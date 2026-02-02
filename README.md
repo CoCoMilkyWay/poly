@@ -5,7 +5,13 @@
 - https://app.artemisanalytics.com/sectors
 - https://defillama.com/categories
 
-# 链上资产成分分解:
+## TVL by Chains
+![TVL](doc/pic/TVL.png)
+
+## TVL by Categories
+![Category](doc/pic/Category.png)
+
+## 链上资产成分分解:
 ```
 ═══════════════════════════════════════════════════════════════════════════════
                         DeFi 资产锁定层级模型
