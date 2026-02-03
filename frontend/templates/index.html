@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polymarket Data Explorer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f0f0f;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 30px 0;
+            border-bottom: 1px solid #333;
+            margin-bottom: 30px;
+        }
+        
+        header h1 {
+            font-size: 2.5em;
+            color: #fff;
+            margin-bottom: 10px;
+        }
+        
+        header p {
+            color: #888;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .card {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #333;
+        }
+        
+        .card h2 {
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .card h2::before {
+            content: '';
+            width: 4px;
+            height: 20px;
+            background: #6366f1;
+            border-radius: 2px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        
+        .stat-item {
+            background: #252525;
+            padding: 12px;
+            border-radius: 8px;
+        }
+        
+        .stat-item .label {
+            font-size: 0.85em;
+            color: #888;
+        }
+        
+        .stat-item .value {
+            font-size: 1.4em;
+            font-weight: 600;
+            color: #6366f1;
+        }
+        
+        .search-box {
+            margin-bottom: 20px;
+        }
+        
+        .search-box label {
+            display: block;
+            margin-bottom: 5px;
+            color: #888;
+            font-size: 0.9em;
+        }
+        
+        .search-box input, .search-box select {
+            width: 100%;
+            padding: 12px;
+            background: #252525;
+            border: 1px solid #333;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1em;
+            margin-bottom: 10px;
+        }
+        
+        .search-box input:focus, .search-box select:focus {
+            outline: none;
+            border-color: #6366f1;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            background: #6366f1;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background 0.2s;
+        }
+        
+        .btn:hover {
+            background: #4f46e5;
+        }
+        
+        .btn-secondary {
+            background: #333;
+        }
+        
+        .btn-secondary:hover {
+            background: #444;
+        }
+        
+        .results {
+            background: #1a1a1a;
+            border-radius: 12px;
+            border: 1px solid #333;
+            overflow: hidden;
+        }
+        
+        .results-header {
+            padding: 15px 20px;
+            background: #252525;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .results-body {
+            padding: 20px;
+            max-height: 400px;
+            overflow: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+        }
+        
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #333;
+        }
+        
+        th {
+            background: #252525;
+            color: #888;
+            font-weight: 500;
+            position: sticky;
+            top: 0;
+        }
+        
+        tr:hover {
+            background: #252525;
+        }
+        
+        .mono {
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.85em;
+        }
+        
+        .truncate {
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .sync-table {
+            font-size: 0.85em;
+        }
+        
+        .sync-table td {
+            padding: 8px;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            background: #333;
+            border-radius: 4px;
+            font-size: 0.8em;
+        }
+        
+        .badge-success {
+            background: #166534;
+            color: #4ade80;
+        }
+        
+        #sql-input {
+            width: 100%;
+            height: 100px;
+            padding: 12px;
+            background: #252525;
+            border: 1px solid #333;
+            border-radius: 8px;
+            color: #fff;
+            font-family: monospace;
+            resize: vertical;
+        }
+        
+        .api-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .api-links a {
+            color: #6366f1;
+            text-decoration: none;
+            padding: 6px 12px;
+            background: #252525;
+            border-radius: 6px;
+            font-size: 0.9em;
+        }
+        
+        .api-links a:hover {
+            background: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Polymarket Data Explorer</h1>
+            <p>从 The Graph 同步的 Polymarket 链上数据</p>
+        </header>
+        
+        <div class="grid">
+            <!-- 数据统计 -->
+            <div class="card">
+                <h2>数据统计</h2>
+                <div class="stats-grid">
+                    {% for table, count in stats.items() %}
+                    <div class="stat-item">
+                        <div class="label">{{ table }}</div>
+                        <div class="value">{{ "{:,}".format(count) if count is number else count }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- 同步状态 -->
+            <div class="card">
+                <h2>同步状态</h2>
+                {% if sync_state %}
+                <table class="sync-table">
+                    <tr>
+                        <th>Subgraph</th>
+                        <th>Entity</th>
+                        <th>最后同步</th>
+                    </tr>
+                    {% for row in sync_state[:10] %}
+                    <tr>
+                        <td class="truncate mono">{{ row[0][:20] }}...</td>
+                        <td>{{ row[1] }}</td>
+                        <td>{{ row[3] }}</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+                {% else %}
+                <p style="color: #888;">暂无同步记录</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="grid">
+            <!-- 用户持仓查询 -->
+            <div class="card">
+                <h2>用户持仓查询</h2>
+                <div class="search-box">
+                    <label>用户地址</label>
+                    <input type="text" id="position-user" placeholder="0x...">
+                    <label>Token ID</label>
+                    <input type="text" id="position-token" placeholder="可选">
+                    <button class="btn" onclick="queryPositions()">查询</button>
+                </div>
+            </div>
+            
+            <!-- 订单查询 -->
+            <div class="card">
+                <h2>订单成交查询</h2>
+                <div class="search-box">
+                    <label>Maker 地址</label>
+                    <input type="text" id="order-maker" placeholder="0x...">
+                    <label>Taker 地址</label>
+                    <input type="text" id="order-taker" placeholder="可选">
+                    <button class="btn" onclick="queryOrders()">查询</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 自定义 SQL -->
+        <div class="card" style="margin-bottom: 30px;">
+            <h2>自定义 SQL 查询</h2>
+            <textarea id="sql-input" placeholder="SELECT * FROM user_position LIMIT 10">SELECT * FROM user_position LIMIT 10</textarea>
+            <div style="margin-top: 10px;">
+                <button class="btn" onclick="querySQL()">执行查询</button>
+                <button class="btn btn-secondary" onclick="clearResults()">清空结果</button>
+            </div>
+            <div class="api-links">
+                <span style="color: #888;">示例:</span>
+                <a href="#" onclick="setSQL('SELECT * FROM user_position ORDER BY realized_pnl DESC LIMIT 20')">Top PnL</a>
+                <a href="#" onclick="setSQL('SELECT * FROM order_filled_event ORDER BY timestamp DESC LIMIT 20')">最新订单</a>
+                <a href="#" onclick="setSQL('SELECT * FROM split ORDER BY timestamp DESC LIMIT 20')">最新 Split</a>
+                <a href="#" onclick="setSQL('SELECT COUNT(*) as cnt, maker FROM order_filled_event GROUP BY maker ORDER BY cnt DESC LIMIT 20')">活跃 Maker</a>
+            </div>
+        </div>
+        
+        <!-- 查询结果 -->
+        <div class="results" id="results-container" style="display: none;">
+            <div class="results-header">
+                <span>查询结果</span>
+                <span id="results-count"></span>
+            </div>
+            <div class="results-body">
+                <table id="results-table">
+                    <thead id="results-head"></thead>
+                    <tbody id="results-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function showResults(data) {
+            const container = document.getElementById('results-container');
+            const head = document.getElementById('results-head');
+            const body = document.getElementById('results-body');
+            const count = document.getElementById('results-count');
+            
+            if (!data || data.length === 0) {
+                container.style.display = 'block';
+                head.innerHTML = '';
+                body.innerHTML = '<tr><td style="text-align:center;color:#888;">无数据</td></tr>';
+                count.textContent = '0 条';
+                return;
+            }
+            
+            if (data.error) {
+                container.style.display = 'block';
+                head.innerHTML = '';
+                body.innerHTML = `<tr><td style="color:#ef4444;">${data.error}</td></tr>`;
+                count.textContent = '错误';
+                return;
+            }
+            
+            const columns = Object.keys(data[0]);
+            
+            head.innerHTML = '<tr>' + columns.map(c => `<th>${c}</th>`).join('') + '</tr>';
+            body.innerHTML = data.map(row => 
+                '<tr>' + columns.map(c => {
+                    let val = row[c];
+                    if (typeof val === 'string' && val.length > 30) {
+                        val = val.substring(0, 30) + '...';
+                    }
+                    return `<td class="mono truncate" title="${row[c]}">${val ?? ''}</td>`;
+                }).join('') + '</tr>'
+            ).join('');
+            
+            count.textContent = `${data.length} 条`;
+            container.style.display = 'block';
+        }
+        
+        async function queryPositions() {
+            const user = document.getElementById('position-user').value;
+            const token = document.getElementById('position-token').value;
+            
+            let url = '/api/positions?limit=100';
+            if (user) url += `&user=${user}`;
+            if (token) url += `&token_id=${token}`;
+            
+            const resp = await fetch(url);
+            const data = await resp.json();
+            showResults(data);
+        }
+        
+        async function queryOrders() {
+            const maker = document.getElementById('order-maker').value;
+            const taker = document.getElementById('order-taker').value;
+            
+            let url = '/api/orders?limit=100';
+            if (maker) url += `&maker=${maker}`;
+            if (taker) url += `&taker=${taker}`;
+            
+            const resp = await fetch(url);
+            const data = await resp.json();
+            showResults(data);
+        }
+        
+        async function querySQL() {
+            const sql = document.getElementById('sql-input').value;
+            const resp = await fetch(`/api/sql?q=${encodeURIComponent(sql)}`);
+            const data = await resp.json();
+            showResults(data);
+        }
+        
+        function setSQL(sql) {
+            document.getElementById('sql-input').value = sql;
+            querySQL();
+        }
+        
+        function clearResults() {
+            document.getElementById('results-container').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
