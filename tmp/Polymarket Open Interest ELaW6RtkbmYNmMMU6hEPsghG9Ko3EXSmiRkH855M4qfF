@@ -1,0 +1,84 @@
+dataSources:
+  - kind: ethereum/contract
+    mapping:
+      abis:
+        - file:
+            /: /ipfs/QmS17MJmDAZPBdg3rRetLDkbwxoUhGcMTAbmyPfWoCV2zn
+          name: ConditionalTokens
+      apiVersion: 0.0.6
+      entities:
+        - Condition
+        - MarketOpenInterest
+        - GlobalOpenInterest
+      eventHandlers:
+        - event: >-
+            PositionSplit(indexed address,address,indexed bytes32,indexed
+            bytes32,uint256[],uint256)
+          handler: handlePositionSplit
+        - event: >-
+            PositionsMerge(indexed address,address,indexed bytes32,indexed
+            bytes32,uint256[],uint256)
+          handler: handlePositionsMerge
+        - event: >-
+            PayoutRedemption(indexed address,indexed address,indexed
+            bytes32,bytes32,uint256[],uint256)
+          handler: handlePayoutRedemption
+        - event: >-
+            ConditionPreparation(indexed bytes32,indexed address,indexed
+            bytes32,uint256)
+          handler: handleConditionPreparation
+      file:
+        /: /ipfs/QmefXA8j9o1nkaYXTNWebxqjh1aUZX822iWeH2ZCeTcSxD
+      kind: ethereum/events
+      language: wasm/assemblyscript
+    name: ConditionalTokens
+    network: matic
+    source:
+      abi: ConditionalTokens
+      address: '0x4D97DCd97eC945f40cF65F87097ACe5EA0476045'
+      startBlock: 4023686
+  - kind: ethereum/contract
+    mapping:
+      abis:
+        - file:
+            /: /ipfs/QmcaDHh6MUYjxsvKXm3qrApoRGc87N7wpFiyDFSQ3d6qpg
+          name: NegRiskAdapter
+      apiVersion: 0.0.6
+      entities:
+        - Condition
+        - NegRiskEvent
+        - MarketOpenInterest
+        - GlobalOpenInterest
+      eventHandlers:
+        - event: 'PositionSplit(indexed address,indexed bytes32,uint256)'
+          handler: handlePositionSplit
+        - event: 'PositionsMerge(indexed address,indexed bytes32,uint256)'
+          handler: handlePositionsMerge
+        - event: 'PayoutRedemption(indexed address,indexed bytes32,uint256[],uint256)'
+          handler: handlePayoutRedemption
+        - event: >-
+            PositionsConverted(indexed address,indexed bytes32,indexed
+            uint256,uint256)
+          handler: handlePositionsConverted
+        - event: 'MarketPrepared(indexed bytes32,indexed address,uint256,bytes)'
+          handler: handleMarketPrepared
+        - event: 'QuestionPrepared(indexed bytes32,indexed bytes32,uint256,bytes)'
+          handler: handleQuestionPrepared
+      file:
+        /: /ipfs/QmcN468YtvjurYXhH3Hjaxsj2UovxzWPunQ8u33Q2YEfpb
+      kind: ethereum/events
+      language: wasm/assemblyscript
+    name: NegRiskAdapter
+    network: matic
+    source:
+      abi: NegRiskAdapter
+      address: '0xd91E80cF2E7be2e162c6513ceD06f1dD0dA35296'
+      startBlock: 50505403
+description: oi-subgraph
+features:
+  - grafting
+repository: 'https://github.com/Polymarket/polymarket-subgraph'
+schema:
+  file:
+    /: /ipfs/QmXE7EGjThvccmeyCn3gqVis4WzJwWCexXJM9Fsqa3KxKH
+specVersion: 0.0.4

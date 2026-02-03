@@ -8,63 +8,53 @@ import signal
 from pathlib import Path
 
 ROOT = Path(__file__).parent
-SYNCER_DIR = ROOT / "syncer"
-SYNCER_BUILD = SYNCER_DIR / "build"
-FRONTEND_DIR = ROOT / "frontend"
+BACKEND_DIR = ROOT / "core-backend"
+BACKEND_BUILD = BACKEND_DIR / "projects" / "core" / "build"
+FRONTEND_DIR = ROOT / "core-frontend"
 CONFIG_FILE = ROOT / "config.json"
 
 # Windows 下的可执行文件名
-SYNCER_EXE = SYNCER_BUILD / ("syncer.exe" if sys.platform == "win32" else "syncer")
+BACKEND_EXE = BACKEND_BUILD / ("core.exe" if sys.platform == "win32" else "core")
 
 
 def need_rebuild():
     """检查是否需要重新编译"""
-    if not SYNCER_EXE.exists():
+    if not BACKEND_EXE.exists():
         return True
     
     # 检查源文件是否比可执行文件新
-    src_dir = SYNCER_DIR / "src"
+    src_dir = BACKEND_DIR / "src"
     if not src_dir.exists():
         return True
     
-    exe_mtime = SYNCER_EXE.stat().st_mtime
+    exe_mtime = BACKEND_EXE.stat().st_mtime
     for src_file in src_dir.glob("*"):
         if src_file.stat().st_mtime > exe_mtime:
             return True
     
-    cmake_file = SYNCER_DIR / "CMakeLists.txt"
+    cmake_file = BACKEND_DIR / "projects" / "core" / "CMakeLists.txt"
     if cmake_file.exists() and cmake_file.stat().st_mtime > exe_mtime:
         return True
     
     return False
 
 
-def build_syncer():
-    """编译 C++ syncer"""
-    print("[run.py] 编译 C++ syncer...")
-    SYNCER_BUILD.mkdir(exist_ok=True)
+def build_backend():
+    """编译 C++ backend"""
+    print("[run.py] 编译 C++ backend...")
+    BACKEND_BUILD.mkdir(parents=True, exist_ok=True)
     
     # cmake 配置
-    result = subprocess.run(
-        ["cmake", ".."],
-        cwd=SYNCER_BUILD,
-        capture_output=True,
-        text=True
-    )
-    if result.returncode != 0:
-        print(f"[run.py] cmake 配置失败:\n{result.stderr}")
-        sys.exit(1)
+    result = subprocess.run([
+        "cmake", "..",
+        "-DCMAKE_C_COMPILER=clang",
+        "-DCMAKE_CXX_COMPILER=clang++"
+    ], cwd=BACKEND_BUILD)
+    assert result.returncode == 0, "cmake 配置失败"
     
     # cmake 编译
-    result = subprocess.run(
-        ["cmake", "--build", ".", "--config", "Release"],
-        cwd=SYNCER_BUILD,
-        capture_output=True,
-        text=True
-    )
-    if result.returncode != 0:
-        print(f"[run.py] 编译失败:\n{result.stderr}")
-        sys.exit(1)
+    result = subprocess.run(["cmake", "--build", ".", "--config", "Release"], cwd=BACKEND_BUILD)
+    assert result.returncode == 0, "编译失败"
     
     print("[run.py] 编译完成")
 
@@ -108,19 +98,19 @@ def main():
     # 1. 检查配置
     check_config()
     
-    # 2. 编译 C++ syncer（如果需要）
+    # 2. 编译 C++ backend（如果需要）
     if need_rebuild():
-        build_syncer()
+        build_backend()
     else:
-        print("[run.py] syncer 已是最新，跳过编译")
+        print("[run.py] backend 已是最新，跳过编译")
     
-    # 3. 启动 C++ syncer（后台）
-    print("[run.py] 启动 syncer...")
-    syncer_proc = subprocess.Popen(
-        [str(SYNCER_EXE), "--config", str(CONFIG_FILE)],
+    # 3. 启动 C++ backend（后台）
+    print("[run.py] 启动 backend...")
+    backend_proc = subprocess.Popen(
+        [str(BACKEND_EXE), "--config", str(CONFIG_FILE)],
         cwd=ROOT
     )
-    processes.append(syncer_proc)
+    processes.append(backend_proc)
     
     # 4. 启动 Python frontend（后台）
     print("[run.py] 启动 frontend...")

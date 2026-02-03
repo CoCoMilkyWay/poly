@@ -1,0 +1,71 @@
+{
+  "api_key": "YOUR_THE_GRAPH_API_KEY",
+  "db_path": "data/polymarket.duckdb",
+  "sync_interval_seconds": 60,
+  
+  "subgraph_ids": {
+    "activity": "Bx1W4S7kDVxs9gC3s2G6DS8kdNBJNVhMviCtin2DiBp",
+    "pnl": "6c58N5U4MtQE2Y8njfVrrAfRykzfqajMGeTMEvMmskVz",
+    "orderbook": "7fu2DWYK93ePfzB24c2wrP94S3x4LGHUrQxphhoEypyY",
+    "oi": "ELaW6RtkbmYNmMMU6hEPsghG9Ko3EXSmiRkH855M4qfF",
+    "fpmm": "81Dm16JjuFSrqz813HysXoUPvzTwE7fsfPk2RTf66nyC",
+    "resolution": "SELF_DEPLOY_RESOLUTION_SUBGRAPH_ID",
+    "positions": "SELF_DEPLOY_POSITIONS_SUBGRAPH_ID",
+    "fee-module": "SELF_DEPLOY_FEE_MODULE_SUBGRAPH_ID",
+    "wallet": "SELF_DEPLOY_WALLET_SUBGRAPH_ID",
+    "sports-oracle": "SELF_DEPLOY_SPORTS_ORACLE_SUBGRAPH_ID"
+  },
+  
+  "subgraphs": [
+    {
+      "id_ref": "activity",
+      "name": "activity",
+      "entities": ["Split", "Merge", "Redemption", "NegRiskConversion", "NegRiskEvent", "FixedProductMarketMaker", "Position", "Condition"]
+    },
+    {
+      "id_ref": "pnl",
+      "name": "pnl",
+      "entities": ["UserPosition", "NegRiskEvent", "Condition", "FPMM"]
+    },
+    {
+      "id_ref": "orderbook",
+      "name": "orderbook",
+      "entities": ["OrderFilledEvent", "Orderbook", "MarketData", "OrdersMatchedEvent", "OrdersMatchedGlobal"]
+    },
+    {
+      "id_ref": "oi",
+      "name": "oi",
+      "entities": ["MarketOpenInterest", "GlobalOpenInterest", "Condition", "NegRiskEvent"]
+    },
+    {
+      "id_ref": "fpmm",
+      "name": "fpmm",
+      "entities": ["FixedProductMarketMaker", "FpmmTransaction", "Condition", "Collateral", "FpmmFundingAddition", "FpmmFundingRemoval", "FpmmPoolMembership"]
+    },
+    {
+      "id_ref": "resolution",
+      "name": "resolution",
+      "entities": ["MarketResolution", "AncillaryDataHashToQuestionId", "Moderator", "Revision"]
+    },
+    {
+      "id_ref": "positions",
+      "name": "positions",
+      "entities": ["UserBalance", "NetUserBalance", "TokenIdCondition", "Condition"]
+    },
+    {
+      "id_ref": "fee-module",
+      "name": "fee-module",
+      "entities": ["FeeRefundedEntity"]
+    },
+    {
+      "id_ref": "wallet",
+      "name": "wallet",
+      "entities": ["Wallet", "GlobalUSDCBalance"]
+    },
+    {
+      "id_ref": "sports-oracle",
+      "name": "sports-oracle",
+      "entities": ["Game", "Market"]
+    }
+  ]
+}

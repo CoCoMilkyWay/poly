@@ -1,0 +1,112 @@
+dataSources:
+  - kind: ethereum/contract
+    mapping:
+      abis:
+        - file:
+            /: /ipfs/QmS17MJmDAZPBdg3rRetLDkbwxoUhGcMTAbmyPfWoCV2zn
+          name: ConditionalTokens
+      apiVersion: 0.0.6
+      entities:
+        - Condition
+        - Split
+        - Merge
+        - Redemption
+        - Position
+        - FixedProductMarketMaker
+      eventHandlers:
+        - event: >-
+            PositionSplit(indexed address,address,indexed bytes32,indexed
+            bytes32,uint256[],uint256)
+          handler: handlePositionSplit
+        - event: >-
+            PositionsMerge(indexed address,address,indexed bytes32,indexed
+            bytes32,uint256[],uint256)
+          handler: handlePositionsMerge
+        - event: >-
+            PayoutRedemption(indexed address,indexed address,indexed
+            bytes32,bytes32,uint256[],uint256)
+          handler: handlePayoutRedemption
+        - event: >-
+            ConditionPreparation(indexed bytes32,indexed address,indexed
+            bytes32,uint256)
+          handler: handleConditionPreparation
+      file:
+        /: /ipfs/Qma59K5PLzZFkfzUHiygFkE9QLa2EnJ5GSVgLuzBYYySHy
+      kind: ethereum/events
+      language: wasm/assemblyscript
+    name: ConditionalTokens
+    network: matic
+    source:
+      abi: ConditionalTokens
+      address: '0x4D97DCd97eC945f40cF65F87097ACe5EA0476045'
+      startBlock: 4023686
+  - kind: ethereum/contract
+    mapping:
+      abis:
+        - file:
+            /: /ipfs/QmbrZwGpsQHDhSC2fRsrTLU1oJUQEE5KAfT7UK6RcQwaoK
+          name: FixedProductMarketMakerFactory
+      apiVersion: 0.0.6
+      entities:
+        - FixedProductMarketMaker
+      eventHandlers:
+        - event: >-
+            FixedProductMarketMakerCreation(indexed address,address,indexed
+            address,indexed address,bytes32[],uint256)
+          handler: handleFixedProductMarketMakerCreation
+      file:
+        /: /ipfs/QmSiR9rj7Y1cidseQ7xMBHrzDJCa98ThXRmP4hASdHHQUv
+      kind: ethereum/events
+      language: wasm/assemblyscript
+    name: FixedProductMarketMakerFactory
+    network: matic
+    source:
+      abi: FixedProductMarketMakerFactory
+      address: '0x8B9805A2f595B6705e74F7310829f2d299D21522'
+      startBlock: 4023693
+  - kind: ethereum/contract
+    mapping:
+      abis:
+        - file:
+            /: /ipfs/QmcaDHh6MUYjxsvKXm3qrApoRGc87N7wpFiyDFSQ3d6qpg
+          name: NegRiskAdapter
+      apiVersion: 0.0.6
+      entities:
+        - Merge
+        - Split
+        - Redemption
+        - NegRiskConversion
+        - NegRiskEvent
+      eventHandlers:
+        - event: 'PositionSplit(indexed address,indexed bytes32,uint256)'
+          handler: handlePositionSplit
+        - event: 'PositionsMerge(indexed address,indexed bytes32,uint256)'
+          handler: handlePositionsMerge
+        - event: >-
+            PositionsConverted(indexed address,indexed bytes32,indexed
+            uint256,uint256)
+          handler: handlePositionsConverted
+        - event: 'PayoutRedemption(indexed address,indexed bytes32,uint256[],uint256)'
+          handler: handlePayoutRedemption
+        - event: 'MarketPrepared(indexed bytes32,indexed address,uint256,bytes)'
+          handler: handleMarketPrepared
+        - event: 'QuestionPrepared(indexed bytes32,indexed bytes32,uint256,bytes)'
+          handler: handleQuestionPrepared
+      file:
+        /: /ipfs/QmbVaUAs2ufDecsnZCtt7xztgvWzEXyVK3F2JmaPsSMAAH
+      kind: ethereum/events
+      language: wasm/assemblyscript
+    name: NegRiskAdapter
+    network: matic
+    source:
+      abi: NegRiskAdapter
+      address: '0xd91E80cF2E7be2e162c6513ceD06f1dD0dA35296'
+      startBlock: 50505403
+description: activity-subgraph
+features:
+  - grafting
+repository: 'https://github.com/Polymarket/polymarket-subgraph'
+schema:
+  file:
+    /: /ipfs/QmYGiNZyKnm6VtVcMpJaPovyhNfBwohpsTeXFx33eHXoWV
+specVersion: 0.0.4
