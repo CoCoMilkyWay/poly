@@ -1,0 +1,35 @@
+type MarketResolution @entity {
+  id: String! # questionID
+  newVersionQ: Boolean! # bool
+  author: Bytes! # address
+  ancillaryData: Bytes! # bytes
+  lastUpdateTimestamp: BigInt! # uint256
+  status: String! # initialized/posed/proposed/challenged/reproposed/disputed/resolved
+  wasDisputed: Boolean! # bool
+  proposedPrice: BigInt! # int256
+  reproposedPrice: BigInt! # int256
+  price: BigInt! # int256
+  updates: String! # comma separated updates
+  transactionHash: String # txHash
+  logIndex: BigInt # uint256
+  approved: Boolean # bool
+}
+
+type AncillaryDataHashToQuestionId @entity {
+  id: String! # ancillaryDataHash
+  questionId: String! # questionID
+}
+
+type Moderator @entity {
+  id: String! # address
+  canMod: Boolean! # bool
+}
+
+type Revision @entity {
+  id: String!
+  moderator: String! # address
+  questionId: String! # questionID of the update
+  timestamp: BigInt! # uint256
+  update: String! # the update posted
+  transactionHash: String! # transaction hash
+}

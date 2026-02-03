@@ -1,0 +1,33 @@
+specVersion: 0.0.7
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: CTF
+    network: matic
+    source:
+      address: "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045"
+      abi: CTF
+      startBlock: 4023686
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - UserBalance
+        - NetUserBalance
+        - TokenIdCondition
+        - Condition
+      abis:
+        - name: CTF
+          file: ./abis/CTF.json
+      eventHandlers:
+        - event: ConditionPreparation(indexed bytes32,indexed address,indexed bytes32,uint256)
+          handler: handleConditionPreparation
+        - event: TransferSingle(indexed address,indexed address,indexed address,uint256,uint256)
+          handler: handleTransferSingle
+        - event: TransferBatch(indexed address,indexed address,indexed address,uint256[],uint256[])
+          handler: handleTransferBatch
+        - event: ConditionResolution(indexed bytes32,indexed address,indexed bytes32,uint256,uint256[])
+          handler: handleConditionResolution
+      file: ./src/ctf.ts

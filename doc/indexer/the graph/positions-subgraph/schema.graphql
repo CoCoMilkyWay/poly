@@ -1,0 +1,25 @@
+type UserBalance @entity {
+  id: String! # address - tokenId
+  user: String! # address
+  asset: TokenIdCondition! # tokenId
+  balance: BigInt! # balance
+}
+
+type NetUserBalance @entity {
+  id: String! # address - conditionId
+  user: String! # address
+  asset: TokenIdCondition! # tokenId
+  balance: BigInt! # balance
+}
+
+type TokenIdCondition @entity {
+  id: String! # tokenId
+  condition: Condition! # conditionId
+  complement: String! # complementary tokenId
+  outcomeIndex: BigInt! # outcome index
+}
+
+type Condition @entity {
+  id: String! # conditionId
+  payouts: [BigDecimal!] # resolution price
+}
