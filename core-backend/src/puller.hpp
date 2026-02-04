@@ -47,18 +47,18 @@ inline std::string escape_json(const std::string& s) {
 inline std::string build_query(const char* plural, const char* fields,
                                const std::string& cursor, int limit) {
     std::ostringstream oss;
-    oss << R"({"query":"query Q($limit:Int!,$cursor:ID){)"
-        << plural 
-        << R"((first:$limit,orderBy:id,orderDirection:asc,where:{id_gt:$cursor}){)"
-        << fields
-        << R"(}}","variables":{"limit":)" << limit << ",\"cursor\":";
+    oss << R"({"query":"query Q($limit:Int!){)" << plural;
     
     if (cursor.empty()) {
-        oss << "null";
+        // 首次查询：无 where 条件
+        oss << R"((first:$limit,orderBy:id,orderDirection:asc){)";
     } else {
-        oss << "\"" << escape_json(cursor) << "\"";
+        // 增量查询：从 cursor 继续
+        oss << R"((first:$limit,orderBy:id,orderDirection:asc,where:{id_gt:\")"
+            << escape_json(cursor) << R"(\"}){)";
     }
-    oss << "}}";
+    
+    oss << fields << R"(}}","variables":{"limit":)" << limit << "}}";
     return oss.str();
 }
 
@@ -179,6 +179,8 @@ public:
     {
         db_.init_sync_state();
         
+        // 预分配空间，避免向量重新分配导致 scheduler_ 指针失效
+        schedulers_.reserve(config.sources.size());
         for (const auto& src : config.sources) {
             bool is_pnl = (src.name == "pnl");
             schedulers_.emplace_back(src, db_, pool_, this, is_pnl);

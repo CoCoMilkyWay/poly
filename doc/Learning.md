@@ -1,6 +1,6 @@
 ## 目标：重建历史交易数据库
 
-### 方案A：用Subgraph（推荐）
+### 方案A：用Subgraph(推荐)
 
 ```
 步骤1: polymarket-subgraph (核心)

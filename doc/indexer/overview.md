@@ -38,7 +38,7 @@
 |                        | `OrdersMatched`                   | ✅    | 订单撮合：taker订单与多个maker订单匹配                                     |
 |                        | `TokenRegistered`                 | ✅    | Token注册：将tokenId/complement/conditionId关联并允许交易                  |
 |                        | `OrderCancelled`                  | ❌    | 订单取消：无法追踪用户主动取消的订单记录                                   |
-|                        | `FeeCharged`                      | ❌    | 费用收取：无法独立追踪费用（需从OrderFilled.fee间接算）                    |
+|                        | `FeeCharged`                      | ❌    | 费用收取：无法独立追踪费用(需从OrderFilled.fee间接算)                    |
 | **NegRiskAdapter**     | `MarketPrepared`                  | ✅    | NegRisk市场创建：记录marketId、oracle、feeBips                             |
 |                        | `QuestionPrepared`                | ✅    | NegRisk问题创建：在市场下新增一个question                                  |
 |                        | `PositionSplit`                   | ✅    | NegRisk拆分：用USDC铸造该question的yes/no tokens                           |

@@ -7,13 +7,29 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+# 平台检查
+if(NOT (WIN32 OR (UNIX AND NOT APPLE)))
+    message(FATAL_ERROR "仅支持 Linux 和 Windows")
+endif()
+
 # 本地路径
 set(PACKAGES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../packages)
 set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../include)
 set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../src)
 
 # OpenSSL (for boost::asio::ssl)
-find_package(OpenSSL REQUIRED)
+find_package(OpenSSL QUIET)
+if(NOT OpenSSL_FOUND)
+    if(WIN32)
+        message(FATAL_ERROR "未找到 OpenSSL\n"
+            "  Windows: 下载安装 https://slproweb.com/products/Win32OpenSSL.html\n"
+            "  或设置 OPENSSL_ROOT_DIR 环境变量")
+    else()
+        message(FATAL_ERROR "未找到 OpenSSL\n"
+            "  Ubuntu/Debian: sudo apt install libssl-dev\n"
+            "  Fedora/RHEL:   sudo dnf install openssl-devel")
+    endif()
+endif()
 
 # 源文件
 set(SOURCES
@@ -36,20 +52,16 @@ if(WIN32)
         OpenSSL::SSL
         OpenSSL::Crypto
     )
-elseif(APPLE)
-    target_link_libraries(core PRIVATE
-        ${PACKAGES_DIR}/duckdb/libduckdb.dylib
-        OpenSSL::SSL
-        OpenSSL::Crypto
-    )
 else()
     target_link_libraries(core PRIVATE
-        -Wl,--whole-archive
-        ${PACKAGES_DIR}/duckdb/libduckdb_static.a
-        -Wl,--no-whole-archive
+        ${PACKAGES_DIR}/duckdb/libduckdb.so
         OpenSSL::SSL
         OpenSSL::Crypto
         pthread
         dl
+    )
+    set_target_properties(core PROPERTIES
+        BUILD_RPATH ${PACKAGES_DIR}/duckdb
+        INSTALL_RPATH ${PACKAGES_DIR}/duckdb
     )
 endif()

@@ -2,7 +2,6 @@
 import subprocess
 import webbrowser
 import time
-import os
 import sys
 import signal
 from pathlib import Path
@@ -98,13 +97,16 @@ def main():
     # 1. 检查配置
     check_config()
     
-    # 2. 编译 C++ backend（如果需要）
+    # 1.5 确保 data 目录存在
+    (ROOT / "data").mkdir(exist_ok=True)
+    
+    # 2. 编译 C++ backend(如果需要)
     if need_rebuild():
         build_backend()
     else:
         print("[run.py] backend 已是最新，跳过编译")
     
-    # 3. 启动 C++ backend（后台）
+    # 3. 启动 C++ backend(后台)
     print("[run.py] 启动 backend...")
     backend_proc = subprocess.Popen(
         [str(BACKEND_EXE), "--config", str(CONFIG_FILE)],
@@ -112,7 +114,7 @@ def main():
     )
     processes.append(backend_proc)
     
-    # 4. 启动 Python frontend（后台）
+    # 4. 启动 Python frontend(后台)
     print("[run.py] 启动 frontend...")
     frontend_proc = subprocess.Popen(
         [sys.executable, "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"],

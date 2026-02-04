@@ -1,0 +1,220 @@
+<style>
+.graph-card { background: #1a1a1a; border-radius: 10px; padding: 15px; border: 1px solid #333; margin-bottom: 15px; }
+.graph-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #333; }
+.graph-header h2 { font-size: 1.1em; color: #fff; display: flex; align-items: center; gap: 8px; margin: 0; }
+.graph-header h2::before { content: ''; width: 3px; height: 16px; background: #6366f1; border-radius: 2px; }
+
+.graph-source { background: #252525; border-radius: 6px; margin-bottom: 8px; overflow: hidden; }
+.graph-source:last-child { margin-bottom: 0; }
+.graph-source-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #2a2a2a; cursor: pointer; }
+.graph-source-header:hover { background: #333; }
+.graph-source-title { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.graph-source-name { font-weight: 600; color: #fff; }
+.graph-source-id { font-family: monospace; font-size: 0.7em; color: #666; word-break: break-all; }
+
+.graph-source-stats { display: flex; align-items: center; gap: 12px; font-size: 0.8em; flex-shrink: 0; }
+.graph-stat-mini { text-align: right; }
+.graph-stat-mini .label { font-size: 0.7em; color: #666; }
+.graph-stat-mini .value { font-family: monospace; color: #6366f1; }
+.graph-stat-mini .value.synced { color: #4ade80; }
+.graph-stat-mini .value.behind { color: #fde047; }
+.graph-stat-mini .value.error { color: #f87171; }
+
+.badge { display: inline-block; padding: 2px 6px; border-radius: 3px; font-size: 0.7em; font-weight: 500; }
+.badge-success { background: #166534; color: #4ade80; }
+.badge-warning { background: #854d0e; color: #fde047; }
+.badge-error { background: #991b1b; color: #fca5a5; }
+
+.graph-source-body { padding: 12px; display: none; font-size: 0.85em; }
+.graph-source.expanded .graph-source-body { display: block; }
+.graph-source.expanded .graph-source-header { border-bottom: 1px solid #333; }
+
+.indexer-list { margin-top: 10px; }
+.indexer-list .title { font-size: 0.8em; color: #888; margin-bottom: 6px; }
+.indexer-item { display: flex; justify-content: space-between; padding: 4px 8px; background: #1a1a1a; border-radius: 3px; margin-bottom: 4px; font-size: 0.8em; }
+.indexer-item .name { color: #aaa; font-family: monospace; word-break: break-all; }
+.indexer-item .stake { color: #6366f1; flex-shrink: 0; margin-left: 12px; }
+
+.data-sources { margin-top: 10px; padding-top: 10px; border-top: 1px solid #333; }
+.data-sources .title { font-size: 0.8em; color: #888; margin-bottom: 6px; }
+.ds-item { background: #1a1a1a; border-radius: 4px; padding: 8px 10px; margin-bottom: 6px; border-left: 2px solid #6366f1; }
+.ds-item.dynamic { border-left-color: #f59e0b; }
+.ds-type { font-size: 0.7em; padding: 1px 4px; border-radius: 2px; margin-right: 4px; }
+.ds-type.static { background: #1e3a5f; color: #60a5fa; }
+.ds-type.dynamic { background: #4a3728; color: #fbbf24; }
+.ds-row { display: flex; align-items: center; justify-content: space-between; font-size: 0.75em; gap: 8px; }
+.ds-left { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.ds-name { color: #fff; font-weight: 500; min-width: 100px; }
+.ds-blocks { display: flex; gap: 10px; color: #888; }
+.ds-blocks .val { color: #6366f1; font-family: monospace; }
+.ds-blocks .val.synced { color: #4ade80; }
+.ds-blocks .val.behind { color: #fde047; }
+.ds-blocks .val.error { color: #f87171; }
+.ds-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.ds-network { color: #888; background: #333; padding: 2px 6px; border-radius: 2px; }
+.ds-progress { font-weight: 500; padding: 2px 8px; border-radius: 3px; min-width: 60px; text-align: center; }
+.ds-progress.synced { background: #166534; color: #4ade80; }
+.ds-progress.behind { background: #854d0e; color: #fde047; }
+.ds-progress.error { background: #991b1b; color: #fca5a5; }
+.ds-addr { font-family: monospace; font-size: 0.7em; color: #666; margin-top: 4px; }
+.ds-entities { font-size: 0.7em; color: #666; margin-top: 4px; }
+.ds-entities span { background: #333; padding: 1px 4px; border-radius: 2px; margin-right: 3px; }
+.ds-entities-label { color: #888; margin-right: 4px; background: none !important; }
+.ds-output-entities { font-size: 0.75em; color: #666; margin-top: 8px; padding-top: 8px; border-top: 1px solid #333; }
+.ds-output-entities span { background: #2d4a2d; color: #4ade80; padding: 1px 4px; border-radius: 2px; margin-right: 3px; }
+
+.expand-icon { color: #666; font-size: 0.8em; transition: transform 0.2s; }
+.graph-source.expanded .expand-icon { transform: rotate(180deg); }
+.btn-sm { padding: 5px 10px; font-size: 0.8em; background: #333; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+.btn-sm:hover { background: #444; }
+.btn-sm:disabled { opacity: 0.5; cursor: not-allowed; }
+.error-msg { color: #f87171; font-size: 0.85em; padding: 8px; background: #1a1a1a; border-radius: 4px; }
+.graph-status-msg { font-size: 0.8em; color: #888; margin-right: 8px; }
+.graph-loading { display: flex; align-items: center; justify-content: center; padding: 20px; color: #888; }
+</style>
+
+<div class="graph-card" id="graph-status-card">
+    <div class="graph-header">
+        <h2>索引服务器节点-状态</h2>
+        <div style="display: flex; align-items: center;">
+            <span class="graph-status-msg" id="graph-status-msg"></span>
+            <button class="btn-sm" onclick="refreshGraphStatus()" id="graph-refresh-btn">刷新</button>
+        </div>
+    </div>
+    <div id="graph-sources-container">
+        <div class="graph-loading">加载中...</div>
+    </div>
+</div>
+
+<script>
+function toggleSource(el) {
+    if (event.target.closest('.btn-sm')) return;
+    el.classList.toggle('expanded');
+}
+
+function refreshGraphStatus() {
+    const btn = document.getElementById('graph-refresh-btn');
+    const statusMsg = document.getElementById('graph-status-msg');
+    const container = document.getElementById('graph-sources-container');
+    
+    btn.disabled = true;
+    btn.textContent = '...';
+    statusMsg.textContent = '连接中...';
+    
+    const eventSource = new EventSource('/api/graph-status-stream');
+    
+    eventSource.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        
+        if (data.type === 'status') {
+            statusMsg.textContent = data.msg;
+        } else if (data.type === 'done') {
+            eventSource.close();
+            statusMsg.textContent = '';
+            btn.disabled = false;
+            btn.textContent = '刷新';
+            
+            if (data.data.error) {
+                container.innerHTML = `<div class="error-msg">${data.data.error}</div>`;
+            } else {
+                container.innerHTML = renderGraphSources(data.data);
+            }
+        }
+    };
+    
+    eventSource.onerror = () => {
+        eventSource.close();
+        statusMsg.textContent = '加载失败';
+        btn.disabled = false;
+        btn.textContent = '刷新';
+    };
+}
+
+document.addEventListener('DOMContentLoaded', refreshGraphStatus);
+
+function renderGraphSources(data) {
+    let html = '';
+    for (const [name, src] of Object.entries(data.sources)) {
+        const meta = src.meta || {};
+        const stats = src.stats || {};
+        const indexerInfo = src.indexer_info || {};
+        const hasError = !!meta.error;
+        
+        const statusBadge = hasError ? '<span class="badge badge-error">错误</span>' :
+            meta.hasIndexingErrors ? '<span class="badge badge-warning">索引错误</span>' :
+            '<span class="badge badge-success">正常</span>';
+        
+        const progressClass = stats.progress > 99 ? 'synced' : (stats.progress > 90 ? 'behind' : 'error');
+        
+        html += `<div class="graph-source" onclick="toggleSource(this)">
+            <div class="graph-source-header">
+                <div class="graph-source-title">
+                    <span class="graph-source-name">${name}</span>
+                    <span class="graph-source-id">${src.subgraph_id}</span>
+                    ${statusBadge}
+                </div>
+                <div class="graph-source-stats">
+                    ${!hasError ? `
+                    <div class="graph-stat-mini"><div class="label">Indexers</div><div class="value">${indexerInfo.indexer_count || 0}</div></div>
+                    <div class="graph-stat-mini"><div class="label">Progress</div><div class="value ${progressClass}">${stats.progress || 0}%</div></div>
+                    ` : ''}
+                    <span class="expand-icon">▼</span>
+                </div>
+            </div>
+            <div class="graph-source-body">
+                ${hasError ? `<div class="error-msg">${meta.error}</div>` : renderSourceBody(src)}
+            </div>
+        </div>`;
+    }
+    return html;
+}
+
+function renderSourceBody(src) {
+    const indexerInfo = src.indexer_info || {};
+    let html = '';
+    
+    if (indexerInfo.indexers?.length) {
+        html += `<div class="indexer-list"><div class="title">Active Indexers (Top ${indexerInfo.indexers.length} by stake)</div>`;
+        for (const idx of indexerInfo.indexers) {
+            const grt = Math.round(parseInt(idx.allocated) / 1e18);
+            html += `<div class="indexer-item"><span class="name">${idx.id}</span><span class="stake">${grt.toLocaleString()} GRT</span></div>`;
+        }
+        html += '</div>';
+    }
+    
+    if (src.contract_nodes?.length) {
+        html += `<div class="data-sources"><div class="title">智能合约节点 (${src.contract_nodes.length})</div>`;
+        for (const node of src.contract_nodes) {
+            const isStatic = node.type === 'static';
+            const typeLabel = isStatic ? '静态' : '动态';
+            const typeClass = isStatic ? 'static' : 'dynamic';
+            const progressClass = node.progress > 99 ? 'synced' : (node.progress > 90 ? 'behind' : 'error');
+            const behindClass = node.behind < 100 ? 'synced' : (node.behind < 10000 ? 'behind' : 'error');
+            html += `<div class="ds-item ${typeClass}">
+                <div class="ds-row">
+                    <div class="ds-left">
+                        <span class="ds-type ${typeClass}">${typeLabel}</span>
+                        <span class="ds-name">${node.name}</span>
+                        <div class="ds-blocks">
+                            ${isStatic ? `<span>Start: <span class="val">${node.start_block?.toLocaleString()}</span></span>` : ''}
+                            <span>Indexed: <span class="val">${node.indexed?.toLocaleString() || 'N/A'}</span></span>
+                            <span>Head: <span class="val">${node.head?.toLocaleString() || 'N/A'}</span></span>
+                            <span>Behind: <span class="val ${behindClass}">${node.behind?.toLocaleString() || 'N/A'}</span></span>
+                        </div>
+                    </div>
+                    <div class="ds-right">
+                        <span class="ds-network">${node.network_display}</span>
+                        ${isStatic ? `<span class="ds-progress ${progressClass}">${node.progress || 0}%</span>` : ''}
+                    </div>
+                </div>
+                ${node.address ? `<div class="ds-addr">${node.address}</div>` : ''}
+                ${node.entities?.length ? `<div class="ds-entities"><span class="ds-entities-label">Entities:</span> ${node.entities.map(e => `<span>${e}</span>`).join('')}</div>` : ''}
+            </div>`;
+        }
+        html += `<div class="ds-output-entities"><span class="ds-entities-label">索引 Entities(输出):</span> ${src.output_entities?.map(e => `<span>${e}</span>`).join('') || ''}</div>`;
+        html += '</div>';
+    }
+    
+    return html;
+}
+</script>

@@ -1,10 +1,10 @@
 {
-  "api_key": "YOUR_THE_GRAPH_API_KEY",
+  "api_key": "1d7a83f3e6778cd93dfbae707bb192de",
   "db_path": "data/polymarket.duckdb",
   "sync_interval_seconds": 60,
   
   "sources": {
-    "main": {
+    "Polymarket": {
       "subgraph_id": "81Dm16JjuFSrqz813HysXoUPvzTwE7fsfPk2RTf66nyC",
       "enabled": true,
       "entities": [
@@ -23,8 +23,8 @@
         "Global"
       ]
     },
-    "pnl": {
-      "subgraph_id": "EtXYMmR6ZVMkR1ndhfb5kZSee2T8hHg72FzPH5CPkypa",
+    "Polymarket Profit and Loss": {
+      "subgraph_id": "6c58N5U4MtQE2Y8njfVrrAfRykzfqajMGeTMEvMmskVz",
       "enabled": true,
       "entities": [
         "UserPosition",

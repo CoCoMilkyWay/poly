@@ -5,13 +5,17 @@
 #include <cassert>
 #include <iostream>
 #include <duckdb.hpp>
+#include <nlohmann/json.hpp>
 #include "entities.hpp"
+
+using json = nlohmann::json;
 
 class Database {
 public:
     explicit Database(const std::string& path) {
         db_ = std::make_unique<duckdb::DuckDB>(path);
-        conn_ = std::make_unique<duckdb::Connection>(*db_);
+        conn_ = std::make_unique<duckdb::Connection>(*db_);        // 写连接
+        read_conn_ = std::make_unique<duckdb::Connection>(*db_);   // 读连接
     }
     
     // ========================================================================
@@ -130,8 +134,59 @@ public:
             std::cerr << "[DB] SQL 执行失败: " << result->GetError() << std::endl;
         }
     }
+    
+    // ========================================================================
+    // 只读查询(用于 HTTP API)
+    // ========================================================================
+    
+    json query_json(const std::string& sql) {
+        auto result = read_conn_->Query(sql);
+        if (result->HasError()) {
+            throw std::runtime_error(result->GetError());
+        }
+        
+        json rows = json::array();
+        auto& types = result->types;
+        auto names = result->names;
+        
+        for (size_t row = 0; row < result->RowCount(); ++row) {
+            json obj = json::object();
+            for (size_t col = 0; col < result->ColumnCount(); ++col) {
+                auto value = result->GetValue(col, row);
+                if (value.IsNull()) {
+                    obj[names[col]] = nullptr;
+                } else {
+                    // 根据类型转换
+                    switch (types[col].id()) {
+                        case duckdb::LogicalTypeId::BOOLEAN:
+                            obj[names[col]] = value.GetValue<bool>();
+                            break;
+                        case duckdb::LogicalTypeId::TINYINT:
+                        case duckdb::LogicalTypeId::SMALLINT:
+                        case duckdb::LogicalTypeId::INTEGER:
+                            obj[names[col]] = value.GetValue<int32_t>();
+                            break;
+                        case duckdb::LogicalTypeId::BIGINT:
+                            obj[names[col]] = value.GetValue<int64_t>();
+                            break;
+                        case duckdb::LogicalTypeId::FLOAT:
+                        case duckdb::LogicalTypeId::DOUBLE:
+                            obj[names[col]] = value.GetValue<double>();
+                            break;
+                        default:
+                            obj[names[col]] = value.ToString();
+                            break;
+                    }
+                }
+            }
+            rows.push_back(std::move(obj));
+        }
+        
+        return rows;
+    }
 
 private:
     std::unique_ptr<duckdb::DuckDB> db_;
-    std::unique_ptr<duckdb::Connection> conn_;
+    std::unique_ptr<duckdb::Connection> conn_;       // 写连接
+    std::unique_ptr<duckdb::Connection> read_conn_;  // 读连接
 };

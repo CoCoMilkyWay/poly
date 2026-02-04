@@ -17,7 +17,7 @@ namespace entities {
 // 工具函数
 // ============================================================================
 
-// SQL 字符串转义（不带引号）
+// SQL 字符串转义(不带引号)
 inline std::string escape_sql_raw(const std::string& s) {
     std::string r;
     r.reserve(s.size());
@@ -28,7 +28,7 @@ inline std::string escape_sql_raw(const std::string& s) {
     return r;
 }
 
-// SQL 字符串转义（带引号）
+// SQL 字符串转义(带引号)
 inline std::string escape_sql(const std::string& s) {
     return "'" + escape_sql_raw(s) + "'";
 }
@@ -72,7 +72,7 @@ inline std::string json_ref(const json& j, const char* key) {
     return "NULL";
 }
 
-// JSON 提取：数组（序列化为 JSON 字符串）
+// JSON 提取：数组(序列化为 JSON 字符串)
 inline std::string json_array(const json& j, const char* key) {
     if (!j.contains(key) || j[key].is_null()) return "NULL";
     return escape_sql(j[key].dump());
@@ -97,7 +97,7 @@ CREATE TABLE IF NOT EXISTS sync_state (
 // ============================================================================
 
 struct EntityDef {
-    const char* name;           // Entity 名称（GraphQL 单数）
+    const char* name;           // Entity 名称(GraphQL 单数)
     const char* plural;         // GraphQL 复数形式
     const char* table;          // 数据库表名
     const char* fields;         // GraphQL 查询字段
@@ -657,7 +657,7 @@ inline const EntityDef UserPosition = {
 };
 
 // ----------------------------------------------------------------------------
-// PnlCondition - PnL 条件（简化版）
+// PnlCondition - PnL 条件(简化版)
 // ----------------------------------------------------------------------------
 inline std::string pnl_condition_to_values(const json& j) {
     return json_str(j, "id") + "," +
@@ -703,7 +703,7 @@ inline const EntityDef NegRiskEvent = {
 };
 
 // ----------------------------------------------------------------------------
-// PnlFPMM - PnL FPMM（简化版）
+// PnlFPMM - PnL FPMM(简化版)
 // ----------------------------------------------------------------------------
 inline std::string pnl_fpmm_to_values(const json& j) {
     return json_str(j, "id") + "," +
