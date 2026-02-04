@@ -1,0 +1,189 @@
+https://thegraph.com/explorer/subgraphs/6c58N5U4MtQE2Y8njfVrrAfRykzfqajMGeTMEvMmskVz?view=About&chain=arbitrum-one
+
+dataSources:
+  - kind: ethereum/contract
+    mapping:
+      abis:
+        - file:
+            /: /ipfs/QmS17MJmDAZPBdg3rRetLDkbwxoUhGcMTAbmyPfWoCV2zn
+          name: ConditionalTokens
+      apiVersion: 0.0.6
+      entities:
+        - UserPosition
+        - Condition
+      eventHandlers:
+        - event: >-
+            ConditionPreparation(indexed bytes32,indexed address,indexed
+            bytes32,uint256)
+          handler: handleConditionPreparation
+        - event: >-
+            ConditionResolution(indexed bytes32,indexed address,indexed
+            bytes32,uint256,uint256[])
+          handler: handleConditionResolution
+        - event: >-
+            PositionSplit(indexed address,address,indexed bytes32,indexed
+            bytes32,uint256[],uint256)
+          handler: handlePositionSplit
+        - event: >-
+            PositionsMerge(indexed address,address,indexed bytes32,indexed
+            bytes32,uint256[],uint256)
+          handler: handlePositionsMerge
+        - event: >-
+            PayoutRedemption(indexed address,indexed address,indexed
+            bytes32,bytes32,uint256[],uint256)
+          handler: handlePayoutRedemption
+      file:
+        /: /ipfs/QmQCoWxWiF4BDa1mNVJvSZCsL1fJWPP5kYptRQNYfLHQNt
+      kind: ethereum/events
+      language: wasm/assemblyscript
+    name: ConditionalTokens
+    network: matic
+    source:
+      abi: ConditionalTokens
+      address: '0x4D97DCd97eC945f40cF65F87097ACe5EA0476045'
+      startBlock: 4023686
+  - kind: ethereum/contract
+    mapping:
+      abis:
+        - file:
+            /: /ipfs/QmbrkWnCiQP7AC76VaZNX6FukDDhZQeb2UVhNBZiW9pZz8
+          name: Exchange
+      apiVersion: 0.0.6
+      entities:
+        - UserPosition
+        - Condition
+      eventHandlers:
+        - event: >-
+            OrderFilled(indexed bytes32,indexed address,indexed
+            address,uint256,uint256,uint256,uint256,uint256)
+          handler: handleOrderFilled
+      file:
+        /: /ipfs/QmXPz3MdfjVq6ZWZSg8AmZ6AkowRwggj6pvKqeHf7g1CYE
+      kind: ethereum/events
+      language: wasm/assemblyscript
+    name: Exchange
+    network: matic
+    source:
+      abi: Exchange
+      address: '0x4bFb41d5B3570DeFd03C39a9A4D8dE6Bd8B8982E'
+      startBlock: 33605403
+  - kind: ethereum/contract
+    mapping:
+      abis:
+        - file:
+            /: /ipfs/QmbrkWnCiQP7AC76VaZNX6FukDDhZQeb2UVhNBZiW9pZz8
+          name: Exchange
+      apiVersion: 0.0.6
+      entities:
+        - UserPosition
+        - Condition
+      eventHandlers:
+        - event: >-
+            OrderFilled(indexed bytes32,indexed address,indexed
+            address,uint256,uint256,uint256,uint256,uint256)
+          handler: handleOrderFilled
+      file:
+        /: /ipfs/QmXPz3MdfjVq6ZWZSg8AmZ6AkowRwggj6pvKqeHf7g1CYE
+      kind: ethereum/events
+      language: wasm/assemblyscript
+    name: NegRiskExchange
+    network: matic
+    source:
+      abi: Exchange
+      address: '0xC5d563A36AE78145C45a50134d48A1215220f80a'
+      startBlock: 50505492
+  - kind: ethereum/contract
+    mapping:
+      abis:
+        - file:
+            /: /ipfs/QmcaDHh6MUYjxsvKXm3qrApoRGc87N7wpFiyDFSQ3d6qpg
+          name: NegRiskAdapter
+      apiVersion: 0.0.6
+      entities:
+        - UserPosition
+        - NegRiskEvent
+        - Condition
+      eventHandlers:
+        - event: 'PositionSplit(indexed address,indexed bytes32,uint256)'
+          handler: handlePositionSplit
+        - event: 'PositionsMerge(indexed address,indexed bytes32,uint256)'
+          handler: handlePositionsMerge
+        - event: >-
+            PositionsConverted(indexed address,indexed bytes32,indexed
+            uint256,uint256)
+          handler: handlePositionsConverted
+        - event: 'PayoutRedemption(indexed address,indexed bytes32,uint256[],uint256)'
+          handler: handlePayoutRedemption
+        - event: 'MarketPrepared(indexed bytes32,indexed address,uint256,bytes)'
+          handler: handleMarketPrepared
+        - event: 'QuestionPrepared(indexed bytes32,indexed bytes32,uint256,bytes)'
+          handler: handleQuestionPrepared
+      file:
+        /: /ipfs/QmU3Nz1yTieCwvJZwhkcMng6BhZNLvC64nDYnEbNnBdExV
+      kind: ethereum/events
+      language: wasm/assemblyscript
+    name: NegRiskAdapter
+    network: matic
+    source:
+      abi: NegRiskAdapter
+      address: '0xd91E80cF2E7be2e162c6513ceD06f1dD0dA35296'
+      startBlock: 50505403
+  - kind: ethereum/contract
+    mapping:
+      abis:
+        - file:
+            /: /ipfs/QmbrZwGpsQHDhSC2fRsrTLU1oJUQEE5KAfT7UK6RcQwaoK
+          name: FixedProductMarketMakerFactory
+      apiVersion: 0.0.6
+      entities:
+        - FixedProductMarketMaker
+      eventHandlers:
+        - event: >-
+            FixedProductMarketMakerCreation(indexed address,address,indexed
+            address,indexed address,bytes32[],uint256)
+          handler: handleFixedProductMarketMakerCreation
+      file:
+        /: /ipfs/QmZh4pQjUkogQWhwHR97fn7Uv8tshaWxvDSJNEyPQwyZVV
+      kind: ethereum/events
+      language: wasm/assemblyscript
+    name: FixedProductMarketMakerFactory
+    network: matic
+    source:
+      abi: FixedProductMarketMakerFactory
+      address: '0x8B9805A2f595B6705e74F7310829f2d299D21522'
+      startBlock: 4023693
+description: PnL Subgraph
+features:
+  - grafting
+repository: 'https://github.com/polymarket/polymarket-subgraph'
+schema:
+  file:
+    /: /ipfs/QmWuXUjnB8TYk6MhWJZ7uBxa8n1aqCjCufhedFPutiu626
+specVersion: 0.0.4
+templates:
+  - kind: ethereum/contract
+    mapping:
+      abis:
+        - file:
+            /: /ipfs/QmYgMXBuxGsh5mydDznLy6rthHirS8KThy8XvBveQH5rBR
+          name: FixedProductMarketMaker
+      apiVersion: 0.0.6
+      entities:
+        - UserPosition
+      eventHandlers:
+        - event: 'FPMMBuy(indexed address,uint256,uint256,indexed uint256,uint256)'
+          handler: handleBuy
+        - event: 'FPMMSell(indexed address,uint256,uint256,indexed uint256,uint256)'
+          handler: handleSell
+        - event: 'FPMMFundingAdded(indexed address,uint256[],uint256)'
+          handler: handleFundingAdded
+        - event: 'FPMMFundingRemoved(indexed address,uint256[],uint256,uint256)'
+          handler: handleFundingRemoved
+      file:
+        /: /ipfs/QmVvN7SoqUx8jyThamjVrJF4dGrLiAzdZkCQ4b3Vpq8om2
+      kind: ethereum/events
+      language: wasm/assemblyscript
+    name: FixedProductMarketMaker
+    network: matic
+    source:
+      abi: FixedProductMarketMaker

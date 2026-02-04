@@ -1,3 +1,5 @@
+https://thegraph.com/explorer/subgraphs/EtXYMmR6ZVMkR1ndhfb5kZSee2T8hHg72FzPH5CPkypa?view=Query&chain=arbitrum-one
+
 dataSources:
   - kind: ethereum/contract
     mapping:
@@ -31,7 +33,7 @@ dataSources:
             bytes32,bytes32,uint256[],uint256)
           handler: handlePayoutRedemption
       file:
-        /: /ipfs/QmQCoWxWiF4BDa1mNVJvSZCsL1fJWPP5kYptRQNYfLHQNt
+        /: /ipfs/QmYGTmaeS8NATJ3kKYYkBjr9TtPP4eKahJuhJrVEPHzPKi
       kind: ethereum/events
       language: wasm/assemblyscript
     name: ConditionalTokens
@@ -56,7 +58,7 @@ dataSources:
             address,uint256,uint256,uint256,uint256,uint256)
           handler: handleOrderFilled
       file:
-        /: /ipfs/QmXPz3MdfjVq6ZWZSg8AmZ6AkowRwggj6pvKqeHf7g1CYE
+        /: /ipfs/QmdfrCktrLHu7zyDyTmUMUhq4HCDYAZdxLMhZNsZfdUHwh
       kind: ethereum/events
       language: wasm/assemblyscript
     name: Exchange
@@ -81,7 +83,7 @@ dataSources:
             address,uint256,uint256,uint256,uint256,uint256)
           handler: handleOrderFilled
       file:
-        /: /ipfs/QmXPz3MdfjVq6ZWZSg8AmZ6AkowRwggj6pvKqeHf7g1CYE
+        /: /ipfs/QmdfrCktrLHu7zyDyTmUMUhq4HCDYAZdxLMhZNsZfdUHwh
       kind: ethereum/events
       language: wasm/assemblyscript
     name: NegRiskExchange
@@ -102,22 +104,22 @@ dataSources:
         - NegRiskEvent
         - Condition
       eventHandlers:
-        - event: 'PositionSplit(indexed address,indexed bytes32,uint256)'
+        - event: PositionSplit(indexed address,indexed bytes32,uint256)
           handler: handlePositionSplit
-        - event: 'PositionsMerge(indexed address,indexed bytes32,uint256)'
+        - event: PositionsMerge(indexed address,indexed bytes32,uint256)
           handler: handlePositionsMerge
         - event: >-
             PositionsConverted(indexed address,indexed bytes32,indexed
             uint256,uint256)
           handler: handlePositionsConverted
-        - event: 'PayoutRedemption(indexed address,indexed bytes32,uint256[],uint256)'
+        - event: PayoutRedemption(indexed address,indexed bytes32,uint256[],uint256)
           handler: handlePayoutRedemption
-        - event: 'MarketPrepared(indexed bytes32,indexed address,uint256,bytes)'
+        - event: MarketPrepared(indexed bytes32,indexed address,uint256,bytes)
           handler: handleMarketPrepared
-        - event: 'QuestionPrepared(indexed bytes32,indexed bytes32,uint256,bytes)'
+        - event: QuestionPrepared(indexed bytes32,indexed bytes32,uint256,bytes)
           handler: handleQuestionPrepared
       file:
-        /: /ipfs/QmU3Nz1yTieCwvJZwhkcMng6BhZNLvC64nDYnEbNnBdExV
+        /: /ipfs/QmQGipf3WD2C8UVSQQ68WJy6nyLDBYd5p3CZjhbxMYbzVN
       kind: ethereum/events
       language: wasm/assemblyscript
     name: NegRiskAdapter
@@ -153,10 +155,10 @@ dataSources:
 description: PnL Subgraph
 features:
   - grafting
-repository: 'https://github.com/polymarket/polymarket-subgraph'
+repository: https://github.com/polymarket/polymarket-subgraph
 schema:
   file:
-    /: /ipfs/QmWuXUjnB8TYk6MhWJZ7uBxa8n1aqCjCufhedFPutiu626
+    /: /ipfs/QmU8R9AVnkuYdG3y8CWydtQnjwAax2RcRo1js7ccQNZH2T
 specVersion: 0.0.4
 templates:
   - kind: ethereum/contract
@@ -169,16 +171,16 @@ templates:
       entities:
         - UserPosition
       eventHandlers:
-        - event: 'FPMMBuy(indexed address,uint256,uint256,indexed uint256,uint256)'
+        - event: FPMMBuy(indexed address,uint256,uint256,indexed uint256,uint256)
           handler: handleBuy
-        - event: 'FPMMSell(indexed address,uint256,uint256,indexed uint256,uint256)'
+        - event: FPMMSell(indexed address,uint256,uint256,indexed uint256,uint256)
           handler: handleSell
-        - event: 'FPMMFundingAdded(indexed address,uint256[],uint256)'
+        - event: FPMMFundingAdded(indexed address,uint256[],uint256)
           handler: handleFundingAdded
-        - event: 'FPMMFundingRemoved(indexed address,uint256[],uint256,uint256)'
+        - event: FPMMFundingRemoved(indexed address,uint256[],uint256,uint256)
           handler: handleFundingRemoved
       file:
-        /: /ipfs/QmVvN7SoqUx8jyThamjVrJF4dGrLiAzdZkCQ4b3Vpq8om2
+        /: /ipfs/QmZ4tNJNabHCR5wUYJ7HM5GT5Nm3QQZtHyz8XZZtvQ8G9v
       kind: ethereum/events
       language: wasm/assemblyscript
     name: FixedProductMarketMaker

@@ -1,0 +1,81 @@
+https://thegraph.com/explorer/subgraphs/7fu2DWYK93ePfzB24c2wrP94S3x4LGHUrQxphhoEypyY?view=About&chain=arbitrum-one
+
+dataSources:
+  - kind: ethereum/contract
+    mapping:
+      abis:
+        - file:
+            /: /ipfs/QmbrkWnCiQP7AC76VaZNX6FukDDhZQeb2UVhNBZiW9pZz8
+          name: Exchange
+      apiVersion: 0.0.6
+      entities:
+        - OrdersMatchedGlobal
+        - OrdersMatchedEvent
+        - Orderbook
+        - MarketData
+        - Global
+        - Account
+        - OrderFilledEvent
+      eventHandlers:
+        - event: >-
+            OrderFilled(indexed bytes32,indexed address,indexed
+            address,uint256,uint256,uint256,uint256,uint256)
+          handler: handleFill
+        - event: >-
+            OrdersMatched(indexed bytes32,indexed
+            address,uint256,uint256,uint256,uint256)
+          handler: handleMatch
+        - event: 'TokenRegistered(indexed uint256,indexed uint256,indexed bytes32)'
+          handler: handleTokenRegistered
+      file:
+        /: /ipfs/QmVNDNkpTDR25sSDn5DKDxyrGbNzjDpQiucqJCJdxpCvh8
+      kind: ethereum/events
+      language: wasm/assemblyscript
+    name: Exchange
+    network: matic
+    source:
+      abi: Exchange
+      address: '0x4bFb41d5B3570DeFd03C39a9A4D8dE6Bd8B8982E'
+      startBlock: 70000000
+  - kind: ethereum/contract
+    mapping:
+      abis:
+        - file:
+            /: /ipfs/QmbrkWnCiQP7AC76VaZNX6FukDDhZQeb2UVhNBZiW9pZz8
+          name: Exchange
+      apiVersion: 0.0.6
+      entities:
+        - OrdersMatchedGlobal
+        - OrdersMatchedEvent
+        - Orderbook
+        - MarketData
+        - Global
+        - Account
+        - OrderFilledEvent
+      eventHandlers:
+        - event: >-
+            OrderFilled(indexed bytes32,indexed address,indexed
+            address,uint256,uint256,uint256,uint256,uint256)
+          handler: handleFill
+        - event: >-
+            OrdersMatched(indexed bytes32,indexed
+            address,uint256,uint256,uint256,uint256)
+          handler: handleMatch
+        - event: 'TokenRegistered(indexed uint256,indexed uint256,indexed bytes32)'
+          handler: handleTokenRegistered
+      file:
+        /: /ipfs/QmVNDNkpTDR25sSDn5DKDxyrGbNzjDpQiucqJCJdxpCvh8
+      kind: ethereum/events
+      language: wasm/assemblyscript
+    name: NegRiskExchange
+    network: matic
+    source:
+      abi: Exchange
+      address: '0xC5d563A36AE78145C45a50134d48A1215220f80a'
+      startBlock: 70000000
+description: Enhanced Polymarket Orderbook Subgraph
+repository: 'https://github.com/yourusername/polymarket-orders-fixed'
+schema:
+  file:
+    /: /ipfs/QmY28RGZMULepAzsaKq1ZHhQZBm836iwPLdeWw7ZjUS6Ug
+specVersion: 0.0.6

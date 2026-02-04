@@ -1,3 +1,5 @@
+https://thegraph.com/explorer/subgraphs/81Dm16JjuFSrqz813HysXoUPvzTwE7fsfPk2RTf66nyC?view=About&chain=arbitrum-one
+
 dataSources:
   - kind: ethereum/contract
     mapping:

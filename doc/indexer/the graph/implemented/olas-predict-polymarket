@@ -1,0 +1,229 @@
+https://thegraph.com/explorer/subgraphs/GsVaaS7CTPEMdBHshwxPJFcFFhsMq3Mivt27vvCZdyCp?view=About&chain=arbitrum-one
+
+dataSources:
+  - kind: ethereum
+    mapping:
+      abis:
+        - file:
+            /: /ipfs/QmRSzHeHutksWBe7Njuo5dh2j9SX9sYbzhgju1ng5ATpHi
+          name: ServiceRegistryL2
+      apiVersion: 0.0.7
+      entities:
+        - TraderAgent
+        - TraderService
+        - Global
+      eventHandlers:
+        - event: >-
+            RegisterInstance(indexed address,indexed uint256,indexed
+            address,uint256)
+          handler: handleRegisterInstance
+        - event: CreateMultisigWithAgents(indexed uint256,indexed address)
+          handler: handleCreateMultisigWithAgents
+      file:
+        /: /ipfs/QmSsx8fN3ZMENBZ58jizoyKHLdmMNczboXpbbm6qCPzFhw
+      kind: ethereum/events
+      language: wasm/assemblyscript
+    name: ServiceRegistryL2
+    network: matic
+    source:
+      abi: ServiceRegistryL2
+      address: '0xE3607b00E75f6405248323A9417ff6b39B244b50'
+      startBlock: 80360433
+  - kind: ethereum
+    mapping:
+      abis:
+        - file:
+            /: /ipfs/QmVsX6SYT7ZWkT8mD5TFpZLxkyFYFjkNKac9zW6W6761WC
+          name: ConditionalTokens
+      apiVersion: 0.0.7
+      entities:
+        - QuestionIdToConditionId
+        - Question
+        - TraderAgent
+        - MarketParticipant
+        - Bet
+        - Global
+        - DailyProfitStatistic
+      eventHandlers:
+        - event: >-
+            ConditionPreparation(indexed bytes32,indexed address,indexed
+            bytes32,uint256)
+          handler: handleConditionPreparation
+        - event: >-
+            PayoutRedemption(indexed address,indexed address,indexed
+            bytes32,bytes32,uint256[],uint256)
+          handler: handlePayoutRedemption
+      file:
+        /: /ipfs/QmdRQ3PwKZqXBYt5padj2UEbFTLcaVkjY4A5xQQeLAkfEv
+      kind: ethereum/events
+      language: wasm/assemblyscript
+    name: ConditionalTokens
+    network: matic
+    source:
+      abi: ConditionalTokens
+      address: '0x4D97DCd97eC945f40cF65F87097ACe5EA0476045'
+      startBlock: 78425180
+  - kind: ethereum/contract
+    mapping:
+      abis:
+        - file:
+            /: /ipfs/QmX4bBArLBBe4jZEmdyzLo7rN3EibLZjLEgDM6yarFe6QT
+          name: OptimisticOracleV3
+      apiVersion: 0.0.7
+      entities:
+        - MarketMetadata
+        - Question
+        - QuestionIdToConditionId
+        - QuestionResolution
+        - TraderAgent
+        - MarketParticipant
+        - DailyProfitStatistic
+        - Global
+      eventHandlers:
+        - event: >-
+            QuestionInitialized(indexed bytes32,indexed uint256,indexed
+            address,bytes,address,uint256,uint256)
+          handler: handleOOQuestionInitialized
+        - event: QuestionResolved(indexed bytes32,indexed int256,uint256[])
+          handler: handleOOQuestionResolved
+      file:
+        /: /ipfs/Qmdw7AYcmay8g6tuWArhRdQBiSC8xrKeXL3rP1hE2zCp7c
+      kind: ethereum/events
+      language: wasm/assemblyscript
+    name: OptimisticOracleV3
+    network: matic
+    source:
+      abi: OptimisticOracleV3
+      address: '0x65070BE91477460D8A7AeEb94ef92fe056C2f2A7'
+      startBlock: 78425180
+  - kind: ethereum/contract
+    mapping:
+      abis:
+        - file:
+            /: /ipfs/QmW6VyyfBBNktDb5qRcaiAhJb1pAD5ohG7brxFAvK2s6rt
+          name: UmaCtfAdapter
+      apiVersion: 0.0.7
+      entities:
+        - MarketMetadata
+        - Question
+        - QuestionIdToConditionId
+        - QuestionResolution
+        - TraderAgent
+        - MarketParticipant
+        - DailyProfitStatistic
+        - Global
+      eventHandlers:
+        - event: >-
+            QuestionInitialized(indexed bytes32,indexed uint256,indexed
+            address,bytes,address,uint256,uint256)
+          handler: handleUmaQuestionInitialized
+        - event: QuestionResolved(indexed bytes32,indexed int256,uint256[])
+          handler: handleUmaQuestionResolved
+      file:
+        /: /ipfs/Qmdw7AYcmay8g6tuWArhRdQBiSC8xrKeXL3rP1hE2zCp7c
+      kind: ethereum/events
+      language: wasm/assemblyscript
+    name: UmaCtfAdapter
+    network: matic
+    source:
+      abi: UmaCtfAdapter
+      address: '0x157Ce2d672854c848c9b79C49a8Cc6cc89176a49'
+      startBlock: 78425180
+  - kind: ethereum/contract
+    mapping:
+      abis:
+        - file:
+            /: /ipfs/QmZeds2H9emYfPHXWC3HcXFtx6RPwwS6VaVK3dqw6EtCDf
+          name: NegRiskAdapter
+      apiVersion: 0.0.7
+      entities:
+        - Question
+        - MarketMetadata
+        - QuestionResolution
+      eventHandlers:
+        - event: QuestionPrepared(indexed bytes32,indexed bytes32,uint256,bytes)
+          handler: handleQuestionPrepared
+        - event: OutcomeReported(indexed bytes32,indexed bytes32,bool)
+          handler: handleOutcomeReported
+        - event: PayoutRedemption(indexed address,indexed bytes32,uint256[],uint256)
+          handler: handleNegRiskPayoutRedemption
+      file:
+        /: /ipfs/QmZDHz5VcbbgJeTWxUV4JoHgDzN5zXmZZ8kEXAkHZZgLCo
+      kind: ethereum/events
+      language: wasm/assemblyscript
+    name: NegRiskAdapter
+    network: matic
+    source:
+      abi: NegRiskAdapter
+      address: '0xd91E80cF2E7be2e162c6513ceD06f1dD0dA35296'
+      startBlock: 78425180
+  - kind: ethereum/contract
+    mapping:
+      abis:
+        - file:
+            /: /ipfs/QmNkMcQeEfddYDNEuHzeSBpvcBsMaDUGtUuow3krY4YDTP
+          name: CTFExchange
+      apiVersion: 0.0.7
+      entities:
+        - Bet
+        - Question
+        - TokenRegistry
+        - TraderAgent
+        - Global
+        - MarketParticipant
+        - DailyProfitStatistic
+      eventHandlers:
+        - event: >-
+            OrderFilled(indexed bytes32,indexed address,indexed
+            address,uint256,uint256,uint256,uint256,uint256)
+          handler: handleOrderFilled
+        - event: TokenRegistered(indexed uint256,indexed uint256,indexed bytes32)
+          handler: handleTokenRegistered
+      file:
+        /: /ipfs/QmSgUYe7UChPPt4YrNjhtqS8posYtDGxj888TJvBKucnqo
+      kind: ethereum/events
+      language: wasm/assemblyscript
+    name: CTFExchange
+    network: matic
+    source:
+      abi: CTFExchange
+      address: '0x4bFb41d5B3570DeFd03C39a9A4D8dE6Bd8B8982e'
+      startBlock: 78425180
+  - kind: ethereum/contract
+    mapping:
+      abis:
+        - file:
+            /: /ipfs/QmNkMcQeEfddYDNEuHzeSBpvcBsMaDUGtUuow3krY4YDTP
+          name: CTFExchange
+      apiVersion: 0.0.7
+      entities:
+        - Bet
+        - Question
+        - TokenRegistry
+        - TraderAgent
+        - Global
+        - MarketParticipant
+        - DailyProfitStatistic
+      eventHandlers:
+        - event: >-
+            OrderFilled(indexed bytes32,indexed address,indexed
+            address,uint256,uint256,uint256,uint256,uint256)
+          handler: handleOrderFilled
+        - event: TokenRegistered(indexed uint256,indexed uint256,indexed bytes32)
+          handler: handleTokenRegistered
+      file:
+        /: /ipfs/QmSgUYe7UChPPt4YrNjhtqS8posYtDGxj888TJvBKucnqo
+      kind: ethereum/events
+      language: wasm/assemblyscript
+    name: NegRiskCTFExchange
+    network: matic
+    source:
+      abi: CTFExchange
+      address: '0xC5d563A36AE78145C45a50134d48A1215220f80a'
+      startBlock: 78425180
+indexerHints:
+  prune: auto
+schema:
+  file:
+    /: /ipfs/QmZocG3LyBzneYq8QShJwP9MkMJiMbe1WR3Qt85FfwJxYq
+specVersion: 1.0.0

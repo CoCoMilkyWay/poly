@@ -1,0 +1,104 @@
+https://thegraph.com/explorer/subgraphs/EZCTgSzLPuBSqQcuR3ifeiKHKBnpjHSNbYpty8Mnjm9D?view=Query&chain=arbitrum-one
+
+dataSources:
+  - kind: ethereum
+    mapping:
+      abis:
+        - file:
+            /: /ipfs/QmbrkWnCiQP7AC76VaZNX6FukDDhZQeb2UVhNBZiW9pZz8
+          name: CTFExchange
+      apiVersion: 0.0.7
+      entities:
+        - OrderFilled
+        - OrdersMatched
+      eventHandlers:
+        - event: >-
+            OrderFilled(indexed bytes32,indexed address,indexed
+            address,uint256,uint256,uint256,uint256,uint256)
+          handler: handleOrderFilled
+      file:
+        /: /ipfs/QmNdW6kdLjiBpWBXHb5sHnr9coxrDyR1WF4YJ5PWMqTT83
+      kind: ethereum/events
+      language: wasm/assemblyscript
+    name: CTFExchange
+    network: matic
+    source:
+      abi: CTFExchange
+      address: '0x4bFb41d5B3570DeFd03C39a9A4D8dE6Bd8B8982E'
+      startBlock: 33605403
+  - kind: ethereum
+    mapping:
+      abis:
+        - file:
+            /: /ipfs/QmNkMcQeEfddYDNEuHzeSBpvcBsMaDUGtUuow3krY4YDTP
+          name: NegRiskCtfExchange
+      apiVersion: 0.0.7
+      entities:
+        - NegRiskCtfExchangeOrderFilled
+      eventHandlers:
+        - event: >-
+            OrderFilled(indexed bytes32,indexed address,indexed
+            address,uint256,uint256,uint256,uint256,uint256)
+          handler: handleOrderFilled
+      file:
+        /: /ipfs/QmT7cA6i7y12ojKassCBSzNhCcd1E5cYfCsz4yA7J9WP4T
+      kind: ethereum/events
+      language: wasm/assemblyscript
+    name: NegRiskCtfExchange
+    network: matic
+    source:
+      abi: NegRiskCtfExchange
+      address: '0xC5d563A36AE78145C45a50134d48A1215220f80a'
+      startBlock: 50505492
+  - kind: ethereum
+    mapping:
+      abis:
+        - file:
+            /: /ipfs/QmVsX6SYT7ZWkT8mD5TFpZLxkyFYFjkNKac9zW6W6761WC
+          name: ConditionalTokens
+      apiVersion: 0.0.7
+      entities:
+        - PayoutRedemption
+      eventHandlers:
+        - event: >-
+            PayoutRedemption(indexed address,indexed address,indexed
+            bytes32,bytes32,uint256[],uint256)
+          handler: handlePayoutRedemption
+      file:
+        /: /ipfs/QmZN4Ebu9bSBkQZU5PKStaN4nhP68hb8dY2EhCBBEVy7QK
+      kind: ethereum/events
+      language: wasm/assemblyscript
+    name: ConditionalTokens
+    network: matic
+    source:
+      abi: ConditionalTokens
+      address: '0x4D97DCd97eC945f40cF65F87097ACe5EA0476045'
+      startBlock: 4023686
+  - kind: ethereum
+    mapping:
+      abis:
+        - file:
+            /: /ipfs/QmZeds2H9emYfPHXWC3HcXFtx6RPwwS6VaVK3dqw6EtCDf
+          name: NegRiskAdapter
+      apiVersion: 0.0.7
+      entities:
+        - NegRiskAdapterPayoutRedemption
+      eventHandlers:
+        - event: 'PayoutRedemption(indexed address,indexed bytes32,uint256[],uint256)'
+          handler: handlePayoutRedemption
+      file:
+        /: /ipfs/QmYkBfQiEvgfonhjyE2BnfbZHMMaixxVxww6hk1ELs9HNt
+      kind: ethereum/events
+      language: wasm/assemblyscript
+    name: NegRiskAdapter
+    network: matic
+    source:
+      abi: NegRiskAdapter
+      address: '0xd91E80cF2E7be2e162c6513ceD06f1dD0dA35296'
+      startBlock: 50505403
+indexerHints:
+  prune: auto
+schema:
+  file:
+    /: /ipfs/QmPHaz6fJ8wpQTAmUFBrwk6afrb5r32HsXLn9QBhGZG3Cy
+specVersion: 1.0.0

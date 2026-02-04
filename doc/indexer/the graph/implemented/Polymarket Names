@@ -1,0 +1,109 @@
+https://thegraph.com/explorer/subgraphs/22CoTbEtpv6fURB6moTNfJPWNUPXtiFGRA8h1zajMha3?view=Query&chain=arbitrum-one
+
+dataSources:
+  - kind: ethereum
+    mapping:
+      abis:
+        - file:
+            /: /ipfs/QmeMsWipQ8vCSYZgar6V1eF75RVvEd6rZDoYZaETXUv752
+          name: UMACTFAdapter
+      apiVersion: 0.0.7
+      entities:
+        - Market
+        - QuestionInitialized
+        - QuestionResolved
+        - AncillaryDataUpdated
+        - QuestionEmergencyResolved
+        - QuestionFlagged
+        - QuestionPaused
+        - QuestionReset
+        - QuestionUnpaused
+        - NewAdmin
+        - RemovedAdmin
+      eventHandlers:
+        - event: >-
+            QuestionInitialized(indexed bytes32,indexed uint256,indexed
+            address,bytes,address,uint256,uint256)
+          handler: handleQuestionInitialized
+      file:
+        /: /ipfs/QmQxL6tAqGfyofDMDsUmN6TfZJWhfgS2k27gSjVNC8GM36
+      kind: ethereum/events
+      language: wasm/assemblyscript
+    name: UMACTFAdapterV2
+    network: matic
+    source:
+      abi: UMACTFAdapter
+      address: '0x6A9D222616C90FcA5754cd1333cFD9b7fb6a4F74'
+      startBlock: 72000000
+  - kind: ethereum
+    mapping:
+      abis:
+        - file:
+            /: /ipfs/QmeMsWipQ8vCSYZgar6V1eF75RVvEd6rZDoYZaETXUv752
+          name: UMACTFAdapter
+      apiVersion: 0.0.7
+      entities:
+        - Market
+        - QuestionInitialized
+        - QuestionResolved
+        - AncillaryDataUpdated
+        - QuestionEmergencyResolved
+        - QuestionFlagged
+        - QuestionPaused
+        - QuestionReset
+        - QuestionUnpaused
+        - NewAdmin
+        - RemovedAdmin
+      eventHandlers:
+        - event: >-
+            QuestionInitialized(indexed bytes32,indexed uint256,indexed
+            address,bytes,address,uint256,uint256)
+          handler: handleQuestionInitialized
+      file:
+        /: /ipfs/QmQxL6tAqGfyofDMDsUmN6TfZJWhfgS2k27gSjVNC8GM36
+      kind: ethereum/events
+      language: wasm/assemblyscript
+    name: UMACTFAdapterLegacy
+    network: matic
+    source:
+      abi: UMACTFAdapter
+      address: '0x71392E133063CC0D16F40E1F9B60227404Bc03f7'
+      startBlock: 72000000
+  - kind: ethereum
+    mapping:
+      abis:
+        - file:
+            /: /ipfs/Qmb3s8FFyVbKdewBKaa8w9BeX6n3XjFfSbEbdEv1p6ww6A
+          name: BinaryAdapter
+      apiVersion: 0.0.7
+      entities:
+        - Market
+        - QuestionInitialized
+        - QuestionResolved
+        - AncillaryDataUpdated
+        - QuestionEmergencyResolved
+        - QuestionFlagged
+        - QuestionPaused
+        - QuestionReset
+        - QuestionUnpaused
+        - NewAdmin
+        - RemovedAdmin
+      eventHandlers:
+        - event: >-
+            QuestionInitialized(indexed
+            bytes32,bytes,uint256,address,uint256,uint256,bool)
+          handler: handleBinaryQuestionInitialized
+      file:
+        /: /ipfs/QmQxL6tAqGfyofDMDsUmN6TfZJWhfgS2k27gSjVNC8GM36
+      kind: ethereum/events
+      language: wasm/assemblyscript
+    name: BinaryAdapter
+    network: matic
+    source:
+      abi: BinaryAdapter
+      address: '0xCB1822859cEF82Cd2Eb4E6276C7916e692995130'
+      startBlock: 72000000
+schema:
+  file:
+    /: /ipfs/QmZfpeBtvQGFPuUBMmTigbNmFCEnMtVcja2NYLxB8tKzDG
+specVersion: 0.0.5
