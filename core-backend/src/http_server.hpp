@@ -247,9 +247,16 @@ private:
   void handle_rebuild_all() {
     res_.set(http::field::content_type, "application/json");
 
+    // 检查是否已经在运行
+    if (rebuilder_.get_progress().running) {
+      res_.result(http::status::ok);
+      res_.body() = R"({"status":"already_running"})";
+      return;
+    }
+
     // 异步执行全量重建
-    std::thread([this]() {
-      rebuilder_.rebuild_all();
+    std::thread([&rebuilder = rebuilder_]() {
+      rebuilder.rebuild_all();
     }).detach();
 
     res_.result(http::status::ok);

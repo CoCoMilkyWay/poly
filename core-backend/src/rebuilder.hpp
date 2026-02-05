@@ -36,8 +36,20 @@ public:
   }
 
   // 全量重建（并行）
+  // 返回空vector表示已有任务在运行
   std::vector<UserResult> rebuild_all() {
-    progress_.running = true;
+    // 原子CAS：仅当running==false时设置为true
+    bool expected = false;
+    if (!progress_.running.compare_exchange_strong(expected, true)) {
+      // 已有任务在运行
+      return {};
+    }
+
+    // 重置进度
+    progress_.total_users = 0;
+    progress_.processed_users = 0;
+    progress_.total_events = 0;
+    progress_.processed_events = 0;
     progress_.error.clear();
 
     auto conn = std::make_unique<duckdb::Connection>(db_);
