@@ -76,8 +76,15 @@ async def api_graph_status_stream():
 
 
 def escape_sql(s: str) -> str:
-    """简单 SQL 转义"""
-    return s.replace("'", "''") if s else ""
+    """SQL 转义 + 注入防护"""
+    if not s:
+        return ""
+    # 禁止危险字符
+    assert ';' not in s, "Semicolon not allowed in input"
+    assert '--' not in s, "SQL comment not allowed in input"
+    assert '/*' not in s, "SQL comment not allowed in input"
+    # 转义单引号
+    return s.replace("'", "''")
 
 
 def sql_query(sql: str):

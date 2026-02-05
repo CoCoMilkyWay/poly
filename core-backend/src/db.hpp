@@ -3,6 +3,7 @@
 #include "entities.hpp"
 #include <cassert>
 #include <duckdb.hpp>
+#include <mutex>
 #include <nlohmann/json.hpp>
 #include <string>
 #include <vector>
@@ -62,6 +63,9 @@ public:
         entities::escape_sql(entity) + ", " +
         entities::escape_sql(cursor) + ", CURRENT_TIMESTAMP)";
 
+    // 加锁保护写操作
+    std::lock_guard<std::mutex> lock(write_mutex_);
+
     // 单事务执行
     auto r1 = conn_->Query("BEGIN TRANSACTION");
     assert(!r1->HasError());
@@ -74,6 +78,7 @@ public:
   }
 
   void execute(const std::string &sql) {
+    std::lock_guard<std::mutex> lock(write_mutex_);
     auto result = conn_->Query(sql);
     assert(!result->HasError() && "execute failed");
   }
@@ -134,4 +139,5 @@ private:
   std::unique_ptr<duckdb::DuckDB> db_;
   std::unique_ptr<duckdb::Connection> conn_;
   std::unique_ptr<duckdb::Connection> read_conn_;
+  std::mutex write_mutex_; // 保护 conn_ 写操作
 };

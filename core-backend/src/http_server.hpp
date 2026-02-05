@@ -102,10 +102,27 @@ private:
     std::string query = get_param("q");
     assert(!query.empty() && "Missing query parameter 'q'");
 
+    // SQL 注入防护
     std::string upper = query;
     for (auto &c : upper)
       c = std::toupper(c);
     assert(upper.starts_with("SELECT") && "Only SELECT queries allowed");
+
+    // 禁止分号（防止多语句注入）
+    assert(query.find(';') == std::string::npos && "Semicolon not allowed");
+
+    // 禁止 SQL 注释
+    assert(query.find("--") == std::string::npos && "SQL comment not allowed");
+    assert(query.find("/*") == std::string::npos && "SQL comment not allowed");
+
+    // 禁止危险关键字
+    assert(upper.find("INSERT") == std::string::npos && "INSERT not allowed");
+    assert(upper.find("UPDATE") == std::string::npos && "UPDATE not allowed");
+    assert(upper.find("DELETE") == std::string::npos && "DELETE not allowed");
+    assert(upper.find("DROP") == std::string::npos && "DROP not allowed");
+    assert(upper.find("CREATE") == std::string::npos && "CREATE not allowed");
+    assert(upper.find("ALTER") == std::string::npos && "ALTER not allowed");
+    assert(upper.find("TRUNCATE") == std::string::npos && "TRUNCATE not allowed");
 
     json result = db_.query_json(query);
     res_.result(http::status::ok);

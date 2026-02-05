@@ -3,11 +3,13 @@
 // ============================================================================
 // 宏配置
 // ============================================================================
-#define PARALLEL_PER_SOURCE 9999 // 每个 source 内最多并行 entity 数
-#define PARALLEL_TOTAL 9999      // 全局最大并发请求数
-#define GRAPHQL_BATCH_SIZE 1000  // 每次请求的 limit
-#define DB_FLUSH_THRESHOLD 1000  // 累积多少条刷入 DB
-#define PULL_RETRY_DELAY_MS 10   // 重试延迟(ms)
+#define PARALLEL_PER_SOURCE 9999      // 每个 source 内最多并行 entity 数
+#define PARALLEL_TOTAL 9999           // 全局最大并发请求数
+#define GRAPHQL_BATCH_SIZE 1000       // 每次请求的 limit
+#define DB_FLUSH_THRESHOLD 1000       // 累积多少条刷入 DB
+#define PULL_RETRY_DELAY_MS 100       // 初始重试延迟(ms)
+#define PULL_RETRY_MAX_DELAY_MS 30000 // 最大重试延迟(ms)
+#define BUFFER_HARD_LIMIT 10000       // buffer 硬上限，超过则 assert
 
 #include <algorithm>
 #include <cassert>
@@ -103,6 +105,9 @@ private:
 
   // 请求计时
   std::chrono::steady_clock::time_point request_start_;
+
+  // 重试指数退避
+  int retry_count_ = 0;
 
   // GraphQL query 缓存
   std::string query_initial_;
@@ -279,11 +284,19 @@ inline void EntityPuller::on_response(const std::string &body) {
 
   auto &stats = EntityStatsManager::instance();
 
+  // 计算重试延迟（指数退避）
+  auto calc_retry_delay = [this]() {
+    int delay = PULL_RETRY_DELAY_MS * (1 << std::min(retry_count_, 10)); // 防止溢出
+    return std::min(delay, PULL_RETRY_MAX_DELAY_MS);
+  };
+
   // 请求失败
   if (body.empty()) {
     stats.record_failure(source_name_, entity_->name, FailureKind::NETWORK, latency_ms);
-    std::cerr << "[Pull] " << entity_->name << " network fail, retry" << std::endl;
-    pool_.schedule_retry([this]() { send_request(); }, PULL_RETRY_DELAY_MS);
+    int delay = calc_retry_delay();
+    std::cerr << "[Pull] " << entity_->name << " network fail, retry in " << delay << "ms" << std::endl;
+    ++retry_count_;
+    pool_.schedule_retry([this]() { send_request(); }, delay);
     return;
   }
 
@@ -293,8 +306,10 @@ inline void EntityPuller::on_response(const std::string &body) {
     j = json::parse(body);
   } catch (...) {
     stats.record_failure(source_name_, entity_->name, FailureKind::JSON, latency_ms);
-    std::cerr << "[Pull] " << entity_->name << " JSON parse fail, retry" << std::endl;
-    pool_.schedule_retry([this]() { send_request(); }, PULL_RETRY_DELAY_MS);
+    int delay = calc_retry_delay();
+    std::cerr << "[Pull] " << entity_->name << " JSON parse fail, retry in " << delay << "ms" << std::endl;
+    ++retry_count_;
+    pool_.schedule_retry([this]() { send_request(); }, delay);
     return;
   }
 
@@ -302,21 +317,28 @@ inline void EntityPuller::on_response(const std::string &body) {
   if (j.contains("errors")) {
     stats.record_failure(source_name_, entity_->name, FailureKind::GRAPHQL, latency_ms);
     parse_indexer_errors(j["errors"], stats);
-    std::cerr << "[Pull] " << entity_->name << " GraphQL error, retry" << std::endl;
-    pool_.schedule_retry([this]() { send_request(); }, PULL_RETRY_DELAY_MS);
+    int delay = calc_retry_delay();
+    std::cerr << "[Pull] " << entity_->name << " GraphQL error, retry in " << delay << "ms" << std::endl;
+    ++retry_count_;
+    pool_.schedule_retry([this]() { send_request(); }, delay);
     return;
   }
 
   // 响应格式错误
   if (!j.contains("data") || !j["data"].contains(entity_->plural)) {
     stats.record_failure(source_name_, entity_->name, FailureKind::FORMAT, latency_ms);
-    std::cerr << "[Pull] " << entity_->name << " format error, retry" << std::endl;
-    pool_.schedule_retry([this]() { send_request(); }, PULL_RETRY_DELAY_MS);
+    int delay = calc_retry_delay();
+    std::cerr << "[Pull] " << entity_->name << " format error, retry in " << delay << "ms" << std::endl;
+    ++retry_count_;
+    pool_.schedule_retry([this]() { send_request(); }, delay);
     return;
   }
 
   auto &items = j["data"][entity_->plural];
   stats.record_success(source_name_, entity_->name, items.size(), latency_ms);
+
+  // 成功，重置重试计数
+  retry_count_ = 0;
 
   // 没有更多数据 - 完成
   if (items.empty()) {
@@ -333,6 +355,9 @@ inline void EntityPuller::on_response(const std::string &body) {
     assert(!values.empty());
     buffer_.push_back(std::move(values));
   }
+
+  // 内存安全检查：buffer 不能无限增长
+  assert(buffer_.size() <= BUFFER_HARD_LIMIT && "buffer overflow, check flush logic");
 
   // 达到阈值则 flush
   if (buffer_.size() >= DB_FLUSH_THRESHOLD) {
