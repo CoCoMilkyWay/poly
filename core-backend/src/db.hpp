@@ -135,6 +135,9 @@ public:
     return rows;
   }
 
+  // 获取底层 DuckDB 引用（供 Rebuilder 使用）
+  duckdb::DuckDB &get_duckdb() { return *db_; }
+
 private:
   std::unique_ptr<duckdb::DuckDB> db_;
   std::unique_ptr<duckdb::Connection> conn_;

@@ -240,9 +240,7 @@ inline void EntityPuller::start() {
   cursor_ = db_.get_cursor(source_name_, entity_->name);
   EntityStatsManager::instance().start_sync(source_name_, entity_->name);
 
-  std::cout << "[Pull] " << source_name_ << "/" << entity_->name
-            << " cursor=" << (cursor_.empty() ? "(empty)" : cursor_.substr(0, 20) + "...")
-            << std::endl;
+  std::cout << "[Pull] " << source_name_ << "/" << entity_->name << " start;" << " cursor=" << (cursor_.empty() ? "(empty)" : cursor_.substr(0, 20) + "...") << std::endl;
   send_request();
 }
 
@@ -267,8 +265,7 @@ inline void EntityPuller::flush_buffer() {
   db_.atomic_insert_with_cursor(entity_->table, entity_->columns, buffer_,
                                 source_name_, entity_->name, cursor_);
 
-  std::cout << "[Pull] " << source_name_ << "/" << entity_->name
-            << " flush " << buffer_.size() << " rows" << std::endl;
+  // std::cout << "[Pull] " << source_name_ << "/" << entity_->name << " flush " << buffer_.size() << " rows" << std::endl;
 
   buffer_.clear();
 }

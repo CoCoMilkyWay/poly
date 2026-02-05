@@ -4,4 +4,11 @@ IPFS manifest: /home/chuyin/work/poly/doc/indexer/the graph/implemented
 合约节点本身的实现: /home/chuyin/work/poly/doc/smart-contracts
 sync到本地的样本示例: /home/chuyin/work/poly/data/export
 
-我们的目的是全量重建整个polymart的所有历史用户的所有交易记录, 持仓详情, 净值
+我们的目的是全量重建整个polymart的所有用户的历史任意时刻的交易记录, 持仓详情, 净值
+
+注意我们会给一个触发按钮, 每一次触发, 就会触发全量重建的flow, 所以没有各种corner case, 不需要断点续传等东西, 只需要极致高效的实现
+注意, 触发的时候, 每个entity都是不完整的, 可能只包括 start到synced 中间的数据, 我们保证中间的数据是完整的, 顺序的
+
+但是每个entity的start和synced对应的时间/区块是不同的
+
+仔细分析一下每个entity的含义和数据结构, 设计一个最优的重建方案

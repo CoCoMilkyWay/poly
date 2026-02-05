@@ -15,6 +15,7 @@
 #include "db.hpp"
 #include "entities.hpp"
 #include "entity_stats.hpp"
+#include "rebuilder.hpp"
 
 namespace asio = boost::asio;
 namespace beast = boost::beast;
@@ -27,8 +28,8 @@ using json = nlohmann::json;
 // ============================================================================
 class HttpSession : public std::enable_shared_from_this<HttpSession> {
 public:
-  HttpSession(tcp::socket socket, Database &db)
-      : socket_(std::move(socket)), db_(db) {}
+  HttpSession(tcp::socket socket, Database &db, rebuilder::Rebuilder &rebuilder)
+      : socket_(std::move(socket)), db_(db), rebuilder_(rebuilder) {}
 
   void run() {
     do_read();
@@ -77,6 +78,12 @@ private:
         handle_stats();
       } else if (target.starts_with("/api/sync")) {
         handle_sync_state();
+      } else if (target.starts_with("/api/rebuild-status")) {
+        handle_rebuild_status();
+      } else if (target.starts_with("/api/rebuild-all")) {
+        handle_rebuild_all();
+      } else if (target.starts_with("/api/rebuild")) {
+        handle_rebuild_user();
       } else {
         res_.result(http::status::not_found);
         res_.set(http::field::content_type, "application/json");
@@ -216,6 +223,44 @@ private:
     res_.body() = rows.dump();
   }
 
+  void handle_rebuild_user() {
+    res_.set(http::field::content_type, "application/json");
+    std::string user = get_param("user");
+    assert(!user.empty() && "Missing query parameter 'user'");
+
+    auto result = rebuilder_.rebuild_user(user);
+    res_.result(http::status::ok);
+    res_.body() = rebuilder::Rebuilder::result_to_json(result).dump();
+  }
+
+  void handle_rebuild_all() {
+    res_.set(http::field::content_type, "application/json");
+
+    // 异步执行全量重建
+    std::thread([this]() {
+      rebuilder_.rebuild_all();
+    }).detach();
+
+    res_.result(http::status::ok);
+    res_.body() = R"({"status":"started"})";
+  }
+
+  void handle_rebuild_status() {
+    res_.set(http::field::content_type, "application/json");
+    auto progress = rebuilder_.get_progress();
+
+    json result = {
+        {"running", progress.running},
+        {"total_users", progress.total_users},
+        {"processed_users", progress.processed_users},
+        {"total_events", progress.total_events},
+        {"processed_events", progress.processed_events},
+        {"error", progress.error}};
+
+    res_.result(http::status::ok);
+    res_.body() = result.dump();
+  }
+
   void do_write() {
     http::async_write(socket_, res_,
                       [self = shared_from_this()](beast::error_code ec, std::size_t) {
@@ -243,6 +288,7 @@ private:
 
   tcp::socket socket_;
   Database &db_;
+  rebuilder::Rebuilder &rebuilder_;
   beast::flat_buffer buffer_;
   http::request<http::string_body> req_;
   http::response<http::string_body> res_;
@@ -254,7 +300,8 @@ private:
 class HttpServer {
 public:
   HttpServer(asio::io_context &ioc, Database &db, unsigned short port)
-      : ioc_(ioc), acceptor_(ioc, tcp::endpoint(tcp::v4(), port)), db_(db) {
+      : ioc_(ioc), acceptor_(ioc, tcp::endpoint(tcp::v4(), port)), db_(db),
+        rebuilder_(db.get_duckdb()) {
     std::cout << "[HTTP] 监听端口 " << port << std::endl;
     do_accept();
   }
@@ -264,7 +311,7 @@ private:
     acceptor_.async_accept(
         [this](beast::error_code ec, tcp::socket socket) {
           if (!ec) {
-            std::make_shared<HttpSession>(std::move(socket), db_)->run();
+            std::make_shared<HttpSession>(std::move(socket), db_, rebuilder_)->run();
           }
           do_accept();
         });
@@ -273,4 +320,5 @@ private:
   asio::io_context &ioc_;
   tcp::acceptor acceptor_;
   Database &db_;
+  rebuilder::Rebuilder rebuilder_;
 };

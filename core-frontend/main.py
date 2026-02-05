@@ -61,6 +61,39 @@ async def api_indexer_fails(source: str = Query(...), entity: str = Query(...)):
     return backend_get("/api/indexer-fails", {"source": source, "entity": entity}, default=[])
 
 
+@app.get("/api/rebuild")
+async def api_rebuild(user: str = Query(...)):
+    """API: 重建单个用户 PnL"""
+    return backend_get("/api/rebuild", {"user": user})
+
+
+@app.get("/api/rebuild-all")
+async def api_rebuild_all():
+    """API: 触发全量重建"""
+    return backend_get("/api/rebuild-all")
+
+
+@app.get("/api/rebuild-status")
+async def api_rebuild_status():
+    """API: 获取重建进度"""
+    return backend_get("/api/rebuild-status")
+
+
+@app.get("/api/pnl-users")
+async def api_pnl_users(limit: int = Query(100)):
+    """API: 获取用户列表（按活跃度排序）"""
+    sql = (
+        "SELECT user_addr, COUNT(*) as event_count FROM ("
+        "SELECT maker as user_addr FROM enriched_order_filled WHERE maker IS NOT NULL "
+        "UNION ALL "
+        "SELECT stakeholder as user_addr FROM merge WHERE stakeholder IS NOT NULL "
+        "UNION ALL "
+        "SELECT redeemer as user_addr FROM redemption WHERE redeemer IS NOT NULL"
+        f") GROUP BY user_addr ORDER BY event_count DESC LIMIT {limit}"
+    )
+    return backend_get("/api/sql", {"q": sql}, default=[])
+
+
 @app.get("/api/graph-status-stream")
 async def api_graph_status_stream():
     """API: 流式获取 The Graph 节点状态 (SSE)"""

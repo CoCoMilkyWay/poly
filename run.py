@@ -107,7 +107,7 @@ def main():
     # 4. 启动 Python frontend(后台)
     print("[run.py] 启动 frontend...")
     frontend_proc = subprocess.Popen(
-        [sys.executable, "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"],
+        [sys.executable, "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--log-level", "warning"],
         cwd=FRONTEND_DIR
     )
     processes.append(frontend_proc)
