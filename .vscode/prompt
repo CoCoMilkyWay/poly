@@ -9,5 +9,6 @@ IPFS manifest(真正的entity): /home/chuyin/work/poly/doc/indexer/the graph/imp
 触发的时候, 每个entity都是不完整的, 可能只包括 start到synced 中间的数据, 我们保证中间的数据是完整的, 顺序的
 但是每个entity的start和synced对应的时间/区块是不同的, 而且是未知的, 这个是graph最大的限制, 我们要能支持
 
-1. 重新review我们的entity选择, 如果你对一些entity感兴趣, 可以写道config里, 我重新嗅探到csv, 目前定义的entity有些是没用的/错误的/不存在的, 修改entity list, 设计最优子集
-2. 重新review 我们的重建过程, 我们不要各种fallback, fallback是屎山的源泉, 我们基于最优数据结构和flow来做, 有问题边改边分析
+1. 重新review 我们的重建过程, 我们不要各种fallback, fallback是屎山的源泉, 我们基于最优数据结构和flow来做, 有问题边改边分析
+
+已知全量重建的生命周期管理有问题，多次触发行为异常， fix

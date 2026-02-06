@@ -67,7 +67,7 @@ inline std::string json_decimal(const json &j, const char *key) {
   return "NULL";
 }
 
-// JSON 提取：关系字段（兼容 {id:"xxx"} 和直接字符串两种格式）
+// JSON 提取：关系字段(兼容 {id:"xxx"} 和直接字符串两种格式)
 inline std::string json_ref(const json &j, const char *key) {
   if (!j.contains(key) || j[key].is_null())
     return "NULL";

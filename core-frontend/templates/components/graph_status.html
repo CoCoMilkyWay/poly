@@ -586,7 +586,7 @@
     };
   }
 
-  // 自动轮询 entity stats（高效，只更新 DOM 中的数字）
+  // 自动轮询 entity stats(高效，只更新 DOM 中的数字)
   function startEntityStatsPolling() {
     if (_entityStatsTimer) clearInterval(_entityStatsTimer);
 
@@ -603,7 +603,7 @@
     _entityStatsTimer = setInterval(pollStats, 2000);
   }
 
-  // hover 时按需拉取最近一条 entity 数据（带 schema）
+  // hover 时按需拉取最近一条 entity 数据(带 schema)
   function _entityLatestTitle(entity, data) {
     if (!data || typeof data !== "object") return "无数据";
     const table = data.table || "";

@@ -141,7 +141,7 @@ async def fetch_chain_block(client: httpx.AsyncClient, network: str, cache: dict
 
 
 async def fetch_entity_stats(client: httpx.AsyncClient) -> dict:
-    """获取后端 entity 实时统计（包含 count）"""
+    """获取后端 entity 实时统计(包含 count)"""
     try:
         resp = await client.get(f"{BACKEND_API}/api/entity-stats", timeout=5)
         if resp.status_code == 200:
@@ -270,7 +270,7 @@ async def get_graph_status_stream() -> AsyncGenerator[dict, None]:
     backend_entity_stats = {}
     
     async with httpx.AsyncClient() as client:
-        # Step 0: 获取后端 entity stats（避免触发后端 COUNT(*)）
+        # Step 0: 获取后端 entity stats(避免触发后端 COUNT(*))
         backend_entity_stats = await fetch_entity_stats(client)
         # Step 1: 并发查询所有 subgraph 的 meta
         yield {"type": "status", "msg": f"查询 {total} 个 subgraph meta..."}
@@ -360,7 +360,7 @@ async def get_graph_status_stream() -> AsyncGenerator[dict, None]:
             indexed_block = meta.get("block", {}).get("number", 0) if not meta.get("error") else 0
             avg_progress = compute_node_stats(contract_nodes, indexed_block, chain_block_cache)
             
-            # 计算每个 configured entity 的本地记录数（按 source/entity）
+            # 计算每个 configured entity 的本地记录数(按 source/entity)
             entity_stats = {}
             for entity in configured_entities:
                 key = f"{name}/{entity}"

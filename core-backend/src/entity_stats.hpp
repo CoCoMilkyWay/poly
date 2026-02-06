@@ -24,7 +24,7 @@ enum class ApiState {
 };
 
 // ============================================================================
-// 失败分类（用于 hover 展示）
+// 失败分类(用于 hover 展示)
 // ============================================================================
 enum class FailureKind : uint8_t {
   NETWORK = 0, // body empty / 网络错误
@@ -40,22 +40,22 @@ struct EntityStat {
   std::string source;
   std::string entity;
 
-  // 记录数（从 DB 初始化，之后累加）
+  // 记录数(从 DB 初始化，之后累加)
   int64_t count = 0;
 
   // 估算：单条记录的"结构体大小"(字节)，用于展示 DB 规模
   int64_t row_size_bytes = 0;
 
-  // 速度统计（历史累积，持久化到DB）
+  // 速度统计(历史累积，持久化到DB)
   int64_t total_rows_synced = 0; // 历史总同步行数
-  int64_t total_api_time_ms = 0; // 历史总API调用时间（不含本地处理）
+  int64_t total_api_time_ms = 0; // 历史总API调用时间(不含本地处理)
 
   // QoS 统计
-  std::deque<int64_t> recent_latencies; // 最近20个请求的延时（不持久化）
+  std::deque<int64_t> recent_latencies; // 最近20个请求的延时(不持久化)
   double success_rate = 100.0;          // 持久化到DB
-  int64_t total_requests = 0;           // 历史总请求数（持久化）
-  int64_t success_requests = 0;         // 历史成功请求数（持久化）
-  int64_t fail_network = 0;             // 失败分类计数（持久化）
+  int64_t total_requests = 0;           // 历史总请求数(持久化)
+  int64_t success_requests = 0;         // 历史成功请求数(持久化)
+  int64_t fail_network = 0;             // 失败分类计数(持久化)
   int64_t fail_json = 0;
   int64_t fail_graphql = 0;
   int64_t fail_format = 0;
@@ -80,13 +80,13 @@ public:
     return inst;
   }
 
-  // 设置数据库连接（在启动时调用一次）
+  // 设置数据库连接(在启动时调用一次)
   void set_database(Database *db) {
     db_ = db;
   }
 
-  // 获取指定 entity（跨 source 汇总）的 count
-  // found=true 表示至少存在一个 source/entity 的统计项（即已经 init 过）
+  // 获取指定 entity(跨 source 汇总)的 count
+  // found=true 表示至少存在一个 source/entity 的统计项(即已经 init 过)
   int64_t get_total_count_for_entity(const std::string &entity, bool *found = nullptr) {
     std::lock_guard<std::mutex> lock(mutex_);
     int64_t sum = 0;
@@ -103,7 +103,7 @@ public:
     return sum;
   }
 
-  // 初始化 entity（设置初始 count，并从DB加载历史统计）
+  // 初始化 entity(设置初始 count，并从DB加载历史统计)
   void init(const std::string &source, const std::string &entity, int64_t count, int64_t row_size_bytes) {
     std::lock_guard<std::mutex> lock(mutex_);
     auto key = make_key(source, entity);
@@ -152,7 +152,7 @@ public:
     }
   }
 
-  // 记录成功的请求（latency_ms是纯API调用时间，不含本地处理）
+  // 记录成功的请求(latency_ms是纯API调用时间，不含本地处理)
   void record_success(const std::string &source, const std::string &entity,
                       int64_t records, int64_t latency_ms) {
     std::lock_guard<std::mutex> lock(mutex_);
@@ -166,7 +166,7 @@ public:
     stat.total_api_time_ms += latency_ms; // 累加API调用时间
     stat.last_update = std::chrono::steady_clock::now();
 
-    // 记录最近20个延时（不持久化）
+    // 记录最近20个延时(不持久化)
     stat.recent_latencies.push_back(latency_ms);
     if (stat.recent_latencies.size() > 20) {
       stat.recent_latencies.pop_front();
@@ -183,7 +183,7 @@ public:
     }
   }
 
-  // 记录失败的请求（latency_ms是纯API调用时间，不含本地处理）
+  // 记录失败的请求(latency_ms是纯API调用时间，不含本地处理)
   void record_failure(const std::string &source, const std::string &entity, FailureKind kind, int64_t latency_ms) {
     std::lock_guard<std::mutex> lock(mutex_);
     auto key = make_key(source, entity);
@@ -204,7 +204,7 @@ public:
     else
       assert(false && "Unknown FailureKind");
 
-    // 记录最近20个延时（不持久化）
+    // 记录最近20个延时(不持久化)
     stat.recent_latencies.push_back(latency_ms);
     if (stat.recent_latencies.size() > 20) {
       stat.recent_latencies.pop_front();
@@ -221,7 +221,7 @@ public:
     }
   }
 
-  // indexer 维度失败计数（只有失败能归因）
+  // indexer 维度失败计数(只有失败能归因)
   void record_indexer_fail(const std::string &source, const std::string &entity, const std::string &indexer) {
     std::lock_guard<std::mutex> lock(mutex_);
     assert(!indexer.empty());
@@ -245,7 +245,7 @@ public:
     }
   }
 
-  // 获取所有统计（JSON dump 字符串；用于 HTTP 直接返回，避免重复序列化）
+  // 获取所有统计(JSON dump 字符串；用于 HTTP 直接返回，避免重复序列化)
   const std::string &get_all_dump() {
     std::lock_guard<std::mutex> lock(mutex_);
     rebuild_cache_if_needed_unsafe();
@@ -284,7 +284,7 @@ private:
 
     for (auto &[key, stat] : stats_) {
       // 计算速度：基于历史累积的准确数据
-      // speed = 总同步行数 / 总API调用时间（秒）
+      // speed = 总同步行数 / 总API调用时间(秒)
       double speed = 0.0;
       if (stat.total_rows_synced > 0 && stat.total_api_time_ms > 0) {
         speed = static_cast<double>(stat.total_rows_synced) / (static_cast<double>(stat.total_api_time_ms) / 1000.0);
@@ -345,7 +345,7 @@ private:
   std::unordered_map<std::string, IndexerFailStat> indexer_fail_;
   Database *db_ = nullptr;
 
-  // 缓存（避免频繁构建/序列化）
+  // 缓存(避免频繁构建/序列化)
   static constexpr auto kCacheTtl = std::chrono::milliseconds(200);
   std::chrono::steady_clock::time_point cached_at_{};
   std::string cached_dump_;

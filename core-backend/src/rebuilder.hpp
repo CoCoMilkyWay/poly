@@ -4,6 +4,22 @@
 // PnL Rebuilder 核心
 // ============================================================================
 
+// 1. **Split(铸造)— 市场进行中**
+//    - 操作: USDC → YES + NO (固定 $0.50/$0.50)
+//    - 做市: 铸造后挂单卖双边，提供流动性
+//    - 套利: 当 YES + NO 市场价之和 > $1 时，铸造后卖双边获利
+//    - 方向性建仓: 当看空方流动性好时，铸造后卖看空方，建仓看多方
+// 
+// 2. **Merge(销毁)— 市场进行中**
+//    - 操作: YES + NO → USDC (固定 $0.50/$0.50)
+//    - 做市: 买入双边后销毁，退出流动性
+//    - 套利: 当 YES + NO 市场价之和 < $1 时，买双边后销毁获利
+//    - 方向性平仓: 当看多方流动性差时，买看空方后销毁双边，平仓看多方
+// 
+// 3. **Redemption(赎回)— 市场结算后**
+//    - 操作: tokens → USDC (只能在市场结算后操作)
+//    - 用途: 赎回 winning tokens 获得收益，losing tokens 归零 (价格由 payoutNumerators/payoutDenominator 决定)
+
 #include "rebuilder_loader.hpp"
 #include "rebuilder_types.hpp"
 #include "rebuilder_worker.hpp"
@@ -12,7 +28,9 @@
 #include <duckdb.hpp>
 #include <future>
 #include <iostream>
+#include <mutex>
 #include <nlohmann/json.hpp>
+#include <shared_mutex>
 #include <thread>
 #include <vector>
 
@@ -24,18 +42,19 @@ class Rebuilder {
 public:
   explicit Rebuilder(duckdb::DuckDB &db) : db_(db) {}
 
-  // 重建单个用户
+  // 重建单个用户(使用缓存的conditions)
   UserResult rebuild_user(const std::string &user) {
     auto conn = std::make_unique<duckdb::Connection>(db_);
     Loader loader(*conn);
 
-    auto configs = loader.load_conditions();
+    // 使用缓存的conditions
+    const auto &configs = get_cached_conditions(loader);
     auto events = loader.load_user_events(user);
 
     return Worker::process_user(user, events, configs);
   }
 
-  // 全量重建（并行）
+  // 全量重建(并行)
   // 返回空vector表示已有任务在运行
   std::vector<UserResult> rebuild_all() {
     // 原子CAS：仅当running==false时设置为true
@@ -55,10 +74,12 @@ public:
     auto conn = std::make_unique<duckdb::Connection>(db_);
     Loader loader(*conn);
 
-    // 加载配置（共享）
+    // 加载配置(共享)并更新缓存
     std::cout << "[Rebuilder] Loading conditions..." << std::endl;
     auto configs = loader.load_conditions();
-    std::cout << "[Rebuilder] Loaded " << configs.size() << " conditions" << std::endl;
+    update_cached_conditions(std::move(configs));
+    const auto &cached = get_cached_conditions(loader);  // 从缓存取引用
+    std::cout << "[Rebuilder] Loaded " << cached.size() << " conditions" << std::endl;
 
     // 获取所有用户
     std::cout << "[Rebuilder] Loading users..." << std::endl;
@@ -85,8 +106,8 @@ public:
 
       std::vector<std::string> user_slice(users.begin() + start, users.begin() + end);
 
-      futures.push_back(std::async(std::launch::async, [this, user_slice, &configs]() {
-        return process_user_batch(user_slice, configs);
+      futures.push_back(std::async(std::launch::async, [this, user_slice, &cached]() {
+        return process_user_batch(user_slice, cached);
       }));
     }
 
@@ -141,7 +162,7 @@ public:
         {"positions", positions},
         {"snapshot_count", r.snapshots.size()}};
 
-    // 包含 snapshots 详情（用于前端时间线）
+    // 包含 snapshots 详情(用于前端时间线)
     if (include_snapshots && !r.snapshots.empty()) {
       json snapshots = json::array();
       for (const auto &snap : r.snapshots) {
@@ -162,6 +183,28 @@ public:
   }
 
 private:
+  // 获取缓存的conditions(若未缓存则加载)
+  const std::unordered_map<std::string, ConditionConfig> &get_cached_conditions(Loader &loader) {
+    std::shared_lock lock(conditions_mutex_);
+    if (!cached_conditions_.empty()) {
+      return cached_conditions_;
+    }
+    lock.unlock();
+
+    // 未缓存，加载并存入
+    std::unique_lock wlock(conditions_mutex_);
+    if (cached_conditions_.empty()) {
+      cached_conditions_ = loader.load_conditions();
+    }
+    return cached_conditions_;
+  }
+
+  // 更新缓存
+  void update_cached_conditions(std::unordered_map<std::string, ConditionConfig> configs) {
+    std::unique_lock lock(conditions_mutex_);
+    cached_conditions_ = std::move(configs);
+  }
+
   // 处理一批用户
   std::vector<UserResult> process_user_batch(
       const std::vector<std::string> &users,
@@ -188,7 +231,11 @@ private:
 
   duckdb::DuckDB &db_;
 
-  // 进度跟踪（原子操作）
+  // Conditions 缓存(避免每次rebuild_user都重新加载)
+  mutable std::shared_mutex conditions_mutex_;
+  std::unordered_map<std::string, ConditionConfig> cached_conditions_;
+
+  // 进度跟踪(原子操作)
   struct AtomicProgress {
     std::atomic<int64_t> total_users{0};
     std::atomic<int64_t> processed_users{0};

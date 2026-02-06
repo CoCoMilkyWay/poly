@@ -83,7 +83,7 @@ public:
     return map;
   }
 
-  // 获取所有用户列表（从 order、merge、redemption 中提取）
+  // 获取所有用户列表(从 order、merge、redemption 中提取)
   std::vector<std::string> get_all_users() {
     auto result = conn_.Query(R"(
       SELECT DISTINCT user_addr FROM (
@@ -110,7 +110,7 @@ public:
   std::vector<Event> load_user_events(const std::string &user) {
     std::vector<Event> events;
 
-    // 1. 加载订单事件（maker 视角: maker 是挂单方）
+    // 1. 加载订单事件(maker 视角: maker 是挂单方)
     // side=Buy: maker 买入 token, 支付 USDC
     // side=Sell: maker 卖出 token, 收取 USDC
     auto maker_result = conn_.Query(
@@ -140,7 +140,7 @@ public:
       events.push_back(std::move(e));
     }
 
-    // 2. 加载订单事件（taker 视角: taker 是吃单方，side 相反）
+    // 2. 加载订单事件(taker 视角: taker 是吃单方，side 相反)
     // maker side=Buy: taker 卖出 token
     // maker side=Sell: taker 买入 token
     auto taker_result = conn_.Query(

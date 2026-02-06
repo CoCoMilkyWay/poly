@@ -281,7 +281,7 @@ inline void EntityPuller::on_response(const std::string &body) {
 
   auto &stats = EntityStatsManager::instance();
 
-  // 计算重试延迟（指数退避）
+  // 计算重试延迟(指数退避)
   auto calc_retry_delay = [this]() {
     int delay = PULL_RETRY_DELAY_MS * (1 << std::min(retry_count_, 10)); // 防止溢出
     return std::min(delay, PULL_RETRY_MAX_DELAY_MS);

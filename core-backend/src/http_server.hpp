@@ -161,7 +161,7 @@ private:
       for (size_t i = 0; i < count; ++i) {
         const auto *e = list[i];
         assert(e != nullptr);
-        // 极限优化：不做 COUNT(*) 扫表，直接复用 puller 维护的内存计数（跨 source 汇总）
+        // 极限优化：不做 COUNT(*) 扫表，直接复用 puller 维护的内存计数(跨 source 汇总)
         stats[e->table] = EntityStatsManager::instance().get_total_count_for_entity(e->name);
       }
     };
@@ -295,7 +295,7 @@ private:
     auto intro = std::make_shared<introspector::Introspector>(pool_, config_);
     intro->start(export_dir_, limit, order_desc);
 
-    // 异步等待完成（通过定时器轮询）
+    // 异步等待完成(通过定时器轮询)
     auto self = shared_from_this();
     auto timer = std::make_shared<asio::steady_timer>(socket_.get_executor());
 

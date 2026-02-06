@@ -68,7 +68,7 @@ public:
   }
 
 private:
-  // 计算总 PnL（realized + unrealized，假设当前价格为 0.5）
+  // 计算总 PnL(realized + unrealized，假设当前价格为 0.5)
   static int64_t calc_total_pnl(const std::unordered_map<std::string, Position> &positions) {
     int64_t total = 0;
     for (const auto &[_, pos] : positions) {
@@ -159,7 +159,7 @@ private:
     // 每个 outcome token 获得 amount 数量
     for (const auto &token_id : cfg.position_ids) {
       auto &pos = result.positions[token_id];
-      // merge 价格为 0.5（YES + NO 各占一半）
+      // merge 价格为 0.5(YES + NO 各占一半)
       int64_t price_1e6 = 500000; // $0.50
       process_order_buy(pos, price_1e6, e.amount);
     }

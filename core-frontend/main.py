@@ -11,7 +11,7 @@ app = FastAPI(title="Polymarket Data Explorer")
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
 
 # httpx 客户端，禁用代理直连 C++ backend
-_client = httpx.Client(timeout=10, trust_env=False)
+_client = httpx.Client(timeout=None, trust_env=False)
 
 
 def backend_get(path: str, params: dict = None, default=None):
@@ -51,7 +51,7 @@ async def api_entity_stats():
 
 @app.get("/api/entity-latest")
 async def api_entity_latest(entity: str = Query(...)):
-    """API: 获取某个 entity 最近一条记录（用于 hover）"""
+    """API: 获取某个 entity 最近一条记录(用于 hover)"""
     return backend_get("/api/entity-latest", {"entity": entity})
 
 
@@ -81,7 +81,7 @@ async def api_rebuild_status():
 
 @app.get("/api/pnl-users")
 async def api_pnl_users(limit: int = Query(100)):
-    """API: 获取用户列表（按活跃度排序）"""
+    """API: 获取用户列表(按活跃度排序)"""
     sql = (
         "SELECT user_addr, COUNT(*) as event_count FROM ("
         "SELECT maker as user_addr FROM enriched_order_filled WHERE maker IS NOT NULL "
@@ -112,13 +112,13 @@ def sql_query(sql: str):
     return backend_get("/api/sql", {"q": sql})
 
 
-# 长超时客户端（用于导出）
+# 长超时客户端(用于导出)
 _export_client = httpx.Client(timeout=300, trust_env=False)
 
 
 @app.get("/api/export")
 async def api_export(limit: int = Query(100, le=1000), order: str = Query("desc")):
-    """从 indexer 拉取原始数据导出（调用 C++ 后端并行实现）
+    """从 indexer 拉取原始数据导出(调用 C++ 后端并行实现)
     order: desc=最新数据, asc=最早数据
     """
     resp = _export_client.get(

@@ -81,7 +81,7 @@ public:
   Introspector(HttpsPool &pool, const Config &config)
       : pool_(pool), config_(config) {}
 
-  // 启动导出（异步）
+  // 启动导出(异步)
   // order_desc: true=最新数据(desc), false=最早数据(asc)
   void start(const std::string &export_dir, int limit, bool order_desc = true) {
     results_.clear();

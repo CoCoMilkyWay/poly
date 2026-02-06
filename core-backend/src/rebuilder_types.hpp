@@ -23,7 +23,7 @@ struct Position {
 };
 
 // ============================================================================
-// 快照（记录每个事件后的状态）
+// 快照(记录每个事件后的状态)
 // ============================================================================
 struct Snapshot {
   int64_t timestamp;
@@ -33,7 +33,7 @@ struct Snapshot {
   std::string side;       // order: Buy/Sell
   int64_t size = 0;       // order: size
   double price = 0.0;     // order: price
-  int64_t total_pnl = 0;  // 事件后的总 PnL（realized + unrealized）
+  int64_t total_pnl = 0;  // 事件后的总 PnL(realized + unrealized)
 };
 
 // ============================================================================
