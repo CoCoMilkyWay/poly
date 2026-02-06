@@ -18,9 +18,9 @@ namespace entities {
 // 同步模式
 // ============================================================================
 enum class SyncMode {
-  TIMESTAMP,      // orderBy: timestamp, where: {timestamp_gte}, + skip
-  RESOLUTION_TS,  // orderBy: resolutionTimestamp, where: {resolutionTimestamp_gte}, + skip
-  ID,             // orderBy: id, where: {id_gt} (no skip)
+  TIMESTAMP,     // orderBy: timestamp, where: {timestamp_gte}, + skip
+  RESOLUTION_TS, // orderBy: resolutionTimestamp, where: {resolutionTimestamp_gte}, + skip
+  ID,            // orderBy: id, where: {id_gt} (no skip)
 };
 
 // ============================================================================

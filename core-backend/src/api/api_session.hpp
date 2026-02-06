@@ -1,12 +1,11 @@
 #pragma once
 
 // ============================================================================
-// HTTP 服务器: 查询 API + 大 sync 触发
+// API Session - HTTP 会话处理
 // ============================================================================
 
 #include <filesystem>
 #include <fstream>
-#include <iostream>
 #include <memory>
 #include <string>
 
@@ -14,9 +13,10 @@
 #include <boost/beast.hpp>
 #include <nlohmann/json.hpp>
 
-#include "big_sync.hpp"
-#include "db.hpp"
-#include "entity_stats.hpp"
+#include "../core/database.hpp"
+#include "../core/entity_definition.hpp"
+#include "../stats/stats_manager.hpp"
+#include "../sync/sync_repair.hpp"
 
 namespace fs = std::filesystem;
 namespace asio = boost::asio;
@@ -26,12 +26,12 @@ using tcp = asio::ip::tcp;
 using json = nlohmann::json;
 
 // ============================================================================
-// HTTP Session
+// ApiSession - HTTP 会话
 // ============================================================================
-class HttpSession : public std::enable_shared_from_this<HttpSession> {
+class ApiSession : public std::enable_shared_from_this<ApiSession> {
 public:
-  HttpSession(tcp::socket socket, Database &db, BigSync &big_sync)
-      : socket_(std::move(socket)), db_(db), big_sync_(big_sync) {}
+  ApiSession(tcp::socket socket, Database &db, SyncRepair &sync_repair)
+      : socket_(std::move(socket)), db_(db), sync_repair_(sync_repair) {}
 
   void run() {
     do_read();
@@ -146,7 +146,7 @@ private:
     for (size_t i = 0; i < entities::ALL_ENTITY_COUNT; ++i) {
       const auto *e = entities::ALL_ENTITIES[i];
       assert(e != nullptr);
-      stats[e->table] = EntityStatsManager::instance().get_total_count_for_entity(e->name);
+      stats[e->table] = StatsManager::instance().get_total_count_for_entity(e->name);
     }
 
     res_.result(http::status::ok);
@@ -165,7 +165,7 @@ private:
   void handle_entity_stats() {
     res_.set(http::field::content_type, "application/json");
     res_.result(http::status::ok);
-    res_.body() = EntityStatsManager::instance().get_all_dump();
+    res_.body() = StatsManager::instance().get_all_dump();
   }
 
   void handle_entity_latest() {
@@ -214,20 +214,20 @@ private:
   void handle_big_sync() {
     res_.set(http::field::content_type, "application/json");
 
-    if (big_sync_.is_running()) {
+    if (sync_repair_.is_running()) {
       res_.result(http::status::ok);
       res_.body() = R"({"status":"already_running"})";
       return;
     }
 
-    big_sync_.start();
+    sync_repair_.start();
     res_.result(http::status::ok);
     res_.body() = R"({"status":"started"})";
   }
 
   void handle_big_sync_status() {
     res_.set(http::field::content_type, "application/json");
-    auto progress = big_sync_.get_progress();
+    auto progress = sync_repair_.get_progress();
 
     json result = {
         {"running", progress.running},
@@ -366,39 +366,8 @@ private:
 
   tcp::socket socket_;
   Database &db_;
-  BigSync &big_sync_;
+  SyncRepair &sync_repair_;
   beast::flat_buffer buffer_;
   http::request<http::string_body> req_;
   http::response<http::string_body> res_;
-};
-
-// ============================================================================
-// HTTP Server
-// ============================================================================
-class HttpServer {
-public:
-  HttpServer(asio::io_context &ioc, Database &db, HttpsPool &pool,
-             const Config &config, unsigned short port)
-      : ioc_(ioc), acceptor_(ioc, tcp::endpoint(tcp::v4(), port)), db_(db),
-        big_sync_(db, pool, config) {
-    std::cout << "[HTTP] 监听端口 " << port << std::endl;
-    do_accept();
-  }
-
-private:
-  void do_accept() {
-    acceptor_.async_accept(
-        [this](beast::error_code ec, tcp::socket socket) {
-          if (!ec) {
-            std::make_shared<HttpSession>(std::move(socket), db_, big_sync_)
-                ->run();
-          }
-          do_accept();
-        });
-  }
-
-  asio::io_context &ioc_;
-  tcp::acceptor acceptor_;
-  Database &db_;
-  BigSync big_sync_;
 };

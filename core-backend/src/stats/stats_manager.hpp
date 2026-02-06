@@ -71,12 +71,12 @@ struct EntityStat {
 };
 
 // ============================================================================
-// 全局 Entity Stats 管理器
+// 全局 Stats 管理器
 // ============================================================================
-class EntityStatsManager {
+class StatsManager {
 public:
-  static EntityStatsManager &instance() {
-    static EntityStatsManager inst;
+  static StatsManager &instance() {
+    static StatsManager inst;
     return inst;
   }
 
@@ -253,7 +253,7 @@ public:
   }
 
 private:
-  EntityStatsManager() = default;
+  StatsManager() = default;
 
   std::string make_key(const std::string &source, const std::string &entity) {
     return source + "/" + entity;
@@ -355,13 +355,13 @@ private:
 };
 
 // ============================================================================
-// EntityStatsManager 数据库操作实现
+// StatsManager 数据库操作实现
 // ============================================================================
 
-#include "db.hpp"
-#include "entities.hpp"
+#include "../core/database.hpp"
+#include "../core/entity_definition.hpp"
 
-inline void EntityStatsManager::load_from_db(EntityStat &stat) {
+inline void StatsManager::load_from_db(EntityStat &stat) {
   if (!db_)
     return;
 
@@ -387,7 +387,7 @@ inline void EntityStatsManager::load_from_db(EntityStat &stat) {
   }
 }
 
-inline void EntityStatsManager::save_to_db(const EntityStat &stat) {
+inline void StatsManager::save_to_db(const EntityStat &stat) {
   if (!db_)
     return;
 
@@ -409,7 +409,7 @@ inline void EntityStatsManager::save_to_db(const EntityStat &stat) {
   db_->execute(sql);
 }
 
-inline void EntityStatsManager::load_indexer_fail_from_db_unsafe(IndexerFailStat &st) {
+inline void StatsManager::load_indexer_fail_from_db_unsafe(StatsManager::IndexerFailStat &st) {
   assert(db_);
   std::string sql =
       "SELECT fail_requests FROM indexer_fail_meta WHERE source = " +
@@ -422,7 +422,7 @@ inline void EntityStatsManager::load_indexer_fail_from_db_unsafe(IndexerFailStat
   }
 }
 
-inline void EntityStatsManager::save_indexer_fail_to_db_unsafe(const IndexerFailStat &st) {
+inline void StatsManager::save_indexer_fail_to_db_unsafe(const StatsManager::IndexerFailStat &st) {
   assert(db_);
   std::string sql =
       "INSERT OR REPLACE INTO indexer_fail_meta "

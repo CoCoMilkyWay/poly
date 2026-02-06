@@ -1,7 +1,7 @@
 #pragma once
 
 // ============================================================================
-// 大 Sync: 修复数据完整性
+// 大sync - 修复数据完整性
 // Phase 1: 删除 null timestamp conditions, 全量重拉
 // Phase 2: 合并 pnl_condition → condition.positionIds
 // Phase 3: 填充剩余 null positionIds
@@ -19,15 +19,15 @@
 #include <thread>
 #include <vector>
 
-#include "config.hpp"
-#include "db.hpp"
-#include "entities.hpp"
-#include "https_pool.hpp"
-#include "puller.hpp"
+#include "../core/config.hpp"
+#include "../core/database.hpp"
+#include "../core/entity_definition.hpp"
+#include "../infra/https_pool.hpp"
+#include "sync_incremental_executor.hpp"
 
 using json = nlohmann::json;
 
-class BigSync {
+class SyncRepair {
 public:
   struct Progress {
     bool running = false;
@@ -37,7 +37,7 @@ public:
     std::string error;
   };
 
-  BigSync(Database &db, HttpsPool &pool, const Config &config)
+  SyncRepair(Database &db, HttpsPool &pool, const Config &config)
       : db_(db), pool_(pool) {
     // 找 Polymarket source (拉 Condition)
     for (const auto &src : config.sources) {
@@ -57,7 +57,7 @@ public:
 
   void start() {
     bool expected = false;
-    assert(running_.compare_exchange_strong(expected, true) && "BigSync already running");
+    assert(running_.compare_exchange_strong(expected, true) && "SyncRepair already running");
 
     progress_mutex_.lock();
     progress_ = {true, "starting", 0, 0, ""};
@@ -84,35 +84,35 @@ private:
   }
 
   void run() {
-    std::cout << "[BigSync] 开始" << std::endl;
+    std::cout << "[SyncRepair] 开始" << std::endl;
 
     // Phase 1: 重拉 conditions
     set_progress("phase1_delete_null");
-    std::cout << "[BigSync] Phase 1: 删除 null timestamp conditions" << std::endl;
+    std::cout << "[SyncRepair] Phase 1: 删除 null timestamp conditions" << std::endl;
     db_.delete_null_conditions();
 
     set_progress("phase1_repull");
-    std::cout << "[BigSync] Phase 1: 全量重拉 conditions" << std::endl;
+    std::cout << "[SyncRepair] Phase 1: 全量重拉 conditions" << std::endl;
     phase1_repull_conditions();
 
     // Phase 2: 合并 pnl_condition
     set_progress("phase2_merge_pnl");
-    std::cout << "[BigSync] Phase 2: 合并 pnl_condition → condition" << std::endl;
+    std::cout << "[SyncRepair] Phase 2: 合并 pnl_condition → condition" << std::endl;
     if (db_.table_exists("pnl_condition")) {
       db_.merge_pnl_into_condition();
       db_.drop_pnl_condition();
-      std::cout << "[BigSync] Phase 2: pnl_condition 已合并并删除" << std::endl;
+      std::cout << "[SyncRepair] Phase 2: pnl_condition 已合并并删除" << std::endl;
     } else {
-      std::cout << "[BigSync] Phase 2: pnl_condition 不存在, 跳过" << std::endl;
+      std::cout << "[SyncRepair] Phase 2: pnl_condition 不存在, 跳过" << std::endl;
     }
 
     // Phase 3: 填充 missing positionIds
     set_progress("phase3_fill_positionids");
-    std::cout << "[BigSync] Phase 3: 填充 missing positionIds" << std::endl;
+    std::cout << "[SyncRepair] Phase 3: 填充 missing positionIds" << std::endl;
     phase3_fill_position_ids();
 
     set_progress("done");
-    std::cout << "[BigSync] 完成" << std::endl;
+    std::cout << "[SyncRepair] 完成" << std::endl;
     running_ = false;
   }
 
@@ -135,10 +135,10 @@ private:
 
       // 同步等待异步请求
       std::string response = sync_request(target, query);
-      assert(!response.empty() && "BigSync: network failure");
+      assert(!response.empty() && "SyncRepair: network failure");
 
       json j = json::parse(response);
-      assert(!j.contains("errors") && "BigSync: GraphQL error");
+      assert(!j.contains("errors") && "SyncRepair: GraphQL error");
       assert(j.contains("data") && j["data"].contains("conditions"));
 
       auto &items = j["data"]["conditions"];
@@ -171,7 +171,7 @@ private:
         break;
     }
 
-    std::cout << "[BigSync] Phase 1: 拉取 " << total_pulled << " 条 conditions" << std::endl;
+    std::cout << "[SyncRepair] Phase 1: 拉取 " << total_pulled << " 条 conditions" << std::endl;
   }
 
   // Phase 3: 批量查 PnL subgraph 填 missing positionIds
@@ -199,7 +199,7 @@ private:
 
       std::string response = sync_request(target, query);
       if (response.empty()) {
-        std::cerr << "[BigSync] Phase 3: network failure, retrying..." << std::endl;
+        std::cerr << "[SyncRepair] Phase 3: network failure, retrying..." << std::endl;
         std::this_thread::sleep_for(std::chrono::seconds(1));
         continue;
       }
@@ -208,13 +208,13 @@ private:
       try {
         j = json::parse(response);
       } catch (...) {
-        std::cerr << "[BigSync] Phase 3: JSON parse failure" << std::endl;
+        std::cerr << "[SyncRepair] Phase 3: JSON parse failure" << std::endl;
         std::this_thread::sleep_for(std::chrono::seconds(1));
         continue;
       }
 
       if (j.contains("errors") || !j.contains("data") || !j["data"].contains("conditions")) {
-        std::cerr << "[BigSync] Phase 3: GraphQL error" << std::endl;
+        std::cerr << "[SyncRepair] Phase 3: GraphQL error" << std::endl;
         std::this_thread::sleep_for(std::chrono::seconds(1));
         continue;
       }
@@ -244,7 +244,7 @@ private:
       }
     }
 
-    std::cout << "[BigSync] Phase 3: 填充 " << total_filled << " 条 positionIds" << std::endl;
+    std::cout << "[SyncRepair] Phase 3: 填充 " << total_filled << " 条 positionIds" << std::endl;
   }
 
   // 同步等待异步请求 (在后台线程中使用)

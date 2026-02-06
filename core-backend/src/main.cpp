@@ -2,11 +2,11 @@
 #include <iostream>
 #include <string>
 
-#include "config.hpp"
-#include "db.hpp"
-#include "http_server.hpp"
-#include "https_pool.hpp"
-#include "puller.hpp"
+#include "api/api_server.hpp"
+#include "core/config.hpp"
+#include "core/database.hpp"
+#include "infra/https_pool.hpp"
+#include "sync/sync_incremental_coordinator.hpp"
 
 void print_usage(const char *prog) {
   std::cout << "用法: " << prog << " --config <config.json>" << std::endl;
@@ -46,11 +46,11 @@ int main(int argc, char *argv[]) {
   HttpsPool pool(ioc, config.api_key);
 
   // HTTP 服务器 (查询 API + 大 sync 触发)
-  HttpServer http_server(ioc, db, pool, config, 8001);
+  ApiServer api_server(ioc, db, pool, config, 8001);
 
   // 数据拉取 (周期性小 sync, 不返回)
-  Puller puller(config, db, pool);
-  puller.start(ioc);
+  SyncIncrementalCoordinator sync_coordinator(config, db, pool);
+  sync_coordinator.start(ioc);
 
   ioc.run();
 

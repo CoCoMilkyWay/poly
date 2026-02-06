@@ -1,6 +1,6 @@
 #pragma once
 
-#include "entities.hpp"
+#include "entity_definition.hpp"
 #include <cassert>
 #include <duckdb.hpp>
 #include <mutex>
