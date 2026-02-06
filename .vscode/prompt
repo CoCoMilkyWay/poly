@@ -11,3 +11,25 @@ polygon链上polymarket协议合约节点本身的实现: /home/chuyin/work/poly
 但是每个entity的start和synced对应的时间/区块是不同的, 而且是未知的, 这个是graph最大的限制, 我们要能支持
 
 我们的重建过程, 我们不要各种fallback, fallback是屎山的源泉, 我们基于最优数据结构和flow来做, 有问题边改边分析
+
+
+
+@.vscode/prompt  @core-backend/src/rebuilder.md 
+/home/chuyin/work/poly/core-backend/src/rebuild
+这是之前有问题的rebuild 代码, 现在没用
+
+我们改了数据库的内容和数据结构, 请仔细理解新的数据结构
+/home/chuyin/work/poly/data/export
+
+我们重新设计rebuild的最优最高效flow
+
+先别改code, 和我先讨论
+@core-backend/src/rebuilder.md  主要围绕这里来做
+
+
+
+1. B
+2. 从enrichorderfilled + S/M/R, 我们可以生成一个用户, 时间从前往后的所有对某个token的开平仓历史记录, 所以每个开平仓的位置做一个snapshot的数据结构(应该很简单, 而且可以统一所有的开平仓事件), 这样一个用户一个深度几十左右的snapshot基本就解决了, 可以把snapshot做成非常高效的ddr连续的形式, 后面用这个可以精确回放某用户历史上任意时间的token持仓, 净值, 近期交易记录等
+3. B 我们要先拿到当时有的token和token数, 然后根据payout反推当时的token价格, 我们snapshot里需要记录开平仓的token和token价格的
+还有, 我们暂时虽然不需要支持多问题相关(NegRisk), 我们还是要支持单问题多选项(outcomeSlotCount > 2), 也就是一个market下可能多个token
+4. 先简化放在内存里, 后面再说
