@@ -38,7 +38,8 @@ public:
     std::string sql = "SELECT cursor_value, cursor_skip FROM sync_state WHERE source = '" +
                       entities::escape_sql_raw(source) + "' AND entity = '" +
                       entities::escape_sql_raw(entity) + "'";
-    auto result = conn_->Query(sql);
+    std::lock_guard<std::mutex> rlock(read_mutex_);
+    auto result = read_conn_->Query(sql);
     if (result->RowCount() == 0)
       return {"", 0};
     auto val = result->GetValue(0, 0);
@@ -56,12 +57,13 @@ public:
       const std::string &cursor_value, int cursor_skip) {
     assert(!values_list.empty());
 
-    std::string insert_sql = "INSERT OR REPLACE INTO " + table + " (" + columns + ") VALUES ";
+    std::string insert_sql = "INSERT INTO " + table + " (" + columns + ") VALUES ";
     for (size_t i = 0; i < values_list.size(); ++i) {
       if (i > 0)
         insert_sql += ", ";
       insert_sql += "(" + values_list[i] + ")";
     }
+    insert_sql += build_on_conflict_clause(columns);
 
     std::string cursor_sql =
         "INSERT OR REPLACE INTO sync_state (source, entity, cursor_value, cursor_skip, last_sync_at) VALUES (" +
@@ -90,6 +92,7 @@ public:
 
   // 只读查询
   int64_t get_table_count(const std::string &table) {
+    std::lock_guard<std::mutex> rlock(read_mutex_);
     auto result = read_conn_->Query("SELECT COUNT(*) FROM " + table);
     if (result->HasError() || result->RowCount() == 0)
       return 0;
@@ -97,6 +100,7 @@ public:
   }
 
   json query_json(const std::string &sql) {
+    std::lock_guard<std::mutex> rlock(read_mutex_);
     auto result = read_conn_->Query(sql);
     if (result->HasError()) {
       throw std::runtime_error(result->GetError());
@@ -150,12 +154,15 @@ public:
 
   void merge_pnl_into_condition() {
     // 检查 pnl_condition 是否存在
-    auto result = read_conn_->Query(
-        "SELECT COUNT(*) FROM information_schema.tables "
-        "WHERE table_name = 'pnl_condition'");
-    if (result->HasError() || result->RowCount() == 0 ||
-        result->GetValue(0, 0).GetValue<int64_t>() == 0)
-      return;
+    {
+      std::lock_guard<std::mutex> rlock(read_mutex_);
+      auto result = read_conn_->Query(
+          "SELECT COUNT(*) FROM information_schema.tables "
+          "WHERE table_name = 'pnl_condition'");
+      if (result->HasError() || result->RowCount() == 0 ||
+          result->GetValue(0, 0).GetValue<int64_t>() == 0)
+        return;
+    }
 
     execute(
         "UPDATE condition SET positionIds = pnl.positionIds "
@@ -165,11 +172,12 @@ public:
   void drop_pnl_condition() {
     execute("DROP TABLE IF EXISTS pnl_condition");
     execute(
-        "DELETE FROM sync_state WHERE entity = 'Condition' "
-        "AND source = 'Profit and Loss'");
+        "INSERT OR REPLACE INTO sync_state (source, entity, cursor_value, cursor_skip, last_sync_at) "
+        "VALUES ('Profit and Loss', 'Condition', '__DISABLED__', 0, CURRENT_TIMESTAMP)");
   }
 
   std::vector<std::string> get_null_positionid_condition_ids(int limit = 100) {
+    std::lock_guard<std::mutex> rlock(read_mutex_);
     auto result = read_conn_->Query(
         "SELECT id FROM condition WHERE positionIds IS NULL LIMIT " +
         std::to_string(limit));
@@ -190,6 +198,7 @@ public:
   }
 
   bool table_exists(const std::string &table_name) {
+    std::lock_guard<std::mutex> rlock(read_mutex_);
     auto result = read_conn_->Query(
         "SELECT COUNT(*) FROM information_schema.tables "
         "WHERE table_name = '" +
@@ -199,12 +208,59 @@ public:
     return result->GetValue(0, 0).GetValue<int64_t>() > 0;
   }
 
+  // 批量 upsert (大 sync 用)
+  void upsert_batch(const std::string &table, const std::string &columns,
+                    const std::vector<std::string> &values_list) {
+    assert(!values_list.empty());
+    std::string sql = "INSERT INTO " + table + " (" + columns + ") VALUES ";
+    for (size_t i = 0; i < values_list.size(); ++i) {
+      if (i > 0) sql += ", ";
+      sql += "(" + values_list[i] + ")";
+    }
+    sql += build_on_conflict_clause(columns);
+    execute(sql);
+  }
+
+  // 检查 entity 是否已被标记禁用 (大 sync 合并后)
+  bool is_entity_disabled(const std::string &source, const std::string &entity) {
+    std::lock_guard<std::mutex> rlock(read_mutex_);
+    auto result = read_conn_->Query(
+        "SELECT cursor_value FROM sync_state WHERE source = '" +
+        entities::escape_sql_raw(source) + "' AND entity = '" +
+        entities::escape_sql_raw(entity) + "'");
+    if (result->HasError() || result->RowCount() == 0)
+      return false;
+    auto val = result->GetValue(0, 0);
+    return !val.IsNull() && val.ToString() == "__DISABLED__";
+  }
+
   // 获取底层 DuckDB 引用
   duckdb::DuckDB &get_duckdb() { return *db_; }
 
 private:
+  static std::string build_on_conflict_clause(const std::string &columns) {
+    std::string clause = " ON CONFLICT(id) DO UPDATE SET ";
+    bool first = true;
+    size_t pos = 0;
+    while (pos < columns.size()) {
+      size_t comma = columns.find(',', pos);
+      std::string col_raw = (comma == std::string::npos)
+          ? columns.substr(pos) : columns.substr(pos, comma - pos);
+      size_t b = col_raw.find_first_not_of(" ");
+      size_t e = col_raw.find_last_not_of(" ");
+      std::string col = (b != std::string::npos) ? col_raw.substr(b, e - b + 1) : "";
+      pos = (comma == std::string::npos) ? columns.size() : comma + 1;
+      if (col.empty() || col == "id") continue;
+      if (!first) clause += ", ";
+      clause += col + "=excluded." + col;
+      first = false;
+    }
+    return clause;
+  }
+
   std::unique_ptr<duckdb::DuckDB> db_;
   std::unique_ptr<duckdb::Connection> conn_;
   std::unique_ptr<duckdb::Connection> read_conn_;
   std::mutex write_mutex_;
+  std::mutex read_mutex_;
 };

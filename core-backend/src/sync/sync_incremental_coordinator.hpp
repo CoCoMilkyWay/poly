@@ -4,6 +4,7 @@
 // 小sync - 全局协调器（最外层，依赖 Scheduler）
 // ============================================================================
 
+#include <functional>
 #include <iostream>
 #include <vector>
 
@@ -24,8 +25,10 @@ namespace asio = boost::asio;
 // ============================================================================
 class SyncIncrementalCoordinator {
 public:
-  SyncIncrementalCoordinator(const Config &config, Database &db, HttpsPool &pool)
-      : config_(config), db_(db), pool_(pool), sync_interval_(config.sync_interval_seconds) {
+  SyncIncrementalCoordinator(const Config &config, Database &db, HttpsPool &pool,
+                             std::function<bool()> is_repair_running = nullptr)
+      : config_(config), db_(db), pool_(pool), sync_interval_(config.sync_interval_seconds),
+        is_repair_running_(std::move(is_repair_running)) {
     db_.init_sync_state();
     StatsManager::instance().set_database(&db_);
   }
@@ -37,6 +40,12 @@ public:
 
 private:
   void start_sync_round() {
+    if (is_repair_running_ && is_repair_running_()) {
+      std::cout << "[Puller] 大sync 运行中, 跳过本轮, " << sync_interval_ << "s 后重试" << std::endl;
+      schedule_next_round();
+      return;
+    }
+
     schedulers_.clear();
     total_active_ = 0;
     done_source_count_ = 0;
@@ -80,7 +89,10 @@ private:
       return;
 
     std::cout << "[Puller] 本轮 sync 完成, " << sync_interval_ << "s 后开始下一轮" << std::endl;
+    schedule_next_round();
+  }
 
+  void schedule_next_round() {
     asio::post(*ioc_, [this]() {
       auto timer = std::make_shared<asio::steady_timer>(*ioc_);
       timer->expires_after(std::chrono::seconds(sync_interval_));
@@ -99,4 +111,5 @@ private:
   int total_active_ = 0;
   int done_source_count_ = 0;
   int sync_interval_;
+  std::function<bool()> is_repair_running_;
 };

@@ -58,7 +58,7 @@ inline std::string build_target(const std::string &subgraph_id) {
 #define GRAPHQL_BATCH_SIZE 1000
 #define DB_FLUSH_THRESHOLD GRAPHQL_BATCH_SIZE
 #define PULL_RETRY_DELAY_MS 50
-#define PULL_RETRY_MAX_DELAY_MS 50
+#define PULL_RETRY_MAX_DELAY_MS 200
 #define BUFFER_HARD_LIMIT 10000
 
 // ============================================================================
@@ -110,17 +110,9 @@ private:
 
     auto &stats = StatsManager::instance();
 
-    auto calc_retry_delay = [this]() {
-      int delay = PULL_RETRY_DELAY_MS * (1 << std::min(retry_count_, 10));
-      return std::min(delay, PULL_RETRY_MAX_DELAY_MS);
-    };
-
     if (body.empty()) {
       stats.record_failure(source_name_, entity_->name, FailureKind::NETWORK, latency_ms);
-      int delay = calc_retry_delay();
-      std::cerr << "[Pull] " << entity_->name << " network fail, retry in " << delay << "ms" << std::endl;
-      ++retry_count_;
-      pool_.schedule_retry([this]() { send_request(); }, delay);
+      do_retry("network fail");
       return;
     }
 
@@ -129,29 +121,20 @@ private:
       j = json::parse(body);
     } catch (...) {
       stats.record_failure(source_name_, entity_->name, FailureKind::JSON, latency_ms);
-      int delay = calc_retry_delay();
-      std::cerr << "[Pull] " << entity_->name << " JSON parse fail, retry in " << delay << "ms" << std::endl;
-      ++retry_count_;
-      pool_.schedule_retry([this]() { send_request(); }, delay);
+      do_retry("JSON parse fail");
       return;
     }
 
     if (j.contains("errors")) {
       stats.record_failure(source_name_, entity_->name, FailureKind::GRAPHQL, latency_ms);
       parse_indexer_errors(j["errors"], stats);
-      int delay = calc_retry_delay();
-      std::cerr << "[Pull] " << entity_->name << " GraphQL error, retry in " << delay << "ms" << std::endl;
-      ++retry_count_;
-      pool_.schedule_retry([this]() { send_request(); }, delay);
+      do_retry("GraphQL error");
       return;
     }
 
     if (!j.contains("data") || !j["data"].contains(entity_->plural)) {
       stats.record_failure(source_name_, entity_->name, FailureKind::FORMAT, latency_ms);
-      int delay = calc_retry_delay();
-      std::cerr << "[Pull] " << entity_->name << " format error, retry in " << delay << "ms" << std::endl;
-      ++retry_count_;
-      pool_.schedule_retry([this]() { send_request(); }, delay);
+      do_retry("format error");
       return;
     }
 
@@ -297,6 +280,15 @@ private:
         }
       }
     }
+  }
+
+  void do_retry(const char *reason) {
+    int delay = PULL_RETRY_DELAY_MS * (1 << std::min(retry_count_, 10));
+    delay = std::min(delay, PULL_RETRY_MAX_DELAY_MS);
+    ++retry_count_;
+    std::cerr << "[Pull] " << entity_->name << " " << reason
+              << ", retry " << retry_count_ << " in " << delay << "ms" << std::endl;
+    pool_.schedule_retry([this]() { send_request(); }, delay);
   }
 
   void finish_sync() {

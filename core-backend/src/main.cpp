@@ -7,6 +7,7 @@
 #include "core/database.hpp"
 #include "infra/https_pool.hpp"
 #include "sync/sync_incremental_coordinator.hpp"
+#include "sync/sync_repair.hpp"
 
 void print_usage(const char *prog) {
   std::cout << "用法: " << prog << " --config <config.json>" << std::endl;
@@ -45,11 +46,14 @@ int main(int argc, char *argv[]) {
   // HTTPS 连接池
   HttpsPool pool(ioc, config.api_key);
 
-  // HTTP 服务器 (查询 API + 大 sync 触发)
-  ApiServer api_server(ioc, db, pool, config, 8001);
+  // 大sync (修复数据完整性)
+  SyncRepair sync_repair(db, pool, config);
 
-  // 数据拉取 (周期性小 sync, 不返回)
-  SyncIncrementalCoordinator sync_coordinator(config, db, pool);
+  // HTTP 服务器 (查询 API + 大 sync 触发)
+  ApiServer api_server(ioc, db, sync_repair, 8001);
+
+  // 数据拉取 (周期性小 sync, 大 sync 运行时自动跳过)
+  SyncIncrementalCoordinator sync_coordinator(config, db, pool, [&sync_repair]() { return sync_repair.is_running(); });
   sync_coordinator.start(ioc);
 
   ioc.run();

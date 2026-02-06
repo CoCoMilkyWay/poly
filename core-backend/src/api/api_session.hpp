@@ -214,13 +214,12 @@ private:
   void handle_big_sync() {
     res_.set(http::field::content_type, "application/json");
 
-    if (sync_repair_.is_running()) {
+    if (!sync_repair_.start()) {
       res_.result(http::status::ok);
       res_.body() = R"({"status":"already_running"})";
       return;
     }
 
-    sync_repair_.start();
     res_.result(http::status::ok);
     res_.body() = R"({"status":"started"})";
   }

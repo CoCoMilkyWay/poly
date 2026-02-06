@@ -55,9 +55,10 @@ public:
     assert(!pnl_subgraph_id_.empty() && "PnL source not found");
   }
 
-  void start() {
+  bool start() {
     bool expected = false;
-    assert(running_.compare_exchange_strong(expected, true) && "SyncRepair already running");
+    if (!running_.compare_exchange_strong(expected, true))
+      return false;
 
     progress_mutex_.lock();
     progress_ = {true, "starting", 0, 0, ""};
@@ -66,6 +67,7 @@ public:
     std::thread([this]() {
       run();
     }).detach();
+    return true;
   }
 
   bool is_running() const { return running_; }
@@ -154,15 +156,7 @@ private:
 
       cursor = items.back()["id"].get<std::string>();
 
-      // INSERT OR REPLACE (不更新 positionIds, 它不在 columns 里)
-      std::string insert_sql = "INSERT OR REPLACE INTO condition (" +
-                               std::string(entities::Condition.columns) + ") VALUES ";
-      for (size_t i = 0; i < values_list.size(); ++i) {
-        if (i > 0)
-          insert_sql += ", ";
-        insert_sql += "(" + values_list[i] + ")";
-      }
-      db_.execute(insert_sql);
+      db_.upsert_batch("condition", entities::Condition.columns, values_list);
 
       total_pulled += items.size();
       set_progress("phase1_repull", 0, total_pulled);

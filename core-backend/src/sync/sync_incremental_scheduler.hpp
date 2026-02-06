@@ -40,6 +40,11 @@ public:
       auto *e = entities::find_entity_by_table(it->second.c_str());
       assert(e && "Unknown entity table");
 
+      if (db_.is_entity_disabled(source_name_, e->name)) {
+        std::cout << "[Scheduler] " << source_name_ << "/" << e->name << " disabled, skip" << std::endl;
+        continue;
+      }
+
       db_.init_entity(e);
 
       int64_t count = db_.get_table_count(e->table);
@@ -53,6 +58,10 @@ public:
 
   void start() {
     std::cout << "[Scheduler] " << source_name_ << " start, " << executors_.size() << " entities" << std::endl;
+    if (executors_.empty()) {
+      on_done_();
+      return;
+    }
     start_next();
   }
 
