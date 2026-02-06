@@ -9,12 +9,19 @@
       "enabled": true,
       "entities": {
         "Condition": "condition",
-        "Merge": "merge",
-        "Redemption": "redemption",
         "EnrichedOrderFilled": "enriched_order_filled"
       }
     },
-    "Polymarket Profit and Loss": {
+    "Activity Polygon": {
+      "subgraph_id": "Bx1W4S7kDVxs9gC3s2G6DS8kdNBJNVhMviCtin2DiBp",
+      "enabled": true,
+      "entities": {
+        "Split": "split",
+        "Merge": "merge",
+        "Redemption": "redemption"
+      }
+    },
+    "Profit and Loss": {
       "subgraph_id": "6c58N5U4MtQE2Y8njfVrrAfRykzfqajMGeTMEvMmskVz",
       "enabled": true,
       "entities": {

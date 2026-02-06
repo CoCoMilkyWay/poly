@@ -6,9 +6,15 @@
 #include <mutex>
 #include <nlohmann/json.hpp>
 #include <string>
+#include <utility>
 #include <vector>
 
 using json = nlohmann::json;
+
+struct SyncCursor {
+  std::string value;
+  int skip = 0;
+};
 
 class Database {
 public:
@@ -28,15 +34,18 @@ public:
   void init_entity(const entities::EntityDef *entity) { execute(entity->ddl); }
 
   // 游标管理
-  std::string get_cursor(const std::string &source, const std::string &entity) {
-    std::string sql = "SELECT last_id FROM sync_state WHERE source = '" +
+  SyncCursor get_cursor(const std::string &source, const std::string &entity) {
+    std::string sql = "SELECT cursor_value, cursor_skip FROM sync_state WHERE source = '" +
                       entities::escape_sql_raw(source) + "' AND entity = '" +
                       entities::escape_sql_raw(entity) + "'";
     auto result = conn_->Query(sql);
     if (result->RowCount() == 0)
-      return "";
-    auto value = result->GetValue(0, 0);
-    return value.IsNull() ? "" : value.ToString();
+      return {"", 0};
+    auto val = result->GetValue(0, 0);
+    auto skip = result->GetValue(1, 0);
+    return {
+        val.IsNull() ? "" : val.ToString(),
+        skip.IsNull() ? 0 : skip.GetValue<int32_t>()};
   }
 
   // 原子写入：数据 + cursor 在同一事务
@@ -44,11 +53,9 @@ public:
       const std::string &table, const std::string &columns,
       const std::vector<std::string> &values_list,
       const std::string &source, const std::string &entity,
-      const std::string &cursor) {
+      const std::string &cursor_value, int cursor_skip) {
     assert(!values_list.empty());
-    assert(!cursor.empty());
 
-    // 构建 batch insert SQL
     std::string insert_sql = "INSERT OR REPLACE INTO " + table + " (" + columns + ") VALUES ";
     for (size_t i = 0; i < values_list.size(); ++i) {
       if (i > 0)
@@ -56,17 +63,15 @@ public:
       insert_sql += "(" + values_list[i] + ")";
     }
 
-    // 构建 cursor update SQL
     std::string cursor_sql =
-        "INSERT OR REPLACE INTO sync_state (source, entity, last_id, last_sync_at) VALUES (" +
+        "INSERT OR REPLACE INTO sync_state (source, entity, cursor_value, cursor_skip, last_sync_at) VALUES (" +
         entities::escape_sql(source) + ", " +
         entities::escape_sql(entity) + ", " +
-        entities::escape_sql(cursor) + ", CURRENT_TIMESTAMP)";
+        entities::escape_sql(cursor_value) + ", " +
+        std::to_string(cursor_skip) + ", CURRENT_TIMESTAMP)";
 
-    // 加锁保护写操作
     std::lock_guard<std::mutex> lock(write_mutex_);
 
-    // 单事务执行
     auto r1 = conn_->Query("BEGIN TRANSACTION");
     assert(!r1->HasError());
     auto r2 = conn_->Query(insert_sql);
@@ -135,12 +140,71 @@ public:
     return rows;
   }
 
-  // 获取底层 DuckDB 引用(供 Rebuilder 使用)
+  // ============================================================================
+  // Big Sync 辅助方法
+  // ============================================================================
+
+  void delete_null_conditions() {
+    execute("DELETE FROM condition WHERE resolutionTimestamp IS NULL");
+  }
+
+  void merge_pnl_into_condition() {
+    // 检查 pnl_condition 是否存在
+    auto result = read_conn_->Query(
+        "SELECT COUNT(*) FROM information_schema.tables "
+        "WHERE table_name = 'pnl_condition'");
+    if (result->HasError() || result->RowCount() == 0 ||
+        result->GetValue(0, 0).GetValue<int64_t>() == 0)
+      return;
+
+    execute(
+        "UPDATE condition SET positionIds = pnl.positionIds "
+        "FROM pnl_condition pnl WHERE condition.id = pnl.id");
+  }
+
+  void drop_pnl_condition() {
+    execute("DROP TABLE IF EXISTS pnl_condition");
+    execute(
+        "DELETE FROM sync_state WHERE entity = 'Condition' "
+        "AND source = 'Profit and Loss'");
+  }
+
+  std::vector<std::string> get_null_positionid_condition_ids(int limit = 100) {
+    auto result = read_conn_->Query(
+        "SELECT id FROM condition WHERE positionIds IS NULL LIMIT " +
+        std::to_string(limit));
+    std::vector<std::string> ids;
+    if (result->HasError())
+      return ids;
+    for (size_t i = 0; i < result->RowCount(); ++i) {
+      ids.push_back(result->GetValue(0, i).ToString());
+    }
+    return ids;
+  }
+
+  void update_condition_position_ids(const std::string &condition_id,
+                                     const std::string &position_ids) {
+    execute("UPDATE condition SET positionIds = " +
+            entities::escape_sql(position_ids) +
+            " WHERE id = " + entities::escape_sql(condition_id));
+  }
+
+  bool table_exists(const std::string &table_name) {
+    auto result = read_conn_->Query(
+        "SELECT COUNT(*) FROM information_schema.tables "
+        "WHERE table_name = '" +
+        entities::escape_sql_raw(table_name) + "'");
+    if (result->HasError() || result->RowCount() == 0)
+      return false;
+    return result->GetValue(0, 0).GetValue<int64_t>() > 0;
+  }
+
+  // 获取底层 DuckDB 引用
   duckdb::DuckDB &get_duckdb() { return *db_; }
 
 private:
   std::unique_ptr<duckdb::DuckDB> db_;
   std::unique_ptr<duckdb::Connection> conn_;
   std::unique_ptr<duckdb::Connection> read_conn_;
-  std::mutex write_mutex_; // 保护 conn_ 写操作
+  std::mutex write_mutex_;
 };

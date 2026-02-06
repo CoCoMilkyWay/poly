@@ -9,7 +9,7 @@
 #define DB_FLUSH_THRESHOLD GRAPHQL_BATCH_SIZE // 累积多少条刷入 DB
 #define PULL_RETRY_DELAY_MS 50                // 初始重试延迟(ms)
 #define PULL_RETRY_MAX_DELAY_MS 50            // 最大重试延迟(ms)
-#define BUFFER_HARD_LIMIT 10000               // buffer 硬上限，超过则 assert
+#define BUFFER_HARD_LIMIT 10000               // buffer 硬上限
 
 #include <algorithm>
 #include <cassert>
@@ -27,7 +27,6 @@
 
 using json = nlohmann::json;
 
-// 前向声明
 class Puller;
 class SourceScheduler;
 
@@ -75,7 +74,6 @@ public:
       : source_name_(source_name), entity_(entity), db_(db), pool_(pool),
         scheduler_(scheduler), target_(graphql::build_target(subgraph_id)) {
     buffer_.reserve(DB_FLUSH_THRESHOLD);
-    build_query_cache_();
   }
 
   void start();
@@ -91,6 +89,20 @@ private:
   void parse_indexer_errors(const json &errors, EntityStatsManager &stats);
   void finish_sync();
 
+  std::string build_query();
+  void update_cursor(const json &items);
+
+  static std::string extract_order_value(const json &item, const char *field) {
+    auto &val = item[field];
+    if (val.is_null())
+      return "";
+    if (val.is_string())
+      return val.get<std::string>();
+    if (val.is_number())
+      return std::to_string(val.get<int64_t>());
+    return val.dump();
+  }
+
   std::string source_name_;
   const entities::EntityDef *entity_;
   Database &db_;
@@ -98,40 +110,15 @@ private:
   SourceScheduler *scheduler_;
   std::string target_;
 
-  // 状态
-  std::string cursor_;
+  // 游标状态
+  std::string cursor_value_;
+  int cursor_skip_ = 0;
+
   std::vector<std::string> buffer_;
   bool done_ = false;
 
-  // 请求计时
   std::chrono::steady_clock::time_point request_start_;
-
-  // 重试指数退避
   int retry_count_ = 0;
-
-  // GraphQL query 缓存
-  std::string query_initial_;
-  std::string query_cursor_prefix_;
-  std::string query_cursor_suffix_;
-
-  void build_query_cache_() {
-    const std::string limit_str = std::to_string(GRAPHQL_BATCH_SIZE);
-
-    // cursor 为空时的完整 query
-    query_initial_ = R"({"query":"query Q($limit:Int!){)" +
-                     std::string(entity_->plural) +
-                     R"((first:$limit,orderBy:id,orderDirection:asc){)" +
-                     entity_->fields +
-                     R"(}}","variables":{"limit":)" + limit_str + "}}";
-
-    // cursor 非空时：prefix + escaped(cursor) + suffix
-    query_cursor_prefix_ = R"({"query":"query Q($limit:Int!){)" +
-                           std::string(entity_->plural) +
-                           R"((first:$limit,orderBy:id,orderDirection:asc,where:{id_gt:\")";
-
-    query_cursor_suffix_ = R"(\"}){)" + std::string(entity_->fields) +
-                           R"(}}","variables":{"limit":)" + limit_str + "}}";
-  }
 };
 
 // ============================================================================
@@ -140,18 +127,16 @@ private:
 class SourceScheduler {
 public:
   SourceScheduler(const SourceConfig &config, Database &db, HttpsPool &pool,
-                  Puller *puller, bool is_pnl)
+                  Puller *puller)
       : source_name_(config.name), db_(db), pool_(pool), puller_(puller) {
-    auto entity_list = is_pnl ? entities::PNL_ENTITIES : entities::MAIN_ENTITIES;
-    auto entity_count = is_pnl ? entities::PNL_ENTITY_COUNT : entities::MAIN_ENTITY_COUNT;
-
-    for (const auto &name : config.entities) {
-      auto *e = entities::find_entity(name.c_str(), entity_list, entity_count);
-      assert(e && "Unknown entity");
+    for (const auto &entity_name : config.entities) {
+      auto it = config.entity_table_map.find(entity_name);
+      assert(it != config.entity_table_map.end());
+      auto *e = entities::find_entity_by_table(it->second.c_str());
+      assert(e && "Unknown entity table");
       pullers_.emplace_back(config.subgraph_id, source_name_, e, db_, pool_, this);
       db_.init_entity(e);
 
-      // 初始化 entity stats
       int64_t count = db_.get_table_count(e->table);
       int64_t row_size_bytes = entities::estimate_row_size_bytes(e);
       EntityStatsManager::instance().init(source_name_, e->name, count, row_size_bytes);
@@ -180,31 +165,20 @@ private:
 };
 
 // ============================================================================
-// Puller - 全局协调器
+// Puller - 全局协调器 (周期性小 sync)
 // ============================================================================
 class Puller {
 public:
   Puller(const Config &config, Database &db, HttpsPool &pool)
-      : db_(db), pool_(pool) {
+      : config_(config), db_(db), pool_(pool), sync_interval_(config.sync_interval_seconds) {
     db_.init_sync_state();
     EntityStatsManager::instance().set_database(&db_);
-
-    // 预分配空间，避免向量重新分配导致 scheduler_ 指针失效
-    schedulers_.reserve(config.sources.size());
-    for (const auto &src : config.sources) {
-      // 判断是否是 PnL subgraph：名字包含 "Profit and Loss"
-      bool is_pnl = src.name.find("Profit and Loss") != std::string::npos;
-      schedulers_.emplace_back(src, db_, pool_, this, is_pnl);
-    }
   }
 
-  void run(asio::io_context &ioc) {
-    std::cout << "[Puller] 启动，共 " << schedulers_.size() << " 个 source" << std::endl;
-    for (auto &s : schedulers_) {
-      s.start();
-    }
-    ioc.run();
-    std::cout << "[Puller] 所有 source 同步完成" << std::endl;
+  // 启动周期 sync (不返回, 持续运行)
+  void start(asio::io_context &ioc) {
+    ioc_ = &ioc;
+    start_sync_round();
   }
 
   bool try_acquire_slot() {
@@ -225,29 +199,128 @@ public:
     }
   }
 
+  void on_source_done() {
+    ++done_source_count_;
+    if (done_source_count_ < static_cast<int>(schedulers_.size()))
+      return;
+
+    std::cout << "[Puller] 本轮 sync 完成, " << sync_interval_ << "s 后开始下一轮" << std::endl;
+
+    // 用 post 延迟, 避免在 EntityPuller 回调栈内 clear schedulers
+    asio::post(*ioc_, [this]() {
+      auto timer = std::make_shared<asio::steady_timer>(*ioc_);
+      timer->expires_after(std::chrono::seconds(sync_interval_));
+      timer->async_wait([this, timer](boost::system::error_code) {
+        start_sync_round();
+      });
+    });
+  }
+
 private:
+  void start_sync_round() {
+    schedulers_.clear();
+    total_active_ = 0;
+    done_source_count_ = 0;
+
+    schedulers_.reserve(config_.sources.size());
+    for (const auto &src : config_.sources) {
+      schedulers_.emplace_back(src, db_, pool_, this);
+    }
+
+    std::cout << "[Puller] 开始 sync, 共 " << schedulers_.size() << " 个 source" << std::endl;
+    for (auto &s : schedulers_) {
+      s.start();
+    }
+  }
+
+  const Config &config_;
   Database &db_;
   HttpsPool &pool_;
+  asio::io_context *ioc_ = nullptr;
+
   std::vector<SourceScheduler> schedulers_;
   int total_active_ = 0;
+  int done_source_count_ = 0;
+  int sync_interval_;
 };
 
 // ============================================================================
 // EntityPuller 实现
 // ============================================================================
 
+inline std::string EntityPuller::build_query() {
+  std::string limit = std::to_string(GRAPHQL_BATCH_SIZE);
+  std::string plural = entity_->plural;
+  std::string fields = entity_->fields;
+
+  if (entity_->sync_mode == entities::SyncMode::ID) {
+    if (cursor_value_.empty()) {
+      return R"({"query":"{)" + plural +
+             "(first:" + limit + ",orderBy:id,orderDirection:asc){" +
+             fields + R"(}}"})";
+    }
+    return R"({"query":"{)" + plural +
+           R"((first:)" + limit + R"(,orderBy:id,orderDirection:asc,where:{id_gt:\")" +
+           graphql::escape_json(cursor_value_) + R"(\"}){)" +
+           fields + R"(}}"})";
+  }
+
+  // TIMESTAMP 或 RESOLUTION_TS: 始终有 where 子句 (排除 null)
+  std::string cv = cursor_value_.empty() ? "0" : cursor_value_;
+  return R"({"query":"{)" + plural +
+         "(first:" + limit + ",orderBy:" + entity_->order_field +
+         ",orderDirection:asc,where:{" + entity_->where_field + ":" + cv +
+         "},skip:" + std::to_string(cursor_skip_) + "){" +
+         fields + R"(}}"})";
+}
+
+inline void EntityPuller::update_cursor(const json &items) {
+  assert(!items.empty());
+
+  if (entity_->sync_mode == entities::SyncMode::ID) {
+    cursor_value_ = items.back()["id"].get<std::string>();
+    cursor_skip_ = 0;
+    return;
+  }
+
+  // TIMESTAMP 或 RESOLUTION_TS
+  const char *order_field = entity_->order_field;
+  std::string last_val = extract_order_value(items.back(), order_field);
+
+  if (static_cast<int>(items.size()) < GRAPHQL_BATCH_SIZE) {
+    // 最后一批, 直接更新
+    cursor_value_ = last_val;
+    cursor_skip_ = 0;
+  } else if (last_val == cursor_value_) {
+    // 同一 timestamp 还没翻完
+    cursor_skip_ += GRAPHQL_BATCH_SIZE;
+  } else {
+    // 推进到新 timestamp, count trailing
+    cursor_value_ = last_val;
+    cursor_skip_ = 0;
+    for (auto it = items.rbegin(); it != items.rend(); ++it) {
+      if (extract_order_value(*it, order_field) == last_val)
+        ++cursor_skip_;
+      else
+        break;
+    }
+  }
+}
+
 inline void EntityPuller::start() {
-  cursor_ = db_.get_cursor(source_name_, entity_->name);
+  auto cursor = db_.get_cursor(source_name_, entity_->name);
+  cursor_value_ = cursor.value;
+  cursor_skip_ = cursor.skip;
   EntityStatsManager::instance().start_sync(source_name_, entity_->name);
 
-  std::cout << "[Pull] " << source_name_ << "/" << entity_->name << " start;" << " cursor=" << (cursor_.empty() ? "(empty)" : cursor_.substr(0, 20) + "...") << std::endl;
+  std::cout << "[Pull] " << source_name_ << "/" << entity_->name
+            << " start; cursor=" << (cursor_value_.empty() ? "(empty)" : cursor_value_.substr(0, 20) + "...")
+            << " skip=" << cursor_skip_ << std::endl;
   send_request();
 }
 
 inline void EntityPuller::send_request() {
-  std::string query = cursor_.empty()
-                          ? query_initial_
-                          : query_cursor_prefix_ + graphql::escape_json(cursor_) + query_cursor_suffix_;
+  std::string query = build_query();
 
   request_start_ = std::chrono::steady_clock::now();
   EntityStatsManager::instance().set_api_state(source_name_, entity_->name, ApiState::CALLING);
@@ -260,18 +333,16 @@ inline void EntityPuller::send_request() {
 
 inline void EntityPuller::flush_buffer() {
   assert(!buffer_.empty());
-  assert(!cursor_.empty()); // cursor 必须在数据处理时被设置
 
   db_.atomic_insert_with_cursor(entity_->table, entity_->columns, buffer_,
-                                source_name_, entity_->name, cursor_);
-
-  // std::cout << "[Pull] " << source_name_ << "/" << entity_->name << " flush " << buffer_.size() << " rows" << std::endl;
+                                source_name_, entity_->name,
+                                cursor_value_, cursor_skip_);
 
   buffer_.clear();
 }
 
 inline bool EntityPuller::should_flush() const {
-  return !buffer_.empty() && !cursor_.empty();
+  return !buffer_.empty();
 }
 
 inline void EntityPuller::on_response(const std::string &body) {
@@ -281,13 +352,11 @@ inline void EntityPuller::on_response(const std::string &body) {
 
   auto &stats = EntityStatsManager::instance();
 
-  // 计算重试延迟(指数退避)
   auto calc_retry_delay = [this]() {
-    int delay = PULL_RETRY_DELAY_MS * (1 << std::min(retry_count_, 10)); // 防止溢出
+    int delay = PULL_RETRY_DELAY_MS * (1 << std::min(retry_count_, 10));
     return std::min(delay, PULL_RETRY_MAX_DELAY_MS);
   };
 
-  // 请求失败
   if (body.empty()) {
     stats.record_failure(source_name_, entity_->name, FailureKind::NETWORK, latency_ms);
     int delay = calc_retry_delay();
@@ -297,7 +366,6 @@ inline void EntityPuller::on_response(const std::string &body) {
     return;
   }
 
-  // JSON 解析
   json j;
   try {
     j = json::parse(body);
@@ -310,7 +378,6 @@ inline void EntityPuller::on_response(const std::string &body) {
     return;
   }
 
-  // GraphQL 错误
   if (j.contains("errors")) {
     stats.record_failure(source_name_, entity_->name, FailureKind::GRAPHQL, latency_ms);
     parse_indexer_errors(j["errors"], stats);
@@ -321,7 +388,6 @@ inline void EntityPuller::on_response(const std::string &body) {
     return;
   }
 
-  // 响应格式错误
   if (!j.contains("data") || !j["data"].contains(entity_->plural)) {
     stats.record_failure(source_name_, entity_->name, FailureKind::FORMAT, latency_ms);
     int delay = calc_retry_delay();
@@ -333,11 +399,9 @@ inline void EntityPuller::on_response(const std::string &body) {
 
   auto &items = j["data"][entity_->plural];
   stats.record_success(source_name_, entity_->name, items.size(), latency_ms);
-
-  // 成功，重置重试计数
   retry_count_ = 0;
 
-  // 没有更多数据 - 完成
+  // 没有更多数据
   if (items.empty()) {
     if (should_flush())
       flush_buffer();
@@ -345,18 +409,18 @@ inline void EntityPuller::on_response(const std::string &body) {
     return;
   }
 
-  // 处理数据：先更新 cursor，再添加到 buffer
-  cursor_ = items.back()["id"].get<std::string>();
+  // 更新游标
+  update_cursor(items);
+
+  // 处理数据
   for (const auto &item : items) {
     std::string values = entity_->to_values(item);
     assert(!values.empty());
     buffer_.push_back(std::move(values));
   }
 
-  // 内存安全检查：buffer 不能无限增长
-  assert(buffer_.size() <= BUFFER_HARD_LIMIT && "buffer overflow, check flush logic");
+  assert(buffer_.size() <= BUFFER_HARD_LIMIT && "buffer overflow");
 
-  // 达到阈值则 flush
   if (buffer_.size() >= DB_FLUSH_THRESHOLD) {
     flush_buffer();
   }
@@ -397,7 +461,6 @@ inline void EntityPuller::parse_indexer_errors(const json &errors, EntityStatsMa
         continue;
       std::string indexer = part.substr(0, colon);
       std::string reason = part.substr(colon + 1);
-      // trim
       while (!indexer.empty() && indexer.front() == ' ')
         indexer.erase(0, 1);
       while (!indexer.empty() && indexer.back() == ' ')
@@ -432,6 +495,12 @@ inline void SourceScheduler::on_entity_done(EntityPuller *puller) {
     --active_count_;
     puller_->release_slot();
   }
+
+  if (all_done()) {
+    puller_->on_source_done();
+    return;
+  }
+
   start_next();
 }
 

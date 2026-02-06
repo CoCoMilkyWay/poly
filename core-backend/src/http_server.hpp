@@ -1,7 +1,7 @@
 #pragma once
 
 // ============================================================================
-// 简单 HTTP 服务器，提供查询 API
+// HTTP 服务器: 查询 API + 大 sync 触发
 // ============================================================================
 
 #include <filesystem>
@@ -14,9 +14,9 @@
 #include <boost/beast.hpp>
 #include <nlohmann/json.hpp>
 
+#include "big_sync.hpp"
 #include "db.hpp"
 #include "entity_stats.hpp"
-#include "rebuilder.hpp"
 
 namespace fs = std::filesystem;
 namespace asio = boost::asio;
@@ -30,8 +30,8 @@ using json = nlohmann::json;
 // ============================================================================
 class HttpSession : public std::enable_shared_from_this<HttpSession> {
 public:
-  HttpSession(tcp::socket socket, Database &db, rebuilder::Rebuilder &rebuilder)
-      : socket_(std::move(socket)), db_(db), rebuilder_(rebuilder) {}
+  HttpSession(tcp::socket socket, Database &db, BigSync &big_sync)
+      : socket_(std::move(socket)), db_(db), big_sync_(big_sync) {}
 
   void run() {
     do_read();
@@ -53,12 +53,10 @@ private:
     res_.version(req_.version());
     res_.keep_alive(req_.keep_alive());
 
-    // CORS 头
     res_.set(http::field::access_control_allow_origin, "*");
     res_.set(http::field::access_control_allow_methods, "GET, POST, OPTIONS");
     res_.set(http::field::access_control_allow_headers, "Content-Type");
 
-    // OPTIONS 预检请求
     if (req_.method() == http::verb::options) {
       res_.result(http::status::ok);
       return do_write();
@@ -67,7 +65,6 @@ private:
     std::string target(req_.target());
 
     try {
-      // 路由
       if (target.starts_with("/api/sql")) {
         handle_sql();
       } else if (target.starts_with("/api/indexer-fails")) {
@@ -80,12 +77,10 @@ private:
         handle_stats();
       } else if (target.starts_with("/api/sync")) {
         handle_sync_state();
-      } else if (target.starts_with("/api/rebuild-status")) {
-        handle_rebuild_status();
-      } else if (target.starts_with("/api/rebuild-all")) {
-        handle_rebuild_all();
-      } else if (target.starts_with("/api/rebuild")) {
-        handle_rebuild_user();
+      } else if (target.starts_with("/api/big-sync-status")) {
+        handle_big_sync_status();
+      } else if (target.starts_with("/api/big-sync")) {
+        handle_big_sync();
       } else if (target.starts_with("/api/export-raw")) {
         handle_export_raw();
       } else {
@@ -113,7 +108,6 @@ private:
     std::string query = get_param("q");
     assert(!query.empty() && "Missing query parameter 'q'");
 
-    // SQL 注入防护
     std::string upper = query;
     for (auto &c : upper)
       c = std::toupper(c);
@@ -149,17 +143,11 @@ private:
     res_.set(http::field::content_type, "application/json");
 
     json stats = json::object();
-    // 从 entities 定义动态获取表名
-    auto collect_stats = [&](const entities::EntityDef *const *list, size_t count) {
-      for (size_t i = 0; i < count; ++i) {
-        const auto *e = list[i];
-        assert(e != nullptr);
-        // 极限优化：不做 COUNT(*) 扫表，直接复用 puller 维护的内存计数(跨 source 汇总)
-        stats[e->table] = EntityStatsManager::instance().get_total_count_for_entity(e->name);
-      }
-    };
-    collect_stats(entities::MAIN_ENTITIES, entities::MAIN_ENTITY_COUNT);
-    collect_stats(entities::PNL_ENTITIES, entities::PNL_ENTITY_COUNT);
+    for (size_t i = 0; i < entities::ALL_ENTITY_COUNT; ++i) {
+      const auto *e = entities::ALL_ENTITIES[i];
+      assert(e != nullptr);
+      stats[e->table] = EntityStatsManager::instance().get_total_count_for_entity(e->name);
+    }
 
     res_.result(http::status::ok);
     res_.body() = stats.dump();
@@ -168,7 +156,7 @@ private:
   void handle_sync_state() {
     res_.set(http::field::content_type, "application/json");
     json result = db_.query_json(
-        "SELECT source, entity, last_id, last_sync_at "
+        "SELECT source, entity, cursor_value, cursor_skip, last_sync_at "
         "FROM sync_state ORDER BY last_sync_at DESC");
     res_.result(http::status::ok);
     res_.body() = result.dump();
@@ -183,14 +171,10 @@ private:
   void handle_entity_latest() {
     res_.set(http::field::content_type, "application/json");
 
-    std::string entity = get_param("entity");
-    assert(!entity.empty() && "Missing query parameter 'entity'");
+    std::string entity_name = get_param("entity");
+    assert(!entity_name.empty() && "Missing query parameter 'entity'");
 
-    const entities::EntityDef *e =
-        entities::find_entity(entity.c_str(), entities::MAIN_ENTITIES, entities::MAIN_ENTITY_COUNT);
-    if (!e) {
-      e = entities::find_entity(entity.c_str(), entities::PNL_ENTITIES, entities::PNL_ENTITY_COUNT);
-    }
+    const entities::EntityDef *e = entities::find_entity(entity_name.c_str(), entities::ALL_ENTITIES, entities::ALL_ENTITY_COUNT);
     assert(e && "Unknown entity");
 
     json schema = db_.query_json(std::string("PRAGMA table_info('") + e->table + "')");
@@ -227,45 +211,29 @@ private:
     res_.body() = rows.dump();
   }
 
-  void handle_rebuild_user() {
-    res_.set(http::field::content_type, "application/json");
-    std::string user = get_param("user");
-    assert(!user.empty() && "Missing query parameter 'user'");
-
-    auto result = rebuilder_.rebuild_user(user);
-    res_.result(http::status::ok);
-    res_.body() = rebuilder::Rebuilder::result_to_json(result).dump();
-  }
-
-  void handle_rebuild_all() {
+  void handle_big_sync() {
     res_.set(http::field::content_type, "application/json");
 
-    // 检查是否已经在运行
-    if (rebuilder_.get_progress().running) {
+    if (big_sync_.is_running()) {
       res_.result(http::status::ok);
       res_.body() = R"({"status":"already_running"})";
       return;
     }
 
-    // 异步执行全量重建
-    std::thread([&rebuilder = rebuilder_]() {
-      rebuilder.rebuild_all();
-    }).detach();
-
+    big_sync_.start();
     res_.result(http::status::ok);
     res_.body() = R"({"status":"started"})";
   }
 
-  void handle_rebuild_status() {
+  void handle_big_sync_status() {
     res_.set(http::field::content_type, "application/json");
-    auto progress = rebuilder_.get_progress();
+    auto progress = big_sync_.get_progress();
 
     json result = {
         {"running", progress.running},
-        {"total_users", progress.total_users},
-        {"processed_users", progress.processed_users},
-        {"total_events", progress.total_events},
-        {"processed_events", progress.processed_events},
+        {"phase", progress.phase},
+        {"total", progress.total},
+        {"processed", progress.processed},
         {"error", progress.error}};
 
     res_.result(http::status::ok);
@@ -307,53 +275,46 @@ private:
       return names;
     };
 
-    auto export_entities = [&](const entities::EntityDef *const *list, size_t count) {
-      for (size_t i = 0; i < count; ++i) {
-        const auto *e = list[i];
-        std::string table = e->table;
-        std::string sql = "SELECT " + std::string(e->columns) + " FROM " + table +
-                          " ORDER BY id " + order_dir + " LIMIT " + std::to_string(limit);
+    for (size_t i = 0; i < entities::ALL_ENTITY_COUNT; ++i) {
+      const auto *e = entities::ALL_ENTITIES[i];
+      std::string table = e->table;
+      std::string sql = "SELECT " + std::string(e->columns) + " FROM " + table +
+                        " ORDER BY id " + order_dir + " LIMIT " + std::to_string(limit);
 
-        json rows = db_.query_json(sql);
-        auto col_names = parse_columns(e->columns);
+      json rows = db_.query_json(sql);
+      auto col_names = parse_columns(e->columns);
 
-        std::string path = export_dir + "/" + table + ".csv";
-        std::ofstream ofs(path);
-        assert(ofs.is_open());
+      std::string path = export_dir + "/" + table + ".csv";
+      std::ofstream ofs(path);
+      assert(ofs.is_open());
 
-        // header
+      for (size_t k = 0; k < col_names.size(); ++k) {
+        if (k > 0)
+          ofs << ",";
+        ofs << col_names[k];
+      }
+      ofs << "\n";
+
+      for (const auto &row : rows) {
         for (size_t k = 0; k < col_names.size(); ++k) {
           if (k > 0)
             ofs << ",";
-          ofs << col_names[k];
+          if (!row.contains(col_names[k]) || row[col_names[k]].is_null())
+            continue;
+          const auto &v = row[col_names[k]];
+          if (v.is_string())
+            ofs << escape_csv(v.get<std::string>());
+          else
+            ofs << v.dump();
         }
         ofs << "\n";
-
-        // rows
-        for (const auto &row : rows) {
-          for (size_t k = 0; k < col_names.size(); ++k) {
-            if (k > 0)
-              ofs << ",";
-            if (!row.contains(col_names[k]) || row[col_names[k]].is_null())
-              continue;
-            const auto &v = row[col_names[k]];
-            if (v.is_string())
-              ofs << escape_csv(v.get<std::string>());
-            else
-              ofs << v.dump();
-          }
-          ofs << "\n";
-        }
-
-        int row_count = static_cast<int>(rows.size());
-        j_results[table] = {{"ok", row_count}};
-        if (row_count > 0)
-          ++ok_count;
       }
-    };
 
-    export_entities(entities::MAIN_ENTITIES, entities::MAIN_ENTITY_COUNT);
-    export_entities(entities::PNL_ENTITIES, entities::PNL_ENTITY_COUNT);
+      int row_count = static_cast<int>(rows.size());
+      j_results[table] = {{"ok", row_count}};
+      if (row_count > 0)
+        ++ok_count;
+    }
 
     res_.result(http::status::ok);
     res_.body() = json{
@@ -384,7 +345,6 @@ private:
                       [self = shared_from_this()](beast::error_code ec, std::size_t) {
                         beast::error_code shutdown_ec;
                         [[maybe_unused]] auto ret = self->socket_.shutdown(tcp::socket::shutdown_send, shutdown_ec);
-                        // shutdown 失败不是致命错误，显式忽略
                       });
   }
 
@@ -406,7 +366,7 @@ private:
 
   tcp::socket socket_;
   Database &db_;
-  rebuilder::Rebuilder &rebuilder_;
+  BigSync &big_sync_;
   beast::flat_buffer buffer_;
   http::request<http::string_body> req_;
   http::response<http::string_body> res_;
@@ -417,9 +377,10 @@ private:
 // ============================================================================
 class HttpServer {
 public:
-  HttpServer(asio::io_context &ioc, Database &db, unsigned short port)
+  HttpServer(asio::io_context &ioc, Database &db, HttpsPool &pool,
+             const Config &config, unsigned short port)
       : ioc_(ioc), acceptor_(ioc, tcp::endpoint(tcp::v4(), port)), db_(db),
-        rebuilder_(db.get_duckdb()) {
+        big_sync_(db, pool, config) {
     std::cout << "[HTTP] 监听端口 " << port << std::endl;
     do_accept();
   }
@@ -429,7 +390,7 @@ private:
     acceptor_.async_accept(
         [this](beast::error_code ec, tcp::socket socket) {
           if (!ec) {
-            std::make_shared<HttpSession>(std::move(socket), db_, rebuilder_)
+            std::make_shared<HttpSession>(std::move(socket), db_, big_sync_)
                 ->run();
           }
           do_accept();
@@ -439,5 +400,5 @@ private:
   asio::io_context &ioc_;
   tcp::acceptor acceptor_;
   Database &db_;
-  rebuilder::Rebuilder rebuilder_;
+  BigSync big_sync_;
 };

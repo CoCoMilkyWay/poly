@@ -25,13 +25,14 @@ int main(int argc, char *argv[]) {
   }
 
   std::cout << "========================================" << std::endl;
-  std::cout << "    Polymarket Data Puller" << std::endl;
+  std::cout << "    Polymarket Data Syncer" << std::endl;
   std::cout << "========================================" << std::endl;
 
   Config config = Config::load(config_path);
 
   std::cout << "[Main] API Key: " << config.api_key.substr(0, 8) << "..." << std::endl;
   std::cout << "[Main] DB Path: " << config.db_path << std::endl;
+  std::cout << "[Main] Sync Interval: " << config.sync_interval_seconds << "s" << std::endl;
   std::cout << "[Main] Active Sources: " << config.sources.size() << std::endl;
   for (const auto &src : config.sources) {
     std::cout << "[Main]   - " << src.name << " (" << src.entities.size() << " entities)" << std::endl;
@@ -44,13 +45,14 @@ int main(int argc, char *argv[]) {
   // HTTPS 连接池
   HttpsPool pool(ioc, config.api_key);
 
-  // HTTP 服务器(查询 API + 导出 API)
-  HttpServer http_server(ioc, db, 8001);
+  // HTTP 服务器 (查询 API + 大 sync 触发)
+  HttpServer http_server(ioc, db, pool, config, 8001);
 
-  // 数据拉取
+  // 数据拉取 (周期性小 sync, 不返回)
   Puller puller(config, db, pool);
+  puller.start(ioc);
 
-  puller.run(ioc);
+  ioc.run();
 
   return 0;
 }

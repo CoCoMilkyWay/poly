@@ -2,7 +2,7 @@
 
 // ============================================================================
 // Entity 定义
-// 每个 entity 包含：GraphQL 字段、DDL、转换函数
+// 每个 entity 包含：GraphQL 字段、DDL、转换函数、同步模式
 // ============================================================================
 
 #include <cassert>
@@ -15,10 +15,18 @@ using json = nlohmann::json;
 namespace entities {
 
 // ============================================================================
+// 同步模式
+// ============================================================================
+enum class SyncMode {
+  TIMESTAMP,      // orderBy: timestamp, where: {timestamp_gte}, + skip
+  RESOLUTION_TS,  // orderBy: resolutionTimestamp, where: {resolutionTimestamp_gte}, + skip
+  ID,             // orderBy: id, where: {id_gt} (no skip)
+};
+
+// ============================================================================
 // 工具函数
 // ============================================================================
 
-// SQL 字符串转义(不带引号)
 inline std::string escape_sql_raw(const std::string &s) {
   std::string r;
   r.reserve(s.size());
@@ -31,12 +39,10 @@ inline std::string escape_sql_raw(const std::string &s) {
   return r;
 }
 
-// SQL 字符串转义(带引号)
 inline std::string escape_sql(const std::string &s) {
   return "'" + escape_sql_raw(s) + "'";
 }
 
-// JSON 提取：字符串
 inline std::string json_str(const json &j, const char *key) {
   if (!j.contains(key) || j[key].is_null())
     return "NULL";
@@ -45,7 +51,6 @@ inline std::string json_str(const json &j, const char *key) {
   return escape_sql(j[key].dump());
 }
 
-// JSON 提取：整数
 inline std::string json_int(const json &j, const char *key) {
   if (!j.contains(key) || j[key].is_null())
     return "NULL";
@@ -56,7 +61,6 @@ inline std::string json_int(const json &j, const char *key) {
   return "NULL";
 }
 
-// JSON 提取：浮点
 inline std::string json_decimal(const json &j, const char *key) {
   if (!j.contains(key) || j[key].is_null())
     return "NULL";
@@ -67,20 +71,16 @@ inline std::string json_decimal(const json &j, const char *key) {
   return "NULL";
 }
 
-// JSON 提取：关系字段(兼容 {id:"xxx"} 和直接字符串两种格式)
 inline std::string json_ref(const json &j, const char *key) {
   if (!j.contains(key) || j[key].is_null())
     return "NULL";
-  if (j[key].is_object() && j[key].contains("id")) {
+  if (j[key].is_object() && j[key].contains("id"))
     return escape_sql(j[key]["id"].get<std::string>());
-  }
-  if (j[key].is_string()) {
+  if (j[key].is_string())
     return escape_sql(j[key].get<std::string>());
-  }
   return "NULL";
 }
 
-// JSON 提取：数组(序列化为 JSON 字符串)
 inline std::string json_array(const json &j, const char *key) {
   if (!j.contains(key) || j[key].is_null())
     return "NULL";
@@ -95,7 +95,8 @@ inline const char *SYNC_STATE_DDL = R"(
 CREATE TABLE IF NOT EXISTS sync_state (
     source VARCHAR NOT NULL,
     entity VARCHAR NOT NULL,
-    last_id VARCHAR,
+    cursor_value VARCHAR,
+    cursor_skip INT DEFAULT 0,
     last_sync_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (source, entity)
 ))";
@@ -138,11 +139,14 @@ struct EntityDef {
   const char *fields;                     // GraphQL 查询字段
   const char *ddl;                        // CREATE TABLE 语句
   const char *columns;                    // INSERT 列名
+  SyncMode sync_mode;                     // 同步模式
+  const char *order_field;                // orderBy 字段名
+  const char *where_field;                // where 过滤字段名
   std::string (*to_values)(const json &); // JSON 转 SQL values
 };
 
 // ============================================================================
-// 估算：单条记录的"结构体大小"(字节) (前端仪表盘需要)
+// 估算：单条记录的"结构体大小"(字节)
 // ============================================================================
 inline int64_t estimate_row_size_bytes(const EntityDef *e) {
   assert(e != nullptr);
@@ -252,129 +256,49 @@ inline int64_t estimate_row_size_bytes(const EntityDef *e) {
 }
 
 // ============================================================================
-// Main Subgraph Entities
+// Polymarket Entities
 // ============================================================================
 
-// ----------------------------------------------------------------------------
 // Condition - 条件 (含结算信息)
-// CSV: id,oracle,questionId,outcomeSlotCount,resolutionTimestamp,payouts,payoutNumerators,payoutDenominator,fixedProductMarketMakers,resolutionHash
-// ----------------------------------------------------------------------------
+// positionIds 不从 GraphQL 拉取, 由大 sync 从 PnL 合入
 inline std::string condition_to_values(const json &j) {
   return json_str(j, "id") + "," +
-         json_str(j, "oracle") + "," +
          json_str(j, "questionId") + "," +
+         json_str(j, "oracle") + "," +
          json_int(j, "outcomeSlotCount") + "," +
          json_int(j, "resolutionTimestamp") + "," +
-         json_array(j, "payouts") + "," +
          json_array(j, "payoutNumerators") + "," +
-         json_int(j, "payoutDenominator") + "," +
-         json_str(j, "resolutionHash");
+         json_int(j, "payoutDenominator");
 }
 
 inline const EntityDef Condition = {
     .name = "Condition",
     .plural = "conditions",
     .table = "condition",
-    .fields = "id oracle questionId outcomeSlotCount resolutionTimestamp payouts payoutNumerators payoutDenominator resolutionHash",
+    .fields = "id questionId oracle outcomeSlotCount resolutionTimestamp payoutNumerators payoutDenominator",
     .ddl = R"(CREATE TABLE IF NOT EXISTS condition (
         id VARCHAR PRIMARY KEY,
-        oracle VARCHAR,
-        questionId VARCHAR,
-        outcomeSlotCount INT,
+        questionId VARCHAR NOT NULL,
+        oracle VARCHAR NOT NULL,
+        outcomeSlotCount INT NOT NULL,
         resolutionTimestamp BIGINT,
-        payouts VARCHAR,
         payoutNumerators VARCHAR,
-        payoutDenominator VARCHAR,
-        resolutionHash VARCHAR
+        payoutDenominator BIGINT,
+        positionIds VARCHAR
     ))",
-    .columns = "id, oracle, questionId, outcomeSlotCount, resolutionTimestamp, payouts, payoutNumerators, payoutDenominator, resolutionHash",
+    .columns = "id, questionId, oracle, outcomeSlotCount, resolutionTimestamp, payoutNumerators, payoutDenominator",
+    .sync_mode = SyncMode::RESOLUTION_TS,
+    .order_field = "resolutionTimestamp",
+    .where_field = "resolutionTimestamp_gte",
     .to_values = condition_to_values};
 
-// ----------------------------------------------------------------------------
-// Merge - 铸造 (用 collateral 铸造 condition 的所有 outcome tokens)
-// CSV: id,timestamp,stakeholder,collateralToken,parentCollectionId,condition,partition,amount
-// stakeholder/collateralToken/condition 是 OBJECT 类型，需要 { id }
-// ----------------------------------------------------------------------------
-inline std::string merge_to_values(const json &j) {
-  return json_str(j, "id") + "," +
-         json_int(j, "timestamp") + "," +
-         json_ref(j, "stakeholder") + "," +
-         json_ref(j, "collateralToken") + "," +
-         json_str(j, "parentCollectionId") + "," +
-         json_ref(j, "condition") + "," +
-         json_array(j, "partition") + "," +
-         json_int(j, "amount");
-}
-
-inline const EntityDef Merge = {
-    .name = "Merge",
-    .plural = "merges",
-    .table = "merge",
-    .fields = "id timestamp stakeholder { id } collateralToken { id } parentCollectionId condition { id } partition amount",
-    .ddl = R"(CREATE TABLE IF NOT EXISTS merge (
-        id VARCHAR PRIMARY KEY,
-        timestamp BIGINT,
-        stakeholder VARCHAR,
-        collateralToken VARCHAR,
-        parentCollectionId VARCHAR,
-        condition VARCHAR,
-        partition VARCHAR,
-        amount VARCHAR
-    );
-    CREATE INDEX IF NOT EXISTS idx_merge_ts ON merge(timestamp);
-    CREATE INDEX IF NOT EXISTS idx_merge_user ON merge(stakeholder))",
-    .columns = "id, timestamp, stakeholder, collateralToken, parentCollectionId, condition, partition, amount",
-    .to_values = merge_to_values};
-
-// ----------------------------------------------------------------------------
-// Redemption - 赎回 (用 outcome tokens 换回 collateral)
-// CSV: id,timestamp,redeemer,collateralToken,parentCollectionId,condition,indexSets,payout
-// redeemer/collateralToken/condition 是 OBJECT 类型，需要 { id }
-// ----------------------------------------------------------------------------
-inline std::string redemption_to_values(const json &j) {
-  return json_str(j, "id") + "," +
-         json_int(j, "timestamp") + "," +
-         json_ref(j, "redeemer") + "," +
-         json_ref(j, "collateralToken") + "," +
-         json_str(j, "parentCollectionId") + "," +
-         json_ref(j, "condition") + "," +
-         json_array(j, "indexSets") + "," +
-         json_int(j, "payout");
-}
-
-inline const EntityDef Redemption = {
-    .name = "Redemption",
-    .plural = "redemptions",
-    .table = "redemption",
-    .fields = "id timestamp redeemer { id } collateralToken { id } parentCollectionId condition { id } indexSets payout",
-    .ddl = R"(CREATE TABLE IF NOT EXISTS redemption (
-        id VARCHAR PRIMARY KEY,
-        timestamp BIGINT,
-        redeemer VARCHAR,
-        collateralToken VARCHAR,
-        parentCollectionId VARCHAR,
-        condition VARCHAR,
-        indexSets VARCHAR,
-        payout VARCHAR
-    );
-    CREATE INDEX IF NOT EXISTS idx_redemption_ts ON redemption(timestamp);
-    CREATE INDEX IF NOT EXISTS idx_redemption_user ON redemption(redeemer))",
-    .columns = "id, timestamp, redeemer, collateralToken, parentCollectionId, condition, indexSets, payout",
-    .to_values = redemption_to_values};
-
-// ----------------------------------------------------------------------------
-// EnrichedOrderFilled - 订单成交 (orderbook 交易)
-// CSV: id,transactionHash,timestamp,maker,taker,orderHash,market,side,size,price
-// market 就是 tokenId (positionId)
-// ----------------------------------------------------------------------------
+// EnrichedOrderFilled - 订单成交
 inline std::string enriched_order_filled_to_values(const json &j) {
   return json_str(j, "id") + "," +
-         json_str(j, "transactionHash") + "," +
          json_int(j, "timestamp") + "," +
          json_ref(j, "maker") + "," +
          json_ref(j, "taker") + "," +
-         json_str(j, "orderHash") + "," +
-         json_str(j, "market") + "," +
+         json_ref(j, "market") + "," +
          json_str(j, "side") + "," +
          json_int(j, "size") + "," +
          json_decimal(j, "price");
@@ -384,73 +308,171 @@ inline const EntityDef EnrichedOrderFilled = {
     .name = "EnrichedOrderFilled",
     .plural = "enrichedOrderFilleds",
     .table = "enriched_order_filled",
-    .fields = "id transactionHash timestamp maker { id } taker { id } orderHash market side size price",
+    .fields = "id timestamp maker { id } taker { id } market { id } side size price",
     .ddl = R"(CREATE TABLE IF NOT EXISTS enriched_order_filled (
         id VARCHAR PRIMARY KEY,
-        transactionHash VARCHAR,
-        timestamp BIGINT,
-        maker VARCHAR,
-        taker VARCHAR,
-        orderHash VARCHAR,
-        market VARCHAR,
-        side VARCHAR,
-        size VARCHAR,
-        price DOUBLE
+        timestamp BIGINT NOT NULL,
+        maker VARCHAR NOT NULL,
+        taker VARCHAR NOT NULL,
+        market VARCHAR NOT NULL,
+        side VARCHAR NOT NULL,
+        size VARCHAR NOT NULL,
+        price DOUBLE NOT NULL
     );
-    CREATE INDEX IF NOT EXISTS idx_eof_ts ON enriched_order_filled(timestamp);
-    CREATE INDEX IF NOT EXISTS idx_eof_maker ON enriched_order_filled(maker);
-    CREATE INDEX IF NOT EXISTS idx_eof_taker ON enriched_order_filled(taker);
-    CREATE INDEX IF NOT EXISTS idx_eof_market ON enriched_order_filled(market))",
-    .columns = "id, transactionHash, timestamp, maker, taker, orderHash, market, side, size, price",
+    CREATE INDEX IF NOT EXISTS idx_eof_ts ON enriched_order_filled(timestamp))",
+    .columns = "id, timestamp, maker, taker, market, side, size, price",
+    .sync_mode = SyncMode::TIMESTAMP,
+    .order_field = "timestamp",
+    .where_field = "timestamp_gte",
     .to_values = enriched_order_filled_to_values};
 
 // ============================================================================
-// PnL Subgraph Entities
+// Activity Polygon Entities (flat fields, no { id } expansion)
 // ============================================================================
 
-// ----------------------------------------------------------------------------
-// PnlCondition - tokenId ↔ conditionId 映射
-// CSV: id,positionIds,payoutNumerators,payoutDenominator
-// positionIds[0] = YES token, positionIds[1] = NO token
-// ----------------------------------------------------------------------------
+// Split - 铸造 (USDC → YES + NO)
+inline std::string split_to_values(const json &j) {
+  return json_str(j, "id") + "," +
+         json_int(j, "timestamp") + "," +
+         json_str(j, "stakeholder") + "," +
+         json_str(j, "condition") + "," +
+         json_int(j, "amount");
+}
+
+inline const EntityDef Split = {
+    .name = "Split",
+    .plural = "splits",
+    .table = "split",
+    .fields = "id timestamp stakeholder condition amount",
+    .ddl = R"(CREATE TABLE IF NOT EXISTS split (
+        id VARCHAR PRIMARY KEY,
+        timestamp BIGINT NOT NULL,
+        stakeholder VARCHAR NOT NULL,
+        condition VARCHAR NOT NULL,
+        amount VARCHAR NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_split_ts ON split(timestamp))",
+    .columns = "id, timestamp, stakeholder, condition, amount",
+    .sync_mode = SyncMode::TIMESTAMP,
+    .order_field = "timestamp",
+    .where_field = "timestamp_gte",
+    .to_values = split_to_values};
+
+// Merge - 销毁 (YES + NO → USDC)
+inline std::string merge_to_values(const json &j) {
+  return json_str(j, "id") + "," +
+         json_int(j, "timestamp") + "," +
+         json_str(j, "stakeholder") + "," +
+         json_str(j, "condition") + "," +
+         json_int(j, "amount");
+}
+
+inline const EntityDef Merge = {
+    .name = "Merge",
+    .plural = "merges",
+    .table = "merge",
+    .fields = "id timestamp stakeholder condition amount",
+    .ddl = R"(CREATE TABLE IF NOT EXISTS merge (
+        id VARCHAR PRIMARY KEY,
+        timestamp BIGINT NOT NULL,
+        stakeholder VARCHAR NOT NULL,
+        condition VARCHAR NOT NULL,
+        amount VARCHAR NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_merge_ts ON merge(timestamp))",
+    .columns = "id, timestamp, stakeholder, condition, amount",
+    .sync_mode = SyncMode::TIMESTAMP,
+    .order_field = "timestamp",
+    .where_field = "timestamp_gte",
+    .to_values = merge_to_values};
+
+// Redemption - 赎回 (tokens → USDC, 市场结算后)
+inline std::string redemption_to_values(const json &j) {
+  return json_str(j, "id") + "," +
+         json_int(j, "timestamp") + "," +
+         json_str(j, "redeemer") + "," +
+         json_str(j, "condition") + "," +
+         json_array(j, "indexSets") + "," +
+         json_int(j, "payout");
+}
+
+inline const EntityDef Redemption = {
+    .name = "Redemption",
+    .plural = "redemptions",
+    .table = "redemption",
+    .fields = "id timestamp redeemer condition indexSets payout",
+    .ddl = R"(CREATE TABLE IF NOT EXISTS redemption (
+        id VARCHAR PRIMARY KEY,
+        timestamp BIGINT NOT NULL,
+        redeemer VARCHAR NOT NULL,
+        condition VARCHAR NOT NULL,
+        indexSets VARCHAR NOT NULL,
+        payout VARCHAR NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_redemption_ts ON redemption(timestamp))",
+    .columns = "id, timestamp, redeemer, condition, indexSets, payout",
+    .sync_mode = SyncMode::TIMESTAMP,
+    .order_field = "timestamp",
+    .where_field = "timestamp_gte",
+    .to_values = redemption_to_values};
+
+// ============================================================================
+// PnL Subgraph Entities (临时, 大 sync 后合入 condition 并删除)
+// ============================================================================
+
 inline std::string pnl_condition_to_values(const json &j) {
   return json_str(j, "id") + "," +
-         json_array(j, "positionIds") + "," +
-         json_array(j, "payoutNumerators") + "," +
-         json_int(j, "payoutDenominator");
+         json_array(j, "positionIds");
 }
 
 inline const EntityDef PnlCondition = {
     .name = "Condition",
     .plural = "conditions",
     .table = "pnl_condition",
-    .fields = "id positionIds payoutNumerators payoutDenominator",
+    .fields = "id positionIds",
     .ddl = R"(CREATE TABLE IF NOT EXISTS pnl_condition (
         id VARCHAR PRIMARY KEY,
-        positionIds VARCHAR,
-        payoutNumerators VARCHAR,
-        payoutDenominator VARCHAR
+        positionIds VARCHAR
     ))",
-    .columns = "id, positionIds, payoutNumerators, payoutDenominator",
+    .columns = "id, positionIds",
+    .sync_mode = SyncMode::ID,
+    .order_field = "id",
+    .where_field = "id_gt",
     .to_values = pnl_condition_to_values};
 
 // ============================================================================
-// Entity 注册表
+// Entity 注册表 (按 subgraph 分组)
 // ============================================================================
 
-inline const EntityDef *MAIN_ENTITIES[] = {
-    &Condition, &Merge, &Redemption, &EnrichedOrderFilled};
-inline constexpr size_t MAIN_ENTITY_COUNT = sizeof(MAIN_ENTITIES) / sizeof(MAIN_ENTITIES[0]);
+inline const EntityDef *POLYMARKET_ENTITIES[] = {
+    &Condition, &EnrichedOrderFilled};
+inline constexpr size_t POLYMARKET_ENTITY_COUNT = sizeof(POLYMARKET_ENTITIES) / sizeof(POLYMARKET_ENTITIES[0]);
+
+inline const EntityDef *ACTIVITY_ENTITIES[] = {
+    &Split, &Merge, &Redemption};
+inline constexpr size_t ACTIVITY_ENTITY_COUNT = sizeof(ACTIVITY_ENTITIES) / sizeof(ACTIVITY_ENTITIES[0]);
 
 inline const EntityDef *PNL_ENTITIES[] = {&PnlCondition};
 inline constexpr size_t PNL_ENTITY_COUNT = sizeof(PNL_ENTITIES) / sizeof(PNL_ENTITIES[0]);
 
+// 所有 entity (用于 stats/export)
+inline const EntityDef *ALL_ENTITIES[] = {
+    &Condition, &EnrichedOrderFilled, &Split, &Merge, &Redemption, &PnlCondition};
+inline constexpr size_t ALL_ENTITY_COUNT = sizeof(ALL_ENTITIES) / sizeof(ALL_ENTITIES[0]);
+
 // 查找 entity
 inline const EntityDef *find_entity(const char *name, const EntityDef *const *list, size_t count) {
   for (size_t i = 0; i < count; ++i) {
-    if (std::string(list[i]->name) == name) {
+    if (std::string(list[i]->name) == name)
       return list[i];
-    }
+  }
+  return nullptr;
+}
+
+inline const EntityDef *find_entity_by_table(const char *table) {
+  for (size_t i = 0; i < ALL_ENTITY_COUNT; ++i) {
+    if (std::string(ALL_ENTITIES[i]->table) == table)
+      return ALL_ENTITIES[i];
   }
   return nullptr;
 }
