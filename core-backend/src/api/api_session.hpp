@@ -85,10 +85,18 @@ private:
         handle_fill_token_ids();
       } else if (target.starts_with("/api/replay-users")) {
         handle_replay_users();
+      } else if (target.starts_with("/api/replay-trades")) {
+        handle_replay_trades();
+      } else if (target.starts_with("/api/replay-positions")) {
+        handle_replay_positions();
       } else if (target.starts_with("/api/replay")) {
         handle_replay();
       } else if (target.starts_with("/api/rebuild-status")) {
         handle_rebuild_status();
+      } else if (target.starts_with("/api/rebuild-check-persist")) {
+        handle_rebuild_check_persist();
+      } else if (target.starts_with("/api/rebuild-load")) {
+        handle_rebuild_load();
       } else if (target.starts_with("/api/rebuild-all")) {
         handle_rebuild_all();
       } else if (target.starts_with("/api/export-raw")) {
@@ -270,7 +278,34 @@ private:
     std::string user = get_param("user");
     assert(!user.empty() && "Missing query parameter 'user'");
     assert(rebuild_engine_.find_user(user) != nullptr && "User not found");
-    json result = replayer::serialize_user(rebuild_engine_, user);
+    res_.result(http::status::ok);
+    res_.body() = replayer::serialize_user_timeline(rebuild_engine_, user);
+  }
+
+  void handle_replay_trades() {
+    res_.set(http::field::content_type, "application/json");
+    std::string user = get_param("user");
+    std::string ts_str = get_param("ts");
+    std::string radius_str = get_param("radius");
+    assert(!user.empty() && "Missing query parameter 'user'");
+    assert(!ts_str.empty() && "Missing query parameter 'ts'");
+    assert(rebuild_engine_.find_user(user) != nullptr && "User not found");
+    int64_t ts = std::stoll(ts_str);
+    int radius = radius_str.empty() ? 20 : std::stoi(radius_str);
+    json result = replayer::serialize_trades_at(rebuild_engine_, user, ts, radius);
+    res_.result(http::status::ok);
+    res_.body() = result.dump();
+  }
+
+  void handle_replay_positions() {
+    res_.set(http::field::content_type, "application/json");
+    std::string user = get_param("user");
+    std::string ts_str = get_param("ts");
+    assert(!user.empty() && "Missing query parameter 'user'");
+    assert(!ts_str.empty() && "Missing query parameter 'ts'");
+    assert(rebuild_engine_.find_user(user) != nullptr && "User not found");
+    int64_t ts = std::stoll(ts_str);
+    json result = replayer::serialize_positions_at(rebuild_engine_, user, ts);
     res_.result(http::status::ok);
     res_.body() = result.dump();
   }
@@ -284,6 +319,34 @@ private:
     res_.body() = result.dump();
   }
 
+  static constexpr const char *PERSIST_DIR = "data/pnl";
+
+  void handle_rebuild_check_persist() {
+    res_.set(http::field::content_type, "application/json");
+    bool exists = rebuild::Engine::has_persist(PERSIST_DIR);
+    int64_t file_size = 0;
+    if (exists)
+      file_size = (int64_t)fs::file_size(std::string(PERSIST_DIR) + "/rebuild.bin");
+    res_.result(http::status::ok);
+    res_.body() = json{{"exists", exists}, {"file_size", file_size}}.dump();
+  }
+
+  void handle_rebuild_load() {
+    res_.set(http::field::content_type, "application/json");
+    auto progress = rebuild_engine_.get_progress();
+    if (progress.running) {
+      res_.result(http::status::ok);
+      res_.body() = json{{"status", "already_running"}}.dump();
+      return;
+    }
+    assert(rebuild::Engine::has_persist(PERSIST_DIR) && "no persist data");
+    std::thread([&engine = rebuild_engine_]() {
+      engine.load_persist(PERSIST_DIR);
+    }).detach();
+    res_.result(http::status::ok);
+    res_.body() = json{{"status", "loading"}}.dump();
+  }
+
   void handle_rebuild_all() {
     res_.set(http::field::content_type, "application/json");
     auto progress = rebuild_engine_.get_progress();
@@ -292,9 +355,10 @@ private:
       res_.body() = json{{"status", "already_running"}}.dump();
       return;
     }
-    // 后台线程触发重建
+    // 后台线程触发重建，完成后自动 persist
     std::thread([&engine = rebuild_engine_]() {
       engine.rebuild_all();
+      engine.save_persist(PERSIST_DIR);
     }).detach();
     res_.result(http::status::ok);
     res_.body() = json{{"status", "started"}}.dump();

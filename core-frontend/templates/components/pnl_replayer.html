@@ -269,6 +269,7 @@
         <div class="rp-legend-item"><div class="rp-legend-dot" style="background:#eab308"></div>Split</div>
         <div class="rp-legend-item"><div class="rp-legend-dot" style="background:#f97316"></div>Merge</div>
         <div class="rp-legend-item"><div class="rp-legend-dot" style="background:#22d3ee"></div>Redeem</div>
+        <div class="rp-legend-item"><div class="rp-legend-dot" style="background:#818cf8"></div>Tokens</div>
       </div>
       <div class="rp-chart-controls">
         <button class="rp-chart-btn" onclick="rpResetZoom()">Reset</button>
@@ -281,6 +282,7 @@
       <span class="pnl" id="rp-cur-pnl">$0.00</span>
       <span class="evt-badge" id="rp-cur-badge"></span>
       <span class="evt-detail" id="rp-cur-detail"></span>
+      <span style="color:#818cf8" id="rp-cur-tokens"></span>
     </div>
 
     <div class="rp-details">
@@ -301,9 +303,9 @@
 // Replayer State
 // ============================================================================
 let _rData = null;
-let _rTimeline = [];       // [{ts,ty,ti,ci,d,p,rpnl}]
-let _rConditions = {};     // ci → {id,oc,snaps:[{ts,pos,cost,rpnl,...}]}
+let _rTimeline = [];       // [{ts,ty,rpnl,tk}] — lightweight curve data only
 let _rUsers = [];
+let _rCurrentUser = '';
 let _rViewStartTs = 0;
 let _rViewEndTs = 0;
 let _rCursorIdx = -1;
@@ -313,8 +315,12 @@ let _rDragStartX = 0;
 let _rDragStartVS = 0;
 let _rDragStartVE = 0;
 let _rDragMoved = false;
+let _rPosDebounceTimer = null;
+let _rTradesDebounceTimer = null;
+let _rTrades = [];         // lazily loaded trades near cursor
+let _rTradeCenter = -1;    // center index in _rTrades
 
-const _rPad = { top: 30, right: 70, bottom: 32, left: 14 };
+const _rPad = { top: 30, right: 70, bottom: 32, left: 50 };
 const _rEvtColors = ['#6366f1','#ef4444','#eab308','#f97316','#22d3ee'];
 const _rEvtNames = ['Buy','Sell','Split','Merge','Redeem'];
 const _rEvtNamesCN = ['买入','卖出','铸造','合币','赎回'];
@@ -408,14 +414,13 @@ async function rpLoadUser() {
     const resp = await fetch(`/api/replay?user=${encodeURIComponent(user)}`);
     _rData = await resp.json();
     _rTimeline = _rData.timeline || [];
-    _rConditions = _rData.conditions || {};
+    _rCurrentUser = user;
 
     rpRenderMeta();
     rpResetZoom();
     _rCursorIdx = _rTimeline.length - 1;
     rpDraw();
     rpUpdateCursor();
-    // body is always visible
   } catch(e) {
     console.error('rpLoadUser', e);
   } finally {
@@ -429,7 +434,7 @@ async function rpLoadUser() {
 function rpRenderMeta() {
   if (!_rData) return;
   const d = _rData;
-  const nCond = Object.keys(d.conditions).length;
+  const nCond = new Set(_rTimeline.map(e => e.ci)).size;
   const finalPnl = _rTimeline.length ? _rTimeline[_rTimeline.length-1].rpnl / 1e6 : 0;
 
   // Count per event type: 0=Buy, 1=Sell, 2=Split, 3=Merge, 4=Redeem
@@ -498,7 +503,7 @@ function rpDraw() {
   iStart = Math.max(0, iStart);
   iEnd = Math.min(_rTimeline.length - 1, iEnd);
 
-  // Y range from visible data
+  // PnL Y range from visible data
   let minY = Infinity, maxY = -Infinity;
   for (let i = iStart; i <= iEnd; i++) {
     const v = _rTimeline[i].rpnl / 1e6;
@@ -506,21 +511,41 @@ function rpDraw() {
     if (v > maxY) maxY = v;
   }
   if (minY === maxY) { minY -= 1; maxY += 1; }
-  // Include zero
   if (minY > 0) minY = 0;
   if (maxY < 0) maxY = 0;
   const yPad = (maxY - minY) * 0.08;
   minY -= yPad; maxY += yPad;
   const yRange = maxY - minY;
 
+  // Token Y range (fixed 50-token grid)
+  let maxTk = 0;
+  for (let i = iStart; i <= iEnd; i++) {
+    const tk = _rTimeline[i].tk || 0;
+    if (tk > maxTk) maxTk = tk;
+  }
+  maxTk = Math.max(50, Math.ceil(maxTk / 50) * 50);
+
   const ts2x = (ts) => p.left + (ts - _rViewStartTs) / tsRange * cW;
   const val2y = (v) => p.top + (1 - (v - minY) / yRange) * cH;
+  const tk2y = (tk) => p.top + (1 - tk / maxTk) * cH;
 
-  // -- Grid --
+  // -- Token Y-axis grid (left, step always multiple of 50) --
+  const tkStep = rpNiceTkStep(maxTk);
+  ctx.font = '10px monospace'; ctx.textAlign = 'right'; ctx.fillStyle = '#6366f1';
+  for (let t = tkStep; t <= maxTk; t += tkStep) {
+    const yy = tk2y(t);
+    ctx.strokeStyle = '#1a1a2a'; ctx.lineWidth = 0.5;
+    ctx.setLineDash([2,4]); ctx.beginPath();
+    ctx.moveTo(p.left, yy); ctx.lineTo(cssW - p.right, yy); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillText(t, p.left - 4, yy + 3);
+  }
+
+  // -- PnL Y-axis grid (right) --
   ctx.strokeStyle = '#222'; ctx.lineWidth = 0.5;
   const yStep = rpNiceStep(yRange, 6);
   let yTick = Math.ceil(minY / yStep) * yStep;
-  ctx.font = '10px monospace'; ctx.textAlign = 'right'; ctx.fillStyle = '#555';
+  ctx.textAlign = 'right'; ctx.fillStyle = '#555';
   while (yTick <= maxY) {
     const yy = val2y(yTick);
     ctx.beginPath(); ctx.moveTo(p.left, yy); ctx.lineTo(cssW - p.right, yy); ctx.stroke();
@@ -548,6 +573,17 @@ function rpDraw() {
     ctx.setLineDash([]);
   }
 
+  // -- Token curve (behind PnL) --
+  ctx.strokeStyle = 'rgba(129,140,248,0.5)'; ctx.lineWidth = 1; ctx.beginPath();
+  let firstTk = true;
+  for (let i = iStart; i <= iEnd; i++) {
+    const x = ts2x(_rTimeline[i].ts);
+    const y = tk2y(_rTimeline[i].tk || 0);
+    if (firstTk) { ctx.moveTo(x, y); firstTk = false; }
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
   // -- PnL curve --
   ctx.strokeStyle = '#10b981'; ctx.lineWidth = 1.5; ctx.beginPath();
   let firstPoint = true;
@@ -559,7 +595,7 @@ function rpDraw() {
   }
   ctx.stroke();
 
-  // Gradient fill
+  // PnL gradient fill
   if (!firstPoint) {
     const baseY = val2y(Math.max(minY, 0));
     ctx.lineTo(ts2x(_rTimeline[iEnd].ts), baseY);
@@ -623,7 +659,7 @@ function rpDraw() {
   }
 
   // Store chart params for mouse mapping
-  canvas._rp = { p, cW, cH, cssW, cssH, minY, maxY, yRange, ts2x, val2y };
+  canvas._rp = { p, cW, cH, cssW, cssH, minY, maxY, yRange, ts2x, val2y, tk2y, maxTk };
 }
 
 // ============================================================================
@@ -742,20 +778,13 @@ function rpUpdateTooltip(e) {
   const pnl = ev.rpnl / 1e6;
   const color = _rEvtColors[ev.ty];
   const name = _rEvtNamesCN[ev.ty];
-
-  let detail = '';
-  if (ev.ty <= 1) {
-    detail = ` ${(ev.d/1e6).toFixed(2)} @ $${(ev.p/1e6).toFixed(4)}`;
-  } else if (ev.ty <= 3) {
-    detail = ` ${(ev.d/1e6).toFixed(2)} tokens`;
-  } else {
-    detail = ` $${(ev.d/1e6).toFixed(2)}`;
-  }
+  const tkCount = ev.tk || 0;
 
   tooltip.innerHTML = `
     <div style="color:#888">${new Date(ev.ts*1000).toLocaleString()}</div>
     <div style="color:${pnl>=0?'#10b981':'#ef4444'};font-size:1.1em">${rpFmtUSD(pnl)}</div>
-    <div><span style="color:${color}">${name}</span>${detail}</div>
+    <div><span style="color:${color}">${name}</span></div>
+    <div style="color:#818cf8">持仓 ${tkCount} 种</div>
   `;
   tooltip.style.display = 'block';
 
@@ -791,86 +820,95 @@ function rpUpdateCursor() {
   badge.style.background = color;
   badge.style.color = '#fff';
 
-  let detail = '';
-  if (ev.ty <= 1) {
-    detail = `${(ev.d/1e6).toFixed(2)} tokens @ $${(ev.p/1e6).toFixed(4)}`;
-  } else if (ev.ty <= 3) {
-    detail = `${(ev.d/1e6).toFixed(2)} tokens`;
-  } else {
-    detail = `$${(ev.d/1e6).toFixed(2)} payout`;
-  }
-  document.getElementById('rp-cur-detail').textContent = detail;
+  document.getElementById('rp-cur-detail').textContent = '';  // filled by trades fetch
+  document.getElementById('rp-cur-tokens').textContent = `持仓 ${ev.tk||0} 种`;
 
-  rpRenderPositions(ev.ts);
-  rpRenderTrades(_rCursorIdx);
+  rpFetchPositionsDebounced(ev.ts);
+  rpFetchTradesDebounced(ev.ts);
 }
 
 // ============================================================================
-// Positions at cursor time
+// Positions at cursor time (lazy fetch from server with debounce)
 // ============================================================================
-function rpRenderPositions(ts) {
+function rpFetchPositionsDebounced(ts) {
+  if (_rPosDebounceTimer) clearTimeout(_rPosDebounceTimer);
+  _rPosDebounceTimer = setTimeout(() => rpFetchPositions(ts), 150);
+}
+
+async function rpFetchPositions(ts) {
+  if (!_rCurrentUser) return;
   const el = document.getElementById('rp-positions');
   const countEl = document.getElementById('rp-pos-count');
-  const positions = [];
 
-  for (const [ci, cond] of Object.entries(_rConditions)) {
-    const snaps = cond.snaps;
-    if (!snaps.length) continue;
-    // Binary search: latest snap.ts <= ts
-    let lo = 0, hi = snaps.length - 1, best = -1;
-    while (lo <= hi) {
-      const mid = (lo + hi) >> 1;
-      if (snaps[mid].ts <= ts) { best = mid; lo = mid + 1; }
-      else hi = mid - 1;
+  try {
+    const resp = await fetch(`/api/replay-positions?user=${encodeURIComponent(_rCurrentUser)}&ts=${ts}`);
+    const data = await resp.json();
+    const positions = data.positions || [];
+    const dustThreshold = data.dust_threshold || 50000000;
+    countEl.textContent = positions.length;
+
+    if (!positions.length) {
+      el.innerHTML = '<div style="color:#888;padding:10px">无持仓</div>';
+      return;
     }
-    if (best < 0) continue;
-    const snap = snaps[best];
-    const hasPos = snap.pos.some(p => p !== 0);
-    if (!hasPos) continue;
 
-    positions.push({
-      ci, id: cond.id, oc: cond.oc,
-      pos: snap.pos, cost: snap.cost, rpnl: snap.rpnl
-    });
+    el.innerHTML = positions.map(p => {
+      const tokensStr = p.pos.filter(v => v !== 0)
+        .map((v, i) => `T${i}:${(v / 1e6).toFixed(2)}`).join(' ');
+      const rpnl = p.rpnl / 1e6;
+      const rpnlCls = rpnl >= 0 ? 'pos' : 'neg';
+      return `<div class="rp-pos-item">
+        <span class="cond" title="${p.id}">${p.id.slice(0, 16)}...</span>
+        <span class="tokens">${tokensStr}</span>
+        <span class="rpnl ${rpnlCls}">${rpFmtUSD(rpnl)}</span>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    console.error('rpFetchPositions', e);
   }
-
-  // Sort by abs rpnl desc
-  positions.sort((a, b) => Math.abs(b.rpnl) - Math.abs(a.rpnl));
-  countEl.textContent = positions.length;
-
-  if (!positions.length) {
-    el.innerHTML = '<div style="color:#888;padding:10px">无持仓</div>';
-    return;
-  }
-
-  el.innerHTML = positions.map(p => {
-    const tokensStr = p.pos.filter(v => v !== 0).map((v,i) => `T${i}:${(v/1e6).toFixed(2)}`).join(' ');
-    const rpnl = p.rpnl / 1e6;
-    const rpnlCls = rpnl >= 0 ? 'pos' : 'neg';
-    return `<div class="rp-pos-item">
-      <span class="cond" title="${p.id}">${p.id.slice(0,16)}...</span>
-      <span class="tokens">${tokensStr}</span>
-      <span class="rpnl ${rpnlCls}">${rpFmtUSD(rpnl)}</span>
-    </div>`;
-  }).join('');
 }
 
 // ============================================================================
-// Trades near cursor
+// Trades near cursor (lazy fetch from server with debounce)
 // ============================================================================
-function rpRenderTrades(curIdx) {
+function rpFetchTradesDebounced(ts) {
+  if (_rTradesDebounceTimer) clearTimeout(_rTradesDebounceTimer);
+  _rTradesDebounceTimer = setTimeout(() => rpFetchTrades(ts), 150);
+}
+
+async function rpFetchTrades(ts) {
+  if (!_rCurrentUser) return;
+  try {
+    const resp = await fetch(`/api/replay-trades?user=${encodeURIComponent(_rCurrentUser)}&ts=${ts}`);
+    const data = await resp.json();
+    _rTrades = data.events || [];
+    _rTradeCenter = data.center ?? -1;
+
+    // Update cursor bar detail from center trade
+    if (_rTradeCenter >= 0 && _rTradeCenter < _rTrades.length) {
+      const t = _rTrades[_rTradeCenter];
+      let detail = '';
+      if (t.ty <= 1) detail = `${(t.d/1e6).toFixed(2)} @ $${(t.p/1e6).toFixed(4)}`;
+      else if (t.ty <= 3) detail = `${(t.d/1e6).toFixed(2)} tokens`;
+      else detail = `$${(t.d/1e6).toFixed(2)} payout`;
+      document.getElementById('rp-cur-detail').textContent = detail;
+    }
+
+    rpRenderTrades();
+  } catch(e) {
+    console.error('rpFetchTrades', e);
+  }
+}
+
+function rpRenderTrades() {
   const el = document.getElementById('rp-trades');
   const countEl = document.getElementById('rp-trade-count');
-  countEl.textContent = _rTimeline.length;
-
-  const radius = 15;
-  const start = Math.max(0, curIdx - radius);
-  const end = Math.min(_rTimeline.length - 1, curIdx + radius);
+  countEl.textContent = _rTrades.length;
 
   const rows = [];
-  for (let i = end; i >= start; i--) {
-    const ev = _rTimeline[i];
-    const isFocus = (i === curIdx);
+  for (let i = _rTrades.length - 1; i >= 0; i--) {
+    const ev = _rTrades[i];
+    const isFocus = (i === _rTradeCenter);
     const color = _rEvtColors[ev.ty];
     const name = _rEvtNamesCN[ev.ty];
 
@@ -900,6 +938,14 @@ function rpRenderTrades(curIdx) {
 // ============================================================================
 // Helpers
 // ============================================================================
+function rpNiceTkStep(max) {
+  // Always returns a multiple of 50, targets ~6-8 labels
+  const nice = [50,100,150,200,250,500,1000,2500,5000,10000,25000,50000,100000,250000,500000];
+  const target = max / 8;
+  for (const n of nice) { if (n >= target) return n; }
+  return Math.ceil(target / 100000) * 100000;
+}
+
 function rpFmtUSD(v) {
   return (v >= 0 ? '+$' : '-$') + Math.abs(v).toFixed(2);
 }

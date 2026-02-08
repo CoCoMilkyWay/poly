@@ -1,7 +1,7 @@
 from backend_api import BACKEND_API
 from graph_status import get_graph_status_stream
 from fastapi import FastAPI, Query, Request
-from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, Response, StreamingResponse
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
 import httpx
@@ -63,12 +63,20 @@ async def api_indexer_fails(source: str = Query(...), entity: str = Query(...)):
 
 @app.get("/api/replay-users")
 async def api_replay_users(limit: int = Query(200)):
-    return backend_get("/api/replay-users", {"limit": limit}, default=[])
+    resp = _client.get(f"{BACKEND_API}/api/replay-users", params={"limit": limit})
+    return Response(content=resp.content, media_type="application/json")
+
+
+@app.get("/api/replay-positions")
+async def api_replay_positions(user: str = Query(...), ts: int = Query(...)):
+    resp = _client.get(f"{BACKEND_API}/api/replay-positions", params={"user": user, "ts": ts})
+    return Response(content=resp.content, media_type="application/json")
 
 
 @app.get("/api/replay")
 async def api_replay(user: str = Query(...)):
-    return backend_get("/api/replay", {"user": user})
+    resp = _client.get(f"{BACKEND_API}/api/replay", params={"user": user})
+    return Response(content=resp.content, media_type="application/json")
 
 
 @app.get("/api/rebuild-all")
@@ -81,6 +89,16 @@ async def api_rebuild_all():
 async def api_rebuild_status():
     """API: 获取重建进度"""
     return backend_get("/api/rebuild-status")
+
+
+@app.get("/api/rebuild-check-persist")
+async def api_rebuild_check_persist():
+    return backend_get("/api/rebuild-check-persist")
+
+
+@app.get("/api/rebuild-load")
+async def api_rebuild_load():
+    return backend_get("/api/rebuild-load")
 
 
 

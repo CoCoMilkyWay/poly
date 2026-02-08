@@ -86,9 +86,47 @@
 
   async function pnlRebuildAll() {
     const btn = document.getElementById("pnl-rebuild-btn");
-    btn.disabled = true;
-    btn.textContent = "重建中...";
     const log = document.getElementById("pnl-rebuild-log");
+
+    // 检查本地是否有缓存数据
+    try {
+      const chk = await fetch("/api/rebuild-check-persist");
+      const info = await chk.json();
+
+      if (info.exists) {
+        const sizeMB = (info.file_size / 1048576).toFixed(1);
+        const choice = confirm(
+          `发现本地缓存数据 (${sizeMB} MB)\n\n` +
+          `[确定] 从缓存加载（快）\n` +
+          `[取消] 全量重建（慢，会覆盖缓存）`
+        );
+        btn.disabled = true;
+        if (choice) {
+          // 加载缓存
+          btn.textContent = "加载中...";
+          log.innerHTML = '<span class="active">●</span> 从缓存加载中...';
+          await fetch("/api/rebuild-load");
+          pnlStartRebuildPolling();
+          return;
+        }
+        // 用户选择全量重建
+        if (!confirm("确认执行全量重建？这可能需要几分钟。")) {
+          btn.disabled = false;
+          return;
+        }
+      } else {
+        // 无缓存，确认全量重建
+        if (!confirm("未发现缓存数据，确认执行全量重建？\n完成后会自动保存供下次使用。")) {
+          return;
+        }
+        btn.disabled = true;
+      }
+    } catch (e) {
+      // 检查失败，直接走重建
+      btn.disabled = true;
+    }
+
+    btn.textContent = "重建中...";
     log.innerHTML = '<span class="active">●</span> 启动中...';
 
     try {
@@ -159,17 +197,31 @@
     }
 
     if (s.phase >= 6) {
+      const isLoadingFromCache = s.phase1_ms === 0 && s.phase2_ms === 0;
       if (s.phase > 6) {
-        lines.push(`<span class="done">✓</span> P3: ${pnlFmt(s.total_users)} users 回放完成 (${(s.phase3_ms / 1000).toFixed(1)}s)`);
+        if (isLoadingFromCache) {
+          lines.push(`<span class="done">✓</span> 从缓存加载: ${pnlFmt(s.total_users)} users`);
+        } else {
+          lines.push(`<span class="done">✓</span> P3: ${pnlFmt(s.total_users)} users 回放完成 (${(s.phase3_ms / 1000).toFixed(1)}s)`);
+        }
       } else {
         const pct = s.total_users ? Math.round((s.processed_users / s.total_users) * 100) : 0;
-        lines.push(`<span class="active">●</span> P3: 回放中 ${pnlFmt(s.processed_users)}/${pnlFmt(s.total_users)} (${pct}%)`);
+        if (isLoadingFromCache) {
+          lines.push(`<span class="active">●</span> 从缓存加载中 ${pnlFmt(s.processed_users)}/${pnlFmt(s.total_users)} (${pct}%)`);
+        } else {
+          lines.push(`<span class="active">●</span> P3: 回放中 ${pnlFmt(s.processed_users)}/${pnlFmt(s.total_users)} (${pct}%)`);
+        }
       }
     }
 
     if (s.phase === 7) {
-      const total = ((s.phase1_ms + s.phase2_ms + s.phase3_ms) / 1000).toFixed(1);
-      lines.push(`<b style="color:#10b981">完成: ${pnlFmt(s.total_users)} users, ${pnlFmt(s.total_events)} events | ${total}s</b>`);
+      const isLoadingFromCache = s.phase1_ms === 0 && s.phase2_ms === 0 && s.phase3_ms === 0;
+      if (isLoadingFromCache) {
+        lines.push(`<b style="color:#10b981">缓存加载完成: ${pnlFmt(s.total_users)} users, ${pnlFmt(s.total_events)} events</b>`);
+      } else {
+        const total = ((s.phase1_ms + s.phase2_ms + s.phase3_ms) / 1000).toFixed(1);
+        lines.push(`<b style="color:#10b981">完成: ${pnlFmt(s.total_users)} users, ${pnlFmt(s.total_events)} events | ${total}s</b>`);
+      }
     }
 
     log.innerHTML = lines.join("<br>");

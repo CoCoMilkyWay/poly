@@ -17,6 +17,8 @@
 #include <chrono>
 #include <cstring>
 #include <duckdb.hpp>
+#include <filesystem>
+#include <fstream>
 #include <future>
 #include <iostream>
 #include <nlohmann/json.hpp>
@@ -112,6 +114,177 @@ public:
               << "p2=" << (int)phase2_ms_ << "ms "
               << "p3=" << (int)phase3_ms_ << "ms "
               << "total=" << (int)(phase1_ms_ + phase2_ms_ + phase3_ms_) << "ms" << std::endl;
+  }
+
+  // ==========================================================================
+  // Persistence — binary dump/load of full engine state
+  // ==========================================================================
+  static constexpr uint32_t PERSIST_MAGIC = 0x524C4E50; // "PNLR"
+  static constexpr uint32_t PERSIST_VERSION = 1;
+
+  static bool has_persist(const std::string &dir) {
+    return std::filesystem::exists(dir + "/rebuild.bin");
+  }
+
+  void save_persist(const std::string &dir) const {
+    std::filesystem::create_directories(dir);
+    std::string path = dir + "/rebuild.bin";
+    std::ofstream f(path, std::ios::binary);
+    assert(f.is_open());
+
+    auto w = [&](const void *data, size_t n) { f.write((const char *)data, n); };
+    auto w32 = [&](uint32_t v) { w(&v, 4); };
+    auto w64 = [&](int64_t v) { w(&v, 8); };
+    auto wstr = [&](const std::string &s) { w32((uint32_t)s.size()); w(s.data(), s.size()); };
+
+    // Header
+    w32(PERSIST_MAGIC);
+    w32(PERSIST_VERSION);
+    w32((uint32_t)conditions_.size());
+    w32((uint32_t)token_map_.size());
+    w32((uint32_t)users_.size());
+    w64(total_events_);
+
+    // Conditions
+    for (size_t i = 0; i < conditions_.size(); ++i) {
+      wstr(cond_ids_[i]);
+      const auto &c = conditions_[i];
+      uint8_t oc = c.outcome_count;
+      w(&oc, 1);
+      w64(c.payout_denominator);
+      w32((uint32_t)c.payout_numerators.size());
+      for (auto pn : c.payout_numerators)
+        w64(pn);
+    }
+
+    // Token map
+    for (const auto &[token_id, pair] : token_map_) {
+      wstr(token_id);
+      w32(pair.first);
+      uint8_t ti = pair.second;
+      w(&ti, 1);
+    }
+
+    // Users + states
+    for (size_t i = 0; i < users_.size(); ++i) {
+      wstr(users_[i]);
+      const auto &us = user_states_[i];
+      w32((uint32_t)us.conditions.size());
+      for (const auto &ch : us.conditions) {
+        w32(ch.cond_idx);
+        w32((uint32_t)ch.snapshots.size());
+        if (!ch.snapshots.empty())
+          w(ch.snapshots.data(), ch.snapshots.size() * sizeof(Snapshot));
+      }
+    }
+
+    f.close();
+    auto fsize = std::filesystem::file_size(path);
+    std::cout << "[rebuild] persisted to " << path
+              << " (" << (fsize / 1048576) << " MB)" << std::endl;
+  }
+
+  void load_persist(const std::string &dir) {
+    bool expected = false;
+    assert(running_.compare_exchange_strong(expected, true) && "rebuild already running");
+
+    std::string path = dir + "/rebuild.bin";
+    std::ifstream f(path, std::ios::binary);
+    assert(f.is_open());
+
+    auto fsize = std::filesystem::file_size(path);
+
+    auto r = [&](void *data, size_t n) { f.read((char *)data, n); assert(f.good()); };
+    auto r32 = [&]() -> uint32_t { uint32_t v; r(&v, 4); return v; };
+    auto r64 = [&]() -> int64_t { int64_t v; r(&v, 8); return v; };
+    auto rstr = [&]() -> std::string { uint32_t n = r32(); std::string s(n, '\0'); r(s.data(), n); return s; };
+
+    phase_ = 1;
+    phase1_ms_ = phase2_ms_ = phase3_ms_ = 0;
+
+    // Header
+    uint32_t magic = r32();
+    assert(magic == PERSIST_MAGIC && "bad persist magic");
+    uint32_t version = r32();
+    assert(version == PERSIST_VERSION && "bad persist version");
+    uint32_t n_conds = r32();
+    uint32_t n_tokens = r32();
+    uint32_t n_users = r32();
+    total_events_ = r64();
+
+    // Conditions
+    conditions_.clear();
+    cond_ids_.clear();
+    cond_map_.clear();
+    conditions_.reserve(n_conds);
+    cond_ids_.reserve(n_conds);
+    cond_map_.reserve(n_conds);
+
+    for (uint32_t i = 0; i < n_conds; ++i) {
+      std::string id = rstr();
+      ConditionInfo info;
+      uint8_t oc;
+      r(&oc, 1);
+      info.outcome_count = oc;
+      info.payout_denominator = r64();
+      uint32_t n_pn = r32();
+      info.payout_numerators.resize(n_pn);
+      for (uint32_t j = 0; j < n_pn; ++j)
+        info.payout_numerators[j] = r64();
+
+      cond_map_[id] = i;
+      conditions_.push_back(std::move(info));
+      cond_ids_.push_back(std::move(id));
+    }
+
+    // Token map
+    token_map_.clear();
+    token_map_.reserve(n_tokens);
+    for (uint32_t i = 0; i < n_tokens; ++i) {
+      std::string token_id = rstr();
+      uint32_t ci = r32();
+      uint8_t ti;
+      r(&ti, 1);
+      token_map_[std::move(token_id)] = {ci, ti};
+    }
+
+    phase_ = 6;
+
+    // Users + states
+    users_.clear();
+    user_map_.clear();
+    user_states_.clear();
+    users_.reserve(n_users);
+    user_map_.reserve(n_users);
+    user_states_.resize(n_users);
+    processed_users_ = 0;
+
+    for (uint32_t i = 0; i < n_users; ++i) {
+      std::string uid = rstr();
+      user_map_[uid] = i;
+      users_.push_back(std::move(uid));
+
+      uint32_t n_ch = r32();
+      auto &us = user_states_[i];
+      us.conditions.resize(n_ch);
+      for (uint32_t j = 0; j < n_ch; ++j) {
+        us.conditions[j].cond_idx = r32();
+        uint32_t n_snaps = r32();
+        us.conditions[j].snapshots.resize(n_snaps);
+        if (n_snaps > 0)
+          r(us.conditions[j].snapshots.data(), n_snaps * sizeof(Snapshot));
+      }
+      processed_users_.fetch_add(1, std::memory_order_relaxed);
+    }
+
+    f.close();
+    phase_ = 7;
+    running_ = false;
+
+    std::cout << "[rebuild] loaded from " << path
+              << " (" << (fsize / 1048576) << " MB): "
+              << users_.size() << " users, "
+              << total_events_ << " events" << std::endl;
   }
 
   // ==========================================================================

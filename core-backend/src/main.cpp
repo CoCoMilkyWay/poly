@@ -1,6 +1,7 @@
 #include <cstring>
 #include <iostream>
 #include <string>
+#include <thread>
 
 #include "api/api_server.hpp"
 #include "core/config.hpp"
@@ -42,10 +43,11 @@ int main(int argc, char *argv[]) {
 
   Database db(config.db_path);
 
-  asio::io_context ioc;
+  asio::io_context ioc_api;  // API 专用
+  asio::io_context ioc_sync; // sync + HTTPS 专用
 
   // HTTPS 连接池
-  HttpsPool pool(ioc, config.api_key);
+  HttpsPool pool(ioc_sync, config.api_key);
 
   // Token ID 填充 (手动触发)
   SyncTokenFiller token_filler(db, pool, config);
@@ -53,14 +55,16 @@ int main(int argc, char *argv[]) {
   // PnL 重建引擎
   rebuild::Engine rebuild_engine(db.get_duckdb());
 
-  // HTTP 服务器 (查询 API)
-  ApiServer api_server(ioc, db, token_filler, rebuild_engine, 8001);
+  // HTTP 服务器 (查询 API) — 独立线程, 不被 sync 阻塞
+  ApiServer api_server(ioc_api, db, token_filler, rebuild_engine, 8001);
 
   // 数据拉取 (周期性增量 sync)
   SyncIncrementalCoordinator sync_coordinator(config, db, pool);
-  sync_coordinator.start(ioc);
+  sync_coordinator.start(ioc_sync);
 
-  ioc.run();
+  std::thread api_thread([&ioc_api]() { ioc_api.run(); });
+  ioc_sync.run();
+  api_thread.join();
 
   return 0;
 }
