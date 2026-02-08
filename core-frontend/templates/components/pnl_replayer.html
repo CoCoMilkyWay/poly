@@ -1,0 +1,952 @@
+<style>
+  .rp-card {
+    background: #1a1a1a;
+    border-radius: 10px;
+    padding: 15px;
+    border: 1px solid #333;
+    margin-bottom: 15px;
+  }
+  .rp-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #333;
+  }
+  .rp-header h2 {
+    font-size: 1.1em;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+  }
+  .rp-header h2::before {
+    content: "";
+    width: 3px;
+    height: 16px;
+    background: #6366f1;
+    border-radius: 2px;
+  }
+  .rp-query-row { margin-bottom: 12px; }
+  .rp-user-select { display: flex; gap: 8px; align-items: center; }
+  .rp-input-wrapper { position: relative; }
+  .rp-user-input {
+    width: 380px;
+    padding: 6px 10px;
+    font-size: 0.85em;
+    background: #252525;
+    color: #fff;
+    border: 1px solid #333;
+    border-radius: 4px;
+    font-family: monospace;
+  }
+  .rp-user-input:focus { outline: none; border-color: #6366f1; }
+  .rp-user-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #252525;
+    border: 1px solid #333;
+    border-radius: 4px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 100;
+    display: none;
+  }
+  .rp-user-dropdown.show { display: block; }
+  .rp-user-item {
+    padding: 6px 10px;
+    cursor: pointer;
+    font-family: monospace;
+    font-size: 0.8em;
+    display: flex;
+    justify-content: space-between;
+  }
+  .rp-user-item:hover { background: #333; }
+  .rp-user-item .count { color: #888; }
+  .rp-btn {
+    padding: 6px 12px;
+    font-size: 0.85em;
+    background: #333;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .rp-btn:hover { background: #444; }
+  .rp-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .rp-btn-primary { background: #6366f1; }
+  .rp-btn-primary:hover { background: #4f46e5; }
+  .rp-query-hint { color: #666; font-size: 0.8em; margin-left: 8px; }
+  .rp-body { display: none; }
+  .rp-body.show { display: block; }
+  .rp-meta {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+  }
+  .rp-meta-item {
+    background: #252525;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 0.85em;
+  }
+  .rp-meta-item .label { color: #888; font-size: 0.8em; }
+  .rp-meta-item .value { color: #fff; font-family: monospace; }
+  .rp-chart-container {
+    position: relative;
+    height: 420px;
+    background: #0f0f0f;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .rp-chart {
+    width: 100%;
+    height: 100%;
+    cursor: crosshair;
+  }
+  .rp-legend {
+    position: absolute;
+    top: 8px;
+    left: 12px;
+    display: flex;
+    gap: 12px;
+    font-size: 0.7em;
+    font-family: monospace;
+    pointer-events: none;
+  }
+  .rp-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #aaa;
+  }
+  .rp-legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+  .rp-tooltip {
+    position: absolute;
+    background: rgba(0,0,0,0.9);
+    border: 1px solid #444;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.78em;
+    font-family: monospace;
+    pointer-events: none;
+    z-index: 10;
+    display: none;
+    white-space: nowrap;
+    line-height: 1.6;
+  }
+  .rp-chart-controls {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    display: flex;
+    gap: 4px;
+  }
+  .rp-chart-btn {
+    padding: 3px 8px;
+    font-size: 0.72em;
+    background: rgba(255,255,255,0.1);
+    color: #aaa;
+    border: 1px solid #444;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+  .rp-chart-btn:hover { background: rgba(255,255,255,0.2); color: #fff; }
+  .rp-cursor-bar {
+    background: #252525;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    display: none;
+    font-family: monospace;
+    font-size: 0.82em;
+    line-height: 1.8;
+  }
+  .rp-cursor-bar.show { display: flex; gap: 20px; flex-wrap: wrap; align-items: baseline; }
+  .rp-cursor-bar .ts { color: #888; }
+  .rp-cursor-bar .pnl { font-size: 1.1em; font-weight: 600; }
+  .rp-cursor-bar .pnl.pos { color: #10b981; }
+  .rp-cursor-bar .pnl.neg { color: #ef4444; }
+  .rp-cursor-bar .evt-badge {
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 0.9em;
+  }
+  .rp-cursor-bar .evt-detail { color: #bbb; }
+  .rp-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  @media (max-width: 900px) {
+    .rp-details { grid-template-columns: 1fr; }
+  }
+  .rp-panel {
+    background: #252525;
+    border-radius: 8px;
+    padding: 12px;
+  }
+  .rp-panel-title {
+    font-size: 0.9em;
+    color: #fff;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #333;
+  }
+  .rp-positions, .rp-trades { max-height: 300px; overflow-y: auto; }
+  .rp-pos-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 8px;
+    background: #1a1a1a;
+    border-radius: 4px;
+    margin-bottom: 3px;
+    font-size: 0.78em;
+    font-family: monospace;
+  }
+  .rp-pos-item .cond {
+    color: #aaa;
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .rp-pos-item .tokens { color: #6366f1; }
+  .rp-pos-item .rpnl { min-width: 80px; text-align: right; }
+  .rp-pos-item .rpnl.pos { color: #10b981; }
+  .rp-pos-item .rpnl.neg { color: #ef4444; }
+  .rp-trade-item {
+    display: flex;
+    gap: 8px;
+    padding: 5px 8px;
+    background: #1a1a1a;
+    border-radius: 4px;
+    margin-bottom: 3px;
+    font-size: 0.74em;
+    font-family: monospace;
+    transition: background 0.15s;
+  }
+  .rp-trade-item.focus { background: #2a2a3a; border-left: 2px solid #6366f1; }
+  .rp-trade-item .time { color: #666; min-width: 72px; }
+  .rp-trade-item .type { min-width: 48px; font-weight: 500; }
+  .rp-trade-item .detail { color: #aaa; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+</style>
+
+<div class="rp-card" id="rp-card">
+  <div class="rp-header">
+    <h2>PnL 回放器</h2>
+  </div>
+  <div class="rp-query-row">
+    <div class="rp-user-select">
+      <div class="rp-input-wrapper">
+        <input type="text" class="rp-user-input" id="rp-user-input"
+               placeholder="输入用户地址 (0x...) 或点击选择" disabled />
+        <div class="rp-user-dropdown" id="rp-user-dropdown"></div>
+      </div>
+      <button class="rp-btn rp-btn-primary" onclick="rpLoadUser()" id="rp-load-btn" disabled>查询</button>
+      <span class="rp-query-hint" id="rp-query-hint">请先执行全量重建</span>
+    </div>
+  </div>
+
+  <div class="rp-body" id="rp-body">
+    <div class="rp-meta" id="rp-meta"></div>
+
+    <div class="rp-chart-container" id="rp-chart-container">
+      <canvas class="rp-chart" id="rp-chart"></canvas>
+      <div class="rp-legend" id="rp-legend">
+        <div class="rp-legend-item"><div class="rp-legend-dot" style="background:#6366f1"></div>Buy</div>
+        <div class="rp-legend-item"><div class="rp-legend-dot" style="background:#ef4444"></div>Sell</div>
+        <div class="rp-legend-item"><div class="rp-legend-dot" style="background:#eab308"></div>Split</div>
+        <div class="rp-legend-item"><div class="rp-legend-dot" style="background:#f97316"></div>Merge</div>
+        <div class="rp-legend-item"><div class="rp-legend-dot" style="background:#22d3ee"></div>Redeem</div>
+      </div>
+      <div class="rp-chart-controls">
+        <button class="rp-chart-btn" onclick="rpResetZoom()">Reset</button>
+      </div>
+      <div class="rp-tooltip" id="rp-tooltip"></div>
+    </div>
+
+    <div class="rp-cursor-bar" id="rp-cursor-bar">
+      <span class="ts" id="rp-cur-ts">-</span>
+      <span class="pnl" id="rp-cur-pnl">$0.00</span>
+      <span class="evt-badge" id="rp-cur-badge"></span>
+      <span class="evt-detail" id="rp-cur-detail"></span>
+    </div>
+
+    <div class="rp-details">
+      <div class="rp-panel">
+        <div class="rp-panel-title">持仓 (<span id="rp-pos-count">0</span>)</div>
+        <div class="rp-positions" id="rp-positions"></div>
+      </div>
+      <div class="rp-panel">
+        <div class="rp-panel-title">交易记录 (<span id="rp-trade-count">0</span>)</div>
+        <div class="rp-trades" id="rp-trades"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================================
+// Replayer State
+// ============================================================================
+let _rData = null;
+let _rTimeline = [];       // [{ts,ty,ti,ci,d,p,rpnl}]
+let _rConditions = {};     // ci → {id,oc,snaps:[{ts,pos,cost,rpnl,...}]}
+let _rUsers = [];
+let _rViewStartTs = 0;
+let _rViewEndTs = 0;
+let _rCursorIdx = -1;
+let _rHoverIdx = -1;
+let _rDragging = false;
+let _rDragStartX = 0;
+let _rDragStartVS = 0;
+let _rDragStartVE = 0;
+let _rDragMoved = false;
+
+const _rPad = { top: 30, right: 70, bottom: 32, left: 14 };
+const _rEvtColors = ['#6366f1','#ef4444','#eab308','#f97316','#22d3ee'];
+const _rEvtNames = ['Buy','Sell','Split','Merge','Redeem'];
+const _rEvtNamesCN = ['买入','卖出','铸造','合币','赎回'];
+
+// ============================================================================
+// Init
+// ============================================================================
+document.addEventListener('DOMContentLoaded', () => {
+  rpCheckStatus();
+
+  const input = document.getElementById('rp-user-input');
+  const dropdown = document.getElementById('rp-user-dropdown');
+
+  input.addEventListener('focus', () => { if (_rUsers.length) dropdown.classList.add('show'); });
+  input.addEventListener('input', () => rpFilterUsers(input.value));
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { dropdown.classList.remove('show'); rpLoadUser(); }
+  });
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.rp-input-wrapper')) dropdown.classList.remove('show');
+  });
+
+  rpSetupInteraction();
+  window.addEventListener('resize', () => { if (_rTimeline.length) rpDraw(); });
+});
+
+// ============================================================================
+// Status check
+// ============================================================================
+async function rpCheckStatus() {
+  try {
+    const resp = await fetch('/api/rebuild-status');
+    const s = await resp.json();
+    if (s.phase === 7 && s.total_users > 0) rpEnableQuery();
+  } catch(e) {}
+}
+
+function rpEnableQuery() {
+  document.getElementById('rp-user-input').disabled = false;
+  document.getElementById('rp-load-btn').disabled = false;
+  document.getElementById('rp-query-hint').style.display = 'none';
+  rpLoadUserList();
+}
+
+// Called by rebuilder on completion
+function rpOnRebuildDone() { rpEnableQuery(); }
+
+// ============================================================================
+// User list
+// ============================================================================
+async function rpLoadUserList() {
+  try {
+    const resp = await fetch('/api/replay-users?limit=200');
+    _rUsers = await resp.json();
+    rpRenderDropdown(_rUsers);
+  } catch(e) {}
+}
+
+function rpRenderDropdown(users) {
+  const dd = document.getElementById('rp-user-dropdown');
+  dd.innerHTML = users.slice(0,50).map(u =>
+    `<div class="rp-user-item" onclick="rpSelectUser('${u.user_addr}')">
+       <span>${u.user_addr}</span>
+       <span class="count">${u.event_count}</span>
+     </div>`
+  ).join('');
+}
+
+function rpFilterUsers(q) {
+  const lq = q.toLowerCase();
+  rpRenderDropdown(_rUsers.filter(u => u.user_addr.toLowerCase().includes(lq)));
+  document.getElementById('rp-user-dropdown').classList.add('show');
+}
+
+function rpSelectUser(addr) {
+  document.getElementById('rp-user-input').value = addr;
+  document.getElementById('rp-user-dropdown').classList.remove('show');
+}
+
+// ============================================================================
+// Load user data
+// ============================================================================
+async function rpLoadUser() {
+  const user = document.getElementById('rp-user-input').value.trim();
+  if (!user) return;
+
+  const btn = document.getElementById('rp-load-btn');
+  btn.disabled = true; btn.textContent = '...';
+
+  try {
+    const resp = await fetch(`/api/replay?user=${encodeURIComponent(user)}`);
+    _rData = await resp.json();
+    _rTimeline = _rData.timeline || [];
+    _rConditions = _rData.conditions || {};
+
+    rpRenderMeta();
+    rpResetZoom();
+    _rCursorIdx = _rTimeline.length - 1;
+    rpDraw();
+    rpUpdateCursor();
+    document.getElementById('rp-body').classList.add('show');
+  } catch(e) {
+    console.error('rpLoadUser', e);
+  } finally {
+    btn.disabled = false; btn.textContent = '查询';
+  }
+}
+
+// ============================================================================
+// Meta info
+// ============================================================================
+function rpRenderMeta() {
+  if (!_rData) return;
+  const d = _rData;
+  const nCond = Object.keys(d.conditions).length;
+  const finalPnl = _rTimeline.length ? _rTimeline[_rTimeline.length-1].rpnl / 1e6 : 0;
+  const pnlClass = finalPnl >= 0 ? 'pos' : 'neg';
+  document.getElementById('rp-meta').innerHTML = `
+    <div class="rp-meta-item"><div class="label">事件</div><div class="value">${d.total_events}</div></div>
+    <div class="rp-meta-item"><div class="label">问题</div><div class="value">${nCond}</div></div>
+    <div class="rp-meta-item"><div class="label">最终 PnL</div><div class="value" style="color:${finalPnl>=0?'#10b981':'#ef4444'}">${rpFmtUSD(finalPnl)}</div></div>
+    <div class="rp-meta-item"><div class="label">首次</div><div class="value">${d.first_ts ? new Date(d.first_ts*1000).toLocaleDateString() : '-'}</div></div>
+    <div class="rp-meta-item"><div class="label">末次</div><div class="value">${d.last_ts ? new Date(d.last_ts*1000).toLocaleDateString() : '-'}</div></div>
+  `;
+}
+
+// ============================================================================
+// Zoom / View
+// ============================================================================
+function rpResetZoom() {
+  if (!_rTimeline.length) return;
+  const margin = Math.max(1, (_rTimeline[_rTimeline.length-1].ts - _rTimeline[0].ts) * 0.02);
+  _rViewStartTs = _rTimeline[0].ts - margin;
+  _rViewEndTs = _rTimeline[_rTimeline.length-1].ts + margin;
+}
+
+// ============================================================================
+// Chart drawing
+// ============================================================================
+function rpDraw() {
+  const canvas = document.getElementById('rp-chart');
+  const container = document.getElementById('rp-chart-container');
+  const rect = container.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+
+  const cssW = rect.width;
+  const cssH = rect.height;
+  canvas.width = cssW * dpr;
+  canvas.height = cssH * dpr;
+  canvas.style.width = cssW + 'px';
+  canvas.style.height = cssH + 'px';
+
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, cssW, cssH);
+
+  if (_rTimeline.length < 1) {
+    ctx.fillStyle = '#888'; ctx.font = '14px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('无数据', cssW/2, cssH/2);
+    return;
+  }
+
+  const p = _rPad;
+  const cW = cssW - p.left - p.right;
+  const cH = cssH - p.top - p.bottom;
+  const tsRange = _rViewEndTs - _rViewStartTs;
+  if (tsRange <= 0) return;
+
+  // Visible events (with one before/after for line continuity)
+  let iStart = rpBsearch(_rTimeline, _rViewStartTs) - 1;
+  let iEnd = rpBsearch(_rTimeline, _rViewEndTs) + 1;
+  iStart = Math.max(0, iStart);
+  iEnd = Math.min(_rTimeline.length - 1, iEnd);
+
+  // Y range from visible data
+  let minY = Infinity, maxY = -Infinity;
+  for (let i = iStart; i <= iEnd; i++) {
+    const v = _rTimeline[i].rpnl / 1e6;
+    if (v < minY) minY = v;
+    if (v > maxY) maxY = v;
+  }
+  if (minY === maxY) { minY -= 1; maxY += 1; }
+  // Include zero
+  if (minY > 0) minY = 0;
+  if (maxY < 0) maxY = 0;
+  const yPad = (maxY - minY) * 0.08;
+  minY -= yPad; maxY += yPad;
+  const yRange = maxY - minY;
+
+  const ts2x = (ts) => p.left + (ts - _rViewStartTs) / tsRange * cW;
+  const val2y = (v) => p.top + (1 - (v - minY) / yRange) * cH;
+
+  // -- Grid --
+  ctx.strokeStyle = '#222'; ctx.lineWidth = 0.5;
+  const yStep = rpNiceStep(yRange, 6);
+  let yTick = Math.ceil(minY / yStep) * yStep;
+  ctx.font = '10px monospace'; ctx.textAlign = 'right'; ctx.fillStyle = '#555';
+  while (yTick <= maxY) {
+    const yy = val2y(yTick);
+    ctx.beginPath(); ctx.moveTo(p.left, yy); ctx.lineTo(cssW - p.right, yy); ctx.stroke();
+    ctx.fillText(rpFmtUSDShort(yTick), cssW - p.right + 4, yy + 3);
+    yTick += yStep;
+  }
+
+  // X-axis labels
+  const xStep = rpNiceTimeStep(tsRange);
+  let xTick = Math.ceil(_rViewStartTs / xStep) * xStep;
+  ctx.textAlign = 'center'; ctx.fillStyle = '#555';
+  while (xTick <= _rViewEndTs) {
+    const xx = ts2x(xTick);
+    ctx.beginPath(); ctx.moveTo(xx, p.top); ctx.lineTo(xx, cssH - p.bottom); ctx.stroke();
+    ctx.fillText(rpFmtTs(xTick, tsRange), xx, cssH - p.bottom + 14);
+    xTick += xStep;
+  }
+
+  // -- Zero line --
+  if (minY < 0 && maxY > 0) {
+    const zy = val2y(0);
+    ctx.strokeStyle = '#444'; ctx.lineWidth = 1;
+    ctx.setLineDash([4,4]); ctx.beginPath();
+    ctx.moveTo(p.left, zy); ctx.lineTo(cssW - p.right, zy); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // -- PnL curve --
+  ctx.strokeStyle = '#10b981'; ctx.lineWidth = 1.5; ctx.beginPath();
+  let firstPoint = true;
+  for (let i = iStart; i <= iEnd; i++) {
+    const x = ts2x(_rTimeline[i].ts);
+    const y = val2y(_rTimeline[i].rpnl / 1e6);
+    if (firstPoint) { ctx.moveTo(x, y); firstPoint = false; }
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // Gradient fill
+  if (!firstPoint) {
+    const baseY = val2y(Math.max(minY, 0));
+    ctx.lineTo(ts2x(_rTimeline[iEnd].ts), baseY);
+    ctx.lineTo(ts2x(_rTimeline[iStart].ts), baseY);
+    ctx.closePath();
+    const grad = ctx.createLinearGradient(0, p.top, 0, cssH - p.bottom);
+    grad.addColorStop(0, 'rgba(16,185,129,0.18)');
+    grad.addColorStop(1, 'rgba(16,185,129,0)');
+    ctx.fillStyle = grad; ctx.fill();
+  }
+
+  // -- Event markers --
+  const minPxGap = 3;
+  let lastMx = -999;
+  for (let i = iStart; i <= iEnd; i++) {
+    const e = _rTimeline[i];
+    const x = ts2x(e.ts);
+    if (Math.abs(x - lastMx) < minPxGap) continue;
+    lastMx = x;
+    const y = val2y(e.rpnl / 1e6);
+    const color = _rEvtColors[e.ty] || '#888';
+    const r = 3;
+
+    ctx.fillStyle = color;
+    if (e.ty === 0 || e.ty === 2) {
+      // up triangle
+      ctx.beginPath();
+      ctx.moveTo(x, y - r - 1);
+      ctx.lineTo(x - r, y + r - 1);
+      ctx.lineTo(x + r, y + r - 1);
+      ctx.closePath(); ctx.fill();
+    } else if (e.ty === 1 || e.ty === 3) {
+      // down triangle
+      ctx.beginPath();
+      ctx.moveTo(x, y + r + 1);
+      ctx.lineTo(x - r, y - r + 1);
+      ctx.lineTo(x + r, y - r + 1);
+      ctx.closePath(); ctx.fill();
+    } else {
+      // circle (redemption)
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill();
+    }
+  }
+
+  // -- Cursor line --
+  if (_rCursorIdx >= 0 && _rCursorIdx < _rTimeline.length) {
+    const ce = _rTimeline[_rCursorIdx];
+    const cx = ts2x(ce.ts);
+    const cy = val2y(ce.rpnl / 1e6);
+
+    if (cx >= p.left && cx <= cssW - p.right) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 1;
+      ctx.setLineDash([3,3]); ctx.beginPath();
+      ctx.moveTo(cx, p.top); ctx.lineTo(cx, cssH - p.bottom); ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = '#fff'; ctx.beginPath();
+      ctx.arc(cx, cy, 5, 0, Math.PI*2); ctx.fill();
+      ctx.strokeStyle = _rEvtColors[ce.ty] || '#888'; ctx.lineWidth = 2; ctx.stroke();
+    }
+  }
+
+  // Store chart params for mouse mapping
+  canvas._rp = { p, cW, cH, cssW, cssH, minY, maxY, yRange, ts2x, val2y };
+}
+
+// ============================================================================
+// Interaction
+// ============================================================================
+function rpSetupInteraction() {
+  const canvas = document.getElementById('rp-chart');
+
+  canvas.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    if (!_rTimeline.length) return;
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const p = _rPad;
+    const frac = Math.max(0, Math.min(1, (mx - p.left) / (rect.width - p.left - p.right)));
+    const mouseTs = _rViewStartTs + frac * (_rViewEndTs - _rViewStartTs);
+    const factor = e.deltaY > 0 ? 1.25 : 0.8;
+    const newRange = (_rViewEndTs - _rViewStartTs) * factor;
+    // Clamp minimum range to 60 seconds
+    if (newRange < 60 && factor < 1) return;
+    _rViewStartTs = mouseTs - frac * newRange;
+    _rViewEndTs = mouseTs + (1 - frac) * newRange;
+    rpDraw();
+  }, { passive: false });
+
+  canvas.addEventListener('mousedown', (e) => {
+    if (e.button !== 0) return;
+    _rDragging = true;
+    _rDragMoved = false;
+    _rDragStartX = e.clientX;
+    _rDragStartVS = _rViewStartTs;
+    _rDragStartVE = _rViewEndTs;
+    canvas.style.cursor = 'grabbing';
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (_rDragging) {
+      const dx = e.clientX - _rDragStartX;
+      if (Math.abs(dx) > 3) _rDragMoved = true;
+      const rect = document.getElementById('rp-chart').getBoundingClientRect();
+      const tsPerPx = (_rDragStartVE - _rDragStartVS) / (rect.width - _rPad.left - _rPad.right);
+      const shift = -dx * tsPerPx;
+      _rViewStartTs = _rDragStartVS + shift;
+      _rViewEndTs = _rDragStartVE + shift;
+      rpDraw();
+    }
+    rpUpdateTooltip(e);
+  });
+
+  window.addEventListener('mouseup', (e) => {
+    if (_rDragging) {
+      _rDragging = false;
+      const canvas = document.getElementById('rp-chart');
+      canvas.style.cursor = 'crosshair';
+      if (!_rDragMoved) {
+        // Click → set cursor
+        rpSetCursorFromMouse(e);
+      }
+    }
+  });
+
+  canvas.addEventListener('mouseleave', () => {
+    document.getElementById('rp-tooltip').style.display = 'none';
+    _rHoverIdx = -1;
+  });
+}
+
+function rpSetCursorFromMouse(e) {
+  const idx = rpMouseToIdx(e);
+  if (idx < 0) return;
+  _rCursorIdx = idx;
+  rpDraw();
+  rpUpdateCursor();
+}
+
+function rpMouseToIdx(e) {
+  if (!_rTimeline.length) return -1;
+  const canvas = document.getElementById('rp-chart');
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const p = _rPad;
+  const frac = (mx - p.left) / (rect.width - p.left - p.right);
+  const ts = _rViewStartTs + frac * (_rViewEndTs - _rViewStartTs);
+  return rpNearestIdx(ts);
+}
+
+function rpNearestIdx(ts) {
+  let lo = 0, hi = _rTimeline.length - 1;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (_rTimeline[mid].ts < ts) lo = mid + 1;
+    else hi = mid;
+  }
+  // Check lo and lo-1 for nearest
+  if (lo > 0 && Math.abs(_rTimeline[lo-1].ts - ts) < Math.abs(_rTimeline[lo].ts - ts)) return lo - 1;
+  return lo;
+}
+
+function rpUpdateTooltip(e) {
+  const tooltip = document.getElementById('rp-tooltip');
+  if (!_rTimeline.length || _rDragging) { tooltip.style.display = 'none'; return; }
+
+  const canvas = document.getElementById('rp-chart');
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+
+  if (mx < _rPad.left || mx > rect.width - _rPad.right || my < _rPad.top || my > rect.height - _rPad.bottom) {
+    tooltip.style.display = 'none'; return;
+  }
+
+  const frac = (mx - _rPad.left) / (rect.width - _rPad.left - _rPad.right);
+  const ts = _rViewStartTs + frac * (_rViewEndTs - _rViewStartTs);
+  const idx = rpNearestIdx(ts);
+  const ev = _rTimeline[idx];
+  const pnl = ev.rpnl / 1e6;
+  const color = _rEvtColors[ev.ty];
+  const name = _rEvtNamesCN[ev.ty];
+
+  let detail = '';
+  if (ev.ty <= 1) {
+    detail = ` ${(ev.d/1e6).toFixed(2)} @ $${(ev.p/1e6).toFixed(4)}`;
+  } else if (ev.ty <= 3) {
+    detail = ` ${(ev.d/1e6).toFixed(2)} tokens`;
+  } else {
+    detail = ` $${(ev.d/1e6).toFixed(2)}`;
+  }
+
+  tooltip.innerHTML = `
+    <div style="color:#888">${new Date(ev.ts*1000).toLocaleString()}</div>
+    <div style="color:${pnl>=0?'#10b981':'#ef4444'};font-size:1.1em">${rpFmtUSD(pnl)}</div>
+    <div><span style="color:${color}">${name}</span>${detail}</div>
+  `;
+  tooltip.style.display = 'block';
+
+  // Position tooltip
+  let tx = mx + 14, ty = my - 10;
+  if (tx + 200 > rect.width) tx = mx - 200;
+  if (ty < 0) ty = 10;
+  tooltip.style.left = tx + 'px';
+  tooltip.style.top = ty + 'px';
+}
+
+// ============================================================================
+// Cursor panel update
+// ============================================================================
+function rpUpdateCursor() {
+  const bar = document.getElementById('rp-cursor-bar');
+  if (_rCursorIdx < 0 || _rCursorIdx >= _rTimeline.length) {
+    bar.classList.remove('show'); return;
+  }
+  bar.classList.add('show');
+
+  const ev = _rTimeline[_rCursorIdx];
+  const pnl = ev.rpnl / 1e6;
+  const color = _rEvtColors[ev.ty];
+
+  document.getElementById('rp-cur-ts').textContent = new Date(ev.ts*1000).toLocaleString();
+  const pnlEl = document.getElementById('rp-cur-pnl');
+  pnlEl.textContent = rpFmtUSD(pnl);
+  pnlEl.className = 'pnl ' + (pnl >= 0 ? 'pos' : 'neg');
+
+  const badge = document.getElementById('rp-cur-badge');
+  badge.textContent = _rEvtNamesCN[ev.ty];
+  badge.style.background = color;
+  badge.style.color = '#fff';
+
+  let detail = '';
+  if (ev.ty <= 1) {
+    detail = `${(ev.d/1e6).toFixed(2)} tokens @ $${(ev.p/1e6).toFixed(4)}`;
+  } else if (ev.ty <= 3) {
+    detail = `${(ev.d/1e6).toFixed(2)} tokens`;
+  } else {
+    detail = `$${(ev.d/1e6).toFixed(2)} payout`;
+  }
+  document.getElementById('rp-cur-detail').textContent = detail;
+
+  rpRenderPositions(ev.ts);
+  rpRenderTrades(_rCursorIdx);
+}
+
+// ============================================================================
+// Positions at cursor time
+// ============================================================================
+function rpRenderPositions(ts) {
+  const el = document.getElementById('rp-positions');
+  const countEl = document.getElementById('rp-pos-count');
+  const positions = [];
+
+  for (const [ci, cond] of Object.entries(_rConditions)) {
+    const snaps = cond.snaps;
+    if (!snaps.length) continue;
+    // Binary search: latest snap.ts <= ts
+    let lo = 0, hi = snaps.length - 1, best = -1;
+    while (lo <= hi) {
+      const mid = (lo + hi) >> 1;
+      if (snaps[mid].ts <= ts) { best = mid; lo = mid + 1; }
+      else hi = mid - 1;
+    }
+    if (best < 0) continue;
+    const snap = snaps[best];
+    const hasPos = snap.pos.some(p => p !== 0);
+    if (!hasPos) continue;
+
+    positions.push({
+      ci, id: cond.id, oc: cond.oc,
+      pos: snap.pos, cost: snap.cost, rpnl: snap.rpnl
+    });
+  }
+
+  // Sort by abs rpnl desc
+  positions.sort((a, b) => Math.abs(b.rpnl) - Math.abs(a.rpnl));
+  countEl.textContent = positions.length;
+
+  if (!positions.length) {
+    el.innerHTML = '<div style="color:#888;padding:10px">无持仓</div>';
+    return;
+  }
+
+  el.innerHTML = positions.map(p => {
+    const tokensStr = p.pos.filter(v => v !== 0).map((v,i) => `T${i}:${(v/1e6).toFixed(2)}`).join(' ');
+    const rpnl = p.rpnl / 1e6;
+    const rpnlCls = rpnl >= 0 ? 'pos' : 'neg';
+    return `<div class="rp-pos-item">
+      <span class="cond" title="${p.id}">${p.id.slice(0,16)}...</span>
+      <span class="tokens">${tokensStr}</span>
+      <span class="rpnl ${rpnlCls}">${rpFmtUSD(rpnl)}</span>
+    </div>`;
+  }).join('');
+}
+
+// ============================================================================
+// Trades near cursor
+// ============================================================================
+function rpRenderTrades(curIdx) {
+  const el = document.getElementById('rp-trades');
+  const countEl = document.getElementById('rp-trade-count');
+  countEl.textContent = _rTimeline.length;
+
+  const radius = 15;
+  const start = Math.max(0, curIdx - radius);
+  const end = Math.min(_rTimeline.length - 1, curIdx + radius);
+
+  const rows = [];
+  for (let i = end; i >= start; i--) {
+    const ev = _rTimeline[i];
+    const isFocus = (i === curIdx);
+    const color = _rEvtColors[ev.ty];
+    const name = _rEvtNamesCN[ev.ty];
+
+    let detail = '';
+    if (ev.ty <= 1) {
+      detail = `${(ev.d/1e6).toFixed(2)} @ $${(ev.p/1e6).toFixed(4)}`;
+    } else if (ev.ty <= 3) {
+      detail = `${(ev.d/1e6).toFixed(2)} tokens`;
+    } else {
+      detail = `$${(ev.d/1e6).toFixed(2)}`;
+    }
+
+    rows.push(`<div class="rp-trade-item${isFocus?' focus':''}">
+      <span class="time">${rpFmtTime(ev.ts)}</span>
+      <span class="type" style="color:${color}">${name}</span>
+      <span class="detail">${detail}</span>
+    </div>`);
+  }
+
+  el.innerHTML = rows.length ? rows.join('') : '<div style="color:#888;padding:10px">无交易</div>';
+
+  // Scroll to focus
+  const focusEl = el.querySelector('.focus');
+  if (focusEl) focusEl.scrollIntoView({ block: 'nearest' });
+}
+
+// ============================================================================
+// Helpers
+// ============================================================================
+function rpFmtUSD(v) {
+  return (v >= 0 ? '+$' : '-$') + Math.abs(v).toFixed(2);
+}
+
+function rpFmtUSDShort(v) {
+  const abs = Math.abs(v);
+  const sign = v < 0 ? '-' : '';
+  if (abs >= 1e6) return sign + '$' + (abs/1e6).toFixed(1) + 'M';
+  if (abs >= 1e3) return sign + '$' + (abs/1e3).toFixed(1) + 'K';
+  return sign + '$' + abs.toFixed(abs < 1 ? 2 : 0);
+}
+
+function rpFmtTime(ts) {
+  const d = new Date(ts * 1000);
+  const h = String(d.getHours()).padStart(2,'0');
+  const m = String(d.getMinutes()).padStart(2,'0');
+  return `${d.getMonth()+1}/${d.getDate()} ${h}:${m}`;
+}
+
+function rpFmtTs(ts, range) {
+  const d = new Date(ts * 1000);
+  if (range > 86400 * 30) return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+  if (range > 86400) return `${d.getMonth()+1}/${d.getDate()}`;
+  const h = String(d.getHours()).padStart(2,'0');
+  const m = String(d.getMinutes()).padStart(2,'0');
+  return `${d.getMonth()+1}/${d.getDate()} ${h}:${m}`;
+}
+
+function rpNiceStep(range, ticks) {
+  const rough = range / ticks;
+  const mag = Math.pow(10, Math.floor(Math.log10(rough)));
+  const res = rough / mag;
+  let nice;
+  if (res <= 1.5) nice = 1;
+  else if (res <= 3) nice = 2;
+  else if (res <= 7) nice = 5;
+  else nice = 10;
+  return nice * mag;
+}
+
+function rpNiceTimeStep(rangeSec) {
+  const targets = [60, 300, 600, 1800, 3600, 7200, 14400, 43200, 86400, 86400*7, 86400*30, 86400*90, 86400*365];
+  const ideal = rangeSec / 8;
+  for (const t of targets) { if (t >= ideal) return t; }
+  return targets[targets.length-1];
+}
+
+// Binary search: find first index where timeline[i].ts >= ts
+function rpBsearch(arr, ts) {
+  let lo = 0, hi = arr.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (arr[mid].ts < ts) lo = mid + 1;
+    else hi = mid;
+  }
+  return lo;
+}
+</script>

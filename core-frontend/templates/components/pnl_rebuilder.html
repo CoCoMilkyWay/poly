@@ -33,13 +33,6 @@
     border-radius: 2px;
   }
 
-  .pnl-controls {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-    flex-wrap: wrap;
-  }
-
   .pnl-btn {
     padding: 6px 12px;
     font-size: 0.85em;
@@ -51,352 +44,8 @@
     transition: background 0.2s;
   }
 
-  .pnl-btn:hover {
-    background: #444;
-  }
-
-  .pnl-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
-  .pnl-btn-primary {
-    background: #10b981;
-  }
-
-  .pnl-btn-primary:hover {
-    background: #059669;
-  }
-
-  .pnl-progress {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.85em;
-    color: #888;
-  }
-
-  .pnl-progress-bar {
-    width: 120px;
-    height: 6px;
-    background: #333;
-    border-radius: 3px;
-    overflow: hidden;
-  }
-
-  .pnl-progress-fill {
-    height: 100%;
-    background: #10b981;
-    transition: width 0.3s;
-  }
-
-  .pnl-user-select {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-  }
-
-  .pnl-user-input {
-    width: 380px;
-    padding: 6px 10px;
-    font-size: 0.85em;
-    background: #252525;
-    color: #fff;
-    border: 1px solid #333;
-    border-radius: 4px;
-    font-family: monospace;
-  }
-
-  .pnl-user-input:focus {
-    outline: none;
-    border-color: #10b981;
-  }
-
-  .pnl-user-dropdown {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: #252525;
-    border: 1px solid #333;
-    border-radius: 4px;
-    max-height: 200px;
-    overflow-y: auto;
-    z-index: 100;
-    display: none;
-  }
-
-  .pnl-user-dropdown.show {
-    display: block;
-  }
-
-  .pnl-user-item {
-    padding: 6px 10px;
-    cursor: pointer;
-    font-family: monospace;
-    font-size: 0.8em;
-    display: flex;
-    justify-content: space-between;
-  }
-
-  .pnl-user-item:hover {
-    background: #333;
-  }
-
-  .pnl-user-item .count {
-    color: #888;
-  }
-
-  .pnl-input-wrapper {
-    position: relative;
-  }
-
-  .pnl-body {
-    display: none;
-  }
-
-  .pnl-body.show {
-    display: block;
-  }
-
-  .pnl-chart-container {
-    position: relative;
-    height: 300px;
-    background: #0f0f0f;
-    border-radius: 8px;
-    margin-bottom: 15px;
-    padding: 10px;
-  }
-
-  .pnl-chart {
-    width: 100%;
-    height: 100%;
-  }
-
-  .pnl-cursor-info {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: rgba(0, 0, 0, 0.8);
-    padding: 8px 12px;
-    border-radius: 4px;
-    font-size: 0.8em;
-    font-family: monospace;
-    pointer-events: none;
-  }
-
-  .pnl-cursor-info .timestamp {
-    color: #888;
-    margin-bottom: 4px;
-  }
-
-  .pnl-cursor-info .value {
-    font-size: 1.2em;
-  }
-
-  .pnl-cursor-info .value.positive {
-    color: #10b981;
-  }
-
-  .pnl-cursor-info .value.negative {
-    color: #ef4444;
-  }
-
-  .pnl-cursor-info .event {
-    font-size: 0.9em;
-    color: #aaa;
-    margin-top: 4px;
-  }
-
-  .pnl-cursor-info .event .type {
-    font-weight: 500;
-  }
-
-  .pnl-cursor-info .event .type.order {
-    color: #6366f1;
-  }
-
-  .pnl-cursor-info .event .type.merge {
-    color: #f59e0b;
-  }
-
-  .pnl-cursor-info .event .type.redemption {
-    color: #10b981;
-  }
-
-  .pnl-details {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
-  }
-
-  @media (max-width: 900px) {
-    .pnl-details {
-      grid-template-columns: 1fr;
-    }
-  }
-
-  .pnl-panel {
-    background: #252525;
-    border-radius: 8px;
-    padding: 12px;
-  }
-
-  .pnl-panel-title {
-    font-size: 0.9em;
-    color: #fff;
-    margin-bottom: 10px;
-    padding-bottom: 6px;
-    border-bottom: 1px solid #333;
-  }
-
-  .pnl-positions {
-    max-height: 250px;
-    overflow-y: auto;
-  }
-
-  .pnl-position-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 6px 8px;
-    background: #1a1a1a;
-    border-radius: 4px;
-    margin-bottom: 4px;
-    font-size: 0.8em;
-  }
-
-  .pnl-position-item .token {
-    font-family: monospace;
-    color: #aaa;
-    max-width: 200px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .pnl-position-item .amount {
-    color: #10b981;
-    font-family: monospace;
-  }
-
-  .pnl-position-item .pnl {
-    font-family: monospace;
-    min-width: 80px;
-    text-align: right;
-  }
-
-  .pnl-position-item .pnl.positive {
-    color: #10b981;
-  }
-
-  .pnl-position-item .pnl.negative {
-    color: #ef4444;
-  }
-
-  .pnl-trades {
-    max-height: 250px;
-    overflow-y: auto;
-  }
-
-  .pnl-trade-item {
-    display: flex;
-    gap: 10px;
-    padding: 6px 8px;
-    background: #1a1a1a;
-    border-radius: 4px;
-    margin-bottom: 4px;
-    font-size: 0.75em;
-    font-family: monospace;
-  }
-
-  .pnl-trade-item .time {
-    color: #666;
-    min-width: 80px;
-  }
-
-  .pnl-trade-item .type {
-    min-width: 70px;
-    font-weight: 500;
-  }
-
-  .pnl-trade-item .type.order {
-    color: #6366f1;
-  }
-
-  .pnl-trade-item .type.merge {
-    color: #f59e0b;
-  }
-
-  .pnl-trade-item .type.redemption {
-    color: #10b981;
-  }
-
-  .pnl-trade-item .details {
-    color: #aaa;
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .pnl-meta {
-    display: flex;
-    gap: 15px;
-    margin-bottom: 15px;
-    flex-wrap: wrap;
-  }
-
-  .pnl-meta-item {
-    background: #252525;
-    padding: 8px 12px;
-    border-radius: 4px;
-    font-size: 0.85em;
-  }
-
-  .pnl-meta-item .label {
-    color: #888;
-    font-size: 0.8em;
-  }
-
-  .pnl-meta-item .value {
-    color: #fff;
-    font-family: monospace;
-  }
-
-  .pnl-slider {
-    width: 100%;
-    margin: 10px 0;
-    -webkit-appearance: none;
-    appearance: none;
-    background: #333;
-    height: 4px;
-    border-radius: 2px;
-    outline: none;
-  }
-
-  .pnl-slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 14px;
-    height: 14px;
-    background: #10b981;
-    border-radius: 50%;
-    cursor: pointer;
-  }
-
-  .pnl-slider::-moz-range-thumb {
-    width: 14px;
-    height: 14px;
-    background: #10b981;
-    border-radius: 50%;
-    cursor: pointer;
-    border: none;
-  }
-
-  .pnl-loading {
-    text-align: center;
-    padding: 20px;
-    color: #888;
-  }
+  .pnl-btn:hover { background: #444; }
+  .pnl-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
   .pnl-rebuild-log {
     font-family: monospace;
@@ -405,508 +54,34 @@
     padding: 8px 12px;
     background: #151515;
     border-radius: 4px;
-    margin-bottom: 12px;
     line-height: 1.8;
   }
 
-  .pnl-rebuild-log .done {
-    color: #10b981;
-  }
-
-  .pnl-rebuild-log .active {
-    color: #f59e0b;
-  }
-
-  .pnl-query-row {
-    margin-bottom: 12px;
-  }
-
-  .pnl-query-hint {
-    color: #666;
-    font-size: 0.8em;
-    margin-left: 8px;
-  }
+  .pnl-rebuild-log .done { color: #10b981; }
+  .pnl-rebuild-log .active { color: #f59e0b; }
 </style>
 
 <div class="pnl-card" id="pnl-card">
   <div class="pnl-header">
     <h2>PnL 重建器</h2>
-    <div class="pnl-controls">
-      <button class="pnl-btn" onclick="pnlRebuildAll()" id="pnl-rebuild-btn">
-        全量重建
-      </button>
+    <div>
+      <button class="pnl-btn" onclick="pnlRebuildAll()" id="pnl-rebuild-btn">全量重建</button>
     </div>
   </div>
   <div class="pnl-rebuild-log" id="pnl-rebuild-log" style="display: none"></div>
-  <div class="pnl-query-row">
-    <div class="pnl-user-select">
-      <div class="pnl-input-wrapper">
-        <input
-          type="text"
-          class="pnl-user-input"
-          id="pnl-user-input"
-          placeholder="输入用户地址 (0x...) 或点击选择"
-          disabled
-        />
-        <div class="pnl-user-dropdown" id="pnl-user-dropdown"></div>
-      </div>
-      <button
-        class="pnl-btn pnl-btn-primary"
-        onclick="pnlLoadUser()"
-        id="pnl-load-btn"
-        disabled
-      >
-        查询
-      </button>
-      <span class="pnl-query-hint" id="pnl-query-hint">请先执行全量重建</span>
-    </div>
-  </div>
-
-  <div class="pnl-body" id="pnl-body">
-    <div class="pnl-meta" id="pnl-meta"></div>
-
-    <div class="pnl-chart-container">
-      <canvas class="pnl-chart" id="pnl-chart"></canvas>
-      <div class="pnl-cursor-info" id="pnl-cursor-info" style="display: none">
-        <div class="timestamp" id="pnl-cursor-time">-</div>
-        <div class="value" id="pnl-cursor-value">$0.00</div>
-        <div class="event" id="pnl-cursor-event"></div>
-      </div>
-    </div>
-
-    <input
-      type="range"
-      class="pnl-slider"
-      id="pnl-slider"
-      min="0"
-      max="100"
-      value="100"
-    />
-
-    <div class="pnl-details">
-      <div class="pnl-panel">
-        <div class="pnl-panel-title">
-          持仓 (<span id="pnl-position-count">0</span>)
-        </div>
-        <div class="pnl-positions" id="pnl-positions"></div>
-      </div>
-      <div class="pnl-panel">
-        <div class="pnl-panel-title">
-          交易记录 (<span id="pnl-trade-count">0</span>)
-        </div>
-        <div class="pnl-trades" id="pnl-trades"></div>
-      </div>
-    </div>
-  </div>
 </div>
 
 <script>
-  let _pnlData = null;
-  let _pnlUsers = [];
-  let _pnlChart = null;
-  let _pnlSnapshots = [];
   let _rebuildPollTimer = null;
 
-  // 初始化
   document.addEventListener("DOMContentLoaded", () => {
     pnlCheckRebuildStatus();
-
-    const input = document.getElementById("pnl-user-input");
-    const dropdown = document.getElementById("pnl-user-dropdown");
-
-    input.addEventListener("focus", () => {
-      if (_pnlUsers.length) dropdown.classList.add("show");
-    });
-
-    input.addEventListener("input", () => {
-      pnlFilterUsers(input.value);
-    });
-
-    input.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        dropdown.classList.remove("show");
-        pnlLoadUser();
-      }
-    });
-
-    document.addEventListener("click", (e) => {
-      if (!e.target.closest(".pnl-input-wrapper")) {
-        dropdown.classList.remove("show");
-      }
-    });
-
-    // slider
-    const slider = document.getElementById("pnl-slider");
-    slider.addEventListener("input", () => {
-      pnlUpdateCursor(parseInt(slider.value));
-    });
   });
-
-  async function pnlLoadUserList() {
-    try {
-      const resp = await fetch("/api/pnl-users?limit=200");
-      _pnlUsers = await resp.json();
-      pnlRenderUserDropdown(_pnlUsers);
-    } catch (e) {
-      console.error("加载用户列表失败", e);
-    }
-  }
-
-  function pnlRenderUserDropdown(users) {
-    const dropdown = document.getElementById("pnl-user-dropdown");
-    dropdown.innerHTML = users
-      .slice(0, 50)
-      .map(
-        (u) => `
-      <div class="pnl-user-item" onclick="pnlSelectUser('${u.user_addr}')">
-        <span>${u.user_addr}</span>
-        <span class="count">${u.event_count} 事件</span>
-      </div>
-    `,
-      )
-      .join("");
-  }
-
-  function pnlFilterUsers(query) {
-    const q = query.toLowerCase();
-    const filtered = _pnlUsers.filter((u) =>
-      u.user_addr.toLowerCase().includes(q),
-    );
-    pnlRenderUserDropdown(filtered);
-    document.getElementById("pnl-user-dropdown").classList.add("show");
-  }
-
-  function pnlSelectUser(addr) {
-    document.getElementById("pnl-user-input").value = addr;
-    document.getElementById("pnl-user-dropdown").classList.remove("show");
-  }
-
-  async function pnlLoadUser() {
-    const input = document.getElementById("pnl-user-input");
-    const user = input.value.trim();
-    if (!user) return;
-
-    const btn = document.getElementById("pnl-load-btn");
-    btn.disabled = true;
-    btn.textContent = "...";
-
-    try {
-      const resp = await fetch(`/api/rebuild?user=${encodeURIComponent(user)}`);
-      _pnlData = await resp.json();
-      pnlRenderData();
-      document.getElementById("pnl-body").classList.add("show");
-    } catch (e) {
-      console.error("加载用户数据失败", e);
-    } finally {
-      btn.disabled = false;
-      btn.textContent = "加载";
-    }
-  }
-
-  function pnlRenderData() {
-    if (!_pnlData) return;
-
-    const meta = _pnlData.meta || {};
-
-    // meta 信息
-    const metaEl = document.getElementById("pnl-meta");
-    metaEl.innerHTML = `
-      <div class="pnl-meta-item"><div class="label">订单</div><div class="value">${meta.order_count || 0}</div></div>
-      <div class="pnl-meta-item"><div class="label">Merge</div><div class="value">${meta.merge_count || 0}</div></div>
-      <div class="pnl-meta-item"><div class="label">Redemption</div><div class="value">${meta.redemption_count || 0}</div></div>
-      <div class="pnl-meta-item"><div class="label">跳过</div><div class="value">${meta.skipped_count || 0}</div></div>
-      <div class="pnl-meta-item"><div class="label">首次交易</div><div class="value">${meta.first_ts ? new Date(meta.first_ts * 1000).toLocaleDateString() : "-"}</div></div>
-      <div class="pnl-meta-item"><div class="label">最后交易</div><div class="value">${meta.last_ts ? new Date(meta.last_ts * 1000).toLocaleDateString() : "-"}</div></div>
-    `;
-
-    // 构建快照序列用于图表
-    _pnlSnapshots = pnlBuildSnapshots(_pnlData);
-
-    // slider
-    const slider = document.getElementById("pnl-slider");
-    slider.max = Math.max(0, _pnlSnapshots.length - 1);
-    slider.value = _pnlSnapshots.length - 1;
-
-    // 绘制图表
-    pnlDrawChart();
-
-    // 显示最终状态
-    pnlUpdateCursor(_pnlSnapshots.length - 1);
-  }
-
-  function pnlBuildSnapshots(data) {
-    // 使用后端返回的真实 snapshots
-    const serverSnapshots = data.snapshots || [];
-    if (serverSnapshots.length === 0) return [];
-
-    return serverSnapshots.map((snap, i) => ({
-      index: i,
-      timestamp: snap.timestamp,
-      pnl: snap.total_pnl / 1000000, // 转为美元
-      event_type: snap.event_type,
-      event_id: snap.event_id,
-      token_id: snap.token_id,
-      side: snap.side,
-      size: snap.size,
-      price: snap.price,
-    }));
-  }
-
-  function pnlDrawChart() {
-    const canvas = document.getElementById("pnl-chart");
-    const ctx = canvas.getContext("2d");
-
-    // 设置 canvas 大小
-    const rect = canvas.parentElement.getBoundingClientRect();
-    canvas.width = rect.width - 20;
-    canvas.height = rect.height - 20;
-
-    const w = canvas.width;
-    const h = canvas.height;
-    const padding = { top: 20, right: 60, bottom: 30, left: 10 };
-
-    ctx.clearRect(0, 0, w, h);
-
-    if (_pnlSnapshots.length < 2) {
-      ctx.fillStyle = "#888";
-      ctx.font = "14px sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillText("数据不足", w / 2, h / 2);
-      return;
-    }
-
-    // 计算范围
-    const pnls = _pnlSnapshots.map((s) => s.pnl);
-    let minPnl = Math.min(...pnls);
-    let maxPnl = Math.max(...pnls);
-    if (minPnl === maxPnl) {
-      minPnl -= 1;
-      maxPnl += 1;
-    }
-    const pnlRange = maxPnl - minPnl;
-
-    const chartW = w - padding.left - padding.right;
-    const chartH = h - padding.top - padding.bottom;
-
-    // 绘制 0 线
-    const zeroY = padding.top + chartH * (1 - (0 - minPnl) / pnlRange);
-    if (zeroY > padding.top && zeroY < h - padding.bottom) {
-      ctx.strokeStyle = "#444";
-      ctx.lineWidth = 1;
-      ctx.setLineDash([4, 4]);
-      ctx.beginPath();
-      ctx.moveTo(padding.left, zeroY);
-      ctx.lineTo(w - padding.right, zeroY);
-      ctx.stroke();
-      ctx.setLineDash([]);
-    }
-
-    // 绘制曲线
-    ctx.strokeStyle = "#10b981";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-
-    for (let i = 0; i < _pnlSnapshots.length; i++) {
-      const x = padding.left + (i / (_pnlSnapshots.length - 1)) * chartW;
-      const y =
-        padding.top + chartH * (1 - (_pnlSnapshots[i].pnl - minPnl) / pnlRange);
-
-      if (i === 0) {
-        ctx.moveTo(x, y);
-      } else {
-        ctx.lineTo(x, y);
-      }
-    }
-    ctx.stroke();
-
-    // 填充渐变
-    ctx.lineTo(padding.left + chartW, h - padding.bottom);
-    ctx.lineTo(padding.left, h - padding.bottom);
-    ctx.closePath();
-
-    const gradient = ctx.createLinearGradient(
-      0,
-      padding.top,
-      0,
-      h - padding.bottom,
-    );
-    gradient.addColorStop(0, "rgba(16, 185, 129, 0.3)");
-    gradient.addColorStop(1, "rgba(16, 185, 129, 0)");
-    ctx.fillStyle = gradient;
-    ctx.fill();
-
-    // Y 轴标签
-    ctx.fillStyle = "#888";
-    ctx.font = "11px monospace";
-    ctx.textAlign = "right";
-    ctx.fillText(pnlFormatUSD(maxPnl), w - 5, padding.top + 10);
-    ctx.fillText(pnlFormatUSD(minPnl), w - 5, h - padding.bottom - 5);
-
-    // 保存图表参数供 cursor 使用
-    _pnlChart = { padding, chartW, chartH, minPnl, maxPnl, pnlRange };
-  }
-
-  function pnlUpdateCursor(index) {
-    if (!_pnlSnapshots.length) return;
-
-    index = Math.max(0, Math.min(index, _pnlSnapshots.length - 1));
-    const snap = _pnlSnapshots[index];
-
-    // 更新 cursor info
-    const infoEl = document.getElementById("pnl-cursor-info");
-    const timeEl = document.getElementById("pnl-cursor-time");
-    const valueEl = document.getElementById("pnl-cursor-value");
-    const eventEl = document.getElementById("pnl-cursor-event");
-
-    infoEl.style.display = "block";
-    timeEl.textContent = new Date(snap.timestamp * 1000).toLocaleString();
-    valueEl.textContent = pnlFormatUSD(snap.pnl);
-    valueEl.className = "value " + (snap.pnl >= 0 ? "positive" : "negative");
-
-    // 显示事件详情
-    let eventText = `<span class="type ${snap.event_type}">${snap.event_type}</span>`;
-    if (snap.event_type === "order") {
-      const side = snap.side === "Buy" ? "买" : "卖";
-      eventText += ` ${side} ${snap.size} @ $${snap.price?.toFixed(4) || 0}`;
-    }
-    eventEl.innerHTML = eventText;
-
-    // 绘制 cursor 线
-    pnlDrawCursorLine(index);
-
-    // 更新持仓
-    pnlRenderPositions(index);
-
-    // 更新交易记录
-    pnlRenderTrades(index);
-  }
-
-  function pnlDrawCursorLine(index) {
-    if (!_pnlChart) return;
-
-    const canvas = document.getElementById("pnl-chart");
-    const ctx = canvas.getContext("2d");
-
-    // 重绘图表
-    pnlDrawChart();
-
-    // 绘制 cursor
-    const { padding, chartW, chartH, minPnl, pnlRange } = _pnlChart;
-    const x = padding.left + (index / (_pnlSnapshots.length - 1)) * chartW;
-    const snap = _pnlSnapshots[index];
-    const y = padding.top + chartH * (1 - (snap.pnl - minPnl) / pnlRange);
-
-    // 垂直线
-    ctx.strokeStyle = "#fff";
-    ctx.lineWidth = 1;
-    ctx.setLineDash([2, 2]);
-    ctx.beginPath();
-    ctx.moveTo(x, padding.top);
-    ctx.lineTo(x, canvas.height - padding.bottom);
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    // 圆点
-    ctx.fillStyle = "#10b981";
-    ctx.beginPath();
-    ctx.arc(x, y, 5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = "#fff";
-    ctx.lineWidth = 2;
-    ctx.stroke();
-  }
-
-  function pnlRenderPositions(index) {
-    const positionsEl = document.getElementById("pnl-positions");
-    const countEl = document.getElementById("pnl-position-count");
-
-    // 只有最终快照有完整 positions
-    const positions = _pnlData?.positions || {};
-    const posArr = Object.entries(positions);
-
-    countEl.textContent = posArr.length;
-
-    if (posArr.length === 0) {
-      positionsEl.innerHTML =
-        '<div style="color:#888;padding:10px;">无持仓</div>';
-      return;
-    }
-
-    positionsEl.innerHTML = posArr
-      .map(([token, pos]) => {
-        const pnl = pos.realized_pnl / 1000000;
-        const pnlClass = pnl >= 0 ? "positive" : "negative";
-        return `
-        <div class="pnl-position-item">
-          <span class="token" title="${token}">${token.slice(0, 20)}...</span>
-          <span class="amount">${pos.amount}</span>
-          <span class="pnl ${pnlClass}">${pnlFormatUSD(pnl)}</span>
-        </div>
-      `;
-      })
-      .join("");
-  }
-
-  function pnlRenderTrades(index) {
-    const tradesEl = document.getElementById("pnl-trades");
-    const countEl = document.getElementById("pnl-trade-count");
-
-    // 显示到当前 index 为止的交易
-    const count = index + 1;
-    countEl.textContent = count;
-
-    // 使用真实的 snapshots 数据
-    const trades = _pnlSnapshots.slice(0, count);
-
-    if (trades.length === 0) {
-      tradesEl.innerHTML =
-        '<div style="color:#888;padding:10px;">无交易记录</div>';
-      return;
-    }
-
-    // 显示最近 30 条，倒序
-    tradesEl.innerHTML = trades
-      .slice(-30)
-      .reverse()
-      .map((t) => {
-        let details = "";
-        if (t.event_type === "order") {
-          const side = t.side === "Buy" ? "买" : "卖";
-          details = `${side} ${t.size} @ $${t.price?.toFixed(4) || 0}`;
-        } else if (t.event_type === "merge") {
-          details = `铸造 ${t.size || "-"}`;
-        } else if (t.event_type === "redemption") {
-          details = `赎回`;
-        }
-
-        const tokenShort = t.token_id ? t.token_id.slice(0, 12) + "..." : "-";
-
-        return `
-        <div class="pnl-trade-item">
-          <span class="time">${new Date(t.timestamp * 1000).toLocaleTimeString()}</span>
-          <span class="type ${t.event_type}">${t.event_type}</span>
-          <span class="details" title="${t.token_id}">${details} | ${tokenShort}</span>
-        </div>
-      `;
-      })
-      .join("");
-  }
-
-  function pnlFormatUSD(val) {
-    const sign = val >= 0 ? "+" : "";
-    return sign + "$" + Math.abs(val).toFixed(2);
-  }
 
   function pnlFmt(n) {
     if (n >= 1000000) return (n / 1000000).toFixed(1) + "M";
     if (n >= 1000) return (n / 1000).toFixed(1) + "K";
     return String(n);
-  }
-
-  function pnlEnableQuery() {
-    document.getElementById("pnl-user-input").disabled = false;
-    document.getElementById("pnl-load-btn").disabled = false;
-    document.getElementById("pnl-query-hint").style.display = "none";
   }
 
   async function pnlRebuildAll() {
@@ -929,7 +104,6 @@
 
   function pnlStartRebuildPolling() {
     if (_rebuildPollTimer) clearInterval(_rebuildPollTimer);
-
     document.getElementById("pnl-rebuild-log").style.display = "block";
 
     _rebuildPollTimer = setInterval(async () => {
@@ -943,9 +117,8 @@
           _rebuildPollTimer = null;
           document.getElementById("pnl-rebuild-btn").disabled = false;
           document.getElementById("pnl-rebuild-btn").textContent = "全量重建";
-          if (status.total_users > 0) {
-            pnlEnableQuery();
-            pnlLoadUserList();
+          if (status.total_users > 0 && typeof rpOnRebuildDone === 'function') {
+            rpOnRebuildDone();
           }
         }
       } catch (e) {
@@ -958,18 +131,14 @@
     const log = document.getElementById("pnl-rebuild-log");
     const lines = [];
 
-    // Phase 1
     if (s.phase >= 1) {
       if (s.phase > 1) {
-        lines.push(
-          `<span class="done">✓</span> P1: ${pnlFmt(s.total_conditions)} 问题, ${pnlFmt(s.total_tokens)} 代币 (${(s.phase1_ms / 1000).toFixed(1)}s)`,
-        );
+        lines.push(`<span class="done">✓</span> P1: ${pnlFmt(s.total_conditions)} 问题, ${pnlFmt(s.total_tokens)} 代币 (${(s.phase1_ms / 1000).toFixed(1)}s)`);
       } else {
         lines.push(`<span class="active">●</span> P1: 加载元数据中...`);
       }
     }
 
-    // Phase 2 sub-scans (parallel — all 4 run simultaneously)
     if (s.phase >= 2) {
       const scans = [
         { name: "买卖(Order)", rows: s.eof_rows, events: s.eof_events, done: s.eof_done },
@@ -979,52 +148,30 @@
       ];
       for (const sc of scans) {
         if (sc.done) {
-          lines.push(
-            `&nbsp;&nbsp;<span class="done">✓</span> ${sc.name}: ${pnlFmt(sc.rows)} rows → ${pnlFmt(sc.events)} 事件`,
-          );
+          lines.push(`&nbsp;&nbsp;<span class="done">✓</span> ${sc.name}: ${pnlFmt(sc.rows)} rows → ${pnlFmt(sc.events)} 事件`);
         } else if (s.phase >= 2 && s.phase < 6) {
-          if (sc.rows > 0) {
-            lines.push(
-              `&nbsp;&nbsp;<span class="active">●</span> ${sc.name}: ${pnlFmt(sc.rows)} rows...`,
-            );
-          } else {
-            lines.push(
-              `&nbsp;&nbsp;<span class="active">●</span> ${sc.name}: 扫描中...`,
-            );
-          }
+          lines.push(sc.rows > 0
+            ? `&nbsp;&nbsp;<span class="active">●</span> ${sc.name}: ${pnlFmt(sc.rows)} rows...`
+            : `&nbsp;&nbsp;<span class="active">●</span> ${sc.name}: 扫描中...`);
         }
       }
       if (s.phase > 5) {
-        lines.push(
-          `<span class="done">✓</span> P2: ${pnlFmt(s.total_events)} 事件 → ${pnlFmt(s.total_users)} 用户 (${(s.phase2_ms / 1000).toFixed(1)}s)`,
-        );
+        lines.push(`<span class="done">✓</span> P2: ${pnlFmt(s.total_events)} 事件 → ${pnlFmt(s.total_users)} 用户 (${(s.phase2_ms / 1000).toFixed(1)}s)`);
       }
     }
 
-    // Phase 3
     if (s.phase >= 6) {
       if (s.phase > 6) {
-        lines.push(
-          `<span class="done">✓</span> P3: ${pnlFmt(s.total_users)} users 回放完成 (${(s.phase3_ms / 1000).toFixed(1)}s)`,
-        );
+        lines.push(`<span class="done">✓</span> P3: ${pnlFmt(s.total_users)} users 回放完成 (${(s.phase3_ms / 1000).toFixed(1)}s)`);
       } else {
-        const pct = s.total_users
-          ? Math.round((s.processed_users / s.total_users) * 100)
-          : 0;
-        lines.push(
-          `<span class="active">●</span> P3: 回放中 ${pnlFmt(s.processed_users)}/${pnlFmt(s.total_users)} (${pct}%)`,
-        );
+        const pct = s.total_users ? Math.round((s.processed_users / s.total_users) * 100) : 0;
+        lines.push(`<span class="active">●</span> P3: 回放中 ${pnlFmt(s.processed_users)}/${pnlFmt(s.total_users)} (${pct}%)`);
       }
     }
 
-    // Done summary
     if (s.phase === 7) {
-      const total = ((s.phase1_ms + s.phase2_ms + s.phase3_ms) / 1000).toFixed(
-        1,
-      );
-      lines.push(
-        `<b style="color:#10b981">完成: ${pnlFmt(s.total_users)} users, ${pnlFmt(s.total_events)} events | ${total}s</b>`,
-      );
+      const total = ((s.phase1_ms + s.phase2_ms + s.phase3_ms) / 1000).toFixed(1);
+      lines.push(`<b style="color:#10b981">完成: ${pnlFmt(s.total_users)} users, ${pnlFmt(s.total_events)} events | ${total}s</b>`);
     }
 
     log.innerHTML = lines.join("<br>");
@@ -1039,8 +186,7 @@
         document.getElementById("pnl-rebuild-btn").textContent = "重建中...";
         pnlStartRebuildPolling();
       } else if (status.total_users > 0) {
-        pnlEnableQuery();
-        pnlLoadUserList();
+        if (typeof rpOnRebuildDone === 'function') rpOnRebuildDone();
         if (status.phase === 7) {
           pnlUpdateRebuildProgress(status);
           document.getElementById("pnl-rebuild-log").style.display = "block";

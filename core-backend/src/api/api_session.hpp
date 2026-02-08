@@ -16,6 +16,7 @@
 #include "../core/database.hpp"
 #include "../core/entity_definition.hpp"
 #include "../rebuild/rebuilder.hpp"
+#include "../replayer/replayer.hpp"
 #include "../stats/stats_manager.hpp"
 #include "../sync/sync_token_filler.hpp"
 
@@ -82,6 +83,10 @@ private:
         handle_sync_state();
       } else if (target.starts_with("/api/fill-token-ids")) {
         handle_fill_token_ids();
+      } else if (target.starts_with("/api/replay-users")) {
+        handle_replay_users();
+      } else if (target.starts_with("/api/replay")) {
+        handle_replay();
       } else if (target.starts_with("/api/rebuild-status")) {
         handle_rebuild_status();
       } else if (target.starts_with("/api/rebuild-all")) {
@@ -258,6 +263,25 @@ private:
     std::string status = token_filler_.start();
     res_.result(http::status::ok);
     res_.body() = json{{"status", status}}.dump();
+  }
+
+  void handle_replay() {
+    res_.set(http::field::content_type, "application/json");
+    std::string user = get_param("user");
+    assert(!user.empty() && "Missing query parameter 'user'");
+    assert(rebuild_engine_.find_user(user) != nullptr && "User not found");
+    json result = replayer::serialize_user(rebuild_engine_, user);
+    res_.result(http::status::ok);
+    res_.body() = result.dump();
+  }
+
+  void handle_replay_users() {
+    res_.set(http::field::content_type, "application/json");
+    std::string limit_str = get_param("limit");
+    int limit = limit_str.empty() ? 200 : std::stoi(limit_str);
+    json result = replayer::serialize_user_list(rebuild_engine_, limit);
+    res_.result(http::status::ok);
+    res_.body() = result.dump();
   }
 
   void handle_rebuild_all() {
