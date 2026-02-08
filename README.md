@@ -81,8 +81,8 @@ FROM condition
 每个事件统一为 32 字节 `RawEvent{timestamp, cond_idx, type, token_idx, amount, price}`, 直接 push 到对应用户的 vector:
 
 1. **enriched_order_filled** ORDER BY timestamp → 每行 2 个事件:
-   - maker: side=Buy→Buy, side=Sell→Sell
-   - taker: side=Buy→Sell, side=Sell→Buy (反向)
+   - taker: side=Buy→Buy, side=Sell→Sell (side = taker's direction)
+   - maker: side=Buy→Sell, side=Sell→Buy (反向)
    - 通过 `token_map_[market]` 解析 (cond_idx, token_idx)
 2. **split** ORDER BY timestamp → stakeholder 得 Split 事件 (all tokens)
 3. **merge** ORDER BY timestamp → stakeholder 得 Merge 事件 (all tokens)

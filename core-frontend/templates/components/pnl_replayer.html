@@ -188,9 +188,6 @@
     grid-template-columns: 1fr 1fr;
     gap: 12px;
   }
-  @media (max-width: 900px) {
-    .rp-details { grid-template-columns: 1fr; }
-  }
   .rp-panel {
     background: #252525;
     border-radius: 8px;
@@ -203,12 +200,12 @@
     padding-bottom: 6px;
     border-bottom: 1px solid #333;
   }
-  .rp-positions, .rp-trades { max-height: 300px; overflow-y: auto; }
+  .rp-positions, .rp-trades { height: 300px; overflow-y: auto; }
   .rp-pos-item {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding: 5px 8px;
+    gap: 6px;
+    padding: 4px 8px;
     background: #1a1a1a;
     border-radius: 4px;
     margin-bottom: 3px;
@@ -217,12 +214,50 @@
   }
   .rp-pos-item .cond {
     color: #aaa;
-    max-width: 180px;
+    min-width: 110px;
+    max-width: 110px;
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
-  .rp-pos-item .tokens { color: #6366f1; }
-  .rp-pos-item .rpnl { min-width: 80px; text-align: right; }
+  .rp-pos-bars {
+    display: flex;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+  }
+  .rp-pos-half {
+    flex: 1;
+    position: relative;
+    height: 18px;
+    background: #111;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .rp-pos-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    border-radius: 2px;
+    min-width: 1px;
+  }
+  .rp-pos-bar.long { background: rgba(16,185,129,0.45); }
+  .rp-pos-bar.short { background: rgba(239,68,68,0.45); }
+  .rp-pos-val {
+    position: relative;
+    z-index: 1;
+    display: block;
+    line-height: 18px;
+    padding: 0 4px;
+    font-size: 0.85em;
+    white-space: nowrap;
+    color: #ccc;
+  }
+  .rp-pos-val.long { color: #10b981; }
+  .rp-pos-val.short { color: #ef4444; }
+  .rp-pos-item .rpnl { min-width: 72px; text-align: right; flex-shrink: 0; }
   .rp-pos-item .rpnl.pos { color: #10b981; }
   .rp-pos-item .rpnl.neg { color: #ef4444; }
   .rp-trade-item {
@@ -381,7 +416,7 @@ async function rpLoadUserList() {
 
 function rpRenderDropdown(users) {
   const dd = document.getElementById('rp-user-dropdown');
-  dd.innerHTML = users.slice(0,100).map(u =>
+  dd.innerHTML = users.map(u =>
     `<div class="rp-user-item" onclick="rpSelectUser('${u.user_addr}')">
        <span>${u.user_addr}</span>
        <span class="count">${u.event_count}</span>
@@ -853,13 +888,13 @@ async function rpFetchPositions(ts) {
     }
 
     el.innerHTML = positions.map(p => {
-      const tokensStr = p.pos.filter(v => v !== 0)
-        .map((v, i) => `T${i}:${(v / 1e6).toFixed(2)}`).join(' ');
       const rpnl = p.rpnl / 1e6;
       const rpnlCls = rpnl >= 0 ? 'pos' : 'neg';
+      const yes = (p.pos[0] || 0) / 1e6;
+      const no = (p.pos[1] || 0) / 1e6;
       return `<div class="rp-pos-item">
         <span class="cond" title="${p.id}">${p.id.slice(0, 16)}...</span>
-        <span class="tokens">${tokensStr}</span>
+        <div class="rp-pos-bars">${rpPosBar(yes, 'Y')}${rpPosBar(no, 'N')}</div>
         <span class="rpnl ${rpnlCls}">${rpFmtUSD(rpnl)}</span>
       </div>`;
     }).join('');
@@ -938,6 +973,15 @@ function rpRenderTrades() {
 // ============================================================================
 // Helpers
 // ============================================================================
+function rpPosBar(val, label) {
+  if (val === 0) return `<div class="rp-pos-half"></div>`;
+  const abs = Math.abs(val);
+  const pct = Math.min(abs / 5000, 1) * 100;
+  const cls = label === 'Y' ? 'long' : 'short';
+  const txt = `${label} ${val > 0 ? '+' : ''}${val.toFixed(0)}`;
+  return `<div class="rp-pos-half"><div class="rp-pos-bar ${cls}" style="width:${pct.toFixed(1)}%"></div><span class="rp-pos-val ${cls}">${txt}</span></div>`;
+}
+
 function rpNiceTkStep(max) {
   // Always returns a multiple of 50, targets ~6-8 labels
   const nice = [50,100,150,200,250,500,1000,2500,5000,10000,25000,50000,100000,250000,500000];

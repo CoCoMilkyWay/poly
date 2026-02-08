@@ -67,6 +67,12 @@ async def api_replay_users(limit: int = Query(200)):
     return Response(content=resp.content, media_type="application/json")
 
 
+@app.get("/api/replay-trades")
+async def api_replay_trades(user: str = Query(...), ts: int = Query(...), radius: int = Query(20)):
+    resp = _client.get(f"{BACKEND_API}/api/replay-trades", params={"user": user, "ts": ts, "radius": radius})
+    return Response(content=resp.content, media_type="application/json")
+
+
 @app.get("/api/replay-positions")
 async def api_replay_positions(user: str = Query(...), ts: int = Query(...)):
     resp = _client.get(f"{BACKEND_API}/api/replay-positions", params={"user": user, "ts": ts})

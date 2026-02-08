@@ -515,9 +515,10 @@ private:
         int64_t sz = parse_i64(size[i]);
         int64_t pr = (int64_t)(price[i] * 1000000);
 
-        push_user_event(sr.user_events, maker[i],
-                        RawEvent{ts[i], ci, (uint8_t)(is_buy ? Buy : Sell), ti, 0, sz, pr});
+        // side = taker's direction: BUY → taker buys, maker sells; SELL → taker sells, maker buys
         push_user_event(sr.user_events, taker[i],
+                        RawEvent{ts[i], ci, (uint8_t)(is_buy ? Buy : Sell), ti, 0, sz, pr});
+        push_user_event(sr.user_events, maker[i],
                         RawEvent{ts[i], ci, (uint8_t)(is_buy ? Sell : Buy), ti, 0, sz, pr});
         sr.events += 2;
       }
@@ -748,22 +749,17 @@ private:
     st.positions[i] += evt.amount;
   }
 
-  // Sell token[i]: realize PnL, reduce position proportionally
+  // Sell token[i]: realize PnL, reduce position
   static void apply_sell(const RawEvent &evt, ReplayState &st) {
     int i = evt.token_idx;
     assert(i < MAX_OUTCOMES);
 
     int64_t pos = st.positions[i];
-    if (pos > 0 && evt.amount > 0) {
-      int64_t sell = std::min(evt.amount, pos);
-      int64_t cost_removed = st.cost[i] * sell / pos;
-      st.realized_pnl += (sell * evt.price - cost_removed) / 1000000;
-      st.cost[i] -= cost_removed;
-      st.positions[i] -= sell;
-    } else {
-      // 无仓位，允许负仓位追踪
-      st.positions[i] -= evt.amount;
-    }
+    if (pos <= 0) return; // nothing to sell
+    int64_t cost_removed = st.cost[i] * evt.amount / pos;
+    st.realized_pnl += (evt.amount * evt.price - cost_removed) / 1000000;
+    st.cost[i] -= cost_removed;
+    st.positions[i] -= evt.amount;
   }
 
   // Split: pay amount USDC → get amount of each outcome token
@@ -782,15 +778,11 @@ private:
     int64_t implied_price = 1000000 / cond.outcome_count;
     for (int i = 0; i < cond.outcome_count; ++i) {
       int64_t pos = st.positions[i];
-      if (pos > 0) {
-        int64_t sell = std::min(evt.amount, pos);
-        int64_t cost_removed = st.cost[i] * sell / pos;
-        st.realized_pnl += (sell * implied_price - cost_removed) / 1000000;
-        st.cost[i] -= cost_removed;
-        st.positions[i] -= sell;
-      } else {
-        st.positions[i] -= evt.amount;
-      }
+      if (pos <= 0) continue;
+      int64_t cost_removed = st.cost[i] * evt.amount / pos;
+      st.realized_pnl += (evt.amount * implied_price - cost_removed) / 1000000;
+      st.cost[i] -= cost_removed;
+      st.positions[i] -= evt.amount;
     }
   }
 
