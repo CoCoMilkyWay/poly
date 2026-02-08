@@ -145,93 +145,47 @@ public:
   }
 
   // ============================================================================
-  // Big Sync 辅助方法
+  // Token ID 填充
   // ============================================================================
 
-  void delete_null_conditions() {
-    execute("DELETE FROM condition WHERE resolutionTimestamp IS NULL");
-  }
-
   void merge_pnl_into_condition() {
-    // 检查 pnl_condition 是否存在
-    {
-      std::lock_guard<std::mutex> rlock(read_mutex_);
-      auto result = read_conn_->Query(
-          "SELECT COUNT(*) FROM information_schema.tables "
-          "WHERE table_name = 'pnl_condition'");
-      if (result->HasError() || result->RowCount() == 0 ||
-          result->GetValue(0, 0).GetValue<int64_t>() == 0)
-        return;
-    }
-
     execute(
         "UPDATE condition SET positionIds = pnl.positionIds "
-        "FROM pnl_condition pnl WHERE condition.id = pnl.id");
+        "FROM pnl_condition pnl WHERE condition.id = pnl.id "
+        "AND condition.positionIds IS NULL");
   }
 
-  void drop_pnl_condition() {
-    execute("DROP TABLE IF EXISTS pnl_condition");
-    execute(
-        "INSERT OR REPLACE INTO sync_state (source, entity, cursor_value, cursor_skip, last_sync_at) "
-        "VALUES ('Profit and Loss', 'Condition', '__DISABLED__', 0, CURRENT_TIMESTAMP)");
-  }
-
-  std::vector<std::string> get_null_positionid_condition_ids(int limit = 100) {
+  std::vector<std::string> get_null_positionid_conditions(int limit = 100) {
     std::lock_guard<std::mutex> rlock(read_mutex_);
     auto result = read_conn_->Query(
-        "SELECT id FROM condition WHERE positionIds IS NULL LIMIT " +
+        "SELECT id FROM condition WHERE positionIds IS NULL "
+        "ORDER BY resolutionTimestamp LIMIT " +
         std::to_string(limit));
     std::vector<std::string> ids;
-    if (result->HasError())
-      return ids;
+    assert(!result->HasError());
     for (size_t i = 0; i < result->RowCount(); ++i) {
       ids.push_back(result->GetValue(0, i).ToString());
     }
     return ids;
   }
 
-  void update_condition_position_ids(const std::string &condition_id,
-                                     const std::string &position_ids) {
+  void update_condition_position_ids(const std::string &id, const std::string &position_ids) {
     execute("UPDATE condition SET positionIds = " +
             entities::escape_sql(position_ids) +
-            " WHERE id = " + entities::escape_sql(condition_id));
+            " WHERE id = " + entities::escape_sql(id));
   }
 
-  bool table_exists(const std::string &table_name) {
+  // ============================================================================
+  // Sync 进度查询
+  // ============================================================================
+
+  int64_t query_single_int(const std::string &sql) {
     std::lock_guard<std::mutex> rlock(read_mutex_);
-    auto result = read_conn_->Query(
-        "SELECT COUNT(*) FROM information_schema.tables "
-        "WHERE table_name = '" +
-        entities::escape_sql_raw(table_name) + "'");
+    auto result = read_conn_->Query(sql);
     if (result->HasError() || result->RowCount() == 0)
-      return false;
-    return result->GetValue(0, 0).GetValue<int64_t>() > 0;
-  }
-
-  // 批量 upsert (大 sync 用)
-  void upsert_batch(const std::string &table, const std::string &columns,
-                    const std::vector<std::string> &values_list) {
-    assert(!values_list.empty());
-    std::string sql = "INSERT INTO " + table + " (" + columns + ") VALUES ";
-    for (size_t i = 0; i < values_list.size(); ++i) {
-      if (i > 0) sql += ", ";
-      sql += "(" + values_list[i] + ")";
-    }
-    sql += build_on_conflict_clause(columns);
-    execute(sql);
-  }
-
-  // 检查 entity 是否已被标记禁用 (大 sync 合并后)
-  bool is_entity_disabled(const std::string &source, const std::string &entity) {
-    std::lock_guard<std::mutex> rlock(read_mutex_);
-    auto result = read_conn_->Query(
-        "SELECT cursor_value FROM sync_state WHERE source = '" +
-        entities::escape_sql_raw(source) + "' AND entity = '" +
-        entities::escape_sql_raw(entity) + "'");
-    if (result->HasError() || result->RowCount() == 0)
-      return false;
+      return 0;
     auto val = result->GetValue(0, 0);
-    return !val.IsNull() && val.ToString() == "__DISABLED__";
+    return val.IsNull() ? 0 : val.GetValue<int64_t>();
   }
 
   // 获取底层 DuckDB 引用

@@ -5,6 +5,7 @@ import time
 import sys
 import signal
 from pathlib import Path
+import socket
 
 ROOT = Path(__file__).parent
 BACKEND_DIR = ROOT / "core-backend"
@@ -71,6 +72,21 @@ def check_config():
         print("[run.py] 获取 API Key: https://thegraph.com/studio/apikeys/")
 
 
+def wait_for_port(host: str, port: int, timeout: int = 30):
+    """等待端口就绪"""
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(1)
+            sock.connect((host, port))
+            sock.close()
+            return True
+        except (socket.timeout, ConnectionRefusedError, OSError):
+            time.sleep(0.2)
+    return False
+
+
 def main():
     processes = []
     
@@ -109,6 +125,11 @@ def main():
         cwd=ROOT
     )
     processes.append(backend_proc)
+    
+    # 3.5 等待 backend API 就绪
+    print("[run.py] 等待 backend API 就绪...")
+    assert wait_for_port("127.0.0.1", 8001), "backend API 启动超时"
+    print("[run.py] backend API 已就绪")
     
     # 4. 启动 Python frontend(后台)
     print("[run.py] 启动 frontend...")

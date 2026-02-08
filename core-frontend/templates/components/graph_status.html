@@ -510,7 +510,119 @@
     padding: 20px;
     color: #888;
   }
+
+  /* 进度条栏 */
+  .progress-card {
+    background: #1a1a1a;
+    border-radius: 10px;
+    padding: 15px;
+    border: 1px solid #333;
+    margin-bottom: 15px;
+  }
+  .progress-card h2 {
+    font-size: 1.1em;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 12px;
+  }
+  .progress-card h2::before {
+    content: "";
+    width: 3px;
+    height: 16px;
+    background: #6366f1;
+    border-radius: 2px;
+  }
+  .progress-row {
+    display: grid;
+    grid-template-columns: 120px 1fr 50px 52px;
+    align-items: center;
+    gap: 4px 10px;
+    margin-bottom: 10px;
+    font-size: 0.82em;
+  }
+  .progress-row:last-child { margin-bottom: 0; }
+  .progress-label {
+    color: #aaa;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .progress-bar-wrap {
+    position: relative;
+    height: 20px;
+    background: #252525;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s ease;
+  }
+  .progress-bar-fill.eof { background: #6366f1; }
+  .progress-bar-fill.token { background: #f59e0b; }
+  .progress-dates {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7em;
+    color: #666;
+    margin-top: 2px;
+    font-family: monospace;
+  }
+  .progress-pct {
+    text-align: right;
+    font-family: monospace;
+    color: #aaa;
+  }
+  .btn-fill {
+    padding: 3px 10px;
+    font-size: 0.78em;
+    background: #92400e;
+    color: #fbbf24;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .btn-fill:hover { background: #78350f; }
+  .btn-fill:disabled { opacity: 0.5; cursor: not-allowed; }
 </style>
+
+<!-- 数据同步进度 -->
+<div class="progress-card" id="sync-progress-card">
+  <h2>数据同步进度</h2>
+  <div class="progress-row">
+    <span class="progress-label">交易订单</span>
+    <div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill eof" id="eof-bar" style="width:0%"></div>
+      </div>
+      <div class="progress-dates">
+        <span id="eof-min">-</span>
+        <span>已同步至 <span id="eof-synced" style="color:#6366f1">-</span></span>
+        <span id="eof-now">-</span>
+      </div>
+    </div>
+    <span class="progress-pct" id="eof-pct">-</span>
+    <span></span>
+  </div>
+  <div class="progress-row">
+    <span class="progress-label">Token ID 填充</span>
+    <div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill token" id="token-bar" style="width:0%"></div>
+      </div>
+      <div class="progress-dates">
+        <span id="token-min">-</span>
+        <span>已同步至 <span id="token-synced" style="color:#f59e0b">-</span></span>
+        <span id="token-now">-</span>
+      </div>
+    </div>
+    <span class="progress-pct" id="token-pct">-</span>
+    <button class="btn-fill" id="fill-btn" onclick="fillTokenIds()">填充</button>
+  </div>
+  <div id="filler-status" style="display:none; font-size:0.72em; color:#888; font-family:monospace; padding:6px 0 0; margin-left:130px; line-height:1.6;"></div>
+</div>
 
 <div class="graph-card" id="graph-status-card">
   <div class="graph-header">
@@ -1015,4 +1127,107 @@
 
     return html;
   }
+
+  // ============================================================================
+  // 数据同步进度
+  // ============================================================================
+  let _syncProgressTimer = null;
+
+  function fmtDate(ts) {
+    if (!ts) return "-";
+    const d = new Date(ts * 1000);
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  }
+
+  function fmtDateTime(ts) {
+    if (!ts) return "-";
+    const d = new Date(ts * 1000);
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0")
+      + " " + String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+  }
+
+  function updateSyncProgress(data) {
+    const pct = (min, synced, now) => {
+      if (!min || !now || now <= min) return 0;
+      return Math.min(100, Math.max(0, ((synced - min) / (now - min)) * 100));
+    };
+
+    const eofP = pct(data.eof_min_ts, data.eof_synced_ts, data.now_ts);
+    document.getElementById("eof-bar").style.width = eofP + "%";
+    document.getElementById("eof-pct").textContent = eofP.toFixed(1) + "%";
+    document.getElementById("eof-min").textContent = fmtDate(data.eof_min_ts);
+    document.getElementById("eof-synced").textContent = fmtDateTime(data.eof_synced_ts);
+    document.getElementById("eof-now").textContent = fmtDate(data.now_ts);
+
+    const tokP = pct(data.token_min_ts, data.token_synced_ts, data.now_ts);
+    document.getElementById("token-bar").style.width = tokP + "%";
+    document.getElementById("token-pct").textContent = tokP.toFixed(1) + "%";
+    document.getElementById("token-min").textContent = fmtDate(data.token_min_ts);
+    document.getElementById("token-synced").textContent = fmtDateTime(data.token_synced_ts);
+    document.getElementById("token-now").textContent = fmtDate(data.now_ts);
+
+    const btn = document.getElementById("fill-btn");
+    const fillerStatus = document.getElementById("filler-status");
+    if (data.filler_running) {
+      btn.disabled = true;
+      btn.textContent = "运行中";
+
+      const phaseText = {0: "准备", 1: "合并中", 2: "查询填充中"}[data.filler_phase] || "";
+      const elapsed = data.now_ts - (data.filler_start_ts || data.now_ts);
+      const em = Math.floor(elapsed / 60), es = elapsed % 60;
+      const elapsedText = em > 0 ? em + "m" + String(es).padStart(2, "0") + "s" : es + "s";
+      const remaining = (data.filler_total_null || 0) - (data.filler_merged || 0) - (data.filler_processed || 0) - (data.filler_not_found || 0);
+
+      const parts = [
+        '<span style="color:#f59e0b">' + phaseText + '</span>',
+        '总计 <span style="color:#fff">' + (data.filler_total_null || 0).toLocaleString() + '</span>',
+        '合并 <span style="color:#4ade80">' + (data.filler_merged || 0).toLocaleString() + '</span>',
+        '已填充 <span style="color:#6366f1">' + (data.filler_processed || 0).toLocaleString() + '</span>',
+        '未找到 <span style="color:#666">' + (data.filler_not_found || 0).toLocaleString() + '</span>',
+        '剩余 <span style="color:#fde047">' + Math.max(0, remaining).toLocaleString() + '</span>',
+      ];
+      if (data.filler_errors > 0)
+        parts.push('错误 <span style="color:#f87171">' + data.filler_errors + '</span>');
+      parts.push('耗时 ' + elapsedText);
+
+      fillerStatus.innerHTML = parts.join(' <span style="color:#444">|</span> ');
+      fillerStatus.style.display = "";
+    } else {
+      btn.disabled = false;
+      btn.textContent = "填充";
+      fillerStatus.style.display = "none";
+    }
+  }
+
+  async function pollSyncProgress() {
+    try {
+      const resp = await fetch("/api/sync-progress");
+      if (resp.ok) updateSyncProgress(await resp.json());
+    } catch (_) {}
+  }
+
+  function startSyncProgressPolling() {
+    if (_syncProgressTimer) clearInterval(_syncProgressTimer);
+    pollSyncProgress();
+    _syncProgressTimer = setInterval(pollSyncProgress, 2000);
+  }
+
+  async function fillTokenIds() {
+    const btn = document.getElementById("fill-btn");
+    btn.disabled = true;
+    btn.textContent = "启动中...";
+    try {
+      const resp = await fetch("/api/fill-token-ids", { method: "POST" });
+      const data = await resp.json();
+      if (data.status !== "started") {
+        btn.textContent = data.status;
+        setTimeout(() => { btn.disabled = false; btn.textContent = "填充"; }, 2000);
+      }
+    } catch (_) {
+      btn.textContent = "失败";
+      setTimeout(() => { btn.disabled = false; btn.textContent = "填充"; }, 2000);
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", startSyncProgressPolling);
 </script>

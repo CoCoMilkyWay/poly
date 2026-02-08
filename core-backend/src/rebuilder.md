@@ -2,33 +2,25 @@
 
 ## 核心表
 
-| Entity                        | Graph            | 必要字段                                                                                                   | 额外字段                 | 类型 | 小sync                                                                                                  | 大sync                                               |
-| ----------------------------- | ---------------- | ---------------------------------------------------------------------------------------------------------- | ------------------------ | ---- | ------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| Condition                     | Polymarket       | id(hashID), questionId, resolutionTimestamp, payoutNumerators, payoutDenominator, outcomeSlotCount, oracle | positionIds(N * tokenID) | 状态 | `orderBy: resolutionTimestamp asc, where: {resolutionTimestamp_gte}` + skip, 记录最新非null时间戳，增量 | 删除null timestamp部分，重新全量拉                   |
-| Condition(创建一次, 后续删除) | Profit and Loss  | id(hashID), positionIds(N * tokenID)                                                                       |                          | 状态 | `orderBy: id asc, where: {id_gt}`，不需要skip因为没有timestamp的alise, 全量拉一次后删除不再sync         | loop over positionIds为null的Condition, 按hashID查补 |
-| EnrichedOrderFilled           | Polymarket       | timestamp, maker.id(usrID), taker.id(usrID), market.id(tokenID), side, size(1e6$), price(0~1)              |                          | 事件 | `orderBy: timestamp asc, where: {timestamp_gte}` + skip                                                 | -                                                    |
-| Split                         | Activity Polygon | timestamp, stakeholder(usrID), condition(questionID), amount(1e6$)                                         |                          | 事件 | `orderBy: timestamp asc, where: {timestamp_gte}` + skip                                                 | -                                                    |
-| Merge                         | Activity Polygon | timestamp, stakeholder(usrID), condition(questionID), amount(1e6$)                                         |                          | 事件 | `orderBy: timestamp asc, where: {timestamp_gte}` + skip                                                 | -                                                    |
-| Redemption                    | Activity Polygon | timestamp, redeemer(usrID), condition(questionID), indexSets("1":yes清零;"2":no清零), payout(1e6$)         |                          | 事件 | `orderBy: timestamp asc, where: {timestamp_gte}` + skip                                                 | -                                                    |
+| Entity              | Graph            | 必要字段                                                                                                   | 额外字段                 | 类型 | 增量sync                                                                                               |
+| ------------------- | ---------------- | ---------------------------------------------------------------------------------------------------------- | ------------------------ | ---- | ------------------------------------------------------------------------------------------------------- |
+| Condition           | Polymarket       | id(hashID), questionId, resolutionTimestamp, payoutNumerators, payoutDenominator, outcomeSlotCount, oracle | positionIds(N * tokenID) | 状态 | `orderBy: resolutionTimestamp asc, where: {resolutionTimestamp_gte}` + skip, 记录最新非null时间戳，增量 |
+| PnlCondition        | Profit and Loss  | id(hashID), positionIds(N * tokenID)                                                                       |                          | 状态 | `orderBy: id asc, where: {id_gt}`，不可真正增量(hash主键)，需定期全量重拉                              |
+| EnrichedOrderFilled | Polymarket       | timestamp, maker.id(usrID), taker.id(usrID), market.id(tokenID), side, size(1e6$), price(0~1)              |                          | 事件 | `orderBy: timestamp asc, where: {timestamp_gte}` + skip                                                |
+| Split               | Activity Polygon | timestamp, stakeholder(usrID), condition(questionID), amount(1e6$)                                         |                          | 事件 | `orderBy: timestamp asc, where: {timestamp_gte}` + skip                                                |
+| Merge               | Activity Polygon | timestamp, stakeholder(usrID), condition(questionID), amount(1e6$)                                         |                          | 事件 | `orderBy: timestamp asc, where: {timestamp_gte}` + skip                                                |
+| Redemption          | Activity Polygon | timestamp, redeemer(usrID), condition(questionID), indexSets("1":yes清零;"2":no清零), payout(1e6$)         |                          | 事件 | `orderBy: timestamp asc, where: {timestamp_gte}` + skip                                                |
 
 注意同时要支持:
     1. 历史markets/questions总和在50W个(10min sync一遍)
     2. 单问题多选项(outcomeSlotCount > 2)
     3. 多问题相关(NegRisk)
 
-小sync(自动更新):
+增量sync(自动):
     1. 每个entity按照自己的orderBy + skip 正常sync
     2. 注意:
-       1. Condition(Polymarket)的null timestamp部分不全
-       2. Condition(Profit and Loss)里所有数据都不全(因为是hash index)
-大sync(UI手动触发)
-    1. 更新索引服务器索引信息
-    2. 需要小sync已经完成
-    3. 删除Condition(Polymarket)的null timestamp部分, 重新拉取
-    4. 如果Condition(Profit and Loss)还存在:
-       1. loop over hashID, 把positionIds填入Condition(Polymarket)的positionIds
-       2. 删除Condition(Profit and Loss), 并且以后不再创建
-    5. 按需loop over Condition(Polymarket) 的 的positionIds 仍为null的row, query Condition(Profit and Loss)拉取
+       1. Condition(Polymarket)的null timestamp部分不全(未结算的condition没有resolutionTimestamp)
+       2. PnlCondition不可真正增量(hash主键，新数据hash可能比旧的小)
 
 ---
 **Split/Merge/Redemption 使用场景**:
@@ -48,6 +40,22 @@
 3. **Redemption(赎回)— 市场结算后**
    - 操作: tokens → USDC (只能在市场结算后操作)
    - 用途: 赎回 winning tokens 获得收益，losing tokens 归零 (价格由 payoutNumerators/payoutDenominator 决定)
+
+
+## 数据库数据结构
+
+业务表(6):
+- `condition` (id PK, questionId, oracle, outcomeSlotCount, resolutionTimestamp?, payoutNumerators?, payoutDenominator?, positionIds?) idx: PK
+- `enriched_order_filled` (id PK, timestamp, maker, taker, market, side, size, price) idx: timestamp
+- `split` (id PK, timestamp, stakeholder, condition, amount) idx: timestamp
+- `merge` (id PK, timestamp, stakeholder, condition, amount) idx: timestamp
+- `redemption` (id PK, timestamp, redeemer, condition, indexSets, payout) idx: timestamp
+- `pnl_condition` (id PK, positionIds?) — positionIds来源表，需定期全量重拉
+
+基础设施表(3):
+- `sync_state` (source+entity PK, cursor_value, cursor_skip, last_sync_at)
+- `entity_stats_meta` (source+entity PK, total/success/fail计数, total_rows_synced, total_api_time_ms, success_rate, updated_at)
+- `indexer_fail_meta` (source+entity+indexer PK, fail_requests, updated_at)
 
 ## 当前实现
 

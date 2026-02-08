@@ -112,6 +112,17 @@ def sql_query(sql: str):
     return backend_get("/api/sql", {"q": sql})
 
 
+@app.get("/api/sync-progress")
+async def api_sync_progress():
+    return backend_get("/api/sync-progress")
+
+
+@app.post("/api/fill-token-ids")
+async def api_fill_token_ids():
+    resp = _client.post(f"{BACKEND_API}/api/fill-token-ids")
+    return resp.json()
+
+
 @app.get("/api/export")
 async def api_export(limit: int = Query(100, le=1000), order: str = Query("desc")):
     """从本地 DB 导出 entity 数据到 CSV

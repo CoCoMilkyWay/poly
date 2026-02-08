@@ -16,7 +16,7 @@
 #include "../core/database.hpp"
 #include "../core/entity_definition.hpp"
 #include "../stats/stats_manager.hpp"
-#include "../sync/sync_repair.hpp"
+#include "../sync/sync_token_filler.hpp"
 
 namespace fs = std::filesystem;
 namespace asio = boost::asio;
@@ -30,8 +30,8 @@ using json = nlohmann::json;
 // ============================================================================
 class ApiSession : public std::enable_shared_from_this<ApiSession> {
 public:
-  ApiSession(tcp::socket socket, Database &db, SyncRepair &sync_repair)
-      : socket_(std::move(socket)), db_(db), sync_repair_(sync_repair) {}
+  ApiSession(tcp::socket socket, Database &db, SyncTokenFiller &token_filler)
+      : socket_(std::move(socket)), db_(db), token_filler_(token_filler) {}
 
   void run() {
     do_read();
@@ -75,12 +75,12 @@ private:
         handle_entity_stats();
       } else if (target.starts_with("/api/stats")) {
         handle_stats();
+      } else if (target.starts_with("/api/sync-progress")) {
+        handle_sync_progress();
       } else if (target.starts_with("/api/sync")) {
         handle_sync_state();
-      } else if (target.starts_with("/api/big-sync-status")) {
-        handle_big_sync_status();
-      } else if (target.starts_with("/api/big-sync")) {
-        handle_big_sync();
+      } else if (target.starts_with("/api/fill-token-ids")) {
+        handle_fill_token_ids();
       } else if (target.starts_with("/api/export-raw")) {
         handle_export_raw();
       } else {
@@ -211,32 +211,50 @@ private:
     res_.body() = rows.dump();
   }
 
-  void handle_big_sync() {
+  void handle_sync_progress() {
     res_.set(http::field::content_type, "application/json");
 
-    if (!sync_repair_.start()) {
-      res_.result(http::status::ok);
-      res_.body() = R"({"status":"already_running"})";
-      return;
-    }
+    int64_t eof_min_ts = db_.query_single_int("SELECT MIN(timestamp) FROM enriched_order_filled");
+    auto eof_cursor = db_.get_cursor("Polymarket", "EnrichedOrderFilled");
+    int64_t eof_synced_ts = eof_cursor.value.empty() ? 0 : std::stoll(eof_cursor.value);
 
-    res_.result(http::status::ok);
-    res_.body() = R"({"status":"started"})";
-  }
+    int64_t token_min_ts = db_.query_single_int("SELECT MIN(resolutionTimestamp) FROM condition");
+    int64_t token_synced_ts = db_.query_single_int(
+        "SELECT MIN(resolutionTimestamp) FROM condition WHERE positionIds IS NULL");
 
-  void handle_big_sync_status() {
-    res_.set(http::field::content_type, "application/json");
-    auto progress = sync_repair_.get_progress();
+    int64_t now_ts = std::chrono::duration_cast<std::chrono::seconds>(
+                         std::chrono::system_clock::now().time_since_epoch())
+                         .count();
+
+    // 全部填完时 token_synced_ts == 0 (没有 NULL 行), 显示为 now
+    if (token_synced_ts == 0)
+      token_synced_ts = now_ts;
 
     json result = {
-        {"running", progress.running},
-        {"phase", progress.phase},
-        {"total", progress.total},
-        {"processed", progress.processed},
-        {"error", progress.error}};
+        {"eof_min_ts", eof_min_ts},
+        {"eof_synced_ts", eof_synced_ts},
+        {"token_min_ts", token_min_ts},
+        {"token_synced_ts", token_synced_ts},
+        {"now_ts", now_ts},
+        {"filler_running", token_filler_.is_running()},
+        {"filler_processed", token_filler_.processed()},
+        {"filler_phase", token_filler_.phase()},
+        {"filler_total_null", token_filler_.total_null()},
+        {"filler_merged", token_filler_.merged()},
+        {"filler_not_found", token_filler_.not_found()},
+        {"filler_errors", token_filler_.errors()},
+        {"filler_start_ts", token_filler_.start_ts()},
+    };
 
     res_.result(http::status::ok);
     res_.body() = result.dump();
+  }
+
+  void handle_fill_token_ids() {
+    res_.set(http::field::content_type, "application/json");
+    std::string status = token_filler_.start();
+    res_.result(http::status::ok);
+    res_.body() = json{{"status", status}}.dump();
   }
 
   void handle_export_raw() {
@@ -365,7 +383,7 @@ private:
 
   tcp::socket socket_;
   Database &db_;
-  SyncRepair &sync_repair_;
+  SyncTokenFiller &token_filler_;
   beast::flat_buffer buffer_;
   http::request<http::string_body> req_;
   http::response<http::string_body> res_;

@@ -260,7 +260,7 @@ inline int64_t estimate_row_size_bytes(const EntityDef *e) {
 // ============================================================================
 
 // Condition - 条件 (含结算信息)
-// positionIds 不从 GraphQL 拉取, 由大 sync 从 PnL 合入
+// positionIds 不从本 GraphQL 拉取, 来源于 PnlCondition
 inline std::string condition_to_values(const json &j) {
   return json_str(j, "id") + "," +
          json_str(j, "questionId") + "," +
@@ -417,7 +417,7 @@ inline const EntityDef Redemption = {
     .to_values = redemption_to_values};
 
 // ============================================================================
-// PnL Subgraph Entities (临时, 大 sync 后合入 condition 并删除)
+// PnL Subgraph Entities
 // ============================================================================
 
 inline std::string pnl_condition_to_values(const json &j) {
