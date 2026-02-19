@@ -1,18 +1,12 @@
-官方推荐graph实现: /home/chuyin/work/poly/doc/indexer/the graph/official (但真正的实现和他其实差异很大)
-真正graph indexer实现:
-    IPFS manifest: /home/chuyin/work/poly/doc/indexer/the graph/implemented/IPFS
-    graphql schema: /home/chuyin/work/poly/doc/indexer/the graph/implemented/schema
+项目目标： 可以replay polymarket 历史上任何用户的历史上每一笔交易记录
 polygon链上polymarket协议合约节点本身的实现: /home/chuyin/work/poly/doc/smart-contracts
 
-我们的目的是全量重建整个polymart的所有用户的历史任意时刻的交易记录, 持仓详情, 净值
+老架构:基于the Graph协议的indexer实现
+新架构:直接query RPC节点获得历史信息(本地Erigon/远程Alchemy节点)
 
-注意我们会给一个触发按钮, 每一次触发, 就会触发全量重建的flow, 所以没有各种corner case, 不需要断点续传等东西, 只需要极致高效的实现
-触发的时候, 每个entity都是不完整的, 可能只包括 start到synced 中间的数据, 我们保证中间的数据是完整的, 顺序的
-但是每个entity的start和synced对应的时间/区块是不同的, 而且是未知的, 这个是graph最大的限制, 我们要能支持
-
-我们的重建过程, 我们不要各种fallback, fallback是屎山的源泉, 我们基于最优数据结构和flow来做, 有问题边改边分析
-
-从enrichorderfilled + S/M/R, 我们可以生成一个用户, 时间从前往后的所有对某个token的开平仓历史记录, 所以每个开平仓的位置做一个snapshot的数据结构(应该很简单, 而且可以统一所有的开平仓事件), 这样一个用户一个深度几十左右的snapshot基本就解决了, 可以把snapshot做成非常高效的ddr连续的形式, 后面用这个可以精确回放某用户历史上任意时间的token持仓, 净值, 近期交易记录等
-我们要先拿到当时有的token和token数, 然后根据payout反推当时的token价格, 我们snapshot里需要记录开平仓的token和token价格的
-还有, 我们暂时虽然不需要支持多问题相关(NegRisk), 我们还是要支持单问题多选项(outcomeSlotCount > 2), 也就是一个market下可能多个token
-先简化放在内存里, 后面再说
+老架构:
+    思路: README.md
+    官方推荐的the Graph实现: /home/chuyin/work/poly/doc/indexer/the graph/official (但真正的实现和他其实差异很大)
+    真正graph indexer实现:
+        IPFS manifest: /home/chuyin/work/poly/doc/indexer/the graph/implemented/IPFS
+        graphql schema: /home/chuyin/work/poly/doc/indexer/the graph/implemented/schema
