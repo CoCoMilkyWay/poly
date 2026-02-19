@@ -1,0 +1,311 @@
+# Polymarket PnL Replayer - 第一阶段：RPC数据准备
+
+## 目标合约
+
+| 合约 | 地址 | 起始区块 |
+|------|------|----------|
+| ConditionalTokens | 0x4D97DCd97eC945f40cF65F87097ACe5EA0476045 | 4023686 |
+| CTFExchange | 0x4bFb41d5B3570DeFd03C39a9A4D8dE6Bd8B8982E | 33605403 |
+| NegRiskCTFExchange | 0xC5d563A36AE78145C45a50134d48A1215220f80a | 50505492 |
+| NegRiskAdapter | 0xd91E80cF2E7be2e162c6513ceD06f1dD0dA35296 | 50505403 |
+
+---
+
+## 事件数据结构
+
+### 1. ConditionalTokens
+
+#### TransferSingle (topic0: 0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62)
+```cpp
+struct TransferSingle {
+    address operator;      // indexed, 操作者
+    address from;          // indexed, 发送方 (0x0=mint)
+    address to;            // indexed, 接收方 (0x0=burn)
+    uint256 id;            // positionId (ERC1155 tokenId)
+    uint256 value;         // 数量
+    // tx metadata
+    bytes32 tx_hash;
+    uint64 block_number;
+    uint32 log_index;
+};
+```
+
+#### TransferBatch (topic0: 0x4a39dc06d4c0dbc64b70af90fd698a233a518aa5d07e595d983b8c0526c8f7fb)
+```cpp
+struct TransferBatch {
+    address operator;      // indexed
+    address from;          // indexed
+    address to;            // indexed
+    uint256[] ids;         // positionId数组
+    uint256[] values;      // 数量数组
+    // tx metadata
+    bytes32 tx_hash;
+    uint64 block_number;
+    uint32 log_index;
+};
+```
+
+#### PositionSplit (topic0: 0x2e6bb91f8cbcda0c93623c54d0403a43514f4b3a3babf4d7a8e50cf2a7b9d435)
+```cpp
+struct PositionSplit {
+    address stakeholder;       // indexed, 操作用户
+    address collateralToken;   // USDC地址
+    bytes32 parentCollectionId;// indexed, 通常为0x0
+    bytes32 conditionId;       // indexed
+    uint256[] partition;       // [1,2] = YES+NO
+    uint256 amount;            // USDC数量 (6 decimals)
+    // tx metadata
+    bytes32 tx_hash;
+    uint64 block_number;
+    uint32 log_index;
+};
+```
+
+#### PositionsMerge (topic0: 0x7a843b0eb41f7a3d57a525b61f6f6584f1d68f403e8917cb9d753ddb6d0e3e2e)
+```cpp
+struct PositionsMerge {
+    address stakeholder;       // indexed
+    address collateralToken;
+    bytes32 parentCollectionId;// indexed
+    bytes32 conditionId;       // indexed
+    uint256[] partition;
+    uint256 amount;
+    // tx metadata
+    bytes32 tx_hash;
+    uint64 block_number;
+    uint32 log_index;
+};
+```
+
+#### PayoutRedemption (topic0: 0x2682012a4a4f1973119f1c9b90745d1bd91fa2bab387344f044cb3586864d18d)
+```cpp
+struct PayoutRedemption {
+    address redeemer;          // indexed
+    address collateralToken;   // indexed, USDC
+    bytes32 parentCollectionId;// indexed
+    bytes32 conditionId;
+    uint256[] indexSets;       // 赎回的position组合
+    uint256 payout;            // 赎回获得的USDC
+    // tx metadata
+    bytes32 tx_hash;
+    uint64 block_number;
+    uint32 log_index;
+};
+```
+
+#### ConditionResolution (topic0: 0xb44d84d3289691f71497564b85d4233648d9dbae8cbdbb4329f301c3a0185894)
+```cpp
+struct ConditionResolution {
+    bytes32 conditionId;       // indexed
+    address oracle;            // indexed, UmaCtfAdapter地址
+    bytes32 questionId;        // indexed
+    uint256 outcomeSlotCount;  // 固定为2
+    uint256[] payoutNumerators;// [1,0]=YES赢, [0,1]=NO赢, [1,1]=平局
+    // tx metadata
+    bytes32 tx_hash;
+    uint64 block_number;
+    uint32 log_index;
+};
+```
+
+#### ConditionPreparation (topic0: 0xab3760c3bd2bb38b5bcf5b13adce5eb9d8f6fd2f241126ebab4a4c6a2792f80c)
+```cpp
+struct ConditionPreparation {
+    bytes32 conditionId;       // indexed
+    address oracle;            // indexed
+    bytes32 questionId;        // indexed
+    uint256 outcomeSlotCount;  // 固定为2
+    // tx metadata
+    bytes32 tx_hash;
+    uint64 block_number;
+    uint32 log_index;
+};
+```
+
+---
+
+### 2. CTFExchange / NegRiskCTFExchange (共用结构)
+
+#### OrderFilled (topic0: 0xd0a08e8c493f9c94f29311604c9de1b4e8c8d4c06bd0c789af57f2d65b5e35)
+```cpp
+struct OrderFilled {
+    bytes32 orderHash;         // indexed
+    address maker;             // indexed, 挂单方
+    address taker;             // indexed, 吃单方
+    uint256 makerAssetId;      // maker给出的tokenId (USDC=0)
+    uint256 takerAssetId;      // taker给出的tokenId
+    uint256 makerAmountFilled; // maker给出的数量
+    uint256 takerAmountFilled; // taker给出的数量
+    uint256 fee;               // 手续费 (USDC, 6 decimals)
+    // tx metadata
+    bytes32 tx_hash;
+    uint64 block_number;
+    uint32 log_index;
+    // 来源标记
+    uint8 exchange_type;       // 0=CTFExchange, 1=NegRiskCTFExchange
+};
+```
+
+#### OrdersMatched (topic0: 0x45d...多个maker被撮合)
+```cpp
+struct OrdersMatched {
+    bytes32 takerOrderHash;    // indexed
+    address takerOrderMaker;   // indexed, taker订单的maker
+    uint256 makerAssetId;
+    uint256 takerAssetId;
+    uint256 makerAmountFilled;
+    uint256 takerAmountFilled;
+    // tx metadata
+    bytes32 tx_hash;
+    uint64 block_number;
+    uint32 log_index;
+    uint8 exchange_type;
+};
+```
+
+#### TokenRegistered (topic0: 0x...)
+```cpp
+struct TokenRegistered {
+    uint256 token0;            // indexed, YES tokenId
+    uint256 token1;            // indexed, NO tokenId
+    bytes32 conditionId;       // indexed
+    // tx metadata
+    bytes32 tx_hash;
+    uint64 block_number;
+    uint32 log_index;
+    uint8 exchange_type;
+};
+```
+
+---
+
+### 3. NegRiskAdapter
+
+#### MarketPrepared (topic0: 0x...)
+```cpp
+struct MarketPrepared {
+    bytes32 marketId;          // indexed
+    address oracle;            // NegRiskOperator地址
+    uint256 feeBips;           // 手续费率 (万分比)
+    bytes data;                // 市场元数据
+    // tx metadata
+    bytes32 tx_hash;
+    uint64 block_number;
+    uint32 log_index;
+};
+```
+
+#### QuestionPrepared (topic0: 0x...)
+```cpp
+struct QuestionPrepared {
+    bytes32 marketId;          // indexed
+    bytes32 questionId;        // indexed, = keccak256(marketId, questionIndex)
+    uint256 questionIndex;
+    bytes data;                // 问题元数据
+    // tx metadata
+    bytes32 tx_hash;
+    uint64 block_number;
+    uint32 log_index;
+};
+```
+
+#### PositionsConverted (topic0: 0x...)
+```cpp
+struct PositionsConverted {
+    address stakeholder;       // indexed
+    bytes32 marketId;          // indexed
+    uint256 indexSet;          // 转换的NO position组合 (bitmap)
+    uint256 amount;
+    // tx metadata
+    bytes32 tx_hash;
+    uint64 block_number;
+    uint32 log_index;
+};
+```
+
+---
+
+## 辅助数据结构
+
+### ID计算 (CTHelpers)
+
+```cpp
+// conditionId = keccak256(oracle, questionId, outcomeSlotCount)
+bytes32 getConditionId(address oracle, bytes32 questionId, uint256 outcomeSlotCount);
+
+// collectionId = 椭圆曲线点加法 (parentCollectionId, conditionId, indexSet)
+// 当 parentCollectionId = 0x0 时简化为:
+//   indexSet=1(YES): collectionId = keccak256(conditionId, 1)
+//   indexSet=2(NO):  collectionId = keccak256(conditionId, 2)
+bytes32 getCollectionId(bytes32 parentCollectionId, bytes32 conditionId, uint256 indexSet);
+
+// positionId = keccak256(collateralToken, collectionId)
+// 这就是 ERC1155 的 tokenId
+uint256 getPositionId(address collateralToken, bytes32 collectionId);
+```
+
+### 索引表
+
+```cpp
+// positionId → conditionId 映射 (从TokenRegistered事件构建)
+struct PositionMapping {
+    uint256 positionId;        // YES或NO的tokenId
+    uint256 complementId;      // 互补的tokenId
+    bytes32 conditionId;
+    bool isYes;                // true=YES, false=NO
+};
+
+// conditionId → 结算结果 (从ConditionResolution事件构建)
+struct ConditionResult {
+    bytes32 conditionId;
+    bool resolved;
+    uint256 winningOutcome;    // 0=YES, 1=NO, 2=平局
+    uint256 payoutNumerator0;  // YES的payout
+    uint256 payoutNumerator1;  // NO的payout
+    uint256 payoutDenominator;
+};
+```
+
+---
+
+## 查询顺序
+
+```
+1. TokenRegistered (两个Exchange)
+   → 构建 positionId ↔ conditionId 映射表
+
+2. ConditionPreparation + ConditionResolution (ConditionalTokens)
+   → 构建 conditionId 状态表
+
+3. TransferSingle + TransferBatch (ConditionalTokens)
+   → 按用户地址过滤，构建持仓变化流水
+
+4. OrderFilled (两个Exchange)
+   → 按用户地址过滤 (maker或taker)，计算成本和收入
+
+5. PayoutRedemption (ConditionalTokens)
+   → 按用户地址过滤，计算赎回收入
+```
+
+---
+
+## 用户PnL计算
+
+```cpp
+struct UserPnL {
+    address user;
+    bytes32 conditionId;
+    
+    // 持仓
+    int256 yesBalance;         // 当前YES数量 (负数表示做空)
+    int256 noBalance;          // 当前NO数量
+    
+    // 成本追踪
+    uint256 totalCostBasis;    // 买入总成本 (USDC)
+    uint256 totalProceeds;     // 卖出总收入 (USDC)
+    uint256 totalFees;         // 支付的手续费
+    uint256 totalRedemption;   // 赎回获得的USDC
+    
+    // 计算: PnL = totalProceeds + totalRedemption - totalCostBasis - totalFees
+};
+```
