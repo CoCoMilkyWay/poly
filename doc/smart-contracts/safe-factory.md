@@ -43,7 +43,7 @@ safe-factory/
     │   │
     │   │  --- 内部函数 ---
     │   ├── _getSigner(paymentToken, payment, paymentReceiver, sig)
-    │   │       # EIP-712 签名验证，恢复 signer 地址
+    │   │       # EIP-712 签名验证, 恢复 signer 地址
     │   └── _getChainIdInternal()
     │           # 获取当前 chainId
     │

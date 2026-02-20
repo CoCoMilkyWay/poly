@@ -2,13 +2,13 @@
 poly-lend/
 └── src/
     ├── PolyLend.sol                  # ===== 条件代币抵押借贷 =====
-    │   │   # 用 YES/NO token 作抵押，借 USDC
+    │   │   # 用 YES/NO token 作抵押, 借 USDC
     │   │   # 核心流程: request → offer → accept → (call) → repay/reclaim
     │   │
     │   │  --- 常量 ---
     │   ├── MAX_INTEREST              # 最大利率 ≈ 1000% APY
-    │   ├── AUCTION_DURATION          # 1 天，call 后的转让拍卖时长
-    │   ├── PAYBACK_BUFFER            # 1 分钟，还款时间戳容差
+    │   ├── AUCTION_DURATION          # 1 天, call 后的转让拍卖时长
+    │   ├── PAYBACK_BUFFER            # 1 分钟, 还款时间戳容差
     │   │
     │   │  --- 数据结构 ---
     │   ├── Request                   # 借款请求
@@ -30,7 +30,7 @@ poly-lend/
     │   │
     │   ├── accept(offerId) → loanId
     │   │       # 接受放贷报价
-    │   │       # 抵押品转入合约，USDC 从 lender 转给 borrower
+    │   │       # 抵押品转入合约, USDC 从 lender 转给 borrower
     │   │
     │   ├── repay(loanId, repayTimestamp)
     │   │       # 还款 (本金 + 利息)
@@ -48,17 +48,17 @@ poly-lend/
     │   ├── call(loanId)
     │   │       # 催收 (需过 minimumDuration)
     │   │       # 启动 1 天拍卖期
-    │   │       # 借款人必须在 callTime 还款，否则开始转让拍卖
+    │   │       # 借款人必须在 callTime 还款, 否则开始转让拍卖
     │   │
     │   ├── reclaim(loanId)
-    │   │       # 拍卖结束后无人接手，lender 收走抵押品
+    │   │       # 拍卖结束后无人接手, lender 收走抵押品
     │   │
     │   │  --- 第三方操作 ---
     │   └── transfer(loanId, newRate)
     │           # 贷款转让 (Dutch Auction 荷兰式拍卖)
-    │           # call 后 1 天内，利率从 0 线性升到 MAX_INTEREST
+    │           # call 后 1 天内, 利率从 0 线性升到 MAX_INTEREST
     │           # 新 lender 出价 ≤ 当前拍卖利率即可接手
-    │           # 新 lender 付清旧贷款，获得新贷款债权
+    │           # 新 lender 付清旧贷款, 获得新贷款债权
     │
     ├── InterestLib.sol               # 利率计算库
     │   ├── ONE = 1e18                # 基准值

@@ -10,7 +10,7 @@ import json
 app = FastAPI(title="Polymarket Data Explorer")
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
 
-# httpx 客户端，禁用代理直连 C++ backend
+# httpx 客户端, 禁用代理直连 C++ backend
 _client = httpx.Client(timeout=None, trust_env=False)
 
 

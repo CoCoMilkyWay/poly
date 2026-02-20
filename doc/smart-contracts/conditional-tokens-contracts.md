@@ -1,10 +1,10 @@
 ```
 conditional-tokens-contracts/
 └── contracts/
-    ├── ConditionalTokens.sol          # ===== 主合约，继承 ERC1155 =====
+    ├── ConditionalTokens.sol          # ===== 主合约, 继承 ERC1155 =====
     │   │
     │   │  --- 状态变量 ---
-    │   ├── payoutNumerators[conditionId]  # 结果向量，如 [1,0]=YES赢, [0,1]=NO赢
+    │   ├── payoutNumerators[conditionId]  # 结果向量, 如 [1,0]=YES赢, [0,1]=NO赢
     │   ├── payoutDenominator[conditionId] # 非零表示已结算
     │   │
     │   │  --- 生命周期 ---
@@ -41,7 +41,7 @@ conditional-tokens-contracts/
     │
     ├── CTHelpers.sol                  # ID 计算库
     │   ├── getConditionId()           # keccak256(oracle, questionId, outcomeCount)
-    │   ├── getCollectionId()          # 椭圆曲线点加法，支持嵌套条件组合 (PM 未用)
+    │   ├── getCollectionId()          # 椭圆曲线点加法, 支持嵌套条件组合 (PM 未用)
     │   └── getPositionId()            # keccak256(collateral, collectionId)
     │
     └── ERC1155/

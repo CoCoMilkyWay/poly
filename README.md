@@ -1,7 +1,7 @@
 # Polymarket PnL Replayer
 
 ```
-项目目标： 可以replay polymarket 历史上任何用户的历史上每一笔交易记录
+项目目标:  可以replay polymarket 历史上任何用户的历史上每一笔交易记录
 polygon链上polymarket协议合约节点本身的实现: /home/chuyin/work/poly/doc/smart-contracts
 
 老架构:基于the Graph协议的indexer实现
@@ -14,47 +14,65 @@ polygon链上polymarket协议合约节点本身的实现: /home/chuyin/work/poly
         IPFS manifest: /home/chuyin/work/poly/doc/indexer/the graph/implemented/IPFS
         graphql schema: /home/chuyin/work/poly/doc/indexer/the graph/implemented/schema
 
-新架构: 如下
 ```
+
+## 新架构
+
+| 目标             | 能知道                             | 不能知道                                       | TransferSingle | TransferBatch | OrderFilled | PositionSplit | PositionsMerge | PayoutRedemption | PositionsConverted |
+| ---------------- | ---------------------------------- | ---------------------------------------------- | :------------: | :-----------: | :---------: | :-----------: | :------------: | :--------------: | :----------------: |
+| **历史持仓**     | 准确 token 余额                    | 成本价                                         |       ✓        |       ✓       |             |               |                |                  |                    |
+| **历史交易/PnL** | USDC 流水(完整)；成交价；已实现PnL | 准确 token 持仓(漏直接转账)；未实现PnL(无市价) |                |               |      ✓      |       ✓       |       ✓        |        ✓         |         ✓          |
+| **历史净值**     | 准确 token 持仓；USDC 净流水       | 实时市价(只有成交价, 需近似)                   |       ✓        |       ✓       |      ✓      |       ✓       |       ✓        |        ✓         |         ✓          |
+
+- **Transfer 事件**: 追踪 ERC1155 position token, 不追踪 USDC (ERC20)
+- **USDC 流水完整**: 所有 USDC 进出都经过协议（买卖/铸造/销毁/赎回/转换）
+- **token 流水不完整**: 用户间 `safeTransferFrom` 直接转账不经过协议, 只触发 Transfer 事件
+- **成交价 ≠ 市价**: 只有历史成交价, 没有实时 bid/ask 报价
 
 **Split/Merge/Convert/Redemption 使用场景**:
 
 1. **Split(铸造)— 市场进行中**
    - 操作: USDC → YES + NO (固定 $0.50/$0.50)
-   - 做市: 铸造后挂单卖双边，提供流动性
-   - 套利: 当 YES + NO 市场价之和 > $1 时，铸造后卖双边获利
-   - 方向性建仓: 当看空方流动性好时，铸造后卖看空方，建仓看多方
+   - 做市: 铸造后挂单卖双边, 提供流动性
+   - 套利: 当 YES + NO 市场价之和 > $1 时, 铸造后卖双边获利
+   - 方向性建仓: 当看空方流动性好时, 铸造后卖看空方, 建仓看多方
 
 2. **Merge(销毁)— 市场进行中**
    - 操作: YES + NO → USDC (固定 $0.50/$0.50)
-   - 做市: 买入双边后销毁，退出流动性
-   - 套利: 当 YES + NO 市场价之和 < $1 时，买双边后销毁获利
-   - 方向性平仓: 当看多方流动性差时，买看空方后销毁双边，平仓看多方
+   - 做市: 买入双边后销毁, 退出流动性
+   - 套利: 当 YES + NO 市场价之和 < $1 时, 买双边后销毁获利
+   - 方向性平仓: 当看多方流动性差时, 买看空方后销毁双边, 平仓看多方
 
 3. **Convert(转换)— NegRisk市场进行中**
    - 操作: M 个选项的 NO tokens → (M-1) USDC（仅限 NegRisk 多选项互斥市场）
-   - 原理: N 个互斥选项的 NO 组合 = "所有选项都不赢" = 不可能，所以 M 个 NO 的价值是 M-1
-   - 套利: 若 M 个 NO tokens 总成本 < (M-1) USDC，买入后 convert 获利
+   - 原理: N 个互斥选项的 NO 组合 = "所有选项都不赢" = 不可能, 所以 M 个 NO 的价值是 M-1
+   - 套利: 若 M 个 NO tokens 总成本 < (M-1) USDC, 买入后 convert 获利
 
 4. **Redemption(赎回)— 市场结算后**
    - 操作: tokens → USDC (只能在市场结算后操作)
-   - 用途: 赎回 winning tokens 获得收益，losing tokens 归零 (价格由 payoutNumerators/payoutDenominator 决定)
+   - 用途: 赎回 winning tokens 获得收益, losing tokens 归零 (价格由 payoutNumerators/payoutDenominator 决定)
 
 ## Flow
 
 ```
-Round 1: eth_getLogs → raw_log (暂存JSON，~15min)
-Round 2: raw_log → 最终表 (纯SQL转换，~2min)
+Round 1: eth_getLogs → raw_log (暂存JSON, ~15min)
+Round 2: raw_log → 最终表 (纯SQL转换, ~2min)
 ```
 
 ## 合约
 
-| 合约               | 地址                                       | 起始区块 |
-| ------------------ | ------------------------------------------ | -------- |
-| ConditionalTokens  | 0x4D97DCd97eC945f40cF65F87097ACe5EA0476045 | 4023686  |
-| CTFExchange        | 0x4bFb41d5B3570DeFd03C39a9A4D8dE6Bd8B8982E | 33605403 |
-| NegRiskCTFExchange | 0xC5d563A36AE78145C45a50134d48A1215220f80a | 50505492 |
-| NegRiskAdapter     | 0xd91E80cF2E7be2e162c6513ceD06f1dD0dA35296 | 50505403 |
+| 合约               | 地址                                       | 起始区块   |
+| ------------------ | ------------------------------------------ | ---------- |
+| ConditionalTokens  | 0x4D97DCd97eC945f40cF65F87097ACe5EA0476045 | 4,027,499  |
+| CTFExchange        | 0x4bFb41d5B3570DeFd03C39a9A4D8dE6Bd8B8982E | 35,887,522 |
+| NegRiskCTFExchange | 0xC5d563A36AE78145C45a50134d48A1215220f80a | 51,405,773 |
+| NegRiskAdapter     | 0xd91E80cF2E7be2e162c6513ceD06f1dD0dA35296 | 50,748,168 |
+
+**Collateral**:
+
+- FiatToken V2.2 (Circle): Native USDC: **polymarket协议不使用**: 0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359 (2023年10月推出, Circle 原生发行)
+- Polygon PoS Bridge: 普通市场 (CTFExchange): USDC.e(Bridged) (`0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174`) (2020年9月推出, 从以太坊桥接)
+- NegRiskAdapter (Polymarket): Wrapped Collateral (`0x3a3bd7bb9528e159577f7c2e685cc81a765002e2`) - 1:1 包装的 USDC.e (为了支持Convert操作, 原生 CTF 里做不到, 需要wrap一下)
 
 ```
 chuyin@chuyin:~/work/polymarket-indexer/service$ /bin/python3 /home/chuyin/work/poly/scripts/scan_events.py
@@ -114,49 +132,49 @@ chuyin@chuyin:~/work/polymarket-indexer/service$ /bin/python3 /home/chuyin/work/
 
 **PositionSplit**
 
-USDC → YES + NO (铸造)
+collateral → YES + NO (铸造)
 
-| 字段               | 类型      | indexed | 说明                                                   |
-| ------------------ | --------- | ------- | ------------------------------------------------------ |
-| stakeholder        | address   | yes     | 操作者                                                 |
-| collateralToken    | address   | no      | 固定为USDC: 0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174 |
-| parentCollectionId | bytes32   | yes     | 几乎总是 0x0                                           |
-| conditionId        | bytes32   | yes     | 条件 ID                                                |
-| partition          | uint256[] | no      | [1,2] = YES+NO                                         |
-| amount             | uint256   | no      | 消耗的USDC数量 (6 decimals)，同时获得等量YES和NO token |
-| tx_hash            | bytes32   | meta    | log.transactionHash                                    |
-| block_number       | uint64    | meta    | log.blockNumber                                        |
-| log_index          | uint32    | meta    | log.logIndex                                           |
+| 字段               | 类型      | indexed | 说明                                                                                                                                        |
+| ------------------ | --------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| stakeholder        | address   | yes     | 操作者                                                                                                                                      |
+| collateralToken    | address   | no      | 普通市场: USDC.e (0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174); NegRisk市场: Wrapped Collateral (0x3a3bd7bb9528e159577f7c2e685cc81a765002e2) |
+| parentCollectionId | bytes32   | yes     | 几乎总是 0x0                                                                                                                                |
+| conditionId        | bytes32   | yes     | 条件 ID                                                                                                                                     |
+| partition          | uint256[] | no      | [1,2] = YES+NO                                                                                                                              |
+| amount             | uint256   | no      | 消耗的collateral数量 (6 decimals), 同时获得等量YES和NO token                                                                                |
+| tx_hash            | bytes32   | meta    | log.transactionHash                                                                                                                         |
+| block_number       | uint64    | meta    | log.blockNumber                                                                                                                             |
+| log_index          | uint32    | meta    | log.logIndex                                                                                                                                |
 
 **PositionsMerge**
 
-YES + NO → USDC (销毁)
+YES + NO → Collateral (销毁)
 
-| 字段               | 类型      | indexed | 说明                                                   |
-| ------------------ | --------- | ------- | ------------------------------------------------------ |
-| stakeholder        | address   | yes     | 操作者                                                 |
-| collateralToken    | address   | no      | 固定为USDC: 0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174 |
-| parentCollectionId | bytes32   | yes     | 几乎总是 0x0                                           |
-| conditionId        | bytes32   | yes     | 条件 ID                                                |
-| partition          | uint256[] | no      | [1,2] = YES+NO                                         |
-| amount             | uint256   | no      | 销毁的YES+NO数量 (6 decimals)，同时获得等量USDC        |
-| tx_hash            | bytes32   | meta    | log.transactionHash                                    |
-| block_number       | uint64    | meta    | log.blockNumber                                        |
-| log_index          | uint32    | meta    | log.logIndex                                           |
+| 字段               | 类型      | indexed | 说明                                                                                                                                        |
+| ------------------ | --------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| stakeholder        | address   | yes     | 操作者                                                                                                                                      |
+| collateralToken    | address   | no      | 普通市场: USDC.e (0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174); NegRisk市场: Wrapped Collateral (0x3a3bd7bb9528e159577f7c2e685cc81a765002e2) |
+| parentCollectionId | bytes32   | yes     | 几乎总是 0x0                                                                                                                                |
+| conditionId        | bytes32   | yes     | 条件 ID                                                                                                                                     |
+| partition          | uint256[] | no      | [1,2] = YES+NO                                                                                                                              |
+| amount             | uint256   | no      | 销毁的YES+NO数量 (6 decimals), 同时获得等量collateral                                                                                       |
+| tx_hash            | bytes32   | meta    | log.transactionHash                                                                                                                         |
+| block_number       | uint64    | meta    | log.blockNumber                                                                                                                             |
+| log_index          | uint32    | meta    | log.logIndex                                                                                                                                |
 
 **TransferSingle / TransferBatch**
 
-TransferSingle + TransferBatch 覆盖**所有**持仓变化，不会重合：
+TransferSingle + TransferBatch 覆盖**所有**持仓变化, 不会重合:
 
-| 场景         | 事件   | 原因                          |
-| ------------ | ------ | ----------------------------- |
-| Split铸造    | Batch  | 同时mint YES+NO 两个token     |
-| Merge销毁    | Batch  | 同时burn YES+NO 两个token     |
-| 交易撮合     | Single | 只转移一个token (买YES或买NO) |
-| 赎回(双边)   | Batch  | 同时burn YES+NO               |
-| 赎回(单边)   | Single | 只burn一个position            |
-| NegRisk转换  | Batch  | 多个NO tokens burn → USDC     |
-| 用户直接转账 | 取决于 | 转几种token就用哪个           |
+| 场景         | 事件   | 原因                                    |
+| ------------ | ------ | --------------------------------------- |
+| Split铸造    | Batch  | 同时mint YES+NO 两个token               |
+| Merge销毁    | Batch  | 同时burn YES+NO 两个token               |
+| 交易撮合     | Single | 只转移一个token (买YES或买NO)           |
+| 赎回(双边)   | Batch  | 同时burn YES+NO                         |
+| 赎回(单边)   | Single | 只burn一个position                      |
+| NegRisk转换  | Batch  | 多个NO tokens burn → Wrapped Collateral |
+| 用户直接转账 | 取决于 | 转几种token就用哪个                     |
 
 **TransferSingle 字段**
 
@@ -165,8 +183,8 @@ TransferSingle + TransferBatch 覆盖**所有**持仓变化，不会重合：
 | operator     | address | yes     | 执行操作的地址。**合约**: CTFExchange(交易撮合)/NegRiskAdapter(Split/Merge/Convert)/NegRiskCTFExchange(NegRisk交易)；**用户**: 直接调用safeTransferFrom转账 |
 | from         | address | yes     | 发送方。**0x0=mint**                                                                                                                                        |
 | to           | address | yes     | 接收方。**0x0=burn**                                                                                                                                        |
-| id           | uint256 | no      | positionId (ERC1155 tokenId)，256位整数，由 keccak256(USDC地址, collectionId) 计算                                                                          |
-| value        | uint256 | no      | token数量，6 decimals (1 token = 1,000,000 units)                                                                                                           |
+| id           | uint256 | no      | positionId (ERC1155 tokenId), 256位整数, 由 keccak256(collateralToken, collectionId) 计算                                                                   |
+| value        | uint256 | no      | token数量, 6 decimals (1 token = 1,000,000 units)                                                                                                           |
 | tx_hash      | bytes32 | meta    | log.transactionHash                                                                                                                                         |
 | block_number | uint64  | meta    | log.blockNumber                                                                                                                                             |
 | log_index    | uint32  | meta    | log.logIndex                                                                                                                                                |
@@ -179,7 +197,7 @@ TransferSingle + TransferBatch 覆盖**所有**持仓变化，不会重合：
 | from         | address   | yes     | 发送方。**0x0=mint** |
 | to           | address   | yes     | 接收方。**0x0=burn** |
 | ids          | uint256[] | no      | positionId 数组      |
-| values       | uint256[] | no      | 数量数组，6 decimals |
+| values       | uint256[] | no      | 数量数组, 6 decimals |
 | tx_hash      | bytes32   | meta    | log.transactionHash  |
 | block_number | uint64    | meta    | log.blockNumber      |
 | log_index    | uint32    | meta    | log.logIndex         |
@@ -199,17 +217,17 @@ TransferSingle + TransferBatch 覆盖**所有**持仓变化，不会重合：
 
 **PayoutRedemption**
 
-| 字段               | 类型      | indexed | 说明                                                      |
-| ------------------ | --------- | ------- | --------------------------------------------------------- |
-| redeemer           | address   | yes     | 操作者                                                    |
-| collateralToken    | address   | yes     | 固定为USDC: 0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174    |
-| parentCollectionId | bytes32   | yes     | 几乎总是 0x0                                              |
-| conditionId        | bytes32   | no      | 条件 ID                                                   |
-| indexSets          | uint256[] | no      | 赎回的position组合: [1]=仅YES, [2]=仅NO, [1,2]=两者都赎回 |
-| payout             | uint256   | no      | 获得的USDC (6 decimals)，可能为0(输家token赎回值为0)      |
-| tx_hash            | bytes32   | meta    | log.transactionHash                                       |
-| block_number       | uint64    | meta    | log.blockNumber                                           |
-| log_index          | uint32    | meta    | log.logIndex                                              |
+| 字段               | 类型      | indexed | 说明                                                         |
+| ------------------ | --------- | ------- | ------------------------------------------------------------ |
+| redeemer           | address   | yes     | 操作者                                                       |
+| collateralToken    | address   | yes     | 普通市场: USDC.e; NegRisk市场: Wrapped Collateral (地址同上) |
+| parentCollectionId | bytes32   | yes     | 几乎总是 0x0                                                 |
+| conditionId        | bytes32   | no      | 条件 ID                                                      |
+| indexSets          | uint256[] | no      | 赎回的position组合: [1]=仅YES, [2]=仅NO, [1,2]=两者都赎回    |
+| payout             | uint256   | no      | 获得的collateral (6 decimals), 可能为0(输家token赎回值为0)   |
+| tx_hash            | bytes32   | meta    | log.transactionHash                                          |
+| block_number       | uint64    | meta    | log.blockNumber                                              |
+| log_index          | uint32    | meta    | log.logIndex                                                 |
 
 ### CTFExchange / NegRiskCTFExchange
 
@@ -233,31 +251,31 @@ TransferSingle + TransferBatch 覆盖**所有**持仓变化，不会重合：
 
 **OrderFilled**
 
-买卖方向: makerAssetId=0 → maker出USDC换token → maker是买方。价格=makerAmountFilled/takerAmountFilled
+买卖方向: makerAssetId=0 → maker出collateral换token → maker是买方。价格=makerAmountFilled/takerAmountFilled
 
-| 字段              | 类型    | indexed | 说明                                     |
-| ----------------- | ------- | ------- | ---------------------------------------- |
-| orderHash         | bytes32 | yes     | 订单哈希                                 |
-| maker             | address | yes     | 挂单方                                   |
-| taker             | address | yes     | 吃单方                                   |
-| makerAssetId      | uint256 | no      | maker给出的资产。**0=USDC**，非0=tokenId |
-| takerAssetId      | uint256 | no      | taker给出的资产。**0=USDC**，非0=tokenId |
-| makerAmountFilled | uint256 | no      | maker给出的数量 (6 decimals)             |
-| takerAmountFilled | uint256 | no      | taker给出的数量 (6 decimals)             |
-| fee               | uint256 | no      | 手续费 (USDC, 6 decimals)                |
-| tx_hash           | bytes32 | meta    | log.transactionHash                      |
-| block_number      | uint64  | meta    | log.blockNumber                          |
-| log_index         | uint32  | meta    | log.logIndex                             |
-| exchange          | TEXT    | meta    | CTFExchange 或 NegRiskCTFExchange        |
+| 字段              | 类型    | indexed | 说明                                           |
+| ----------------- | ------- | ------- | ---------------------------------------------- |
+| orderHash         | bytes32 | yes     | 订单哈希                                       |
+| maker             | address | yes     | 挂单方                                         |
+| taker             | address | yes     | 吃单方                                         |
+| makerAssetId      | uint256 | no      | maker给出的资产。**0=collateral**, 非0=tokenId |
+| takerAssetId      | uint256 | no      | taker给出的资产。**0=collateral**, 非0=tokenId |
+| makerAmountFilled | uint256 | no      | maker给出的数量 (6 decimals)                   |
+| takerAmountFilled | uint256 | no      | taker给出的数量 (6 decimals)                   |
+| fee               | uint256 | no      | 手续费 (collateral, 6 decimals)                |
+| tx_hash           | bytes32 | meta    | log.transactionHash                            |
+| block_number      | uint64  | meta    | log.blockNumber                                |
+| log_index         | uint32  | meta    | log.logIndex                                   |
+| exchange          | TEXT    | meta    | CTFExchange 或 NegRiskCTFExchange              |
 
 **OrdersMatched**
 
 | 字段              | 类型    | indexed | 说明                                                 |
 | ----------------- | ------- | ------- | ---------------------------------------------------- |
 | takerOrderHash    | bytes32 | yes     | taker 订单哈希                                       |
-| takerOrderMaker   | address | yes     | **名字易混淆**: "taker订单的maker"，即发起吃单的用户 |
-| makerAssetId      | uint256 | no      | maker给出的资产。**0=USDC**，非0=tokenId             |
-| takerAssetId      | uint256 | no      | taker给出的资产。**0=USDC**，非0=tokenId             |
+| takerOrderMaker   | address | yes     | **名字易混淆**: "taker订单的maker", 即发起吃单的用户 |
+| makerAssetId      | uint256 | no      | maker给出的资产。**0=collateral**, 非0=tokenId       |
+| takerAssetId      | uint256 | no      | taker给出的资产。**0=collateral**, 非0=tokenId       |
 | makerAmountFilled | uint256 | no      | maker给出的数量 (6 decimals)                         |
 | takerAmountFilled | uint256 | no      | taker给出的数量 (6 decimals)                         |
 | tx_hash           | bytes32 | meta    | log.transactionHash                                  |
@@ -311,12 +329,12 @@ TransferSingle + TransferBatch 覆盖**所有**持仓变化，不会重合：
 
 **PositionsConverted**
 
-NegRisk转换: M 个 NO tokens burn → (M-1) USDC (利用互斥选项的逻辑冗余套利)
+NegRisk转换: M 个 NO tokens burn → (M-1) Wrapped Collateral (利用互斥选项的逻辑冗余套利)
 
 | 字段         | 类型    | indexed | 说明                                                                  |
 | ------------ | ------- | ------- | --------------------------------------------------------------------- |
 | stakeholder  | address | yes     | 操作者                                                                |
-| marketId     | bytes32 | yes     | NegRisk市场ID，一个市场包含多个互斥问题(如"谁会赢得选举": A/B/C/其他) |
+| marketId     | bytes32 | yes     | NegRisk市场ID, 一个市场包含多个互斥问题(如"谁会赢得选举": A/B/C/其他) |
 | indexSet     | uint256 | yes     | **bitmap**: 转换了哪些NO。如6=0b110表示第2和第3个NO token             |
 | amount       | uint256 | no      | 每个被转换position的数量 (6 decimals)                                 |
 | tx_hash      | bytes32 | meta    | log.transactionHash                                                   |
@@ -380,20 +398,20 @@ NegRisk转换: M 个 NO tokens burn → (M-1) USDC (利用互斥选项的逻辑�
 | size         | INTEGER    | 计算        | makerAssetId=0 ? makerAmountFilled : takerAmountFilled |
 | price_num    | INTEGER    | OrderFilled | makerAmountFilled                                      |
 | price_den    | INTEGER    | OrderFilled | takerAmountFilled                                      |
-| fee          | INTEGER    | OrderFilled | $.fee (USDC 6 decimals)                                |
+| fee          | INTEGER    | OrderFilled | $.fee (collateral 6 decimals)                          |
 
-**side/market 判断**: makerAssetId=0 表示 maker 出 USDC 买 token → Buy; 否则 maker 出 token 换 USDC → Sell
+**side/market 判断**: makerAssetId=0 表示 maker 出 collateral 买 token → Buy; 否则 maker 出 token 换 collateral → Sell
 
 ### split
 
-| column       | 类型       | 来源          | 处理                       |
-| ------------ | ---------- | ------------- | -------------------------- |
-| id           | INTEGER PK | raw_log       | block\*10000+log_idx       |
-| block_number | INTEGER    | raw_log       | 直接取                     |
-| log_index    | INTEGER    | raw_log       | 直接取                     |
-| stakeholder  | TEXT       | PositionSplit | $.stakeholder              |
-| condition_id | TEXT       | PositionSplit | $.conditionId              |
-| amount       | INTEGER    | PositionSplit | $.amount (USDC 6 decimals) |
+| column       | 类型       | 来源          | 处理                             |
+| ------------ | ---------- | ------------- | -------------------------------- |
+| id           | INTEGER PK | raw_log       | block\*10000+log_idx             |
+| block_number | INTEGER    | raw_log       | 直接取                           |
+| log_index    | INTEGER    | raw_log       | 直接取                           |
+| stakeholder  | TEXT       | PositionSplit | $.stakeholder                    |
+| condition_id | TEXT       | PositionSplit | $.conditionId                    |
+| amount       | INTEGER    | PositionSplit | $.amount (collateral 6 decimals) |
 
 ### merge
 
@@ -416,7 +434,7 @@ NegRisk转换: M 个 NO tokens burn → (M-1) USDC (利用互斥选项的逻辑�
 | redeemer     | TEXT       | PayoutRedemption | $.redeemer               |
 | condition_id | TEXT       | PayoutRedemption | $.conditionId            |
 | index_sets   | TEXT       | PayoutRedemption | $.indexSets (JSON array) |
-| payout       | INTEGER    | PayoutRedemption | $.payout (USDC)          |
+| payout       | INTEGER    | PayoutRedemption | $.payout (collateral)    |
 
 ### sync_state
 

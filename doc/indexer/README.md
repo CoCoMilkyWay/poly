@@ -4,8 +4,8 @@
 
 | Entity              | Graph            | 必要字段                                                                                                   | 额外字段                  | 类型 | 增量sync                                                                                                |
 | ------------------- | ---------------- | ---------------------------------------------------------------------------------------------------------- | ------------------------- | ---- | ------------------------------------------------------------------------------------------------------- |
-| Condition           | Polymarket       | id(hashID), questionId, resolutionTimestamp, payoutNumerators, payoutDenominator, outcomeSlotCount, oracle | positionIds(N \* tokenID) | 状态 | `orderBy: resolutionTimestamp asc, where: {resolutionTimestamp_gte}` + skip, 记录最新非null时间戳，增量 |
-| PnlCondition        | Profit and Loss  | id(hashID), positionIds(N \* tokenID)                                                                      |                           | 状态 | `orderBy: id asc, where: {id_gt}`，不可真正增量(hash主键)，需定期全量重拉                               |
+| Condition           | Polymarket       | id(hashID), questionId, resolutionTimestamp, payoutNumerators, payoutDenominator, outcomeSlotCount, oracle | positionIds(N \* tokenID) | 状态 | `orderBy: resolutionTimestamp asc, where: {resolutionTimestamp_gte}` + skip, 记录最新非null时间戳, 增量 |
+| PnlCondition        | Profit and Loss  | id(hashID), positionIds(N \* tokenID)                                                                      |                           | 状态 | `orderBy: id asc, where: {id_gt}`, 不可真正增量(hash主键), 需定期全量重拉                               |
 | EnrichedOrderFilled | Polymarket       | timestamp, maker.id(usrID), taker.id(usrID), market.id(tokenID), side, size(1e6$), price(0~1)              |                           | 事件 | `orderBy: timestamp asc, where: {timestamp_gte}` + skip                                                 |
 | Split               | Activity Polygon | timestamp, stakeholder(usrID), condition(questionID), amount(1e6$)                                         |                           | 事件 | `orderBy: timestamp asc, where: {timestamp_gte}` + skip                                                 |
 | Merge               | Activity Polygon | timestamp, stakeholder(usrID), condition(questionID), amount(1e6$)                                         |                           | 事件 | `orderBy: timestamp asc, where: {timestamp_gte}` + skip                                                 |
@@ -13,7 +13,7 @@
 
 注意同时要支持: 1. 历史markets/questions总和在50W个(10min sync一遍) 2. 单问题多选项(outcomeSlotCount > 2) 3. 多问题相关(NegRisk)
 
-增量sync(自动): 1. 每个entity按照自己的orderBy + skip 正常sync 2. 注意: 1. Condition(Polymarket)的null timestamp部分不全(未结算的condition没有resolutionTimestamp) 2. PnlCondition不可真正增量(hash主键，新数据hash可能比旧的小)
+增量sync(自动): 1. 每个entity按照自己的orderBy + skip 正常sync 2. 注意: 1. Condition(Polymarket)的null timestamp部分不全(未结算的condition没有resolutionTimestamp) 2. PnlCondition不可真正增量(hash主键, 新数据hash可能比旧的小)
 
 ---
 
@@ -21,19 +21,19 @@
 
 1. **Split(铸造)— 市场进行中**
    - 操作: USDC → YES + NO (固定 $0.50/$0.50)
-   - 做市: 铸造后挂单卖双边，提供流动性
-   - 套利: 当 YES + NO 市场价之和 > $1 时，铸造后卖双边获利
-   - 方向性建仓: 当看空方流动性好时，铸造后卖看空方，建仓看多方
+   - 做市: 铸造后挂单卖双边, 提供流动性
+   - 套利: 当 YES + NO 市场价之和 > $1 时, 铸造后卖双边获利
+   - 方向性建仓: 当看空方流动性好时, 铸造后卖看空方, 建仓看多方
 
 2. **Merge(销毁)— 市场进行中**
    - 操作: YES + NO → USDC (固定 $0.50/$0.50)
-   - 做市: 买入双边后销毁，退出流动性
-   - 套利: 当 YES + NO 市场价之和 < $1 时，买双边后销毁获利
-   - 方向性平仓: 当看多方流动性差时，买看空方后销毁双边，平仓看多方
+   - 做市: 买入双边后销毁, 退出流动性
+   - 套利: 当 YES + NO 市场价之和 < $1 时, 买双边后销毁获利
+   - 方向性平仓: 当看多方流动性差时, 买看空方后销毁双边, 平仓看多方
 
 3. **Redemption(赎回)— 市场结算后**
    - 操作: tokens → USDC (只能在市场结算后操作)
-   - 用途: 赎回 winning tokens 获得收益，losing tokens 归零 (价格由 payoutNumerators/payoutDenominator 决定)
+   - 用途: 赎回 winning tokens 获得收益, losing tokens 归零 (价格由 payoutNumerators/payoutDenominator 决定)
 
 ## 数据库数据结构
 
@@ -44,7 +44,7 @@
 - `split` (id PK, timestamp, stakeholder, condition, amount) idx: timestamp
 - `merge` (id PK, timestamp, stakeholder, condition, amount) idx: timestamp
 - `redemption` (id PK, timestamp, redeemer, condition, indexSets, payout) idx: timestamp
-- `pnl_condition` (id PK, positionIds?) — positionIds来源表，需定期全量重拉
+- `pnl_condition` (id PK, positionIds?) — positionIds来源表, 需定期全量重拉
 
 基础设施表(3):
 

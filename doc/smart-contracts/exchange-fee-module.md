@@ -3,7 +3,7 @@ exchange-fee-module/
 └── src/
     ├── FeeModule.sol                 # ===== 手续费代理模块 =====
     │   │   # 代理 CTFExchange 并处理手续费退款
-    │   │   # 核心功能: 如果 operator 收取的费用 < 订单签名的最大费率，退还差额
+    │   │   # 核心功能: 如果 operator 收取的费用 < 订单签名的最大费率, 退还差额
     │   │
     │   │  --- 不可变量 ---
     │   ├── exchange                  # CTFExchange 地址
@@ -46,7 +46,7 @@ exchange-fee-module/
     │   │   │
     │   │   ├── calculateRefund(feeRateBps, operatorFee, outcomeTokens, ...)
     │   │   │       # refund = exchangeFee - operatorFee
-    │   │   │       # 如果 exchangeFee <= operatorFee，返回 0
+    │   │   │       # 如果 exchangeFee <= operatorFee, 返回 0
     │   │   │
     │   │   ├── calculateExchangeFee(feeRateBps, outcomeTokens, makerAmt, takerAmt, side)
     │   │   │       # 手续费公式 (与 CTFExchange 一致):

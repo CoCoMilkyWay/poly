@@ -156,7 +156,7 @@
 | 标准 | ERC1155                                                              |
 | 源码 | [conditional-tokens-contracts.md](./conditional-tokens-contracts.md) |
 
-**核心功能**：条件代币的创建、拆分、合并、赎回
+**核心功能**: 条件代币的创建、拆分、合并、赎回
 
 | 接口                                                                             | 输入                                 | 输出        | 说明            |
 | -------------------------------------------------------------------------------- | ------------------------------------ | ----------- | --------------- |
@@ -166,9 +166,9 @@
 | `redeemPositions(collateral, parentCollectionId, conditionId, indexSets)`        | 抵押品, 父集合ID, 条件ID, 索引集     | -           | 结算后赎回      |
 | `reportPayouts(questionId, payouts[])`                                           | 问题ID, 赔付向量                     | -           | 仅 oracle 可调  |
 
-**状态变量**：
+**状态变量**: 
 
-- `payoutNumerators[conditionId]` - 结果向量，如 `[1,0]`=YES赢
+- `payoutNumerators[conditionId]` - 结果向量, 如 `[1,0]`=YES赢
 - `payoutDenominator[conditionId]` - 非零表示已结算
 
 ---
@@ -182,7 +182,7 @@
 | 地址 | `0x4bFb41d5B3570DeFd03C39a9A4D8dE6Bd8B8982E` |
 | 源码 | [ctf-exchange.md](./ctf-exchange.md)         |
 
-**核心功能**：订单撮合、交易执行、代币注册
+**核心功能**: 订单撮合、交易执行、代币注册
 
 | 接口                                              | 权限     | 输入                              | 输出 | 说明         |
 | ------------------------------------------------- | -------- | --------------------------------- | ---- | ------------ |
@@ -192,13 +192,13 @@
 | `cancelOrder(order)`                              | Maker    | 订单                              | -    | 取消订单     |
 | `registerToken(tokenId, complement, conditionId)` | Admin    | tokenId, 互补tokenId, conditionId | -    | 注册交易对   |
 
-**MatchType 撮合类型**：
+**MatchType 撮合类型**: 
 
-- `COMPLEMENTARY` - 买 vs 卖，直接交换
-- `MINT` - 两个买单，调 `CTF.splitPosition` 铸造 YES+NO
-- `MERGE` - 两个卖单，调 `CTF.mergePositions` 合并成 USDC
+- `COMPLEMENTARY` - 买 vs 卖, 直接交换
+- `MINT` - 两个买单, 调 `CTF.splitPosition` 铸造 YES+NO
+- `MERGE` - 两个卖单, 调 `CTF.mergePositions` 合并成 USDC
 
-**SignatureType 签名类型**：
+**SignatureType 签名类型**: 
 
 - `EOA=0` - 普通外部账户
 - `POLY_PROXY=1` - Polymarket 代理钱包
@@ -213,7 +213,7 @@
 | ---- | ---------------------------------------------------- |
 | 源码 | [neg-risk-ctf-adapter.md](./neg-risk-ctf-adapter.md) |
 
-**说明**：CTFExchange 的薄封装，构造时授权 NegRiskAdapter 操作 CTF，继承 CTFExchange 所有功能。
+**说明**: CTFExchange 的薄封装, 构造时授权 NegRiskAdapter 操作 CTF, 继承 CTFExchange 所有功能。
 
 ---
 
@@ -223,14 +223,14 @@
 | ---- | -------------------------------------------------- |
 | 源码 | [exchange-fee-module.md](./exchange-fee-module.md) |
 
-**核心功能**：代理 CTFExchange 并处理手续费退款
+**核心功能**: 代理 CTFExchange 并处理手续费退款
 
 | 接口                                | 权限  | 说明                                         |
 | ----------------------------------- | ----- | -------------------------------------------- |
 | `matchOrders(...)`                  | Admin | 调用 exchange.matchOrders() + 退还多付手续费 |
 | `withdrawFees(to, tokenId, amount)` | Admin | 提取手续费 (tokenId=0 为 USDC)               |
 
-**退款逻辑**：
+**退款逻辑**: 
 
 ```
 exchangeFee = order.feeRateBps 计算出的费用
@@ -249,7 +249,7 @@ refund = exchangeFee - operatorFee (如果 > 0)
 | 地址 | `0xd91E80cF2E7be2e162c6513ceD06f1dD0dA35296`         |
 | 源码 | [neg-risk-ctf-adapter.md](./neg-risk-ctf-adapter.md) |
 
-**核心功能**：多选一市场的 CTF 适配器，支持"负风险"转换
+**核心功能**: 多选一市场的 CTF 适配器, 支持"负风险"转换
 
 | 接口                                           | 权限   | 输入                 | 说明                      |
 | ---------------------------------------------- | ------ | -------------------- | ------------------------- |
@@ -258,12 +258,12 @@ refund = exchangeFee - operatorFee (如果 > 0)
 | `reportOutcome(questionId, outcome)`           | Oracle | 问题ID, 结果         | 报告问题结果              |
 | `splitPosition(conditionId, amount)`           | 用户   | 条件ID, 数量         | USDC → YES + NO           |
 | `mergePositions(conditionId, amount)`          | 用户   | 条件ID, 数量         | YES + NO → USDC           |
-| `convertPositions(marketId, indexSet, amount)` | 用户   | 市场ID, 索引集, 数量 | **核心特性：NO 仓位转换** |
+| `convertPositions(marketId, indexSet, amount)` | 用户   | 市场ID, 索引集, 数量 | **核心特性: NO 仓位转换** |
 
-**convertPositions 负风险转换**：
+**convertPositions 负风险转换**: 
 
 ```
-持有选项 A,B,C 的 NO，indexSet=0b111
+持有选项 A,B,C 的 NO, indexSet=0b111
 转换后得到: 2 份 USDC (因为 3-1=2)
 这就是"负风险"名称的由来
 ```
@@ -276,16 +276,16 @@ refund = exchangeFee - operatorFee (如果 > 0)
 | ---- | ---------------------------------------------------- |
 | 源码 | [neg-risk-ctf-adapter.md](./neg-risk-ctf-adapter.md) |
 
-**核心功能**：Oracle 中间层，接收 UMA 结果并推送到 NegRiskAdapter
+**核心功能**: Oracle 中间层, 接收 UMA 结果并推送到 NegRiskAdapter
 
 | 接口                                           | 权限   | 说明                        |
 | ---------------------------------------------- | ------ | --------------------------- |
 | `setOracle(addr)`                              | Admin  | 设置 oracle (仅一次)        |
 | `prepareMarket(feeBips, data)`                 | Admin  | 创建市场                    |
-| `prepareQuestion(marketId, data, requestId)`   | Admin  | 添加问题，关联 UMA 请求     |
+| `prepareQuestion(marketId, data, requestId)`   | Admin  | 添加问题, 关联 UMA 请求     |
 | `reportPayouts(requestId, payouts[])`          | Oracle | UMA adapter 回调            |
 | `resolveQuestion(questionId)`                  | 任何人 | 将结果推送到 NegRiskAdapter |
-| `flagQuestion(questionId)`                     | Admin  | 标记问题，阻止自动解析      |
+| `flagQuestion(questionId)`                     | Admin  | 标记问题, 阻止自动解析      |
 | `emergencyResolveQuestion(questionId, result)` | Admin  | 紧急手动解析                |
 
 ---
@@ -298,7 +298,7 @@ refund = exchangeFee - operatorFee (如果 > 0)
 | ---- | ------------------------------------------ |
 | 源码 | [uma-ctf-adapter.md](./uma-ctf-adapter.md) |
 
-**核心功能**：连接 UMA Optimistic Oracle 和 ConditionalTokens
+**核心功能**: 连接 UMA Optimistic Oracle 和 ConditionalTokens
 
 | 接口                                                                     | 权限   | 输入                                   | 说明                 |
 | ------------------------------------------------------------------------ | ------ | -------------------------------------- | -------------------- |
@@ -309,7 +309,7 @@ refund = exchangeFee - operatorFee (如果 > 0)
 | `resolveManually(questionID, payouts[])`                                 | Admin  | 问题ID, 赔付向量                       | 手动解析             |
 | `reset(questionID)`                                                      | Admin  | 问题ID                                 | 重置并重新请求价格   |
 
-**OO 返回值解析**：
+**OO 返回值解析**: 
 
 - `1e18` = YES 赢
 - `0` = NO 赢
@@ -323,7 +323,7 @@ refund = exchangeFee - operatorFee (如果 > 0)
 | ---- | ---------------------------------------------- |
 | 源码 | [uma-sports-oracle.md](./uma-sports-oracle.md) |
 
-**核心功能**：体育赛事预言机，支持胜负盘、让分盘、大小盘
+**核心功能**: 体育赛事预言机, 支持胜负盘、让分盘、大小盘
 
 | 接口                                                                 | 权限   | 说明             |
 | -------------------------------------------------------------------- | ------ | ---------------- |
@@ -333,13 +333,13 @@ refund = exchangeFee - operatorFee (如果 > 0)
 | `createTotalsMarket(gameId, line)`                                   | Admin  | 创建大小盘       |
 | `resolveMarket(marketId)`                                            | 任何人 | 使用比分解析市场 |
 
-**MarketType**：
+**MarketType**: 
 
 - `Winner` - 胜负盘
-- `Spreads` - 让分盘 (line 必须是半点，如 2.5)
+- `Spreads` - 让分盘 (line 必须是半点, 如 2.5)
 - `Totals` - 大小盘
 
-**GameState**：`Created → Paused → Settled/Canceled/EmergencySettled`
+**GameState**: `Created → Paused → Settled/Canceled/EmergencySettled`
 
 ---
 
@@ -351,14 +351,14 @@ refund = exchangeFee - operatorFee (如果 > 0)
 | ---- | ------------------------------------ |
 | 源码 | [safe-factory.md](./safe-factory.md) |
 
-**核心功能**：用 EIP-712 签名创建 Gnosis Safe 钱包
+**核心功能**: 用 EIP-712 签名创建 Gnosis Safe 钱包
 
 | 接口                                                             | 输入                         | 输出       | 说明                           |
 | ---------------------------------------------------------------- | ---------------------------- | ---------- | ------------------------------ |
-| `createProxy(paymentToken, payment, paymentReceiver, createSig)` | 支付代币, 金额, 接收者, 签名 | proxy 地址 | 从签名恢复 owner，Create2 部署 |
+| `createProxy(paymentToken, payment, paymentReceiver, createSig)` | 支付代币, 金额, 接收者, 签名 | proxy 地址 | 从签名恢复 owner, Create2 部署 |
 | `computeProxyAddress(user)`                                      | 用户地址                     | proxy 地址 | 预计算地址 (不部署)            |
 
-**Safe 初始化参数**：
+**Safe 初始化参数**: 
 
 - owners: `[owner]`
 - threshold: `1`
@@ -372,11 +372,11 @@ refund = exchangeFee - operatorFee (如果 > 0)
 | ---- | -------------------------------------- |
 | 源码 | [proxy-factory.md](./proxy-factory.md) |
 
-**核心功能**：代理钱包工厂，支持 GSN 代付 gas
+**核心功能**: 代理钱包工厂, 支持 GSN 代付 gas
 
 | 接口                                     | 说明                                            |
 | ---------------------------------------- | ----------------------------------------------- |
-| `proxy(ProxyCall[] calls)`               | 通过 GSN relayer 执行批量调用，无钱包则自动创建 |
+| `proxy(ProxyCall[] calls)`               | 通过 GSN relayer 执行批量调用, 无钱包则自动创建 |
 | `makeWallet(_implementation, msgSender)` | Create2 克隆创建用户钱包                        |
 | `setGSNModule(gsnModule)`                | 更新 GSN 模块 (onlyOwner)                       |
 
@@ -390,19 +390,19 @@ refund = exchangeFee - operatorFee (如果 > 0)
 | ---- | ------------------------------ |
 | 源码 | [poly-lend.md](./poly-lend.md) |
 
-**核心功能**：用 YES/NO token 作抵押借 USDC
+**核心功能**: 用 YES/NO token 作抵押借 USDC
 
 | 接口                                                     | 角色   | 说明                     |
 | -------------------------------------------------------- | ------ | ------------------------ |
 | `request(positionId, collateralAmount, minimumDuration)` | 借款人 | 发起借款请求             |
 | `offer(requestId, loanAmount, rate)`                     | 放贷人 | 对请求报价               |
-| `accept(offerId)`                                        | 借款人 | 接受报价，抵押品转入合约 |
+| `accept(offerId)`                                        | 借款人 | 接受报价, 抵押品转入合约 |
 | `repay(loanId, repayTimestamp)`                          | 借款人 | 还款 (本金 + 利息)       |
-| `call(loanId)`                                           | 放贷人 | 催收，启动 1 天拍卖期    |
+| `call(loanId)`                                           | 放贷人 | 催收, 启动 1 天拍卖期    |
 | `reclaim(loanId)`                                        | 放贷人 | 拍卖结束后收走抵押品     |
 | `transfer(loanId, newRate)`                              | 第三方 | Dutch Auction 贷款转让   |
 
-**关键常量**：
+**关键常量**: 
 
 - `MAX_INTEREST` ≈ 1000% APY
 - `AUCTION_DURATION` = 1 天
@@ -425,7 +425,7 @@ sequenceDiagram
     participant CTF as ConditionalTokens
     participant USDC as USDC
 
-    User->>SDK: 1. 选择市场，输入买入 $1000 Yes @ 0.55
+    User->>SDK: 1. 选择市场, 输入买入 $1000 Yes @ 0.55
     SDK->>SDK: 2. 构建 Order 结构体
     SDK->>Privy: 3. 请求 EIP-712 签名
     Privy->>Privy: MPC 联合计算签名
@@ -447,7 +447,7 @@ sequenceDiagram
         CTF->>Counterparty: No 代币
     end
 
-    Exchange-->>User: 10. 交易完成，持仓更新
+    Exchange-->>User: 10. 交易完成, 持仓更新
 ```
 
 ### 3.2 多选市场 (NegRisk) 交易流程
@@ -538,10 +538,10 @@ sequenceDiagram
     Admin->>Oracle: 6. createSpreadsMarket(gameId, underdog, 2.5)
     Oracle->>CTF: 7. prepareCondition (让分盘)
 
-    Note over Oracle,UMA: 比赛结束，UMA 提议者提交比分
+    Note over Oracle,UMA: 比赛结束, UMA 提议者提交比分
 
     UMA->>Oracle: 8. priceSettled(home=110, away=105)
-    Oracle->>Oracle: 9. 解码比分，结算 Game
+    Oracle->>Oracle: 9. 解码比分, 结算 Game
 
     User->>Oracle: 10. resolveMarket(胜负盘 marketId)
     Oracle->>Oracle: 11. 根据比分计算 payout
@@ -589,7 +589,7 @@ sequenceDiagram
             Borrower->>PolyLend: 9a. repay (必须在 callTime)
         else 拍卖转让
             Bidder->>PolyLend: 9b. transfer(loanId, newRate)
-            Note over PolyLend: Dutch Auction，利率从 0 升到 MAX
+            Note over PolyLend: Dutch Auction, 利率从 0 升到 MAX
             PolyLend->>USDC: Bidder 付清旧贷款
             Note over PolyLend: Bidder 成为新 Lender
         else 无人接手
@@ -618,7 +618,7 @@ sequenceDiagram
                                                          positionId (ERC1155 tokenId)
 ```
 
-**计算公式**：
+**计算公式**: 
 
 ```solidity
 conditionId = keccak256(oracle, questionId, outcomeSlotCount)
@@ -626,7 +626,7 @@ collectionId = CTHelpers.getCollectionId(parentCollectionId, conditionId, indexS
 positionId = keccak256(collateralToken, collectionId)
 ```
 
-**Polymarket 简化**：
+**Polymarket 简化**: 
 
 - `outcomeSlotCount` 固定为 2 (YES/NO)
 - `parentCollectionId` 固定为 bytes32(0)
@@ -660,7 +660,7 @@ flowchart LR
 
 ```solidity
 struct Order {
-    uint256 salt;           // 随机数，确保唯一性
+    uint256 salt;           // 随机数, 确保唯一性
     address maker;          // 挂单方地址
     address signer;         // 签名者 (可以是 maker 或授权的 signer)
     address taker;          // 吃单方 (0x0 表示任何人)
@@ -678,7 +678,7 @@ struct Order {
 ### 4.4 手续费计算
 
 ```
-price = makerAmount / takerAmount (或反向，取决于 side)
+price = makerAmount / takerAmount (或反向, 取决于 side)
 surcharge = min(price, 1 - price)  // 越接近 0.5 费率越高
 
 BUY:  fee = feeRateBps * surcharge * (tokens / price) / 10000

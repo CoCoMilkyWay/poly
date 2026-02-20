@@ -20,7 +20,7 @@ proxy-factory/
     │   │   │
     │   │   │  --- 钱包管理 ---
     │   │   ├── makeWallet(_implementation, msgSender)
-    │   │   │       # 用 Create2 克隆实现合约，创建用户钱包
+    │   │   │       # 用 Create2 克隆实现合约, 创建用户钱包
     │   │   │       # salt = keccak256(msgSender)
     │   │   ├── maybeMakeWallet(_implementation, instanceAddress, msgSender)
     │   │   │       # 如果地址无代码则创建钱包

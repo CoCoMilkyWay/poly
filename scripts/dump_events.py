@@ -29,7 +29,7 @@ Head: 75,000,000
   PositionsConverted            266
   OutcomeReported                 9
 
-[Erigon] 完成，耗时 20.3s
+[Erigon] 完成, 耗时 20.3s
 [Erigon] 输出目录: /home/chuyin/work/poly/scripts/events/Erigon/
 
 ==================================================
@@ -55,7 +55,7 @@ Head: 75,000,000
   PositionsConverted            266
   OutcomeReported                 9
 
-[dRPC] 完成，耗时 77.3s
+[dRPC] 完成, 耗时 77.3s
 [dRPC] 输出目录: /home/chuyin/work/poly/scripts/events/dRPC/
 
 ==================================================
@@ -209,7 +209,7 @@ def rpc_call(rpc_url, method, params, timeout=30):
 
 
 def rpc_batch(rpc_url, calls, timeout=30):
-    """批量RPC调用，calls = [(method, params), ...]，返回结果列表"""
+    """批量RPC调用, calls = [(method, params), ...], 返回结果列表"""
     batch = [{"jsonrpc": "2.0", "method": m, "params": p, "id": i}
              for i, (m, p) in enumerate(calls)]
     req = json.dumps(batch).encode()
@@ -260,7 +260,7 @@ def decode_uint_array(data, offset):
 
 
 def parse_log(log, exchange_name=None):
-    """解析单个log，返回 (event_name, row_dict)"""
+    """解析单个log, 返回 (event_name, row_dict)"""
     topics = log.get("topics", [])
     if not topics:
         return None, None
@@ -502,7 +502,7 @@ def dump_node(node_name, rpc_url, chunk, output_dir, head, start_block, num_bloc
         f.close()
 
     elapsed = time.time() - start_time
-    print(f"\n[{node_name}] 完成，耗时 {elapsed:.1f}s")
+    print(f"\n[{node_name}] 完成, 耗时 {elapsed:.1f}s")
     print(f"[{node_name}] 输出目录: {output_dir}/")
     return counts
 

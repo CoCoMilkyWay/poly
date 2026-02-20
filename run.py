@@ -41,7 +41,7 @@ def build_backend():
 
 def check_config():
     """检查配置文件"""
-    assert CONFIG_FILE.exists(), f"配置文件 {CONFIG_FILE} 不存在，请创建并填入 API_KEY"
+    assert CONFIG_FILE.exists(), f"配置文件 {CONFIG_FILE} 不存在, 请创建并填入 API_KEY"
 
     import json
     with open(CONFIG_FILE) as f:
@@ -72,7 +72,7 @@ def main():
 
     def cleanup(signum=None, frame=None):
         print("\n[run.py] 正在关闭...")
-        # 逐个关闭: 先 frontend 再 backend，每个等退出后再关下一个
+        # 逐个关闭: 先 frontend 再 backend, 每个等退出后再关下一个
         for p in reversed(processes):
             if p.poll() is None:
                 p.terminate()
@@ -115,20 +115,20 @@ def main():
     )
     processes.append(frontend_proc)
 
-    # 5. 等待服务就绪，打开浏览器
+    # 5. 等待服务就绪, 打开浏览器
     time.sleep(2)
     url = "http://localhost:8000"
     print(f"[run.py] 打开浏览器: {url}")
     webbrowser.open(url)
 
     # 6. 等待进程退出
-    print("[run.py] 服务已启动，按 Ctrl+C 退出")
+    print("[run.py] 服务已启动, 按 Ctrl+C 退出")
     try:
         # 等待任一进程退出
         while True:
             for p in processes:
                 if p.poll() is not None:
-                    print(f"[run.py] 进程 {p.pid} 已退出，退出码: {p.returncode}")
+                    print(f"[run.py] 进程 {p.pid} 已退出, 退出码: {p.returncode}")
                     cleanup()
             time.sleep(1)
     except KeyboardInterrupt:

@@ -40,7 +40,7 @@ HEAD = 83_000_000  # 固定 head
 BLOCK_TIME = 2  # 秒/block
 UTC = datetime.timezone.utc
 NOW_TS = int(datetime.datetime.now(UTC).timestamp())
-# HEAD 对应当前时间，往前推算
+# HEAD 对应当前时间, 往前推算
 BLOCK0_TS = NOW_TS - HEAD * BLOCK_TIME
 YEAR0 = datetime.datetime.fromtimestamp(BLOCK0_TS, UTC).year
 YEARS = list(range(YEAR0, datetime.datetime.now(UTC).year + 1))
@@ -213,7 +213,7 @@ def main():
         cur = end + 1
 
     elapsed = time.time() - start_time
-    print(f"\n  扫描完成，耗时 {elapsed:.0f}s\n")
+    print(f"\n  扫描完成, 耗时 {elapsed:.0f}s\n")
 
 if __name__ == "__main__":
     main()

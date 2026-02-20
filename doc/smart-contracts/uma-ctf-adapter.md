@@ -12,14 +12,14 @@ uma-ctf-adapter/
     │   │
     │   │  --- 核心流程: 初始化 → 等待 → 解析 ---
     │   ├── initialize(ancillaryData, rewardToken, reward, proposalBond, liveness)
-    │   │       # 创建问题，同时:
+    │   │       # 创建问题, 同时:
     │   │       #   1. 存储 QuestionData
     │   │       #   2. 调 ctf.prepareCondition() 创建条件
     │   │       #   3. 向 UMA OO 发起价格请求
     │   │       # questionID = keccak256(ancillaryData + creator)
     │   │
     │   ├── resolve(questionID)
-    │   │       # 任何人可调，从 OO 拉取结果并解析市场
+    │   │       # 任何人可调, 从 OO 拉取结果并解析市场
     │   │       # 调 ctf.reportPayouts() 设置结果
     │   │       # OO 返回: 1e18=YES赢, 0=NO赢, 0.5e18=平局
     │   │
@@ -31,14 +31,14 @@ uma-ctf-adapter/
     │   ├── isFlagged(questionID)      # 是否被标记需手动解析
     │   │
     │   │  --- OO 回调 ---
-    │   ├── priceDisputed(...)         # OO 争议回调，重置问题并重新请求价格
+    │   ├── priceDisputed(...)         # OO 争议回调, 重置问题并重新请求价格
     │   │
     │   │  --- Admin 管理 ---
-    │   ├── flag(questionID)           # 标记问题，暂停自动解析，启动 SAFETY_PERIOD
+    │   ├── flag(questionID)           # 标记问题, 暂停自动解析, 启动 SAFETY_PERIOD
     │   ├── unflag(questionID)         # 取消标记 (SAFETY_PERIOD 内)
     │   ├── resolveManually(questionID, payouts[])
     │   │       # 手动解析 (需先 flag 且过了 SAFETY_PERIOD)
-    │   ├── reset(questionID)          # 重置问题，重新向 OO 请求价格
+    │   ├── reset(questionID)          # 重置问题, 重新向 OO 请求价格
     │   ├── pause(questionID)          # 暂停解析
     │   └── unpause(questionID)
     │

@@ -15,7 +15,7 @@ uma-sports-oracle/
     │   │
     │   │  --- Game 生命周期: Created → Settled/Canceled/EmergencySettled ---
     │   ├── createGame(ancillaryData, ordering, token, reward, bond, liveness)
-    │   │       # 创建比赛，同时向 UMA OO 发起价格请求
+    │   │       # 创建比赛, 同时向 UMA OO 发起价格请求
     │   │       # gameId = keccak256(ancillaryData + creator)
     │   │       # ordering: Home vs Away 的顺序
     │   │
@@ -23,9 +23,9 @@ uma-sports-oracle/
     │   ├── createWinnerMarket(gameId)
     │   │       # 创建胜负盘 (Team A vs Team B)
     │   ├── createSpreadsMarket(gameId, underdog, line)
-    │   │       # 创建让分盘，line 必须是半点 (如 2.5 = 2_500_000)
+    │   │       # 创建让分盘, line 必须是半点 (如 2.5 = 2_500_000)
     │   ├── createTotalsMarket(gameId, line)
-    │   │       # 创建大小盘，line 如 218.5 = 218_500_000
+    │   │       # 创建大小盘, line 如 218.5 = 218_500_000
     │   │
     │   │  --- Market 解析 ---
     │   ├── resolveMarket(marketId)
@@ -33,9 +33,9 @@ uma-sports-oracle/
     │   │       # 调 ctf.reportPayouts() 设置结果
     │   │
     │   │  --- OO 回调 ---
-    │   ├── priceSettled(...)         # OO 结算回调，解码比分并结算 Game
+    │   ├── priceSettled(...)         # OO 结算回调, 解码比分并结算 Game
     │   │       # int256.max = 取消, int256.min = 忽略(重置)
-    │   ├── priceDisputed(...)        # OO 争议回调，重置 Game 并重新请求价格
+    │   ├── priceDisputed(...)        # OO 争议回调, 重置 Game 并重新请求价格
     │   │
     │   │  --- 查询 ---
     │   ├── getGame(gameId)           # 返回完整 GameData
@@ -44,15 +44,15 @@ uma-sports-oracle/
     │   │  --- Admin 管理 (Game) ---
     │   ├── pauseGame(gameId)         # Created → Paused
     │   ├── unpauseGame(gameId)       # Paused → Created
-    │   ├── resetGame(gameId)         # 重置，重新向 OO 请求价格
+    │   ├── resetGame(gameId)         # 重置, 重新向 OO 请求价格
     │   ├── emergencySettleGame(gameId, home, away)
-    │   │       # Paused → EmergencySettled，手动设置比分
+    │   │       # Paused → EmergencySettled, 手动设置比分
     │   │
     │   │  --- Admin 管理 (Market) ---
     │   ├── pauseMarket(marketId)     # Created → Paused
     │   ├── unpauseMarket(marketId)   # Paused → Created
     │   ├── emergencyResolveMarket(marketId, payouts[])
-    │   │       # Paused → EmergencyResolved，手动设置 payout
+    │   │       # Paused → EmergencyResolved, 手动设置 payout
     │   │
     │   │  --- Admin 管理 (OO 参数) ---
     │   ├── setBond(gameId, bond)     # 更新 UMA 押金

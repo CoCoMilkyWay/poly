@@ -14,20 +14,20 @@ ctf-exchange/
     └── exchange/
         ├── BaseExchange.sol               # ERC1155Holder + ReentrancyGuard 基类
         │
-        ├── CTFExchange.sol                # ===== 主合约，继承所有 mixin =====
+        ├── CTFExchange.sol                # ===== 主合约, 继承所有 mixin =====
         │   │
         │   │  --- 交易 (onlyOperator) ---
-        │   ├── fillOrder(order, amount)   # 执行单笔订单，operator 作为对手方垫资
+        │   ├── fillOrder(order, amount)   # 执行单笔订单, operator 作为对手方垫资
         │   ├── fillOrders()               # 批量执行
         │   ├── matchOrders(takerOrder, makerOrders[], ...)
-        │   │       # 撮合一个 taker 对多个 maker，三种 MatchType:
-        │   │       #   COMPLEMENTARY: buy vs sell，直接交换
-        │   │       #   MINT: 两个 buy，调 CTF.splitPosition 铸造 YES+NO
-        │   │       #   MERGE: 两个 sell，调 CTF.mergePositions 合并成 USDC
+        │   │       # 撮合一个 taker 对多个 maker, 三种 MatchType:
+        │   │       #   COMPLEMENTARY: buy vs sell, 直接交换
+        │   │       #   MINT: 两个 buy, 调 CTF.splitPosition 铸造 YES+NO
+        │   │       #   MERGE: 两个 sell, 调 CTF.mergePositions 合并成 USDC
         │   │
         │   │  --- 管理 (onlyAdmin) ---
         │   ├── registerToken(tokenId, complement, conditionId)
-        │   │       # 注册交易对：YES tokenId ↔ NO tokenId，关联 conditionId
+        │   │       # 注册交易对: YES tokenId ↔ NO tokenId, 关联 conditionId
         │   ├── pauseTrading()             # 紧急暂停所有交易
         │   ├── unpauseTrading()
         │   ├── setProxyFactory()          # 更新 Proxy 钱包工厂
@@ -65,7 +65,7 @@ ctf-exchange/
             │   └── isOperator(addr)
             │
             ├── NonceManager.sol           # ===== 批量取消 =====
-            │   ├── incrementNonce()       # nonce++，使所有旧 nonce 订单失效
+            │   ├── incrementNonce()       # nonce++, 使所有旧 nonce 订单失效
             │   └── isValidNonce(user, n)  # 校验 nonce 是否匹配
             │
             ├── Registry.sol               # ===== tokenId 注册 =====
@@ -84,7 +84,7 @@ ctf-exchange/
             ├── Hashing.sol                # EIP712
             │   └── hashOrder(order)       # 生成订单哈希用于签名
             │
-            ├── Signatures.sol             # 签名验证，支持 4 种钱包类型
+            ├── Signatures.sol             # 签名验证, 支持 4 种钱包类型
             │   └── validateOrderSignature(hash, order)
             │
             ├── Pausable.sol               # 暂停状态

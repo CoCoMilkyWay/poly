@@ -124,7 +124,7 @@ def fetch_schema(subgraph_id):
 
 
 def resolve_type(t):
-    """递归解析类型，返回类型字符串"""
+    """递归解析类型, 返回类型字符串"""
     if t is None:
         return "?"
     kind = t.get("kind")
@@ -217,7 +217,7 @@ def convert_schema(data, output_file=None):
                     sf_type = resolve_type(sf["type"])
                     sf_base = sf_type.replace("!", "").replace(
                         "[", "").replace("]", "")
-                    # 只展开一层，不再递归
+                    # 只展开一层, 不再递归
                     if sf_base not in entity_names:
                         lines.append(f"    .{sf_name}: {sf_type}")
 
