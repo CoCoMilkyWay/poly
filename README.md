@@ -1,7 +1,7 @@
 # Polymarket PnL Replayer
 
 ```
-项目目标:  可以replay polymarket 历史上任何用户的历史上每一笔交易记录
+项目目标:  可以replay polymarket 历史上任何用户的历史Token净值/PnL
 polygon链上polymarket协议合约节点本身的实现: /home/chuyin/work/poly/doc/smart-contracts
 
 老架构:基于the Graph协议的indexer实现
@@ -71,8 +71,8 @@ polygon链上polymarket协议合约节点本身的实现: /home/chuyin/work/poly
 ## Flow
 
 ```
-Round 1: eth_getLogs → raw_log (暂存JSON, ~15min)
-Round 2: raw_log → 最终表 (纯SQL转换, ~2min)
+Stage 1: eth_getLogs → raw_log (暂存JSON, ~15min)
+Stage 2: raw_log → 最终表 (纯SQL转换, ~2min)
 ```
 
 ## 合约
@@ -364,120 +364,138 @@ NegRisk转换: M 个 NO tokens burn → (M-1) Wrapped Collateral (利用互斥�
 | collectionId (parentCollectionId=0x0, indexSet=2) | keccak256(conditionId, 2) → NO                             |
 | positionId                                        | keccak256(collateralToken, collectionId) → ERC1155 tokenId |
 
-## Round 1: raw_log 暂存表
-
-| column       | 类型       | 来源                              |
-| ------------ | ---------- | --------------------------------- |
-| id           | INTEGER PK | block_number \* 10000 + log_index |
-| block_number | INTEGER    | log.blockNumber                   |
-| log_index    | INTEGER    | log.logIndex                      |
-| event_type   | TEXT       | topic0 解码                       |
-| contract     | TEXT       | log.address                       |
-| data         | TEXT       | JSON: 所有字段原始解析            |
-
-## Round 2: SQL 转换
-
-### token_map
-
-| column       | 类型    | 来源            | 处理                                            |
-| ------------ | ------- | --------------- | ----------------------------------------------- |
-| token_id     | TEXT PK | raw_log.data    | TokenRegistered: token0/token1                  |
-| condition_id | TEXT    | raw_log.data    | $.conditionId                                   |
-| exchange     | TEXT    | TokenRegistered | CTFExchange 或 NegRiskCTFExchange               |
-| is_yes       | INTEGER | 计算            | token0 < token1 时: token0=YES(1), token1=NO(0) |
-
-### condition
-
-| column             | 类型    | 来源事件             | 处理                                                |
-| ------------------ | ------- | -------------------- | --------------------------------------------------- |
-| condition_id       | TEXT PK | ConditionPreparation | $.conditionId                                       |
-| oracle             | TEXT    | ConditionPreparation | $.oracle                                            |
-| question_id        | TEXT    | ConditionPreparation | $.questionId                                        |
-| outcome_slot_count | INTEGER | ConditionPreparation | $.outcomeSlotCount (固定2)                          |
-| payout_numerators  | TEXT    | ConditionResolution  | $.payoutNumerators, [1,0]=YES赢 [0,1]=NO赢 [1,1]=平 |
-| resolution_block   | INTEGER | ConditionResolution  | block_number, NULL=未结算                           |
+## Stage 1: eth_getLogs → 结构化表
 
 ### order_filled
 
-| column       | 类型       | 来源        | 处理                                                   |
-| ------------ | ---------- | ----------- | ------------------------------------------------------ |
-| id           | INTEGER PK | raw_log     | block\*10000+log_idx                                   |
-| block_number | INTEGER    | raw_log     | 直接取                                                 |
-| log_index    | INTEGER    | raw_log     | 直接取                                                 |
-| exchange     | TEXT       | OrderFilled | CTFExchange 或 NegRiskCTFExchange                      |
-| maker        | TEXT       | OrderFilled | $.maker                                                |
-| taker        | TEXT       | OrderFilled | $.taker                                                |
-| market       | TEXT       | 计算        | makerAssetId=0 ? takerAssetId : makerAssetId           |
-| side         | TEXT       | 计算        | makerAssetId=0 ? 'Buy' : 'Sell'                        |
-| size         | INTEGER    | 计算        | makerAssetId=0 ? makerAmountFilled : takerAmountFilled |
-| price_num    | INTEGER    | OrderFilled | makerAmountFilled                                      |
-| price_den    | INTEGER    | OrderFilled | takerAmountFilled                                      |
-| fee          | INTEGER    | OrderFilled | $.fee (collateral 6 decimals)                          |
+| column       | 类型       | 来源        | 处理                                          |
+| ------------ | ---------- | ----------- | --------------------------------------------- |
+| id           | INTEGER PK | log         | block_number \* 10000 + log_index             |
+| block_number | INTEGER    | log         |                                               |
+| log_index    | INTEGER    | log         |                                               |
+| exchange     | TEXT       | log.address | "CTF" \| "NegRisk"                            |
+| maker        | BLOB(20)   | OrderFilled | $.maker                                       |
+| taker        | BLOB(20)   | OrderFilled | $.taker                                       |
+| token_id     | BLOB(32)   | 计算        | makerAssetId==0 ? takerAssetId : makerAssetId |
+| side         | INTEGER    | 计算        | makerAssetId==0 ? 1(Buy) : 2(Sell)            |
+| usdc_amount  | INTEGER    | 计算        | collateral数量 (6 decimals)                   |
+| token_amount | INTEGER    | 计算        | token数量 (6 decimals)                        |
+| fee          | INTEGER    | OrderFilled | $.fee (6 decimals)                            |
 
-**side/market 判断**: makerAssetId=0 表示 maker 出 collateral 买 token → Buy; 否则 maker 出 token 换 collateral → Sell
+**side判断**: makerAssetId=0 → maker出collateral买token → Buy(1); 否则Sell(2)
 
 ### split
 
-| column       | 类型       | 来源          | 处理                             |
-| ------------ | ---------- | ------------- | -------------------------------- |
-| id           | INTEGER PK | raw_log       | block\*10000+log_idx             |
-| block_number | INTEGER    | raw_log       | 直接取                           |
-| log_index    | INTEGER    | raw_log       | 直接取                           |
-| stakeholder  | TEXT       | PositionSplit | $.stakeholder                    |
-| condition_id | TEXT       | PositionSplit | $.conditionId                    |
-| amount       | INTEGER    | PositionSplit | $.amount (collateral 6 decimals) |
+| column       | 类型       | 来源          | 处理                              |
+| ------------ | ---------- | ------------- | --------------------------------- |
+| id           | INTEGER PK | log           | block_number \* 10000 + log_index |
+| block_number | INTEGER    | log           |                                   |
+| log_index    | INTEGER    | log           |                                   |
+| stakeholder  | BLOB(20)   | PositionSplit | $.stakeholder                     |
+| condition_id | BLOB(32)   | PositionSplit | $.conditionId                     |
+| amount       | INTEGER    | PositionSplit | USDC消耗 = YES获得 = NO获得       |
 
 ### merge
 
-| column       | 类型       | 来源           | 处理                 |
-| ------------ | ---------- | -------------- | -------------------- |
-| id           | INTEGER PK | raw_log        | block\*10000+log_idx |
-| block_number | INTEGER    | raw_log        | 直接取               |
-| log_index    | INTEGER    | raw_log        | 直接取               |
-| stakeholder  | TEXT       | PositionsMerge | $.stakeholder        |
-| condition_id | TEXT       | PositionsMerge | $.conditionId        |
-| amount       | INTEGER    | PositionsMerge | $.amount             |
+| column       | 类型       | 来源           | 处理                              |
+| ------------ | ---------- | -------------- | --------------------------------- |
+| id           | INTEGER PK | log            | block_number \* 10000 + log_index |
+| block_number | INTEGER    | log            |                                   |
+| log_index    | INTEGER    | log            |                                   |
+| stakeholder  | BLOB(20)   | PositionsMerge | $.stakeholder                     |
+| condition_id | BLOB(32)   | PositionsMerge | $.conditionId                     |
+| amount       | INTEGER    | PositionsMerge | USDC获得 = YES消耗 = NO消耗       |
 
 ### redemption
 
-| column       | 类型       | 来源             | 处理                     |
-| ------------ | ---------- | ---------------- | ------------------------ |
-| id           | INTEGER PK | raw_log          | block\*10000+log_idx     |
-| block_number | INTEGER    | raw_log          | 直接取                   |
-| log_index    | INTEGER    | raw_log          | 直接取                   |
-| redeemer     | TEXT       | PayoutRedemption | $.redeemer               |
-| condition_id | TEXT       | PayoutRedemption | $.conditionId            |
-| index_sets   | TEXT       | PayoutRedemption | $.indexSets (JSON array) |
-| payout       | INTEGER    | PayoutRedemption | $.payout (collateral)    |
+| column       | 类型       | 来源             | 处理                              |
+| ------------ | ---------- | ---------------- | --------------------------------- |
+| id           | INTEGER PK | log              | block_number \* 10000 + log_index |
+| block_number | INTEGER    | log              |                                   |
+| log_index    | INTEGER    | log              |                                   |
+| redeemer     | BLOB(20)   | PayoutRedemption | $.redeemer                        |
+| condition_id | BLOB(32)   | PayoutRedemption | $.conditionId                     |
+| index_sets   | INTEGER    | PayoutRedemption | bitmap: 1=YES, 2=NO, 3=both       |
+| payout       | INTEGER    | PayoutRedemption | USDC获得 (6 decimals)             |
+
+### convert
+
+| column       | 类型       | 来源               | 处理                              |
+| ------------ | ---------- | ------------------ | --------------------------------- |
+| id           | INTEGER PK | log                | block_number \* 10000 + log_index |
+| block_number | INTEGER    | log                |                                   |
+| log_index    | INTEGER    | log                |                                   |
+| stakeholder  | BLOB(20)   | PositionsConverted | $.stakeholder                     |
+| market_id    | BLOB(32)   | PositionsConverted | $.marketId                        |
+| index_set    | INTEGER    | PositionsConverted | bitmap: 哪些NO被转换              |
+| amount       | INTEGER    | PositionsConverted | 每个position的数量                |
+
+### transfer
+
+**过滤**: `from != 0x0 AND to != 0x0` (跳过mint/burn，已被split/merge/redemption/convert覆盖)
+
+| column       | 类型       | 来源     | 处理                              |
+| ------------ | ---------- | -------- | --------------------------------- |
+| id           | INTEGER PK | log      | block_number \* 10000 + log_index |
+| block_number | INTEGER    | log      |                                   |
+| log_index    | INTEGER    | log      |                                   |
+| from_addr    | BLOB(20)   | Transfer | $.from (≠0x0)                     |
+| to_addr      | BLOB(20)   | Transfer | $.to (≠0x0)                       |
+| token_id     | BLOB(32)   | Transfer | $.id                              |
+| amount       | INTEGER    | Transfer | $.value                           |
+
+### token_map
+
+| column       | 类型        | 来源            | 处理                                            |
+| ------------ | ----------- | --------------- | ----------------------------------------------- |
+| token_id     | BLOB(32) PK | TokenRegistered | token0 或 token1                                |
+| condition_id | BLOB(32)    | TokenRegistered | $.conditionId                                   |
+| exchange     | TEXT        | log.address     | "CTF" \| "NegRisk"                              |
+| is_yes       | INTEGER     | 计算            | token0 < token1 时: token0=YES(1), token1=NO(0) |
+
+### condition
+
+| column            | 类型        | 来源                 | 处理                                                 |
+| ----------------- | ----------- | -------------------- | ---------------------------------------------------- |
+| condition_id      | BLOB(32) PK | ConditionPreparation | $.conditionId                                        |
+| oracle            | BLOB(20)    | ConditionPreparation | $.oracle                                             |
+| question_id       | BLOB(32)    | ConditionPreparation | $.questionId                                         |
+| payout_numerators | TEXT        | ConditionResolution  | NULL=未结算, "[1,0]"=YES赢, "[0,1]"=NO赢, "[1,1]"=平 |
+| resolution_block  | INTEGER     | ConditionResolution  | NULL=未结算                                          |
 
 ### sync_state
 
-| key         | 含义                  |
-| ----------- | --------------------- |
-| last_block  | Round1 已同步到的区块 |
-| round1_done | Round1 完成标记       |
-| round2_done | Round2 完成标记       |
+| key        | 含义           |
+| ---------- | -------------- |
+| last_block | 已同步到的区块 |
 
 ## 索引
 
-| 表           | 索引        | 用途           |
-| ------------ | ----------- | -------------- |
-| order_filled | maker       | 按用户查交易   |
-| order_filled | taker       | 按用户查交易   |
-| order_filled | market      | 按市场查交易   |
-| split        | stakeholder | 按用户查 split |
-| merge        | stakeholder | 按用户查 merge |
-| redemption   | redeemer    | 按用户查赎回   |
+| 表           | 索引        | 用途         |
+| ------------ | ----------- | ------------ |
+| order_filled | maker       | 按用户查交易 |
+| order_filled | taker       | 按用户查交易 |
+| order_filled | token_id    | 按市场查交易 |
+| split        | stakeholder | 按用户查     |
+| merge        | stakeholder | 按用户查     |
+| redemption   | redeemer    | 按用户查     |
+| convert      | stakeholder | 按用户查     |
+| transfer     | from_addr   | 按用户查     |
+| transfer     | to_addr     | 按用户查     |
 
 ## PnL 计算
 
 ```
-PnL = totalProceeds + totalRedemption - totalCostBasis - totalFees
+PnL = Σ(Sell) + Σ(Merge) + Σ(Redemption) + Σ(Convert收益)
+    - Σ(Buy) - Σ(Split) - Σ(Fee)
 ```
 
-| 来源                | 加减         | 说明          |
-| ------------------- | ------------ | ------------- |
-| order_filled (Buy)  | - costBasis  | 买入花费 USDC |
-| order_filled (Sell) | + proceeds   | 卖出获得 USDC |
-| order_filled.fee    | - fees       | 手续费        |
-| redemption.payout   | + redemption | 结算赎回      |
+| 来源              | 加减 | 说明                            |
+| ----------------- | ---- | ------------------------------- |
+| order_filled Buy  | -    | 买入花费 USDC                   |
+| order_filled Sell | +    | 卖出获得 USDC                   |
+| order_filled.fee  | -    | 手续费                          |
+| split.amount      | -    | 铸造消耗 USDC                   |
+| merge.amount      | +    | 销毁获得 USDC                   |
+| redemption.payout | +    | 结算赎回                        |
+| convert           | +    | (popcount(index_set)-1)\*amount |
