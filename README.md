@@ -370,58 +370,58 @@ NegRisk转换: M 个 NO tokens burn → (M-1) Wrapped Collateral (利用互斥�
 
 | column       | 类型       | 来源        | 处理                                          |
 | ------------ | ---------- | ----------- | --------------------------------------------- |
-| block_number | INTEGER PK | log         |                                               |
+| block_number | BIGINT PK  | log         |                                               |
 | log_index    | INTEGER PK | log         |                                               |
 | exchange     | TEXT       | log.address | "CTF" \| "NegRisk"                            |
 | maker        | BLOB(20)   | OrderFilled | $.maker                                       |
 | taker        | BLOB(20)   | OrderFilled | $.taker                                       |
 | token_id     | BLOB(32)   | 计算        | makerAssetId==0 ? takerAssetId : makerAssetId |
 | side         | INTEGER    | 计算        | makerAssetId==0 ? 1(Buy) : 2(Sell)            |
-| usdc_amount  | INTEGER    | 计算        | collateral数量 (6 decimals)                   |
-| token_amount | INTEGER    | 计算        | token数量 (6 decimals)                        |
-| fee          | INTEGER    | OrderFilled | $.fee (6 decimals)                            |
+| usdc_amount  | BIGINT     | 计算        | collateral数量 (6 decimals)                   |
+| token_amount | BIGINT     | 计算        | token数量 (6 decimals)                        |
+| fee          | BIGINT     | OrderFilled | $.fee (6 decimals)                            |
 
 ### split
 
 | column       | 类型       | 来源          | 处理                        |
 | ------------ | ---------- | ------------- | --------------------------- |
-| block_number | INTEGER PK | log           |                             |
+| block_number | BIGINT PK  | log           |                             |
 | log_index    | INTEGER PK | log           |                             |
 | stakeholder  | BLOB(20)   | PositionSplit | $.stakeholder               |
 | condition_id | BLOB(32)   | PositionSplit | $.conditionId               |
-| amount       | INTEGER    | PositionSplit | USDC消耗 = YES获得 = NO获得 |
+| amount       | BIGINT     | PositionSplit | USDC消耗 = YES获得 = NO获得 |
 
 ### merge
 
 | column       | 类型       | 来源           | 处理                        |
 | ------------ | ---------- | -------------- | --------------------------- |
-| block_number | INTEGER PK | log            |                             |
+| block_number | BIGINT PK  | log            |                             |
 | log_index    | INTEGER PK | log            |                             |
 | stakeholder  | BLOB(20)   | PositionsMerge | $.stakeholder               |
 | condition_id | BLOB(32)   | PositionsMerge | $.conditionId               |
-| amount       | INTEGER    | PositionsMerge | USDC获得 = YES消耗 = NO消耗 |
+| amount       | BIGINT     | PositionsMerge | USDC获得 = YES消耗 = NO消耗 |
 
 ### redemption
 
 | column       | 类型       | 来源             | 处理                        |
 | ------------ | ---------- | ---------------- | --------------------------- |
-| block_number | INTEGER PK | log              |                             |
+| block_number | BIGINT PK  | log              |                             |
 | log_index    | INTEGER PK | log              |                             |
 | redeemer     | BLOB(20)   | PayoutRedemption | $.redeemer                  |
 | condition_id | BLOB(32)   | PayoutRedemption | $.conditionId               |
 | index_sets   | INTEGER    | PayoutRedemption | bitmap: 1=YES, 2=NO, 3=both |
-| payout       | INTEGER    | PayoutRedemption | USDC获得 (6 decimals)       |
+| payout       | BIGINT     | PayoutRedemption | USDC获得 (6 decimals)       |
 
 ### convert
 
 | column       | 类型       | 来源               | 处理                 |
 | ------------ | ---------- | ------------------ | -------------------- |
-| block_number | INTEGER PK | log                |                      |
+| block_number | BIGINT PK  | log                |                      |
 | log_index    | INTEGER PK | log                |                      |
 | stakeholder  | BLOB(20)   | PositionsConverted | $.stakeholder        |
 | market_id    | BLOB(32)   | PositionsConverted | $.marketId           |
-| index_set    | INTEGER    | PositionsConverted | bitmap: 哪些NO被转换 |
-| amount       | INTEGER    | PositionsConverted | 每个position的数量   |
+| index_set    | BIGINT     | PositionsConverted | bitmap: 哪些NO被转换 |
+| amount       | BIGINT     | PositionsConverted | 每个position的数量   |
 
 ### transfer
 
@@ -430,14 +430,14 @@ NegRisk转换: M 个 NO tokens burn → (M-1) Wrapped Collateral (利用互斥�
 - `from != 0x0 AND to != 0x0` (跳过mint/burn)
 - `operator NOT IN (CTFExchange, NegRiskCTFExchange, NegRiskAdapter)` (跳过合约操作，已被order_filled/split/merge/convert覆盖)
 
-| column       | 类型       | 来源     | 处理          |
-| ------------ | ---------- | -------- | ------------- |
-| block_number | INTEGER PK | log      |               |
-| log_index    | INTEGER PK | log      |               |
-| from_addr    | BLOB(20)   | Transfer | $.from (≠0x0) |
-| to_addr      | BLOB(20)   | Transfer | $.to (≠0x0)   |
-| token_id     | BLOB(32)   | Transfer | $.id          |
-| amount       | INTEGER    | Transfer | $.value       |
+| column       | 类型      | 来源     | 处理                                       |
+| ------------ | --------- | -------- | ------------------------------------------ |
+| block_number | BIGINT PK | log      |                                            |
+| log_index    | BIGINT PK | 计算     | log_index * 1000 + sub_index (Batch拆分用) |
+| from_addr    | BLOB(20)  | Transfer | $.from (≠0x0)                              |
+| to_addr      | BLOB(20)  | Transfer | $.to (≠0x0)                                |
+| token_id     | BLOB(32)  | Transfer | $.id                                       |
+| amount       | BIGINT    | Transfer | $.value                                    |
 
 ### token_map
 
@@ -456,7 +456,7 @@ NegRisk转换: M 个 NO tokens burn → (M-1) Wrapped Collateral (利用互斥�
 | oracle            | BLOB(20)    | ConditionPreparation | $.oracle                                             |
 | question_id       | BLOB(32)    | ConditionPreparation | $.questionId                                         |
 | payout_numerators | TEXT        | ConditionResolution  | NULL=未结算, "[1,0]"=YES赢, "[0,1]"=NO赢, "[1,1]"=平 |
-| resolution_block  | INTEGER     | ConditionResolution  | NULL=未结算                                          |
+| resolution_block  | BIGINT      | ConditionResolution  | NULL=未结算                                          |
 
 ### neg_risk_market
 

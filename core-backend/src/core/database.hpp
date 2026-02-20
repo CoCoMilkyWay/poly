@@ -214,7 +214,7 @@ public:
     execute(R"(
       CREATE TABLE IF NOT EXISTS transfer (
         block_number BIGINT NOT NULL,
-        log_index INTEGER NOT NULL,
+        log_index BIGINT NOT NULL,
         from_addr BLOB NOT NULL,
         to_addr BLOB NOT NULL,
         token_id BLOB NOT NULL,
@@ -275,7 +275,7 @@ public:
   int64_t get_last_block() {
     auto rows = query_json("SELECT value FROM sync_state WHERE key='last_block'");
     if (rows.empty() || rows[0]["value"].is_null())
-      return 0;
+      return -1;
     return std::stoll(rows[0]["value"].get<std::string>());
   }
 

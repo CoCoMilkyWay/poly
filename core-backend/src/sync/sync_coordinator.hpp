@@ -58,17 +58,18 @@ private:
     }
 
     int64_t last_block = db_.get_last_block();
+    int64_t from_block = (last_block < 0) ? config_.initial_block : last_block + 1;
 
     std::cout << "[Sync] head=" << head_block_ << ", last=" << last_block << std::endl;
 
-    if (last_block >= head_block_) {
+    if (from_block > head_block_) {
       std::cout << "[Sync] 已同步到最新, " << interval_seconds_ << "s 后检查" << std::endl;
       is_syncing_ = false;
       schedule_sync(interval_seconds_);
       return;
     }
 
-    sync_batch(last_block + 1, head_block_);
+    sync_batch(from_block, head_block_);
   }
 
   void sync_batch(int64_t from_block, int64_t head_block) {

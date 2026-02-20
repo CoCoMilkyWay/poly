@@ -5,5 +5,6 @@
   "api_port": 8001,
   "frontend_port": 8000,
   "sync_batch_size": 1000,
-  "sync_interval_seconds": 30
+  "sync_interval_seconds": 30,
+  "initial_block": 50000000
 }

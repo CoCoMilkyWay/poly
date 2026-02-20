@@ -64,7 +64,7 @@ private:
   }
 
   static int64_t hex_to_int64(const std::string &hex) {
-    return std::stoll(hex, nullptr, 16);
+    return static_cast<int64_t>(std::stoull(hex, nullptr, 16));
   }
 
   static std::string sql_blob(const std::string &hex) {
@@ -90,6 +90,15 @@ private:
   static int64_t extract_uint256_from_data(const std::string &data, size_t index) {
     std::string hex = extract_bytes32_from_data(data, index);
     return hex_to_int64(hex);
+  }
+
+  static bool is_zero_uint256(const std::string &data, size_t index) {
+    std::string hex = extract_bytes32_from_data(data, index);
+    for (size_t i = 2; i < hex.size(); ++i) {
+      if (hex[i] != '0')
+        return false;
+    }
+    return true;
   }
 
   static void parse_log(const json &log, ParsedEvents &events) {
@@ -178,7 +187,7 @@ private:
     }
 
     std::ostringstream ss;
-    ss << block_number << ", " << log_index << ", "
+    ss << block_number << ", " << (log_index * 1000) << ", "
        << sql_blob(from) << ", " << sql_blob(to) << ", "
        << sql_blob(token_id) << ", " << amount;
     events.transfer.push_back(ss.str());
@@ -308,8 +317,7 @@ private:
     std::string maker = extract_address_from_topic(topics[2].get<std::string>());
     std::string taker = extract_address_from_topic(topics[3].get<std::string>());
 
-    int64_t maker_asset_id = extract_uint256_from_data(data, 0);
-    int64_t taker_asset_id = extract_uint256_from_data(data, 1);
+    bool maker_is_collateral = is_zero_uint256(data, 0);
     int64_t maker_amount = extract_uint256_from_data(data, 2);
     int64_t taker_amount = extract_uint256_from_data(data, 3);
     int64_t fee = extract_uint256_from_data(data, 4);
@@ -318,7 +326,7 @@ private:
     int side;
     int64_t usdc_amount, token_amount;
 
-    if (maker_asset_id == 0) {
+    if (maker_is_collateral) {
       token_id = extract_bytes32_from_data(data, 1);
       side = 1;
       usdc_amount = maker_amount;

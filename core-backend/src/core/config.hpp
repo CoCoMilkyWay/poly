@@ -15,6 +15,7 @@ struct Config {
   int frontend_port;
   int sync_batch_size;
   int sync_interval_seconds;
+  int64_t initial_block;
 
   static Config load(const std::string &path) {
     std::ifstream f(path);
@@ -36,6 +37,7 @@ struct Config {
     config.frontend_port = require("frontend_port").get<int>();
     config.sync_batch_size = require("sync_batch_size").get<int>();
     config.sync_interval_seconds = require("sync_interval_seconds").get<int>();
+    config.initial_block = require("initial_block").get<int64_t>();
 
     return config;
   }
