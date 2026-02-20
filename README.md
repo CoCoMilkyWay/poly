@@ -17,7 +17,7 @@ polygon链上polymarket协议合约节点本身的实现: /home/chuyin/work/poly
 新架构: 如下
 ```
 
-**Split/Merge/Redemption 使用场景**:
+**Split/Merge/Convert/Redemption 使用场景**:
 
 1. **Split(铸造)— 市场进行中**
    - 操作: USDC → YES + NO (固定 $0.50/$0.50)
@@ -31,7 +31,12 @@ polygon链上polymarket协议合约节点本身的实现: /home/chuyin/work/poly
    - 套利: 当 YES + NO 市场价之和 < $1 时，买双边后销毁获利
    - 方向性平仓: 当看多方流动性差时，买看空方后销毁双边，平仓看多方
 
-3. **Redemption(赎回)— 市场结算后**
+3. **Convert(转换)— NegRisk市场进行中**
+   - 操作: M 个选项的 NO tokens → (M-1) USDC（仅限 NegRisk 多选项互斥市场）
+   - 原理: N 个互斥选项的 NO 组合 = "所有选项都不赢" = 不可能，所以 M 个 NO 的价值是 M-1
+   - 套利: 若 M 个 NO tokens 总成本 < (M-1) USDC，买入后 convert 获利
+
+4. **Redemption(赎回)— 市场结算后**
    - 操作: tokens → USDC (只能在市场结算后操作)
    - 用途: 赎回 winning tokens 获得收益，losing tokens 归零 (价格由 payoutNumerators/payoutDenominator 决定)
 
@@ -139,35 +144,45 @@ YES + NO → USDC (销毁)
 | block_number       | uint64    | meta    | log.blockNumber                                        |
 | log_index          | uint32    | meta    | log.logIndex                                           |
 
-**TransferSingle**
+**TransferSingle / TransferBatch**
 
-覆盖**所有**持仓变化: Split铸造、Merge销毁、交易所撮合、赎回、用户间直接转账
+TransferSingle + TransferBatch 覆盖**所有**持仓变化，不会重合：
 
-| 字段         | 类型    | indexed | 说明                                                                                                          |
-| ------------ | ------- | ------- | ------------------------------------------------------------------------------------------------------------- |
-| operator     | address | yes     | 执行操作的**合约**，非用户。CTFExchange=0x4bFb41.../NegRiskAdapter=0xd91E80.../NegRiskCTFExchange=0xC5d563... |
-| from         | address | yes     | 发送方。**0x0=mint**(Split铸造)                                                                               |
-| to           | address | yes     | 接收方。**0x0=burn**(Merge销毁/Redemption赎回)                                                                |
-| id           | uint256 | no      | positionId (ERC1155 tokenId)，256位整数，由 keccak256(USDC地址, collectionId) 计算                            |
-| value        | uint256 | no      | token数量，6 decimals (1 token = 1,000,000 units)                                                             |
-| tx_hash      | bytes32 | meta    | log.transactionHash                                                                                           |
-| block_number | uint64  | meta    | log.blockNumber                                                                                               |
-| log_index    | uint32  | meta    | log.logIndex                                                                                                  |
+| 场景         | 事件   | 原因                          |
+| ------------ | ------ | ----------------------------- |
+| Split铸造    | Batch  | 同时mint YES+NO 两个token     |
+| Merge销毁    | Batch  | 同时burn YES+NO 两个token     |
+| 交易撮合     | Single | 只转移一个token (买YES或买NO) |
+| 赎回(双边)   | Batch  | 同时burn YES+NO               |
+| 赎回(单边)   | Single | 只burn一个position            |
+| NegRisk转换  | Batch  | 多个NO tokens burn → USDC     |
+| 用户直接转账 | 取决于 | 转几种token就用哪个           |
 
-**TransferBatch**
+**TransferSingle 字段**
 
-同 TransferSingle，批量版本
+| 字段         | 类型    | indexed | 说明                                                                                                                                                        |
+| ------------ | ------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| operator     | address | yes     | 执行操作的地址。**合约**: CTFExchange(交易撮合)/NegRiskAdapter(Split/Merge/Convert)/NegRiskCTFExchange(NegRisk交易)；**用户**: 直接调用safeTransferFrom转账 |
+| from         | address | yes     | 发送方。**0x0=mint**                                                                                                                                        |
+| to           | address | yes     | 接收方。**0x0=burn**                                                                                                                                        |
+| id           | uint256 | no      | positionId (ERC1155 tokenId)，256位整数，由 keccak256(USDC地址, collectionId) 计算                                                                          |
+| value        | uint256 | no      | token数量，6 decimals (1 token = 1,000,000 units)                                                                                                           |
+| tx_hash      | bytes32 | meta    | log.transactionHash                                                                                                                                         |
+| block_number | uint64  | meta    | log.blockNumber                                                                                                                                             |
+| log_index    | uint32  | meta    | log.logIndex                                                                                                                                                |
 
-| 字段         | 类型      | indexed | 说明                       |
-| ------------ | --------- | ------- | -------------------------- |
-| operator     | address   | yes     | 执行操作的**合约**，非用户 |
-| from         | address   | yes     | 发送方。**0x0=mint**       |
-| to           | address   | yes     | 接收方。**0x0=burn**       |
-| ids          | uint256[] | no      | positionId 数组            |
-| values       | uint256[] | no      | 数量数组，6 decimals       |
-| tx_hash      | bytes32   | meta    | log.transactionHash        |
-| block_number | uint64    | meta    | log.blockNumber            |
-| log_index    | uint32    | meta    | log.logIndex               |
+**TransferBatch 字段**
+
+| 字段         | 类型      | indexed | 说明                 |
+| ------------ | --------- | ------- | -------------------- |
+| operator     | address   | yes     | 同TransferSingle     |
+| from         | address   | yes     | 发送方。**0x0=mint** |
+| to           | address   | yes     | 接收方。**0x0=burn** |
+| ids          | uint256[] | no      | positionId 数组      |
+| values       | uint256[] | no      | 数量数组，6 decimals |
+| tx_hash      | bytes32   | meta    | log.transactionHash  |
+| block_number | uint64    | meta    | log.blockNumber      |
+| log_index    | uint32    | meta    | log.logIndex         |
 
 **ConditionResolution**
 
@@ -296,7 +311,7 @@ YES + NO → USDC (销毁)
 
 **PositionsConverted**
 
-NegRisk转换: 多个NO tokens → 单个YES token (当你确信某个选项会赢时)
+NegRisk转换: M 个 NO tokens burn → (M-1) USDC (利用互斥选项的逻辑冗余套利)
 
 | 字段         | 类型    | indexed | 说明                                                                  |
 | ------------ | ------- | ------- | --------------------------------------------------------------------- |
