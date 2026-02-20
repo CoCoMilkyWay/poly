@@ -1,32 +1,9 @@
 {
-  "api_key": "1d7a83f3e6778cd93dfbae707bb192de",
   "db_path": "data/polymarket.duckdb",
-  "sync_interval_seconds": 60,
-  
-  "sources": {
-    "Polymarket": {
-      "subgraph_id": "81Dm16JjuFSrqz813HysXoUPvzTwE7fsfPk2RTf66nyC",
-      "enabled": true,
-      "entities": {
-        "Condition": "condition",
-        "EnrichedOrderFilled": "enriched_order_filled"
-      }
-    },
-    "Activity Polygon": {
-      "subgraph_id": "Bx1W4S7kDVxs9gC3s2G6DS8kdNBJNVhMviCtin2DiBp",
-      "enabled": true,
-      "entities": {
-        "Split": "split",
-        "Merge": "merge",
-        "Redemption": "redemption"
-      }
-    },
-    "Profit and Loss": {
-      "subgraph_id": "6c58N5U4MtQE2Y8njfVrrAfRykzfqajMGeTMEvMmskVz",
-      "enabled": true,
-      "entities": {
-        "Condition": "pnl_condition"
-      }
-    }
-  }
+  "rpc_url": "http://127.0.0.1:8545",
+  "rpc_api_key": "",
+  "api_port": 8001,
+  "frontend_port": 8000,
+  "sync_batch_size": 1000,
+  "sync_interval_seconds": 30
 }
