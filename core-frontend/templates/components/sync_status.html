@@ -62,23 +62,23 @@
     }
   }
   .sync-stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    display: flex;
     gap: 12px;
-    margin-bottom: 15px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
   }
   .sync-stat {
     background: #252525;
     border-radius: 6px;
-    padding: 10px 12px;
+    padding: 8px 12px;
+    min-width: 100px;
   }
   .sync-stat-label {
-    font-size: 0.75em;
-    color: #888;
-    margin-bottom: 4px;
+    font-size: 0.7em;
+    color: #666;
   }
   .sync-stat-value {
-    font-size: 1.2em;
+    font-size: 1em;
     font-weight: 500;
     font-family: monospace;
     color: #fff;
@@ -96,71 +96,24 @@
     margin-bottom: 15px;
   }
   .progress-bar {
-    height: 8px;
+    height: 6px;
     background: #252525;
-    border-radius: 4px;
+    border-radius: 3px;
     overflow: hidden;
   }
   .progress-fill {
     height: 100%;
     background: linear-gradient(90deg, #6366f1, #8b5cf6);
-    border-radius: 4px;
+    border-radius: 3px;
     transition: width 0.5s ease;
   }
   .progress-info {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    margin-top: 6px;
-    font-size: 0.8em;
-  }
-  .progress-pct {
-    font-family: monospace;
-    color: #aaa;
-  }
-  .progress-blocks {
-    color: #666;
-  }
-  .auto-refresh-tag {
+    margin-top: 4px;
     font-size: 0.75em;
     color: #666;
-  }
-  .tables-section {
-    border-top: 1px solid #333;
-    padding-top: 12px;
-  }
-  .tables-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-  }
-  .tables-title {
-    font-size: 0.9em;
-    color: #aaa;
-  }
-  .table-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 8px;
-  }
-  .table-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: #252525;
-    border-radius: 4px;
-    padding: 8px 10px;
-  }
-  .table-name {
     font-family: monospace;
-    font-size: 0.85em;
-    color: #e0e0e0;
-  }
-  .table-count {
-    font-family: monospace;
-    font-size: 0.85em;
-    color: #6366f1;
   }
   .btn {
     padding: 5px 10px;
@@ -170,7 +123,6 @@
     border: none;
     border-radius: 4px;
     cursor: pointer;
-    transition: background 0.2s;
   }
   .btn:hover {
     background: #444;
@@ -178,6 +130,180 @@
   .btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+  }
+
+  .contracts-section {
+    border-top: 1px solid #333;
+    padding-top: 12px;
+  }
+  .contract-item {
+    background: #252525;
+    border-radius: 6px;
+    margin-bottom: 6px;
+    overflow: hidden;
+  }
+  .contract-item:last-child {
+    margin-bottom: 0;
+  }
+  .contract-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .contract-header:hover {
+    background: #2a2a2a;
+  }
+  .contract-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .contract-name {
+    font-weight: 600;
+    color: #fff;
+    font-size: 0.9em;
+  }
+  .contract-addr {
+    font-family: monospace;
+    font-size: 0.65em;
+    color: #555;
+  }
+  .contract-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.75em;
+  }
+  .contract-stat {
+    text-align: right;
+  }
+  .contract-stat .label {
+    font-size: 0.8em;
+    color: #555;
+  }
+  .contract-stat .value {
+    font-family: monospace;
+    color: #888;
+  }
+  .contract-progress {
+    font-weight: 500;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: monospace;
+    font-size: 0.85em;
+  }
+  .contract-progress.synced {
+    background: #166534;
+    color: #4ade80;
+  }
+  .contract-progress.behind {
+    background: #854d0e;
+    color: #fde047;
+  }
+  .contract-progress.error {
+    background: #991b1b;
+    color: #fca5a5;
+  }
+  .expand-icon {
+    color: #555;
+    font-size: 0.7em;
+    transition: transform 0.2s;
+  }
+  .contract-item.expanded .expand-icon {
+    transform: rotate(180deg);
+  }
+  .contract-body {
+    display: none;
+    padding: 8px 12px;
+    border-top: 1px solid #333;
+  }
+  .contract-item.expanded .contract-body {
+    display: block;
+  }
+
+  .event-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 6px 0;
+    border-bottom: 1px solid #2a2a2a;
+    cursor: default;
+  }
+  .event-item:last-child {
+    border-bottom: none;
+  }
+  .event-item:hover {
+    background: #1f1f1f;
+    margin: 0 -12px;
+    padding: 6px 12px;
+  }
+  .event-name {
+    color: #f59e0b;
+    font-weight: 500;
+    font-size: 0.8em;
+    min-width: 140px;
+    flex-shrink: 0;
+  }
+  .event-topic {
+    font-family: monospace;
+    font-size: 0.6em;
+    color: #444;
+    flex: 1;
+    word-break: break-all;
+  }
+  .event-tables {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .table-tag {
+    font-family: monospace;
+    font-size: 0.7em;
+    padding: 2px 6px;
+    background: #1a1a1a;
+    border-radius: 3px;
+    color: #888;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .table-tag:hover {
+    background: #333;
+    color: #fff;
+  }
+  .table-tag .count {
+    color: #6366f1;
+    margin-left: 4px;
+  }
+
+  .tooltip {
+    position: fixed;
+    background: rgba(0, 0, 0, 0.95);
+    border: 1px solid #444;
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 0.72em;
+    font-family: monospace;
+    pointer-events: none;
+    z-index: 1000;
+    max-width: 500px;
+    max-height: 400px;
+    overflow: auto;
+    white-space: pre-wrap;
+    line-height: 1.4;
+    display: none;
+    color: #ccc;
+  }
+  .tooltip .field {
+    color: #f59e0b;
+  }
+  .tooltip .type {
+    color: #6366f1;
+  }
+  .tooltip .desc {
+    color: #888;
   }
 </style>
 
@@ -194,7 +320,6 @@
       <button class="btn" id="export-all-btn" onclick="exportAllCSV()">
         全部导出
       </button>
-      <span class="auto-refresh-tag">自动刷新</span>
     </div>
   </div>
 
@@ -216,7 +341,7 @@
       <div class="sync-stat-value" id="behind-blocks">-</div>
     </div>
     <div class="sync-stat">
-      <div class="sync-stat-label">同步速度</div>
+      <div class="sync-stat-label">Speed</div>
       <div class="sync-stat-value" id="sync-speed">-</div>
     </div>
   </div>
@@ -226,43 +351,433 @@
       <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
     </div>
     <div class="progress-info">
-      <span class="progress-blocks" id="progress-blocks">- / -</span>
-      <span class="progress-pct" id="progress-pct">0%</span>
+      <span id="progress-blocks">- / -</span>
+      <span id="progress-pct">0%</span>
     </div>
   </div>
 
-  <div class="tables-section">
-    <div class="tables-header">
-      <span class="tables-title">数据表</span>
-    </div>
-    <div class="table-list" id="tables-list">
-      {% for t in tables %}
-      <div class="table-item">
-        <span class="table-name">{{ t.name }}</span>
-        <span class="table-count">{{ "{:,}".format(t.count) }}</span>
-      </div>
-      {% else %}
-      <div
-        class="table-item"
-        style="grid-column: 1/-1; justify-content: center; color: #666"
-      >
-        暂无数据
-      </div>
-      {% endfor %}
-    </div>
+  <div class="contracts-section">
+    <div id="contracts-list"></div>
   </div>
 </div>
+
+<div class="tooltip" id="tooltip"></div>
 
 <script>
   (function () {
     const START_BLOCK = 4027499;
     let lastBlock = parseInt(document.body.dataset.lastBlock || "0");
     let lastTime = Date.now();
-    let currentTables = [];
+    let tableCountsCache = {};
+    let expandedContracts = new Set();
+
+    const EVENT_SCHEMAS = {
+      ConditionPreparation: [
+        ["conditionId", "bytes32", "indexed", "条件 ID"],
+        ["oracle", "address", "indexed", "oracle 地址"],
+        ["questionId", "bytes32", "indexed", "问题 ID"],
+        ["outcomeSlotCount", "uint256", "", "固定为 2"],
+      ],
+      ConditionResolution: [
+        ["conditionId", "bytes32", "indexed", "条件 ID"],
+        ["oracle", "address", "indexed", "UmaCtfAdapter 地址"],
+        ["questionId", "bytes32", "indexed", "问题 ID"],
+        ["outcomeSlotCount", "uint256", "", "固定为 2"],
+        [
+          "payoutNumerators",
+          "uint256[]",
+          "",
+          "[1,0]=YES赢, [0,1]=NO赢, [1,1]=平局",
+        ],
+      ],
+      PositionSplit: [
+        ["stakeholder", "address", "indexed", "操作者"],
+        ["collateralToken", "address", "", "USDC.e 或 Wrapped Collateral"],
+        ["parentCollectionId", "bytes32", "indexed", "几乎总是 0x0"],
+        ["conditionId", "bytes32", "indexed", "条件 ID"],
+        ["partition", "uint256[]", "", "[1,2] = YES+NO"],
+        ["amount", "uint256", "", "USDC消耗 = YES获得 = NO获得"],
+      ],
+      PositionsMerge: [
+        ["stakeholder", "address", "indexed", "操作者"],
+        ["collateralToken", "address", "", "USDC.e 或 Wrapped Collateral"],
+        ["parentCollectionId", "bytes32", "indexed", "几乎总是 0x0"],
+        ["conditionId", "bytes32", "indexed", "条件 ID"],
+        ["partition", "uint256[]", "", "[1,2] = YES+NO"],
+        ["amount", "uint256", "", "USDC获得 = YES消耗 = NO消耗"],
+      ],
+      PayoutRedemption: [
+        ["redeemer", "address", "indexed", "操作者"],
+        [
+          "collateralToken",
+          "address",
+          "indexed",
+          "USDC.e 或 Wrapped Collateral",
+        ],
+        ["parentCollectionId", "bytes32", "indexed", "几乎总是 0x0"],
+        ["conditionId", "bytes32", "", "条件 ID"],
+        ["indexSets", "uint256[]", "", "[1]=仅YES, [2]=仅NO, [1,2]=两者"],
+        ["payout", "uint256", "", "获得的USDC (可能为0)"],
+      ],
+      TransferSingle: [
+        ["operator", "address", "indexed", "执行操作的地址"],
+        ["from", "address", "indexed", "发送方 (0x0=mint)"],
+        ["to", "address", "indexed", "接收方 (0x0=burn)"],
+        ["id", "uint256", "", "positionId (ERC1155 tokenId)"],
+        ["value", "uint256", "", "token数量 (6 decimals)"],
+      ],
+      TransferBatch: [
+        ["operator", "address", "indexed", "执行操作的地址"],
+        ["from", "address", "indexed", "发送方 (0x0=mint)"],
+        ["to", "address", "indexed", "接收方 (0x0=burn)"],
+        ["ids", "uint256[]", "", "positionId 数组"],
+        ["values", "uint256[]", "", "数量数组 (6 decimals)"],
+      ],
+      TokenRegistered: [
+        ["token0", "uint256", "indexed", "YES tokenId"],
+        ["token1", "uint256", "indexed", "NO tokenId"],
+        ["conditionId", "bytes32", "indexed", "条件 ID"],
+      ],
+      OrderFilled: [
+        ["orderHash", "bytes32", "indexed", "订单哈希"],
+        ["maker", "address", "indexed", "挂单方"],
+        ["taker", "address", "indexed", "吃单方"],
+        ["makerAssetId", "uint256", "", "0=collateral, 非0=tokenId"],
+        ["takerAssetId", "uint256", "", "0=collateral, 非0=tokenId"],
+        ["makerAmountFilled", "uint256", "", "maker给出的数量"],
+        ["takerAmountFilled", "uint256", "", "taker给出的数量"],
+        ["fee", "uint256", "", "手续费"],
+      ],
+      OrdersMatched: [
+        ["takerOrderHash", "bytes32", "indexed", "taker 订单哈希"],
+        ["takerOrderMaker", "address", "indexed", "发起吃单的用户"],
+        ["makerAssetId", "uint256", "", "0=collateral, 非0=tokenId"],
+        ["takerAssetId", "uint256", "", "0=collateral, 非0=tokenId"],
+        ["makerAmountFilled", "uint256", "", "maker给出的数量"],
+        ["takerAmountFilled", "uint256", "", "taker给出的数量"],
+      ],
+      MarketPrepared: [
+        ["marketId", "bytes32", "indexed", "市场 ID"],
+        ["oracle", "address", "indexed", "NegRiskOperator 地址"],
+        ["feeBips", "uint256", "", "手续费率 (万分比)"],
+        ["data", "bytes", "", "市场元数据"],
+      ],
+      QuestionPrepared: [
+        ["marketId", "bytes32", "indexed", "市场 ID"],
+        [
+          "questionId",
+          "bytes32",
+          "indexed",
+          "keccak256(marketId, questionIndex)",
+        ],
+        ["questionIndex", "uint256", "", "问题索引"],
+        ["data", "bytes", "", "问题元数据"],
+      ],
+      OutcomeReported: [
+        ["marketId", "bytes32", "indexed", "市场 ID"],
+        ["questionId", "bytes32", "indexed", "问题 ID"],
+        ["outcome", "bool", "", "结果"],
+      ],
+      PositionsConverted: [
+        ["stakeholder", "address", "indexed", "操作者"],
+        ["marketId", "bytes32", "indexed", "NegRisk市场ID"],
+        ["indexSet", "uint256", "indexed", "bitmap: 哪些NO被转换"],
+        ["amount", "uint256", "", "每个position的数量"],
+      ],
+    };
+
+    const CONTRACTS = [
+      {
+        name: "ConditionalTokens",
+        addr: "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+        start: 4027499,
+        events: [
+          {
+            name: "ConditionPreparation",
+            topic:
+              "0xab3760c3bd2bb38b5bcf54dc79802ed67338b4cf29f3054ded67ed24661e4177",
+            tables: ["condition"],
+          },
+          {
+            name: "ConditionResolution",
+            topic:
+              "0xb44d84d3289691f71497564b85d4233648d9dbae8cbdbb4329f301c3a0185894",
+            tables: ["condition"],
+          },
+          {
+            name: "PositionSplit",
+            topic:
+              "0x2e6bb91f8cbcda0c93623c54d0403a43514fabc40084ec96b6d5379a74786298",
+            tables: ["split"],
+          },
+          {
+            name: "PositionsMerge",
+            topic:
+              "0x6f13ca62553fcc2bcd2372180a43949c1e4cebba603901ede2f4e14f36b282ca",
+            tables: ["merge"],
+          },
+          {
+            name: "PayoutRedemption",
+            topic:
+              "0x2682012a4a4f1973119f1c9b90745d1bd91fa2bab387344f044cb3586864d18d",
+            tables: ["redemption"],
+          },
+          {
+            name: "TransferSingle",
+            topic:
+              "0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62",
+            tables: ["transfer"],
+          },
+          {
+            name: "TransferBatch",
+            topic:
+              "0x4a39dc06d4c0dbc64b70af90fd698a233a518aa5d07e595d983b8c0526c8f7fb",
+            tables: ["transfer"],
+          },
+        ],
+      },
+      {
+        name: "CTFExchange",
+        addr: "0x4bFb41d5B3570DeFd03C39a9A4D8dE6Bd8B8982E",
+        start: 35887522,
+        events: [
+          {
+            name: "TokenRegistered",
+            topic:
+              "0xbc9a2432e8aeb48327246cddd6e872ef452812b4243c04e6bfb786a2cd8faf0d",
+            tables: ["token_map"],
+          },
+          {
+            name: "OrderFilled",
+            topic:
+              "0xd0a08e8c493f9c94f29311604c9de1b4e8c8d4c06bd0c789af57f2d65bfec0f6",
+            tables: ["order_filled"],
+          },
+          {
+            name: "OrdersMatched",
+            topic:
+              "0x63bf4d16b7fa898ef4c4b2b6d90fd201e9c56313b65638af6088d149d2ce956c",
+            tables: [],
+          },
+        ],
+      },
+      {
+        name: "NegRiskCTFExchange",
+        addr: "0xC5d563A36AE78145C45a50134d48A1215220f80a",
+        start: 51405773,
+        events: [
+          {
+            name: "TokenRegistered",
+            topic:
+              "0xbc9a2432e8aeb48327246cddd6e872ef452812b4243c04e6bfb786a2cd8faf0d",
+            tables: ["token_map"],
+          },
+          {
+            name: "OrderFilled",
+            topic:
+              "0xd0a08e8c493f9c94f29311604c9de1b4e8c8d4c06bd0c789af57f2d65bfec0f6",
+            tables: ["order_filled"],
+          },
+          {
+            name: "OrdersMatched",
+            topic:
+              "0x63bf4d16b7fa898ef4c4b2b6d90fd201e9c56313b65638af6088d149d2ce956c",
+            tables: [],
+          },
+        ],
+      },
+      {
+        name: "NegRiskAdapter",
+        addr: "0xd91E80cF2E7be2e162c6513ceD06f1dD0dA35296",
+        start: 50748168,
+        events: [
+          {
+            name: "MarketPrepared",
+            topic:
+              "0xf059ab16d1ca60e123eab60e3c02b68faf060347c701a5d14885a8e1def7b3a8",
+            tables: ["neg_risk_market"],
+          },
+          {
+            name: "QuestionPrepared",
+            topic:
+              "0xaac410f87d423a922a7b226ac68f0c2eaf5bf6d15e644ac0758c7f96e2c253f7",
+            tables: ["neg_risk_question"],
+          },
+          {
+            name: "OutcomeReported",
+            topic:
+              "0x9e9fa7fd355160bd4cd3f22d4333519354beff1f5689bde87f2c5e63d8d484b2",
+            tables: [],
+          },
+          {
+            name: "PositionsConverted",
+            topic:
+              "0xb03d19dddbc72a87e735ff0ea3b57bef133ebe44e1894284916a84044deb367e",
+            tables: ["convert"],
+          },
+        ],
+      },
+    ];
 
     function formatNumber(n) {
       return n.toLocaleString();
     }
+
+    function calcProgress(contract, last, head) {
+      if (last < contract.start) return 0;
+      if (head <= contract.start) return 0;
+      return Math.min(
+        100,
+        ((last - contract.start) / (head - contract.start)) * 100,
+      );
+    }
+
+    function getProgressClass(pct) {
+      if (pct >= 99.9) return "synced";
+      if (pct >= 90) return "behind";
+      return "error";
+    }
+
+    function toggleContract(name) {
+      if (expandedContracts.has(name)) expandedContracts.delete(name);
+      else expandedContracts.add(name);
+      renderContracts();
+    }
+
+    function formatEventSchema(eventName) {
+      const schema = EVENT_SCHEMAS[eventName];
+      if (!schema) return eventName;
+      let text = `event ${eventName}(\n`;
+      for (const [field, type, indexed, desc] of schema) {
+        const idxStr = indexed ? " indexed" : "";
+        text += `  <span class="type">${type}</span>${idxStr} <span class="field">${field}</span>  <span class="desc">// ${desc}</span>\n`;
+      }
+      text += ")";
+      return text;
+    }
+
+    function renderContracts() {
+      const last = parseInt(document.body.dataset.lastBlock || "0");
+      const head = parseInt(document.body.dataset.headBlock || "0");
+
+      let html = "";
+      for (const c of CONTRACTS) {
+        const isExpanded = expandedContracts.has(c.name);
+        const pct = calcProgress(c, last, head);
+        const progressClass = getProgressClass(pct);
+
+        html += `
+        <div class="contract-item ${isExpanded ? "expanded" : ""}">
+          <div class="contract-header" onclick="window._toggleContract('${c.name}')">
+            <div class="contract-left">
+              <span class="contract-name">${c.name}</span>
+              <span class="contract-addr">${c.addr}</span>
+            </div>
+            <div class="contract-right">
+              <div class="contract-stat"><div class="label">Start</div><div class="value">${formatNumber(c.start)}</div></div>
+              <div class="contract-stat"><div class="label">Last</div><div class="value">${formatNumber(last)}</div></div>
+              <div class="contract-stat"><div class="label">Head</div><div class="value">${formatNumber(head)}</div></div>
+              <span class="contract-progress ${progressClass}">${pct.toFixed(1)}%</span>
+              <span class="expand-icon">▼</span>
+            </div>
+          </div>
+          <div class="contract-body">
+            ${c.events
+              .map(
+                (ev) => `
+              <div class="event-item" 
+                   onmouseenter="window._showEventTooltip(event, '${ev.name}')"
+                   onmouseleave="window._hideTooltip()">
+                <span class="event-name">${ev.name}</span>
+                <span class="event-topic">${ev.topic}</span>
+                <div class="event-tables">
+                  ${ev.tables
+                    .map((t) => {
+                      const count = tableCountsCache[t] || 0;
+                      return `<span class="table-tag" 
+                                 onmouseenter="window._showTableTooltip(event, '${t}')"
+                                 onmouseleave="window._hideTooltip()">${t}<span class="count">${formatNumber(count)}</span></span>`;
+                    })
+                    .join("")}
+                </div>
+              </div>
+            `,
+              )
+              .join("")}
+          </div>
+        </div>
+      `;
+      }
+      document.getElementById("contracts-list").innerHTML = html;
+    }
+
+    let tooltipTimeout = null;
+    const tooltip = document.getElementById("tooltip");
+
+    function showTooltip(event, html) {
+      tooltip.innerHTML = html;
+      tooltip.style.display = "block";
+      const rect = event.target.getBoundingClientRect();
+      tooltip.style.left =
+        Math.min(rect.left, window.innerWidth - tooltip.offsetWidth - 20) +
+        "px";
+      tooltip.style.top = rect.bottom + 8 + "px";
+    }
+
+    function hideTooltip() {
+      if (tooltipTimeout) {
+        clearTimeout(tooltipTimeout);
+        tooltipTimeout = null;
+      }
+      tooltip.style.display = "none";
+    }
+
+    let tableSchemaCache = {};
+    async function fetchTableSchema(tableName) {
+      if (tableSchemaCache[tableName]) return tableSchemaCache[tableName];
+      try {
+        const resp = await fetch(
+          `/api/query?q=${encodeURIComponent(`SELECT * FROM "${tableName}" LIMIT 1`)}`,
+        );
+        const rows = await resp.json();
+        if (Array.isArray(rows) && rows.length > 0) {
+          const row = rows[0];
+          let text = '';
+          for (const [k, v] of Object.entries(row)) {
+            let val = v;
+            if (typeof v === 'string' && v.length > 50) val = v.slice(0, 50) + '...';
+            text += `<span class="field">${k}</span>: ${val}\n`;
+          }
+          tableSchemaCache[tableName] = text;
+        } else {
+          tableSchemaCache[tableName] = "(empty)";
+        }
+        return tableSchemaCache[tableName];
+      } catch (e) {
+        return `Error: ${e.message}`;
+      }
+    }
+
+    window._toggleContract = toggleContract;
+    window._showEventTooltip = function (event, eventName) {
+      event.stopPropagation();
+      if (tooltipTimeout) clearTimeout(tooltipTimeout);
+      tooltipTimeout = setTimeout(
+        () => showTooltip(event, formatEventSchema(eventName)),
+        150,
+      );
+    };
+    window._showTableTooltip = async function (event, tableName) {
+      event.stopPropagation();
+      if (tooltipTimeout) clearTimeout(tooltipTimeout);
+      const count = tableCountsCache[tableName] || 0;
+      const latestRow = await fetchTableSchema(tableName);
+      showTooltip(
+        event,
+        `<span class="type">${tableName}</span>  rows: ${formatNumber(count)}\n\n${latestRow}`,
+      );
+    };
+    window._hideTooltip = hideTooltip;
 
     function updateSyncStatus(sync) {
       const currentBlock = sync.last_block || 0;
@@ -297,54 +812,42 @@
       const timeDiff = (now - lastTime) / 1000;
       const blockDiff = currentBlock - lastBlock;
       if (timeDiff > 0 && blockDiff > 0) {
-        const speed = Math.round(blockDiff / timeDiff);
         document.getElementById("sync-speed").textContent =
-          formatNumber(speed) + " blk/s";
+          formatNumber(Math.round(blockDiff / timeDiff)) + "/s";
       } else if (blockDiff === 0) {
         document.getElementById("sync-speed").textContent = "-";
       }
       lastBlock = currentBlock;
       lastTime = now;
 
+      document.body.dataset.lastBlock = currentBlock;
+      document.body.dataset.headBlock = headBlock;
       updateProgress(currentBlock, headBlock);
+      renderContracts();
     }
 
-    function updateProgress(lastBlock, headBlock) {
-      if (headBlock <= START_BLOCK) {
+    function updateProgress(last, head) {
+      if (head <= START_BLOCK) {
         document.getElementById("progress-fill").style.width = "0%";
         document.getElementById("progress-pct").textContent = "0%";
         document.getElementById("progress-blocks").textContent = "- / -";
         return;
       }
-      const total = headBlock - START_BLOCK;
-      const done = Math.max(0, lastBlock - START_BLOCK);
-      const pct = Math.min(100, (done / total) * 100);
-
+      const pct = Math.min(
+        100,
+        ((last - START_BLOCK) / (head - START_BLOCK)) * 100,
+      );
       document.getElementById("progress-fill").style.width =
         pct.toFixed(1) + "%";
       document.getElementById("progress-pct").textContent =
         pct.toFixed(2) + "%";
       document.getElementById("progress-blocks").textContent =
-        formatNumber(lastBlock) + " / " + formatNumber(headBlock);
+        formatNumber(last) + " / " + formatNumber(head);
     }
 
     function updateTables(tables) {
-      currentTables = tables;
-      const list = document.getElementById("tables-list");
-      if (tables.length === 0) {
-        list.innerHTML =
-          '<div class="table-item" style="grid-column: 1/-1; justify-content: center; color: #666;">暂无数据</div>';
-      } else {
-        list.innerHTML = tables
-          .map(
-            (t) =>
-              `<div class="table-item">
-          <span class="table-name">${t.name}</span>
-          <span class="table-count">${formatNumber(t.count)}</span>
-        </div>`,
-          )
-          .join("");
-      }
+      for (const t of tables) tableCountsCache[t.name] = t.count;
+      renderContracts();
     }
 
     updateProgress(
@@ -375,8 +878,11 @@
         "badge badge-warning";
     }
 
+    renderContracts();
+
     window.updateSyncStatus = updateSyncStatus;
     window.updateTables = updateTables;
-    window.getCurrentTables = () => currentTables;
+    window.updateContractSync = updateSyncStatus;
+    window.updateContractTables = updateTables;
   })();
 </script>
