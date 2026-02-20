@@ -37,3 +37,41 @@ async def api_sync_state():
 @app.get("/api/query")
 async def api_query(q: str = Query(...)):
     return await backend_get("/api/query", {"q": q})
+
+
+@app.post("/api/export-all")
+async def api_export_all():
+    export_tables = [
+        "order_filled", "split", "merge", "redemption", "convert", "transfer",
+        "token_map", "condition", "neg_risk_market", "neg_risk_question",
+    ]
+    export_dir = Path(__file__).parent.parent / "data" / "export"
+    export_dir.mkdir(parents=True, exist_ok=True)
+
+    results = []
+
+    for table_name in export_tables:
+        query = f"SELECT * FROM {table_name} LIMIT 1000"
+        rows = await backend_get("/api/query", {"q": query})
+
+        if rows:
+            headers = list(rows[0].keys())
+            lines = [",".join(headers)]
+            for row in rows:
+                vals = []
+                for h in headers:
+                    val = row[h]
+                    if val is None:
+                        vals.append("")
+                    elif isinstance(val, str) and ("," in val or '"' in val or "\n" in val):
+                        vals.append('"' + val.replace('"', '""') + '"')
+                    else:
+                        vals.append(str(val))
+                lines.append(",".join(vals))
+
+            csv_content = "\n".join(lines)
+            file_path = export_dir / f"{table_name}.csv"
+            file_path.write_text(csv_content)
+            results.append(table_name)
+
+    return {"exported": results, "path": str(export_dir)}

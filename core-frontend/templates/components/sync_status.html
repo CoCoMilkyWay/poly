@@ -53,8 +53,13 @@
     background: #6b7280;
   }
   @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.4;
+    }
   }
   .sync-stats {
     display: grid;
@@ -186,7 +191,9 @@
     </h2>
     <div class="sync-header-right">
       <span id="sync-status-text" class="badge badge-success">空闲</span>
-      <button class="btn" id="export-all-btn" onclick="exportAllCSV()">全部导出</button>
+      <button class="btn" id="export-all-btn" onclick="exportAllCSV()">
+        全部导出
+      </button>
       <span class="auto-refresh-tag">自动刷新</span>
     </div>
   </div>
@@ -194,11 +201,15 @@
   <div class="sync-stats">
     <div class="sync-stat">
       <div class="sync-stat-label">Last Block</div>
-      <div class="sync-stat-value" id="last-block">{{ "{:,}".format(sync_state.last_block or 0) }}</div>
+      <div class="sync-stat-value" id="last-block">
+        {{ "{:,}".format(sync_state.last_block or 0) }}
+      </div>
     </div>
     <div class="sync-stat">
       <div class="sync-stat-label">Head Block</div>
-      <div class="sync-stat-value" id="head-block">{{ "{:,}".format(sync_state.head_block or 0) }}</div>
+      <div class="sync-stat-value" id="head-block">
+        {{ "{:,}".format(sync_state.head_block or 0) }}
+      </div>
     </div>
     <div class="sync-stat">
       <div class="sync-stat-label">Behind</div>
@@ -231,116 +242,141 @@
         <span class="table-count">{{ "{:,}".format(t.count) }}</span>
       </div>
       {% else %}
-      <div class="table-item" style="grid-column: 1/-1; justify-content: center; color: #666;">暂无数据</div>
+      <div
+        class="table-item"
+        style="grid-column: 1/-1; justify-content: center; color: #666"
+      >
+        暂无数据
+      </div>
       {% endfor %}
     </div>
   </div>
 </div>
 
 <script>
-(function() {
-  const START_BLOCK = 4027499;
-  let lastBlock = parseInt(document.body.dataset.lastBlock || "0");
-  let lastTime = Date.now();
-  let currentTables = [];
+  (function () {
+    const START_BLOCK = 4027499;
+    let lastBlock = parseInt(document.body.dataset.lastBlock || "0");
+    let lastTime = Date.now();
+    let currentTables = [];
 
-  function formatNumber(n) {
-    return n.toLocaleString();
-  }
-
-  function updateSyncStatus(sync) {
-    const currentBlock = sync.last_block || 0;
-    const headBlock = sync.head_block || 0;
-    const isSyncing = sync.is_syncing;
-    const behind = Math.max(0, headBlock - currentBlock);
-
-    document.getElementById("last-block").textContent = formatNumber(currentBlock);
-    document.getElementById("head-block").textContent = formatNumber(headBlock);
-
-    const behindEl = document.getElementById("behind-blocks");
-    behindEl.textContent = formatNumber(behind);
-    behindEl.className = "sync-stat-value " + (behind < 100 ? "synced" : behind < 10000 ? "behind" : "error");
-
-    const dot = document.getElementById("status-dot");
-    const statusText = document.getElementById("sync-status-text");
-    if (isSyncing) {
-      dot.className = "status-indicator status-syncing";
-      statusText.textContent = "同步中";
-      statusText.className = "badge badge-warning";
-    } else {
-      dot.className = "status-indicator status-idle";
-      statusText.textContent = "空闲";
-      statusText.className = "badge badge-success";
+    function formatNumber(n) {
+      return n.toLocaleString();
     }
 
-    const now = Date.now();
-    const timeDiff = (now - lastTime) / 1000;
-    const blockDiff = currentBlock - lastBlock;
-    if (timeDiff > 0 && blockDiff > 0) {
-      const speed = Math.round(blockDiff / timeDiff);
-      document.getElementById("sync-speed").textContent = formatNumber(speed) + " blk/s";
-    } else if (blockDiff === 0) {
-      document.getElementById("sync-speed").textContent = "-";
+    function updateSyncStatus(sync) {
+      const currentBlock = sync.last_block || 0;
+      const headBlock = sync.head_block || 0;
+      const isSyncing = sync.is_syncing;
+      const behind = Math.max(0, headBlock - currentBlock);
+
+      document.getElementById("last-block").textContent =
+        formatNumber(currentBlock);
+      document.getElementById("head-block").textContent =
+        formatNumber(headBlock);
+
+      const behindEl = document.getElementById("behind-blocks");
+      behindEl.textContent = formatNumber(behind);
+      behindEl.className =
+        "sync-stat-value " +
+        (behind < 100 ? "synced" : behind < 10000 ? "behind" : "error");
+
+      const dot = document.getElementById("status-dot");
+      const statusText = document.getElementById("sync-status-text");
+      if (isSyncing) {
+        dot.className = "status-indicator status-syncing";
+        statusText.textContent = "同步中";
+        statusText.className = "badge badge-warning";
+      } else {
+        dot.className = "status-indicator status-idle";
+        statusText.textContent = "空闲";
+        statusText.className = "badge badge-success";
+      }
+
+      const now = Date.now();
+      const timeDiff = (now - lastTime) / 1000;
+      const blockDiff = currentBlock - lastBlock;
+      if (timeDiff > 0 && blockDiff > 0) {
+        const speed = Math.round(blockDiff / timeDiff);
+        document.getElementById("sync-speed").textContent =
+          formatNumber(speed) + " blk/s";
+      } else if (blockDiff === 0) {
+        document.getElementById("sync-speed").textContent = "-";
+      }
+      lastBlock = currentBlock;
+      lastTime = now;
+
+      updateProgress(currentBlock, headBlock);
     }
-    lastBlock = currentBlock;
-    lastTime = now;
 
-    updateProgress(currentBlock, headBlock);
-  }
+    function updateProgress(lastBlock, headBlock) {
+      if (headBlock <= START_BLOCK) {
+        document.getElementById("progress-fill").style.width = "0%";
+        document.getElementById("progress-pct").textContent = "0%";
+        document.getElementById("progress-blocks").textContent = "- / -";
+        return;
+      }
+      const total = headBlock - START_BLOCK;
+      const done = Math.max(0, lastBlock - START_BLOCK);
+      const pct = Math.min(100, (done / total) * 100);
 
-  function updateProgress(lastBlock, headBlock) {
-    if (headBlock <= START_BLOCK) {
-      document.getElementById("progress-fill").style.width = "0%";
-      document.getElementById("progress-pct").textContent = "0%";
-      document.getElementById("progress-blocks").textContent = "- / -";
-      return;
+      document.getElementById("progress-fill").style.width =
+        pct.toFixed(1) + "%";
+      document.getElementById("progress-pct").textContent =
+        pct.toFixed(2) + "%";
+      document.getElementById("progress-blocks").textContent =
+        formatNumber(lastBlock) + " / " + formatNumber(headBlock);
     }
-    const total = headBlock - START_BLOCK;
-    const done = Math.max(0, lastBlock - START_BLOCK);
-    const pct = Math.min(100, (done / total) * 100);
 
-    document.getElementById("progress-fill").style.width = pct.toFixed(1) + "%";
-    document.getElementById("progress-pct").textContent = pct.toFixed(2) + "%";
-    document.getElementById("progress-blocks").textContent =
-      formatNumber(lastBlock) + " / " + formatNumber(headBlock);
-  }
-
-  function updateTables(tables) {
-    currentTables = tables;
-    const list = document.getElementById("tables-list");
-    if (tables.length === 0) {
-      list.innerHTML = '<div class="table-item" style="grid-column: 1/-1; justify-content: center; color: #666;">暂无数据</div>';
-    } else {
-      list.innerHTML = tables.map(t =>
-        `<div class="table-item">
+    function updateTables(tables) {
+      currentTables = tables;
+      const list = document.getElementById("tables-list");
+      if (tables.length === 0) {
+        list.innerHTML =
+          '<div class="table-item" style="grid-column: 1/-1; justify-content: center; color: #666;">暂无数据</div>';
+      } else {
+        list.innerHTML = tables
+          .map(
+            (t) =>
+              `<div class="table-item">
           <span class="table-name">${t.name}</span>
           <span class="table-count">${formatNumber(t.count)}</span>
-        </div>`
-      ).join("");
+        </div>`,
+          )
+          .join("");
+      }
     }
-  }
 
-  updateProgress(
-    parseInt(document.body.dataset.lastBlock || "0"),
-    parseInt(document.body.dataset.headBlock || "0")
-  );
+    updateProgress(
+      parseInt(document.body.dataset.lastBlock || "0"),
+      parseInt(document.body.dataset.headBlock || "0"),
+    );
 
-  const initialBehind = Math.max(0,
-    parseInt(document.body.dataset.headBlock || "0") -
-    parseInt(document.body.dataset.lastBlock || "0")
-  );
-  const behindEl = document.getElementById("behind-blocks");
-  behindEl.textContent = formatNumber(initialBehind);
-  behindEl.className = "sync-stat-value " + (initialBehind < 100 ? "synced" : initialBehind < 10000 ? "behind" : "error");
+    const initialBehind = Math.max(
+      0,
+      parseInt(document.body.dataset.headBlock || "0") -
+        parseInt(document.body.dataset.lastBlock || "0"),
+    );
+    const behindEl = document.getElementById("behind-blocks");
+    behindEl.textContent = formatNumber(initialBehind);
+    behindEl.className =
+      "sync-stat-value " +
+      (initialBehind < 100
+        ? "synced"
+        : initialBehind < 10000
+          ? "behind"
+          : "error");
 
-  if (document.body.dataset.isSyncing === "true") {
-    document.getElementById("status-dot").className = "status-indicator status-syncing";
-    document.getElementById("sync-status-text").textContent = "同步中";
-    document.getElementById("sync-status-text").className = "badge badge-warning";
-  }
+    if (document.body.dataset.isSyncing === "true") {
+      document.getElementById("status-dot").className =
+        "status-indicator status-syncing";
+      document.getElementById("sync-status-text").textContent = "同步中";
+      document.getElementById("sync-status-text").className =
+        "badge badge-warning";
+    }
 
-  window.updateSyncStatus = updateSyncStatus;
-  window.updateTables = updateTables;
-  window.getCurrentTables = () => currentTables;
-})();
+    window.updateSyncStatus = updateSyncStatus;
+    window.updateTables = updateTables;
+    window.getCurrentTables = () => currentTables;
+  })();
 </script>

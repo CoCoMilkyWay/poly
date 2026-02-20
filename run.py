@@ -84,6 +84,8 @@ def main():
         webbrowser.open(url)
 
         backend.wait()
+    except KeyboardInterrupt:
+        pass
     finally:
         print("[run.py] 正在关闭...")
         for proc in [backend, frontend]:
