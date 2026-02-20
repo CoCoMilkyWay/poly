@@ -107,7 +107,6 @@ private:
         logs.push_back(log);
       }
     }
-    std::cout << " " << logs.size() << " logs" << std::endl;
 
     ParsedEvents events = EventParser::parse_logs(logs);
 
@@ -152,8 +151,8 @@ private:
       std::string payout = val.substr(first_sep + 2, payout_end - first_sep - 2 + 1);
       std::string block = val.substr(payout_end + 3);
       resolution_sqls.push_back("UPDATE condition SET payout_numerators = " + payout +
-                                 ", resolution_block = " + block +
-                                 " WHERE condition_id = " + condition_id);
+                                ", resolution_block = " + block +
+                                " WHERE condition_id = " + condition_id);
     }
 
     {

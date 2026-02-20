@@ -1,6 +1,7 @@
 #include <cstring>
 #include <iostream>
 #include <string>
+#include <thread>
 
 #include "api/api_server.hpp"
 #include "core/config.hpp"
@@ -44,13 +45,19 @@ int main(int argc, char *argv[]) {
     return {sync.is_syncing(), sync.get_head_block()};
   };
 
-  boost::asio::io_context ioc;
-  ApiServer api_server(ioc, db, config.api_port, sync_getter);
+  // Sync 使用单独的 io_context 和线程，避免阻塞 API
+  boost::asio::io_context sync_ioc;
+  sync.start(sync_ioc);
+  std::thread sync_thread([&sync_ioc]() { sync_ioc.run(); });
 
-  sync.start(ioc);
+  boost::asio::io_context api_ioc;
+  ApiServer api_server(api_ioc, db, config.api_port, sync_getter);
 
   std::cout << "[Main] 服务已启动" << std::endl;
-  ioc.run();
+  api_ioc.run();
+
+  sync_ioc.stop();
+  sync_thread.join();
 
   return 0;
 }
