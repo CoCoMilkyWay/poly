@@ -88,6 +88,13 @@ Stage 2: raw_log → 最终表 (纯SQL转换, ~2min)
 | NegRiskCTFExchange | 0xC5d563A36AE78145C45a50134d48A1215220f80a | 51,405,773 | NegRisk订单簿              |
 | NegRiskAdapter     | 0xd91E80cF2E7be2e162c6513ceD06f1dD0dA35296 | 50,748,168 | NegRisk市场管理            |
 
+**权限与中心化**:
+
+- 链上协议完全开放，任何人都可以创建prepareCondition和FPMMCreation(协议仍可使用，只是已经被官方自己废弃)
+- 但Polymarket网站只显示官方创建的市场，第三方创建的市场无流动性, 而且不被平台显示
+- 结算权在oracle手中 (conditionId = keccak256(oracle, questionId, outcomeSlotCount))
+- 本质是"协议开放 + 运营中心化"模式
+
 **Collateral**:
 
 - FiatToken V2.2 (Circle): Native USDC: **polymarket协议不使用**: `0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359` (2023年10月推出, Circle 原生发行)
@@ -387,18 +394,20 @@ NegRisk转换: M 个 NO tokens burn → (M-1) Wrapped Collateral (利用互斥�
 
 **FPMMBuy** (FPMM合约发出)
 
-| 字段                | 类型    | indexed | 说明                                  |
-| ------------------- | ------- | ------- | ------------------------------------- |
-| buyer               | address | yes     | 买家地址                              |
-| investmentAmount    | uint256 | no      | 投入的USDC数量 (含手续费, 6 decimals) |
-| feeAmount           | uint256 | no      | 手续费 (6 decimals)                   |
-| outcomeIndex        | uint256 | yes     | 0=YES, 1=NO                           |
-| outcomeTokensBought | uint256 | no      | 获得的token数量 (6 decimals)          |
+| 字段                | 类型    | indexed | 说明                                   |
+| ------------------- | ------- | ------- | -------------------------------------- |
+| fpmm                | address | meta    | log.address (动态部署, 需记录合约地址) |
+| buyer               | address | yes     | 买家地址                               |
+| investmentAmount    | uint256 | no      | 投入的USDC数量 (含手续费, 6 decimals)  |
+| feeAmount           | uint256 | no      | 手续费 (6 decimals)                    |
+| outcomeIndex        | uint256 | yes     | 0=YES, 1=NO                            |
+| outcomeTokensBought | uint256 | no      | 获得的token数量 (6 decimals)           |
 
 **FPMMSell** (FPMM合约发出)
 
 | 字段              | 类型    | indexed | 说明                                    |
 | ----------------- | ------- | ------- | --------------------------------------- |
+| fpmm              | address | meta    | log.address (动态部署, 需记录合约地址)  |
 | seller            | address | yes     | 卖家地址                                |
 | returnAmount      | uint256 | no      | 获得的USDC数量 (不含手续费, 6 decimals) |
 | feeAmount         | uint256 | no      | 手续费 (6 decimals)                     |
@@ -407,20 +416,22 @@ NegRisk转换: M 个 NO tokens burn → (M-1) Wrapped Collateral (利用互斥�
 
 **FPMMFundingAdded** (FPMM合约发出)
 
-| 字段         | 类型      | indexed | 说明                     |
-| ------------ | --------- | ------- | ------------------------ |
-| funder       | address   | yes     | LP地址                   |
-| amountsAdded | uint256[] | no      | 各outcome添加的token数量 |
-| sharesMinted | uint256   | no      | 铸造的LP份额             |
+| 字段         | 类型      | indexed | 说明                                   |
+| ------------ | --------- | ------- | -------------------------------------- |
+| fpmm         | address   | meta    | log.address (动态部署, 需记录合约地址) |
+| funder       | address   | yes     | LP地址                                 |
+| amountsAdded | uint256[] | no      | 各outcome添加的token数量               |
+| sharesMinted | uint256   | no      | 铸造的LP份额                           |
 
 **FPMMFundingRemoved** (FPMM合约发出)
 
-| 字段                         | 类型      | indexed | 说明                   |
-| ---------------------------- | --------- | ------- | ---------------------- |
-| funder                       | address   | yes     | LP地址                 |
-| amountsRemoved               | uint256[] | no      | 各outcome移除的token量 |
-| collateralRemovedFromFeePool | uint256   | no      | 从手续费池取出的USDC   |
-| sharesBurnt                  | uint256   | no      | 销毁的LP份额           |
+| 字段                         | 类型      | indexed | 说明                                   |
+| ---------------------------- | --------- | ------- | -------------------------------------- |
+| fpmm                         | address   | meta    | log.address (动态部署, 需记录合约地址) |
+| funder                       | address   | yes     | LP地址                                 |
+| amountsRemoved               | uint256[] | no      | 各outcome移除的token量                 |
+| collateralRemovedFromFeePool | uint256   | no      | 从手续费池取出的USDC                   |
+| sharesBurnt                  | uint256   | no      | 销毁的LP份额                           |
 
 **FPMM内部机制**:
 

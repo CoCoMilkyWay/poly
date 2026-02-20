@@ -7,15 +7,20 @@ Head: 75,000,000
 
 
 ==================================================
-开始查询 Erigon: http://127.0.0.1:8545... (chunk=2000)
+开始查询 Erigon: http://127.0.0.1:8545... (chunk=10000)
 ==================================================
 
-  [Erigon] Block: 75,000,000 - 75,000,000  (100.0%)  492 blk/s  ETA: 0s
+  [Erigon] Block: 75,000,000 - 75,000,000  (100.0%)  487 blk/s  ETA: 0s
 
   事件                             数量
   -----------------------------------
   TransferSingle             79,123
   TransferBatch              41,957
+  FPMMCreation                    8
+  FPMMBuy                         0
+  FPMMSell                        0
+  FPMMFundingAdded                0
+  FPMMFundingRemoved              0
   OrderFilled                69,698
   OrdersMatched              29,024
   TokenRegistered                36
@@ -29,19 +34,24 @@ Head: 75,000,000
   PositionsConverted            266
   OutcomeReported                 9
 
-[Erigon] 完成, 耗时 20.3s
+[Erigon] 完成, 耗时 20.6s
 [Erigon] 输出目录: /home/chuyin/work/poly/scripts/events/Erigon/
 
 ==================================================
 开始查询 dRPC: https://lb.drpc.org/ogrpc?network=polygon&dkey=Aj9... (chunk=1000)
 ==================================================
 
-  [dRPC] Block: 75,000,000 - 75,000,000  (100.0%)  129 blk/s  ETA: 0s
+  [dRPC] Block: 75,000,000 - 75,000,000  (100.0%)  161 blk/s  ETA: 0s
 
   事件                             数量
   -----------------------------------
   TransferSingle             79,123
   TransferBatch              41,957
+  FPMMCreation                    8
+  FPMMBuy                         0
+  FPMMSell                        0
+  FPMMFundingAdded                0
+  FPMMFundingRemoved              0
   OrderFilled                69,698
   OrdersMatched              29,024
   TokenRegistered                36
@@ -55,7 +65,7 @@ Head: 75,000,000
   PositionsConverted            266
   OutcomeReported                 9
 
-[dRPC] 完成, 耗时 77.3s
+[dRPC] 完成, 耗时 62.0s
 [dRPC] 输出目录: /home/chuyin/work/poly/scripts/events/dRPC/
 
 ==================================================
@@ -75,6 +85,11 @@ Head: 75,000,000
   QuestionPrepared       10 vs 10 ✓
   PositionsConverted     266 vs 266 ✓
   OutcomeReported        9 vs 9 ✓
+  FPMMCreation           8 vs 8 ✓
+  FPMMBuy                0 vs 0 ✓
+  FPMMSell               0 vs 0 ✓
+  FPMMFundingAdded       0 vs 0 ✓
+  FPMMFundingRemoved     0 vs 0 ✓
 
 总体: 全部一致 ✓
 """
@@ -594,7 +609,7 @@ def dump_node(node_name, rpc_url, chunk, output_dir, head, start_block, num_bloc
 
 def main():
     # head = get_head()
-    head = 16_000_000
+    head = 75_000_000
     num_blocks = int(sys.argv[1]) if len(sys.argv) > 1 else 10000
     start_block = head - num_blocks
 
