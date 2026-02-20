@@ -58,6 +58,9 @@ async def api_export_all():
         "token_map": None,
         "neg_risk_market": None,
         "neg_risk_question": None,
+        "fpmm": "block_number DESC",
+        "fpmm_trade": "block_number DESC, log_index DESC",
+        "fpmm_funding": "block_number DESC, log_index DESC",
     }
     export_dir = Path(__file__).parent.parent / "data" / "export"
     export_dir.mkdir(parents=True, exist_ok=True)

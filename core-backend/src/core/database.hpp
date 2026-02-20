@@ -269,6 +269,44 @@ public:
       )
     )");
 
+    execute(R"(
+      CREATE TABLE IF NOT EXISTS fpmm (
+        fpmm_addr BLOB PRIMARY KEY,
+        condition_id BLOB NOT NULL,
+        fee BIGINT NOT NULL,
+        block_number BIGINT NOT NULL
+      )
+    )");
+
+    execute(R"(
+      CREATE TABLE IF NOT EXISTS fpmm_trade (
+        block_number BIGINT NOT NULL,
+        log_index INTEGER NOT NULL,
+        fpmm_addr BLOB NOT NULL,
+        trader BLOB NOT NULL,
+        side INTEGER NOT NULL,
+        outcome_index INTEGER NOT NULL,
+        usdc_amount BIGINT NOT NULL,
+        token_amount BIGINT NOT NULL,
+        fee BIGINT NOT NULL,
+        PRIMARY KEY (block_number, log_index)
+      )
+    )");
+
+    execute(R"(
+      CREATE TABLE IF NOT EXISTS fpmm_funding (
+        block_number BIGINT NOT NULL,
+        log_index INTEGER NOT NULL,
+        fpmm_addr BLOB NOT NULL,
+        funder BLOB NOT NULL,
+        side INTEGER NOT NULL,
+        amount0 BIGINT NOT NULL,
+        amount1 BIGINT NOT NULL,
+        shares BIGINT NOT NULL,
+        PRIMARY KEY (block_number, log_index)
+      )
+    )");
+
     execute("CREATE INDEX IF NOT EXISTS idx_order_filled_maker ON order_filled(maker)");
     execute("CREATE INDEX IF NOT EXISTS idx_order_filled_taker ON order_filled(taker)");
     execute("CREATE INDEX IF NOT EXISTS idx_order_filled_token ON order_filled(token_id)");
@@ -279,6 +317,11 @@ public:
     execute("CREATE INDEX IF NOT EXISTS idx_transfer_from ON transfer(from_addr)");
     execute("CREATE INDEX IF NOT EXISTS idx_transfer_to ON transfer(to_addr)");
     execute("CREATE INDEX IF NOT EXISTS idx_neg_risk_question_market ON neg_risk_question(market_id)");
+    execute("CREATE INDEX IF NOT EXISTS idx_fpmm_condition ON fpmm(condition_id)");
+    execute("CREATE INDEX IF NOT EXISTS idx_fpmm_trade_trader ON fpmm_trade(trader)");
+    execute("CREATE INDEX IF NOT EXISTS idx_fpmm_trade_fpmm ON fpmm_trade(fpmm_addr)");
+    execute("CREATE INDEX IF NOT EXISTS idx_fpmm_funding_funder ON fpmm_funding(funder)");
+    execute("CREATE INDEX IF NOT EXISTS idx_fpmm_funding_fpmm ON fpmm_funding(fpmm_addr)");
   }
 
   int64_t get_last_block() {
@@ -330,9 +373,15 @@ public:
     auto r1 = write_conn_->Query("BEGIN TRANSACTION");
     assert(!r1->HasError());
 
+    bool has_fpmm_trade = false;
+    bool has_fpmm_funding = false;
     for (const auto &[table, columns, values_list] : batches) {
       if (values_list.empty())
         continue;
+      if (table == "fpmm_trade")
+        has_fpmm_trade = true;
+      if (table == "fpmm_funding")
+        has_fpmm_funding = true;
       std::string insert_sql = "INSERT OR IGNORE INTO " + table + " (" + columns + ") VALUES ";
       for (size_t i = 0; i < values_list.size(); ++i) {
         if (i > 0)
@@ -341,6 +390,26 @@ public:
       }
       auto r = write_conn_->Query(insert_sql);
       assert(!r->HasError());
+    }
+
+    if (has_fpmm_trade) {
+      auto r = write_conn_->Query(R"(
+        SELECT COUNT(*) FROM fpmm_trade ft
+        WHERE NOT EXISTS (SELECT 1 FROM fpmm f WHERE f.fpmm_addr = ft.fpmm_addr)
+      )");
+      assert(!r->HasError());
+      int64_t orphan_count = r->GetValue(0, 0).GetValue<int64_t>();
+      assert(orphan_count == 0 && "fpmm_trade references non-existent fpmm");
+    }
+
+    if (has_fpmm_funding) {
+      auto r = write_conn_->Query(R"(
+        SELECT COUNT(*) FROM fpmm_funding ff
+        WHERE NOT EXISTS (SELECT 1 FROM fpmm f WHERE f.fpmm_addr = ff.fpmm_addr)
+      )");
+      assert(!r->HasError());
+      int64_t orphan_count = r->GetValue(0, 0).GetValue<int64_t>();
+      assert(orphan_count == 0 && "fpmm_funding references non-existent fpmm");
     }
 
     for (const auto &sql : extra_sqls) {

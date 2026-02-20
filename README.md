@@ -530,13 +530,30 @@ NegRisk转换: M 个 NO tokens burn → (M-1) Wrapped Collateral (利用互斥�
 | token_amount  | BIGINT     | FPMMBuy/Sell | Buy: outcomeTokensBought; Sell: outcomeTokensSold |
 | fee           | BIGINT     | FPMMBuy/Sell | $.feeAmount (6 decimals)                          |
 
+**数据库校验**: 每batch插入后SQL校验`fpmm_trade.fpmm_addr`必须存在于`fpmm`表，否则abort。
+
+### fpmm_funding (FPMM流动性变化)
+
+| column       | 类型       | 来源              | 处理                                     |
+| ------------ | ---------- | ----------------- | ---------------------------------------- |
+| block_number | BIGINT PK  | log               |                                          |
+| log_index    | INTEGER PK | log               |                                          |
+| fpmm_addr    | BLOB(20)   | log.address       | 发出事件的FPMM合约地址                   |
+| funder       | BLOB(20)   | FundingAdded/Removed | LP地址                                |
+| side         | INTEGER    | 事件类型          | 1=Added, 2=Removed                       |
+| amount0      | BIGINT     | amountsAdded/Removed | outcome0 (YES) token数量             |
+| amount1      | BIGINT     | amountsAdded/Removed | outcome1 (NO) token数量              |
+| shares       | BIGINT     | sharesMinted/Burnt | LP份额变化                              |
+
+**数据库校验**: 每batch插入后SQL校验`fpmm_funding.fpmm_addr`必须存在于`fpmm`表，否则abort。
+
 ### transfer
 
-**过滤** (只保留用户直接转账):
+**过滤** (Stage1只做前两条，第三条查询时SQL过滤):
 
 - `from != 0x0 AND to != 0x0` (跳过mint/burn)
 - `operator NOT IN (CTFExchange, NegRiskCTFExchange, NegRiskAdapter)` (跳过合约操作，已被order_filled/split/merge/convert覆盖)
-- `operator NOT IN (SELECT fpmm_addr FROM fpmm)` (跳过FPMM合约，已被fpmm_trade覆盖)
+- `operator NOT IN (SELECT fpmm_addr FROM fpmm)` (跳过FPMM合约，已被fpmm_trade/fpmm_funding覆盖)
 
 | column       | 类型      | 来源     | 处理                                        |
 | ------------ | --------- | -------- | ------------------------------------------- |

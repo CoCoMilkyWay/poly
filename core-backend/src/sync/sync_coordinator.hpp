@@ -5,6 +5,7 @@
 #include <deque>
 #include <iostream>
 #include <memory>
+#include <optional>
 #include <vector>
 
 #include <boost/asio.hpp>
@@ -111,13 +112,19 @@ private:
         topics::ORDER_FILLED, topics::TOKEN_REGISTERED};
     static const std::vector<std::string> nra_topics = {
         topics::MARKET_PREPARED, topics::QUESTION_PREPARED, topics::POSITIONS_CONVERTED};
+    static const std::vector<std::string> fpmm_factory_topics = {topics::FPMM_CREATION};
+    static const std::vector<std::string> fpmm_topics = {
+        topics::FPMM_BUY, topics::FPMM_SELL,
+        topics::FPMM_FUNDING_ADDED, topics::FPMM_FUNDING_REMOVED};
 
     std::vector<json> results;
     try {
-      results = rpc_.eth_getLogs_batch({{contracts::CONDITIONAL_TOKENS, from_block, to_block, ct_topics},
-                                        {contracts::CTF_EXCHANGE, from_block, to_block, ex_topics},
-                                        {contracts::NEG_RISK_CTF_EXCHANGE, from_block, to_block, ex_topics},
-                                        {contracts::NEG_RISK_ADAPTER, from_block, to_block, nra_topics}});
+      results = rpc_.eth_getLogs_batch({{std::string(contracts::CONDITIONAL_TOKENS), from_block, to_block, ct_topics},
+                                        {std::string(contracts::CTF_EXCHANGE), from_block, to_block, ex_topics},
+                                        {std::string(contracts::NEG_RISK_CTF_EXCHANGE), from_block, to_block, ex_topics},
+                                        {std::string(contracts::NEG_RISK_ADAPTER), from_block, to_block, nra_topics},
+                                        {std::string(contracts::FPMM_FACTORY), from_block, to_block, fpmm_factory_topics},
+                                        {std::nullopt, from_block, to_block, fpmm_topics}});
     } catch (const std::exception &e) {
       int64_t reduced = std::max(current_batch_size_ / 2, (int64_t)1);
       std::cerr << "[Sync] eth_getLogs 失败: " << e.what()
@@ -176,6 +183,15 @@ private:
     batches.emplace_back("neg_risk_question",
                          "question_id, market_id, question_index, data",
                          std::move(events.neg_risk_question));
+    batches.emplace_back("fpmm",
+                         "fpmm_addr, condition_id, fee, block_number",
+                         std::move(events.fpmm));
+    batches.emplace_back("fpmm_trade",
+                         "block_number, log_index, fpmm_addr, trader, side, outcome_index, usdc_amount, token_amount, fee",
+                         std::move(events.fpmm_trade));
+    batches.emplace_back("fpmm_funding",
+                         "block_number, log_index, fpmm_addr, funder, side, amount0, amount1, shares",
+                         std::move(events.fpmm_funding));
 
     std::vector<std::string> resolution_sqls;
     for (const auto &val : events.condition_resolution) {

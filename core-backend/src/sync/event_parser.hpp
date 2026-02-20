@@ -14,6 +14,7 @@ constexpr const char *CONDITIONAL_TOKENS = "0x4d97dcd97ec945f40cf65f87097ace5ea0
 constexpr const char *CTF_EXCHANGE = "0x4bfb41d5b3570defd03c39a9a4d8de6bd8b8982e";
 constexpr const char *NEG_RISK_CTF_EXCHANGE = "0xc5d563a36ae78145c45a50134d48a1215220f80a";
 constexpr const char *NEG_RISK_ADAPTER = "0xd91e80cf2e7be2e162c6513ced06f1dd0da35296";
+constexpr const char *FPMM_FACTORY = "0x8b9805a2f595b6705e74f7310829f2d299d21522";
 } // namespace contracts
 
 namespace topics {
@@ -31,6 +32,11 @@ constexpr const char *MARKET_PREPARED = "0xf059ab16d1ca60e123eab60e3c02b68faf060
 constexpr const char *QUESTION_PREPARED = "0xaac410f87d423a922a7b226ac68f0c2eaf5bf6d15e644ac0758c7f96e2c253f7";
 constexpr const char *OUTCOME_REPORTED = "0x9e9fa7fd355160bd4cd3f22d4333519354beff1f5689bde87f2c5e63d8d484b2";
 constexpr const char *POSITIONS_CONVERTED = "0xb03d19dddbc72a87e735ff0ea3b57bef133ebe44e1894284916a84044deb367e";
+constexpr const char *FPMM_CREATION = "0x92e0912d3d7f3192cad5c7ae3b47fb97f9c465c1dd12a5c24fd901ddb3905f43";
+constexpr const char *FPMM_BUY = "0x4f62630f51608fc8a7603a9391a5101e58bd7c276139366fc107dc3b67c3dcf8";
+constexpr const char *FPMM_SELL = "0xadcf2a240ed9300d681d9a3f5382b6c1beed1b7e46643e0c7b42cbe6e2d766b4";
+constexpr const char *FPMM_FUNDING_ADDED = "0xec2dc3e5a3bb9aa0a1deb905d2bd23640d07f107e6ceb484024501aad964a951";
+constexpr const char *FPMM_FUNDING_REMOVED = "0x8b4b2c8ebd04c47fc8bce136a85df9b93fcb1f47c8aa296457d4391519d190e7";
 } // namespace topics
 
 struct ParsedEvents {
@@ -45,6 +51,9 @@ struct ParsedEvents {
   std::vector<std::string> condition_resolution;
   std::vector<std::string> neg_risk_market;
   std::vector<std::string> neg_risk_question;
+  std::vector<std::string> fpmm;
+  std::vector<std::string> fpmm_trade;
+  std::vector<std::string> fpmm_funding;
 };
 
 class EventParser {
@@ -119,6 +128,10 @@ private:
       parse_exchange_event(topic0, topics_arr, data, block_number, log_index, "NegRisk", events);
     } else if (address == contracts::NEG_RISK_ADAPTER) {
       parse_neg_risk_adapter_event(topic0, topics_arr, data, block_number, log_index, events);
+    } else if (address == contracts::FPMM_FACTORY) {
+      parse_fpmm_factory_event(topic0, topics_arr, data, block_number, log_index, events);
+    } else {
+      parse_fpmm_event(topic0, address, topics_arr, data, block_number, log_index, events);
     }
   }
 
@@ -437,5 +450,75 @@ private:
       ss << ", " << sql_blob(question_data);
     }
     events.neg_risk_question.push_back(ss.str());
+  }
+
+  static void parse_fpmm_factory_event(const std::string &topic0, const json &topics,
+                                       const std::string &data, int64_t block_number,
+                                       int64_t log_index, ParsedEvents &events) {
+    if (topic0 != topics::FPMM_CREATION)
+      return;
+
+    std::string fpmm_addr = extract_address_from_topic("0x" + data.substr(2, 64));
+    int64_t cond_ids_offset = extract_uint256_from_data(data, 1);
+    int64_t cond_ids_len = extract_uint256_from_data(data, cond_ids_offset / 32);
+    assert(cond_ids_len >= 1);
+    std::string condition_id = extract_bytes32_from_data(data, cond_ids_offset / 32 + 1);
+    int64_t fee = extract_uint256_from_data(data, 2);
+
+    std::ostringstream ss;
+    ss << sql_blob(fpmm_addr) << ", " << sql_blob(condition_id) << ", " << fee << ", " << block_number;
+    events.fpmm.push_back(ss.str());
+  }
+
+  static void parse_fpmm_event(const std::string &topic0, const std::string &fpmm_addr,
+                               const json &topics, const std::string &data,
+                               int64_t block_number, int64_t log_index, ParsedEvents &events) {
+    if (topic0 == topics::FPMM_BUY) {
+      std::string buyer = extract_address_from_topic(topics[1].get<std::string>());
+      int64_t outcome_index = hex_to_int64(topics[2].get<std::string>());
+      int64_t investment = extract_uint256_from_data(data, 0);
+      int64_t fee = extract_uint256_from_data(data, 1);
+      int64_t tokens_bought = extract_uint256_from_data(data, 2);
+
+      std::ostringstream ss;
+      ss << block_number << ", " << log_index << ", " << sql_blob(fpmm_addr) << ", "
+         << sql_blob(buyer) << ", 1, " << outcome_index << ", "
+         << investment << ", " << tokens_bought << ", " << fee;
+      events.fpmm_trade.push_back(ss.str());
+    } else if (topic0 == topics::FPMM_SELL) {
+      std::string seller = extract_address_from_topic(topics[1].get<std::string>());
+      int64_t outcome_index = hex_to_int64(topics[2].get<std::string>());
+      int64_t return_amount = extract_uint256_from_data(data, 0);
+      int64_t fee = extract_uint256_from_data(data, 1);
+      int64_t tokens_sold = extract_uint256_from_data(data, 2);
+
+      std::ostringstream ss;
+      ss << block_number << ", " << log_index << ", " << sql_blob(fpmm_addr) << ", "
+         << sql_blob(seller) << ", 2, " << outcome_index << ", "
+         << return_amount << ", " << tokens_sold << ", " << fee;
+      events.fpmm_trade.push_back(ss.str());
+    } else if (topic0 == topics::FPMM_FUNDING_ADDED) {
+      std::string funder = extract_address_from_topic(topics[1].get<std::string>());
+      int64_t amounts_offset = extract_uint256_from_data(data, 0);
+      int64_t shares_minted = extract_uint256_from_data(data, 1);
+      int64_t amount0 = extract_uint256_from_data(data, amounts_offset / 32 + 1);
+      int64_t amount1 = extract_uint256_from_data(data, amounts_offset / 32 + 2);
+
+      std::ostringstream ss;
+      ss << block_number << ", " << log_index << ", " << sql_blob(fpmm_addr) << ", "
+         << sql_blob(funder) << ", 1, " << amount0 << ", " << amount1 << ", " << shares_minted;
+      events.fpmm_funding.push_back(ss.str());
+    } else if (topic0 == topics::FPMM_FUNDING_REMOVED) {
+      std::string funder = extract_address_from_topic(topics[1].get<std::string>());
+      int64_t amounts_offset = extract_uint256_from_data(data, 0);
+      int64_t shares_burnt = extract_uint256_from_data(data, 2);
+      int64_t amount0 = extract_uint256_from_data(data, amounts_offset / 32 + 1);
+      int64_t amount1 = extract_uint256_from_data(data, amounts_offset / 32 + 2);
+
+      std::ostringstream ss;
+      ss << block_number << ", " << log_index << ", " << sql_blob(fpmm_addr) << ", "
+         << sql_blob(funder) << ", 2, " << amount0 << ", " << amount1 << ", " << shares_burnt;
+      events.fpmm_funding.push_back(ss.str());
+    }
   }
 };

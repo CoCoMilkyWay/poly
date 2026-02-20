@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <nlohmann/json.hpp>
+#include <optional>
 #include <stdexcept>
 #include <string>
 
@@ -41,14 +42,17 @@ public:
   }
 
   std::vector<json> eth_getLogs_batch(
-      const std::vector<std::tuple<std::string, int64_t, int64_t, std::vector<std::string>>> &queries) {
+      const std::vector<std::tuple<std::optional<std::string>, int64_t, int64_t, std::vector<std::string>>> &queries) {
     json batch = json::array();
 
     for (const auto &[address, from_block, to_block, topic0_list] : queries) {
       json filter = {
-          {"address", address},
           {"fromBlock", to_hex(from_block)},
           {"toBlock", to_hex(to_block)}};
+
+      if (address.has_value()) {
+        filter["address"] = address.value();
+      }
 
       if (!topic0_list.empty()) {
         filter["topics"] = json::array({topic0_list});

@@ -508,6 +508,38 @@
         ["indexSet", "uint256", "indexed", "bitmap: 哪些NO被转换"],
         ["amount", "uint256", "", "每个position的数量"],
       ],
+      FPMMCreation: [
+        ["fixedProductMarketMaker", "address", "", "FPMM合约地址"],
+        ["conditionalTokens", "address", "", "CT合约"],
+        ["collateralToken", "address", "", "抵押品(USDC)"],
+        ["conditionIds", "bytes32[]", "", "条件ID数组"],
+        ["fee", "uint256", "", "手续费率"],
+      ],
+      FPMMFundingAdded: [
+        ["funder", "address", "indexed", "LP地址"],
+        ["amountsAdded", "uint256[]", "", "各outcome添加的token数量"],
+        ["sharesMinted", "uint256", "", "铸造的LP份额"],
+      ],
+      FPMMFundingRemoved: [
+        ["funder", "address", "indexed", "LP地址"],
+        ["amountsRemoved", "uint256[]", "", "各outcome移除的token量"],
+        ["collateralRemovedFromFeePool", "uint256", "", "从手续费池取出的USDC"],
+        ["sharesBurnt", "uint256", "", "销毁的LP份额"],
+      ],
+      FPMMBuy: [
+        ["buyer", "address", "indexed", "买入者"],
+        ["outcomeIndex", "uint256", "indexed", "0=YES, 1=NO"],
+        ["investmentAmount", "uint256", "", "投入USDC数量"],
+        ["feeAmount", "uint256", "", "手续费"],
+        ["outcomeTokensBought", "uint256", "", "获得token数量"],
+      ],
+      FPMMSell: [
+        ["seller", "address", "indexed", "卖出者"],
+        ["outcomeIndex", "uint256", "indexed", "0=YES, 1=NO"],
+        ["returnAmount", "uint256", "", "获得USDC数量"],
+        ["feeAmount", "uint256", "", "手续费"],
+        ["outcomeTokensSold", "uint256", "", "卖出token数量"],
+      ],
     };
 
     const CONTRACTS = [
@@ -638,6 +670,50 @@
             topic:
               "0xb03d19dddbc72a87e735ff0ea3b57bef133ebe44e1894284916a84044deb367e",
             tables: ["convert"],
+          },
+        ],
+      },
+      {
+        name: "FPMMFactory",
+        addr: "0x8b9805a2f595b6705e74f7310829f2d299d21522",
+        start: 4027499,
+        events: [
+          {
+            name: "FPMMCreation",
+            topic:
+              "0x92e0912d3d7f3192cad5c7ae3b47fb97f9c465c1dd12a5c24fd901ddb3905f43",
+            tables: ["fpmm"],
+          },
+        ],
+      },
+      {
+        name: "FPMM (Dynamic)",
+        addr: "topic-only",
+        start: 4027499,
+        events: [
+          {
+            name: "FPMMBuy",
+            topic:
+              "0x4f62630f51608fc8a7603a9391a5101e58bd7c276139366fc107dc3b67c3dcf8",
+            tables: ["fpmm_trade"],
+          },
+          {
+            name: "FPMMSell",
+            topic:
+              "0xadcf2a240ed9300d681d9a3f5382b6c1beed1b7e46643e0c7b42cbe6e2d766b4",
+            tables: ["fpmm_trade"],
+          },
+          {
+            name: "FPMMFundingAdded",
+            topic:
+              "0xec2dc3e5a3bb9aa0a1deb905d2bd23640d07f107e6ceb484024501aad964a951",
+            tables: ["fpmm_funding"],
+          },
+          {
+            name: "FPMMFundingRemoved",
+            topic:
+              "0x8b4b2c8ebd04c47fc8bce136a85df9b93fcb1f47c8aa296457d4391519d190e7",
+            tables: ["fpmm_funding"],
           },
         ],
       },
