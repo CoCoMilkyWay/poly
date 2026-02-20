@@ -432,7 +432,9 @@ NegRisk转换: M 个 NO tokens burn → (M-1) Wrapped Collateral (利用互斥�
 
 ### transfer
 
-**过滤**: `from != 0x0 AND to != 0x0` (跳过mint/burn，已被split/merge/redemption/convert覆盖)
+**过滤** (只保留用户直接转账):
+- `from != 0x0 AND to != 0x0` (跳过mint/burn)
+- `operator NOT IN (CTFExchange, NegRiskCTFExchange, NegRiskAdapter)` (跳过合约操作，已被order_filled/split/merge/convert覆盖)
 
 | column       | 类型       | 来源     | 处理                              |
 | ------------ | ---------- | -------- | --------------------------------- |
@@ -451,7 +453,7 @@ NegRisk转换: M 个 NO tokens burn → (M-1) Wrapped Collateral (利用互斥�
 | token_id     | BLOB(32) PK | TokenRegistered | token0 或 token1                                |
 | condition_id | BLOB(32)    | TokenRegistered | $.conditionId                                   |
 | exchange     | TEXT        | log.address     | "CTF" \| "NegRisk"                              |
-| is_yes       | INTEGER     | 计算            | token0 < token1 时: token0=YES(1), token1=NO(0) |
+| is_yes       | INTEGER     | 计算            | 仅处理 token0 < token1 的行 → token0=YES(1), token1=NO(0) |
 
 ### condition
 
