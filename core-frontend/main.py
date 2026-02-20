@@ -51,11 +51,14 @@ async def api_export_all():
     results = []
 
     for table_name in export_tables:
+        col_query = f"SELECT column_name FROM information_schema.columns WHERE table_name = '{table_name}' ORDER BY ordinal_position"
+        cols_result = await backend_get("/api/query", {"q": col_query})
+        headers = [c["column_name"] for c in cols_result]
+
         query = f"SELECT * FROM {table_name} LIMIT 1000"
         rows = await backend_get("/api/query", {"q": query})
 
         if rows:
-            headers = list(rows[0].keys())
             lines = [",".join(headers)]
             for row in rows:
                 vals = []
