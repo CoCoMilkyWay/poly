@@ -165,14 +165,14 @@ def render(cur_block, head, now):
         ("NegRiskAdapter", "PositionsConverted"),
         ("NegRiskAdapter", "OutcomeReported"),
     ]
-    year_hdrs = "".join(f"{y:>10}" for y in YEARS)
+    year_hdrs = "".join(f"{y:>11}" for y in YEARS)
     lines.append(f"  {'合约':<18}  {'事件':<20}  {'总计':>12}  {'首block':>12}  {'末block':>12}{year_hdrs}")
-    lines.append("  " + "-" * (18+2+20+2+12+2+12+2+12 + len(YEARS)*10))
+    lines.append("  " + "-" * (18+2+20+2+12+2+12+2+12 + len(YEARS)*11))
     for key in order:
         cnt = counts.get(key, 0)
         fb = f"{first_blk[key]:>12,}" if key in first_blk else "-".center(12)
         lb = f"{last_blk[key]:>12,}" if key in last_blk else "-".center(12)
-        ycols = "".join(f"{yearly.get((key[0], key[1], y), 0):>10,}" for y in YEARS)
+        ycols = "".join(f"{yearly.get((key[0], key[1], y), 0):>11,}" for y in YEARS)
         lines.append(f"  {key[0]:<18}  {key[1]:<20}  {cnt:>12,}  {fb}  {lb}{ycols}")
 
     for line in lines:

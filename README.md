@@ -18,16 +18,32 @@ polygon链上polymarket协议合约节点本身的实现: /home/chuyin/work/poly
 
 ## 新架构
 
-| 目标             | 能知道                             | 不能知道                                       | TransferSingle | TransferBatch | OrderFilled | PositionSplit | PositionsMerge | PayoutRedemption | PositionsConverted |
-| ---------------- | ---------------------------------- | ---------------------------------------------- | :------------: | :-----------: | :---------: | :-----------: | :------------: | :--------------: | :----------------: |
-| **历史持仓**     | 准确 token 余额                    | 成本价                                         |       ✓        |       ✓       |             |               |                |                  |                    |
-| **历史交易/PnL** | USDC 流水(完整)；成交价；已实现PnL | 准确 token 持仓(漏直接转账)；未实现PnL(无市价) |                |               |      ✓      |       ✓       |       ✓        |        ✓         |         ✓          |
-| **历史净值**     | 准确 token 持仓；USDC 净流水       | 实时市价(只有成交价, 需近似)                   |       ✓        |       ✓       |      ✓      |       ✓       |       ✓        |        ✓         |         ✓          |
+| 事件                 |               历史Token持仓                |                  历史Token交易                   |                   历史Token净值/PnL                   |
+| -------------------- | :----------------------------------------: | :----------------------------------------------: | :---------------------------------------------------: |
+| **能知道**           | Token协议流水; Token账户流水; USDC协议流水 |       Token协议流水; USDC协议流水; 成交价        | Token协议流水; Token账户流水; USDC协议流水; Token PnL |
+| **不能知道**         | USDC钱包流水; 成交价; Token PnL; 实时市价  | Token账户流水; USDC钱包流水; Token PnL; 实时市价 |                USDC钱包流水; 实时市价                 |
+| TransferSingle       |                     ✓                      |                                                  |                           ✓                           |
+| TransferBatch        |                     ✓                      |                                                  |                           ✓                           |
+| OrderFilled          |                                            |                        ✓                         |                           ✓                           |
+| OrdersMatched        |                                            |                                                  |                                                       |
+| TokenRegistered      |                                            |                                                  |                                                       |
+| PositionSplit        |                                            |                        ✓                         |                           ✓                           |
+| PositionsMerge       |                                            |                        ✓                         |                           ✓                           |
+| PayoutRedemption     |                                            |                        ✓                         |                           ✓                           |
+| PositionsConverted   |                                            |                        ✓                         |                           ✓                           |
+| ConditionPreparation |                                            |                                                  |                                                       |
+| ConditionResolution  |                                            |                                                  |                                                       |
+| MarketPrepared       |                                            |                                                  |                                                       |
+| QuestionPrepared     |                                            |                                                  |                                                       |
+| OutcomeReported      |                                            |                                                  |                                                       |
 
-- **Transfer 事件**: 追踪 ERC1155 position token, 不追踪 USDC (ERC20)
-- **USDC 流水完整**: 所有 USDC 进出都经过协议（买卖/铸造/销毁/赎回/转换）
-- **token 流水不完整**: 用户间 `safeTransferFrom` 直接转账不经过协议, 只触发 Transfer 事件
-- **成交价 ≠ 市价**: 只有历史成交价, 没有实时 bid/ask 报价
+- **Token 持仓** = Token 协议流水(可追踪) + Token 账户流水(可追踪)
+- **USDC 持仓** = USDC 协议流水(可追踪) + USDC 钱包流水（USDC ERC20 Transfer）(此项目未追踪)
+- **Token 协议流水**: Split/Merge/Redemption/Convert 中的 token 变动
+- **Token 账户流水**: ERC1155 Transfer（含用户间直接转账）
+- **USDC 协议流水**: OrderFilled/Split/Merge/Redemption 中的 USDC 变动
+- **USDC 钱包流水**: USDC ERC20 Transfer（充值/提现，未追踪）
+- **成交价 ≠ 市价**: 只有历史成交价，没有实时 bid/ask 报价
 
 **Split/Merge/Convert/Redemption 使用场景**:
 
@@ -70,7 +86,7 @@ Round 2: raw_log → 最终表 (纯SQL转换, ~2min)
 
 **Collateral**:
 
-- FiatToken V2.2 (Circle): Native USDC: **polymarket协议不使用**: 0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359 (2023年10月推出, Circle 原生发行)
+- FiatToken V2.2 (Circle): Native USDC: **polymarket协议不使用**: `0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359` (2023年10月推出, Circle 原生发行)
 - Polygon PoS Bridge: 普通市场 (CTFExchange): USDC.e(Bridged) (`0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174`) (2020年9月推出, 从以太坊桥接)
 - NegRiskAdapter (Polymarket): Wrapped Collateral (`0x3a3bd7bb9528e159577f7c2e685cc81a765002e2`) - 1:1 包装的 USDC.e (为了支持Convert操作, 原生 CTF 里做不到, 需要wrap一下)
 
@@ -180,7 +196,7 @@ TransferSingle + TransferBatch 覆盖**所有**持仓变化, 不会重合:
 
 | 字段         | 类型    | indexed | 说明                                                                                                                                                        |
 | ------------ | ------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| operator     | address | yes     | 执行操作的地址。**合约**: CTFExchange(交易撮合)/NegRiskAdapter(Split/Merge/Convert)/NegRiskCTFExchange(NegRisk交易)；**用户**: 直接调用safeTransferFrom转账 |
+| operator     | address | yes     | 执行操作的地址。**合约**: CTFExchange(交易撮合)/NegRiskAdapter(Split/Merge/Convert)/NegRiskCTFExchange(NegRisk交易); **用户**: 直接调用safeTransferFrom转账 |
 | from         | address | yes     | 发送方。**0x0=mint**                                                                                                                                        |
 | to           | address | yes     | 接收方。**0x0=burn**                                                                                                                                        |
 | id           | uint256 | no      | positionId (ERC1155 tokenId), 256位整数, 由 keccak256(collateralToken, collectionId) 计算                                                                   |
