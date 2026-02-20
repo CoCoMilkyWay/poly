@@ -3,7 +3,7 @@
   "api_port": 8001,
   "frontend_port": 8000,
   "sync_interval_seconds": 30,
-  "initial_block": 50000000,
+  "initial_block": 0,
   "active_rpc": "Erigon",
   "rpc_nodes": [
     {
