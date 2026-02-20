@@ -344,6 +344,20 @@
       <div class="sync-stat-label">Speed</div>
       <div class="sync-stat-value" id="sync-speed">-</div>
     </div>
+    <div class="sync-stat" style="flex: 1; min-width: 160px">
+      <div class="sync-stat-label">RPC Node</div>
+      <div
+        class="sync-stat-value"
+        style="font-size: 0.85em"
+        title="{{ rpc_node.url }}"
+      >
+        {{ rpc_node.name }}
+        <span style="color: #555; font-size: 0.8em"
+          >{{ rpc_node.url[:40] }}{% if rpc_node.url|length > 40 %}…{% endif
+          %}</span
+        >
+      </div>
+    </div>
   </div>
 
   <div class="progress-container">
@@ -737,18 +751,23 @@
       if (tableSchemaCache[tableName]) return tableSchemaCache[tableName];
       try {
         const [colsResp, rowsResp] = await Promise.all([
-          fetch(`/api/query?q=${encodeURIComponent(`SELECT column_name FROM information_schema.columns WHERE table_name = '${tableName}' ORDER BY ordinal_position`)}`),
-          fetch(`/api/query?q=${encodeURIComponent(`SELECT * FROM "${tableName}" LIMIT 1`)}`),
+          fetch(
+            `/api/query?q=${encodeURIComponent(`SELECT column_name FROM information_schema.columns WHERE table_name = '${tableName}' ORDER BY ordinal_position`)}`,
+          ),
+          fetch(
+            `/api/query?q=${encodeURIComponent(`SELECT * FROM "${tableName}" LIMIT 1`)}`,
+          ),
         ]);
         const cols = await colsResp.json();
         const rows = await rowsResp.json();
         if (Array.isArray(rows) && rows.length > 0) {
           const row = rows[0];
-          const headers = cols.map(c => c.column_name);
-          let text = '';
+          const headers = cols.map((c) => c.column_name);
+          let text = "";
           for (const k of headers) {
             let val = row[k];
-            if (typeof val === 'string' && val.length > 50) val = val.slice(0, 50) + '...';
+            if (typeof val === "string" && val.length > 50)
+              val = val.slice(0, 50) + "...";
             text += `<span class="field">${k}</span>: ${val}\n`;
           }
           tableSchemaCache[tableName] = text;

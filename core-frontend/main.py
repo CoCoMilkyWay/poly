@@ -1,8 +1,13 @@
+import json
 from backend_api import backend_get
 from fastapi import FastAPI, Query, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
+
+_cfg = json.loads((Path(__file__).parent.parent / "config.json").read_text())
+_nodes = {n["name"]: n for n in _cfg["rpc_nodes"]}
+ACTIVE_RPC_NODE = _nodes[_cfg["active_rpc"]]
 
 app = FastAPI(title="Polymarket Explorer")
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
@@ -16,6 +21,7 @@ async def index(request: Request):
         "request": request,
         "tables": tables,
         "sync_state": sync_state,
+        "rpc_node": ACTIVE_RPC_NODE,
     })
 
 

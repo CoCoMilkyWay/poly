@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
   Config config = Config::load(config_path);
 
   std::cout << "[Main] DB Path: " << config.db_path << std::endl;
-  std::cout << "[Main] RPC URL: " << config.rpc_url << std::endl;
+  std::cout << "[Main] RPC Node: " << config.rpc_name << " (" << config.rpc_url << ")" << std::endl;
   std::cout << "[Main] API Port: " << config.api_port << std::endl;
   std::cout << "[Main] Sync Batch: " << config.sync_batch_size << " blocks" << std::endl;
   std::cout << "[Main] Sync Interval: " << config.sync_interval_seconds << "s" << std::endl;

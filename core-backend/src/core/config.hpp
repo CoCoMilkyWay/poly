@@ -9,6 +9,7 @@ using json = nlohmann::json;
 
 struct Config {
   std::string db_path;
+  std::string rpc_name;
   std::string rpc_url;
   std::string rpc_api_key;
   int api_port;
@@ -31,13 +32,23 @@ struct Config {
 
     Config config;
     config.db_path = require("db_path").get<std::string>();
-    config.rpc_url = require("rpc_url").get<std::string>();
-    config.rpc_api_key = require("rpc_api_key").get<std::string>();
     config.api_port = require("api_port").get<int>();
     config.frontend_port = require("frontend_port").get<int>();
     config.sync_batch_size = require("sync_batch_size").get<int>();
     config.sync_interval_seconds = require("sync_interval_seconds").get<int>();
     config.initial_block = require("initial_block").get<int64_t>();
+
+    std::string active = require("active_rpc").get<std::string>();
+    const auto &nodes = require("rpc_nodes");
+    for (const auto &node : nodes) {
+      if (node["name"].get<std::string>() == active) {
+        config.rpc_name = node["name"].get<std::string>();
+        config.rpc_url  = node["url"].get<std::string>();
+        config.rpc_api_key = node.value("key", "");
+        break;
+      }
+    }
+    assert(!config.rpc_url.empty() && "active_rpc 在 rpc_nodes 中未找到");
 
     return config;
   }
