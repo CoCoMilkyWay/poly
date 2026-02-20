@@ -70,6 +70,7 @@
       </header>
 
       {% include 'components/sync_status.html' %}
+      {% include 'components/contract_status.html' %}
     </div>
 
     <script>
@@ -88,6 +89,8 @@
 
           updateSyncStatus(sync);
           updateTables(tables);
+          if (window.updateContractSync) updateContractSync(sync);
+          if (window.updateContractTables) updateContractTables(tables);
         } catch (e) {
           console.error("Refresh failed:", e);
         }

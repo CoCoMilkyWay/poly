@@ -64,7 +64,6 @@ def main():
     backend = subprocess.Popen(
         [str(BACKEND_EXE), "--config", str(CONFIG_FILE)],
         cwd=ROOT,
-        start_new_session=True,
     )
 
     print("[run.py] 启动 frontend...")
@@ -72,7 +71,6 @@ def main():
         [sys.executable, "-m", "uvicorn", "main:app", "--host",
             "0.0.0.0", "--port", str(FRONTEND_PORT), "--log-level", "warning"],
         cwd=FRONTEND_DIR,
-        start_new_session=True,
     )
 
     try:
@@ -90,7 +88,9 @@ def main():
         print("[run.py] 正在关闭...")
         for proc in [backend, frontend]:
             if proc.poll() is None:
-                os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+                proc.terminate()
+        for proc in [backend, frontend]:
+            proc.wait(timeout=10)
         print("[run.py] 已退出")
 
 

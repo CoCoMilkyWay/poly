@@ -1,3 +1,4 @@
+#include <csignal>
 #include <cstring>
 #include <iostream>
 #include <string>
@@ -53,11 +54,19 @@ int main(int argc, char *argv[]) {
   boost::asio::io_context api_ioc;
   ApiServer api_server(api_ioc, db, config.api_port, sync_getter);
 
+  boost::asio::signal_set signals(api_ioc, SIGINT, SIGTERM);
+  signals.async_wait([&](const boost::system::error_code &, int sig) {
+    std::cout << "\n[Main] 正在关闭..." << std::endl;
+    api_ioc.stop();
+  });
+
   std::cout << "[Main] 服务已启动" << std::endl;
   api_ioc.run();
 
+  std::cout << "[Main] 正在停止同步..." << std::endl;
   sync_ioc.stop();
   sync_thread.join();
 
+  std::cout << "[Main] 已退出" << std::endl;
   return 0;
 }
