@@ -95,6 +95,7 @@ MAX_PER_EVENT = 1000
 # ── 合约地址 ──────────────────────────────────────────────────
 CONTRACTS = {
     "ConditionalTokens":   "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+    "FPMMFactory":         "0x8B9805A2f595B6705e74F7310829f2d299D21522",
     "CTFExchange":         "0x4bFb41d5B3570DeFd03C39a9A4D8dE6Bd8B8982E",
     "NegRiskCTFExchange":  "0xC5d563A36AE78145C45a50134d48A1215220f80a",
     "NegRiskAdapter":      "0xd91E80cF2E7be2e162c6513ceD06f1dD0dA35296",
@@ -110,6 +111,13 @@ TOPICS = {
     "PositionSplit":         "0x2e6bb91f8cbcda0c93623c54d0403a43514fabc40084ec96b6d5379a74786298",
     "PositionsMerge":        "0x6f13ca62553fcc2bcd2372180a43949c1e4cebba603901ede2f4e14f36b282ca",
     "PayoutRedemption":      "0x2682012a4a4f1973119f1c9b90745d1bd91fa2bab387344f044cb3586864d18d",
+    # FPMMFactory
+    "FPMMCreation":          "0x92e0912d3d7f3192cad5c7ae3b47fb97f9c465c1dd12a5c24fd901ddb3905f43",
+    # FPMM (动态合约, 不指定address, 用topic过滤)
+    "FPMMBuy":               "0x4f62630f51608fc8a7603a9391a5101e58bd7c276139366fc107dc3b67c3dcf8",
+    "FPMMSell":              "0xadcf2a240ed9300d681d9a3f5382b6c1beed1b7e46643e0c7b42cbe6e2d766b4",
+    "FPMMFundingAdded":      "0xec2dc3e5a3bb9aa0a1deb905d2bd23640d07f107e6ceb484024501aad964a951",
+    "FPMMFundingRemoved":    "0x8b4b2c8ebd04c47fc8bce136a85df9b93fcb1f47c8aa296457d4391519d190e7",
     # CTFExchange / NegRiskCTFExchange
     "OrderFilled":           "0xd0a08e8c493f9c94f29311604c9de1b4e8c8d4c06bd0c789af57f2d65bfec0f6",
     "OrdersMatched":         "0x63bf4d16b7fa898ef4c4b2b6d90fd201e9c56313b65638af6088d149d2ce956c",
@@ -183,6 +191,26 @@ CSV_FIELDS = {
     "OutcomeReported": [
         "block_number", "tx_hash", "log_index",
         "marketId", "questionId", "outcome"
+    ],
+    "FPMMCreation": [
+        "block_number", "tx_hash", "log_index",
+        "creator", "fpmm", "conditionalTokens", "collateralToken", "conditionIds", "fee"
+    ],
+    "FPMMBuy": [
+        "block_number", "tx_hash", "log_index", "fpmm",
+        "buyer", "investmentAmount", "feeAmount", "outcomeIndex", "outcomeTokensBought"
+    ],
+    "FPMMSell": [
+        "block_number", "tx_hash", "log_index", "fpmm",
+        "seller", "returnAmount", "feeAmount", "outcomeIndex", "outcomeTokensSold"
+    ],
+    "FPMMFundingAdded": [
+        "block_number", "tx_hash", "log_index", "fpmm",
+        "funder", "amountsAdded", "sharesMinted"
+    ],
+    "FPMMFundingRemoved": [
+        "block_number", "tx_hash", "log_index", "fpmm",
+        "funder", "amountsRemoved", "collateralRemovedFromFeePool", "sharesBurnt"
     ],
 }
 
@@ -377,6 +405,51 @@ def parse_log(log, exchange_name=None):
         row["questionId"] = decode_bytes32(topics[2])
         row["outcome"] = decode_uint(data[0:64]) != 0  # bool
 
+    elif event_name == "FPMMCreation":
+        row["creator"] = decode_address(topics[1])
+        row["conditionalTokens"] = decode_address(topics[2])
+        row["collateralToken"] = decode_address(topics[3])
+        row["fpmm"] = decode_address(data[0:64])
+        # conditionIds: 动态数组从 offset 64 开始
+        arr_offset = decode_uint(data[64:128])
+        arr_start = arr_offset * 2
+        length = decode_uint(data[arr_start:arr_start+64])
+        condition_ids = []
+        for i in range(length):
+            start = arr_start + 64 + i * 64
+            condition_ids.append(decode_bytes32(data[start:start+64]))
+        row["conditionIds"] = condition_ids
+        row["fee"] = decode_uint(data[128:192])
+
+    elif event_name == "FPMMBuy":
+        row["fpmm"] = log["address"]
+        row["buyer"] = decode_address(topics[1])
+        row["outcomeIndex"] = decode_uint(topics[2])
+        row["investmentAmount"] = decode_uint(data[0:64])
+        row["feeAmount"] = decode_uint(data[64:128])
+        row["outcomeTokensBought"] = decode_uint(data[128:192])
+
+    elif event_name == "FPMMSell":
+        row["fpmm"] = log["address"]
+        row["seller"] = decode_address(topics[1])
+        row["outcomeIndex"] = decode_uint(topics[2])
+        row["returnAmount"] = decode_uint(data[0:64])
+        row["feeAmount"] = decode_uint(data[64:128])
+        row["outcomeTokensSold"] = decode_uint(data[128:192])
+
+    elif event_name == "FPMMFundingAdded":
+        row["fpmm"] = log["address"]
+        row["funder"] = decode_address(topics[1])
+        row["amountsAdded"] = decode_uint_array(data, 0)
+        row["sharesMinted"] = decode_uint(data[64:128])
+
+    elif event_name == "FPMMFundingRemoved":
+        row["fpmm"] = log["address"]
+        row["funder"] = decode_address(topics[1])
+        row["amountsRemoved"] = decode_uint_array(data, 0)
+        row["collateralRemovedFromFeePool"] = decode_uint(data[64:128])
+        row["sharesBurnt"] = decode_uint(data[128:192])
+
     return event_name, row
 
 
@@ -420,6 +493,7 @@ def dump_node(node_name, rpc_url, chunk, output_dir, head, start_block, num_bloc
 
         display_order = [
             "TransferSingle", "TransferBatch",
+            "FPMMCreation", "FPMMBuy", "FPMMSell", "FPMMFundingAdded", "FPMMFundingRemoved",
             "OrderFilled", "OrdersMatched", "TokenRegistered",
             "PositionSplit", "PositionsMerge", "PayoutRedemption",
             "ConditionPreparation", "ConditionResolution",
@@ -450,6 +524,15 @@ def dump_node(node_name, rpc_url, chunk, output_dir, head, start_block, num_bloc
         TOPICS["PositionsMerge"],
         TOPICS["PayoutRedemption"],
     ]
+    fpmm_factory_topics = [
+        TOPICS["FPMMCreation"],
+    ]
+    fpmm_topics = [
+        TOPICS["FPMMBuy"],
+        TOPICS["FPMMSell"],
+        TOPICS["FPMMFundingAdded"],
+        TOPICS["FPMMFundingRemoved"],
+    ]
     ex_topics = [
         TOPICS["OrderFilled"],
         TOPICS["OrdersMatched"],
@@ -470,6 +553,10 @@ def dump_node(node_name, rpc_url, chunk, output_dir, head, start_block, num_bloc
             ("eth_getLogs", [{"fromBlock": hex(cur), "toBlock": hex(end),
                              "address": CONTRACTS["ConditionalTokens"], "topics": [ct_topics]}]),
             ("eth_getLogs", [{"fromBlock": hex(cur), "toBlock": hex(end),
+                             "address": CONTRACTS["FPMMFactory"], "topics": [fpmm_factory_topics]}]),
+            ("eth_getLogs", [{"fromBlock": hex(cur), "toBlock": hex(end),
+                             "topics": [fpmm_topics]}]),  # 不指定address, 扫描所有FPMM合约
+            ("eth_getLogs", [{"fromBlock": hex(cur), "toBlock": hex(end),
                              "address": CONTRACTS["CTFExchange"], "topics": [ex_topics]}]),
             ("eth_getLogs", [{"fromBlock": hex(cur), "toBlock": hex(end),
                              "address": CONTRACTS["NegRiskCTFExchange"], "topics": [ex_topics]}]),
@@ -478,9 +565,11 @@ def dump_node(node_name, rpc_url, chunk, output_dir, head, start_block, num_bloc
         ])
 
         all_logs.extend((log, None) for log in results[0])
-        all_logs.extend((log, "CTFExchange") for log in results[1])
-        all_logs.extend((log, "NegRiskCTFExchange") for log in results[2])
-        all_logs.extend((log, None) for log in results[3])
+        all_logs.extend((log, None) for log in results[1])
+        all_logs.extend((log, None) for log in results[2])
+        all_logs.extend((log, "CTFExchange") for log in results[3])
+        all_logs.extend((log, "NegRiskCTFExchange") for log in results[4])
+        all_logs.extend((log, None) for log in results[5])
 
         for log, exchange_name in all_logs:
             event_name, row = parse_log(log, exchange_name)
@@ -505,7 +594,7 @@ def dump_node(node_name, rpc_url, chunk, output_dir, head, start_block, num_bloc
 
 def main():
     # head = get_head()
-    head = 75_000_000
+    head = 16_000_000
     num_blocks = int(sys.argv[1]) if len(sys.argv) > 1 else 10000
     start_block = head - num_blocks
 

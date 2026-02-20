@@ -36,6 +36,9 @@ polygon链上polymarket协议合约节点本身的实现: /home/chuyin/work/poly
 | MarketPrepared       |                                            |                                                  |                                                       |  neg_risk  |
 | QuestionPrepared     |                                            |                                                  |                                                       |  neg_risk  |
 | OutcomeReported      |                                            |                                                  |                                                       |  neg_risk  |
+| FPMMCreation         |                                            |                                                  |                                                       |    fpmm    |
+| FPMMBuy              |                                            |                        ✓                         |                           ✓                           |            |
+| FPMMSell             |                                            |                        ✓                         |                           ✓                           |            |
 
 - **Token 持仓** = Token 协议流水(可追踪) + Token 账户流水(可追踪)
 - **USDC 持仓** = USDC 协议流水(可追踪) + USDC 钱包流水（USDC ERC20 Transfer）(此项目未追踪)
@@ -77,12 +80,13 @@ Stage 2: raw_log → 最终表 (纯SQL转换, ~2min)
 
 ## 合约
 
-| 合约               | 地址                                       | 起始区块   |
-| ------------------ | ------------------------------------------ | ---------- |
-| ConditionalTokens  | 0x4D97DCd97eC945f40cF65F87097ACe5EA0476045 | 4,027,499  |
-| CTFExchange        | 0x4bFb41d5B3570DeFd03C39a9A4D8dE6Bd8B8982E | 35,887,522 |
-| NegRiskCTFExchange | 0xC5d563A36AE78145C45a50134d48A1215220f80a | 51,405,773 |
-| NegRiskAdapter     | 0xd91E80cF2E7be2e162c6513ceD06f1dD0dA35296 | 50,748,168 |
+| 合约               | 地址                                       | 起始区块   | 备注                       |
+| ------------------ | ------------------------------------------ | ---------- | -------------------------- |
+| ConditionalTokens  | 0x4D97DCd97eC945f40cF65F87097ACe5EA0476045 | 4,027,499  | 核心token合约              |
+| FPMMFactory        | 0x8B9805A2f595B6705e74F7310829f2d299D21522 | 4,023,693  | 早期AMM, CTFExchange上线前 |
+| CTFExchange        | 0x4bFb41d5B3570DeFd03C39a9A4D8dE6Bd8B8982E | 35,887,522 | 订单簿交易所               |
+| NegRiskCTFExchange | 0xC5d563A36AE78145C45a50134d48A1215220f80a | 51,405,773 | NegRisk订单簿              |
+| NegRiskAdapter     | 0xd91E80cF2E7be2e162c6513ceD06f1dD0dA35296 | 50,748,168 | NegRisk市场管理            |
 
 **Collateral**:
 
@@ -355,6 +359,75 @@ NegRisk转换: M 个 NO tokens burn → (M-1) Wrapped Collateral (利用互斥�
 | block_number | uint64  | meta    | log.blockNumber                                                       |
 | log_index    | uint32  | meta    | log.logIndex                                                          |
 
+### FPMMFactory (早期AMM)
+
+| 事件                            | topic0                                        |
+| ------------------------------- | --------------------------------------------- |
+| FixedProductMarketMakerCreation | (从Factory合约发出, 每个市场部署一个FPMM合约) |
+
+**FixedProductMarketMakerCreation** (FPMMFactory发出)
+
+| 字段                    | 类型      | indexed | 说明                      |
+| ----------------------- | --------- | ------- | ------------------------- |
+| creator                 | address   | yes     | FPMM创建者                |
+| fixedProductMarketMaker | address   | no      | **新部署的FPMM合约地址**  |
+| conditionalTokens       | address   | yes     | ConditionalTokens合约地址 |
+| collateralToken         | address   | yes     | collateral地址 (USDC.e)   |
+| conditionIds            | bytes32[] | no      | 关联的conditionId数组     |
+| fee                     | uint256   | no      | 手续费率 (1e18 = 100%)    |
+
+### FPMM合约 (动态部署, 每市场一个)
+
+| 事件               | 说明                 |
+| ------------------ | -------------------- |
+| FPMMBuy            | 用户通过AMM买入token |
+| FPMMSell           | 用户通过AMM卖出token |
+| FPMMFundingAdded   | LP添加流动性         |
+| FPMMFundingRemoved | LP移除流动性         |
+
+**FPMMBuy** (FPMM合约发出)
+
+| 字段                | 类型    | indexed | 说明                                  |
+| ------------------- | ------- | ------- | ------------------------------------- |
+| buyer               | address | yes     | 买家地址                              |
+| investmentAmount    | uint256 | no      | 投入的USDC数量 (含手续费, 6 decimals) |
+| feeAmount           | uint256 | no      | 手续费 (6 decimals)                   |
+| outcomeIndex        | uint256 | yes     | 0=YES, 1=NO                           |
+| outcomeTokensBought | uint256 | no      | 获得的token数量 (6 decimals)          |
+
+**FPMMSell** (FPMM合约发出)
+
+| 字段              | 类型    | indexed | 说明                                    |
+| ----------------- | ------- | ------- | --------------------------------------- |
+| seller            | address | yes     | 卖家地址                                |
+| returnAmount      | uint256 | no      | 获得的USDC数量 (不含手续费, 6 decimals) |
+| feeAmount         | uint256 | no      | 手续费 (6 decimals)                     |
+| outcomeIndex      | uint256 | yes     | 0=YES, 1=NO                             |
+| outcomeTokensSold | uint256 | no      | 卖出的token数量 (6 decimals)            |
+
+**FPMMFundingAdded** (FPMM合约发出)
+
+| 字段         | 类型      | indexed | 说明                     |
+| ------------ | --------- | ------- | ------------------------ |
+| funder       | address   | yes     | LP地址                   |
+| amountsAdded | uint256[] | no      | 各outcome添加的token数量 |
+| sharesMinted | uint256   | no      | 铸造的LP份额             |
+
+**FPMMFundingRemoved** (FPMM合约发出)
+
+| 字段                         | 类型      | indexed | 说明                   |
+| ---------------------------- | --------- | ------- | ---------------------- |
+| funder                       | address   | yes     | LP地址                 |
+| amountsRemoved               | uint256[] | no      | 各outcome移除的token量 |
+| collateralRemovedFromFeePool | uint256   | no      | 从手续费池取出的USDC   |
+| sharesBurnt                  | uint256   | no      | 销毁的LP份额           |
+
+**FPMM内部机制**:
+
+- FPMMBuy: 用户USDC→FPMM内部split→`safeTransferFrom(FPMM, user, tokenId)`转token
+- FPMMSell: 用户`safeTransferFrom(user, FPMM, tokenId)`→FPMM内部merge→转USDC给用户
+- 这就是为什么TransferSingle里operator=FPMM地址的记录混入了transfer表
+
 ### ID 计算
 
 | ID                                                | 计算方式                                                   |
@@ -423,12 +496,36 @@ NegRisk转换: M 个 NO tokens burn → (M-1) Wrapped Collateral (利用互斥�
 | index_set    | BIGINT     | PositionsConverted | bitmap: 哪些NO被转换 |
 | amount       | BIGINT     | PositionsConverted | 每个position的数量   |
 
+### fpmm (FPMM合约映射表)
+
+| column       | 类型        | 来源                            | 处理                      |
+| ------------ | ----------- | ------------------------------- | ------------------------- |
+| fpmm_addr    | BLOB(20) PK | FixedProductMarketMakerCreation | $.fixedProductMarketMaker |
+| condition_id | BLOB(32)    | FixedProductMarketMakerCreation | $.conditionIds[0]         |
+| fee          | BIGINT      | FixedProductMarketMakerCreation | $.fee (1e18 scale)        |
+| block_number | BIGINT      | log                             |                           |
+
+### fpmm_trade (FPMM交易记录)
+
+| column        | 类型       | 来源         | 处理                                              |
+| ------------- | ---------- | ------------ | ------------------------------------------------- |
+| block_number  | BIGINT PK  | log          |                                                   |
+| log_index     | INTEGER PK | log          |                                                   |
+| fpmm_addr     | BLOB(20)   | log.address  | 发出事件的FPMM合约地址                            |
+| trader        | BLOB(20)   | FPMMBuy/Sell | $.buyer 或 $.seller                               |
+| side          | INTEGER    | 事件类型     | 1=Buy, 2=Sell                                     |
+| outcome_index | INTEGER    | FPMMBuy/Sell | 0=YES, 1=NO                                       |
+| usdc_amount   | BIGINT     | FPMMBuy/Sell | Buy: investmentAmount; Sell: returnAmount         |
+| token_amount  | BIGINT     | FPMMBuy/Sell | Buy: outcomeTokensBought; Sell: outcomeTokensSold |
+| fee           | BIGINT     | FPMMBuy/Sell | $.feeAmount (6 decimals)                          |
+
 ### transfer
 
 **过滤** (只保留用户直接转账):
 
 - `from != 0x0 AND to != 0x0` (跳过mint/burn)
 - `operator NOT IN (CTFExchange, NegRiskCTFExchange, NegRiskAdapter)` (跳过合约操作，已被order_filled/split/merge/convert覆盖)
+- `operator NOT IN (SELECT fpmm_addr FROM fpmm)` (跳过FPMM合约，已被fpmm_trade覆盖)
 
 | column       | 类型      | 来源     | 处理                                        |
 | ------------ | --------- | -------- | ------------------------------------------- |
@@ -486,18 +583,21 @@ NegRisk转换: M 个 NO tokens burn → (M-1) Wrapped Collateral (利用互斥�
 
 ## 索引
 
-| 表                | 索引        | 用途         |
-| ----------------- | ----------- | ------------ |
-| order_filled      | maker       | 按用户查交易 |
-| order_filled      | taker       | 按用户查交易 |
-| order_filled      | token_id    | 按市场查交易 |
-| split             | stakeholder | 按用户查     |
-| merge             | stakeholder | 按用户查     |
-| redemption        | redeemer    | 按用户查     |
-| convert           | stakeholder | 按用户查     |
-| transfer          | from_addr   | 按用户查     |
-| transfer          | to_addr     | 按用户查     |
-| neg_risk_question | market_id   | 按市场查问题 |
+| 表                | 索引         | 用途              |
+| ----------------- | ------------ | ----------------- |
+| order_filled      | maker        | 按用户查交易      |
+| order_filled      | taker        | 按用户查交易      |
+| order_filled      | token_id     | 按市场查交易      |
+| split             | stakeholder  | 按用户查          |
+| merge             | stakeholder  | 按用户查          |
+| redemption        | redeemer     | 按用户查          |
+| convert           | stakeholder  | 按用户查          |
+| fpmm              | condition_id | FPMM按condition查 |
+| fpmm_trade        | trader       | 按用户查FPMM交易  |
+| fpmm_trade        | fpmm_addr    | 按FPMM合约查交易  |
+| transfer          | from_addr    | 按用户查          |
+| transfer          | to_addr      | 按用户查          |
+| neg_risk_question | market_id    | 按市场查问题      |
 
 ## PnL 计算
 
@@ -511,6 +611,9 @@ PnL = Σ(Sell) + Σ(Merge) + Σ(Redemption) + Σ(Convert收益)
 | order_filled Buy  | -    | 买入花费 USDC                   |
 | order_filled Sell | +    | 卖出获得 USDC                   |
 | order_filled.fee  | -    | 手续费                          |
+| fpmm_trade Buy    | -    | FPMM买入花费 USDC               |
+| fpmm_trade Sell   | +    | FPMM卖出获得 USDC               |
+| fpmm_trade.fee    | -    | FPMM手续费                      |
 | split.amount      | -    | 铸造消耗 USDC                   |
 | merge.amount      | +    | 销毁获得 USDC                   |
 | redemption.payout | +    | 结算赎回                        |

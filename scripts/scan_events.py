@@ -27,12 +27,12 @@ Polymarket 事件扫描  (head=83,000,000)
   NegRiskAdapter      OutcomeReported                  0       -             -               0         0         0         0         0         0         0
 """
 
+from pathlib import Path
+import urllib.request
+import time
+import sys
 import datetime
 import json
-import sys
-import time
-import urllib.request
-from pathlib import Path
 
 _cfg = json.loads((Path(__file__).parent.parent / "config.json").read_text())
 _node = next(n for n in _cfg["rpc_nodes"] if n["name"] == _cfg["active_rpc"])
@@ -48,13 +48,16 @@ BLOCK0_TS = NOW_TS - HEAD * BLOCK_TIME
 YEAR0 = datetime.datetime.fromtimestamp(BLOCK0_TS, UTC).year
 YEARS = list(range(YEAR0, datetime.datetime.now(UTC).year + 1))
 
+
 def block_to_year(blknum):
     ts = NOW_TS - (HEAD - blknum) * BLOCK_TIME
     return datetime.datetime.fromtimestamp(ts, UTC).year
 
+
 # ── 合约地址 ──────────────────────────────────────────────────
 CONTRACTS = {
     "ConditionalTokens":   "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045",
+    "FPMMFactory":         "0x8B9805A2f595B6705e74F7310829f2d299D21522",
     "CTFExchange":         "0x4bFb41d5B3570DeFd03C39a9A4D8dE6Bd8B8982E",
     "NegRiskCTFExchange":  "0xC5d563A36AE78145C45a50134d48A1215220f80a",
     "NegRiskAdapter":      "0xd91E80cF2E7be2e162c6513ceD06f1dD0dA35296",
@@ -70,6 +73,13 @@ EVENTS = {
     "0x2e6bb91f8cbcda0c93623c54d0403a43514fabc40084ec96b6d5379a74786298": ("ConditionalTokens", "PositionSplit"),
     "0x6f13ca62553fcc2bcd2372180a43949c1e4cebba603901ede2f4e14f36b282ca": ("ConditionalTokens", "PositionsMerge"),
     "0x2682012a4a4f1973119f1c9b90745d1bd91fa2bab387344f044cb3586864d18d": ("ConditionalTokens", "PayoutRedemption"),
+    # FPMMFactory
+    "0x92e0912d3d7f3192cad5c7ae3b47fb97f9c465c1dd12a5c24fd901ddb3905f43": ("FPMMFactory", "FPMMCreation"),
+    # FPMM (动态合约)
+    "0x4f62630f51608fc8a7603a9391a5101e58bd7c276139366fc107dc3b67c3dcf8": ("FPMM", "FPMMBuy"),
+    "0xadcf2a240ed9300d681d9a3f5382b6c1beed1b7e46643e0c7b42cbe6e2d766b4": ("FPMM", "FPMMSell"),
+    "0xec2dc3e5a3bb9aa0a1deb905d2bd23640d07f107e6ceb484024501aad964a951": ("FPMM", "FPMMFundingAdded"),
+    "0x8b4b2c8ebd04c47fc8bce136a85df9b93fcb1f47c8aa296457d4391519d190e7": ("FPMM", "FPMMFundingRemoved"),
     # CTFExchange
     "0xd0a08e8c493f9c94f29311604c9de1b4e8c8d4c06bd0c789af57f2d65bfec0f6": ("CTFExchange", "OrderFilled"),
     "0x63bf4d16b7fa898ef4c4b2b6d90fd201e9c56313b65638af6088d149d2ce956c": ("CTFExchange", "OrdersMatched"),
@@ -83,11 +93,12 @@ EVENTS = {
 }
 
 # ── 状态 ──────────────────────────────────────────────────────
-counts    = {}   # (contract, event) -> int
+counts = {}   # (contract, event) -> int
 first_blk = {}   # (contract, event) -> int
-last_blk  = {}   # (contract, event) -> int
-yearly     = {}   # (contract, event, year) -> int
+last_blk = {}   # (contract, event) -> int
+yearly = {}   # (contract, event, year) -> int
 recent_times = []  # 最近20次查询的 (block, time) 用于计算滑动平均速度
+
 
 def rpc_batch(calls, timeout=30):
     batch = [{"jsonrpc": "2.0", "method": m, "params": p, "id": i}
@@ -102,6 +113,7 @@ def rpc_batch(calls, timeout=30):
     for resp in responses:
         assert "result" in resp, f"RPC error: {resp}"
     return [resp["result"] for resp in responses]
+
 
 def process_logs(logs, contract_name):
     for log in logs:
@@ -125,7 +137,9 @@ def process_logs(logs, contract_name):
         ykey = (contract_name, event_name, year)
         yearly[ykey] = yearly.get(ykey, 0) + 1
 
+
 LINES = 0
+
 
 def render(cur_block, head, now):
     global LINES
@@ -146,7 +160,8 @@ def render(cur_block, head, now):
     eta = (head - cur_block) / rate if rate > 0 else 0
 
     lines = []
-    lines.append(f"  块进度: {cur_block:>12,} / {head:,}  ({pct:.1f}%)  -  速度: {rate:,.0f} blk/s  ETA: {eta/60:.1f} min")
+    lines.append(
+        f"  块进度: {cur_block:>12,} / {head:,}  ({pct:.1f}%)  -  速度: {rate:,.0f} blk/s  ETA: {eta/60:.1f} min")
     lines.append("")
 
     order = [
@@ -157,6 +172,11 @@ def render(cur_block, head, now):
         ("ConditionalTokens", "PositionSplit"),
         ("ConditionalTokens", "PositionsMerge"),
         ("ConditionalTokens", "PayoutRedemption"),
+        ("FPMMFactory", "FPMMCreation"),
+        ("FPMM", "FPMMBuy"),
+        ("FPMM", "FPMMSell"),
+        ("FPMM", "FPMMFundingAdded"),
+        ("FPMM", "FPMMFundingRemoved"),
         ("CTFExchange", "OrderFilled"),
         ("CTFExchange", "OrdersMatched"),
         ("CTFExchange", "TokenRegistered"),
@@ -169,25 +189,32 @@ def render(cur_block, head, now):
         ("NegRiskAdapter", "OutcomeReported"),
     ]
     year_hdrs = "".join(f"{y:>11}" for y in YEARS)
-    lines.append(f"  {'合约':<18}  {'事件':<20}  {'总计':>12}  {'首block':>12}  {'末block':>12}{year_hdrs}")
+    lines.append(
+        f"  {'合约':<18}  {'事件':<20}  {'总计':>12}  {'首block':>12}  {'末block':>12}{year_hdrs}")
     lines.append("  " + "-" * (18+2+20+2+12+2+12+2+12 + len(YEARS)*11))
     for key in order:
         cnt = counts.get(key, 0)
         fb = f"{first_blk[key]:>12,}" if key in first_blk else "-".center(12)
         lb = f"{last_blk[key]:>12,}" if key in last_blk else "-".center(12)
-        ycols = "".join(f"{yearly.get((key[0], key[1], y), 0):>11,}" for y in YEARS)
-        lines.append(f"  {key[0]:<18}  {key[1]:<20}  {cnt:>12,}  {fb}  {lb}{ycols}")
+        ycols = "".join(
+            f"{yearly.get((key[0], key[1], y), 0):>11,}" for y in YEARS)
+        lines.append(
+            f"  {key[0]:<18}  {key[1]:<20}  {cnt:>12,}  {fb}  {lb}{ycols}")
 
     for line in lines:
         sys.stdout.write(line + "\n")
     sys.stdout.flush()
     LINES = len(lines)
 
+
 def main():
     head = HEAD
     print(f"\n  Polymarket 事件扫描  (head={head:,})\n")
 
     ct_topics = [t for t, (c, _) in EVENTS.items() if c == "ConditionalTokens"]
+    fpmm_factory_topics = [
+        t for t, (c, _) in EVENTS.items() if c == "FPMMFactory"]
+    fpmm_topics = [t for t, (c, _) in EVENTS.items() if c == "FPMM"]
     ex_topics = [t for t, (c, _) in EVENTS.items() if c == "CTFExchange"]
     nra_topics = [t for t, (c, _) in EVENTS.items() if c == "NegRiskAdapter"]
 
@@ -201,6 +228,10 @@ def main():
             ("eth_getLogs", [{"fromBlock": hex(cur), "toBlock": hex(end),
                               "address": CONTRACTS["ConditionalTokens"], "topics": [ct_topics]}]),
             ("eth_getLogs", [{"fromBlock": hex(cur), "toBlock": hex(end),
+                              "address": CONTRACTS["FPMMFactory"], "topics": [fpmm_factory_topics]}]),
+            ("eth_getLogs", [{"fromBlock": hex(cur), "toBlock": hex(end),
+                              "topics": [fpmm_topics]}]),  # 不指定address
+            ("eth_getLogs", [{"fromBlock": hex(cur), "toBlock": hex(end),
                               "address": CONTRACTS["CTFExchange"], "topics": [ex_topics]}]),
             ("eth_getLogs", [{"fromBlock": hex(cur), "toBlock": hex(end),
                               "address": CONTRACTS["NegRiskCTFExchange"], "topics": [ex_topics]}]),
@@ -208,15 +239,18 @@ def main():
                               "address": CONTRACTS["NegRiskAdapter"], "topics": [nra_topics]}]),
         ])
         process_logs(results[0], "ConditionalTokens")
-        process_logs(results[1], "CTFExchange")
-        process_logs(results[2], "NegRiskCTFExchange")
-        process_logs(results[3], "NegRiskAdapter")
+        process_logs(results[1], "FPMMFactory")
+        process_logs(results[2], "FPMM")
+        process_logs(results[3], "CTFExchange")
+        process_logs(results[4], "NegRiskCTFExchange")
+        process_logs(results[5], "NegRiskAdapter")
 
         render(end, head, time.time())
         cur = end + 1
 
     elapsed = time.time() - start_time
     print(f"\n  扫描完成, 耗时 {elapsed:.0f}s\n")
+
 
 if __name__ == "__main__":
     main()
