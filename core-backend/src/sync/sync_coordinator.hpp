@@ -24,6 +24,7 @@ public:
       : config_(config), db_(db),
         rpc_(config.rpc_url, config.rpc_api_key),
         batch_size_(config.rpc_chunk),
+        current_batch_size_(config.rpc_chunk),
         interval_seconds_(config.sync_interval_seconds) {}
 
   void start(asio::io_context &ioc) {
@@ -83,7 +84,7 @@ private:
   }
 
   void sync_batch(int64_t from_block, int64_t head_block) {
-    int64_t to_block = std::min(from_block + batch_size_ - 1, head_block);
+    int64_t to_block = std::min(from_block + current_batch_size_ - 1, head_block);
 
     static const std::vector<std::string> ct_topics = {
         topics::TRANSFER_SINGLE, topics::TRANSFER_BATCH,
@@ -101,7 +102,10 @@ private:
                                         {contracts::NEG_RISK_CTF_EXCHANGE, from_block, to_block, ex_topics},
                                         {contracts::NEG_RISK_ADAPTER, from_block, to_block, nra_topics}});
     } catch (const std::exception &e) {
-      std::cerr << "[Sync] eth_getLogs 失败: " << e.what() << ", 5s 后重试" << std::endl;
+      int64_t reduced = std::max(current_batch_size_ / 2, (int64_t)1);
+      std::cerr << "[Sync] eth_getLogs 失败: " << e.what()
+                << ", chunk " << current_batch_size_ << " -> " << reduced << ", 5s 后重试" << std::endl;
+      current_batch_size_ = reduced;
       auto timer = std::make_shared<asio::steady_timer>(*ioc_);
       timer->expires_after(std::chrono::seconds(5));
       timer->async_wait([this, timer, from_block, head_block](boost::system::error_code ec) {
@@ -111,6 +115,8 @@ private:
       });
       return;
     }
+
+    current_batch_size_ = batch_size_;
 
     json logs = json::array();
     for (const auto &r : results) {
@@ -194,7 +200,8 @@ private:
   RpcClient rpc_;
   asio::io_context *ioc_ = nullptr;
 
-  int batch_size_;
+  int64_t batch_size_;
+  int64_t current_batch_size_;
   int interval_seconds_;
   std::atomic<bool> is_syncing_{false};
   std::atomic<int64_t> head_block_{0};

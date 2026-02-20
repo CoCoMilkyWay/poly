@@ -41,8 +41,8 @@ struct Config {
     const auto &nodes = require("rpc_nodes");
     for (const auto &node : nodes) {
       if (node["name"].get<std::string>() == active) {
-        config.rpc_name  = node["name"].get<std::string>();
-        config.rpc_url   = node["url"].get<std::string>();
+        config.rpc_name = node["name"].get<std::string>();
+        config.rpc_url = node["url"].get<std::string>();
         config.rpc_api_key = node.value("key", "");
         config.rpc_chunk = node["chunk"].get<int>();
         break;

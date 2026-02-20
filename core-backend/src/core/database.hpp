@@ -346,6 +346,7 @@ public:
     for (const auto &sql : extra_sqls) {
       auto r = write_conn_->Query(sql);
       assert(!r->HasError());
+      assert(r->RowCount() > 0 && r->GetValue(0, 0).GetValue<int64_t>() > 0 && "extra_sql affected 0 rows (resolution without matching preparation?)");
     }
 
     auto r3 = write_conn_->Query(

@@ -1,11 +1,14 @@
 #pragma once
 
+#include <cassert>
 #include <nlohmann/json.hpp>
 #include <stdexcept>
 #include <string>
 
 #include <boost/asio.hpp>
+#include <boost/asio/ssl.hpp>
 #include <boost/beast.hpp>
+#include <boost/beast/ssl.hpp>
 
 namespace asio = boost::asio;
 namespace beast = boost::beast;
@@ -79,6 +82,8 @@ private:
     } else if (u.starts_with("http://")) {
       use_ssl_ = false;
       u = u.substr(7);
+    } else {
+      assert(false && "RPC URL 必须以 http:// 或 https:// 开头");
     }
 
     auto slash_pos = u.find('/');
@@ -102,10 +107,6 @@ private:
   std::string http_post(const std::string &body) {
     asio::io_context ioc;
     tcp::resolver resolver(ioc);
-    beast::tcp_stream stream(ioc);
-
-    auto const results = resolver.resolve(host_, port_);
-    stream.connect(results);
 
     http::request<http::string_body> req{http::verb::post, target_, 11};
     req.set(http::field::host, host_);
@@ -119,15 +120,31 @@ private:
     req.body() = body;
     req.prepare_payload();
 
-    http::write(stream, req);
-
+    auto const endpoints = resolver.resolve(host_, port_);
     beast::flat_buffer buffer;
     http::response_parser<http::string_body> parser;
-    parser.body_limit(256 * 1024 * 1024);  // 256MB
-    http::read(stream, buffer, parser);
+    parser.body_limit(256 * 1024 * 1024);
 
-    beast::error_code ec;
-    [[maybe_unused]] auto ret = stream.socket().shutdown(tcp::socket::shutdown_both, ec);
+    if (use_ssl_) {
+      asio::ssl::context ssl_ctx(asio::ssl::context::tls_client);
+      ssl_ctx.set_default_verify_paths();
+      ssl_ctx.set_verify_mode(asio::ssl::verify_peer);
+      beast::ssl_stream<beast::tcp_stream> stream(ioc, ssl_ctx);
+      SSL_set_tlsext_host_name(stream.native_handle(), host_.c_str());
+      beast::get_lowest_layer(stream).connect(endpoints);
+      stream.handshake(asio::ssl::stream_base::client);
+      http::write(stream, req);
+      http::read(stream, buffer, parser);
+      beast::error_code ec;
+      [[maybe_unused]] auto _ = stream.shutdown(ec);
+    } else {
+      beast::tcp_stream stream(ioc);
+      stream.connect(endpoints);
+      http::write(stream, req);
+      http::read(stream, buffer, parser);
+      beast::error_code ec;
+      [[maybe_unused]] auto _2 = stream.socket().shutdown(tcp::socket::shutdown_both, ec);
+    }
 
     return parser.get().body();
   }
