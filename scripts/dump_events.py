@@ -85,14 +85,10 @@ import sys
 import os
 import csv
 import json
+from pathlib import Path
 
-DRPC_API_KEY = "Aj9Y8zpk1EVEkcL8w3Z1mGcHAZE3DdUR8biw-uF7NYYO"
-# https://drpc.org/dashboard/3f58f33a-64d4-4544-91c2-fcc376759867/keys
-
-RPC_ENDPOINTS = {
-    "Erigon": ("http://127.0.0.1:8545", 2000),
-    "dRPC":   (f"https://lb.drpc.org/ogrpc?network=polygon&dkey={DRPC_API_KEY}", 1000),
-}
+_cfg = json.loads((Path(__file__).parent.parent / "config.json").read_text())
+RPC_ENDPOINTS = {n["name"]: (n["url"], n["chunk"]) for n in _cfg["rpc_nodes"]}
 BASE_OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "events")
 MAX_PER_EVENT = 1000
 

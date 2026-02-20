@@ -32,9 +32,12 @@ import json
 import sys
 import time
 import urllib.request
+from pathlib import Path
 
-RPC = "http://127.0.0.1:8545"
-CHUNK = 2000  # 每次查询块数
+_cfg = json.loads((Path(__file__).parent.parent / "config.json").read_text())
+_node = next(n for n in _cfg["rpc_nodes"] if n["name"] == _cfg["active_rpc"])
+RPC = _node["url"]
+CHUNK = _node["chunk"]
 HEAD = 83_000_000  # 固定 head
 
 BLOCK_TIME = 2  # 秒/block
