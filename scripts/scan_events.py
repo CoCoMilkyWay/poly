@@ -73,10 +73,10 @@ EVENTS = {
     "0xbc9a2432e8aeb48327246cddd6e872ef452812b4243c04e6bfb786a2cd8faf0d": ("CTFExchange", "TokenRegistered"),
     # NegRiskCTFExchange (same topics as CTFExchange)
     # NegRiskAdapter
-    "0xaac410f87d423a922a7b226ac68f5ba267c3a70a6eb6db3a0d11a8027dc303b0": ("NegRiskAdapter", "MarketPrepared"),
-    "0xf059ab16d1ca60e123eab60e3c02d4ab3e7c267b7dbb5361a38e7fbc7d5e5a05": ("NegRiskAdapter", "QuestionPrepared"),
-    "0xbbed930dbfb7907ae2d60ddf78341a2c1f8cfe1e6f3b4e74c8c7b7a0be5e9e16": ("NegRiskAdapter", "PositionsConverted"),
-    "0xd5a3c84c3953ba5cf608be6e2bd08447c931838ab29dc6543f5e5575d1574e8f": ("NegRiskAdapter", "OutcomeReported"),
+    "0xf059ab16d1ca60e123eab60e3c02b68faf060347c701a5d14885a8e1def7b3a8": ("NegRiskAdapter", "MarketPrepared"),
+    "0xaac410f87d423a922a7b226ac68f0c2eaf5bf6d15e644ac0758c7f96e2c253f7": ("NegRiskAdapter", "QuestionPrepared"),
+    "0xb03d19dddbc72a87e735ff0ea3b57bef133ebe44e1894284916a84044deb367e": ("NegRiskAdapter", "PositionsConverted"),
+    "0x9e9fa7fd355160bd4cd3f22d4333519354beff1f5689bde87f2c5e63d8d484b2": ("NegRiskAdapter", "OutcomeReported"),
 }
 
 # ── 状态 ──────────────────────────────────────────────────────

@@ -87,9 +87,9 @@ chuyin@chuyin:~/work/polymarket-indexer/service$ /bin/python3 /home/chuyin/work/
 
 | 事件                 | topic0                                                             |
 | -------------------- | ------------------------------------------------------------------ |
-| ConditionPreparation | 0xab3760c3bd2bb38b5bcf5b13adce5eb9d8f6fd2f241126ebab4a4c6a2792f80c |
-| PositionSplit        | 0x2e6bb91f8cbcda0c93623c54d0403a43514f4b3a3babf4d7a8e50cf2a7b9d435 |
-| PositionsMerge       | 0x7a843b0eb41f7a3d57a525b61f6f6584f1d68f403e8917cb9d753ddb6d0e3e2e |
+| ConditionPreparation | 0xab3760c3bd2bb38b5bcf54dc79802ed67338b4cf29f3054ded67ed24661e4177 |
+| PositionSplit        | 0x2e6bb91f8cbcda0c93623c54d0403a43514fabc40084ec96b6d5379a74786298 |
+| PositionsMerge       | 0x6f13ca62553fcc2bcd2372180a43949c1e4cebba603901ede2f4e14f36b282ca |
 | TransferSingle       | 0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62 |
 | TransferBatch        | 0x4a39dc06d4c0dbc64b70af90fd698a233a518aa5d07e595d983b8c0526c8f7fb |
 | ConditionResolution  | 0xb44d84d3289691f71497564b85d4233648d9dbae8cbdbb4329f301c3a0185894 |
@@ -192,9 +192,9 @@ chuyin@chuyin:~/work/polymarket-indexer/service$ /bin/python3 /home/chuyin/work/
 
 | 事件            | topic0                                                             |
 | --------------- | ------------------------------------------------------------------ |
-| TokenRegistered | (需从合约获取)                                                     |
-| OrderFilled     | 0xd0a08e8c493f9c94f29311604c9de1b4e8c8d4c06bd0c789af57f2d65b5e35   |
-| OrdersMatched   | 0x091000c64bc02cdf968ee7d39d0b829a7d3a626ab76679d0a033d48e43c53be8 |
+| TokenRegistered | 0xbc9a2432e8aeb48327246cddd6e872ef452812b4243c04e6bfb786a2cd8faf0d |
+| OrderFilled     | 0xd0a08e8c493f9c94f29311604c9de1b4e8c8d4c06bd0c789af57f2d65bfec0f6 |
+| OrdersMatched   | 0x63bf4d16b7fa898ef4c4b2b6d90fd201e9c56313b65638af6088d149d2ce956c |
 
 **TokenRegistered**
 
@@ -242,19 +242,19 @@ chuyin@chuyin:~/work/polymarket-indexer/service$ /bin/python3 /home/chuyin/work/
 
 ### NegRiskAdapter
 
-| 事件               | topic0         |
-| ------------------ | -------------- |
-| MarketPrepared     | (需从合约获取) |
-| QuestionPrepared   | (需从合约获取) |
-| OutcomeReported    | (需从合约获取) |
-| PositionsConverted | (需从合约获取) |
+| 事件               | topic0                                                             |
+| ------------------ | ------------------------------------------------------------------ |
+| MarketPrepared     | 0xf059ab16d1ca60e123eab60e3c02b68faf060347c701a5d14885a8e1def7b3a8 |
+| QuestionPrepared   | 0xaac410f87d423a922a7b226ac68f0c2eaf5bf6d15e644ac0758c7f96e2c253f7 |
+| OutcomeReported    | 0x9e9fa7fd355160bd4cd3f22d4333519354beff1f5689bde87f2c5e63d8d484b2 |
+| PositionsConverted | 0xb03d19dddbc72a87e735ff0ea3b57bef133ebe44e1894284916a84044deb367e |
 
 **MarketPrepared**
 
 | 字段         | 类型    | indexed | 说明                 |
 | ------------ | ------- | ------- | -------------------- |
 | marketId     | bytes32 | yes     | 市场 ID              |
-| oracle       | address | no      | NegRiskOperator 地址 |
+| oracle       | address | yes     | NegRiskOperator 地址 |
 | feeBips      | uint256 | no      | 手续费率 (万分比)    |
 | data         | bytes   | no      | 市场元数据           |
 | tx_hash      | bytes32 | meta    | log.transactionHash  |
@@ -279,7 +279,7 @@ chuyin@chuyin:~/work/polymarket-indexer/service$ /bin/python3 /home/chuyin/work/
 | ------------ | ------- | ------- | ------------------- |
 | marketId     | bytes32 | yes     | 市场 ID             |
 | questionId   | bytes32 | yes     | 问题 ID             |
-| outcome      | uint256 | no      | 结果                |
+| outcome      | bool    | no      | 结果                |
 | tx_hash      | bytes32 | meta    | log.transactionHash |
 | block_number | uint64  | meta    | log.blockNumber     |
 | log_index    | uint32  | meta    | log.logIndex        |
@@ -290,7 +290,7 @@ chuyin@chuyin:~/work/polymarket-indexer/service$ /bin/python3 /home/chuyin/work/
 | ------------ | ------- | ------- | -------------------------------- |
 | stakeholder  | address | yes     | 操作者                           |
 | marketId     | bytes32 | yes     | 市场 ID                          |
-| indexSet     | uint256 | no      | 转换的 NO position 组合 (bitmap) |
+| indexSet     | uint256 | yes     | 转换的 NO position 组合 (bitmap) |
 | amount       | uint256 | no      | 数量                             |
 | tx_hash      | bytes32 | meta    | log.transactionHash              |
 | block_number | uint64  | meta    | log.blockNumber                  |
