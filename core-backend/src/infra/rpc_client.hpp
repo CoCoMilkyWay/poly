@@ -23,6 +23,8 @@ public:
     parse_url(url);
   }
 
+  size_t get_last_response_size() const { return last_response_size_; }
+
   int64_t eth_blockNumber() {
     json request = {
         {"jsonrpc", "2.0"},
@@ -146,7 +148,9 @@ private:
       [[maybe_unused]] auto _2 = stream.socket().shutdown(tcp::socket::shutdown_both, ec);
     }
 
-    return parser.get().body();
+    std::string result = parser.get().body();
+    last_response_size_ = result.size();
+    return result;
   }
 
   static std::string to_hex(int64_t value) {
@@ -165,4 +169,5 @@ private:
   std::string api_key_;
   bool use_ssl_ = false;
   int request_id_ = 0;
+  size_t last_response_size_ = 0;
 };

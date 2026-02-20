@@ -20,6 +20,7 @@ struct SyncStatus {
   bool is_syncing = false;
   int64_t head_block = 0;
   double blocks_per_second = 0.0;
+  double bytes_per_block = 0.0;
 };
 
 class ApiSession : public std::enable_shared_from_this<ApiSession> {
@@ -118,6 +119,7 @@ private:
       result["head_block"] = status.head_block;
       result["is_syncing"] = status.is_syncing;
       result["blocks_per_second"] = status.blocks_per_second;
+      result["bytes_per_block"] = status.bytes_per_block;
     }
 
     res_.result(http::status::ok);

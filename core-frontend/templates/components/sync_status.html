@@ -341,6 +341,10 @@
       <div class="sync-stat-value" id="behind-blocks">-</div>
     </div>
     <div class="sync-stat">
+      <div class="sync-stat-label">Size</div>
+      <div class="sync-stat-value" id="sync-size">-</div>
+    </div>
+    <div class="sync-stat">
       <div class="sync-stat-label">Speed</div>
       <div class="sync-stat-value" id="sync-speed">-</div>
     </div>
@@ -834,6 +838,20 @@
         dot.className = "status-indicator status-idle";
         statusText.textContent = "空闲";
         statusText.className = "badge badge-success";
+      }
+
+      const bytesPerBlock = sync.bytes_per_block || 0;
+      const sizeEl = document.getElementById("sync-size");
+      if (bytesPerBlock > 0) {
+        if (bytesPerBlock < 1000) {
+          sizeEl.textContent = Math.round(bytesPerBlock) + " B/blk";
+        } else if (bytesPerBlock < 1000000) {
+          sizeEl.textContent = (bytesPerBlock / 1000).toFixed(1) + " KB/blk";
+        } else {
+          sizeEl.textContent = (bytesPerBlock / 1000000).toFixed(2) + " MB/blk";
+        }
+      } else {
+        sizeEl.textContent = "-";
       }
 
       const bps = sync.blocks_per_second || 0;

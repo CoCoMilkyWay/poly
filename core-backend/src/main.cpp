@@ -43,7 +43,7 @@ int main(int argc, char *argv[]) {
   SyncCoordinator sync(config, db);
 
   auto sync_getter = [&sync]() -> SyncStatus {
-    return {sync.is_syncing(), sync.get_head_block(), sync.get_blocks_per_second()};
+    return {sync.is_syncing(), sync.get_head_block(), sync.get_blocks_per_second(), sync.get_bytes_per_block()};
   };
 
   // Sync 使用单独的 io_context 和线程，避免阻塞 API

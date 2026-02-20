@@ -39,10 +39,27 @@ public:
   double get_blocks_per_second() const {
     if (chunk_history_.size() < 2)
       return 0.0;
-    double time_diff = chunk_history_.back().second - chunk_history_.front().second;
+    double time_diff = chunk_history_.back().time_s - chunk_history_.front().time_s;
     if (time_diff <= 0)
       return 0.0;
-    return (chunk_history_.back().first - chunk_history_.front().first) / time_diff;
+    double total_blocks = 0;
+    for (const auto &r : chunk_history_)
+      total_blocks += r.block_count;
+    return total_blocks / time_diff;
+  }
+
+  double get_bytes_per_block() const {
+    if (chunk_history_.empty())
+      return 0.0;
+    size_t total_bytes = 0;
+    int64_t total_blocks = 0;
+    for (const auto &r : chunk_history_) {
+      total_bytes += r.body_bytes;
+      total_blocks += r.block_count;
+    }
+    if (total_blocks == 0)
+      return 0.0;
+    return static_cast<double>(total_bytes) / total_blocks;
   }
 
 private:
@@ -117,6 +134,7 @@ private:
     }
 
     current_batch_size_ = batch_size_;
+    size_t response_bytes = rpc_.get_last_response_size();
 
     json logs = json::array();
     for (const auto &r : results) {
@@ -180,7 +198,7 @@ private:
     double now = std::chrono::duration<double>(
                      std::chrono::steady_clock::now().time_since_epoch())
                      .count();
-    chunk_history_.push_back({to_block, now});
+    chunk_history_.push_back({to_block, now, response_bytes, to_block - from_block + 1});
     if (chunk_history_.size() > 20)
       chunk_history_.pop_front();
 
@@ -205,5 +223,11 @@ private:
   int interval_seconds_;
   std::atomic<bool> is_syncing_{false};
   std::atomic<int64_t> head_block_{0};
-  std::deque<std::pair<int64_t, double>> chunk_history_; // (end_block, time_s)
+  struct ChunkRecord {
+    int64_t to_block;
+    double time_s;
+    size_t body_bytes;
+    int64_t block_count;
+  };
+  std::deque<ChunkRecord> chunk_history_;
 };
