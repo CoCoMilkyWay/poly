@@ -5,6 +5,8 @@ import time
 import sys
 import signal
 import socket
+import os
+import atexit
 from pathlib import Path
 
 ROOT = Path(__file__).parent
@@ -14,6 +16,93 @@ FRONTEND_DIR = ROOT / "core-frontend"
 CONFIG_FILE = ROOT / "config.json"
 
 BACKEND_EXE = BACKEND_BUILD / ("core.exe" if sys.platform == "win32" else "core")
+BACKEND_PORT = 8001
+FRONTEND_PORT = 8000
+
+processes = []
+cleaning_up = False
+
+
+def kill_port(port: int):
+    """杀掉占用指定端口的进程"""
+    try:
+        result = subprocess.run(
+            ["lsof", "-ti", f":{port}"],
+            capture_output=True, text=True
+        )
+        if result.stdout.strip():
+            pids = result.stdout.strip().split('\n')
+            for pid in pids:
+                try:
+                    os.kill(int(pid), signal.SIGKILL)
+                    print(f"[run.py] 杀掉端口 {port} 的进程 {pid}")
+                except (ProcessLookupError, ValueError):
+                    pass
+            time.sleep(0.5)
+    except FileNotFoundError:
+        pass
+
+
+def kill_by_pattern(pattern: str):
+    """杀掉匹配模式的进程"""
+    try:
+        subprocess.run(["pkill", "-9", "-f", pattern], capture_output=True)
+    except FileNotFoundError:
+        pass
+
+
+def cleanup_stale():
+    """清理残留进程"""
+    kill_port(BACKEND_PORT)
+    kill_port(FRONTEND_PORT)
+    kill_by_pattern("core-backend/projects/core/build/core")
+    kill_by_pattern("uvicorn main:app.*8000")
+    time.sleep(0.5)
+
+
+def terminate_process(p, timeout=3):
+    """优雅终止进程，超时后强杀"""
+    if p.poll() is not None:
+        return
+    
+    try:
+        pgid = os.getpgid(p.pid)
+        os.killpg(pgid, signal.SIGTERM)
+    except (ProcessLookupError, OSError):
+        try:
+            p.terminate()
+        except:
+            pass
+    
+    try:
+        p.wait(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        try:
+            pgid = os.getpgid(p.pid)
+            os.killpg(pgid, signal.SIGKILL)
+        except (ProcessLookupError, OSError):
+            try:
+                p.kill()
+            except:
+                pass
+        p.wait()
+
+
+def cleanup(signum=None, frame=None):
+    """清理所有子进程"""
+    global cleaning_up
+    if cleaning_up:
+        return
+    cleaning_up = True
+    
+    print("\n[run.py] 正在关闭...")
+    
+    for p in reversed(processes):
+        terminate_process(p)
+    
+    cleanup_stale()
+    print("[run.py] 已退出")
+    sys.exit(0)
 
 
 def build_backend():
@@ -49,21 +138,15 @@ def wait_for_port(host: str, port: int, timeout: int = 30):
 
 
 def main():
-    processes = []
-
-    def cleanup(signum=None, frame=None):
-        print("\n[run.py] 正在关闭...")
-        for p in reversed(processes):
-            if p.poll() is None:
-                p.terminate()
-            p.wait()
-        sys.exit(0)
-
     signal.signal(signal.SIGINT, cleanup)
     signal.signal(signal.SIGTERM, cleanup)
+    atexit.register(cleanup)
 
     assert CONFIG_FILE.exists(), f"配置文件 {CONFIG_FILE} 不存在"
     (ROOT / "data").mkdir(exist_ok=True)
+
+    print("[run.py] 检查残留进程...")
+    cleanup_stale()
 
     build_backend()
 
@@ -76,20 +159,31 @@ def main():
     processes.append(backend_proc)
 
     print("[run.py] 等待 backend API 就绪...")
-    assert wait_for_port("127.0.0.1", 8001), "backend API 启动超时"
+    if not wait_for_port("127.0.0.1", BACKEND_PORT, timeout=10):
+        if backend_proc.poll() is not None:
+            print(f"[run.py] backend 启动失败, 退出码: {backend_proc.returncode}")
+        else:
+            print("[run.py] backend API 启动超时")
+        cleanup()
+        return
+
     print("[run.py] backend API 已就绪")
 
     print("[run.py] 启动 frontend...")
     frontend_proc = subprocess.Popen(
         [sys.executable, "-m", "uvicorn", "main:app", "--host",
-            "0.0.0.0", "--port", "8000", "--log-level", "warning"],
+            "0.0.0.0", "--port", str(FRONTEND_PORT), "--log-level", "warning"],
         cwd=FRONTEND_DIR,
         start_new_session=True,
     )
     processes.append(frontend_proc)
 
-    time.sleep(2)
-    url = "http://localhost:8000"
+    if not wait_for_port("127.0.0.1", FRONTEND_PORT, timeout=10):
+        print("[run.py] frontend 启动超时")
+        cleanup()
+        return
+
+    url = f"http://localhost:{FRONTEND_PORT}"
     print(f"[run.py] 打开浏览器: {url}")
     webbrowser.open(url)
 

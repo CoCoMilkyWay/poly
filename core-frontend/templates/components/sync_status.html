@@ -1,0 +1,346 @@
+<style>
+  .sync-card {
+    background: #1a1a1a;
+    border-radius: 10px;
+    padding: 15px;
+    border: 1px solid #333;
+    margin-bottom: 15px;
+  }
+  .sync-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #333;
+  }
+  .sync-header h2 {
+    font-size: 1.1em;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+  }
+  .sync-header h2::before {
+    content: "";
+    width: 3px;
+    height: 16px;
+    background: #6366f1;
+    border-radius: 2px;
+  }
+  .sync-header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .sync-status-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .status-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+  .status-syncing {
+    background: #4ade80;
+    animation: pulse 1s infinite;
+  }
+  .status-idle {
+    background: #6b7280;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  .sync-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin-bottom: 15px;
+  }
+  .sync-stat {
+    background: #252525;
+    border-radius: 6px;
+    padding: 10px 12px;
+  }
+  .sync-stat-label {
+    font-size: 0.75em;
+    color: #888;
+    margin-bottom: 4px;
+  }
+  .sync-stat-value {
+    font-size: 1.2em;
+    font-weight: 500;
+    font-family: monospace;
+    color: #fff;
+  }
+  .sync-stat-value.synced {
+    color: #4ade80;
+  }
+  .sync-stat-value.behind {
+    color: #fde047;
+  }
+  .sync-stat-value.error {
+    color: #f87171;
+  }
+  .progress-container {
+    margin-bottom: 15px;
+  }
+  .progress-bar {
+    height: 8px;
+    background: #252525;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #6366f1, #8b5cf6);
+    border-radius: 4px;
+    transition: width 0.5s ease;
+  }
+  .progress-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 6px;
+    font-size: 0.8em;
+  }
+  .progress-pct {
+    font-family: monospace;
+    color: #aaa;
+  }
+  .progress-blocks {
+    color: #666;
+  }
+  .auto-refresh-tag {
+    font-size: 0.75em;
+    color: #666;
+  }
+  .tables-section {
+    border-top: 1px solid #333;
+    padding-top: 12px;
+  }
+  .tables-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .tables-title {
+    font-size: 0.9em;
+    color: #aaa;
+  }
+  .table-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 8px;
+  }
+  .table-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #252525;
+    border-radius: 4px;
+    padding: 8px 10px;
+  }
+  .table-name {
+    font-family: monospace;
+    font-size: 0.85em;
+    color: #e0e0e0;
+  }
+  .table-count {
+    font-family: monospace;
+    font-size: 0.85em;
+    color: #6366f1;
+  }
+  .btn {
+    padding: 5px 10px;
+    font-size: 0.8em;
+    background: #333;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .btn:hover {
+    background: #444;
+  }
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+</style>
+
+<div class="sync-card">
+  <div class="sync-header">
+    <h2>
+      <span class="sync-status-row">
+        <span id="status-dot" class="status-indicator status-idle"></span>
+        同步状态
+      </span>
+    </h2>
+    <div class="sync-header-right">
+      <span id="sync-status-text" class="badge badge-success">空闲</span>
+      <button class="btn" id="export-all-btn" onclick="exportAllCSV()">全部导出</button>
+      <span class="auto-refresh-tag">自动刷新</span>
+    </div>
+  </div>
+
+  <div class="sync-stats">
+    <div class="sync-stat">
+      <div class="sync-stat-label">Last Block</div>
+      <div class="sync-stat-value" id="last-block">{{ "{:,}".format(sync_state.last_block or 0) }}</div>
+    </div>
+    <div class="sync-stat">
+      <div class="sync-stat-label">Head Block</div>
+      <div class="sync-stat-value" id="head-block">{{ "{:,}".format(sync_state.head_block or 0) }}</div>
+    </div>
+    <div class="sync-stat">
+      <div class="sync-stat-label">Behind</div>
+      <div class="sync-stat-value" id="behind-blocks">-</div>
+    </div>
+    <div class="sync-stat">
+      <div class="sync-stat-label">同步速度</div>
+      <div class="sync-stat-value" id="sync-speed">-</div>
+    </div>
+  </div>
+
+  <div class="progress-container">
+    <div class="progress-bar">
+      <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+    </div>
+    <div class="progress-info">
+      <span class="progress-blocks" id="progress-blocks">- / -</span>
+      <span class="progress-pct" id="progress-pct">0%</span>
+    </div>
+  </div>
+
+  <div class="tables-section">
+    <div class="tables-header">
+      <span class="tables-title">数据表</span>
+    </div>
+    <div class="table-list" id="tables-list">
+      {% for t in tables %}
+      <div class="table-item">
+        <span class="table-name">{{ t.name }}</span>
+        <span class="table-count">{{ "{:,}".format(t.count) }}</span>
+      </div>
+      {% else %}
+      <div class="table-item" style="grid-column: 1/-1; justify-content: center; color: #666;">暂无数据</div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const START_BLOCK = 4027499;
+  let lastBlock = parseInt(document.body.dataset.lastBlock || "0");
+  let lastTime = Date.now();
+  let currentTables = [];
+
+  function formatNumber(n) {
+    return n.toLocaleString();
+  }
+
+  function updateSyncStatus(sync) {
+    const currentBlock = sync.last_block || 0;
+    const headBlock = sync.head_block || 0;
+    const isSyncing = sync.is_syncing;
+    const behind = Math.max(0, headBlock - currentBlock);
+
+    document.getElementById("last-block").textContent = formatNumber(currentBlock);
+    document.getElementById("head-block").textContent = formatNumber(headBlock);
+
+    const behindEl = document.getElementById("behind-blocks");
+    behindEl.textContent = formatNumber(behind);
+    behindEl.className = "sync-stat-value " + (behind < 100 ? "synced" : behind < 10000 ? "behind" : "error");
+
+    const dot = document.getElementById("status-dot");
+    const statusText = document.getElementById("sync-status-text");
+    if (isSyncing) {
+      dot.className = "status-indicator status-syncing";
+      statusText.textContent = "同步中";
+      statusText.className = "badge badge-warning";
+    } else {
+      dot.className = "status-indicator status-idle";
+      statusText.textContent = "空闲";
+      statusText.className = "badge badge-success";
+    }
+
+    const now = Date.now();
+    const timeDiff = (now - lastTime) / 1000;
+    const blockDiff = currentBlock - lastBlock;
+    if (timeDiff > 0 && blockDiff > 0) {
+      const speed = Math.round(blockDiff / timeDiff);
+      document.getElementById("sync-speed").textContent = formatNumber(speed) + " blk/s";
+    } else if (blockDiff === 0) {
+      document.getElementById("sync-speed").textContent = "-";
+    }
+    lastBlock = currentBlock;
+    lastTime = now;
+
+    updateProgress(currentBlock, headBlock);
+  }
+
+  function updateProgress(lastBlock, headBlock) {
+    if (headBlock <= START_BLOCK) {
+      document.getElementById("progress-fill").style.width = "0%";
+      document.getElementById("progress-pct").textContent = "0%";
+      document.getElementById("progress-blocks").textContent = "- / -";
+      return;
+    }
+    const total = headBlock - START_BLOCK;
+    const done = Math.max(0, lastBlock - START_BLOCK);
+    const pct = Math.min(100, (done / total) * 100);
+
+    document.getElementById("progress-fill").style.width = pct.toFixed(1) + "%";
+    document.getElementById("progress-pct").textContent = pct.toFixed(2) + "%";
+    document.getElementById("progress-blocks").textContent =
+      formatNumber(lastBlock) + " / " + formatNumber(headBlock);
+  }
+
+  function updateTables(tables) {
+    currentTables = tables;
+    const list = document.getElementById("tables-list");
+    if (tables.length === 0) {
+      list.innerHTML = '<div class="table-item" style="grid-column: 1/-1; justify-content: center; color: #666;">暂无数据</div>';
+    } else {
+      list.innerHTML = tables.map(t =>
+        `<div class="table-item">
+          <span class="table-name">${t.name}</span>
+          <span class="table-count">${formatNumber(t.count)}</span>
+        </div>`
+      ).join("");
+    }
+  }
+
+  updateProgress(
+    parseInt(document.body.dataset.lastBlock || "0"),
+    parseInt(document.body.dataset.headBlock || "0")
+  );
+
+  const initialBehind = Math.max(0,
+    parseInt(document.body.dataset.headBlock || "0") -
+    parseInt(document.body.dataset.lastBlock || "0")
+  );
+  const behindEl = document.getElementById("behind-blocks");
+  behindEl.textContent = formatNumber(initialBehind);
+  behindEl.className = "sync-stat-value " + (initialBehind < 100 ? "synced" : initialBehind < 10000 ? "behind" : "error");
+
+  if (document.body.dataset.isSyncing === "true") {
+    document.getElementById("status-dot").className = "status-indicator status-syncing";
+    document.getElementById("sync-status-text").textContent = "同步中";
+    document.getElementById("sync-status-text").className = "badge badge-warning";
+  }
+
+  window.updateSyncStatus = updateSyncStatus;
+  window.updateTables = updateTables;
+  window.getCurrentTables = () => currentTables;
+})();
+</script>

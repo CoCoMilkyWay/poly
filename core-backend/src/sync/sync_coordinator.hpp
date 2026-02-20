@@ -89,8 +89,8 @@ private:
                                         {contracts::CTF_EXCHANGE, from_block, to_block, ex_topics},
                                         {contracts::NEG_RISK_CTF_EXCHANGE, from_block, to_block, ex_topics},
                                         {contracts::NEG_RISK_ADAPTER, from_block, to_block, nra_topics}});
-    } catch (...) {
-      std::cerr << "[Sync] eth_getLogs 失败, 5s 后重试" << std::endl;
+    } catch (const std::exception &e) {
+      std::cerr << "[Sync] eth_getLogs 失败: " << e.what() << ", 5s 后重试" << std::endl;
       auto timer = std::make_shared<asio::steady_timer>(*ioc_);
       timer->expires_after(std::chrono::seconds(5));
       timer->async_wait([this, timer, from_block, head_block](boost::system::error_code ec) {
@@ -107,6 +107,7 @@ private:
         logs.push_back(log);
       }
     }
+    std::cout << " " << logs.size() << " logs" << std::endl;
 
     ParsedEvents events = EventParser::parse_logs(logs);
 

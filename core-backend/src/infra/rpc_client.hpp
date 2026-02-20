@@ -1,7 +1,7 @@
 #pragma once
 
-#include <cassert>
 #include <nlohmann/json.hpp>
+#include <stdexcept>
 #include <string>
 
 #include <boost/asio.hpp>
@@ -29,7 +29,9 @@ public:
 
     std::string response_body = http_post(request.dump());
     json response = json::parse(response_body);
-    assert(!response.contains("error") && "RPC error");
+    if (response.contains("error")) {
+      throw std::runtime_error("RPC error: " + response["error"].dump());
+    }
     return from_hex(response["result"].get<std::string>());
   }
 
@@ -58,7 +60,9 @@ public:
 
     std::vector<json> results(queries.size());
     for (const auto &resp : responses) {
-      assert(!resp.contains("error") && "RPC batch error");
+      if (resp.contains("error")) {
+        throw std::runtime_error("RPC error: " + resp["error"].dump());
+      }
       size_t id = resp["id"].get<size_t>();
       results[id] = resp["result"];
     }
@@ -118,13 +122,14 @@ private:
     http::write(stream, req);
 
     beast::flat_buffer buffer;
-    http::response<http::string_body> res;
-    http::read(stream, buffer, res);
+    http::response_parser<http::string_body> parser;
+    parser.body_limit(256 * 1024 * 1024);  // 256MB
+    http::read(stream, buffer, parser);
 
     beast::error_code ec;
     [[maybe_unused]] auto ret = stream.socket().shutdown(tcp::socket::shutdown_both, ec);
 
-    return res.body();
+    return parser.get().body();
   }
 
   static std::string to_hex(int64_t value) {
