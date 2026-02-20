@@ -344,8 +344,16 @@
       <div class="sync-stat-label">Speed</div>
       <div class="sync-stat-value" id="sync-speed">-</div>
     </div>
+    <div class="sync-stat">
+      <div class="sync-stat-label">ETA</div>
+      <div class="sync-stat-value" id="sync-eta">-</div>
+    </div>
     <div class="sync-stat" style="flex: 1; min-width: 160px">
-      <div class="sync-stat-label">RPC Node</div>
+      <div class="sync-stat-label">
+        RPC Node &nbsp;<span style="color: #555"
+          >chunk={{ "{:,}".format(rpc_node.chunk) }}</span
+        >
+      </div>
       <div
         class="sync-stat-value"
         style="font-size: 0.85em"
@@ -380,8 +388,6 @@
 <script>
   (function () {
     const START_BLOCK = 4027499;
-    let lastBlock = parseInt(document.body.dataset.lastBlock || "0");
-    let lastTime = Date.now();
     let tableCountsCache = {};
     let expandedContracts = new Set();
 
@@ -830,17 +836,27 @@
         statusText.className = "badge badge-success";
       }
 
-      const now = Date.now();
-      const timeDiff = (now - lastTime) / 1000;
-      const blockDiff = currentBlock - lastBlock;
-      if (timeDiff > 0 && blockDiff > 0) {
-        document.getElementById("sync-speed").textContent =
-          formatNumber(Math.round(blockDiff / timeDiff)) + "/s";
-      } else if (blockDiff === 0) {
-        document.getElementById("sync-speed").textContent = "-";
+      const bps = sync.blocks_per_second || 0;
+      const speedEl = document.getElementById("sync-speed");
+      const etaEl = document.getElementById("sync-eta");
+      if (bps > 0) {
+        speedEl.textContent = formatNumber(Math.round(bps)) + "/s";
+        if (behind > 0) {
+          const etaSec = behind / bps;
+          if (etaSec < 60) {
+            etaEl.textContent = Math.round(etaSec) + "s";
+          } else if (etaSec < 3600) {
+            etaEl.textContent = Math.round(etaSec / 60) + "min";
+          } else {
+            etaEl.textContent = (etaSec / 3600).toFixed(1) + "h";
+          }
+        } else {
+          etaEl.textContent = "已同步";
+        }
+      } else {
+        speedEl.textContent = "-";
+        etaEl.textContent = "-";
       }
-      lastBlock = currentBlock;
-      lastTime = now;
 
       document.body.dataset.lastBlock = currentBlock;
       document.body.dataset.headBlock = headBlock;

@@ -12,9 +12,9 @@ struct Config {
   std::string rpc_name;
   std::string rpc_url;
   std::string rpc_api_key;
+  int rpc_chunk;
   int api_port;
   int frontend_port;
-  int sync_batch_size;
   int sync_interval_seconds;
   int64_t initial_block;
 
@@ -34,7 +34,6 @@ struct Config {
     config.db_path = require("db_path").get<std::string>();
     config.api_port = require("api_port").get<int>();
     config.frontend_port = require("frontend_port").get<int>();
-    config.sync_batch_size = require("sync_batch_size").get<int>();
     config.sync_interval_seconds = require("sync_interval_seconds").get<int>();
     config.initial_block = require("initial_block").get<int64_t>();
 
@@ -42,9 +41,10 @@ struct Config {
     const auto &nodes = require("rpc_nodes");
     for (const auto &node : nodes) {
       if (node["name"].get<std::string>() == active) {
-        config.rpc_name = node["name"].get<std::string>();
-        config.rpc_url  = node["url"].get<std::string>();
+        config.rpc_name  = node["name"].get<std::string>();
+        config.rpc_url   = node["url"].get<std::string>();
         config.rpc_api_key = node.value("key", "");
+        config.rpc_chunk = node["chunk"].get<int>();
         break;
       }
     }

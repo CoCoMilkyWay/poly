@@ -19,6 +19,7 @@ using json = nlohmann::json;
 struct SyncStatus {
   bool is_syncing = false;
   int64_t head_block = 0;
+  double blocks_per_second = 0.0;
 };
 
 class ApiSession : public std::enable_shared_from_this<ApiSession> {
@@ -116,6 +117,7 @@ private:
       SyncStatus status = sync_getter_();
       result["head_block"] = status.head_block;
       result["is_syncing"] = status.is_syncing;
+      result["blocks_per_second"] = status.blocks_per_second;
     }
 
     res_.result(http::status::ok);

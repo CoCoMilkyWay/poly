@@ -2,6 +2,7 @@
 
 #include <atomic>
 #include <chrono>
+#include <deque>
 #include <iostream>
 #include <memory>
 #include <vector>
@@ -22,7 +23,7 @@ public:
   SyncCoordinator(const Config &config, Database &db)
       : config_(config), db_(db),
         rpc_(config.rpc_url, config.rpc_api_key),
-        batch_size_(config.sync_batch_size),
+        batch_size_(config.rpc_chunk),
         interval_seconds_(config.sync_interval_seconds) {}
 
   void start(asio::io_context &ioc) {
@@ -33,6 +34,15 @@ public:
 
   bool is_syncing() const { return is_syncing_; }
   int64_t get_head_block() const { return head_block_; }
+
+  double get_blocks_per_second() const {
+    if (chunk_history_.size() < 2)
+      return 0.0;
+    double time_diff = chunk_history_.back().second - chunk_history_.front().second;
+    if (time_diff <= 0)
+      return 0.0;
+    return (chunk_history_.back().first - chunk_history_.front().first) / time_diff;
+  }
 
 private:
   void schedule_sync(int delay_seconds) {
@@ -161,6 +171,13 @@ private:
       db_.atomic_multi_insert(batches, to_block, resolution_sqls);
     }
 
+    double now = std::chrono::duration<double>(
+                     std::chrono::steady_clock::now().time_since_epoch())
+                     .count();
+    chunk_history_.push_back({to_block, now});
+    if (chunk_history_.size() > 20)
+      chunk_history_.pop_front();
+
     if (to_block < head_block) {
       asio::post(*ioc_, [this, to_block, head_block]() {
         sync_batch(to_block + 1, head_block);
@@ -181,4 +198,5 @@ private:
   int interval_seconds_;
   std::atomic<bool> is_syncing_{false};
   std::atomic<int64_t> head_block_{0};
+  std::deque<std::pair<int64_t, double>> chunk_history_; // (end_block, time_s)
 };
