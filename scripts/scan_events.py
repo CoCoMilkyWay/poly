@@ -2,15 +2,29 @@
 """扫描 Polymarket 合约历史事件统计（动态终端刷新）"""
 
 """
-  Polymarket 事件扫描  (head=76,549,285)
+Polymarket 事件扫描  (head=83,000,000)
 
-  块进度:   60,925,999 / 76,549,285  (79.6%)  -  速度: 15,330 blk/s  ETA: 17.0 min
+  块进度:   68,281,999 / 83,000,000  (82.3%)  -  速度: 355 blk/s  ETA: 690.6 min
 
-  合约                 事件                 总计        首个block      最后block
-  ----------------------------------------------------------------------------------
-  ConditionalTokens    TransferSingle    xxx,xxx     4,027,499    76,549,000
-  ConditionalTokens    TransferBatch     xxx,xxx     4,027,499    76,549,000
-  ...
+  合约                  事件                              总计        首block        末block      2020      2021      2022      2023      2024      2025      2026
+  --------------------------------------------------------------------------------------------------------------------------------------------------------
+  ConditionalTokens   TransferSingle          84,545,926     4,028,711    68,281,999         0 1,323,929 1,455,369   492,77439,667,70441,606,150         0
+  ConditionalTokens   TransferBatch           54,120,488     4,028,608    68,281,999         0 1,202,775 1,832,003   376,67525,391,33625,317,699         0
+  ConditionalTokens   ConditionPreparation        37,482     4,027,499    68,278,448         0     1,029     7,392     4,218    15,364     9,479         0
+  ConditionalTokens   ConditionResolution         30,040     6,205,069    68,278,044         0       750     3,733     3,805    13,606     8,146         0
+  ConditionalTokens   PositionSplit           21,647,506     4,028,608    68,281,999         0   617,762   968,524   230,22710,177,708 9,653,285         0
+  ConditionalTokens   PositionsMerge          10,311,617     4,028,724    68,281,998         0   490,210   657,656   113,262 4,172,673 4,877,816         0
+  ConditionalTokens   PayoutRedemption         4,987,113     6,233,711    68,281,991         0   332,902   246,192    69,917 1,747,897 2,590,205         0
+  CTFExchange         OrderFilled             19,759,589    35,896,869    68,281,999         0         0         0   247,475 7,633,61911,878,495         0
+  CTFExchange         OrdersMatched            8,334,148    35,896,869    68,281,999         0         0         0   101,248 3,233,641 4,999,259         0
+  CTFExchange         TokenRegistered             31,180    35,887,522    68,278,152         0         0         0     6,744    14,526     9,910         0
+  NegRiskCTFExchange  OrderFilled             57,493,076    51,408,357    68,281,999         0         0         0         030,359,91227,133,164         0
+  NegRiskCTFExchange  OrdersMatched           26,593,833    51,408,357    68,281,999         0         0         0         014,092,05212,501,781         0
+  NegRiskCTFExchange  TokenRegistered             25,004    51,405,773    68,278,481         0         0         0         0    16,042     8,962         0
+  NegRiskAdapter      MarketPrepared                   0       -             -               0         0         0         0         0         0         0
+  NegRiskAdapter      QuestionPrepared                 0       -             -               0         0         0         0         0         0         0
+  NegRiskAdapter      PositionsConverted               0       -             -               0         0         0         0         0         0         0
+  NegRiskAdapter      OutcomeReported                  0       -             -               0         0         0         0         0         0         0
 """
 
 import datetime
@@ -72,17 +86,19 @@ last_blk  = {}   # (contract, event) -> int
 yearly     = {}   # (contract, event, year) -> int
 recent_times = []  # 最近20次查询的 (block, time) 用于计算滑动平均速度
 
-def rpc_call(method, params, timeout=20):
-    req = json.dumps({"jsonrpc": "2.0", "method": method, "params": params, "id": 1}).encode()
+def rpc_batch(calls, timeout=30):
+    batch = [{"jsonrpc": "2.0", "method": m, "params": p, "id": i}
+             for i, (m, p) in enumerate(calls)]
+    req = json.dumps(batch).encode()
     with urllib.request.urlopen(
         urllib.request.Request(RPC, req, {"Content-Type": "application/json"}),
         timeout=timeout
     ) as r:
-        return json.loads(r.read())
-
-def get_head():
-    res = rpc_call("eth_blockNumber", [])
-    return int(res["result"], 16)
+        responses = json.loads(r.read())
+    responses.sort(key=lambda x: x["id"])
+    for resp in responses:
+        assert "result" in resp, f"RPC error: {resp}"
+    return [resp["result"] for resp in responses]
 
 def process_logs(logs, contract_name):
     for log in logs:
@@ -178,45 +194,20 @@ def main():
     while cur <= head:
         end = min(cur + CHUNK - 1, head)
 
-        # ConditionalTokens
-        res = rpc_call("eth_getLogs", [{
-            "fromBlock": hex(cur),
-            "toBlock":   hex(end),
-            "address":   CONTRACTS["ConditionalTokens"],
-            "topics":    [ct_topics],
-        }], timeout=30)
-        assert "result" in res, res
-        process_logs(res["result"], "ConditionalTokens")
-
-        # CTFExchange
-        res = rpc_call("eth_getLogs", [{
-            "fromBlock": hex(cur),
-            "toBlock":   hex(end),
-            "address":   CONTRACTS["CTFExchange"],
-            "topics":    [ex_topics],
-        }], timeout=30)
-        assert "result" in res, res
-        process_logs(res["result"], "CTFExchange")
-
-        # NegRiskCTFExchange
-        res = rpc_call("eth_getLogs", [{
-            "fromBlock": hex(cur),
-            "toBlock":   hex(end),
-            "address":   CONTRACTS["NegRiskCTFExchange"],
-            "topics":    [ex_topics],
-        }], timeout=30)
-        assert "result" in res, res
-        process_logs(res["result"], "NegRiskCTFExchange")
-
-        # NegRiskAdapter
-        res = rpc_call("eth_getLogs", [{
-            "fromBlock": hex(cur),
-            "toBlock":   hex(end),
-            "address":   CONTRACTS["NegRiskAdapter"],
-            "topics":    [nra_topics],
-        }], timeout=30)
-        assert "result" in res, res
-        process_logs(res["result"], "NegRiskAdapter")
+        results = rpc_batch([
+            ("eth_getLogs", [{"fromBlock": hex(cur), "toBlock": hex(end),
+                              "address": CONTRACTS["ConditionalTokens"], "topics": [ct_topics]}]),
+            ("eth_getLogs", [{"fromBlock": hex(cur), "toBlock": hex(end),
+                              "address": CONTRACTS["CTFExchange"], "topics": [ex_topics]}]),
+            ("eth_getLogs", [{"fromBlock": hex(cur), "toBlock": hex(end),
+                              "address": CONTRACTS["NegRiskCTFExchange"], "topics": [ex_topics]}]),
+            ("eth_getLogs", [{"fromBlock": hex(cur), "toBlock": hex(end),
+                              "address": CONTRACTS["NegRiskAdapter"], "topics": [nra_topics]}]),
+        ])
+        process_logs(results[0], "ConditionalTokens")
+        process_logs(results[1], "CTFExchange")
+        process_logs(results[2], "NegRiskCTFExchange")
+        process_logs(results[3], "NegRiskAdapter")
 
         render(end, head, time.time())
         cur = end + 1

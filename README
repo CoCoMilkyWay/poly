@@ -308,4 +308,305 @@ struct UserPnL {
     
     // 计算: PnL = totalProceeds + totalRedemption - totalCostBasis - totalFees
 };
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                        Round 1: RPC → 原始表                         │
+│                                                                     │
+│  eth_getLogs ──────────────────────────────────────────────────────>│
+│       │                                                             │
+│       ▼                                                             │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │ raw_log (暂存表，保持链上原始格式)                            │   │
+│  │                                                             │   │
+│  │ CREATE TABLE raw_log (                                      │   │
+│  │     id INTEGER PRIMARY KEY,  -- block*10000+log_idx         │   │
+│  │     block_number INTEGER,                                   │   │
+│  │     log_index INTEGER,                                      │   │
+│  │     event_type TEXT,         -- 'TokenRegistered' etc       │   │
+│  │     contract TEXT,           -- 来源合约                     │   │
+│  │     data TEXT                -- JSON: 原始解析字段           │   │
+│  │ );                                                          │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+│                                                                     │
+│  数据量: ~15M logs, 耗时 ~15min (本地 Erigon)                       │
+└─────────────────────────────────────────────────────────────────────┘
+                                  │
+                                  ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                   Round 2: 原始表 → 最终表 (纯 SQL)                  │
+│                                                                     │
+│  Step 2.1: 构建映射表                                               │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │ -- token_map: 从 TokenRegistered 提取                        │   │
+│  │ INSERT INTO token_map (token_id, condition_id, is_yes)       │   │
+│  │ SELECT                                                       │   │
+│  │     json_extract(data, '$.token0'),                          │   │
+│  │     json_extract(data, '$.conditionId'),                     │   │
+│  │     1                                                        │   │
+│  │ FROM raw_log                                                 │   │
+│  │ WHERE event_type = 'TokenRegistered'                         │   │
+│  │   AND json_extract(data,'$.token0') < json_extract(data,'$.token1')│
+│  │ UNION ALL                                                    │   │
+│  │ SELECT                                                       │   │
+│  │     json_extract(data, '$.token1'),                          │   │
+│  │     json_extract(data, '$.conditionId'),                     │   │
+│  │     0                                                        │   │
+│  │ FROM raw_log                                                 │   │
+│  │ WHERE event_type = 'TokenRegistered'                         │   │
+│  │   AND json_extract(data,'$.token0') < json_extract(data,'$.token1')│
+│  └─────────────────────────────────────────────────────────────┘   │
+│                                                                     │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │ -- condition: 从 ConditionPreparation + Resolution           │   │
+│  │ INSERT INTO condition (...)                                  │   │
+│  │ SELECT ... FROM raw_log WHERE event_type='ConditionPreparation'│   │
+│  │                                                             │   │
+│  │ UPDATE condition SET payout_numerators=..., resolution_block=...│   │
+│  │ FROM raw_log WHERE event_type='ConditionResolution'          │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+│                                                                     │
+│  Step 2.2: 转换事件表                                               │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │ -- order_filled: 从 OrderFilled 计算 side/price/size         │   │
+│  │ INSERT INTO order_filled (...)                               │   │
+│  │ SELECT                                                       │   │
+│  │     r.id,                                                    │   │
+│  │     r.block_number,                                          │   │
+│  │     r.log_index,                                             │   │
+│  │     json_extract(r.data, '$.maker'),                         │   │
+│  │     json_extract(r.data, '$.taker'),                         │   │
+│  │     CASE WHEN maker_asset = 0                                │   │
+│  │          THEN taker_asset ELSE maker_asset END AS market,    │   │
+│  │     CASE WHEN maker_asset = 0                                │   │
+│  │          THEN 'Buy' ELSE 'Sell' END AS side,                 │   │
+│  │     CASE WHEN maker_asset = 0                                │   │
+│  │          THEN maker_amt ELSE taker_amt END AS size,          │   │
+│  │     ...                                                      │   │
+│  │ FROM raw_log r                                               │   │
+│  │ WHERE r.event_type = 'OrderFilled'                           │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+│                                                                     │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │ -- split/merge/redemption: 直接映射                          │   │
+│  │ INSERT INTO split (...)                                      │   │
+│  │ SELECT id, block_number, log_index,                          │   │
+│  │        json_extract(data, '$.stakeholder'),                  │   │
+│  │        json_extract(data, '$.conditionId'),                  │   │
+│  │        json_extract(data, '$.amount')                        │   │
+│  │ FROM raw_log WHERE event_type = 'PositionSplit'              │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+│                                                                     │
+│  Step 2.3: 建索引                                                   │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │ CREATE INDEX idx_of_maker ON order_filled(maker);            │   │
+│  │ CREATE INDEX idx_of_taker ON order_filled(taker);            │   │
+│  │ CREATE INDEX idx_split_user ON split(stakeholder);           │   │
+│  │ ...                                                          │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+│                                                                     │
+│  Step 2.4 (可选): 清理暂存                                          │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │ DROP TABLE raw_log;  -- 或保留用于调试                        │   │
+│  │ VACUUM;                                                      │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+│                                                                     │
+│  耗时: ~2min (纯数据库操作)                                         │
+└─────────────────────────────────────────────────────────────────────┘
+
+-- ============ 暂存表 (Round 1) ============
+CREATE TABLE raw_log (
+    id INTEGER PRIMARY KEY,       -- block_number * 10000 + log_index
+    block_number INTEGER NOT NULL,
+    log_index INTEGER NOT NULL,
+    event_type TEXT NOT NULL,     -- 事件名
+    contract TEXT NOT NULL,       -- 来源合约
+    data TEXT NOT NULL            -- JSON: 所有字段
+);
+
+-- ============ 最终表 (Round 2) ============
+CREATE TABLE token_map (
+    token_id TEXT PRIMARY KEY,
+    condition_id TEXT NOT NULL,
+    is_yes INTEGER NOT NULL       -- 1=YES, 0=NO
+);
+
+CREATE TABLE condition (
+    condition_id TEXT PRIMARY KEY,
+    oracle TEXT,
+    question_id TEXT,
+    outcome_slot_count INTEGER,
+    payout_numerators TEXT,       -- JSON array, NULL=未结算
+    resolution_block INTEGER      -- NULL=未结算
+);
+
+CREATE TABLE order_filled (
+    id INTEGER PRIMARY KEY,
+    block_number INTEGER NOT NULL,
+    log_index INTEGER NOT NULL,
+    maker TEXT NOT NULL,
+    taker TEXT NOT NULL,
+    market TEXT NOT NULL,         -- tokenId
+    side TEXT NOT NULL,           -- 'Buy'/'Sell'
+    size INTEGER NOT NULL,        -- USDC (6 decimals)
+    price_num INTEGER NOT NULL,
+    price_den INTEGER NOT NULL,
+    fee INTEGER NOT NULL
+);
+
+CREATE TABLE split (
+    id INTEGER PRIMARY KEY,
+    block_number INTEGER NOT NULL,
+    log_index INTEGER NOT NULL,
+    stakeholder TEXT NOT NULL,
+    condition_id TEXT NOT NULL,
+    amount INTEGER NOT NULL
+);
+
+CREATE TABLE merge (
+    id INTEGER PRIMARY KEY,
+    block_number INTEGER NOT NULL,
+    log_index INTEGER NOT NULL,
+    stakeholder TEXT NOT NULL,
+    condition_id TEXT NOT NULL,
+    amount INTEGER NOT NULL
+);
+
+CREATE TABLE redemption (
+    id INTEGER PRIMARY KEY,
+    block_number INTEGER NOT NULL,
+    log_index INTEGER NOT NULL,
+    redeemer TEXT NOT NULL,
+    condition_id TEXT NOT NULL,
+    index_sets TEXT NOT NULL,     -- JSON array
+    payout INTEGER NOT NULL
+);
+
+-- ============ 同步状态表 ============
+CREATE TABLE sync_state (
+    key TEXT PRIMARY KEY,
+    value INTEGER
+);
+-- key: 'last_block', 'round1_done', 'round2_done'
+
+def round1_dump_raw(rpc_url, db):
+    """RPC → raw_log 表"""
+    last_block = db.execute("SELECT value FROM sync_state WHERE key='last_block'").fetchone()
+    start = (last_block[0] + 1) if last_block else START_BLOCKS["ConditionalTokens"]
+    head = get_head(rpc_url)
+    
+    CHUNK = 2000
+    cur = start
+    while cur <= head:
+        end = min(cur + CHUNK - 1, head)
+        
+        # 批量查询所有合约的所有事件
+        logs = rpc_batch(rpc_url, [
+            ("eth_getLogs", [{"fromBlock": hex(cur), "toBlock": hex(end),
+                            "address": CONTRACTS["ConditionalTokens"], "topics": [CT_TOPICS]}]),
+            ("eth_getLogs", [{"fromBlock": hex(cur), "toBlock": hex(end),
+                            "address": CONTRACTS["CTFExchange"], "topics": [EX_TOPICS]}]),
+            # ...
+        ])
+        
+        # 解析并写入 raw_log
+        batch = []
+        for log, contract_name in flatten_logs(logs):
+            event_type, data = parse_log(log)
+            row_id = int(log["blockNumber"], 16) * 10000 + int(log["logIndex"], 16)
+            batch.append((row_id, int(log["blockNumber"], 16), 
+                         int(log["logIndex"], 16), event_type, 
+                         contract_name, json.dumps(data)))
+        
+        db.executemany("INSERT OR IGNORE INTO raw_log VALUES (?,?,?,?,?,?)", batch)
+        db.execute("INSERT OR REPLACE INTO sync_state VALUES ('last_block', ?)", (end,))
+        db.commit()
+        
+        cur = end + 1
+
+def round2_transform(db):
+    """raw_log → 最终表 (纯 SQL)"""
+    
+    # 2.1 token_map
+    db.executescript("""
+        INSERT INTO token_map (token_id, condition_id, is_yes)
+        SELECT json_extract(data, '$.token0'), 
+               json_extract(data, '$.conditionId'), 1
+        FROM raw_log WHERE event_type = 'TokenRegistered'
+          AND CAST(json_extract(data,'$.token0') AS INTEGER) 
+            < CAST(json_extract(data,'$.token1') AS INTEGER);
+        
+        INSERT INTO token_map (token_id, condition_id, is_yes)
+        SELECT json_extract(data, '$.token1'),
+               json_extract(data, '$.conditionId'), 0
+        FROM raw_log WHERE event_type = 'TokenRegistered'
+          AND CAST(json_extract(data,'$.token0') AS INTEGER)
+            < CAST(json_extract(data,'$.token1') AS INTEGER);
+    """)
+    
+    # 2.2 condition
+    db.executescript("""
+        INSERT INTO condition (condition_id, oracle, question_id, outcome_slot_count)
+        SELECT json_extract(data, '$.conditionId'),
+               json_extract(data, '$.oracle'),
+               json_extract(data, '$.questionId'),
+               json_extract(data, '$.outcomeSlotCount')
+        FROM raw_log WHERE event_type = 'ConditionPreparation';
+        
+        UPDATE condition SET
+            payout_numerators = (SELECT json_extract(data, '$.payoutNumerators') 
+                                FROM raw_log r WHERE r.event_type='ConditionResolution'
+                                AND json_extract(r.data,'$.conditionId')=condition.condition_id),
+            resolution_block = (SELECT block_number FROM raw_log r 
+                               WHERE r.event_type='ConditionResolution'
+                               AND json_extract(r.data,'$.conditionId')=condition.condition_id)
+        WHERE EXISTS (SELECT 1 FROM raw_log r WHERE r.event_type='ConditionResolution'
+                     AND json_extract(r.data,'$.conditionId')=condition.condition_id);
+    """)
+    
+    # 2.3 order_filled (核心转换)
+    db.execute("""
+        INSERT INTO order_filled (id, block_number, log_index, maker, taker,
+                                  market, side, size, price_num, price_den, fee)
+        SELECT 
+            id, block_number, log_index,
+            json_extract(data, '$.maker'),
+            json_extract(data, '$.taker'),
+            CASE WHEN CAST(json_extract(data,'$.makerAssetId') AS INTEGER) = 0
+                 THEN json_extract(data,'$.takerAssetId')
+                 ELSE json_extract(data,'$.makerAssetId') END,
+            CASE WHEN CAST(json_extract(data,'$.makerAssetId') AS INTEGER) = 0
+                 THEN 'Buy' ELSE 'Sell' END,
+            CASE WHEN CAST(json_extract(data,'$.makerAssetId') AS INTEGER) = 0
+                 THEN CAST(json_extract(data,'$.makerAmountFilled') AS INTEGER)
+                 ELSE CAST(json_extract(data,'$.takerAmountFilled') AS INTEGER) END,
+            CAST(json_extract(data,'$.makerAmountFilled') AS INTEGER),
+            CAST(json_extract(data,'$.takerAmountFilled') AS INTEGER),
+            CAST(json_extract(data,'$.fee') AS INTEGER)
+        FROM raw_log WHERE event_type = 'OrderFilled'
+    """)
+    
+    # 2.4 split/merge/redemption (直接映射)
+    db.execute("""
+        INSERT INTO split (id, block_number, log_index, stakeholder, condition_id, amount)
+        SELECT id, block_number, log_index,
+               json_extract(data, '$.stakeholder'),
+               json_extract(data, '$.conditionId'),
+               CAST(json_extract(data, '$.amount') AS INTEGER)
+        FROM raw_log WHERE event_type = 'PositionSplit'
+    """)
+    # merge, redemption 类似...
+    
+    # 2.5 建索引
+    db.executescript("""
+        CREATE INDEX idx_of_maker ON order_filled(maker);
+        CREATE INDEX idx_of_taker ON order_filled(taker);
+        CREATE INDEX idx_of_market ON order_filled(market);
+        CREATE INDEX idx_split_user ON split(stakeholder);
+        CREATE INDEX idx_merge_user ON merge(stakeholder);
+        CREATE INDEX idx_redeem_user ON redemption(redeemer);
+    """)
+    
+    db.execute("INSERT OR REPLACE INTO sync_state VALUES ('round2_done', 1)")
+    db.commit()
+
 ```

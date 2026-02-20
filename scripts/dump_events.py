@@ -2,10 +2,16 @@
 """从本地RPC节点dump Polymarket事件到CSV文件"""
 
 """
+chuyin@chuyin:~/work/poly$ /bin/python3 /home/chuyin/work/poly/scripts/dump_events.py
 Head: 75,000,000
 查询范围: 74,990,000 - 75,000,000 (10,000 blocks)
 
-  Block: 75,000,000 - 75,000,000  (100.0%)  499 blk/s  ETA: 0s
+
+==================================================
+开始查询 Erigon: http://127.0.0.1:8545... (chunk=2000)
+==================================================
+
+  [Erigon] Block: 75,000,000 - 75,000,000  (100.0%)  464 blk/s  ETA: 0s
 
   事件                             数量
   -----------------------------------
@@ -24,9 +30,54 @@ Head: 75,000,000
   PositionsConverted              0
   OutcomeReported                 0
 
-完成，耗时 20.0s
+[Erigon] 完成，耗时 21.5s
+[Erigon] 输出目录: /home/chuyin/work/poly/scripts/events/Erigon/
 
-输出目录: data/events/
+==================================================
+开始查询 dRPC: https://lb.drpc.org/ogrpc?network=polygon&dkey=Aj9... (chunk=1000)
+==================================================
+
+  [dRPC] Block: 75,000,000 - 75,000,000  (100.0%)  159 blk/s  ETA: 0s
+
+  事件                             数量
+  -----------------------------------
+  TransferSingle             79,123
+  TransferBatch              41,957
+  OrderFilled                69,698
+  OrdersMatched              29,024
+  TokenRegistered                36
+  PositionSplit              28,069
+  PositionsMerge              4,249
+  PayoutRedemption           11,950
+  ConditionPreparation           66
+  ConditionResolution            94
+  MarketPrepared                  0
+  QuestionPrepared                0
+  PositionsConverted              0
+  OutcomeReported                 0
+
+[dRPC] 完成，耗时 62.8s
+[dRPC] 输出目录: /home/chuyin/work/poly/scripts/events/dRPC/
+
+==================================================
+对比结果:
+==================================================
+  TransferSingle         79,123 vs 79,123 ✓
+  TransferBatch          41,957 vs 41,957 ✓
+  ConditionPreparation   66 vs 66 ✓
+  ConditionResolution    94 vs 94 ✓
+  PositionSplit          28,069 vs 28,069 ✓
+  PositionsMerge         4,249 vs 4,249 ✓
+  PayoutRedemption       11,950 vs 11,950 ✓
+  OrderFilled            69,698 vs 69,698 ✓
+  OrdersMatched          29,024 vs 29,024 ✓
+  TokenRegistered        36 vs 36 ✓
+  MarketPrepared         0 vs 0 ✓
+  QuestionPrepared       0 vs 0 ✓
+  PositionsConverted     0 vs 0 ✓
+  OutcomeReported        0 vs 0 ✓
+
+总体: 全部一致 ✓
 """
 
 import urllib.request
@@ -460,7 +511,7 @@ def dump_node(node_name, rpc_url, chunk, output_dir, head, start_block, num_bloc
 def main():
     # head = get_head()
     head = 75_000_000
-    num_blocks = int(sys.argv[1]) if len(sys.argv) > 1 else 1000
+    num_blocks = int(sys.argv[1]) if len(sys.argv) > 1 else 10000
     start_block = head - num_blocks
 
     print(f"Head: {head:,}")
