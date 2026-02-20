@@ -2,7 +2,6 @@
 """从本地RPC节点dump Polymarket事件到CSV文件"""
 
 """
-chuyin@chuyin:~/work/poly$ /bin/python3 /home/chuyin/work/poly/scripts/dump_events.py
 Head: 75,000,000
 查询范围: 74,990,000 - 75,000,000 (10,000 blocks)
 
@@ -11,7 +10,7 @@ Head: 75,000,000
 开始查询 Erigon: http://127.0.0.1:8545... (chunk=2000)
 ==================================================
 
-  [Erigon] Block: 75,000,000 - 75,000,000  (100.0%)  464 blk/s  ETA: 0s
+  [Erigon] Block: 75,000,000 - 75,000,000  (100.0%)  492 blk/s  ETA: 0s
 
   事件                             数量
   -----------------------------------
@@ -25,19 +24,19 @@ Head: 75,000,000
   PayoutRedemption           11,950
   ConditionPreparation           66
   ConditionResolution            94
-  MarketPrepared                  0
-  QuestionPrepared                0
-  PositionsConverted              0
-  OutcomeReported                 0
+  MarketPrepared                  2
+  QuestionPrepared               10
+  PositionsConverted            266
+  OutcomeReported                 9
 
-[Erigon] 完成，耗时 21.5s
+[Erigon] 完成，耗时 20.3s
 [Erigon] 输出目录: /home/chuyin/work/poly/scripts/events/Erigon/
 
 ==================================================
 开始查询 dRPC: https://lb.drpc.org/ogrpc?network=polygon&dkey=Aj9... (chunk=1000)
 ==================================================
 
-  [dRPC] Block: 75,000,000 - 75,000,000  (100.0%)  159 blk/s  ETA: 0s
+  [dRPC] Block: 75,000,000 - 75,000,000  (100.0%)  129 blk/s  ETA: 0s
 
   事件                             数量
   -----------------------------------
@@ -51,12 +50,12 @@ Head: 75,000,000
   PayoutRedemption           11,950
   ConditionPreparation           66
   ConditionResolution            94
-  MarketPrepared                  0
-  QuestionPrepared                0
-  PositionsConverted              0
-  OutcomeReported                 0
+  MarketPrepared                  2
+  QuestionPrepared               10
+  PositionsConverted            266
+  OutcomeReported                 9
 
-[dRPC] 完成，耗时 62.8s
+[dRPC] 完成，耗时 77.3s
 [dRPC] 输出目录: /home/chuyin/work/poly/scripts/events/dRPC/
 
 ==================================================
@@ -72,10 +71,10 @@ Head: 75,000,000
   OrderFilled            69,698 vs 69,698 ✓
   OrdersMatched          29,024 vs 29,024 ✓
   TokenRegistered        36 vs 36 ✓
-  MarketPrepared         0 vs 0 ✓
-  QuestionPrepared       0 vs 0 ✓
-  PositionsConverted     0 vs 0 ✓
-  OutcomeReported        0 vs 0 ✓
+  MarketPrepared         2 vs 2 ✓
+  QuestionPrepared       10 vs 10 ✓
+  PositionsConverted     266 vs 266 ✓
+  OutcomeReported        9 vs 9 ✓
 
 总体: 全部一致 ✓
 """

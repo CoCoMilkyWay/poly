@@ -10,7 +10,7 @@ polygon链上polymarket协议合约节点本身的实现: /home/chuyin/work/poly
 老架构:
     思路: doc/indexer/README.md
     官方推荐的the Graph实现: /home/chuyin/work/poly/doc/indexer/the graph/official (但真正的实现和他其实差异很大)
-    真正graph indexer实现:
+    商业graph indexer实现:
         IPFS manifest: /home/chuyin/work/poly/doc/indexer/the graph/implemented/IPFS
         graphql schema: /home/chuyin/work/poly/doc/indexer/the graph/implemented/schema
 
@@ -109,57 +109,65 @@ chuyin@chuyin:~/work/polymarket-indexer/service$ /bin/python3 /home/chuyin/work/
 
 **PositionSplit**
 
-| 字段               | 类型      | indexed | 说明                   |
-| ------------------ | --------- | ------- | ---------------------- |
-| stakeholder        | address   | yes     | 操作者                 |
-| collateralToken    | address   | no      | USDC 地址              |
-| parentCollectionId | bytes32   | yes     | 通常为 0x0             |
-| conditionId        | bytes32   | yes     | 条件 ID                |
-| partition          | uint256[] | no      | [1,2] = YES+NO         |
-| amount             | uint256   | no      | USDC 数量 (6 decimals) |
-| tx_hash            | bytes32   | meta    | log.transactionHash    |
-| block_number       | uint64    | meta    | log.blockNumber        |
-| log_index          | uint32    | meta    | log.logIndex           |
+USDC → YES + NO (铸造)
+
+| 字段               | 类型      | indexed | 说明                                                   |
+| ------------------ | --------- | ------- | ------------------------------------------------------ |
+| stakeholder        | address   | yes     | 操作者                                                 |
+| collateralToken    | address   | no      | 固定为USDC: 0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174 |
+| parentCollectionId | bytes32   | yes     | 几乎总是 0x0                                           |
+| conditionId        | bytes32   | yes     | 条件 ID                                                |
+| partition          | uint256[] | no      | [1,2] = YES+NO                                         |
+| amount             | uint256   | no      | 消耗的USDC数量 (6 decimals)，同时获得等量YES和NO token |
+| tx_hash            | bytes32   | meta    | log.transactionHash                                    |
+| block_number       | uint64    | meta    | log.blockNumber                                        |
+| log_index          | uint32    | meta    | log.logIndex                                           |
 
 **PositionsMerge**
 
-| 字段               | 类型      | indexed | 说明                   |
-| ------------------ | --------- | ------- | ---------------------- |
-| stakeholder        | address   | yes     | 操作者                 |
-| collateralToken    | address   | no      | USDC 地址              |
-| parentCollectionId | bytes32   | yes     | 通常为 0x0             |
-| conditionId        | bytes32   | yes     | 条件 ID                |
-| partition          | uint256[] | no      | [1,2] = YES+NO         |
-| amount             | uint256   | no      | USDC 数量 (6 decimals) |
-| tx_hash            | bytes32   | meta    | log.transactionHash    |
-| block_number       | uint64    | meta    | log.blockNumber        |
-| log_index          | uint32    | meta    | log.logIndex           |
+YES + NO → USDC (销毁)
+
+| 字段               | 类型      | indexed | 说明                                                   |
+| ------------------ | --------- | ------- | ------------------------------------------------------ |
+| stakeholder        | address   | yes     | 操作者                                                 |
+| collateralToken    | address   | no      | 固定为USDC: 0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174 |
+| parentCollectionId | bytes32   | yes     | 几乎总是 0x0                                           |
+| conditionId        | bytes32   | yes     | 条件 ID                                                |
+| partition          | uint256[] | no      | [1,2] = YES+NO                                         |
+| amount             | uint256   | no      | 销毁的YES+NO数量 (6 decimals)，同时获得等量USDC        |
+| tx_hash            | bytes32   | meta    | log.transactionHash                                    |
+| block_number       | uint64    | meta    | log.blockNumber                                        |
+| log_index          | uint32    | meta    | log.logIndex                                           |
 
 **TransferSingle**
 
-| 字段         | 类型    | indexed | 说明                         |
-| ------------ | ------- | ------- | ---------------------------- |
-| operator     | address | yes     | 操作者                       |
-| from         | address | yes     | 发送方 (0x0=mint)            |
-| to           | address | yes     | 接收方 (0x0=burn)            |
-| id           | uint256 | no      | positionId (ERC1155 tokenId) |
-| value        | uint256 | no      | 数量                         |
-| tx_hash      | bytes32 | meta    | log.transactionHash          |
-| block_number | uint64  | meta    | log.blockNumber              |
-| log_index    | uint32  | meta    | log.logIndex                 |
+覆盖**所有**持仓变化: Split铸造、Merge销毁、交易所撮合、赎回、用户间直接转账
+
+| 字段         | 类型    | indexed | 说明                                                                                                          |
+| ------------ | ------- | ------- | ------------------------------------------------------------------------------------------------------------- |
+| operator     | address | yes     | 执行操作的**合约**，非用户。CTFExchange=0x4bFb41.../NegRiskAdapter=0xd91E80.../NegRiskCTFExchange=0xC5d563... |
+| from         | address | yes     | 发送方。**0x0=mint**(Split铸造)                                                                               |
+| to           | address | yes     | 接收方。**0x0=burn**(Merge销毁/Redemption赎回)                                                                |
+| id           | uint256 | no      | positionId (ERC1155 tokenId)，256位整数，由 keccak256(USDC地址, collectionId) 计算                            |
+| value        | uint256 | no      | token数量，6 decimals (1 token = 1,000,000 units)                                                             |
+| tx_hash      | bytes32 | meta    | log.transactionHash                                                                                           |
+| block_number | uint64  | meta    | log.blockNumber                                                                                               |
+| log_index    | uint32  | meta    | log.logIndex                                                                                                  |
 
 **TransferBatch**
 
-| 字段         | 类型      | indexed | 说明                |
-| ------------ | --------- | ------- | ------------------- |
-| operator     | address   | yes     | 操作者              |
-| from         | address   | yes     | 发送方 (0x0=mint)   |
-| to           | address   | yes     | 接收方 (0x0=burn)   |
-| ids          | uint256[] | no      | positionId 数组     |
-| values       | uint256[] | no      | 数量数组            |
-| tx_hash      | bytes32   | meta    | log.transactionHash |
-| block_number | uint64    | meta    | log.blockNumber     |
-| log_index    | uint32    | meta    | log.logIndex        |
+同 TransferSingle，批量版本
+
+| 字段         | 类型      | indexed | 说明                       |
+| ------------ | --------- | ------- | -------------------------- |
+| operator     | address   | yes     | 执行操作的**合约**，非用户 |
+| from         | address   | yes     | 发送方。**0x0=mint**       |
+| to           | address   | yes     | 接收方。**0x0=burn**       |
+| ids          | uint256[] | no      | positionId 数组            |
+| values       | uint256[] | no      | 数量数组，6 decimals       |
+| tx_hash      | bytes32   | meta    | log.transactionHash        |
+| block_number | uint64    | meta    | log.blockNumber            |
+| log_index    | uint32    | meta    | log.logIndex               |
 
 **ConditionResolution**
 
@@ -176,17 +184,17 @@ chuyin@chuyin:~/work/polymarket-indexer/service$ /bin/python3 /home/chuyin/work/
 
 **PayoutRedemption**
 
-| 字段               | 类型      | indexed | 说明                 |
-| ------------------ | --------- | ------- | -------------------- |
-| redeemer           | address   | yes     | 操作者               |
-| collateralToken    | address   | yes     | USDC 地址            |
-| parentCollectionId | bytes32   | yes     | 通常为 0x0           |
-| conditionId        | bytes32   | no      | 条件 ID              |
-| indexSets          | uint256[] | no      | 赎回的 position 组合 |
-| payout             | uint256   | no      | 赎回获得的 USDC 数量 |
-| tx_hash            | bytes32   | meta    | log.transactionHash  |
-| block_number       | uint64    | meta    | log.blockNumber      |
-| log_index          | uint32    | meta    | log.logIndex         |
+| 字段               | 类型      | indexed | 说明                                                      |
+| ------------------ | --------- | ------- | --------------------------------------------------------- |
+| redeemer           | address   | yes     | 操作者                                                    |
+| collateralToken    | address   | yes     | 固定为USDC: 0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174    |
+| parentCollectionId | bytes32   | yes     | 几乎总是 0x0                                              |
+| conditionId        | bytes32   | no      | 条件 ID                                                   |
+| indexSets          | uint256[] | no      | 赎回的position组合: [1]=仅YES, [2]=仅NO, [1,2]=两者都赎回 |
+| payout             | uint256   | no      | 获得的USDC (6 decimals)，可能为0(输家token赎回值为0)      |
+| tx_hash            | bytes32   | meta    | log.transactionHash                                       |
+| block_number       | uint64    | meta    | log.blockNumber                                           |
+| log_index          | uint32    | meta    | log.logIndex                                              |
 
 ### CTFExchange / NegRiskCTFExchange
 
@@ -210,35 +218,37 @@ chuyin@chuyin:~/work/polymarket-indexer/service$ /bin/python3 /home/chuyin/work/
 
 **OrderFilled**
 
-| 字段              | 类型    | indexed | 说明                              |
-| ----------------- | ------- | ------- | --------------------------------- |
-| orderHash         | bytes32 | yes     | 订单哈希                          |
-| maker             | address | yes     | 挂单方                            |
-| taker             | address | yes     | 吃单方                            |
-| makerAssetId      | uint256 | no      | maker 给出的 tokenId (USDC=0)     |
-| takerAssetId      | uint256 | no      | taker 给出的 tokenId              |
-| makerAmountFilled | uint256 | no      | maker 给出的数量                  |
-| takerAmountFilled | uint256 | no      | taker 给出的数量                  |
-| fee               | uint256 | no      | 手续费 (USDC, 6 decimals)         |
-| tx_hash           | bytes32 | meta    | log.transactionHash               |
-| block_number      | uint64  | meta    | log.blockNumber                   |
-| log_index         | uint32  | meta    | log.logIndex                      |
-| exchange          | TEXT    | meta    | CTFExchange 或 NegRiskCTFExchange |
+买卖方向: makerAssetId=0 → maker出USDC换token → maker是买方。价格=makerAmountFilled/takerAmountFilled
+
+| 字段              | 类型    | indexed | 说明                                     |
+| ----------------- | ------- | ------- | ---------------------------------------- |
+| orderHash         | bytes32 | yes     | 订单哈希                                 |
+| maker             | address | yes     | 挂单方                                   |
+| taker             | address | yes     | 吃单方                                   |
+| makerAssetId      | uint256 | no      | maker给出的资产。**0=USDC**，非0=tokenId |
+| takerAssetId      | uint256 | no      | taker给出的资产。**0=USDC**，非0=tokenId |
+| makerAmountFilled | uint256 | no      | maker给出的数量 (6 decimals)             |
+| takerAmountFilled | uint256 | no      | taker给出的数量 (6 decimals)             |
+| fee               | uint256 | no      | 手续费 (USDC, 6 decimals)                |
+| tx_hash           | bytes32 | meta    | log.transactionHash                      |
+| block_number      | uint64  | meta    | log.blockNumber                          |
+| log_index         | uint32  | meta    | log.logIndex                             |
+| exchange          | TEXT    | meta    | CTFExchange 或 NegRiskCTFExchange        |
 
 **OrdersMatched**
 
-| 字段              | 类型    | indexed | 说明                              |
-| ----------------- | ------- | ------- | --------------------------------- |
-| takerOrderHash    | bytes32 | yes     | taker 订单哈希                    |
-| takerOrderMaker   | address | yes     | taker 订单的 maker                |
-| makerAssetId      | uint256 | no      | maker 给出的 tokenId (USDC=0)     |
-| takerAssetId      | uint256 | no      | taker 给出的 tokenId              |
-| makerAmountFilled | uint256 | no      | maker 给出的数量                  |
-| takerAmountFilled | uint256 | no      | taker 给出的数量                  |
-| tx_hash           | bytes32 | meta    | log.transactionHash               |
-| block_number      | uint64  | meta    | log.blockNumber                   |
-| log_index         | uint32  | meta    | log.logIndex                      |
-| exchange          | TEXT    | meta    | CTFExchange 或 NegRiskCTFExchange |
+| 字段              | 类型    | indexed | 说明                                                 |
+| ----------------- | ------- | ------- | ---------------------------------------------------- |
+| takerOrderHash    | bytes32 | yes     | taker 订单哈希                                       |
+| takerOrderMaker   | address | yes     | **名字易混淆**: "taker订单的maker"，即发起吃单的用户 |
+| makerAssetId      | uint256 | no      | maker给出的资产。**0=USDC**，非0=tokenId             |
+| takerAssetId      | uint256 | no      | taker给出的资产。**0=USDC**，非0=tokenId             |
+| makerAmountFilled | uint256 | no      | maker给出的数量 (6 decimals)                         |
+| takerAmountFilled | uint256 | no      | taker给出的数量 (6 decimals)                         |
+| tx_hash           | bytes32 | meta    | log.transactionHash                                  |
+| block_number      | uint64  | meta    | log.blockNumber                                      |
+| log_index         | uint32  | meta    | log.logIndex                                         |
+| exchange          | TEXT    | meta    | CTFExchange 或 NegRiskCTFExchange                    |
 
 ### NegRiskAdapter
 
@@ -286,15 +296,17 @@ chuyin@chuyin:~/work/polymarket-indexer/service$ /bin/python3 /home/chuyin/work/
 
 **PositionsConverted**
 
-| 字段         | 类型    | indexed | 说明                             |
-| ------------ | ------- | ------- | -------------------------------- |
-| stakeholder  | address | yes     | 操作者                           |
-| marketId     | bytes32 | yes     | 市场 ID                          |
-| indexSet     | uint256 | yes     | 转换的 NO position 组合 (bitmap) |
-| amount       | uint256 | no      | 数量                             |
-| tx_hash      | bytes32 | meta    | log.transactionHash              |
-| block_number | uint64  | meta    | log.blockNumber                  |
-| log_index    | uint32  | meta    | log.logIndex                     |
+NegRisk转换: 多个NO tokens → 单个YES token (当你确信某个选项会赢时)
+
+| 字段         | 类型    | indexed | 说明                                                                  |
+| ------------ | ------- | ------- | --------------------------------------------------------------------- |
+| stakeholder  | address | yes     | 操作者                                                                |
+| marketId     | bytes32 | yes     | NegRisk市场ID，一个市场包含多个互斥问题(如"谁会赢得选举": A/B/C/其他) |
+| indexSet     | uint256 | yes     | **bitmap**: 转换了哪些NO。如6=0b110表示第2和第3个NO token             |
+| amount       | uint256 | no      | 每个被转换position的数量 (6 decimals)                                 |
+| tx_hash      | bytes32 | meta    | log.transactionHash                                                   |
+| block_number | uint64  | meta    | log.blockNumber                                                       |
+| log_index    | uint32  | meta    | log.logIndex                                                          |
 
 ### ID 计算
 
