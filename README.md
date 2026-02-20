@@ -18,24 +18,24 @@ polygon链上polymarket协议合约节点本身的实现: /home/chuyin/work/poly
 
 ## 新架构
 
-| 事件                 |               历史Token持仓                |                  历史Token交易                   |                   历史Token净值/PnL                   |
-| -------------------- | :----------------------------------------: | :----------------------------------------------: | :---------------------------------------------------: |
-| **能知道**           | Token协议流水; Token账户流水; USDC协议流水 |       Token协议流水; USDC协议流水; 成交价        | Token协议流水; Token账户流水; USDC协议流水; Token PnL |
-| **不能知道**         | USDC钱包流水; 成交价; Token PnL; 实时市价  | Token账户流水; USDC钱包流水; Token PnL; 实时市价 |                USDC钱包流水; 实时市价                 |
-| TransferSingle       |                     ✓                      |                                                  |                           ✓                           |
-| TransferBatch        |                     ✓                      |                                                  |                           ✓                           |
-| OrderFilled          |                                            |                        ✓                         |                           ✓                           |
-| OrdersMatched        |                                            |                                                  |                                                       |
-| TokenRegistered      |                                            |                                                  |                                                       |
-| PositionSplit        |                                            |                        ✓                         |                           ✓                           |
-| PositionsMerge       |                                            |                        ✓                         |                           ✓                           |
-| PayoutRedemption     |                                            |                        ✓                         |                           ✓                           |
-| PositionsConverted   |                                            |                        ✓                         |                           ✓                           |
-| ConditionPreparation |                                            |                                                  |                                                       |
-| ConditionResolution  |                                            |                                                  |                                                       |
-| MarketPrepared       |                                            |                                                  |                                                       |
-| QuestionPrepared     |                                            |                                                  |                                                       |
-| OutcomeReported      |                                            |                                                  |                                                       |
+| 事件                 |               历史Token持仓                |                  历史Token交易                   |                   历史Token净值/PnL                   | 辅助映射表 |
+| -------------------- | :----------------------------------------: | :----------------------------------------------: | :---------------------------------------------------: | :--------: |
+| **能知道**           | Token协议流水; Token账户流水; USDC协议流水 |       Token协议流水; USDC协议流水; 成交价        | Token协议流水; Token账户流水; USDC协议流水; Token PnL |            |
+| **不能知道**         | USDC钱包流水; 成交价; Token PnL; 实时市价  | Token账户流水; USDC钱包流水; Token PnL; 实时市价 |                USDC钱包流水; 实时市价                 |            |
+| TransferSingle       |                     ✓                      |                                                  |                           ✓                           |            |
+| TransferBatch        |                     ✓                      |                                                  |                           ✓                           |            |
+| OrderFilled          |                                            |                        ✓                         |                           ✓                           |            |
+| OrdersMatched        |                                            |                                                  |                                                       |            |
+| TokenRegistered      |                                            |                                                  |                                                       | token_map  |
+| PositionSplit        |                                            |                        ✓                         |                           ✓                           |            |
+| PositionsMerge       |                                            |                        ✓                         |                           ✓                           |            |
+| PayoutRedemption     |                                            |                        ✓                         |                           ✓                           |            |
+| PositionsConverted   |                                            |                        ✓                         |                           ✓                           |            |
+| ConditionPreparation |                                            |                                                  |                                                       | condition  |
+| ConditionResolution  |                                            |                                                  |                                                       | condition  |
+| MarketPrepared       |                                            |                                                  |                                                       |  neg_risk  |
+| QuestionPrepared     |                                            |                                                  |                                                       |  neg_risk  |
+| OutcomeReported      |                                            |                                                  |                                                       |  neg_risk  |
 
 - **Token 持仓** = Token 协议流水(可追踪) + Token 账户流水(可追踪)
 - **USDC 持仓** = USDC 协议流水(可追踪) + USDC 钱包流水（USDC ERC20 Transfer）(此项目未追踪)
@@ -91,33 +91,31 @@ Round 2: raw_log → 最终表 (纯SQL转换, ~2min)
 - NegRiskAdapter (Polymarket): Wrapped Collateral (`0x3a3bd7bb9528e159577f7c2e685cc81a765002e2`) - 1:1 包装的 USDC.e (为了支持Convert操作, 原生 CTF 里做不到, 需要wrap一下)
 
 ```
-chuyin@chuyin:~/work/polymarket-indexer/service$ /bin/python3 /home/chuyin/work/poly/scripts/scan_events.py
+polymarket-indexer/service$ /bin/python3 /home/chuyin/work/poly/scripts/scan_events.py
 
   Polymarket 事件扫描  (head=83,000,000)
 
-  块进度:   74,369,999 / 83,000,000  (89.6%)  -  速度: 318 blk/s  ETA: 451.7 min
+  块进度:   65,467,999 / 83,000,000  (78.9%)  -  速度: 535 blk/s  ETA: 546.4 min
 
-  合约                  事件                        总计       首block       末block      2020       2021       2022       2023       2024       2025      2026
-  -------------------------------------------------------------------------------------------------------------------------------------------------------------
-  ConditionalTokens   TransferSingle         132,416,088     4,028,711    74,369,999         0  1,323,929  1,455,369    492,774 39,667,704 89,476,312         0
-  ConditionalTokens   TransferBatch           85,890,764     4,028,608    74,369,999         0  1,202,775  1,832,003    376,675 25,391,336 57,087,975         0
-  ConditionalTokens   ConditionPreparation        77,416     4,027,499    74,369,693         0      1,029      7,392      4,218     15,364     49,413         0
-  ConditionalTokens   ConditionResolution         64,718     6,205,069    74,369,952         0        750      3,733      3,805     13,606     42,824         0
-  ConditionalTokens   PositionSplit           38,000,136     4,028,608    74,369,999         0    617,762    968,524    230,227 10,177,708 26,005,915         0
-  ConditionalTokens   PositionsMerge          13,957,678     4,028,724    74,369,999         0    490,210    657,656    113,262  4,172,673  8,523,877         0
-  ConditionalTokens   PayoutRedemption        10,249,718     6,233,711    74,369,995         0    332,902    246,192     69,917  1,747,897  7,852,810         0
-  CTFExchange         OrderFilled             39,573,179    35,896,869    74,369,999         0          0          0    247,475  7,633,619 31,692,085         0
-  CTFExchange         OrdersMatched           16,494,141    35,896,869    74,369,999         0          0          0    101,248  3,233,641 13,159,252         0
-  CTFExchange         TokenRegistered             73,224    35,887,522    74,369,705         0          0          0      6,744     14,526     51,954         0
-  NegRiskCTFExchange  OrderFilled             80,419,827    51,408,357    74,369,999         0          0          0          0 30,359,912 50,059,915         0
-  NegRiskCTFExchange  OrdersMatched           36,356,327    51,408,357    74,369,999         0          0          0          0 14,092,052 22,264,275         0
-  NegRiskCTFExchange  TokenRegistered             60,990    51,405,773    74,367,455         0          0          0          0     16,042     44,948         0
-  NegRiskAdapter      MarketPrepared                   0       -             -               0          0          0          0          0          0         0
-  NegRiskAdapter      QuestionPrepared                 0       -             -               0          0          0          0          0          0         0
-  NegRiskAdapter      PositionsConverted               0       -             -               0          0          0          0          0          0         0
-  NegRiskAdapter      OutcomeReported                  0       -             -               0          0          0          0          0          0         0
-
-
+  合约                事件                          总计       首block       末block      2020       2021       2022       2023       2024       2025       2026
+  --------------------------------------------------------------------------------------------------------------------------------------------------------------
+  ConditionalTokens   TransferSingle          47,348,105     4,028,711    65,467,999         0  1,322,645  1,455,391    493,401 39,332,437  4,744,231          0
+  ConditionalTokens   TransferBatch           30,683,111     4,028,608    65,467,999         0  1,201,193  1,831,804    378,200 25,262,411  2,009,503          0
+  ConditionalTokens   ConditionPreparation        28,936     4,027,499    65,452,567         0      1,026      7,388      4,225     15,363        934          0
+  ConditionalTokens   ConditionResolution         22,696     6,205,069    65,466,968         0        749      3,730      3,805     13,545        867          0
+  ConditionalTokens   PositionSplit           12,798,752     4,028,608    65,467,999         0    616,869    968,444    230,975 10,124,784    857,680          0
+  ConditionalTokens   PositionsMerge           5,773,935     4,028,724    65,467,998         0    489,725    657,668    113,704  4,149,360    363,478          0
+  ConditionalTokens   PayoutRedemption         2,602,647     6,233,711    65,467,995         0    332,502    246,240     70,204  1,729,971    223,730          0
+  CTFExchange         OrderFilled              9,552,442    35,896,869    65,467,999         0          0          0    246,898  7,504,812  1,800,732          0
+  CTFExchange         OrdersMatched            4,063,600    35,896,869    65,467,999         0          0          0    101,015  3,176,077    786,508          0
+  CTFExchange         TokenRegistered             22,230    35,887,522    65,452,605         0          0          0      6,744     14,524        962          0
+  NegRiskCTFExchange  OrderFilled             32,890,431    51,408,357    65,467,999         0          0          0          0 30,171,094  2,719,337          0
+  NegRiskCTFExchange  OrdersMatched           15,252,068    51,408,357    65,467,999         0          0          0          0 14,004,104  1,247,964          0
+  NegRiskCTFExchange  TokenRegistered             16,946    51,405,773    65,451,107         0          0          0          0     16,042        904          0
+  NegRiskAdapter      MarketPrepared               1,418    50,748,168    65,450,786         0          0          0          0      1,337         81          0
+  NegRiskAdapter      QuestionPrepared             8,458    50,750,368    65,451,080         0          0          0          0      8,005        453          0
+  NegRiskAdapter      PositionsConverted         276,724    50,861,311    65,467,758         0          0          0          0    261,040     15,684          0
+  NegRiskAdapter      OutcomeReported              7,006    51,868,332    65,456,813         0          0          0          0      6,544        462          0
 ```
 
 ## 链上事件结构
