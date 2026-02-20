@@ -109,6 +109,15 @@ public:
           case duckdb::LogicalTypeId::DOUBLE:
             obj[names[col]] = value.GetValue<double>();
             break;
+          case duckdb::LogicalTypeId::BLOB: {
+            auto blob = duckdb::StringValue::Get(value);
+            if (!blob.empty() && blob[0] == 'x') {
+              obj[names[col]] = "0" + blob;
+            } else {
+              obj[names[col]] = "0x" + blob;
+            }
+            break;
+          }
           default:
             obj[names[col]] = value.ToString();
             break;

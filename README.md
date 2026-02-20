@@ -430,14 +430,14 @@ NegRisk转换: M 个 NO tokens burn → (M-1) Wrapped Collateral (利用互斥�
 - `from != 0x0 AND to != 0x0` (跳过mint/burn)
 - `operator NOT IN (CTFExchange, NegRiskCTFExchange, NegRiskAdapter)` (跳过合约操作，已被order_filled/split/merge/convert覆盖)
 
-| column       | 类型      | 来源     | 处理                                       |
-| ------------ | --------- | -------- | ------------------------------------------ |
-| block_number | BIGINT PK | log      |                                            |
-| log_index    | BIGINT PK | 计算     | log_index * 1000 + sub_index (Batch拆分用) |
-| from_addr    | BLOB(20)  | Transfer | $.from (≠0x0)                              |
-| to_addr      | BLOB(20)  | Transfer | $.to (≠0x0)                                |
-| token_id     | BLOB(32)  | Transfer | $.id                                       |
-| amount       | BIGINT    | Transfer | $.value                                    |
+| column       | 类型      | 来源     | 处理                                        |
+| ------------ | --------- | -------- | ------------------------------------------- |
+| block_number | BIGINT PK | log      |                                             |
+| log_index    | BIGINT PK | 计算     | log_index \* 1000 + sub_index (Batch拆分用) |
+| from_addr    | BLOB(20)  | Transfer | $.from (≠0x0)                               |
+| to_addr      | BLOB(20)  | Transfer | $.to (≠0x0)                                 |
+| token_id     | BLOB(32)  | Transfer | $.id                                        |
+| amount       | BIGINT    | Transfer | $.value                                     |
 
 ### token_map
 

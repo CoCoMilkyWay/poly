@@ -41,21 +41,32 @@ async def api_query(q: str = Query(...)):
 
 @app.post("/api/export-all")
 async def api_export_all():
-    export_tables = [
-        "order_filled", "split", "merge", "redemption", "convert", "transfer",
-        "token_map", "condition", "neg_risk_market", "neg_risk_question",
-    ]
+    table_order_by = {
+        "order_filled": "block_number DESC, log_index DESC",
+        "split": "block_number DESC, log_index DESC",
+        "merge": "block_number DESC, log_index DESC",
+        "redemption": "block_number DESC, log_index DESC",
+        "convert": "block_number DESC, log_index DESC",
+        "transfer": "block_number DESC, log_index DESC",
+        "condition": "resolution_block DESC",
+        "token_map": None,
+        "neg_risk_market": None,
+        "neg_risk_question": None,
+    }
     export_dir = Path(__file__).parent.parent / "data" / "export"
     export_dir.mkdir(parents=True, exist_ok=True)
 
     results = []
 
-    for table_name in export_tables:
+    for table_name, order_by in table_order_by.items():
         col_query = f"SELECT column_name FROM information_schema.columns WHERE table_name = '{table_name}' ORDER BY ordinal_position"
         cols_result = await backend_get("/api/query", {"q": col_query})
         headers = [c["column_name"] for c in cols_result]
 
-        query = f"SELECT * FROM {table_name} LIMIT 1000"
+        if order_by:
+            query = f"SELECT * FROM {table_name} ORDER BY {order_by} LIMIT 1000"
+        else:
+            query = f"SELECT * FROM {table_name} LIMIT 1000"
         rows = await backend_get("/api/query", {"q": query})
 
         if rows:
