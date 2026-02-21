@@ -25,14 +25,24 @@ struct SyncStatus {
   double bytes_per_block = 0.0;
 };
 
+struct UserSyncStatusInfo {
+  int64_t last_block = 0;
+  int64_t head_block = 0;
+  bool is_syncing = false;
+  double blocks_per_second = 0.0;
+};
+
 class ApiSession : public std::enable_shared_from_this<ApiSession> {
 public:
   using SyncStatusGetter = std::function<SyncStatus()>;
+  using UserSyncStatusGetter = std::function<UserSyncStatusInfo()>;
 
   ApiSession(tcp::socket socket, Database &db, rebuild::Engine &rebuilder,
-             SyncStatusGetter sync_getter = nullptr)
+             SyncStatusGetter sync_getter = nullptr,
+             UserSyncStatusGetter user_sync_getter = nullptr)
       : socket_(std::move(socket)), db_(db), rebuilder_(rebuilder),
-        sync_getter_(std::move(sync_getter)) {}
+        sync_getter_(std::move(sync_getter)),
+        user_sync_getter_(std::move(user_sync_getter)) {}
 
   void run() { do_read(); }
 
@@ -70,6 +80,8 @@ private:
         handle_tables();
       } else if (target.starts_with("/api/sync-state")) {
         handle_sync_state();
+      } else if (target.starts_with("/api/user-sync-status")) {
+        handle_user_sync_status();
       } else if (target.starts_with("/api/query")) {
         handle_query();
       } else if (target == "/api/rebuild" && req_.method() == http::verb::post) {
@@ -141,6 +153,35 @@ private:
       result["blocks_per_second"] = status.blocks_per_second;
       result["bytes_per_block"] = status.bytes_per_block;
     }
+
+    res_.result(http::status::ok);
+    res_.body() = result.dump();
+  }
+
+  void handle_user_sync_status() {
+    res_.set(http::field::content_type, "application/json");
+
+    if (!user_sync_getter_) {
+      res_.result(http::status::service_unavailable);
+      res_.body() = R"({"error":"User sync not available"})";
+      return;
+    }
+
+    UserSyncStatusInfo status = user_sync_getter_();
+    int64_t behind = status.head_block - status.last_block;
+    double eta_seconds = 0;
+    if (status.blocks_per_second > 0 && behind > 0) {
+      eta_seconds = behind / status.blocks_per_second;
+    }
+
+    json result = {
+        {"last_block", status.last_block},
+        {"head_block", status.head_block},
+        {"behind", behind},
+        {"is_syncing", status.is_syncing},
+        {"blocks_per_second", status.blocks_per_second},
+        {"eta_seconds", eta_seconds},
+    };
 
     res_.result(http::status::ok);
     res_.body() = result.dump();
@@ -501,6 +542,7 @@ private:
   Database &db_;
   rebuild::Engine &rebuilder_;
   SyncStatusGetter sync_getter_;
+  UserSyncStatusGetter user_sync_getter_;
   beast::flat_buffer buffer_;
   http::request<http::string_body> req_;
   http::response<http::string_body> res_;

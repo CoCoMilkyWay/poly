@@ -70,6 +70,7 @@
       </header>
 
       {% include 'components/sync_status.html' %}
+      {% include 'components/user_sync.html' %}
       {% include 'components/pnl_rebuilder.html' %}
       {% include 'components/pnl_replayer.html' %}
     </div>
@@ -81,17 +82,20 @@
 
       async function refresh() {
         try {
-          const [syncRes, tablesRes] = await Promise.all([
+          const [syncRes, tablesRes, userSyncRes] = await Promise.all([
             fetch("/api/sync-state"),
             fetch("/api/tables"),
+            fetch("/api/user-sync-status"),
           ]);
           const sync = await syncRes.json();
           const tables = await tablesRes.json();
+          const userSync = await userSyncRes.json();
 
           updateSyncStatus(sync);
           updateTables(tables);
           if (window.updateContractSync) updateContractSync(sync);
           if (window.updateContractTables) updateContractTables(tables);
+          if (window.updateUserSyncStatus) updateUserSyncStatus(userSync);
         } catch (e) {
           console.error("Refresh failed:", e);
         }

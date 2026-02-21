@@ -9,6 +9,7 @@
 #include "core/database.hpp"
 #include "rebuild/rebuilder.hpp"
 #include "sync/sync_coordinator.hpp"
+#include "sync/user_sync_coordinator.hpp"
 
 void print_usage(const char *prog) {
   std::cout << "用法: " << prog << " --config <config.json>" << std::endl;
@@ -32,30 +33,45 @@ int main(int argc, char *argv[]) {
 
   Config config = Config::load(config_path);
 
-  std::cout << "[Main] DB Path: " << config.db_path_stage1 << std::endl;
+  std::cout << "[Main] Stage1 DB: " << config.db_path_stage1 << std::endl;
+  std::cout << "[Main] Stage2 DB: " << config.db_path_stage2 << std::endl;
   std::cout << "[Main] RPC Node: " << config.rpc_name << " (" << config.rpc_url << ")" << std::endl;
   std::cout << "[Main] RPC Chunk: " << config.rpc_chunk << " blocks" << std::endl;
   std::cout << "[Main] API Port: " << config.backend_port << std::endl;
   std::cout << "[Main] Sync Interval: " << config.sync_interval_seconds << "s" << std::endl;
 
-  Database db(config.db_path_stage1);
-  db.init_schema();
+  Database stage1_db(config.db_path_stage1);
+  stage1_db.init_schema();
 
-  SyncCoordinator sync(config, db);
+  Database stage2_db(config.db_path_stage2);
+
+  SyncCoordinator sync(config, stage1_db);
 
   auto sync_getter = [&sync]() -> SyncStatus {
     return {sync.is_syncing(), sync.get_head_block(), sync.get_blocks_per_second(), sync.get_bytes_per_block()};
   };
 
-  // Sync 使用单独的 io_context 和线程，避免阻塞 API
+  // Stage1 Sync 使用单独的 io_context 和线程
   boost::asio::io_context sync_ioc;
   sync.start(sync_ioc);
   std::thread sync_thread([&sync_ioc]() { sync_ioc.run(); });
 
-  rebuild::Engine rebuilder(db);
+  // Stage2 UserSync 使用单独的 io_context 和线程
+  UserSyncCoordinator user_sync(config, stage1_db, stage2_db);
+
+  auto user_sync_getter = [&user_sync]() -> UserSyncStatusInfo {
+    auto status = user_sync.get_status();
+    return {status.last_block, status.head_block, status.is_syncing, status.blocks_per_second};
+  };
+
+  boost::asio::io_context user_sync_ioc;
+  user_sync.start(user_sync_ioc);
+  std::thread user_sync_thread([&user_sync_ioc]() { user_sync_ioc.run(); });
+
+  rebuild::Engine rebuilder(stage1_db, stage2_db);
 
   boost::asio::io_context api_ioc;
-  ApiServer api_server(api_ioc, db, rebuilder, config.backend_port, sync_getter);
+  ApiServer api_server(api_ioc, stage1_db, rebuilder, config.backend_port, sync_getter, user_sync_getter);
 
   boost::asio::signal_set signals(api_ioc, SIGINT, SIGTERM);
   signals.async_wait([&](const boost::system::error_code &, int sig) {
@@ -68,7 +84,9 @@ int main(int argc, char *argv[]) {
 
   std::cout << "[Main] 正在停止同步..." << std::endl;
   sync_ioc.stop();
+  user_sync_ioc.stop();
   sync_thread.join();
+  user_sync_thread.join();
 
   std::cout << "[Main] 已退出" << std::endl;
   return 0;

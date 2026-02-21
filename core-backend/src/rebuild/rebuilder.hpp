@@ -40,7 +40,10 @@ struct RebuildProgress {
 
 class Engine {
 public:
-  explicit Engine(Database &db) : db_(db) {}
+  explicit Engine(Database &stage1_db, Database &stage2_db)
+      : db_(stage1_db), stage2_db_(stage2_db) {}
+
+  explicit Engine(Database &db) : db_(db), stage2_db_(db) {}
 
   void rebuild_all() {
     assert(!progress_.running);
@@ -253,6 +256,7 @@ public:
 
 private:
   Database &db_;
+  Database &stage2_db_;
   RebuildProgress progress_;
 
   // Phase 1: 元数据映射
@@ -334,6 +338,12 @@ private:
     token_map_.clear();
     fpmm_map_.clear();
 
+    if (try_load_from_stage2()) {
+      progress_.total_conditions = static_cast<int64_t>(conditions_.size());
+      progress_.total_tokens = static_cast<int64_t>(token_map_.size());
+      return;
+    }
+
     // 从 token_map 表加载 (订单簿时代)
     auto token_rows = db_.query_json("SELECT token0, token1, condition_id FROM token_map");
     for (const auto &row : token_rows) {
@@ -380,6 +390,59 @@ private:
 
     progress_.total_conditions = static_cast<int64_t>(conditions_.size());
     progress_.total_tokens = static_cast<int64_t>(token_map_.size());
+  }
+
+  bool try_load_from_stage2() {
+    try {
+      auto count_rows = stage2_db_.query_json("SELECT COUNT(*) as cnt FROM rb_condition");
+      if (count_rows.empty() || count_rows[0]["cnt"].get<int64_t>() == 0)
+        return false;
+
+      auto cond_rows = stage2_db_.query_json(
+          "SELECT cond_idx, condition_id, outcome_count, payout_numerators FROM rb_condition ORDER BY cond_idx");
+      for (const auto &row : cond_rows) {
+        uint32_t idx = row["cond_idx"].get<uint32_t>();
+        std::string cond_id = row["condition_id"].get<std::string>();
+        int outcome_count = row["outcome_count"].get<int>();
+
+        while (conditions_.size() <= idx) {
+          conditions_.emplace_back();
+          cond_ids_.push_back("");
+        }
+
+        conditions_[idx].outcome_count = static_cast<uint8_t>(outcome_count);
+        cond_ids_[idx] = cond_id;
+        cond_map_[cond_id] = idx;
+
+        if (!row["payout_numerators"].is_null()) {
+          auto payout_arr = json::parse(row["payout_numerators"].get<std::string>());
+          for (const auto &v : payout_arr) {
+            conditions_[idx].payout_numerators.push_back(v.get<int64_t>());
+          }
+        }
+      }
+
+      auto token_rows = stage2_db_.query_json("SELECT token_id, cond_idx, is_yes FROM rb_token");
+      for (const auto &row : token_rows) {
+        std::string token_id = row["token_id"].get<std::string>();
+        uint32_t cond_idx = row["cond_idx"].get<uint32_t>();
+        int is_yes = row["is_yes"].get<int>();
+        token_map_[token_id] = {cond_idx, static_cast<uint8_t>(is_yes)};
+      }
+
+      auto fpmm_rows = stage2_db_.query_json("SELECT fpmm_addr, cond_idx FROM rb_fpmm");
+      for (const auto &row : fpmm_rows) {
+        std::string fpmm_addr = row["fpmm_addr"].get<std::string>();
+        uint32_t cond_idx = row["cond_idx"].get<uint32_t>();
+        fpmm_map_[fpmm_addr] = {cond_idx};
+      }
+
+      std::cout << "[Engine] Loaded from Stage2: " << conditions_.size() << " conditions, "
+                << token_map_.size() << " tokens, " << fpmm_map_.size() << " FPMMs" << std::endl;
+      return true;
+    } catch (...) {
+      return false;
+    }
   }
 
   uint32_t get_or_create_condition(const std::string &cond_id) {

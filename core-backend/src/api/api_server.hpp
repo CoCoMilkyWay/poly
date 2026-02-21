@@ -17,9 +17,11 @@ using tcp = asio::ip::tcp;
 class ApiServer {
 public:
   ApiServer(asio::io_context &ioc, Database &db, rebuild::Engine &rebuilder,
-            unsigned short port, ApiSession::SyncStatusGetter sync_getter = nullptr)
+            unsigned short port, ApiSession::SyncStatusGetter sync_getter = nullptr,
+            ApiSession::UserSyncStatusGetter user_sync_getter = nullptr)
       : ioc_(ioc), acceptor_(ioc, tcp::endpoint(tcp::v4(), port)), db_(db),
-        rebuilder_(rebuilder), sync_getter_(std::move(sync_getter)) {
+        rebuilder_(rebuilder), sync_getter_(std::move(sync_getter)),
+        user_sync_getter_(std::move(user_sync_getter)) {
     std::cout << "[API] 监听端口 " << port << std::endl;
     do_accept();
   }
@@ -28,7 +30,7 @@ private:
   void do_accept() {
     acceptor_.async_accept([this](beast::error_code ec, tcp::socket socket) {
       if (!ec) {
-        std::make_shared<ApiSession>(std::move(socket), db_, rebuilder_, sync_getter_)->run();
+        std::make_shared<ApiSession>(std::move(socket), db_, rebuilder_, sync_getter_, user_sync_getter_)->run();
       }
       do_accept();
     });
@@ -39,4 +41,5 @@ private:
   Database &db_;
   rebuild::Engine &rebuilder_;
   ApiSession::SyncStatusGetter sync_getter_;
+  ApiSession::UserSyncStatusGetter user_sync_getter_;
 };

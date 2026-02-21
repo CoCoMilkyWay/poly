@@ -40,6 +40,11 @@ async def api_sync_state():
     return await backend_get("/api/sync-state")
 
 
+@app.get("/api/user-sync-status")
+async def api_user_sync_status():
+    return await backend_get("/api/user-sync-status")
+
+
 @app.get("/api/query")
 async def api_query(q: str = Query(...)):
     return await backend_get("/api/query", {"q": q})

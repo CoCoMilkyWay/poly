@@ -1,0 +1,113 @@
+<div class="sync-card">
+  <div class="sync-header">
+    <h2>
+      <span class="sync-status-row">
+        <span id="user-sync-status-dot" class="status-indicator status-idle"></span>
+        同步用户
+      </span>
+    </h2>
+    <div class="sync-header-right">
+      <span id="user-sync-status-text" class="badge badge-success">空闲</span>
+    </div>
+  </div>
+
+  <div class="sync-stats">
+    <div class="sync-stat">
+      <div class="sync-stat-label">Last Block</div>
+      <div class="sync-stat-value" id="user-sync-last-block">-</div>
+    </div>
+    <div class="sync-stat">
+      <div class="sync-stat-label">Head Block</div>
+      <div class="sync-stat-value" id="user-sync-head-block">-</div>
+    </div>
+    <div class="sync-stat">
+      <div class="sync-stat-label">Behind</div>
+      <div class="sync-stat-value" id="user-sync-behind">-</div>
+    </div>
+    <div class="sync-stat">
+      <div class="sync-stat-label">Speed</div>
+      <div class="sync-stat-value" id="user-sync-speed">-</div>
+    </div>
+    <div class="sync-stat">
+      <div class="sync-stat-label">ETA</div>
+      <div class="sync-stat-value" id="user-sync-eta">-</div>
+    </div>
+  </div>
+
+  <div class="progress-container">
+    <div class="progress-bar">
+      <div class="progress-fill" id="user-sync-progress-fill" style="width: 0%"></div>
+    </div>
+    <div class="progress-info">
+      <span id="user-sync-progress-blocks">- / -</span>
+      <span id="user-sync-progress-pct">0%</span>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const START_BLOCK = 4027499;
+
+  function formatNumber(n) {
+    return n.toLocaleString();
+  }
+
+  function updateUserSyncStatus(data) {
+    const lastBlock = data.last_block || 0;
+    const headBlock = data.head_block || 0;
+    const behind = data.behind || 0;
+    const isSyncing = data.is_syncing;
+    const bps = data.blocks_per_second || 0;
+
+    document.getElementById("user-sync-last-block").textContent = formatNumber(lastBlock);
+    document.getElementById("user-sync-head-block").textContent = formatNumber(headBlock);
+
+    const behindEl = document.getElementById("user-sync-behind");
+    behindEl.textContent = formatNumber(behind);
+    behindEl.className = "sync-stat-value " + 
+      (behind < 1000 ? "synced" : behind < 100000 ? "behind" : "error");
+
+    const dot = document.getElementById("user-sync-status-dot");
+    const statusText = document.getElementById("user-sync-status-text");
+    if (isSyncing) {
+      dot.className = "status-indicator status-syncing";
+      statusText.textContent = "同步中";
+      statusText.className = "badge badge-warning";
+    } else {
+      dot.className = "status-indicator status-idle";
+      statusText.textContent = "空闲";
+      statusText.className = "badge badge-success";
+    }
+
+    const speedEl = document.getElementById("user-sync-speed");
+    const etaEl = document.getElementById("user-sync-eta");
+    if (bps > 0) {
+      speedEl.textContent = formatNumber(Math.round(bps)) + "/s";
+      const etaSec = data.eta_seconds || (behind > 0 ? behind / bps : 0);
+      if (etaSec <= 0) {
+        etaEl.textContent = "已同步";
+      } else if (etaSec < 60) {
+        etaEl.textContent = Math.round(etaSec) + "s";
+      } else if (etaSec < 3600) {
+        etaEl.textContent = Math.round(etaSec / 60) + "min";
+      } else {
+        etaEl.textContent = (etaSec / 3600).toFixed(1) + "h";
+      }
+    } else {
+      speedEl.textContent = "-";
+      etaEl.textContent = behind > 0 ? "计算中" : "-";
+    }
+
+    if (headBlock > START_BLOCK) {
+      const pct = Math.min(100, ((lastBlock - START_BLOCK) / (headBlock - START_BLOCK)) * 100);
+      document.getElementById("user-sync-progress-fill").style.width = pct.toFixed(1) + "%";
+      document.getElementById("user-sync-progress-pct").textContent = pct.toFixed(2) + "%";
+      document.getElementById("user-sync-progress-blocks").textContent = 
+        formatNumber(lastBlock) + " / " + formatNumber(headBlock);
+    }
+  }
+
+  window.updateUserSyncStatus = updateUserSyncStatus;
+})();
+</script>
