@@ -6,10 +6,9 @@
 ┌─────────────────────────────────────────────────────────────────┐
 │                         Phase 1: Metadata                       │
 ├─────────────────────────────────────────────────────────────────┤
-│  condition ──────────────────────► cond_map_                    │
-│      │                               conditions_[]              │
-│      │                               cond_ids_[]                │
-│      │                                                          │
+│  condition_preparation ─────────────► cond_map_                 │
+│  condition_resolution ──────────────► conditions_[] (payout)    │
+│                                                                 │
 │  token_map ─────► (join cond_map_) ─► token_map_                │
 │                                           ▲                     │
 │  fpmm ──────────► (join cond_map_) ─► fpmm_map_                 │
@@ -20,21 +19,30 @@
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                      Phase 2: Collect Events                    │
+│                   Phase 2: Build Semantic Index                 │
 ├─────────────────────────────────────────────────────────────────┤
-│  order_filled ──► token_map_    ──► user_events_[uid]           │
-│  split ─────────► cond_map_     ──► user_events_[uid]           │
-│  merge ─────────► cond_map_     ──► user_events_[uid]           │
-│  redemption ────► cond_map_     ──► user_events_[uid]           │
-│  fpmm_trade ────► fpmm_map_     ──► user_events_[uid]           │
-│  fpmm_funding ──► fpmm_map_     ──► user_events_[uid]           │
-│  convert ───────► neg_risk_map_ ──► user_events_[uid]           │
-│  transfer ──────► token_map_    ──► user_events_[uid]           │
+│  split ─────────────► tx_split_[(block, tx_hash)]               │
+│  merge ─────────────► tx_merge_[(block, tx_hash)]               │
+│  redemption ────────► tx_redemption_[(block, tx_hash)]          │
+│  convert ───────────► tx_convert_[(block, tx_hash)]             │
+│  order_filled ──────► tx_order_[(block, tx_hash, token_id)]     │
+│  fpmm_trade ────────► tx_fpmm_trade_[(block, tx_hash)]          │
+│  fpmm_funding ──────► tx_fpmm_funding_[(block, tx_hash)]        │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                        Phase 3: Replay                          │
+│                   Phase 3: Process Transfer                     │
+├─────────────────────────────────────────────────────────────────┤
+│  for each transfer:                                             │
+│    classify by (operator, from, to)                             │
+│    lookup semantic event → get price/context                    │
+│    push to user_events_[from] and/or user_events_[to]           │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                        Phase 4: Replay                          │
 ├─────────────────────────────────────────────────────────────────┤
 │  for each user (parallel):                                      │
 │    sort events by sort_key                                      │
@@ -49,31 +57,60 @@
 2. 任何token流水不被double count
 3. token流水被精确还原， 不含近似假设
 
+核心设计：
+- Transfer 是持仓变化的【唯一来源】(TransferSingle + TransferBatch 覆盖所有持仓变化)
+- 其他事件(Split/Merge/OrderFilled等)只提供【语义和价格信息】
+- 通过 (block_number, tx_hash) 关联 Transfer 和语义事件
+
 ```
 
 ## 数据结构
 
-### 映射表
+### 映射表 (Phase 1 产出)
 
 ```
 cond_map_: map<condition_id(hex), cond_idx(u32)>
-    来源: condition 表 (包含所有 condition)
+    来源: condition_preparation 表
 
 token_map_: map<token_id(hex), TokenInfo>
-    来源: token_map 表
-    TokenInfo = { cond_idx: u32, is_yes: u8 }
+    来源: token_map 表 + fpmm 表计算补全
+    TokenInfo = { cond_idx: u32, is_yes: bool }
 
-fpmm_map_: map<fpmm_addr(hex), cond_idx(u32)>
+fpmm_map_: map<fpmm_addr(hex), FPMMInfo>
     来源: fpmm 表
+    FPMMInfo = { cond_idx: u32, token_yes: hex, token_no: hex }
 
 neg_risk_map_: map<(market_id, question_index), cond_idx(u32)>
-    来源: neg_risk_question JOIN condition ON question_id
+    来源: neg_risk_question JOIN condition_preparation ON question_id
 
 conditions_[cond_idx]: ConditionInfo
     ConditionInfo = { outcome_count: u8, payout_numerators: vec<i64> }
+```
 
-cond_ids_[cond_idx]: string
-    condition_id 反查
+### 语义索引 (Phase 2 产出)
+
+```
+tx_split_: map<(block_number, tx_hash), SplitInfo>
+    SplitInfo = { condition_id, amount, stakeholder }
+
+tx_merge_: map<(block_number, tx_hash), MergeInfo>
+    MergeInfo = { condition_id, amount, stakeholder }
+
+tx_redemption_: map<(block_number, tx_hash), RedemptionInfo>
+    RedemptionInfo = { condition_id, index_sets, payout, redeemer }
+
+tx_convert_: map<(block_number, tx_hash), ConvertInfo>
+    ConvertInfo = { market_id, index_set, amount, stakeholder }
+
+tx_order_: map<(block_number, tx_hash, token_id), OrderInfo>
+    OrderInfo = { maker, taker, side, token_amount, usdc_amount, fee }
+    side: 1=maker买入, 2=maker卖出
+
+tx_fpmm_trade_: map<(block_number, tx_hash), FPMMTradeInfo>
+    FPMMTradeInfo = { fpmm_addr, trader, side, outcome_index, token_amount, usdc_amount, fee }
+
+tx_fpmm_funding_: map<(block_number, tx_hash), FPMMFundingInfo>
+    FPMMFundingInfo = { fpmm_addr, funder, side, amounts[], collateral_from_fee_pool }
 ```
 
 ### 事件
@@ -116,10 +153,10 @@ Snapshot (快照):
 
 ## Phase 1: load_metadata
 
-### 1.1 从 condition 表构建 cond*map*
+### 1.1 从 condition_preparation 表构建 cond_map_
 
 ```sql
-SELECT condition_id, payout_numerators FROM condition
+SELECT condition_id, outcome_slot_count FROM condition_preparation
 ```
 
 ```
@@ -128,71 +165,83 @@ for row in results:
     cond_idx = conditions_.size()
 
     cond_map_[cond_id] = cond_idx
-    cond_ids_.push(cond_id)
-
-    cond = ConditionInfo { outcome_count: 2 }
-    if payout_numerators != NULL:
-        cond.payout_numerators = parse(payout_numerators)
-    conditions_.push(cond)
+    conditions_.push(ConditionInfo { outcome_count: outcome_slot_count })
 ```
 
-### 1.2 从 token*map 表构建 token_map*
+### 1.2 从 condition_resolution 表填充 payout_numerators
 
 ```sql
-SELECT token_id, condition_id, is_yes FROM token_map
+SELECT condition_id, payout_numerators FROM condition_resolution
 ```
 
 ```
 for row in results:
-    token_id = lowercase(token_id)
     cond_id = lowercase(condition_id)
-
-    if cond_id not in cond_map_: continue
-
-    token_map_[token_id] = TokenInfo {
-        cond_idx: cond_map_[cond_id],
-        is_yes: is_yes
-    }
-```
-
-### 1.3 从 fpmm 表构建 fpmm_map_ 并补全 token_map_
-
-```sql
-SELECT fpmm_addr, condition_id FROM fpmm
-```
-
-```
-USDC_E = 0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174
-
-for row in results:
-    fpmm_addr = lowercase(fpmm_addr)
-    cond_id = lowercase(condition_id)
-
     if cond_id not in cond_map_: continue
 
     cond_idx = cond_map_[cond_id]
-    fpmm_map_[fpmm_addr] = cond_idx
-
-    // 补全 FPMM 市场的 token_map (可能未在订单簿注册)
-    // positionId = keccak256(collateralToken, collectionId)
-    // collectionId = keccak256(conditionId, indexSet)
-    collection_yes = keccak256(cond_id, 1)
-    collection_no  = keccak256(cond_id, 2)
-    token_yes = keccak256(USDC_E, collection_yes)
-    token_no  = keccak256(USDC_E, collection_no)
-
-    if token_yes not in token_map_:
-        token_map_[token_yes] = TokenInfo { cond_idx, is_yes: 1 }
-    if token_no not in token_map_:
-        token_map_[token_no] = TokenInfo { cond_idx, is_yes: 0 }
+    conditions_[cond_idx].payout_numerators = parse(payout_numerators)
 ```
 
-### 1.4 从 neg_risk_question 构建 neg_risk_map_
+### 1.3 从 token_map 表构建 token_map_
 
 ```sql
-SELECT nrq.market_id, nrq.question_index, c.condition_id
+SELECT token0, token1, condition_id FROM token_map
+```
+
+```
+for row in results:
+    token0 = lowercase(token0)  // YES token
+    token1 = lowercase(token1)  // NO token
+    cond_id = lowercase(condition_id)
+
+    if cond_id not in cond_map_: continue
+    cond_idx = cond_map_[cond_id]
+
+    token_map_[token0] = TokenInfo { cond_idx, is_yes: true }
+    token_map_[token1] = TokenInfo { cond_idx, is_yes: false }
+```
+
+### 1.4 从 fpmm 表构建 fpmm_map_ 并补全 token_map_
+
+```sql
+SELECT fpmm_addr, condition_ids, collateral_token FROM fpmm
+```
+
+```
+for row in results:
+    fpmm_addr = lowercase(fpmm_addr)
+    cond_ids = parse_json(condition_ids)  // "[\"0x...\"]"
+    collateral = lowercase(collateral_token)
+
+    for cond_id in cond_ids:
+        cond_id = lowercase(cond_id)
+        if cond_id not in cond_map_: continue
+
+        cond_idx = cond_map_[cond_id]
+
+        // 补全 FPMM 市场的 token_map (可能未在订单簿注册)
+        // positionId = keccak256(collateralToken, collectionId)
+        // collectionId = keccak256(conditionId, indexSet)
+        collection_yes = keccak256(cond_id, 1)
+        collection_no  = keccak256(cond_id, 2)
+        token_yes = keccak256(collateral, collection_yes)
+        token_no  = keccak256(collateral, collection_no)
+
+        fpmm_map_[fpmm_addr] = FPMMInfo { cond_idx, token_yes, token_no }
+
+        if token_yes not in token_map_:
+            token_map_[token_yes] = TokenInfo { cond_idx, is_yes: true }
+        if token_no not in token_map_:
+            token_map_[token_no] = TokenInfo { cond_idx, is_yes: false }
+```
+
+### 1.5 从 neg_risk_question 构建 neg_risk_map_
+
+```sql
+SELECT nrq.market_id, nrq.question_index, cp.condition_id
 FROM neg_risk_question nrq
-JOIN condition c ON nrq.question_id = c.question_id
+JOIN condition_preparation cp ON nrq.question_id = cp.question_id
 ```
 
 ```
@@ -205,271 +254,134 @@ for row in results:
     neg_risk_map_[(market_id, question_index)] = cond_map_[cond_id]
 ```
 
-## Phase 2: collect_events
+## Phase 2: build_semantic_index
 
-8 个 scan 函数并行执行。
-
-### scan_order_filled
-
-**步骤**:
-1. 查 token_map_ 获取 cond_idx 和 is_yes
-2. 计算 price = usdc_amount * 1e6 / token_amount
-3. 根据 side 判断 maker/taker 的买卖方向
-4. 为 maker 和 taker 各生成一个事件
-
-**注意**:
-- side=1 表示 maker 买入（maker 出 USDC 换 token）
-- side=2 表示 maker 卖出（maker 出 token 换 USDC）
-- taker 方向与 maker 相反
-- price 单位是 1e6 = $1（与 token 数量单位一致）
-
-```sql
-SELECT block_number, log_index, maker, taker, token_id, side, usdc_amount, token_amount
-FROM order_filled ORDER BY block_number, log_index
-```
-
-```
-for row in results:
-    token_id = lowercase(token_id)
-    if token_id not in token_map_: continue
-
-    info = token_map_[token_id]
-    sort_key = block_number * 1e9 + log_index
-    price = usdc_amount * 1e6 / token_amount
-    token_idx = info.is_yes ? 0 : 1
-
-    maker_uid = intern_user(maker)
-    taker_uid = intern_user(taker)
-
-    if side == 1:  // maker 买入
-        push(maker_uid, { sort_key, info.cond_idx, Buy,  token_idx, token_amount, price })
-        push(taker_uid, { sort_key, info.cond_idx, Sell, token_idx, token_amount, price })
-    else:          // maker 卖出
-        push(maker_uid, { sort_key, info.cond_idx, Sell, token_idx, token_amount, price })
-        push(taker_uid, { sort_key, info.cond_idx, Buy,  token_idx, token_amount, price })
-```
+构建语义索引，供 Phase 3 关联查询。所有 scan 函数可并行执行。
 
 ### scan_split
 
-**步骤**:
-1. 过滤 NegRiskAdapter 地址
-2. 查 cond_map_ 获取 cond_idx
-3. 生成 Split 事件，token_idx=0xFF 表示双边
-
-**注意**:
-- **过滤 NegRiskAdapter 的原因**：交易所内部 Split 时，stakeholder 是 Adapter，用户流水在 order_filled
-- **设计假设**：所有 NegRiskAdapter Split 都是交易所内部操作（为交易提供流动性）
-- **待验证的风险**：如果用户直接调用 NegRiskAdapter.splitPosition（套利/建仓），stakeholder 仍是 Adapter，用户信息在被过滤的 Transfer 中，会导致流水丢失。数据显示 73% 的 NegRiskAdapter Split 无对应 order_filled，需要验证这些是否为用户直接操作
-- amount 是消耗的 USDC 数量，同时获得等量 YES 和 NO
-- token_idx=0xFF 表示操作涉及所有 outcome（YES+NO）
-
 ```sql
-SELECT block_number, log_index, stakeholder, condition_id, amount
-FROM split ORDER BY block_number, log_index
+SELECT block_number, tx_hash, condition_id, amount, stakeholder FROM split
 ```
 
 ```
-NEGRISK_ADAPTER = 0xd91e80cf2e7be2e162c6513ced06f1dd0da35296
-
 for row in results:
-    if stakeholder == NEGRISK_ADAPTER: continue
-
-    cond_id = lowercase(condition_id)
-    if cond_id not in cond_map_: continue
-
-    cond_idx = cond_map_[cond_id]
-    sort_key = block_number * 1e9 + log_index
-    uid = intern_user(stakeholder)
-
-    push(uid, { sort_key, cond_idx, Split, 0xFF, amount, 0 })
+    key = (block_number, lowercase(tx_hash))
+    tx_split_[key] = SplitInfo { condition_id, amount, stakeholder }
 ```
 
 ### scan_merge
 
-**步骤**:
-1. 过滤 NegRiskAdapter 地址
-2. 查 cond_map_ 获取 cond_idx
-3. 生成 Merge 事件，token_idx=0xFF 表示双边
-
-**注意**:
-- **过滤 NegRiskAdapter 的原因**：同 scan_split
-- **待验证的风险**：同 scan_split。数据显示 85% 的 NegRiskAdapter Merge 无对应 order_filled
-- amount 是销毁的 YES/NO 数量（各 amount 个），获得等量 USDC
-- Merge 是 Split 的逆操作
-
 ```sql
-SELECT block_number, log_index, stakeholder, condition_id, amount
-FROM merge ORDER BY block_number, log_index
+SELECT block_number, tx_hash, condition_id, amount, stakeholder FROM merge
 ```
 
 ```
-NEGRISK_ADAPTER = 0xd91e80cf2e7be2e162c6513ced06f1dd0da35296
-
 for row in results:
-    if stakeholder == NEGRISK_ADAPTER: continue
-
-    cond_id = lowercase(condition_id)
-    if cond_id not in cond_map_: continue
-
-    cond_idx = cond_map_[cond_id]
-    sort_key = block_number * 1e9 + log_index
-    uid = intern_user(stakeholder)
-
-    push(uid, { sort_key, cond_idx, Merge, 0xFF, amount, 0 })
+    key = (block_number, lowercase(tx_hash))
+    tx_merge_[key] = MergeInfo { condition_id, amount, stakeholder }
 ```
 
 ### scan_redemption
 
-**步骤**:
-1. 查 cond_map_ 获取 cond_idx
-2. 生成 Redemption 事件，token_idx 存 index_sets，amount 存 payout
-
-**注意**:
-- index_sets 是 bitmap：1=YES, 2=NO, 3=两者都赎回
-- payout 是获得的 USDC 总额（可能为 0，表示赎回的是输家 token）
-- **apply_event 中假设全量赎回**：清空涉及的 positions
-- 市场必须已结算（payout_numerators 非空）才能赎回
-
 ```sql
-SELECT block_number, log_index, redeemer, condition_id, index_sets, payout
-FROM redemption ORDER BY block_number, log_index
+SELECT block_number, tx_hash, condition_id, index_sets, payout, redeemer FROM redemption
 ```
 
 ```
 for row in results:
-    cond_id = lowercase(condition_id)
-    if cond_id not in cond_map_: continue
-
-    cond_idx = cond_map_[cond_id]
-    sort_key = block_number * 1e9 + log_index
-    uid = intern_user(redeemer)
-
-    push(uid, { sort_key, cond_idx, Redemption, index_sets, payout, 0 })
-```
-
-### scan_fpmm_trade
-
-**步骤**:
-1. 查 fpmm_map_ 获取 cond_idx
-2. 计算 price = usdc_amount * 1e6 / token_amount
-3. 根据 side 判断 Buy/Sell，生成 FPMMBuy 或 FPMMSell 事件
-
-**注意**:
-- FPMM 是 AMM 时代的交易（已废弃，但历史数据仍需处理）
-- side=1 表示 Buy（用户投入 USDC 获得 token）
-- side=2 表示 Sell（用户卖出 token 获得 USDC）
-- outcome_index: 0=YES, 1=NO
-- 与 order_filled 不同，FPMM 只有 taker（用户），没有 maker
-
-```sql
-SELECT block_number, log_index, fpmm_addr, trader, side, outcome_index, usdc_amount, token_amount
-FROM fpmm_trade ORDER BY block_number, log_index
-```
-
-```
-for row in results:
-    fpmm_addr = lowercase(fpmm_addr)
-    if fpmm_addr not in fpmm_map_: continue
-
-    cond_idx = fpmm_map_[fpmm_addr]
-    sort_key = block_number * 1e9 + log_index
-    price = usdc_amount * 1e6 / token_amount
-    token_idx = (outcome_index == 0) ? 0 : 1
-    uid = intern_user(trader)
-
-    type = (side == 1) ? FPMMBuy : FPMMSell
-    push(uid, { sort_key, cond_idx, type, token_idx, token_amount, price })
-```
-
-### scan_fpmm_funding
-
-**步骤**:
-1. 查 fpmm_map_ 获取 cond_idx
-2. 根据 side 判断 Add/Remove，生成 FPMMLPAdd 或 FPMMLPRemove 事件
-3. amount 存 YES 数量，price 存 NO 数量
-
-**注意**:
-- LP 添加/移除流动性，涉及双边 token（YES+NO）
-- side=1 表示 FundingAdded（LP 投入 USDC，获得 YES+NO）
-- side=2 表示 FundingRemoved（LP 取回 YES+NO）
-- amount0/amount1 是按池子当前比例添加/取回的 YES/NO 数量
-- **成本计算**：Add 时 usdc_spent = max(amount0, amount1)
-- **FPMM 手续费不追踪**：FPMMFundingRemoved.collateralRemovedFromFeePool 字段不保存，LP 手续费收入不计入 PnL
-
-```sql
-SELECT block_number, log_index, fpmm_addr, funder, side, amount0, amount1
-FROM fpmm_funding ORDER BY block_number, log_index
-```
-
-```
-for row in results:
-    fpmm_addr = lowercase(fpmm_addr)
-    if fpmm_addr not in fpmm_map_: continue
-
-    cond_idx = fpmm_map_[fpmm_addr]
-    sort_key = block_number * 1e9 + log_index
-    uid = intern_user(funder)
-
-    type = (side == 1) ? FPMMLPAdd : FPMMLPRemove
-    push(uid, { sort_key, cond_idx, type, 0xFF, amount0, amount1 })
+    key = (block_number, lowercase(tx_hash))
+    tx_redemption_[key] = RedemptionInfo { condition_id, index_sets, payout, redeemer }
 ```
 
 ### scan_convert
 
-**步骤**:
-1. 遍历 index_set 的每个 bit，找到涉及的 question_index
-2. 查 neg_risk_map_ 获取每个 question 对应的 cond_idx
-3. 为每个涉及的 condition 生成一个 Convert 事件
-
-**注意**:
-- **仅限 NegRisk 市场**：Convert 操作是 NegRisk 多选项互斥市场的套利机制
-- **原理**：M 个互斥选项的 NO 组合 = "所有选项都不赢" = 不可能，所以 M 个 NO 可以换 (M-1) USDC
-- index_set 是 bitmap：bit N = 1 表示 question_index=N 的 NO 参与转换
-- amount 是每个 NO 的数量（各 amount 个）
-- **收益分摊**：每个 condition 记录 (popcount-1)/popcount * amount 的收益
-- token_idx=1 表示 NO token，price 存 index_set 供 apply_event 计算 popcount
-
 ```sql
-SELECT block_number, log_index, stakeholder, market_id, index_set, amount
-FROM convert ORDER BY block_number, log_index
+SELECT block_number, tx_hash, market_id, index_set, amount, stakeholder FROM convert
 ```
 
 ```
 for row in results:
-    market_id = lowercase(market_id)
-    sort_key = block_number * 1e9 + log_index
-    uid = intern_user(stakeholder)
-
-    // 遍历 index_set 的每个 bit，为每个涉及的 condition 生成事件
-    for bit_idx in 0..64:
-        if not ((index_set >> bit_idx) & 1): continue
-
-        key = (market_id, bit_idx)
-        if key not in neg_risk_map_: continue
-
-        cond_idx = neg_risk_map_[key]
-        push(uid, { sort_key, cond_idx, Convert, 1, amount, index_set })
+    key = (block_number, lowercase(tx_hash))
+    tx_convert_[key] = ConvertInfo { market_id, index_set, amount, stakeholder }
 ```
 
-### scan_transfer
-
-**步骤**:
-1. 查 token_map_ 获取 cond_idx 和 is_yes
-2. 为 from_addr 生成 TransferOut 事件
-3. 为 to_addr 生成 TransferIn 事件
-
-**注意**:
-- transfer 表已在 Stage1 过滤掉：
-  - mint (from=0x0) 和 burn (to=0x0)
-  - operator 是 CTFExchange/NegRiskCTFExchange/NegRiskAdapter 的记录
-  - from/to 是 FPMM 地址的记录
-- 剩下的主要是用户间直接转账
-- **TransferIn 是 0 成本获得 token**（可能是赠与、空投等）
-- **TransferOut 不产生 realized_pnl**（只是成本转移）
-- 如果 token_id 不在 token_map_ 中，会被 skip（FPMM-only 市场已在 Phase 1.3 补全）
+### scan_order_filled
 
 ```sql
-SELECT block_number, log_index, from_addr, to_addr, token_id, amount
+SELECT block_number, tx_hash, maker, taker, maker_asset_id, taker_asset_id,
+       maker_amount, taker_amount, fee
+FROM order_filled
+```
+
+```
+for row in results:
+    // 确定 token_id 和交易方向
+    if maker_asset_id == 0x0:  // maker 出 USDC 换 token → maker 买入
+        token_id = taker_asset_id
+        side = 1  // maker buy
+        token_amount = taker_amount
+        usdc_amount = maker_amount
+    else:  // maker 出 token 换 USDC → maker 卖出
+        token_id = maker_asset_id
+        side = 2  // maker sell
+        token_amount = maker_amount
+        usdc_amount = taker_amount
+
+    key = (block_number, lowercase(tx_hash), lowercase(token_id))
+    tx_order_[key] = OrderInfo { maker, taker, side, token_amount, usdc_amount, fee }
+```
+
+### scan_fpmm_trade
+
+```sql
+SELECT block_number, tx_hash, fpmm_addr, trader, side, outcome_index,
+       usdc_amount, token_amount, fee
+FROM fpmm_trade
+```
+
+```
+for row in results:
+    key = (block_number, lowercase(tx_hash))
+    tx_fpmm_trade_[key] = FPMMTradeInfo {
+        fpmm_addr, trader, side, outcome_index, token_amount, usdc_amount, fee
+    }
+```
+
+### scan_fpmm_funding
+
+```sql
+SELECT block_number, tx_hash, fpmm_addr, funder, side, amounts, collateral_from_fee_pool
+FROM fpmm_funding
+```
+
+```
+for row in results:
+    key = (block_number, lowercase(tx_hash))
+    amounts_arr = parse_json(amounts)  // "[yes, no]"
+    tx_fpmm_funding_[key] = FPMMFundingInfo {
+        fpmm_addr, funder, side, amounts_arr, collateral_from_fee_pool
+    }
+```
+
+## Phase 3: process_transfer
+
+**核心逻辑**：遍历 transfer 表的每条记录，根据 (operator, from_addr, to_addr) 判断类型，关联语义索引获取价格，生成用户事件。
+
+### 已知合约地址
+
+```
+ZERO_ADDR = 0x0000000000000000000000000000000000000000
+CTF_EXCHANGE = 0x4bfb41d5b3570defd03c39a9a4d8de6bd8b8982e
+NEG_RISK_CTF_EXCHANGE = 0xc5d563a36ae78145c45a50134d48a1215220f80a
+NEG_RISK_ADAPTER = 0xd91e80cf2e7be2e162c6513ced06f1dd0da35296
+CONDITIONAL_TOKENS = 0x4d97dcd97ec945f40cf65f87097ace5ea0476045
+```
+
+### 主流程
+
+```sql
+SELECT block_number, tx_hash, log_index, operator, from_addr, to_addr, token_id, amount
 FROM transfer ORDER BY block_number, log_index
 ```
 
@@ -479,17 +391,208 @@ for row in results:
     if token_id not in token_map_: continue
 
     info = token_map_[token_id]
-    sort_key = block_number * 1e9 + log_index
+    cond_idx = info.cond_idx
     token_idx = info.is_yes ? 0 : 1
+    sort_key = block_number * 1e9 + log_index
+    tx_key = (block_number, lowercase(tx_hash))
 
-    from_uid = intern_user(from_addr)
-    to_uid = intern_user(to_addr)
+    op = lowercase(operator)
+    from = lowercase(from_addr)
+    to = lowercase(to_addr)
 
-    push(from_uid, { sort_key, info.cond_idx, TransferOut, token_idx, amount, 0 })
-    push(to_uid,   { sort_key, info.cond_idx, TransferIn,  token_idx, amount, 0 })
+    // 分类处理
+    if from == ZERO_ADDR:
+        process_mint(tx_key, to, op, cond_idx, token_idx, amount, sort_key)
+    elif to == ZERO_ADDR:
+        process_burn(tx_key, from, op, cond_idx, token_idx, amount, sort_key, token_id)
+    elif op == CTF_EXCHANGE or op == NEG_RISK_CTF_EXCHANGE:
+        process_exchange_trade(tx_key, from, to, token_id, cond_idx, token_idx, amount, sort_key)
+    elif op in fpmm_map_:
+        process_fpmm_trade(tx_key, from, to, op, cond_idx, token_idx, amount, sort_key)
+    else:
+        process_direct_transfer(from, to, cond_idx, token_idx, amount, sort_key)
 ```
 
-## Phase 3: replay_all
+### process_mint (from=0x0)
+
+mint 来源：Split 或 FPMMLPAdd (内部 Split)
+
+```
+def process_mint(tx_key, to, op, cond_idx, token_idx, amount, sort_key):
+    // 尝试匹配 Split (用户直接操作)
+    if tx_key in tx_split_:
+        split = tx_split_[tx_key]
+        // 如果 to 是用户，直接记录
+        if not is_known_contract(to):
+            user = to
+            uid = intern_user(user)
+            push(uid, { sort_key, cond_idx, Split, token_idx, amount, 500000 })
+        return
+
+    // 尝试匹配 FPMMLPAdd (FPMM 内部 Split)
+    if tx_key in tx_fpmm_funding_ and tx_fpmm_funding_[tx_key].side == 1:
+        funding = tx_fpmm_funding_[tx_key]
+        // mint to FPMM 的 Transfer，用户是 funder
+        // FPMMLPAdd 只处理一次（token_idx=0 时）
+        if token_idx == 0:
+            user = lowercase(funding.funder)
+            uid = intern_user(user)
+            // amount 是 mint 的总量 (max)，用于计算成本
+            // funding.amounts 是进池子的量
+            // 注意：同 tx 可能有多条 mint Transfer (YES/NO 各一条)
+            // 这里用 Transfer 的 amount 作为 max，假设 YES/NO 数量相等
+            push(uid, { sort_key, cond_idx, FPMMLPAdd, 0xFF, funding.amounts[0], funding.amounts[1] })
+        return
+
+    // 如果 to 是已知合约，跳过
+    if to in fpmm_map_ or is_known_contract(to):
+        return
+
+    // 未匹配到语义事件，作为无成本 TransferIn
+    uid = intern_user(to)
+    push(uid, { sort_key, cond_idx, TransferIn, token_idx, amount, 0 })
+```
+
+**is_known_contract**: CTF_EXCHANGE, NEG_RISK_CTF_EXCHANGE, NEG_RISK_ADAPTER, CONDITIONAL_TOKENS
+
+### process_burn (to=0x0)
+
+burn 来源：Merge 或 Redemption 或 Convert 或 FPMMLPRemove
+
+```
+def process_burn(tx_key, from, op, cond_idx, token_idx, amount, sort_key, token_id):
+    // 如果 from 是已知合约，跳过（合约内部操作，不是用户流水）
+    if from in fpmm_map_ or is_known_contract(from):
+        return
+
+    // 尝试匹配 Merge
+    if tx_key in tx_merge_:
+        merge = tx_merge_[tx_key]
+        user = from
+        uid = intern_user(user)
+        // Merge: 1 YES + 1 NO → 1 USDC, 每个 token 换回 0.5
+        // amount 是单个 token 数量，price = 0.5 * 1e6 = 500000
+        push(uid, { sort_key, cond_idx, Merge, token_idx, amount, 500000 })
+        return
+
+    // 尝试匹配 Redemption
+    if tx_key in tx_redemption_:
+        redemption = tx_redemption_[tx_key]
+        user = from
+        uid = intern_user(user)
+        // Redemption: 需要从 payout 和 positions 计算 price
+        // 为避免重复，只在第一个被赎回的 token 时处理
+        index_sets = parse_json(redemption.index_sets)
+        first_idx = find_first_set_bit(index_sets)
+        if token_idx == first_idx:
+            push(uid, { sort_key, cond_idx, Redemption, pack_index_sets(index_sets), redemption.payout, 0 })
+        return
+
+    // 尝试匹配 Convert
+    if tx_key in tx_convert_:
+        convert = tx_convert_[tx_key]
+        user = from
+        uid = intern_user(user)
+        // Convert: M 个 NO → (M-1) USDC
+        // price 存 index_set 供 apply_event 计算 popcount
+        // 只处理 NO token (token_idx=1)
+        if token_idx == 1:
+            push(uid, { sort_key, cond_idx, Convert, 1, amount, convert.index_set })
+        return
+
+    // 尝试匹配 FPMMLPRemove
+    if tx_key in tx_fpmm_funding_:
+        funding = tx_fpmm_funding_[tx_key]
+        if funding.side == 2:  // Remove
+            user = from
+            uid = intern_user(user)
+            if token_idx == 0:
+                push(uid, { sort_key, cond_idx, FPMMLPRemove, 0xFF, funding.amounts[0], funding.amounts[1] })
+            return
+
+    // 未匹配到语义事件，作为 TransferOut
+    uid = intern_user(from)
+    push(uid, { sort_key, cond_idx, TransferOut, token_idx, amount, 0 })
+```
+
+### process_exchange_trade (operator=Exchange)
+
+交易所撮合的 Transfer
+
+```
+def process_exchange_trade(tx_key, from, to, token_id, cond_idx, token_idx, amount, sort_key):
+    order_key = (tx_key[0], tx_key[1], lowercase(token_id))
+
+    if order_key not in tx_order_:
+        // 无对应 OrderFilled，作为直接转账处理
+        process_direct_transfer(from, to, cond_idx, token_idx, amount, sort_key)
+        return
+
+    order = tx_order_[order_key]
+    price = order.usdc_amount * 1e6 / order.token_amount
+
+    // from 是卖方，to 是买方
+    seller_uid = intern_user(from)
+    buyer_uid = intern_user(to)
+
+    push(seller_uid, { sort_key, cond_idx, Sell, token_idx, amount, price })
+    push(buyer_uid,  { sort_key, cond_idx, Buy,  token_idx, amount, price })
+```
+
+### process_fpmm_trade (operator=FPMM)
+
+FPMM 相关的 Transfer
+
+```
+def process_fpmm_trade(tx_key, from, to, fpmm_addr, cond_idx, token_idx, amount, sort_key):
+    // 先检查是否是 FPMMTrade (Buy/Sell)
+    if tx_key in tx_fpmm_trade_:
+        trade = tx_fpmm_trade_[tx_key]
+        price = trade.usdc_amount * 1e6 / trade.token_amount
+
+        if trade.side == 1:  // Buy: FPMM → user
+            user_uid = intern_user(to)
+            push(user_uid, { sort_key, cond_idx, FPMMBuy, token_idx, amount, price })
+        else:  // Sell: user → FPMM
+            user_uid = intern_user(from)
+            push(user_uid, { sort_key, cond_idx, FPMMSell, token_idx, amount, price })
+        return
+
+    // 检查是否是 FPMMFunding 相关的 Transfer
+    if tx_key in tx_fpmm_funding_:
+        funding = tx_fpmm_funding_[tx_key]
+        fpmm = lowercase(fpmm_addr)
+
+        if from == fpmm:
+            // FPMM → user: LP Add 返还多余 token，作为 0 成本 TransferIn
+            uid = intern_user(to)
+            push(uid, { sort_key, cond_idx, TransferIn, token_idx, amount, 0 })
+        else:
+            // user → FPMM: LP Remove 前用户转入 token 给 FPMM burn
+            // 这些 token 会在 process_burn 中作为 FPMMLPRemove 处理，跳过避免重复
+            pass
+        return
+
+    // 其他情况作为直接转账
+    process_direct_transfer(from, to, cond_idx, token_idx, amount, sort_key)
+```
+
+### process_direct_transfer
+
+用户间直接转账
+
+```
+def process_direct_transfer(from, to, cond_idx, token_idx, amount, sort_key):
+    from_uid = intern_user(from)
+    to_uid = intern_user(to)
+
+    push(from_uid, { sort_key, cond_idx, TransferOut, token_idx, amount, 0 })
+    push(to_uid,   { sort_key, cond_idx, TransferIn,  token_idx, amount, 0 })
+```
+
+---
+
+## Phase 4: replay_all
 
 ### 主流程
 
@@ -576,18 +679,19 @@ positions[i] -= amount
 #### Split
 
 **步骤**:
-1. 为每个 outcome 增加成本 = amount / outcome_count
-2. 为每个 outcome 增加持仓 = amount
+1. 计算成本 = amount * price / 1e6 (price = 500000 = $0.50)
+2. cost[i] += 成本
+3. positions[i] += amount
 
 **注意**:
-- 1 USDC → 1 YES + 1 NO（binary market）
-- 成本平均分配到 YES 和 NO（各 0.5 USDC）
-- amount 是消耗的 USDC，也是获得的每种 token 数量
+- 新设计：每个 mint Transfer 单独处理，YES 和 NO 各一次
+- price = 500000 ($0.50)，因为 1 USDC → 1 YES + 1 NO
+- amount 是单个 token 的数量
 
 ```
-for i in 0..outcome_count:
-    cost[i] += amount / outcome_count
-    positions[i] += amount
+i = token_idx
+cost[i] += amount * price / 1e6  // = amount * 0.5
+positions[i] += amount
 ```
 
 ---
@@ -595,22 +699,22 @@ for i in 0..outcome_count:
 #### Merge
 
 **步骤**:
-1. 为每个 outcome 计算按比例移除的成本
-2. 计算每个 outcome 的收入 = amount / outcome_count
+1. 计算按比例移除的成本
+2. 计算收入 = amount * price / 1e6 (price = 500000 = $0.50)
 3. realized_pnl += 收入 - 成本
 4. 减少 cost 和 positions
 
 **注意**:
-- 1 YES + 1 NO → 1 USDC（binary market）
+- 新设计：每个 burn Transfer 单独处理，YES 和 NO 各一次
+- price = 500000 ($0.50)，因为 1 YES + 1 NO → 1 USDC
 - 是 Split 的逆操作
-- **假设各 outcome 持仓相等**：Merge 需要等量的 YES 和 NO
 
 ```
-for i in 0..outcome_count:
-    cost_removed = cost[i] * amount / positions[i]
-    realized_pnl += amount / outcome_count - cost_removed
-    cost[i] -= cost_removed
-    positions[i] -= amount
+i = token_idx
+cost_removed = cost[i] * amount / positions[i]
+realized_pnl += amount * price / 1e6 - cost_removed  // = amount * 0.5 - cost_removed
+cost[i] -= cost_removed
+positions[i] -= amount
 ```
 
 ---
@@ -647,14 +751,15 @@ for i in 0..outcome_count:
 
 **步骤**:
 1. 计算实际 USDC 投入 = max(amount0, amount1)
-2. 按 token 比例分配成本
-3. 增加 positions
+2. 按 token 比例分配成本（只针对进池子的部分）
+3. 增加 positions（只记录进池子的部分）
 
 **注意**:
 - LP 投入 USDC → Split 成 YES+NO → 按池子比例添加 → 多余 token 返还
-- **usdc_spent = max(amount0, amount1)**：因为 Split 是 1:1，需要 Split 足够的 USDC 来获得较多的那一边
-- 成本按实际获得的 token 比例分配
-- **待验证的风险**：当前只记录添加到池子的 (amount0, amount1)，返还给用户的 (max-amount0, max-amount1) 通过 Transfer(from=FPMM) 返还，被 Stage1 过滤。如果用户后续卖出返还的 token，可能导致负持仓。精确修复需确认 Split 数量是否总等于 max(amount0, amount1)
+- **usdc_spent = max(amount0, amount1)**：这是 Split 的 USDC 数量
+- amount0/amount1 是进入池子的 token 数量
+- **返还 token 单独处理**：返还给用户的 (max-amount0) YES + (max-amount1) NO 通过 Transfer(from=FPMM) 被 process_fpmm_trade 处理为 TransferIn（成本=0）
+- **成本近似**：返还 token 成本为 0，不完美但简化了逻辑。用户的总 USDC 支出 = usdc_spent，其中大部分成本分配给进池子的 token
 
 ```
 amount0 = amount   // 添加到池子的 YES 数量
@@ -681,8 +786,7 @@ positions[1] += amount1
 - LP 取回的是 YES+NO token，**不是 USDC**
 - **不计算 realized_pnl 的原因**：Remove 只是把"池子份额"换成"手持 token"，没有发生 USDC 交换
 - 用户后续可能：(1) 保留 token (2) 手动 Merge (3) 在交易所卖出
-- 这些操作会通过 Merge/OrderFilled 事件捕获，届时再计入 realized_pnl
-- **避免 double count**：如果 Remove 时计算 realized_pnl，用户后续 Merge 时 scan_merge 会再次计入
+- 这些操作会通过 Transfer 事件被捕获，届时再计入 realized_pnl
 
 ```
 amount0 = amount   // YES 数量

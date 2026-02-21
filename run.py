@@ -88,7 +88,7 @@ def main():
             if proc.poll() is None:
                 proc.terminate()
         for proc in [backend, frontend]:
-            proc.wait(timeout=10)
+            proc.wait()  # 等待进程结束，不设置timeout
         print("[run.py] 已退出")
 
 
