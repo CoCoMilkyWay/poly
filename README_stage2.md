@@ -1,14 +1,42 @@
 # Stage 2: 构建映射 + 写 user_event
 
-## 核心设计
+## 关键假设 (已验证)
 
-**Transfer 是持仓变化的唯一来源**：TransferSingle + TransferBatch 覆盖所有持仓变化，其他事件只提供语义和价格信息，通过 `(block_number, tx_hash)` 关联。
+### 假设 1: Transfer 是持仓变化的唯一来源 ✅
+
+ERC1155 规范强制要求：**任何 `_balances` 修改都必须 emit Transfer**
 
 ```
-原则：
-1. 任何 token 流水都被包括
-2. 任何 token 流水不被 double count
-3. token 流水被精确还原，不含近似假设
+ERC1155.sol 中所有修改余额的地方：
+  safeTransferFrom   → emit TransferSingle
+  safeBatchTransferFrom → emit TransferBatch
+  _mint / _batchMint → emit TransferSingle / TransferBatch (from=0x0)
+  _burn / _batchBurn → emit TransferSingle / TransferBatch (to=0x0)
+```
+
+### 假设 2: 语义事件和 Transfer 在同一个 tx ✅
+
+所有协议操作都是**原子的**，在同一个函数调用中完成 Transfer 和 emit 语义事件：
+
+| 操作                     | Transfer                                  | 语义事件           | 来源     |
+| ------------------------ | ----------------------------------------- | ------------------ | -------- |
+| CTF.splitPosition        | `_batchMint` → TransferBatch              | PositionSplit      | 同一函数 |
+| CTF.mergePositions       | `_batchBurn` → TransferBatch              | PositionsMerge     | 同一函数 |
+| CTF.redeemPositions      | `_burn` → TransferSingle                  | PayoutRedemption   | 同一函数 |
+| Exchange.fillOrder       | `safeTransferFrom` × 2                    | OrderFilled        | 同一函数 |
+| FPMM.buy                 | splitPosition + safeTransferFrom          | FPMMBuy            | 同一函数 |
+| FPMM.sell                | safeTransferFrom + mergePositions         | FPMMSell           | 同一函数 |
+| FPMM.addFunding          | splitPosition + safeBatchTransferFrom     | FPMMFundingAdded   | 同一函数 |
+| NegRisk.convertPositions | splitPosition + safeBatchTransferFrom × 3 | PositionsConverted | 同一函数 |
+
+**边界情况**：用户直接调用 `safeTransferFrom` 只有 Transfer、无语义事件 → 分类为 TransferIn/Out
+
+### 设计原则
+
+```
+1. 任何 token 流水都被包括 (Transfer 是唯一来源保证)
+2. 任何 token 流水不被 double count (分类决策树保证)
+3. token 流水被精确还原，不含近似假设 (语义事件提供精确价格)
 ```
 
 ## 运行模式
