@@ -581,24 +581,24 @@ AMM 的 LP Maker 操作记录。LP 按池子当前比例添加/取回 YES+NO，s
 
 ### token_map
 
-| column       | 类型        | 来源            | 处理                                                      |
-| ------------ | ----------- | --------------- | --------------------------------------------------------- |
-| token_id     | BLOB(32) PK | TokenRegistered | token0 或 token1                                          |
-| condition_id | BLOB(32)    | TokenRegistered | $.conditionId                                             |
-| exchange     | TEXT        | log.address     | "CTF" \| "NegRisk"                                        |
+| column       | 类型        | 来源            | 处理                                                     |
+| ------------ | ----------- | --------------- | -------------------------------------------------------- |
+| token_id     | BLOB(32) PK | TokenRegistered | token0 或 token1                                         |
+| condition_id | BLOB(32)    | TokenRegistered | $.conditionId                                            |
+| exchange     | TEXT        | log.address     | "CTF" \| "NegRisk"                                       |
 | is_yes       | INTEGER     | 计算            | 先swap确保token0<token1，然后token0=YES(1), token1=NO(0) |
 
 ### condition
 
 ConditionPreparation 时 INSERT，ConditionResolution 时 UPDATE 同一行。
 
-| column            | 类型        | 来源                 | 处理                                                 |
-| ----------------- | ----------- | -------------------- | ---------------------------------------------------- |
-| condition_id      | BLOB(32) PK | ConditionPreparation | $.conditionId                                        |
-| oracle            | BLOB(20)    | ConditionPreparation | $.oracle                                             |
-| question_id       | BLOB(32)    | ConditionPreparation | $.questionId                                         |
+| column            | 类型        | 来源                 | 处理                                                         |
+| ----------------- | ----------- | -------------------- | ------------------------------------------------------------ |
+| condition_id      | BLOB(32) PK | ConditionPreparation | $.conditionId                                                |
+| oracle            | BLOB(20)    | ConditionPreparation | $.oracle                                                     |
+| question_id       | BLOB(32)    | ConditionPreparation | $.questionId                                                 |
 | payout_numerators | TEXT        | ConditionResolution  | UPDATE, NULL=未结算, "[1,0]"=YES赢, "[0,1]"=NO赢, "[1,1]"=平 |
-| resolution_block  | BIGINT      | ConditionResolution  | UPDATE, NULL=未结算                                  |
+| resolution_block  | BIGINT      | ConditionResolution  | UPDATE, NULL=未结算                                          |
 
 ### neg_risk_market
 
