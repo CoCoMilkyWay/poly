@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
   stage3::PnlEngine pnl_engine(event_sync.builder());
 
   boost::asio::io_context api_ioc;
-  ApiServer api_server(api_ioc, stage1_db, event_sync, pnl_engine, config.backend_port, sync_getter);
+  ApiServer api_server(api_ioc, stage1_db, pnl_engine, config.backend_port, sync_getter);
 
   boost::asio::signal_set signals(api_ioc, SIGINT, SIGTERM);
   signals.async_wait([&](const boost::system::error_code &, int sig) {

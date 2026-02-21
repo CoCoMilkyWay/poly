@@ -106,7 +106,14 @@ private:
   static std::string blob_to_hex(const std::string &blob) {
     if (blob.starts_with("0x"))
       return blob;
-    return "0x" + blob;
+    static const char hex_chars[] = "0123456789abcdef";
+    std::string result = "0x";
+    result.reserve(2 + blob.size() * 2);
+    for (unsigned char c : blob) {
+      result.push_back(hex_chars[c >> 4]);
+      result.push_back(hex_chars[c & 0x0f]);
+    }
+    return result;
   }
 
   static std::string to_lower(std::string s) {
@@ -214,6 +221,9 @@ private:
 
   bool try_load_from_stage2() {
     try {
+      if (!stage2_db_.table_exists("rb_condition"))
+        return false;
+
       auto count_rows = stage2_db_.query_json("SELECT COUNT(*) as cnt FROM rb_condition");
       if (count_rows.empty() || count_rows[0]["cnt"].get<int64_t>() == 0)
         return false;

@@ -1,5 +1,5 @@
 import json
-from backend_api import backend_get, backend_post
+from backend_api import backend_get
 from fastapi import FastAPI, Query, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -101,19 +101,9 @@ async def api_export_all():
     return {"exported": results, "path": str(export_dir)}
 
 
-@app.post("/api/rebuild")
-async def api_rebuild():
-    return await backend_post("/api/rebuild")
-
-
 @app.get("/api/rebuild-status")
 async def api_rebuild_status():
     return await backend_get("/api/rebuild-status")
-
-
-@app.get("/api/stage2-sync-status")
-async def api_stage2_sync_status():
-    return await backend_get("/api/stage2-sync-status")
 
 
 @app.get("/api/replay-users")

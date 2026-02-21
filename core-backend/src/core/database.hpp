@@ -80,6 +80,10 @@ public:
   json query_json(const std::string &sql) {
     std::lock_guard<std::mutex> lock(read_mutex_);
     auto result = read_conn_->Query(sql);
+    if (result->HasError()) {
+      std::cerr << "[DB] query_json failed: " << result->GetError() << std::endl;
+      std::cerr << "[DB] SQL: " << sql << std::endl;
+    }
     assert(!result->HasError() && "query_json failed");
 
     json rows = json::array();
@@ -146,6 +150,13 @@ public:
 
   int64_t get_table_count(const std::string &table) {
     return query_single_int("SELECT COUNT(*) FROM " + table);
+  }
+
+  bool table_exists(const std::string &table) {
+    return query_single_int(
+               "SELECT COUNT(*) FROM information_schema.tables "
+               "WHERE table_schema='main' AND table_name='" +
+               table + "'") > 0;
   }
 
   duckdb::DuckDB &get_duckdb() { return *db_; }

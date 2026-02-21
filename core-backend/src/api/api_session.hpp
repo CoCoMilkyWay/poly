@@ -3,14 +3,12 @@
 #include <functional>
 #include <memory>
 #include <string>
-#include <thread>
 
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
 #include <nlohmann/json.hpp>
 
 #include "../core/database.hpp"
-#include "../stage2/event_sync.hpp"
 #include "../stage3/pnl_replay.hpp"
 
 namespace asio = boost::asio;
@@ -30,10 +28,10 @@ class ApiSession : public std::enable_shared_from_this<ApiSession> {
 public:
   using SyncStatusGetter = std::function<SyncStatus()>;
 
-  ApiSession(tcp::socket socket, Database &db, stage2::EventSync &event_sync,
-             stage3::PnlEngine &pnl_engine, SyncStatusGetter sync_getter = nullptr)
-      : socket_(std::move(socket)), db_(db), event_sync_(event_sync),
-        pnl_engine_(pnl_engine), sync_getter_(std::move(sync_getter)) {}
+  ApiSession(tcp::socket socket, Database &db, stage3::PnlEngine &pnl_engine,
+             SyncStatusGetter sync_getter = nullptr)
+      : socket_(std::move(socket)), db_(db), pnl_engine_(pnl_engine),
+        sync_getter_(std::move(sync_getter)) {}
 
   void run() { do_read(); }
 
@@ -73,10 +71,6 @@ private:
         handle_sync_state();
       } else if (target.starts_with("/api/query")) {
         handle_query();
-      } else if (target.starts_with("/api/stage2-sync-status")) {
-        handle_stage2_sync_status();
-      } else if (target == "/api/rebuild" && req_.method() == http::verb::post) {
-        handle_rebuild();
       } else if (target.starts_with("/api/rebuild-status")) {
         handle_rebuild_status();
       } else if (target.starts_with("/api/user/") && target.find("/pnl") != std::string::npos) {
@@ -172,42 +166,6 @@ private:
     json result = db_.query_json(query);
     res_.result(http::status::ok);
     res_.body() = result.dump();
-  }
-
-  void handle_stage2_sync_status() {
-    res_.set(http::field::content_type, "application/json");
-
-    const auto &p = event_sync_.progress();
-    const auto &bp = event_sync_.build_progress();
-    json result = {
-        {"syncing", p.syncing || bp.running},
-        {"stage1_transfer_count", p.stage1_transfer_count},
-        {"last_build_transfer_count", p.last_build_transfer_count},
-        {"pending_transfers", p.pending_transfers},
-        {"last_build_ms", p.last_build_ms},
-        {"last_build_events", p.last_build_events},
-        {"last_build_users", p.last_build_users},
-        {"build_phase", bp.phase},
-        {"build_running", bp.running},
-    };
-
-    res_.result(http::status::ok);
-    res_.body() = result.dump();
-  }
-
-  void handle_rebuild() {
-    res_.set(http::field::content_type, "application/json");
-
-    if (event_sync_.build_progress().running || pnl_engine_.progress().running) {
-      res_.result(http::status::conflict);
-      res_.body() = R"({"error":"Rebuild already in progress"})";
-      return;
-    }
-
-    std::thread([this]() { pnl_engine_.rebuild_all(); }).detach();
-
-    res_.result(http::status::accepted);
-    res_.body() = R"({"status":"started"})";
   }
 
   void handle_rebuild_status() {
@@ -529,7 +487,6 @@ private:
 
   tcp::socket socket_;
   Database &db_;
-  stage2::EventSync &event_sync_;
   stage3::PnlEngine &pnl_engine_;
   SyncStatusGetter sync_getter_;
   beast::flat_buffer buffer_;
