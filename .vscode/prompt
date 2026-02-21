@@ -1,13 +1,26 @@
 @README.md 
+@README_stage1.md 
 @README_stage2.md 
-
-
-仔细分析stage2的实现细节， 是不是正确， 高效， 合理
-
-尤其是具体把不同事件的计算和处理流程
+@README_stage3.md 
+仔细读上面架构文档
 
 这里是stage1的部分sump数据片段
 /home/chuyin/work/poly/data/export
 
-完整数据可以访问本地RPC：
-@config.json (7-21) 
+完整数据可以访问本地RPC:
+{
+  "active_rpc": "Erigon",
+  "rpc_nodes": [
+    {
+      "name": "Erigon",
+      "url": "http://127.0.0.1:8545",
+      "key": "",
+      "chunk": 10000
+    },
+    {
+      "name": "dRPC",
+      "url": "https://lb.drpc.org/ogrpc?network=polygon&dkey=Aj9Y8zpk1EVEkcL8w3Z1mGcHAZE3DdUR8biw-uF7NYYO",
+      "key": "Aj9Y8zpk1EVEkcL8w3Z1mGcHAZE3DdUR8biw-uF7NYYO",
+      "chunk": 1000
+    }
+}

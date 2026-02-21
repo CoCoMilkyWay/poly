@@ -16,6 +16,28 @@ namespace rebuild {
 
 static constexpr int REBUILD_P3_WORKERS = 16;
 
+// 合约地址常量
+static constexpr const char *ZERO_ADDR = "0x0000000000000000000000000000000000000000";
+static constexpr const char *CTF_EXCHANGE = "0x4bfb41d5b3570defd03c39a9a4d8de6bd8b8982e";
+static constexpr const char *NEG_RISK_CTF_EXCHANGE = "0xc5d563a36ae78145c45a50134d48a1215220f80a";
+static constexpr const char *NEG_RISK_ADAPTER = "0xd91e80cf2e7be2e162c6513ced06f1dd0da35296";
+static constexpr const char *USDC_E = "0x2791bca1f2de4661ed88a30c99a7a9449aa84174";
+
+struct RebuildProgress {
+  int phase = 0;
+  int64_t total_conditions = 0;
+  int64_t total_tokens = 0;
+  int64_t total_events = 0;
+  int64_t total_users = 0;
+  int64_t processed_users = 0;
+  bool running = false;
+  double phase1_ms = 0;
+  double phase2_ms = 0;
+  double phase3_ms = 0;
+  int64_t transfer_rows = 0;
+  int64_t transfer_events = 0;
+};
+
 class Engine {
 public:
   explicit Engine(Database &db) : db_(db) {}
@@ -29,20 +51,18 @@ public:
     auto t0 = std::chrono::steady_clock::now();
     load_metadata();
     auto t1 = std::chrono::steady_clock::now();
-    progress_.phase1_ms =
-        std::chrono::duration<double, std::milli>(t1 - t0).count();
+    progress_.phase1_ms = std::chrono::duration<double, std::milli>(t1 - t0).count();
 
     progress_.phase = 2;
-    collect_events();
+    build_semantic_index();
     auto t2 = std::chrono::steady_clock::now();
-    progress_.phase2_ms =
-        std::chrono::duration<double, std::milli>(t2 - t1).count();
+    progress_.phase2_ms = std::chrono::duration<double, std::milli>(t2 - t1).count();
 
     progress_.phase = 3;
+    process_transfers();
     replay_all();
     auto t3 = std::chrono::steady_clock::now();
-    progress_.phase3_ms =
-        std::chrono::duration<double, std::milli>(t3 - t2).count();
+    progress_.phase3_ms = std::chrono::duration<double, std::milli>(t3 - t2).count();
 
     progress_.phase = 7;
     progress_.running = false;
@@ -59,13 +79,16 @@ public:
     return &user_states_[it->second];
   }
 
-  const ConditionInfo &get_condition(uint32_t idx) const {
-    return conditions_[idx];
+  const UserState *find_user(const std::string &addr) const {
+    return get_user_state(addr);
   }
 
-  const std::string &get_condition_id(uint32_t idx) const {
-    return cond_ids_[idx];
-  }
+  const ConditionInfo &get_condition(uint32_t idx) const { return conditions_[idx]; }
+  const std::string &get_condition_id(uint32_t idx) const { return cond_ids_[idx]; }
+  const std::vector<ConditionInfo> &conditions() const { return conditions_; }
+  const std::vector<std::string> &condition_ids() const { return cond_ids_; }
+  const std::vector<std::string> &users() const { return users_; }
+  const std::vector<UserState> &user_states() const { return user_states_; }
 
   struct UserSummary {
     std::string addr;
@@ -89,10 +112,9 @@ public:
         result.push_back({users_[i], event_count, realized_pnl});
       }
     }
-    std::sort(result.begin(), result.end(),
-              [](const UserSummary &a, const UserSummary &b) {
-                return a.event_count > b.event_count;
-              });
+    std::sort(result.begin(), result.end(), [](const UserSummary &a, const UserSummary &b) {
+      return a.event_count > b.event_count;
+    });
     if (limit > 0 && static_cast<int64_t>(result.size()) > limit) {
       result.resize(static_cast<size_t>(limit));
     }
@@ -123,15 +145,12 @@ public:
           if (snap.positions[i] != 0)
             ++token_count;
         }
-        timeline.push_back({snap.sort_key, snap.event_type, snap.realized_pnl,
-                            snap.delta, snap.price, ch.cond_idx, snap.token_idx,
-                            token_count});
+        timeline.push_back({snap.sort_key, snap.event_type, snap.realized_pnl, snap.delta,
+                            snap.price, ch.cond_idx, snap.token_idx, token_count});
       }
     }
     std::sort(timeline.begin(), timeline.end(),
-              [](const TimelineEntry &a, const TimelineEntry &b) {
-                return a.sort_key < b.sort_key;
-              });
+              [](const TimelineEntry &a, const TimelineEntry &b) { return a.sort_key < b.sort_key; });
 
     int64_t cum_pnl = 0;
     int cum_tokens = 0;
@@ -157,8 +176,7 @@ public:
     int outcome_count;
   };
 
-  std::vector<PositionAtTime> get_positions_at(const std::string &addr,
-                                                int64_t sort_key) const {
+  std::vector<PositionAtTime> get_positions_at(const std::string &addr, int64_t sort_key) const {
     const auto *state = get_user_state(addr);
     if (!state)
       return {};
@@ -167,9 +185,8 @@ public:
     for (const auto &ch : state->conditions) {
       if (ch.snapshots.empty())
         continue;
-      auto it =
-          std::upper_bound(ch.snapshots.begin(), ch.snapshots.end(), sort_key,
-                           [](int64_t sk, const Snapshot &s) { return sk < s.sort_key; });
+      auto it = std::upper_bound(ch.snapshots.begin(), ch.snapshots.end(), sort_key,
+                                  [](int64_t sk, const Snapshot &s) { return sk < s.sort_key; });
       if (it == ch.snapshots.begin())
         continue;
       --it;
@@ -203,42 +220,33 @@ public:
     uint8_t token_idx;
   };
 
-  std::vector<TradeEntry> get_trades_near(const std::string &addr,
-                                          int64_t sort_key, int radius = 20) const {
+  std::vector<TradeEntry> get_trades_near(const std::string &addr, int64_t sort_key, int radius = 20) const {
     auto timeline = get_user_timeline(addr);
     if (timeline.empty())
       return {};
 
     auto it = std::lower_bound(timeline.begin(), timeline.end(), sort_key,
-                               [](const TimelineEntry &e, int64_t sk) {
-                                 return e.sort_key < sk;
-                               });
-    size_t center = (it == timeline.end()) ? timeline.size() - 1
-                                            : static_cast<size_t>(it - timeline.begin());
+                               [](const TimelineEntry &e, int64_t sk) { return e.sort_key < sk; });
+    size_t center = (it == timeline.end()) ? timeline.size() - 1 : static_cast<size_t>(it - timeline.begin());
     size_t start = (center > static_cast<size_t>(radius)) ? center - radius : 0;
     size_t end = std::min(center + radius + 1, timeline.size());
 
     std::vector<TradeEntry> result;
     for (size_t i = start; i < end; ++i) {
       const auto &e = timeline[i];
-      result.push_back(
-          {e.sort_key, e.event_type, e.delta, e.price, e.cond_idx, e.token_idx});
+      result.push_back({e.sort_key, e.event_type, e.delta, e.price, e.cond_idx, e.token_idx});
     }
     return result;
   }
 
-  size_t get_trades_center_index(const std::string &addr, int64_t sort_key,
-                                 int radius = 20) const {
+  size_t get_trades_center_index(const std::string &addr, int64_t sort_key, int radius = 20) const {
     auto timeline = get_user_timeline(addr);
     if (timeline.empty())
       return 0;
 
     auto it = std::lower_bound(timeline.begin(), timeline.end(), sort_key,
-                               [](const TimelineEntry &e, int64_t sk) {
-                                 return e.sort_key < sk;
-                               });
-    size_t center = (it == timeline.end()) ? timeline.size() - 1
-                                            : static_cast<size_t>(it - timeline.begin());
+                               [](const TimelineEntry &e, int64_t sk) { return e.sort_key < sk; });
+    size_t center = (it == timeline.end()) ? timeline.size() - 1 : static_cast<size_t>(it - timeline.begin());
     size_t start = (center > static_cast<size_t>(radius)) ? center - radius : 0;
     return center - start;
   }
@@ -247,12 +255,23 @@ private:
   Database &db_;
   RebuildProgress progress_;
 
+  // Phase 1: 元数据映射
   std::vector<ConditionInfo> conditions_;
   std::vector<std::string> cond_ids_;
   std::unordered_map<std::string, uint32_t> cond_map_;
   std::unordered_map<std::string, TokenInfo> token_map_;
-  std::unordered_map<std::string, uint32_t> fpmm_map_;
+  std::unordered_map<std::string, FPMMInfo> fpmm_map_;
 
+  // Phase 2: 语义索引 (仅内存, chunk 内有效)
+  std::unordered_map<TxCondKey, SplitInfo> tx_split_;
+  std::unordered_map<TxCondKey, MergeInfo> tx_merge_;
+  std::unordered_map<TxCondKey, RedemptionInfo> tx_redemption_;
+  std::unordered_map<TxKey, ConvertInfo> tx_convert_;
+  std::unordered_map<TxTokenKey, OrderInfo> tx_order_;
+  std::unordered_map<TxKey, FPMMTradeInfo> tx_fpmm_trade_;
+  std::unordered_map<TxKey, FPMMFundingInfo> tx_fpmm_funding_;
+
+  // Phase 3: 用户事件
   std::vector<std::string> users_;
   std::unordered_map<std::string, uint32_t> user_map_;
   std::vector<std::vector<RawEvent>> user_events_;
@@ -260,9 +279,34 @@ private:
 
   std::mutex user_mutex_;
 
+  // ============================================================================
+  // 工具函数
+  // ============================================================================
+
+  static std::string blob_to_hex(const std::string &blob) {
+    if (blob.starts_with("0x"))
+      return blob;
+    return "0x" + blob;
+  }
+
+  static std::string to_lower(std::string s) {
+    std::transform(s.begin(), s.end(), s.begin(), ::tolower);
+    return s;
+  }
+
+  static std::array<uint8_t, 32> hex_to_bytes32(const std::string &hex) {
+    std::array<uint8_t, 32> result{};
+    std::string h = hex;
+    if (h.starts_with("0x"))
+      h = h.substr(2);
+    for (size_t i = 0; i < 32 && i * 2 < h.size(); ++i) {
+      result[i] = static_cast<uint8_t>(std::stoul(h.substr(i * 2, 2), nullptr, 16));
+    }
+    return result;
+  }
+
   uint32_t intern_user(const std::string &addr) {
-    std::string lower = addr;
-    std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+    std::string lower = to_lower(addr);
     std::lock_guard<std::mutex> lock(user_mutex_);
     auto it = user_map_.find(lower);
     if (it != user_map_.end())
@@ -279,11 +323,9 @@ private:
     user_events_[uid].push_back(evt);
   }
 
-  static std::string blob_to_hex(const std::string &blob) {
-    if (blob.starts_with("0x"))
-      return blob;
-    return "0x" + blob;
-  }
+  // ============================================================================
+  // Phase 1: 加载元数据
+  // ============================================================================
 
   void load_metadata() {
     conditions_.clear();
@@ -292,39 +334,23 @@ private:
     token_map_.clear();
     fpmm_map_.clear();
 
-    auto token_rows = db_.query_json(
-        "SELECT token0, token1, condition_id FROM token_map");
+    // 从 token_map 表加载 (订单簿时代)
+    auto token_rows = db_.query_json("SELECT token0, token1, condition_id FROM token_map");
     for (const auto &row : token_rows) {
-      std::string token0 = row["token0"].get<std::string>();
-      std::string token1 = row["token1"].get<std::string>();
-      std::string cond_id = row["condition_id"].get<std::string>();
+      std::string token0 = to_lower(row["token0"].get<std::string>());
+      std::string token1 = to_lower(row["token1"].get<std::string>());
+      std::string cond_id = to_lower(row["condition_id"].get<std::string>());
 
-      std::transform(token0.begin(), token0.end(), token0.begin(), ::tolower);
-      std::transform(token1.begin(), token1.end(), token1.begin(), ::tolower);
-      std::transform(cond_id.begin(), cond_id.end(), cond_id.begin(), ::tolower);
-
-      uint32_t cond_idx;
-      auto it = cond_map_.find(cond_id);
-      if (it == cond_map_.end()) {
-        cond_idx = static_cast<uint32_t>(conditions_.size());
-        cond_map_[cond_id] = cond_idx;
-        cond_ids_.push_back(cond_id);
-        conditions_.emplace_back();
-      } else {
-        cond_idx = it->second;
-      }
-
+      uint32_t cond_idx = get_or_create_condition(cond_id);
       int is_yes0 = (token0 < token1) ? 1 : 0;
       token_map_[token0] = {cond_idx, static_cast<uint8_t>(is_yes0)};
       token_map_[token1] = {cond_idx, static_cast<uint8_t>(1 - is_yes0)};
     }
 
-    auto cond_rows = db_.query_json(
-        "SELECT condition_id, payout_numerators FROM condition_resolution");
+    // 从 condition_resolution 加载结算信息
+    auto cond_rows = db_.query_json("SELECT condition_id, payout_numerators FROM condition_resolution");
     for (const auto &row : cond_rows) {
-      std::string cond_id = row["condition_id"].get<std::string>();
-      std::transform(cond_id.begin(), cond_id.end(), cond_id.begin(), ::tolower);
-
+      std::string cond_id = to_lower(row["condition_id"].get<std::string>());
       auto it = cond_map_.find(cond_id);
       if (it == cond_map_.end())
         continue;
@@ -337,42 +363,56 @@ private:
       }
     }
 
-    auto fpmm_rows =
-        db_.query_json("SELECT fpmm_addr, condition_ids FROM fpmm");
+    // 从 fpmm 表加载 (AMM 时代)
+    auto fpmm_rows = db_.query_json("SELECT fpmm_addr, condition_ids FROM fpmm");
     for (const auto &row : fpmm_rows) {
-      std::string fpmm_addr = row["fpmm_addr"].get<std::string>();
+      std::string fpmm_addr = to_lower(row["fpmm_addr"].get<std::string>());
       std::string cond_ids_str = row["condition_ids"].get<std::string>();
-      std::transform(fpmm_addr.begin(), fpmm_addr.end(), fpmm_addr.begin(), ::tolower);
 
       auto cond_ids_arr = json::parse(cond_ids_str);
       if (cond_ids_arr.empty())
         continue;
-      std::string cond_id = cond_ids_arr[0].get<std::string>();
-      std::transform(cond_id.begin(), cond_id.end(), cond_id.begin(), ::tolower);
+      std::string cond_id = to_lower(cond_ids_arr[0].get<std::string>());
 
-      auto it = cond_map_.find(cond_id);
-      if (it != cond_map_.end()) {
-        fpmm_map_[fpmm_addr] = it->second;
-      }
+      uint32_t cond_idx = get_or_create_condition(cond_id);
+      fpmm_map_[fpmm_addr] = {cond_idx};
     }
 
     progress_.total_conditions = static_cast<int64_t>(conditions_.size());
     progress_.total_tokens = static_cast<int64_t>(token_map_.size());
   }
 
-  void collect_events() {
-    users_.clear();
-    user_map_.clear();
-    user_events_.clear();
+  uint32_t get_or_create_condition(const std::string &cond_id) {
+    auto it = cond_map_.find(cond_id);
+    if (it != cond_map_.end())
+      return it->second;
+    uint32_t idx = static_cast<uint32_t>(conditions_.size());
+    cond_map_[cond_id] = idx;
+    cond_ids_.push_back(cond_id);
+    conditions_.emplace_back();
+    return idx;
+  }
 
-    auto f1 = std::async(std::launch::async, [this]() { scan_order_filled(); });
-    auto f2 = std::async(std::launch::async, [this]() { scan_split(); });
-    auto f3 = std::async(std::launch::async, [this]() { scan_merge(); });
-    auto f4 = std::async(std::launch::async, [this]() { scan_redemption(); });
-    auto f5 = std::async(std::launch::async, [this]() { scan_fpmm_trade(); });
-    auto f6 = std::async(std::launch::async, [this]() { scan_fpmm_funding(); });
-    auto f7 = std::async(std::launch::async, [this]() { scan_convert(); });
-    auto f8 = std::async(std::launch::async, [this]() { scan_transfer(); });
+  // ============================================================================
+  // Phase 2: 构建语义索引
+  // ============================================================================
+
+  void build_semantic_index() {
+    tx_split_.clear();
+    tx_merge_.clear();
+    tx_redemption_.clear();
+    tx_convert_.clear();
+    tx_order_.clear();
+    tx_fpmm_trade_.clear();
+    tx_fpmm_funding_.clear();
+
+    auto f1 = std::async(std::launch::async, [this]() { index_split(); });
+    auto f2 = std::async(std::launch::async, [this]() { index_merge(); });
+    auto f3 = std::async(std::launch::async, [this]() { index_redemption(); });
+    auto f4 = std::async(std::launch::async, [this]() { index_convert(); });
+    auto f5 = std::async(std::launch::async, [this]() { index_order_filled(); });
+    auto f6 = std::async(std::launch::async, [this]() { index_fpmm_trade(); });
+    auto f7 = std::async(std::launch::async, [this]() { index_fpmm_funding(); });
 
     f1.get();
     f2.get();
@@ -381,172 +421,57 @@ private:
     f5.get();
     f6.get();
     f7.get();
-    f8.get();
-
-    int64_t total = 0;
-    for (const auto &evts : user_events_) {
-      total += static_cast<int64_t>(evts.size());
-    }
-    progress_.total_events = total;
-    progress_.total_users = static_cast<int64_t>(users_.size());
   }
 
-  void scan_order_filled() {
+  void index_split() {
     duckdb::Connection conn(db_.get_duckdb());
     auto result = conn.Query(
-        "SELECT block_number, log_index, maker, taker, maker_asset_id, taker_asset_id, "
-        "maker_amount, taker_amount FROM order_filled ORDER BY block_number, log_index");
+        "SELECT block_number, tx_hash, stakeholder, condition_id, amount FROM split");
     assert(!result->HasError());
 
-    static const std::string ZERO_ASSET = "0x0000000000000000000000000000000000000000000000000000000000000000";
-
-    int64_t rows = 0, events = 0;
     for (size_t r = 0; r < result->RowCount(); ++r) {
       int64_t block = result->GetValue(0, r).GetValue<int64_t>();
-      int64_t log_idx = result->GetValue(1, r).GetValue<int64_t>();
-      std::string maker = blob_to_hex(duckdb::StringValue::Get(result->GetValue(2, r)));
-      std::string taker = blob_to_hex(duckdb::StringValue::Get(result->GetValue(3, r)));
-      std::string maker_asset_id = blob_to_hex(duckdb::StringValue::Get(result->GetValue(4, r)));
-      std::string taker_asset_id = blob_to_hex(duckdb::StringValue::Get(result->GetValue(5, r)));
-      int64_t maker_amount = result->GetValue(6, r).GetValue<int64_t>();
-      int64_t taker_amount = result->GetValue(7, r).GetValue<int64_t>();
-
-      std::transform(maker_asset_id.begin(), maker_asset_id.end(), maker_asset_id.begin(), ::tolower);
-      std::transform(taker_asset_id.begin(), taker_asset_id.end(), taker_asset_id.begin(), ::tolower);
-
-      std::string token_id;
-      int side;
-      int64_t usdc, tokens;
-      if (maker_asset_id == ZERO_ASSET) {
-        token_id = taker_asset_id;
-        side = 1;
-        usdc = maker_amount;
-        tokens = taker_amount;
-      } else {
-        token_id = maker_asset_id;
-        side = 2;
-        usdc = taker_amount;
-        tokens = maker_amount;
-      }
-
-      auto it = token_map_.find(token_id);
-      if (it == token_map_.end())
-        continue;
-
-      uint32_t cond_idx = it->second.cond_idx;
-      uint8_t token_idx = it->second.is_yes ? 0 : 1;
-      int64_t sort_key = block * 1000000000LL + log_idx;
-      int64_t price = tokens > 0 ? (usdc * 1000000LL / tokens) : 0;
-
-      uint32_t maker_uid = intern_user(maker);
-      uint32_t taker_uid = intern_user(taker);
-
-      RawEvent maker_evt{sort_key, cond_idx, 0, token_idx, 0, tokens, price};
-      RawEvent taker_evt{sort_key, cond_idx, 0, token_idx, 0, tokens, price};
-
-      if (side == 1) {
-        maker_evt.type = EventType::Buy;
-        taker_evt.type = EventType::Sell;
-      } else {
-        maker_evt.type = EventType::Sell;
-        taker_evt.type = EventType::Buy;
-      }
-
-      push_event(maker_uid, maker_evt);
-      push_event(taker_uid, taker_evt);
-      ++rows;
-      events += 2;
-    }
-    progress_.order_filled_rows = rows;
-    progress_.order_filled_events = events;
-  }
-
-  void scan_split() {
-    duckdb::Connection conn(db_.get_duckdb());
-    auto result = conn.Query(
-        "SELECT block_number, log_index, stakeholder, condition_id, amount "
-        "FROM split ORDER BY block_number, log_index");
-    assert(!result->HasError());
-
-    int64_t rows = 0, events = 0;
-    for (size_t r = 0; r < result->RowCount(); ++r) {
-      int64_t block = result->GetValue(0, r).GetValue<int64_t>();
-      int64_t log_idx = result->GetValue(1, r).GetValue<int64_t>();
-      std::string user = blob_to_hex(duckdb::StringValue::Get(result->GetValue(2, r)));
-      std::string cond_id = blob_to_hex(duckdb::StringValue::Get(result->GetValue(3, r)));
+      std::string tx_hash = to_lower(blob_to_hex(duckdb::StringValue::Get(result->GetValue(1, r))));
+      std::string stakeholder = to_lower(blob_to_hex(duckdb::StringValue::Get(result->GetValue(2, r))));
+      std::string cond_id = to_lower(blob_to_hex(duckdb::StringValue::Get(result->GetValue(3, r))));
       int64_t amount = result->GetValue(4, r).GetValue<int64_t>();
 
-      std::transform(cond_id.begin(), cond_id.end(), cond_id.begin(), ::tolower);
-      auto it = cond_map_.find(cond_id);
-      if (it == cond_map_.end())
-        continue;
-
-      uint32_t cond_idx = it->second;
-      int64_t sort_key = block * 1000000000LL + log_idx;
-      uint32_t uid = intern_user(user);
-
-      RawEvent evt{sort_key, cond_idx, EventType::Split, 0xFF, 0, amount, 0};
-      push_event(uid, evt);
-      ++rows;
-      ++events;
+      TxCondKey key{block, hex_to_bytes32(tx_hash), cond_id};
+      tx_split_[key] = {amount, stakeholder, cond_id};
     }
-    progress_.split_rows = rows;
-    progress_.split_events = events;
   }
 
-  void scan_merge() {
+  void index_merge() {
     duckdb::Connection conn(db_.get_duckdb());
     auto result = conn.Query(
-        "SELECT block_number, log_index, stakeholder, condition_id, amount "
-        "FROM merge ORDER BY block_number, log_index");
+        "SELECT block_number, tx_hash, stakeholder, condition_id, amount FROM merge");
     assert(!result->HasError());
 
-    int64_t rows = 0, events = 0;
     for (size_t r = 0; r < result->RowCount(); ++r) {
       int64_t block = result->GetValue(0, r).GetValue<int64_t>();
-      int64_t log_idx = result->GetValue(1, r).GetValue<int64_t>();
-      std::string user = blob_to_hex(duckdb::StringValue::Get(result->GetValue(2, r)));
-      std::string cond_id = blob_to_hex(duckdb::StringValue::Get(result->GetValue(3, r)));
+      std::string tx_hash = to_lower(blob_to_hex(duckdb::StringValue::Get(result->GetValue(1, r))));
+      std::string stakeholder = to_lower(blob_to_hex(duckdb::StringValue::Get(result->GetValue(2, r))));
+      std::string cond_id = to_lower(blob_to_hex(duckdb::StringValue::Get(result->GetValue(3, r))));
       int64_t amount = result->GetValue(4, r).GetValue<int64_t>();
 
-      std::transform(cond_id.begin(), cond_id.end(), cond_id.begin(), ::tolower);
-      auto it = cond_map_.find(cond_id);
-      if (it == cond_map_.end())
-        continue;
-
-      uint32_t cond_idx = it->second;
-      int64_t sort_key = block * 1000000000LL + log_idx;
-      uint32_t uid = intern_user(user);
-
-      RawEvent evt{sort_key, cond_idx, EventType::Merge, 0xFF, 0, amount, 0};
-      push_event(uid, evt);
-      ++rows;
-      ++events;
+      TxCondKey key{block, hex_to_bytes32(tx_hash), cond_id};
+      tx_merge_[key] = {amount, stakeholder, cond_id};
     }
-    progress_.merge_rows = rows;
-    progress_.merge_events = events;
   }
 
-  void scan_redemption() {
+  void index_redemption() {
     duckdb::Connection conn(db_.get_duckdb());
     auto result = conn.Query(
-        "SELECT block_number, log_index, redeemer, condition_id, index_sets, payout "
-        "FROM redemption ORDER BY block_number, log_index");
+        "SELECT block_number, tx_hash, redeemer, condition_id, index_sets, payout FROM redemption");
     assert(!result->HasError());
 
-    int64_t rows = 0, events = 0;
     for (size_t r = 0; r < result->RowCount(); ++r) {
       int64_t block = result->GetValue(0, r).GetValue<int64_t>();
-      int64_t log_idx = result->GetValue(1, r).GetValue<int64_t>();
-      std::string user = blob_to_hex(duckdb::StringValue::Get(result->GetValue(2, r)));
-      std::string cond_id = blob_to_hex(duckdb::StringValue::Get(result->GetValue(3, r)));
+      std::string tx_hash = to_lower(blob_to_hex(duckdb::StringValue::Get(result->GetValue(1, r))));
+      std::string redeemer = to_lower(blob_to_hex(duckdb::StringValue::Get(result->GetValue(2, r))));
+      std::string cond_id = to_lower(blob_to_hex(duckdb::StringValue::Get(result->GetValue(3, r))));
       std::string index_sets_str = result->GetValue(4, r).ToString();
       int64_t payout = result->GetValue(5, r).GetValue<int64_t>();
-
-      std::transform(cond_id.begin(), cond_id.end(), cond_id.begin(), ::tolower);
-      auto it = cond_map_.find(cond_id);
-      if (it == cond_map_.end())
-        continue;
 
       auto index_sets_arr = json::parse(index_sets_str);
       int index_sets = 0;
@@ -554,171 +479,421 @@ private:
         index_sets |= static_cast<int>(v.get<int64_t>());
       }
 
-      uint32_t cond_idx = it->second;
-      int64_t sort_key = block * 1000000000LL + log_idx;
-      uint32_t uid = intern_user(user);
-
-      RawEvent evt{sort_key, cond_idx, EventType::Redemption,
-                   static_cast<uint8_t>(index_sets), 0, payout, 0};
-      push_event(uid, evt);
-      ++rows;
-      ++events;
+      TxCondKey key{block, hex_to_bytes32(tx_hash), cond_id};
+      tx_redemption_[key] = {index_sets, payout, redeemer, cond_id};
     }
-    progress_.redemption_rows = rows;
-    progress_.redemption_events = events;
   }
 
-  void scan_fpmm_trade() {
+  void index_convert() {
     duckdb::Connection conn(db_.get_duckdb());
     auto result = conn.Query(
-        "SELECT block_number, log_index, fpmm_addr, trader, side, outcome_index, "
-        "usdc_amount, token_amount FROM fpmm_trade ORDER BY block_number, log_index");
+        "SELECT block_number, tx_hash, stakeholder, market_id, index_set, amount FROM convert");
     assert(!result->HasError());
 
-    int64_t rows = 0, events = 0;
     for (size_t r = 0; r < result->RowCount(); ++r) {
       int64_t block = result->GetValue(0, r).GetValue<int64_t>();
-      int64_t log_idx = result->GetValue(1, r).GetValue<int64_t>();
-      std::string fpmm_addr = blob_to_hex(duckdb::StringValue::Get(result->GetValue(2, r)));
-      std::string trader = blob_to_hex(duckdb::StringValue::Get(result->GetValue(3, r)));
+      std::string tx_hash = to_lower(blob_to_hex(duckdb::StringValue::Get(result->GetValue(1, r))));
+      std::string stakeholder = to_lower(blob_to_hex(duckdb::StringValue::Get(result->GetValue(2, r))));
+      std::string market_id = to_lower(blob_to_hex(duckdb::StringValue::Get(result->GetValue(3, r))));
+      int64_t index_set = result->GetValue(4, r).GetValue<int64_t>();
+      int64_t amount = result->GetValue(5, r).GetValue<int64_t>();
+
+      TxKey key{block, hex_to_bytes32(tx_hash)};
+      tx_convert_[key] = {market_id, index_set, amount, stakeholder};
+    }
+  }
+
+  void index_order_filled() {
+    duckdb::Connection conn(db_.get_duckdb());
+    auto result = conn.Query(
+        "SELECT block_number, tx_hash, maker, taker, maker_asset_id, taker_asset_id, "
+        "maker_amount, taker_amount, fee FROM order_filled");
+    assert(!result->HasError());
+
+    static const std::string ZERO_ASSET = "0x0000000000000000000000000000000000000000000000000000000000000000";
+
+    for (size_t r = 0; r < result->RowCount(); ++r) {
+      int64_t block = result->GetValue(0, r).GetValue<int64_t>();
+      std::string tx_hash = to_lower(blob_to_hex(duckdb::StringValue::Get(result->GetValue(1, r))));
+      std::string maker = to_lower(blob_to_hex(duckdb::StringValue::Get(result->GetValue(2, r))));
+      std::string taker = to_lower(blob_to_hex(duckdb::StringValue::Get(result->GetValue(3, r))));
+      std::string maker_asset_id = to_lower(blob_to_hex(duckdb::StringValue::Get(result->GetValue(4, r))));
+      std::string taker_asset_id = to_lower(blob_to_hex(duckdb::StringValue::Get(result->GetValue(5, r))));
+      int64_t maker_amount = result->GetValue(6, r).GetValue<int64_t>();
+      int64_t taker_amount = result->GetValue(7, r).GetValue<int64_t>();
+      int64_t fee = result->GetValue(8, r).GetValue<int64_t>();
+
+      std::string token_id;
+      int maker_side;
+      int64_t usdc, tokens;
+      if (maker_asset_id == ZERO_ASSET) {
+        token_id = taker_asset_id;
+        maker_side = 1; // maker买
+        usdc = maker_amount;
+        tokens = taker_amount;
+      } else {
+        token_id = maker_asset_id;
+        maker_side = 2; // maker卖
+        usdc = taker_amount;
+        tokens = maker_amount;
+      }
+
+      TxTokenKey key{block, hex_to_bytes32(tx_hash), token_id};
+      tx_order_[key] = {maker, taker, maker_side, usdc, tokens, fee};
+    }
+  }
+
+  void index_fpmm_trade() {
+    duckdb::Connection conn(db_.get_duckdb());
+    auto result = conn.Query(
+        "SELECT block_number, tx_hash, fpmm_addr, trader, side, outcome_index, "
+        "usdc_amount, token_amount FROM fpmm_trade");
+    assert(!result->HasError());
+
+    for (size_t r = 0; r < result->RowCount(); ++r) {
+      int64_t block = result->GetValue(0, r).GetValue<int64_t>();
+      std::string tx_hash = to_lower(blob_to_hex(duckdb::StringValue::Get(result->GetValue(1, r))));
+      std::string fpmm_addr = to_lower(blob_to_hex(duckdb::StringValue::Get(result->GetValue(2, r))));
+      std::string trader = to_lower(blob_to_hex(duckdb::StringValue::Get(result->GetValue(3, r))));
       int side = result->GetValue(4, r).GetValue<int32_t>();
       int outcome_idx = result->GetValue(5, r).GetValue<int32_t>();
       int64_t usdc = result->GetValue(6, r).GetValue<int64_t>();
       int64_t tokens = result->GetValue(7, r).GetValue<int64_t>();
 
-      std::transform(fpmm_addr.begin(), fpmm_addr.end(), fpmm_addr.begin(), ::tolower);
-      auto it = fpmm_map_.find(fpmm_addr);
-      if (it == fpmm_map_.end())
-        continue;
-
-      uint32_t cond_idx = it->second;
-      uint8_t token_idx = (outcome_idx == 0) ? 0 : 1;
-      int64_t sort_key = block * 1000000000LL + log_idx;
-      int64_t price = tokens > 0 ? (usdc * 1000000LL / tokens) : 0;
-      uint32_t uid = intern_user(trader);
-
-      RawEvent evt{sort_key, cond_idx,
-                   static_cast<uint8_t>(side == 1 ? EventType::FPMMBuy : EventType::FPMMSell),
-                   token_idx, 0, tokens, price};
-      push_event(uid, evt);
-      ++rows;
-      ++events;
+      TxKey key{block, hex_to_bytes32(tx_hash)};
+      tx_fpmm_trade_[key] = {fpmm_addr, trader, side, outcome_idx, usdc, tokens};
     }
-    progress_.fpmm_trade_rows = rows;
-    progress_.fpmm_trade_events = events;
   }
 
-  void scan_fpmm_funding() {
+  void index_fpmm_funding() {
     duckdb::Connection conn(db_.get_duckdb());
     auto result = conn.Query(
-        "SELECT block_number, log_index, fpmm_addr, funder, side, amounts "
-        "FROM fpmm_funding ORDER BY block_number, log_index");
+        "SELECT block_number, tx_hash, fpmm_addr, funder, side, amounts FROM fpmm_funding");
     assert(!result->HasError());
 
-    int64_t rows = 0, events = 0;
     for (size_t r = 0; r < result->RowCount(); ++r) {
       int64_t block = result->GetValue(0, r).GetValue<int64_t>();
-      int64_t log_idx = result->GetValue(1, r).GetValue<int64_t>();
-      std::string fpmm_addr = blob_to_hex(duckdb::StringValue::Get(result->GetValue(2, r)));
-      std::string funder = blob_to_hex(duckdb::StringValue::Get(result->GetValue(3, r)));
+      std::string tx_hash = to_lower(blob_to_hex(duckdb::StringValue::Get(result->GetValue(1, r))));
+      std::string fpmm_addr = to_lower(blob_to_hex(duckdb::StringValue::Get(result->GetValue(2, r))));
+      std::string funder = to_lower(blob_to_hex(duckdb::StringValue::Get(result->GetValue(3, r))));
       int side = result->GetValue(4, r).GetValue<int32_t>();
       std::string amounts_str = result->GetValue(5, r).ToString();
-
-      std::transform(fpmm_addr.begin(), fpmm_addr.end(), fpmm_addr.begin(), ::tolower);
-      auto it = fpmm_map_.find(fpmm_addr);
-      if (it == fpmm_map_.end())
-        continue;
 
       auto amounts_arr = json::parse(amounts_str);
       int64_t amount0 = amounts_arr.size() > 0 ? amounts_arr[0].get<int64_t>() : 0;
       int64_t amount1 = amounts_arr.size() > 1 ? amounts_arr[1].get<int64_t>() : 0;
 
-      uint32_t cond_idx = it->second;
-      int64_t sort_key = block * 1000000000LL + log_idx;
-      uint32_t uid = intern_user(funder);
-
-      RawEvent evt{sort_key, cond_idx,
-                   static_cast<uint8_t>(side == 1 ? EventType::FPMMLPAdd : EventType::FPMMLPRemove),
-                   0xFF, 0, amount0, amount1};
-      push_event(uid, evt);
-      ++rows;
-      ++events;
+      TxKey key{block, hex_to_bytes32(tx_hash)};
+      tx_fpmm_funding_[key] = {fpmm_addr, funder, side, amount0, amount1};
     }
-    progress_.fpmm_funding_rows = rows;
-    progress_.fpmm_funding_events = events;
   }
 
-  void scan_convert() {
+  // ============================================================================
+  // Phase 3: Transfer 分类与处理
+  // ============================================================================
+
+  void process_transfers() {
+    users_.clear();
+    user_map_.clear();
+    user_events_.clear();
+
     duckdb::Connection conn(db_.get_duckdb());
     auto result = conn.Query(
-        "SELECT block_number, log_index, stakeholder, market_id, index_set, amount "
-        "FROM convert ORDER BY block_number, log_index");
-    assert(!result->HasError());
-
-    std::unordered_map<std::string, uint32_t> market_to_cond;
-    auto q_rows = db_.query_json(
-        "SELECT nrq.market_id, cp.condition_id FROM neg_risk_question nrq "
-        "JOIN condition_preparation cp ON nrq.question_id = cp.question_id LIMIT 1");
-
-    int64_t rows = 0, events = 0;
-    for (size_t r = 0; r < result->RowCount(); ++r) {
-      int64_t block = result->GetValue(0, r).GetValue<int64_t>();
-      int64_t log_idx = result->GetValue(1, r).GetValue<int64_t>();
-      std::string user = blob_to_hex(duckdb::StringValue::Get(result->GetValue(2, r)));
-      int64_t index_set = result->GetValue(4, r).GetValue<int64_t>();
-      int64_t amount = result->GetValue(5, r).GetValue<int64_t>();
-
-      int64_t sort_key = block * 1000000000LL + log_idx;
-      uint32_t uid = intern_user(user);
-
-      RawEvent evt{sort_key, 0, EventType::Convert, 0xFF, 0, amount, index_set};
-      push_event(uid, evt);
-      ++rows;
-      ++events;
-    }
-    progress_.convert_rows = rows;
-    progress_.convert_events = events;
-  }
-
-  void scan_transfer() {
-    duckdb::Connection conn(db_.get_duckdb());
-    auto result = conn.Query(
-        "SELECT block_number, log_index, from_addr, to_addr, token_id, amount "
+        "SELECT block_number, tx_hash, log_index, operator, from_addr, to_addr, token_id, amount "
         "FROM transfer ORDER BY block_number, log_index");
     assert(!result->HasError());
 
     int64_t rows = 0, events = 0;
     for (size_t r = 0; r < result->RowCount(); ++r) {
       int64_t block = result->GetValue(0, r).GetValue<int64_t>();
-      int64_t log_idx = result->GetValue(1, r).GetValue<int64_t>();
-      std::string from = blob_to_hex(duckdb::StringValue::Get(result->GetValue(2, r)));
-      std::string to = blob_to_hex(duckdb::StringValue::Get(result->GetValue(3, r)));
-      std::string token_id = blob_to_hex(duckdb::StringValue::Get(result->GetValue(4, r)));
-      int64_t amount = result->GetValue(5, r).GetValue<int64_t>();
+      std::string tx_hash = to_lower(blob_to_hex(duckdb::StringValue::Get(result->GetValue(1, r))));
+      int64_t log_idx = result->GetValue(2, r).GetValue<int64_t>();
+      std::string op = to_lower(blob_to_hex(duckdb::StringValue::Get(result->GetValue(3, r))));
+      std::string from = to_lower(blob_to_hex(duckdb::StringValue::Get(result->GetValue(4, r))));
+      std::string to = to_lower(blob_to_hex(duckdb::StringValue::Get(result->GetValue(5, r))));
+      std::string token_id = to_lower(blob_to_hex(duckdb::StringValue::Get(result->GetValue(6, r))));
+      int64_t amount = result->GetValue(7, r).GetValue<int64_t>();
 
-      std::transform(token_id.begin(), token_id.end(), token_id.begin(), ::tolower);
-      auto it = token_map_.find(token_id);
-      if (it == token_map_.end())
-        continue;
-
-      uint32_t cond_idx = it->second.cond_idx;
-      uint8_t token_idx = it->second.is_yes ? 0 : 1;
-      int64_t sort_key = block * 1000000000LL + log_idx;
-
-      uint32_t from_uid = intern_user(from);
-      uint32_t to_uid = intern_user(to);
-
-      RawEvent out_evt{sort_key, cond_idx, EventType::TransferOut, token_idx, 0, amount, 0};
-      RawEvent in_evt{sort_key, cond_idx, EventType::TransferIn, token_idx, 0, amount, 0};
-
-      push_event(from_uid, out_evt);
-      push_event(to_uid, in_evt);
+      int n = classify_and_emit(block, tx_hash, log_idx, op, from, to, token_id, amount);
       ++rows;
-      events += 2;
+      events += n;
     }
+
     progress_.transfer_rows = rows;
     progress_.transfer_events = events;
+    progress_.total_events = events;
+    progress_.total_users = static_cast<int64_t>(users_.size());
   }
+
+  int classify_and_emit(int64_t block, const std::string &tx_hash, int64_t log_idx,
+                        const std::string &op, const std::string &from, const std::string &to,
+                        const std::string &token_id, int64_t amount) {
+    int64_t sort_key = block * 1000000000LL + log_idx;
+    TxKey tx_key{block, hex_to_bytes32(tx_hash)};
+
+    // FPMM 特殊处理: 可能没有 TokenRegistered, 需要从 fpmm_map_ 和 trade info 获取
+    auto fpmm_it = fpmm_map_.find(op);
+    if (fpmm_it != fpmm_map_.end()) {
+      return handle_fpmm_transfer_special(sort_key, tx_key, fpmm_it->second, from, to, amount);
+    }
+
+    // 标准处理: 从 token_map_ 查找
+    auto token_it = token_map_.find(token_id);
+    if (token_it == token_map_.end())
+      return 0;
+
+    uint32_t cond_idx = token_it->second.cond_idx;
+    uint8_t token_idx = token_it->second.is_yes ? 0 : 1;
+    std::string cond_id = cond_ids_[cond_idx];
+    const auto &cond = conditions_[cond_idx];
+
+    TxCondKey tx_cond_key{block, hex_to_bytes32(tx_hash), cond_id};
+    TxTokenKey tx_token_key{block, hex_to_bytes32(tx_hash), token_id};
+
+    if (from == ZERO_ADDR) {
+      return handle_mint(sort_key, tx_cond_key, tx_key, to, cond_idx, token_idx, amount, cond);
+    } else if (to == ZERO_ADDR) {
+      return handle_burn(sort_key, tx_cond_key, tx_key, from, cond_idx, token_idx, amount, cond);
+    } else if (op == CTF_EXCHANGE || op == NEG_RISK_CTF_EXCHANGE) {
+      return handle_exchange_transfer(sort_key, tx_token_key, cond_idx, token_idx, amount);
+    } else if (op == NEG_RISK_ADAPTER) {
+      return 0;
+    } else {
+      return emit_transfer(sort_key, from, to, cond_idx, token_idx, amount);
+    }
+  }
+
+  int handle_fpmm_transfer_special(int64_t sort_key, const TxKey &tx_key, const FPMMInfo &fpmm_info,
+                                   const std::string &from, const std::string &to, int64_t amount) {
+    uint32_t cond_idx = fpmm_info.cond_idx;
+    const auto &cond = conditions_[cond_idx];
+    std::string cond_id = cond_ids_[cond_idx];
+
+    // FPMM trade?
+    auto trade_it = tx_fpmm_trade_.find(tx_key);
+    if (trade_it != tx_fpmm_trade_.end()) {
+      const auto &info = trade_it->second;
+      uint8_t token_idx = (info.outcome_idx == 0) ? 0 : 1;
+      int64_t price = info.tokens > 0 ? (info.usdc * 1000000 / info.tokens) : 0;
+      uint32_t uid = intern_user(info.trader);
+      RawEvent evt{sort_key, cond_idx,
+                   static_cast<uint8_t>(info.side == 1 ? EventType::FPMMBuy : EventType::FPMMSell),
+                   token_idx, 0, amount, price};
+      push_event(uid, evt);
+      return 1;
+    }
+
+    // FPMM funding?
+    auto funding_it = tx_fpmm_funding_.find(tx_key);
+    if (funding_it != tx_fpmm_funding_.end()) {
+      const auto &info = funding_it->second;
+      int64_t total = info.amount0 + info.amount1;
+
+      if (from == ZERO_ADDR && info.side == 1) {
+        // LP Add mint
+        uint8_t token_idx = (amount == info.amount0) ? 0 : 1;
+        int64_t my_amount = (token_idx == 0) ? info.amount0 : info.amount1;
+        int64_t price = total > 0 ? (my_amount * 1000000 / total) : 500000;
+        uint32_t uid = intern_user(info.funder);
+        RawEvent evt{sort_key, cond_idx, EventType::FPMMLPAdd, token_idx, 0, amount, price};
+        push_event(uid, evt);
+        return 1;
+      }
+
+      if (to == ZERO_ADDR && info.side == 2) {
+        // LP Remove burn
+        uint8_t token_idx = (amount == info.amount0) ? 0 : 1;
+        int64_t my_amount = (token_idx == 0) ? info.amount0 : info.amount1;
+        int64_t price = total > 0 ? (my_amount * 1000000 / total) : 500000;
+        uint32_t uid = intern_user(info.funder);
+        RawEvent evt{sort_key, cond_idx, EventType::FPMMLPRemove, token_idx, 0, amount, price};
+        push_event(uid, evt);
+        return 1;
+      }
+    }
+
+    // Split for FPMM
+    TxCondKey tx_cond_key{tx_key.block, tx_key.tx_hash, cond_id};
+    auto split_it = tx_split_.find(tx_cond_key);
+    if (split_it != tx_split_.end() && from == ZERO_ADDR && split_it->second.stakeholder == to) {
+      int64_t price = 1000000 / cond.outcome_count;
+      uint32_t uid = intern_user(to);
+      uint8_t token_idx = 0; // 简化: 假设第一个是 YES
+      RawEvent evt{sort_key, cond_idx, EventType::Split, token_idx, 0, amount, price};
+      push_event(uid, evt);
+      return 1;
+    }
+
+    // Merge for FPMM
+    auto merge_it = tx_merge_.find(tx_cond_key);
+    if (merge_it != tx_merge_.end() && to == ZERO_ADDR && merge_it->second.stakeholder == from) {
+      int64_t price = 1000000 / cond.outcome_count;
+      uint32_t uid = intern_user(from);
+      uint8_t token_idx = 0;
+      RawEvent evt{sort_key, cond_idx, EventType::Merge, token_idx, 0, amount, price};
+      push_event(uid, evt);
+      return 1;
+    }
+
+    return 0;
+  }
+
+  int handle_mint(int64_t sort_key, const TxCondKey &tx_cond_key, const TxKey &tx_key,
+                  const std::string &to, uint32_t cond_idx, uint8_t token_idx, int64_t amount,
+                  const ConditionInfo &cond) {
+    // Split?
+    auto split_it = tx_split_.find(tx_cond_key);
+    if (split_it != tx_split_.end() && split_it->second.stakeholder == to) {
+      int64_t price = 1000000 / cond.outcome_count;
+      uint32_t uid = intern_user(to);
+      RawEvent evt{sort_key, cond_idx, EventType::Split, token_idx, 0, amount, price};
+      push_event(uid, evt);
+      return 1;
+    }
+
+    // FPMMLPAdd?
+    auto funding_it = tx_fpmm_funding_.find(tx_key);
+    if (funding_it != tx_fpmm_funding_.end() && funding_it->second.side == 1) {
+      const auto &info = funding_it->second;
+      int64_t total = info.amount0 + info.amount1;
+      int64_t my_amount = (token_idx == 0) ? info.amount0 : info.amount1;
+      int64_t price = total > 0 ? (my_amount * 1000000 / total) : 500000;
+      uint32_t uid = intern_user(info.funder);
+      RawEvent evt{sort_key, cond_idx, EventType::FPMMLPAdd, token_idx, 0, amount, price};
+      push_event(uid, evt);
+      return 1;
+    }
+
+    // FPMM/NegRisk 内部 mint, 跳过
+    return 0;
+  }
+
+  int handle_burn(int64_t sort_key, const TxCondKey &tx_cond_key, const TxKey &tx_key,
+                  const std::string &from, uint32_t cond_idx, uint8_t token_idx, int64_t amount,
+                  const ConditionInfo &cond) {
+    // Merge?
+    auto merge_it = tx_merge_.find(tx_cond_key);
+    if (merge_it != tx_merge_.end() && merge_it->second.stakeholder == from) {
+      int64_t price = 1000000 / cond.outcome_count;
+      uint32_t uid = intern_user(from);
+      RawEvent evt{sort_key, cond_idx, EventType::Merge, token_idx, 0, amount, price};
+      push_event(uid, evt);
+      return 1;
+    }
+
+    // Redemption?
+    auto redeem_it = tx_redemption_.find(tx_cond_key);
+    if (redeem_it != tx_redemption_.end() && redeem_it->second.redeemer == from) {
+      int64_t payout_price = 0;
+      if (!cond.payout_numerators.empty() && token_idx < cond.payout_numerators.size()) {
+        payout_price = cond.payout_numerators[token_idx] * 1000000;
+      }
+      uint32_t uid = intern_user(from);
+      RawEvent evt{sort_key, cond_idx, EventType::Redemption, token_idx, 0, amount, payout_price};
+      push_event(uid, evt);
+      return 1;
+    }
+
+    // Convert?
+    auto convert_it = tx_convert_.find(tx_key);
+    if (convert_it != tx_convert_.end() && convert_it->second.stakeholder == from) {
+      const auto &info = convert_it->second;
+      int popcount = __builtin_popcountll(static_cast<uint64_t>(info.index_set));
+      int64_t price = popcount > 0 ? ((popcount - 1) * 1000000 / popcount) : 0;
+      uint32_t uid = intern_user(from);
+      RawEvent evt{sort_key, cond_idx, EventType::Convert, token_idx, 0, amount, price};
+      push_event(uid, evt);
+      return 1;
+    }
+
+    // FPMMLPRemove?
+    auto funding_it = tx_fpmm_funding_.find(tx_key);
+    if (funding_it != tx_fpmm_funding_.end() && funding_it->second.side == 2) {
+      const auto &info = funding_it->second;
+      int64_t total = info.amount0 + info.amount1;
+      int64_t my_amount = (token_idx == 0) ? info.amount0 : info.amount1;
+      int64_t price = total > 0 ? (my_amount * 1000000 / total) : 500000;
+      uint32_t uid = intern_user(info.funder);
+      RawEvent evt{sort_key, cond_idx, EventType::FPMMLPRemove, token_idx, 0, amount, price};
+      push_event(uid, evt);
+      return 1;
+    }
+
+    // FPMM/NegRisk 内部 burn, 跳过
+    return 0;
+  }
+
+  int handle_exchange_transfer(int64_t sort_key, const TxTokenKey &tx_token_key,
+                               uint32_t cond_idx, uint8_t token_idx, int64_t amount) {
+    auto order_it = tx_order_.find(tx_token_key);
+    if (order_it == tx_order_.end())
+      return 0;
+
+    const auto &info = order_it->second;
+    int64_t price = info.tokens > 0 ? (info.usdc * 1000000 / info.tokens) : 0;
+
+    uint32_t maker_uid = intern_user(info.maker);
+    uint32_t taker_uid = intern_user(info.taker);
+
+    RawEvent maker_evt{sort_key, cond_idx, 0, token_idx, 0, amount, price};
+    RawEvent taker_evt{sort_key, cond_idx, 0, token_idx, 0, amount, price};
+
+    if (info.maker_side == 1) {
+      maker_evt.type = EventType::Buy;
+      taker_evt.type = EventType::Sell;
+    } else {
+      maker_evt.type = EventType::Sell;
+      taker_evt.type = EventType::Buy;
+    }
+
+    push_event(maker_uid, maker_evt);
+    push_event(taker_uid, taker_evt);
+    return 2;
+  }
+
+  int handle_fpmm_transfer(int64_t sort_key, const TxKey &tx_key, const std::string &op,
+                           const std::string &from, const std::string &to,
+                           uint32_t cond_idx, uint8_t token_idx, int64_t amount) {
+    auto trade_it = tx_fpmm_trade_.find(tx_key);
+    if (trade_it != tx_fpmm_trade_.end()) {
+      const auto &info = trade_it->second;
+      int64_t price = info.tokens > 0 ? (info.usdc * 1000000 / info.tokens) : 0;
+      uint32_t uid = intern_user(info.trader);
+      RawEvent evt{sort_key, cond_idx,
+                   static_cast<uint8_t>(info.side == 1 ? EventType::FPMMBuy : EventType::FPMMSell),
+                   token_idx, 0, amount, price};
+      push_event(uid, evt);
+      return 1;
+    }
+
+    // FPMM 返还多余 token 给 LP
+    if (from == op) {
+      uint32_t uid = intern_user(to);
+      RawEvent evt{sort_key, cond_idx, EventType::TransferIn, token_idx, 0, amount, 0};
+      push_event(uid, evt);
+      return 1;
+    }
+
+    // FPMM 内部 transfer, 跳过
+    return 0;
+  }
+
+  int emit_transfer(int64_t sort_key, const std::string &from, const std::string &to,
+                    uint32_t cond_idx, uint8_t token_idx, int64_t amount) {
+    uint32_t from_uid = intern_user(from);
+    uint32_t to_uid = intern_user(to);
+
+    RawEvent out_evt{sort_key, cond_idx, EventType::TransferOut, token_idx, 0, amount, 0};
+    RawEvent in_evt{sort_key, cond_idx, EventType::TransferIn, token_idx, 0, amount, 0};
+
+    push_event(from_uid, out_evt);
+    push_event(to_uid, in_evt);
+    return 2;
+  }
+
+  // ============================================================================
+  // Replay
+  // ============================================================================
 
   void replay_all() {
     size_t nu = users_.size();
@@ -756,9 +931,7 @@ private:
     }
 
     std::sort(events.begin(), events.end(),
-              [](const RawEvent &a, const RawEvent &b) {
-                return a.sort_key < b.sort_key;
-              });
+              [](const RawEvent &a, const RawEvent &b) { return a.sort_key < b.sort_key; });
 
     std::unordered_map<uint32_t, ReplayState> states;
     std::unordered_map<uint32_t, std::vector<Snapshot>> snaps;
@@ -806,19 +979,19 @@ private:
       apply_sell(evt, st);
       break;
     case EventType::Split:
-      apply_split(evt, st, cond);
+      apply_split(evt, st);
       break;
     case EventType::Merge:
-      apply_merge(evt, st, cond);
+      apply_merge(evt, st);
       break;
     case EventType::Redemption:
-      apply_redemption(evt, st, cond);
+      apply_redemption(evt, st);
       break;
     case EventType::FPMMLPAdd:
-      apply_lp_add(evt, st, cond);
+      apply_lp_add(evt, st);
       break;
     case EventType::FPMMLPRemove:
-      apply_lp_remove(evt, st, cond);
+      apply_lp_remove(evt, st);
       break;
     case EventType::Convert:
       apply_convert(evt, st);
@@ -850,79 +1023,63 @@ private:
     st.positions[i] -= sell;
   }
 
-  static void apply_split(const RawEvent &evt, ReplayState &st, const ConditionInfo &cond) {
-    int64_t implied_price = 1000000 / cond.outcome_count;
-    for (int i = 0; i < cond.outcome_count; ++i) {
-      st.cost[i] += evt.amount * implied_price;
-      st.positions[i] += evt.amount;
-    }
+  static void apply_split(const RawEvent &evt, ReplayState &st) {
+    int i = evt.token_idx;
+    st.cost[i] += evt.amount * evt.price;
+    st.positions[i] += evt.amount;
   }
 
-  static void apply_merge(const RawEvent &evt, ReplayState &st, const ConditionInfo &cond) {
-    int64_t implied_price = 1000000 / cond.outcome_count;
-    for (int i = 0; i < cond.outcome_count; ++i) {
-      int64_t pos = st.positions[i];
-      if (pos <= 0)
-        continue;
-      int64_t sell = std::min(evt.amount, pos);
-      int64_t cost_removed = st.cost[i] * sell / pos;
-      st.realized_pnl += (sell * implied_price - cost_removed) / 1000000;
-      st.cost[i] -= cost_removed;
-      st.positions[i] -= sell;
-    }
-  }
-
-  static void apply_redemption(const RawEvent &evt, ReplayState &st, const ConditionInfo &cond) {
-    if (cond.payout_numerators.empty())
+  static void apply_merge(const RawEvent &evt, ReplayState &st) {
+    int i = evt.token_idx;
+    int64_t pos = st.positions[i];
+    if (pos <= 0)
       return;
-
-    int index_sets = evt.token_idx;
-    for (int i = 0; i < cond.outcome_count && i < static_cast<int>(cond.payout_numerators.size()); ++i) {
-      if (!((index_sets >> i) & 1))
-        continue;
-      int64_t pos = st.positions[i];
-      if (pos <= 0)
-        continue;
-      int64_t payout_price = cond.payout_numerators[i] * 1000000;
-      int64_t cost_removed = st.cost[i];
-      st.realized_pnl += (pos * payout_price - cost_removed) / 1000000;
-      st.cost[i] = 0;
-      st.positions[i] = 0;
-    }
+    int64_t sell = std::min(evt.amount, pos);
+    int64_t cost_removed = st.cost[i] * sell / pos;
+    st.realized_pnl += (sell * evt.price - cost_removed) / 1000000;
+    st.cost[i] -= cost_removed;
+    st.positions[i] -= sell;
   }
 
-  static void apply_lp_add(const RawEvent &evt, ReplayState &st, const ConditionInfo &cond) {
-    int64_t total = evt.amount + evt.price;
-    int64_t implied_price0 = total > 0 ? (evt.amount * 1000000 / total) : 500000;
-    int64_t implied_price1 = total > 0 ? (evt.price * 1000000 / total) : 500000;
-    st.cost[0] += evt.amount * implied_price0;
-    st.positions[0] += evt.amount;
-    st.cost[1] += evt.price * implied_price1;
-    st.positions[1] += evt.price;
+  static void apply_redemption(const RawEvent &evt, ReplayState &st) {
+    int i = evt.token_idx;
+    int64_t pos = st.positions[i];
+    if (pos <= 0)
+      return;
+    int64_t cost_removed = st.cost[i];
+    st.realized_pnl += (pos * evt.price - cost_removed) / 1000000;
+    st.cost[i] = 0;
+    st.positions[i] = 0;
   }
 
-  static void apply_lp_remove(const RawEvent &evt, ReplayState &st, const ConditionInfo &cond) {
-    for (int i = 0; i < 2; ++i) {
-      int64_t pos = st.positions[i];
-      int64_t remove = (i == 0) ? evt.amount : evt.price;
-      if (pos <= 0 || remove <= 0)
-        continue;
-      int64_t actual = std::min(remove, pos);
-      int64_t cost_removed = st.cost[i] * actual / pos;
-      int64_t total = evt.amount + evt.price;
-      int64_t implied_price = total > 0 ? (remove * 1000000 / total) : 500000;
-      st.realized_pnl += (actual * implied_price - cost_removed) / 1000000;
-      st.cost[i] -= cost_removed;
-      st.positions[i] -= actual;
-    }
+  static void apply_lp_add(const RawEvent &evt, ReplayState &st) {
+    int i = evt.token_idx;
+    st.cost[i] += evt.amount * evt.price;
+    st.positions[i] += evt.amount;
+  }
+
+  static void apply_lp_remove(const RawEvent &evt, ReplayState &st) {
+    int i = evt.token_idx;
+    int64_t pos = st.positions[i];
+    if (pos <= 0)
+      return;
+    int64_t actual = std::min(evt.amount, pos);
+    int64_t cost_removed = st.cost[i] * actual / pos;
+    st.realized_pnl += (actual * evt.price - cost_removed) / 1000000;
+    st.cost[i] -= cost_removed;
+    st.positions[i] -= actual;
   }
 
   static void apply_convert(const RawEvent &evt, ReplayState &st) {
-    int64_t index_set = evt.price;
-    int popcount = __builtin_popcountll(static_cast<uint64_t>(index_set));
-    if (popcount > 1) {
-      st.realized_pnl += (popcount - 1) * evt.amount;
-    }
+    int i = evt.token_idx;
+    int64_t pos = st.positions[i];
+    if (pos <= 0)
+      return;
+    int64_t actual = std::min(evt.amount, pos);
+    int64_t cost_removed = st.cost[i] * actual / pos;
+    st.realized_pnl += (actual * evt.price - cost_removed) / 1000000;
+    st.cost[i] -= cost_removed;
+    st.positions[i] -= actual;
   }
 
   static void apply_transfer_in(const RawEvent &evt, ReplayState &st) {

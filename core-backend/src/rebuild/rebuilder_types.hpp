@@ -1,6 +1,8 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
+#include <string>
 #include <vector>
 
 namespace rebuild {
@@ -32,14 +34,18 @@ struct TokenInfo {
   uint8_t is_yes;
 };
 
+struct FPMMInfo {
+  uint32_t cond_idx;
+};
+
 struct RawEvent {
   int64_t sort_key;    // 8  block_number * 1e9 + log_index
   uint32_t cond_idx;   // 4
   uint8_t type;        // 1  EventType
-  uint8_t token_idx;   // 1  0=YES, 1=NO, 0xFF=all
+  uint8_t token_idx;   // 1  0=YES, 1=NO
   uint16_t _pad;       // 2
   int64_t amount;      // 8  raw units (1e6 = $1)
-  int64_t price;       // 8  price * 1e6, or extra data
+  int64_t price;       // 8  price * 1e6
 };
 static_assert(sizeof(RawEvent) == 32);
 
@@ -72,34 +78,121 @@ struct ReplayState {
   int64_t realized_pnl = 0;
 };
 
-struct RebuildProgress {
-  int phase = 0;
-  int64_t total_conditions = 0;
-  int64_t total_tokens = 0;
-  int64_t total_events = 0;
-  int64_t total_users = 0;
-  int64_t processed_users = 0;
-  bool running = false;
-  double phase1_ms = 0;
-  double phase2_ms = 0;
-  double phase3_ms = 0;
+// ============================================================================
+// 语义索引结构体 (Phase 2 构建, 供 Transfer 分类使用)
+// Key 格式: block_number * 1e9 + log_index 的低 32 位 tx_hash 哈希拼接
+// ============================================================================
 
-  int64_t order_filled_rows = 0;
-  int64_t order_filled_events = 0;
-  int64_t split_rows = 0;
-  int64_t split_events = 0;
-  int64_t merge_rows = 0;
-  int64_t merge_events = 0;
-  int64_t redemption_rows = 0;
-  int64_t redemption_events = 0;
-  int64_t fpmm_trade_rows = 0;
-  int64_t fpmm_trade_events = 0;
-  int64_t fpmm_funding_rows = 0;
-  int64_t fpmm_funding_events = 0;
-  int64_t convert_rows = 0;
-  int64_t convert_events = 0;
-  int64_t transfer_rows = 0;
-  int64_t transfer_events = 0;
+struct TxCondKey {
+  int64_t block;
+  std::array<uint8_t, 32> tx_hash;
+  std::string cond_id;
+
+  bool operator==(const TxCondKey &o) const {
+    return block == o.block && tx_hash == o.tx_hash && cond_id == o.cond_id;
+  }
+};
+
+struct TxKey {
+  int64_t block;
+  std::array<uint8_t, 32> tx_hash;
+
+  bool operator==(const TxKey &o) const {
+    return block == o.block && tx_hash == o.tx_hash;
+  }
+};
+
+struct TxTokenKey {
+  int64_t block;
+  std::array<uint8_t, 32> tx_hash;
+  std::string token_id;
+
+  bool operator==(const TxTokenKey &o) const {
+    return block == o.block && tx_hash == o.tx_hash && token_id == o.token_id;
+  }
+};
+
+struct SplitInfo {
+  int64_t amount;
+  std::string stakeholder;
+  std::string cond_id;
+};
+
+struct MergeInfo {
+  int64_t amount;
+  std::string stakeholder;
+  std::string cond_id;
+};
+
+struct RedemptionInfo {
+  int index_sets;
+  int64_t payout;
+  std::string redeemer;
+  std::string cond_id;
+};
+
+struct ConvertInfo {
+  std::string market_id;
+  int64_t index_set;
+  int64_t amount;
+  std::string stakeholder;
+};
+
+struct OrderInfo {
+  std::string maker;
+  std::string taker;
+  int maker_side;  // 1=maker买, 2=maker卖
+  int64_t usdc;
+  int64_t tokens;
+  int64_t fee;
+};
+
+struct FPMMTradeInfo {
+  std::string fpmm_addr;
+  std::string trader;
+  int side;  // 1=Buy, 2=Sell
+  int outcome_idx;
+  int64_t usdc;
+  int64_t tokens;
+};
+
+struct FPMMFundingInfo {
+  std::string fpmm_addr;
+  std::string funder;
+  int side;  // 1=Added, 2=Removed
+  int64_t amount0;
+  int64_t amount1;
 };
 
 } // namespace rebuild
+
+namespace std {
+template <> struct hash<rebuild::TxCondKey> {
+  size_t operator()(const rebuild::TxCondKey &k) const {
+    size_t h = std::hash<int64_t>()(k.block);
+    for (size_t i = 0; i < 8; ++i)
+      h ^= std::hash<uint8_t>()(k.tx_hash[i]) << (i % 8);
+    h ^= std::hash<std::string>()(k.cond_id);
+    return h;
+  }
+};
+
+template <> struct hash<rebuild::TxKey> {
+  size_t operator()(const rebuild::TxKey &k) const {
+    size_t h = std::hash<int64_t>()(k.block);
+    for (size_t i = 0; i < 8; ++i)
+      h ^= std::hash<uint8_t>()(k.tx_hash[i]) << (i % 8);
+    return h;
+  }
+};
+
+template <> struct hash<rebuild::TxTokenKey> {
+  size_t operator()(const rebuild::TxTokenKey &k) const {
+    size_t h = std::hash<int64_t>()(k.block);
+    for (size_t i = 0; i < 8; ++i)
+      h ^= std::hash<uint8_t>()(k.tx_hash[i]) << (i % 8);
+    h ^= std::hash<std::string>()(k.token_id);
+    return h;
+  }
+};
+} // namespace std

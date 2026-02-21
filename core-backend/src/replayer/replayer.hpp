@@ -30,13 +30,12 @@ inline std::string serialize_user_timeline(const rebuild::Engine &engine, const 
   const auto *state = engine.find_user(user_id);
   assert(state != nullptr && "user not found");
 
-  // -- 收集所有 condition 的 snapshots 到扁平 timeline --
   struct TimelineEntry {
-    int64_t timestamp;
+    int64_t sort_key;
     uint32_t cond_idx;
     uint8_t event_type;
     uint8_t outcome_count;
-    int64_t cond_rpnl; // per-condition cumulative
+    int64_t cond_rpnl;
     int64_t positions[rebuild::MAX_OUTCOMES];
   };
 
@@ -44,7 +43,7 @@ inline std::string serialize_user_timeline(const rebuild::Engine &engine, const 
   for (const auto &ch : state->conditions) {
     for (const auto &snap : ch.snapshots) {
       TimelineEntry te{};
-      te.timestamp = snap.timestamp;
+      te.sort_key = snap.sort_key;
       te.cond_idx = ch.cond_idx;
       te.event_type = snap.event_type;
       te.outcome_count = snap.outcome_count;
@@ -56,13 +55,11 @@ inline std::string serialize_user_timeline(const rebuild::Engine &engine, const 
 
   std::sort(timeline.begin(), timeline.end(),
             [](const TimelineEntry &a, const TimelineEntry &b) {
-              return a.timestamp < b.timestamp;
+              return a.sort_key < b.sort_key;
             });
 
-  // -- 计算逐事件的全局累计 realized PnL + 活跃 condition 数 (按 condition 维度 dust 过滤) --
-  // -- 直接写 JSON 字符串, 跳过 nlohmann::json 避免百万级堆分配 --
   std::unordered_map<uint32_t, int64_t> cond_rpnl_map;
-  std::unordered_map<uint32_t, bool> cond_non_dust; // per-condition non-dust flag
+  std::unordered_map<uint32_t, bool> cond_non_dust;
   int64_t global_rpnl = 0;
   int64_t total_tokens = 0;
 
@@ -75,7 +72,6 @@ inline std::string serialize_user_timeline(const rebuild::Engine &engine, const 
     global_rpnl += e.cond_rpnl - cond_rpnl_map[e.cond_idx];
     cond_rpnl_map[e.cond_idx] = e.cond_rpnl;
 
-    // per-condition: sum of abs(positions) across all outcomes
     int64_t abs_sum = 0;
     for (int k = 0; k < e.outcome_count; ++k)
       abs_sum += std::abs(e.positions[k]);
@@ -89,7 +85,7 @@ inline std::string serialize_user_timeline(const rebuild::Engine &engine, const 
 
     if (!first) buf += ',';
     first = false;
-    buf += "{\"ts\":";   buf += std::to_string(e.timestamp);
+    buf += "{\"ts\":";   buf += std::to_string(e.sort_key);
     buf += ",\"ty\":";   buf += std::to_string((int)e.event_type);
     buf += ",\"rpnl\":"; buf += std::to_string(global_rpnl);
     buf += ",\"tk\":";   buf += std::to_string(total_tokens);
@@ -97,8 +93,8 @@ inline std::string serialize_user_timeline(const rebuild::Engine &engine, const 
   }
   buf += ']';
 
-  int64_t first_ts = timeline.empty() ? 0 : timeline.front().timestamp;
-  int64_t last_ts = timeline.empty() ? 0 : timeline.back().timestamp;
+  int64_t first_ts = timeline.empty() ? 0 : timeline.front().sort_key;
+  int64_t last_ts = timeline.empty() ? 0 : timeline.back().sort_key;
 
   return "{\"user\":\"" + user_id + "\""
        + ",\"total_events\":" + std::to_string((int64_t)timeline.size())
@@ -119,7 +115,7 @@ inline json serialize_trades_at(const rebuild::Engine &engine, const std::string
   const auto &cond_ids = engine.condition_ids();
 
   struct TradeEntry {
-    int64_t timestamp;
+    int64_t sort_key;
     uint32_t cond_idx;
     uint8_t event_type;
     uint8_t token_idx;
@@ -130,24 +126,23 @@ inline json serialize_trades_at(const rebuild::Engine &engine, const std::string
   std::vector<TradeEntry> trades;
   for (const auto &ch : state->conditions) {
     for (const auto &snap : ch.snapshots) {
-      trades.push_back({snap.timestamp, ch.cond_idx, snap.event_type,
+      trades.push_back({snap.sort_key, ch.cond_idx, snap.event_type,
                          snap.token_idx, snap.delta, snap.price});
     }
   }
 
   std::sort(trades.begin(), trades.end(),
-            [](const TradeEntry &a, const TradeEntry &b) { return a.timestamp < b.timestamp; });
+            [](const TradeEntry &a, const TradeEntry &b) { return a.sort_key < b.sort_key; });
 
-  // 二分查找最接近 ts 的事件
   int lo = 0, hi = (int)trades.size();
   while (lo < hi) {
     int mid = (lo + hi) >> 1;
-    if (trades[mid].timestamp < ts) lo = mid + 1;
+    if (trades[mid].sort_key < ts) lo = mid + 1;
     else hi = mid;
   }
   int center = lo;
   if (center > 0 && center < (int)trades.size()) {
-    if (std::abs(trades[center - 1].timestamp - ts) <= std::abs(trades[center].timestamp - ts))
+    if (std::abs(trades[center - 1].sort_key - ts) <= std::abs(trades[center].sort_key - ts))
       center = center - 1;
   } else if (center >= (int)trades.size()) {
     center = (int)trades.size() - 1;
@@ -160,7 +155,7 @@ inline json serialize_trades_at(const rebuild::Engine &engine, const std::string
   for (int i = start; i <= end; ++i) {
     const auto &t = trades[i];
     events.push_back({
-        {"ts", t.timestamp},
+        {"ts", t.sort_key},
         {"ty", (int)t.event_type},
         {"ti", (int)t.token_idx},
         {"ci", t.cond_idx},
@@ -187,7 +182,6 @@ inline json serialize_positions_at(const rebuild::Engine &engine, const std::str
   const auto &cond_ids = engine.condition_ids();
   const auto &conditions = engine.conditions();
 
-  // Step 1: 收集每个 condition 在 ts 时刻的 snapshot, 按 condition 维度 dust 过滤
   struct CondSnap {
     uint32_t cond_idx;
     const rebuild::Snapshot *snap;
@@ -197,16 +191,14 @@ inline json serialize_positions_at(const rebuild::Engine &engine, const std::str
   for (const auto &ch : state->conditions) {
     const auto &snaps = ch.snapshots;
     if (snaps.empty()) continue;
-    // 二分查找: 最后一个 snap.timestamp <= ts
     int lo = 0, hi = (int)snaps.size() - 1, best = -1;
     while (lo <= hi) {
       int mid = (lo + hi) >> 1;
-      if (snaps[mid].timestamp <= ts) { best = mid; lo = mid + 1; }
+      if (snaps[mid].sort_key <= ts) { best = mid; lo = mid + 1; }
       else hi = mid - 1;
     }
     if (best < 0) continue;
     const auto &snap = snaps[best];
-    // per-condition dust check: sum of abs(positions) across all outcomes
     int64_t abs_sum = 0;
     for (int k = 0; k < snap.outcome_count; ++k)
       abs_sum += std::abs(snap.positions[k]);
@@ -214,7 +206,6 @@ inline json serialize_positions_at(const rebuild::Engine &engine, const std::str
     cond_snaps.push_back({ch.cond_idx, &snap});
   }
 
-  // Step 2: 构造 JSON (已按 condition 维度过滤)
   json j_positions = json::array();
   for (const auto &cs : cond_snaps) {
     const auto &cond = conditions[cs.cond_idx];
@@ -232,7 +223,6 @@ inline json serialize_positions_at(const rebuild::Engine &engine, const std::str
     });
   }
 
-  // 按 |rpnl| 降序
   std::sort(j_positions.begin(), j_positions.end(),
             [](const json &a, const json &b) {
               return std::abs(a["rpnl"].get<int64_t>()) > std::abs(b["rpnl"].get<int64_t>());

@@ -202,13 +202,6 @@ private:
         {"phase1_ms", p.phase1_ms},
         {"phase2_ms", p.phase2_ms},
         {"phase3_ms", p.phase3_ms},
-        {"order_filled", {{"rows", p.order_filled_rows}, {"events", p.order_filled_events}}},
-        {"split", {{"rows", p.split_rows}, {"events", p.split_events}}},
-        {"merge", {{"rows", p.merge_rows}, {"events", p.merge_events}}},
-        {"redemption", {{"rows", p.redemption_rows}, {"events", p.redemption_events}}},
-        {"fpmm_trade", {{"rows", p.fpmm_trade_rows}, {"events", p.fpmm_trade_events}}},
-        {"fpmm_funding", {{"rows", p.fpmm_funding_rows}, {"events", p.fpmm_funding_events}}},
-        {"convert", {{"rows", p.convert_rows}, {"events", p.convert_events}}},
         {"transfer", {{"rows", p.transfer_rows}, {"events", p.transfer_events}}},
     };
 
