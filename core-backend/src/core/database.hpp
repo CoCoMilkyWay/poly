@@ -1,12 +1,10 @@
 #pragma once
 
-#include <algorithm>
 #include <cassert>
 #include <duckdb.hpp>
 #include <fcntl.h>
 #include <mutex>
 #include <nlohmann/json.hpp>
-#include <set>
 #include <string>
 #include <sys/file.h>
 #include <unistd.h>
@@ -160,72 +158,13 @@ public:
       )
     )");
 
-    execute(R"(
-      CREATE TABLE IF NOT EXISTS order_filled (
-        block_number BIGINT NOT NULL,
-        log_index INTEGER NOT NULL,
-        exchange TEXT NOT NULL,
-        maker BLOB NOT NULL,
-        taker BLOB NOT NULL,
-        token_id BLOB NOT NULL,
-        side INTEGER NOT NULL,
-        usdc_amount BIGINT NOT NULL,
-        token_amount BIGINT NOT NULL,
-        fee BIGINT NOT NULL,
-        PRIMARY KEY (block_number, log_index)
-      )
-    )");
-
-    execute(R"(
-      CREATE TABLE IF NOT EXISTS split (
-        block_number BIGINT NOT NULL,
-        log_index INTEGER NOT NULL,
-        stakeholder BLOB NOT NULL,
-        condition_id BLOB NOT NULL,
-        amount BIGINT NOT NULL,
-        PRIMARY KEY (block_number, log_index)
-      )
-    )");
-
-    execute(R"(
-      CREATE TABLE IF NOT EXISTS merge (
-        block_number BIGINT NOT NULL,
-        log_index INTEGER NOT NULL,
-        stakeholder BLOB NOT NULL,
-        condition_id BLOB NOT NULL,
-        amount BIGINT NOT NULL,
-        PRIMARY KEY (block_number, log_index)
-      )
-    )");
-
-    execute(R"(
-      CREATE TABLE IF NOT EXISTS redemption (
-        block_number BIGINT NOT NULL,
-        log_index INTEGER NOT NULL,
-        redeemer BLOB NOT NULL,
-        condition_id BLOB NOT NULL,
-        index_sets INTEGER NOT NULL,
-        payout BIGINT NOT NULL,
-        PRIMARY KEY (block_number, log_index)
-      )
-    )");
-
-    execute(R"(
-      CREATE TABLE IF NOT EXISTS convert (
-        block_number BIGINT NOT NULL,
-        log_index INTEGER NOT NULL,
-        stakeholder BLOB NOT NULL,
-        market_id BLOB NOT NULL,
-        index_set BIGINT NOT NULL,
-        amount BIGINT NOT NULL,
-        PRIMARY KEY (block_number, log_index)
-      )
-    )");
-
+    // ConditionalTokens: 转账
     execute(R"(
       CREATE TABLE IF NOT EXISTS transfer (
         block_number BIGINT NOT NULL,
+        tx_hash BLOB NOT NULL,
         log_index BIGINT NOT NULL,
+        operator BLOB NOT NULL,
         from_addr BLOB NOT NULL,
         to_addr BLOB NOT NULL,
         token_id BLOB NOT NULL,
@@ -234,55 +173,98 @@ public:
       )
     )");
 
+    // ConditionalTokens: 条件
     execute(R"(
-      CREATE TABLE IF NOT EXISTS token_map (
-        token_id BLOB PRIMARY KEY,
-        condition_id BLOB NOT NULL,
-        exchange TEXT NOT NULL,
-        is_yes INTEGER NOT NULL
-      )
-    )");
-
-    execute(R"(
-      CREATE TABLE IF NOT EXISTS condition (
+      CREATE TABLE IF NOT EXISTS condition_preparation (
+        block_number BIGINT NOT NULL,
+        tx_hash BLOB NOT NULL,
+        log_index INTEGER NOT NULL,
         condition_id BLOB PRIMARY KEY,
         oracle BLOB NOT NULL,
         question_id BLOB NOT NULL,
-        payout_numerators TEXT,
-        resolution_block BIGINT
+        outcome_slot_count INTEGER NOT NULL
       )
     )");
 
     execute(R"(
-      CREATE TABLE IF NOT EXISTS neg_risk_market (
-        market_id BLOB PRIMARY KEY,
+      CREATE TABLE IF NOT EXISTS condition_resolution (
+        block_number BIGINT NOT NULL,
+        tx_hash BLOB NOT NULL,
+        log_index INTEGER NOT NULL,
+        condition_id BLOB NOT NULL,
         oracle BLOB NOT NULL,
-        fee_bips INTEGER NOT NULL,
-        data BLOB
+        question_id BLOB NOT NULL,
+        outcome_slot_count INTEGER NOT NULL,
+        payout_numerators TEXT NOT NULL,
+        PRIMARY KEY (block_number, log_index)
+      )
+    )");
+
+    // ConditionalTokens: 持仓操作
+    execute(R"(
+      CREATE TABLE IF NOT EXISTS split (
+        block_number BIGINT NOT NULL,
+        tx_hash BLOB NOT NULL,
+        log_index INTEGER NOT NULL,
+        stakeholder BLOB NOT NULL,
+        collateral_token BLOB NOT NULL,
+        parent_collection_id BLOB NOT NULL,
+        condition_id BLOB NOT NULL,
+        partition TEXT NOT NULL,
+        amount BIGINT NOT NULL,
+        PRIMARY KEY (block_number, log_index)
       )
     )");
 
     execute(R"(
-      CREATE TABLE IF NOT EXISTS neg_risk_question (
-        question_id BLOB PRIMARY KEY,
-        market_id BLOB NOT NULL,
-        question_index INTEGER NOT NULL,
-        data BLOB
+      CREATE TABLE IF NOT EXISTS merge (
+        block_number BIGINT NOT NULL,
+        tx_hash BLOB NOT NULL,
+        log_index INTEGER NOT NULL,
+        stakeholder BLOB NOT NULL,
+        collateral_token BLOB NOT NULL,
+        parent_collection_id BLOB NOT NULL,
+        condition_id BLOB NOT NULL,
+        partition TEXT NOT NULL,
+        amount BIGINT NOT NULL,
+        PRIMARY KEY (block_number, log_index)
       )
     )");
 
+    execute(R"(
+      CREATE TABLE IF NOT EXISTS redemption (
+        block_number BIGINT NOT NULL,
+        tx_hash BLOB NOT NULL,
+        log_index INTEGER NOT NULL,
+        redeemer BLOB NOT NULL,
+        collateral_token BLOB NOT NULL,
+        parent_collection_id BLOB NOT NULL,
+        condition_id BLOB NOT NULL,
+        index_sets TEXT NOT NULL,
+        payout BIGINT NOT NULL,
+        PRIMARY KEY (block_number, log_index)
+      )
+    )");
+
+    // FPMM: AMM池
     execute(R"(
       CREATE TABLE IF NOT EXISTS fpmm (
+        block_number BIGINT NOT NULL,
+        tx_hash BLOB NOT NULL,
+        log_index INTEGER NOT NULL,
+        creator BLOB NOT NULL,
         fpmm_addr BLOB PRIMARY KEY,
-        condition_id BLOB NOT NULL,
-        fee BIGINT NOT NULL,
-        block_number BIGINT NOT NULL
+        conditional_tokens BLOB NOT NULL,
+        collateral_token BLOB NOT NULL,
+        condition_ids TEXT NOT NULL,
+        fee BIGINT NOT NULL
       )
     )");
 
     execute(R"(
       CREATE TABLE IF NOT EXISTS fpmm_trade (
         block_number BIGINT NOT NULL,
+        tx_hash BLOB NOT NULL,
         log_index INTEGER NOT NULL,
         fpmm_addr BLOB NOT NULL,
         trader BLOB NOT NULL,
@@ -298,32 +280,105 @@ public:
     execute(R"(
       CREATE TABLE IF NOT EXISTS fpmm_funding (
         block_number BIGINT NOT NULL,
+        tx_hash BLOB NOT NULL,
         log_index INTEGER NOT NULL,
         fpmm_addr BLOB NOT NULL,
         funder BLOB NOT NULL,
         side INTEGER NOT NULL,
-        amount0 BIGINT NOT NULL,
-        amount1 BIGINT NOT NULL,
+        amounts TEXT NOT NULL,
+        collateral_from_fee_pool BIGINT NOT NULL,
         shares BIGINT NOT NULL,
         PRIMARY KEY (block_number, log_index)
       )
     )");
 
-    execute("CREATE INDEX IF NOT EXISTS idx_order_filled_maker ON order_filled(maker)");
-    execute("CREATE INDEX IF NOT EXISTS idx_order_filled_taker ON order_filled(taker)");
-    execute("CREATE INDEX IF NOT EXISTS idx_order_filled_token ON order_filled(token_id)");
+    // CTFExchange: 订单
+    execute(R"(
+      CREATE TABLE IF NOT EXISTS order_filled (
+        block_number BIGINT NOT NULL,
+        tx_hash BLOB NOT NULL,
+        log_index INTEGER NOT NULL,
+        exchange TEXT NOT NULL,
+        order_hash BLOB NOT NULL,
+        maker BLOB NOT NULL,
+        taker BLOB NOT NULL,
+        maker_asset_id BLOB NOT NULL,
+        taker_asset_id BLOB NOT NULL,
+        maker_amount BIGINT NOT NULL,
+        taker_amount BIGINT NOT NULL,
+        fee BIGINT NOT NULL,
+        PRIMARY KEY (block_number, log_index)
+      )
+    )");
+
+    execute(R"(
+      CREATE TABLE IF NOT EXISTS token_map (
+        block_number BIGINT NOT NULL,
+        tx_hash BLOB NOT NULL,
+        log_index INTEGER NOT NULL,
+        exchange TEXT NOT NULL,
+        token0 BLOB NOT NULL,
+        token1 BLOB NOT NULL,
+        condition_id BLOB NOT NULL,
+        PRIMARY KEY (block_number, log_index)
+      )
+    )");
+
+    // NegRiskAdapter: 市场
+    execute(R"(
+      CREATE TABLE IF NOT EXISTS neg_risk_market (
+        block_number BIGINT NOT NULL,
+        tx_hash BLOB NOT NULL,
+        log_index INTEGER NOT NULL,
+        market_id BLOB PRIMARY KEY,
+        oracle BLOB NOT NULL,
+        fee_bips INTEGER NOT NULL,
+        data BLOB
+      )
+    )");
+
+    execute(R"(
+      CREATE TABLE IF NOT EXISTS neg_risk_question (
+        block_number BIGINT NOT NULL,
+        tx_hash BLOB NOT NULL,
+        log_index INTEGER NOT NULL,
+        market_id BLOB NOT NULL,
+        question_id BLOB PRIMARY KEY,
+        question_index INTEGER NOT NULL,
+        data BLOB
+      )
+    )");
+
+    execute(R"(
+      CREATE TABLE IF NOT EXISTS convert (
+        block_number BIGINT NOT NULL,
+        tx_hash BLOB NOT NULL,
+        log_index INTEGER NOT NULL,
+        stakeholder BLOB NOT NULL,
+        market_id BLOB NOT NULL,
+        index_set BIGINT NOT NULL,
+        amount BIGINT NOT NULL,
+        PRIMARY KEY (block_number, log_index)
+      )
+    )");
+
+    // ConditionalTokens 索引
+    execute("CREATE INDEX IF NOT EXISTS idx_transfer_from ON transfer(from_addr)");
+    execute("CREATE INDEX IF NOT EXISTS idx_transfer_to ON transfer(to_addr)");
+    execute("CREATE INDEX IF NOT EXISTS idx_transfer_operator ON transfer(operator)");
+    execute("CREATE INDEX IF NOT EXISTS idx_condition_resolution_condition_id ON condition_resolution(condition_id)");
     execute("CREATE INDEX IF NOT EXISTS idx_split_stakeholder ON split(stakeholder)");
     execute("CREATE INDEX IF NOT EXISTS idx_merge_stakeholder ON merge(stakeholder)");
     execute("CREATE INDEX IF NOT EXISTS idx_redemption_redeemer ON redemption(redeemer)");
-    execute("CREATE INDEX IF NOT EXISTS idx_convert_stakeholder ON convert(stakeholder)");
-    execute("CREATE INDEX IF NOT EXISTS idx_transfer_from ON transfer(from_addr)");
-    execute("CREATE INDEX IF NOT EXISTS idx_transfer_to ON transfer(to_addr)");
-    execute("CREATE INDEX IF NOT EXISTS idx_neg_risk_question_market ON neg_risk_question(market_id)");
-    execute("CREATE INDEX IF NOT EXISTS idx_fpmm_condition ON fpmm(condition_id)");
+    // FPMM 索引
     execute("CREATE INDEX IF NOT EXISTS idx_fpmm_trade_trader ON fpmm_trade(trader)");
     execute("CREATE INDEX IF NOT EXISTS idx_fpmm_trade_fpmm ON fpmm_trade(fpmm_addr)");
-    execute("CREATE INDEX IF NOT EXISTS idx_fpmm_funding_funder ON fpmm_funding(funder)");
-    execute("CREATE INDEX IF NOT EXISTS idx_fpmm_funding_fpmm ON fpmm_funding(fpmm_addr)");
+    // CTFExchange 索引
+    execute("CREATE INDEX IF NOT EXISTS idx_order_filled_maker ON order_filled(maker)");
+    execute("CREATE INDEX IF NOT EXISTS idx_order_filled_taker ON order_filled(taker)");
+    // NegRiskAdapter 索引
+    execute("CREATE INDEX IF NOT EXISTS idx_neg_risk_question_market ON neg_risk_question(market_id)");
+    execute("CREATE INDEX IF NOT EXISTS idx_convert_stakeholder ON convert(stakeholder)");
   }
 
   int64_t get_last_block() {
@@ -331,25 +386,6 @@ public:
     if (rows.empty() || rows[0]["value"].is_null())
       return -1;
     return std::stoll(rows[0]["value"].get<std::string>());
-  }
-
-  std::set<std::string> get_fpmm_addrs() {
-    std::lock_guard<std::mutex> lock(read_mutex_);
-    auto result = read_conn_->Query("SELECT fpmm_addr FROM fpmm");
-    assert(!result->HasError());
-    std::set<std::string> addrs;
-    for (size_t row = 0; row < result->RowCount(); ++row) {
-      auto blob = duckdb::StringValue::Get(result->GetValue(0, row));
-      std::string addr;
-      if (!blob.empty() && blob[0] == 'x') {
-        addr = "0" + blob;
-      } else {
-        addr = "0x" + blob;
-      }
-      std::transform(addr.begin(), addr.end(), addr.begin(), ::tolower);
-      addrs.insert(addr);
-    }
-    return addrs;
   }
 
   void set_last_block(int64_t block) {
@@ -387,8 +423,7 @@ public:
 
   void atomic_multi_insert(
       const std::vector<std::tuple<std::string, std::string, std::vector<std::string>>> &batches,
-      int64_t new_last_block,
-      const std::vector<std::string> &extra_sqls = {}) {
+      int64_t new_last_block) {
     std::lock_guard<std::mutex> lock(write_mutex_);
 
     auto r1 = write_conn_->Query("BEGIN TRANSACTION");
@@ -405,12 +440,6 @@ public:
       }
       auto r = write_conn_->Query(insert_sql);
       assert(!r->HasError());
-    }
-
-    for (const auto &sql : extra_sqls) {
-      auto r = write_conn_->Query(sql);
-      assert(!r->HasError());
-      assert(r->RowCount() > 0 && r->GetValue(0, 0).GetValue<int64_t>() > 0 && "extra_sql affected 0 rows (resolution without matching preparation?)");
     }
 
     auto r3 = write_conn_->Query(

@@ -5,8 +5,6 @@
 #include <deque>
 #include <iostream>
 #include <memory>
-#include <optional>
-#include <set>
 #include <vector>
 
 #include <boost/asio.hpp>
@@ -31,7 +29,6 @@ public:
 
   void start(asio::io_context &ioc) {
     ioc_ = &ioc;
-    fpmm_addrs_ = db_.get_fpmm_addrs();
     is_syncing_ = false;
     schedule_sync(0);
   }
@@ -106,17 +103,10 @@ private:
   void sync_batch(int64_t from_block, int64_t head_block) {
     int64_t to_block = std::min(from_block + current_batch_size_ - 1, head_block);
 
-    static const std::vector<std::string> ct_topics = {
-        topics::POSITION_SPLIT, topics::POSITION_MERGE, topics::POSITION_REDEEM,
-        topics::TRANSFER_SINGLE, topics::TRANSFER_BATCH,
-        topics::CONDITION_PREPARE, topics::CONDITION_RESOLVE};
-    static const std::vector<std::string> ex_topics = {
-        topics::ORDER_FILL, topics::TOKEN_REGISTER};
-    static const std::vector<std::string> nra_topics = {
-        topics::MARKET_PREPARE, topics::QUESTION_PREPARE, topics::POSITION_CONVERT};
-    static const std::vector<std::string> fpmm_topics = {
-        topics::FPMM_CREATE, topics::FPMM_BUY, topics::FPMM_SELL,
-        topics::FPMM_FUNDING_ADD, topics::FPMM_FUNDING_REMOVE};
+    static const std::vector<std::string> ct_topics = {topics::TRANSFER_SINGLE, topics::TRANSFER_BATCH, topics::CONDITION_PREPARE, topics::CONDITION_RESOLVE, topics::POSITION_SPLIT, topics::POSITION_MERGE, topics::POSITION_REDEEM};
+    static const std::vector<std::string> ex_topics = {topics::ORDER_FILL, topics::TOKEN_REGISTER};
+    static const std::vector<std::string> nra_topics = {topics::MARKET_PREPARE, topics::QUESTION_PREPARE, topics::POSITION_CONVERT};
+    static const std::vector<std::string> fpmm_topics = {topics::FPMM_CREATE, topics::FPMM_BUY, topics::FPMM_SELL, topics::FPMM_FUNDING_ADD, topics::FPMM_FUNDING_REMOVE};
 
     std::vector<json> results;
     try {
@@ -150,78 +140,61 @@ private:
       }
     }
 
-    ParsedEvents events = EventParser::parse_logs(logs, fpmm_addrs_);
-
-    std::vector<std::string> filtered_transfers;
-    for (const auto &t : events.transfer) {
-      if (fpmm_addrs_.find(t.from_addr) == fpmm_addrs_.end() &&
-          fpmm_addrs_.find(t.to_addr) == fpmm_addrs_.end()) {
-        filtered_transfers.push_back(t.sql_values);
-      }
-    }
+    ParsedEvents events = EventParser::parse_logs(logs);
 
     std::vector<std::tuple<std::string, std::string, std::vector<std::string>>> batches;
-    // CTFExchange 订单
-    batches.emplace_back("order_filled",
-                         "block_number, log_index, exchange, maker, taker, token_id, side, usdc_amount, token_amount, fee",
-                         std::move(events.order_filled));
-    batches.emplace_back("token_map",
-                         "token_id, condition_id, exchange, is_yes",
-                         std::move(events.token_map));
+    // ConditionalTokens 转账
+    batches.emplace_back("transfer",
+                         "block_number, tx_hash, log_index, operator, from_addr, to_addr, token_id, amount",
+                         std::move(events.transfer));
+    // ConditionalTokens 条件
+    batches.emplace_back("condition_preparation",
+                         "block_number, tx_hash, log_index, condition_id, oracle, question_id, outcome_slot_count",
+                         std::move(events.condition_preparation));
+    batches.emplace_back("condition_resolution",
+                         "block_number, tx_hash, log_index, condition_id, oracle, question_id, outcome_slot_count, payout_numerators",
+                         std::move(events.condition_resolution));
     // ConditionalTokens 持仓操作
     batches.emplace_back("split",
-                         "block_number, log_index, stakeholder, condition_id, amount",
+                         "block_number, tx_hash, log_index, stakeholder, collateral_token, parent_collection_id, condition_id, partition, amount",
                          std::move(events.split));
     batches.emplace_back("merge",
-                         "block_number, log_index, stakeholder, condition_id, amount",
+                         "block_number, tx_hash, log_index, stakeholder, collateral_token, parent_collection_id, condition_id, partition, amount",
                          std::move(events.merge));
     batches.emplace_back("redemption",
-                         "block_number, log_index, redeemer, condition_id, index_sets, payout",
+                         "block_number, tx_hash, log_index, redeemer, collateral_token, parent_collection_id, condition_id, index_sets, payout",
                          std::move(events.redemption));
-    batches.emplace_back("transfer",
-                         "block_number, log_index, from_addr, to_addr, token_id, amount",
-                         std::move(filtered_transfers));
-    // ConditionalTokens 条件
-    batches.emplace_back("condition",
-                         "condition_id, oracle, question_id, payout_numerators, resolution_block",
-                         std::move(events.condition_prepare));
-    // NegRiskAdapter 市场
-    batches.emplace_back("neg_risk_market",
-                         "market_id, oracle, fee_bips, data",
-                         std::move(events.neg_risk_market));
-    batches.emplace_back("neg_risk_question",
-                         "question_id, market_id, question_index, data",
-                         std::move(events.neg_risk_question));
-    batches.emplace_back("convert",
-                         "block_number, log_index, stakeholder, market_id, index_set, amount",
-                         std::move(events.convert));
     // FPMM
     batches.emplace_back("fpmm",
-                         "fpmm_addr, condition_id, fee, block_number",
+                         "block_number, tx_hash, log_index, creator, fpmm_addr, conditional_tokens, collateral_token, condition_ids, fee",
                          std::move(events.fpmm));
     batches.emplace_back("fpmm_trade",
-                         "block_number, log_index, fpmm_addr, trader, side, outcome_index, usdc_amount, token_amount, fee",
+                         "block_number, tx_hash, log_index, fpmm_addr, trader, side, outcome_index, usdc_amount, token_amount, fee",
                          std::move(events.fpmm_trade));
     batches.emplace_back("fpmm_funding",
-                         "block_number, log_index, fpmm_addr, funder, side, amount0, amount1, shares",
+                         "block_number, tx_hash, log_index, fpmm_addr, funder, side, amounts, collateral_from_fee_pool, shares",
                          std::move(events.fpmm_funding));
-
-    std::vector<std::string> resolve_sqls;
-    for (const auto &val : events.condition_resolve) {
-      // format: x'<hex>', '<payout_array>', <block_number>
-      size_t first_sep = val.find(", ");
-      std::string condition_id = val.substr(0, first_sep);
-      size_t payout_end = val.rfind("', ");
-      std::string payout = val.substr(first_sep + 2, payout_end - first_sep - 2 + 1);
-      std::string block = val.substr(payout_end + 3);
-      resolve_sqls.push_back("UPDATE condition SET payout_numerators = " + payout +
-                             ", resolution_block = " + block +
-                             " WHERE condition_id = " + condition_id);
-    }
+    // CTFExchange 订单
+    batches.emplace_back("order_filled",
+                         "block_number, tx_hash, log_index, exchange, order_hash, maker, taker, maker_asset_id, taker_asset_id, maker_amount, taker_amount, fee",
+                         std::move(events.order_filled));
+    batches.emplace_back("token_map",
+                         "block_number, tx_hash, log_index, exchange, token0, token1, condition_id",
+                         std::move(events.token_map));
+    // NegRiskAdapter 市场
+    batches.emplace_back("neg_risk_market",
+                         "block_number, tx_hash, log_index, market_id, oracle, fee_bips, data",
+                         std::move(events.neg_risk_market));
+    batches.emplace_back("neg_risk_question",
+                         "block_number, tx_hash, log_index, market_id, question_id, question_index, data",
+                         std::move(events.neg_risk_question));
+    batches.emplace_back("convert",
+                         "block_number, tx_hash, log_index, stakeholder, market_id, index_set, amount",
+                         std::move(events.convert));
 
     {
       Database::WriteLock lock(db_);
-      db_.atomic_multi_insert(batches, to_block, resolve_sqls);
+      db_.atomic_multi_insert(batches, to_block);
     }
 
     double now = std::chrono::duration<double>(
@@ -252,7 +225,6 @@ private:
   int interval_seconds_;
   std::atomic<bool> is_syncing_{false};
   std::atomic<int64_t> head_block_{0};
-  std::set<std::string> fpmm_addrs_;
   struct ChunkRecord {
     int64_t to_block;
     double time_s;

@@ -48,19 +48,20 @@ async def api_query(q: str = Query(...)):
 @app.post("/api/export-all")
 async def api_export_all():
     table_order_by = {
-        "order_filled": "block_number DESC, log_index DESC",
+        "transfer": "block_number DESC, log_index DESC",
+        "condition_preparation": "block_number DESC, log_index DESC",
+        "condition_resolution": "block_number DESC, log_index DESC",
         "split": "block_number DESC, log_index DESC",
         "merge": "block_number DESC, log_index DESC",
         "redemption": "block_number DESC, log_index DESC",
-        "convert": "block_number DESC, log_index DESC",
-        "transfer": "block_number DESC, log_index DESC",
-        "condition": "resolution_block DESC",
-        "token_map": None,
-        "neg_risk_market": None,
-        "neg_risk_question": None,
         "fpmm": "block_number DESC",
         "fpmm_trade": "block_number DESC, log_index DESC",
         "fpmm_funding": "block_number DESC, log_index DESC",
+        "order_filled": "block_number DESC, log_index DESC",
+        "token_map": "block_number DESC, log_index DESC",
+        "neg_risk_market": "block_number DESC, log_index DESC",
+        "neg_risk_question": "block_number DESC, log_index DESC",
+        "convert": "block_number DESC, log_index DESC",
     }
     export_dir = Path(__file__).parent.parent / "data" / "export"
     export_dir.mkdir(parents=True, exist_ok=True)

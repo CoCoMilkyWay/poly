@@ -293,16 +293,15 @@ private:
     fpmm_map_.clear();
 
     auto token_rows = db_.query_json(
-        "SELECT token_id, condition_id, is_yes FROM token_map");
+        "SELECT token0, token1, condition_id FROM token_map");
     for (const auto &row : token_rows) {
-      std::string token_id = row["token_id"].get<std::string>();
+      std::string token0 = row["token0"].get<std::string>();
+      std::string token1 = row["token1"].get<std::string>();
       std::string cond_id = row["condition_id"].get<std::string>();
-      int is_yes = row["is_yes"].get<int>();
 
-      std::transform(token_id.begin(), token_id.end(), token_id.begin(),
-                     ::tolower);
-      std::transform(cond_id.begin(), cond_id.end(), cond_id.begin(),
-                     ::tolower);
+      std::transform(token0.begin(), token0.end(), token0.begin(), ::tolower);
+      std::transform(token1.begin(), token1.end(), token1.begin(), ::tolower);
+      std::transform(cond_id.begin(), cond_id.end(), cond_id.begin(), ::tolower);
 
       uint32_t cond_idx;
       auto it = cond_map_.find(cond_id);
@@ -315,16 +314,16 @@ private:
         cond_idx = it->second;
       }
 
-      token_map_[token_id] = {cond_idx, static_cast<uint8_t>(is_yes)};
+      int is_yes0 = (token0 < token1) ? 1 : 0;
+      token_map_[token0] = {cond_idx, static_cast<uint8_t>(is_yes0)};
+      token_map_[token1] = {cond_idx, static_cast<uint8_t>(1 - is_yes0)};
     }
 
     auto cond_rows = db_.query_json(
-        "SELECT condition_id, payout_numerators FROM condition "
-        "WHERE payout_numerators IS NOT NULL");
+        "SELECT condition_id, payout_numerators FROM condition_resolution");
     for (const auto &row : cond_rows) {
       std::string cond_id = row["condition_id"].get<std::string>();
-      std::transform(cond_id.begin(), cond_id.end(), cond_id.begin(),
-                     ::tolower);
+      std::transform(cond_id.begin(), cond_id.end(), cond_id.begin(), ::tolower);
 
       auto it = cond_map_.find(cond_id);
       if (it == cond_map_.end())
@@ -339,14 +338,17 @@ private:
     }
 
     auto fpmm_rows =
-        db_.query_json("SELECT fpmm_addr, condition_id FROM fpmm");
+        db_.query_json("SELECT fpmm_addr, condition_ids FROM fpmm");
     for (const auto &row : fpmm_rows) {
       std::string fpmm_addr = row["fpmm_addr"].get<std::string>();
-      std::string cond_id = row["condition_id"].get<std::string>();
-      std::transform(fpmm_addr.begin(), fpmm_addr.end(), fpmm_addr.begin(),
-                     ::tolower);
-      std::transform(cond_id.begin(), cond_id.end(), cond_id.begin(),
-                     ::tolower);
+      std::string cond_ids_str = row["condition_ids"].get<std::string>();
+      std::transform(fpmm_addr.begin(), fpmm_addr.end(), fpmm_addr.begin(), ::tolower);
+
+      auto cond_ids_arr = json::parse(cond_ids_str);
+      if (cond_ids_arr.empty())
+        continue;
+      std::string cond_id = cond_ids_arr[0].get<std::string>();
+      std::transform(cond_id.begin(), cond_id.end(), cond_id.begin(), ::tolower);
 
       auto it = cond_map_.find(cond_id);
       if (it != cond_map_.end()) {
@@ -392,9 +394,11 @@ private:
   void scan_order_filled() {
     duckdb::Connection conn(db_.get_duckdb());
     auto result = conn.Query(
-        "SELECT block_number, log_index, maker, taker, token_id, side, "
-        "usdc_amount, token_amount FROM order_filled ORDER BY block_number, log_index");
+        "SELECT block_number, log_index, maker, taker, maker_asset_id, taker_asset_id, "
+        "maker_amount, taker_amount FROM order_filled ORDER BY block_number, log_index");
     assert(!result->HasError());
+
+    static const std::string ZERO_ASSET = "0x0000000000000000000000000000000000000000000000000000000000000000";
 
     int64_t rows = 0, events = 0;
     for (size_t r = 0; r < result->RowCount(); ++r) {
@@ -402,12 +406,29 @@ private:
       int64_t log_idx = result->GetValue(1, r).GetValue<int64_t>();
       std::string maker = blob_to_hex(duckdb::StringValue::Get(result->GetValue(2, r)));
       std::string taker = blob_to_hex(duckdb::StringValue::Get(result->GetValue(3, r)));
-      std::string token_id = blob_to_hex(duckdb::StringValue::Get(result->GetValue(4, r)));
-      int side = result->GetValue(5, r).GetValue<int32_t>();
-      int64_t usdc = result->GetValue(6, r).GetValue<int64_t>();
-      int64_t tokens = result->GetValue(7, r).GetValue<int64_t>();
+      std::string maker_asset_id = blob_to_hex(duckdb::StringValue::Get(result->GetValue(4, r)));
+      std::string taker_asset_id = blob_to_hex(duckdb::StringValue::Get(result->GetValue(5, r)));
+      int64_t maker_amount = result->GetValue(6, r).GetValue<int64_t>();
+      int64_t taker_amount = result->GetValue(7, r).GetValue<int64_t>();
 
-      std::transform(token_id.begin(), token_id.end(), token_id.begin(), ::tolower);
+      std::transform(maker_asset_id.begin(), maker_asset_id.end(), maker_asset_id.begin(), ::tolower);
+      std::transform(taker_asset_id.begin(), taker_asset_id.end(), taker_asset_id.begin(), ::tolower);
+
+      std::string token_id;
+      int side;
+      int64_t usdc, tokens;
+      if (maker_asset_id == ZERO_ASSET) {
+        token_id = taker_asset_id;
+        side = 1;
+        usdc = maker_amount;
+        tokens = taker_amount;
+      } else {
+        token_id = maker_asset_id;
+        side = 2;
+        usdc = taker_amount;
+        tokens = maker_amount;
+      }
+
       auto it = token_map_.find(token_id);
       if (it == token_map_.end())
         continue;
@@ -519,13 +540,19 @@ private:
       int64_t log_idx = result->GetValue(1, r).GetValue<int64_t>();
       std::string user = blob_to_hex(duckdb::StringValue::Get(result->GetValue(2, r)));
       std::string cond_id = blob_to_hex(duckdb::StringValue::Get(result->GetValue(3, r)));
-      int index_sets = result->GetValue(4, r).GetValue<int32_t>();
+      std::string index_sets_str = result->GetValue(4, r).ToString();
       int64_t payout = result->GetValue(5, r).GetValue<int64_t>();
 
       std::transform(cond_id.begin(), cond_id.end(), cond_id.begin(), ::tolower);
       auto it = cond_map_.find(cond_id);
       if (it == cond_map_.end())
         continue;
+
+      auto index_sets_arr = json::parse(index_sets_str);
+      int index_sets = 0;
+      for (const auto &v : index_sets_arr) {
+        index_sets |= static_cast<int>(v.get<int64_t>());
+      }
 
       uint32_t cond_idx = it->second;
       int64_t sort_key = block * 1000000000LL + log_idx;
@@ -584,7 +611,7 @@ private:
   void scan_fpmm_funding() {
     duckdb::Connection conn(db_.get_duckdb());
     auto result = conn.Query(
-        "SELECT block_number, log_index, fpmm_addr, funder, side, amount0, amount1 "
+        "SELECT block_number, log_index, fpmm_addr, funder, side, amounts "
         "FROM fpmm_funding ORDER BY block_number, log_index");
     assert(!result->HasError());
 
@@ -595,13 +622,16 @@ private:
       std::string fpmm_addr = blob_to_hex(duckdb::StringValue::Get(result->GetValue(2, r)));
       std::string funder = blob_to_hex(duckdb::StringValue::Get(result->GetValue(3, r)));
       int side = result->GetValue(4, r).GetValue<int32_t>();
-      int64_t amount0 = result->GetValue(5, r).GetValue<int64_t>();
-      int64_t amount1 = result->GetValue(6, r).GetValue<int64_t>();
+      std::string amounts_str = result->GetValue(5, r).ToString();
 
       std::transform(fpmm_addr.begin(), fpmm_addr.end(), fpmm_addr.begin(), ::tolower);
       auto it = fpmm_map_.find(fpmm_addr);
       if (it == fpmm_map_.end())
         continue;
+
+      auto amounts_arr = json::parse(amounts_str);
+      int64_t amount0 = amounts_arr.size() > 0 ? amounts_arr[0].get<int64_t>() : 0;
+      int64_t amount1 = amounts_arr.size() > 1 ? amounts_arr[1].get<int64_t>() : 0;
 
       uint32_t cond_idx = it->second;
       int64_t sort_key = block * 1000000000LL + log_idx;
@@ -627,8 +657,8 @@ private:
 
     std::unordered_map<std::string, uint32_t> market_to_cond;
     auto q_rows = db_.query_json(
-        "SELECT nrq.market_id, c.condition_id FROM neg_risk_question nrq "
-        "JOIN condition c ON nrq.question_id = c.question_id LIMIT 1");
+        "SELECT nrq.market_id, cp.condition_id FROM neg_risk_question nrq "
+        "JOIN condition_preparation cp ON nrq.question_id = cp.question_id LIMIT 1");
 
     int64_t rows = 0, events = 0;
     for (size_t r = 0; r < result->RowCount(); ++r) {
