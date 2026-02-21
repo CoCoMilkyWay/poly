@@ -2,6 +2,18 @@
 
 从 user_event 表回放计算每个用户的 PnL。可全量预计算，也可按需查询。
 
+## 用户状态
+
+```
+ReplayState (回放中间态):
+    positions[8]: i64   每个 outcome 的持仓
+    cost[8]:      i64   每个 outcome 的成本
+    realized_pnl: i64   已实现盈亏
+
+Snapshot (快照):
+    sort_key, delta, price, positions[8], cost_basis, realized_pnl, event_type, token_idx, outcome_count
+```
+
 ## 查询流程
 
 ```

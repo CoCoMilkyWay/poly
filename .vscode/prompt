@@ -1,0 +1,13 @@
+@README.md 
+@README_stage2.md 
+
+
+仔细分析stage2的实现细节， 是不是正确， 高效， 合理
+
+尤其是具体把不同事件的计算和处理流程
+
+这里是stage1的部分sump数据片段
+/home/chuyin/work/poly/data/export
+
+完整数据可以访问本地RPC：
+@config.json (7-21) 

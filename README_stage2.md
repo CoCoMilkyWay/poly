@@ -76,16 +76,18 @@ rebuild(target_block):
 ### 语义索引 (仅内存, 不持久化)
 
 ```
-tx_split_[(block, tx_hash)]       → {condition_id, amount, stakeholder}
-tx_merge_[(block, tx_hash)]       → {condition_id, amount, stakeholder}
-tx_redemption_[(block, tx_hash)]  → {condition_id, index_sets, payout, redeemer}
-tx_convert_[(block, tx_hash)]     → {market_id, index_set, amount, stakeholder}
+tx_split_[(block, tx_hash, cond_id)]  → {amount, stakeholder}
+tx_merge_[(block, tx_hash, cond_id)]  → {amount, stakeholder}
+tx_redemption_[(block, tx_hash, cond_id)] → {index_sets, payout, redeemer}
+tx_convert_[(block, tx_hash)]         → {market_id, index_set, amount, stakeholder}
 tx_order_[(block, tx_hash, token_id)] → {maker, taker, side, amounts, fee}
-tx_fpmm_trade_[(block, tx_hash)]  → {fpmm_addr, trader, side, outcome_index, amounts, fee}
-tx_fpmm_funding_[(block, tx_hash)]→ {fpmm_addr, funder, side, amounts[]}
+tx_fpmm_trade_[(block, tx_hash)]      → {fpmm_addr, trader, side, outcome_index, amounts, fee}
+tx_fpmm_funding_[(block, tx_hash)]    → {fpmm_addr, funder, side, amounts[]}
 ```
 
-**为什么不持久化**：语义事件和 Transfer 在同一个 tx，增量只需索引 new_range 即可关联。
+**注意**: Split/Merge/Redemption 用 `cond_id` 作 key，因为同一 tx 可能对多个 condition 操作 (套利机器人)
+
+**为什么不持久化**: 语义事件和 Transfer 在同一个 tx，增量只需索引 new_range 即可关联。
 
 ### user_event 表
 
@@ -95,16 +97,36 @@ CREATE TABLE user_event (
     sort_key   INTEGER,   -- block_number * 1e9 + log_index
     cond_idx   INTEGER,
     event_type INTEGER,   -- EventType enum
-    token_idx  INTEGER,   -- 0=YES, 1=NO, 255=全部
+    token_idx  INTEGER,   -- 见下方说明
     amount     INTEGER,   -- 6 decimals
     price      INTEGER,   -- 价格*1e6 或额外数据
-    PRIMARY KEY (user_addr, sort_key, cond_idx, event_type)
+    PRIMARY KEY (user_addr, sort_key, cond_idx, event_type, token_idx)
 );
 
 EventType: Buy=0, Sell=1, Split=2, Merge=3, Redemption=4,
            FPMMBuy=5, FPMMSell=6, FPMMLPAdd=7, FPMMLPRemove=8,
            Convert=9, TransferIn=10, TransferOut=11
 ```
+
+**设计原则: 一个事件一个 token**
+
+所有事件都拆分为单 token，Stage3 统一处理：
+
+```
+apply_event(token_idx, amount, price):
+    positions[token_idx] += delta
+    cost[token_idx] += amount * price
+```
+
+| EventType        | token_idx | 说明                                            |
+| ---------------- | --------- | ----------------------------------------------- |
+| Buy/Sell         | 0..N      | 单 token 交易                                   |
+| FPMMBuy/FPMMSell | 0..N      | 单 token 交易                                   |
+| Split/Merge      | 0..N      | 每个 token 一条，price=1/outcome_count          |
+| Redemption       | 0..N      | 每个被赎回的 token 一条，price=payout_numerator |
+| FPMMLPAdd/Remove | 0..N      | 每个 token 一条，price=implied (按池子比例)     |
+| Convert          | 0..N      | 每个被 burn 的 NO 一条，price=(M-1)/M           |
+| TransferIn/Out   | 0..N      | 单 token 转账，price=0                          |
 
 ## Phase 3: Transfer 分类与处理
 
@@ -114,29 +136,45 @@ EventType: Buy=0, Sell=1, Split=2, Merge=3, Redemption=4,
 Transfer(operator, from, to, token_id, amount)
     │
     ├─ from == 0x0 (mint)
-    │   ├─ tx_split_ 存在 → Split (price=0.5)
-    │   ├─ tx_fpmm_funding_ 且 side=Added → FPMMLPAdd
-    │   └─ 否则 → TransferIn (price=0, 未知来源)
+    │   │
+    │   ├─ tx_split_ 存在 且 stakeholder == to
+    │   │   └─ Split: user=to, 每条 Transfer 一个事件 (token_idx)
+    │   │
+    │   ├─ tx_fpmm_funding_ 存在 且 side=Added
+    │   │   └─ FPMMLPAdd: user=funder, 每条 Transfer 一个事件
+    │   │
+    │   └─ 否则 → 跳过 (FPMM/NegRisk 内部 mint，不是用户操作)
     │
     ├─ to == 0x0 (burn)
-    │   ├─ tx_merge_ 存在 → Merge (price=0.5)
-    │   ├─ tx_redemption_ 存在 → Redemption (只处理 first index_set)
-    │   ├─ tx_convert_ 存在 → Convert (只处理 NO token)
-    │   ├─ tx_fpmm_funding_ 且 side=Removed → FPMMLPRemove
-    │   └─ 否则 → TransferOut (price=0)
+    │   │
+    │   ├─ tx_merge_ 存在 且 stakeholder == from
+    │   │   └─ Merge: user=from, 每条 Transfer 一个事件 (token_idx)
+    │   │
+    │   ├─ tx_redemption_ 存在 且 redeemer == from
+    │   │   └─ Redemption: user=from, 每条 burn 一个事件, price=payout_numerator
+    │   │
+    │   ├─ tx_convert_ 存在 且 stakeholder == from
+    │   │   └─ Convert: user=from, 每条 NO burn 一个事件, price=(M-1)/M
+    │   │
+    │   ├─ tx_fpmm_funding_ 存在 且 side=Removed
+    │   │   └─ FPMMLPRemove: user=funder, 每条 Transfer 一个事件
+    │   │
+    │   └─ 否则 → 跳过 (FPMM/NegRisk 内部 burn)
     │
     ├─ operator == CTF_EXCHANGE / NEG_RISK_CTF_EXCHANGE
-    │   ├─ tx_order_ 存在 → Buy + Sell (price = usdc/token)
-    │   └─ 否则 → direct transfer
+    │   ├─ tx_order_ 存在
+    │   │   └─ 生成两个事件: maker 的 Buy/Sell + taker 的 Sell/Buy
+    │   └─ 否则 → TransferIn(to) + TransferOut(from)
+    │
+    ├─ operator == NEG_RISK_ADAPTER
+    │   └─ 跳过 (Split/Merge/Convert 内部 transfer，已在 mint/burn 分支处理)
     │
     ├─ operator in fpmm_map_
-    │   ├─ tx_fpmm_trade_ 存在 → FPMMBuy / FPMMSell
-    │   ├─ tx_fpmm_funding_ 存在
-    │   │   ├─ from == fpmm → TransferIn (LP 返还多余)
-    │   │   └─ to == fpmm → 跳过 (burn 时处理)
-    │   └─ 否则 → direct transfer
+    │   ├─ tx_fpmm_trade_ 存在 → FPMMBuy/FPMMSell: user=trader
+    │   ├─ from == fpmm → TransferIn: user=to (LP 返还多余 token)
+    │   └─ 否则 → 跳过 (FPMM 内部 transfer)
     │
-    └─ 其他 → TransferIn + TransferOut (用户间直接转账)
+    └─ 其他 → TransferIn(to) + TransferOut(from) (用户间直接转账)
 ```
 
 ### 已知合约地址
@@ -151,18 +189,32 @@ CONDITIONAL_TOKENS   = 0x4d97dcd97ec945f40cf65f87097ace5ea0476045
 
 ### 关键处理逻辑
 
-**避免 double count**：
+**避免 double count**:
 
-- Split/Merge: YES/NO 两条 Transfer，两条都记录 (各自 token_idx)
-- Redemption: 多条 burn Transfer，只在 first index_set 时记录一次
-- Convert: 多个 NO burn，只在 token_idx=1 时记录一次
-- FPMMLPAdd/Remove: 两条 Transfer，只在 token_idx=0 时记录一次
+一个事件一个 token，每条 Transfer 自然对应一个 user_event，无需额外去重。
 
-**价格计算**：
+**跳过内部操作**:
 
-- Split/Merge: 固定 0.5 (1 YES + 1 NO = 1 USDC)
-- Buy/Sell: `usdc_amount / token_amount`
-- Convert: `price` 字段存 index_set，回放时用 popcount 计算收益
+- FPMM.buy/sell 内部的 Split/Merge: stakeholder=FPMM，不等于 Transfer.to/from
+- NegRisk 内部的 Split: operator=NEG_RISK_ADAPTER 且 stakeholder != 用户
+- FPMM 内部的 Transfer: operator=fpmm 且没有对应语义事件
+
+**用户识别**:
+
+- Split/Merge/Redemption: 从 Transfer.to (mint) 或 Transfer.from (burn)
+- OrderFilled: 从 tx*order*.maker/taker
+- FPMMTrade: 从 tx*fpmm_trade*.trader
+- FPMMFunding: 从 tx*fpmm_funding*.funder (**不是 Transfer.to/from!**)
+- Convert: 从 tx*convert*.stakeholder
+
+**价格计算**:
+
+- Split/Merge: `1 / outcome_count` (二元市场 = 0.5)
+- Buy/Sell/FPMMBuy/FPMMSell: `usdc_amount / token_amount`
+- Redemption: `payout_numerator` (赢家=1, 输家=0, 平局=0.5)
+- FPMMLPAdd/Remove: 按池子当时的隐含价格
+- Convert: `(M-1) / M`，M = popcount(index_set)
+- TransferIn/Out: 0 (无价格信息)
 
 ## Stage 3 用户状态
 
