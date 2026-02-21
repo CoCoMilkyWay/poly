@@ -24,21 +24,23 @@ polygon链上polymarket协议合约节点本身的实现: /home/chuyin/work/poly
 | **不能知道**         | USDC钱包流水; 成交价; Token PnL; 实时市价  | Token账户流水; USDC钱包流水; Token PnL; 实时市价 |                USDC钱包流水; 实时市价                 |            |
 | TransferSingle       |                     ✓                      |                                                  |                           ✓                           |            |
 | TransferBatch        |                     ✓                      |                                                  |                           ✓                           |            |
-| OrderFilled          |                                            |                        ✓                         |                           ✓                           |            |
-| OrdersMatched        |                                            |                                                  |                                                       |            |
-| TokenRegistered      |                                            |                                                  |                                                       | token_map  |
+| ConditionPreparation |                                            |                                                  |                                                       | condition  |
+| ConditionResolution  |                                            |                                                  |                                                       | condition  |
 | PositionSplit        |                                            |                        ✓                         |                           ✓                           |            |
 | PositionsMerge       |                                            |                        ✓                         |                           ✓                           |            |
 | PayoutRedemption     |                                            |                        ✓                         |                           ✓                           |            |
-| PositionsConverted   |                                            |                        ✓                         |                           ✓                           |            |
-| ConditionPreparation |                                            |                                                  |                                                       | condition  |
-| ConditionResolution  |                                            |                                                  |                                                       | condition  |
-| MarketPrepared       |                                            |                                                  |                                                       |  neg_risk  |
-| QuestionPrepared     |                                            |                                                  |                                                       |  neg_risk  |
-| OutcomeReported      |                                            |                                                  |                                                       |  neg_risk  |
 | FPMMCreation         |                                            |                                                  |                                                       |    fpmm    |
 | FPMMBuy              |                                            |                        ✓                         |                           ✓                           |            |
 | FPMMSell             |                                            |                        ✓                         |                           ✓                           |            |
+| FPMMFundingAdded     |                                            |                        ✓                         |                           ✓                           |            |
+| FPMMFundingRemoved   |                                            |                        ✓                         |                           ✓                           |            |
+| OrderFilled          |                                            |                        ✓                         |                           ✓                           |            |
+| OrdersMatched        |                                            |                                                  |                                                       |            |
+| TokenRegistered      |                                            |                                                  |                                                       | token_map  |
+| MarketPrepared       |                                            |                                                  |                                                       |  neg_risk  |
+| QuestionPrepared     |                                            |                                                  |                                                       |  neg_risk  |
+| PositionsConverted   |                                            |                        ✓                         |                           ✓                           |            |
+| OutcomeReported      |                                            |                                                  |                                                       |  neg_risk  |
 
 - **Token 持仓** = Token 协议流水(可追踪) + Token 账户流水(可追踪)
 - **USDC 持仓** = USDC 协议流水(可追踪) + USDC 钱包流水（USDC ERC20 Transfer）(此项目未追踪)
@@ -144,57 +146,13 @@ Stage 2: raw_log → 最终表 (纯SQL转换, ~2min)
 
 | 事件                 | topic0                                                             |
 | -------------------- | ------------------------------------------------------------------ |
-| ConditionPreparation | 0xab3760c3bd2bb38b5bcf54dc79802ed67338b4cf29f3054ded67ed24661e4177 |
-| PositionSplit        | 0x2e6bb91f8cbcda0c93623c54d0403a43514fabc40084ec96b6d5379a74786298 |
-| PositionsMerge       | 0x6f13ca62553fcc2bcd2372180a43949c1e4cebba603901ede2f4e14f36b282ca |
 | TransferSingle       | 0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62 |
 | TransferBatch        | 0x4a39dc06d4c0dbc64b70af90fd698a233a518aa5d07e595d983b8c0526c8f7fb |
+| ConditionPreparation | 0xab3760c3bd2bb38b5bcf54dc79802ed67338b4cf29f3054ded67ed24661e4177 |
 | ConditionResolution  | 0xb44d84d3289691f71497564b85d4233648d9dbae8cbdbb4329f301c3a0185894 |
+| PositionSplit        | 0x2e6bb91f8cbcda0c93623c54d0403a43514fabc40084ec96b6d5379a74786298 |
+| PositionsMerge       | 0x6f13ca62553fcc2bcd2372180a43949c1e4cebba603901ede2f4e14f36b282ca |
 | PayoutRedemption     | 0x2682012a4a4f1973119f1c9b90745d1bd91fa2bab387344f044cb3586864d18d |
-
-**ConditionPreparation**
-
-| 字段             | 类型    | indexed | 说明                |
-| ---------------- | ------- | ------- | ------------------- |
-| conditionId      | bytes32 | yes     | 条件 ID             |
-| oracle           | address | yes     | oracle 地址         |
-| questionId       | bytes32 | yes     | 问题 ID             |
-| outcomeSlotCount | uint256 | no      | 固定为 2            |
-| tx_hash          | bytes32 | meta    | log.transactionHash |
-| block_number     | uint64  | meta    | log.blockNumber     |
-| log_index        | uint32  | meta    | log.logIndex        |
-
-**PositionSplit**
-
-collateral → YES + NO (铸造)
-
-| 字段               | 类型      | indexed | 说明                                                                                                                                        |
-| ------------------ | --------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| stakeholder        | address   | yes     | 操作者                                                                                                                                      |
-| collateralToken    | address   | no      | 普通市场: USDC.e (0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174); NegRisk市场: Wrapped Collateral (0x3a3bd7bb9528e159577f7c2e685cc81a765002e2) |
-| parentCollectionId | bytes32   | yes     | 几乎总是 0x0                                                                                                                                |
-| conditionId        | bytes32   | yes     | 条件 ID                                                                                                                                     |
-| partition          | uint256[] | no      | [1,2] = YES+NO                                                                                                                              |
-| amount             | uint256   | no      | 消耗的collateral数量 (6 decimals), 同时获得等量YES和NO token                                                                                |
-| tx_hash            | bytes32   | meta    | log.transactionHash                                                                                                                         |
-| block_number       | uint64    | meta    | log.blockNumber                                                                                                                             |
-| log_index          | uint32    | meta    | log.logIndex                                                                                                                                |
-
-**PositionsMerge**
-
-YES + NO → Collateral (销毁)
-
-| 字段               | 类型      | indexed | 说明                                                                                                                                        |
-| ------------------ | --------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| stakeholder        | address   | yes     | 操作者                                                                                                                                      |
-| collateralToken    | address   | no      | 普通市场: USDC.e (0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174); NegRisk市场: Wrapped Collateral (0x3a3bd7bb9528e159577f7c2e685cc81a765002e2) |
-| parentCollectionId | bytes32   | yes     | 几乎总是 0x0                                                                                                                                |
-| conditionId        | bytes32   | yes     | 条件 ID                                                                                                                                     |
-| partition          | uint256[] | no      | [1,2] = YES+NO                                                                                                                              |
-| amount             | uint256   | no      | 销毁的YES+NO数量 (6 decimals), 同时获得等量collateral                                                                                       |
-| tx_hash            | bytes32   | meta    | log.transactionHash                                                                                                                         |
-| block_number       | uint64    | meta    | log.blockNumber                                                                                                                             |
-| log_index          | uint32    | meta    | log.logIndex                                                                                                                                |
 
 **TransferSingle / TransferBatch**
 
@@ -236,6 +194,18 @@ TransferSingle + TransferBatch 覆盖**所有**持仓变化, 不会重合:
 | block_number | uint64    | meta    | log.blockNumber      |
 | log_index    | uint32    | meta    | log.logIndex         |
 
+**ConditionPreparation**
+
+| 字段             | 类型    | indexed | 说明                |
+| ---------------- | ------- | ------- | ------------------- |
+| conditionId      | bytes32 | yes     | 条件 ID             |
+| oracle           | address | yes     | oracle 地址         |
+| questionId       | bytes32 | yes     | 问题 ID             |
+| outcomeSlotCount | uint256 | no      | 固定为 2            |
+| tx_hash          | bytes32 | meta    | log.transactionHash |
+| block_number     | uint64  | meta    | log.blockNumber     |
+| log_index        | uint32  | meta    | log.logIndex        |
+
 **ConditionResolution**
 
 | 字段             | 类型      | indexed | 说明                                |
@@ -248,6 +218,38 @@ TransferSingle + TransferBatch 覆盖**所有**持仓变化, 不会重合:
 | tx_hash          | bytes32   | meta    | log.transactionHash                 |
 | block_number     | uint64    | meta    | log.blockNumber                     |
 | log_index        | uint32    | meta    | log.logIndex                        |
+
+**PositionSplit**
+
+collateral → YES + NO (铸造)
+
+| 字段               | 类型      | indexed | 说明                                                                                                                                        |
+| ------------------ | --------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| stakeholder        | address   | yes     | 操作者                                                                                                                                      |
+| collateralToken    | address   | no      | 普通市场: USDC.e (0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174); NegRisk市场: Wrapped Collateral (0x3a3bd7bb9528e159577f7c2e685cc81a765002e2) |
+| parentCollectionId | bytes32   | yes     | 几乎总是 0x0                                                                                                                                |
+| conditionId        | bytes32   | yes     | 条件 ID                                                                                                                                     |
+| partition          | uint256[] | no      | [1,2] = YES+NO                                                                                                                              |
+| amount             | uint256   | no      | 消耗的collateral数量 (6 decimals), 同时获得等量YES和NO token                                                                                |
+| tx_hash            | bytes32   | meta    | log.transactionHash                                                                                                                         |
+| block_number       | uint64    | meta    | log.blockNumber                                                                                                                             |
+| log_index          | uint32    | meta    | log.logIndex                                                                                                                                |
+
+**PositionsMerge**
+
+YES + NO → Collateral (销毁)
+
+| 字段               | 类型      | indexed | 说明                                                                                                                                        |
+| ------------------ | --------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| stakeholder        | address   | yes     | 操作者                                                                                                                                      |
+| collateralToken    | address   | no      | 普通市场: USDC.e (0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174); NegRisk市场: Wrapped Collateral (0x3a3bd7bb9528e159577f7c2e685cc81a765002e2) |
+| parentCollectionId | bytes32   | yes     | 几乎总是 0x0                                                                                                                                |
+| conditionId        | bytes32   | yes     | 条件 ID                                                                                                                                     |
+| partition          | uint256[] | no      | [1,2] = YES+NO                                                                                                                              |
+| amount             | uint256   | no      | 销毁的YES+NO数量 (6 decimals), 同时获得等量collateral                                                                                       |
+| tx_hash            | bytes32   | meta    | log.transactionHash                                                                                                                         |
+| block_number       | uint64    | meta    | log.blockNumber                                                                                                                             |
+| log_index          | uint32    | meta    | log.logIndex                                                                                                                                |
 
 **PayoutRedemption**
 
@@ -267,21 +269,9 @@ TransferSingle + TransferBatch 覆盖**所有**持仓变化, 不会重合:
 
 | 事件            | topic0                                                             |
 | --------------- | ------------------------------------------------------------------ |
-| TokenRegistered | 0xbc9a2432e8aeb48327246cddd6e872ef452812b4243c04e6bfb786a2cd8faf0d |
 | OrderFilled     | 0xd0a08e8c493f9c94f29311604c9de1b4e8c8d4c06bd0c789af57f2d65bfec0f6 |
 | OrdersMatched   | 0x63bf4d16b7fa898ef4c4b2b6d90fd201e9c56313b65638af6088d149d2ce956c |
-
-**TokenRegistered**
-
-| 字段         | 类型    | indexed | 说明                              |
-| ------------ | ------- | ------- | --------------------------------- |
-| token0       | uint256 | yes     | YES tokenId                       |
-| token1       | uint256 | yes     | NO tokenId                        |
-| conditionId  | bytes32 | yes     | 条件 ID                           |
-| tx_hash      | bytes32 | meta    | log.transactionHash               |
-| block_number | uint64  | meta    | log.blockNumber                   |
-| log_index    | uint32  | meta    | log.logIndex                      |
-| exchange     | TEXT    | meta    | CTFExchange 或 NegRiskCTFExchange |
+| TokenRegistered | 0xbc9a2432e8aeb48327246cddd6e872ef452812b4243c04e6bfb786a2cd8faf0d |
 
 **OrderFilled**
 
@@ -317,14 +307,26 @@ TransferSingle + TransferBatch 覆盖**所有**持仓变化, 不会重合:
 | log_index         | uint32  | meta    | log.logIndex                                         |
 | exchange          | TEXT    | meta    | CTFExchange 或 NegRiskCTFExchange                    |
 
+**TokenRegistered**
+
+| 字段         | 类型    | indexed | 说明                              |
+| ------------ | ------- | ------- | --------------------------------- |
+| token0       | uint256 | yes     | YES tokenId                       |
+| token1       | uint256 | yes     | NO tokenId                        |
+| conditionId  | bytes32 | yes     | 条件 ID                           |
+| tx_hash      | bytes32 | meta    | log.transactionHash               |
+| block_number | uint64  | meta    | log.blockNumber                   |
+| log_index    | uint32  | meta    | log.logIndex                      |
+| exchange     | TEXT    | meta    | CTFExchange 或 NegRiskCTFExchange |
+
 ### NegRiskAdapter
 
 | 事件               | topic0                                                             |
 | ------------------ | ------------------------------------------------------------------ |
 | MarketPrepared     | 0xf059ab16d1ca60e123eab60e3c02b68faf060347c701a5d14885a8e1def7b3a8 |
 | QuestionPrepared   | 0xaac410f87d423a922a7b226ac68f0c2eaf5bf6d15e644ac0758c7f96e2c253f7 |
-| OutcomeReported    | 0x9e9fa7fd355160bd4cd3f22d4333519354beff1f5689bde87f2c5e63d8d484b2 |
 | PositionsConverted | 0xb03d19dddbc72a87e735ff0ea3b57bef133ebe44e1894284916a84044deb367e |
+| OutcomeReported    | 0x9e9fa7fd355160bd4cd3f22d4333519354beff1f5689bde87f2c5e63d8d484b2 |
 
 **MarketPrepared**
 
@@ -350,17 +352,6 @@ TransferSingle + TransferBatch 覆盖**所有**持仓变化, 不会重合:
 | block_number  | uint64  | meta    | log.blockNumber                    |
 | log_index     | uint32  | meta    | log.logIndex                       |
 
-**OutcomeReported**
-
-| 字段         | 类型    | indexed | 说明                |
-| ------------ | ------- | ------- | ------------------- |
-| marketId     | bytes32 | yes     | 市场 ID             |
-| questionId   | bytes32 | yes     | 问题 ID             |
-| outcome      | bool    | no      | 结果                |
-| tx_hash      | bytes32 | meta    | log.transactionHash |
-| block_number | uint64  | meta    | log.blockNumber     |
-| log_index    | uint32  | meta    | log.logIndex        |
-
 **PositionsConverted**
 
 NegRisk转换: M 个 NO tokens burn → (M-1) Wrapped Collateral (利用互斥选项的逻辑冗余套利)
@@ -374,6 +365,17 @@ NegRisk转换: M 个 NO tokens burn → (M-1) Wrapped Collateral (利用互斥�
 | tx_hash      | bytes32 | meta    | log.transactionHash                                                   |
 | block_number | uint64  | meta    | log.blockNumber                                                       |
 | log_index    | uint32  | meta    | log.logIndex                                                          |
+
+**OutcomeReported**
+
+| 字段         | 类型    | indexed | 说明                |
+| ------------ | ------- | ------- | ------------------- |
+| marketId     | bytes32 | yes     | 市场 ID             |
+| questionId   | bytes32 | yes     | 问题 ID             |
+| outcome      | bool    | no      | 结果                |
+| tx_hash      | bytes32 | meta    | log.transactionHash |
+| block_number | uint64  | meta    | log.blockNumber     |
+| log_index    | uint32  | meta    | log.logIndex        |
 
 ### FPMMFactory (早期AMM)
 
@@ -463,20 +465,34 @@ fpmm_trade (Taker) + fpmm_funding (LP Maker结算) = 订单簿时代的 order_fi
 
 ## Stage 1: eth_getLogs → 结构化表
 
-### order_filled
+### transfer
 
-| column       | 类型       | 来源        | 处理                                          |
-| ------------ | ---------- | ----------- | --------------------------------------------- |
-| block_number | BIGINT PK  | log         |                                               |
-| log_index    | INTEGER PK | log         |                                               |
-| exchange     | TEXT       | log.address | "CTF" \| "NegRisk"                            |
-| maker        | BLOB(20)   | OrderFilled | $.maker                                       |
-| taker        | BLOB(20)   | OrderFilled | $.taker                                       |
-| token_id     | BLOB(32)   | 计算        | makerAssetId==0 ? takerAssetId : makerAssetId |
-| side         | INTEGER    | 计算        | makerAssetId==0 ? 1(Buy) : 2(Sell)            |
-| usdc_amount  | BIGINT     | 计算        | collateral数量 (6 decimals)                   |
-| token_amount | BIGINT     | 计算        | token数量 (6 decimals)                        |
-| fee          | BIGINT     | OrderFilled | $.fee (6 decimals)                            |
+**过滤**
+
+- `from != 0x0 AND to != 0x0` (跳过mint/burn)
+- `operator NOT IN (CTFExchange, NegRiskCTFExchange, NegRiskAdapter)` (跳过合约操作，已被order_filled/split/merge/convert覆盖)
+- `from NOT IN fpmm_addrs AND to NOT IN fpmm_addrs` (跳过FPMM相关transfer，已被fpmm_trade/fpmm_funding覆盖；fpmm_addrs = 数据库已有 + 当前batch新增)
+
+| column       | 类型      | 来源     | 处理                                        |
+| ------------ | --------- | -------- | ------------------------------------------- |
+| block_number | BIGINT PK | log      |                                             |
+| log_index    | BIGINT PK | 计算     | log_index \* 1000 + sub_index (Batch拆分用) |
+| from_addr    | BLOB(20)  | Transfer | $.from (≠0x0)                               |
+| to_addr      | BLOB(20)  | Transfer | $.to (≠0x0)                                 |
+| token_id     | BLOB(32)  | Transfer | $.id                                        |
+| amount       | BIGINT    | Transfer | $.value                                     |
+
+### condition
+
+ConditionPreparation 时 INSERT，ConditionResolution 时 UPDATE 同一行。
+
+| column            | 类型        | 来源                 | 处理                                                         |
+| ----------------- | ----------- | -------------------- | ------------------------------------------------------------ |
+| condition_id      | BLOB(32) PK | ConditionPreparation | $.conditionId                                                |
+| oracle            | BLOB(20)    | ConditionPreparation | $.oracle                                                     |
+| question_id       | BLOB(32)    | ConditionPreparation | $.questionId                                                 |
+| payout_numerators | TEXT        | ConditionResolution  | UPDATE, NULL=未结算, "[1,0]"=YES赢, "[0,1]"=NO赢, "[1,1]"=平 |
+| resolution_block  | BIGINT      | ConditionResolution  | UPDATE, NULL=未结算                                          |
 
 ### split
 
@@ -508,17 +524,6 @@ fpmm_trade (Taker) + fpmm_funding (LP Maker结算) = 订单簿时代的 order_fi
 | condition_id | BLOB(32)   | PayoutRedemption | $.conditionId               |
 | index_sets   | INTEGER    | PayoutRedemption | bitmap: 1=YES, 2=NO, 3=both |
 | payout       | BIGINT     | PayoutRedemption | USDC获得 (6 decimals)       |
-
-### convert
-
-| column       | 类型       | 来源               | 处理                 |
-| ------------ | ---------- | ------------------ | -------------------- |
-| block_number | BIGINT PK  | log                |                      |
-| log_index    | INTEGER PK | log                |                      |
-| stakeholder  | BLOB(20)   | PositionsConverted | $.stakeholder        |
-| market_id    | BLOB(32)   | PositionsConverted | $.marketId           |
-| index_set    | BIGINT     | PositionsConverted | bitmap: 哪些NO被转换 |
-| amount       | BIGINT     | PositionsConverted | 每个position的数量   |
 
 ### fpmm (FPMM合约映射表)
 
@@ -562,22 +567,20 @@ AMM 的 LP Maker 操作记录。LP 按池子当前比例添加/取回 YES+NO，s
 | amount1      | BIGINT     | amountsAdded/Removed | LP添加/取回的NO数量 (按池子当前比例)  |
 | shares       | BIGINT     | sharesMinted/Burnt   | LP份额变化                            |
 
-### transfer
+### order_filled
 
-**过滤**
-
-- `from != 0x0 AND to != 0x0` (跳过mint/burn)
-- `operator NOT IN (CTFExchange, NegRiskCTFExchange, NegRiskAdapter)` (跳过合约操作，已被order_filled/split/merge/convert覆盖)
-- `from NOT IN fpmm_addrs AND to NOT IN fpmm_addrs` (跳过FPMM相关transfer，已被fpmm_trade/fpmm_funding覆盖；fpmm_addrs = 数据库已有 + 当前batch新增)
-
-| column       | 类型      | 来源     | 处理                                        |
-| ------------ | --------- | -------- | ------------------------------------------- |
-| block_number | BIGINT PK | log      |                                             |
-| log_index    | BIGINT PK | 计算     | log_index \* 1000 + sub_index (Batch拆分用) |
-| from_addr    | BLOB(20)  | Transfer | $.from (≠0x0)                               |
-| to_addr      | BLOB(20)  | Transfer | $.to (≠0x0)                                 |
-| token_id     | BLOB(32)  | Transfer | $.id                                        |
-| amount       | BIGINT    | Transfer | $.value                                     |
+| column       | 类型       | 来源        | 处理                                          |
+| ------------ | ---------- | ----------- | --------------------------------------------- |
+| block_number | BIGINT PK  | log         |                                               |
+| log_index    | INTEGER PK | log         |                                               |
+| exchange     | TEXT       | log.address | "CTF" \| "NegRisk"                            |
+| maker        | BLOB(20)   | OrderFilled | $.maker                                       |
+| taker        | BLOB(20)   | OrderFilled | $.taker                                       |
+| token_id     | BLOB(32)   | 计算        | makerAssetId==0 ? takerAssetId : makerAssetId |
+| side         | INTEGER    | 计算        | makerAssetId==0 ? 1(Buy) : 2(Sell)            |
+| usdc_amount  | BIGINT     | 计算        | collateral数量 (6 decimals)                   |
+| token_amount | BIGINT     | 计算        | token数量 (6 decimals)                        |
+| fee          | BIGINT     | OrderFilled | $.fee (6 decimals)                            |
 
 ### token_map
 
@@ -587,18 +590,6 @@ AMM 的 LP Maker 操作记录。LP 按池子当前比例添加/取回 YES+NO，s
 | condition_id | BLOB(32)    | TokenRegistered | $.conditionId                                            |
 | exchange     | TEXT        | log.address     | "CTF" \| "NegRisk"                                       |
 | is_yes       | INTEGER     | 计算            | 先swap确保token0<token1，然后token0=YES(1), token1=NO(0) |
-
-### condition
-
-ConditionPreparation 时 INSERT，ConditionResolution 时 UPDATE 同一行。
-
-| column            | 类型        | 来源                 | 处理                                                         |
-| ----------------- | ----------- | -------------------- | ------------------------------------------------------------ |
-| condition_id      | BLOB(32) PK | ConditionPreparation | $.conditionId                                                |
-| oracle            | BLOB(20)    | ConditionPreparation | $.oracle                                                     |
-| question_id       | BLOB(32)    | ConditionPreparation | $.questionId                                                 |
-| payout_numerators | TEXT        | ConditionResolution  | UPDATE, NULL=未结算, "[1,0]"=YES赢, "[0,1]"=NO赢, "[1,1]"=平 |
-| resolution_block  | BIGINT      | ConditionResolution  | UPDATE, NULL=未结算                                          |
 
 ### neg_risk_market
 
@@ -618,6 +609,17 @@ ConditionPreparation 时 INSERT，ConditionResolution 时 UPDATE 同一行。
 | question_index | INTEGER     | QuestionPrepared | $.questionIndex                             |
 | data           | BLOB        | QuestionPrepared | $.data (ABI编码: question, description, id) |
 
+### convert
+
+| column       | 类型       | 来源               | 处理                 |
+| ------------ | ---------- | ------------------ | -------------------- |
+| block_number | BIGINT PK  | log                |                      |
+| log_index    | INTEGER PK | log                |                      |
+| stakeholder  | BLOB(20)   | PositionsConverted | $.stakeholder        |
+| market_id    | BLOB(32)   | PositionsConverted | $.marketId           |
+| index_set    | BIGINT     | PositionsConverted | bitmap: 哪些NO被转换 |
+| amount       | BIGINT     | PositionsConverted | 每个position的数量   |
+
 **关键连接**: `neg_risk_question.question_id` = `condition.question_id`
 
 ### sync_state
@@ -630,19 +632,19 @@ ConditionPreparation 时 INSERT，ConditionResolution 时 UPDATE 同一行。
 
 | 表                | 索引         | 用途              |
 | ----------------- | ------------ | ----------------- |
-| order_filled      | maker        | 按用户查交易      |
-| order_filled      | taker        | 按用户查交易      |
-| order_filled      | token_id     | 按市场查交易      |
+| transfer          | from_addr    | 按用户查          |
+| transfer          | to_addr      | 按用户查          |
 | split             | stakeholder  | 按用户查          |
 | merge             | stakeholder  | 按用户查          |
 | redemption        | redeemer     | 按用户查          |
-| convert           | stakeholder  | 按用户查          |
 | fpmm              | condition_id | FPMM按condition查 |
 | fpmm_trade        | trader       | 按用户查FPMM交易  |
 | fpmm_trade        | fpmm_addr    | 按FPMM合约查交易  |
-| transfer          | from_addr    | 按用户查          |
-| transfer          | to_addr      | 按用户查          |
+| order_filled      | maker        | 按用户查交易      |
+| order_filled      | taker        | 按用户查交易      |
+| order_filled      | token_id     | 按市场查交易      |
 | neg_risk_question | market_id    | 按市场查问题      |
+| convert           | stakeholder  | 按用户查          |
 
 ## PnL 计算
 
@@ -653,13 +655,13 @@ PnL = Σ(Sell) + Σ(Merge) + Σ(Redemption) + Σ(Convert收益)
 
 | 来源              | 加减 | 说明                            |
 | ----------------- | ---- | ------------------------------- |
-| order_filled Buy  | -    | 买入花费 USDC                   |
-| order_filled Sell | +    | 卖出获得 USDC                   |
-| order_filled.fee  | -    | 手续费                          |
-| fpmm_trade Buy    | -    | FPMM买入花费 USDC               |
-| fpmm_trade Sell   | +    | FPMM卖出获得 USDC               |
-| fpmm_trade.fee    | -    | FPMM手续费                      |
 | split.amount      | -    | 铸造消耗 USDC                   |
 | merge.amount      | +    | 销毁获得 USDC                   |
 | redemption.payout | +    | 结算赎回                        |
+| fpmm_trade Buy    | -    | FPMM买入花费 USDC               |
+| fpmm_trade Sell   | +    | FPMM卖出获得 USDC               |
+| fpmm_trade.fee    | -    | FPMM手续费                      |
+| order_filled Buy  | -    | 买入花费 USDC                   |
+| order_filled Sell | +    | 卖出获得 USDC                   |
+| order_filled.fee  | -    | 手续费                          |
 | convert           | +    | (popcount(index_set)-1)\*amount |
