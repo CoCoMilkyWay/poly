@@ -6,7 +6,7 @@ from pathlib import Path
 import duckdb
 
 ROOT = Path(__file__).parent.parent
-DB_PATH = ROOT / json.loads((ROOT / "config.json").read_text())["db_path"]
+DB_PATH = ROOT / json.loads((ROOT / "config.json").read_text())["db_path_stage1"]
 
 # ============================================================================
 # 在这里写要执行的操作

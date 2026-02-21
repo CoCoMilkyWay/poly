@@ -32,13 +32,13 @@ int main(int argc, char *argv[]) {
 
   Config config = Config::load(config_path);
 
-  std::cout << "[Main] DB Path: " << config.db_path << std::endl;
+  std::cout << "[Main] DB Path: " << config.db_path_stage1 << std::endl;
   std::cout << "[Main] RPC Node: " << config.rpc_name << " (" << config.rpc_url << ")" << std::endl;
   std::cout << "[Main] RPC Chunk: " << config.rpc_chunk << " blocks" << std::endl;
   std::cout << "[Main] API Port: " << config.backend_port << std::endl;
   std::cout << "[Main] Sync Interval: " << config.sync_interval_seconds << "s" << std::endl;
 
-  Database db(config.db_path);
+  Database db(config.db_path_stage1);
   db.init_schema();
 
   SyncCoordinator sync(config, db);
