@@ -13,7 +13,7 @@ struct Config {
   std::string rpc_url;
   std::string rpc_api_key;
   int rpc_chunk;
-  int api_port;
+  int backend_port;
   int frontend_port;
   int sync_interval_seconds;
   int64_t initial_block;
@@ -32,7 +32,7 @@ struct Config {
 
     Config config;
     config.db_path = require("db_path").get<std::string>();
-    config.api_port = require("api_port").get<int>();
+    config.backend_port = require("backend_port").get<int>();
     config.frontend_port = require("frontend_port").get<int>();
     config.sync_interval_seconds = require("sync_interval_seconds").get<int>();
     config.initial_block = require("initial_block").get<int64_t>();

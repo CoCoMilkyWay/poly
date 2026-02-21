@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
   std::cout << "[Main] DB Path: " << config.db_path << std::endl;
   std::cout << "[Main] RPC Node: " << config.rpc_name << " (" << config.rpc_url << ")" << std::endl;
   std::cout << "[Main] RPC Chunk: " << config.rpc_chunk << " blocks" << std::endl;
-  std::cout << "[Main] API Port: " << config.api_port << std::endl;
+  std::cout << "[Main] API Port: " << config.backend_port << std::endl;
   std::cout << "[Main] Sync Interval: " << config.sync_interval_seconds << "s" << std::endl;
 
   Database db(config.db_path);
@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
   rebuild::Engine rebuilder(db);
 
   boost::asio::io_context api_ioc;
-  ApiServer api_server(api_ioc, db, rebuilder, config.api_port, sync_getter);
+  ApiServer api_server(api_ioc, db, rebuilder, config.backend_port, sync_getter);
 
   boost::asio::signal_set signals(api_ioc, SIGINT, SIGTERM);
   signals.async_wait([&](const boost::system::error_code &, int sig) {
