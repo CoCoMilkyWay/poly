@@ -44,8 +44,13 @@
     transition: background 0.2s;
   }
 
-  .pnl-btn:hover { background: #444; }
-  .pnl-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .pnl-btn:hover {
+    background: #444;
+  }
+  .pnl-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 
   .pnl-rebuild-log {
     font-family: monospace;
@@ -57,15 +62,21 @@
     line-height: 1.8;
   }
 
-  .pnl-rebuild-log .done { color: #10b981; }
-  .pnl-rebuild-log .active { color: #f59e0b; }
+  .pnl-rebuild-log .done {
+    color: #10b981;
+  }
+  .pnl-rebuild-log .active {
+    color: #f59e0b;
+  }
 </style>
 
 <div class="pnl-card" id="pnl-card">
   <div class="pnl-header">
     <h2>PnL 重建器</h2>
     <div>
-      <button class="pnl-btn" onclick="pnlRebuildAll()" id="pnl-rebuild-btn">全量重建</button>
+      <button class="pnl-btn" onclick="pnlRebuildAll()" id="pnl-rebuild-btn">
+        全量重建
+      </button>
     </div>
   </div>
   <div class="pnl-rebuild-log" id="pnl-rebuild-log">等待操作...</div>
@@ -120,7 +131,7 @@
           _rebuildPollTimer = null;
           document.getElementById("pnl-rebuild-btn").disabled = false;
           document.getElementById("pnl-rebuild-btn").textContent = "全量重建";
-          if (status.total_users > 0 && typeof rpOnRebuildDone === 'function') {
+          if (status.total_users > 0 && typeof rpOnRebuildDone === "function") {
             rpOnRebuildDone();
           }
         }
@@ -136,7 +147,9 @@
 
     if (s.phase >= 1) {
       if (s.phase > 1) {
-        lines.push(`<span class="done">✓</span> P1: ${pnlFmt(s.total_conditions)} 问题, ${pnlFmt(s.total_tokens)} 代币 (${(s.phase1_ms / 1000).toFixed(1)}s)`);
+        lines.push(
+          `<span class="done">✓</span> P1: ${pnlFmt(s.total_conditions)} 问题, ${pnlFmt(s.total_tokens)} 代币 (${(s.phase1_ms / 1000).toFixed(1)}s)`,
+        );
       } else {
         lines.push(`<span class="active">●</span> P1: 加载元数据中...`);
       }
@@ -157,30 +170,46 @@
         const rows = sc.obj?.rows || 0;
         const events = sc.obj?.events || 0;
         if (events > 0 || s.phase > 2) {
-          lines.push(`&nbsp;&nbsp;<span class="done">✓</span> ${sc.name}: ${pnlFmt(rows)} rows → ${pnlFmt(events)} 事件`);
+          lines.push(
+            `&nbsp;&nbsp;<span class="done">✓</span> ${sc.name}: ${pnlFmt(rows)} rows → ${pnlFmt(events)} 事件`,
+          );
         } else if (s.phase === 2) {
-          lines.push(rows > 0
-            ? `&nbsp;&nbsp;<span class="active">●</span> ${sc.name}: ${pnlFmt(rows)} rows...`
-            : `&nbsp;&nbsp;<span class="active">●</span> ${sc.name}: 扫描中...`);
+          lines.push(
+            rows > 0
+              ? `&nbsp;&nbsp;<span class="active">●</span> ${sc.name}: ${pnlFmt(rows)} rows...`
+              : `&nbsp;&nbsp;<span class="active">●</span> ${sc.name}: 扫描中...`,
+          );
         }
       }
       if (s.phase > 2) {
-        lines.push(`<span class="done">✓</span> P2: ${pnlFmt(s.total_events)} 事件 → ${pnlFmt(s.total_users)} 用户 (${(s.phase2_ms / 1000).toFixed(1)}s)`);
+        lines.push(
+          `<span class="done">✓</span> P2: ${pnlFmt(s.total_events)} 事件 → ${pnlFmt(s.total_users)} 用户 (${(s.phase2_ms / 1000).toFixed(1)}s)`,
+        );
       }
     }
 
     if (s.phase >= 3) {
       if (s.phase > 3) {
-        lines.push(`<span class="done">✓</span> P3: ${pnlFmt(s.total_users)} users 回放完成 (${(s.phase3_ms / 1000).toFixed(1)}s)`);
+        lines.push(
+          `<span class="done">✓</span> P3: ${pnlFmt(s.total_users)} users 回放完成 (${(s.phase3_ms / 1000).toFixed(1)}s)`,
+        );
       } else {
-        const pct = s.total_users ? Math.round((s.processed_users / s.total_users) * 100) : 0;
-        lines.push(`<span class="active">●</span> P3: 回放中 ${pnlFmt(s.processed_users)}/${pnlFmt(s.total_users)} (${pct}%)`);
+        const pct = s.total_users
+          ? Math.round((s.processed_users / s.total_users) * 100)
+          : 0;
+        lines.push(
+          `<span class="active">●</span> P3: 回放中 ${pnlFmt(s.processed_users)}/${pnlFmt(s.total_users)} (${pct}%)`,
+        );
       }
     }
 
     if (s.phase === 7) {
-      const total = ((s.phase1_ms + s.phase2_ms + s.phase3_ms) / 1000).toFixed(1);
-      lines.push(`<b style="color:#10b981">完成: ${pnlFmt(s.total_users)} users, ${pnlFmt(s.total_events)} events | ${total}s</b>`);
+      const total = ((s.phase1_ms + s.phase2_ms + s.phase3_ms) / 1000).toFixed(
+        1,
+      );
+      lines.push(
+        `<b style="color:#10b981">完成: ${pnlFmt(s.total_users)} users, ${pnlFmt(s.total_events)} events | ${total}s</b>`,
+      );
     }
 
     log.innerHTML = lines.join("<br>");
@@ -195,7 +224,7 @@
         document.getElementById("pnl-rebuild-btn").textContent = "重建中...";
         pnlStartRebuildPolling();
       } else if (status.total_users > 0) {
-        if (typeof rpOnRebuildDone === 'function') rpOnRebuildDone();
+        if (typeof rpOnRebuildDone === "function") rpOnRebuildDone();
         if (status.phase === 7) {
           pnlUpdateRebuildProgress(status);
         }

@@ -7,9 +7,8 @@
 #include "api/api_server.hpp"
 #include "core/config.hpp"
 #include "core/database.hpp"
-#include "rebuild/rebuilder.hpp"
-#include "sync/sync_coordinator.hpp"
-#include "sync/user_sync_coordinator.hpp"
+#include "stage1/chain_sync.hpp"
+#include "stage3/pnl_replay.hpp"
 
 void print_usage(const char *prog) {
   std::cout << "用法: " << prog << " --config <config.json>" << std::endl;
@@ -45,33 +44,21 @@ int main(int argc, char *argv[]) {
 
   Database stage2_db(config.db_path_stage2);
 
-  SyncCoordinator sync(config, stage1_db);
+  stage1::ChainSync chain_sync(config, stage1_db);
 
-  auto sync_getter = [&sync]() -> SyncStatus {
-    return {sync.is_syncing(), sync.get_head_block(), sync.get_blocks_per_second(), sync.get_bytes_per_block()};
+  auto sync_getter = [&chain_sync]() -> SyncStatus {
+    return {chain_sync.is_syncing(), chain_sync.get_head_block(),
+            chain_sync.get_blocks_per_second(), chain_sync.get_bytes_per_block()};
   };
 
-  // Stage1 Sync 使用单独的 io_context 和线程
   boost::asio::io_context sync_ioc;
-  sync.start(sync_ioc);
+  chain_sync.start(sync_ioc);
   std::thread sync_thread([&sync_ioc]() { sync_ioc.run(); });
 
-  // Stage2 UserSync 使用单独的 io_context 和线程
-  UserSyncCoordinator user_sync(config, stage1_db, stage2_db);
-
-  auto user_sync_getter = [&user_sync]() -> UserSyncStatusInfo {
-    auto status = user_sync.get_status();
-    return {status.last_block, status.head_block, status.is_syncing, status.blocks_per_second};
-  };
-
-  boost::asio::io_context user_sync_ioc;
-  user_sync.start(user_sync_ioc);
-  std::thread user_sync_thread([&user_sync_ioc]() { user_sync_ioc.run(); });
-
-  rebuild::Engine rebuilder(stage1_db, stage2_db);
+  stage3::PnlEngine pnl_engine(stage1_db, stage2_db);
 
   boost::asio::io_context api_ioc;
-  ApiServer api_server(api_ioc, stage1_db, rebuilder, config.backend_port, sync_getter, user_sync_getter);
+  ApiServer api_server(api_ioc, stage1_db, pnl_engine, config.backend_port, sync_getter);
 
   boost::asio::signal_set signals(api_ioc, SIGINT, SIGTERM);
   signals.async_wait([&](const boost::system::error_code &, int sig) {
@@ -84,9 +71,7 @@ int main(int argc, char *argv[]) {
 
   std::cout << "[Main] 正在停止同步..." << std::endl;
   sync_ioc.stop();
-  user_sync_ioc.stop();
   sync_thread.join();
-  user_sync_thread.join();
 
   std::cout << "[Main] 已退出" << std::endl;
   return 0;

@@ -45,7 +45,9 @@ constexpr const char *QUESTION_PREPARE = "0xaac410f87d423a922a7b226ac68f0c2eaf5b
 constexpr const char *POSITION_CONVERT = "0xb03d19dddbc72a87e735ff0ea3b57bef133ebe44e1894284916a84044deb367e";
 } // namespace topics
 
-struct ParsedEvents {
+namespace stage1 {
+
+struct DecodedEvents {
   // ConditionalTokens 转账
   std::vector<std::string> transfer;
   // ConditionalTokens 条件
@@ -68,10 +70,10 @@ struct ParsedEvents {
   std::vector<std::string> convert;
 };
 
-class EventParser {
+class EventDecoder {
 public:
-  static ParsedEvents parse_logs(const json &logs) {
-    ParsedEvents events;
+  static DecodedEvents decode_logs(const json &logs) {
+    DecodedEvents events;
     std::set<std::string> fpmm_addrs;
     // 第一趟: FPMM创建
     for (const auto &log : logs) {
@@ -124,7 +126,7 @@ private:
     return hex_to_int64(hex);
   }
 
-  static void parse_log(const json &log, const std::set<std::string> &fpmm_addrs, ParsedEvents &events) {
+  static void parse_log(const json &log, const std::set<std::string> &fpmm_addrs, DecodedEvents &events) {
     std::string address = to_lower(log["address"].get<std::string>());
     const auto &topics_arr = log["topics"];
     assert(!topics_arr.empty());
@@ -153,7 +155,7 @@ private:
   static void parse_conditional_tokens_event(const std::string &topic0, const json &topics,
                                              const std::string &data, const std::string &tx_hash,
                                              int64_t block_number, int64_t log_index,
-                                             ParsedEvents &events) {
+                                             DecodedEvents &events) {
     if (topic0 == topics::TRANSFER_SINGLE) {
       parse_transfer_single(topics, data, tx_hash, block_number, log_index, events);
     } else if (topic0 == topics::TRANSFER_BATCH) {
@@ -174,7 +176,7 @@ private:
   static void parse_exchange_event(const std::string &topic0, const json &topics,
                                    const std::string &data, const std::string &tx_hash,
                                    int64_t block_number, int64_t log_index,
-                                   const std::string &exchange, ParsedEvents &events) {
+                                   const std::string &exchange, DecodedEvents &events) {
     if (topic0 == topics::ORDER_FILL) {
       parse_order_filled(topics, data, tx_hash, block_number, log_index, exchange, events);
     } else if (topic0 == topics::TOKEN_REGISTER) {
@@ -185,7 +187,7 @@ private:
   static void parse_neg_risk_adapter_event(const std::string &topic0, const json &topics,
                                            const std::string &data, const std::string &tx_hash,
                                            int64_t block_number, int64_t log_index,
-                                           ParsedEvents &events) {
+                                           DecodedEvents &events) {
     if (topic0 == topics::MARKET_PREPARE) {
       parse_neg_risk_market(topics, data, tx_hash, block_number, log_index, events);
     } else if (topic0 == topics::QUESTION_PREPARE) {
@@ -197,7 +199,7 @@ private:
 
   static void parse_transfer_single(const json &topics, const std::string &data,
                                     const std::string &tx_hash, int64_t block_number,
-                                    int64_t log_index, ParsedEvents &events) {
+                                    int64_t log_index, DecodedEvents &events) {
     std::string op = extract_address_from_topic(topics[1].get<std::string>());
     std::string from = extract_address_from_topic(topics[2].get<std::string>());
     std::string to = extract_address_from_topic(topics[3].get<std::string>());
@@ -214,7 +216,7 @@ private:
 
   static void parse_transfer_batch(const json &topics, const std::string &data,
                                    const std::string &tx_hash, int64_t block_number,
-                                   int64_t log_index, ParsedEvents &events) {
+                                   int64_t log_index, DecodedEvents &events) {
     std::string op = extract_address_from_topic(topics[1].get<std::string>());
     std::string from = extract_address_from_topic(topics[2].get<std::string>());
     std::string to = extract_address_from_topic(topics[3].get<std::string>());
@@ -269,7 +271,7 @@ private:
 
   static void parse_redemption(const json &topics, const std::string &data,
                                const std::string &tx_hash, int64_t block_number,
-                               int64_t log_index, ParsedEvents &events) {
+                               int64_t log_index, DecodedEvents &events) {
     std::string redeemer = extract_address_from_topic(topics[1].get<std::string>());
     std::string collateral_token = extract_address_from_topic(topics[2].get<std::string>());
     std::string parent_collection_id = topics[3].get<std::string>();
@@ -298,7 +300,7 @@ private:
 
   static void parse_condition_preparation(const json &topics, const std::string &data,
                                           const std::string &tx_hash, int64_t block_number,
-                                          int64_t log_index, ParsedEvents &events) {
+                                          int64_t log_index, DecodedEvents &events) {
     std::string condition_id = topics[1].get<std::string>();
     std::string oracle = extract_address_from_topic(topics[2].get<std::string>());
     std::string question_id = topics[3].get<std::string>();
@@ -313,7 +315,7 @@ private:
 
   static void parse_condition_resolution(const json &topics, const std::string &data,
                                          const std::string &tx_hash, int64_t block_number,
-                                         int64_t log_index, ParsedEvents &events) {
+                                         int64_t log_index, DecodedEvents &events) {
     std::string condition_id = topics[1].get<std::string>();
     std::string oracle = extract_address_from_topic(topics[2].get<std::string>());
     std::string question_id = topics[3].get<std::string>();
@@ -342,7 +344,7 @@ private:
   static void parse_order_filled(const json &topics, const std::string &data,
                                  const std::string &tx_hash, int64_t block_number,
                                  int64_t log_index, const std::string &exchange,
-                                 ParsedEvents &events) {
+                                 DecodedEvents &events) {
     std::string order_hash = topics[1].get<std::string>();
     std::string maker = extract_address_from_topic(topics[2].get<std::string>());
     std::string taker = extract_address_from_topic(topics[3].get<std::string>());
@@ -364,7 +366,7 @@ private:
 
   static void parse_token_map(const json &topics, const std::string &tx_hash,
                               int64_t block_number, int64_t log_index,
-                              const std::string &exchange, ParsedEvents &events) {
+                              const std::string &exchange, DecodedEvents &events) {
     std::string token0 = topics[1].get<std::string>();
     std::string token1 = topics[2].get<std::string>();
     std::string condition_id = topics[3].get<std::string>();
@@ -378,7 +380,7 @@ private:
 
   static void parse_convert(const json &topics, const std::string &data,
                             const std::string &tx_hash, int64_t block_number,
-                            int64_t log_index, ParsedEvents &events) {
+                            int64_t log_index, DecodedEvents &events) {
     std::string stakeholder = extract_address_from_topic(topics[1].get<std::string>());
     std::string market_id = topics[2].get<std::string>();
     int64_t index_set = hex_to_int64(topics[3].get<std::string>());
@@ -394,7 +396,7 @@ private:
 
   static void parse_neg_risk_market(const json &topics, const std::string &data,
                                     const std::string &tx_hash, int64_t block_number,
-                                    int64_t log_index, ParsedEvents &events) {
+                                    int64_t log_index, DecodedEvents &events) {
     std::string market_id = topics[1].get<std::string>();
     std::string oracle = extract_address_from_topic(topics[2].get<std::string>());
 
@@ -424,7 +426,7 @@ private:
 
   static void parse_neg_risk_question(const json &topics, const std::string &data,
                                       const std::string &tx_hash, int64_t block_number,
-                                      int64_t log_index, ParsedEvents &events) {
+                                      int64_t log_index, DecodedEvents &events) {
     std::string market_id = topics[1].get<std::string>();
     std::string question_id = topics[2].get<std::string>();
 
@@ -452,7 +454,7 @@ private:
     events.neg_risk_question.push_back(ss.str());
   }
 
-  static std::optional<std::string> parse_fpmm_create(const json &log, ParsedEvents &events) {
+  static std::optional<std::string> parse_fpmm_create(const json &log, DecodedEvents &events) {
     const auto &topics_arr = log["topics"];
     std::string topic0 = to_lower(topics_arr[0].get<std::string>());
     if (topic0 != topics::FPMM_CREATE)
@@ -494,7 +496,7 @@ private:
   static void parse_fpmm_event(const std::string &topic0, const std::string &fpmm_addr,
                                const json &topics, const std::string &data,
                                const std::string &tx_hash, int64_t block_number,
-                               int64_t log_index, ParsedEvents &events) {
+                               int64_t log_index, DecodedEvents &events) {
     if (topic0 == topics::FPMM_BUY) {
       std::string buyer = extract_address_from_topic(topics[1].get<std::string>());
       int64_t outcome_index = hex_to_int64(topics[2].get<std::string>());
@@ -563,3 +565,5 @@ private:
     }
   }
 };
+
+} // namespace stage1

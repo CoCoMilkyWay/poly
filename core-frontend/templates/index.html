@@ -69,10 +69,9 @@
         <p>Polymarket 链上数据同步与查询</p>
       </header>
 
-      {% include 'components/sync_status.html' %}
-      {% include 'components/user_sync.html' %}
-      {% include 'components/pnl_rebuilder.html' %}
-      {% include 'components/pnl_replayer.html' %}
+      {% include 'components/stage1_sync.html' %}
+      {% include 'components/stage3_rebuild.html' %}
+      {% include 'components/stage3_replay.html' %}
     </div>
 
     <script>
@@ -82,20 +81,17 @@
 
       async function refresh() {
         try {
-          const [syncRes, tablesRes, userSyncRes] = await Promise.all([
+          const [syncRes, tablesRes] = await Promise.all([
             fetch("/api/sync-state"),
             fetch("/api/tables"),
-            fetch("/api/user-sync-status"),
           ]);
           const sync = await syncRes.json();
           const tables = await tablesRes.json();
-          const userSync = await userSyncRes.json();
 
           updateSyncStatus(sync);
           updateTables(tables);
           if (window.updateContractSync) updateContractSync(sync);
           if (window.updateContractTables) updateContractTables(tables);
-          if (window.updateUserSyncStatus) updateUserSyncStatus(userSync);
         } catch (e) {
           console.error("Refresh failed:", e);
         }

@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-namespace rebuild {
+namespace stage2 {
 
 static constexpr int MAX_OUTCOMES = 8;
 
@@ -39,13 +39,13 @@ struct FPMMInfo {
 };
 
 struct RawEvent {
-  int64_t sort_key;    // 8  block_number * 1e9 + log_index
-  uint32_t cond_idx;   // 4
-  uint8_t type;        // 1  EventType
-  uint8_t token_idx;   // 1  0=YES, 1=NO
-  uint16_t _pad;       // 2
-  int64_t amount;      // 8  raw units (1e6 = $1)
-  int64_t price;       // 8  price * 1e6
+  int64_t sort_key;  // 8  block_number * 1e9 + log_index
+  uint32_t cond_idx; // 4
+  uint8_t type;      // 1  EventType
+  uint8_t token_idx; // 1  0=YES, 1=NO
+  uint16_t _pad;     // 2
+  int64_t amount;    // 8  raw units (1e6 = $1)
+  int64_t price;     // 8  price * 1e6
 };
 static_assert(sizeof(RawEvent) == 32);
 
@@ -141,7 +141,7 @@ struct ConvertInfo {
 struct OrderInfo {
   std::string maker;
   std::string taker;
-  int maker_side;  // 1=maker买, 2=maker卖
+  int maker_side; // 1=maker买, 2=maker卖
   int64_t usdc;
   int64_t tokens;
   int64_t fee;
@@ -150,7 +150,7 @@ struct OrderInfo {
 struct FPMMTradeInfo {
   std::string fpmm_addr;
   std::string trader;
-  int side;  // 1=Buy, 2=Sell
+  int side; // 1=Buy, 2=Sell
   int outcome_idx;
   int64_t usdc;
   int64_t tokens;
@@ -159,16 +159,17 @@ struct FPMMTradeInfo {
 struct FPMMFundingInfo {
   std::string fpmm_addr;
   std::string funder;
-  int side;  // 1=Added, 2=Removed
+  int side; // 1=Added, 2=Removed
   int64_t amount0;
   int64_t amount1;
 };
 
-} // namespace rebuild
+} // namespace stage2
 
 namespace std {
-template <> struct hash<rebuild::TxCondKey> {
-  size_t operator()(const rebuild::TxCondKey &k) const {
+template <>
+struct hash<stage2::TxCondKey> {
+  size_t operator()(const stage2::TxCondKey &k) const {
     size_t h = std::hash<int64_t>()(k.block);
     for (size_t i = 0; i < 8; ++i)
       h ^= std::hash<uint8_t>()(k.tx_hash[i]) << (i % 8);
@@ -177,8 +178,9 @@ template <> struct hash<rebuild::TxCondKey> {
   }
 };
 
-template <> struct hash<rebuild::TxKey> {
-  size_t operator()(const rebuild::TxKey &k) const {
+template <>
+struct hash<stage2::TxKey> {
+  size_t operator()(const stage2::TxKey &k) const {
     size_t h = std::hash<int64_t>()(k.block);
     for (size_t i = 0; i < 8; ++i)
       h ^= std::hash<uint8_t>()(k.tx_hash[i]) << (i % 8);
@@ -186,8 +188,9 @@ template <> struct hash<rebuild::TxKey> {
   }
 };
 
-template <> struct hash<rebuild::TxTokenKey> {
-  size_t operator()(const rebuild::TxTokenKey &k) const {
+template <>
+struct hash<stage2::TxTokenKey> {
+  size_t operator()(const stage2::TxTokenKey &k) const {
     size_t h = std::hash<int64_t>()(k.block);
     for (size_t i = 0; i < 8; ++i)
       h ^= std::hash<uint8_t>()(k.tx_hash[i]) << (i % 8);

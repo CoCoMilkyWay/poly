@@ -8,7 +8,7 @@
 // serialize_user_list()     — 返回按事件数排序的用户列表 JSON
 // ============================================================================
 
-#include "../rebuild/rebuilder.hpp"
+#include "pnl_replay.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -18,7 +18,7 @@
 
 #define REPLAY_DUST_THRESHOLD_USDC 50
 
-namespace replayer {
+namespace stage3 {
 
 using json = nlohmann::json;
 static constexpr int64_t DUST_THRESHOLD = REPLAY_DUST_THRESHOLD_USDC * 1000000LL;
@@ -26,7 +26,7 @@ static constexpr int64_t DUST_THRESHOLD = REPLAY_DUST_THRESHOLD_USDC * 1000000LL
 // ============================================================================
 // 序列化单用户 timeline → JSON (瘦身: 仅 PnL 曲线 + #token 曲线, 用于快速首屏)
 // ============================================================================
-inline std::string serialize_user_timeline(const rebuild::Engine &engine, const std::string &user_id) {
+inline std::string serialize_user_timeline(const PnlEngine &engine, const std::string &user_id) {
   const auto *state = engine.find_user(user_id);
   assert(state != nullptr && "user not found");
 
@@ -36,7 +36,7 @@ inline std::string serialize_user_timeline(const rebuild::Engine &engine, const 
     uint8_t event_type;
     uint8_t outcome_count;
     int64_t cond_rpnl;
-    int64_t positions[rebuild::MAX_OUTCOMES];
+    int64_t positions[MAX_OUTCOMES];
   };
 
   std::vector<TimelineEntry> timeline;
@@ -80,15 +80,22 @@ inline std::string serialize_user_timeline(const rebuild::Engine &engine, const 
     bool new_non_dust = (abs_sum >= DUST_THRESHOLD);
     cond_non_dust[e.cond_idx] = new_non_dust;
 
-    if (new_non_dust && !old_non_dust) total_tokens++;
-    else if (!new_non_dust && old_non_dust) total_tokens--;
+    if (new_non_dust && !old_non_dust)
+      total_tokens++;
+    else if (!new_non_dust && old_non_dust)
+      total_tokens--;
 
-    if (!first) buf += ',';
+    if (!first)
+      buf += ',';
     first = false;
-    buf += "{\"ts\":";   buf += std::to_string(e.sort_key);
-    buf += ",\"ty\":";   buf += std::to_string((int)e.event_type);
-    buf += ",\"rpnl\":"; buf += std::to_string(global_rpnl);
-    buf += ",\"tk\":";   buf += std::to_string(total_tokens);
+    buf += "{\"ts\":";
+    buf += std::to_string(e.sort_key);
+    buf += ",\"ty\":";
+    buf += std::to_string((int)e.event_type);
+    buf += ",\"rpnl\":";
+    buf += std::to_string(global_rpnl);
+    buf += ",\"tk\":";
+    buf += std::to_string(total_tokens);
     buf += '}';
   }
   buf += ']';
@@ -96,18 +103,13 @@ inline std::string serialize_user_timeline(const rebuild::Engine &engine, const 
   int64_t first_ts = timeline.empty() ? 0 : timeline.front().sort_key;
   int64_t last_ts = timeline.empty() ? 0 : timeline.back().sort_key;
 
-  return "{\"user\":\"" + user_id + "\""
-       + ",\"total_events\":" + std::to_string((int64_t)timeline.size())
-       + ",\"first_ts\":" + std::to_string(first_ts)
-       + ",\"last_ts\":" + std::to_string(last_ts)
-       + ",\"dust_threshold\":" + std::to_string(DUST_THRESHOLD)
-       + ",\"timeline\":" + buf + "}";
+  return "{\"user\":\"" + user_id + "\"" + ",\"total_events\":" + std::to_string((int64_t)timeline.size()) + ",\"first_ts\":" + std::to_string(first_ts) + ",\"last_ts\":" + std::to_string(last_ts) + ",\"dust_threshold\":" + std::to_string(DUST_THRESHOLD) + ",\"timeline\":" + buf + "}";
 }
 
 // ============================================================================
 // 查询指定时刻附近的交易记录 → JSON (按需调用, cursor 联动)
 // ============================================================================
-inline json serialize_trades_at(const rebuild::Engine &engine, const std::string &user_id,
+inline json serialize_trades_at(const PnlEngine &engine, const std::string &user_id,
                                 int64_t ts, int radius = 20) {
   const auto *state = engine.find_user(user_id);
   assert(state != nullptr && "user not found");
@@ -127,7 +129,7 @@ inline json serialize_trades_at(const rebuild::Engine &engine, const std::string
   for (const auto &ch : state->conditions) {
     for (const auto &snap : ch.snapshots) {
       trades.push_back({snap.sort_key, ch.cond_idx, snap.event_type,
-                         snap.token_idx, snap.delta, snap.price});
+                        snap.token_idx, snap.delta, snap.price});
     }
   }
 
@@ -137,8 +139,10 @@ inline json serialize_trades_at(const rebuild::Engine &engine, const std::string
   int lo = 0, hi = (int)trades.size();
   while (lo < hi) {
     int mid = (lo + hi) >> 1;
-    if (trades[mid].sort_key < ts) lo = mid + 1;
-    else hi = mid;
+    if (trades[mid].sort_key < ts)
+      lo = mid + 1;
+    else
+      hi = mid;
   }
   int center = lo;
   if (center > 0 && center < (int)trades.size()) {
@@ -175,7 +179,7 @@ inline json serialize_trades_at(const rebuild::Engine &engine, const std::string
 // ============================================================================
 // 查询指定时刻的持仓快照 → JSON (服务端二分查找, 按需调用)
 // ============================================================================
-inline json serialize_positions_at(const rebuild::Engine &engine, const std::string &user_id, int64_t ts) {
+inline json serialize_positions_at(const PnlEngine &engine, const std::string &user_id, int64_t ts) {
   const auto *state = engine.find_user(user_id);
   assert(state != nullptr && "user not found");
 
@@ -184,25 +188,31 @@ inline json serialize_positions_at(const rebuild::Engine &engine, const std::str
 
   struct CondSnap {
     uint32_t cond_idx;
-    const rebuild::Snapshot *snap;
+    const Snapshot *snap;
   };
   std::vector<CondSnap> cond_snaps;
 
   for (const auto &ch : state->conditions) {
     const auto &snaps = ch.snapshots;
-    if (snaps.empty()) continue;
+    if (snaps.empty())
+      continue;
     int lo = 0, hi = (int)snaps.size() - 1, best = -1;
     while (lo <= hi) {
       int mid = (lo + hi) >> 1;
-      if (snaps[mid].sort_key <= ts) { best = mid; lo = mid + 1; }
-      else hi = mid - 1;
+      if (snaps[mid].sort_key <= ts) {
+        best = mid;
+        lo = mid + 1;
+      } else
+        hi = mid - 1;
     }
-    if (best < 0) continue;
+    if (best < 0)
+      continue;
     const auto &snap = snaps[best];
     int64_t abs_sum = 0;
     for (int k = 0; k < snap.outcome_count; ++k)
       abs_sum += std::abs(snap.positions[k]);
-    if (abs_sum < DUST_THRESHOLD) continue;
+    if (abs_sum < DUST_THRESHOLD)
+      continue;
     cond_snaps.push_back({ch.cond_idx, &snap});
   }
 
@@ -239,7 +249,7 @@ inline json serialize_positions_at(const rebuild::Engine &engine, const std::str
 // ============================================================================
 // 序列化用户列表 (按事件数降序, 前 limit 个)
 // ============================================================================
-inline json serialize_user_list(const rebuild::Engine &engine, int limit) {
+inline json serialize_user_list(const PnlEngine &engine, int limit) {
   const auto &users = engine.users();
   const auto &states = engine.user_states();
 
@@ -275,4 +285,4 @@ inline json serialize_user_list(const rebuild::Engine &engine, int limit) {
   return result;
 }
 
-} // namespace replayer
+} // namespace stage3

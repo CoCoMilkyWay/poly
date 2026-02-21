@@ -14,14 +14,16 @@
 #include "../core/config.hpp"
 #include "../core/database.hpp"
 #include "../infra/rpc_client.hpp"
-#include "event_parser.hpp"
+#include "event_decode.hpp"
 
 namespace asio = boost::asio;
 using json = nlohmann::json;
 
-class SyncCoordinator {
+namespace stage1 {
+
+class ChainSync {
 public:
-  SyncCoordinator(const Config &config, Database &db)
+  ChainSync(const Config &config, Database &db)
       : config_(config), db_(db),
         rpc_(config.rpc_url, config.rpc_api_key),
         batch_size_(config.rpc_chunk),
@@ -171,7 +173,7 @@ private:
       }
     }
 
-    ParsedEvents events = EventParser::parse_logs(logs);
+    DecodedEvents events = EventDecoder::decode_logs(logs);
 
     std::vector<std::tuple<std::string, std::string, std::vector<std::string>>> batches;
     batches.emplace_back("transfer",
@@ -258,3 +260,5 @@ private:
   };
   std::deque<ChunkRecord> chunk_history_;
 };
+
+} // namespace stage1

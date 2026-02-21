@@ -10,7 +10,7 @@
 #include <nlohmann/json.hpp>
 
 #include "../core/database.hpp"
-#include "../rebuild/rebuilder.hpp"
+#include "../stage3/pnl_replay.hpp"
 
 namespace asio = boost::asio;
 namespace beast = boost::beast;
@@ -25,24 +25,14 @@ struct SyncStatus {
   double bytes_per_block = 0.0;
 };
 
-struct UserSyncStatusInfo {
-  int64_t last_block = 0;
-  int64_t head_block = 0;
-  bool is_syncing = false;
-  double blocks_per_second = 0.0;
-};
-
 class ApiSession : public std::enable_shared_from_this<ApiSession> {
 public:
   using SyncStatusGetter = std::function<SyncStatus()>;
-  using UserSyncStatusGetter = std::function<UserSyncStatusInfo()>;
 
-  ApiSession(tcp::socket socket, Database &db, rebuild::Engine &rebuilder,
-             SyncStatusGetter sync_getter = nullptr,
-             UserSyncStatusGetter user_sync_getter = nullptr)
-      : socket_(std::move(socket)), db_(db), rebuilder_(rebuilder),
-        sync_getter_(std::move(sync_getter)),
-        user_sync_getter_(std::move(user_sync_getter)) {}
+  ApiSession(tcp::socket socket, Database &db, stage3::PnlEngine &pnl_engine,
+             SyncStatusGetter sync_getter = nullptr)
+      : socket_(std::move(socket)), db_(db), pnl_engine_(pnl_engine),
+        sync_getter_(std::move(sync_getter)) {}
 
   void run() { do_read(); }
 
@@ -80,8 +70,6 @@ private:
         handle_tables();
       } else if (target.starts_with("/api/sync-state")) {
         handle_sync_state();
-      } else if (target.starts_with("/api/user-sync-status")) {
-        handle_user_sync_status();
       } else if (target.starts_with("/api/query")) {
         handle_query();
       } else if (target == "/api/rebuild" && req_.method() == http::verb::post) {
@@ -158,35 +146,6 @@ private:
     res_.body() = result.dump();
   }
 
-  void handle_user_sync_status() {
-    res_.set(http::field::content_type, "application/json");
-
-    if (!user_sync_getter_) {
-      res_.result(http::status::service_unavailable);
-      res_.body() = R"({"error":"User sync not available"})";
-      return;
-    }
-
-    UserSyncStatusInfo status = user_sync_getter_();
-    int64_t behind = status.head_block - status.last_block;
-    double eta_seconds = 0;
-    if (status.blocks_per_second > 0 && behind > 0) {
-      eta_seconds = behind / status.blocks_per_second;
-    }
-
-    json result = {
-        {"last_block", status.last_block},
-        {"head_block", status.head_block},
-        {"behind", behind},
-        {"is_syncing", status.is_syncing},
-        {"blocks_per_second", status.blocks_per_second},
-        {"eta_seconds", eta_seconds},
-    };
-
-    res_.result(http::status::ok);
-    res_.body() = result.dump();
-  }
-
   void handle_query() {
     res_.set(http::field::content_type, "application/json");
 
@@ -215,14 +174,14 @@ private:
   void handle_rebuild() {
     res_.set(http::field::content_type, "application/json");
 
-    const auto &progress = rebuilder_.progress();
+    const auto &progress = pnl_engine_.progress();
     if (progress.running) {
       res_.result(http::status::conflict);
       res_.body() = R"({"error":"Rebuild already in progress"})";
       return;
     }
 
-    std::thread([this]() { rebuilder_.rebuild_all(); }).detach();
+    std::thread([this]() { pnl_engine_.rebuild_all(); }).detach();
 
     res_.result(http::status::accepted);
     res_.body() = R"({"status":"started"})";
@@ -231,7 +190,7 @@ private:
   void handle_rebuild_status() {
     res_.set(http::field::content_type, "application/json");
 
-    const auto &p = rebuilder_.progress();
+    const auto &p = pnl_engine_.progress();
     json result = {
         {"phase", p.phase},
         {"running", p.running},
@@ -243,7 +202,14 @@ private:
         {"phase1_ms", p.phase1_ms},
         {"phase2_ms", p.phase2_ms},
         {"phase3_ms", p.phase3_ms},
-        {"transfer", {{"rows", p.transfer_rows}, {"events", p.transfer_events}}},
+        {"order_filled", {{"rows", p.order_filled.rows}, {"events", p.order_filled.events}}},
+        {"split", {{"rows", p.split.rows}, {"events", p.split.events}}},
+        {"merge", {{"rows", p.merge.rows}, {"events", p.merge.events}}},
+        {"redemption", {{"rows", p.redemption.rows}, {"events", p.redemption.events}}},
+        {"fpmm_trade", {{"rows", p.fpmm_trade.rows}, {"events", p.fpmm_trade.events}}},
+        {"fpmm_funding", {{"rows", p.fpmm_funding.rows}, {"events", p.fpmm_funding.events}}},
+        {"convert", {{"rows", p.convert.rows}, {"events", p.convert.events}}},
+        {"transfer", {{"rows", p.transfer.rows}, {"events", p.transfer.events}}},
     };
 
     res_.result(http::status::ok);
@@ -260,7 +226,7 @@ private:
       return;
     }
 
-    const auto *state = rebuilder_.get_user_state(addr);
+    const auto *state = pnl_engine_.get_user_state(addr);
     if (!state) {
       res_.result(http::status::not_found);
       res_.body() = R"({"error":"User not found"})";
@@ -279,7 +245,7 @@ private:
       total_cost_basis += last.cost_basis;
 
       json cond_obj = {
-          {"condition_id", rebuilder_.get_condition_id(ch.cond_idx)},
+          {"condition_id", pnl_engine_.get_condition_id(ch.cond_idx)},
           {"realized_pnl", last.realized_pnl},
           {"cost_basis", last.cost_basis},
           {"positions", json::array()},
@@ -312,7 +278,7 @@ private:
       return;
     }
 
-    const auto *state = rebuilder_.get_user_state(addr);
+    const auto *state = pnl_engine_.get_user_state(addr);
     if (!state) {
       res_.result(http::status::not_found);
       res_.body() = R"({"error":"User not found"})";
@@ -335,7 +301,7 @@ private:
         continue;
 
       json pos_obj = {
-          {"condition_id", rebuilder_.get_condition_id(ch.cond_idx)},
+          {"condition_id", pnl_engine_.get_condition_id(ch.cond_idx)},
           {"positions", json::array()},
           {"cost_basis", last.cost_basis},
       };
@@ -361,7 +327,7 @@ private:
     std::string limit_str = get_param("limit");
     int64_t limit = limit_str.empty() ? 200 : std::stoll(limit_str);
 
-    auto users = rebuilder_.get_users_sorted(limit);
+    auto users = pnl_engine_.get_users_sorted(limit);
     json result = json::array();
     for (const auto &u : users) {
       result.push_back({
@@ -385,7 +351,7 @@ private:
       return;
     }
 
-    auto timeline = rebuilder_.get_user_timeline(user);
+    auto timeline = pnl_engine_.get_user_timeline(user);
     if (timeline.empty()) {
       res_.result(http::status::not_found);
       res_.body() = R"({"error":"User not found or no events"})";
@@ -432,7 +398,7 @@ private:
     }
 
     int64_t sort_key = std::stoll(sk_str);
-    auto positions = rebuilder_.get_positions_at(user, sort_key);
+    auto positions = pnl_engine_.get_positions_at(user, sort_key);
 
     json pos_arr = json::array();
     for (const auto &p : positions) {
@@ -467,8 +433,8 @@ private:
     int64_t sort_key = std::stoll(sk_str);
     int radius = radius_str.empty() ? 20 : std::stoi(radius_str);
 
-    auto trades = rebuilder_.get_trades_near(user, sort_key, radius);
-    size_t center = rebuilder_.get_trades_center_index(user, sort_key, radius);
+    auto trades = pnl_engine_.get_trades_near(user, sort_key, radius);
+    size_t center = pnl_engine_.get_trades_center_index(user, sort_key, radius);
 
     json events_arr = json::array();
     for (const auto &t : trades) {
@@ -540,9 +506,8 @@ private:
 
   tcp::socket socket_;
   Database &db_;
-  rebuild::Engine &rebuilder_;
+  stage3::PnlEngine &pnl_engine_;
   SyncStatusGetter sync_getter_;
-  UserSyncStatusGetter user_sync_getter_;
   beast::flat_buffer buffer_;
   http::request<http::string_body> req_;
   http::response<http::string_body> res_;
