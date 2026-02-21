@@ -80,6 +80,14 @@ private:
         handle_user_pnl(target);
       } else if (target.starts_with("/api/user/") && target.find("/positions") != std::string::npos) {
         handle_user_positions(target);
+      } else if (target.starts_with("/api/replay-users")) {
+        handle_replay_users();
+      } else if (target.starts_with("/api/replay-positions")) {
+        handle_replay_positions();
+      } else if (target.starts_with("/api/replay-trades")) {
+        handle_replay_trades();
+      } else if (target.starts_with("/api/replay")) {
+        handle_replay();
       } else {
         res_.result(http::status::not_found);
         res_.set(http::field::content_type, "application/json");
@@ -311,6 +319,137 @@ private:
 
     res_.result(http::status::ok);
     res_.body() = result.dump();
+  }
+
+  void handle_replay_users() {
+    res_.set(http::field::content_type, "application/json");
+
+    std::string limit_str = get_param("limit");
+    int64_t limit = limit_str.empty() ? 200 : std::stoll(limit_str);
+
+    auto users = rebuilder_.get_users_sorted(limit);
+    json result = json::array();
+    for (const auto &u : users) {
+      result.push_back({
+          {"user_addr", u.addr},
+          {"event_count", u.event_count},
+          {"realized_pnl", u.realized_pnl},
+      });
+    }
+
+    res_.result(http::status::ok);
+    res_.body() = result.dump();
+  }
+
+  void handle_replay() {
+    res_.set(http::field::content_type, "application/json");
+
+    std::string user = get_param("user");
+    if (user.empty()) {
+      res_.result(http::status::bad_request);
+      res_.body() = R"({"error":"Missing user parameter"})";
+      return;
+    }
+
+    auto timeline = rebuilder_.get_user_timeline(user);
+    if (timeline.empty()) {
+      res_.result(http::status::not_found);
+      res_.body() = R"({"error":"User not found or no events"})";
+      return;
+    }
+
+    int64_t first_ts = timeline.front().sort_key / 1000000000LL;
+    int64_t last_ts = timeline.back().sort_key / 1000000000LL;
+
+    json timeline_arr = json::array();
+    for (const auto &e : timeline) {
+      timeline_arr.push_back({
+          {"sk", e.sort_key},
+          {"ty", e.event_type},
+          {"rpnl", e.realized_pnl},
+          {"d", e.delta},
+          {"p", e.price},
+          {"ci", e.cond_idx},
+          {"ti", e.token_idx},
+          {"tk", e.token_count},
+      });
+    }
+
+    json result = {
+        {"total_events", timeline.size()},
+        {"first_ts", first_ts},
+        {"last_ts", last_ts},
+        {"timeline", timeline_arr},
+    };
+
+    res_.result(http::status::ok);
+    res_.body() = result.dump();
+  }
+
+  void handle_replay_positions() {
+    res_.set(http::field::content_type, "application/json");
+
+    std::string user = get_param("user");
+    std::string sk_str = get_param("sk");
+    if (user.empty() || sk_str.empty()) {
+      res_.result(http::status::bad_request);
+      res_.body() = R"({"error":"Missing user or sk parameter"})";
+      return;
+    }
+
+    int64_t sort_key = std::stoll(sk_str);
+    auto positions = rebuilder_.get_positions_at(user, sort_key);
+
+    json pos_arr = json::array();
+    for (const auto &p : positions) {
+      json pos_obj = {
+          {"id", p.condition_id},
+          {"pos", json::array()},
+          {"cost", p.cost_basis},
+          {"rpnl", p.realized_pnl},
+      };
+      for (int i = 0; i < p.outcome_count; ++i) {
+        pos_obj["pos"].push_back(p.positions[i]);
+      }
+      pos_arr.push_back(pos_obj);
+    }
+
+    res_.result(http::status::ok);
+    res_.body() = json{{"positions", pos_arr}}.dump();
+  }
+
+  void handle_replay_trades() {
+    res_.set(http::field::content_type, "application/json");
+
+    std::string user = get_param("user");
+    std::string sk_str = get_param("sk");
+    std::string radius_str = get_param("radius");
+    if (user.empty() || sk_str.empty()) {
+      res_.result(http::status::bad_request);
+      res_.body() = R"({"error":"Missing user or sk parameter"})";
+      return;
+    }
+
+    int64_t sort_key = std::stoll(sk_str);
+    int radius = radius_str.empty() ? 20 : std::stoi(radius_str);
+
+    auto trades = rebuilder_.get_trades_near(user, sort_key, radius);
+    size_t center = rebuilder_.get_trades_center_index(user, sort_key, radius);
+
+    json events_arr = json::array();
+    for (const auto &t : trades) {
+      events_arr.push_back({
+          {"sk", t.sort_key},
+          {"ty", t.event_type},
+          {"d", t.delta},
+          {"p", t.price},
+          {"ci", t.cond_idx},
+          {"ti", t.token_idx},
+      });
+    }
+
+    res_.result(http::status::ok);
+    res_.body() = json{{"events", events_arr}, {"center", center}}.dump();
   }
 
   static std::string extract_user_addr(const std::string &target) {

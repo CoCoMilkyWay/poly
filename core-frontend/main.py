@@ -1,5 +1,5 @@
 import json
-from backend_api import backend_get
+from backend_api import backend_get, backend_post
 from fastapi import FastAPI, Query, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -98,3 +98,33 @@ async def api_export_all():
             results.append(table_name)
 
     return {"exported": results, "path": str(export_dir)}
+
+
+@app.post("/api/rebuild")
+async def api_rebuild():
+    return await backend_post("/api/rebuild")
+
+
+@app.get("/api/rebuild-status")
+async def api_rebuild_status():
+    return await backend_get("/api/rebuild-status")
+
+
+@app.get("/api/replay-users")
+async def api_replay_users(limit: int = Query(200)):
+    return await backend_get("/api/replay-users", {"limit": limit})
+
+
+@app.get("/api/replay")
+async def api_replay(user: str = Query(...)):
+    return await backend_get("/api/replay", {"user": user})
+
+
+@app.get("/api/replay-positions")
+async def api_replay_positions(user: str = Query(...), sk: int = Query(...)):
+    return await backend_get("/api/replay-positions", {"user": user, "sk": sk})
+
+
+@app.get("/api/replay-trades")
+async def api_replay_trades(user: str = Query(...), sk: int = Query(...), radius: int = Query(20)):
+    return await backend_get("/api/replay-trades", {"user": user, "sk": sk, "radius": radius})

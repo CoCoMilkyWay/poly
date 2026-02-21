@@ -1,0 +1,205 @@
+<style>
+  .pnl-card {
+    background: #1a1a1a;
+    border-radius: 10px;
+    padding: 15px;
+    border: 1px solid #333;
+    margin-bottom: 15px;
+  }
+
+  .pnl-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #333;
+  }
+
+  .pnl-header h2 {
+    font-size: 1.1em;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+  }
+
+  .pnl-header h2::before {
+    content: "";
+    width: 3px;
+    height: 16px;
+    background: #10b981;
+    border-radius: 2px;
+  }
+
+  .pnl-btn {
+    padding: 6px 12px;
+    font-size: 0.85em;
+    background: #333;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .pnl-btn:hover { background: #444; }
+  .pnl-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .pnl-rebuild-log {
+    font-family: monospace;
+    font-size: 0.8em;
+    color: #aaa;
+    padding: 8px 12px;
+    background: #151515;
+    border-radius: 4px;
+    line-height: 1.8;
+  }
+
+  .pnl-rebuild-log .done { color: #10b981; }
+  .pnl-rebuild-log .active { color: #f59e0b; }
+</style>
+
+<div class="pnl-card" id="pnl-card">
+  <div class="pnl-header">
+    <h2>PnL 重建器</h2>
+    <div>
+      <button class="pnl-btn" onclick="pnlRebuildAll()" id="pnl-rebuild-btn">全量重建</button>
+    </div>
+  </div>
+  <div class="pnl-rebuild-log" id="pnl-rebuild-log">等待操作...</div>
+</div>
+
+<script>
+  let _rebuildPollTimer = null;
+
+  document.addEventListener("DOMContentLoaded", () => {
+    pnlCheckRebuildStatus();
+  });
+
+  function pnlFmt(n) {
+    if (n >= 1000000) return (n / 1000000).toFixed(1) + "M";
+    if (n >= 1000) return (n / 1000).toFixed(1) + "K";
+    return String(n);
+  }
+
+  async function pnlRebuildAll() {
+    const btn = document.getElementById("pnl-rebuild-btn");
+    const log = document.getElementById("pnl-rebuild-log");
+
+    if (!confirm("确认执行全量重建？这可能需要几分钟。")) {
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = "重建中...";
+    log.innerHTML = '<span class="active">●</span> 启动中...';
+
+    try {
+      await fetch("/api/rebuild", { method: "POST" });
+      pnlStartRebuildPolling();
+    } catch (e) {
+      console.error("启动重建失败", e);
+      btn.disabled = false;
+      btn.textContent = "全量重建";
+    }
+  }
+
+  function pnlStartRebuildPolling() {
+    if (_rebuildPollTimer) clearInterval(_rebuildPollTimer);
+
+    _rebuildPollTimer = setInterval(async () => {
+      try {
+        const resp = await fetch("/api/rebuild-status");
+        const status = await resp.json();
+        pnlUpdateRebuildProgress(status);
+
+        if (!status.running) {
+          clearInterval(_rebuildPollTimer);
+          _rebuildPollTimer = null;
+          document.getElementById("pnl-rebuild-btn").disabled = false;
+          document.getElementById("pnl-rebuild-btn").textContent = "全量重建";
+          if (status.total_users > 0 && typeof rpOnRebuildDone === 'function') {
+            rpOnRebuildDone();
+          }
+        }
+      } catch (e) {
+        console.error("查询进度失败", e);
+      }
+    }, 1000);
+  }
+
+  function pnlUpdateRebuildProgress(s) {
+    const log = document.getElementById("pnl-rebuild-log");
+    const lines = [];
+
+    if (s.phase >= 1) {
+      if (s.phase > 1) {
+        lines.push(`<span class="done">✓</span> P1: ${pnlFmt(s.total_conditions)} 问题, ${pnlFmt(s.total_tokens)} 代币 (${(s.phase1_ms / 1000).toFixed(1)}s)`);
+      } else {
+        lines.push(`<span class="active">●</span> P1: 加载元数据中...`);
+      }
+    }
+
+    if (s.phase >= 2) {
+      const scans = [
+        { name: "订单(OrderFilled)", obj: s.order_filled },
+        { name: "铸币(Split)", obj: s.split },
+        { name: "合币(Merge)", obj: s.merge },
+        { name: "赎回(Redemption)", obj: s.redemption },
+        { name: "AMM交易(FPMMTrade)", obj: s.fpmm_trade },
+        { name: "LP操作(FPMMFunding)", obj: s.fpmm_funding },
+        { name: "转换(Convert)", obj: s.convert },
+        { name: "转账(Transfer)", obj: s.transfer },
+      ];
+      for (const sc of scans) {
+        const rows = sc.obj?.rows || 0;
+        const events = sc.obj?.events || 0;
+        if (events > 0 || s.phase > 2) {
+          lines.push(`&nbsp;&nbsp;<span class="done">✓</span> ${sc.name}: ${pnlFmt(rows)} rows → ${pnlFmt(events)} 事件`);
+        } else if (s.phase === 2) {
+          lines.push(rows > 0
+            ? `&nbsp;&nbsp;<span class="active">●</span> ${sc.name}: ${pnlFmt(rows)} rows...`
+            : `&nbsp;&nbsp;<span class="active">●</span> ${sc.name}: 扫描中...`);
+        }
+      }
+      if (s.phase > 2) {
+        lines.push(`<span class="done">✓</span> P2: ${pnlFmt(s.total_events)} 事件 → ${pnlFmt(s.total_users)} 用户 (${(s.phase2_ms / 1000).toFixed(1)}s)`);
+      }
+    }
+
+    if (s.phase >= 3) {
+      if (s.phase > 3) {
+        lines.push(`<span class="done">✓</span> P3: ${pnlFmt(s.total_users)} users 回放完成 (${(s.phase3_ms / 1000).toFixed(1)}s)`);
+      } else {
+        const pct = s.total_users ? Math.round((s.processed_users / s.total_users) * 100) : 0;
+        lines.push(`<span class="active">●</span> P3: 回放中 ${pnlFmt(s.processed_users)}/${pnlFmt(s.total_users)} (${pct}%)`);
+      }
+    }
+
+    if (s.phase === 7) {
+      const total = ((s.phase1_ms + s.phase2_ms + s.phase3_ms) / 1000).toFixed(1);
+      lines.push(`<b style="color:#10b981">完成: ${pnlFmt(s.total_users)} users, ${pnlFmt(s.total_events)} events | ${total}s</b>`);
+    }
+
+    log.innerHTML = lines.join("<br>");
+  }
+
+  async function pnlCheckRebuildStatus() {
+    try {
+      const resp = await fetch("/api/rebuild-status");
+      const status = await resp.json();
+      if (status.running) {
+        document.getElementById("pnl-rebuild-btn").disabled = true;
+        document.getElementById("pnl-rebuild-btn").textContent = "重建中...";
+        pnlStartRebuildPolling();
+      } else if (status.total_users > 0) {
+        if (typeof rpOnRebuildDone === 'function') rpOnRebuildDone();
+        if (status.phase === 7) {
+          pnlUpdateRebuildProgress(status);
+        }
+      }
+    } catch (e) {}
+  }
+</script>

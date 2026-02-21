@@ -1,0 +1,990 @@
+<style>
+  .rp-card {
+    background: #1a1a1a;
+    border-radius: 10px;
+    padding: 15px;
+    border: 1px solid #333;
+    margin-bottom: 15px;
+  }
+  .rp-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #333;
+  }
+  .rp-header h2 {
+    font-size: 1.1em;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+  }
+  .rp-header h2::before {
+    content: "";
+    width: 3px;
+    height: 16px;
+    background: #6366f1;
+    border-radius: 2px;
+  }
+  .rp-query-row { margin-bottom: 12px; }
+  .rp-user-select { display: flex; gap: 8px; align-items: center; }
+  .rp-input-wrapper { position: relative; }
+  .rp-user-input {
+    width: 380px;
+    padding: 6px 10px;
+    font-size: 0.85em;
+    background: #252525;
+    color: #fff;
+    border: 1px solid #333;
+    border-radius: 4px;
+    font-family: monospace;
+  }
+  .rp-user-input:focus { outline: none; border-color: #6366f1; }
+  .rp-user-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #252525;
+    border: 1px solid #333;
+    border-radius: 4px;
+    max-height: 360px;
+    overflow-y: auto;
+    z-index: 100;
+    display: none;
+  }
+  .rp-user-dropdown.show { display: block; }
+  .rp-user-item {
+    padding: 6px 10px;
+    cursor: pointer;
+    font-family: monospace;
+    font-size: 0.8em;
+    display: flex;
+    justify-content: space-between;
+  }
+  .rp-user-item:hover { background: #333; }
+  .rp-user-item .count { color: #888; }
+  .rp-btn {
+    padding: 6px 12px;
+    font-size: 0.85em;
+    background: #333;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .rp-btn:hover { background: #444; }
+  .rp-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .rp-btn-primary { background: #6366f1; }
+  .rp-btn-primary:hover { background: #4f46e5; }
+  .rp-query-hint { color: #666; font-size: 0.8em; margin-left: 8px; }
+  .rp-body { display: block; }
+  .rp-meta {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+  }
+  .rp-meta-item {
+    background: #252525;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 0.85em;
+  }
+  .rp-meta-item .label { color: #888; font-size: 0.8em; }
+  .rp-meta-item .value { color: #fff; font-family: monospace; }
+  .rp-chart-container {
+    position: relative;
+    height: 420px;
+    background: #0f0f0f;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .rp-chart {
+    width: 100%;
+    height: 100%;
+    cursor: crosshair;
+  }
+  .rp-legend {
+    position: absolute;
+    top: 8px;
+    left: 12px;
+    display: flex;
+    gap: 12px;
+    font-size: 0.7em;
+    font-family: monospace;
+    pointer-events: none;
+    flex-wrap: wrap;
+  }
+  .rp-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #aaa;
+  }
+  .rp-legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+  .rp-tooltip {
+    position: absolute;
+    background: rgba(0,0,0,0.9);
+    border: 1px solid #444;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.78em;
+    font-family: monospace;
+    pointer-events: none;
+    z-index: 10;
+    display: none;
+    white-space: nowrap;
+    line-height: 1.6;
+  }
+  .rp-chart-controls {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    display: flex;
+    gap: 4px;
+  }
+  .rp-chart-btn {
+    padding: 3px 8px;
+    font-size: 0.72em;
+    background: rgba(255,255,255,0.1);
+    color: #aaa;
+    border: 1px solid #444;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+  .rp-chart-btn:hover { background: rgba(255,255,255,0.2); color: #fff; }
+  .rp-cursor-bar {
+    background: #252525;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    display: none;
+    font-family: monospace;
+    font-size: 0.82em;
+    line-height: 1.8;
+  }
+  .rp-cursor-bar.show { display: flex; gap: 20px; flex-wrap: wrap; align-items: baseline; }
+  .rp-cursor-bar .sk { color: #888; }
+  .rp-cursor-bar .pnl { font-size: 1.1em; font-weight: 600; }
+  .rp-cursor-bar .pnl.pos { color: #10b981; }
+  .rp-cursor-bar .pnl.neg { color: #ef4444; }
+  .rp-cursor-bar .evt-badge {
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 0.9em;
+  }
+  .rp-cursor-bar .evt-detail { color: #bbb; }
+  .rp-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .rp-panel {
+    background: #252525;
+    border-radius: 8px;
+    padding: 12px;
+  }
+  .rp-panel-title {
+    font-size: 0.9em;
+    color: #fff;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #333;
+  }
+  .rp-positions, .rp-trades { height: 300px; overflow-y: auto; }
+  .rp-pos-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    background: #1a1a1a;
+    border-radius: 4px;
+    margin-bottom: 3px;
+    font-size: 0.78em;
+    font-family: monospace;
+  }
+  .rp-pos-item .cond {
+    color: #aaa;
+    min-width: 110px;
+    max-width: 110px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .rp-pos-bars {
+    display: flex;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+  }
+  .rp-pos-half {
+    flex: 1;
+    position: relative;
+    height: 18px;
+    background: #111;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .rp-pos-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    border-radius: 2px;
+    min-width: 1px;
+  }
+  .rp-pos-bar.long { background: rgba(16,185,129,0.45); }
+  .rp-pos-bar.short { background: rgba(239,68,68,0.45); }
+  .rp-pos-val {
+    position: relative;
+    z-index: 1;
+    display: block;
+    line-height: 18px;
+    padding: 0 4px;
+    font-size: 0.85em;
+    white-space: nowrap;
+    color: #ccc;
+  }
+  .rp-pos-val.long { color: #10b981; }
+  .rp-pos-val.short { color: #ef4444; }
+  .rp-pos-item .rpnl { min-width: 72px; text-align: right; flex-shrink: 0; }
+  .rp-pos-item .rpnl.pos { color: #10b981; }
+  .rp-pos-item .rpnl.neg { color: #ef4444; }
+  .rp-trade-item {
+    display: flex;
+    gap: 8px;
+    padding: 5px 8px;
+    background: #1a1a1a;
+    border-radius: 4px;
+    margin-bottom: 3px;
+    font-size: 0.74em;
+    font-family: monospace;
+    transition: background 0.15s;
+  }
+  .rp-trade-item.focus { background: #2a2a3a; border-left: 2px solid #6366f1; }
+  .rp-trade-item .blk { color: #666; min-width: 72px; }
+  .rp-trade-item .type { min-width: 56px; font-weight: 500; }
+  .rp-trade-item .detail { color: #aaa; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+</style>
+
+<div class="rp-card" id="rp-card">
+  <div class="rp-header">
+    <h2>PnL 回放器</h2>
+  </div>
+  <div class="rp-query-row">
+    <div class="rp-user-select">
+      <div class="rp-input-wrapper">
+        <input type="text" class="rp-user-input" id="rp-user-input"
+               placeholder="输入用户地址 (0x...) 或点击选择" disabled />
+        <div class="rp-user-dropdown" id="rp-user-dropdown"></div>
+      </div>
+      <button class="rp-btn rp-btn-primary" onclick="rpLoadUser()" id="rp-load-btn" disabled>查询</button>
+      <span class="rp-query-hint" id="rp-query-hint">请先执行全量重建</span>
+    </div>
+  </div>
+
+  <div class="rp-body" id="rp-body">
+    <div class="rp-meta" id="rp-meta"></div>
+
+    <div class="rp-chart-container" id="rp-chart-container">
+      <canvas class="rp-chart" id="rp-chart"></canvas>
+      <div class="rp-legend" id="rp-legend">
+        <div class="rp-legend-item"><div class="rp-legend-dot" style="background:#6366f1"></div>Buy</div>
+        <div class="rp-legend-item"><div class="rp-legend-dot" style="background:#ef4444"></div>Sell</div>
+        <div class="rp-legend-item"><div class="rp-legend-dot" style="background:#eab308"></div>Split</div>
+        <div class="rp-legend-item"><div class="rp-legend-dot" style="background:#f97316"></div>Merge</div>
+        <div class="rp-legend-item"><div class="rp-legend-dot" style="background:#22d3ee"></div>Redeem</div>
+        <div class="rp-legend-item"><div class="rp-legend-dot" style="background:#a855f7"></div>FPMM</div>
+        <div class="rp-legend-item"><div class="rp-legend-dot" style="background:#14b8a6"></div>LP</div>
+        <div class="rp-legend-item"><div class="rp-legend-dot" style="background:#f472b6"></div>Convert</div>
+        <div class="rp-legend-item"><div class="rp-legend-dot" style="background:#64748b"></div>Transfer</div>
+        <div class="rp-legend-item"><div class="rp-legend-dot" style="background:#818cf8"></div>Tokens</div>
+      </div>
+      <div class="rp-chart-controls">
+        <button class="rp-chart-btn" onclick="rpResetZoom()">Reset</button>
+      </div>
+      <div class="rp-tooltip" id="rp-tooltip"></div>
+    </div>
+
+    <div class="rp-cursor-bar" id="rp-cursor-bar">
+      <span class="sk" id="rp-cur-sk">-</span>
+      <span class="pnl" id="rp-cur-pnl">$0.00</span>
+      <span class="evt-badge" id="rp-cur-badge"></span>
+      <span class="evt-detail" id="rp-cur-detail"></span>
+      <span style="color:#818cf8" id="rp-cur-tokens"></span>
+    </div>
+
+    <div class="rp-details">
+      <div class="rp-panel">
+        <div class="rp-panel-title">持仓 (<span id="rp-pos-count">0</span>)</div>
+        <div class="rp-positions" id="rp-positions"></div>
+      </div>
+      <div class="rp-panel">
+        <div class="rp-panel-title">交易记录 (<span id="rp-trade-count">0</span>)</div>
+        <div class="rp-trades" id="rp-trades"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let _rData = null;
+let _rTimeline = [];
+let _rUsers = [];
+let _rCurrentUser = '';
+let _rViewStartSk = 0;
+let _rViewEndSk = 0;
+let _rCursorIdx = -1;
+let _rDragging = false;
+let _rDragStartX = 0;
+let _rDragStartVS = 0;
+let _rDragStartVE = 0;
+let _rDragMoved = false;
+let _rPosDebounceTimer = null;
+let _rTradesDebounceTimer = null;
+let _rTrades = [];
+let _rTradeCenter = -1;
+
+const _rPad = { top: 30, right: 70, bottom: 32, left: 50 };
+const _rEvtColors = ['#6366f1','#ef4444','#eab308','#f97316','#22d3ee','#a855f7','#a855f7','#14b8a6','#14b8a6','#f472b6','#64748b','#64748b'];
+const _rEvtNames = ['Buy','Sell','Split','Merge','Redeem','FPMMBuy','FPMMSell','LPAdd','LPRemove','Convert','TransferIn','TransferOut'];
+const _rEvtNamesCN = ['买入','卖出','铸造','合币','赎回','AMM买','AMM卖','LP添加','LP移除','转换','转入','转出'];
+
+document.addEventListener('DOMContentLoaded', () => {
+  rpCheckStatus();
+
+  const input = document.getElementById('rp-user-input');
+  const dropdown = document.getElementById('rp-user-dropdown');
+
+  input.addEventListener('focus', () => { if (_rUsers.length) dropdown.classList.add('show'); });
+  input.addEventListener('input', () => rpFilterUsers(input.value));
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { dropdown.classList.remove('show'); rpLoadUser(); }
+  });
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.rp-input-wrapper')) dropdown.classList.remove('show');
+  });
+
+  rpSetupInteraction();
+  window.addEventListener('resize', () => { if (_rTimeline.length) rpDraw(); });
+});
+
+async function rpCheckStatus() {
+  try {
+    const resp = await fetch('/api/rebuild-status');
+    const s = await resp.json();
+    if (s.phase === 7 && s.total_users > 0) rpEnableQuery();
+  } catch(e) {}
+}
+
+function rpEnableQuery() {
+  document.getElementById('rp-user-input').disabled = false;
+  document.getElementById('rp-load-btn').disabled = false;
+  document.getElementById('rp-query-hint').style.display = 'none';
+  rpLoadUserList();
+}
+
+function rpOnRebuildDone() { rpEnableQuery(); }
+
+async function rpLoadUserList() {
+  try {
+    const resp = await fetch('/api/replay-users?limit=1000');
+    _rUsers = await resp.json();
+    rpRenderDropdown(_rUsers);
+  } catch(e) {}
+}
+
+function rpRenderDropdown(users) {
+  const dd = document.getElementById('rp-user-dropdown');
+  dd.innerHTML = users.map(u =>
+    `<div class="rp-user-item" onclick="rpSelectUser('${u.user_addr}')">
+       <span>${u.user_addr}</span>
+       <span class="count">${u.event_count}</span>
+     </div>`
+  ).join('');
+}
+
+function rpFilterUsers(q) {
+  const lq = q.toLowerCase();
+  rpRenderDropdown(_rUsers.filter(u => u.user_addr.toLowerCase().includes(lq)));
+  document.getElementById('rp-user-dropdown').classList.add('show');
+}
+
+function rpSelectUser(addr) {
+  document.getElementById('rp-user-input').value = addr;
+  document.getElementById('rp-user-dropdown').classList.remove('show');
+}
+
+async function rpLoadUser() {
+  const user = document.getElementById('rp-user-input').value.trim();
+  if (!user) return;
+
+  const btn = document.getElementById('rp-load-btn');
+  btn.disabled = true; btn.textContent = '...';
+
+  try {
+    const resp = await fetch(`/api/replay?user=${encodeURIComponent(user)}`);
+    _rData = await resp.json();
+    _rTimeline = _rData.timeline || [];
+    _rCurrentUser = user;
+
+    rpRenderMeta();
+    rpResetZoom();
+    _rCursorIdx = _rTimeline.length - 1;
+    rpDraw();
+    rpUpdateCursor();
+  } catch(e) {
+    console.error('rpLoadUser', e);
+  } finally {
+    btn.disabled = false; btn.textContent = '查询';
+  }
+}
+
+function rpRenderMeta() {
+  if (!_rData) return;
+  const d = _rData;
+  const nCond = new Set(_rTimeline.map(e => e.ci)).size;
+  const finalPnl = _rTimeline.length ? _rTimeline[_rTimeline.length-1].rpnl / 1e6 : 0;
+
+  const typeCounts = new Array(12).fill(0);
+  for (const e of _rTimeline) typeCounts[e.ty]++;
+
+  document.getElementById('rp-meta').innerHTML = `
+    <div class="rp-meta-item"><div class="label">事件</div><div class="value">${d.total_events}</div></div>
+    <div class="rp-meta-item"><div class="label" style="color:${_rEvtColors[0]}">Buy</div><div class="value">${typeCounts[0]+typeCounts[5]}</div></div>
+    <div class="rp-meta-item"><div class="label" style="color:${_rEvtColors[1]}">Sell</div><div class="value">${typeCounts[1]+typeCounts[6]}</div></div>
+    <div class="rp-meta-item"><div class="label" style="color:${_rEvtColors[2]}">Split</div><div class="value">${typeCounts[2]}</div></div>
+    <div class="rp-meta-item"><div class="label" style="color:${_rEvtColors[3]}">Merge</div><div class="value">${typeCounts[3]}</div></div>
+    <div class="rp-meta-item"><div class="label" style="color:${_rEvtColors[4]}">Redeem</div><div class="value">${typeCounts[4]}</div></div>
+    <div class="rp-meta-item"><div class="label" style="color:${_rEvtColors[7]}">LP</div><div class="value">${typeCounts[7]+typeCounts[8]}</div></div>
+    <div class="rp-meta-item"><div class="label" style="color:${_rEvtColors[9]}">Convert</div><div class="value">${typeCounts[9]}</div></div>
+    <div class="rp-meta-item"><div class="label" style="color:${_rEvtColors[10]}">Transfer</div><div class="value">${typeCounts[10]+typeCounts[11]}</div></div>
+    <div class="rp-meta-item"><div class="label">问题</div><div class="value">${nCond}</div></div>
+    <div class="rp-meta-item"><div class="label">最终 PnL</div><div class="value" style="color:${finalPnl>=0?'#10b981':'#ef4444'}">${rpFmtUSD(finalPnl)}</div></div>
+    <div class="rp-meta-item"><div class="label">首次</div><div class="value">${d.first_ts ? 'block ' + (d.first_ts / 1e9).toFixed(0) : '-'}</div></div>
+    <div class="rp-meta-item"><div class="label">末次</div><div class="value">${d.last_ts ? 'block ' + (d.last_ts / 1e9).toFixed(0) : '-'}</div></div>
+  `;
+}
+
+function rpResetZoom() {
+  if (!_rTimeline.length) return;
+  const margin = Math.max(1, (_rTimeline[_rTimeline.length-1].sk - _rTimeline[0].sk) * 0.02);
+  _rViewStartSk = _rTimeline[0].sk - margin;
+  _rViewEndSk = _rTimeline[_rTimeline.length-1].sk + margin;
+}
+
+function rpDraw() {
+  const canvas = document.getElementById('rp-chart');
+  const container = document.getElementById('rp-chart-container');
+  const rect = container.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+
+  const cssW = rect.width;
+  const cssH = rect.height;
+  canvas.width = cssW * dpr;
+  canvas.height = cssH * dpr;
+  canvas.style.width = cssW + 'px';
+  canvas.style.height = cssH + 'px';
+
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, cssW, cssH);
+
+  if (_rTimeline.length < 1) {
+    ctx.fillStyle = '#888'; ctx.font = '14px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('无数据', cssW/2, cssH/2);
+    return;
+  }
+
+  const p = _rPad;
+  const cW = cssW - p.left - p.right;
+  const cH = cssH - p.top - p.bottom;
+  const skRange = _rViewEndSk - _rViewStartSk;
+  if (skRange <= 0) return;
+
+  let iStart = rpBsearch(_rTimeline, _rViewStartSk) - 1;
+  let iEnd = rpBsearch(_rTimeline, _rViewEndSk) + 1;
+  iStart = Math.max(0, iStart);
+  iEnd = Math.min(_rTimeline.length - 1, iEnd);
+
+  let minY = Infinity, maxY = -Infinity;
+  for (let i = iStart; i <= iEnd; i++) {
+    const v = _rTimeline[i].rpnl / 1e6;
+    if (v < minY) minY = v;
+    if (v > maxY) maxY = v;
+  }
+  if (minY === maxY) { minY -= 1; maxY += 1; }
+  if (minY > 0) minY = 0;
+  if (maxY < 0) maxY = 0;
+  const yPad = (maxY - minY) * 0.08;
+  minY -= yPad; maxY += yPad;
+  const yRange = maxY - minY;
+
+  let maxTk = 0;
+  for (let i = iStart; i <= iEnd; i++) {
+    const tk = _rTimeline[i].tk || 0;
+    if (tk > maxTk) maxTk = tk;
+  }
+  maxTk = Math.max(50, Math.ceil(maxTk / 50) * 50);
+
+  const sk2x = (sk) => p.left + (sk - _rViewStartSk) / skRange * cW;
+  const val2y = (v) => p.top + (1 - (v - minY) / yRange) * cH;
+  const tk2y = (tk) => p.top + (1 - tk / maxTk) * cH;
+
+  const tkStep = rpNiceTkStep(maxTk);
+  ctx.font = '10px monospace'; ctx.textAlign = 'right'; ctx.fillStyle = '#6366f1';
+  for (let t = tkStep; t <= maxTk; t += tkStep) {
+    const yy = tk2y(t);
+    ctx.strokeStyle = '#1a1a2a'; ctx.lineWidth = 0.5;
+    ctx.setLineDash([2,4]); ctx.beginPath();
+    ctx.moveTo(p.left, yy); ctx.lineTo(cssW - p.right, yy); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillText(t, p.left - 4, yy + 3);
+  }
+
+  ctx.strokeStyle = '#222'; ctx.lineWidth = 0.5;
+  const yStep = rpNiceStep(yRange, 6);
+  let yTick = Math.ceil(minY / yStep) * yStep;
+  ctx.textAlign = 'right'; ctx.fillStyle = '#555';
+  while (yTick <= maxY) {
+    const yy = val2y(yTick);
+    ctx.beginPath(); ctx.moveTo(p.left, yy); ctx.lineTo(cssW - p.right, yy); ctx.stroke();
+    ctx.fillText(rpFmtUSDShort(yTick), cssW - p.right + 4, yy + 3);
+    yTick += yStep;
+  }
+
+  const xStep = rpNiceSkStep(skRange);
+  let xTick = Math.ceil(_rViewStartSk / xStep) * xStep;
+  ctx.textAlign = 'center'; ctx.fillStyle = '#555';
+  while (xTick <= _rViewEndSk) {
+    const xx = sk2x(xTick);
+    ctx.beginPath(); ctx.moveTo(xx, p.top); ctx.lineTo(xx, cssH - p.bottom); ctx.stroke();
+    ctx.fillText(rpFmtSk(xTick), xx, cssH - p.bottom + 14);
+    xTick += xStep;
+  }
+
+  if (minY < 0 && maxY > 0) {
+    const zy = val2y(0);
+    ctx.strokeStyle = '#444'; ctx.lineWidth = 1;
+    ctx.setLineDash([4,4]); ctx.beginPath();
+    ctx.moveTo(p.left, zy); ctx.lineTo(cssW - p.right, zy); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  ctx.strokeStyle = 'rgba(129,140,248,0.5)'; ctx.lineWidth = 1; ctx.beginPath();
+  let firstTk = true;
+  for (let i = iStart; i <= iEnd; i++) {
+    const x = sk2x(_rTimeline[i].sk);
+    const y = tk2y(_rTimeline[i].tk || 0);
+    if (firstTk) { ctx.moveTo(x, y); firstTk = false; }
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  ctx.strokeStyle = '#10b981'; ctx.lineWidth = 1.5; ctx.beginPath();
+  let firstPoint = true;
+  for (let i = iStart; i <= iEnd; i++) {
+    const x = sk2x(_rTimeline[i].sk);
+    const y = val2y(_rTimeline[i].rpnl / 1e6);
+    if (firstPoint) { ctx.moveTo(x, y); firstPoint = false; }
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  if (!firstPoint) {
+    const baseY = val2y(Math.max(minY, 0));
+    ctx.lineTo(sk2x(_rTimeline[iEnd].sk), baseY);
+    ctx.lineTo(sk2x(_rTimeline[iStart].sk), baseY);
+    ctx.closePath();
+    const grad = ctx.createLinearGradient(0, p.top, 0, cssH - p.bottom);
+    grad.addColorStop(0, 'rgba(16,185,129,0.18)');
+    grad.addColorStop(1, 'rgba(16,185,129,0)');
+    ctx.fillStyle = grad; ctx.fill();
+  }
+
+  const minPxGap = 3;
+  let lastMx = -999;
+  for (let i = iStart; i <= iEnd; i++) {
+    const e = _rTimeline[i];
+    const x = sk2x(e.sk);
+    if (Math.abs(x - lastMx) < minPxGap) continue;
+    lastMx = x;
+    const y = val2y(e.rpnl / 1e6);
+    const color = _rEvtColors[e.ty] || '#888';
+    const r = 3;
+
+    ctx.fillStyle = color;
+    if (e.ty === 0 || e.ty === 2 || e.ty === 5 || e.ty === 7 || e.ty === 10) {
+      ctx.beginPath();
+      ctx.moveTo(x, y - r - 1);
+      ctx.lineTo(x - r, y + r - 1);
+      ctx.lineTo(x + r, y + r - 1);
+      ctx.closePath(); ctx.fill();
+    } else if (e.ty === 1 || e.ty === 3 || e.ty === 6 || e.ty === 8 || e.ty === 11) {
+      ctx.beginPath();
+      ctx.moveTo(x, y + r + 1);
+      ctx.lineTo(x - r, y - r + 1);
+      ctx.lineTo(x + r, y - r + 1);
+      ctx.closePath(); ctx.fill();
+    } else {
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill();
+    }
+  }
+
+  if (_rCursorIdx >= 0 && _rCursorIdx < _rTimeline.length) {
+    const ce = _rTimeline[_rCursorIdx];
+    const cx = sk2x(ce.sk);
+    const cy = val2y(ce.rpnl / 1e6);
+
+    if (cx >= p.left && cx <= cssW - p.right) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 1;
+      ctx.setLineDash([3,3]); ctx.beginPath();
+      ctx.moveTo(cx, p.top); ctx.lineTo(cx, cssH - p.bottom); ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = '#fff'; ctx.beginPath();
+      ctx.arc(cx, cy, 5, 0, Math.PI*2); ctx.fill();
+      ctx.strokeStyle = _rEvtColors[ce.ty] || '#888'; ctx.lineWidth = 2; ctx.stroke();
+    }
+  }
+
+  canvas._rp = { p, cW, cH, cssW, cssH, minY, maxY, yRange, sk2x, val2y, tk2y, maxTk };
+}
+
+function rpSetupInteraction() {
+  const canvas = document.getElementById('rp-chart');
+
+  canvas.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    if (!_rTimeline.length) return;
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const p = _rPad;
+    const frac = Math.max(0, Math.min(1, (mx - p.left) / (rect.width - p.left - p.right)));
+    const mouseSk = _rViewStartSk + frac * (_rViewEndSk - _rViewStartSk);
+    const factor = e.deltaY > 0 ? 1.25 : 0.8;
+    const newRange = (_rViewEndSk - _rViewStartSk) * factor;
+    if (newRange < 1e6 && factor < 1) return;
+    _rViewStartSk = mouseSk - frac * newRange;
+    _rViewEndSk = mouseSk + (1 - frac) * newRange;
+    rpDraw();
+  }, { passive: false });
+
+  canvas.addEventListener('mousedown', (e) => {
+    if (e.button !== 0) return;
+    _rDragging = true;
+    _rDragMoved = false;
+    _rDragStartX = e.clientX;
+    _rDragStartVS = _rViewStartSk;
+    _rDragStartVE = _rViewEndSk;
+    canvas.style.cursor = 'grabbing';
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (_rDragging) {
+      const dx = e.clientX - _rDragStartX;
+      if (Math.abs(dx) > 3) _rDragMoved = true;
+      const rect = document.getElementById('rp-chart').getBoundingClientRect();
+      const skPerPx = (_rDragStartVE - _rDragStartVS) / (rect.width - _rPad.left - _rPad.right);
+      const shift = -dx * skPerPx;
+      _rViewStartSk = _rDragStartVS + shift;
+      _rViewEndSk = _rDragStartVE + shift;
+      rpDraw();
+    }
+    rpUpdateTooltip(e);
+  });
+
+  window.addEventListener('mouseup', (e) => {
+    if (_rDragging) {
+      _rDragging = false;
+      const canvas = document.getElementById('rp-chart');
+      canvas.style.cursor = 'crosshair';
+      if (!_rDragMoved) {
+        rpSetCursorFromMouse(e);
+      }
+    }
+  });
+
+  canvas.addEventListener('mouseleave', () => {
+    document.getElementById('rp-tooltip').style.display = 'none';
+  });
+}
+
+function rpSetCursorFromMouse(e) {
+  const idx = rpMouseToIdx(e);
+  if (idx < 0) return;
+  _rCursorIdx = idx;
+  rpDraw();
+  rpUpdateCursor();
+}
+
+function rpMouseToIdx(e) {
+  if (!_rTimeline.length) return -1;
+  const canvas = document.getElementById('rp-chart');
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const p = _rPad;
+  const frac = (mx - p.left) / (rect.width - p.left - p.right);
+  const sk = _rViewStartSk + frac * (_rViewEndSk - _rViewStartSk);
+  return rpNearestIdx(sk);
+}
+
+function rpNearestIdx(sk) {
+  let lo = 0, hi = _rTimeline.length - 1;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (_rTimeline[mid].sk < sk) lo = mid + 1;
+    else hi = mid;
+  }
+  if (lo > 0 && Math.abs(_rTimeline[lo-1].sk - sk) < Math.abs(_rTimeline[lo].sk - sk)) return lo - 1;
+  return lo;
+}
+
+function rpUpdateTooltip(e) {
+  const tooltip = document.getElementById('rp-tooltip');
+  if (!_rTimeline.length || _rDragging) { tooltip.style.display = 'none'; return; }
+
+  const canvas = document.getElementById('rp-chart');
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+
+  if (mx < _rPad.left || mx > rect.width - _rPad.right || my < _rPad.top || my > rect.height - _rPad.bottom) {
+    tooltip.style.display = 'none'; return;
+  }
+
+  const frac = (mx - _rPad.left) / (rect.width - _rPad.left - _rPad.right);
+  const sk = _rViewStartSk + frac * (_rViewEndSk - _rViewStartSk);
+  const idx = rpNearestIdx(sk);
+  const ev = _rTimeline[idx];
+  const pnl = ev.rpnl / 1e6;
+  const color = _rEvtColors[ev.ty];
+  const name = _rEvtNamesCN[ev.ty];
+  const tkCount = ev.tk || 0;
+
+  tooltip.innerHTML = `
+    <div style="color:#888">${rpFmtSk(ev.sk)}</div>
+    <div style="color:${pnl>=0?'#10b981':'#ef4444'};font-size:1.1em">${rpFmtUSD(pnl)}</div>
+    <div><span style="color:${color}">${name}</span></div>
+    <div style="color:#818cf8">持仓 ${tkCount} 种</div>
+  `;
+  tooltip.style.display = 'block';
+
+  let tx = mx + 14, ty = my - 10;
+  if (tx + 200 > rect.width) tx = mx - 200;
+  if (ty < 0) ty = 10;
+  tooltip.style.left = tx + 'px';
+  tooltip.style.top = ty + 'px';
+}
+
+function rpUpdateCursor() {
+  const bar = document.getElementById('rp-cursor-bar');
+  if (_rCursorIdx < 0 || _rCursorIdx >= _rTimeline.length) {
+    bar.classList.remove('show'); return;
+  }
+  bar.classList.add('show');
+
+  const ev = _rTimeline[_rCursorIdx];
+  const pnl = ev.rpnl / 1e6;
+  const color = _rEvtColors[ev.ty];
+
+  document.getElementById('rp-cur-sk').textContent = rpFmtSk(ev.sk);
+  const pnlEl = document.getElementById('rp-cur-pnl');
+  pnlEl.textContent = rpFmtUSD(pnl);
+  pnlEl.className = 'pnl ' + (pnl >= 0 ? 'pos' : 'neg');
+
+  const badge = document.getElementById('rp-cur-badge');
+  badge.textContent = _rEvtNamesCN[ev.ty];
+  badge.style.background = color;
+  badge.style.color = '#fff';
+
+  document.getElementById('rp-cur-detail').textContent = '';
+  document.getElementById('rp-cur-tokens').textContent = `持仓 ${ev.tk||0} 种`;
+
+  rpFetchPositionsDebounced(ev.sk);
+  rpFetchTradesDebounced(ev.sk);
+}
+
+function rpFetchPositionsDebounced(sk) {
+  if (_rPosDebounceTimer) clearTimeout(_rPosDebounceTimer);
+  _rPosDebounceTimer = setTimeout(() => rpFetchPositions(sk), 150);
+}
+
+async function rpFetchPositions(sk) {
+  if (!_rCurrentUser) return;
+  const el = document.getElementById('rp-positions');
+  const countEl = document.getElementById('rp-pos-count');
+
+  try {
+    const resp = await fetch(`/api/replay-positions?user=${encodeURIComponent(_rCurrentUser)}&sk=${sk}`);
+    const data = await resp.json();
+    const positions = data.positions || [];
+    countEl.textContent = positions.length;
+
+    if (!positions.length) {
+      el.innerHTML = '<div style="color:#888;padding:10px">无持仓</div>';
+      return;
+    }
+
+    el.innerHTML = positions.map(p => {
+      const rpnl = p.rpnl / 1e6;
+      const rpnlCls = rpnl >= 0 ? 'pos' : 'neg';
+      const yes = (p.pos[0] || 0) / 1e6;
+      const no = (p.pos[1] || 0) / 1e6;
+      return `<div class="rp-pos-item">
+        <span class="cond" title="${p.id}">${p.id.slice(0, 16)}...</span>
+        <div class="rp-pos-bars">${rpPosBar(yes, 'Y')}${rpPosBar(no, 'N')}</div>
+        <span class="rpnl ${rpnlCls}">${rpFmtUSD(rpnl)}</span>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    console.error('rpFetchPositions', e);
+  }
+}
+
+function rpFetchTradesDebounced(sk) {
+  if (_rTradesDebounceTimer) clearTimeout(_rTradesDebounceTimer);
+  _rTradesDebounceTimer = setTimeout(() => rpFetchTrades(sk), 150);
+}
+
+async function rpFetchTrades(sk) {
+  if (!_rCurrentUser) return;
+  try {
+    const resp = await fetch(`/api/replay-trades?user=${encodeURIComponent(_rCurrentUser)}&sk=${sk}`);
+    const data = await resp.json();
+    _rTrades = data.events || [];
+    _rTradeCenter = data.center ?? -1;
+
+    if (_rTradeCenter >= 0 && _rTradeCenter < _rTrades.length) {
+      const t = _rTrades[_rTradeCenter];
+      let detail = '';
+      if (t.ty <= 1 || t.ty === 5 || t.ty === 6) detail = `${(t.d/1e6).toFixed(2)} @ $${(t.p/1e6).toFixed(4)}`;
+      else if (t.ty <= 3 || t.ty === 7 || t.ty === 8) detail = `${(t.d/1e6).toFixed(2)} tokens`;
+      else if (t.ty === 4) detail = `$${(t.d/1e6).toFixed(2)} payout`;
+      else if (t.ty === 9) detail = `${(t.d/1e6).toFixed(2)} convert`;
+      else detail = `${(t.d/1e6).toFixed(2)} tokens`;
+      document.getElementById('rp-cur-detail').textContent = detail;
+    }
+
+    rpRenderTrades();
+  } catch(e) {
+    console.error('rpFetchTrades', e);
+  }
+}
+
+function rpRenderTrades() {
+  const el = document.getElementById('rp-trades');
+  const countEl = document.getElementById('rp-trade-count');
+  countEl.textContent = _rTrades.length;
+
+  const rows = [];
+  for (let i = _rTrades.length - 1; i >= 0; i--) {
+    const ev = _rTrades[i];
+    const isFocus = (i === _rTradeCenter);
+    const color = _rEvtColors[ev.ty];
+    const name = _rEvtNamesCN[ev.ty];
+
+    let detail = '';
+    if (ev.ty <= 1 || ev.ty === 5 || ev.ty === 6) {
+      detail = `${(ev.d/1e6).toFixed(2)} @ $${(ev.p/1e6).toFixed(4)}`;
+    } else if (ev.ty <= 3 || ev.ty === 7 || ev.ty === 8) {
+      detail = `${(ev.d/1e6).toFixed(2)} tokens`;
+    } else if (ev.ty === 4) {
+      detail = `$${(ev.d/1e6).toFixed(2)}`;
+    } else {
+      detail = `${(ev.d/1e6).toFixed(2)}`;
+    }
+
+    rows.push(`<div class="rp-trade-item${isFocus?' focus':''}">
+      <span class="blk">${rpFmtSkShort(ev.sk)}</span>
+      <span class="type" style="color:${color}">${name}</span>
+      <span class="detail">${detail}</span>
+    </div>`);
+  }
+
+  el.innerHTML = rows.length ? rows.join('') : '<div style="color:#888;padding:10px">无交易</div>';
+
+  const focusEl = el.querySelector('.focus');
+  if (focusEl) focusEl.scrollIntoView({ block: 'nearest' });
+}
+
+function rpPosBar(val, label) {
+  if (val === 0) return `<div class="rp-pos-half"></div>`;
+  const abs = Math.abs(val);
+  const pct = Math.min(abs / 5000, 1) * 100;
+  const cls = label === 'Y' ? 'long' : 'short';
+  const txt = `${label} ${val > 0 ? '+' : ''}${val.toFixed(0)}`;
+  return `<div class="rp-pos-half"><div class="rp-pos-bar ${cls}" style="width:${pct.toFixed(1)}%"></div><span class="rp-pos-val ${cls}">${txt}</span></div>`;
+}
+
+function rpNiceTkStep(max) {
+  const nice = [50,100,150,200,250,500,1000,2500,5000,10000,25000,50000,100000,250000,500000];
+  const target = max / 8;
+  for (const n of nice) { if (n >= target) return n; }
+  return Math.ceil(target / 100000) * 100000;
+}
+
+function rpFmtUSD(v) {
+  return (v >= 0 ? '+$' : '-$') + Math.abs(v).toFixed(2);
+}
+
+function rpFmtUSDShort(v) {
+  const abs = Math.abs(v);
+  const sign = v < 0 ? '-' : '';
+  if (abs >= 1e6) return sign + '$' + (abs/1e6).toFixed(1) + 'M';
+  if (abs >= 1e3) return sign + '$' + (abs/1e3).toFixed(1) + 'K';
+  return sign + '$' + abs.toFixed(abs < 1 ? 2 : 0);
+}
+
+function rpFmtSk(sk) {
+  const block = Math.floor(sk / 1e9);
+  const logIdx = sk % 1e9;
+  return `block ${block.toLocaleString()} #${logIdx}`;
+}
+
+function rpFmtSkShort(sk) {
+  const block = Math.floor(sk / 1e9);
+  return block.toLocaleString();
+}
+
+function rpNiceStep(range, ticks) {
+  const rough = range / ticks;
+  const mag = Math.pow(10, Math.floor(Math.log10(rough)));
+  const res = rough / mag;
+  let nice;
+  if (res <= 1.5) nice = 1;
+  else if (res <= 3) nice = 2;
+  else if (res <= 7) nice = 5;
+  else nice = 10;
+  return nice * mag;
+}
+
+function rpNiceSkStep(rangeSk) {
+  const rangeBlocks = rangeSk / 1e9;
+  const targets = [100, 500, 1000, 5000, 10000, 50000, 100000, 500000, 1000000, 5000000, 10000000];
+  const ideal = rangeBlocks / 8;
+  for (const t of targets) { if (t >= ideal) return t * 1e9; }
+  return targets[targets.length-1] * 1e9;
+}
+
+function rpBsearch(arr, sk) {
+  let lo = 0, hi = arr.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (arr[mid].sk < sk) lo = mid + 1;
+    else hi = mid;
+  }
+  return lo;
+}
+</script>

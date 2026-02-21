@@ -67,6 +67,182 @@ public:
     return cond_ids_[idx];
   }
 
+  struct UserSummary {
+    std::string addr;
+    int64_t event_count;
+    int64_t realized_pnl;
+  };
+
+  std::vector<UserSummary> get_users_sorted(int64_t limit = 200) const {
+    std::vector<UserSummary> result;
+    result.reserve(users_.size());
+    for (size_t i = 0; i < users_.size(); ++i) {
+      int64_t event_count = 0;
+      int64_t realized_pnl = 0;
+      for (const auto &ch : user_states_[i].conditions) {
+        event_count += static_cast<int64_t>(ch.snapshots.size());
+        if (!ch.snapshots.empty()) {
+          realized_pnl += ch.snapshots.back().realized_pnl;
+        }
+      }
+      if (event_count > 0) {
+        result.push_back({users_[i], event_count, realized_pnl});
+      }
+    }
+    std::sort(result.begin(), result.end(),
+              [](const UserSummary &a, const UserSummary &b) {
+                return a.event_count > b.event_count;
+              });
+    if (limit > 0 && static_cast<int64_t>(result.size()) > limit) {
+      result.resize(static_cast<size_t>(limit));
+    }
+    return result;
+  }
+
+  struct TimelineEntry {
+    int64_t sort_key;
+    uint8_t event_type;
+    int64_t realized_pnl;
+    int64_t delta;
+    int64_t price;
+    uint32_t cond_idx;
+    uint8_t token_idx;
+    int token_count;
+  };
+
+  std::vector<TimelineEntry> get_user_timeline(const std::string &addr) const {
+    const auto *state = get_user_state(addr);
+    if (!state)
+      return {};
+
+    std::vector<TimelineEntry> timeline;
+    for (const auto &ch : state->conditions) {
+      for (const auto &snap : ch.snapshots) {
+        int token_count = 0;
+        for (int i = 0; i < snap.outcome_count; ++i) {
+          if (snap.positions[i] != 0)
+            ++token_count;
+        }
+        timeline.push_back({snap.sort_key, snap.event_type, snap.realized_pnl,
+                            snap.delta, snap.price, ch.cond_idx, snap.token_idx,
+                            token_count});
+      }
+    }
+    std::sort(timeline.begin(), timeline.end(),
+              [](const TimelineEntry &a, const TimelineEntry &b) {
+                return a.sort_key < b.sort_key;
+              });
+
+    int64_t cum_pnl = 0;
+    int cum_tokens = 0;
+    std::unordered_map<uint32_t, int> cond_token_count;
+    for (auto &e : timeline) {
+      cum_pnl = e.realized_pnl;
+      auto &tc = cond_token_count[e.cond_idx];
+      tc = e.token_count;
+      cum_tokens = 0;
+      for (const auto &[_, c] : cond_token_count) {
+        cum_tokens += c;
+      }
+      e.token_count = cum_tokens;
+    }
+    return timeline;
+  }
+
+  struct PositionAtTime {
+    std::string condition_id;
+    int64_t positions[MAX_OUTCOMES];
+    int64_t cost_basis;
+    int64_t realized_pnl;
+    int outcome_count;
+  };
+
+  std::vector<PositionAtTime> get_positions_at(const std::string &addr,
+                                                int64_t sort_key) const {
+    const auto *state = get_user_state(addr);
+    if (!state)
+      return {};
+
+    std::vector<PositionAtTime> result;
+    for (const auto &ch : state->conditions) {
+      if (ch.snapshots.empty())
+        continue;
+      auto it =
+          std::upper_bound(ch.snapshots.begin(), ch.snapshots.end(), sort_key,
+                           [](int64_t sk, const Snapshot &s) { return sk < s.sort_key; });
+      if (it == ch.snapshots.begin())
+        continue;
+      --it;
+      const auto &snap = *it;
+      bool has_pos = false;
+      for (int i = 0; i < snap.outcome_count; ++i) {
+        if (snap.positions[i] != 0) {
+          has_pos = true;
+          break;
+        }
+      }
+      if (!has_pos && snap.realized_pnl == 0)
+        continue;
+      PositionAtTime pos;
+      pos.condition_id = cond_ids_[ch.cond_idx];
+      std::memcpy(pos.positions, snap.positions, sizeof(snap.positions));
+      pos.cost_basis = snap.cost_basis;
+      pos.realized_pnl = snap.realized_pnl;
+      pos.outcome_count = snap.outcome_count;
+      result.push_back(pos);
+    }
+    return result;
+  }
+
+  struct TradeEntry {
+    int64_t sort_key;
+    uint8_t event_type;
+    int64_t delta;
+    int64_t price;
+    uint32_t cond_idx;
+    uint8_t token_idx;
+  };
+
+  std::vector<TradeEntry> get_trades_near(const std::string &addr,
+                                          int64_t sort_key, int radius = 20) const {
+    auto timeline = get_user_timeline(addr);
+    if (timeline.empty())
+      return {};
+
+    auto it = std::lower_bound(timeline.begin(), timeline.end(), sort_key,
+                               [](const TimelineEntry &e, int64_t sk) {
+                                 return e.sort_key < sk;
+                               });
+    size_t center = (it == timeline.end()) ? timeline.size() - 1
+                                            : static_cast<size_t>(it - timeline.begin());
+    size_t start = (center > static_cast<size_t>(radius)) ? center - radius : 0;
+    size_t end = std::min(center + radius + 1, timeline.size());
+
+    std::vector<TradeEntry> result;
+    for (size_t i = start; i < end; ++i) {
+      const auto &e = timeline[i];
+      result.push_back(
+          {e.sort_key, e.event_type, e.delta, e.price, e.cond_idx, e.token_idx});
+    }
+    return result;
+  }
+
+  size_t get_trades_center_index(const std::string &addr, int64_t sort_key,
+                                 int radius = 20) const {
+    auto timeline = get_user_timeline(addr);
+    if (timeline.empty())
+      return 0;
+
+    auto it = std::lower_bound(timeline.begin(), timeline.end(), sort_key,
+                               [](const TimelineEntry &e, int64_t sk) {
+                                 return e.sort_key < sk;
+                               });
+    size_t center = (it == timeline.end()) ? timeline.size() - 1
+                                            : static_cast<size_t>(it - timeline.begin());
+    size_t start = (center > static_cast<size_t>(radius)) ? center - radius : 0;
+    return center - start;
+  }
+
 private:
   Database &db_;
   RebuildProgress progress_;
