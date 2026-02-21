@@ -2,7 +2,6 @@
 
 ## 1. 模块架构总图
 
-
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
 │                                                              外 部 系 统 (External Systems)                                                                     │
@@ -166,7 +165,7 @@
 | `redeemPositions(collateral, parentCollectionId, conditionId, indexSets)`        | 抵押品, 父集合ID, 条件ID, 索引集     | -           | 结算后赎回      |
 | `reportPayouts(questionId, payouts[])`                                           | 问题ID, 赔付向量                     | -           | 仅 oracle 可调  |
 
-**状态变量**: 
+**状态变量**:
 
 - `payoutNumerators[conditionId]` - 结果向量, 如 `[1,0]`=YES赢
 - `payoutDenominator[conditionId]` - 非零表示已结算
@@ -192,13 +191,13 @@
 | `cancelOrder(order)`                              | Maker    | 订单                              | -    | 取消订单     |
 | `registerToken(tokenId, complement, conditionId)` | Admin    | tokenId, 互补tokenId, conditionId | -    | 注册交易对   |
 
-**MatchType 撮合类型**: 
+**MatchType 撮合类型**:
 
 - `COMPLEMENTARY` - 买 vs 卖, 直接交换
 - `MINT` - 两个买单, 调 `CTF.splitPosition` 铸造 YES+NO
 - `MERGE` - 两个卖单, 调 `CTF.mergePositions` 合并成 USDC
 
-**SignatureType 签名类型**: 
+**SignatureType 签名类型**:
 
 - `EOA=0` - 普通外部账户
 - `POLY_PROXY=1` - Polymarket 代理钱包
@@ -230,7 +229,7 @@
 | `matchOrders(...)`                  | Admin | 调用 exchange.matchOrders() + 退还多付手续费 |
 | `withdrawFees(to, tokenId, amount)` | Admin | 提取手续费 (tokenId=0 为 USDC)               |
 
-**退款逻辑**: 
+**退款逻辑**:
 
 ```
 exchangeFee = order.feeRateBps 计算出的费用
@@ -260,7 +259,7 @@ refund = exchangeFee - operatorFee (如果 > 0)
 | `mergePositions(conditionId, amount)`          | 用户   | 条件ID, 数量         | YES + NO → USDC           |
 | `convertPositions(marketId, indexSet, amount)` | 用户   | 市场ID, 索引集, 数量 | **核心特性: NO 仓位转换** |
 
-**convertPositions 负风险转换**: 
+**convertPositions 负风险转换**:
 
 ```
 持有选项 A,B,C 的 NO, indexSet=0b111
@@ -309,7 +308,7 @@ refund = exchangeFee - operatorFee (如果 > 0)
 | `resolveManually(questionID, payouts[])`                                 | Admin  | 问题ID, 赔付向量                       | 手动解析             |
 | `reset(questionID)`                                                      | Admin  | 问题ID                                 | 重置并重新请求价格   |
 
-**OO 返回值解析**: 
+**OO 返回值解析**:
 
 - `1e18` = YES 赢
 - `0` = NO 赢
@@ -333,7 +332,7 @@ refund = exchangeFee - operatorFee (如果 > 0)
 | `createTotalsMarket(gameId, line)`                                   | Admin  | 创建大小盘       |
 | `resolveMarket(marketId)`                                            | 任何人 | 使用比分解析市场 |
 
-**MarketType**: 
+**MarketType**:
 
 - `Winner` - 胜负盘
 - `Spreads` - 让分盘 (line 必须是半点, 如 2.5)
@@ -358,7 +357,7 @@ refund = exchangeFee - operatorFee (如果 > 0)
 | `createProxy(paymentToken, payment, paymentReceiver, createSig)` | 支付代币, 金额, 接收者, 签名 | proxy 地址 | 从签名恢复 owner, Create2 部署 |
 | `computeProxyAddress(user)`                                      | 用户地址                     | proxy 地址 | 预计算地址 (不部署)            |
 
-**Safe 初始化参数**: 
+**Safe 初始化参数**:
 
 - owners: `[owner]`
 - threshold: `1`
@@ -402,7 +401,7 @@ refund = exchangeFee - operatorFee (如果 > 0)
 | `reclaim(loanId)`                                        | 放贷人 | 拍卖结束后收走抵押品     |
 | `transfer(loanId, newRate)`                              | 第三方 | Dutch Auction 贷款转让   |
 
-**关键常量**: 
+**关键常量**:
 
 - `MAX_INTEREST` ≈ 1000% APY
 - `AUCTION_DURATION` = 1 天
@@ -618,7 +617,7 @@ sequenceDiagram
                                                          positionId (ERC1155 tokenId)
 ```
 
-**计算公式**: 
+**计算公式**:
 
 ```solidity
 conditionId = keccak256(oracle, questionId, outcomeSlotCount)
@@ -626,7 +625,7 @@ collectionId = CTHelpers.getCollectionId(parentCollectionId, conditionId, indexS
 positionId = keccak256(collateralToken, collectionId)
 ```
 
-**Polymarket 简化**: 
+**Polymarket 简化**:
 
 - `outcomeSlotCount` 固定为 2 (YES/NO)
 - `parentCollectionId` 固定为 bytes32(0)
