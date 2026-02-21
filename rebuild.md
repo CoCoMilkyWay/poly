@@ -43,6 +43,12 @@
 │      snapshot → append to Snapshot chain                        │
 │    store user_states_[uid]                                      │
 └─────────────────────────────────────────────────────────────────┘
+
+原则：
+1. 任何token流水都被包括
+2. 任何token流水不被double count
+3. token流水被精确还原， 不含近似假设
+
 ```
 
 ## 数据结构
@@ -251,7 +257,9 @@ for row in results:
 3. 生成 Split 事件，token_idx=0xFF 表示双边
 
 **注意**:
-- **必须过滤 NegRiskAdapter**：NegRisk 用户通过 Adapter 操作，Split 的 stakeholder 是 Adapter 而非用户。用户的实际 token 流水已在 order_filled 中记录
+- **过滤 NegRiskAdapter 的原因**：交易所内部 Split 时，stakeholder 是 Adapter，用户流水在 order_filled
+- **设计假设**：所有 NegRiskAdapter Split 都是交易所内部操作（为交易提供流动性）
+- **待验证的风险**：如果用户直接调用 NegRiskAdapter.splitPosition（套利/建仓），stakeholder 仍是 Adapter，用户信息在被过滤的 Transfer 中，会导致流水丢失。数据显示 73% 的 NegRiskAdapter Split 无对应 order_filled，需要验证这些是否为用户直接操作
 - amount 是消耗的 USDC 数量，同时获得等量 YES 和 NO
 - token_idx=0xFF 表示操作涉及所有 outcome（YES+NO）
 
@@ -284,7 +292,8 @@ for row in results:
 3. 生成 Merge 事件，token_idx=0xFF 表示双边
 
 **注意**:
-- **必须过滤 NegRiskAdapter**：同 scan_split
+- **过滤 NegRiskAdapter 的原因**：同 scan_split
+- **待验证的风险**：同 scan_split。数据显示 85% 的 NegRiskAdapter Merge 无对应 order_filled
 - amount 是销毁的 YES/NO 数量（各 amount 个），获得等量 USDC
 - Merge 是 Split 的逆操作
 
@@ -384,7 +393,8 @@ for row in results:
 - side=1 表示 FundingAdded（LP 投入 USDC，获得 YES+NO）
 - side=2 表示 FundingRemoved（LP 取回 YES+NO）
 - amount0/amount1 是按池子当前比例添加/取回的 YES/NO 数量
-- **成本计算**：Add 时 usdc_spent = max(amount0, amount1)；Remove 时 usdc_received = min(amount0, amount1)
+- **成本计算**：Add 时 usdc_spent = max(amount0, amount1)
+- **FPMM 手续费不追踪**：FPMMFundingRemoved.collateralRemovedFromFeePool 字段不保存，LP 手续费收入不计入 PnL
 
 ```sql
 SELECT block_number, log_index, fpmm_addr, funder, side, amount0, amount1
@@ -644,10 +654,11 @@ for i in 0..outcome_count:
 - LP 投入 USDC → Split 成 YES+NO → 按池子比例添加 → 多余 token 返还
 - **usdc_spent = max(amount0, amount1)**：因为 Split 是 1:1，需要 Split 足够的 USDC 来获得较多的那一边
 - 成本按实际获得的 token 比例分配
+- **待验证的风险**：当前只记录添加到池子的 (amount0, amount1)，返还给用户的 (max-amount0, max-amount1) 通过 Transfer(from=FPMM) 返还，被 Stage1 过滤。如果用户后续卖出返还的 token，可能导致负持仓。精确修复需确认 Split 数量是否总等于 max(amount0, amount1)
 
 ```
-amount0 = amount   // YES 数量
-amount1 = price    // NO 数量
+amount0 = amount   // 添加到池子的 YES 数量
+amount1 = price    // 添加到池子的 NO 数量
 usdc_spent = max(amount0, amount1)
 total = amount0 + amount1
 
@@ -662,31 +673,28 @@ positions[1] += amount1
 #### FPMMLPRemove
 
 **步骤**:
-1. 计算实际 USDC 取回 = min(amount0, amount1)
-2. 计算按比例移除的成本
-3. 计算按比例分配的收入
-4. realized_pnl += 收入 - 成本
-5. 减少 cost 和 positions
+1. 按比例移除成本
+2. 减少 cost 和 positions
+3. **不计算 realized_pnl**
 
 **注意**:
-- LP 取回 YES+NO → 较少的那边可以和对方 Merge 成 USDC
-- **usdc_received = min(amount0, amount1)**：只有 min 部分可以 Merge
-- 多余的 token 留在用户手中（已计入 positions）
+- LP 取回的是 YES+NO token，**不是 USDC**
+- **不计算 realized_pnl 的原因**：Remove 只是把"池子份额"换成"手持 token"，没有发生 USDC 交换
+- 用户后续可能：(1) 保留 token (2) 手动 Merge (3) 在交易所卖出
+- 这些操作会通过 Merge/OrderFilled 事件捕获，届时再计入 realized_pnl
+- **避免 double count**：如果 Remove 时计算 realized_pnl，用户后续 Merge 时 scan_merge 会再次计入
 
 ```
 amount0 = amount   // YES 数量
 amount1 = price    // NO 数量
-usdc_received = min(amount0, amount1)
-total = amount0 + amount1
 
 cost_removed0 = cost[0] * amount0 / positions[0]
 cost_removed1 = cost[1] * amount1 / positions[1]
-realized_pnl += usdc_received * amount0 / total - cost_removed0
-realized_pnl += usdc_received * amount1 / total - cost_removed1
 cost[0] -= cost_removed0
 cost[1] -= cost_removed1
 positions[0] -= amount0
 positions[1] -= amount1
+// realized_pnl 不变
 ```
 
 ---

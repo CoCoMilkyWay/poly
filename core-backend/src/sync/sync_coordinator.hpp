@@ -3,6 +3,7 @@
 #include <atomic>
 #include <chrono>
 #include <deque>
+#include <future>
 #include <iostream>
 #include <memory>
 #include <vector>
@@ -63,6 +64,35 @@ public:
   }
 
 private:
+  static const std::vector<std::string> &ct_topics() {
+    static const std::vector<std::string> v = {
+        topics::TRANSFER_SINGLE, topics::TRANSFER_BATCH, topics::CONDITION_PREPARE,
+        topics::CONDITION_RESOLVE, topics::POSITION_SPLIT, topics::POSITION_MERGE, topics::POSITION_REDEEM};
+    return v;
+  }
+  static const std::vector<std::string> &ex_topics() {
+    static const std::vector<std::string> v = {topics::ORDER_FILL, topics::TOKEN_REGISTER};
+    return v;
+  }
+  static const std::vector<std::string> &nra_topics() {
+    static const std::vector<std::string> v = {topics::MARKET_PREPARE, topics::QUESTION_PREPARE, topics::POSITION_CONVERT};
+    return v;
+  }
+  static const std::vector<std::string> &fpmm_topics() {
+    static const std::vector<std::string> v = {
+        topics::FPMM_CREATE, topics::FPMM_BUY, topics::FPMM_SELL,
+        topics::FPMM_FUNDING_ADD, topics::FPMM_FUNDING_REMOVE};
+    return v;
+  }
+
+  std::vector<RpcClient::LogsQuery> build_queries(int64_t from_block, int64_t to_block) {
+    return {{std::string(contracts::CONDITIONAL_TOKENS), from_block, to_block, ct_topics()},
+            {std::string(contracts::CTF_EXCHANGE), from_block, to_block, ex_topics()},
+            {std::string(contracts::NEG_RISK_CTF_EXCHANGE), from_block, to_block, ex_topics()},
+            {std::string(contracts::NEG_RISK_ADAPTER), from_block, to_block, nra_topics()},
+            {std::nullopt, from_block, to_block, fpmm_topics()}};
+  }
+
   void schedule_sync(int delay_seconds) {
     auto timer = std::make_shared<asio::steady_timer>(*ioc_);
     timer->expires_after(std::chrono::seconds(delay_seconds));
@@ -97,24 +127,16 @@ private:
       return;
     }
 
-    sync_batch(from_block, head_block_);
+    int64_t to_block = std::min(from_block + current_batch_size_ - 1, head_block_.load());
+    auto first_future = rpc_.eth_getLogs_batch_async(build_queries(from_block, to_block));
+    sync_batch_pipeline(from_block, to_block, head_block_, std::move(first_future));
   }
 
-  void sync_batch(int64_t from_block, int64_t head_block) {
-    int64_t to_block = std::min(from_block + current_batch_size_ - 1, head_block);
-
-    static const std::vector<std::string> ct_topics = {topics::TRANSFER_SINGLE, topics::TRANSFER_BATCH, topics::CONDITION_PREPARE, topics::CONDITION_RESOLVE, topics::POSITION_SPLIT, topics::POSITION_MERGE, topics::POSITION_REDEEM};
-    static const std::vector<std::string> ex_topics = {topics::ORDER_FILL, topics::TOKEN_REGISTER};
-    static const std::vector<std::string> nra_topics = {topics::MARKET_PREPARE, topics::QUESTION_PREPARE, topics::POSITION_CONVERT};
-    static const std::vector<std::string> fpmm_topics = {topics::FPMM_CREATE, topics::FPMM_BUY, topics::FPMM_SELL, topics::FPMM_FUNDING_ADD, topics::FPMM_FUNDING_REMOVE};
-
+  void sync_batch_pipeline(int64_t from_block, int64_t to_block, int64_t head_block,
+                           std::future<std::vector<json>> current_future) {
     std::vector<json> results;
     try {
-      results = rpc_.eth_getLogs_batch({{std::string(contracts::CONDITIONAL_TOKENS), from_block, to_block, ct_topics},
-                                        {std::string(contracts::CTF_EXCHANGE), from_block, to_block, ex_topics},
-                                        {std::string(contracts::NEG_RISK_CTF_EXCHANGE), from_block, to_block, ex_topics},
-                                        {std::string(contracts::NEG_RISK_ADAPTER), from_block, to_block, nra_topics},
-                                        {std::nullopt, from_block, to_block, fpmm_topics}});
+      results = current_future.get();
     } catch (const std::exception &e) {
       int64_t reduced = std::max(current_batch_size_ / 2, (int64_t)1);
       std::cerr << "[Sync] eth_getLogs 失败: " << e.what()
@@ -124,7 +146,9 @@ private:
       timer->expires_after(std::chrono::seconds(5));
       timer->async_wait([this, timer, from_block, head_block](boost::system::error_code ec) {
         if (!ec) {
-          sync_batch(from_block, head_block);
+          int64_t to = std::min(from_block + current_batch_size_ - 1, head_block);
+          auto fut = rpc_.eth_getLogs_batch_async(build_queries(from_block, to));
+          sync_batch_pipeline(from_block, to, head_block, std::move(fut));
         }
       });
       return;
@@ -132,6 +156,13 @@ private:
 
     current_batch_size_ = batch_size_;
     size_t response_bytes = rpc_.get_last_response_size();
+
+    int64_t next_from = to_block + 1;
+    int64_t next_to = std::min(next_from + current_batch_size_ - 1, head_block);
+    std::optional<std::future<std::vector<json>>> next_future;
+    if (next_from <= head_block) {
+      next_future = rpc_.eth_getLogs_batch_async(build_queries(next_from, next_to));
+    }
 
     json logs = json::array();
     for (const auto &r : results) {
@@ -143,18 +174,15 @@ private:
     ParsedEvents events = EventParser::parse_logs(logs);
 
     std::vector<std::tuple<std::string, std::string, std::vector<std::string>>> batches;
-    // ConditionalTokens 转账
     batches.emplace_back("transfer",
                          "block_number, tx_hash, log_index, operator, from_addr, to_addr, token_id, amount",
                          std::move(events.transfer));
-    // ConditionalTokens 条件
     batches.emplace_back("condition_preparation",
                          "block_number, tx_hash, log_index, condition_id, oracle, question_id, outcome_slot_count",
                          std::move(events.condition_preparation));
     batches.emplace_back("condition_resolution",
                          "block_number, tx_hash, log_index, condition_id, oracle, question_id, outcome_slot_count, payout_numerators",
                          std::move(events.condition_resolution));
-    // ConditionalTokens 持仓操作
     batches.emplace_back("split",
                          "block_number, tx_hash, log_index, stakeholder, collateral_token, parent_collection_id, condition_id, partition, amount",
                          std::move(events.split));
@@ -164,7 +192,6 @@ private:
     batches.emplace_back("redemption",
                          "block_number, tx_hash, log_index, redeemer, collateral_token, parent_collection_id, condition_id, index_sets, payout",
                          std::move(events.redemption));
-    // FPMM
     batches.emplace_back("fpmm",
                          "block_number, tx_hash, log_index, creator, fpmm_addr, conditional_tokens, collateral_token, condition_ids, fee",
                          std::move(events.fpmm));
@@ -174,14 +201,12 @@ private:
     batches.emplace_back("fpmm_funding",
                          "block_number, tx_hash, log_index, fpmm_addr, funder, side, amounts, collateral_from_fee_pool, shares",
                          std::move(events.fpmm_funding));
-    // CTFExchange 订单
     batches.emplace_back("order_filled",
                          "block_number, tx_hash, log_index, exchange, order_hash, maker, taker, maker_asset_id, taker_asset_id, maker_amount, taker_amount, fee",
                          std::move(events.order_filled));
     batches.emplace_back("token_map",
                          "block_number, tx_hash, log_index, exchange, token0, token1, condition_id",
                          std::move(events.token_map));
-    // NegRiskAdapter 市场
     batches.emplace_back("neg_risk_market",
                          "block_number, tx_hash, log_index, market_id, oracle, fee_bips, data",
                          std::move(events.neg_risk_market));
@@ -204,9 +229,9 @@ private:
     if (chunk_history_.size() > 20)
       chunk_history_.pop_front();
 
-    if (to_block < head_block) {
-      asio::post(*ioc_, [this, to_block, head_block]() {
-        sync_batch(to_block + 1, head_block);
+    if (next_future.has_value()) {
+      asio::post(*ioc_, [this, next_from, next_to, head_block, fut = std::move(*next_future)]() mutable {
+        sync_batch_pipeline(next_from, next_to, head_block, std::move(fut));
       });
     } else {
       std::cout << "[Sync] 本轮同步完成, " << interval_seconds_ << "s 后检查更新" << std::endl;

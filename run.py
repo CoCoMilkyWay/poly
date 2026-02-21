@@ -3,9 +3,7 @@ import subprocess
 import webbrowser
 import time
 import sys
-import signal
 import socket
-import os
 from pathlib import Path
 
 ROOT = Path(__file__).parent
