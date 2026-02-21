@@ -11,8 +11,9 @@
 │      │                               cond_ids_[]                │
 │      │                                                          │
 │  token_map ─────► (join cond_map_) ─► token_map_                │
-│                                                                 │
+│                                           ▲                     │
 │  fpmm ──────────► (join cond_map_) ─► fpmm_map_                 │
+│       └──────────► (keccak256)  ──────────┘ (补全FPMM token)    │
 │                                                                 │
 │  neg_risk_question ► (join condition) ► neg_risk_map_           │
 └─────────────────────────────────────────────────────────────────┘
@@ -204,6 +205,18 @@ for row in results:
 
 ### scan_order_filled
 
+**步骤**:
+1. 查 token_map_ 获取 cond_idx 和 is_yes
+2. 计算 price = usdc_amount * 1e6 / token_amount
+3. 根据 side 判断 maker/taker 的买卖方向
+4. 为 maker 和 taker 各生成一个事件
+
+**注意**:
+- side=1 表示 maker 买入（maker 出 USDC 换 token）
+- side=2 表示 maker 卖出（maker 出 token 换 USDC）
+- taker 方向与 maker 相反
+- price 单位是 1e6 = $1（与 token 数量单位一致）
+
 ```sql
 SELECT block_number, log_index, maker, taker, token_id, side, usdc_amount, token_amount
 FROM order_filled ORDER BY block_number, log_index
@@ -232,6 +245,16 @@ for row in results:
 
 ### scan_split
 
+**步骤**:
+1. 过滤 NegRiskAdapter 地址
+2. 查 cond_map_ 获取 cond_idx
+3. 生成 Split 事件，token_idx=0xFF 表示双边
+
+**注意**:
+- **必须过滤 NegRiskAdapter**：NegRisk 用户通过 Adapter 操作，Split 的 stakeholder 是 Adapter 而非用户。用户的实际 token 流水已在 order_filled 中记录
+- amount 是消耗的 USDC 数量，同时获得等量 YES 和 NO
+- token_idx=0xFF 表示操作涉及所有 outcome（YES+NO）
+
 ```sql
 SELECT block_number, log_index, stakeholder, condition_id, amount
 FROM split ORDER BY block_number, log_index
@@ -241,7 +264,6 @@ FROM split ORDER BY block_number, log_index
 NEGRISK_ADAPTER = 0xd91e80cf2e7be2e162c6513ced06f1dd0da35296
 
 for row in results:
-    // NegRisk 用户通过 Adapter 操作，实际流水已在 order_filled 中
     if stakeholder == NEGRISK_ADAPTER: continue
 
     cond_id = lowercase(condition_id)
@@ -256,6 +278,16 @@ for row in results:
 
 ### scan_merge
 
+**步骤**:
+1. 过滤 NegRiskAdapter 地址
+2. 查 cond_map_ 获取 cond_idx
+3. 生成 Merge 事件，token_idx=0xFF 表示双边
+
+**注意**:
+- **必须过滤 NegRiskAdapter**：同 scan_split
+- amount 是销毁的 YES/NO 数量（各 amount 个），获得等量 USDC
+- Merge 是 Split 的逆操作
+
 ```sql
 SELECT block_number, log_index, stakeholder, condition_id, amount
 FROM merge ORDER BY block_number, log_index
@@ -265,7 +297,6 @@ FROM merge ORDER BY block_number, log_index
 NEGRISK_ADAPTER = 0xd91e80cf2e7be2e162c6513ced06f1dd0da35296
 
 for row in results:
-    // NegRisk 用户通过 Adapter 操作，实际流水已在 order_filled 中
     if stakeholder == NEGRISK_ADAPTER: continue
 
     cond_id = lowercase(condition_id)
@@ -279,6 +310,16 @@ for row in results:
 ```
 
 ### scan_redemption
+
+**步骤**:
+1. 查 cond_map_ 获取 cond_idx
+2. 生成 Redemption 事件，token_idx 存 index_sets，amount 存 payout
+
+**注意**:
+- index_sets 是 bitmap：1=YES, 2=NO, 3=两者都赎回
+- payout 是获得的 USDC 总额（可能为 0，表示赎回的是输家 token）
+- **apply_event 中假设全量赎回**：清空涉及的 positions
+- 市场必须已结算（payout_numerators 非空）才能赎回
 
 ```sql
 SELECT block_number, log_index, redeemer, condition_id, index_sets, payout
@@ -298,6 +339,18 @@ for row in results:
 ```
 
 ### scan_fpmm_trade
+
+**步骤**:
+1. 查 fpmm_map_ 获取 cond_idx
+2. 计算 price = usdc_amount * 1e6 / token_amount
+3. 根据 side 判断 Buy/Sell，生成 FPMMBuy 或 FPMMSell 事件
+
+**注意**:
+- FPMM 是 AMM 时代的交易（已废弃，但历史数据仍需处理）
+- side=1 表示 Buy（用户投入 USDC 获得 token）
+- side=2 表示 Sell（用户卖出 token 获得 USDC）
+- outcome_index: 0=YES, 1=NO
+- 与 order_filled 不同，FPMM 只有 taker（用户），没有 maker
 
 ```sql
 SELECT block_number, log_index, fpmm_addr, trader, side, outcome_index, usdc_amount, token_amount
@@ -321,6 +374,18 @@ for row in results:
 
 ### scan_fpmm_funding
 
+**步骤**:
+1. 查 fpmm_map_ 获取 cond_idx
+2. 根据 side 判断 Add/Remove，生成 FPMMLPAdd 或 FPMMLPRemove 事件
+3. amount 存 YES 数量，price 存 NO 数量
+
+**注意**:
+- LP 添加/移除流动性，涉及双边 token（YES+NO）
+- side=1 表示 FundingAdded（LP 投入 USDC，获得 YES+NO）
+- side=2 表示 FundingRemoved（LP 取回 YES+NO）
+- amount0/amount1 是按池子当前比例添加/取回的 YES/NO 数量
+- **成本计算**：Add 时 usdc_spent = max(amount0, amount1)；Remove 时 usdc_received = min(amount0, amount1)
+
 ```sql
 SELECT block_number, log_index, fpmm_addr, funder, side, amount0, amount1
 FROM fpmm_funding ORDER BY block_number, log_index
@@ -341,6 +406,19 @@ for row in results:
 
 ### scan_convert
 
+**步骤**:
+1. 遍历 index_set 的每个 bit，找到涉及的 question_index
+2. 查 neg_risk_map_ 获取每个 question 对应的 cond_idx
+3. 为每个涉及的 condition 生成一个 Convert 事件
+
+**注意**:
+- **仅限 NegRisk 市场**：Convert 操作是 NegRisk 多选项互斥市场的套利机制
+- **原理**：M 个互斥选项的 NO 组合 = "所有选项都不赢" = 不可能，所以 M 个 NO 可以换 (M-1) USDC
+- index_set 是 bitmap：bit N = 1 表示 question_index=N 的 NO 参与转换
+- amount 是每个 NO 的数量（各 amount 个）
+- **收益分摊**：每个 condition 记录 (popcount-1)/popcount * amount 的收益
+- token_idx=1 表示 NO token，price 存 index_set 供 apply_event 计算 popcount
+
 ```sql
 SELECT block_number, log_index, stakeholder, market_id, index_set, amount
 FROM convert ORDER BY block_number, log_index
@@ -352,10 +430,6 @@ for row in results:
     sort_key = block_number * 1e9 + log_index
     uid = intern_user(stakeholder)
 
-    // Convert: M 个 NO → (M-1) USDC
-    // index_set 是 bitmap，表示哪些 question 的 NO 被转换
-    // 每个 bit 对应一个 question_index
-
     // 遍历 index_set 的每个 bit，为每个涉及的 condition 生成事件
     for bit_idx in 0..64:
         if not ((index_set >> bit_idx) & 1): continue
@@ -364,14 +438,25 @@ for row in results:
         if key not in neg_risk_map_: continue
 
         cond_idx = neg_risk_map_[key]
-        // NO token 被销毁
         push(uid, { sort_key, cond_idx, Convert, 1, amount, index_set })
-
-    // 总收益 = (popcount - 1) * amount，记录在第一个 condition
-    // 或者在 replay 时统一计算
 ```
 
 ### scan_transfer
+
+**步骤**:
+1. 查 token_map_ 获取 cond_idx 和 is_yes
+2. 为 from_addr 生成 TransferOut 事件
+3. 为 to_addr 生成 TransferIn 事件
+
+**注意**:
+- transfer 表已在 Stage1 过滤掉：
+  - mint (from=0x0) 和 burn (to=0x0)
+  - operator 是 CTFExchange/NegRiskCTFExchange/NegRiskAdapter 的记录
+  - from/to 是 FPMM 地址的记录
+- 剩下的主要是用户间直接转账
+- **TransferIn 是 0 成本获得 token**（可能是赠与、空投等）
+- **TransferOut 不产生 realized_pnl**（只是成本转移）
+- 如果 token_id 不在 token_map_ 中，会被 skip（FPMM-only 市场已在 Phase 1.3 补全）
 
 ```sql
 SELECT block_number, log_index, from_addr, to_addr, token_id, amount
@@ -432,115 +517,234 @@ replay_user(uid):
 
 ### apply_event
 
-所有操作只做简单的 +/- 仓位，不做任何持仓检查。负持仓说明有 bug。
+**核心原则**：所有操作只做简单的 +/- 仓位，不做任何持仓检查。负持仓说明有 bug。
+
+---
+
+#### Buy / FPMMBuy
+
+**步骤**:
+1. 计算成本 = amount * price / 1e6
+2. cost[i] += 成本
+3. positions[i] += amount
+
+**注意**:
+- price 单位是 1e6 = $1，amount 也是 6 decimals
+- 除以 1e6 是为了让 cost 的单位也是 6 decimals
 
 ```
-Buy / FPMMBuy:
-    i = token_idx
-    cost[i] += amount * price / 1e6
-    positions[i] += amount
+i = token_idx
+cost[i] += amount * price / 1e6
+positions[i] += amount
+```
 
-Sell / FPMMSell:
-    i = token_idx
+---
+
+#### Sell / FPMMSell
+
+**步骤**:
+1. 计算按比例移除的成本 = cost[i] * amount / positions[i]
+2. 计算卖出收入 = amount * price / 1e6
+3. realized_pnl += 收入 - 成本
+4. cost[i] -= cost_removed
+5. positions[i] -= amount
+
+**注意**:
+- **不检查 positions[i] 是否足够**：如果 positions[i] < amount，会产生负持仓
+- 负持仓 = bug 信号，需要排查事件流
+
+```
+i = token_idx
+cost_removed = cost[i] * amount / positions[i]
+realized_pnl += amount * price / 1e6 - cost_removed
+cost[i] -= cost_removed
+positions[i] -= amount
+```
+
+---
+
+#### Split
+
+**步骤**:
+1. 为每个 outcome 增加成本 = amount / outcome_count
+2. 为每个 outcome 增加持仓 = amount
+
+**注意**:
+- 1 USDC → 1 YES + 1 NO（binary market）
+- 成本平均分配到 YES 和 NO（各 0.5 USDC）
+- amount 是消耗的 USDC，也是获得的每种 token 数量
+
+```
+for i in 0..outcome_count:
+    cost[i] += amount / outcome_count
+    positions[i] += amount
+```
+
+---
+
+#### Merge
+
+**步骤**:
+1. 为每个 outcome 计算按比例移除的成本
+2. 计算每个 outcome 的收入 = amount / outcome_count
+3. realized_pnl += 收入 - 成本
+4. 减少 cost 和 positions
+
+**注意**:
+- 1 YES + 1 NO → 1 USDC（binary market）
+- 是 Split 的逆操作
+- **假设各 outcome 持仓相等**：Merge 需要等量的 YES 和 NO
+
+```
+for i in 0..outcome_count:
     cost_removed = cost[i] * amount / positions[i]
-    realized_pnl += amount * price / 1e6 - cost_removed
+    realized_pnl += amount / outcome_count - cost_removed
     cost[i] -= cost_removed
     positions[i] -= amount
+```
 
-Split:
-    // USDC → YES + NO (1 USDC → 1 YES + 1 NO)
-    for i in 0..outcome_count:
-        cost[i] += amount / outcome_count
-        positions[i] += amount
+---
 
-Merge:
-    // YES + NO → USDC (1 YES + 1 NO → 1 USDC)
-    for i in 0..outcome_count:
-        cost_removed = cost[i] * amount / positions[i]
-        realized_pnl += amount / outcome_count - cost_removed
-        cost[i] -= cost_removed
-        positions[i] -= amount
+#### Redemption
 
-Redemption:
-    // token → USDC (按 payout 结算，payout 是实际获得的 USDC)
-    // index_sets: bitmap 表示赎回哪些 outcome
-    // payout: 实际获得的 USDC 总额
-    index_sets = token_idx
+**步骤**:
+1. 解析 index_sets bitmap
+2. 对每个涉及的 outcome：
+   - realized_pnl += 持仓 * payout_price - 成本
+   - 清零 cost 和 positions
+
+**注意**:
+- **假设全量赎回**：清零所有涉及的 positions
+- payout_price = payout_numerators[i]（0 或 1）
+- 输家 token (payout=0)：realized_pnl -= cost（亏损全部成本）
+- 赢家 token (payout=1)：realized_pnl += positions - cost
+
+```
+index_sets = token_idx
+
+for i in 0..outcome_count:
+    if not ((index_sets >> i) & 1): continue
     
-    // 从 payout 反算赎回数量
-    // binary market: payout_numerators = [1,0] 或 [0,1] 或 [1,1]
-    // redeemed_amount = payout / sum(payout_numerators[i] for i in index_sets)
-    payout_sum = 0
-    for i in 0..outcome_count:
-        if (index_sets >> i) & 1:
-            payout_sum += payout_numerators[i]
-    
-    if payout_sum > 0:
-        redeemed = payout / payout_sum
-    else:
-        // 全输，从 positions 推断（所有涉及的 position 应该相等）
-        redeemed = positions[first_set_bit(index_sets)]
-    
-    for i in 0..outcome_count:
-        if not ((index_sets >> i) & 1): continue
-        
-        cost_removed = cost[i] * redeemed / positions[i]
-        payout_price = payout_numerators[i]
-        realized_pnl += redeemed * payout_price - cost_removed
-        cost[i] -= cost_removed
-        positions[i] -= redeemed
+    payout_price = payout_numerators[i]
+    realized_pnl += positions[i] * payout_price - cost[i]
+    cost[i] = 0
+    positions[i] = 0
+```
 
-FPMMLPAdd:
-    // LP 添加流动性: 投入 USDC → 获得 YES + NO
-    // 实际 USDC 投入 = max(amount0, amount1)，因为 Split 是 1:1
-    amount0 = amount   // YES 数量
-    amount1 = price    // NO 数量
-    usdc_spent = max(amount0, amount1)
-    total = amount0 + amount1
-    
-    cost[0] += usdc_spent * amount0 / total
-    cost[1] += usdc_spent * amount1 / total
-    positions[0] += amount0
-    positions[1] += amount1
+---
 
-FPMMLPRemove:
-    // LP 移除流动性: 取回 YES + NO → 部分 Merge 成 USDC
-    // 实际 USDC 取回 = min(amount0, amount1)
-    amount0 = amount   // YES 数量
-    amount1 = price    // NO 数量
-    usdc_received = min(amount0, amount1)
-    total = amount0 + amount1
-    
-    cost_removed0 = cost[0] * amount0 / positions[0]
-    cost_removed1 = cost[1] * amount1 / positions[1]
-    realized_pnl += usdc_received * amount0 / total - cost_removed0
-    realized_pnl += usdc_received * amount1 / total - cost_removed1
-    cost[0] -= cost_removed0
-    cost[1] -= cost_removed1
-    positions[0] -= amount0
-    positions[1] -= amount1
+#### FPMMLPAdd
 
-Convert:
-    // NegRisk: M 个 NO → (M-1) USDC
-    // token_idx=1 (NO), amount 是数量, price 存 index_set
-    index_set = price
-    popcount = bitcount(index_set)
+**步骤**:
+1. 计算实际 USDC 投入 = max(amount0, amount1)
+2. 按 token 比例分配成本
+3. 增加 positions
 
-    // NO token 被销毁
-    cost_removed = cost[1] * amount / positions[1]
-    cost[1] -= cost_removed
-    positions[1] -= amount
+**注意**:
+- LP 投入 USDC → Split 成 YES+NO → 按池子比例添加 → 多余 token 返还
+- **usdc_spent = max(amount0, amount1)**：因为 Split 是 1:1，需要 Split 足够的 USDC 来获得较多的那一边
+- 成本按实际获得的 token 比例分配
 
-    // 收益分摊到每个 condition: (popcount - 1) / popcount * amount
-    realized_pnl += (popcount - 1) * amount / popcount - cost_removed
+```
+amount0 = amount   // YES 数量
+amount1 = price    // NO 数量
+usdc_spent = max(amount0, amount1)
+total = amount0 + amount1
 
-TransferIn:
-    // 0 成本获得 token
-    positions[token_idx] += amount
+cost[0] += usdc_spent * amount0 / total
+cost[1] += usdc_spent * amount1 / total
+positions[0] += amount0
+positions[1] += amount1
+```
 
-TransferOut:
-    // 转出 token，按比例移除成本，不产生 realized_pnl
-    cost_removed = cost[token_idx] * amount / positions[token_idx]
-    cost[token_idx] -= cost_removed
-    positions[token_idx] -= amount
+---
+
+#### FPMMLPRemove
+
+**步骤**:
+1. 计算实际 USDC 取回 = min(amount0, amount1)
+2. 计算按比例移除的成本
+3. 计算按比例分配的收入
+4. realized_pnl += 收入 - 成本
+5. 减少 cost 和 positions
+
+**注意**:
+- LP 取回 YES+NO → 较少的那边可以和对方 Merge 成 USDC
+- **usdc_received = min(amount0, amount1)**：只有 min 部分可以 Merge
+- 多余的 token 留在用户手中（已计入 positions）
+
+```
+amount0 = amount   // YES 数量
+amount1 = price    // NO 数量
+usdc_received = min(amount0, amount1)
+total = amount0 + amount1
+
+cost_removed0 = cost[0] * amount0 / positions[0]
+cost_removed1 = cost[1] * amount1 / positions[1]
+realized_pnl += usdc_received * amount0 / total - cost_removed0
+realized_pnl += usdc_received * amount1 / total - cost_removed1
+cost[0] -= cost_removed0
+cost[1] -= cost_removed1
+positions[0] -= amount0
+positions[1] -= amount1
+```
+
+---
+
+#### Convert
+
+**步骤**:
+1. 解析 index_set，计算 popcount
+2. 按比例移除 NO 成本
+3. 减少 NO 持仓
+4. 计算分摊收益 = (popcount-1)/popcount * amount
+
+**注意**:
+- **仅限 NegRisk**：M 个 NO → (M-1) USDC
+- 每个涉及的 condition 都会收到一个 Convert 事件
+- **收益分摊**：总收益 (M-1)*amount 平均分到 M 个 condition
+- 每个 condition 销毁 amount 个 NO token
+
+```
+index_set = price
+popcount = bitcount(index_set)
+
+cost_removed = cost[1] * amount / positions[1]
+cost[1] -= cost_removed
+positions[1] -= amount
+
+realized_pnl += (popcount - 1) * amount / popcount - cost_removed
+```
+
+---
+
+#### TransferIn
+
+**步骤**:
+1. 增加 positions
+
+**注意**:
+- **0 成本获得 token**：可能是赠与、空投、从其他账户转入
+- 不增加 cost（成本为 0）
+
+```
+positions[token_idx] += amount
+```
+
+---
+
+#### TransferOut
+
+**步骤**:
+1. 按比例移除成本
+2. 减少 cost 和 positions
+
+**注意**:
+- **不产生 realized_pnl**：转出不是卖出，只是把 token 和对应成本转移走
+- 如果转给自己的另一个账户，那边会收到 TransferIn（成本为 0）
+
+```
+cost_removed = cost[token_idx] * amount / positions[token_idx]
+cost[token_idx] -= cost_removed
+positions[token_idx] -= amount
 ```
