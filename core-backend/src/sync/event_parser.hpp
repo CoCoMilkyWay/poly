@@ -39,13 +39,19 @@ constexpr const char *FPMM_FUNDING_ADDED = "0xec2dc3e5a3bb9aa0a1deb905d2bd23640d
 constexpr const char *FPMM_FUNDING_REMOVED = "0x8b4b2c8ebd04c47fc8bce136a85df9b93fcb1f47c8aa296457d4391519d190e7";
 } // namespace topics
 
+struct TransferRecord {
+  std::string from_addr;
+  std::string to_addr;
+  std::string sql_values;
+};
+
 struct ParsedEvents {
   std::vector<std::string> order_filled;
   std::vector<std::string> split;
   std::vector<std::string> merge;
   std::vector<std::string> redemption;
   std::vector<std::string> convert;
-  std::vector<std::string> transfer;
+  std::vector<TransferRecord> transfer;
   std::vector<std::string> token_map;
   std::vector<std::string> condition;
   std::vector<std::string> condition_resolution;
@@ -128,7 +134,7 @@ private:
       parse_exchange_event(topic0, topics_arr, data, block_number, log_index, "NegRisk", events);
     } else if (address == contracts::NEG_RISK_ADAPTER) {
       parse_neg_risk_adapter_event(topic0, topics_arr, data, block_number, log_index, events);
-    } else if (address == contracts::FPMM_FACTORY) {
+    } else if (topic0 == topics::FPMM_CREATION) {
       parse_fpmm_factory_event(topic0, topics_arr, data, block_number, log_index, events);
     } else {
       parse_fpmm_event(topic0, address, topics_arr, data, block_number, log_index, events);
@@ -203,7 +209,7 @@ private:
     ss << block_number << ", " << (log_index * 1000) << ", "
        << sql_blob(from) << ", " << sql_blob(to) << ", "
        << sql_blob(token_id) << ", " << amount;
-    events.transfer.push_back(ss.str());
+    events.transfer.push_back({to_lower(from), to_lower(to), ss.str()});
   }
 
   static void parse_transfer_batch(const json &topics, const std::string &data,
@@ -231,6 +237,8 @@ private:
     int64_t values_len = extract_uint256_from_data(data, values_offset / 32);
     assert(ids_len == values_len);
 
+    std::string from_lower = to_lower(from);
+    std::string to_lower_addr = to_lower(to);
     for (int64_t i = 0; i < ids_len; ++i) {
       std::string token_id = extract_bytes32_from_data(data, ids_offset / 32 + 1 + i);
       int64_t amount = extract_uint256_from_data(data, values_offset / 32 + 1 + i);
@@ -239,7 +247,7 @@ private:
       ss << block_number << ", " << (log_index * 1000 + i) << ", "
          << sql_blob(from) << ", " << sql_blob(to) << ", "
          << sql_blob(token_id) << ", " << amount;
-      events.transfer.push_back(ss.str());
+      events.transfer.push_back({from_lower, to_lower_addr, ss.str()});
     }
   }
 

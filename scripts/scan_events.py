@@ -2,29 +2,34 @@
 """扫描 Polymarket 合约历史事件统计（动态终端刷新）"""
 
 """
-Polymarket 事件扫描  (head=83,000,000)
+  Polymarket 事件扫描  (head=83,000,000)
 
-  块进度:   68,281,999 / 83,000,000  (82.3%)  -  速度: 355 blk/s  ETA: 690.6 min
+  块进度:   62,889,999 / 83,000,000  (75.8%)  -  速度: 458 blk/s  ETA: 731.8 min
 
-  合约                  事件                              总计        首block        末block      2020      2021      2022      2023      2024      2025      2026
-  --------------------------------------------------------------------------------------------------------------------------------------------------------
-  ConditionalTokens   TransferSingle          84,545,926     4,028,711    68,281,999         0 1,323,929 1,455,369   492,77439,667,70441,606,150         0
-  ConditionalTokens   TransferBatch           54,120,488     4,028,608    68,281,999         0 1,202,775 1,832,003   376,67525,391,33625,317,699         0
-  ConditionalTokens   ConditionPreparation        37,482     4,027,499    68,278,448         0     1,029     7,392     4,218    15,364     9,479         0
-  ConditionalTokens   ConditionResolution         30,040     6,205,069    68,278,044         0       750     3,733     3,805    13,606     8,146         0
-  ConditionalTokens   PositionSplit           21,647,506     4,028,608    68,281,999         0   617,762   968,524   230,22710,177,708 9,653,285         0
-  ConditionalTokens   PositionsMerge          10,311,617     4,028,724    68,281,998         0   490,210   657,656   113,262 4,172,673 4,877,816         0
-  ConditionalTokens   PayoutRedemption         4,987,113     6,233,711    68,281,991         0   332,902   246,192    69,917 1,747,897 2,590,205         0
-  CTFExchange         OrderFilled             19,759,589    35,896,869    68,281,999         0         0         0   247,475 7,633,61911,878,495         0
-  CTFExchange         OrdersMatched            8,334,148    35,896,869    68,281,999         0         0         0   101,248 3,233,641 4,999,259         0
-  CTFExchange         TokenRegistered             31,180    35,887,522    68,278,152         0         0         0     6,744    14,526     9,910         0
-  NegRiskCTFExchange  OrderFilled             57,493,076    51,408,357    68,281,999         0         0         0         030,359,91227,133,164         0
-  NegRiskCTFExchange  OrdersMatched           26,593,833    51,408,357    68,281,999         0         0         0         014,092,05212,501,781         0
-  NegRiskCTFExchange  TokenRegistered             25,004    51,405,773    68,278,481         0         0         0         0    16,042     8,962         0
-  NegRiskAdapter      MarketPrepared                   0       -             -               0         0         0         0         0         0         0
-  NegRiskAdapter      QuestionPrepared                 0       -             -               0         0         0         0         0         0         0
-  NegRiskAdapter      PositionsConverted               0       -             -               0         0         0         0         0         0         0
-  NegRiskAdapter      OutcomeReported                  0       -             -               0         0         0         0         0         0         0
+  合约                事件                          总计       首block       末block       2020       2021       2022       2023       2024       2025       2026
+  ---------------------------------------------------------------------------------------------------------------------------------------------------------------
+  ConditionalTokens   TransferSingle          15,922,185     4,028,711    62,889,999          0  1,319,462  1,457,584    493,197 12,651,942          0          0
+  ConditionalTokens   TransferBatch           12,080,571     4,028,608    62,889,999          0  1,197,332  1,834,233    379,225  8,669,781          0          0
+  ConditionalTokens   ConditionPreparation        23,270     4,027,499    62,887,016          0      1,012      7,388      4,236     10,634          0          0
+  ConditionalTokens   ConditionResolution         17,159     6,205,069    62,889,281          0        743      3,734      3,797      8,885          0          0
+  ConditionalTokens   PositionSplit            5,692,159     4,028,608    62,889,999          0    614,470    970,174    231,322  3,876,193          0          0
+  ConditionalTokens   PositionsMerge           2,500,809     4,028,724    62,889,998          0    488,700    658,156    114,156  1,239,797          0          0
+  ConditionalTokens   PayoutRedemption         1,284,556     6,233,711    62,889,985          0    331,252    247,416     70,202    635,686          0          0
+  FPMMFactory         FPMMCreation                13,642     4,027,846    62,760,657          0        981      7,230      4,240      1,191          0          0
+  FPMM                FPMMBuy                  1,068,771     4,028,711    62,889,297          0    264,187    640,882    161,829      1,873          0          0
+  FPMM                FPMMSell                 1,064,706     4,028,724    62,876,506          0    448,241    540,392     75,316        757          0          0
+  FPMM                FPMMFundingAdded           186,350     4,028,608    61,759,915          0     49,219    108,232     28,689        210          0          0
+  FPMM                FPMMFundingRemoved         168,320     4,350,124    62,752,190          0     44,937     97,533     25,691        159          0          0
+  CTFExchange         OrderFilled              3,215,134    35,896,869    62,889,996          0          0          0    245,770  2,969,364          0          0
+  CTFExchange         OrdersMatched            1,324,672    35,896,869    62,889,996          0          0          0    100,553  1,224,119          0          0
+  CTFExchange         TokenRegistered             16,372    35,887,522    62,887,050          0          0          0      6,738      9,634          0          0
+  NegRiskCTFExchange  OrderFilled              9,044,559    51,408,357    62,889,999          0          0          0          0  9,044,559          0          0
+  NegRiskCTFExchange  OrdersMatched            4,105,482    51,408,357    62,889,999          0          0          0          0  4,105,482          0          0
+  NegRiskCTFExchange  TokenRegistered             11,444    51,405,773    62,881,562          0          0          0          0     11,444          0          0
+  NegRiskAdapter      MarketPrepared                 947    50,748,168    62,881,479          0          0          0          0        947          0          0
+  NegRiskAdapter      QuestionPrepared             5,732    50,750,368    62,881,531          0          0          0          0      5,732          0          0
+  NegRiskAdapter      PositionsConverted         119,043    50,861,311    62,889,978          0          0          0          0    119,043          0          0
+  NegRiskAdapter      OutcomeReported              4,239    51,868,332    62,889,281          0          0          0          0      4,239          0          0
 """
 
 from pathlib import Path

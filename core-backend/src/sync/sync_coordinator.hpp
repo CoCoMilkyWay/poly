@@ -112,9 +112,8 @@ private:
         topics::ORDER_FILLED, topics::TOKEN_REGISTERED};
     static const std::vector<std::string> nra_topics = {
         topics::MARKET_PREPARED, topics::QUESTION_PREPARED, topics::POSITIONS_CONVERTED};
-    static const std::vector<std::string> fpmm_factory_topics = {topics::FPMM_CREATION};
     static const std::vector<std::string> fpmm_topics = {
-        topics::FPMM_BUY, topics::FPMM_SELL,
+        topics::FPMM_CREATION, topics::FPMM_BUY, topics::FPMM_SELL,
         topics::FPMM_FUNDING_ADDED, topics::FPMM_FUNDING_REMOVED};
 
     std::vector<json> results;
@@ -123,7 +122,6 @@ private:
                                         {std::string(contracts::CTF_EXCHANGE), from_block, to_block, ex_topics},
                                         {std::string(contracts::NEG_RISK_CTF_EXCHANGE), from_block, to_block, ex_topics},
                                         {std::string(contracts::NEG_RISK_ADAPTER), from_block, to_block, nra_topics},
-                                        {std::string(contracts::FPMM_FACTORY), from_block, to_block, fpmm_factory_topics},
                                         {std::nullopt, from_block, to_block, fpmm_topics}});
     } catch (const std::exception &e) {
       int64_t reduced = std::max(current_batch_size_ / 2, (int64_t)1);
@@ -152,6 +150,23 @@ private:
 
     ParsedEvents events = EventParser::parse_logs(logs);
 
+    auto fpmm_addrs = db_.get_fpmm_addrs();
+    for (const auto &f : events.fpmm) {
+      size_t first_comma = f.find(',');
+      std::string addr = f.substr(2, first_comma - 3);
+      std::string addr_lower = "0x" + addr;
+      std::transform(addr_lower.begin(), addr_lower.end(), addr_lower.begin(), ::tolower);
+      fpmm_addrs.insert(addr_lower);
+    }
+
+    std::vector<std::string> filtered_transfers;
+    for (const auto &t : events.transfer) {
+      if (fpmm_addrs.find(t.from_addr) == fpmm_addrs.end() &&
+          fpmm_addrs.find(t.to_addr) == fpmm_addrs.end()) {
+        filtered_transfers.push_back(t.sql_values);
+      }
+    }
+
     std::vector<std::tuple<std::string, std::string, std::vector<std::string>>> batches;
     batches.emplace_back("order_filled",
                          "block_number, log_index, exchange, maker, taker, token_id, side, usdc_amount, token_amount, fee",
@@ -170,7 +185,7 @@ private:
                          std::move(events.convert));
     batches.emplace_back("transfer",
                          "block_number, log_index, from_addr, to_addr, token_id, amount",
-                         std::move(events.transfer));
+                         std::move(filtered_transfers));
     batches.emplace_back("token_map",
                          "token_id, condition_id, exchange, is_yes",
                          std::move(events.token_map));

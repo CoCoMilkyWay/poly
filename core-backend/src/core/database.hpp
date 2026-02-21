@@ -1,10 +1,12 @@
 #pragma once
 
+#include <algorithm>
 #include <cassert>
 #include <duckdb.hpp>
 #include <fcntl.h>
 #include <mutex>
 #include <nlohmann/json.hpp>
+#include <set>
 #include <string>
 #include <sys/file.h>
 #include <unistd.h>
@@ -331,6 +333,25 @@ public:
     return std::stoll(rows[0]["value"].get<std::string>());
   }
 
+  std::set<std::string> get_fpmm_addrs() {
+    std::lock_guard<std::mutex> lock(read_mutex_);
+    auto result = read_conn_->Query("SELECT fpmm_addr FROM fpmm");
+    assert(!result->HasError());
+    std::set<std::string> addrs;
+    for (size_t row = 0; row < result->RowCount(); ++row) {
+      auto blob = duckdb::StringValue::Get(result->GetValue(0, row));
+      std::string addr;
+      if (!blob.empty() && blob[0] == 'x') {
+        addr = "0" + blob;
+      } else {
+        addr = "0x" + blob;
+      }
+      std::transform(addr.begin(), addr.end(), addr.begin(), ::tolower);
+      addrs.insert(addr);
+    }
+    return addrs;
+  }
+
   void set_last_block(int64_t block) {
     execute("INSERT OR REPLACE INTO sync_state (key, value) VALUES ('last_block', '" +
             std::to_string(block) + "')");
@@ -373,15 +394,9 @@ public:
     auto r1 = write_conn_->Query("BEGIN TRANSACTION");
     assert(!r1->HasError());
 
-    bool has_fpmm_trade = false;
-    bool has_fpmm_funding = false;
     for (const auto &[table, columns, values_list] : batches) {
       if (values_list.empty())
         continue;
-      if (table == "fpmm_trade")
-        has_fpmm_trade = true;
-      if (table == "fpmm_funding")
-        has_fpmm_funding = true;
       std::string insert_sql = "INSERT OR IGNORE INTO " + table + " (" + columns + ") VALUES ";
       for (size_t i = 0; i < values_list.size(); ++i) {
         if (i > 0)
@@ -390,26 +405,6 @@ public:
       }
       auto r = write_conn_->Query(insert_sql);
       assert(!r->HasError());
-    }
-
-    if (has_fpmm_trade) {
-      auto r = write_conn_->Query(R"(
-        SELECT COUNT(*) FROM fpmm_trade ft
-        WHERE NOT EXISTS (SELECT 1 FROM fpmm f WHERE f.fpmm_addr = ft.fpmm_addr)
-      )");
-      assert(!r->HasError());
-      int64_t orphan_count = r->GetValue(0, 0).GetValue<int64_t>();
-      assert(orphan_count == 0 && "fpmm_trade references non-existent fpmm");
-    }
-
-    if (has_fpmm_funding) {
-      auto r = write_conn_->Query(R"(
-        SELECT COUNT(*) FROM fpmm_funding ff
-        WHERE NOT EXISTS (SELECT 1 FROM fpmm f WHERE f.fpmm_addr = ff.fpmm_addr)
-      )");
-      assert(!r->HasError());
-      int64_t orphan_count = r->GetValue(0, 0).GetValue<int64_t>();
-      assert(orphan_count == 0 && "fpmm_funding references non-existent fpmm");
     }
 
     for (const auto &sql : extra_sqls) {

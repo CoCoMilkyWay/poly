@@ -42,9 +42,15 @@ polygon链上polymarket协议合约节点本身的实现: /home/chuyin/work/poly
 
 - **Token 持仓** = Token 协议流水(可追踪) + Token 账户流水(可追踪)
 - **USDC 持仓** = USDC 协议流水(可追踪) + USDC 钱包流水（USDC ERC20 Transfer）(此项目未追踪)
-- **Token 协议流水**: Split/Merge/Redemption/Convert 中的 token 变动
-- **Token 账户流水**: ERC1155 Transfer（含用户间直接转账）
-- **USDC 协议流水**: OrderFilled/Split/Merge/Redemption 中的 USDC 变动
+- **Token 协议流水** = 特殊操作 + 与市场交互
+  - 特殊操作 (两个时代通用): Split/Merge/Redemption/Convert (YES+NO双边变动)
+  - 订单簿时代: OrderFilled (Taker+Maker, 单边)
+  - AMM时代: FPMMBuy/FPMMSell (Taker, 单边) + FPMMFundingAdded/Removed (LP池 Maker, 双边按池子比例)
+- **Token 账户流水**: ERC1155 Transfer（含用户间直接转账）(TransferSingle/TransferBatch)
+- **USDC 协议流水**:
+  - 特殊操作 (两个时代通用): Split/Merge/Redemption/Convert (USDC双边变动)
+  - 订单簿时代: OrderFilled 中的 USDC 变动
+  - AMM时代: FPMMBuy/FPMMSell/FPMMFundingAdded/FPMMFundingRemoved 中的 USDC 变动
 - **USDC 钱包流水**: USDC ERC20 Transfer（充值/提现，未追踪）
 - **成交价 ≠ 市价**: 只有历史成交价，没有实时 bid/ask 报价
 
@@ -102,31 +108,34 @@ Stage 2: raw_log → 最终表 (纯SQL转换, ~2min)
 - NegRiskAdapter (Polymarket): Wrapped Collateral (`0x3a3bd7bb9528e159577f7c2e685cc81a765002e2`) - 1:1 包装的 USDC.e (为了支持Convert操作, 原生 CTF 里做不到, 需要wrap一下)
 
 ```
-polymarket-indexer/service$ /bin/python3 /home/chuyin/work/poly/scripts/scan_events.py
-
   Polymarket 事件扫描  (head=83,000,000)
 
-  块进度:   65,467,999 / 83,000,000  (78.9%)  -  速度: 535 blk/s  ETA: 546.4 min
+  块进度:   62,889,999 / 83,000,000  (75.8%)  -  速度: 458 blk/s  ETA: 731.8 min
 
-  合约                事件                          总计       首block       末block      2020       2021       2022       2023       2024       2025       2026
-  --------------------------------------------------------------------------------------------------------------------------------------------------------------
-  ConditionalTokens   TransferSingle          47,348,105     4,028,711    65,467,999         0  1,322,645  1,455,391    493,401 39,332,437  4,744,231          0
-  ConditionalTokens   TransferBatch           30,683,111     4,028,608    65,467,999         0  1,201,193  1,831,804    378,200 25,262,411  2,009,503          0
-  ConditionalTokens   ConditionPreparation        28,936     4,027,499    65,452,567         0      1,026      7,388      4,225     15,363        934          0
-  ConditionalTokens   ConditionResolution         22,696     6,205,069    65,466,968         0        749      3,730      3,805     13,545        867          0
-  ConditionalTokens   PositionSplit           12,798,752     4,028,608    65,467,999         0    616,869    968,444    230,975 10,124,784    857,680          0
-  ConditionalTokens   PositionsMerge           5,773,935     4,028,724    65,467,998         0    489,725    657,668    113,704  4,149,360    363,478          0
-  ConditionalTokens   PayoutRedemption         2,602,647     6,233,711    65,467,995         0    332,502    246,240     70,204  1,729,971    223,730          0
-  CTFExchange         OrderFilled              9,552,442    35,896,869    65,467,999         0          0          0    246,898  7,504,812  1,800,732          0
-  CTFExchange         OrdersMatched            4,063,600    35,896,869    65,467,999         0          0          0    101,015  3,176,077    786,508          0
-  CTFExchange         TokenRegistered             22,230    35,887,522    65,452,605         0          0          0      6,744     14,524        962          0
-  NegRiskCTFExchange  OrderFilled             32,890,431    51,408,357    65,467,999         0          0          0          0 30,171,094  2,719,337          0
-  NegRiskCTFExchange  OrdersMatched           15,252,068    51,408,357    65,467,999         0          0          0          0 14,004,104  1,247,964          0
-  NegRiskCTFExchange  TokenRegistered             16,946    51,405,773    65,451,107         0          0          0          0     16,042        904          0
-  NegRiskAdapter      MarketPrepared               1,418    50,748,168    65,450,786         0          0          0          0      1,337         81          0
-  NegRiskAdapter      QuestionPrepared             8,458    50,750,368    65,451,080         0          0          0          0      8,005        453          0
-  NegRiskAdapter      PositionsConverted         276,724    50,861,311    65,467,758         0          0          0          0    261,040     15,684          0
-  NegRiskAdapter      OutcomeReported              7,006    51,868,332    65,456,813         0          0          0          0      6,544        462          0
+  合约                事件                          总计       首block       末block       2020       2021       2022       2023       2024       2025       2026
+  ---------------------------------------------------------------------------------------------------------------------------------------------------------------
+  ConditionalTokens   TransferSingle          15,922,185     4,028,711    62,889,999          0  1,319,462  1,457,584    493,197 12,651,942          0          0
+  ConditionalTokens   TransferBatch           12,080,571     4,028,608    62,889,999          0  1,197,332  1,834,233    379,225  8,669,781          0          0
+  ConditionalTokens   ConditionPreparation        23,270     4,027,499    62,887,016          0      1,012      7,388      4,236     10,634          0          0
+  ConditionalTokens   ConditionResolution         17,159     6,205,069    62,889,281          0        743      3,734      3,797      8,885          0          0
+  ConditionalTokens   PositionSplit            5,692,159     4,028,608    62,889,999          0    614,470    970,174    231,322  3,876,193          0          0
+  ConditionalTokens   PositionsMerge           2,500,809     4,028,724    62,889,998          0    488,700    658,156    114,156  1,239,797          0          0
+  ConditionalTokens   PayoutRedemption         1,284,556     6,233,711    62,889,985          0    331,252    247,416     70,202    635,686          0          0
+  FPMMFactory         FPMMCreation                13,642     4,027,846    62,760,657          0        981      7,230      4,240      1,191          0          0
+  FPMM                FPMMBuy                  1,068,771     4,028,711    62,889,297          0    264,187    640,882    161,829      1,873          0          0
+  FPMM                FPMMSell                 1,064,706     4,028,724    62,876,506          0    448,241    540,392     75,316        757          0          0
+  FPMM                FPMMFundingAdded           186,350     4,028,608    61,759,915          0     49,219    108,232     28,689        210          0          0
+  FPMM                FPMMFundingRemoved         168,320     4,350,124    62,752,190          0     44,937     97,533     25,691        159          0          0
+  CTFExchange         OrderFilled              3,215,134    35,896,869    62,889,996          0          0          0    245,770  2,969,364          0          0
+  CTFExchange         OrdersMatched            1,324,672    35,896,869    62,889,996          0          0          0    100,553  1,224,119          0          0
+  CTFExchange         TokenRegistered             16,372    35,887,522    62,887,050          0          0          0      6,738      9,634          0          0
+  NegRiskCTFExchange  OrderFilled              9,044,559    51,408,357    62,889,999          0          0          0          0  9,044,559          0          0
+  NegRiskCTFExchange  OrdersMatched            4,105,482    51,408,357    62,889,999          0          0          0          0  4,105,482          0          0
+  NegRiskCTFExchange  TokenRegistered             11,444    51,405,773    62,881,562          0          0          0          0     11,444          0          0
+  NegRiskAdapter      MarketPrepared                 947    50,748,168    62,881,479          0          0          0          0        947          0          0
+  NegRiskAdapter      QuestionPrepared             5,732    50,750,368    62,881,531          0          0          0          0      5,732          0          0
+  NegRiskAdapter      PositionsConverted         119,043    50,861,311    62,889,978          0          0          0          0    119,043          0          0
+  NegRiskAdapter      OutcomeReported              4,239    51,868,332    62,889,281          0          0          0          0      4,239          0          0
 ```
 
 ## 链上事件结构
@@ -385,12 +394,14 @@ NegRisk转换: M 个 NO tokens burn → (M-1) Wrapped Collateral (利用互斥�
 
 ### FPMM合约 (动态部署, 每市场一个)
 
-| 事件               | 说明                 |
-| ------------------ | -------------------- |
-| FPMMBuy            | 用户通过AMM买入token |
-| FPMMSell           | 用户通过AMM卖出token |
-| FPMMFundingAdded   | LP添加流动性         |
-| FPMMFundingRemoved | LP移除流动性         |
+| 事件               | 角色  | 说明                              | 用户Token变动         |
+| ------------------ | ----- | --------------------------------- | --------------------- |
+| FPMMBuy            | Taker | 用户投入USDC，获得token           | 单边 (获得YES或NO)    |
+| FPMMSell           | Taker | 用户卖出token，获得USDC           | 单边 (卖出YES或NO)    |
+| FPMMFundingAdded   | LP    | LP投入USDC，按池子比例添加YES+NO  | 双边 (按池子比例)     |
+| FPMMFundingRemoved | LP    | LP销毁shares，取回YES+NO + 手续费 | 双边 (按池子比例取回) |
+
+fpmm_trade (Taker) + fpmm_funding (LP Maker结算) = 订单簿时代的 order_filled。
 
 **FPMMBuy** (FPMM合约发出)
 
@@ -420,7 +431,7 @@ NegRisk转换: M 个 NO tokens burn → (M-1) Wrapped Collateral (利用互斥�
 | ------------ | --------- | ------- | -------------------------------------- |
 | fpmm         | address   | meta    | log.address (动态部署, 需记录合约地址) |
 | funder       | address   | yes     | LP地址                                 |
-| amountsAdded | uint256[] | no      | 各outcome添加的token数量               |
+| amountsAdded | uint256[] | no      | LP添加的YES/NO数量 (按池子当前比例)    |
 | sharesMinted | uint256   | no      | 铸造的LP份额                           |
 
 **FPMMFundingRemoved** (FPMM合约发出)
@@ -429,15 +440,17 @@ NegRisk转换: M 个 NO tokens burn → (M-1) Wrapped Collateral (利用互斥�
 | ---------------------------- | --------- | ------- | -------------------------------------- |
 | fpmm                         | address   | meta    | log.address (动态部署, 需记录合约地址) |
 | funder                       | address   | yes     | LP地址                                 |
-| amountsRemoved               | uint256[] | no      | 各outcome移除的token量                 |
+| amountsRemoved               | uint256[] | no      | LP取回的YES/NO token数量               |
 | collateralRemovedFromFeePool | uint256   | no      | 从手续费池取出的USDC                   |
 | sharesBurnt                  | uint256   | no      | 销毁的LP份额                           |
 
 **FPMM内部机制**:
 
-- FPMMBuy: 用户USDC→FPMM内部split→`safeTransferFrom(FPMM, user, tokenId)`转token
-- FPMMSell: 用户`safeTransferFrom(user, FPMM, tokenId)`→FPMM内部merge→转USDC给用户
-- 这就是为什么TransferSingle里operator=FPMM地址的记录混入了transfer表
+- FPMMBuy: 用户USDC→FPMM→`safeTransferFrom(FPMM, user, tokenId)`转单边token
+- FPMMSell: 用户`safeTransferFrom(user, FPMM, tokenId)`→FPMM→转USDC给用户
+- FPMMFundingAdded: 用户USDC→FPMM split成YES+NO→按池子比例添加→LP获得shares (多余tokens返还)
+- FPMMFundingRemoved: LP销毁shares→按池子比例取回YES+NO→`safeBatchTransferFrom(FPMM, user, ids)`
+- 这就是为什么Transfer里operator=FPMM地址的记录需要被过滤
 
 ### ID 计算
 
@@ -509,6 +522,8 @@ NegRisk转换: M 个 NO tokens burn → (M-1) Wrapped Collateral (利用互斥�
 
 ### fpmm (FPMM合约映射表)
 
+记录动态部署的 FPMM 合约地址 → conditionId 映射，用于关联 fpmm_trade/fpmm_funding 和过滤 transfer。
+
 | column       | 类型        | 来源                            | 处理                      |
 | ------------ | ----------- | ------------------------------- | ------------------------- |
 | fpmm_addr    | BLOB(20) PK | FixedProductMarketMakerCreation | $.fixedProductMarketMaker |
@@ -516,7 +531,9 @@ NegRisk转换: M 个 NO tokens burn → (M-1) Wrapped Collateral (利用互斥�
 | fee          | BIGINT      | FixedProductMarketMakerCreation | $.fee (1e18 scale)        |
 | block_number | BIGINT      | log                             |                           |
 
-### fpmm_trade (FPMM交易记录)
+### fpmm_trade (AMM Taker交易)
+
+AMM 的 Taker 交易记录 (FPMMBuy/FPMMSell)，单边操作。
 
 | column        | 类型       | 来源         | 处理                                              |
 | ------------- | ---------- | ------------ | ------------------------------------------------- |
@@ -530,30 +547,28 @@ NegRisk转换: M 个 NO tokens burn → (M-1) Wrapped Collateral (利用互斥�
 | token_amount  | BIGINT     | FPMMBuy/Sell | Buy: outcomeTokensBought; Sell: outcomeTokensSold |
 | fee           | BIGINT     | FPMMBuy/Sell | $.feeAmount (6 decimals)                          |
 
-**数据库校验**: 每batch插入后SQL校验`fpmm_trade.fpmm_addr`必须存在于`fpmm`表，否则abort。
+### fpmm_funding (LP操作)
 
-### fpmm_funding (FPMM流动性变化)
+AMM 的 LP Maker 操作记录。LP 按池子当前比例添加/取回 YES+NO，shares 是整个池子的份额（不分 YES/NO）, 相当于强行做多流动性冲裕方。
 
-| column       | 类型       | 来源              | 处理                                     |
-| ------------ | ---------- | ----------------- | ---------------------------------------- |
-| block_number | BIGINT PK  | log               |                                          |
-| log_index    | INTEGER PK | log               |                                          |
-| fpmm_addr    | BLOB(20)   | log.address       | 发出事件的FPMM合约地址                   |
+| column       | 类型       | 来源                 | 处理                                  |
+| ------------ | ---------- | -------------------- | ------------------------------------- |
+| block_number | BIGINT PK  | log                  |                                       |
+| log_index    | INTEGER PK | log                  |                                       |
+| fpmm_addr    | BLOB(20)   | log.address          | 发出事件的FPMM合约地址                |
 | funder       | BLOB(20)   | FundingAdded/Removed | LP地址                                |
-| side         | INTEGER    | 事件类型          | 1=Added, 2=Removed                       |
-| amount0      | BIGINT     | amountsAdded/Removed | outcome0 (YES) token数量             |
-| amount1      | BIGINT     | amountsAdded/Removed | outcome1 (NO) token数量              |
-| shares       | BIGINT     | sharesMinted/Burnt | LP份额变化                              |
-
-**数据库校验**: 每batch插入后SQL校验`fpmm_funding.fpmm_addr`必须存在于`fpmm`表，否则abort。
+| side         | INTEGER    | 事件类型             | 1=Added, 2=Removed                    |
+| amount0      | BIGINT     | amountsAdded/Removed | LP添加/取回的YES数量 (按池子当前比例) |
+| amount1      | BIGINT     | amountsAdded/Removed | LP添加/取回的NO数量 (按池子当前比例)  |
+| shares       | BIGINT     | sharesMinted/Burnt   | LP份额变化                            |
 
 ### transfer
 
-**过滤** (Stage1只做前两条，第三条查询时SQL过滤):
+**过滤**
 
 - `from != 0x0 AND to != 0x0` (跳过mint/burn)
 - `operator NOT IN (CTFExchange, NegRiskCTFExchange, NegRiskAdapter)` (跳过合约操作，已被order_filled/split/merge/convert覆盖)
-- `operator NOT IN (SELECT fpmm_addr FROM fpmm)` (跳过FPMM合约，已被fpmm_trade/fpmm_funding覆盖)
+- `from NOT IN fpmm_addrs AND to NOT IN fpmm_addrs` (跳过FPMM相关transfer，已被fpmm_trade/fpmm_funding覆盖；fpmm_addrs = 数据库已有 + 当前batch新增)
 
 | column       | 类型      | 来源     | 处理                                        |
 | ------------ | --------- | -------- | ------------------------------------------- |
@@ -571,17 +586,19 @@ NegRisk转换: M 个 NO tokens burn → (M-1) Wrapped Collateral (利用互斥�
 | token_id     | BLOB(32) PK | TokenRegistered | token0 或 token1                                          |
 | condition_id | BLOB(32)    | TokenRegistered | $.conditionId                                             |
 | exchange     | TEXT        | log.address     | "CTF" \| "NegRisk"                                        |
-| is_yes       | INTEGER     | 计算            | 仅处理 token0 < token1 的行 → token0=YES(1), token1=NO(0) |
+| is_yes       | INTEGER     | 计算            | 先swap确保token0<token1，然后token0=YES(1), token1=NO(0) |
 
 ### condition
+
+ConditionPreparation 时 INSERT，ConditionResolution 时 UPDATE 同一行。
 
 | column            | 类型        | 来源                 | 处理                                                 |
 | ----------------- | ----------- | -------------------- | ---------------------------------------------------- |
 | condition_id      | BLOB(32) PK | ConditionPreparation | $.conditionId                                        |
 | oracle            | BLOB(20)    | ConditionPreparation | $.oracle                                             |
 | question_id       | BLOB(32)    | ConditionPreparation | $.questionId                                         |
-| payout_numerators | TEXT        | ConditionResolution  | NULL=未结算, "[1,0]"=YES赢, "[0,1]"=NO赢, "[1,1]"=平 |
-| resolution_block  | BIGINT      | ConditionResolution  | NULL=未结算                                          |
+| payout_numerators | TEXT        | ConditionResolution  | UPDATE, NULL=未结算, "[1,0]"=YES赢, "[0,1]"=NO赢, "[1,1]"=平 |
+| resolution_block  | BIGINT      | ConditionResolution  | UPDATE, NULL=未结算                                  |
 
 ### neg_risk_market
 
