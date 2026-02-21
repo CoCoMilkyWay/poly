@@ -44,9 +44,9 @@ struct BuildProgress {
 class EventBuilder {
 public:
   explicit EventBuilder(Database &stage1_db, Database &stage2_db)
-      : db_(stage1_db), stage2_db_(stage2_db) {}
+      : stage1_db_(stage1_db), stage2_db_(stage2_db) {}
 
-  explicit EventBuilder(Database &db) : db_(db), stage2_db_(db) {}
+  explicit EventBuilder(Database &db) : stage1_db_(db), stage2_db_(db) {}
 
   void build_all() {
     assert(!progress_.running);
@@ -79,10 +79,8 @@ public:
   const std::vector<std::string> &users() const { return users_; }
   const std::vector<std::vector<RawEvent>> &user_events() const { return user_events_; }
 
-  std::vector<std::vector<RawEvent>> take_user_events() { return std::move(user_events_); }
-
 private:
-  Database &db_;
+  Database &stage1_db_;
   Database &stage2_db_;
   BuildProgress progress_;
 
@@ -169,7 +167,7 @@ private:
       return;
     }
 
-    auto token_rows = db_.query_json("SELECT token0, token1, condition_id FROM token_map");
+    auto token_rows = stage1_db_.query_json("SELECT token0, token1, condition_id FROM token_map");
     for (const auto &row : token_rows) {
       std::string token0 = to_lower(row["token0"].get<std::string>());
       std::string token1 = to_lower(row["token1"].get<std::string>());
@@ -181,7 +179,7 @@ private:
       token_map_[token1] = {cond_idx, static_cast<uint8_t>(1 - is_yes0)};
     }
 
-    auto cond_rows = db_.query_json("SELECT condition_id, payout_numerators FROM condition_resolution");
+    auto cond_rows = stage1_db_.query_json("SELECT condition_id, payout_numerators FROM condition_resolution");
     for (const auto &row : cond_rows) {
       std::string cond_id = to_lower(row["condition_id"].get<std::string>());
       auto it = cond_map_.find(cond_id);
@@ -196,7 +194,7 @@ private:
       }
     }
 
-    auto fpmm_rows = db_.query_json("SELECT fpmm_addr, condition_ids FROM fpmm");
+    auto fpmm_rows = stage1_db_.query_json("SELECT fpmm_addr, condition_ids FROM fpmm");
     for (const auto &row : fpmm_rows) {
       std::string fpmm_addr = to_lower(row["fpmm_addr"].get<std::string>());
       std::string cond_ids_str = row["condition_ids"].get<std::string>();
@@ -294,7 +292,7 @@ private:
   }
 
   ScanStats index_split() {
-    duckdb::Connection conn(db_.get_duckdb());
+    duckdb::Connection conn(stage1_db_.get_duckdb());
     auto result = conn.Query("SELECT block_number, tx_hash, stakeholder, condition_id, amount FROM split");
     assert(!result->HasError());
 
@@ -314,7 +312,7 @@ private:
   }
 
   ScanStats index_merge() {
-    duckdb::Connection conn(db_.get_duckdb());
+    duckdb::Connection conn(stage1_db_.get_duckdb());
     auto result = conn.Query("SELECT block_number, tx_hash, stakeholder, condition_id, amount FROM merge");
     assert(!result->HasError());
 
@@ -334,7 +332,7 @@ private:
   }
 
   ScanStats index_redemption() {
-    duckdb::Connection conn(db_.get_duckdb());
+    duckdb::Connection conn(stage1_db_.get_duckdb());
     auto result = conn.Query("SELECT block_number, tx_hash, redeemer, condition_id, index_sets, payout FROM redemption");
     assert(!result->HasError());
 
@@ -361,7 +359,7 @@ private:
   }
 
   ScanStats index_convert() {
-    duckdb::Connection conn(db_.get_duckdb());
+    duckdb::Connection conn(stage1_db_.get_duckdb());
     auto result = conn.Query("SELECT block_number, tx_hash, stakeholder, market_id, index_set, amount FROM convert");
     assert(!result->HasError());
 
@@ -382,7 +380,7 @@ private:
   }
 
   ScanStats index_order_filled() {
-    duckdb::Connection conn(db_.get_duckdb());
+    duckdb::Connection conn(stage1_db_.get_duckdb());
     auto result = conn.Query(
         "SELECT block_number, tx_hash, maker, taker, maker_asset_id, taker_asset_id, "
         "maker_amount, taker_amount, fee FROM order_filled");
@@ -425,7 +423,7 @@ private:
   }
 
   ScanStats index_fpmm_trade() {
-    duckdb::Connection conn(db_.get_duckdb());
+    duckdb::Connection conn(stage1_db_.get_duckdb());
     auto result = conn.Query(
         "SELECT block_number, tx_hash, fpmm_addr, trader, side, outcome_index, "
         "usdc_amount, token_amount FROM fpmm_trade");
@@ -450,7 +448,7 @@ private:
   }
 
   ScanStats index_fpmm_funding() {
-    duckdb::Connection conn(db_.get_duckdb());
+    duckdb::Connection conn(stage1_db_.get_duckdb());
     auto result = conn.Query("SELECT block_number, tx_hash, fpmm_addr, funder, side, amounts FROM fpmm_funding");
     assert(!result->HasError());
 
@@ -479,7 +477,7 @@ private:
     user_map_.clear();
     user_events_.clear();
 
-    duckdb::Connection conn(db_.get_duckdb());
+    duckdb::Connection conn(stage1_db_.get_duckdb());
     auto result = conn.Query(
         "SELECT block_number, tx_hash, log_index, operator, from_addr, to_addr, token_id, amount "
         "FROM transfer ORDER BY block_number, log_index");

@@ -24,12 +24,13 @@ struct ReplayProgress {
 
 class PnlEngine {
 public:
-  explicit PnlEngine(Database &stage1_db, Database &stage2_db)
-      : builder_(stage1_db, stage2_db) {}
-
-  explicit PnlEngine(Database &db) : builder_(db) {}
+  explicit PnlEngine(EventBuilder &builder) : builder_(builder) {}
 
   void rebuild_all() {
+    if (builder_.progress().running) {
+      return;
+    }
+
     builder_.build_all();
 
     replay_progress_ = ReplayProgress{};
@@ -38,10 +39,11 @@ public:
     auto t0 = std::chrono::steady_clock::now();
 
     users_ = builder_.users();
-    user_events_ = builder_.take_user_events();
+    user_events_ = builder_.user_events();
     conditions_ = builder_.conditions();
     cond_ids_ = builder_.condition_ids();
 
+    user_map_.clear();
     for (size_t i = 0; i < users_.size(); ++i) {
       user_map_[users_[i]] = static_cast<uint32_t>(i);
     }
@@ -80,7 +82,15 @@ public:
   RebuildProgress progress() const {
     const auto &bp = builder_.progress();
     RebuildProgress p;
-    p.phase = bp.running ? bp.phase : (replay_progress_.running ? 4 : 7);
+    if (bp.running) {
+      p.phase = bp.phase;
+    } else if (replay_progress_.running) {
+      p.phase = 3;
+    } else if (replay_progress_.replay_ms > 0) {
+      p.phase = 7;
+    } else {
+      p.phase = 0;
+    }
     p.total_conditions = bp.total_conditions;
     p.total_tokens = bp.total_tokens;
     p.order_filled = bp.order_filled;
@@ -97,7 +107,7 @@ public:
     p.running = bp.running || replay_progress_.running;
     p.phase1_ms = bp.phase1_ms;
     p.phase2_ms = bp.phase2_ms;
-    p.phase3_ms = bp.phase3_ms + replay_progress_.replay_ms;
+    p.phase3_ms = replay_progress_.replay_ms;
     return p;
   }
 
@@ -277,7 +287,7 @@ public:
   }
 
 private:
-  EventBuilder builder_;
+  EventBuilder &builder_;
   ReplayProgress replay_progress_;
 
   std::vector<ConditionInfo> conditions_;

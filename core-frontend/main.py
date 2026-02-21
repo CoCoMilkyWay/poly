@@ -111,6 +111,11 @@ async def api_rebuild_status():
     return await backend_get("/api/rebuild-status")
 
 
+@app.get("/api/stage2-sync-status")
+async def api_stage2_sync_status():
+    return await backend_get("/api/stage2-sync-status")
+
+
 @app.get("/api/replay-users")
 async def api_replay_users(limit: int = Query(200)):
     return await backend_get("/api/replay-users", {"limit": limit})

@@ -8,6 +8,7 @@
 #include "core/config.hpp"
 #include "core/database.hpp"
 #include "stage1/chain_sync.hpp"
+#include "stage2/event_sync.hpp"
 #include "stage3/pnl_replay.hpp"
 
 void print_usage(const char *prog) {
@@ -55,10 +56,15 @@ int main(int argc, char *argv[]) {
   chain_sync.start(sync_ioc);
   std::thread sync_thread([&sync_ioc]() { sync_ioc.run(); });
 
-  stage3::PnlEngine pnl_engine(stage1_db, stage2_db);
+  stage2::EventSync event_sync(stage1_db, stage2_db, config.sync_interval_seconds);
+  boost::asio::io_context stage2_ioc;
+  event_sync.start(stage2_ioc);
+  std::thread stage2_thread([&stage2_ioc]() { stage2_ioc.run(); });
+
+  stage3::PnlEngine pnl_engine(event_sync.builder());
 
   boost::asio::io_context api_ioc;
-  ApiServer api_server(api_ioc, stage1_db, pnl_engine, config.backend_port, sync_getter);
+  ApiServer api_server(api_ioc, stage1_db, event_sync, pnl_engine, config.backend_port, sync_getter);
 
   boost::asio::signal_set signals(api_ioc, SIGINT, SIGTERM);
   signals.async_wait([&](const boost::system::error_code &, int sig) {
@@ -71,7 +77,9 @@ int main(int argc, char *argv[]) {
 
   std::cout << "[Main] 正在停止同步..." << std::endl;
   sync_ioc.stop();
+  stage2_ioc.stop();
   sync_thread.join();
+  stage2_thread.join();
 
   std::cout << "[Main] 已退出" << std::endl;
   return 0;
