@@ -7,6 +7,7 @@
 #include "api/api_server.hpp"
 #include "core/config.hpp"
 #include "core/database.hpp"
+#include "rebuild/rebuilder.hpp"
 #include "sync/sync_coordinator.hpp"
 
 void print_usage(const char *prog) {
@@ -51,8 +52,10 @@ int main(int argc, char *argv[]) {
   sync.start(sync_ioc);
   std::thread sync_thread([&sync_ioc]() { sync_ioc.run(); });
 
+  rebuild::Engine rebuilder(db);
+
   boost::asio::io_context api_ioc;
-  ApiServer api_server(api_ioc, db, config.api_port, sync_getter);
+  ApiServer api_server(api_ioc, db, rebuilder, config.api_port, sync_getter);
 
   boost::asio::signal_set signals(api_ioc, SIGINT, SIGTERM);
   signals.async_wait([&](const boost::system::error_code &, int sig) {

@@ -3,12 +3,14 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <thread>
 
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
 #include <nlohmann/json.hpp>
 
 #include "../core/database.hpp"
+#include "../rebuild/rebuilder.hpp"
 
 namespace asio = boost::asio;
 namespace beast = boost::beast;
@@ -27,8 +29,10 @@ class ApiSession : public std::enable_shared_from_this<ApiSession> {
 public:
   using SyncStatusGetter = std::function<SyncStatus()>;
 
-  ApiSession(tcp::socket socket, Database &db, SyncStatusGetter sync_getter = nullptr)
-      : socket_(std::move(socket)), db_(db), sync_getter_(std::move(sync_getter)) {}
+  ApiSession(tcp::socket socket, Database &db, rebuild::Engine &rebuilder,
+             SyncStatusGetter sync_getter = nullptr)
+      : socket_(std::move(socket)), db_(db), rebuilder_(rebuilder),
+        sync_getter_(std::move(sync_getter)) {}
 
   void run() { do_read(); }
 
@@ -68,6 +72,14 @@ private:
         handle_sync_state();
       } else if (target.starts_with("/api/query")) {
         handle_query();
+      } else if (target == "/api/rebuild" && req_.method() == http::verb::post) {
+        handle_rebuild();
+      } else if (target.starts_with("/api/rebuild-status")) {
+        handle_rebuild_status();
+      } else if (target.starts_with("/api/user/") && target.find("/pnl") != std::string::npos) {
+        handle_user_pnl(target);
+      } else if (target.starts_with("/api/user/") && target.find("/positions") != std::string::npos) {
+        handle_user_positions(target);
       } else {
         res_.result(http::status::not_found);
         res_.set(http::field::content_type, "application/json");
@@ -151,6 +163,169 @@ private:
     res_.body() = result.dump();
   }
 
+  void handle_rebuild() {
+    res_.set(http::field::content_type, "application/json");
+
+    const auto &progress = rebuilder_.progress();
+    if (progress.running) {
+      res_.result(http::status::conflict);
+      res_.body() = R"({"error":"Rebuild already in progress"})";
+      return;
+    }
+
+    std::thread([this]() { rebuilder_.rebuild_all(); }).detach();
+
+    res_.result(http::status::accepted);
+    res_.body() = R"({"status":"started"})";
+  }
+
+  void handle_rebuild_status() {
+    res_.set(http::field::content_type, "application/json");
+
+    const auto &p = rebuilder_.progress();
+    json result = {
+        {"phase", p.phase},
+        {"running", p.running},
+        {"total_conditions", p.total_conditions},
+        {"total_tokens", p.total_tokens},
+        {"total_events", p.total_events},
+        {"total_users", p.total_users},
+        {"processed_users", p.processed_users},
+        {"phase1_ms", p.phase1_ms},
+        {"phase2_ms", p.phase2_ms},
+        {"phase3_ms", p.phase3_ms},
+        {"order_filled", {{"rows", p.order_filled_rows}, {"events", p.order_filled_events}}},
+        {"split", {{"rows", p.split_rows}, {"events", p.split_events}}},
+        {"merge", {{"rows", p.merge_rows}, {"events", p.merge_events}}},
+        {"redemption", {{"rows", p.redemption_rows}, {"events", p.redemption_events}}},
+        {"fpmm_trade", {{"rows", p.fpmm_trade_rows}, {"events", p.fpmm_trade_events}}},
+        {"fpmm_funding", {{"rows", p.fpmm_funding_rows}, {"events", p.fpmm_funding_events}}},
+        {"convert", {{"rows", p.convert_rows}, {"events", p.convert_events}}},
+        {"transfer", {{"rows", p.transfer_rows}, {"events", p.transfer_events}}},
+    };
+
+    res_.result(http::status::ok);
+    res_.body() = result.dump();
+  }
+
+  void handle_user_pnl(const std::string &target) {
+    res_.set(http::field::content_type, "application/json");
+
+    std::string addr = extract_user_addr(target);
+    if (addr.empty()) {
+      res_.result(http::status::bad_request);
+      res_.body() = R"({"error":"Invalid address"})";
+      return;
+    }
+
+    const auto *state = rebuilder_.get_user_state(addr);
+    if (!state) {
+      res_.result(http::status::not_found);
+      res_.body() = R"({"error":"User not found"})";
+      return;
+    }
+
+    int64_t total_realized_pnl = 0;
+    int64_t total_cost_basis = 0;
+    json conditions = json::array();
+
+    for (const auto &ch : state->conditions) {
+      if (ch.snapshots.empty())
+        continue;
+      const auto &last = ch.snapshots.back();
+      total_realized_pnl += last.realized_pnl;
+      total_cost_basis += last.cost_basis;
+
+      json cond_obj = {
+          {"condition_id", rebuilder_.get_condition_id(ch.cond_idx)},
+          {"realized_pnl", last.realized_pnl},
+          {"cost_basis", last.cost_basis},
+          {"positions", json::array()},
+      };
+      for (int i = 0; i < last.outcome_count; ++i) {
+        cond_obj["positions"].push_back(last.positions[i]);
+      }
+      conditions.push_back(cond_obj);
+    }
+
+    json result = {
+        {"address", addr},
+        {"total_realized_pnl", total_realized_pnl},
+        {"total_cost_basis", total_cost_basis},
+        {"conditions_count", state->conditions.size()},
+        {"conditions", conditions},
+    };
+
+    res_.result(http::status::ok);
+    res_.body() = result.dump();
+  }
+
+  void handle_user_positions(const std::string &target) {
+    res_.set(http::field::content_type, "application/json");
+
+    std::string addr = extract_user_addr(target);
+    if (addr.empty()) {
+      res_.result(http::status::bad_request);
+      res_.body() = R"({"error":"Invalid address"})";
+      return;
+    }
+
+    const auto *state = rebuilder_.get_user_state(addr);
+    if (!state) {
+      res_.result(http::status::not_found);
+      res_.body() = R"({"error":"User not found"})";
+      return;
+    }
+
+    json positions = json::array();
+    for (const auto &ch : state->conditions) {
+      if (ch.snapshots.empty())
+        continue;
+      const auto &last = ch.snapshots.back();
+      bool has_position = false;
+      for (int i = 0; i < last.outcome_count; ++i) {
+        if (last.positions[i] != 0) {
+          has_position = true;
+          break;
+        }
+      }
+      if (!has_position)
+        continue;
+
+      json pos_obj = {
+          {"condition_id", rebuilder_.get_condition_id(ch.cond_idx)},
+          {"positions", json::array()},
+          {"cost_basis", last.cost_basis},
+      };
+      for (int i = 0; i < last.outcome_count; ++i) {
+        pos_obj["positions"].push_back(last.positions[i]);
+      }
+      positions.push_back(pos_obj);
+    }
+
+    json result = {
+        {"address", addr},
+        {"active_positions", positions.size()},
+        {"positions", positions},
+    };
+
+    res_.result(http::status::ok);
+    res_.body() = result.dump();
+  }
+
+  static std::string extract_user_addr(const std::string &target) {
+    size_t start = target.find("/api/user/");
+    if (start == std::string::npos)
+      return "";
+    start += 10;
+    size_t end = target.find('/', start);
+    if (end == std::string::npos)
+      end = target.find('?', start);
+    if (end == std::string::npos)
+      end = target.size();
+    return target.substr(start, end - start);
+  }
+
   std::string get_param(const char *name) {
     std::string target(req_.target());
     std::string key = std::string(name) + "=";
@@ -192,6 +367,7 @@ private:
 
   tcp::socket socket_;
   Database &db_;
+  rebuild::Engine &rebuilder_;
   SyncStatusGetter sync_getter_;
   beast::flat_buffer buffer_;
   http::request<http::string_body> req_;
