@@ -838,7 +838,7 @@
       try {
         const [colsResp, rowsResp] = await Promise.all([
           fetch(
-            `/api/query?q=${encodeURIComponent(`SELECT column_name FROM information_schema.columns WHERE table_name = '${tableName}' ORDER BY ordinal_position`)}`,
+            `/api/query?q=${encodeURIComponent(`SELECT column_name FROM information_schema.columns WHERE table_schema = 'main' AND table_name = '${tableName}' ORDER BY ordinal_position`)}`,
           ),
           fetch(
             `/api/query?q=${encodeURIComponent(`SELECT * FROM "${tableName}" LIMIT 1`)}`,

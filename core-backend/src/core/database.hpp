@@ -423,11 +423,13 @@ public:
   }
 
 private:
+  // 路径
   std::string db_path_;
   std::string lock_path_;
+  // 文件锁
   int lock_fd_ = -1;
   bool has_write_lock_ = false;
-
+  // DuckDB
   std::unique_ptr<duckdb::DuckDB> db_;
   std::unique_ptr<duckdb::Connection> read_conn_;
   std::unique_ptr<duckdb::Connection> write_conn_;

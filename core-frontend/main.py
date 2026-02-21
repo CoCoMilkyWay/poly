@@ -68,7 +68,7 @@ async def api_export_all():
     results = []
 
     for table_name, order_by in table_order_by.items():
-        col_query = f"SELECT column_name FROM information_schema.columns WHERE table_name = '{table_name}' ORDER BY ordinal_position"
+        col_query = f"SELECT column_name FROM information_schema.columns WHERE table_schema = 'main' AND table_name = '{table_name}' ORDER BY ordinal_position"
         cols_result = await backend_get("/api/query", {"q": col_query})
         headers = [c["column_name"] for c in cols_result]
 

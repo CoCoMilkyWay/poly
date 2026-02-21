@@ -107,16 +107,16 @@ private:
     int64_t to_block = std::min(from_block + current_batch_size_ - 1, head_block);
 
     static const std::vector<std::string> ct_topics = {
+        topics::POSITION_SPLIT, topics::POSITION_MERGE, topics::POSITION_REDEEM,
         topics::TRANSFER_SINGLE, topics::TRANSFER_BATCH,
-        topics::CONDITION_PREPARATION, topics::CONDITION_RESOLUTION,
-        topics::POSITION_SPLIT, topics::POSITIONS_MERGE, topics::PAYOUT_REDEMPTION};
+        topics::CONDITION_PREPARE, topics::CONDITION_RESOLVE};
     static const std::vector<std::string> ex_topics = {
-        topics::ORDER_FILLED, topics::TOKEN_REGISTERED};
+        topics::ORDER_FILL, topics::TOKEN_REGISTER};
     static const std::vector<std::string> nra_topics = {
-        topics::MARKET_PREPARED, topics::QUESTION_PREPARED, topics::POSITIONS_CONVERTED};
+        topics::MARKET_PREPARE, topics::QUESTION_PREPARE, topics::POSITION_CONVERT};
     static const std::vector<std::string> fpmm_topics = {
-        topics::FPMM_CREATION, topics::FPMM_BUY, topics::FPMM_SELL,
-        topics::FPMM_FUNDING_ADDED, topics::FPMM_FUNDING_REMOVED};
+        topics::FPMM_CREATE, topics::FPMM_BUY, topics::FPMM_SELL,
+        topics::FPMM_FUNDING_ADD, topics::FPMM_FUNDING_REMOVE};
 
     std::vector<json> results;
     try {
@@ -161,9 +161,14 @@ private:
     }
 
     std::vector<std::tuple<std::string, std::string, std::vector<std::string>>> batches;
+    // CTFExchange 订单
     batches.emplace_back("order_filled",
                          "block_number, log_index, exchange, maker, taker, token_id, side, usdc_amount, token_amount, fee",
                          std::move(events.order_filled));
+    batches.emplace_back("token_map",
+                         "token_id, condition_id, exchange, is_yes",
+                         std::move(events.token_map));
+    // ConditionalTokens 持仓操作
     batches.emplace_back("split",
                          "block_number, log_index, stakeholder, condition_id, amount",
                          std::move(events.split));
@@ -173,24 +178,24 @@ private:
     batches.emplace_back("redemption",
                          "block_number, log_index, redeemer, condition_id, index_sets, payout",
                          std::move(events.redemption));
-    batches.emplace_back("convert",
-                         "block_number, log_index, stakeholder, market_id, index_set, amount",
-                         std::move(events.convert));
     batches.emplace_back("transfer",
                          "block_number, log_index, from_addr, to_addr, token_id, amount",
                          std::move(filtered_transfers));
-    batches.emplace_back("token_map",
-                         "token_id, condition_id, exchange, is_yes",
-                         std::move(events.token_map));
+    // ConditionalTokens 条件
     batches.emplace_back("condition",
                          "condition_id, oracle, question_id, payout_numerators, resolution_block",
-                         std::move(events.condition));
+                         std::move(events.condition_prepare));
+    // NegRiskAdapter 市场
     batches.emplace_back("neg_risk_market",
                          "market_id, oracle, fee_bips, data",
                          std::move(events.neg_risk_market));
     batches.emplace_back("neg_risk_question",
                          "question_id, market_id, question_index, data",
                          std::move(events.neg_risk_question));
+    batches.emplace_back("convert",
+                         "block_number, log_index, stakeholder, market_id, index_set, amount",
+                         std::move(events.convert));
+    // FPMM
     batches.emplace_back("fpmm",
                          "fpmm_addr, condition_id, fee, block_number",
                          std::move(events.fpmm));
@@ -201,22 +206,22 @@ private:
                          "block_number, log_index, fpmm_addr, funder, side, amount0, amount1, shares",
                          std::move(events.fpmm_funding));
 
-    std::vector<std::string> resolution_sqls;
-    for (const auto &val : events.condition_resolution) {
+    std::vector<std::string> resolve_sqls;
+    for (const auto &val : events.condition_resolve) {
       // format: x'<hex>', '<payout_array>', <block_number>
       size_t first_sep = val.find(", ");
       std::string condition_id = val.substr(0, first_sep);
       size_t payout_end = val.rfind("', ");
       std::string payout = val.substr(first_sep + 2, payout_end - first_sep - 2 + 1);
       std::string block = val.substr(payout_end + 3);
-      resolution_sqls.push_back("UPDATE condition SET payout_numerators = " + payout +
-                                ", resolution_block = " + block +
-                                " WHERE condition_id = " + condition_id);
+      resolve_sqls.push_back("UPDATE condition SET payout_numerators = " + payout +
+                             ", resolution_block = " + block +
+                             " WHERE condition_id = " + condition_id);
     }
 
     {
       Database::WriteLock lock(db_);
-      db_.atomic_multi_insert(batches, to_block, resolution_sqls);
+      db_.atomic_multi_insert(batches, to_block, resolve_sqls);
     }
 
     double now = std::chrono::duration<double>(

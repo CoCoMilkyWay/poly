@@ -20,25 +20,29 @@ constexpr const char *FPMM_FACTORY = "0x8b9805a2f595b6705e74f7310829f2d299d21522
 } // namespace contracts
 
 namespace topics {
-constexpr const char *CONDITION_PREPARATION = "0xab3760c3bd2bb38b5bcf54dc79802ed67338b4cf29f3054ded67ed24661e4177";
+// ConditionalTokens: 持仓操作
 constexpr const char *POSITION_SPLIT = "0x2e6bb91f8cbcda0c93623c54d0403a43514fabc40084ec96b6d5379a74786298";
-constexpr const char *POSITIONS_MERGE = "0x6f13ca62553fcc2bcd2372180a43949c1e4cebba603901ede2f4e14f36b282ca";
+constexpr const char *POSITION_MERGE = "0x6f13ca62553fcc2bcd2372180a43949c1e4cebba603901ede2f4e14f36b282ca";
+constexpr const char *POSITION_REDEEM = "0x2682012a4a4f1973119f1c9b90745d1bd91fa2bab387344f044cb3586864d18d";
+// ConditionalTokens: 转账
 constexpr const char *TRANSFER_SINGLE = "0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62";
 constexpr const char *TRANSFER_BATCH = "0x4a39dc06d4c0dbc64b70af90fd698a233a518aa5d07e595d983b8c0526c8f7fb";
-constexpr const char *CONDITION_RESOLUTION = "0xb44d84d3289691f71497564b85d4233648d9dbae8cbdbb4329f301c3a0185894";
-constexpr const char *PAYOUT_REDEMPTION = "0x2682012a4a4f1973119f1c9b90745d1bd91fa2bab387344f044cb3586864d18d";
-constexpr const char *TOKEN_REGISTERED = "0xbc9a2432e8aeb48327246cddd6e872ef452812b4243c04e6bfb786a2cd8faf0d";
-constexpr const char *ORDER_FILLED = "0xd0a08e8c493f9c94f29311604c9de1b4e8c8d4c06bd0c789af57f2d65bfec0f6";
-constexpr const char *ORDERS_MATCHED = "0x63bf4d16b7fa898ef4c4b2b6d90fd201e9c56313b65638af6088d149d2ce956c";
-constexpr const char *MARKET_PREPARED = "0xf059ab16d1ca60e123eab60e3c02b68faf060347c701a5d14885a8e1def7b3a8";
-constexpr const char *QUESTION_PREPARED = "0xaac410f87d423a922a7b226ac68f0c2eaf5bf6d15e644ac0758c7f96e2c253f7";
-constexpr const char *OUTCOME_REPORTED = "0x9e9fa7fd355160bd4cd3f22d4333519354beff1f5689bde87f2c5e63d8d484b2";
-constexpr const char *POSITIONS_CONVERTED = "0xb03d19dddbc72a87e735ff0ea3b57bef133ebe44e1894284916a84044deb367e";
-constexpr const char *FPMM_CREATION = "0x92e0912d3d7f3192cad5c7ae3b47fb97f9c465c1dd12a5c24fd901ddb3905f43";
+// ConditionalTokens: 条件
+constexpr const char *CONDITION_PREPARE = "0xab3760c3bd2bb38b5bcf54dc79802ed67338b4cf29f3054ded67ed24661e4177";
+constexpr const char *CONDITION_RESOLVE = "0xb44d84d3289691f71497564b85d4233648d9dbae8cbdbb4329f301c3a0185894";
+// CTFExchange: 订单
+constexpr const char *ORDER_FILL = "0xd0a08e8c493f9c94f29311604c9de1b4e8c8d4c06bd0c789af57f2d65bfec0f6";
+constexpr const char *TOKEN_REGISTER = "0xbc9a2432e8aeb48327246cddd6e872ef452812b4243c04e6bfb786a2cd8faf0d";
+// NegRiskAdapter: 市场
+constexpr const char *MARKET_PREPARE = "0xf059ab16d1ca60e123eab60e3c02b68faf060347c701a5d14885a8e1def7b3a8";
+constexpr const char *QUESTION_PREPARE = "0xaac410f87d423a922a7b226ac68f0c2eaf5bf6d15e644ac0758c7f96e2c253f7";
+constexpr const char *POSITION_CONVERT = "0xb03d19dddbc72a87e735ff0ea3b57bef133ebe44e1894284916a84044deb367e";
+// FPMM: AMM池
+constexpr const char *FPMM_CREATE = "0x92e0912d3d7f3192cad5c7ae3b47fb97f9c465c1dd12a5c24fd901ddb3905f43";
 constexpr const char *FPMM_BUY = "0x4f62630f51608fc8a7603a9391a5101e58bd7c276139366fc107dc3b67c3dcf8";
 constexpr const char *FPMM_SELL = "0xadcf2a240ed9300d681d9a3f5382b6c1beed1b7e46643e0c7b42cbe6e2d766b4";
-constexpr const char *FPMM_FUNDING_ADDED = "0xec2dc3e5a3bb9aa0a1deb905d2bd23640d07f107e6ceb484024501aad964a951";
-constexpr const char *FPMM_FUNDING_REMOVED = "0x8b4b2c8ebd04c47fc8bce136a85df9b93fcb1f47c8aa296457d4391519d190e7";
+constexpr const char *FPMM_FUNDING_ADD = "0xec2dc3e5a3bb9aa0a1deb905d2bd23640d07f107e6ceb484024501aad964a951";
+constexpr const char *FPMM_FUNDING_REMOVE = "0x8b4b2c8ebd04c47fc8bce136a85df9b93fcb1f47c8aa296457d4391519d190e7";
 } // namespace topics
 
 struct TransferRecord {
@@ -48,17 +52,22 @@ struct TransferRecord {
 };
 
 struct ParsedEvents {
+  // CTFExchange 订单
   std::vector<std::string> order_filled;
+  std::vector<std::string> token_map;
+  // ConditionalTokens 持仓操作
   std::vector<std::string> split;
   std::vector<std::string> merge;
   std::vector<std::string> redemption;
-  std::vector<std::string> convert;
   std::vector<TransferRecord> transfer;
-  std::vector<std::string> token_map;
-  std::vector<std::string> condition;
-  std::vector<std::string> condition_resolution;
+  // ConditionalTokens 条件
+  std::vector<std::string> condition_prepare;
+  std::vector<std::string> condition_resolve;
+  // NegRiskAdapter 市场
   std::vector<std::string> neg_risk_market;
   std::vector<std::string> neg_risk_question;
+  std::vector<std::string> convert;
+  // FPMM
   std::vector<std::string> fpmm;
   std::vector<std::string> fpmm_trade;
   std::vector<std::string> fpmm_funding;
@@ -68,15 +77,16 @@ class EventParser {
 public:
   static ParsedEvents parse_logs(const json &logs, std::set<std::string> &fpmm_addrs) {
     ParsedEvents events;
-    // 第一趟：FPMMCreation，更新白名单
+    // 第一趟: FPMM创建，更新白名单
     for (const auto &log : logs) {
       std::string addr = to_lower(log["address"].get<std::string>());
       if (addr == contracts::FPMM_FACTORY) {
-        auto new_addr = parse_fpmm_creation(log, events);
-        if (new_addr) fpmm_addrs.insert(*new_addr);
+        auto new_addr = parse_fpmm_create(log, events);
+        if (new_addr)
+          fpmm_addrs.insert(*new_addr);
       }
     }
-    // 第二趟：所有事件
+    // 第二趟: 所有事件
     for (const auto &log : logs) {
       parse_log(log, fpmm_addrs, events);
     }
@@ -155,20 +165,20 @@ private:
   static void parse_conditional_tokens_event(const std::string &topic0, const json &topics,
                                              const std::string &data, int64_t block_number,
                                              int64_t log_index, ParsedEvents &events) {
-    if (topic0 == topics::TRANSFER_SINGLE) {
+    if (topic0 == topics::POSITION_SPLIT) {
+      parse_position_split(topics, data, block_number, log_index, events);
+    } else if (topic0 == topics::POSITION_MERGE) {
+      parse_position_merge(topics, data, block_number, log_index, events);
+    } else if (topic0 == topics::POSITION_REDEEM) {
+      parse_position_redeem(topics, data, block_number, log_index, events);
+    } else if (topic0 == topics::TRANSFER_SINGLE) {
       parse_transfer_single(topics, data, block_number, log_index, events);
     } else if (topic0 == topics::TRANSFER_BATCH) {
       parse_transfer_batch(topics, data, block_number, log_index, events);
-    } else if (topic0 == topics::POSITION_SPLIT) {
-      parse_position_split(topics, data, block_number, log_index, events);
-    } else if (topic0 == topics::POSITIONS_MERGE) {
-      parse_positions_merge(topics, data, block_number, log_index, events);
-    } else if (topic0 == topics::PAYOUT_REDEMPTION) {
-      parse_payout_redemption(topics, data, block_number, log_index, events);
-    } else if (topic0 == topics::CONDITION_PREPARATION) {
-      parse_condition_preparation(topics, data, block_number, log_index, events);
-    } else if (topic0 == topics::CONDITION_RESOLUTION) {
-      parse_condition_resolution(topics, data, block_number, log_index, events);
+    } else if (topic0 == topics::CONDITION_PREPARE) {
+      parse_condition_prepare(topics, data, block_number, log_index, events);
+    } else if (topic0 == topics::CONDITION_RESOLVE) {
+      parse_condition_resolve(topics, data, block_number, log_index, events);
     }
   }
 
@@ -176,22 +186,22 @@ private:
                                    const std::string &data, int64_t block_number,
                                    int64_t log_index, const std::string &exchange,
                                    ParsedEvents &events) {
-    if (topic0 == topics::ORDER_FILLED) {
-      parse_order_filled(topics, data, block_number, log_index, exchange, events);
-    } else if (topic0 == topics::TOKEN_REGISTERED) {
-      parse_token_registered(topics, data, block_number, log_index, exchange, events);
+    if (topic0 == topics::ORDER_FILL) {
+      parse_order_fill(topics, data, block_number, log_index, exchange, events);
+    } else if (topic0 == topics::TOKEN_REGISTER) {
+      parse_token_register(topics, data, block_number, log_index, exchange, events);
     }
   }
 
   static void parse_neg_risk_adapter_event(const std::string &topic0, const json &topics,
                                            const std::string &data, int64_t block_number,
                                            int64_t log_index, ParsedEvents &events) {
-    if (topic0 == topics::POSITIONS_CONVERTED) {
-      parse_positions_converted(topics, data, block_number, log_index, events);
-    } else if (topic0 == topics::MARKET_PREPARED) {
-      parse_market_prepared(topics, data, block_number, log_index, events);
-    } else if (topic0 == topics::QUESTION_PREPARED) {
-      parse_question_prepared(topics, data, block_number, log_index, events);
+    if (topic0 == topics::MARKET_PREPARE) {
+      parse_market_prepare(topics, data, block_number, log_index, events);
+    } else if (topic0 == topics::QUESTION_PREPARE) {
+      parse_question_prepare(topics, data, block_number, log_index, events);
+    } else if (topic0 == topics::POSITION_CONVERT) {
+      parse_position_convert(topics, data, block_number, log_index, events);
     }
   }
 
@@ -275,8 +285,8 @@ private:
     events.split.push_back(ss.str());
   }
 
-  static void parse_positions_merge(const json &topics, const std::string &data,
-                                    int64_t block_number, int64_t log_index, ParsedEvents &events) {
+  static void parse_position_merge(const json &topics, const std::string &data,
+                                   int64_t block_number, int64_t log_index, ParsedEvents &events) {
     std::string stakeholder = extract_address_from_topic(topics[1].get<std::string>());
     std::string condition_id = topics[3].get<std::string>();
 
@@ -288,8 +298,8 @@ private:
     events.merge.push_back(ss.str());
   }
 
-  static void parse_payout_redemption(const json &topics, const std::string &data,
-                                      int64_t block_number, int64_t log_index, ParsedEvents &events) {
+  static void parse_position_redeem(const json &topics, const std::string &data,
+                                    int64_t block_number, int64_t log_index, ParsedEvents &events) {
     std::string redeemer = extract_address_from_topic(topics[1].get<std::string>());
 
     std::string condition_id = extract_bytes32_from_data(data, 0);
@@ -310,8 +320,8 @@ private:
     events.redemption.push_back(ss.str());
   }
 
-  static void parse_condition_preparation(const json &topics, const std::string &data,
-                                          int64_t block_number, int64_t log_index, ParsedEvents &events) {
+  static void parse_condition_prepare(const json &topics, const std::string &data,
+                                      int64_t block_number, int64_t log_index, ParsedEvents &events) {
     std::string condition_id = topics[1].get<std::string>();
     std::string oracle = extract_address_from_topic(topics[2].get<std::string>());
     std::string question_id = topics[3].get<std::string>();
@@ -319,11 +329,11 @@ private:
     std::ostringstream ss;
     ss << sql_blob(condition_id) << ", " << sql_blob(oracle) << ", "
        << sql_blob(question_id) << ", NULL, NULL";
-    events.condition.push_back(ss.str());
+    events.condition_prepare.push_back(ss.str());
   }
 
-  static void parse_condition_resolution(const json &topics, const std::string &data,
-                                         int64_t block_number, int64_t log_index, ParsedEvents &events) {
+  static void parse_condition_resolve(const json &topics, const std::string &data,
+                                      int64_t block_number, int64_t log_index, ParsedEvents &events) {
     std::string condition_id = topics[1].get<std::string>();
 
     int64_t payout_offset = extract_uint256_from_data(data, 1);
@@ -340,12 +350,12 @@ private:
 
     std::ostringstream ss;
     ss << sql_blob(condition_id) << ", " << sql_str(payout_ss.str()) << ", " << block_number;
-    events.condition_resolution.push_back(ss.str());
+    events.condition_resolve.push_back(ss.str());
   }
 
-  static void parse_order_filled(const json &topics, const std::string &data,
-                                 int64_t block_number, int64_t log_index,
-                                 const std::string &exchange, ParsedEvents &events) {
+  static void parse_order_fill(const json &topics, const std::string &data,
+                               int64_t block_number, int64_t log_index,
+                               const std::string &exchange, ParsedEvents &events) {
     std::string maker = extract_address_from_topic(topics[2].get<std::string>());
     std::string taker = extract_address_from_topic(topics[3].get<std::string>());
 
@@ -378,9 +388,9 @@ private:
     events.order_filled.push_back(ss.str());
   }
 
-  static void parse_token_registered(const json &topics, const std::string &data,
-                                     int64_t block_number, int64_t log_index,
-                                     const std::string &exchange, ParsedEvents &events) {
+  static void parse_token_register(const json &topics, const std::string &data,
+                                   int64_t block_number, int64_t log_index,
+                                   const std::string &exchange, ParsedEvents &events) {
     std::string token0 = topics[1].get<std::string>();
     std::string token1 = topics[2].get<std::string>();
     std::string condition_id = topics[3].get<std::string>();
@@ -400,8 +410,8 @@ private:
     events.token_map.push_back(ss1.str());
   }
 
-  static void parse_positions_converted(const json &topics, const std::string &data,
-                                        int64_t block_number, int64_t log_index, ParsedEvents &events) {
+  static void parse_position_convert(const json &topics, const std::string &data,
+                                     int64_t block_number, int64_t log_index, ParsedEvents &events) {
     std::string stakeholder = extract_address_from_topic(topics[1].get<std::string>());
     std::string market_id = topics[2].get<std::string>();
     int64_t index_set = hex_to_int64(topics[3].get<std::string>());
@@ -415,8 +425,8 @@ private:
     events.convert.push_back(ss.str());
   }
 
-  static void parse_market_prepared(const json &topics, const std::string &data,
-                                    int64_t block_number, int64_t log_index, ParsedEvents &events) {
+  static void parse_market_prepare(const json &topics, const std::string &data,
+                                   int64_t block_number, int64_t log_index, ParsedEvents &events) {
     std::string market_id = topics[1].get<std::string>();
     std::string oracle = extract_address_from_topic(topics[2].get<std::string>());
 
@@ -443,8 +453,8 @@ private:
     events.neg_risk_market.push_back(ss.str());
   }
 
-  static void parse_question_prepared(const json &topics, const std::string &data,
-                                      int64_t block_number, int64_t log_index, ParsedEvents &events) {
+  static void parse_question_prepare(const json &topics, const std::string &data,
+                                     int64_t block_number, int64_t log_index, ParsedEvents &events) {
     std::string market_id = topics[1].get<std::string>();
     std::string question_id = topics[2].get<std::string>();
 
@@ -471,10 +481,10 @@ private:
     events.neg_risk_question.push_back(ss.str());
   }
 
-  static std::optional<std::string> parse_fpmm_creation(const json &log, ParsedEvents &events) {
+  static std::optional<std::string> parse_fpmm_create(const json &log, ParsedEvents &events) {
     const auto &topics_arr = log["topics"];
     std::string topic0 = to_lower(topics_arr[0].get<std::string>());
-    if (topic0 != topics::FPMM_CREATION)
+    if (topic0 != topics::FPMM_CREATE)
       return std::nullopt;
 
     std::string data = log["data"].get<std::string>();
@@ -521,7 +531,7 @@ private:
          << sql_blob(seller) << ", 2, " << outcome_index << ", "
          << return_amount << ", " << tokens_sold << ", " << fee;
       events.fpmm_trade.push_back(ss.str());
-    } else if (topic0 == topics::FPMM_FUNDING_ADDED) {
+    } else if (topic0 == topics::FPMM_FUNDING_ADD) {
       std::string funder = extract_address_from_topic(topics[1].get<std::string>());
       int64_t amounts_offset = extract_uint256_from_data(data, 0);
       int64_t shares_minted = extract_uint256_from_data(data, 1);
@@ -532,7 +542,7 @@ private:
       ss << block_number << ", " << log_index << ", " << sql_blob(fpmm_addr) << ", "
          << sql_blob(funder) << ", 1, " << amount0 << ", " << amount1 << ", " << shares_minted;
       events.fpmm_funding.push_back(ss.str());
-    } else if (topic0 == topics::FPMM_FUNDING_REMOVED) {
+    } else if (topic0 == topics::FPMM_FUNDING_REMOVE) {
       std::string funder = extract_address_from_topic(topics[1].get<std::string>());
       int64_t amounts_offset = extract_uint256_from_data(data, 0);
       int64_t shares_burnt = extract_uint256_from_data(data, 2);
