@@ -39,29 +39,22 @@ ERC1155.sol 中所有修改余额的地方：
 3. token 流水被精确还原，不含近似假设 (语义事件提供精确价格)
 ```
 
-## 运行模式
-
-| 模式 | 条件                     | Phase 1A           | Phase 1B/2/3     |
-| ---- | ------------------------ | ------------------ | ---------------- |
-| 首次 | `rebuild_last_block` = 0 | 跳过 (rb\_\* 表空) | 全量处理         |
-| 增量 | `rebuild_last_block` > 0 | 从 rb\_\* 加载映射 | 只处理 new_range |
-
 ## 执行流程
 
 ```
 rebuild(target_block):
-    last_block = sync_state['rebuild_last_block'] ?? 0
-    new_range = (last_block, target_block]
+    Phase 0: rb_* → 内存映射 (增量模式, 首次跳过)
 
-    Phase 1A: rb_* → 内存映射 (首次跳过)
-    Phase 1B: Stage1 表 + new_range → 更新内存映射 + 持久化到 rb_*
-              ├─ 先处理 condition_preparation (其他都依赖 cond_map_)
-              └─ 并行: condition_resolution / token_map / fpmm / neg_risk_question
-    Phase 2:  并行扫 7 表 → 内存语义索引 (同 tx 关联, 无需持久化)
-    Phase 3:  顺序扫 transfer → 分类 + 关联语义 → 批量写 user_event
-
-    sync_state['rebuild_last_block'] = target_block
+    固定 chunk 循环 (cursor → target_block):
+        Phase 1: chunk 内 Stage1 表 → 更新内存映射 + rb_* 数据
+                 ├─ 先处理 condition_preparation
+                 └─ 并行: condition_resolution / token_map / fpmm / neg_risk_question
+        Phase 2: chunk 内 7 表 → 内存语义索引
+        Phase 3: chunk 内 transfer → 分类 + 关联语义 → user_event 数据
+        └─ 单事务: batch_insert(rb_* + user_event) + UPDATE cursor
 ```
+
+单 chunk = Phase 1→2→3 完整流程 + 单事务写入，崩溃从 cursor 断点重做
 
 ## 数据结构
 
