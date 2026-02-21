@@ -6,6 +6,7 @@
 #include <iostream>
 #include <memory>
 #include <optional>
+#include <set>
 #include <vector>
 
 #include <boost/asio.hpp>
@@ -30,6 +31,7 @@ public:
 
   void start(asio::io_context &ioc) {
     ioc_ = &ioc;
+    fpmm_addrs_ = db_.get_fpmm_addrs();
     is_syncing_ = false;
     schedule_sync(0);
   }
@@ -148,21 +150,12 @@ private:
       }
     }
 
-    ParsedEvents events = EventParser::parse_logs(logs);
-
-    auto fpmm_addrs = db_.get_fpmm_addrs();
-    for (const auto &f : events.fpmm) {
-      size_t first_comma = f.find(',');
-      std::string addr = f.substr(2, first_comma - 3);
-      std::string addr_lower = "0x" + addr;
-      std::transform(addr_lower.begin(), addr_lower.end(), addr_lower.begin(), ::tolower);
-      fpmm_addrs.insert(addr_lower);
-    }
+    ParsedEvents events = EventParser::parse_logs(logs, fpmm_addrs_);
 
     std::vector<std::string> filtered_transfers;
     for (const auto &t : events.transfer) {
-      if (fpmm_addrs.find(t.from_addr) == fpmm_addrs.end() &&
-          fpmm_addrs.find(t.to_addr) == fpmm_addrs.end()) {
+      if (fpmm_addrs_.find(t.from_addr) == fpmm_addrs_.end() &&
+          fpmm_addrs_.find(t.to_addr) == fpmm_addrs_.end()) {
         filtered_transfers.push_back(t.sql_values);
       }
     }
@@ -254,6 +247,7 @@ private:
   int interval_seconds_;
   std::atomic<bool> is_syncing_{false};
   std::atomic<int64_t> head_block_{0};
+  std::set<std::string> fpmm_addrs_;
   struct ChunkRecord {
     int64_t to_block;
     double time_s;

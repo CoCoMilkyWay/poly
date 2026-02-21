@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <cassert>
 #include <nlohmann/json.hpp>
+#include <optional>
+#include <set>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -64,10 +66,19 @@ struct ParsedEvents {
 
 class EventParser {
 public:
-  static ParsedEvents parse_logs(const json &logs) {
+  static ParsedEvents parse_logs(const json &logs, std::set<std::string> &fpmm_addrs) {
     ParsedEvents events;
+    // 第一趟：FPMMCreation，更新白名单
     for (const auto &log : logs) {
-      parse_log(log, events);
+      std::string addr = to_lower(log["address"].get<std::string>());
+      if (addr == contracts::FPMM_FACTORY) {
+        auto new_addr = parse_fpmm_creation(log, events);
+        if (new_addr) fpmm_addrs.insert(*new_addr);
+      }
+    }
+    // 第二趟：所有事件
+    for (const auto &log : logs) {
+      parse_log(log, fpmm_addrs, events);
     }
     return events;
   }
@@ -116,7 +127,7 @@ private:
     return true;
   }
 
-  static void parse_log(const json &log, ParsedEvents &events) {
+  static void parse_log(const json &log, const std::set<std::string> &fpmm_addrs, ParsedEvents &events) {
     std::string address = to_lower(log["address"].get<std::string>());
     const auto &topics_arr = log["topics"];
     assert(!topics_arr.empty());
@@ -134,9 +145,9 @@ private:
       parse_exchange_event(topic0, topics_arr, data, block_number, log_index, "NegRisk", events);
     } else if (address == contracts::NEG_RISK_ADAPTER) {
       parse_neg_risk_adapter_event(topic0, topics_arr, data, block_number, log_index, events);
-    } else if (topic0 == topics::FPMM_CREATION) {
-      parse_fpmm_factory_event(topic0, topics_arr, data, block_number, log_index, events);
-    } else {
+    } else if (address == contracts::FPMM_FACTORY) {
+      // 第一趟已处理，跳过
+    } else if (fpmm_addrs.contains(address)) {
       parse_fpmm_event(topic0, address, topics_arr, data, block_number, log_index, events);
     }
   }
@@ -460,11 +471,14 @@ private:
     events.neg_risk_question.push_back(ss.str());
   }
 
-  static void parse_fpmm_factory_event(const std::string &topic0, const json &topics,
-                                       const std::string &data, int64_t block_number,
-                                       int64_t log_index, ParsedEvents &events) {
+  static std::optional<std::string> parse_fpmm_creation(const json &log, ParsedEvents &events) {
+    const auto &topics_arr = log["topics"];
+    std::string topic0 = to_lower(topics_arr[0].get<std::string>());
     if (topic0 != topics::FPMM_CREATION)
-      return;
+      return std::nullopt;
+
+    std::string data = log["data"].get<std::string>();
+    int64_t block_number = hex_to_int64(log["blockNumber"].get<std::string>());
 
     std::string fpmm_addr = extract_address_from_topic("0x" + data.substr(2, 64));
     int64_t cond_ids_offset = extract_uint256_from_data(data, 1);
@@ -476,6 +490,8 @@ private:
     std::ostringstream ss;
     ss << sql_blob(fpmm_addr) << ", " << sql_blob(condition_id) << ", " << fee << ", " << block_number;
     events.fpmm.push_back(ss.str());
+
+    return to_lower(fpmm_addr);
   }
 
   static void parse_fpmm_event(const std::string &topic0, const std::string &fpmm_addr,
