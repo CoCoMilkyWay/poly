@@ -175,7 +175,11 @@ private:
     while (!stop_requested_ && next_future) {
       TraceN("sync_batch");
 
-      auto result = next_future->get();
+      PrefetchResult result;
+      {
+        TraceN("wait_rpc");
+        result = next_future->get();
+      }
       next_future.reset();
 
       if (!result.success) {
