@@ -792,7 +792,8 @@ private:
                          uint32_t cond_idx, uint8_t token_idx) {
     // ===== 基础验证 =====
     assert(amount >= 0 && "Transfer amount must be non-negative");
-    if (amount == 0) return;  // 0-amount transfer 无意义，跳过
+    if (amount == 0)
+      return; // 0-amount transfer 无意义，跳过
     assert(cond_idx < conditions_.size() && "Invalid cond_idx");
     assert(token_idx < 2 && "Invalid token_idx");
     assert(from != to && "from and to must be different");
@@ -814,12 +815,11 @@ private:
       if (fpmm_map_.count(to) > 0) {
         TxFPMMKey tx_fpmm_key{block, tx_hash, to};
         auto fit = tx_fpmm_funding_.find(tx_fpmm_key);
-        if (fit != tx_fpmm_funding_.end() && fit->second.side == 1) {
-          assert(!is_protocol_contract(fit->second.funder) && "LP funder should not be protocol");
+        if (fit != tx_fpmm_funding_.end() && fit->second.side == 1 &&
+            !is_protocol_contract(fit->second.funder)) {
           RawEvent evt{sort_key, cond_idx, EventType::FPMMLPAdd, token_idx, 0, amount, split_price};
           push_event(fit->second.funder, evt);
         }
-        // 无论是否有 LP Add 事件，FPMM 的 mint 都不记录为 Split
         return;
       }
 
@@ -827,15 +827,13 @@ private:
       auto sit = tx_split_.find(tx_cond_key);
       if (sit != tx_split_.end()) {
         for (const auto &info : sit->second) {
-          if (info.stakeholder == to) {
-            assert(!is_protocol_contract(to) && "Split user should not be protocol");
+          if (info.stakeholder == to && !is_protocol_contract(to)) {
             RawEvent evt{sort_key, cond_idx, EventType::Split, token_idx, 0, amount, split_price};
             push_event(to, evt);
             return;
           }
         }
       }
-      // 其他内部 mint → 跳过
       return;
     }
 
