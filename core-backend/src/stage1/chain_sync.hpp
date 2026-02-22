@@ -170,7 +170,10 @@ private:
     std::optional<std::future<PrefetchResult>> next_future;
 
     int64_t to_block = std::min(from_block + current_batch_size_ - 1, head_block);
-    next_future = prefetch_async(from_block, to_block);
+    {
+      TraceN("start_prefetch");
+      next_future = prefetch_async(from_block, to_block);
+    }
 
     while (!stop_requested_ && next_future) {
       TraceN("sync_batch");
@@ -202,6 +205,7 @@ private:
 
       int64_t next_from = result.to_block + 1;
       if (next_from <= head_block && !stop_requested_) {
+        TraceN("start_prefetch");
         int64_t next_to = std::min(next_from + current_batch_size_ - 1, head_block);
         next_future = prefetch_async(next_from, next_to);
       }
