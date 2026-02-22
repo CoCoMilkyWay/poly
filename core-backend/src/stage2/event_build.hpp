@@ -393,19 +393,22 @@ private:
     }
 
     auto tm = conn->Query(
-        "SELECT token0, condition_id FROM " + stage1_db_.feather_table_range("token_map", start, end) +
+        "SELECT token0, token1, condition_id FROM " + stage1_db_.feather_table_range("token_map", start, end) +
         " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
     for (idx_t i = 0; i < tm->RowCount(); ++i) {
-      std::string tid = blob_to_hex(tm->GetValue(0, i).GetValueUnsafe<std::string>());
-      std::string cid = blob_to_hex(tm->GetValue(1, i).GetValueUnsafe<std::string>());
+      std::string token0 = blob_to_hex(tm->GetValue(0, i).GetValueUnsafe<std::string>());
+      std::string token1 = blob_to_hex(tm->GetValue(1, i).GetValueUnsafe<std::string>());
+      std::string cid = blob_to_hex(tm->GetValue(2, i).GetValueUnsafe<std::string>());
       std::string lower_cid = to_lower(cid);
       auto it = cond_map_.find(lower_cid);
+      uint32_t cond_idx;
       if (it == cond_map_.end()) {
-        uint32_t idx = intern_condition(cid, 2);
-        intern_token(tid, idx, 1);
+        cond_idx = intern_condition(cid, 2);
       } else {
-        intern_token(tid, it->second, 1);
+        cond_idx = it->second;
       }
+      intern_token(token0, cond_idx, 1);  // YES
+      intern_token(token1, cond_idx, 0);  // NO
     }
 
     auto fpmm = conn->Query(
@@ -692,19 +695,13 @@ private:
       auto oit = tx_order_.find(tx_token_key);
       if (oit != tx_order_.end()) {
         int64_t price = oit->second.tokens > 0 ? (oit->second.usdc * 1000000 / oit->second.tokens) : 0;
-        bool maker_buys = (oit->second.maker_side == 1);
-
-        if (maker_buys) {
-          RawEvent buy_evt{sort_key, cond_idx, EventType::Buy, token_idx, 0, amount, price};
-          push_event(oit->second.maker, buy_evt);
-          RawEvent sell_evt{sort_key, cond_idx, EventType::Sell, token_idx, 0, -amount, price};
-          push_event(oit->second.taker, sell_evt);
-        } else {
-          RawEvent sell_evt{sort_key, cond_idx, EventType::Sell, token_idx, 0, -amount, price};
-          push_event(oit->second.maker, sell_evt);
-          RawEvent buy_evt{sort_key, cond_idx, EventType::Buy, token_idx, 0, amount, price};
-          push_event(oit->second.taker, buy_evt);
-        }
+        // 使用transfer的from/to确定买卖方，而不是order_filled的maker/taker
+        // 避免同一tx同一token多个order_filled时maker/taker被覆盖导致用户错误
+        // from = 卖方(token转出), to = 买方(token转入)
+        RawEvent buy_evt{sort_key, cond_idx, EventType::Buy, token_idx, 0, amount, price};
+        push_event(to, buy_evt);
+        RawEvent sell_evt{sort_key, cond_idx, EventType::Sell, token_idx, 0, -amount, price};
+        push_event(from, sell_evt);
         return;
       }
       RawEvent in_evt{sort_key, cond_idx, EventType::TransferIn, token_idx, 0, amount, 0};

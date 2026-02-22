@@ -19,6 +19,9 @@ public:
   explicit Database(const std::string &path) : db_path_(path) {
     auto parent = fs::path(path).parent_path();
     data_dir_ = parent.empty() ? "." : parent.string();
+    if (!parent.empty() && !fs::exists(parent)) {
+      fs::create_directories(parent);
+    }
     duckdb::DBConfig config;
     config.SetOption("checkpoint_threshold", duckdb::Value("256MB"));
     config.SetOption("wal_autocheckpoint", duckdb::Value("256MB"));
