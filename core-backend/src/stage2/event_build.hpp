@@ -582,21 +582,38 @@ private:
         "FROM " +
         stage1_db_.feather_table("transfer") + " WHERE block_number > " +
         std::to_string(start) +
-        " AND block_number <= " + std::to_string(end) +
-        " ORDER BY block_number, log_index");
+        " AND block_number <= " + std::to_string(end));
 
+    struct TransferRow {
+      int64_t block, log_idx, amount;
+      std::string tx_hash, op, from, to, token_id;
+    };
+    std::vector<TransferRow> rows;
+    rows.reserve(transfers->RowCount());
     for (idx_t i = 0; i < transfers->RowCount(); ++i) {
-      int64_t block = transfers->GetValue(0, i).GetValue<int64_t>();
-      std::string tx_hash_hex = blob_to_hex(transfers->GetValue(1, i).GetValueUnsafe<std::string>());
-      int64_t log_idx = transfers->GetValue(2, i).GetValue<int64_t>();
-      std::string op = to_lower(blob_to_hex(transfers->GetValue(3, i).GetValueUnsafe<std::string>()));
-      std::string from = to_lower(blob_to_hex(transfers->GetValue(4, i).GetValueUnsafe<std::string>()));
-      std::string to = to_lower(blob_to_hex(transfers->GetValue(5, i).GetValueUnsafe<std::string>()));
-      std::string token_id = to_lower(blob_to_hex(transfers->GetValue(6, i).GetValueUnsafe<std::string>()));
-      int64_t amount = transfers->GetValue(7, i).GetValue<int64_t>();
+      rows.push_back({
+          transfers->GetValue(0, i).GetValue<int64_t>(),
+          transfers->GetValue(2, i).GetValue<int64_t>(),
+          transfers->GetValue(7, i).GetValue<int64_t>(),
+          blob_to_hex(transfers->GetValue(1, i).GetValueUnsafe<std::string>()),
+          blob_to_hex(transfers->GetValue(3, i).GetValueUnsafe<std::string>()),
+          blob_to_hex(transfers->GetValue(4, i).GetValueUnsafe<std::string>()),
+          blob_to_hex(transfers->GetValue(5, i).GetValueUnsafe<std::string>()),
+          blob_to_hex(transfers->GetValue(6, i).GetValueUnsafe<std::string>()),
+      });
+    }
+    std::sort(rows.begin(), rows.end(), [](const TransferRow &a, const TransferRow &b) {
+      return a.block != b.block ? a.block < b.block : a.log_idx < b.log_idx;
+    });
 
-      int64_t sort_key = block * 1000000000LL + log_idx;
-      auto tx_hash = hex_to_bytes32(tx_hash_hex);
+    for (const auto &r : rows) {
+      std::string op = to_lower(r.op);
+      std::string from = to_lower(r.from);
+      std::string to = to_lower(r.to);
+      std::string token_id = to_lower(r.token_id);
+
+      int64_t sort_key = r.block * 1000000000LL + r.log_idx;
+      auto tx_hash = hex_to_bytes32(r.tx_hash);
 
       auto tit = token_map_.find(token_id);
       if (tit == token_map_.end())
@@ -604,7 +621,7 @@ private:
       uint32_t cond_idx = tit->second.cond_idx;
       uint8_t token_idx = tit->second.is_yes ? 0 : 1;
 
-      classify_and_emit(sort_key, tx_hash, block, op, from, to, token_id, amount, cond_idx, token_idx);
+      classify_and_emit(sort_key, tx_hash, r.block, op, from, to, token_id, r.amount, cond_idx, token_idx);
     }
     progress_.cnt_transfer += transfers->RowCount();
   }

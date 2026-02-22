@@ -47,22 +47,11 @@ async def api_query(q: str = Query(...)):
 
 @app.post("/api/export-all")
 async def api_export_all():
-    feather_tables = {
-        "transfer": "block_number DESC, log_index DESC",
-        "condition_preparation": "block_number DESC, log_index DESC",
-        "condition_resolution": "block_number DESC, log_index DESC",
-        "split": "block_number DESC, log_index DESC",
-        "merge": "block_number DESC, log_index DESC",
-        "redemption": "block_number DESC, log_index DESC",
-        "fpmm": "block_number DESC",
-        "fpmm_trade": "block_number DESC, log_index DESC",
-        "fpmm_funding": "block_number DESC, log_index DESC",
-        "order_filled": "block_number DESC, log_index DESC",
-        "token_map": "block_number DESC, log_index DESC",
-        "neg_risk_market": "block_number DESC, log_index DESC",
-        "neg_risk_question": "block_number DESC, log_index DESC",
-        "convert": "block_number DESC, log_index DESC",
-    }
+    feather_tables = [
+        "transfer", "condition_preparation", "condition_resolution",
+        "split", "merge", "redemption", "fpmm", "fpmm_trade", "fpmm_funding",
+        "order_filled", "token_map", "neg_risk_market", "neg_risk_question", "convert"
+    ]
     export_dir = Path(__file__).parent.parent / "data" / "export"
     export_dir.mkdir(parents=True, exist_ok=True)
 
@@ -72,11 +61,11 @@ async def api_export_all():
 
     results = []
 
-    for table_name, order_by in feather_tables.items():
+    for table_name in feather_tables:
         if feather_counts.get(table_name, 0) == 0:
             continue
 
-        query = f"SELECT * FROM {table_name} ORDER BY {order_by} LIMIT 1000"
+        query = f"SELECT * FROM {table_name} LIMIT 1000"
         rows = await backend_get("/api/query", {"q": query})
 
         if isinstance(rows, list) and len(rows) > 0:
