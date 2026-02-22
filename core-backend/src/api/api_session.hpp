@@ -56,7 +56,7 @@ private:
   }
 
   void handle_request() {
-    TraceN("API::handle_request");
+    TraceN("handle_request");
     res_ = {};
     res_.version(req_.version());
     res_.keep_alive(req_.keep_alive());
@@ -121,6 +121,7 @@ private:
   }
 
   void handle_tables() {
+    TraceN("tables");
     res_.set(http::field::content_type, "application/json");
 
     json tables_info = json::array();
@@ -136,6 +137,7 @@ private:
   }
 
   void handle_sync_state() {
+    TraceN("sync_state");
     res_.set(http::field::content_type, "application/json");
 
     int64_t last_block = db_.get_last_block();
@@ -154,7 +156,7 @@ private:
   }
 
   void handle_query() {
-    TraceN("API::query");
+    TraceN("query");
     res_.set(http::field::content_type, "application/json");
 
     std::string query = get_param("q");
@@ -180,6 +182,7 @@ private:
   }
 
   void handle_rebuild_status() {
+    TraceN("rebuild_status");
     res_.set(http::field::content_type, "application/json");
 
     const auto &p = pnl_engine_.progress();
@@ -214,7 +217,7 @@ private:
   }
 
   void handle_user_pnl(const std::string &target) {
-    TraceN("API::user_pnl");
+    TraceN("user_pnl");
     res_.set(http::field::content_type, "application/json");
 
     std::string addr = extract_user_addr(target);
@@ -267,6 +270,7 @@ private:
   }
 
   void handle_user_positions(const std::string &target) {
+    TraceN("user_positions");
     res_.set(http::field::content_type, "application/json");
 
     std::string addr = extract_user_addr(target);
@@ -320,6 +324,7 @@ private:
   }
 
   void handle_replay_users() {
+    TraceN("replay_users");
     res_.set(http::field::content_type, "application/json");
 
     std::string limit_str = get_param("limit");
@@ -340,7 +345,7 @@ private:
   }
 
   void handle_replay() {
-    TraceN("API::replay");
+    TraceN("replay");
     res_.set(http::field::content_type, "application/json");
 
     std::string user = get_param("user");
@@ -386,6 +391,7 @@ private:
   }
 
   void handle_replay_positions() {
+    TraceN("replay_positions");
     res_.set(http::field::content_type, "application/json");
 
     std::string user = get_param("user");
@@ -418,6 +424,7 @@ private:
   }
 
   void handle_replay_trades() {
+    TraceN("replay_trades");
     res_.set(http::field::content_type, "application/json");
 
     std::string user = get_param("user");

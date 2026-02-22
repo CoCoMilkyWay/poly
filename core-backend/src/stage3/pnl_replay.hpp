@@ -126,6 +126,7 @@ public:
   };
 
   std::vector<UserSummary> get_users_sorted(int64_t limit = 200) const {
+    TraceN("users_sorted");
     std::vector<UserSummary> result;
     result.reserve(users_.size());
     for (size_t i = 0; i < users_.size(); ++i) {
@@ -162,7 +163,7 @@ public:
   };
 
   std::vector<TimelineEntry> get_user_timeline(const std::string &addr) const {
-    TraceN("PnlEngine::timeline");
+    TraceN("timeline");
     const auto *state = get_user_state(addr);
     if (!state)
       return {};
@@ -204,7 +205,7 @@ public:
   };
 
   std::vector<PositionAtTime> get_positions_at(const std::string &addr, int64_t sort_key) const {
-    TraceN("PnlEngine::positions");
+    TraceN("positions");
     const auto *state = get_user_state(addr);
     if (!state)
       return {};
@@ -249,6 +250,7 @@ public:
   };
 
   std::vector<TradeEntry> get_trades_near(const std::string &addr, int64_t sort_key, int radius = 20) const {
+    TraceN("trades_near");
     auto timeline = get_user_timeline(addr);
     if (timeline.empty())
       return {};

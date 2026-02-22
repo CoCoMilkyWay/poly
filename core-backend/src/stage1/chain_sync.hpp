@@ -139,7 +139,7 @@ private:
   }
 
   void do_sync() {
-    TraceN("Stage1::do_sync");
+    TraceN("do_sync");
     is_syncing_ = true;
 
     try {
@@ -173,7 +173,8 @@ private:
     next_future = prefetch_async(from_block, to_block);
 
     while (!stop_requested_ && next_future) {
-      TraceN("Stage1::sync_batch");
+      TraceN("sync_batch");
+
       auto result = next_future->get();
       next_future.reset();
 
@@ -216,30 +217,33 @@ private:
 
   void process_batch(const PrefetchResult &r) {
     json logs = json::array();
-    for (const auto &result : r.results) {
-      for (const auto &log : result) {
-        logs.push_back(log);
+    {
+      TraceN("merge_logs");
+      for (const auto &result : r.results) {
+        for (const auto &log : result) {
+          logs.push_back(log);
+        }
       }
     }
-
     DecodedEvents events;
     {
-      TraceN("Stage1::decode_logs");
+      TraceN("decode_logs");
       events = EventDecoder::decode_logs(logs);
     }
 
     {
-      TraceN("Stage1::db_write");
+      TraceN("db_write");
       Database::WriteLock lock(db_);
       db_.atomic_multi_insert_appender(events, r.to_block);
     }
 
-    double now = std::chrono::duration<double>(
-                     std::chrono::steady_clock::now().time_since_epoch())
-                     .count();
-    chunk_history_.push_back({r.to_block, now, r.response_bytes, r.to_block - r.from_block + 1});
-    if (chunk_history_.size() > 20)
-      chunk_history_.pop_front();
+    {
+      TraceN("fetch_chunk");
+      double now = std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();
+      chunk_history_.push_back({r.to_block, now, r.response_bytes, r.to_block - r.from_block + 1});
+      if (chunk_history_.size() > 20)
+        chunk_history_.pop_front();
+    }
   }
 
   const Config &config_;

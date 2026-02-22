@@ -136,7 +136,7 @@ def main():
 
         url = f"http://localhost:{FRONTEND_PORT}"
         print(f"[run.py] 服务已启动: {url}")
-        webbrowser.open(url)
+        # webbrowser.open(url)
 
         backend.wait()
     except KeyboardInterrupt:

@@ -91,7 +91,7 @@ private:
       }
 
       if (has_request_) {
-        TraceN("RPC::http_post");
+        TraceN("http_post");
         try {
           result_body_ = http_post(request_body_);
           request_error_.clear();
@@ -191,6 +191,7 @@ private:
   void ensure_connected() {
     if (connected_)
       return;
+    TraceN("connect");
 
     tcp::resolver resolver(ioc_);
     auto const endpoints = resolver.resolve(host_, port_);
@@ -240,7 +241,7 @@ private:
 
         beast::flat_buffer buffer;
         http::response_parser<http::string_body> parser;
-        parser.body_limit(1024 * 1024 * 1024);  // 1GB
+        parser.body_limit(1024 * 1024 * 1024); // 1GB
 
         if (use_ssl_) {
           http::write(*ssl_stream_, req);
