@@ -33,8 +33,11 @@ public:
   void start(asio::io_context &ioc) {
     ioc_ = &ioc;
     is_syncing_ = false;
+    stop_requested_ = false;
     schedule_sync(0);
   }
+
+  void stop() { stop_requested_ = true; }
 
   bool is_syncing() const { return is_syncing_; }
   int64_t get_head_block() const { return head_block_; }
@@ -96,10 +99,12 @@ private:
   }
 
   void schedule_sync(int delay_seconds) {
+    if (stop_requested_)
+      return;
     auto timer = std::make_shared<asio::steady_timer>(*ioc_);
     timer->expires_after(std::chrono::seconds(delay_seconds));
     timer->async_wait([this, timer](boost::system::error_code ec) {
-      if (!ec) {
+      if (!ec && !stop_requested_) {
         do_sync();
       }
     });
@@ -134,7 +139,7 @@ private:
   }
 
   void sync_loop(int64_t from_block, int64_t head_block) {
-    while (from_block <= head_block) {
+    while (from_block <= head_block && !stop_requested_) {
       int64_t to_block = std::min(from_block + current_batch_size_ - 1, head_block);
 
       if (!sync_one_batch(from_block, to_block, head_block)) {
@@ -142,6 +147,11 @@ private:
       }
 
       from_block = to_block + 1;
+    }
+
+    if (stop_requested_) {
+      is_syncing_ = false;
+      return;
     }
 
     std::cout << "[Sync] 本轮同步完成, " << interval_seconds_ << "s 后检查更新" << std::endl;
@@ -164,7 +174,7 @@ private:
       auto timer = std::make_shared<asio::steady_timer>(*ioc_);
       timer->expires_after(std::chrono::seconds(5));
       timer->async_wait([this, timer, from_block, head_block](boost::system::error_code ec) {
-        if (!ec) {
+        if (!ec && !stop_requested_) {
           sync_loop(from_block, head_block);
         }
       });
@@ -187,54 +197,10 @@ private:
       events = EventDecoder::decode_logs(logs);
     }
 
-    std::vector<std::tuple<std::string, std::string, std::vector<std::string>>> batches;
-    batches.emplace_back("transfer",
-                         "block_number, tx_hash, log_index, operator, from_addr, to_addr, token_id, amount",
-                         std::move(events.transfer));
-    batches.emplace_back("condition_preparation",
-                         "block_number, tx_hash, log_index, condition_id, oracle, question_id, outcome_slot_count",
-                         std::move(events.condition_preparation));
-    batches.emplace_back("condition_resolution",
-                         "block_number, tx_hash, log_index, condition_id, oracle, question_id, outcome_slot_count, payout_numerators",
-                         std::move(events.condition_resolution));
-    batches.emplace_back("split",
-                         "block_number, tx_hash, log_index, stakeholder, collateral_token, parent_collection_id, condition_id, partition, amount",
-                         std::move(events.split));
-    batches.emplace_back("merge",
-                         "block_number, tx_hash, log_index, stakeholder, collateral_token, parent_collection_id, condition_id, partition, amount",
-                         std::move(events.merge));
-    batches.emplace_back("redemption",
-                         "block_number, tx_hash, log_index, redeemer, collateral_token, parent_collection_id, condition_id, index_sets, payout",
-                         std::move(events.redemption));
-    batches.emplace_back("fpmm",
-                         "block_number, tx_hash, log_index, creator, fpmm_addr, conditional_tokens, collateral_token, condition_ids, fee",
-                         std::move(events.fpmm));
-    batches.emplace_back("fpmm_trade",
-                         "block_number, tx_hash, log_index, fpmm_addr, trader, side, outcome_index, usdc_amount, token_amount, fee",
-                         std::move(events.fpmm_trade));
-    batches.emplace_back("fpmm_funding",
-                         "block_number, tx_hash, log_index, fpmm_addr, funder, side, amounts, collateral_from_fee_pool, shares",
-                         std::move(events.fpmm_funding));
-    batches.emplace_back("order_filled",
-                         "block_number, tx_hash, log_index, exchange, order_hash, maker, taker, maker_asset_id, taker_asset_id, maker_amount, taker_amount, fee",
-                         std::move(events.order_filled));
-    batches.emplace_back("token_map",
-                         "block_number, tx_hash, log_index, exchange, token0, token1, condition_id",
-                         std::move(events.token_map));
-    batches.emplace_back("neg_risk_market",
-                         "block_number, tx_hash, log_index, market_id, oracle, fee_bips, data",
-                         std::move(events.neg_risk_market));
-    batches.emplace_back("neg_risk_question",
-                         "block_number, tx_hash, log_index, market_id, question_id, question_index, data",
-                         std::move(events.neg_risk_question));
-    batches.emplace_back("convert",
-                         "block_number, tx_hash, log_index, stakeholder, market_id, index_set, amount",
-                         std::move(events.convert));
-
     {
       TraceN("Stage1::db_write");
       Database::WriteLock lock(db_);
-      db_.atomic_multi_insert(batches, to_block);
+      db_.atomic_multi_insert_appender(events, to_block);
     }
 
     double now = std::chrono::duration<double>(
@@ -256,6 +222,7 @@ private:
   int64_t current_batch_size_;
   int interval_seconds_;
   std::atomic<bool> is_syncing_{false};
+  std::atomic<bool> stop_requested_{false};
   std::atomic<int64_t> head_block_{0};
   struct ChunkRecord {
     int64_t to_block;

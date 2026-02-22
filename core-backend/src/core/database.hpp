@@ -9,6 +9,8 @@
 #include <sys/file.h>
 #include <unistd.h>
 
+#include "../stage1/event_decode.hpp"
+
 using json = nlohmann::json;
 
 class Database {
@@ -408,53 +410,260 @@ public:
             std::to_string(block) + "')");
   }
 
-  void atomic_insert_batch(const std::string &table, const std::string &columns,
-                           const std::vector<std::string> &values_list,
-                           int64_t new_last_block) {
+  void atomic_multi_insert_appender(const stage1::DecodedEvents &events, int64_t new_last_block) {
     std::lock_guard<std::mutex> lock(write_mutex_);
 
     auto r1 = write_conn_->Query("BEGIN TRANSACTION");
     assert(!r1->HasError());
 
-    if (!values_list.empty()) {
-      std::string insert_sql = "INSERT OR IGNORE INTO " + table + " (" + columns + ") VALUES ";
-      for (size_t i = 0; i < values_list.size(); ++i) {
-        if (i > 0)
-          insert_sql += ", ";
-        insert_sql += "(" + values_list[i] + ")";
+    if (!events.transfer.empty()) {
+      duckdb::Appender app(*write_conn_, "transfer");
+      for (const auto &e : events.transfer) {
+        app.BeginRow();
+        app.Append<int64_t>(e.block_number);
+        app.Append(make_blob(e.tx_hash));
+        app.Append<int64_t>(e.log_index);
+        app.Append(make_blob(e.op));
+        app.Append(make_blob(e.from));
+        app.Append(make_blob(e.to));
+        app.Append(make_blob(e.token_id));
+        app.Append<int64_t>(e.amount);
+        app.EndRow();
       }
-      auto r2 = write_conn_->Query(insert_sql);
-      assert(!r2->HasError());
+      app.Close();
     }
 
-    auto r3 = write_conn_->Query(
-        "INSERT OR REPLACE INTO sync_state (key, value) VALUES ('last_block', '" +
-        std::to_string(new_last_block) + "')");
-    assert(!r3->HasError());
-
-    auto r4 = write_conn_->Query("COMMIT");
-    assert(!r4->HasError());
-  }
-
-  void atomic_multi_insert(
-      const std::vector<std::tuple<std::string, std::string, std::vector<std::string>>> &batches,
-      int64_t new_last_block) {
-    std::lock_guard<std::mutex> lock(write_mutex_);
-
-    auto r1 = write_conn_->Query("BEGIN TRANSACTION");
-    assert(!r1->HasError());
-
-    for (const auto &[table, columns, values_list] : batches) {
-      if (values_list.empty())
-        continue;
-      std::string insert_sql = "INSERT OR IGNORE INTO " + table + " (" + columns + ") VALUES ";
-      for (size_t i = 0; i < values_list.size(); ++i) {
-        if (i > 0)
-          insert_sql += ", ";
-        insert_sql += "(" + values_list[i] + ")";
+    if (!events.condition_preparation.empty()) {
+      duckdb::Appender app(*write_conn_, "condition_preparation");
+      for (const auto &e : events.condition_preparation) {
+        app.BeginRow();
+        app.Append<int64_t>(e.block_number);
+        app.Append(make_blob(e.tx_hash));
+        app.Append<int64_t>(e.log_index);
+        app.Append(make_blob(e.condition_id));
+        app.Append(make_blob(e.oracle));
+        app.Append(make_blob(e.question_id));
+        app.Append<int64_t>(e.outcome_slot_count);
+        app.EndRow();
       }
-      auto r = write_conn_->Query(insert_sql);
-      assert(!r->HasError());
+      app.Close();
+    }
+
+    if (!events.condition_resolution.empty()) {
+      duckdb::Appender app(*write_conn_, "condition_resolution");
+      for (const auto &e : events.condition_resolution) {
+        app.BeginRow();
+        app.Append<int64_t>(e.block_number);
+        app.Append(make_blob(e.tx_hash));
+        app.Append<int64_t>(e.log_index);
+        app.Append(make_blob(e.condition_id));
+        app.Append(make_blob(e.oracle));
+        app.Append(make_blob(e.question_id));
+        app.Append<int64_t>(e.outcome_slot_count);
+        app.Append(duckdb::Value(e.payout_numerators));
+        app.EndRow();
+      }
+      app.Close();
+    }
+
+    if (!events.split.empty()) {
+      duckdb::Appender app(*write_conn_, "split");
+      for (const auto &e : events.split) {
+        app.BeginRow();
+        app.Append<int64_t>(e.block_number);
+        app.Append(make_blob(e.tx_hash));
+        app.Append<int64_t>(e.log_index);
+        app.Append(make_blob(e.stakeholder));
+        app.Append(make_blob(e.collateral_token));
+        app.Append(make_blob(e.parent_collection_id));
+        app.Append(make_blob(e.condition_id));
+        app.Append(duckdb::Value(e.partition));
+        app.Append<int64_t>(e.amount);
+        app.EndRow();
+      }
+      app.Close();
+    }
+
+    if (!events.merge.empty()) {
+      duckdb::Appender app(*write_conn_, "merge");
+      for (const auto &e : events.merge) {
+        app.BeginRow();
+        app.Append<int64_t>(e.block_number);
+        app.Append(make_blob(e.tx_hash));
+        app.Append<int64_t>(e.log_index);
+        app.Append(make_blob(e.stakeholder));
+        app.Append(make_blob(e.collateral_token));
+        app.Append(make_blob(e.parent_collection_id));
+        app.Append(make_blob(e.condition_id));
+        app.Append(duckdb::Value(e.partition));
+        app.Append<int64_t>(e.amount);
+        app.EndRow();
+      }
+      app.Close();
+    }
+
+    if (!events.redemption.empty()) {
+      duckdb::Appender app(*write_conn_, "redemption");
+      for (const auto &e : events.redemption) {
+        app.BeginRow();
+        app.Append<int64_t>(e.block_number);
+        app.Append(make_blob(e.tx_hash));
+        app.Append<int64_t>(e.log_index);
+        app.Append(make_blob(e.redeemer));
+        app.Append(make_blob(e.collateral_token));
+        app.Append(make_blob(e.parent_collection_id));
+        app.Append(make_blob(e.condition_id));
+        app.Append(duckdb::Value(e.index_sets));
+        app.Append<int64_t>(e.payout);
+        app.EndRow();
+      }
+      app.Close();
+    }
+
+    if (!events.fpmm.empty()) {
+      duckdb::Appender app(*write_conn_, "fpmm");
+      for (const auto &e : events.fpmm) {
+        app.BeginRow();
+        app.Append<int64_t>(e.block_number);
+        app.Append(make_blob(e.tx_hash));
+        app.Append<int64_t>(e.log_index);
+        app.Append(make_blob(e.creator));
+        app.Append(make_blob(e.fpmm_addr));
+        app.Append(make_blob(e.conditional_tokens));
+        app.Append(make_blob(e.collateral_token));
+        app.Append(duckdb::Value(e.condition_ids));
+        app.Append<int64_t>(e.fee);
+        app.EndRow();
+      }
+      app.Close();
+    }
+
+    if (!events.fpmm_trade.empty()) {
+      duckdb::Appender app(*write_conn_, "fpmm_trade");
+      for (const auto &e : events.fpmm_trade) {
+        app.BeginRow();
+        app.Append<int64_t>(e.block_number);
+        app.Append(make_blob(e.tx_hash));
+        app.Append<int64_t>(e.log_index);
+        app.Append(make_blob(e.fpmm_addr));
+        app.Append(make_blob(e.trader));
+        app.Append<int64_t>(e.side);
+        app.Append<int64_t>(e.outcome_index);
+        app.Append<int64_t>(e.usdc_amount);
+        app.Append<int64_t>(e.token_amount);
+        app.Append<int64_t>(e.fee);
+        app.EndRow();
+      }
+      app.Close();
+    }
+
+    if (!events.fpmm_funding.empty()) {
+      duckdb::Appender app(*write_conn_, "fpmm_funding");
+      for (const auto &e : events.fpmm_funding) {
+        app.BeginRow();
+        app.Append<int64_t>(e.block_number);
+        app.Append(make_blob(e.tx_hash));
+        app.Append<int64_t>(e.log_index);
+        app.Append(make_blob(e.fpmm_addr));
+        app.Append(make_blob(e.funder));
+        app.Append<int64_t>(e.side);
+        app.Append(duckdb::Value(e.amounts));
+        app.Append<int64_t>(e.collateral_from_fee_pool);
+        app.Append<int64_t>(e.shares);
+        app.EndRow();
+      }
+      app.Close();
+    }
+
+    if (!events.order_filled.empty()) {
+      duckdb::Appender app(*write_conn_, "order_filled");
+      for (const auto &e : events.order_filled) {
+        app.BeginRow();
+        app.Append<int64_t>(e.block_number);
+        app.Append(make_blob(e.tx_hash));
+        app.Append<int64_t>(e.log_index);
+        app.Append(duckdb::Value(e.exchange));
+        app.Append(make_blob(e.order_hash));
+        app.Append(make_blob(e.maker));
+        app.Append(make_blob(e.taker));
+        app.Append(make_blob(e.maker_asset_id));
+        app.Append(make_blob(e.taker_asset_id));
+        app.Append<int64_t>(e.maker_amount);
+        app.Append<int64_t>(e.taker_amount);
+        app.Append<int64_t>(e.fee);
+        app.EndRow();
+      }
+      app.Close();
+    }
+
+    if (!events.token_map.empty()) {
+      duckdb::Appender app(*write_conn_, "token_map");
+      for (const auto &e : events.token_map) {
+        app.BeginRow();
+        app.Append<int64_t>(e.block_number);
+        app.Append(make_blob(e.tx_hash));
+        app.Append<int64_t>(e.log_index);
+        app.Append(duckdb::Value(e.exchange));
+        app.Append(make_blob(e.token0));
+        app.Append(make_blob(e.token1));
+        app.Append(make_blob(e.condition_id));
+        app.EndRow();
+      }
+      app.Close();
+    }
+
+    if (!events.neg_risk_market.empty()) {
+      duckdb::Appender app(*write_conn_, "neg_risk_market");
+      for (const auto &e : events.neg_risk_market) {
+        app.BeginRow();
+        app.Append<int64_t>(e.block_number);
+        app.Append(make_blob(e.tx_hash));
+        app.Append<int64_t>(e.log_index);
+        app.Append(make_blob(e.market_id));
+        app.Append(make_blob(e.oracle));
+        app.Append<int64_t>(e.fee_bips);
+        if (e.data)
+          app.Append(make_blob(*e.data));
+        else
+          app.Append(duckdb::Value());
+        app.EndRow();
+      }
+      app.Close();
+    }
+
+    if (!events.neg_risk_question.empty()) {
+      duckdb::Appender app(*write_conn_, "neg_risk_question");
+      for (const auto &e : events.neg_risk_question) {
+        app.BeginRow();
+        app.Append<int64_t>(e.block_number);
+        app.Append(make_blob(e.tx_hash));
+        app.Append<int64_t>(e.log_index);
+        app.Append(make_blob(e.market_id));
+        app.Append(make_blob(e.question_id));
+        app.Append<int64_t>(e.question_index);
+        if (e.data)
+          app.Append(make_blob(*e.data));
+        else
+          app.Append(duckdb::Value());
+        app.EndRow();
+      }
+      app.Close();
+    }
+
+    if (!events.convert.empty()) {
+      duckdb::Appender app(*write_conn_, "convert");
+      for (const auto &e : events.convert) {
+        app.BeginRow();
+        app.Append<int64_t>(e.block_number);
+        app.Append(make_blob(e.tx_hash));
+        app.Append<int64_t>(e.log_index);
+        app.Append(make_blob(e.stakeholder));
+        app.Append(make_blob(e.market_id));
+        app.Append<int64_t>(e.index_set);
+        app.Append<int64_t>(e.amount);
+        app.EndRow();
+      }
+      app.Close();
     }
 
     auto r3 = write_conn_->Query(
@@ -467,6 +676,29 @@ public:
   }
 
 private:
+  static duckdb::Value make_blob(const std::string &hex) {
+    std::string h = hex;
+    if (h.size() >= 2 && h[0] == '0' && (h[1] == 'x' || h[1] == 'X'))
+      h = h.substr(2);
+    std::string bytes;
+    bytes.reserve(h.size() / 2);
+    for (size_t i = 0; i + 1 < h.size(); i += 2) {
+      unsigned char c = 0;
+      for (int j = 0; j < 2; ++j) {
+        char ch = h[i + j];
+        c <<= 4;
+        if (ch >= '0' && ch <= '9')
+          c |= ch - '0';
+        else if (ch >= 'a' && ch <= 'f')
+          c |= ch - 'a' + 10;
+        else if (ch >= 'A' && ch <= 'F')
+          c |= ch - 'A' + 10;
+      }
+      bytes.push_back(static_cast<char>(c));
+    }
+    return duckdb::Value::BLOB((duckdb::const_data_ptr_t)bytes.data(), bytes.size());
+  }
+
   // 路径
   std::string db_path_;
   std::string lock_path_;
