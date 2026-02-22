@@ -779,16 +779,31 @@ private:
                   std::to_string(nf.cond_idx) + ")");
     }
 
-    for (auto &[user, evt] : new_events_) {
-      std::string user_blob = hex_to_blob(user);
-      conn->Query(std::string("INSERT OR IGNORE INTO user_event VALUES ('") +
-                  escape_blob(user_blob) + "'::BLOB, " +
-                  std::to_string(evt.sort_key) + ", " +
-                  std::to_string(evt.cond_idx) + ", " +
-                  std::to_string(evt.type) + ", " +
-                  std::to_string(evt.token_idx) + ", " +
-                  std::to_string(evt.amount) + ", " +
-                  std::to_string(evt.price) + ")");
+    if (!new_events_.empty()) {
+      conn->Query("CREATE TEMP TABLE IF NOT EXISTS tmp_user_event ("
+                  "user_addr BLOB, sort_key BIGINT, cond_idx INTEGER, "
+                  "event_type INTEGER, token_idx INTEGER, amount BIGINT, price BIGINT)");
+      conn->Query("DELETE FROM tmp_user_event");
+
+      {
+        duckdb::Appender appender(*conn, "tmp_user_event");
+        for (auto &[user, evt] : new_events_) {
+          std::string user_blob = hex_to_blob(user);
+          appender.BeginRow();
+          appender.Append(duckdb::Value::BLOB(user_blob));
+          appender.Append(evt.sort_key);
+          appender.Append(static_cast<int32_t>(evt.cond_idx));
+          appender.Append(static_cast<int32_t>(evt.type));
+          appender.Append(static_cast<int32_t>(evt.token_idx));
+          appender.Append(evt.amount);
+          appender.Append(evt.price);
+          appender.EndRow();
+        }
+        appender.Close();
+      }
+
+      conn->Query("INSERT OR IGNORE INTO user_event "
+                  "SELECT * FROM tmp_user_event");
     }
 
     conn->Query("INSERT OR REPLACE INTO stage2_cursor VALUES ('last_block', " +

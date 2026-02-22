@@ -1,6 +1,6 @@
 {
-  "db_path_stage1": "data/polymarket.duckdb",
-  "db_path_stage2": "data/users.duckdb",
+  "db_path_stage1": "data/stage1/polymarket.duckdb",
+  "db_path_stage2": "data/stage2/users.duckdb",
   "frontend_port": 8000,
   "backend_port": 8001,
   "sync_interval_seconds": 30,

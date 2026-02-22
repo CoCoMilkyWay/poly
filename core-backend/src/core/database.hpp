@@ -237,7 +237,7 @@ public:
   }
 
   std::string feather_dir(const std::string &table) const {
-    return data_dir_ + "/stage1/" + table;
+    return data_dir_ + "/" + table;
   }
 
   std::string feather_table_range(const std::string &table, int64_t start_block, int64_t end_block) {
