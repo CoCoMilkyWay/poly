@@ -2,6 +2,7 @@
 
 #include "../stage2/event_build.hpp"
 #include "../stage2/types.hpp"
+#include "misc/profiler.hpp"
 #include <algorithm>
 #include <atomic>
 #include <cstring>
@@ -161,6 +162,7 @@ public:
   };
 
   std::vector<TimelineEntry> get_user_timeline(const std::string &addr) const {
+    TraceN("PnlEngine::timeline");
     const auto *state = get_user_state(addr);
     if (!state)
       return {};
@@ -202,6 +204,7 @@ public:
   };
 
   std::vector<PositionAtTime> get_positions_at(const std::string &addr, int64_t sort_key) const {
+    TraceN("PnlEngine::positions");
     const auto *state = get_user_state(addr);
     if (!state)
       return {};

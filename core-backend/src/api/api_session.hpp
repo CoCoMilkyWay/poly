@@ -10,6 +10,7 @@
 
 #include "../core/database.hpp"
 #include "../stage3/pnl_replay.hpp"
+#include "misc/profiler.hpp"
 
 namespace asio = boost::asio;
 namespace beast = boost::beast;
@@ -55,6 +56,7 @@ private:
   }
 
   void handle_request() {
+    TraceN("API::handle_request");
     res_ = {};
     res_.version(req_.version());
     res_.keep_alive(req_.keep_alive());
@@ -152,6 +154,7 @@ private:
   }
 
   void handle_query() {
+    TraceN("API::query");
     res_.set(http::field::content_type, "application/json");
 
     std::string query = get_param("q");
@@ -211,6 +214,7 @@ private:
   }
 
   void handle_user_pnl(const std::string &target) {
+    TraceN("API::user_pnl");
     res_.set(http::field::content_type, "application/json");
 
     std::string addr = extract_user_addr(target);
@@ -336,6 +340,7 @@ private:
   }
 
   void handle_replay() {
+    TraceN("API::replay");
     res_.set(http::field::content_type, "application/json");
 
     std::string user = get_param("user");

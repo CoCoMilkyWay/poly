@@ -15,6 +15,7 @@
 #include "../core/database.hpp"
 #include "../infra/rpc_client.hpp"
 #include "event_decode.hpp"
+#include "misc/profiler.hpp"
 
 namespace asio = boost::asio;
 using json = nlohmann::json;
@@ -106,6 +107,7 @@ private:
   }
 
   void do_sync() {
+    TraceN("Stage1::do_sync");
     is_syncing_ = true;
 
     try {
@@ -136,6 +138,7 @@ private:
 
   void sync_batch_pipeline(int64_t from_block, int64_t to_block, int64_t head_block,
                            std::future<std::vector<json>> current_future) {
+    TraceN("Stage1::sync_batch");
     std::vector<json> results;
     try {
       results = current_future.get();
@@ -173,7 +176,11 @@ private:
       }
     }
 
-    DecodedEvents events = EventDecoder::decode_logs(logs);
+    DecodedEvents events;
+    {
+      TraceN("Stage1::decode_logs");
+      events = EventDecoder::decode_logs(logs);
+    }
 
     std::vector<std::tuple<std::string, std::string, std::vector<std::string>>> batches;
     batches.emplace_back("transfer",
@@ -220,6 +227,7 @@ private:
                          std::move(events.convert));
 
     {
+      TraceN("Stage1::db_write");
       Database::WriteLock lock(db_);
       db_.atomic_multi_insert(batches, to_block);
     }

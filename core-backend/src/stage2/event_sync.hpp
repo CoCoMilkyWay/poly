@@ -7,6 +7,7 @@
 
 #include "../core/database.hpp"
 #include "event_build.hpp"
+#include "misc/profiler.hpp"
 
 namespace asio = boost::asio;
 
@@ -56,6 +57,7 @@ private:
   }
 
   void do_sync() {
+    TraceN("Stage2::do_sync");
     int64_t stage1_last = stage1_db_.get_last_block();
     int64_t stage2_cursor = builder_.cursor();
     int64_t behind_blocks = stage1_last - stage2_cursor;

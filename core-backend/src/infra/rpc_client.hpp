@@ -13,6 +13,8 @@
 #include <boost/beast.hpp>
 #include <boost/beast/ssl.hpp>
 
+#include "misc/profiler.hpp"
+
 namespace asio = boost::asio;
 namespace beast = boost::beast;
 namespace http = beast::http;
@@ -163,6 +165,7 @@ private:
   }
 
   std::string http_post(const std::string &body) {
+    TraceN("RPC::http_post");
     std::lock_guard<std::mutex> lock(mutex_);
 
     http::request<http::string_body> req{http::verb::post, target_, 11};
