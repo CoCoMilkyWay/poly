@@ -172,12 +172,12 @@ public:
   int64_t cursor() const { return progress_.cursor; }
 
   bool build_chunk(int64_t target_block) {
-    TraceN("s2/build");
     if (progress_.cursor >= target_block)
       return false;
 
     int64_t chunk_start = progress_.cursor;
     int64_t chunk_end = std::min(progress_.cursor + chunk_size_, target_block);
+    // std::cerr << "[Stage2] Processing chunk: " << chunk_start << " -> " << chunk_end << std::endl;
     progress_.target = target_block;
     progress_.chunk_start = chunk_start;
     progress_.chunk_end = chunk_end;
@@ -255,8 +255,6 @@ private:
   std::vector<std::tuple<std::string, RawEvent>> new_events_;
 
   static std::string blob_to_hex(const std::string &blob) {
-    if (blob.starts_with("0x"))
-      return blob;
     static const char hex_chars[] = "0123456789abcdef";
     std::string result = "0x";
     result.reserve(2 + blob.size() * 2);
@@ -278,7 +276,12 @@ private:
     if (h.starts_with("0x"))
       h = h.substr(2);
     for (size_t i = 0; i < 32 && i * 2 < h.size(); ++i) {
-      result[i] = static_cast<uint8_t>(std::stoul(h.substr(i * 2, 2), nullptr, 16));
+      try {
+        result[i] = static_cast<uint8_t>(std::stoul(h.substr(i * 2, 2), nullptr, 16));
+      } catch (const std::exception &e) {
+        std::cerr << "[ERROR] hex_to_bytes32 failed at i=" << i << ", hex='" << hex << "', substr='" << h.substr(i * 2, 2) << "'" << std::endl;
+        throw;
+      }
     }
     return result;
   }
@@ -290,7 +293,12 @@ private:
     std::string result;
     result.reserve(h.size() / 2);
     for (size_t i = 0; i + 1 < h.size(); i += 2) {
-      result.push_back(static_cast<char>(std::stoul(h.substr(i, 2), nullptr, 16)));
+      try {
+        result.push_back(static_cast<char>(std::stoul(h.substr(i, 2), nullptr, 16)));
+      } catch (const std::exception &e) {
+        std::cerr << "[ERROR] hex_to_blob failed at i=" << i << ", hex='" << hex << "', substr='" << h.substr(i, 2) << "'" << std::endl;
+        throw;
+      }
     }
     return result;
   }
