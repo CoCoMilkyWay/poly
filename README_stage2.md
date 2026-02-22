@@ -48,7 +48,7 @@ rebuild(target_block):
     固定 chunk 循环 (cursor → target_block):
         Phase 1: chunk 内 Stage1 表 → 更新内存映射 + rb_* 数据
                  ├─ 先处理 condition_preparation
-                 └─ 并行: condition_resolution / token_map / fpmm / neg_risk_question
+                 └─ 并行: condition_resolution / token_map / fpmm
         Phase 2: chunk 内 7 表 → 内存语义索引
         Phase 3: chunk 内 transfer → 分类 + 关联语义 → user_event 数据
         └─ 单事务: batch_insert(rb_* + user_event) + UPDATE cursor
@@ -66,8 +66,6 @@ rebuild(target_block):
 | `conditions_[cond_idx] → {outcome_count, payout}`        | condition_preparation + resolution | 结算状态           |
 | `token_map_[token_id] → {cond_idx, is_yes}`              | token_map + fpmm计算               | Transfer 归属      |
 | `fpmm_map_[fpmm_addr] → {cond_idx, token_yes, token_no}` | fpmm                               | FPMM operator 识别 |
-| `neg_risk_map_[(market_id, question_index)] → cond_idx`  | neg_risk_question                  | NegRisk Convert    |
-
 **关键洞察**：`token_map_` 有两个来源
 
 1. TokenRegistered 事件直接提供

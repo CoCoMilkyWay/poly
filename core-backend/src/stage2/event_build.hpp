@@ -76,15 +76,6 @@ public:
     )");
 
     stage2_db_.execute(R"(
-      CREATE TABLE IF NOT EXISTS rb_neg_risk (
-        market_id       BLOB NOT NULL,
-        question_index  INTEGER NOT NULL,
-        cond_idx        INTEGER NOT NULL,
-        PRIMARY KEY (market_id, question_index)
-      )
-    )");
-
-    stage2_db_.execute(R"(
       CREATE TABLE IF NOT EXISTS user_event (
         user_addr   BLOB NOT NULL,
         sort_key    BIGINT NOT NULL,
@@ -149,14 +140,6 @@ public:
       fpmm_map_[to_lower(addr)] = info;
     }
 
-    auto neg_r = conn->Query("SELECT market_id, question_index, cond_idx FROM rb_neg_risk");
-    for (idx_t i = 0; i < neg_r->RowCount(); ++i) {
-      std::string mid = blob_to_hex(neg_r->GetValue(0, i).GetValueUnsafe<std::string>());
-      int qidx = neg_r->GetValue(1, i).GetValue<int>();
-      uint32_t cidx = neg_r->GetValue(2, i).GetValue<uint32_t>();
-      neg_risk_map_[{to_lower(mid), qidx}] = cidx;
-    }
-
     progress_.total_conditions = conditions_.size();
     progress_.total_tokens = token_map_.size();
   }
@@ -164,7 +147,8 @@ public:
   int64_t cursor() const { return progress_.cursor; }
 
   bool build_chunk(int64_t target_block) {
-    if (progress_.cursor >= target_block) return false;
+    if (progress_.cursor >= target_block)
+      return false;
 
     int64_t chunk_start = progress_.cursor;
     int64_t chunk_end = std::min(progress_.cursor + chunk_size_, target_block);
@@ -176,7 +160,6 @@ public:
     new_conditions_.clear();
     new_tokens_.clear();
     new_fpmms_.clear();
-    new_neg_risks_.clear();
     new_events_.clear();
 
     tx_split_.clear();
@@ -217,20 +200,6 @@ private:
   std::unordered_map<std::string, TokenInfo> token_map_;
   std::unordered_map<std::string, FPMMInfo> fpmm_map_;
 
-  struct NegRiskKey {
-    std::string market_id;
-    int question_index;
-    bool operator==(const NegRiskKey &o) const {
-      return market_id == o.market_id && question_index == o.question_index;
-    }
-  };
-  struct NegRiskKeyHash {
-    size_t operator()(const NegRiskKey &k) const {
-      return std::hash<std::string>()(k.market_id) ^ std::hash<int>()(k.question_index);
-    }
-  };
-  std::unordered_map<NegRiskKey, uint32_t, NegRiskKeyHash> neg_risk_map_;
-
   std::unordered_map<TxCondKey, SplitInfo> tx_split_;
   std::unordered_map<TxCondKey, MergeInfo> tx_merge_;
   std::unordered_map<TxCondKey, RedemptionInfo> tx_redemption_;
@@ -239,19 +208,29 @@ private:
   std::unordered_map<TxKey, FPMMTradeInfo> tx_fpmm_trade_;
   std::unordered_map<TxKey, FPMMFundingInfo> tx_fpmm_funding_;
 
-  struct NewCondition { uint32_t idx; std::string cond_id; ConditionInfo info; };
-  struct NewToken { std::string token_id; uint32_t cond_idx; uint8_t is_yes; };
-  struct NewFPMM { std::string addr; uint32_t cond_idx; };
-  struct NewNegRisk { std::string market_id; int question_index; uint32_t cond_idx; };
+  struct NewCondition {
+    uint32_t idx;
+    std::string cond_id;
+    ConditionInfo info;
+  };
+  struct NewToken {
+    std::string token_id;
+    uint32_t cond_idx;
+    uint8_t is_yes;
+  };
+  struct NewFPMM {
+    std::string addr;
+    uint32_t cond_idx;
+  };
 
   std::vector<NewCondition> new_conditions_;
   std::vector<NewToken> new_tokens_;
   std::vector<NewFPMM> new_fpmms_;
-  std::vector<NewNegRisk> new_neg_risks_;
   std::vector<std::tuple<std::string, RawEvent>> new_events_;
 
   static std::string blob_to_hex(const std::string &blob) {
-    if (blob.starts_with("0x")) return blob;
+    if (blob.starts_with("0x"))
+      return blob;
     static const char hex_chars[] = "0123456789abcdef";
     std::string result = "0x";
     result.reserve(2 + blob.size() * 2);
@@ -270,7 +249,8 @@ private:
   static std::array<uint8_t, 32> hex_to_bytes32(const std::string &hex) {
     std::array<uint8_t, 32> result{};
     std::string h = hex;
-    if (h.starts_with("0x")) h = h.substr(2);
+    if (h.starts_with("0x"))
+      h = h.substr(2);
     for (size_t i = 0; i < 32 && i * 2 < h.size(); ++i) {
       result[i] = static_cast<uint8_t>(std::stoul(h.substr(i * 2, 2), nullptr, 16));
     }
@@ -279,7 +259,8 @@ private:
 
   static std::string hex_to_blob(const std::string &hex) {
     std::string h = hex;
-    if (h.starts_with("0x")) h = h.substr(2);
+    if (h.starts_with("0x"))
+      h = h.substr(2);
     std::string result;
     result.reserve(h.size() / 2);
     for (size_t i = 0; i + 1 < h.size(); i += 2) {
@@ -291,7 +272,8 @@ private:
   uint32_t intern_condition(const std::string &cond_id, uint8_t outcome_cnt) {
     std::string lower = to_lower(cond_id);
     auto it = cond_map_.find(lower);
-    if (it != cond_map_.end()) return it->second;
+    if (it != cond_map_.end())
+      return it->second;
 
     uint32_t idx = static_cast<uint32_t>(conditions_.size());
     ConditionInfo info;
@@ -320,7 +302,8 @@ private:
 
   void intern_token(const std::string &token_id, uint32_t cond_idx, uint8_t is_yes) {
     std::string lower = to_lower(token_id);
-    if (token_map_.count(lower)) return;
+    if (token_map_.count(lower))
+      return;
     token_map_[lower] = {cond_idx, is_yes};
     new_tokens_.push_back({lower, cond_idx, is_yes});
     progress_.total_tokens = token_map_.size();
@@ -328,17 +311,10 @@ private:
 
   void intern_fpmm(const std::string &addr, uint32_t cond_idx) {
     std::string lower = to_lower(addr);
-    if (fpmm_map_.count(lower)) return;
+    if (fpmm_map_.count(lower))
+      return;
     fpmm_map_[lower] = {cond_idx};
     new_fpmms_.push_back({lower, cond_idx});
-  }
-
-  void intern_neg_risk(const std::string &market_id, int question_index, uint32_t cond_idx) {
-    std::string lower = to_lower(market_id);
-    NegRiskKey key{lower, question_index};
-    if (neg_risk_map_.count(key)) return;
-    neg_risk_map_[key] = cond_idx;
-    new_neg_risks_.push_back({lower, question_index, cond_idx});
   }
 
   void push_event(const std::string &user_addr, const RawEvent &evt) {
@@ -351,7 +327,8 @@ private:
 
     auto cp = conn->Query(
         "SELECT condition_id, outcome_slot_count FROM condition_preparation "
-        "WHERE block_number > " + std::to_string(start) +
+        "WHERE block_number > " +
+        std::to_string(start) +
         " AND block_number <= " + std::to_string(end));
     for (idx_t i = 0; i < cp->RowCount(); ++i) {
       std::string cid = blob_to_hex(cp->GetValue(0, i).GetValueUnsafe<std::string>());
@@ -361,13 +338,15 @@ private:
 
     auto cr = conn->Query(
         "SELECT condition_id, payout_numerators FROM condition_resolution "
-        "WHERE block_number > " + std::to_string(start) +
+        "WHERE block_number > " +
+        std::to_string(start) +
         " AND block_number <= " + std::to_string(end));
     for (idx_t i = 0; i < cr->RowCount(); ++i) {
       std::string cid = blob_to_hex(cr->GetValue(0, i).GetValueUnsafe<std::string>());
       std::string lower = to_lower(cid);
       auto it = cond_map_.find(lower);
-      if (it == cond_map_.end()) continue;
+      if (it == cond_map_.end())
+        continue;
       std::string payout_str = cr->GetValue(1, i).GetValueUnsafe<std::string>();
       std::vector<int64_t> payouts;
       auto payout_arr = nlohmann::json::parse(payout_str);
@@ -379,7 +358,8 @@ private:
 
     auto tm = conn->Query(
         "SELECT token0, condition_id FROM token_map "
-        "WHERE block_number > " + std::to_string(start) +
+        "WHERE block_number > " +
+        std::to_string(start) +
         " AND block_number <= " + std::to_string(end));
     for (idx_t i = 0; i < tm->RowCount(); ++i) {
       std::string tid = blob_to_hex(tm->GetValue(0, i).GetValueUnsafe<std::string>());
@@ -395,30 +375,21 @@ private:
     }
 
     auto fpmm = conn->Query(
-        "SELECT fpmm_addr, condition_id FROM fpmm "
-        "WHERE block_number > " + std::to_string(start) +
+        "SELECT fpmm_addr, condition_ids FROM fpmm "
+        "WHERE block_number > " +
+        std::to_string(start) +
         " AND block_number <= " + std::to_string(end));
     for (idx_t i = 0; i < fpmm->RowCount(); ++i) {
       std::string addr = blob_to_hex(fpmm->GetValue(0, i).GetValueUnsafe<std::string>());
-      std::string cid = blob_to_hex(fpmm->GetValue(1, i).GetValueUnsafe<std::string>());
+      std::string cids_json = fpmm->GetValue(1, i).GetValueUnsafe<std::string>();
+      auto cids_arr = nlohmann::json::parse(cids_json);
+      assert(!cids_arr.empty());
+      std::string cid = cids_arr[0].get<std::string>();
       std::string lower_cid = to_lower(cid);
       auto it = cond_map_.find(lower_cid);
-      if (it == cond_map_.end()) continue;
+      if (it == cond_map_.end())
+        continue;
       intern_fpmm(addr, it->second);
-    }
-
-    auto nrq = conn->Query(
-        "SELECT market_id, question_index, condition_id FROM neg_risk_question "
-        "WHERE block_number > " + std::to_string(start) +
-        " AND block_number <= " + std::to_string(end));
-    for (idx_t i = 0; i < nrq->RowCount(); ++i) {
-      std::string mid = blob_to_hex(nrq->GetValue(0, i).GetValueUnsafe<std::string>());
-      int qidx = nrq->GetValue(1, i).GetValue<int>();
-      std::string cid = blob_to_hex(nrq->GetValue(2, i).GetValueUnsafe<std::string>());
-      std::string lower_cid = to_lower(cid);
-      auto it = cond_map_.find(lower_cid);
-      if (it == cond_map_.end()) continue;
-      intern_neg_risk(mid, qidx, it->second);
     }
   }
 
@@ -427,7 +398,8 @@ private:
 
     auto split = conn->Query(
         "SELECT block_number, tx_hash, condition_id, amount, stakeholder FROM split "
-        "WHERE block_number > " + std::to_string(start) +
+        "WHERE block_number > " +
+        std::to_string(start) +
         " AND block_number <= " + std::to_string(end));
     for (idx_t i = 0; i < split->RowCount(); ++i) {
       TxCondKey key;
@@ -443,7 +415,8 @@ private:
 
     auto merge = conn->Query(
         "SELECT block_number, tx_hash, condition_id, amount, stakeholder FROM merge "
-        "WHERE block_number > " + std::to_string(start) +
+        "WHERE block_number > " +
+        std::to_string(start) +
         " AND block_number <= " + std::to_string(end));
     for (idx_t i = 0; i < merge->RowCount(); ++i) {
       TxCondKey key;
@@ -459,7 +432,8 @@ private:
 
     auto redemption = conn->Query(
         "SELECT block_number, tx_hash, condition_id, index_sets, payout, redeemer FROM redemption "
-        "WHERE block_number > " + std::to_string(start) +
+        "WHERE block_number > " +
+        std::to_string(start) +
         " AND block_number <= " + std::to_string(end));
     for (idx_t i = 0; i < redemption->RowCount(); ++i) {
       TxCondKey key;
@@ -476,7 +450,8 @@ private:
 
     auto convert = conn->Query(
         "SELECT block_number, tx_hash, market_id, index_set, amount, stakeholder FROM convert "
-        "WHERE block_number > " + std::to_string(start) +
+        "WHERE block_number > " +
+        std::to_string(start) +
         " AND block_number <= " + std::to_string(end));
     for (idx_t i = 0; i < convert->RowCount(); ++i) {
       TxKey key;
@@ -492,8 +467,9 @@ private:
 
     auto order = conn->Query(
         "SELECT block_number, tx_hash, maker, taker, maker_asset_id, taker_asset_id, "
-        "maker_amount_filled, taker_amount_filled, fee FROM order_filled "
-        "WHERE block_number > " + std::to_string(start) +
+        "maker_amount, taker_amount, fee FROM order_filled "
+        "WHERE block_number > " +
+        std::to_string(start) +
         " AND block_number <= " + std::to_string(end));
     for (idx_t i = 0; i < order->RowCount(); ++i) {
       int64_t block = order->GetValue(0, i).GetValue<int64_t>();
@@ -522,8 +498,9 @@ private:
 
     auto fpmm_trade = conn->Query(
         "SELECT block_number, tx_hash, fpmm_addr, trader, side, outcome_index, "
-        "investment_amount, outcome_tokens FROM fpmm_trade "
-        "WHERE block_number > " + std::to_string(start) +
+        "usdc_amount, token_amount FROM fpmm_trade "
+        "WHERE block_number > " +
+        std::to_string(start) +
         " AND block_number <= " + std::to_string(end));
     for (idx_t i = 0; i < fpmm_trade->RowCount(); ++i) {
       TxKey key;
@@ -540,9 +517,9 @@ private:
     }
 
     auto fpmm_funding = conn->Query(
-        "SELECT block_number, tx_hash, fpmm_addr, funder, side, "
-        "outcome_tokens_0, outcome_tokens_1 FROM fpmm_funding "
-        "WHERE block_number > " + std::to_string(start) +
+        "SELECT block_number, tx_hash, fpmm_addr, funder, side, amounts FROM fpmm_funding "
+        "WHERE block_number > " +
+        std::to_string(start) +
         " AND block_number <= " + std::to_string(end));
     for (idx_t i = 0; i < fpmm_funding->RowCount(); ++i) {
       TxKey key;
@@ -552,8 +529,10 @@ private:
       info.fpmm_addr = to_lower(blob_to_hex(fpmm_funding->GetValue(2, i).GetValueUnsafe<std::string>()));
       info.funder = to_lower(blob_to_hex(fpmm_funding->GetValue(3, i).GetValueUnsafe<std::string>()));
       info.side = fpmm_funding->GetValue(4, i).GetValue<int>();
-      info.amount0 = fpmm_funding->GetValue(5, i).GetValue<int64_t>();
-      info.amount1 = fpmm_funding->GetValue(6, i).GetValue<int64_t>();
+      std::string amounts_json = fpmm_funding->GetValue(5, i).GetValueUnsafe<std::string>();
+      auto amounts_arr = nlohmann::json::parse(amounts_json);
+      info.amount0 = amounts_arr.size() > 0 ? amounts_arr[0].get<int64_t>() : 0;
+      info.amount1 = amounts_arr.size() > 1 ? amounts_arr[1].get<int64_t>() : 0;
       tx_fpmm_funding_[key] = info;
     }
   }
@@ -562,7 +541,8 @@ private:
     auto conn = stage1_db_.create_connection();
     auto transfers = conn->Query(
         "SELECT block_number, tx_hash, log_index, operator, from_addr, to_addr, token_id, amount "
-        "FROM transfer WHERE block_number > " + std::to_string(start) +
+        "FROM transfer WHERE block_number > " +
+        std::to_string(start) +
         " AND block_number <= " + std::to_string(end) +
         " ORDER BY block_number, log_index");
 
@@ -580,7 +560,8 @@ private:
       auto tx_hash = hex_to_bytes32(tx_hash_hex);
 
       auto tit = token_map_.find(token_id);
-      if (tit == token_map_.end()) continue;
+      if (tit == token_map_.end())
+        continue;
       uint32_t cond_idx = tit->second.cond_idx;
       uint8_t token_idx = tit->second.is_yes ? 0 : 1;
 
@@ -722,7 +703,8 @@ private:
       std::string blob = hex_to_blob(nc.cond_id);
       std::string pvals;
       for (int i = 0; i < 8; ++i) {
-        if (i > 0) pvals += ", ";
+        if (i > 0)
+          pvals += ", ";
         if (i < static_cast<int>(nc.info.payout_numerators.size()) && nc.info.payout_numerators[i] >= 0) {
           pvals += std::to_string(nc.info.payout_numerators[i]);
         } else {
@@ -748,14 +730,6 @@ private:
       conn->Query(std::string("INSERT OR IGNORE INTO rb_fpmm VALUES ('") +
                   escape_blob(blob) + "'::BLOB, " +
                   std::to_string(nf.cond_idx) + ")");
-    }
-
-    for (auto &nr : new_neg_risks_) {
-      std::string blob = hex_to_blob(nr.market_id);
-      conn->Query(std::string("INSERT OR IGNORE INTO rb_neg_risk VALUES ('") +
-                  escape_blob(blob) + "'::BLOB, " +
-                  std::to_string(nr.question_index) + ", " +
-                  std::to_string(nr.cond_idx) + ")");
     }
 
     for (auto &[user, evt] : new_events_) {
