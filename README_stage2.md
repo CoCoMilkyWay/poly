@@ -33,13 +33,13 @@ ERC1155.sol 中所有修改余额的地方：
 
 ### 设计原则与 Assert 验证
 
-| 原则                                | 保证机制             | Assert 验证                                   |
-| ----------------------------------- | -------------------- | --------------------------------------------- |
-| 1. 任何 token 流水都被包括          | Transfer 是唯一来源  | `amount > 0`, `cond_idx < conditions_.size()` |
-| 2. 任何 token 流水不被 double count | 分类决策树互斥       | 每个分支 return，无 fallthrough               |
-| 3. token 流水被精确还原             | 语义事件提供精确价格 | `price ∈ [0, 1e6]`, `tokens > 0`              |
-| 4. 事件只记录给用户                 | 协议合约地址不记录   | `!is_protocol_contract(user)`                 |
-| 5. from/to 不同                     | Transfer 语义保证    | `from != to`                                  |
+| 原则                                | 保证机制             | Assert 验证                                    |
+| ----------------------------------- | -------------------- | ---------------------------------------------- |
+| 1. 任何 token 流水都被包括          | Transfer 是唯一来源  | `amount >= 0`, `cond_idx < conditions_.size()` |
+| 2. 任何 token 流水不被 double count | 分类决策树互斥       | 每个分支 return，无 fallthrough                |
+| 3. token 流水被精确还原             | 语义事件提供精确价格 | `price ∈ [0, 1e6]`, `tokens > 0`               |
+| 4. 事件只记录给用户                 | 协议合约地址不记录   | `!is_protocol_contract(user)`                  |
+| 5. from/to 不同                     | Transfer 语义保证    | `from != to`                                   |
 
 ## 执行流程
 

@@ -791,7 +791,8 @@ private:
                          const std::string &token_id, int64_t amount,
                          uint32_t cond_idx, uint8_t token_idx) {
     // ===== 基础验证 =====
-    assert(amount > 0 && "Transfer amount must be positive");
+    assert(amount >= 0 && "Transfer amount must be non-negative");
+    if (amount == 0) return;  // 0-amount transfer 无意义，跳过
     assert(cond_idx < conditions_.size() && "Invalid cond_idx");
     assert(token_idx < 2 && "Invalid token_idx");
     assert(from != to && "from and to must be different");
@@ -894,12 +895,14 @@ private:
     if (op == CTF_EXCHANGE || op == NEG_RISK_CTF_EXCHANGE) {
       auto oit = tx_order_.find(tx_token_key);
       if (oit != tx_order_.end()) {
-        assert(!is_protocol_contract(from) && !is_protocol_contract(to) && "Trade parties should not be protocol");
         assert(oit->second.tokens > 0 && "Order tokens must be positive");
         int64_t price = oit->second.usdc * 1000000 / oit->second.tokens;
         assert(price >= 0 && price <= 1000000 && "Price out of range [0,1]");
-        push_event(to, RawEvent{sort_key, cond_idx, EventType::Buy, token_idx, 0, amount, price});
-        push_event(from, RawEvent{sort_key, cond_idx, EventType::Sell, token_idx, 0, -amount, price});
+        // 只给非协议方记录事件（FPMM 等可能通过 Exchange 交易）
+        if (!is_protocol_contract(to))
+          push_event(to, RawEvent{sort_key, cond_idx, EventType::Buy, token_idx, 0, amount, price});
+        if (!is_protocol_contract(from))
+          push_event(from, RawEvent{sort_key, cond_idx, EventType::Sell, token_idx, 0, -amount, price});
         return;
       }
       // 无对应 order → TransferIn/Out（Exchange 内部转账，罕见）
