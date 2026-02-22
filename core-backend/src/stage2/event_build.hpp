@@ -292,8 +292,8 @@ private:
   std::unordered_map<TxCondKey, std::vector<RedemptionInfo>> tx_redemption_;
   std::unordered_map<TxMarketKey, std::vector<ConvertInfo>> tx_convert_;
   std::unordered_map<TxTokenKey, OrderInfo> tx_order_;
-  std::unordered_map<TxKey, FPMMTradeInfo> tx_fpmm_trade_;
-  std::unordered_map<TxKey, FPMMFundingInfo> tx_fpmm_funding_;
+  std::unordered_map<TxFPMMKey, FPMMTradeInfo> tx_fpmm_trade_;
+  std::unordered_map<TxFPMMKey, FPMMFundingInfo> tx_fpmm_funding_;
 
   struct NewCondition {
     uint32_t idx;
@@ -680,11 +680,13 @@ private:
         stage1_db_.feather_table_range("fpmm_trade", start, end) +
         " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
     for (idx_t i = 0; i < fpmm_trade->RowCount(); ++i) {
-      TxKey key;
+      std::string fpmm_addr = to_lower(blob_to_hex(fpmm_trade->GetValue(2, i).GetValueUnsafe<std::string>()));
+      TxFPMMKey key;
       key.block = fpmm_trade->GetValue(0, i).GetValue<int64_t>();
       key.tx_hash = hex_to_bytes32(blob_to_hex(fpmm_trade->GetValue(1, i).GetValueUnsafe<std::string>()));
+      key.fpmm_addr = fpmm_addr;
       FPMMTradeInfo info;
-      info.fpmm_addr = to_lower(blob_to_hex(fpmm_trade->GetValue(2, i).GetValueUnsafe<std::string>()));
+      info.fpmm_addr = fpmm_addr;
       info.trader = to_lower(blob_to_hex(fpmm_trade->GetValue(3, i).GetValueUnsafe<std::string>()));
       info.side = fpmm_trade->GetValue(4, i).GetValue<int>();
       info.outcome_idx = fpmm_trade->GetValue(5, i).GetValue<int>();
@@ -698,11 +700,13 @@ private:
         stage1_db_.feather_table_range("fpmm_funding", start, end) +
         " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
     for (idx_t i = 0; i < fpmm_funding->RowCount(); ++i) {
-      TxKey key;
+      std::string fpmm_addr = to_lower(blob_to_hex(fpmm_funding->GetValue(2, i).GetValueUnsafe<std::string>()));
+      TxFPMMKey key;
       key.block = fpmm_funding->GetValue(0, i).GetValue<int64_t>();
       key.tx_hash = hex_to_bytes32(blob_to_hex(fpmm_funding->GetValue(1, i).GetValueUnsafe<std::string>()));
+      key.fpmm_addr = fpmm_addr;
       FPMMFundingInfo info;
-      info.fpmm_addr = to_lower(blob_to_hex(fpmm_funding->GetValue(2, i).GetValueUnsafe<std::string>()));
+      info.fpmm_addr = fpmm_addr;
       info.funder = to_lower(blob_to_hex(fpmm_funding->GetValue(3, i).GetValueUnsafe<std::string>()));
       info.side = fpmm_funding->GetValue(4, i).GetValue<int>();
       std::string amounts_json = fpmm_funding->GetValue(5, i).GetValueUnsafe<std::string>();
@@ -792,7 +796,6 @@ private:
     assert(token_idx < 2 && "Invalid token_idx");
     assert(from != to && "from and to must be different");
 
-    TxKey tx_key{block, tx_hash};
     std::string cond_id = cond_ids_[cond_idx];
     TxCondKey tx_cond_key{block, tx_hash, cond_id};
     TxTokenKey tx_token_key{block, tx_hash, token_id};
@@ -808,7 +811,8 @@ private:
 
       // FPMM 内部 mint → 检查是否是 LP Add（必须先于 Split 检查！）
       if (fpmm_map_.count(to) > 0) {
-        auto fit = tx_fpmm_funding_.find(tx_key);
+        TxFPMMKey tx_fpmm_key{block, tx_hash, to};
+        auto fit = tx_fpmm_funding_.find(tx_fpmm_key);
         if (fit != tx_fpmm_funding_.end() && fit->second.side == 1) {
           assert(!is_protocol_contract(fit->second.funder) && "LP funder should not be protocol");
           RawEvent evt{sort_key, cond_idx, EventType::FPMMLPAdd, token_idx, 0, amount, split_price};
@@ -842,7 +846,8 @@ private:
 
       // FPMM 内部 burn → 检查是否是 LP Remove（必须先于 Merge 检查！）
       if (fpmm_map_.count(from) > 0) {
-        auto fit = tx_fpmm_funding_.find(tx_key);
+        TxFPMMKey tx_fpmm_key{block, tx_hash, from};
+        auto fit = tx_fpmm_funding_.find(tx_fpmm_key);
         if (fit != tx_fpmm_funding_.end() && fit->second.side == 2) {
           assert(!is_protocol_contract(fit->second.funder) && "LP funder should not be protocol");
           RawEvent evt{sort_key, cond_idx, EventType::FPMMLPRemove, token_idx, 0, -amount, split_price};
@@ -969,7 +974,8 @@ private:
     // ========== FPMM operator ==========
     auto fpmm_it = fpmm_map_.find(op);
     if (fpmm_it != fpmm_map_.end()) {
-      auto tit = tx_fpmm_trade_.find(tx_key);
+      TxFPMMKey tx_fpmm_key{block, tx_hash, op};
+      auto tit = tx_fpmm_trade_.find(tx_fpmm_key);
       if (tit != tx_fpmm_trade_.end()) {
         assert(!is_protocol_contract(tit->second.trader) && "FPMM trader should not be protocol");
         assert(tit->second.tokens > 0 && "FPMM trade tokens must be positive");

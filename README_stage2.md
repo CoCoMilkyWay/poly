@@ -95,22 +95,23 @@ rebuild(target_block):
 ### 语义索引 (仅内存, 不持久化)
 
 ```
-tx_split_[(block, tx_hash, cond_id)]      → vector<{amount, stakeholder}>
-tx_merge_[(block, tx_hash, cond_id)]      → vector<{amount, stakeholder}>
-tx_redemption_[(block, tx_hash, cond_id)] → vector<{payout, redeemer}>
-tx_convert_[(block, tx_hash, market_id)]  → vector<{index_set, amount, stakeholder}>
-tx_order_[(block, tx_hash, token_id)]     → {maker, taker, side, amounts, fee}
-tx_fpmm_trade_[(block, tx_hash)]          → {fpmm_addr, trader, side, outcome_index, amounts, fee}
-tx_fpmm_funding_[(block, tx_hash)]        → {fpmm_addr, funder, side, amounts[]}
+tx_split_[(block, tx_hash, cond_id)]       → vector<{amount, stakeholder}>
+tx_merge_[(block, tx_hash, cond_id)]       → vector<{amount, stakeholder}>
+tx_redemption_[(block, tx_hash, cond_id)]  → vector<{payout, redeemer}>
+tx_convert_[(block, tx_hash, market_id)]   → vector<{index_set, amount, stakeholder}>
+tx_order_[(block, tx_hash, token_id)]      → {maker, taker, side, amounts, fee}
+tx_fpmm_trade_[(block, tx_hash, fpmm)]     → {trader, side, outcome_index, amounts}
+tx_fpmm_funding_[(block, tx_hash, fpmm)]   → {funder, side, amounts[]}
 ```
 
 **关键设计**:
 
-- Split/Merge/Redemption 用 `cond_id` 作 key，存储 vector 支持同一 tx 同一 condition 多次操作
+- Split/Merge/Redemption 用 `cond_id` 作 key，vector 支持同 tx 同 condition 多次操作
 - Convert 用 `market_id` 作 key，通过 condition 的 question_id 查找对应 market
-- 遍历 vector 查找 stakeholder 匹配的事件，确保精确关联
+- Order 用 `token_id` 作 key，同 tx 可能有多个 order 针对不同 token
+- FPMM trade/funding 用 `fpmm_addr` 作 key，同 tx 可能和多个 FPMM 交互
 
-**为什么不持久化**: 语义事件和 Transfer 在同一个 tx，增量只需索引 new_range 即可关联。
+**为什么不持久化**: 语义事件和 Transfer 在同一个 tx，增量只需索引 chunk 范围即可关联。
 
 ### user_event 表
 

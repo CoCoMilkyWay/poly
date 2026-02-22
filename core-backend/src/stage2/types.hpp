@@ -123,6 +123,16 @@ struct TxMarketKey {
   }
 };
 
+struct TxFPMMKey {
+  int64_t block;
+  std::array<uint8_t, 32> tx_hash;
+  std::string fpmm_addr;
+
+  bool operator==(const TxFPMMKey &o) const {
+    return block == o.block && tx_hash == o.tx_hash && fpmm_addr == o.fpmm_addr;
+  }
+};
+
 struct SplitInfo {
   int64_t amount;
   std::string stakeholder;
@@ -216,6 +226,17 @@ struct hash<stage2::TxMarketKey> {
     for (size_t i = 0; i < 8; ++i)
       h ^= std::hash<uint8_t>()(k.tx_hash[i]) << (i % 8);
     h ^= std::hash<std::string>()(k.market_id);
+    return h;
+  }
+};
+
+template <>
+struct hash<stage2::TxFPMMKey> {
+  size_t operator()(const stage2::TxFPMMKey &k) const {
+    size_t h = std::hash<int64_t>()(k.block);
+    for (size_t i = 0; i < 8; ++i)
+      h ^= std::hash<uint8_t>()(k.tx_hash[i]) << (i % 8);
+    h ^= std::hash<std::string>()(k.fpmm_addr);
     return h;
   }
 };
