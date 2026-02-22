@@ -55,17 +55,17 @@ async def api_export_all():
     export_dir = Path(__file__).parent.parent / "data" / "export"
     export_dir.mkdir(parents=True, exist_ok=True)
 
-    tables_info = await backend_get("/api/tables")
-    feather_list = tables_info.get("feather", []) if isinstance(tables_info, dict) else []
-    feather_counts = {t["name"]: t["count"] for t in feather_list if isinstance(t, dict)}
-
     results = []
 
     for table_name in feather_tables:
-        if feather_counts.get(table_name, 0) == 0:
+        stage1_dir = Path(__file__).parent.parent / "data" / "stage1" / table_name
+        if not stage1_dir.exists():
+            continue
+        feathers = sorted(stage1_dir.glob("*.feather"), key=lambda p: int(p.stem), reverse=True)
+        if not feathers:
             continue
 
-        query = f"SELECT * FROM {table_name} LIMIT 1000"
+        query = f"SELECT * FROM read_arrow('{feathers[0]}') LIMIT 1000"
         rows = await backend_get("/api/query", {"q": query})
 
         if isinstance(rows, list) and len(rows) > 0:
