@@ -73,10 +73,14 @@ public:
         question_id BLOB
       )
     )");
-    // 添加question_id列（如果表已存在但没有这个列）
-    try {
-      stage2_db_.execute("ALTER TABLE rb_condition ADD COLUMN question_id BLOB");
-    } catch (...) {
+    // 添加question_id列（如果旧表没有这个列）
+    {
+      auto conn = stage2_db_.create_connection();
+      auto r = conn->Query("SELECT column_name FROM information_schema.columns "
+                           "WHERE table_name='rb_condition' AND column_name='question_id'");
+      if (r->RowCount() == 0) {
+        stage2_db_.execute("ALTER TABLE rb_condition ADD COLUMN question_id BLOB");
+      }
     }
 
     stage2_db_.execute(R"(
@@ -713,58 +717,75 @@ private:
     progress_.cnt_transfer += transfers->RowCount();
   }
 
+  // 检查地址是否是协议合约（不应该记录事件给协议合约）
+  bool is_protocol_contract(const std::string &addr) const {
+    return addr == ZERO_ADDR || addr == CTF_EXCHANGE || addr == NEG_RISK_CTF_EXCHANGE ||
+           addr == NEG_RISK_ADAPTER || addr == CONDITIONAL_TOKENS ||
+           fpmm_map_.count(addr) > 0;
+  }
+
   void classify_and_emit(int64_t sort_key, const std::array<uint8_t, 32> &tx_hash,
                          int64_t block, const std::string &op,
                          const std::string &from, const std::string &to,
                          const std::string &token_id, int64_t amount,
                          uint32_t cond_idx, uint8_t token_idx) {
+    // ===== 基础验证 =====
+    assert(amount > 0 && "Transfer amount must be positive");
+    assert(cond_idx < conditions_.size() && "Invalid cond_idx");
+    assert(token_idx < 2 && "Invalid token_idx");
+    assert(from != to && "from and to must be different");
+
     TxKey tx_key{block, tx_hash};
-    std::string cond_id = cond_idx < cond_ids_.size() ? cond_ids_[cond_idx] : "";
+    std::string cond_id = cond_ids_[cond_idx];
     TxCondKey tx_cond_key{block, tx_hash, cond_id};
     TxTokenKey tx_token_key{block, tx_hash, token_id};
 
-    uint8_t outcome_cnt = cond_idx < conditions_.size() ? conditions_[cond_idx].outcome_count : 2;
+    uint8_t outcome_cnt = conditions_[cond_idx].outcome_count;
     int64_t split_price = 1000000 / outcome_cnt;
 
     // ========== mint 分支 (from == 0x0) ==========
     if (from == ZERO_ADDR) {
-      // NegRisk 内部 mint，跳过（用户通过后续 transfer 获取）
+      // NegRisk 内部 mint → 跳过（用户通过后续 transfer 获取）
       if (to == NEG_RISK_ADAPTER)
         return;
 
-      // 普通市场 Split: stakeholder == to
+      // Split: stakeholder == to
       auto sit = tx_split_.find(tx_cond_key);
       if (sit != tx_split_.end()) {
         for (const auto &info : sit->second) {
           if (info.stakeholder == to) {
+            assert(!is_protocol_contract(to) && "Split user should not be protocol");
+            assert(info.amount > 0 && "Split amount must be positive");
             RawEvent evt{sort_key, cond_idx, EventType::Split, token_idx, 0, amount, split_price};
             push_event(to, evt);
             return;
           }
         }
       }
-      // FPMM LP Add
+      // FPMM LP Add: mint 给 FPMM，funder 是用户
       auto fit = tx_fpmm_funding_.find(tx_key);
       if (fit != tx_fpmm_funding_.end() && fit->second.side == 1) {
+        assert(!is_protocol_contract(fit->second.funder) && "LP funder should not be protocol");
         RawEvent evt{sort_key, cond_idx, EventType::FPMMLPAdd, token_idx, 0, amount, split_price};
         push_event(fit->second.funder, evt);
         return;
       }
-      // 其他内部 mint，跳过
+      // 其他：FPMM 内部 split (stakeholder=FPMM) → 跳过
       return;
     }
 
     // ========== burn 分支 (to == 0x0) ==========
     if (to == ZERO_ADDR) {
-      // NegRisk 内部 burn，跳过（用户已通过之前的 transfer 记录）
+      // NegRisk 内部 burn → 跳过（用户已通过 transfer 记录）
       if (from == NEG_RISK_ADAPTER)
         return;
 
-      // 普通市场 Merge: stakeholder == from
+      // Merge: stakeholder == from
       auto mit = tx_merge_.find(tx_cond_key);
       if (mit != tx_merge_.end()) {
         for (const auto &info : mit->second) {
           if (info.stakeholder == from) {
+            assert(!is_protocol_contract(from) && "Merge user should not be protocol");
             RawEvent evt{sort_key, cond_idx, EventType::Merge, token_idx, 0, -amount, split_price};
             push_event(from, evt);
             return;
@@ -776,83 +797,84 @@ private:
       if (rit != tx_redemption_.end()) {
         for (const auto &info : rit->second) {
           if (info.redeemer == from) {
-            int64_t payout_price = 1000000;
-            if (cond_idx < conditions_.size()) {
-              auto &payouts = conditions_[cond_idx].payout_numerators;
-              if (token_idx < payouts.size() && payouts[token_idx] >= 0) {
-                payout_price = payouts[token_idx];
-              }
-            }
+            assert(!is_protocol_contract(from) && "Redemption user should not be protocol");
+            auto &payouts = conditions_[cond_idx].payout_numerators;
+            int64_t payout_price = (token_idx < payouts.size() && payouts[token_idx] >= 0)
+                                       ? payouts[token_idx]
+                                       : 1000000;
+            assert(payout_price >= 0 && payout_price <= 1000000 && "Invalid payout price");
             RawEvent evt{sort_key, cond_idx, EventType::Redemption, token_idx, 0, -amount, payout_price};
             push_event(from, evt);
             return;
           }
         }
       }
-      // FPMM LP Remove
+      // FPMM LP Remove: burn 从 FPMM，funder 是用户
       auto fit = tx_fpmm_funding_.find(tx_key);
       if (fit != tx_fpmm_funding_.end() && fit->second.side == 2) {
+        assert(!is_protocol_contract(fit->second.funder) && "LP funder should not be protocol");
         RawEvent evt{sort_key, cond_idx, EventType::FPMMLPRemove, token_idx, 0, -amount, split_price};
         push_event(fit->second.funder, evt);
         return;
       }
-      // 其他内部 burn，跳过
+      // 其他：FPMM 内部 merge → 跳过
       return;
     }
 
-    // ========== operator == CTF_EXCHANGE / NEG_RISK_CTF_EXCHANGE ==========
+    // ========== Exchange operator ==========
     if (op == CTF_EXCHANGE || op == NEG_RISK_CTF_EXCHANGE) {
       auto oit = tx_order_.find(tx_token_key);
       if (oit != tx_order_.end()) {
-        int64_t price = oit->second.tokens > 0 ? (oit->second.usdc * 1000000 / oit->second.tokens) : 0;
-        RawEvent buy_evt{sort_key, cond_idx, EventType::Buy, token_idx, 0, amount, price};
-        push_event(to, buy_evt);
-        RawEvent sell_evt{sort_key, cond_idx, EventType::Sell, token_idx, 0, -amount, price};
-        push_event(from, sell_evt);
+        assert(!is_protocol_contract(from) && !is_protocol_contract(to) && "Trade parties should not be protocol");
+        assert(oit->second.tokens > 0 && "Order tokens must be positive");
+        int64_t price = oit->second.usdc * 1000000 / oit->second.tokens;
+        assert(price >= 0 && price <= 1000000 && "Price out of range [0,1]");
+        push_event(to, RawEvent{sort_key, cond_idx, EventType::Buy, token_idx, 0, amount, price});
+        push_event(from, RawEvent{sort_key, cond_idx, EventType::Sell, token_idx, 0, -amount, price});
         return;
       }
-      RawEvent in_evt{sort_key, cond_idx, EventType::TransferIn, token_idx, 0, amount, 0};
-      push_event(to, in_evt);
-      RawEvent out_evt{sort_key, cond_idx, EventType::TransferOut, token_idx, 0, -amount, 0};
-      push_event(from, out_evt);
+      // 无对应 order → TransferIn/Out（Exchange 内部转账，罕见）
+      if (!is_protocol_contract(to))
+        push_event(to, RawEvent{sort_key, cond_idx, EventType::TransferIn, token_idx, 0, amount, 0});
+      if (!is_protocol_contract(from))
+        push_event(from, RawEvent{sort_key, cond_idx, EventType::TransferOut, token_idx, 0, -amount, 0});
       return;
     }
 
-    // ========== operator == NEG_RISK_ADAPTER ==========
+    // ========== NegRisk Adapter operator ==========
     if (op == NEG_RISK_ADAPTER) {
-      // Adapter → 用户
+      // Adapter → 用户: NegRisk Split
       if (from == NEG_RISK_ADAPTER) {
-        // NegRisk Split: stakeholder == Adapter
         auto sit = tx_split_.find(tx_cond_key);
         if (sit != tx_split_.end()) {
           for (const auto &info : sit->second) {
             if (info.stakeholder == NEG_RISK_ADAPTER) {
-              RawEvent evt{sort_key, cond_idx, EventType::Split, token_idx, 0, amount, split_price};
-              push_event(to, evt);
+              assert(!is_protocol_contract(to) && "NegRisk Split recipient should not be protocol");
+              push_event(to, RawEvent{sort_key, cond_idx, EventType::Split, token_idx, 0, amount, split_price});
               return;
             }
           }
         }
-        // 其他情况：用户直接收到 transfer（罕见）
-        RawEvent evt{sort_key, cond_idx, EventType::TransferIn, token_idx, 0, amount, 0};
-        push_event(to, evt);
+        // 无 split 事件 → TransferIn（罕见）
+        if (!is_protocol_contract(to))
+          push_event(to, RawEvent{sort_key, cond_idx, EventType::TransferIn, token_idx, 0, amount, 0});
         return;
       }
-      // 用户 → Adapter
+      // 用户 → Adapter: NegRisk Merge 或 Convert
       if (to == NEG_RISK_ADAPTER) {
-        // NegRisk Merge: stakeholder == Adapter
+        // Merge
         auto mit = tx_merge_.find(tx_cond_key);
         if (mit != tx_merge_.end()) {
           for (const auto &info : mit->second) {
             if (info.stakeholder == NEG_RISK_ADAPTER) {
-              RawEvent evt{sort_key, cond_idx, EventType::Merge, token_idx, 0, -amount, split_price};
-              push_event(from, evt);
+              assert(!is_protocol_contract(from) && "NegRisk Merge sender should not be protocol");
+              push_event(from, RawEvent{sort_key, cond_idx, EventType::Merge, token_idx, 0, -amount, split_price});
               return;
             }
           }
         }
-        // NegRisk Convert: stakeholder == 用户
-        if (cond_idx < conditions_.size() && !conditions_[cond_idx].question_id.empty()) {
+        // Convert
+        if (!conditions_[cond_idx].question_id.empty()) {
           auto market_it = cond_to_market_.find(conditions_[cond_idx].question_id);
           if (market_it != cond_to_market_.end()) {
             TxMarketKey tx_market_key{block, tx_hash, market_it->second};
@@ -860,55 +882,57 @@ private:
             if (cit != tx_convert_.end()) {
               for (const auto &info : cit->second) {
                 if (info.stakeholder == from) {
+                  assert(!is_protocol_contract(from) && "Convert user should not be protocol");
                   int M = __builtin_popcountll(info.index_set);
-                  int64_t conv_price = M > 1 ? 1000000 * (M - 1) / M : 0;
-                  RawEvent evt{sort_key, cond_idx, EventType::Convert, token_idx, 0, -amount, conv_price};
-                  push_event(from, evt);
+                  assert(M >= 2 && "Convert requires at least 2 positions");
+                  int64_t conv_price = 1000000 * (M - 1) / M;
+                  push_event(from, RawEvent{sort_key, cond_idx, EventType::Convert, token_idx, 0, -amount, conv_price});
                   return;
                 }
               }
             }
           }
         }
-        // 其他情况：用户直接 transfer 给 Adapter（罕见）
-        RawEvent evt{sort_key, cond_idx, EventType::TransferOut, token_idx, 0, -amount, 0};
-        push_event(from, evt);
+        // 无 merge/convert 事件 → TransferOut（罕见）
+        if (!is_protocol_contract(from))
+          push_event(from, RawEvent{sort_key, cond_idx, EventType::TransferOut, token_idx, 0, -amount, 0});
         return;
       }
-      // Adapter 内部 transfer，跳过
+      // Adapter 内部 → 跳过
       return;
     }
 
-    // ========== operator in fpmm_map_ ==========
+    // ========== FPMM operator ==========
     auto fpmm_it = fpmm_map_.find(op);
     if (fpmm_it != fpmm_map_.end()) {
       auto tit = tx_fpmm_trade_.find(tx_key);
       if (tit != tx_fpmm_trade_.end()) {
-        int64_t price = tit->second.tokens > 0 ? (tit->second.usdc * 1000000 / tit->second.tokens) : 0;
+        assert(!is_protocol_contract(tit->second.trader) && "FPMM trader should not be protocol");
+        assert(tit->second.tokens > 0 && "FPMM trade tokens must be positive");
+        int64_t price = tit->second.usdc * 1000000 / tit->second.tokens;
+        assert(price >= 0 && price <= 1000000 && "FPMM price out of range");
         if (tit->second.side == 1) {
-          RawEvent evt{sort_key, cond_idx, EventType::FPMMBuy, token_idx, 0, amount, price};
-          push_event(tit->second.trader, evt);
+          push_event(tit->second.trader, RawEvent{sort_key, cond_idx, EventType::FPMMBuy, token_idx, 0, amount, price});
         } else {
-          RawEvent evt{sort_key, cond_idx, EventType::FPMMSell, token_idx, 0, -amount, price};
-          push_event(tit->second.trader, evt);
+          push_event(tit->second.trader, RawEvent{sort_key, cond_idx, EventType::FPMMSell, token_idx, 0, -amount, price});
         }
         return;
       }
-      // LP 返还多余 token
-      if (from == op) {
-        RawEvent evt{sort_key, cond_idx, EventType::TransferIn, token_idx, 0, amount, 0};
-        push_event(to, evt);
+      // LP 返还多余 token (from=FPMM, to=user)
+      if (from == op && !is_protocol_contract(to)) {
+        push_event(to, RawEvent{sort_key, cond_idx, EventType::TransferIn, token_idx, 0, amount, 0});
         return;
       }
-      // FPMM 内部 transfer，跳过
+      // FPMM 内部 → 跳过
       return;
     }
 
     // ========== 其他：用户间直接转账 ==========
-    RawEvent in_evt{sort_key, cond_idx, EventType::TransferIn, token_idx, 0, amount, 0};
-    push_event(to, in_evt);
-    RawEvent out_evt{sort_key, cond_idx, EventType::TransferOut, token_idx, 0, -amount, 0};
-    push_event(from, out_evt);
+    // 只为非协议合约记录事件（可能是未知的 FPMM 等）
+    if (!is_protocol_contract(to))
+      push_event(to, RawEvent{sort_key, cond_idx, EventType::TransferIn, token_idx, 0, amount, 0});
+    if (!is_protocol_contract(from))
+      push_event(from, RawEvent{sort_key, cond_idx, EventType::TransferOut, token_idx, 0, -amount, 0});
   }
 
   void commit_chunk(int64_t new_cursor) {
