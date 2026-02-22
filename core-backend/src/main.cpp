@@ -13,7 +13,7 @@
 #include "stage2/event_sync.hpp"
 #include "stage3/pnl_replay.hpp"
 
-// #define STAGE2_ENABLED
+#define STAGE2_ENABLED
 
 void print_usage(const char *prog) {
   std::cout << "用法: " << prog << " --config <config.json>" << std::endl;
