@@ -15,6 +15,7 @@
 
 #include "../core/config.hpp"
 #include "../core/database.hpp"
+#include "../core/feather_writer.hpp"
 #include "../infra/rpc_client.hpp"
 #include "event_decode.hpp"
 #include "misc/profiler.hpp"
@@ -28,6 +29,7 @@ class ChainSync {
 public:
   ChainSync(const Config &config, Database &db)
       : config_(config), db_(db),
+        feather_writer_(db.data_dir()),
         rpc_(config.rpc_url, config.rpc_api_key),
         batch_size_(config.rpc_chunk),
         current_batch_size_(config.rpc_chunk),
@@ -232,7 +234,9 @@ private:
     {
       TraceN("s1/write");
       Database::WriteLock lock(db_);
-      db_.atomic_multi_insert_appender(events, to_block);
+      feather_writer_.append_events(events);
+      db_.set_last_block(to_block);
+      db_.refresh_feather_views();
     }
 
     {
@@ -246,6 +250,7 @@ private:
 
   const Config &config_;
   Database &db_;
+  FeatherWriter feather_writer_;
   RpcClient rpc_;
   asio::io_context *ioc_ = nullptr;
 

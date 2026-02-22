@@ -55,6 +55,10 @@ if(NOT OpenSSL_FOUND)
     endif()
 endif()
 
+# Arrow (for Feather file writing)
+find_package(Arrow REQUIRED)
+message(STATUS "Found Arrow: ${Arrow_VERSION}")
+
 # 源文件
 set(SOURCES
     ${SRC_DIR}/main.cpp
@@ -88,6 +92,7 @@ if(WIN32)
         ${PACKAGES_DIR}/duckdb/duckdb.lib
         OpenSSL::SSL
         OpenSSL::Crypto
+        Arrow::arrow_shared
     )
     if(PROFILE_MODE)
         target_link_libraries(core PRIVATE ws2_32 dbghelp)
@@ -97,6 +102,7 @@ else()
         ${PACKAGES_DIR}/duckdb/libduckdb.so
         OpenSSL::SSL
         OpenSSL::Crypto
+        Arrow::arrow_shared
         pthread
         dl
     )

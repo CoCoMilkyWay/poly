@@ -1,5 +1,6 @@
 #pragma once
 
+#include <filesystem>
 #include <functional>
 #include <memory>
 #include <string>
@@ -125,16 +126,33 @@ private:
     TraceN("api/tables");
     res_.set(http::field::content_type, "application/json");
 
-    json tables_info = json::array();
+    json result = json::object();
+
+    json duckdb_tables = json::array();
     auto tables = db_.get_tables();
     for (const auto &t : tables) {
       std::string name = t["table_name"].get<std::string>();
       int64_t count = db_.get_table_count(name);
-      tables_info.push_back({{"name", name}, {"count", count}});
+      duckdb_tables.push_back({{"name", name}, {"count", count}});
     }
+    result["duckdb"] = duckdb_tables;
+
+    static const char *feather_names[] = {
+        "transfer", "condition_preparation", "condition_resolution",
+        "split", "merge", "redemption", "fpmm", "fpmm_trade", "fpmm_funding",
+        "order_filled", "token_map", "neg_risk_market", "neg_risk_question", "convert"};
+    json feather_files = json::array();
+    for (const char *name : feather_names) {
+      std::string path = db_.feather_path(name);
+      if (std::filesystem::exists(path)) {
+        int64_t count = db_.query_single_int("SELECT COUNT(*) FROM '" + path + "'");
+        feather_files.push_back({{"name", name}, {"count", count}});
+      }
+    }
+    result["feather"] = feather_files;
 
     res_.result(http::status::ok);
-    res_.body() = tables_info.dump();
+    res_.body() = result.dump();
   }
 
   void handle_sync_state() {
