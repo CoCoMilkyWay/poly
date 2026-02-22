@@ -431,7 +431,7 @@ private:
     }
 
     auto redemption = conn->Query(
-        "SELECT block_number, tx_hash, condition_id, index_sets, payout, redeemer FROM redemption "
+        "SELECT block_number, tx_hash, condition_id, payout, redeemer FROM redemption "
         "WHERE block_number > " +
         std::to_string(start) +
         " AND block_number <= " + std::to_string(end));
@@ -441,9 +441,8 @@ private:
       key.tx_hash = hex_to_bytes32(blob_to_hex(redemption->GetValue(1, i).GetValueUnsafe<std::string>()));
       key.cond_id = to_lower(blob_to_hex(redemption->GetValue(2, i).GetValueUnsafe<std::string>()));
       RedemptionInfo info;
-      info.index_sets = redemption->GetValue(3, i).GetValue<int>();
-      info.payout = redemption->GetValue(4, i).GetValue<int64_t>();
-      info.redeemer = to_lower(blob_to_hex(redemption->GetValue(5, i).GetValueUnsafe<std::string>()));
+      info.payout = redemption->GetValue(3, i).GetValue<int64_t>();
+      info.redeemer = to_lower(blob_to_hex(redemption->GetValue(4, i).GetValueUnsafe<std::string>()));
       info.cond_id = key.cond_id;
       tx_redemption_[key] = info;
     }

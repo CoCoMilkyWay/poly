@@ -125,7 +125,6 @@ struct MergeInfo {
 };
 
 struct RedemptionInfo {
-  int index_sets;
   int64_t payout;
   std::string redeemer;
   std::string cond_id;
