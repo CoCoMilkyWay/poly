@@ -195,7 +195,6 @@ public:
       )
     )");
     cleanup_incomplete_partitions();
-    refresh_feather_views();
   }
 
   void cleanup_incomplete_partitions() {
@@ -241,25 +240,29 @@ public:
     return data_dir_ + "/stage1/" + table;
   }
 
-  std::string feather_glob(const std::string &table) const {
-    return feather_dir(table) + "/*.feather";
-  }
+  std::string feather_table_range(const std::string &table, int64_t start_block, int64_t end_block) {
+    int64_t first_partition = (start_block / PARTITION_SIZE) * PARTITION_SIZE;
+    int64_t last_partition = (end_block / PARTITION_SIZE) * PARTITION_SIZE;
 
-  std::string feather_table(const std::string &table) const {
-    return "read_arrow('" + feather_glob(table) + "', union_by_name=true)";
-  }
-
-  void refresh_feather_views() {
-    static const char *feather_tables[] = {
-        "transfer", "condition_preparation", "condition_resolution",
-        "split", "merge", "redemption", "fpmm", "fpmm_trade", "fpmm_funding",
-        "order_filled", "token_map", "neg_risk_market", "neg_risk_question", "convert"};
-    for (const char *name : feather_tables) {
-      std::string dir = feather_dir(name);
-      if (fs::exists(dir) && !fs::is_empty(dir)) {
-        execute("CREATE OR REPLACE VIEW " + std::string(name) + " AS SELECT * FROM " + feather_table(name));
+    std::vector<std::string> paths;
+    for (int64_t p = first_partition; p <= last_partition; p += PARTITION_SIZE) {
+      if (partition_exists(table, p)) {
+        paths.push_back(feather_dir(table) + "/" + std::to_string(p) + ".feather");
       }
     }
+
+    if (paths.empty()) {
+      return "(SELECT 1 WHERE 1=0)";
+    }
+    if (paths.size() == 1) {
+      return "read_arrow('" + paths[0] + "')";
+    }
+    std::string result = "(";
+    for (size_t i = 0; i < paths.size(); ++i) {
+      if (i > 0) result += " UNION ALL ";
+      result += "SELECT * FROM read_arrow('" + paths[i] + "')";
+    }
+    return result + ")";
   }
 
   const std::string &data_dir() const { return data_dir_; }
@@ -277,17 +280,30 @@ public:
   }
 
 private:
-  // 路径
+  static constexpr int64_t PARTITION_SIZE = 100000;
+
+  bool partition_exists(const std::string &table, int64_t partition_start) {
+    std::string key = table + "/" + std::to_string(partition_start);
+    if (key == cached_partition_key_) return cached_partition_exists_;
+
+    std::string path = feather_dir(table) + "/" + std::to_string(partition_start) + ".feather";
+    bool exists = fs::exists(path);
+
+    cached_partition_key_ = key;
+    cached_partition_exists_ = exists;
+    return exists;
+  }
+
   std::string data_dir_;
   std::string db_path_;
   std::string lock_path_;
-  // 文件锁
   int lock_fd_ = -1;
   bool has_write_lock_ = false;
-  // DuckDB
   std::unique_ptr<duckdb::DuckDB> db_;
   std::unique_ptr<duckdb::Connection> read_conn_;
   std::unique_ptr<duckdb::Connection> write_conn_;
   std::mutex read_mutex_;
   std::mutex write_mutex_;
+  std::string cached_partition_key_;
+  bool cached_partition_exists_ = false;
 };

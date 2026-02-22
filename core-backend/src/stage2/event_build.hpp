@@ -353,10 +353,8 @@ private:
     auto conn = stage1_db_.create_connection();
 
     auto cp = conn->Query(
-        "SELECT condition_id, outcome_slot_count FROM " + stage1_db_.feather_table("condition_preparation") + " "
-                                                                                                              "WHERE block_number > " +
-        std::to_string(start) +
-        " AND block_number <= " + std::to_string(end));
+        "SELECT condition_id, outcome_slot_count FROM " + stage1_db_.feather_table_range("condition_preparation", start, end) +
+        " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
     for (idx_t i = 0; i < cp->RowCount(); ++i) {
       std::string cid = blob_to_hex(cp->GetValue(0, i).GetValueUnsafe<std::string>());
       int cnt = cp->GetValue(1, i).GetValue<int>();
@@ -364,10 +362,8 @@ private:
     }
 
     auto cr = conn->Query(
-        "SELECT condition_id, payout_numerators FROM " + stage1_db_.feather_table("condition_resolution") + " "
-                                                                                                            "WHERE block_number > " +
-        std::to_string(start) +
-        " AND block_number <= " + std::to_string(end));
+        "SELECT condition_id, payout_numerators FROM " + stage1_db_.feather_table_range("condition_resolution", start, end) +
+        " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
     for (idx_t i = 0; i < cr->RowCount(); ++i) {
       std::string cid = blob_to_hex(cr->GetValue(0, i).GetValueUnsafe<std::string>());
       std::string lower = to_lower(cid);
@@ -384,10 +380,8 @@ private:
     }
 
     auto tm = conn->Query(
-        "SELECT token0, condition_id FROM " + stage1_db_.feather_table("token_map") + " "
-                                                                                      "WHERE block_number > " +
-        std::to_string(start) +
-        " AND block_number <= " + std::to_string(end));
+        "SELECT token0, condition_id FROM " + stage1_db_.feather_table_range("token_map", start, end) +
+        " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
     for (idx_t i = 0; i < tm->RowCount(); ++i) {
       std::string tid = blob_to_hex(tm->GetValue(0, i).GetValueUnsafe<std::string>());
       std::string cid = blob_to_hex(tm->GetValue(1, i).GetValueUnsafe<std::string>());
@@ -402,10 +396,8 @@ private:
     }
 
     auto fpmm = conn->Query(
-        "SELECT fpmm_addr, condition_ids FROM " + stage1_db_.feather_table("fpmm") + " "
-                                                                                     "WHERE block_number > " +
-        std::to_string(start) +
-        " AND block_number <= " + std::to_string(end));
+        "SELECT fpmm_addr, condition_ids FROM " + stage1_db_.feather_table_range("fpmm", start, end) +
+        " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
     for (idx_t i = 0; i < fpmm->RowCount(); ++i) {
       std::string addr = blob_to_hex(fpmm->GetValue(0, i).GetValueUnsafe<std::string>());
       std::string cids_json = fpmm->GetValue(1, i).GetValueUnsafe<std::string>();
@@ -425,10 +417,9 @@ private:
     auto conn = stage1_db_.create_connection();
 
     auto split = conn->Query(
-        "SELECT block_number, tx_hash, condition_id, amount, stakeholder FROM " + stage1_db_.feather_table("split") + " "
-                                                                                                                      "WHERE block_number > " +
-        std::to_string(start) +
-        " AND block_number <= " + std::to_string(end));
+        "SELECT block_number, tx_hash, condition_id, amount, stakeholder FROM " +
+        stage1_db_.feather_table_range("split", start, end) +
+        " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
     for (idx_t i = 0; i < split->RowCount(); ++i) {
       TxCondKey key;
       key.block = split->GetValue(0, i).GetValue<int64_t>();
@@ -442,10 +433,9 @@ private:
     }
 
     auto merge = conn->Query(
-        "SELECT block_number, tx_hash, condition_id, amount, stakeholder FROM " + stage1_db_.feather_table("merge") + " "
-                                                                                                                      "WHERE block_number > " +
-        std::to_string(start) +
-        " AND block_number <= " + std::to_string(end));
+        "SELECT block_number, tx_hash, condition_id, amount, stakeholder FROM " +
+        stage1_db_.feather_table_range("merge", start, end) +
+        " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
     for (idx_t i = 0; i < merge->RowCount(); ++i) {
       TxCondKey key;
       key.block = merge->GetValue(0, i).GetValue<int64_t>();
@@ -459,10 +449,9 @@ private:
     }
 
     auto redemption = conn->Query(
-        "SELECT block_number, tx_hash, condition_id, payout, redeemer FROM " + stage1_db_.feather_table("redemption") + " "
-                                                                                                                        "WHERE block_number > " +
-        std::to_string(start) +
-        " AND block_number <= " + std::to_string(end));
+        "SELECT block_number, tx_hash, condition_id, payout, redeemer FROM " +
+        stage1_db_.feather_table_range("redemption", start, end) +
+        " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
     for (idx_t i = 0; i < redemption->RowCount(); ++i) {
       TxCondKey key;
       key.block = redemption->GetValue(0, i).GetValue<int64_t>();
@@ -476,10 +465,9 @@ private:
     }
 
     auto convert = conn->Query(
-        "SELECT block_number, tx_hash, market_id, index_set, amount, stakeholder FROM " + stage1_db_.feather_table("convert") + " "
-                                                                                                                                "WHERE block_number > " +
-        std::to_string(start) +
-        " AND block_number <= " + std::to_string(end));
+        "SELECT block_number, tx_hash, market_id, index_set, amount, stakeholder FROM " +
+        stage1_db_.feather_table_range("convert", start, end) +
+        " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
     for (idx_t i = 0; i < convert->RowCount(); ++i) {
       TxKey key;
       key.block = convert->GetValue(0, i).GetValue<int64_t>();
@@ -495,10 +483,8 @@ private:
     auto order = conn->Query(
         "SELECT block_number, tx_hash, maker, taker, maker_asset_id, taker_asset_id, "
         "maker_amount, taker_amount, fee FROM " +
-        stage1_db_.feather_table("order_filled") + " "
-                                                   "WHERE block_number > " +
-        std::to_string(start) +
-        " AND block_number <= " + std::to_string(end));
+        stage1_db_.feather_table_range("order_filled", start, end) +
+        " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
     for (idx_t i = 0; i < order->RowCount(); ++i) {
       int64_t block = order->GetValue(0, i).GetValue<int64_t>();
       auto tx_hash = hex_to_bytes32(blob_to_hex(order->GetValue(1, i).GetValueUnsafe<std::string>()));
@@ -527,10 +513,8 @@ private:
     auto fpmm_trade = conn->Query(
         "SELECT block_number, tx_hash, fpmm_addr, trader, side, outcome_index, "
         "usdc_amount, token_amount FROM " +
-        stage1_db_.feather_table("fpmm_trade") + " "
-                                                 "WHERE block_number > " +
-        std::to_string(start) +
-        " AND block_number <= " + std::to_string(end));
+        stage1_db_.feather_table_range("fpmm_trade", start, end) +
+        " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
     for (idx_t i = 0; i < fpmm_trade->RowCount(); ++i) {
       TxKey key;
       key.block = fpmm_trade->GetValue(0, i).GetValue<int64_t>();
@@ -546,10 +530,9 @@ private:
     }
 
     auto fpmm_funding = conn->Query(
-        "SELECT block_number, tx_hash, fpmm_addr, funder, side, amounts FROM " + stage1_db_.feather_table("fpmm_funding") + " "
-                                                                                                                            "WHERE block_number > " +
-        std::to_string(start) +
-        " AND block_number <= " + std::to_string(end));
+        "SELECT block_number, tx_hash, fpmm_addr, funder, side, amounts FROM " +
+        stage1_db_.feather_table_range("fpmm_funding", start, end) +
+        " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
     for (idx_t i = 0; i < fpmm_funding->RowCount(); ++i) {
       TxKey key;
       key.block = fpmm_funding->GetValue(0, i).GetValue<int64_t>();
@@ -578,11 +561,9 @@ private:
     TraceN("s2/phase3_xfer");
     auto conn = stage1_db_.create_connection();
     auto transfers = conn->Query(
-        "SELECT block_number, tx_hash, log_index, operator, from_addr, to_addr, token_id, amount "
-        "FROM " +
-        stage1_db_.feather_table("transfer") + " WHERE block_number > " +
-        std::to_string(start) +
-        " AND block_number <= " + std::to_string(end));
+        "SELECT block_number, tx_hash, log_index, operator, from_addr, to_addr, token_id, amount FROM " +
+        stage1_db_.feather_table_range("transfer", start, end) +
+        " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
 
     struct TransferRow {
       int64_t block, log_idx, amount;
