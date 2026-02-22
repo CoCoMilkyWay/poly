@@ -108,7 +108,8 @@ private:
 
       {
         std::unique_lock<std::mutex> lock(worker_mutex_);
-        TraceN("rpc/wait");
+        // TraceN("rpc/wait");
+        // TraceColor(C_Gray);
         worker_cv_.wait(lock, [this] { return !worker_running_ || has_request_; });
 
         if (!worker_running_ && !has_request_) {

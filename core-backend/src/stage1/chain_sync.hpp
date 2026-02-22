@@ -168,7 +168,8 @@ private:
       int64_t cur_to = pending->to_block;
       RpcClient::BatchResult rpc_result;
       {
-        TraceN("s1/wait_rpc");
+        // TraceN("s1/wait_rpc");
+        // TraceColor(C_Gray);
         rpc_result = pending->future.get();
       }
       pending.reset();
