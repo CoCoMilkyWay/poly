@@ -229,7 +229,6 @@ private:
   void ensure_connected() {
     if (connected_)
       return;
-    TraceN("rpc/connect");
 
     tcp::resolver resolver(ioc_);
     auto const endpoints = resolver.resolve(host_, port_);
@@ -282,20 +281,15 @@ private:
         parser.body_limit(1024 * 1024 * 1024); // 1GB
 
         if (use_ssl_) {
-          TraceN("rpc/ssl_write");
           http::write(*ssl_stream_, req);
         } else {
-          TraceN("rpc/tcp_write");
           http::write(*tcp_stream_, req);
         }
 
-        {
-          TraceN("rpc/read");
-          if (use_ssl_) {
-            http::read(*ssl_stream_, buffer, parser);
-          } else {
-            http::read(*tcp_stream_, buffer, parser);
-          }
+        if (use_ssl_) {
+          http::read(*ssl_stream_, buffer, parser);
+        } else {
+          http::read(*tcp_stream_, buffer, parser);
         }
 
         std::string result = parser.get().body();

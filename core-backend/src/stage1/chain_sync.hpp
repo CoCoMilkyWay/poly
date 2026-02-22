@@ -123,7 +123,6 @@ private:
   }
 
   void do_sync() {
-    TraceN("s1/sync");
     is_syncing_ = true;
 
     try {
