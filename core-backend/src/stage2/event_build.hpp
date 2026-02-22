@@ -760,22 +760,22 @@ private:
       }
       conn->Query("INSERT OR REPLACE INTO rb_condition VALUES (" +
                   std::to_string(nc.idx) + ", " +
-                  "'" + escape_blob(blob) + "'::BLOB, " +
+                  blob_to_hex_literal(blob) + ", " +
                   std::to_string(nc.info.outcome_count) + ", " + pvals + ")");
     }
 
     for (auto &nt : new_tokens_) {
       std::string blob = hex_to_blob(nt.token_id);
-      conn->Query(std::string("INSERT OR IGNORE INTO rb_token VALUES ('") +
-                  escape_blob(blob) + "'::BLOB, " +
+      conn->Query("INSERT OR IGNORE INTO rb_token VALUES (" +
+                  blob_to_hex_literal(blob) + ", " +
                   std::to_string(nt.cond_idx) + ", " +
                   std::to_string(nt.is_yes) + ")");
     }
 
     for (auto &nf : new_fpmms_) {
       std::string blob = hex_to_blob(nf.addr);
-      conn->Query(std::string("INSERT OR IGNORE INTO rb_fpmm VALUES ('") +
-                  escape_blob(blob) + "'::BLOB, " +
+      conn->Query("INSERT OR IGNORE INTO rb_fpmm VALUES (" +
+                  blob_to_hex_literal(blob) + ", " +
                   std::to_string(nf.cond_idx) + ")");
     }
 
@@ -790,7 +790,7 @@ private:
         for (auto &[user, evt] : new_events_) {
           std::string user_blob = hex_to_blob(user);
           appender.BeginRow();
-          appender.Append(duckdb::Value::BLOB(user_blob));
+          appender.Append(duckdb::Value::BLOB(reinterpret_cast<duckdb::const_data_ptr_t>(user_blob.data()), user_blob.size()));
           appender.Append(evt.sort_key);
           appender.Append(static_cast<int32_t>(evt.cond_idx));
           appender.Append(static_cast<int32_t>(evt.type));
@@ -826,16 +826,15 @@ private:
     conn->Query("COMMIT");
   }
 
-  static std::string escape_blob(const std::string &blob) {
-    std::string result;
-    result.reserve(blob.size() * 2);
+  static std::string blob_to_hex_literal(const std::string &blob) {
+    static const char hex_chars[] = "0123456789abcdef";
+    std::string result = "X'";
+    result.reserve(3 + blob.size() * 2);
     for (unsigned char c : blob) {
-      if (c == '\'') {
-        result += "''";
-      } else {
-        result += c;
-      }
+      result.push_back(hex_chars[c >> 4]);
+      result.push_back(hex_chars[c & 0x0f]);
     }
+    result.push_back('\'');
     return result;
   }
 };

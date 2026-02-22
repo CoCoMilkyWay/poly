@@ -17,7 +17,7 @@ class FeatherWriter {
 public:
   static constexpr int64_t PARTITION_SIZE = 100000;
 
-  explicit FeatherWriter(const std::string &data_dir) : stage1_dir_(data_dir + "/stage1") {}
+  explicit FeatherWriter(const std::string &data_dir) : stage1_dir_(data_dir) {}
 
   void write_partition(int64_t start_block, const stage1::DecodedEvents &events) {
     write_transfer(start_block, events.transfer);
