@@ -47,6 +47,7 @@ async def api_query(q: str = Query(...)):
 
 @app.post("/api/export-all")
 async def api_export_all():
+    import asyncio
     feather_tables = [
         "transfer", "condition_preparation", "condition_resolution",
         "split", "merge", "redemption", "fpmm", "fpmm_trade", "fpmm_funding",
@@ -55,40 +56,13 @@ async def api_export_all():
     export_dir = Path(__file__).parent.parent / "data" / "export"
     export_dir.mkdir(parents=True, exist_ok=True)
 
-    results = []
+    async def export_one(table_name: str):
+        output = str(export_dir / f"{table_name}.csv")
+        resp = await backend_get("/api/export-csv", {"table": table_name, "output": output, "limit": 1000})
+        return table_name if resp.get("rows", 0) > 0 else None
 
-    for table_name in feather_tables:
-        stage1_dir = Path(__file__).parent.parent / "data" / "stage1" / table_name
-        if not stage1_dir.exists():
-            continue
-        feathers = sorted(stage1_dir.glob("*.feather"), key=lambda p: int(p.stem), reverse=True)
-        if not feathers:
-            continue
-
-        query = f"SELECT * FROM read_arrow('{feathers[0]}') LIMIT 1000"
-        rows = await backend_get("/api/query", {"q": query})
-
-        if isinstance(rows, list) and len(rows) > 0:
-            headers = list(rows[0].keys())
-            lines = [",".join(headers)]
-            for row in rows:
-                vals = []
-                for h in headers:
-                    val = row.get(h)
-                    if val is None:
-                        vals.append("")
-                    elif isinstance(val, str) and ("," in val or '"' in val or "\n" in val):
-                        vals.append('"' + val.replace('"', '""') + '"')
-                    else:
-                        vals.append(str(val))
-                lines.append(",".join(vals))
-
-            csv_content = "\n".join(lines)
-            file_path = export_dir / f"{table_name}.csv"
-            file_path.write_text(csv_content)
-            results.append(table_name)
-
-    return {"exported": results, "path": str(export_dir)}
+    results = await asyncio.gather(*[export_one(t) for t in feather_tables])
+    return {"exported": [r for r in results if r], "path": str(export_dir)}
 
 
 @app.get("/api/rebuild-status")

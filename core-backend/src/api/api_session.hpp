@@ -99,6 +99,8 @@ private:
         handle_replay_trades();
       } else if (target.starts_with("/api/replay")) {
         handle_replay();
+      } else if (target.starts_with("/api/export-csv")) {
+        handle_export_csv();
       } else {
         res_.result(http::status::not_found);
         res_.set(http::field::content_type, "application/json");
@@ -218,6 +220,58 @@ private:
     json result = db_.query_json(query);
     res_.result(http::status::ok);
     res_.body() = result.dump();
+  }
+
+  void handle_export_csv() {
+    TraceN("api/export_csv");
+    res_.set(http::field::content_type, "application/json");
+
+    std::string table = get_param("table");
+    std::string output = get_param("output");
+    std::string limit_str = get_param("limit");
+    int64_t limit = limit_str.empty() ? 1000 : std::stoll(limit_str);
+
+    if (table.empty() || output.empty()) {
+      res_.result(http::status::bad_request);
+      res_.body() = R"({"error":"Missing table or output parameter"})";
+      return;
+    }
+
+    std::string dir = db_.feather_dir(table);
+    if (!std::filesystem::exists(dir) || std::filesystem::is_empty(dir)) {
+      res_.result(http::status::ok);
+      res_.body() = R"({"rows":0})";
+      return;
+    }
+
+    std::string latest;
+    int64_t max_block = -1;
+    for (const auto &entry : std::filesystem::directory_iterator(dir)) {
+      std::string filename = entry.path().filename().string();
+      if (!filename.ends_with(".feather"))
+        continue;
+      int64_t block = std::stoll(filename.substr(0, filename.size() - 8));
+      if (block > max_block) {
+        max_block = block;
+        latest = entry.path().string();
+      }
+    }
+
+    if (latest.empty()) {
+      res_.result(http::status::ok);
+      res_.body() = R"({"rows":0})";
+      return;
+    }
+
+    std::string sql = "COPY (SELECT * FROM read_arrow('" + latest + "') LIMIT " +
+                      std::to_string(limit) + ") TO '" + output + "' (HEADER)";
+    db_.execute(sql);
+
+    int64_t rows = db_.query_single_int("SELECT COUNT(*) FROM read_arrow('" + latest + "')");
+    rows = std::min(rows, limit);
+
+    res_.result(http::status::ok);
+    res_.body() = json{{"rows", rows}}.dump();
   }
 
   void handle_rebuild_status() {
