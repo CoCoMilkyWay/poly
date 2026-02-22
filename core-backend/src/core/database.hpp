@@ -16,7 +16,10 @@ using json = nlohmann::json;
 class Database {
 public:
   explicit Database(const std::string &path) : db_path_(path) {
-    db_ = std::make_unique<duckdb::DuckDB>(path);
+    duckdb::DBConfig config;
+    config.SetOption("checkpoint_threshold", duckdb::Value("256MB"));
+    config.SetOption("wal_autocheckpoint", duckdb::Value("256MB"));
+    db_ = std::make_unique<duckdb::DuckDB>(path, &config);
     read_conn_ = std::make_unique<duckdb::Connection>(*db_);
     write_conn_ = std::make_unique<duckdb::Connection>(*db_);
 
@@ -165,6 +168,12 @@ public:
 
   std::unique_ptr<duckdb::Connection> create_connection() {
     return std::make_unique<duckdb::Connection>(*db_);
+  }
+
+  void checkpoint() {
+    std::lock_guard<std::mutex> lock(write_mutex_);
+    auto result = write_conn_->Query("CHECKPOINT");
+    assert(!result->HasError());
   }
 
   void init_schema() {
