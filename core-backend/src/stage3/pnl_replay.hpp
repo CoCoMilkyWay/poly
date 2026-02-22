@@ -72,14 +72,14 @@ public:
     double phase1_ms = 0;
     double phase2_ms = 0;
     double phase3_ms = 0;
-    ScanStats order_filled;
-    ScanStats split;
-    ScanStats merge;
-    ScanStats redemption;
-    ScanStats fpmm_trade;
-    ScanStats fpmm_funding;
-    ScanStats convert;
-    ScanStats transfer;
+    int64_t cnt_split = 0;
+    int64_t cnt_merge = 0;
+    int64_t cnt_redemption = 0;
+    int64_t cnt_convert = 0;
+    int64_t cnt_order = 0;
+    int64_t cnt_fpmm_trade = 0;
+    int64_t cnt_fpmm_funding = 0;
+    int64_t cnt_transfer = 0;
   };
 
   RebuildProgress progress() const {
@@ -90,6 +90,14 @@ public:
     p.total_tokens = bp.total_tokens;
     p.total_events = bp.total_events;
     p.running = bp.running;
+    p.cnt_split = bp.cnt_split;
+    p.cnt_merge = bp.cnt_merge;
+    p.cnt_redemption = bp.cnt_redemption;
+    p.cnt_convert = bp.cnt_convert;
+    p.cnt_order = bp.cnt_order;
+    p.cnt_fpmm_trade = bp.cnt_fpmm_trade;
+    p.cnt_fpmm_funding = bp.cnt_fpmm_funding;
+    p.cnt_transfer = bp.cnt_transfer;
     return p;
   }
 

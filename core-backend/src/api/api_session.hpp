@@ -186,6 +186,14 @@ private:
         {"total_conditions", p.total_conditions},
         {"total_tokens", p.total_tokens},
         {"total_events", p.total_events},
+        {"cnt_split", p.cnt_split},
+        {"cnt_merge", p.cnt_merge},
+        {"cnt_redemption", p.cnt_redemption},
+        {"cnt_convert", p.cnt_convert},
+        {"cnt_order", p.cnt_order},
+        {"cnt_fpmm_trade", p.cnt_fpmm_trade},
+        {"cnt_fpmm_funding", p.cnt_fpmm_funding},
+        {"cnt_transfer", p.cnt_transfer},
     };
 
     if (stage2_getter_) {

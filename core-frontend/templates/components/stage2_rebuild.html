@@ -192,94 +192,32 @@
       const log = document.getElementById("stage2-log");
       const bar = document.getElementById("stage2-progress-bar");
       const badge = document.getElementById("stage2-badge");
-      const lines = [];
 
       s2UpdateStats(s);
 
-      let progress = 0;
-      if (s.phase >= 1) {
-        progress = 10;
-        if (s.phase > 1) {
-          lines.push(
-            `<span class="done">✓</span> 元数据: ${s2Fmt(s.total_conditions)} 问题, ${s2Fmt(s.total_tokens)} 代币`,
-          );
-        } else {
-          lines.push(`<span class="active">●</span> 加载元数据中...`);
-        }
-      }
+      const sync = s.stage2_sync || {};
+      const cursor = sync.stage2_cursor || 0;
+      const headBlock = sync.stage1_last_block || 0;
+      const progress = headBlock > 0 ? (cursor / headBlock) * 100 : 0;
+      bar.style.width = progress.toFixed(2) + "%";
 
-      if (s.phase >= 2) {
-        progress = 30;
-        const scans = [
-          { name: "订单", key: "order_filled" },
-          { name: "铸币", key: "split" },
-          { name: "合币", key: "merge" },
-          { name: "赎回", key: "redemption" },
-          { name: "AMM", key: "fpmm_trade" },
-          { name: "LP", key: "fpmm_funding" },
-          { name: "转换", key: "convert" },
-          { name: "转账", key: "transfer" },
-        ];
-        const parts = [];
-        for (const sc of scans) {
-          const obj = s[sc.key];
-          if (obj && obj.rows > 0) {
-            parts.push(`${sc.name}:${s2Fmt(obj.rows)}`);
-          }
-        }
-        if (s.phase > 2) {
-          lines.push(`<span class="done">✓</span> 索引: ${parts.join(" | ")}`);
-          lines.push(
-            `<span class="done">✓</span> 事件: ${s2Fmt(s.total_events)} → ${s2Fmt(s.total_users)} 用户`,
-          );
-          progress = 70;
-        } else {
-          lines.push(
-            `<span class="active">●</span> 索引: ${parts.join(" | ")}`,
-          );
-        }
-      }
+      const parts = [];
+      if (s.cnt_order) parts.push(`订单:${s2Fmt(s.cnt_order)}`);
+      if (s.cnt_split) parts.push(`铸币:${s2Fmt(s.cnt_split)}`);
+      if (s.cnt_merge) parts.push(`合币:${s2Fmt(s.cnt_merge)}`);
+      if (s.cnt_redemption) parts.push(`赎回:${s2Fmt(s.cnt_redemption)}`);
+      if (s.cnt_convert) parts.push(`转换:${s2Fmt(s.cnt_convert)}`);
+      if (s.cnt_fpmm_trade) parts.push(`AMM:${s2Fmt(s.cnt_fpmm_trade)}`);
+      if (s.cnt_fpmm_funding) parts.push(`LP:${s2Fmt(s.cnt_fpmm_funding)}`);
+      if (s.cnt_transfer) parts.push(`转账:${s2Fmt(s.cnt_transfer)}`);
+      log.innerHTML = parts.length > 0 ? parts.join(" | ") : "-";
 
-      if (s.phase >= 3) {
-        const pct = s.total_users
-          ? Math.round((s.processed_users / s.total_users) * 100)
-          : 0;
-        progress = 70 + pct * 0.3;
-        if (s.phase > 3) {
-          lines.push(
-            `<span class="done">✓</span> 回放: ${s2Fmt(s.total_users)} 用户完成`,
-          );
-          progress = 100;
-        } else {
-          lines.push(
-            `<span class="active">●</span> 回放: ${s2Fmt(s.processed_users)}/${s2Fmt(s.total_users)} (${pct}%)`,
-          );
-        }
-      }
-
-      if (s.phase === 7) {
-        const total = (
-          (s.phase1_ms + s.phase2_ms + s.phase3_ms) /
-          1000
-        ).toFixed(1);
-        lines.push(
-          `<b style="color:#10b981">就绪: ${s2Fmt(s.total_users)} 用户, ${s2Fmt(s.total_events)} 事件 (${total}s)</b>`,
-        );
-      }
-
-      if (lines.length === 0) {
-        lines.push("等待 Stage1 同步数据...");
-      }
-
-      log.innerHTML = lines.join("<br>");
-      bar.style.width = progress + "%";
-
-      if (s.running) {
+      if (sync.syncing) {
         badge.className = "badge badge-warning";
-        badge.textContent = "构建中";
-      } else if (s.phase === 7) {
+        badge.textContent = "同步中";
+      } else if (cursor >= headBlock && headBlock > 0) {
         badge.className = "badge badge-success";
-        badge.textContent = "就绪";
+        badge.textContent = "已同步";
       } else {
         badge.className = "badge badge-warning";
         badge.textContent = "等待中";

@@ -29,6 +29,14 @@ struct BuildProgress {
   int64_t total_conditions = 0;
   int64_t total_tokens = 0;
   int64_t total_events = 0;
+  int64_t cnt_split = 0;
+  int64_t cnt_merge = 0;
+  int64_t cnt_redemption = 0;
+  int64_t cnt_convert = 0;
+  int64_t cnt_order = 0;
+  int64_t cnt_fpmm_trade = 0;
+  int64_t cnt_fpmm_funding = 0;
+  int64_t cnt_transfer = 0;
 };
 
 class EventBuilder {
@@ -534,6 +542,14 @@ private:
       info.amount1 = amounts_arr.size() > 1 ? amounts_arr[1].get<int64_t>() : 0;
       tx_fpmm_funding_[key] = info;
     }
+
+    progress_.cnt_split += tx_split_.size();
+    progress_.cnt_merge += tx_merge_.size();
+    progress_.cnt_redemption += tx_redemption_.size();
+    progress_.cnt_convert += tx_convert_.size();
+    progress_.cnt_order += tx_order_.size();
+    progress_.cnt_fpmm_trade += tx_fpmm_trade_.size();
+    progress_.cnt_fpmm_funding += tx_fpmm_funding_.size();
   }
 
   void phase3_process_transfers(int64_t start, int64_t end) {
@@ -566,6 +582,7 @@ private:
 
       classify_and_emit(sort_key, tx_hash, block, op, from, to, token_id, amount, cond_idx, token_idx);
     }
+    progress_.cnt_transfer += transfers->RowCount();
   }
 
   void classify_and_emit(int64_t sort_key, const std::array<uint8_t, 32> &tx_hash,
