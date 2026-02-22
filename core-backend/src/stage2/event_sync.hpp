@@ -1,7 +1,6 @@
 #pragma once
 
 #include <chrono>
-#include <iostream>
 
 #include <boost/asio.hpp>
 
@@ -73,31 +72,15 @@ private:
     }
 
     progress_.syncing = true;
-    int64_t chunks_to_build = std::min(behind_chunks, CHUNK_THRESHOLD);
-    progress_.chunks_per_rebuild = chunks_to_build;
+    progress_.chunks_per_rebuild = 1;
 
-    std::cout << "[Stage2Sync] 落后 " << behind_chunks << " chunks, 构建 " 
-              << chunks_to_build << " chunks..." << std::endl;
-
-    auto t0 = std::chrono::steady_clock::now();
-    int64_t chunks_built = 0;
-
-    while (chunks_built < chunks_to_build) {
-      int64_t target = std::min(builder_.cursor() + chunk_size_, stage1_last);
-      if (!builder_.build_chunk(target)) break;
-      chunks_built++;
-      progress_.phase = builder_.progress().phase;
-      progress_.stage2_cursor = builder_.cursor();
-    }
-
-    auto t1 = std::chrono::steady_clock::now();
-    double elapsed_ms = std::chrono::duration<double, std::milli>(t1 - t0).count();
-
-    std::cout << "[Stage2Sync] 完成 " << chunks_built << " chunks ("
-              << (elapsed_ms / 1000.0) << "s), cursor=" << builder_.cursor() << std::endl;
+    int64_t target = std::min(builder_.cursor() + chunk_size_, stage1_last);
+    builder_.build_chunk(target);
+    progress_.phase = builder_.progress().phase;
+    progress_.stage2_cursor = builder_.cursor();
 
     progress_.syncing = false;
-    schedule_sync(1);
+    schedule_sync(0);
   }
 
   Database &stage1_db_;

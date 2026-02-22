@@ -4,6 +4,7 @@
 #include "types.hpp"
 #include <algorithm>
 #include <cassert>
+#include <nlohmann/json.hpp>
 #include <unordered_map>
 
 namespace stage2 {
@@ -369,12 +370,9 @@ private:
       if (it == cond_map_.end()) continue;
       std::string payout_str = cr->GetValue(1, i).GetValueUnsafe<std::string>();
       std::vector<int64_t> payouts;
-      size_t pos = 0;
-      while (pos < payout_str.size()) {
-        size_t next = payout_str.find(',', pos);
-        if (next == std::string::npos) next = payout_str.size();
-        payouts.push_back(std::stoll(payout_str.substr(pos, next - pos)));
-        pos = next + 1;
+      auto payout_arr = nlohmann::json::parse(payout_str);
+      for (const auto &v : payout_arr) {
+        payouts.push_back(v.get<int64_t>());
       }
       update_condition_payout(it->second, payouts);
     }
