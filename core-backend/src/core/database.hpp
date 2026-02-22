@@ -19,6 +19,7 @@ public:
   explicit Database(const std::string &path) : db_path_(path) {
     auto parent = fs::path(path).parent_path();
     data_dir_ = parent.empty() ? "." : parent.string();
+    fs::create_directories(data_dir_);
     duckdb::DBConfig config;
     config.SetOption("checkpoint_threshold", duckdb::Value("256MB"));
     config.SetOption("wal_autocheckpoint", duckdb::Value("256MB"));
@@ -259,7 +260,8 @@ public:
     }
     std::string result = "(";
     for (size_t i = 0; i < paths.size(); ++i) {
-      if (i > 0) result += " UNION ALL ";
+      if (i > 0)
+        result += " UNION ALL ";
       result += "SELECT * FROM read_arrow('" + paths[i] + "')";
     }
     return result + ")";
@@ -284,7 +286,8 @@ private:
 
   bool partition_exists(const std::string &table, int64_t partition_start) {
     std::string key = table + "/" + std::to_string(partition_start);
-    if (key == cached_partition_key_) return cached_partition_exists_;
+    if (key == cached_partition_key_)
+      return cached_partition_exists_;
 
     std::string path = feather_dir(table) + "/" + std::to_string(partition_start) + ".feather";
     bool exists = fs::exists(path);

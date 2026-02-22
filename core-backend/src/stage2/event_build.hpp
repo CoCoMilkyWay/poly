@@ -76,7 +76,8 @@ public:
     // 添加question_id列（如果表已存在但没有这个列）
     try {
       stage2_db_.execute("ALTER TABLE rb_condition ADD COLUMN question_id BLOB");
-    } catch (...) {}
+    } catch (...) {
+    }
 
     stage2_db_.execute(R"(
       CREATE TABLE IF NOT EXISTS rb_token (
@@ -191,10 +192,10 @@ public:
 
     progress_.total_conditions = conditions_.size();
     progress_.total_tokens = token_map_.size();
-    
+
     auto user_cnt = conn->Query("SELECT COUNT(DISTINCT user_addr) FROM user_event");
     progress_.total_users = user_cnt->RowCount() > 0 ? user_cnt->GetValue(0, 0).GetValue<int64_t>() : 0;
-    
+
     if (progress_.cursor > 0)
       progress_.phase = 3;
   }
@@ -255,7 +256,7 @@ private:
   std::unordered_map<std::string, uint32_t> cond_map_;
   std::unordered_map<std::string, TokenInfo> token_map_;
   std::unordered_map<std::string, FPMMInfo> fpmm_map_;
-  std::unordered_map<std::string, std::string> cond_to_market_;  // condition_id -> market_id
+  std::unordered_map<std::string, std::string> cond_to_market_; // condition_id -> market_id
 
   std::unordered_map<TxCondKey, std::vector<SplitInfo>> tx_split_;
   std::unordered_map<TxCondKey, std::vector<MergeInfo>> tx_merge_;
@@ -446,8 +447,8 @@ private:
       } else {
         cond_idx = it->second;
       }
-      intern_token(token0, cond_idx, 1);  // YES
-      intern_token(token1, cond_idx, 0);  // NO
+      intern_token(token0, cond_idx, 1); // YES
+      intern_token(token1, cond_idx, 0); // NO
     }
 
     auto fpmm = conn->Query(
@@ -480,7 +481,7 @@ private:
         std::string collection_input(96, '\0');
         // parentCollectionId = 0x0 (前32字节已经是0)
         std::memcpy(collection_input.data() + 32, cond_bytes.data(), std::min(size_t(32), cond_bytes.size()));
-        collection_input[95] = static_cast<char>(index_set);  // indexSet在最后一个字节(uint256大端)
+        collection_input[95] = static_cast<char>(index_set); // indexSet在最后一个字节(uint256大端)
         auto collection_hash = crypto::keccak256(collection_input);
 
         // positionId = keccak256(collateralToken[20] + collectionId[32])
@@ -490,7 +491,7 @@ private:
         auto position_hash = crypto::keccak256(position_input);
 
         std::string token_id = crypto::Keccak256::to_hex(position_hash);
-        intern_token(token_id, cond_idx, index_set == 1 ? 1 : 0);  // 1=YES, 2=NO
+        intern_token(token_id, cond_idx, index_set == 1 ? 1 : 0); // 1=YES, 2=NO
       }
     }
 
@@ -649,10 +650,14 @@ private:
       tx_fpmm_funding_[key] = info;
     }
 
-    for (const auto &kv : tx_split_) progress_.cnt_split += kv.second.size();
-    for (const auto &kv : tx_merge_) progress_.cnt_merge += kv.second.size();
-    for (const auto &kv : tx_redemption_) progress_.cnt_redemption += kv.second.size();
-    for (const auto &kv : tx_convert_) progress_.cnt_convert += kv.second.size();
+    for (const auto &kv : tx_split_)
+      progress_.cnt_split += kv.second.size();
+    for (const auto &kv : tx_merge_)
+      progress_.cnt_merge += kv.second.size();
+    for (const auto &kv : tx_redemption_)
+      progress_.cnt_redemption += kv.second.size();
+    for (const auto &kv : tx_convert_)
+      progress_.cnt_convert += kv.second.size();
     progress_.cnt_order += tx_order_.size();
     progress_.cnt_fpmm_trade += tx_fpmm_trade_.size();
     progress_.cnt_fpmm_funding += tx_fpmm_funding_.size();
@@ -721,7 +726,13 @@ private:
     uint8_t outcome_cnt = cond_idx < conditions_.size() ? conditions_[cond_idx].outcome_count : 2;
     int64_t split_price = 1000000 / outcome_cnt;
 
+    // ========== mint 分支 (from == 0x0) ==========
     if (from == ZERO_ADDR) {
+      // NegRisk 内部 mint，跳过（用户通过后续 transfer 获取）
+      if (to == NEG_RISK_ADAPTER)
+        return;
+
+      // 普通市场 Split: stakeholder == to
       auto sit = tx_split_.find(tx_cond_key);
       if (sit != tx_split_.end()) {
         for (const auto &info : sit->second) {
@@ -732,17 +743,24 @@ private:
           }
         }
       }
+      // FPMM LP Add
       auto fit = tx_fpmm_funding_.find(tx_key);
       if (fit != tx_fpmm_funding_.end() && fit->second.side == 1) {
-        int64_t price = split_price;
-        RawEvent evt{sort_key, cond_idx, EventType::FPMMLPAdd, token_idx, 0, amount, price};
+        RawEvent evt{sort_key, cond_idx, EventType::FPMMLPAdd, token_idx, 0, amount, split_price};
         push_event(fit->second.funder, evt);
         return;
       }
+      // 其他内部 mint，跳过
       return;
     }
 
+    // ========== burn 分支 (to == 0x0) ==========
     if (to == ZERO_ADDR) {
+      // NegRisk 内部 burn，跳过（用户已通过之前的 transfer 记录）
+      if (from == NEG_RISK_ADAPTER)
+        return;
+
+      // 普通市场 Merge: stakeholder == from
       auto mit = tx_merge_.find(tx_cond_key);
       if (mit != tx_merge_.end()) {
         for (const auto &info : mit->second) {
@@ -753,6 +771,7 @@ private:
           }
         }
       }
+      // Redemption: redeemer == from
       auto rit = tx_redemption_.find(tx_cond_key);
       if (rit != tx_redemption_.end()) {
         for (const auto &info : rit->second) {
@@ -770,42 +789,22 @@ private:
           }
         }
       }
-      // convert: 通过condition的question_id查找market_id，然后用TxMarketKey查找convert事件
-      if (cond_idx < conditions_.size() && !conditions_[cond_idx].question_id.empty()) {
-        auto market_it = cond_to_market_.find(conditions_[cond_idx].question_id);
-        if (market_it != cond_to_market_.end()) {
-          TxMarketKey tx_market_key{block, tx_hash, market_it->second};
-          auto cit = tx_convert_.find(tx_market_key);
-          if (cit != tx_convert_.end()) {
-            for (const auto &info : cit->second) {
-              if (info.stakeholder == from) {
-                int M = __builtin_popcountll(info.index_set);
-                int64_t conv_price = M > 1 ? 1000000 * (M - 1) / M : 0;
-                RawEvent evt{sort_key, cond_idx, EventType::Convert, token_idx, 0, -amount, conv_price};
-                push_event(from, evt);
-                return;
-              }
-            }
-          }
-        }
-      }
+      // FPMM LP Remove
       auto fit = tx_fpmm_funding_.find(tx_key);
       if (fit != tx_fpmm_funding_.end() && fit->second.side == 2) {
-        int64_t price = split_price;
-        RawEvent evt{sort_key, cond_idx, EventType::FPMMLPRemove, token_idx, 0, -amount, price};
+        RawEvent evt{sort_key, cond_idx, EventType::FPMMLPRemove, token_idx, 0, -amount, split_price};
         push_event(fit->second.funder, evt);
         return;
       }
+      // 其他内部 burn，跳过
       return;
     }
 
+    // ========== operator == CTF_EXCHANGE / NEG_RISK_CTF_EXCHANGE ==========
     if (op == CTF_EXCHANGE || op == NEG_RISK_CTF_EXCHANGE) {
       auto oit = tx_order_.find(tx_token_key);
       if (oit != tx_order_.end()) {
         int64_t price = oit->second.tokens > 0 ? (oit->second.usdc * 1000000 / oit->second.tokens) : 0;
-        // 使用transfer的from/to确定买卖方，而不是order_filled的maker/taker
-        // 避免同一tx同一token多个order_filled时maker/taker被覆盖导致用户错误
-        // from = 卖方(token转出), to = 买方(token转入)
         RawEvent buy_evt{sort_key, cond_idx, EventType::Buy, token_idx, 0, amount, price};
         push_event(to, buy_evt);
         RawEvent sell_evt{sort_key, cond_idx, EventType::Sell, token_idx, 0, -amount, price};
@@ -819,10 +818,68 @@ private:
       return;
     }
 
+    // ========== operator == NEG_RISK_ADAPTER ==========
     if (op == NEG_RISK_ADAPTER) {
+      // Adapter → 用户
+      if (from == NEG_RISK_ADAPTER) {
+        // NegRisk Split: stakeholder == Adapter
+        auto sit = tx_split_.find(tx_cond_key);
+        if (sit != tx_split_.end()) {
+          for (const auto &info : sit->second) {
+            if (info.stakeholder == NEG_RISK_ADAPTER) {
+              RawEvent evt{sort_key, cond_idx, EventType::Split, token_idx, 0, amount, split_price};
+              push_event(to, evt);
+              return;
+            }
+          }
+        }
+        // 其他情况：用户直接收到 transfer（罕见）
+        RawEvent evt{sort_key, cond_idx, EventType::TransferIn, token_idx, 0, amount, 0};
+        push_event(to, evt);
+        return;
+      }
+      // 用户 → Adapter
+      if (to == NEG_RISK_ADAPTER) {
+        // NegRisk Merge: stakeholder == Adapter
+        auto mit = tx_merge_.find(tx_cond_key);
+        if (mit != tx_merge_.end()) {
+          for (const auto &info : mit->second) {
+            if (info.stakeholder == NEG_RISK_ADAPTER) {
+              RawEvent evt{sort_key, cond_idx, EventType::Merge, token_idx, 0, -amount, split_price};
+              push_event(from, evt);
+              return;
+            }
+          }
+        }
+        // NegRisk Convert: stakeholder == 用户
+        if (cond_idx < conditions_.size() && !conditions_[cond_idx].question_id.empty()) {
+          auto market_it = cond_to_market_.find(conditions_[cond_idx].question_id);
+          if (market_it != cond_to_market_.end()) {
+            TxMarketKey tx_market_key{block, tx_hash, market_it->second};
+            auto cit = tx_convert_.find(tx_market_key);
+            if (cit != tx_convert_.end()) {
+              for (const auto &info : cit->second) {
+                if (info.stakeholder == from) {
+                  int M = __builtin_popcountll(info.index_set);
+                  int64_t conv_price = M > 1 ? 1000000 * (M - 1) / M : 0;
+                  RawEvent evt{sort_key, cond_idx, EventType::Convert, token_idx, 0, -amount, conv_price};
+                  push_event(from, evt);
+                  return;
+                }
+              }
+            }
+          }
+        }
+        // 其他情况：用户直接 transfer 给 Adapter（罕见）
+        RawEvent evt{sort_key, cond_idx, EventType::TransferOut, token_idx, 0, -amount, 0};
+        push_event(from, evt);
+        return;
+      }
+      // Adapter 内部 transfer，跳过
       return;
     }
 
+    // ========== operator in fpmm_map_ ==========
     auto fpmm_it = fpmm_map_.find(op);
     if (fpmm_it != fpmm_map_.end()) {
       auto tit = tx_fpmm_trade_.find(tx_key);
@@ -837,14 +894,17 @@ private:
         }
         return;
       }
+      // LP 返还多余 token
       if (from == op) {
         RawEvent evt{sort_key, cond_idx, EventType::TransferIn, token_idx, 0, amount, 0};
         push_event(to, evt);
         return;
       }
+      // FPMM 内部 transfer，跳过
       return;
     }
 
+    // ========== 其他：用户间直接转账 ==========
     RawEvent in_evt{sort_key, cond_idx, EventType::TransferIn, token_idx, 0, amount, 0};
     push_event(to, in_evt);
     RawEvent out_evt{sort_key, cond_idx, EventType::TransferOut, token_idx, 0, -amount, 0};

@@ -61,13 +61,13 @@ rebuild(target_block):
 
 ### 映射表 (持久化 rb\_\* + 内存)
 
-| 映射                                                          | 来源                               | 用途                    |
-| ------------------------------------------------------------- | ---------------------------------- | ----------------------- |
-| `cond_map_[condition_id] → cond_idx`                          | condition_preparation              | 32字节→4字节压缩        |
-| `conditions_[cond_idx] → {outcome_count, payout, question_id}` | condition_preparation + resolution | 结算状态 + NegRisk关联  |
-| `token_map_[token_id] → {cond_idx, is_yes}`                   | token_map + fpmm计算               | Transfer 归属           |
-| `fpmm_map_[fpmm_addr] → cond_idx`                             | fpmm                               | FPMM operator 识别      |
-| `cond_to_market_[question_id] → market_id`                    | neg_risk_question                  | Convert 事件的市场查找  |
+| 映射                                                           | 来源                               | 用途                   |
+| -------------------------------------------------------------- | ---------------------------------- | ---------------------- |
+| `cond_map_[condition_id] → cond_idx`                           | condition_preparation              | 32字节→4字节压缩       |
+| `conditions_[cond_idx] → {outcome_count, payout, question_id}` | condition_preparation + resolution | 结算状态 + NegRisk关联 |
+| `token_map_[token_id] → {cond_idx, is_yes}`                    | token_map + fpmm计算               | Transfer 归属          |
+| `fpmm_map_[fpmm_addr] → cond_idx`                              | fpmm                               | FPMM operator 识别     |
+| `cond_to_market_[question_id] → market_id`                     | neg_risk_question                  | Convert 事件的市场查找 |
 
 **关键洞察**：`token_map_` 有两个来源
 
@@ -137,6 +137,14 @@ apply_event(token_idx, amount, price):
 
 ## Phase 3: Transfer 分类与处理
 
+### NegRisk vs 普通市场的关键区别
+
+| 操作    | 普通市场                        | NegRisk 市场                                         |
+| ------- | ------------------------------- | ---------------------------------------------------- |
+| Split   | 用户直接 mint，stakeholder=用户 | Adapter mint 后 transfer 给用户，stakeholder=Adapter |
+| Merge   | 用户直接 burn，stakeholder=用户 | 用户 transfer 给 Adapter 后 Adapter burn             |
+| Convert | N/A                             | 用户 transfer 给 Adapter 后 Adapter burn             |
+
 ### 分类决策树
 
 ```
@@ -144,41 +152,67 @@ Transfer(operator, from, to, token_id, amount)
     │
     ├─ from == 0x0 (mint)
     │   │
+    │   ├─ to == NEG_RISK_ADAPTER
+    │   │   └─ 跳过 (NegRisk 内部 mint，用户通过后续 transfer 获取)
+    │   │
     │   ├─ tx_split_ 存在 且 stakeholder == to
-    │   │   └─ Split: user=to, 每条 Transfer 一个事件 (token_idx)
+    │   │   └─ Split: user=to (普通市场用户直接 split)
     │   │
     │   ├─ tx_fpmm_funding_ 存在 且 side=Added
-    │   │   └─ FPMMLPAdd: user=funder, 每条 Transfer 一个事件
+    │   │   └─ FPMMLPAdd: user=funder
     │   │
-    │   └─ 否则 → 跳过 (FPMM/NegRisk 内部 mint，不是用户操作)
+    │   └─ 否则 → 跳过 (FPMM 内部 mint)
     │
     ├─ to == 0x0 (burn)
     │   │
+    │   ├─ from == NEG_RISK_ADAPTER
+    │   │   └─ 跳过 (NegRisk 内部 burn，用户已通过之前的 transfer 记录)
+    │   │
     │   ├─ tx_merge_ 存在 且 stakeholder == from
-    │   │   └─ Merge: user=from, 每条 Transfer 一个事件 (token_idx)
+    │   │   └─ Merge: user=from (普通市场用户直接 merge)
     │   │
     │   ├─ tx_redemption_ 存在 且 redeemer == from
-    │   │   └─ Redemption: user=from, 每条 burn 一个事件, price=payout_numerator
-    │   │
-    │   ├─ tx_convert_ 存在 (通过 question_id → market_id 查找) 且 stakeholder == from
-    │   │   └─ Convert: user=from, 每条 NO burn 一个事件, price=(M-1)/M，M=该事件的 popcount(index_set)
+    │   │   └─ Redemption: user=from, price=payout_numerator
     │   │
     │   ├─ tx_fpmm_funding_ 存在 且 side=Removed
-    │   │   └─ FPMMLPRemove: user=funder, 每条 Transfer 一个事件
+    │   │   └─ FPMMLPRemove: user=funder
     │   │
-    │   └─ 否则 → 跳过 (FPMM/NegRisk 内部 burn)
+    │   └─ 否则 → 跳过 (FPMM 内部 burn)
     │
     ├─ operator == CTF_EXCHANGE / NEG_RISK_CTF_EXCHANGE
+    │   │
     │   ├─ tx_order_ 存在
-    │   │   └─ 生成两个事件: to 的 Buy + from 的 Sell (使用 transfer 的 from/to，不用 maker/taker)
+    │   │   └─ Buy(to) + Sell(from)，使用 transfer 的 from/to 而非 maker/taker
+    │   │
     │   └─ 否则 → TransferIn(to) + TransferOut(from)
     │
     ├─ operator == NEG_RISK_ADAPTER
-    │   └─ 跳过 (Split/Merge/Convert 内部 transfer，已在 mint/burn 分支处理)
+    │   │
+    │   ├─ from == NEG_RISK_ADAPTER (Adapter → 用户)
+    │   │   │
+    │   │   ├─ tx_split_ 存在 且 stakeholder == NEG_RISK_ADAPTER
+    │   │   │   └─ Split: user=to (NegRisk split，用户收到 token)
+    │   │   │
+    │   │   └─ 否则 → TransferIn: user=to
+    │   │
+    │   ├─ to == NEG_RISK_ADAPTER (用户 → Adapter)
+    │   │   │
+    │   │   ├─ tx_merge_ 存在 且 stakeholder == NEG_RISK_ADAPTER
+    │   │   │   └─ Merge: user=from (NegRisk merge，用户转出 token)
+    │   │   │
+    │   │   ├─ tx_convert_ 存在 且 stakeholder == from
+    │   │   │   └─ Convert: user=from, price=(M-1)/M
+    │   │   │
+    │   │   └─ 否则 → TransferOut: user=from
+    │   │
+    │   └─ 否则 → 跳过 (Adapter 内部 transfer)
     │
     ├─ operator in fpmm_map_
+    │   │
     │   ├─ tx_fpmm_trade_ 存在 → FPMMBuy/FPMMSell: user=trader
+    │   │
     │   ├─ from == fpmm → TransferIn: user=to (LP 返还多余 token)
+    │   │
     │   └─ 否则 → 跳过 (FPMM 内部 transfer)
     │
     └─ 其他 → TransferIn(to) + TransferOut(from) (用户间直接转账)
@@ -200,28 +234,40 @@ CONDITIONAL_TOKENS   = 0x4d97dcd97ec945f40cf65f87097ace5ea0476045
 
 一个事件一个 token，每条 Transfer 自然对应一个 user_event，无需额外去重。
 
-**跳过内部操作**:
+**跳过内部操作** (确保不会给协议合约地址记录事件):
 
-- FPMM.buy/sell 内部的 Split/Merge: stakeholder=FPMM，不等于 Transfer.to/from
-- NegRisk 内部的 Split: operator=NEG_RISK_ADAPTER 且 stakeholder != 用户
-- FPMM 内部的 Transfer: operator=fpmm 且没有对应语义事件
+| 跳过条件                         | 原因                                        |
+| -------------------------------- | ------------------------------------------- |
+| mint && to == NEG_RISK_ADAPTER   | NegRisk 内部 mint，用户通过 transfer 获取   |
+| burn && from == NEG_RISK_ADAPTER | NegRisk 内部 burn，用户已通过 transfer 记录 |
+| mint && stakeholder != to        | FPMM 内部 split (stakeholder=FPMM)          |
+| burn && stakeholder != from      | FPMM 内部 merge (stakeholder=FPMM)          |
+| operator=FPMM && 无语义事件      | FPMM 内部 transfer                          |
 
 **用户识别**:
 
-- Split/Merge/Redemption: 从 Transfer.to (mint) 或 Transfer.from (burn)，遍历 vector 查找匹配的 stakeholder
-- OrderFilled: 从 Transfer.from (卖方) 和 Transfer.to (买方)，**不用 maker/taker** 避免同 tx 多 order 覆盖问题
-- FPMMTrade: 从 tx*fpmm_trade*.trader
-- FPMMFunding: 从 tx*fpmm_funding*.funder (**不是 Transfer.to/from!**)
-- Convert: 从 tx*convert*.stakeholder，通过 condition.question_id → market_id 查找
+| 场景          | 用户来源                   | 说明                           |
+| ------------- | -------------------------- | ------------------------------ |
+| 普通 Split    | Transfer.to (mint)         | stakeholder == to              |
+| NegRisk Split | Transfer.to (from=Adapter) | stakeholder == Adapter         |
+| 普通 Merge    | Transfer.from (burn)       | stakeholder == from            |
+| NegRisk Merge | Transfer.from (to=Adapter) | stakeholder == Adapter         |
+| Convert       | Transfer.from (to=Adapter) | stakeholder == from (用户地址) |
+| Redemption    | Transfer.from (burn)       | redeemer == from               |
+| OrderFilled   | Transfer.from/to           | 不用 maker/taker，避免覆盖问题 |
+| FPMMTrade     | tx*fpmm_trade*.trader      |                                |
+| FPMMFunding   | tx*fpmm_funding*.funder    | 不是 Transfer.to/from          |
 
 **价格计算**:
 
-- Split/Merge: `1 / outcome_count` (二元市场 = 0.5)
-- Buy/Sell/FPMMBuy/FPMMSell: `usdc_amount / token_amount`
-- Redemption: `payout_numerator` (赢家=1, 输家=0, 平局=0.5)
-- FPMMLPAdd/Remove: 按池子当时的隐含价格
-- Convert: `(M-1) / M`，M = popcount(index_set)，从匹配 stakeholder 的 convert 事件获取精确 index_set
-- TransferIn/Out: 0 (无价格信息)
+| 事件类型       | 价格公式                    | 单位       |
+| -------------- | --------------------------- | ---------- |
+| Split/Merge    | 1e6 / outcome_count         | 0.5 = 5e5  |
+| Buy/Sell       | usdc_amount \* 1e6 / tokens | 1e6 = $1   |
+| FPMMBuy/Sell   | usdc_amount \* 1e6 / tokens | 1e6 = $1   |
+| Redemption     | payout_numerator \* 1e6     | 0/1e6      |
+| Convert        | (M-1) \* 1e6 / M            | M=popcount |
+| TransferIn/Out | 0                           | 无价格     |
 
 ## Stage 3 用户状态
 
