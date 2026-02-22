@@ -110,6 +110,20 @@ public:
     auto cur = conn->Query("SELECT value FROM stage2_cursor WHERE key='last_block'");
     progress_.cursor = cur->RowCount() > 0 ? cur->GetValue(0, 0).GetValue<int64_t>() : 0;
 
+    auto load_cnt = [&](const char *key) -> int64_t {
+      auto r = conn->Query("SELECT value FROM stage2_cursor WHERE key='" + std::string(key) + "'");
+      return r->RowCount() > 0 ? r->GetValue(0, 0).GetValue<int64_t>() : 0;
+    };
+    progress_.cnt_split = load_cnt("cnt_split");
+    progress_.cnt_merge = load_cnt("cnt_merge");
+    progress_.cnt_redemption = load_cnt("cnt_redemption");
+    progress_.cnt_convert = load_cnt("cnt_convert");
+    progress_.cnt_order = load_cnt("cnt_order");
+    progress_.cnt_fpmm_trade = load_cnt("cnt_fpmm_trade");
+    progress_.cnt_fpmm_funding = load_cnt("cnt_fpmm_funding");
+    progress_.cnt_transfer = load_cnt("cnt_transfer");
+    progress_.total_events = load_cnt("total_events");
+
     auto cond_r = conn->Query("SELECT cond_idx, cond_id, outcome_cnt, "
                               "payout_0, payout_1, payout_2, payout_3, "
                               "payout_4, payout_5, payout_6, payout_7 FROM rb_condition ORDER BY cond_idx");
@@ -760,8 +774,22 @@ private:
                   std::to_string(evt.price) + ")");
     }
 
-    conn->Query("UPDATE stage2_cursor SET value = " + std::to_string(new_cursor) +
-                " WHERE key = 'last_block'");
+    conn->Query("INSERT OR REPLACE INTO stage2_cursor VALUES ('last_block', " +
+                std::to_string(new_cursor) + ")");
+
+    auto save_cnt = [&](const char *key, int64_t val) {
+      conn->Query("INSERT OR REPLACE INTO stage2_cursor VALUES ('" + std::string(key) +
+                  "', " + std::to_string(val) + ")");
+    };
+    save_cnt("cnt_split", progress_.cnt_split);
+    save_cnt("cnt_merge", progress_.cnt_merge);
+    save_cnt("cnt_redemption", progress_.cnt_redemption);
+    save_cnt("cnt_convert", progress_.cnt_convert);
+    save_cnt("cnt_order", progress_.cnt_order);
+    save_cnt("cnt_fpmm_trade", progress_.cnt_fpmm_trade);
+    save_cnt("cnt_fpmm_funding", progress_.cnt_fpmm_funding);
+    save_cnt("cnt_transfer", progress_.cnt_transfer);
+    save_cnt("total_events", progress_.total_events);
 
     conn->Query("COMMIT");
   }
