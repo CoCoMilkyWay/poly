@@ -7,6 +7,7 @@
 #include "api/api_server.hpp"
 #include "core/config.hpp"
 #include "core/database.hpp"
+#include "misc/profiler.hpp"
 #include "stage1/chain_sync.hpp"
 #include "stage2/event_sync.hpp"
 #include "stage3/pnl_replay.hpp"
@@ -16,6 +17,7 @@ void print_usage(const char *prog) {
 }
 
 int main(int argc, char *argv[]) {
+  TraceThread("Main");
   std::string config_path = "config.json";
 
   for (int i = 1; i < argc; ++i) {
@@ -54,12 +56,18 @@ int main(int argc, char *argv[]) {
 
   boost::asio::io_context sync_ioc;
   chain_sync.start(sync_ioc);
-  std::thread sync_thread([&sync_ioc]() { sync_ioc.run(); });
+  std::thread sync_thread([&sync_ioc]() {
+    TraceThread("Stage1-Sync");
+    sync_ioc.run();
+  });
 
   stage2::EventSync event_sync(stage1_db, stage2_db, config.rpc_chunk);
   boost::asio::io_context stage2_ioc;
   event_sync.start(stage2_ioc);
-  std::thread stage2_thread([&stage2_ioc]() { stage2_ioc.run(); });
+  std::thread stage2_thread([&stage2_ioc]() {
+    TraceThread("Stage2-Sync");
+    stage2_ioc.run();
+  });
 
   stage3::PnlEngine pnl_engine(event_sync.builder());
 

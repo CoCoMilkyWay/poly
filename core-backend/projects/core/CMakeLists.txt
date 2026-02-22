@@ -12,6 +12,30 @@ if(NOT (WIN32 OR (UNIX AND NOT APPLE)))
     message(FATAL_ERROR "仅支持 Linux 和 Windows")
 endif()
 
+# ============================================================================
+# Build Mode Options
+# ============================================================================
+option(PROFILE_MODE "Profile mode: enable Tracy profiling" OFF)
+
+# 编译选项
+if(PROFILE_MODE)
+    message(STATUS "Build mode: PROFILE (tracy instrumentation)")
+    add_compile_definitions(PROFILE_MODE TRACY_ENABLE TRACY_NO_SYSTEM_TRACING TRACY_NO_SAMPLING)
+    if(WIN32)
+        add_compile_options(/O2 /Zi -march=native /fp:fast)
+    else()
+        add_compile_options(-O2 -g -march=native -ffast-math)
+    endif()
+else()
+    message(STATUS "Build mode: PRODUCTION")
+    add_compile_definitions(NDEBUG)
+    if(WIN32)
+        add_compile_options(/O2 -march=native /fp:fast)
+    else()
+        add_compile_options(-O2 -march=native -ffast-math)
+    endif()
+endif()
+
 # 本地路径
 set(PACKAGES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../packages)
 set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../include)
@@ -36,11 +60,16 @@ set(SOURCES
     ${SRC_DIR}/main.cpp
 )
 
+if(PROFILE_MODE)
+    list(APPEND SOURCES ${PACKAGES_DIR}/tracy/public/TracyClient.cpp)
+endif()
+
 add_executable(core ${SOURCES})
 
 target_include_directories(core PRIVATE
     ${SRC_DIR}
     ${PACKAGES_DIR}/duckdb
+    ${PACKAGES_DIR}/tracy/public/tracy
     ${INCLUDE_DIR}
     ${INCLUDE_DIR}/package
 )
@@ -60,6 +89,9 @@ if(WIN32)
         OpenSSL::SSL
         OpenSSL::Crypto
     )
+    if(PROFILE_MODE)
+        target_link_libraries(core PRIVATE ws2_32 dbghelp)
+    endif()
 else()
     target_link_libraries(core PRIVATE
         ${PACKAGES_DIR}/duckdb/libduckdb.so
