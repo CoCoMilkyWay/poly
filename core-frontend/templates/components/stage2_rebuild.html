@@ -106,14 +106,14 @@
     <span id="stage2-badge" class="badge badge-warning">等待中</span>
   </div>
 
-  <div class="stage2-stats" id="stage2-stats" style="display: none">
+  <div class="stage2-stats" id="stage2-stats">
     <div class="stage2-stat">
-      <div class="stage2-stat-label">Processed</div>
-      <div class="stage2-stat-value" id="s2-processed">0</div>
+      <div class="stage2-stat-label">Last Block</div>
+      <div class="stage2-stat-value" id="s2-last-block">0</div>
     </div>
     <div class="stage2-stat">
-      <div class="stage2-stat-label">Total Users</div>
-      <div class="stage2-stat-value" id="s2-total">0</div>
+      <div class="stage2-stat-label">Head Block</div>
+      <div class="stage2-stat-value" id="s2-head-block">0</div>
     </div>
     <div class="stage2-stat">
       <div class="stage2-stat-label">Behind</div>
@@ -151,33 +151,41 @@
       return n.toLocaleString();
     }
 
+    let s2LastCursor = 0;
+    let s2LastTime = Date.now();
+
     function s2UpdateStats(s) {
-      const processedEl = document.getElementById("s2-processed");
-      const totalEl = document.getElementById("s2-total");
+      const lastBlockEl = document.getElementById("s2-last-block");
+      const headBlockEl = document.getElementById("s2-head-block");
       const behindEl = document.getElementById("s2-behind");
-      const statusEl = document.getElementById("s2-status");
+      const speedEl = document.getElementById("s2-speed");
+      const etaEl = document.getElementById("s2-eta");
 
       const sync = s.stage2_sync || {};
-      const stage2Block = sync.stage2_cursor || 0;
-      const stage1Block = sync.stage1_last_block || 0;
-      const behind = sync.behind_chunks || 0;
-      const syncing = sync.syncing || false;
+      const cursor = sync.stage2_cursor || 0;
+      const headBlock = sync.stage1_last_block || 0;
+      const behind = headBlock - cursor;
 
-      processedEl.textContent = s2FmtNum(stage2Block);
-      totalEl.textContent = s2FmtNum(stage1Block);
+      lastBlockEl.textContent = s2FmtNum(cursor);
+      headBlockEl.textContent = s2FmtNum(headBlock);
       behindEl.textContent = s2FmtNum(behind);
-      behindEl.className = "stage2-stat-value " + (behind < 1000 ? "synced" : "behind");
 
-      if (syncing) {
-        statusEl.textContent = "构建中";
-        statusEl.className = "stage2-stat-value behind";
-      } else if (behind >= 1000) {
-        statusEl.textContent = "等待";
-        statusEl.className = "stage2-stat-value behind";
-      } else {
-        statusEl.textContent = "跟踪中";
-        statusEl.className = "stage2-stat-value synced";
+      const now = Date.now();
+      const dt = (now - s2LastTime) / 1000;
+      if (dt > 0 && cursor > s2LastCursor) {
+        const speed = (cursor - s2LastCursor) / dt;
+        speedEl.textContent = s2Fmt(Math.round(speed)) + "/s";
+        if (speed > 0 && behind > 0) {
+          const eta = behind / speed;
+          if (eta < 60) etaEl.textContent = Math.round(eta) + "s";
+          else if (eta < 3600) etaEl.textContent = Math.round(eta / 60) + "m";
+          else etaEl.textContent = (eta / 3600).toFixed(1) + "h";
+        } else {
+          etaEl.textContent = "-";
+        }
       }
+      s2LastCursor = cursor;
+      s2LastTime = now;
     }
 
     function s2UpdateProgress(s) {

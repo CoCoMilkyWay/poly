@@ -74,6 +74,7 @@ int main(int argc, char *argv[]) {
   boost::asio::signal_set signals(api_ioc, SIGINT, SIGTERM);
   signals.async_wait([&](const boost::system::error_code &, int sig) {
     std::cout << "\n[Main] 正在关闭..." << std::endl;
+    event_sync.stop();
     api_ioc.stop();
   });
 
