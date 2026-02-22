@@ -90,6 +90,7 @@ public:
     p.total_conditions = bp.total_conditions;
     p.total_tokens = bp.total_tokens;
     p.total_events = bp.total_events;
+    p.total_users = bp.total_users;
     p.running = bp.running;
     p.cnt_split = bp.cnt_split;
     p.cnt_merge = bp.cnt_merge;

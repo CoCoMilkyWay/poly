@@ -82,27 +82,76 @@
     transition: width 0.3s;
   }
 
-  .stage2-log {
-    font-family: monospace;
-    font-size: 0.8em;
-    color: #aaa;
-    padding: 8px 12px;
-    background: #151515;
-    border-radius: 4px;
-    line-height: 1.8;
+  .stage2-summary {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
   }
 
-  .stage2-log .done {
-    color: #10b981;
+  .stage2-summary-item {
+    background: linear-gradient(135deg, #1e3a5f 0%, #1a2d45 100%);
+    border-radius: 8px;
+    padding: 10px 16px;
+    min-width: 100px;
+    border: 1px solid #2a4a6a;
   }
-  .stage2-log .active {
-    color: #f59e0b;
+
+  .stage2-summary-label {
+    font-size: 0.7em;
+    color: #6b9bd1;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .stage2-summary-value {
+    font-size: 1.2em;
+    font-weight: 600;
+    font-family: monospace;
+    color: #60a5fa;
+  }
+
+  .stage2-events {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .stage2-event {
+    background: #202020;
+    border-radius: 6px;
+    padding: 10px;
+    text-align: center;
+    border: 1px solid #333;
+    transition: border-color 0.2s;
+  }
+
+  .stage2-event:hover {
+    border-color: #555;
+  }
+
+  .stage2-event-label {
+    font-size: 0.7em;
+    color: #888;
+    margin-bottom: 4px;
+  }
+
+  .stage2-event-value {
+    font-size: 1.1em;
+    font-weight: 500;
+    font-family: monospace;
+    color: #e0e0e0;
+  }
+
+  .stage2-event-value.zero {
+    color: #555;
   }
 </style>
 
 <div class="stage2-card">
   <div class="stage2-header">
-    <h2>PnL重建器</h2>
+    <h2>Stage2 事件索引</h2>
     <span id="stage2-badge" class="badge badge-warning">等待中</span>
   </div>
 
@@ -136,7 +185,52 @@
       style="width: 0%"
     ></div>
   </div>
-  <div class="stage2-log" id="stage2-log">等待 Stage1 同步数据...</div>
+
+  <div class="stage2-summary">
+    <div class="stage2-summary-item">
+      <div class="stage2-summary-label">用户数</div>
+      <div class="stage2-summary-value" id="s2-total-users">0</div>
+    </div>
+    <div class="stage2-summary-item">
+      <div class="stage2-summary-label">市场数</div>
+      <div class="stage2-summary-value" id="s2-total-conditions">0</div>
+    </div>
+    <div class="stage2-summary-item">
+      <div class="stage2-summary-label">代币数</div>
+      <div class="stage2-summary-value" id="s2-total-tokens">0</div>
+    </div>
+  </div>
+
+  <div class="stage2-events">
+    <div class="stage2-event">
+      <div class="stage2-event-label">订单</div>
+      <div class="stage2-event-value" id="s2-cnt-order">0</div>
+    </div>
+    <div class="stage2-event">
+      <div class="stage2-event-label">铸币</div>
+      <div class="stage2-event-value" id="s2-cnt-split">0</div>
+    </div>
+    <div class="stage2-event">
+      <div class="stage2-event-label">合币</div>
+      <div class="stage2-event-value" id="s2-cnt-merge">0</div>
+    </div>
+    <div class="stage2-event">
+      <div class="stage2-event-label">赎回</div>
+      <div class="stage2-event-value" id="s2-cnt-redemption">0</div>
+    </div>
+    <div class="stage2-event">
+      <div class="stage2-event-label">AMM交易</div>
+      <div class="stage2-event-value" id="s2-cnt-fpmm-trade">0</div>
+    </div>
+    <div class="stage2-event">
+      <div class="stage2-event-label">LP操作</div>
+      <div class="stage2-event-value" id="s2-cnt-fpmm-funding">0</div>
+    </div>
+    <div class="stage2-event">
+      <div class="stage2-event-label">转账</div>
+      <div class="stage2-event-value" id="s2-cnt-transfer">0</div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -188,8 +282,13 @@
       s2LastTime = now;
     }
 
+    function s2UpdateEventCount(id, value) {
+      const el = document.getElementById(id);
+      el.textContent = s2Fmt(value || 0);
+      el.classList.toggle("zero", !value);
+    }
+
     function s2UpdateProgress(s) {
-      const log = document.getElementById("stage2-log");
       const bar = document.getElementById("stage2-progress-bar");
       const badge = document.getElementById("stage2-badge");
 
@@ -201,16 +300,23 @@
       const progress = headBlock > 0 ? (cursor / headBlock) * 100 : 0;
       bar.style.width = progress.toFixed(2) + "%";
 
-      const parts = [];
-      if (s.cnt_order) parts.push(`订单:${s2Fmt(s.cnt_order)}`);
-      if (s.cnt_split) parts.push(`铸币:${s2Fmt(s.cnt_split)}`);
-      if (s.cnt_merge) parts.push(`合币:${s2Fmt(s.cnt_merge)}`);
-      if (s.cnt_redemption) parts.push(`赎回:${s2Fmt(s.cnt_redemption)}`);
-      if (s.cnt_convert) parts.push(`转换:${s2Fmt(s.cnt_convert)}`);
-      if (s.cnt_fpmm_trade) parts.push(`AMM:${s2Fmt(s.cnt_fpmm_trade)}`);
-      if (s.cnt_fpmm_funding) parts.push(`LP:${s2Fmt(s.cnt_fpmm_funding)}`);
-      if (s.cnt_transfer) parts.push(`转账:${s2Fmt(s.cnt_transfer)}`);
-      log.innerHTML = parts.length > 0 ? parts.join(" | ") : "-";
+      document.getElementById("s2-total-users").textContent = s2Fmt(
+        s.total_users || 0,
+      );
+      document.getElementById("s2-total-conditions").textContent = s2Fmt(
+        s.total_conditions || 0,
+      );
+      document.getElementById("s2-total-tokens").textContent = s2Fmt(
+        s.total_tokens || 0,
+      );
+
+      s2UpdateEventCount("s2-cnt-order", s.cnt_order);
+      s2UpdateEventCount("s2-cnt-split", s.cnt_split);
+      s2UpdateEventCount("s2-cnt-merge", s.cnt_merge);
+      s2UpdateEventCount("s2-cnt-redemption", s.cnt_redemption);
+      s2UpdateEventCount("s2-cnt-fpmm-trade", s.cnt_fpmm_trade);
+      s2UpdateEventCount("s2-cnt-fpmm-funding", s.cnt_fpmm_funding);
+      s2UpdateEventCount("s2-cnt-transfer", s.cnt_transfer);
 
       if (sync.syncing) {
         badge.className = "badge badge-warning";

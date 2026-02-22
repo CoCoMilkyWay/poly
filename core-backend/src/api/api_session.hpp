@@ -320,6 +320,7 @@ private:
         {"total_conditions", p.total_conditions},
         {"total_tokens", p.total_tokens},
         {"total_events", p.total_events},
+        {"total_users", p.total_users},
         {"cnt_split", p.cnt_split},
         {"cnt_merge", p.cnt_merge},
         {"cnt_redemption", p.cnt_redemption},

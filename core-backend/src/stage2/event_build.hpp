@@ -30,6 +30,7 @@ struct BuildProgress {
   int64_t total_conditions = 0;
   int64_t total_tokens = 0;
   int64_t total_events = 0;
+  int64_t total_users = 0;
   int64_t cnt_split = 0;
   int64_t cnt_merge = 0;
   int64_t cnt_redemption = 0;
@@ -165,6 +166,10 @@ public:
 
     progress_.total_conditions = conditions_.size();
     progress_.total_tokens = token_map_.size();
+    
+    auto user_cnt = conn->Query("SELECT COUNT(DISTINCT user_addr) FROM user_event");
+    progress_.total_users = user_cnt->RowCount() > 0 ? user_cnt->GetValue(0, 0).GetValue<int64_t>() : 0;
+    
     if (progress_.cursor > 0)
       progress_.phase = 3;
   }
@@ -824,6 +829,9 @@ private:
     save_cnt("total_events", progress_.total_events);
 
     conn->Query("COMMIT");
+
+    auto user_cnt = conn->Query("SELECT COUNT(DISTINCT user_addr) FROM user_event");
+    progress_.total_users = user_cnt->RowCount() > 0 ? user_cnt->GetValue(0, 0).GetValue<int64_t>() : 0;
   }
 
   static std::string blob_to_hex_literal(const std::string &blob) {
