@@ -143,9 +143,9 @@ private:
         "order_filled", "token_map", "neg_risk_market", "neg_risk_question", "convert"};
     json feather_files = json::array();
     for (const char *name : feather_names) {
-      std::string path = db_.feather_path(name);
-      if (std::filesystem::exists(path)) {
-        int64_t count = db_.query_single_int("SELECT COUNT(*) FROM read_arrow('" + path + "')");
+      std::string dir = db_.feather_dir(name);
+      if (std::filesystem::exists(dir) && !std::filesystem::is_empty(dir)) {
+        int64_t count = db_.query_single_int("SELECT COUNT(*) FROM " + db_.feather_table(name));
         feather_files.push_back({{"name", name}, {"count", count}});
       }
     }

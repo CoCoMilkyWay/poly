@@ -4,6 +4,7 @@
 #include <duckdb.hpp>
 #include <fcntl.h>
 #include <filesystem>
+#include <iostream>
 #include <mutex>
 #include <nlohmann/json.hpp>
 #include <string>
@@ -183,15 +184,59 @@ public:
         value TEXT
       )
     )");
+    cleanup_incomplete_partitions();
     refresh_feather_views();
   }
 
-  std::string feather_path(const std::string &table) const {
-    return data_dir_ + "/stage1/" + table + ".feather";
+  void cleanup_incomplete_partitions() {
+    static constexpr int64_t PARTITION_SIZE = 100000;
+    static const char *tables[] = {
+        "transfer", "condition_preparation", "condition_resolution",
+        "split", "merge", "redemption", "fpmm", "fpmm_trade", "fpmm_funding",
+        "order_filled", "token_map", "neg_risk_market", "neg_risk_question", "convert"};
+
+    int64_t cursor = get_last_block();
+    int64_t valid_end = (cursor < 0) ? -1 : (cursor / PARTITION_SIZE) * PARTITION_SIZE + PARTITION_SIZE - 1;
+
+    int removed = 0;
+    for (const char *table : tables) {
+      std::string dir = feather_dir(table);
+      if (!fs::exists(dir))
+        continue;
+
+      for (const auto &entry : fs::directory_iterator(dir)) {
+        std::string filename = entry.path().filename().string();
+        if (filename.ends_with(".tmp")) {
+          fs::remove(entry.path());
+          ++removed;
+          continue;
+        }
+        if (!filename.ends_with(".feather"))
+          continue;
+
+        std::string stem = filename.substr(0, filename.size() - 8);
+        int64_t start_block = std::stoll(stem);
+        if (start_block > valid_end) {
+          fs::remove(entry.path());
+          ++removed;
+        }
+      }
+    }
+    if (removed > 0) {
+      std::cout << "[DB] 清理了 " << removed << " 个不完整分区文件" << std::endl;
+    }
+  }
+
+  std::string feather_dir(const std::string &table) const {
+    return data_dir_ + "/stage1/" + table;
+  }
+
+  std::string feather_glob(const std::string &table) const {
+    return feather_dir(table) + "/*.feather";
   }
 
   std::string feather_table(const std::string &table) const {
-    return "read_arrow('" + feather_path(table) + "')";
+    return "read_arrow('" + feather_glob(table) + "', union_by_name=true)";
   }
 
   void refresh_feather_views() {
@@ -200,9 +245,9 @@ public:
         "split", "merge", "redemption", "fpmm", "fpmm_trade", "fpmm_funding",
         "order_filled", "token_map", "neg_risk_market", "neg_risk_question", "convert"};
     for (const char *name : feather_tables) {
-      std::string path = feather_path(name);
-      if (fs::exists(path)) {
-        execute("CREATE OR REPLACE VIEW " + std::string(name) + " AS SELECT * FROM read_arrow('" + path + "')");
+      std::string dir = feather_dir(name);
+      if (fs::exists(dir) && !fs::is_empty(dir)) {
+        execute("CREATE OR REPLACE VIEW " + std::string(name) + " AS SELECT * FROM " + feather_table(name));
       }
     }
   }

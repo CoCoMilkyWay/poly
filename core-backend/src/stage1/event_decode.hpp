@@ -177,21 +177,25 @@ struct DecodedEvents {
 
 class EventDecoder {
 public:
-  static DecodedEvents decode_logs(const json &logs) {
+  static DecodedEvents decode_logs(const std::vector<json> &results) {
     DecodedEvents events;
     std::set<std::string> fpmm_addrs;
     // 第一趟: FPMM创建
-    for (const auto &log : logs) {
-      std::string addr = to_lower(log["address"].get<std::string>());
-      if (addr == contracts::FPMM_FACTORY) {
-        auto new_addr = parse_fpmm_create(log, events);
-        if (new_addr)
-          fpmm_addrs.insert(*new_addr);
+    for (const auto &result : results) {
+      for (const auto &log : result) {
+        std::string addr = to_lower(log["address"].get<std::string>());
+        if (addr == contracts::FPMM_FACTORY) {
+          auto new_addr = parse_fpmm_create(log, events);
+          if (new_addr)
+            fpmm_addrs.insert(*new_addr);
+        }
       }
     }
     // 第二趟: 所有事件
-    for (const auto &log : logs) {
-      parse_log(log, fpmm_addrs, events);
+    for (const auto &result : results) {
+      for (const auto &log : result) {
+        parse_log(log, fpmm_addrs, events);
+      }
     }
     return events;
   }

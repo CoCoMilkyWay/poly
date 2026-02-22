@@ -4,6 +4,7 @@
 #include <arrow/io/api.h>
 #include <arrow/ipc/api.h>
 #include <cassert>
+#include <cstdio>
 #include <filesystem>
 #include <string>
 #include <vector>
@@ -14,45 +15,42 @@ namespace fs = std::filesystem;
 
 class FeatherWriter {
 public:
-  explicit FeatherWriter(const std::string &data_dir) : data_dir_(data_dir) {
-    stage1_dir_ = data_dir + "/stage1";
-    fs::create_directories(stage1_dir_);
+  static constexpr int64_t PARTITION_SIZE = 100000;
+
+  explicit FeatherWriter(const std::string &data_dir) : stage1_dir_(data_dir + "/stage1") {}
+
+  void write_partition(int64_t start_block, const stage1::DecodedEvents &events) {
+    write_transfer(start_block, events.transfer);
+    write_condition_preparation(start_block, events.condition_preparation);
+    write_condition_resolution(start_block, events.condition_resolution);
+    write_split(start_block, events.split);
+    write_merge(start_block, events.merge);
+    write_redemption(start_block, events.redemption);
+    write_fpmm(start_block, events.fpmm);
+    write_fpmm_trade(start_block, events.fpmm_trade);
+    write_fpmm_funding(start_block, events.fpmm_funding);
+    write_order_filled(start_block, events.order_filled);
+    write_token_map(start_block, events.token_map);
+    write_neg_risk_market(start_block, events.neg_risk_market);
+    write_neg_risk_question(start_block, events.neg_risk_question);
+    write_convert(start_block, events.convert);
   }
 
-  void append_events(const stage1::DecodedEvents &events) {
-    if (!events.transfer.empty())
-      append_transfer(events.transfer);
-    if (!events.condition_preparation.empty())
-      append_condition_preparation(events.condition_preparation);
-    if (!events.condition_resolution.empty())
-      append_condition_resolution(events.condition_resolution);
-    if (!events.split.empty())
-      append_split(events.split);
-    if (!events.merge.empty())
-      append_merge(events.merge);
-    if (!events.redemption.empty())
-      append_redemption(events.redemption);
-    if (!events.fpmm.empty())
-      append_fpmm(events.fpmm);
-    if (!events.fpmm_trade.empty())
-      append_fpmm_trade(events.fpmm_trade);
-    if (!events.fpmm_funding.empty())
-      append_fpmm_funding(events.fpmm_funding);
-    if (!events.order_filled.empty())
-      append_order_filled(events.order_filled);
-    if (!events.token_map.empty())
-      append_token_map(events.token_map);
-    if (!events.neg_risk_market.empty())
-      append_neg_risk_market(events.neg_risk_market);
-    if (!events.neg_risk_question.empty())
-      append_neg_risk_question(events.neg_risk_question);
-    if (!events.convert.empty())
-      append_convert(events.convert);
-  }
+  static int64_t partition_start(int64_t block) { return (block / PARTITION_SIZE) * PARTITION_SIZE; }
+  static int64_t partition_end(int64_t block) { return partition_start(block) + PARTITION_SIZE - 1; }
 
 private:
-  std::string data_dir_;
   std::string stage1_dir_;
+
+  std::string table_dir(const std::string &table) {
+    std::string dir = stage1_dir_ + "/" + table;
+    fs::create_directories(dir);
+    return dir;
+  }
+
+  std::string partition_path(const std::string &table, int64_t start_block) {
+    return table_dir(table) + "/" + std::to_string(start_block) + ".feather";
+  }
 
   static std::string hex_to_bytes(const std::string &hex) {
     std::string h = hex;
@@ -77,55 +75,33 @@ private:
     return bytes;
   }
 
-  void write_feather(const std::string &path, std::shared_ptr<arrow::Table> table) {
-    auto outfile = arrow::io::FileOutputStream::Open(path);
-    assert(outfile.ok());
-    auto writer = arrow::ipc::MakeFileWriter(outfile->get(), table->schema());
-    assert(writer.ok());
-    auto reader = arrow::TableBatchReader(*table);
-    std::shared_ptr<arrow::RecordBatch> batch;
-    while (true) {
-      auto status = reader.ReadNext(&batch);
-      assert(status.ok());
-      if (!batch)
-        break;
-      auto write_status = (*writer)->WriteRecordBatch(*batch);
-      assert(write_status.ok());
+  void atomic_write_feather(const std::string &path, std::shared_ptr<arrow::Table> table) {
+    std::string tmp_path = path + ".tmp";
+    {
+      auto outfile = arrow::io::FileOutputStream::Open(tmp_path);
+      assert(outfile.ok());
+      auto writer = arrow::ipc::MakeFileWriter(outfile->get(), table->schema());
+      assert(writer.ok());
+      auto reader = arrow::TableBatchReader(*table);
+      std::shared_ptr<arrow::RecordBatch> batch;
+      while (true) {
+        auto status = reader.ReadNext(&batch);
+        assert(status.ok());
+        if (!batch)
+          break;
+        auto write_status = (*writer)->WriteRecordBatch(*batch);
+        assert(write_status.ok());
+      }
+      auto close_status = (*writer)->Close();
+      assert(close_status.ok());
     }
-    auto close_status = (*writer)->Close();
-    assert(close_status.ok());
+    int ret = std::rename(tmp_path.c_str(), path.c_str());
+    assert(ret == 0);
   }
 
-  std::shared_ptr<arrow::Table> read_feather(const std::string &path) {
-    if (!fs::exists(path))
-      return nullptr;
-    auto infile = arrow::io::ReadableFile::Open(path);
-    assert(infile.ok());
-    auto reader = arrow::ipc::RecordBatchFileReader::Open(infile->get());
-    assert(reader.ok());
-    std::vector<std::shared_ptr<arrow::RecordBatch>> batches;
-    for (int i = 0; i < (*reader)->num_record_batches(); ++i) {
-      auto batch = (*reader)->ReadRecordBatch(i);
-      assert(batch.ok());
-      batches.push_back(*batch);
-    }
-    if (batches.empty())
-      return nullptr;
-    auto table = arrow::Table::FromRecordBatches(batches);
-    assert(table.ok());
-    return *table;
-  }
-
-  std::shared_ptr<arrow::Table> concat_tables(std::shared_ptr<arrow::Table> existing,
-                                              std::shared_ptr<arrow::Table> new_data) {
-    if (!existing)
-      return new_data;
-    auto result = arrow::ConcatenateTables({existing, new_data});
-    assert(result.ok());
-    return *result;
-  }
-
-  void append_transfer(const std::vector<stage1::TransferEvent> &events) {
+  void write_transfer(int64_t start_block, const std::vector<stage1::TransferEvent> &events) {
+    if (events.empty())
+      return;
     arrow::Int64Builder block_number, log_index, amount;
     arrow::BinaryBuilder tx_hash, op, from, to, token_id;
 
@@ -151,24 +127,23 @@ private:
         arrow::field("amount", arrow::int64()),
     });
 
-    std::shared_ptr<arrow::Array> arr_block, arr_tx, arr_log, arr_op, arr_from, arr_to, arr_token, arr_amt;
-    assert(block_number.Finish(&arr_block).ok());
-    assert(tx_hash.Finish(&arr_tx).ok());
-    assert(log_index.Finish(&arr_log).ok());
-    assert(op.Finish(&arr_op).ok());
-    assert(from.Finish(&arr_from).ok());
-    assert(to.Finish(&arr_to).ok());
-    assert(token_id.Finish(&arr_token).ok());
-    assert(amount.Finish(&arr_amt).ok());
+    std::shared_ptr<arrow::Array> a1, a2, a3, a4, a5, a6, a7, a8;
+    assert(block_number.Finish(&a1).ok());
+    assert(tx_hash.Finish(&a2).ok());
+    assert(log_index.Finish(&a3).ok());
+    assert(op.Finish(&a4).ok());
+    assert(from.Finish(&a5).ok());
+    assert(to.Finish(&a6).ok());
+    assert(token_id.Finish(&a7).ok());
+    assert(amount.Finish(&a8).ok());
 
-    auto new_table = arrow::Table::Make(schema, {arr_block, arr_tx, arr_log, arr_op, arr_from, arr_to, arr_token, arr_amt});
-    std::string path = stage1_dir_ + "/transfer.feather";
-    auto existing = read_feather(path);
-    auto merged = concat_tables(existing, new_table);
-    write_feather(path, merged);
+    auto table = arrow::Table::Make(schema, {a1, a2, a3, a4, a5, a6, a7, a8});
+    atomic_write_feather(partition_path("transfer", start_block), table);
   }
 
-  void append_condition_preparation(const std::vector<stage1::ConditionPrepEvent> &events) {
+  void write_condition_preparation(int64_t start_block, const std::vector<stage1::ConditionPrepEvent> &events) {
+    if (events.empty())
+      return;
     arrow::Int64Builder block_number, log_index, outcome_slot_count;
     arrow::BinaryBuilder tx_hash, condition_id, oracle, question_id;
 
@@ -201,14 +176,13 @@ private:
     assert(question_id.Finish(&a6).ok());
     assert(outcome_slot_count.Finish(&a7).ok());
 
-    auto new_table = arrow::Table::Make(schema, {a1, a2, a3, a4, a5, a6, a7});
-    std::string path = stage1_dir_ + "/condition_preparation.feather";
-    auto existing = read_feather(path);
-    auto merged = concat_tables(existing, new_table);
-    write_feather(path, merged);
+    auto table = arrow::Table::Make(schema, {a1, a2, a3, a4, a5, a6, a7});
+    atomic_write_feather(partition_path("condition_preparation", start_block), table);
   }
 
-  void append_condition_resolution(const std::vector<stage1::ConditionResolveEvent> &events) {
+  void write_condition_resolution(int64_t start_block, const std::vector<stage1::ConditionResolveEvent> &events) {
+    if (events.empty())
+      return;
     arrow::Int64Builder block_number, log_index, outcome_slot_count;
     arrow::BinaryBuilder tx_hash, condition_id, oracle, question_id;
     arrow::StringBuilder payout_numerators;
@@ -245,14 +219,13 @@ private:
     assert(outcome_slot_count.Finish(&a7).ok());
     assert(payout_numerators.Finish(&a8).ok());
 
-    auto new_table = arrow::Table::Make(schema, {a1, a2, a3, a4, a5, a6, a7, a8});
-    std::string path = stage1_dir_ + "/condition_resolution.feather";
-    auto existing = read_feather(path);
-    auto merged = concat_tables(existing, new_table);
-    write_feather(path, merged);
+    auto table = arrow::Table::Make(schema, {a1, a2, a3, a4, a5, a6, a7, a8});
+    atomic_write_feather(partition_path("condition_resolution", start_block), table);
   }
 
-  void append_split_merge_impl(const std::vector<stage1::SplitMergeEvent> &events, const std::string &table_name) {
+  void write_split_merge_impl(int64_t start_block, const std::vector<stage1::SplitMergeEvent> &events, const std::string &table_name) {
+    if (events.empty())
+      return;
     arrow::Int64Builder block_number, log_index, amount;
     arrow::BinaryBuilder tx_hash, stakeholder, collateral_token, parent_collection_id, condition_id;
     arrow::StringBuilder partition;
@@ -292,22 +265,21 @@ private:
     assert(partition.Finish(&a8).ok());
     assert(amount.Finish(&a9).ok());
 
-    auto new_table = arrow::Table::Make(schema, {a1, a2, a3, a4, a5, a6, a7, a8, a9});
-    std::string path = stage1_dir_ + "/" + table_name + ".feather";
-    auto existing = read_feather(path);
-    auto merged = concat_tables(existing, new_table);
-    write_feather(path, merged);
+    auto table = arrow::Table::Make(schema, {a1, a2, a3, a4, a5, a6, a7, a8, a9});
+    atomic_write_feather(partition_path(table_name, start_block), table);
   }
 
-  void append_split(const std::vector<stage1::SplitMergeEvent> &events) {
-    append_split_merge_impl(events, "split");
+  void write_split(int64_t start_block, const std::vector<stage1::SplitMergeEvent> &events) {
+    write_split_merge_impl(start_block, events, "split");
   }
 
-  void append_merge(const std::vector<stage1::SplitMergeEvent> &events) {
-    append_split_merge_impl(events, "merge");
+  void write_merge(int64_t start_block, const std::vector<stage1::SplitMergeEvent> &events) {
+    write_split_merge_impl(start_block, events, "merge");
   }
 
-  void append_redemption(const std::vector<stage1::RedemptionEvent> &events) {
+  void write_redemption(int64_t start_block, const std::vector<stage1::RedemptionEvent> &events) {
+    if (events.empty())
+      return;
     arrow::Int64Builder block_number, log_index, payout;
     arrow::BinaryBuilder tx_hash, redeemer, collateral_token, parent_collection_id, condition_id;
     arrow::StringBuilder index_sets;
@@ -347,14 +319,13 @@ private:
     assert(index_sets.Finish(&a8).ok());
     assert(payout.Finish(&a9).ok());
 
-    auto new_table = arrow::Table::Make(schema, {a1, a2, a3, a4, a5, a6, a7, a8, a9});
-    std::string path = stage1_dir_ + "/redemption.feather";
-    auto existing = read_feather(path);
-    auto merged = concat_tables(existing, new_table);
-    write_feather(path, merged);
+    auto table = arrow::Table::Make(schema, {a1, a2, a3, a4, a5, a6, a7, a8, a9});
+    atomic_write_feather(partition_path("redemption", start_block), table);
   }
 
-  void append_fpmm(const std::vector<stage1::FpmmEvent> &events) {
+  void write_fpmm(int64_t start_block, const std::vector<stage1::FpmmEvent> &events) {
+    if (events.empty())
+      return;
     arrow::Int64Builder block_number, log_index, fee;
     arrow::BinaryBuilder tx_hash, creator, fpmm_addr, conditional_tokens, collateral_token;
     arrow::StringBuilder condition_ids;
@@ -394,14 +365,13 @@ private:
     assert(condition_ids.Finish(&a8).ok());
     assert(fee.Finish(&a9).ok());
 
-    auto new_table = arrow::Table::Make(schema, {a1, a2, a3, a4, a5, a6, a7, a8, a9});
-    std::string path = stage1_dir_ + "/fpmm.feather";
-    auto existing = read_feather(path);
-    auto merged = concat_tables(existing, new_table);
-    write_feather(path, merged);
+    auto table = arrow::Table::Make(schema, {a1, a2, a3, a4, a5, a6, a7, a8, a9});
+    atomic_write_feather(partition_path("fpmm", start_block), table);
   }
 
-  void append_fpmm_trade(const std::vector<stage1::FpmmTradeEvent> &events) {
+  void write_fpmm_trade(int64_t start_block, const std::vector<stage1::FpmmTradeEvent> &events) {
+    if (events.empty())
+      return;
     arrow::Int64Builder block_number, log_index, side, outcome_index, usdc_amount, token_amount, fee;
     arrow::BinaryBuilder tx_hash, fpmm_addr, trader;
 
@@ -443,14 +413,13 @@ private:
     assert(token_amount.Finish(&a9).ok());
     assert(fee.Finish(&a10).ok());
 
-    auto new_table = arrow::Table::Make(schema, {a1, a2, a3, a4, a5, a6, a7, a8, a9, a10});
-    std::string path = stage1_dir_ + "/fpmm_trade.feather";
-    auto existing = read_feather(path);
-    auto merged = concat_tables(existing, new_table);
-    write_feather(path, merged);
+    auto table = arrow::Table::Make(schema, {a1, a2, a3, a4, a5, a6, a7, a8, a9, a10});
+    atomic_write_feather(partition_path("fpmm_trade", start_block), table);
   }
 
-  void append_fpmm_funding(const std::vector<stage1::FpmmFundingEvent> &events) {
+  void write_fpmm_funding(int64_t start_block, const std::vector<stage1::FpmmFundingEvent> &events) {
+    if (events.empty())
+      return;
     arrow::Int64Builder block_number, log_index, side, collateral_from_fee_pool, shares;
     arrow::BinaryBuilder tx_hash, fpmm_addr, funder;
     arrow::StringBuilder amounts;
@@ -490,14 +459,13 @@ private:
     assert(collateral_from_fee_pool.Finish(&a8).ok());
     assert(shares.Finish(&a9).ok());
 
-    auto new_table = arrow::Table::Make(schema, {a1, a2, a3, a4, a5, a6, a7, a8, a9});
-    std::string path = stage1_dir_ + "/fpmm_funding.feather";
-    auto existing = read_feather(path);
-    auto merged = concat_tables(existing, new_table);
-    write_feather(path, merged);
+    auto table = arrow::Table::Make(schema, {a1, a2, a3, a4, a5, a6, a7, a8, a9});
+    atomic_write_feather(partition_path("fpmm_funding", start_block), table);
   }
 
-  void append_order_filled(const std::vector<stage1::OrderFilledEvent> &events) {
+  void write_order_filled(int64_t start_block, const std::vector<stage1::OrderFilledEvent> &events) {
+    if (events.empty())
+      return;
     arrow::Int64Builder block_number, log_index, maker_amount, taker_amount, fee;
     arrow::BinaryBuilder tx_hash, order_hash, maker, taker, maker_asset_id, taker_asset_id;
     arrow::StringBuilder exchange;
@@ -546,14 +514,13 @@ private:
     assert(taker_amount.Finish(&a11).ok());
     assert(fee.Finish(&a12).ok());
 
-    auto new_table = arrow::Table::Make(schema, {a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12});
-    std::string path = stage1_dir_ + "/order_filled.feather";
-    auto existing = read_feather(path);
-    auto merged = concat_tables(existing, new_table);
-    write_feather(path, merged);
+    auto table = arrow::Table::Make(schema, {a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12});
+    atomic_write_feather(partition_path("order_filled", start_block), table);
   }
 
-  void append_token_map(const std::vector<stage1::TokenMapEvent> &events) {
+  void write_token_map(int64_t start_block, const std::vector<stage1::TokenMapEvent> &events) {
+    if (events.empty())
+      return;
     arrow::Int64Builder block_number, log_index;
     arrow::BinaryBuilder tx_hash, token0, token1, condition_id;
     arrow::StringBuilder exchange;
@@ -587,14 +554,13 @@ private:
     assert(token1.Finish(&a6).ok());
     assert(condition_id.Finish(&a7).ok());
 
-    auto new_table = arrow::Table::Make(schema, {a1, a2, a3, a4, a5, a6, a7});
-    std::string path = stage1_dir_ + "/token_map.feather";
-    auto existing = read_feather(path);
-    auto merged = concat_tables(existing, new_table);
-    write_feather(path, merged);
+    auto table = arrow::Table::Make(schema, {a1, a2, a3, a4, a5, a6, a7});
+    atomic_write_feather(partition_path("token_map", start_block), table);
   }
 
-  void append_neg_risk_market(const std::vector<stage1::NegRiskMarketEvent> &events) {
+  void write_neg_risk_market(int64_t start_block, const std::vector<stage1::NegRiskMarketEvent> &events) {
+    if (events.empty())
+      return;
     arrow::Int64Builder block_number, log_index, fee_bips;
     arrow::BinaryBuilder tx_hash, market_id, oracle, data;
 
@@ -631,14 +597,13 @@ private:
     assert(fee_bips.Finish(&a6).ok());
     assert(data.Finish(&a7).ok());
 
-    auto new_table = arrow::Table::Make(schema, {a1, a2, a3, a4, a5, a6, a7});
-    std::string path = stage1_dir_ + "/neg_risk_market.feather";
-    auto existing = read_feather(path);
-    auto merged = concat_tables(existing, new_table);
-    write_feather(path, merged);
+    auto table = arrow::Table::Make(schema, {a1, a2, a3, a4, a5, a6, a7});
+    atomic_write_feather(partition_path("neg_risk_market", start_block), table);
   }
 
-  void append_neg_risk_question(const std::vector<stage1::NegRiskQuestionEvent> &events) {
+  void write_neg_risk_question(int64_t start_block, const std::vector<stage1::NegRiskQuestionEvent> &events) {
+    if (events.empty())
+      return;
     arrow::Int64Builder block_number, log_index, question_index;
     arrow::BinaryBuilder tx_hash, market_id, question_id, data;
 
@@ -675,14 +640,13 @@ private:
     assert(question_index.Finish(&a6).ok());
     assert(data.Finish(&a7).ok());
 
-    auto new_table = arrow::Table::Make(schema, {a1, a2, a3, a4, a5, a6, a7});
-    std::string path = stage1_dir_ + "/neg_risk_question.feather";
-    auto existing = read_feather(path);
-    auto merged = concat_tables(existing, new_table);
-    write_feather(path, merged);
+    auto table = arrow::Table::Make(schema, {a1, a2, a3, a4, a5, a6, a7});
+    atomic_write_feather(partition_path("neg_risk_question", start_block), table);
   }
 
-  void append_convert(const std::vector<stage1::ConvertEvent> &events) {
+  void write_convert(int64_t start_block, const std::vector<stage1::ConvertEvent> &events) {
+    if (events.empty())
+      return;
     arrow::Int64Builder block_number, log_index, index_set, amount;
     arrow::BinaryBuilder tx_hash, stakeholder, market_id;
 
@@ -715,10 +679,7 @@ private:
     assert(index_set.Finish(&a6).ok());
     assert(amount.Finish(&a7).ok());
 
-    auto new_table = arrow::Table::Make(schema, {a1, a2, a3, a4, a5, a6, a7});
-    std::string path = stage1_dir_ + "/convert.feather";
-    auto existing = read_feather(path);
-    auto merged = concat_tables(existing, new_table);
-    write_feather(path, merged);
+    auto table = arrow::Table::Make(schema, {a1, a2, a3, a4, a5, a6, a7});
+    atomic_write_feather(partition_path("convert", start_block), table);
   }
 };

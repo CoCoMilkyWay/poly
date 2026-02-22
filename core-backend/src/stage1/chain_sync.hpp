@@ -33,7 +33,11 @@ public:
         rpc_(config.rpc_url, config.rpc_api_key),
         batch_size_(config.rpc_chunk),
         current_batch_size_(config.rpc_chunk),
-        interval_seconds_(config.sync_interval_seconds) {}
+        interval_seconds_(config.sync_interval_seconds) {
+    int64_t cursor = db_.get_last_block();
+    current_partition_start_ = (cursor < 0) ? FeatherWriter::partition_start(config_.initial_block)
+                                            : FeatherWriter::partition_start(cursor) + FeatherWriter::PARTITION_SIZE;
+  }
 
   void start(asio::io_context &ioc) {
     ioc_ = &ioc;
@@ -217,36 +221,49 @@ private:
   }
 
   void process_batch(const RpcClient::BatchResult &r, int64_t from_block, int64_t to_block) {
-    json logs = json::array();
-    {
-      TraceN("s1/merge");
-      for (const auto &result : r.results) {
-        for (const auto &log : result) {
-          logs.push_back(log);
-        }
-      }
-    }
     DecodedEvents events;
     {
       TraceN("s1/decode");
-      events = EventDecoder::decode_logs(logs);
+      events = EventDecoder::decode_logs(r.results);
     }
 
-    {
+    merge_events(cached_events_, events);
+
+    int64_t partition_end = current_partition_start_ + FeatherWriter::PARTITION_SIZE - 1;
+    if (to_block >= partition_end) {
       TraceN("s1/write");
-      Database::WriteLock lock(db_);
-      feather_writer_.append_events(events);
-      db_.set_last_block(to_block);
-      db_.refresh_feather_views();
+      feather_writer_.write_partition(current_partition_start_, cached_events_);
+      {
+        Database::WriteLock lock(db_);
+        db_.set_last_block(partition_end);
+      }
+      cached_events_ = DecodedEvents{};
+      current_partition_start_ += FeatherWriter::PARTITION_SIZE;
+      std::cout << "[Sync] 分区 " << (current_partition_start_ - FeatherWriter::PARTITION_SIZE) << " 已落地" << std::endl;
     }
 
-    {
-      TraceN("s1/fetch");
-      double now = std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();
-      chunk_history_.push_back({to_block, now, r.response_bytes, to_block - from_block + 1});
-      if (chunk_history_.size() > 20)
-        chunk_history_.pop_front();
-    }
+    double now = std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();
+    chunk_history_.push_back({to_block, now, r.response_bytes, to_block - from_block + 1});
+    if (chunk_history_.size() > 20)
+      chunk_history_.pop_front();
+  }
+
+  static void merge_events(DecodedEvents &dst, const DecodedEvents &src) {
+    auto append = [](auto &d, const auto &s) { d.insert(d.end(), s.begin(), s.end()); };
+    append(dst.transfer, src.transfer);
+    append(dst.condition_preparation, src.condition_preparation);
+    append(dst.condition_resolution, src.condition_resolution);
+    append(dst.split, src.split);
+    append(dst.merge, src.merge);
+    append(dst.redemption, src.redemption);
+    append(dst.fpmm, src.fpmm);
+    append(dst.fpmm_trade, src.fpmm_trade);
+    append(dst.fpmm_funding, src.fpmm_funding);
+    append(dst.order_filled, src.order_filled);
+    append(dst.token_map, src.token_map);
+    append(dst.neg_risk_market, src.neg_risk_market);
+    append(dst.neg_risk_question, src.neg_risk_question);
+    append(dst.convert, src.convert);
   }
 
   const Config &config_;
@@ -261,6 +278,10 @@ private:
   std::atomic<bool> is_syncing_{false};
   std::atomic<bool> stop_requested_{false};
   std::atomic<int64_t> head_block_{0};
+
+  DecodedEvents cached_events_;
+  int64_t current_partition_start_ = 0;
+
   struct ChunkRecord {
     int64_t to_block;
     double time_s;
