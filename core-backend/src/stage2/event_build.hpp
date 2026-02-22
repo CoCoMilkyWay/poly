@@ -104,6 +104,13 @@ public:
     )");
 
     stage2_db_.execute(R"(
+      CREATE TABLE IF NOT EXISTS rb_neg_risk_market (
+        question_id BLOB PRIMARY KEY,
+        market_id   BLOB NOT NULL
+      )
+    )");
+
+    stage2_db_.execute(R"(
       CREATE TABLE IF NOT EXISTS user_event (
         user_addr   BLOB NOT NULL,
         sort_key    BIGINT NOT NULL,
@@ -124,25 +131,50 @@ public:
   }
 
   void load_from_rb() {
-    progress_.phase = 0;
     auto conn = stage2_db_.create_connection();
 
     auto cur = conn->Query("SELECT value FROM stage2_cursor WHERE key='last_block'");
     progress_.cursor = cur->RowCount() > 0 ? cur->GetValue(0, 0).GetValue<int64_t>() : 0;
 
-    auto load_cnt = [&](const char *key) -> int64_t {
-      auto r = conn->Query("SELECT value FROM stage2_cursor WHERE key='" + std::string(key) + "'");
-      return r->RowCount() > 0 ? r->GetValue(0, 0).GetValue<int64_t>() : 0;
-    };
-    progress_.cnt_split = load_cnt("cnt_split");
-    progress_.cnt_merge = load_cnt("cnt_merge");
-    progress_.cnt_redemption = load_cnt("cnt_redemption");
-    progress_.cnt_convert = load_cnt("cnt_convert");
-    progress_.cnt_order = load_cnt("cnt_order");
-    progress_.cnt_fpmm_trade = load_cnt("cnt_fpmm_trade");
-    progress_.cnt_fpmm_funding = load_cnt("cnt_fpmm_funding");
-    progress_.cnt_transfer = load_cnt("cnt_transfer");
-    progress_.total_events = load_cnt("total_events");
+    // 从 user_event 表重新计算事件计数（保证数据一致性）
+    auto cnt_r = conn->Query(R"(
+      SELECT event_type, COUNT(*) as cnt FROM user_event GROUP BY event_type
+    )");
+    for (idx_t i = 0; i < cnt_r->RowCount(); ++i) {
+      int type = cnt_r->GetValue(0, i).GetValue<int>();
+      int64_t cnt = cnt_r->GetValue(1, i).GetValue<int64_t>();
+      switch (static_cast<EventType>(type)) {
+      case EventType::Buy:
+      case EventType::Sell:
+        progress_.cnt_order += cnt;
+        break;
+      case EventType::Split:
+        progress_.cnt_split += cnt;
+        break;
+      case EventType::Merge:
+        progress_.cnt_merge += cnt;
+        break;
+      case EventType::Redemption:
+        progress_.cnt_redemption += cnt;
+        break;
+      case EventType::FPMMBuy:
+      case EventType::FPMMSell:
+        progress_.cnt_fpmm_trade += cnt;
+        break;
+      case EventType::FPMMLPAdd:
+      case EventType::FPMMLPRemove:
+        progress_.cnt_fpmm_funding += cnt;
+        break;
+      case EventType::Convert:
+        progress_.cnt_convert += cnt;
+        break;
+      case EventType::TransferIn:
+      case EventType::TransferOut:
+        progress_.cnt_transfer += cnt;
+        break;
+      }
+      progress_.total_events += cnt;
+    }
 
     auto cond_r = conn->Query("SELECT cond_idx, cond_id, outcome_cnt, "
                               "payout_0, payout_1, payout_2, payout_3, "
@@ -187,24 +219,27 @@ public:
       fpmm_cond_idxs_.insert(info.cond_idx);
     }
 
-    // 从stage1加载condition -> market映射 (用于NegRisk convert)
-    if (progress_.cursor > 0) {
-      auto conn1 = stage1_db_.create_connection();
-      auto nrq = conn1->Query(
-          "SELECT market_id, question_id FROM " + stage1_db_.feather_table_range("neg_risk_question", 0, progress_.cursor) +
-          " WHERE block_number <= " + std::to_string(progress_.cursor));
-      for (idx_t i = 0; i < nrq->RowCount(); ++i) {
-        std::string market_id = to_lower(blob_to_hex(nrq->GetValue(0, i).GetValueUnsafe<std::string>()));
-        std::string question_id = to_lower(blob_to_hex(nrq->GetValue(1, i).GetValueUnsafe<std::string>()));
-        cond_to_market_[question_id] = market_id;
-        seen_markets_.insert(market_id);
-      }
-    }
+    // 从 rb_neg_risk_market 表加载 question_id -> market_id 映射，并标记 NegRisk 条件
+    auto nrm_r = conn->Query("SELECT question_id, market_id FROM rb_neg_risk_market");
+    for (idx_t i = 0; i < nrm_r->RowCount(); ++i) {
+      std::string question_id = to_lower(blob_to_hex(nrm_r->GetValue(0, i).GetValueUnsafe<std::string>()));
+      std::string market_id = to_lower(blob_to_hex(nrm_r->GetValue(1, i).GetValueUnsafe<std::string>()));
+      cond_to_market_[question_id] = market_id;
+      seen_markets_.insert(market_id);
 
-    // 标记 NegRisk 条件
-    for (size_t i = 0; i < conditions_.size(); ++i) {
-      if (!conditions_[i].question_id.empty() && cond_to_market_.count(conditions_[i].question_id)) {
-        negrisk_cond_idxs_.insert(static_cast<uint32_t>(i));
+      // 计算 conditionId 并标记对应条件为 NegRisk
+      auto oracle_bytes = hex_to_blob(NEG_RISK_ADAPTER);
+      auto qid_bytes = hex_to_blob(question_id);
+      std::string input(84, '\0');
+      std::memcpy(input.data(), oracle_bytes.data(), std::min(size_t(20), oracle_bytes.size()));
+      std::memcpy(input.data() + 20, qid_bytes.data(), std::min(size_t(32), qid_bytes.size()));
+      input[83] = 2; // outcomeSlotCount = 2
+      auto cond_hash = crypto::keccak256(input);
+      std::string cond_id = to_lower(crypto::Keccak256::to_hex(cond_hash));
+      
+      auto it = cond_map_.find(cond_id);
+      if (it != cond_map_.end()) {
+        negrisk_cond_idxs_.insert(it->second);
       }
     }
 
@@ -242,6 +277,7 @@ public:
     new_conditions_.clear();
     new_tokens_.clear();
     new_fpmms_.clear();
+    new_neg_risk_markets_.clear();
     new_events_.clear();
 
     tx_split_.clear();
@@ -310,9 +346,15 @@ private:
     uint32_t cond_idx;
   };
 
+  struct NewNegRiskMarket {
+    std::string question_id;
+    std::string market_id;
+  };
+
   std::vector<NewCondition> new_conditions_;
   std::vector<NewToken> new_tokens_;
   std::vector<NewFPMM> new_fpmms_;
+  std::vector<NewNegRiskMarket> new_neg_risk_markets_;
   std::vector<std::tuple<std::string, RawEvent>> new_events_;
 
   static std::string blob_to_hex(const std::string &blob) {
@@ -371,11 +413,18 @@ private:
       // 更新question_id（如果之前没有）
       if (!question_id.empty() && conditions_[it->second].question_id.empty()) {
         conditions_[it->second].question_id = question_id;
+        // 确保更新被持久化
+        bool found = false;
         for (auto &nc : new_conditions_) {
           if (nc.idx == it->second) {
             nc.info.question_id = question_id;
+            found = true;
             break;
           }
+        }
+        if (!found) {
+          // 条件在之前 chunk 创建，需要添加到 new_conditions_ 以持久化更新
+          new_conditions_.push_back({it->second, cond_ids_[it->second], conditions_[it->second]});
         }
       }
       return it->second;
@@ -452,9 +501,36 @@ private:
       progress_.total_users = seen_users_.size();
     }
 
-    // 只统计真正的用户间转账
-    if (evt.type == EventType::TransferIn || evt.type == EventType::TransferOut) {
+    // 更新事件计数
+    switch (evt.type) {
+    case EventType::Buy:
+    case EventType::Sell:
+      progress_.cnt_order++;
+      break;
+    case EventType::Split:
+      progress_.cnt_split++;
+      break;
+    case EventType::Merge:
+      progress_.cnt_merge++;
+      break;
+    case EventType::Redemption:
+      progress_.cnt_redemption++;
+      break;
+    case EventType::FPMMBuy:
+    case EventType::FPMMSell:
+      progress_.cnt_fpmm_trade++;
+      break;
+    case EventType::FPMMLPAdd:
+    case EventType::FPMMLPRemove:
+      progress_.cnt_fpmm_funding++;
+      break;
+    case EventType::Convert:
+      progress_.cnt_convert++;
+      break;
+    case EventType::TransferIn:
+    case EventType::TransferOut:
       progress_.cnt_transfer++;
+      break;
     }
   }
 
@@ -554,21 +630,36 @@ private:
     }
 
     // 建立condition -> market映射 (用于NegRisk convert)
+    // conditionId = keccak256(oracle[20] + questionId[32] + outcomeSlotCount[32])
     auto nrq = conn->Query(
         "SELECT market_id, question_id FROM " + stage1_db_.feather_table_range("neg_risk_question", start, end) +
         " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
     for (idx_t i = 0; i < nrq->RowCount(); ++i) {
       std::string market_id = to_lower(blob_to_hex(nrq->GetValue(0, i).GetValueUnsafe<std::string>()));
       std::string question_id = to_lower(blob_to_hex(nrq->GetValue(1, i).GetValueUnsafe<std::string>()));
-      cond_to_market_[question_id] = market_id;
-      seen_markets_.insert(market_id);
-      progress_.total_markets = seen_markets_.size();
 
-      // 标记对应条件为 NegRisk
-      for (size_t ci = 0; ci < conditions_.size(); ++ci) {
-        if (conditions_[ci].question_id == question_id) {
-          negrisk_cond_idxs_.insert(static_cast<uint32_t>(ci));
-        }
+      // 只记录新的映射
+      if (!cond_to_market_.count(question_id)) {
+        cond_to_market_[question_id] = market_id;
+        seen_markets_.insert(market_id);
+        new_neg_risk_markets_.push_back({question_id, market_id});
+        progress_.total_markets = seen_markets_.size();
+      }
+
+      // 计算 conditionId 并标记对应条件为 NegRisk
+      // conditionId = keccak256(oracle[20] + questionId[32] + outcomeSlotCount[32])
+      auto oracle_bytes = hex_to_blob(NEG_RISK_ADAPTER);
+      auto qid_bytes = hex_to_blob(question_id);
+      std::string input(84, '\0');
+      std::memcpy(input.data(), oracle_bytes.data(), std::min(size_t(20), oracle_bytes.size()));
+      std::memcpy(input.data() + 20, qid_bytes.data(), std::min(size_t(32), qid_bytes.size()));
+      input[83] = 2; // outcomeSlotCount = 2 (uint256 大端)
+      auto cond_hash = crypto::keccak256(input);
+      std::string cond_id = to_lower(crypto::Keccak256::to_hex(cond_hash));
+      
+      auto it = cond_map_.find(cond_id);
+      if (it != cond_map_.end()) {
+        negrisk_cond_idxs_.insert(it->second);
       }
     }
     update_cond_type_stats();
@@ -1035,6 +1126,14 @@ private:
       conn->Query("INSERT OR IGNORE INTO rb_fpmm VALUES (" +
                   blob_to_hex_literal(blob) + ", " +
                   std::to_string(nf.cond_idx) + ")");
+    }
+
+    for (auto &nm : new_neg_risk_markets_) {
+      std::string qid_blob = hex_to_blob(nm.question_id);
+      std::string mid_blob = hex_to_blob(nm.market_id);
+      conn->Query("INSERT OR IGNORE INTO rb_neg_risk_market VALUES (" +
+                  blob_to_hex_literal(qid_blob) + ", " +
+                  blob_to_hex_literal(mid_blob) + ")");
     }
 
     if (!new_events_.empty()) {
