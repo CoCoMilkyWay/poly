@@ -67,7 +67,8 @@ int main(int argc, char *argv[]) {
     sync_ioc.run();
   });
 
-  stage2::EventSync event_sync(stage1_db, stage2_db, config.rpc_chunk);
+  static constexpr int STAGE2_CHUNK_SIZE = 100000;  // 与feather分区对齐
+  stage2::EventSync event_sync(stage1_db, stage2_db, STAGE2_CHUNK_SIZE);
   boost::asio::io_context stage2_ioc;
   std::optional<std::thread> stage2_thread;
   {
