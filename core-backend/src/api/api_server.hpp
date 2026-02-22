@@ -9,6 +9,7 @@
 #include "../core/database.hpp"
 #include "../stage3/pnl_replay.hpp"
 #include "api_session.hpp"
+#include "misc/profiler.hpp"
 
 namespace asio = boost::asio;
 namespace beast = boost::beast;
@@ -28,6 +29,7 @@ public:
 
 private:
   void do_accept() {
+    TraceN("do_accept");
     acceptor_.async_accept([this](beast::error_code ec, tcp::socket socket) {
       if (!ec) {
         std::make_shared<ApiSession>(std::move(socket), db_, pnl_engine_, sync_getter_, stage2_getter_)->run();

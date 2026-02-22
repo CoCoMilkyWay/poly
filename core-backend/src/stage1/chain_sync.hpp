@@ -71,30 +71,14 @@ public:
   }
 
 private:
-  struct PrefetchResult {
-    std::vector<json> results;
-    size_t response_bytes = 0;
+  struct PendingFetch {
+    std::future<RpcClient::BatchResult> future;
     int64_t from_block = 0;
     int64_t to_block = 0;
-    bool success = false;
-    std::string error_msg;
   };
 
-  std::future<PrefetchResult> prefetch_async(int64_t from, int64_t to) {
-    return std::async(std::launch::async, [this, from, to]() {
-      PrefetchResult r;
-      r.from_block = from;
-      r.to_block = to;
-      try {
-        r.results = rpc_.eth_getLogs_batch(build_queries(from, to));
-        r.response_bytes = rpc_.get_last_response_size();
-        r.success = true;
-      } catch (const std::exception &e) {
-        r.success = false;
-        r.error_msg = e.what();
-      }
-      return r;
-    });
+  PendingFetch prefetch_async(int64_t from, int64_t to) {
+    return {rpc_.eth_getLogs_batch_async(build_queries(from, to)), from, to};
   }
 
   static const std::vector<std::string> &ct_topics() {
@@ -167,35 +151,37 @@ private:
   }
 
   void sync_loop(int64_t from_block, int64_t head_block) {
-    std::optional<std::future<PrefetchResult>> next_future;
+    std::optional<PendingFetch> pending;
 
     int64_t to_block = std::min(from_block + current_batch_size_ - 1, head_block);
     {
       TraceN("start_prefetch");
-      next_future = prefetch_async(from_block, to_block);
+      pending = prefetch_async(from_block, to_block);
     }
 
-    while (!stop_requested_ && next_future) {
+    while (!stop_requested_ && pending) {
       TraceN("sync_batch");
 
-      PrefetchResult result;
+      int64_t cur_from = pending->from_block;
+      int64_t cur_to = pending->to_block;
+      RpcClient::BatchResult rpc_result;
       {
         TraceN("wait_rpc");
-        result = next_future->get();
+        rpc_result = pending->future.get();
       }
-      next_future.reset();
+      pending.reset();
 
-      if (!result.success) {
+      if (!rpc_result.success) {
         int64_t reduced = std::max(current_batch_size_ / 2, (int64_t)1);
-        std::cerr << "[Sync] eth_getLogs 失败: " << result.error_msg
+        std::cerr << "[Sync] eth_getLogs 失败: " << rpc_result.error_msg
                   << ", chunk " << current_batch_size_ << " -> " << reduced << ", 5s 后重试" << std::endl;
         current_batch_size_ = reduced;
 
         auto timer = std::make_shared<asio::steady_timer>(*ioc_);
         timer->expires_after(std::chrono::seconds(5));
-        timer->async_wait([this, timer, from_block = result.from_block, head_block](boost::system::error_code ec) {
+        timer->async_wait([this, timer, cur_from, head_block](boost::system::error_code ec) {
           if (!ec && !stop_requested_) {
-            sync_loop(from_block, head_block);
+            sync_loop(cur_from, head_block);
           }
         });
         return;
@@ -203,14 +189,14 @@ private:
 
       current_batch_size_ = batch_size_;
 
-      int64_t next_from = result.to_block + 1;
+      int64_t next_from = cur_to + 1;
       if (next_from <= head_block && !stop_requested_) {
         TraceN("start_prefetch");
         int64_t next_to = std::min(next_from + current_batch_size_ - 1, head_block);
-        next_future = prefetch_async(next_from, next_to);
+        pending = prefetch_async(next_from, next_to);
       }
 
-      process_batch(result);
+      process_batch(rpc_result, cur_from, cur_to);
     }
 
     if (stop_requested_) {
@@ -223,7 +209,7 @@ private:
     schedule_sync(interval_seconds_);
   }
 
-  void process_batch(const PrefetchResult &r) {
+  void process_batch(const RpcClient::BatchResult &r, int64_t from_block, int64_t to_block) {
     json logs = json::array();
     {
       TraceN("merge_logs");
@@ -242,13 +228,13 @@ private:
     {
       TraceN("db_write");
       Database::WriteLock lock(db_);
-      db_.atomic_multi_insert_appender(events, r.to_block);
+      db_.atomic_multi_insert_appender(events, to_block);
     }
 
     {
       TraceN("fetch_chunk");
       double now = std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();
-      chunk_history_.push_back({r.to_block, now, r.response_bytes, r.to_block - r.from_block + 1});
+      chunk_history_.push_back({to_block, now, r.response_bytes, to_block - from_block + 1});
       if (chunk_history_.size() > 20)
         chunk_history_.pop_front();
     }

@@ -46,9 +46,8 @@ int main(int argc, char *argv[]) {
   std::cout << "[Main] Sync Interval: " << config.sync_interval_seconds << "s" << std::endl;
 
   Database stage1_db(config.db_path_stage1);
-  stage1_db.init_schema();
-
   Database stage2_db(config.db_path_stage2);
+  { TraceN("Init-Stage1-DB"); stage1_db.init_schema(); }
 
   stage1::ChainSync chain_sync(config, stage1_db);
 
@@ -58,7 +57,7 @@ int main(int argc, char *argv[]) {
   };
 
   boost::asio::io_context sync_ioc;
-  chain_sync.start(sync_ioc);
+  { TraceN("Start-Stage1-Sync"); chain_sync.start(sync_ioc); }
   std::thread sync_thread([&sync_ioc]() {
     TraceThread("Stage1-Sync");
     sync_ioc.run();
@@ -68,7 +67,7 @@ int main(int argc, char *argv[]) {
   boost::asio::io_context stage2_ioc;
   std::optional<std::thread> stage2_thread;
 #ifdef STAGE2_ENABLED
-  event_sync.start(stage2_ioc);
+  { TraceN("Start-Stage2-Sync"); event_sync.start(stage2_ioc); }
   stage2_thread.emplace([&stage2_ioc]() {
     TraceThread("Stage2-Sync");
     stage2_ioc.run();

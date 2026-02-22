@@ -46,6 +46,7 @@ public:
 
 private:
   void do_read() {
+    TraceN("do_read");
     req_ = {};
     http::async_read(socket_, buffer_, req_,
                      [self = shared_from_this()](beast::error_code ec, std::size_t) {
@@ -499,6 +500,7 @@ private:
   }
 
   void do_write() {
+    TraceN("do_write");
     http::async_write(socket_, res_,
                       [self = shared_from_this()](beast::error_code ec, std::size_t) {
                         if (!ec && self->res_.keep_alive()) {

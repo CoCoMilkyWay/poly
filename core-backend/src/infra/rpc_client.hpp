@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <condition_variable>
+#include <future>
 #include <iostream>
 #include <mutex>
 #include <nlohmann/json.hpp>
@@ -27,6 +28,14 @@ class RpcClient {
 public:
   using LogsQuery = std::tuple<std::optional<std::string>, int64_t, int64_t, std::vector<std::string>>;
 
+  struct BatchResult {
+    std::vector<json> results;
+    std::string raw_body;
+    size_t response_bytes = 0;
+    bool success = false;
+    std::string error_msg;
+  };
+
   RpcClient(const std::string &url, const std::string &api_key = "")
       : api_key_(api_key), ioc_(), ssl_ctx_(asio::ssl::context::tls_client) {
     parse_url(url);
@@ -39,8 +48,6 @@ public:
     stop_worker();
     disconnect();
   }
-
-  size_t get_last_response_size() const { return last_response_size_; }
 
   int64_t eth_blockNumber() {
     json request = {
@@ -55,10 +62,22 @@ public:
     return from_hex(response["result"].get<std::string>());
   }
 
-  std::vector<json> eth_getLogs_batch(const std::vector<LogsQuery> &queries) {
+  std::future<BatchResult> eth_getLogs_batch_async(const std::vector<LogsQuery> &queries) {
+    auto promise = std::make_shared<std::promise<BatchResult>>();
+    auto future = promise->get_future();
     std::string body = build_batch_request(queries);
-    std::string response_body = execute_request(body);
-    return parse_batch_response(response_body, queries.size());
+    size_t count = queries.size();
+
+    {
+      std::lock_guard<std::mutex> lock(worker_mutex_);
+      request_body_ = std::move(body);
+      request_promise_ = promise;
+      request_count_ = count;
+      has_request_ = true;
+      worker_cv_.notify_one();
+    }
+
+    return future;
   }
 
 private:
@@ -83,48 +102,67 @@ private:
 
   void worker_loop() {
     while (true) {
-      std::unique_lock<std::mutex> lock(worker_mutex_);
-      worker_cv_.wait(lock, [this] { return !worker_running_ || has_request_; });
+      std::string body;
+      std::shared_ptr<std::promise<BatchResult>> promise;
+      size_t count = 0;
 
-      if (!worker_running_ && !has_request_) {
-        break;
+      {
+        std::unique_lock<std::mutex> lock(worker_mutex_);
+        TraceN("wait_request");
+        worker_cv_.wait(lock, [this] { return !worker_running_ || has_request_; });
+
+        if (!worker_running_ && !has_request_) {
+          break;
+        }
+
+        if (has_request_) {
+          body = std::move(request_body_);
+          promise = std::move(request_promise_);
+          count = request_count_;
+          has_request_ = false;
+        }
       }
 
-      if (has_request_) {
+      if (promise) {
         TraceN("http_post");
+        BatchResult result;
         try {
-          result_body_ = http_post(request_body_);
-          request_error_.clear();
+          std::string response_body = http_post(body);
+          result.response_bytes = last_response_size_;
+          if (count > 0) {
+            result.results = parse_batch_response(response_body, count);
+          } else {
+            result.raw_body = std::move(response_body);
+          }
+          result.success = true;
         } catch (const std::exception &e) {
-          request_error_ = e.what();
+          result.success = false;
+          result.error_msg = e.what();
         }
-        has_request_ = false;
-        request_done_ = true;
-        lock.unlock();
-        done_cv_.notify_one();
+        promise->set_value(std::move(result));
       }
     }
   }
 
   std::string execute_request(const std::string &body) {
+    auto promise = std::make_shared<std::promise<BatchResult>>();
+    auto future = promise->get_future();
+
     {
       std::lock_guard<std::mutex> lock(worker_mutex_);
       request_body_ = body;
+      request_promise_ = promise;
+      request_count_ = 0;
       has_request_ = true;
-      request_done_ = false;
       worker_cv_.notify_one();
     }
 
-    {
-      std::unique_lock<std::mutex> lock(worker_mutex_);
-      done_cv_.wait(lock, [this] { return request_done_; });
+    auto result = future.get();
+    if (!result.success) {
+      std::cerr << "[RPC] Request failed: " << result.error_msg << std::endl;
     }
-
-    if (!request_error_.empty()) {
-      std::cerr << "[RPC] Request failed: " << request_error_ << std::endl;
-    }
-    assert(request_error_.empty() && "RPC request failed");
-    return result_body_;
+    assert(result.success && "RPC request failed");
+    return result.raw_body;
   }
 
   std::string build_batch_request(const std::vector<LogsQuery> &queries) {
@@ -244,11 +282,20 @@ private:
         parser.body_limit(1024 * 1024 * 1024); // 1GB
 
         if (use_ssl_) {
+          TraceN("ssl_write");
           http::write(*ssl_stream_, req);
-          http::read(*ssl_stream_, buffer, parser);
         } else {
+          TraceN("tcp_write");
           http::write(*tcp_stream_, req);
-          http::read(*tcp_stream_, buffer, parser);
+        }
+
+        {
+          TraceN("http_read");
+          if (use_ssl_) {
+            http::read(*ssl_stream_, buffer, parser);
+          } else {
+            http::read(*tcp_stream_, buffer, parser);
+          }
         }
 
         std::string result = parser.get().body();
@@ -289,11 +336,9 @@ private:
   std::thread worker_thread_;
   std::mutex worker_mutex_;
   std::condition_variable worker_cv_;
-  std::condition_variable done_cv_;
   bool worker_running_ = false;
   bool has_request_ = false;
-  bool request_done_ = false;
   std::string request_body_;
-  std::string result_body_;
-  std::string request_error_;
+  std::shared_ptr<std::promise<BatchResult>> request_promise_;
+  size_t request_count_ = 0;
 };
