@@ -75,8 +75,8 @@ private:
   }
 
   int64_t get_stage1_transfer_count() {
-    duckdb::Connection conn(stage1_db_.get_duckdb());
-    auto result = conn.Query("SELECT COUNT(*) FROM transfer");
+    auto conn = stage1_db_.create_connection();
+    auto result = conn->Query("SELECT COUNT(*) FROM transfer");
     assert(!result->HasError());
     return result->GetValue(0, 0).GetValue<int64_t>();
   }

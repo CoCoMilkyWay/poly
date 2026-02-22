@@ -161,6 +161,10 @@ public:
 
   duckdb::DuckDB &get_duckdb() { return *db_; }
 
+  std::unique_ptr<duckdb::Connection> create_connection() {
+    return std::make_unique<duckdb::Connection>(*db_);
+  }
+
   void init_schema() {
     execute(R"(
       CREATE TABLE IF NOT EXISTS sync_state (

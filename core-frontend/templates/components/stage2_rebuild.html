@@ -33,6 +33,40 @@
     border-radius: 2px;
   }
 
+  .stage2-stats {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+
+  .stage2-stat {
+    background: #252525;
+    border-radius: 6px;
+    padding: 8px 12px;
+    min-width: 90px;
+  }
+
+  .stage2-stat-label {
+    font-size: 0.7em;
+    color: #666;
+  }
+
+  .stage2-stat-value {
+    font-size: 1em;
+    font-weight: 500;
+    font-family: monospace;
+    color: #fff;
+  }
+
+  .stage2-stat-value.synced {
+    color: #4ade80;
+  }
+
+  .stage2-stat-value.behind {
+    color: #fde047;
+  }
+
   .stage2-progress {
     height: 6px;
     background: #333;
@@ -71,111 +105,249 @@
     <h2>PnL重建器</h2>
     <span id="stage2-badge" class="badge badge-warning">等待中</span>
   </div>
+
+  <div class="stage2-stats" id="stage2-stats" style="display: none">
+    <div class="stage2-stat">
+      <div class="stage2-stat-label">Processed</div>
+      <div class="stage2-stat-value" id="s2-processed">0</div>
+    </div>
+    <div class="stage2-stat">
+      <div class="stage2-stat-label">Total Users</div>
+      <div class="stage2-stat-value" id="s2-total">0</div>
+    </div>
+    <div class="stage2-stat">
+      <div class="stage2-stat-label">Behind</div>
+      <div class="stage2-stat-value" id="s2-behind">-</div>
+    </div>
+    <div class="stage2-stat">
+      <div class="stage2-stat-label">Speed</div>
+      <div class="stage2-stat-value" id="s2-speed">-</div>
+    </div>
+    <div class="stage2-stat">
+      <div class="stage2-stat-label">ETA</div>
+      <div class="stage2-stat-value" id="s2-eta">-</div>
+    </div>
+  </div>
+
   <div class="stage2-progress">
-    <div class="stage2-progress-bar" id="stage2-progress-bar" style="width: 0%"></div>
+    <div
+      class="stage2-progress-bar"
+      id="stage2-progress-bar"
+      style="width: 0%"
+    ></div>
   </div>
   <div class="stage2-log" id="stage2-log">等待 Stage1 同步数据...</div>
 </div>
 
 <script>
-  function s2Fmt(n) {
-    if (n >= 1000000) return (n / 1000000).toFixed(1) + "M";
-    if (n >= 1000) return (n / 1000).toFixed(1) + "K";
-    return String(n);
-  }
+  (function () {
+    let s2LastProcessed = 0;
+    let s2LastTime = 0;
+    let s2SpeedHistory = [];
 
-  function s2UpdateProgress(s) {
-    const log = document.getElementById("stage2-log");
-    const bar = document.getElementById("stage2-progress-bar");
-    const badge = document.getElementById("stage2-badge");
-    const lines = [];
-
-    let progress = 0;
-    if (s.phase >= 1) {
-      progress = 10;
-      if (s.phase > 1) {
-        lines.push(`<span class="done">✓</span> 元数据: ${s2Fmt(s.total_conditions)} 问题, ${s2Fmt(s.total_tokens)} 代币`);
-      } else {
-        lines.push(`<span class="active">●</span> 加载元数据中...`);
-      }
+    function s2Fmt(n) {
+      if (n >= 1000000) return (n / 1000000).toFixed(1) + "M";
+      if (n >= 1000) return (n / 1000).toFixed(1) + "K";
+      return String(n);
     }
 
-    if (s.phase >= 2) {
-      progress = 30;
-      const scans = [
-        { name: "订单", key: "order_filled" },
-        { name: "铸币", key: "split" },
-        { name: "合币", key: "merge" },
-        { name: "赎回", key: "redemption" },
-        { name: "AMM", key: "fpmm_trade" },
-        { name: "LP", key: "fpmm_funding" },
-        { name: "转换", key: "convert" },
-        { name: "转账", key: "transfer" },
-      ];
-      const parts = [];
-      for (const sc of scans) {
-        const obj = s[sc.key];
-        if (obj && obj.rows > 0) {
-          parts.push(`${sc.name}:${s2Fmt(obj.rows)}`);
+    function s2FmtNum(n) {
+      return n.toLocaleString();
+    }
+
+    function s2CalcSpeed(processed) {
+      const now = Date.now();
+      if (s2LastTime > 0 && processed > s2LastProcessed) {
+        const deltaUsers = processed - s2LastProcessed;
+        const deltaSec = (now - s2LastTime) / 1000;
+        if (deltaSec > 0) {
+          const speed = deltaUsers / deltaSec;
+          s2SpeedHistory.push(speed);
+          if (s2SpeedHistory.length > 10) s2SpeedHistory.shift();
         }
       }
-      if (s.phase > 2) {
-        lines.push(`<span class="done">✓</span> 索引: ${parts.join(" | ")}`);
-        lines.push(`<span class="done">✓</span> 事件: ${s2Fmt(s.total_events)} → ${s2Fmt(s.total_users)} 用户`);
-        progress = 70;
+      s2LastProcessed = processed;
+      s2LastTime = now;
+
+      if (s2SpeedHistory.length === 0) return 0;
+      return s2SpeedHistory.reduce((a, b) => a + b, 0) / s2SpeedHistory.length;
+    }
+
+    function s2UpdateStats(s) {
+      const statsEl = document.getElementById("stage2-stats");
+      const processedEl = document.getElementById("s2-processed");
+      const totalEl = document.getElementById("s2-total");
+      const behindEl = document.getElementById("s2-behind");
+      const speedEl = document.getElementById("s2-speed");
+      const etaEl = document.getElementById("s2-eta");
+
+      if (s.phase >= 3 && s.total_users > 0) {
+        statsEl.style.display = "flex";
+
+        const processed = s.processed_users || 0;
+        const total = s.total_users || 0;
+        const behind = Math.max(0, total - processed);
+
+        processedEl.textContent = s2FmtNum(processed);
+        totalEl.textContent = s2FmtNum(total);
+        behindEl.textContent = s2FmtNum(behind);
+        behindEl.className =
+          "stage2-stat-value " + (behind === 0 ? "synced" : "behind");
+
+        const speed = s2CalcSpeed(processed);
+        if (speed > 0 && s.running) {
+          speedEl.textContent = s2FmtNum(Math.round(speed)) + "/s";
+          if (behind > 0) {
+            const etaSec = behind / speed;
+            if (etaSec < 60) {
+              etaEl.textContent = Math.round(etaSec) + "s";
+            } else if (etaSec < 3600) {
+              etaEl.textContent = Math.round(etaSec / 60) + "min";
+            } else {
+              etaEl.textContent = (etaSec / 3600).toFixed(1) + "h";
+            }
+          } else {
+            etaEl.textContent = "完成";
+          }
+        } else if (s.phase === 7) {
+          speedEl.textContent = "-";
+          etaEl.textContent = "完成";
+        } else {
+          speedEl.textContent = "-";
+          etaEl.textContent = "-";
+        }
+      } else if (s.phase === 7) {
+        statsEl.style.display = "flex";
+        processedEl.textContent = s2FmtNum(s.total_users);
+        totalEl.textContent = s2FmtNum(s.total_users);
+        behindEl.textContent = "0";
+        behindEl.className = "stage2-stat-value synced";
+        speedEl.textContent = "-";
+        etaEl.textContent = "完成";
       } else {
-        lines.push(`<span class="active">●</span> 索引: ${parts.join(" | ")}`);
+        statsEl.style.display = "none";
+        s2SpeedHistory = [];
+        s2LastProcessed = 0;
+        s2LastTime = 0;
       }
     }
 
-    if (s.phase >= 3) {
-      const pct = s.total_users ? Math.round((s.processed_users / s.total_users) * 100) : 0;
-      progress = 70 + pct * 0.3;
-      if (s.phase > 3) {
-        lines.push(`<span class="done">✓</span> 回放: ${s2Fmt(s.total_users)} 用户完成`);
-        progress = 100;
+    function s2UpdateProgress(s) {
+      const log = document.getElementById("stage2-log");
+      const bar = document.getElementById("stage2-progress-bar");
+      const badge = document.getElementById("stage2-badge");
+      const lines = [];
+
+      s2UpdateStats(s);
+
+      let progress = 0;
+      if (s.phase >= 1) {
+        progress = 10;
+        if (s.phase > 1) {
+          lines.push(
+            `<span class="done">✓</span> 元数据: ${s2Fmt(s.total_conditions)} 问题, ${s2Fmt(s.total_tokens)} 代币`,
+          );
+        } else {
+          lines.push(`<span class="active">●</span> 加载元数据中...`);
+        }
+      }
+
+      if (s.phase >= 2) {
+        progress = 30;
+        const scans = [
+          { name: "订单", key: "order_filled" },
+          { name: "铸币", key: "split" },
+          { name: "合币", key: "merge" },
+          { name: "赎回", key: "redemption" },
+          { name: "AMM", key: "fpmm_trade" },
+          { name: "LP", key: "fpmm_funding" },
+          { name: "转换", key: "convert" },
+          { name: "转账", key: "transfer" },
+        ];
+        const parts = [];
+        for (const sc of scans) {
+          const obj = s[sc.key];
+          if (obj && obj.rows > 0) {
+            parts.push(`${sc.name}:${s2Fmt(obj.rows)}`);
+          }
+        }
+        if (s.phase > 2) {
+          lines.push(`<span class="done">✓</span> 索引: ${parts.join(" | ")}`);
+          lines.push(
+            `<span class="done">✓</span> 事件: ${s2Fmt(s.total_events)} → ${s2Fmt(s.total_users)} 用户`,
+          );
+          progress = 70;
+        } else {
+          lines.push(
+            `<span class="active">●</span> 索引: ${parts.join(" | ")}`,
+          );
+        }
+      }
+
+      if (s.phase >= 3) {
+        const pct = s.total_users
+          ? Math.round((s.processed_users / s.total_users) * 100)
+          : 0;
+        progress = 70 + pct * 0.3;
+        if (s.phase > 3) {
+          lines.push(
+            `<span class="done">✓</span> 回放: ${s2Fmt(s.total_users)} 用户完成`,
+          );
+          progress = 100;
+        } else {
+          lines.push(
+            `<span class="active">●</span> 回放: ${s2Fmt(s.processed_users)}/${s2Fmt(s.total_users)} (${pct}%)`,
+          );
+        }
+      }
+
+      if (s.phase === 7) {
+        const total = (
+          (s.phase1_ms + s.phase2_ms + s.phase3_ms) /
+          1000
+        ).toFixed(1);
+        lines.push(
+          `<b style="color:#10b981">就绪: ${s2Fmt(s.total_users)} 用户, ${s2Fmt(s.total_events)} 事件 (${total}s)</b>`,
+        );
+      }
+
+      if (lines.length === 0) {
+        lines.push("等待 Stage1 同步数据...");
+      }
+
+      log.innerHTML = lines.join("<br>");
+      bar.style.width = progress + "%";
+
+      if (s.running) {
+        badge.className = "badge badge-warning";
+        badge.textContent = "构建中";
+      } else if (s.phase === 7) {
+        badge.className = "badge badge-success";
+        badge.textContent = "就绪";
       } else {
-        lines.push(`<span class="active">●</span> 回放: ${s2Fmt(s.processed_users)}/${s2Fmt(s.total_users)} (${pct}%)`);
+        badge.className = "badge badge-warning";
+        badge.textContent = "等待中";
       }
     }
 
-    if (s.phase === 7) {
-      const total = ((s.phase1_ms + s.phase2_ms + s.phase3_ms) / 1000).toFixed(1);
-      lines.push(`<b style="color:#10b981">就绪: ${s2Fmt(s.total_users)} 用户, ${s2Fmt(s.total_events)} 事件 (${total}s)</b>`);
+    async function s2Poll() {
+      try {
+        const resp = await fetch("/api/rebuild-status");
+        const status = await resp.json();
+        s2UpdateProgress(status);
+        if (
+          status.phase === 7 &&
+          !status.running &&
+          typeof rpOnRebuildDone === "function"
+        ) {
+          rpOnRebuildDone();
+        }
+      } catch (e) {}
     }
 
-    if (lines.length === 0) {
-      lines.push("等待 Stage1 同步数据...");
-    }
-
-    log.innerHTML = lines.join("<br>");
-    bar.style.width = progress + "%";
-
-    if (s.running) {
-      badge.className = "badge badge-warning";
-      badge.textContent = "构建中";
-    } else if (s.phase === 7) {
-      badge.className = "badge badge-success";
-      badge.textContent = "就绪";
-    } else {
-      badge.className = "badge badge-warning";
-      badge.textContent = "等待中";
-    }
-  }
-
-  async function s2Poll() {
-    try {
-      const resp = await fetch("/api/rebuild-status");
-      const status = await resp.json();
-      s2UpdateProgress(status);
-      if (status.phase === 7 && !status.running && typeof rpOnRebuildDone === "function") {
-        rpOnRebuildDone();
-      }
-    } catch (e) {}
-  }
-
-  document.addEventListener("DOMContentLoaded", () => {
-    s2Poll();
-    setInterval(s2Poll, 2000);
-  });
+    document.addEventListener("DOMContentLoaded", () => {
+      s2Poll();
+      setInterval(s2Poll, 2000);
+    });
+  })();
 </script>

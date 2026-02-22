@@ -302,8 +302,8 @@ private:
   }
 
   ScanStats index_split() {
-    duckdb::Connection conn(stage1_db_.get_duckdb());
-    auto result = conn.Query("SELECT block_number, tx_hash, stakeholder, condition_id, amount FROM split");
+    auto conn = stage1_db_.create_connection();
+    auto result = conn->Query("SELECT block_number, tx_hash, stakeholder, condition_id, amount FROM split");
     assert(!result->HasError());
 
     ScanStats stats;
@@ -322,8 +322,8 @@ private:
   }
 
   ScanStats index_merge() {
-    duckdb::Connection conn(stage1_db_.get_duckdb());
-    auto result = conn.Query("SELECT block_number, tx_hash, stakeholder, condition_id, amount FROM merge");
+    auto conn = stage1_db_.create_connection();
+    auto result = conn->Query("SELECT block_number, tx_hash, stakeholder, condition_id, amount FROM merge");
     assert(!result->HasError());
 
     ScanStats stats;
@@ -342,8 +342,8 @@ private:
   }
 
   ScanStats index_redemption() {
-    duckdb::Connection conn(stage1_db_.get_duckdb());
-    auto result = conn.Query("SELECT block_number, tx_hash, redeemer, condition_id, index_sets, payout FROM redemption");
+    auto conn = stage1_db_.create_connection();
+    auto result = conn->Query("SELECT block_number, tx_hash, redeemer, condition_id, index_sets, payout FROM redemption");
     assert(!result->HasError());
 
     ScanStats stats;
@@ -369,8 +369,8 @@ private:
   }
 
   ScanStats index_convert() {
-    duckdb::Connection conn(stage1_db_.get_duckdb());
-    auto result = conn.Query("SELECT block_number, tx_hash, stakeholder, market_id, index_set, amount FROM convert");
+    auto conn = stage1_db_.create_connection();
+    auto result = conn->Query("SELECT block_number, tx_hash, stakeholder, market_id, index_set, amount FROM convert");
     assert(!result->HasError());
 
     ScanStats stats;
@@ -390,8 +390,8 @@ private:
   }
 
   ScanStats index_order_filled() {
-    duckdb::Connection conn(stage1_db_.get_duckdb());
-    auto result = conn.Query(
+    auto conn = stage1_db_.create_connection();
+    auto result = conn->Query(
         "SELECT block_number, tx_hash, maker, taker, maker_asset_id, taker_asset_id, "
         "maker_amount, taker_amount, fee FROM order_filled");
     assert(!result->HasError());
@@ -433,8 +433,8 @@ private:
   }
 
   ScanStats index_fpmm_trade() {
-    duckdb::Connection conn(stage1_db_.get_duckdb());
-    auto result = conn.Query(
+    auto conn = stage1_db_.create_connection();
+    auto result = conn->Query(
         "SELECT block_number, tx_hash, fpmm_addr, trader, side, outcome_index, "
         "usdc_amount, token_amount FROM fpmm_trade");
     assert(!result->HasError());
@@ -458,8 +458,8 @@ private:
   }
 
   ScanStats index_fpmm_funding() {
-    duckdb::Connection conn(stage1_db_.get_duckdb());
-    auto result = conn.Query("SELECT block_number, tx_hash, fpmm_addr, funder, side, amounts FROM fpmm_funding");
+    auto conn = stage1_db_.create_connection();
+    auto result = conn->Query("SELECT block_number, tx_hash, fpmm_addr, funder, side, amounts FROM fpmm_funding");
     assert(!result->HasError());
 
     ScanStats stats;
@@ -487,8 +487,8 @@ private:
     user_map_.clear();
     user_events_.clear();
 
-    duckdb::Connection conn(stage1_db_.get_duckdb());
-    auto result = conn.Query(
+    auto conn = stage1_db_.create_connection();
+    auto result = conn->Query(
         "SELECT block_number, tx_hash, log_index, operator, from_addr, to_addr, token_id, amount "
         "FROM transfer ORDER BY block_number, log_index");
     assert(!result->HasError());
