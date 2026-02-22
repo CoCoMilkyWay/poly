@@ -1,12 +1,14 @@
 #pragma once
 
 #include <cassert>
-#include <future>
+#include <condition_variable>
+#include <iostream>
 #include <mutex>
 #include <nlohmann/json.hpp>
 #include <optional>
 #include <stdexcept>
 #include <string>
+#include <thread>
 
 #include <boost/asio.hpp>
 #include <boost/asio/ssl.hpp>
@@ -23,50 +25,108 @@ using json = nlohmann::json;
 
 class RpcClient {
 public:
+  using LogsQuery = std::tuple<std::optional<std::string>, int64_t, int64_t, std::vector<std::string>>;
+
   RpcClient(const std::string &url, const std::string &api_key = "")
       : api_key_(api_key), ioc_(), ssl_ctx_(asio::ssl::context::tls_client) {
     parse_url(url);
     ssl_ctx_.set_default_verify_paths();
     ssl_ctx_.set_verify_mode(asio::ssl::verify_peer);
+    start_worker();
   }
 
-  ~RpcClient() { disconnect(); }
+  ~RpcClient() {
+    stop_worker();
+    disconnect();
+  }
 
   size_t get_last_response_size() const { return last_response_size_; }
 
   int64_t eth_blockNumber() {
     json request = {
         {"jsonrpc", "2.0"},
-        {"id", ++request_id_},
+        {"id", 1},
         {"method", "eth_blockNumber"},
         {"params", json::array()}};
 
-    std::string response_body = http_post(request.dump());
+    std::string response_body = execute_request(request.dump());
     json response = json::parse(response_body);
-    if (response.contains("error")) {
-      throw std::runtime_error("RPC error: " + response["error"].dump());
-    }
+    assert(!response.contains("error") && "eth_blockNumber RPC error");
     return from_hex(response["result"].get<std::string>());
   }
 
-  using LogsQuery = std::tuple<std::optional<std::string>, int64_t, int64_t, std::vector<std::string>>;
-
   std::vector<json> eth_getLogs_batch(const std::vector<LogsQuery> &queries) {
     std::string body = build_batch_request(queries);
-    std::string response_body = http_post(body);
+    std::string response_body = execute_request(body);
     return parse_batch_response(response_body, queries.size());
   }
 
-  std::future<std::vector<json>> eth_getLogs_batch_async(const std::vector<LogsQuery> &queries) {
-    std::string body = build_batch_request(queries);
-    size_t count = queries.size();
-    return std::async(std::launch::async, [this, body = std::move(body), count]() {
-      std::string response_body = http_post(body);
-      return parse_batch_response(response_body, count);
+private:
+  void start_worker() {
+    worker_running_ = true;
+    worker_thread_ = std::thread([this]() {
+      TraceThread("RPC-Worker");
+      worker_loop();
     });
   }
 
-private:
+  void stop_worker() {
+    {
+      std::lock_guard<std::mutex> lock(worker_mutex_);
+      worker_running_ = false;
+      worker_cv_.notify_one();
+    }
+    if (worker_thread_.joinable()) {
+      worker_thread_.join();
+    }
+  }
+
+  void worker_loop() {
+    while (true) {
+      std::unique_lock<std::mutex> lock(worker_mutex_);
+      worker_cv_.wait(lock, [this] { return !worker_running_ || has_request_; });
+
+      if (!worker_running_ && !has_request_) {
+        break;
+      }
+
+      if (has_request_) {
+        TraceN("RPC::http_post");
+        try {
+          result_body_ = http_post(request_body_);
+          request_error_.clear();
+        } catch (const std::exception &e) {
+          request_error_ = e.what();
+        }
+        has_request_ = false;
+        request_done_ = true;
+        lock.unlock();
+        done_cv_.notify_one();
+      }
+    }
+  }
+
+  std::string execute_request(const std::string &body) {
+    {
+      std::lock_guard<std::mutex> lock(worker_mutex_);
+      request_body_ = body;
+      has_request_ = true;
+      request_done_ = false;
+      worker_cv_.notify_one();
+    }
+
+    {
+      std::unique_lock<std::mutex> lock(worker_mutex_);
+      done_cv_.wait(lock, [this] { return request_done_; });
+    }
+
+    if (!request_error_.empty()) {
+      std::cerr << "[RPC] Request failed: " << request_error_ << std::endl;
+    }
+    assert(request_error_.empty() && "RPC request failed");
+    return result_body_;
+  }
+
   std::string build_batch_request(const std::vector<LogsQuery> &queries) {
     json batch = json::array();
     for (const auto &[address, from_block, to_block, topic0_list] : queries) {
@@ -91,9 +151,7 @@ private:
     json responses = json::parse(response_body);
     std::vector<json> results(count);
     for (const auto &resp : responses) {
-      if (resp.contains("error")) {
-        throw std::runtime_error("RPC error: " + resp["error"].dump());
-      }
+      assert(!resp.contains("error") && "RPC batch response error");
       size_t id = resp["id"].get<size_t>();
       results[id] = resp["result"];
     }
@@ -165,9 +223,6 @@ private:
   }
 
   std::string http_post(const std::string &body) {
-    TraceN("RPC::http_post");
-    std::lock_guard<std::mutex> lock(mutex_);
-
     http::request<http::string_body> req{http::verb::post, target_, 11};
     req.set(http::field::host, host_);
     req.set(http::field::content_type, "application/json");
@@ -185,7 +240,7 @@ private:
 
         beast::flat_buffer buffer;
         http::response_parser<http::string_body> parser;
-        parser.body_limit(256 * 1024 * 1024);
+        parser.body_limit(1024 * 1024 * 1024);  // 1GB
 
         if (use_ssl_) {
           http::write(*ssl_stream_, req);
@@ -222,7 +277,6 @@ private:
   std::string target_;
   std::string api_key_;
   bool use_ssl_ = false;
-  int request_id_ = 0;
   size_t last_response_size_ = 0;
 
   asio::io_context ioc_;
@@ -230,5 +284,15 @@ private:
   std::unique_ptr<beast::ssl_stream<beast::tcp_stream>> ssl_stream_;
   std::unique_ptr<beast::tcp_stream> tcp_stream_;
   bool connected_ = false;
-  std::mutex mutex_;
+
+  std::thread worker_thread_;
+  std::mutex worker_mutex_;
+  std::condition_variable worker_cv_;
+  std::condition_variable done_cv_;
+  bool worker_running_ = false;
+  bool has_request_ = false;
+  bool request_done_ = false;
+  std::string request_body_;
+  std::string result_body_;
+  std::string request_error_;
 };

@@ -1,6 +1,7 @@
 #include <csignal>
 #include <cstring>
 #include <iostream>
+#include <optional>
 #include <string>
 #include <thread>
 
@@ -11,6 +12,8 @@
 #include "stage1/chain_sync.hpp"
 #include "stage2/event_sync.hpp"
 #include "stage3/pnl_replay.hpp"
+
+// #define STAGE2_ENABLED
 
 void print_usage(const char *prog) {
   std::cout << "用法: " << prog << " --config <config.json>" << std::endl;
@@ -63,11 +66,14 @@ int main(int argc, char *argv[]) {
 
   stage2::EventSync event_sync(stage1_db, stage2_db, config.rpc_chunk);
   boost::asio::io_context stage2_ioc;
+  std::optional<std::thread> stage2_thread;
+#ifdef STAGE2_ENABLED
   event_sync.start(stage2_ioc);
-  std::thread stage2_thread([&stage2_ioc]() {
+  stage2_thread.emplace([&stage2_ioc]() {
     TraceThread("Stage2-Sync");
     stage2_ioc.run();
   });
+#endif
 
   stage3::PnlEngine pnl_engine(event_sync.builder());
 
@@ -92,7 +98,9 @@ int main(int argc, char *argv[]) {
   api_ioc.run();
 
   sync_thread.join();
-  stage2_thread.join();
+#ifdef STAGE2_ENABLED
+  stage2_thread->join();
+#endif
 
   std::cout << "[Main] 已退出" << std::endl;
   return 0;

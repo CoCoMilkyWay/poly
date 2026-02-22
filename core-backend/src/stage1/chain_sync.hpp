@@ -3,7 +3,6 @@
 #include <atomic>
 #include <chrono>
 #include <deque>
-#include <future>
 #include <iostream>
 #include <memory>
 #include <vector>
@@ -131,43 +130,49 @@ private:
       return;
     }
 
-    int64_t to_block = std::min(from_block + current_batch_size_ - 1, head_block_.load());
-    auto first_future = rpc_.eth_getLogs_batch_async(build_queries(from_block, to_block));
-    sync_batch_pipeline(from_block, to_block, head_block_, std::move(first_future));
+    sync_loop(from_block, head_block_);
   }
 
-  void sync_batch_pipeline(int64_t from_block, int64_t to_block, int64_t head_block,
-                           std::future<std::vector<json>> current_future) {
+  void sync_loop(int64_t from_block, int64_t head_block) {
+    while (from_block <= head_block) {
+      int64_t to_block = std::min(from_block + current_batch_size_ - 1, head_block);
+
+      if (!sync_one_batch(from_block, to_block, head_block)) {
+        return;
+      }
+
+      from_block = to_block + 1;
+    }
+
+    std::cout << "[Sync] 本轮同步完成, " << interval_seconds_ << "s 后检查更新" << std::endl;
+    is_syncing_ = false;
+    schedule_sync(interval_seconds_);
+  }
+
+  bool sync_one_batch(int64_t from_block, int64_t to_block, int64_t head_block) {
     TraceN("Stage1::sync_batch");
+
     std::vector<json> results;
     try {
-      results = current_future.get();
+      results = rpc_.eth_getLogs_batch(build_queries(from_block, to_block));
     } catch (const std::exception &e) {
       int64_t reduced = std::max(current_batch_size_ / 2, (int64_t)1);
       std::cerr << "[Sync] eth_getLogs 失败: " << e.what()
                 << ", chunk " << current_batch_size_ << " -> " << reduced << ", 5s 后重试" << std::endl;
       current_batch_size_ = reduced;
+
       auto timer = std::make_shared<asio::steady_timer>(*ioc_);
       timer->expires_after(std::chrono::seconds(5));
       timer->async_wait([this, timer, from_block, head_block](boost::system::error_code ec) {
         if (!ec) {
-          int64_t to = std::min(from_block + current_batch_size_ - 1, head_block);
-          auto fut = rpc_.eth_getLogs_batch_async(build_queries(from_block, to));
-          sync_batch_pipeline(from_block, to, head_block, std::move(fut));
+          sync_loop(from_block, head_block);
         }
       });
-      return;
+      return false;
     }
 
     current_batch_size_ = batch_size_;
     size_t response_bytes = rpc_.get_last_response_size();
-
-    int64_t next_from = to_block + 1;
-    int64_t next_to = std::min(next_from + current_batch_size_ - 1, head_block);
-    std::optional<std::future<std::vector<json>>> next_future;
-    if (next_from <= head_block) {
-      next_future = rpc_.eth_getLogs_batch_async(build_queries(next_from, next_to));
-    }
 
     json logs = json::array();
     for (const auto &r : results) {
@@ -239,15 +244,7 @@ private:
     if (chunk_history_.size() > 20)
       chunk_history_.pop_front();
 
-    if (next_future.has_value()) {
-      asio::post(*ioc_, [this, next_from, next_to, head_block, fut = std::move(*next_future)]() mutable {
-        sync_batch_pipeline(next_from, next_to, head_block, std::move(fut));
-      });
-    } else {
-      std::cout << "[Sync] 本轮同步完成, " << interval_seconds_ << "s 后检查更新" << std::endl;
-      is_syncing_ = false;
-      schedule_sync(interval_seconds_);
-    }
+    return true;
   }
 
   const Config &config_;
