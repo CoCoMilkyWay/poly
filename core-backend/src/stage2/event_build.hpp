@@ -1057,27 +1057,43 @@ private:
     }
 
     // ========== FPMM operator ==========
+    // FPMM buy:  Transfer(op=FPMM, from=FPMM, to=user) + FPMMBuy event
+    // FPMM sell: Transfer(op=FPMM, from=user, to=FPMM) + FPMMSell event
+    // LP add 返还: Transfer(op=FPMM, from=FPMM, to=user) + FPMMFundingAdded event
+    // LP remove:  Transfer(op=FPMM, from=user, to=FPMM) + FPMMFundingRemoved event (罕见单独 transfer)
     auto fpmm_it = fpmm_map_.find(op);
     if (fpmm_it != fpmm_map_.end()) {
       TxFPMMKey tx_fpmm_key{block, tx_hash, op};
       auto tit = tx_fpmm_trade_.find(tx_fpmm_key);
-      if (tit != tx_fpmm_trade_.end() && !is_protocol_contract(tit->second.trader)) {
-        assert(tit->second.tokens > 0 && "FPMM trade tokens must be positive");
-        int64_t price = tit->second.usdc * 1000000 / tit->second.tokens;
-        assert(price >= 0 && price <= 1000000 && "FPMM price out of range");
-        if (tit->second.side == 1) {
-          push_event(tit->second.trader, RawEvent{sort_key, cond_idx, EventType::FPMMBuy, token_idx, 0, amount, price});
-        } else {
-          push_event(tit->second.trader, RawEvent{sort_key, cond_idx, EventType::FPMMSell, token_idx, 0, -amount, price});
+      auto fit = tx_fpmm_funding_.find(tx_fpmm_key);
+
+      // FPMM buy/sell (有 trade 事件)
+      if (tit != tx_fpmm_trade_.end()) {
+        if (!is_protocol_contract(tit->second.trader)) {
+          assert(tit->second.tokens > 0 && "FPMM trade tokens must be positive");
+          int64_t price = tit->second.usdc * 1000000 / tit->second.tokens;
+          assert(price >= 0 && price <= 1000000 && "FPMM price out of range");
+          if (tit->second.side == 1) {
+            push_event(tit->second.trader, RawEvent{sort_key, cond_idx, EventType::FPMMBuy, token_idx, 0, amount, price});
+          } else {
+            push_event(tit->second.trader, RawEvent{sort_key, cond_idx, EventType::FPMMSell, token_idx, 0, -amount, price});
+          }
         }
         return;
       }
-      // LP 返还多余 token (from=FPMM, to=user)
-      if (from == op && !is_protocol_contract(to)) {
-        push_event(to, RawEvent{sort_key, cond_idx, EventType::TransferIn, token_idx, 0, amount, 0});
+
+      // LP 操作 (有 funding 事件)
+      if (fit != tx_fpmm_funding_.end()) {
+        // LP add 时返还多余 token 给用户 (from=FPMM)
+        if (from == op && !is_protocol_contract(to)) {
+          push_event(to, RawEvent{sort_key, cond_idx, EventType::TransferIn, token_idx, 0, amount, 0});
+        }
+        // LP remove 时用户转 token 给 FPMM (to=FPMM) → 不记录，已在 burn 分支处理
         return;
       }
-      // FPMM 内部 → 跳过
+
+      // 无 trade/funding 事件，但 operator 是 FPMM → 应该不发生
+      assert(false && "FPMM transfer without trade/funding event");
       return;
     }
 
