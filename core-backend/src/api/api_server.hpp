@@ -29,7 +29,7 @@ public:
 
 private:
   void do_accept() {
-    TraceN("do_accept");
+    TraceN("api/accept");
     acceptor_.async_accept([this](beast::error_code ec, tcp::socket socket) {
       if (!ec) {
         std::make_shared<ApiSession>(std::move(socket), db_, pnl_engine_, sync_getter_, stage2_getter_)->run();

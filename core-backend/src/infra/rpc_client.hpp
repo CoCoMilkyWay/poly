@@ -108,7 +108,7 @@ private:
 
       {
         std::unique_lock<std::mutex> lock(worker_mutex_);
-        TraceN("wait_request");
+        TraceN("rpc/wait");
         worker_cv_.wait(lock, [this] { return !worker_running_ || has_request_; });
 
         if (!worker_running_ && !has_request_) {
@@ -124,7 +124,7 @@ private:
       }
 
       if (promise) {
-        TraceN("http_post");
+        TraceN("rpc/post");
         BatchResult result;
         try {
           std::string response_body = http_post(body);
@@ -229,7 +229,7 @@ private:
   void ensure_connected() {
     if (connected_)
       return;
-    TraceN("connect");
+    TraceN("rpc/connect");
 
     tcp::resolver resolver(ioc_);
     auto const endpoints = resolver.resolve(host_, port_);
@@ -282,15 +282,15 @@ private:
         parser.body_limit(1024 * 1024 * 1024); // 1GB
 
         if (use_ssl_) {
-          TraceN("ssl_write");
+          TraceN("rpc/ssl_write");
           http::write(*ssl_stream_, req);
         } else {
-          TraceN("tcp_write");
+          TraceN("rpc/tcp_write");
           http::write(*tcp_stream_, req);
         }
 
         {
-          TraceN("http_read");
+          TraceN("rpc/read");
           if (use_ssl_) {
             http::read(*ssl_stream_, buffer, parser);
           } else {

@@ -123,7 +123,7 @@ private:
   }
 
   void do_sync() {
-    TraceN("do_sync");
+    TraceN("s1/sync");
     is_syncing_ = true;
 
     try {
@@ -155,18 +155,18 @@ private:
 
     int64_t to_block = std::min(from_block + current_batch_size_ - 1, head_block);
     {
-      TraceN("start_prefetch");
+      TraceN("s1/prefetch");
       pending = prefetch_async(from_block, to_block);
     }
 
     while (!stop_requested_ && pending) {
-      TraceN("sync_batch");
+      TraceN("s1/batch");
 
       int64_t cur_from = pending->from_block;
       int64_t cur_to = pending->to_block;
       RpcClient::BatchResult rpc_result;
       {
-        TraceN("wait_rpc");
+        TraceN("s1/wait_rpc");
         rpc_result = pending->future.get();
       }
       pending.reset();
@@ -191,7 +191,7 @@ private:
 
       int64_t next_from = cur_to + 1;
       if (next_from <= head_block && !stop_requested_) {
-        TraceN("start_prefetch");
+        TraceN("s1/prefetch");
         int64_t next_to = std::min(next_from + current_batch_size_ - 1, head_block);
         pending = prefetch_async(next_from, next_to);
       }
@@ -212,7 +212,7 @@ private:
   void process_batch(const RpcClient::BatchResult &r, int64_t from_block, int64_t to_block) {
     json logs = json::array();
     {
-      TraceN("merge_logs");
+      TraceN("s1/merge");
       for (const auto &result : r.results) {
         for (const auto &log : result) {
           logs.push_back(log);
@@ -221,18 +221,18 @@ private:
     }
     DecodedEvents events;
     {
-      TraceN("decode_logs");
+      TraceN("s1/decode");
       events = EventDecoder::decode_logs(logs);
     }
 
     {
-      TraceN("db_write");
+      TraceN("s1/write");
       Database::WriteLock lock(db_);
       db_.atomic_multi_insert_appender(events, to_block);
     }
 
     {
-      TraceN("fetch_chunk");
+      TraceN("s1/fetch");
       double now = std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();
       chunk_history_.push_back({to_block, now, r.response_bytes, to_block - from_block + 1});
       if (chunk_history_.size() > 20)

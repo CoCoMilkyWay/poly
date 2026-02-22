@@ -46,7 +46,7 @@ public:
 
 private:
   void do_read() {
-    TraceN("do_read");
+    TraceN("api/read");
     req_ = {};
     http::async_read(socket_, buffer_, req_,
                      [self = shared_from_this()](beast::error_code ec, std::size_t) {
@@ -57,7 +57,7 @@ private:
   }
 
   void handle_request() {
-    TraceN("handle_request");
+    TraceN("api/handle");
     res_ = {};
     res_.version(req_.version());
     res_.keep_alive(req_.keep_alive());
@@ -122,7 +122,7 @@ private:
   }
 
   void handle_tables() {
-    TraceN("tables");
+    TraceN("api/tables");
     res_.set(http::field::content_type, "application/json");
 
     json tables_info = json::array();
@@ -138,7 +138,7 @@ private:
   }
 
   void handle_sync_state() {
-    TraceN("sync_state");
+    TraceN("api/sync_state");
     res_.set(http::field::content_type, "application/json");
 
     int64_t last_block = db_.get_last_block();
@@ -157,7 +157,7 @@ private:
   }
 
   void handle_query() {
-    TraceN("query");
+    TraceN("api/query");
     res_.set(http::field::content_type, "application/json");
 
     std::string query = get_param("q");
@@ -183,7 +183,7 @@ private:
   }
 
   void handle_rebuild_status() {
-    TraceN("rebuild_status");
+    TraceN("api/rebuild");
     res_.set(http::field::content_type, "application/json");
 
     const auto &p = pnl_engine_.progress();
@@ -218,7 +218,7 @@ private:
   }
 
   void handle_user_pnl(const std::string &target) {
-    TraceN("user_pnl");
+    TraceN("api/user_pnl");
     res_.set(http::field::content_type, "application/json");
 
     std::string addr = extract_user_addr(target);
@@ -271,7 +271,7 @@ private:
   }
 
   void handle_user_positions(const std::string &target) {
-    TraceN("user_positions");
+    TraceN("api/user_pos");
     res_.set(http::field::content_type, "application/json");
 
     std::string addr = extract_user_addr(target);
@@ -325,7 +325,7 @@ private:
   }
 
   void handle_replay_users() {
-    TraceN("replay_users");
+    TraceN("api/replay_users");
     res_.set(http::field::content_type, "application/json");
 
     std::string limit_str = get_param("limit");
@@ -346,7 +346,7 @@ private:
   }
 
   void handle_replay() {
-    TraceN("replay");
+    TraceN("api/replay");
     res_.set(http::field::content_type, "application/json");
 
     std::string user = get_param("user");
@@ -392,7 +392,7 @@ private:
   }
 
   void handle_replay_positions() {
-    TraceN("replay_positions");
+    TraceN("api/replay_pos");
     res_.set(http::field::content_type, "application/json");
 
     std::string user = get_param("user");
@@ -425,7 +425,7 @@ private:
   }
 
   void handle_replay_trades() {
-    TraceN("replay_trades");
+    TraceN("api/replay_trades");
     res_.set(http::field::content_type, "application/json");
 
     std::string user = get_param("user");
@@ -500,7 +500,7 @@ private:
   }
 
   void do_write() {
-    TraceN("do_write");
+    TraceN("api/write");
     http::async_write(socket_, res_,
                       [self = shared_from_this()](beast::error_code ec, std::size_t) {
                         if (!ec && self->res_.keep_alive()) {

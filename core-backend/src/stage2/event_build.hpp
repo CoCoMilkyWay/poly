@@ -172,7 +172,7 @@ public:
   int64_t cursor() const { return progress_.cursor; }
 
   bool build_chunk(int64_t target_block) {
-    TraceN("build_chunk");
+    TraceN("s2/build");
     if (progress_.cursor >= target_block)
       return false;
 
@@ -349,7 +349,7 @@ private:
   }
 
   void phase1_update_mappings(int64_t start, int64_t end) {
-    TraceN("phase1_mappings");
+    TraceN("s2/phase1_map");
     auto conn = stage1_db_.create_connection();
 
     auto cp = conn->Query(
@@ -421,7 +421,7 @@ private:
   }
 
   void phase2_build_semantic_index(int64_t start, int64_t end) {
-    TraceN("phase2_index");
+    TraceN("s2/phase2_idx");
     auto conn = stage1_db_.create_connection();
 
     auto split = conn->Query(
@@ -573,7 +573,7 @@ private:
   }
 
   void phase3_process_transfers(int64_t start, int64_t end) {
-    TraceN("phase3_transfers");
+    TraceN("s2/phase3_xfer");
     auto conn = stage1_db_.create_connection();
     auto transfers = conn->Query(
         "SELECT block_number, tx_hash, log_index, operator, from_addr, to_addr, token_id, amount "
@@ -733,7 +733,7 @@ private:
   }
 
   void commit_chunk(int64_t new_cursor) {
-    TraceN("commit");
+    TraceN("s2/commit");
     auto conn = stage2_db_.create_connection();
     conn->Query("BEGIN TRANSACTION");
 
