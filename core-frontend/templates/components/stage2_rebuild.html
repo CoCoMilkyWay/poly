@@ -141,10 +141,6 @@
 
 <script>
   (function () {
-    let s2LastProcessed = 0;
-    let s2LastTime = 0;
-    let s2SpeedHistory = [];
-
     function s2Fmt(n) {
       if (n >= 1000000) return (n / 1000000).toFixed(1) + "M";
       if (n >= 1000) return (n / 1000).toFixed(1) + "K";
@@ -155,80 +151,32 @@
       return n.toLocaleString();
     }
 
-    function s2CalcSpeed(processed) {
-      const now = Date.now();
-      if (s2LastTime > 0 && processed > s2LastProcessed) {
-        const deltaUsers = processed - s2LastProcessed;
-        const deltaSec = (now - s2LastTime) / 1000;
-        if (deltaSec > 0) {
-          const speed = deltaUsers / deltaSec;
-          s2SpeedHistory.push(speed);
-          if (s2SpeedHistory.length > 10) s2SpeedHistory.shift();
-        }
-      }
-      s2LastProcessed = processed;
-      s2LastTime = now;
-
-      if (s2SpeedHistory.length === 0) return 0;
-      return s2SpeedHistory.reduce((a, b) => a + b, 0) / s2SpeedHistory.length;
-    }
-
     function s2UpdateStats(s) {
-      const statsEl = document.getElementById("stage2-stats");
       const processedEl = document.getElementById("s2-processed");
       const totalEl = document.getElementById("s2-total");
       const behindEl = document.getElementById("s2-behind");
-      const speedEl = document.getElementById("s2-speed");
-      const etaEl = document.getElementById("s2-eta");
+      const statusEl = document.getElementById("s2-status");
 
-      if (s.phase >= 3 && s.total_users > 0) {
-        statsEl.style.display = "flex";
+      const sync = s.stage2_sync || {};
+      const stage2Block = sync.stage2_last_block || 0;
+      const stage1Block = sync.stage1_last_block || 0;
+      const behind = sync.behind_chunks || 0;
+      const syncing = sync.syncing || false;
 
-        const processed = s.processed_users || 0;
-        const total = s.total_users || 0;
-        const behind = Math.max(0, total - processed);
+      processedEl.textContent = s2FmtNum(stage2Block);
+      totalEl.textContent = s2FmtNum(stage1Block);
+      behindEl.textContent = s2FmtNum(behind);
+      behindEl.className = "stage2-stat-value " + (behind < 1000 ? "synced" : "behind");
 
-        processedEl.textContent = s2FmtNum(processed);
-        totalEl.textContent = s2FmtNum(total);
-        behindEl.textContent = s2FmtNum(behind);
-        behindEl.className =
-          "stage2-stat-value " + (behind === 0 ? "synced" : "behind");
-
-        const speed = s2CalcSpeed(processed);
-        if (speed > 0 && s.running) {
-          speedEl.textContent = s2FmtNum(Math.round(speed)) + "/s";
-          if (behind > 0) {
-            const etaSec = behind / speed;
-            if (etaSec < 60) {
-              etaEl.textContent = Math.round(etaSec) + "s";
-            } else if (etaSec < 3600) {
-              etaEl.textContent = Math.round(etaSec / 60) + "min";
-            } else {
-              etaEl.textContent = (etaSec / 3600).toFixed(1) + "h";
-            }
-          } else {
-            etaEl.textContent = "完成";
-          }
-        } else if (s.phase === 7) {
-          speedEl.textContent = "-";
-          etaEl.textContent = "完成";
-        } else {
-          speedEl.textContent = "-";
-          etaEl.textContent = "-";
-        }
-      } else if (s.phase === 7) {
-        statsEl.style.display = "flex";
-        processedEl.textContent = s2FmtNum(s.total_users);
-        totalEl.textContent = s2FmtNum(s.total_users);
-        behindEl.textContent = "0";
-        behindEl.className = "stage2-stat-value synced";
-        speedEl.textContent = "-";
-        etaEl.textContent = "完成";
+      if (syncing) {
+        statusEl.textContent = "构建中";
+        statusEl.className = "stage2-stat-value behind";
+      } else if (behind >= 1000) {
+        statusEl.textContent = "等待";
+        statusEl.className = "stage2-stat-value behind";
       } else {
-        statsEl.style.display = "none";
-        s2SpeedHistory = [];
-        s2LastProcessed = 0;
-        s2LastTime = 0;
+        statusEl.textContent = "跟踪中";
+        statusEl.className = "stage2-stat-value synced";
       }
     }
 

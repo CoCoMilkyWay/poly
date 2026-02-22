@@ -47,7 +47,7 @@ int main(int argc, char *argv[]) {
 
   stage1::ChainSync chain_sync(config, stage1_db);
 
-  auto sync_getter = [&chain_sync]() -> SyncStatus {
+  auto stage1_getter = [&chain_sync]() -> Stage1SyncStatus {
     return {chain_sync.is_syncing(), chain_sync.get_head_block(),
             chain_sync.get_blocks_per_second(), chain_sync.get_bytes_per_block()};
   };
@@ -56,15 +56,20 @@ int main(int argc, char *argv[]) {
   chain_sync.start(sync_ioc);
   std::thread sync_thread([&sync_ioc]() { sync_ioc.run(); });
 
-  stage2::EventSync event_sync(stage1_db, stage2_db, config.sync_interval_seconds);
+  stage2::EventSync event_sync(stage1_db, stage2_db, config.rpc_chunk);
   boost::asio::io_context stage2_ioc;
   event_sync.start(stage2_ioc);
   std::thread stage2_thread([&stage2_ioc]() { stage2_ioc.run(); });
 
   stage3::PnlEngine pnl_engine(event_sync.builder());
 
+  auto stage2_getter = [&event_sync]() -> Stage2SyncStatus {
+    const auto &p = event_sync.progress();
+    return {p.syncing, p.stage1_last_block, p.stage2_last_block, p.behind_chunks};
+  };
+
   boost::asio::io_context api_ioc;
-  ApiServer api_server(api_ioc, stage1_db, pnl_engine, config.backend_port, sync_getter);
+  ApiServer api_server(api_ioc, stage1_db, pnl_engine, config.backend_port, stage1_getter, stage2_getter);
 
   boost::asio::signal_set signals(api_ioc, SIGINT, SIGTERM);
   signals.async_wait([&](const boost::system::error_code &, int sig) {

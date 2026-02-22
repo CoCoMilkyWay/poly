@@ -17,21 +17,29 @@ namespace http = beast::http;
 using tcp = asio::ip::tcp;
 using json = nlohmann::json;
 
-struct SyncStatus {
+struct Stage1SyncStatus {
   bool is_syncing = false;
   int64_t head_block = 0;
   double blocks_per_second = 0.0;
   double bytes_per_block = 0.0;
 };
 
+struct Stage2SyncStatus {
+  bool syncing = false;
+  int64_t stage1_last_block = 0;
+  int64_t stage2_last_block = 0;
+  int64_t behind_chunks = 0;
+};
+
 class ApiSession : public std::enable_shared_from_this<ApiSession> {
 public:
-  using SyncStatusGetter = std::function<SyncStatus()>;
+  using Stage1SyncGetter = std::function<Stage1SyncStatus()>;
+  using Stage2SyncGetter = std::function<Stage2SyncStatus()>;
 
   ApiSession(tcp::socket socket, Database &db, stage3::PnlEngine &pnl_engine,
-             SyncStatusGetter sync_getter = nullptr)
+             Stage1SyncGetter stage1_getter = nullptr, Stage2SyncGetter stage2_getter = nullptr)
       : socket_(std::move(socket)), db_(db), pnl_engine_(pnl_engine),
-        sync_getter_(std::move(sync_getter)) {}
+        sync_getter_(std::move(stage1_getter)), stage2_getter_(std::move(stage2_getter)) {}
 
   void run() { do_read(); }
 
@@ -132,7 +140,7 @@ private:
     json result = {{"last_block", last_block}};
 
     if (sync_getter_) {
-      SyncStatus status = sync_getter_();
+      Stage1SyncStatus status = sync_getter_();
       result["head_block"] = status.head_block;
       result["is_syncing"] = status.is_syncing;
       result["blocks_per_second"] = status.blocks_per_second;
@@ -192,6 +200,16 @@ private:
         {"convert", {{"rows", p.convert.rows}, {"events", p.convert.events}}},
         {"transfer", {{"rows", p.transfer.rows}, {"events", p.transfer.events}}},
     };
+
+    if (stage2_getter_) {
+      auto s2 = stage2_getter_();
+      result["stage2_sync"] = {
+          {"syncing", s2.syncing},
+          {"stage1_last_block", s2.stage1_last_block},
+          {"stage2_last_block", s2.stage2_last_block},
+          {"behind_chunks", s2.behind_chunks},
+      };
+    }
 
     res_.result(http::status::ok);
     res_.body() = result.dump();
@@ -488,7 +506,8 @@ private:
   tcp::socket socket_;
   Database &db_;
   stage3::PnlEngine &pnl_engine_;
-  SyncStatusGetter sync_getter_;
+  Stage1SyncGetter sync_getter_;
+  Stage2SyncGetter stage2_getter_;
   beast::flat_buffer buffer_;
   http::request<http::string_body> req_;
   http::response<http::string_body> res_;
