@@ -45,6 +45,11 @@ async def api_query(q: str = Query(...)):
     return await backend_get("/api/query", {"q": q})
 
 
+@app.get("/api/table-sample")
+async def api_table_sample(table: str = Query(...)):
+    return await backend_get("/api/table-sample", {"table": table})
+
+
 @app.post("/api/export-all")
 async def api_export_all():
     import asyncio

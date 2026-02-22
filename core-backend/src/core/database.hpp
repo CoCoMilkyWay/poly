@@ -89,9 +89,19 @@ public:
     assert(!result->HasError() && "execute failed");
   }
 
+  void execute_read(const std::string &sql) {
+    std::lock_guard<std::mutex> lock(read_mutex_);
+    auto result = read_conn_->Query(sql);
+    assert(!result->HasError() && "execute_read failed");
+  }
+
   json query_json(const std::string &sql) {
     std::lock_guard<std::mutex> lock(read_mutex_);
     auto result = read_conn_->Query(sql);
+    if (result->HasError()) {
+      std::cerr << "[DB] query_json failed: " << result->GetError() << std::endl;
+      std::cerr << "[DB] SQL: " << sql << std::endl;
+    }
     assert(!result->HasError() && "query_json failed");
 
     json rows = json::array();

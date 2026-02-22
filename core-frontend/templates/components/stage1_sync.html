@@ -832,9 +832,7 @@
         return tableSchemaCache[tableName];
       }
       try {
-        const rowsResp = await fetch(
-          `/api/query?q=${encodeURIComponent(`SELECT * FROM ${tableName} LIMIT 1`)}`,
-        );
+        const rowsResp = await fetch(`/api/table-sample?table=${tableName}`);
         const rows = await rowsResp.json();
         if (rows.error) {
           tableSchemaCache[tableName] = `Error: ${rows.error}`;
