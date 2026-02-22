@@ -11,7 +11,7 @@
       "name": "Erigon",
       "url": "http://127.0.0.1:8545",
       "key": "",
-      "chunk": 10000
+      "chunk": 1000
     },
     {
       "name": "dRPC",
