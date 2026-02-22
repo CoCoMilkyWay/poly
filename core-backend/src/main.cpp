@@ -75,15 +75,14 @@ int main(int argc, char *argv[]) {
   signals.async_wait([&](const boost::system::error_code &, int sig) {
     std::cout << "\n[Main] 正在关闭..." << std::endl;
     event_sync.stop();
+    sync_ioc.stop();
+    stage2_ioc.stop();
     api_ioc.stop();
   });
 
   std::cout << "[Main] 服务已启动" << std::endl;
   api_ioc.run();
 
-  std::cout << "[Main] 正在停止同步..." << std::endl;
-  sync_ioc.stop();
-  stage2_ioc.stop();
   sync_thread.join();
   stage2_thread.join();
 

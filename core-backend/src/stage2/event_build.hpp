@@ -164,6 +164,8 @@ public:
 
     progress_.total_conditions = conditions_.size();
     progress_.total_tokens = token_map_.size();
+    if (progress_.cursor > 0)
+      progress_.phase = 3;
   }
 
   int64_t cursor() const { return progress_.cursor; }
