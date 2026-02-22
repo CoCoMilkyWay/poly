@@ -145,7 +145,7 @@ private:
     for (const char *name : feather_names) {
       std::string path = db_.feather_path(name);
       if (std::filesystem::exists(path)) {
-        int64_t count = db_.query_single_int("SELECT COUNT(*) FROM '" + path + "'");
+        int64_t count = db_.query_single_int("SELECT COUNT(*) FROM read_arrow('" + path + "')");
         feather_files.push_back({{"name", name}, {"count", count}});
       }
     }

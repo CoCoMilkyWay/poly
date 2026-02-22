@@ -353,7 +353,7 @@ private:
     auto conn = stage1_db_.create_connection();
 
     auto cp = conn->Query(
-        "SELECT condition_id, outcome_slot_count FROM '" + stage1_db_.feather_path("condition_preparation") + "' "
+        "SELECT condition_id, outcome_slot_count FROM " + stage1_db_.feather_table("condition_preparation") + " "
                                                                                                               "WHERE block_number > " +
         std::to_string(start) +
         " AND block_number <= " + std::to_string(end));
@@ -364,7 +364,7 @@ private:
     }
 
     auto cr = conn->Query(
-        "SELECT condition_id, payout_numerators FROM '" + stage1_db_.feather_path("condition_resolution") + "' "
+        "SELECT condition_id, payout_numerators FROM " + stage1_db_.feather_table("condition_resolution") + " "
                                                                                                             "WHERE block_number > " +
         std::to_string(start) +
         " AND block_number <= " + std::to_string(end));
@@ -384,7 +384,7 @@ private:
     }
 
     auto tm = conn->Query(
-        "SELECT token0, condition_id FROM '" + stage1_db_.feather_path("token_map") + "' "
+        "SELECT token0, condition_id FROM " + stage1_db_.feather_table("token_map") + " "
                                                                                       "WHERE block_number > " +
         std::to_string(start) +
         " AND block_number <= " + std::to_string(end));
@@ -402,7 +402,7 @@ private:
     }
 
     auto fpmm = conn->Query(
-        "SELECT fpmm_addr, condition_ids FROM '" + stage1_db_.feather_path("fpmm") + "' "
+        "SELECT fpmm_addr, condition_ids FROM " + stage1_db_.feather_table("fpmm") + " "
                                                                                      "WHERE block_number > " +
         std::to_string(start) +
         " AND block_number <= " + std::to_string(end));
@@ -425,7 +425,7 @@ private:
     auto conn = stage1_db_.create_connection();
 
     auto split = conn->Query(
-        "SELECT block_number, tx_hash, condition_id, amount, stakeholder FROM '" + stage1_db_.feather_path("split") + "' "
+        "SELECT block_number, tx_hash, condition_id, amount, stakeholder FROM " + stage1_db_.feather_table("split") + " "
                                                                                                                       "WHERE block_number > " +
         std::to_string(start) +
         " AND block_number <= " + std::to_string(end));
@@ -442,7 +442,7 @@ private:
     }
 
     auto merge = conn->Query(
-        "SELECT block_number, tx_hash, condition_id, amount, stakeholder FROM '" + stage1_db_.feather_path("merge") + "' "
+        "SELECT block_number, tx_hash, condition_id, amount, stakeholder FROM " + stage1_db_.feather_table("merge") + " "
                                                                                                                       "WHERE block_number > " +
         std::to_string(start) +
         " AND block_number <= " + std::to_string(end));
@@ -459,7 +459,7 @@ private:
     }
 
     auto redemption = conn->Query(
-        "SELECT block_number, tx_hash, condition_id, payout, redeemer FROM '" + stage1_db_.feather_path("redemption") + "' "
+        "SELECT block_number, tx_hash, condition_id, payout, redeemer FROM " + stage1_db_.feather_table("redemption") + " "
                                                                                                                         "WHERE block_number > " +
         std::to_string(start) +
         " AND block_number <= " + std::to_string(end));
@@ -476,7 +476,7 @@ private:
     }
 
     auto convert = conn->Query(
-        "SELECT block_number, tx_hash, market_id, index_set, amount, stakeholder FROM '" + stage1_db_.feather_path("convert") + "' "
+        "SELECT block_number, tx_hash, market_id, index_set, amount, stakeholder FROM " + stage1_db_.feather_table("convert") + " "
                                                                                                                                 "WHERE block_number > " +
         std::to_string(start) +
         " AND block_number <= " + std::to_string(end));
@@ -494,9 +494,9 @@ private:
 
     auto order = conn->Query(
         "SELECT block_number, tx_hash, maker, taker, maker_asset_id, taker_asset_id, "
-        "maker_amount, taker_amount, fee FROM '" +
-        stage1_db_.feather_path("order_filled") + "' "
-                                                  "WHERE block_number > " +
+        "maker_amount, taker_amount, fee FROM " +
+        stage1_db_.feather_table("order_filled") + " "
+                                                   "WHERE block_number > " +
         std::to_string(start) +
         " AND block_number <= " + std::to_string(end));
     for (idx_t i = 0; i < order->RowCount(); ++i) {
@@ -526,9 +526,9 @@ private:
 
     auto fpmm_trade = conn->Query(
         "SELECT block_number, tx_hash, fpmm_addr, trader, side, outcome_index, "
-        "usdc_amount, token_amount FROM '" +
-        stage1_db_.feather_path("fpmm_trade") + "' "
-                                                "WHERE block_number > " +
+        "usdc_amount, token_amount FROM " +
+        stage1_db_.feather_table("fpmm_trade") + " "
+                                                 "WHERE block_number > " +
         std::to_string(start) +
         " AND block_number <= " + std::to_string(end));
     for (idx_t i = 0; i < fpmm_trade->RowCount(); ++i) {
@@ -546,7 +546,7 @@ private:
     }
 
     auto fpmm_funding = conn->Query(
-        "SELECT block_number, tx_hash, fpmm_addr, funder, side, amounts FROM '" + stage1_db_.feather_path("fpmm_funding") + "' "
+        "SELECT block_number, tx_hash, fpmm_addr, funder, side, amounts FROM " + stage1_db_.feather_table("fpmm_funding") + " "
                                                                                                                             "WHERE block_number > " +
         std::to_string(start) +
         " AND block_number <= " + std::to_string(end));
@@ -579,8 +579,8 @@ private:
     auto conn = stage1_db_.create_connection();
     auto transfers = conn->Query(
         "SELECT block_number, tx_hash, log_index, operator, from_addr, to_addr, token_id, amount "
-        "FROM '" +
-        stage1_db_.feather_path("transfer") + "' WHERE block_number > " +
+        "FROM " +
+        stage1_db_.feather_table("transfer") + " WHERE block_number > " +
         std::to_string(start) +
         " AND block_number <= " + std::to_string(end) +
         " ORDER BY block_number, log_index");

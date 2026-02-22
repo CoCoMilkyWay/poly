@@ -172,6 +172,8 @@ public:
   }
 
   void init_schema() {
+    execute("INSTALL nanoarrow FROM community");
+    execute("LOAD nanoarrow");
     execute(R"(
       CREATE TABLE IF NOT EXISTS sync_state (
         key TEXT PRIMARY KEY,
@@ -185,6 +187,10 @@ public:
     return data_dir_ + "/stage1/" + table + ".feather";
   }
 
+  std::string feather_table(const std::string &table) const {
+    return "read_arrow('" + feather_path(table) + "')";
+  }
+
   void refresh_feather_views() {
     static const char *feather_tables[] = {
         "transfer", "condition_preparation", "condition_resolution",
@@ -193,7 +199,7 @@ public:
     for (const char *name : feather_tables) {
       std::string path = feather_path(name);
       if (fs::exists(path)) {
-        execute("CREATE OR REPLACE VIEW " + std::string(name) + " AS SELECT * FROM '" + path + "'");
+        execute("CREATE OR REPLACE VIEW " + std::string(name) + " AS SELECT * FROM read_arrow('" + path + "')");
       }
     }
   }
