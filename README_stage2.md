@@ -47,9 +47,10 @@ rebuild(target_block):
 
     固定 chunk 循环 (cursor → target_block):
         Phase 1: chunk 内 Stage1 表 → 更新内存映射 + rb_* 数据
-                 ├─ 先处理 condition_preparation
-                 └─ 并行: condition_resolution / token_map / fpmm
-        Phase 2: chunk 内 7 表 → 内存语义索引
+                 ├─ 先处理 condition_preparation (含 question_id)
+                 ├─ 并行: condition_resolution / token_map / fpmm
+                 └─ neg_risk_question → cond_to_market_ 映射
+        Phase 2: chunk 内 7 表 → 内存语义索引 (split/merge/redemption/convert 用 vector 存储多值)
         Phase 3: chunk 内 transfer → 分类 + 关联语义 → user_event 数据
         └─ 单事务: batch_insert(rb_* + user_event) + UPDATE cursor
 ```
@@ -60,30 +61,38 @@ rebuild(target_block):
 
 ### 映射表 (持久化 rb\_\* + 内存)
 
-| 映射                                                     | 来源                               | 用途               |
-| -------------------------------------------------------- | ---------------------------------- | ------------------ |
-| `cond_map_[condition_id] → cond_idx`                     | condition_preparation              | 32字节→4字节压缩   |
-| `conditions_[cond_idx] → {outcome_count, payout}`        | condition_preparation + resolution | 结算状态           |
-| `token_map_[token_id] → {cond_idx, is_yes}`              | token_map + fpmm计算               | Transfer 归属      |
-| `fpmm_map_[fpmm_addr] → {cond_idx, token_yes, token_no}` | fpmm                               | FPMM operator 识别 |
+| 映射                                                          | 来源                               | 用途                    |
+| ------------------------------------------------------------- | ---------------------------------- | ----------------------- |
+| `cond_map_[condition_id] → cond_idx`                          | condition_preparation              | 32字节→4字节压缩        |
+| `conditions_[cond_idx] → {outcome_count, payout, question_id}` | condition_preparation + resolution | 结算状态 + NegRisk关联  |
+| `token_map_[token_id] → {cond_idx, is_yes}`                   | token_map + fpmm计算               | Transfer 归属           |
+| `fpmm_map_[fpmm_addr] → cond_idx`                             | fpmm                               | FPMM operator 识别      |
+| `cond_to_market_[question_id] → market_id`                    | neg_risk_question                  | Convert 事件的市场查找  |
+
 **关键洞察**：`token_map_` 有两个来源
 
-1. TokenRegistered 事件直接提供
-2. FPMMCreation 需要 keccak256 计算: `token_id = keccak256(collateral, keccak256(cond_id, index_set))`
+1. TokenRegistered 事件直接提供 token0(YES) 和 token1(NO)
+2. FPMMCreation 需要 keccak256 计算:
+   - `collectionId = keccak256(parentCollectionId[32] + conditionId[32] + indexSet[32])`
+   - `positionId = keccak256(collateralToken[20] + collectionId[32])`
 
 ### 语义索引 (仅内存, 不持久化)
 
 ```
-tx_split_[(block, tx_hash, cond_id)]  → {amount, stakeholder}
-tx_merge_[(block, tx_hash, cond_id)]  → {amount, stakeholder}
-tx_redemption_[(block, tx_hash, cond_id)] → {index_sets, payout, redeemer}
-tx_convert_[(block, tx_hash)]         → {market_id, index_set, amount, stakeholder}
-tx_order_[(block, tx_hash, token_id)] → {maker, taker, side, amounts, fee}
-tx_fpmm_trade_[(block, tx_hash)]      → {fpmm_addr, trader, side, outcome_index, amounts, fee}
-tx_fpmm_funding_[(block, tx_hash)]    → {fpmm_addr, funder, side, amounts[]}
+tx_split_[(block, tx_hash, cond_id)]      → vector<{amount, stakeholder}>
+tx_merge_[(block, tx_hash, cond_id)]      → vector<{amount, stakeholder}>
+tx_redemption_[(block, tx_hash, cond_id)] → vector<{payout, redeemer}>
+tx_convert_[(block, tx_hash, market_id)]  → vector<{index_set, amount, stakeholder}>
+tx_order_[(block, tx_hash, token_id)]     → {maker, taker, side, amounts, fee}
+tx_fpmm_trade_[(block, tx_hash)]          → {fpmm_addr, trader, side, outcome_index, amounts, fee}
+tx_fpmm_funding_[(block, tx_hash)]        → {fpmm_addr, funder, side, amounts[]}
 ```
 
-**注意**: Split/Merge/Redemption 用 `cond_id` 作 key，因为同一 tx 可能对多个 condition 操作 (套利机器人)
+**关键设计**:
+
+- Split/Merge/Redemption 用 `cond_id` 作 key，存储 vector 支持同一 tx 同一 condition 多次操作
+- Convert 用 `market_id` 作 key，通过 condition 的 question_id 查找对应 market
+- 遍历 vector 查找 stakeholder 匹配的事件，确保精确关联
 
 **为什么不持久化**: 语义事件和 Transfer 在同一个 tx，增量只需索引 new_range 即可关联。
 
@@ -151,8 +160,8 @@ Transfer(operator, from, to, token_id, amount)
     │   ├─ tx_redemption_ 存在 且 redeemer == from
     │   │   └─ Redemption: user=from, 每条 burn 一个事件, price=payout_numerator
     │   │
-    │   ├─ tx_convert_ 存在 且 stakeholder == from
-    │   │   └─ Convert: user=from, 每条 NO burn 一个事件, price=(M-1)/M
+    │   ├─ tx_convert_ 存在 (通过 question_id → market_id 查找) 且 stakeholder == from
+    │   │   └─ Convert: user=from, 每条 NO burn 一个事件, price=(M-1)/M，M=该事件的 popcount(index_set)
     │   │
     │   ├─ tx_fpmm_funding_ 存在 且 side=Removed
     │   │   └─ FPMMLPRemove: user=funder, 每条 Transfer 一个事件
@@ -161,7 +170,7 @@ Transfer(operator, from, to, token_id, amount)
     │
     ├─ operator == CTF_EXCHANGE / NEG_RISK_CTF_EXCHANGE
     │   ├─ tx_order_ 存在
-    │   │   └─ 生成两个事件: maker 的 Buy/Sell + taker 的 Sell/Buy
+    │   │   └─ 生成两个事件: to 的 Buy + from 的 Sell (使用 transfer 的 from/to，不用 maker/taker)
     │   └─ 否则 → TransferIn(to) + TransferOut(from)
     │
     ├─ operator == NEG_RISK_ADAPTER
@@ -199,11 +208,11 @@ CONDITIONAL_TOKENS   = 0x4d97dcd97ec945f40cf65f87097ace5ea0476045
 
 **用户识别**:
 
-- Split/Merge/Redemption: 从 Transfer.to (mint) 或 Transfer.from (burn)
-- OrderFilled: 从 tx*order*.maker/taker
+- Split/Merge/Redemption: 从 Transfer.to (mint) 或 Transfer.from (burn)，遍历 vector 查找匹配的 stakeholder
+- OrderFilled: 从 Transfer.from (卖方) 和 Transfer.to (买方)，**不用 maker/taker** 避免同 tx 多 order 覆盖问题
 - FPMMTrade: 从 tx*fpmm_trade*.trader
 - FPMMFunding: 从 tx*fpmm_funding*.funder (**不是 Transfer.to/from!**)
-- Convert: 从 tx*convert*.stakeholder
+- Convert: 从 tx*convert*.stakeholder，通过 condition.question_id → market_id 查找
 
 **价格计算**:
 
@@ -211,7 +220,7 @@ CONDITIONAL_TOKENS   = 0x4d97dcd97ec945f40cf65f87097ace5ea0476045
 - Buy/Sell/FPMMBuy/FPMMSell: `usdc_amount / token_amount`
 - Redemption: `payout_numerator` (赢家=1, 输家=0, 平局=0.5)
 - FPMMLPAdd/Remove: 按池子当时的隐含价格
-- Convert: `(M-1) / M`，M = popcount(index_set)
+- Convert: `(M-1) / M`，M = popcount(index_set)，从匹配 stakeholder 的 convert 事件获取精确 index_set
 - TransferIn/Out: 0 (无价格信息)
 
 ## Stage 3 用户状态

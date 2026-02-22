@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../core/database.hpp"
+#include "../core/keccak256.hpp"
 #include "misc/profiler.hpp"
 #include "types.hpp"
 #include <algorithm>
@@ -14,6 +15,8 @@ static constexpr const char *ZERO_ADDR = "0x000000000000000000000000000000000000
 static constexpr const char *CTF_EXCHANGE = "0x4bfb41d5b3570defd03c39a9a4d8de6bd8b8982e";
 static constexpr const char *NEG_RISK_CTF_EXCHANGE = "0xc5d563a36ae78145c45a50134d48a1215220f80a";
 static constexpr const char *NEG_RISK_ADAPTER = "0xd91e80cf2e7be2e162c6513ced06f1dd0da35296";
+static constexpr const char *USDC_E = "0x2791bca1f2de4661ed88a30c99a7a9449aa84174";
+static constexpr const char *CONDITIONAL_TOKENS = "0x4d97dcd97ec945f40cf65f87097ace5ea0476045";
 
 struct ScanStats {
   int64_t rows = 0;
@@ -66,9 +69,14 @@ public:
         payout_4    BIGINT,
         payout_5    BIGINT,
         payout_6    BIGINT,
-        payout_7    BIGINT
+        payout_7    BIGINT,
+        question_id BLOB
       )
     )");
+    // 添加question_id列（如果表已存在但没有这个列）
+    try {
+      stage2_db_.execute("ALTER TABLE rb_condition ADD COLUMN question_id BLOB");
+    } catch (...) {}
 
     stage2_db_.execute(R"(
       CREATE TABLE IF NOT EXISTS rb_token (
@@ -128,7 +136,7 @@ public:
 
     auto cond_r = conn->Query("SELECT cond_idx, cond_id, outcome_cnt, "
                               "payout_0, payout_1, payout_2, payout_3, "
-                              "payout_4, payout_5, payout_6, payout_7 FROM rb_condition ORDER BY cond_idx");
+                              "payout_4, payout_5, payout_6, payout_7, question_id FROM rb_condition ORDER BY cond_idx");
     for (idx_t i = 0; i < cond_r->RowCount(); ++i) {
       uint32_t idx = cond_r->GetValue(0, i).GetValue<uint32_t>();
       std::string cond_id = blob_to_hex(cond_r->GetValue(1, i).GetValueUnsafe<std::string>());
@@ -137,6 +145,10 @@ public:
       for (int j = 0; j < info.outcome_count; ++j) {
         auto v = cond_r->GetValue(3 + j, i);
         info.payout_numerators.push_back(v.IsNull() ? -1 : v.GetValue<int64_t>());
+      }
+      auto qid_v = cond_r->GetValue(11, i);
+      if (!qid_v.IsNull()) {
+        info.question_id = to_lower(blob_to_hex(qid_v.GetValueUnsafe<std::string>()));
       }
       while (conditions_.size() <= idx) {
         conditions_.emplace_back();
@@ -162,6 +174,19 @@ public:
       FPMMInfo info;
       info.cond_idx = fpmm_r->GetValue(1, i).GetValue<uint32_t>();
       fpmm_map_[to_lower(addr)] = info;
+    }
+
+    // 从stage1加载condition -> market映射 (用于NegRisk convert)
+    if (progress_.cursor > 0) {
+      auto conn1 = stage1_db_.create_connection();
+      auto nrq = conn1->Query(
+          "SELECT market_id, question_id FROM " + stage1_db_.feather_table_range("neg_risk_question", 0, progress_.cursor) +
+          " WHERE block_number <= " + std::to_string(progress_.cursor));
+      for (idx_t i = 0; i < nrq->RowCount(); ++i) {
+        std::string market_id = to_lower(blob_to_hex(nrq->GetValue(0, i).GetValueUnsafe<std::string>()));
+        std::string question_id = to_lower(blob_to_hex(nrq->GetValue(1, i).GetValueUnsafe<std::string>()));
+        cond_to_market_[question_id] = market_id;
+      }
     }
 
     progress_.total_conditions = conditions_.size();
@@ -230,11 +255,12 @@ private:
   std::unordered_map<std::string, uint32_t> cond_map_;
   std::unordered_map<std::string, TokenInfo> token_map_;
   std::unordered_map<std::string, FPMMInfo> fpmm_map_;
+  std::unordered_map<std::string, std::string> cond_to_market_;  // condition_id -> market_id
 
-  std::unordered_map<TxCondKey, SplitInfo> tx_split_;
-  std::unordered_map<TxCondKey, MergeInfo> tx_merge_;
-  std::unordered_map<TxCondKey, RedemptionInfo> tx_redemption_;
-  std::unordered_map<TxKey, ConvertInfo> tx_convert_;
+  std::unordered_map<TxCondKey, std::vector<SplitInfo>> tx_split_;
+  std::unordered_map<TxCondKey, std::vector<MergeInfo>> tx_merge_;
+  std::unordered_map<TxCondKey, std::vector<RedemptionInfo>> tx_redemption_;
+  std::unordered_map<TxMarketKey, std::vector<ConvertInfo>> tx_convert_;
   std::unordered_map<TxTokenKey, OrderInfo> tx_order_;
   std::unordered_map<TxKey, FPMMTradeInfo> tx_fpmm_trade_;
   std::unordered_map<TxKey, FPMMFundingInfo> tx_fpmm_funding_;
@@ -308,15 +334,27 @@ private:
     return result;
   }
 
-  uint32_t intern_condition(const std::string &cond_id, uint8_t outcome_cnt) {
+  uint32_t intern_condition(const std::string &cond_id, uint8_t outcome_cnt, const std::string &question_id = "") {
     std::string lower = to_lower(cond_id);
     auto it = cond_map_.find(lower);
-    if (it != cond_map_.end())
+    if (it != cond_map_.end()) {
+      // 更新question_id（如果之前没有）
+      if (!question_id.empty() && conditions_[it->second].question_id.empty()) {
+        conditions_[it->second].question_id = question_id;
+        for (auto &nc : new_conditions_) {
+          if (nc.idx == it->second) {
+            nc.info.question_id = question_id;
+            break;
+          }
+        }
+      }
       return it->second;
+    }
 
     uint32_t idx = static_cast<uint32_t>(conditions_.size());
     ConditionInfo info;
     info.outcome_count = outcome_cnt;
+    info.question_id = question_id;
     conditions_.push_back(info);
     cond_ids_.push_back(lower);
     cond_map_[lower] = idx;
@@ -366,12 +404,13 @@ private:
     auto conn = stage1_db_.create_connection();
 
     auto cp = conn->Query(
-        "SELECT condition_id, outcome_slot_count FROM " + stage1_db_.feather_table_range("condition_preparation", start, end) +
+        "SELECT condition_id, outcome_slot_count, question_id FROM " + stage1_db_.feather_table_range("condition_preparation", start, end) +
         " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
     for (idx_t i = 0; i < cp->RowCount(); ++i) {
       std::string cid = blob_to_hex(cp->GetValue(0, i).GetValueUnsafe<std::string>());
       int cnt = cp->GetValue(1, i).GetValue<int>();
-      intern_condition(cid, cnt);
+      std::string qid = to_lower(blob_to_hex(cp->GetValue(2, i).GetValueUnsafe<std::string>()));
+      intern_condition(cid, cnt, qid);
     }
 
     auto cr = conn->Query(
@@ -412,19 +451,63 @@ private:
     }
 
     auto fpmm = conn->Query(
-        "SELECT fpmm_addr, condition_ids FROM " + stage1_db_.feather_table_range("fpmm", start, end) +
+        "SELECT fpmm_addr, condition_ids, collateral_token FROM " + stage1_db_.feather_table_range("fpmm", start, end) +
         " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
     for (idx_t i = 0; i < fpmm->RowCount(); ++i) {
       std::string addr = blob_to_hex(fpmm->GetValue(0, i).GetValueUnsafe<std::string>());
       std::string cids_json = fpmm->GetValue(1, i).GetValueUnsafe<std::string>();
+      std::string collateral = to_lower(blob_to_hex(fpmm->GetValue(2, i).GetValueUnsafe<std::string>()));
       auto cids_arr = nlohmann::json::parse(cids_json);
       assert(!cids_arr.empty());
       std::string cid = cids_arr[0].get<std::string>();
       std::string lower_cid = to_lower(cid);
       auto it = cond_map_.find(lower_cid);
-      if (it == cond_map_.end())
-        continue;
-      intern_fpmm(addr, it->second);
+      uint32_t cond_idx;
+      if (it == cond_map_.end()) {
+        cond_idx = intern_condition(cid, 2);
+      } else {
+        cond_idx = it->second;
+      }
+      intern_fpmm(addr, cond_idx);
+
+      // 计算FPMM的YES和NO token_id
+      // collectionId = keccak256(parentCollectionId[32] + conditionId[32] + indexSet[32])
+      // positionId = keccak256(collateralToken[20] + collectionId[32])
+      auto cond_bytes = hex_to_blob(lower_cid);
+      auto collateral_bytes = hex_to_blob(collateral);
+      for (int index_set = 1; index_set <= 2; ++index_set) {
+        // collectionId = keccak256(0x00..00[32] + conditionId[32] + indexSet[32])
+        std::string collection_input(96, '\0');
+        // parentCollectionId = 0x0 (前32字节已经是0)
+        std::memcpy(collection_input.data() + 32, cond_bytes.data(), std::min(size_t(32), cond_bytes.size()));
+        collection_input[95] = static_cast<char>(index_set);  // indexSet在最后一个字节(uint256大端)
+        auto collection_hash = crypto::keccak256(collection_input);
+
+        // positionId = keccak256(collateralToken[20] + collectionId[32])
+        std::string position_input(52, '\0');
+        std::memcpy(position_input.data(), collateral_bytes.data(), std::min(size_t(20), collateral_bytes.size()));
+        std::memcpy(position_input.data() + 20, collection_hash.data(), 32);
+        auto position_hash = crypto::keccak256(position_input);
+
+        std::string token_id = crypto::Keccak256::to_hex(position_hash);
+        intern_token(token_id, cond_idx, index_set == 1 ? 1 : 0);  // 1=YES, 2=NO
+      }
+    }
+
+    // 建立condition -> market映射 (用于NegRisk convert)
+    auto nrq = conn->Query(
+        "SELECT market_id, question_id FROM " + stage1_db_.feather_table_range("neg_risk_question", start, end) +
+        " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
+    for (idx_t i = 0; i < nrq->RowCount(); ++i) {
+      std::string market_id = to_lower(blob_to_hex(nrq->GetValue(0, i).GetValueUnsafe<std::string>()));
+      std::string question_id = to_lower(blob_to_hex(nrq->GetValue(1, i).GetValueUnsafe<std::string>()));
+      // conditionId = keccak256(oracle, questionId, outcomeSlotCount)
+      // NegRisk的oracle是固定的NegRiskAdapter地址，outcomeSlotCount=2
+      // 实际上我们可以直接从condition_preparation表匹配question_id
+      // 但更简单的方法：遍历conditions_，找到question_id匹配的
+      // 或者在处理convert时，直接从token找到condition，再从这里找market
+      // 先存储question_id -> market_id，稍后在处理时再关联
+      cond_to_market_[question_id] = market_id;
     }
   }
 
@@ -445,7 +528,7 @@ private:
       info.amount = split->GetValue(3, i).GetValue<int64_t>();
       info.stakeholder = to_lower(blob_to_hex(split->GetValue(4, i).GetValueUnsafe<std::string>()));
       info.cond_id = key.cond_id;
-      tx_split_[key] = info;
+      tx_split_[key].push_back(info);
     }
 
     auto merge = conn->Query(
@@ -461,7 +544,7 @@ private:
       info.amount = merge->GetValue(3, i).GetValue<int64_t>();
       info.stakeholder = to_lower(blob_to_hex(merge->GetValue(4, i).GetValueUnsafe<std::string>()));
       info.cond_id = key.cond_id;
-      tx_merge_[key] = info;
+      tx_merge_[key].push_back(info);
     }
 
     auto redemption = conn->Query(
@@ -477,7 +560,7 @@ private:
       info.payout = redemption->GetValue(3, i).GetValue<int64_t>();
       info.redeemer = to_lower(blob_to_hex(redemption->GetValue(4, i).GetValueUnsafe<std::string>()));
       info.cond_id = key.cond_id;
-      tx_redemption_[key] = info;
+      tx_redemption_[key].push_back(info);
     }
 
     auto convert = conn->Query(
@@ -485,15 +568,17 @@ private:
         stage1_db_.feather_table_range("convert", start, end) +
         " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
     for (idx_t i = 0; i < convert->RowCount(); ++i) {
-      TxKey key;
+      std::string market_id = to_lower(blob_to_hex(convert->GetValue(2, i).GetValueUnsafe<std::string>()));
+      TxMarketKey key;
       key.block = convert->GetValue(0, i).GetValue<int64_t>();
       key.tx_hash = hex_to_bytes32(blob_to_hex(convert->GetValue(1, i).GetValueUnsafe<std::string>()));
+      key.market_id = market_id;
       ConvertInfo info;
-      info.market_id = to_lower(blob_to_hex(convert->GetValue(2, i).GetValueUnsafe<std::string>()));
+      info.market_id = market_id;
       info.index_set = convert->GetValue(3, i).GetValue<int64_t>();
       info.amount = convert->GetValue(4, i).GetValue<int64_t>();
       info.stakeholder = to_lower(blob_to_hex(convert->GetValue(5, i).GetValueUnsafe<std::string>()));
-      tx_convert_[key] = info;
+      tx_convert_[key].push_back(info);
     }
 
     auto order = conn->Query(
@@ -564,10 +649,10 @@ private:
       tx_fpmm_funding_[key] = info;
     }
 
-    progress_.cnt_split += tx_split_.size();
-    progress_.cnt_merge += tx_merge_.size();
-    progress_.cnt_redemption += tx_redemption_.size();
-    progress_.cnt_convert += tx_convert_.size();
+    for (const auto &kv : tx_split_) progress_.cnt_split += kv.second.size();
+    for (const auto &kv : tx_merge_) progress_.cnt_merge += kv.second.size();
+    for (const auto &kv : tx_redemption_) progress_.cnt_redemption += kv.second.size();
+    for (const auto &kv : tx_convert_) progress_.cnt_convert += kv.second.size();
     progress_.cnt_order += tx_order_.size();
     progress_.cnt_fpmm_trade += tx_fpmm_trade_.size();
     progress_.cnt_fpmm_funding += tx_fpmm_funding_.size();
@@ -638,10 +723,14 @@ private:
 
     if (from == ZERO_ADDR) {
       auto sit = tx_split_.find(tx_cond_key);
-      if (sit != tx_split_.end() && sit->second.stakeholder == to) {
-        RawEvent evt{sort_key, cond_idx, EventType::Split, token_idx, 0, amount, split_price};
-        push_event(to, evt);
-        return;
+      if (sit != tx_split_.end()) {
+        for (const auto &info : sit->second) {
+          if (info.stakeholder == to) {
+            RawEvent evt{sort_key, cond_idx, EventType::Split, token_idx, 0, amount, split_price};
+            push_event(to, evt);
+            return;
+          }
+        }
       }
       auto fit = tx_fpmm_funding_.find(tx_key);
       if (fit != tx_fpmm_funding_.end() && fit->second.side == 1) {
@@ -655,31 +744,50 @@ private:
 
     if (to == ZERO_ADDR) {
       auto mit = tx_merge_.find(tx_cond_key);
-      if (mit != tx_merge_.end() && mit->second.stakeholder == from) {
-        RawEvent evt{sort_key, cond_idx, EventType::Merge, token_idx, 0, -amount, split_price};
-        push_event(from, evt);
-        return;
-      }
-      auto rit = tx_redemption_.find(tx_cond_key);
-      if (rit != tx_redemption_.end() && rit->second.redeemer == from) {
-        int64_t payout_price = 1000000;
-        if (cond_idx < conditions_.size()) {
-          auto &payouts = conditions_[cond_idx].payout_numerators;
-          if (token_idx < payouts.size() && payouts[token_idx] >= 0) {
-            payout_price = payouts[token_idx];
+      if (mit != tx_merge_.end()) {
+        for (const auto &info : mit->second) {
+          if (info.stakeholder == from) {
+            RawEvent evt{sort_key, cond_idx, EventType::Merge, token_idx, 0, -amount, split_price};
+            push_event(from, evt);
+            return;
           }
         }
-        RawEvent evt{sort_key, cond_idx, EventType::Redemption, token_idx, 0, -amount, payout_price};
-        push_event(from, evt);
-        return;
       }
-      auto cit = tx_convert_.find(tx_key);
-      if (cit != tx_convert_.end() && cit->second.stakeholder == from) {
-        int M = __builtin_popcountll(cit->second.index_set);
-        int64_t conv_price = M > 1 ? 1000000 * (M - 1) / M : 0;
-        RawEvent evt{sort_key, cond_idx, EventType::Convert, token_idx, 0, -amount, conv_price};
-        push_event(from, evt);
-        return;
+      auto rit = tx_redemption_.find(tx_cond_key);
+      if (rit != tx_redemption_.end()) {
+        for (const auto &info : rit->second) {
+          if (info.redeemer == from) {
+            int64_t payout_price = 1000000;
+            if (cond_idx < conditions_.size()) {
+              auto &payouts = conditions_[cond_idx].payout_numerators;
+              if (token_idx < payouts.size() && payouts[token_idx] >= 0) {
+                payout_price = payouts[token_idx];
+              }
+            }
+            RawEvent evt{sort_key, cond_idx, EventType::Redemption, token_idx, 0, -amount, payout_price};
+            push_event(from, evt);
+            return;
+          }
+        }
+      }
+      // convert: 通过condition的question_id查找market_id，然后用TxMarketKey查找convert事件
+      if (cond_idx < conditions_.size() && !conditions_[cond_idx].question_id.empty()) {
+        auto market_it = cond_to_market_.find(conditions_[cond_idx].question_id);
+        if (market_it != cond_to_market_.end()) {
+          TxMarketKey tx_market_key{block, tx_hash, market_it->second};
+          auto cit = tx_convert_.find(tx_market_key);
+          if (cit != tx_convert_.end()) {
+            for (const auto &info : cit->second) {
+              if (info.stakeholder == from) {
+                int M = __builtin_popcountll(info.index_set);
+                int64_t conv_price = M > 1 ? 1000000 * (M - 1) / M : 0;
+                RawEvent evt{sort_key, cond_idx, EventType::Convert, token_idx, 0, -amount, conv_price};
+                push_event(from, evt);
+                return;
+              }
+            }
+          }
+        }
       }
       auto fit = tx_fpmm_funding_.find(tx_key);
       if (fit != tx_fpmm_funding_.end() && fit->second.side == 2) {
@@ -760,10 +868,11 @@ private:
           pvals += "NULL";
         }
       }
+      std::string qid_val = nc.info.question_id.empty() ? "NULL" : blob_to_hex_literal(hex_to_blob(nc.info.question_id));
       conn->Query("INSERT OR REPLACE INTO rb_condition VALUES (" +
                   std::to_string(nc.idx) + ", " +
                   blob_to_hex_literal(blob) + ", " +
-                  std::to_string(nc.info.outcome_count) + ", " + pvals + ")");
+                  std::to_string(nc.info.outcome_count) + ", " + pvals + ", " + qid_val + ")");
     }
 
     for (auto &nt : new_tokens_) {

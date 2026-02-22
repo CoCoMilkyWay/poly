@@ -27,6 +27,7 @@ enum EventType : uint8_t {
 struct ConditionInfo {
   uint8_t outcome_count = 2;
   std::vector<int64_t> payout_numerators;
+  std::string question_id;  // 用于NegRisk convert的market查找
 };
 
 struct TokenInfo {
@@ -112,6 +113,16 @@ struct TxTokenKey {
   }
 };
 
+struct TxMarketKey {
+  int64_t block;
+  std::array<uint8_t, 32> tx_hash;
+  std::string market_id;
+
+  bool operator==(const TxMarketKey &o) const {
+    return block == o.block && tx_hash == o.tx_hash && market_id == o.market_id;
+  }
+};
+
 struct SplitInfo {
   int64_t amount;
   std::string stakeholder;
@@ -194,6 +205,17 @@ struct hash<stage2::TxTokenKey> {
     for (size_t i = 0; i < 8; ++i)
       h ^= std::hash<uint8_t>()(k.tx_hash[i]) << (i % 8);
     h ^= std::hash<std::string>()(k.token_id);
+    return h;
+  }
+};
+
+template <>
+struct hash<stage2::TxMarketKey> {
+  size_t operator()(const stage2::TxMarketKey &k) const {
+    size_t h = std::hash<int64_t>()(k.block);
+    for (size_t i = 0; i < 8; ++i)
+      h ^= std::hash<uint8_t>()(k.tx_hash[i]) << (i % 8);
+    h ^= std::hash<std::string>()(k.market_id);
     return h;
   }
 };
