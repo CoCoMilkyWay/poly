@@ -35,10 +35,10 @@ struct BuildProgress {
   int64_t total_tokens = 0;
   int64_t total_events = 0;
   int64_t total_users = 0;
-  int64_t total_markets = 0;      // NegRisk 市场数
-  int64_t cnt_cond_amm = 0;       // AMM 问题数
-  int64_t cnt_cond_normal = 0;    // Normal 问题数
-  int64_t cnt_cond_negrisk = 0;   // NegRisk 问题数
+  int64_t total_markets = 0;    // NegRisk 市场数
+  int64_t cnt_cond_amm = 0;     // AMM 问题数
+  int64_t cnt_cond_normal = 0;  // Normal 问题数
+  int64_t cnt_cond_negrisk = 0; // NegRisk 问题数
   int64_t cnt_split = 0;
   int64_t cnt_merge = 0;
   int64_t cnt_redemption = 0;
@@ -282,10 +282,10 @@ private:
   std::unordered_map<std::string, TokenInfo> token_map_;
   std::unordered_map<std::string, FPMMInfo> fpmm_map_;
   std::unordered_map<std::string, std::string> cond_to_market_; // condition_id -> market_id
-  std::unordered_set<std::string> seen_users_;     // 实时统计唯一用户
-  std::unordered_set<std::string> seen_markets_;   // 统计唯一 NegRisk 市场
-  std::unordered_set<uint32_t> fpmm_cond_idxs_;    // AMM 对应的 cond_idx
-  std::unordered_set<uint32_t> negrisk_cond_idxs_; // NegRisk 对应的 cond_idx
+  std::unordered_set<std::string> seen_users_;                  // 实时统计唯一用户
+  std::unordered_set<std::string> seen_markets_;                // 统计唯一 NegRisk 市场
+  std::unordered_set<uint32_t> fpmm_cond_idxs_;                 // AMM 对应的 cond_idx
+  std::unordered_set<uint32_t> negrisk_cond_idxs_;              // NegRisk 对应的 cond_idx
 
   std::unordered_map<TxCondKey, std::vector<SplitInfo>> tx_split_;
   std::unordered_map<TxCondKey, std::vector<MergeInfo>> tx_merge_;
@@ -806,28 +806,31 @@ private:
       if (to == NEG_RISK_ADAPTER)
         return;
 
-      // Split: stakeholder == to
+      // FPMM 内部 mint → 检查是否是 LP Add（必须先于 Split 检查！）
+      if (fpmm_map_.count(to) > 0) {
+        auto fit = tx_fpmm_funding_.find(tx_key);
+        if (fit != tx_fpmm_funding_.end() && fit->second.side == 1) {
+          assert(!is_protocol_contract(fit->second.funder) && "LP funder should not be protocol");
+          RawEvent evt{sort_key, cond_idx, EventType::FPMMLPAdd, token_idx, 0, amount, split_price};
+          push_event(fit->second.funder, evt);
+        }
+        // 无论是否有 LP Add 事件，FPMM 的 mint 都不记录为 Split
+        return;
+      }
+
+      // 普通 Split: stakeholder == to (用户直接 split)
       auto sit = tx_split_.find(tx_cond_key);
       if (sit != tx_split_.end()) {
         for (const auto &info : sit->second) {
           if (info.stakeholder == to) {
             assert(!is_protocol_contract(to) && "Split user should not be protocol");
-            assert(info.amount > 0 && "Split amount must be positive");
             RawEvent evt{sort_key, cond_idx, EventType::Split, token_idx, 0, amount, split_price};
             push_event(to, evt);
             return;
           }
         }
       }
-      // FPMM LP Add: mint 给 FPMM，funder 是用户
-      auto fit = tx_fpmm_funding_.find(tx_key);
-      if (fit != tx_fpmm_funding_.end() && fit->second.side == 1) {
-        assert(!is_protocol_contract(fit->second.funder) && "LP funder should not be protocol");
-        RawEvent evt{sort_key, cond_idx, EventType::FPMMLPAdd, token_idx, 0, amount, split_price};
-        push_event(fit->second.funder, evt);
-        return;
-      }
-      // 其他：FPMM 内部 split (stakeholder=FPMM) → 跳过
+      // 其他内部 mint → 跳过
       return;
     }
 
@@ -837,7 +840,19 @@ private:
       if (from == NEG_RISK_ADAPTER)
         return;
 
-      // Merge: stakeholder == from
+      // FPMM 内部 burn → 检查是否是 LP Remove（必须先于 Merge 检查！）
+      if (fpmm_map_.count(from) > 0) {
+        auto fit = tx_fpmm_funding_.find(tx_key);
+        if (fit != tx_fpmm_funding_.end() && fit->second.side == 2) {
+          assert(!is_protocol_contract(fit->second.funder) && "LP funder should not be protocol");
+          RawEvent evt{sort_key, cond_idx, EventType::FPMMLPRemove, token_idx, 0, -amount, split_price};
+          push_event(fit->second.funder, evt);
+        }
+        // 无论是否有 LP Remove 事件，FPMM 的 burn 都不记录为 Merge
+        return;
+      }
+
+      // 普通 Merge: stakeholder == from (用户直接 merge)
       auto mit = tx_merge_.find(tx_cond_key);
       if (mit != tx_merge_.end()) {
         for (const auto &info : mit->second) {
@@ -866,15 +881,7 @@ private:
           }
         }
       }
-      // FPMM LP Remove: burn 从 FPMM，funder 是用户
-      auto fit = tx_fpmm_funding_.find(tx_key);
-      if (fit != tx_fpmm_funding_.end() && fit->second.side == 2) {
-        assert(!is_protocol_contract(fit->second.funder) && "LP funder should not be protocol");
-        RawEvent evt{sort_key, cond_idx, EventType::FPMMLPRemove, token_idx, 0, -amount, split_price};
-        push_event(fit->second.funder, evt);
-        return;
-      }
-      // 其他：FPMM 内部 merge → 跳过
+      // 其他内部 burn → 跳过
       return;
     }
 

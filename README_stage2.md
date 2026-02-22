@@ -45,19 +45,33 @@ ERC1155.sol 中所有修改余额的地方：
 
 ```
 rebuild(target_block):
-    Phase 0: rb_* → 内存映射 (增量模式, 首次跳过)
+    Phase 0: rb_* → 内存映射 (增量恢复，首次跳过)
 
     固定 chunk 循环 (cursor → target_block):
-        Phase 1: chunk 内 Stage1 表 → 更新内存映射 + rb_* 数据
-                 ├─ 先处理 condition_preparation (含 question_id)
-                 ├─ 并行: condition_resolution / token_map / fpmm
-                 └─ neg_risk_question → cond_to_market_ 映射
-        Phase 2: chunk 内 7 表 → 内存语义索引 (split/merge/redemption/convert 用 vector 存储多值)
-        Phase 3: chunk 内 transfer → 分类 + 关联语义 → user_event 数据
-        └─ 单事务: batch_insert(rb_* + user_event) + UPDATE cursor
+        Phase 1: 更新映射表 (依赖顺序: 先注册 condition/token，后建立关联)
+                 ① condition_preparation → cond_map_, conditions_
+                 ② condition_resolution → conditions_.payout
+                 ③ token_map           → token_map_ (需 condition 存在)
+                 ④ fpmm                → fpmm_map_, token_map_ (需 condition 存在，计算 token_id)
+                 ⑤ neg_risk_question   → cond_to_market_ (建立 question_id → market_id)
+
+        Phase 2: 构建语义索引 (7 表，仅内存)
+                 split/merge/redemption/convert/order_filled/fpmm_trade/fpmm_funding
+                 → tx_split_, tx_merge_, tx_redemption_, tx_convert_, tx_order_, tx_fpmm_trade_, tx_fpmm_funding_
+
+        Phase 3: 处理 Transfer (按 block + log_index 排序)
+                 → 分类决策树 + 关联语义索引 → user_event
+
+        Commit: 单事务写入 (rb_* + user_event) + UPDATE cursor
+
+崩溃恢复: 从 cursor 断点重做，语义索引不持久化（同 tx 保证）
 ```
 
-单 chunk = Phase 1→2→3 完整流程 + 单事务写入，崩溃从 cursor 断点重做
+**依赖关系保证**:
+
+- Stage1 扫链保证: condition_preparation < 使用该 condition 的任何事件
+- Phase 1 顺序保证: ①②③④⑤ 严格顺序，后续步骤可依赖前序结果
+- 同 tx 保证: 语义事件和 Transfer 在同一 tx，必在同一 chunk
 
 ## 数据结构
 
@@ -154,21 +168,24 @@ Transfer(operator, from, to, token_id, amount)
     │
     ├─ from == 0x0 (mint)
     │   │
-    │   ├─ to == NEG_RISK_ADAPTER
-    │   │   └─ 跳过 (NegRisk 内部 mint，用户通过后续 transfer 获取)
+    │   ├─ to == NEG_RISK_ADAPTER → 跳过 (NegRisk 内部 mint)
+    │   │
+    │   ├─ to in fpmm_map_ (FPMM 内部 mint，必须先检查！)
+    │   │   ├─ tx_fpmm_funding_ 存在 且 side=Added → FPMMLPAdd: user=funder
+    │   │   └─ 否则 → 跳过 (FPMM 内部 split)
     │   │
     │   ├─ tx_split_ 存在 且 stakeholder == to
     │   │   └─ Split: user=to (普通市场用户直接 split)
     │   │
-    │   ├─ tx_fpmm_funding_ 存在 且 side=Added
-    │   │   └─ FPMMLPAdd: user=funder
-    │   │
-    │   └─ 否则 → 跳过 (FPMM 内部 mint)
+    │   └─ 否则 → 跳过
     │
     ├─ to == 0x0 (burn)
     │   │
-    │   ├─ from == NEG_RISK_ADAPTER
-    │   │   └─ 跳过 (NegRisk 内部 burn，用户已通过之前的 transfer 记录)
+    │   ├─ from == NEG_RISK_ADAPTER → 跳过 (NegRisk 内部 burn)
+    │   │
+    │   ├─ from in fpmm_map_ (FPMM 内部 burn，必须先检查！)
+    │   │   ├─ tx_fpmm_funding_ 存在 且 side=Removed → FPMMLPRemove: user=funder
+    │   │   └─ 否则 → 跳过 (FPMM 内部 merge)
     │   │
     │   ├─ tx_merge_ 存在 且 stakeholder == from
     │   │   └─ Merge: user=from (普通市场用户直接 merge)
@@ -176,48 +193,31 @@ Transfer(operator, from, to, token_id, amount)
     │   ├─ tx_redemption_ 存在 且 redeemer == from
     │   │   └─ Redemption: user=from, price=payout_numerator
     │   │
-    │   ├─ tx_fpmm_funding_ 存在 且 side=Removed
-    │   │   └─ FPMMLPRemove: user=funder
-    │   │
-    │   └─ 否则 → 跳过 (FPMM 内部 burn)
+    │   └─ 否则 → 跳过
     │
     ├─ operator == CTF_EXCHANGE / NEG_RISK_CTF_EXCHANGE
-    │   │
-    │   ├─ tx_order_ 存在
-    │   │   └─ Buy(to) + Sell(from)，使用 transfer 的 from/to 而非 maker/taker
-    │   │
+    │   ├─ tx_order_ 存在 → Buy(to) + Sell(from)
     │   └─ 否则 → TransferIn(to) + TransferOut(from)
     │
     ├─ operator == NEG_RISK_ADAPTER
     │   │
     │   ├─ from == NEG_RISK_ADAPTER (Adapter → 用户)
-    │   │   │
-    │   │   ├─ tx_split_ 存在 且 stakeholder == NEG_RISK_ADAPTER
-    │   │   │   └─ Split: user=to (NegRisk split，用户收到 token)
-    │   │   │
+    │   │   ├─ tx_split_ 存在 且 stakeholder == Adapter → Split: user=to
     │   │   └─ 否则 → TransferIn: user=to
     │   │
     │   ├─ to == NEG_RISK_ADAPTER (用户 → Adapter)
-    │   │   │
-    │   │   ├─ tx_merge_ 存在 且 stakeholder == NEG_RISK_ADAPTER
-    │   │   │   └─ Merge: user=from (NegRisk merge，用户转出 token)
-    │   │   │
-    │   │   ├─ tx_convert_ 存在 且 stakeholder == from
-    │   │   │   └─ Convert: user=from, price=(M-1)/M
-    │   │   │
+    │   │   ├─ tx_merge_ 存在 且 stakeholder == Adapter → Merge: user=from
+    │   │   ├─ tx_convert_ 存在 且 stakeholder == from → Convert: user=from
     │   │   └─ 否则 → TransferOut: user=from
     │   │
-    │   └─ 否则 → 跳过 (Adapter 内部 transfer)
+    │   └─ 否则 → 跳过 (Adapter 内部)
     │
     ├─ operator in fpmm_map_
-    │   │
     │   ├─ tx_fpmm_trade_ 存在 → FPMMBuy/FPMMSell: user=trader
-    │   │
-    │   ├─ from == fpmm → TransferIn: user=to (LP 返还多余 token)
-    │   │
-    │   └─ 否则 → 跳过 (FPMM 内部 transfer)
+    │   ├─ from == fpmm → TransferIn: user=to (LP 返还)
+    │   └─ 否则 → 跳过 (FPMM 内部)
     │
-    └─ 其他 → TransferIn(to) + TransferOut(from) (用户间直接转账)
+    └─ 其他 → TransferIn(to) + TransferOut(from)
 ```
 
 ### 已知合约地址
