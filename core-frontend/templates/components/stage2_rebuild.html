@@ -158,7 +158,7 @@
       const statusEl = document.getElementById("s2-status");
 
       const sync = s.stage2_sync || {};
-      const stage2Block = sync.stage2_last_block || 0;
+      const stage2Block = sync.stage2_cursor || 0;
       const stage1Block = sync.stage1_last_block || 0;
       const behind = sync.behind_chunks || 0;
       const syncing = sync.syncing || false;

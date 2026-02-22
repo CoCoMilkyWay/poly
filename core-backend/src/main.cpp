@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
 
   auto stage2_getter = [&event_sync]() -> Stage2SyncStatus {
     const auto &p = event_sync.progress();
-    return {p.syncing, p.stage1_last_block, p.stage2_last_block, p.behind_chunks};
+    return {p.syncing, p.stage1_last_block, p.stage2_cursor, p.behind_chunks};
   };
 
   boost::asio::io_context api_ioc;

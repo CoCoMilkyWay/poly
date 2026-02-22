@@ -4,7 +4,6 @@
 #include "../stage2/types.hpp"
 #include <algorithm>
 #include <atomic>
-#include <chrono>
 #include <cstring>
 #include <thread>
 #include <unordered_map>
@@ -26,6 +25,8 @@ class PnlEngine {
 public:
   explicit PnlEngine(EventBuilder &builder) : builder_(builder) {}
 
+  // TODO: port to new chunk-based EventBuilder interface
+#if 0
   void rebuild_all() {
     if (builder_.progress().running) {
       return;
@@ -54,6 +55,8 @@ public:
     replay_progress_.replay_ms = std::chrono::duration<double, std::milli>(t1 - t0).count();
     replay_progress_.running = false;
   }
+#endif
+  void rebuild_all() {}
 
   const BuildProgress &build_progress() const { return builder_.progress(); }
   const ReplayProgress &replay_progress() const { return replay_progress_; }
@@ -82,32 +85,11 @@ public:
   RebuildProgress progress() const {
     const auto &bp = builder_.progress();
     RebuildProgress p;
-    if (bp.running) {
-      p.phase = bp.phase;
-    } else if (replay_progress_.running) {
-      p.phase = 3;
-    } else if (replay_progress_.replay_ms > 0) {
-      p.phase = 7;
-    } else {
-      p.phase = 0;
-    }
+    p.phase = bp.phase;
     p.total_conditions = bp.total_conditions;
     p.total_tokens = bp.total_tokens;
-    p.order_filled = bp.order_filled;
-    p.split = bp.split;
-    p.merge = bp.merge;
-    p.redemption = bp.redemption;
-    p.fpmm_trade = bp.fpmm_trade;
-    p.fpmm_funding = bp.fpmm_funding;
-    p.convert = bp.convert;
-    p.transfer = bp.transfer;
-    p.total_events = bp.transfer.events;
-    p.total_users = bp.total_users;
-    p.processed_users = replay_progress_.processed_users;
-    p.running = bp.running || replay_progress_.running;
-    p.phase1_ms = bp.phase1_ms;
-    p.phase2_ms = bp.phase2_ms;
-    p.phase3_ms = replay_progress_.replay_ms;
+    p.total_events = bp.total_events;
+    p.running = bp.running;
     return p;
   }
 

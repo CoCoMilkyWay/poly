@@ -27,7 +27,7 @@ struct Stage1SyncStatus {
 struct Stage2SyncStatus {
   bool syncing = false;
   int64_t stage1_last_block = 0;
-  int64_t stage2_last_block = 0;
+  int64_t stage2_cursor = 0;
   int64_t behind_chunks = 0;
 };
 
@@ -186,19 +186,6 @@ private:
         {"total_conditions", p.total_conditions},
         {"total_tokens", p.total_tokens},
         {"total_events", p.total_events},
-        {"total_users", p.total_users},
-        {"processed_users", p.processed_users},
-        {"phase1_ms", p.phase1_ms},
-        {"phase2_ms", p.phase2_ms},
-        {"phase3_ms", p.phase3_ms},
-        {"order_filled", {{"rows", p.order_filled.rows}, {"events", p.order_filled.events}}},
-        {"split", {{"rows", p.split.rows}, {"events", p.split.events}}},
-        {"merge", {{"rows", p.merge.rows}, {"events", p.merge.events}}},
-        {"redemption", {{"rows", p.redemption.rows}, {"events", p.redemption.events}}},
-        {"fpmm_trade", {{"rows", p.fpmm_trade.rows}, {"events", p.fpmm_trade.events}}},
-        {"fpmm_funding", {{"rows", p.fpmm_funding.rows}, {"events", p.fpmm_funding.events}}},
-        {"convert", {{"rows", p.convert.rows}, {"events", p.convert.events}}},
-        {"transfer", {{"rows", p.transfer.rows}, {"events", p.transfer.events}}},
     };
 
     if (stage2_getter_) {
@@ -206,7 +193,7 @@ private:
       result["stage2_sync"] = {
           {"syncing", s2.syncing},
           {"stage1_last_block", s2.stage1_last_block},
-          {"stage2_last_block", s2.stage2_last_block},
+          {"stage2_cursor", s2.stage2_cursor},
           {"behind_chunks", s2.behind_chunks},
       };
     }
