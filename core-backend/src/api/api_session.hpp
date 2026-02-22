@@ -4,6 +4,8 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <unordered_map>
+#include <unordered_set>
 
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
@@ -141,13 +143,31 @@ private:
         "transfer", "condition_preparation", "condition_resolution",
         "split", "merge", "redemption", "fpmm", "fpmm_trade", "fpmm_funding",
         "order_filled", "token_map", "neg_risk_market", "neg_risk_question", "convert"};
+
+    struct TableCache {
+      std::unordered_set<std::string> files;
+      int64_t total = 0;
+    };
+    static std::unordered_map<std::string, TableCache> table_cache;
+
     json feather_files = json::array();
     for (const char *name : feather_names) {
       std::string dir = db_.feather_dir(name);
-      if (std::filesystem::exists(dir) && !std::filesystem::is_empty(dir)) {
-        int64_t count = db_.query_single_int("SELECT COUNT(*) FROM " + db_.feather_table(name));
-        feather_files.push_back({{"name", name}, {"count", count}});
+      if (!std::filesystem::exists(dir) || std::filesystem::is_empty(dir))
+        continue;
+
+      auto &cache = table_cache[name];
+      for (const auto &entry : std::filesystem::directory_iterator(dir)) {
+        std::string filename = entry.path().filename().string();
+        if (!filename.ends_with(".feather"))
+          continue;
+        if (cache.files.count(filename))
+          continue;
+        int64_t cnt = db_.query_single_int("SELECT COUNT(*) FROM read_arrow('" + entry.path().string() + "')");
+        cache.files.insert(filename);
+        cache.total += cnt;
       }
+      feather_files.push_back({{"name", name}, {"count", cache.total}});
     }
     result["feather"] = feather_files;
 
