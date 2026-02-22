@@ -3,8 +3,10 @@
 #include <atomic>
 #include <chrono>
 #include <deque>
+#include <future>
 #include <iostream>
 #include <memory>
+#include <optional>
 #include <vector>
 
 #include <boost/asio.hpp>
@@ -69,6 +71,32 @@ public:
   }
 
 private:
+  struct PrefetchResult {
+    std::vector<json> results;
+    size_t response_bytes = 0;
+    int64_t from_block = 0;
+    int64_t to_block = 0;
+    bool success = false;
+    std::string error_msg;
+  };
+
+  std::future<PrefetchResult> prefetch_async(int64_t from, int64_t to) {
+    return std::async(std::launch::async, [this, from, to]() {
+      PrefetchResult r;
+      r.from_block = from;
+      r.to_block = to;
+      try {
+        r.results = rpc_.eth_getLogs_batch(build_queries(from, to));
+        r.response_bytes = rpc_.get_last_response_size();
+        r.success = true;
+      } catch (const std::exception &e) {
+        r.success = false;
+        r.error_msg = e.what();
+      }
+      return r;
+    });
+  }
+
   static const std::vector<std::string> &ct_topics() {
     static const std::vector<std::string> v = {
         topics::TRANSFER_SINGLE, topics::TRANSFER_BATCH, topics::CONDITION_PREPARE,
@@ -139,14 +167,41 @@ private:
   }
 
   void sync_loop(int64_t from_block, int64_t head_block) {
-    while (from_block <= head_block && !stop_requested_) {
-      int64_t to_block = std::min(from_block + current_batch_size_ - 1, head_block);
+    std::optional<std::future<PrefetchResult>> next_future;
 
-      if (!sync_one_batch(from_block, to_block, head_block)) {
+    int64_t to_block = std::min(from_block + current_batch_size_ - 1, head_block);
+    next_future = prefetch_async(from_block, to_block);
+
+    while (!stop_requested_ && next_future) {
+      TraceN("Stage1::sync_batch");
+      auto result = next_future->get();
+      next_future.reset();
+
+      if (!result.success) {
+        int64_t reduced = std::max(current_batch_size_ / 2, (int64_t)1);
+        std::cerr << "[Sync] eth_getLogs 失败: " << result.error_msg
+                  << ", chunk " << current_batch_size_ << " -> " << reduced << ", 5s 后重试" << std::endl;
+        current_batch_size_ = reduced;
+
+        auto timer = std::make_shared<asio::steady_timer>(*ioc_);
+        timer->expires_after(std::chrono::seconds(5));
+        timer->async_wait([this, timer, from_block = result.from_block, head_block](boost::system::error_code ec) {
+          if (!ec && !stop_requested_) {
+            sync_loop(from_block, head_block);
+          }
+        });
         return;
       }
 
-      from_block = to_block + 1;
+      current_batch_size_ = batch_size_;
+
+      int64_t next_from = result.to_block + 1;
+      if (next_from <= head_block && !stop_requested_) {
+        int64_t next_to = std::min(next_from + current_batch_size_ - 1, head_block);
+        next_future = prefetch_async(next_from, next_to);
+      }
+
+      process_batch(result);
     }
 
     if (stop_requested_) {
@@ -159,34 +214,10 @@ private:
     schedule_sync(interval_seconds_);
   }
 
-  bool sync_one_batch(int64_t from_block, int64_t to_block, int64_t head_block) {
-    TraceN("Stage1::sync_batch");
-
-    std::vector<json> results;
-    try {
-      results = rpc_.eth_getLogs_batch(build_queries(from_block, to_block));
-    } catch (const std::exception &e) {
-      int64_t reduced = std::max(current_batch_size_ / 2, (int64_t)1);
-      std::cerr << "[Sync] eth_getLogs 失败: " << e.what()
-                << ", chunk " << current_batch_size_ << " -> " << reduced << ", 5s 后重试" << std::endl;
-      current_batch_size_ = reduced;
-
-      auto timer = std::make_shared<asio::steady_timer>(*ioc_);
-      timer->expires_after(std::chrono::seconds(5));
-      timer->async_wait([this, timer, from_block, head_block](boost::system::error_code ec) {
-        if (!ec && !stop_requested_) {
-          sync_loop(from_block, head_block);
-        }
-      });
-      return false;
-    }
-
-    current_batch_size_ = batch_size_;
-    size_t response_bytes = rpc_.get_last_response_size();
-
+  void process_batch(const PrefetchResult &r) {
     json logs = json::array();
-    for (const auto &r : results) {
-      for (const auto &log : r) {
+    for (const auto &result : r.results) {
+      for (const auto &log : result) {
         logs.push_back(log);
       }
     }
@@ -200,17 +231,15 @@ private:
     {
       TraceN("Stage1::db_write");
       Database::WriteLock lock(db_);
-      db_.atomic_multi_insert_appender(events, to_block);
+      db_.atomic_multi_insert_appender(events, r.to_block);
     }
 
     double now = std::chrono::duration<double>(
                      std::chrono::steady_clock::now().time_since_epoch())
                      .count();
-    chunk_history_.push_back({to_block, now, response_bytes, to_block - from_block + 1});
+    chunk_history_.push_back({r.to_block, now, r.response_bytes, r.to_block - r.from_block + 1});
     if (chunk_history_.size() > 20)
       chunk_history_.pop_front();
-
-    return true;
   }
 
   const Config &config_;
