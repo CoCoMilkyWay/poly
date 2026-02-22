@@ -826,22 +826,22 @@
     let tableSchemaCache = {};
     async function fetchTableSchema(tableName) {
       if (tableSchemaCache[tableName]) return tableSchemaCache[tableName];
+      const count = tableCountsCache[tableName] || 0;
+      if (count === 0) {
+        tableSchemaCache[tableName] = "(no data)";
+        return tableSchemaCache[tableName];
+      }
       try {
-        const [colsResp, rowsResp] = await Promise.all([
-          fetch(
-            `/api/query?q=${encodeURIComponent(`SELECT column_name FROM information_schema.columns WHERE table_schema = 'main' AND table_name = '${tableName}' ORDER BY ordinal_position`)}`,
-          ),
-          fetch(
-            `/api/query?q=${encodeURIComponent(`SELECT * FROM "${tableName}" LIMIT 1`)}`,
-          ),
-        ]);
-        const cols = await colsResp.json();
+        const rowsResp = await fetch(
+          `/api/query?q=${encodeURIComponent(`SELECT * FROM ${tableName} LIMIT 1`)}`,
+        );
         const rows = await rowsResp.json();
-        if (Array.isArray(rows) && rows.length > 0) {
+        if (rows.error) {
+          tableSchemaCache[tableName] = `Error: ${rows.error}`;
+        } else if (Array.isArray(rows) && rows.length > 0) {
           const row = rows[0];
-          const headers = cols.map((c) => c.column_name);
           let text = "";
-          for (const k of headers) {
+          for (const k of Object.keys(row)) {
             let val = row[k];
             if (typeof val === "string" && val.length > 50)
               val = val.slice(0, 50) + "...";
@@ -969,7 +969,16 @@
     }
 
     function updateTables(tables) {
-      for (const t of tables) tableCountsCache[t.name] = t.count;
+      if (Array.isArray(tables)) {
+        for (const t of tables) tableCountsCache[t.name] = t.count;
+      } else {
+        if (tables.feather) {
+          for (const t of tables.feather) tableCountsCache[t.name] = t.count;
+        }
+        if (tables.duckdb) {
+          for (const t of tables.duckdb) tableCountsCache[t.name] = t.count;
+        }
+      }
       renderContracts();
     }
 

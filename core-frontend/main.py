@@ -47,7 +47,7 @@ async def api_query(q: str = Query(...)):
 
 @app.post("/api/export-all")
 async def api_export_all():
-    table_order_by = {
+    feather_tables = {
         "transfer": "block_number DESC, log_index DESC",
         "condition_preparation": "block_number DESC, log_index DESC",
         "condition_resolution": "block_number DESC, log_index DESC",
@@ -66,25 +66,26 @@ async def api_export_all():
     export_dir = Path(__file__).parent.parent / "data" / "export"
     export_dir.mkdir(parents=True, exist_ok=True)
 
+    tables_info = await backend_get("/api/tables")
+    feather_list = tables_info.get("feather", []) if isinstance(tables_info, dict) else []
+    feather_counts = {t["name"]: t["count"] for t in feather_list if isinstance(t, dict)}
+
     results = []
 
-    for table_name, order_by in table_order_by.items():
-        col_query = f"SELECT column_name FROM information_schema.columns WHERE table_schema = 'main' AND table_name = '{table_name}' ORDER BY ordinal_position"
-        cols_result = await backend_get("/api/query", {"q": col_query})
-        headers = [c["column_name"] for c in cols_result]
+    for table_name, order_by in feather_tables.items():
+        if feather_counts.get(table_name, 0) == 0:
+            continue
 
-        if order_by:
-            query = f"SELECT * FROM {table_name} ORDER BY {order_by} LIMIT 1000"
-        else:
-            query = f"SELECT * FROM {table_name} LIMIT 1000"
+        query = f"SELECT * FROM {table_name} ORDER BY {order_by} LIMIT 1000"
         rows = await backend_get("/api/query", {"q": query})
 
-        if rows:
+        if isinstance(rows, list) and len(rows) > 0:
+            headers = list(rows[0].keys())
             lines = [",".join(headers)]
             for row in rows:
                 vals = []
                 for h in headers:
-                    val = row[h]
+                    val = row.get(h)
                     if val is None:
                         vals.append("")
                     elif isinstance(val, str) and ("," in val or '"' in val or "\n" in val):

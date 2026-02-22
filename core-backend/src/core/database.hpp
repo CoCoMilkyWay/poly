@@ -122,11 +122,14 @@ public:
             break;
           case duckdb::LogicalTypeId::BLOB: {
             auto blob = duckdb::StringValue::Get(value);
-            if (!blob.empty() && blob[0] == 'x') {
-              obj[names[col]] = "0" + blob;
-            } else {
-              obj[names[col]] = "0x" + blob;
+            std::string hex = "0x";
+            hex.reserve(2 + blob.size() * 2);
+            static const char hex_chars[] = "0123456789abcdef";
+            for (unsigned char c : blob) {
+              hex.push_back(hex_chars[c >> 4]);
+              hex.push_back(hex_chars[c & 0x0f]);
             }
+            obj[names[col]] = hex;
             break;
           }
           default:
