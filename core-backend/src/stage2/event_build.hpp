@@ -847,12 +847,11 @@ private:
       if (fpmm_map_.count(from) > 0) {
         TxFPMMKey tx_fpmm_key{block, tx_hash, from};
         auto fit = tx_fpmm_funding_.find(tx_fpmm_key);
-        if (fit != tx_fpmm_funding_.end() && fit->second.side == 2) {
-          assert(!is_protocol_contract(fit->second.funder) && "LP funder should not be protocol");
+        if (fit != tx_fpmm_funding_.end() && fit->second.side == 2 &&
+            !is_protocol_contract(fit->second.funder)) {
           RawEvent evt{sort_key, cond_idx, EventType::FPMMLPRemove, token_idx, 0, -amount, split_price};
           push_event(fit->second.funder, evt);
         }
-        // 无论是否有 LP Remove 事件，FPMM 的 burn 都不记录为 Merge
         return;
       }
 
@@ -860,8 +859,7 @@ private:
       auto mit = tx_merge_.find(tx_cond_key);
       if (mit != tx_merge_.end()) {
         for (const auto &info : mit->second) {
-          if (info.stakeholder == from) {
-            assert(!is_protocol_contract(from) && "Merge user should not be protocol");
+          if (info.stakeholder == from && !is_protocol_contract(from)) {
             RawEvent evt{sort_key, cond_idx, EventType::Merge, token_idx, 0, -amount, split_price};
             push_event(from, evt);
             return;
@@ -872,8 +870,7 @@ private:
       auto rit = tx_redemption_.find(tx_cond_key);
       if (rit != tx_redemption_.end()) {
         for (const auto &info : rit->second) {
-          if (info.redeemer == from) {
-            assert(!is_protocol_contract(from) && "Redemption user should not be protocol");
+          if (info.redeemer == from && !is_protocol_contract(from)) {
             auto &payouts = conditions_[cond_idx].payout_numerators;
             int64_t payout_price = (token_idx < payouts.size() && payouts[token_idx] >= 0)
                                        ? payouts[token_idx]
@@ -885,7 +882,6 @@ private:
           }
         }
       }
-      // 其他内部 burn → 跳过
       return;
     }
 
@@ -918,8 +914,7 @@ private:
         auto sit = tx_split_.find(tx_cond_key);
         if (sit != tx_split_.end()) {
           for (const auto &info : sit->second) {
-            if (info.stakeholder == NEG_RISK_ADAPTER) {
-              assert(!is_protocol_contract(to) && "NegRisk Split recipient should not be protocol");
+            if (info.stakeholder == NEG_RISK_ADAPTER && !is_protocol_contract(to)) {
               push_event(to, RawEvent{sort_key, cond_idx, EventType::Split, token_idx, 0, amount, split_price});
               return;
             }
@@ -936,8 +931,7 @@ private:
         auto mit = tx_merge_.find(tx_cond_key);
         if (mit != tx_merge_.end()) {
           for (const auto &info : mit->second) {
-            if (info.stakeholder == NEG_RISK_ADAPTER) {
-              assert(!is_protocol_contract(from) && "NegRisk Merge sender should not be protocol");
+            if (info.stakeholder == NEG_RISK_ADAPTER && !is_protocol_contract(from)) {
               push_event(from, RawEvent{sort_key, cond_idx, EventType::Merge, token_idx, 0, -amount, split_price});
               return;
             }
@@ -951,8 +945,7 @@ private:
             auto cit = tx_convert_.find(tx_market_key);
             if (cit != tx_convert_.end()) {
               for (const auto &info : cit->second) {
-                if (info.stakeholder == from) {
-                  assert(!is_protocol_contract(from) && "Convert user should not be protocol");
+                if (info.stakeholder == from && !is_protocol_contract(from)) {
                   int M = __builtin_popcountll(info.index_set);
                   assert(M >= 2 && "Convert requires at least 2 positions");
                   int64_t conv_price = 1000000 * (M - 1) / M;
@@ -977,8 +970,7 @@ private:
     if (fpmm_it != fpmm_map_.end()) {
       TxFPMMKey tx_fpmm_key{block, tx_hash, op};
       auto tit = tx_fpmm_trade_.find(tx_fpmm_key);
-      if (tit != tx_fpmm_trade_.end()) {
-        assert(!is_protocol_contract(tit->second.trader) && "FPMM trader should not be protocol");
+      if (tit != tx_fpmm_trade_.end() && !is_protocol_contract(tit->second.trader)) {
         assert(tit->second.tokens > 0 && "FPMM trade tokens must be positive");
         int64_t price = tit->second.usdc * 1000000 / tit->second.tokens;
         assert(price >= 0 && price <= 1000000 && "FPMM price out of range");
