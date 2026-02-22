@@ -68,6 +68,10 @@ public:
     int64_t total_tokens = 0;
     int64_t total_events = 0;
     int64_t total_users = 0;
+    int64_t total_markets = 0;
+    int64_t cnt_cond_amm = 0;
+    int64_t cnt_cond_normal = 0;
+    int64_t cnt_cond_negrisk = 0;
     int64_t processed_users = 0;
     bool running = false;
     double phase1_ms = 0;
@@ -91,6 +95,10 @@ public:
     p.total_tokens = bp.total_tokens;
     p.total_events = bp.total_events;
     p.total_users = bp.total_users;
+    p.total_markets = bp.total_markets;
+    p.cnt_cond_amm = bp.cnt_cond_amm;
+    p.cnt_cond_normal = bp.cnt_cond_normal;
+    p.cnt_cond_negrisk = bp.cnt_cond_negrisk;
     p.running = bp.running;
     p.cnt_split = bp.cnt_split;
     p.cnt_merge = bp.cnt_merge;

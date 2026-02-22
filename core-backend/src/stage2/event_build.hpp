@@ -8,6 +8,7 @@
 #include <cassert>
 #include <nlohmann/json.hpp>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace stage2 {
 
@@ -34,6 +35,10 @@ struct BuildProgress {
   int64_t total_tokens = 0;
   int64_t total_events = 0;
   int64_t total_users = 0;
+  int64_t total_markets = 0;      // NegRisk 市场数
+  int64_t cnt_cond_amm = 0;       // AMM 问题数
+  int64_t cnt_cond_normal = 0;    // Normal 问题数
+  int64_t cnt_cond_negrisk = 0;   // NegRisk 问题数
   int64_t cnt_split = 0;
   int64_t cnt_merge = 0;
   int64_t cnt_redemption = 0;
@@ -179,6 +184,7 @@ public:
       FPMMInfo info;
       info.cond_idx = fpmm_r->GetValue(1, i).GetValue<uint32_t>();
       fpmm_map_[to_lower(addr)] = info;
+      fpmm_cond_idxs_.insert(info.cond_idx);
     }
 
     // 从stage1加载condition -> market映射 (用于NegRisk convert)
@@ -191,14 +197,29 @@ public:
         std::string market_id = to_lower(blob_to_hex(nrq->GetValue(0, i).GetValueUnsafe<std::string>()));
         std::string question_id = to_lower(blob_to_hex(nrq->GetValue(1, i).GetValueUnsafe<std::string>()));
         cond_to_market_[question_id] = market_id;
+        seen_markets_.insert(market_id);
+      }
+    }
+
+    // 标记 NegRisk 条件
+    for (size_t i = 0; i < conditions_.size(); ++i) {
+      if (!conditions_[i].question_id.empty() && cond_to_market_.count(conditions_[i].question_id)) {
+        negrisk_cond_idxs_.insert(static_cast<uint32_t>(i));
       }
     }
 
     progress_.total_conditions = conditions_.size();
     progress_.total_tokens = token_map_.size();
+    progress_.total_markets = seen_markets_.size();
+    update_cond_type_stats();
 
-    auto user_cnt = conn->Query("SELECT COUNT(DISTINCT user_addr) FROM user_event");
-    progress_.total_users = user_cnt->RowCount() > 0 ? user_cnt->GetValue(0, 0).GetValue<int64_t>() : 0;
+    // 加载已知用户（恢复时从数据库）
+    auto user_r = conn->Query("SELECT DISTINCT user_addr FROM user_event");
+    for (idx_t i = 0; i < user_r->RowCount(); ++i) {
+      std::string addr = blob_to_hex(user_r->GetValue(0, i).GetValueUnsafe<std::string>());
+      seen_users_.insert(to_lower(addr));
+    }
+    progress_.total_users = seen_users_.size();
 
     if (progress_.cursor > 0)
       progress_.phase = 3;
@@ -261,6 +282,10 @@ private:
   std::unordered_map<std::string, TokenInfo> token_map_;
   std::unordered_map<std::string, FPMMInfo> fpmm_map_;
   std::unordered_map<std::string, std::string> cond_to_market_; // condition_id -> market_id
+  std::unordered_set<std::string> seen_users_;     // 实时统计唯一用户
+  std::unordered_set<std::string> seen_markets_;   // 统计唯一 NegRisk 市场
+  std::unordered_set<uint32_t> fpmm_cond_idxs_;    // AMM 对应的 cond_idx
+  std::unordered_set<uint32_t> negrisk_cond_idxs_; // NegRisk 对应的 cond_idx
 
   std::unordered_map<TxCondKey, std::vector<SplitInfo>> tx_split_;
   std::unordered_map<TxCondKey, std::vector<MergeInfo>> tx_merge_;
@@ -397,11 +422,40 @@ private:
       return;
     fpmm_map_[lower] = {cond_idx};
     new_fpmms_.push_back({lower, cond_idx});
+    fpmm_cond_idxs_.insert(cond_idx);
+  }
+
+  void update_cond_type_stats() {
+    int64_t amm = 0, negrisk = 0, normal = 0;
+    for (size_t i = 0; i < conditions_.size(); ++i) {
+      uint32_t idx = static_cast<uint32_t>(i);
+      if (fpmm_cond_idxs_.count(idx)) {
+        ++amm;
+      } else if (negrisk_cond_idxs_.count(idx)) {
+        ++negrisk;
+      } else {
+        ++normal;
+      }
+    }
+    progress_.cnt_cond_amm = amm;
+    progress_.cnt_cond_negrisk = negrisk;
+    progress_.cnt_cond_normal = normal;
   }
 
   void push_event(const std::string &user_addr, const RawEvent &evt) {
-    new_events_.emplace_back(to_lower(user_addr), evt);
+    std::string lower = to_lower(user_addr);
+    new_events_.emplace_back(lower, evt);
     progress_.total_events++;
+
+    // 实时更新用户数
+    if (seen_users_.insert(lower).second) {
+      progress_.total_users = seen_users_.size();
+    }
+
+    // 只统计真正的用户间转账
+    if (evt.type == EventType::TransferIn || evt.type == EventType::TransferOut) {
+      progress_.cnt_transfer++;
+    }
   }
 
   void phase1_update_mappings(int64_t start, int64_t end) {
@@ -506,14 +560,18 @@ private:
     for (idx_t i = 0; i < nrq->RowCount(); ++i) {
       std::string market_id = to_lower(blob_to_hex(nrq->GetValue(0, i).GetValueUnsafe<std::string>()));
       std::string question_id = to_lower(blob_to_hex(nrq->GetValue(1, i).GetValueUnsafe<std::string>()));
-      // conditionId = keccak256(oracle, questionId, outcomeSlotCount)
-      // NegRisk的oracle是固定的NegRiskAdapter地址，outcomeSlotCount=2
-      // 实际上我们可以直接从condition_preparation表匹配question_id
-      // 但更简单的方法：遍历conditions_，找到question_id匹配的
-      // 或者在处理convert时，直接从token找到condition，再从这里找market
-      // 先存储question_id -> market_id，稍后在处理时再关联
       cond_to_market_[question_id] = market_id;
+      seen_markets_.insert(market_id);
+      progress_.total_markets = seen_markets_.size();
+
+      // 标记对应条件为 NegRisk
+      for (size_t ci = 0; ci < conditions_.size(); ++ci) {
+        if (conditions_[ci].question_id == question_id) {
+          negrisk_cond_idxs_.insert(static_cast<uint32_t>(ci));
+        }
+      }
     }
+    update_cond_type_stats();
   }
 
   void phase2_build_semantic_index(int64_t start, int64_t end) {
@@ -714,7 +772,6 @@ private:
 
       classify_and_emit(sort_key, tx_hash, r.block, op, from, to, token_id, r.amount, cond_idx, token_idx);
     }
-    progress_.cnt_transfer += transfers->RowCount();
   }
 
   // 检查地址是否是协议合约（不应该记录事件给协议合约）

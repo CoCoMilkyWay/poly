@@ -2,7 +2,7 @@
   .stage2-card {
     background: #1a1a1a;
     border-radius: 10px;
-    padding: 15px;
+    padding: 12px 15px;
     border: 1px solid #333;
     margin-bottom: 15px;
   }
@@ -11,13 +11,11 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid #333;
+    margin-bottom: 10px;
   }
 
   .stage2-header h2 {
-    font-size: 1.1em;
+    font-size: 1em;
     color: #fff;
     display: flex;
     align-items: center;
@@ -28,124 +26,90 @@
   .stage2-header h2::before {
     content: "";
     width: 3px;
-    height: 16px;
+    height: 14px;
     background: #10b981;
     border-radius: 2px;
   }
 
-  .stage2-stats {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 12px;
-    flex-wrap: wrap;
-  }
-
-  .stage2-stat {
-    background: #252525;
-    border-radius: 6px;
-    padding: 8px 12px;
-    min-width: 90px;
-  }
-
-  .stage2-stat-label {
-    font-size: 0.7em;
-    color: #666;
-  }
-
-  .stage2-stat-value {
-    font-size: 1em;
-    font-weight: 500;
-    font-family: monospace;
-    color: #fff;
-  }
-
-  .stage2-stat-value.synced {
-    color: #4ade80;
-  }
-
-  .stage2-stat-value.behind {
-    color: #fde047;
-  }
-
   .stage2-progress {
-    height: 6px;
+    height: 4px;
     background: #333;
-    border-radius: 3px;
-    margin-bottom: 12px;
+    border-radius: 2px;
+    margin-bottom: 10px;
     overflow: hidden;
   }
 
   .stage2-progress-bar {
     height: 100%;
     background: linear-gradient(90deg, #10b981, #34d399);
-    border-radius: 3px;
+    border-radius: 2px;
     transition: width 0.3s;
   }
 
-  .stage2-summary {
+  .stage2-row {
     display: flex;
-    gap: 16px;
-    margin-bottom: 12px;
     flex-wrap: wrap;
-  }
-
-  .stage2-summary-item {
-    background: linear-gradient(135deg, #1e3a5f 0%, #1a2d45 100%);
-    border-radius: 8px;
-    padding: 10px 16px;
-    min-width: 100px;
-    border: 1px solid #2a4a6a;
-  }
-
-  .stage2-summary-label {
-    font-size: 0.7em;
-    color: #6b9bd1;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  .stage2-summary-value {
-    font-size: 1.2em;
-    font-weight: 600;
+    gap: 6px 16px;
+    font-size: 0.8em;
     font-family: monospace;
+    margin-bottom: 6px;
+  }
+
+  .stage2-row:last-child {
+    margin-bottom: 0;
+  }
+
+  .stage2-item {
+    display: flex;
+    gap: 4px;
+    align-items: baseline;
+  }
+
+  .stage2-label {
+    color: #666;
+  }
+
+  .stage2-value {
+    color: #fff;
+    font-weight: 500;
+  }
+
+  .stage2-value.zero {
+    color: #444;
+  }
+
+  .stage2-value.highlight {
     color: #60a5fa;
   }
 
-  .stage2-events {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  .stage2-sep {
+    color: #333;
+    margin: 0 2px;
+  }
+
+  .stage2-stats {
+    display: flex;
     gap: 8px;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
   }
 
-  .stage2-event {
-    background: #202020;
-    border-radius: 6px;
-    padding: 10px;
-    text-align: center;
-    border: 1px solid #333;
-    transition: border-color 0.2s;
+  .stage2-stat {
+    background: #252525;
+    border-radius: 4px;
+    padding: 4px 10px;
   }
 
-  .stage2-event:hover {
-    border-color: #555;
+  .stage2-stat-label {
+    font-size: 0.65em;
+    color: #666;
   }
 
-  .stage2-event-label {
-    font-size: 0.7em;
-    color: #888;
-    margin-bottom: 4px;
-  }
-
-  .stage2-event-value {
-    font-size: 1.1em;
+  .stage2-stat-value {
+    font-size: 0.9em;
     font-weight: 500;
     font-family: monospace;
-    color: #e0e0e0;
-  }
-
-  .stage2-event-value.zero {
-    color: #555;
+    color: #fff;
   }
 </style>
 
@@ -155,7 +119,15 @@
     <span id="stage2-badge" class="badge badge-warning">等待中</span>
   </div>
 
-  <div class="stage2-stats" id="stage2-stats">
+  <div class="stage2-progress">
+    <div
+      class="stage2-progress-bar"
+      id="stage2-progress-bar"
+      style="width: 0%"
+    ></div>
+  </div>
+
+  <div class="stage2-stats">
     <div class="stage2-stat">
       <div class="stage2-stat-label">Last Block</div>
       <div class="stage2-stat-value" id="s2-last-block">0</div>
@@ -178,58 +150,65 @@
     </div>
   </div>
 
-  <div class="stage2-progress">
-    <div
-      class="stage2-progress-bar"
-      id="stage2-progress-bar"
-      style="width: 0%"
-    ></div>
+  <div class="stage2-row">
+    <span class="stage2-item">
+      <span class="stage2-label">用户</span>
+      <span class="stage2-value highlight" id="s2-total-users">0</span>
+    </span>
+    <span class="stage2-item">
+      <span class="stage2-label">市场</span>
+      <span class="stage2-value highlight" id="s2-total-markets">0</span>
+    </span>
+    <span class="stage2-item">
+      <span class="stage2-label">问题</span>
+      <span class="stage2-value highlight" id="s2-total-conditions">0</span>
+      <span style="color: #555">(</span><span style="color: #d4a574">AMM</span
+      ><span class="stage2-value" id="s2-cnt-cond-amm">0</span>
+      <span style="color: #a5d474">Norm</span
+      ><span class="stage2-value" id="s2-cnt-cond-normal">0</span>
+      <span style="color: #d474d4">Neg</span
+      ><span class="stage2-value" id="s2-cnt-cond-negrisk">0</span
+      ><span style="color: #555">)</span>
+    </span>
+    <span class="stage2-item">
+      <span class="stage2-label">代币</span>
+      <span class="stage2-value highlight" id="s2-total-tokens">0</span>
+    </span>
   </div>
 
-  <div class="stage2-summary">
-    <div class="stage2-summary-item">
-      <div class="stage2-summary-label">用户数</div>
-      <div class="stage2-summary-value" id="s2-total-users">0</div>
-    </div>
-    <div class="stage2-summary-item">
-      <div class="stage2-summary-label">市场数</div>
-      <div class="stage2-summary-value" id="s2-total-conditions">0</div>
-    </div>
-    <div class="stage2-summary-item">
-      <div class="stage2-summary-label">代币数</div>
-      <div class="stage2-summary-value" id="s2-total-tokens">0</div>
-    </div>
-  </div>
-
-  <div class="stage2-events">
-    <div class="stage2-event">
-      <div class="stage2-event-label">订单</div>
-      <div class="stage2-event-value" id="s2-cnt-order">0</div>
-    </div>
-    <div class="stage2-event">
-      <div class="stage2-event-label">铸币</div>
-      <div class="stage2-event-value" id="s2-cnt-split">0</div>
-    </div>
-    <div class="stage2-event">
-      <div class="stage2-event-label">合币</div>
-      <div class="stage2-event-value" id="s2-cnt-merge">0</div>
-    </div>
-    <div class="stage2-event">
-      <div class="stage2-event-label">赎回</div>
-      <div class="stage2-event-value" id="s2-cnt-redemption">0</div>
-    </div>
-    <div class="stage2-event">
-      <div class="stage2-event-label">AMM交易</div>
-      <div class="stage2-event-value" id="s2-cnt-fpmm-trade">0</div>
-    </div>
-    <div class="stage2-event">
-      <div class="stage2-event-label">LP操作</div>
-      <div class="stage2-event-value" id="s2-cnt-fpmm-funding">0</div>
-    </div>
-    <div class="stage2-event">
-      <div class="stage2-event-label">转账</div>
-      <div class="stage2-event-value" id="s2-cnt-transfer">0</div>
-    </div>
+  <div class="stage2-row">
+    <span class="stage2-item">
+      <span class="stage2-label">订单</span>
+      <span class="stage2-value" id="s2-cnt-order">0</span>
+    </span>
+    <span class="stage2-item">
+      <span class="stage2-label">铸币</span>
+      <span class="stage2-value" id="s2-cnt-split">0</span>
+    </span>
+    <span class="stage2-item">
+      <span class="stage2-label">合币</span>
+      <span class="stage2-value" id="s2-cnt-merge">0</span>
+    </span>
+    <span class="stage2-item">
+      <span class="stage2-label">赎回</span>
+      <span class="stage2-value" id="s2-cnt-redemption">0</span>
+    </span>
+    <span class="stage2-item">
+      <span class="stage2-label">转换</span>
+      <span class="stage2-value" id="s2-cnt-convert">0</span>
+    </span>
+    <span class="stage2-item">
+      <span class="stage2-label">AMM</span>
+      <span class="stage2-value" id="s2-cnt-fpmm-trade">0</span>
+    </span>
+    <span class="stage2-item">
+      <span class="stage2-label">LP</span>
+      <span class="stage2-value" id="s2-cnt-fpmm-funding">0</span>
+    </span>
+    <span class="stage2-item">
+      <span class="stage2-label">转账</span>
+      <span class="stage2-value" id="s2-cnt-transfer">0</span>
+    </span>
   </div>
 </div>
 
@@ -249,40 +228,42 @@
     let s2LastTime = Date.now();
 
     function s2UpdateStats(s) {
-      const lastBlockEl = document.getElementById("s2-last-block");
-      const headBlockEl = document.getElementById("s2-head-block");
-      const behindEl = document.getElementById("s2-behind");
-      const speedEl = document.getElementById("s2-speed");
-      const etaEl = document.getElementById("s2-eta");
-
       const sync = s.stage2_sync || {};
       const cursor = sync.stage2_cursor || 0;
       const headBlock = sync.stage1_last_block || 0;
       const behind = headBlock - cursor;
 
-      lastBlockEl.textContent = s2FmtNum(cursor);
-      headBlockEl.textContent = s2FmtNum(headBlock);
-      behindEl.textContent = s2FmtNum(behind);
+      document.getElementById("s2-last-block").textContent = s2FmtNum(cursor);
+      document.getElementById("s2-head-block").textContent =
+        s2FmtNum(headBlock);
+      document.getElementById("s2-behind").textContent = s2FmtNum(behind);
 
       const now = Date.now();
       const dt = (now - s2LastTime) / 1000;
       if (dt > 0 && cursor > s2LastCursor) {
         const speed = (cursor - s2LastCursor) / dt;
-        speedEl.textContent = s2Fmt(Math.round(speed)) + "/s";
+        document.getElementById("s2-speed").textContent =
+          s2Fmt(Math.round(speed)) + "/s";
         if (speed > 0 && behind > 0) {
           const eta = behind / speed;
-          if (eta < 60) etaEl.textContent = Math.round(eta) + "s";
-          else if (eta < 3600) etaEl.textContent = Math.round(eta / 60) + "m";
-          else etaEl.textContent = (eta / 3600).toFixed(1) + "h";
+          if (eta < 60)
+            document.getElementById("s2-eta").textContent =
+              Math.round(eta) + "s";
+          else if (eta < 3600)
+            document.getElementById("s2-eta").textContent =
+              Math.round(eta / 60) + "m";
+          else
+            document.getElementById("s2-eta").textContent =
+              (eta / 3600).toFixed(1) + "h";
         } else {
-          etaEl.textContent = "-";
+          document.getElementById("s2-eta").textContent = "-";
         }
       }
       s2LastCursor = cursor;
       s2LastTime = now;
     }
 
-    function s2UpdateEventCount(id, value) {
+    function s2Set(id, value) {
       const el = document.getElementById(id);
       el.textContent = s2Fmt(value || 0);
       el.classList.toggle("zero", !value);
@@ -300,23 +281,21 @@
       const progress = headBlock > 0 ? (cursor / headBlock) * 100 : 0;
       bar.style.width = progress.toFixed(2) + "%";
 
-      document.getElementById("s2-total-users").textContent = s2Fmt(
-        s.total_users || 0,
-      );
-      document.getElementById("s2-total-conditions").textContent = s2Fmt(
-        s.total_conditions || 0,
-      );
-      document.getElementById("s2-total-tokens").textContent = s2Fmt(
-        s.total_tokens || 0,
-      );
-
-      s2UpdateEventCount("s2-cnt-order", s.cnt_order);
-      s2UpdateEventCount("s2-cnt-split", s.cnt_split);
-      s2UpdateEventCount("s2-cnt-merge", s.cnt_merge);
-      s2UpdateEventCount("s2-cnt-redemption", s.cnt_redemption);
-      s2UpdateEventCount("s2-cnt-fpmm-trade", s.cnt_fpmm_trade);
-      s2UpdateEventCount("s2-cnt-fpmm-funding", s.cnt_fpmm_funding);
-      s2UpdateEventCount("s2-cnt-transfer", s.cnt_transfer);
+      s2Set("s2-total-users", s.total_users);
+      s2Set("s2-total-markets", s.total_markets);
+      s2Set("s2-total-conditions", s.total_conditions);
+      s2Set("s2-total-tokens", s.total_tokens);
+      s2Set("s2-cnt-cond-amm", s.cnt_cond_amm);
+      s2Set("s2-cnt-cond-normal", s.cnt_cond_normal);
+      s2Set("s2-cnt-cond-negrisk", s.cnt_cond_negrisk);
+      s2Set("s2-cnt-order", s.cnt_order);
+      s2Set("s2-cnt-split", s.cnt_split);
+      s2Set("s2-cnt-merge", s.cnt_merge);
+      s2Set("s2-cnt-redemption", s.cnt_redemption);
+      s2Set("s2-cnt-convert", s.cnt_convert);
+      s2Set("s2-cnt-fpmm-trade", s.cnt_fpmm_trade);
+      s2Set("s2-cnt-fpmm-funding", s.cnt_fpmm_funding);
+      s2Set("s2-cnt-transfer", s.cnt_transfer);
 
       if (sync.syncing) {
         badge.className = "badge badge-warning";
