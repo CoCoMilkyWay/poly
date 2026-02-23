@@ -42,8 +42,8 @@ enum class TransferClass {
   InternalMint,
   InternalBurn,
   InternalTransfer,
-  NonUsdcFpmm,   // 非 USDC.e 抵押品的 FPMM 操作
-  UnknownToken,
+  NonUsdcFpmm,   // 非 USDC 抵押品的 FPMM 操作
+  NonPolymarket, // 非 Polymarket 的 token（如 Omen 等其他协议使用 ConditionalTokens）
   Unclassified,
 };
 
@@ -66,7 +66,7 @@ struct TransferStats {
   int64_t internal_burn = 0;
   int64_t internal_transfer = 0;
   int64_t non_usdc_fpmm = 0;
-  int64_t unknown_token = 0;
+  int64_t non_polymarket = 0; // 非 Polymarket token（其他协议如 Omen）
   int64_t unclassified = 0;
 
   void add(TransferClass cls) {
@@ -123,8 +123,8 @@ struct TransferStats {
     case TransferClass::NonUsdcFpmm:
       ++non_usdc_fpmm;
       break;
-    case TransferClass::UnknownToken:
-      ++unknown_token;
+    case TransferClass::NonPolymarket:
+      ++non_polymarket;
       break;
     case TransferClass::Unclassified:
       ++unclassified;
@@ -138,11 +138,10 @@ struct TransferStats {
                        fpmm_buy + fpmm_sell + fpmm_lp_add + fpmm_lp_remove + fpmm_lp_return;
     int64_t user_xfer = transfer_in + transfer_out;
     int64_t internal = internal_mint + internal_burn + internal_transfer;
-    int64_t skipped = non_usdc_fpmm;
-    int64_t unknown = unknown_token;
+    int64_t skipped = non_usdc_fpmm + non_polymarket;
     int64_t bad = unclassified;
 
-    int64_t sum = semantic + user_xfer + internal + skipped + unknown + bad;
+    int64_t sum = semantic + user_xfer + internal + skipped + bad;
     if (sum != total) {
       std::cerr << "[ERROR] Transfer stats don't add up: sum=" << sum << ", total=" << total << std::endl;
       assert(false);
@@ -150,9 +149,6 @@ struct TransferStats {
     if (bad > 0) {
       std::cerr << "[ERROR] Unclassified transfers: " << bad << std::endl;
       assert(false);
-    }
-    if (unknown > 0) {
-      std::cerr << "[WARN] Unknown token transfers: " << unknown << std::endl;
     }
   }
 
@@ -169,20 +165,13 @@ struct TransferStats {
     std::cerr << "    TransferIn: " << transfer_in << ", TransferOut: " << transfer_out << std::endl;
     std::cerr << "  Internal:" << std::endl;
     std::cerr << "    InternalMint: " << internal_mint << ", InternalBurn: " << internal_burn << ", InternalTransfer: " << internal_transfer << std::endl;
-    std::cerr << "  Skipped:" << std::endl;
-    std::cerr << "    NonUsdcFpmm: " << non_usdc_fpmm << std::endl;
-    std::cerr << "  Errors:" << std::endl;
-    std::cerr << "    UnknownToken: " << unknown_token << ", Unclassified: " << unclassified << std::endl;
+    std::cerr << "  Skipped (non-Polymarket):" << std::endl;
+    std::cerr << "    NonUsdcFpmm: " << non_usdc_fpmm << ", NonPolymarket: " << non_polymarket << std::endl;
+    if (unclassified > 0) {
+      std::cerr << "  Errors:" << std::endl;
+      std::cerr << "    Unclassified: " << unclassified << std::endl;
+    }
   }
-};
-
-struct UnknownTokenInfo {
-  int64_t block;
-  std::string op;
-  std::string from;
-  std::string to;
-  std::string token_id;
-  int64_t amount;
 };
 
 struct BuildProgress {

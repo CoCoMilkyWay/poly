@@ -209,6 +209,15 @@
       <span class="stage2-label">转账</span>
       <span class="stage2-value" id="s2-cnt-transfer">0</span>
     </span>
+    <span class="stage2-sep">|</span>
+    <span class="stage2-item">
+      <span class="stage2-label" style="color:#888">非USDC</span>
+      <span class="stage2-value" style="color:#666" id="s2-cnt-non-usdc">0</span>
+    </span>
+    <span class="stage2-item">
+      <span class="stage2-label" style="color:#888">非Poly</span>
+      <span class="stage2-value" style="color:#666" id="s2-cnt-non-poly">0</span>
+    </span>
   </div>
 </div>
 
@@ -296,6 +305,8 @@
       s2Set("s2-cnt-fpmm-trade", s.cnt_fpmm_trade);
       s2Set("s2-cnt-fpmm-funding", s.cnt_fpmm_funding);
       s2Set("s2-cnt-transfer", s.cnt_transfer);
+      s2Set("s2-cnt-non-usdc", s.cnt_non_usdc_fpmm);
+      s2Set("s2-cnt-non-poly", s.cnt_non_polymarket);
 
       if (sync.syncing) {
         badge.className = "badge badge-warning";

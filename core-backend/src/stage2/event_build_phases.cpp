@@ -76,11 +76,50 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
     bool is_usdc = is_usdc_collateral(collateral);
     intern_fpmm(addr, cond_idx, is_usdc, collateral);
 
-    if (!is_usdc) {
-      // 非 USDC FPMM，跳过 token 计算
-      continue;
+    // 为所有 FPMM 计算 token_id（包括非 USDC 的，以便识别用户的 merge/burn 操作）
+    auto cond_bytes = hex_to_blob(lower_cid);
+    auto collateral_bytes = hex_to_blob(collateral);
+    for (int index_set = 1; index_set <= 2; ++index_set) {
+      std::string collection_input(96, '\0');
+      std::memcpy(collection_input.data() + 32, cond_bytes.data(), std::min(size_t(32), cond_bytes.size()));
+      collection_input[95] = static_cast<char>(index_set);
+      auto collection_hash = crypto::keccak256(collection_input);
+
+      std::string position_input(52, '\0');
+      std::memcpy(position_input.data(), collateral_bytes.data(), std::min(size_t(20), collateral_bytes.size()));
+      std::memcpy(position_input.data() + 20, collection_hash.data(), 32);
+      auto position_hash = crypto::keccak256(position_input);
+
+      std::string token_id = crypto::Keccak256::to_hex(position_hash);
+      intern_token(token_id, cond_idx, index_set == 1 ? 1 : 0);
+    }
+  }
+
+  // 从 split 事件中提取 token_id（覆盖没有经过 FPMM 的 condition）
+  auto split_for_tokens = conn->Query(
+      "SELECT DISTINCT condition_id, collateral_token FROM " + stage1_db_.feather_table_range("split", start, end) +
+      " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
+  for (idx_t i = 0; i < split_for_tokens->RowCount(); ++i) {
+    std::string cid = blob_to_hex(split_for_tokens->GetValue(0, i).GetValueUnsafe<std::string>());
+    std::string lower_cid = to_lower(cid);
+    std::string collateral = to_lower(blob_to_hex(split_for_tokens->GetValue(1, i).GetValueUnsafe<std::string>()));
+
+    auto it = cond_map_.find(lower_cid);
+    uint32_t cond_idx;
+    if (it == cond_map_.end()) {
+      cond_idx = intern_condition(cid, 2);
+    } else {
+      cond_idx = it->second;
     }
 
+    // 如果是非 USDC collateral，记录到 non_usdc_cond_idxs_
+    bool is_usdc = is_usdc_collateral(collateral);
+    if (!is_usdc) {
+      non_usdc_cond_idxs_.insert(cond_idx);
+      non_usdc_collaterals_[cond_idx] = collateral;
+    }
+
+    // 计算 token_id（如果还没计算过）
     auto cond_bytes = hex_to_blob(lower_cid);
     auto collateral_bytes = hex_to_blob(collateral);
     for (int index_set = 1; index_set <= 2; ++index_set) {
@@ -327,14 +366,44 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
     int64_t sort_key = r.block * 1000000000LL + r.log_idx;
     auto tx_hash = hex_to_bytes32(r.tx_hash);
 
+    // 优先检查是否涉及 non-USDC FPMM（在 token lookup 之前）
+    auto check_non_usdc_fpmm = [&](const std::string &addr) -> bool {
+      auto it = fpmm_map_.find(addr);
+      if (it != fpmm_map_.end() && !it->second.is_usdc) {
+        non_usdc_by_collat_[it->second.collateral]++;
+        chunk_xfer_stats_.add(TransferClass::NonUsdcFpmm);
+        return true;
+      }
+      return false;
+    };
+    if (check_non_usdc_fpmm(op) || check_non_usdc_fpmm(from) || check_non_usdc_fpmm(to))
+      continue;
+
     auto tit = token_map_.find(token_id);
     if (tit == token_map_.end()) {
-      chunk_xfer_stats_.add(TransferClass::UnknownToken);
-      unknown_tokens_.push_back({r.block, op, from, to, token_id, r.amount});
+      chunk_xfer_stats_.add(TransferClass::NonPolymarket);
       continue;
     }
     uint32_t cond_idx = tit->second.cond_idx;
     uint8_t token_idx = tit->second.is_yes ? 0 : 1;
+
+    // 检查 token 是否属于非 USDC condition（用户直接操作如 merge/burn）
+    if (non_usdc_cond_idxs_.count(cond_idx)) {
+      // 从 non_usdc_collaterals_ 或 fpmm_map_ 找到 collateral 地址
+      auto collat_it = non_usdc_collaterals_.find(cond_idx);
+      if (collat_it != non_usdc_collaterals_.end()) {
+        non_usdc_by_collat_[collat_it->second]++;
+      } else {
+        for (const auto &[addr, info] : fpmm_map_) {
+          if (info.cond_idx == cond_idx && !info.is_usdc) {
+            non_usdc_by_collat_[info.collateral]++;
+            break;
+          }
+        }
+      }
+      chunk_xfer_stats_.add(TransferClass::NonUsdcFpmm);
+      continue;
+    }
 
     TransferClass cls = classify_and_emit(sort_key, tx_hash, r.block, op, from, to, token_id, r.amount, cond_idx, token_idx);
     chunk_xfer_stats_.add(cls);

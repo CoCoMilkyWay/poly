@@ -185,8 +185,11 @@ public:
       if (!collateral_val.IsNull())
         info.collateral = to_lower(blob_to_hex(collateral_val.GetValueUnsafe<std::string>()));
       fpmm_map_[to_lower(addr)] = info;
-      if (info.is_usdc)
+      if (info.is_usdc) {
         fpmm_cond_idxs_.insert(info.cond_idx);
+      } else {
+        non_usdc_cond_idxs_.insert(info.cond_idx);
+      }
     }
 
     // 从 rb_neg_risk_market 表加载 question_id -> market_id 映射，并标记 NegRisk 条件
@@ -290,10 +293,8 @@ public:
 
     // 验证 transfer 分类完整性
     chunk_xfer_stats_.verify();
-    // 打印 unknown token 详情（如果有）
-    print_unknown_tokens();
-    // 打印非 USDC FPMM 统计（如果有）
-    print_non_usdc_stats();
+    // 清理临时数据
+    non_usdc_by_collat_.clear();
     progress_.xfer_stats.total += chunk_xfer_stats_.total;
     progress_.xfer_stats.split += chunk_xfer_stats_.split;
     progress_.xfer_stats.merge += chunk_xfer_stats_.merge;
@@ -312,7 +313,7 @@ public:
     progress_.xfer_stats.internal_burn += chunk_xfer_stats_.internal_burn;
     progress_.xfer_stats.internal_transfer += chunk_xfer_stats_.internal_transfer;
     progress_.xfer_stats.non_usdc_fpmm += chunk_xfer_stats_.non_usdc_fpmm;
-    progress_.xfer_stats.unknown_token += chunk_xfer_stats_.unknown_token;
+    progress_.xfer_stats.non_polymarket += chunk_xfer_stats_.non_polymarket;
 
     commit_chunk(chunk_end);
 
@@ -339,6 +340,8 @@ private:
   std::unordered_set<std::string> seen_markets_;                // 统计唯一 NegRisk 市场
   std::unordered_set<uint32_t> fpmm_cond_idxs_;                 // AMM 对应的 cond_idx
   std::unordered_set<uint32_t> negrisk_cond_idxs_;              // NegRisk 对应的 cond_idx
+  std::unordered_set<uint32_t> non_usdc_cond_idxs_;             // 非 USDC 抵押品的 cond_idx
+  std::unordered_map<uint32_t, std::string> non_usdc_collaterals_; // cond_idx -> collateral address
 
   std::unordered_map<TxCondKey, std::vector<SplitInfo>> tx_split_;
   std::unordered_map<TxCondKey, std::vector<MergeInfo>> tx_merge_;
@@ -348,7 +351,6 @@ private:
   std::unordered_map<TxFPMMKey, FPMMTradeInfo> tx_fpmm_trade_;
   std::unordered_map<TxFPMMKey, FPMMFundingInfo> tx_fpmm_funding_;
   TransferStats chunk_xfer_stats_;                              // 当前 chunk 的 transfer 统计
-  std::vector<UnknownTokenInfo> unknown_tokens_;                // 未知 token 详情
   std::unordered_map<std::string, int64_t> non_usdc_by_collat_; // 按抵押品统计非 USDC FPMM transfer
 
   struct NewCondition {
@@ -444,8 +446,11 @@ private:
       return;
     fpmm_map_[lower] = {cond_idx, is_usdc, collateral};
     new_fpmms_.push_back({lower, cond_idx, is_usdc, collateral});
-    if (is_usdc)
+    if (is_usdc) {
       fpmm_cond_idxs_.insert(cond_idx);
+    } else {
+      non_usdc_cond_idxs_.insert(cond_idx);
+    }
   }
 
   void update_cond_type_stats() {
@@ -517,87 +522,6 @@ private:
     return addr == ZERO_ADDR || addr == CTF_EXCHANGE || addr == NEG_RISK_CTF_EXCHANGE ||
            addr == NEG_RISK_ADAPTER || addr == CONDITIONAL_TOKENS ||
            addr == NO_TOKEN_BURN_ADDRESS || fpmm_map_.count(addr) > 0;
-  }
-
-  void print_unknown_tokens() {
-    if (unknown_tokens_.empty())
-      return;
-    std::unordered_map<std::string, int> by_op;
-    std::unordered_set<std::string> unique_tokens;
-    bool is_mint = false, is_burn = false, is_transfer = false;
-    for (const auto &t : unknown_tokens_) {
-      by_op[t.op]++;
-      unique_tokens.insert(t.token_id);
-      if (t.from == ZERO_ADDR)
-        is_mint = true;
-      else if (t.to == ZERO_ADDR)
-        is_burn = true;
-      else
-        is_transfer = true;
-    }
-    std::cerr << "[DEBUG] Unknown tokens breakdown (" << unknown_tokens_.size() << " transfers, "
-              << unique_tokens.size() << " unique tokens):" << std::endl;
-    std::cerr << "  Transfer types: ";
-    if (is_mint)
-      std::cerr << "MINT ";
-    if (is_burn)
-      std::cerr << "BURN ";
-    if (is_transfer)
-      std::cerr << "TRANSFER ";
-    std::cerr << std::endl;
-    std::cerr << "  Unique token_ids:" << std::endl;
-    for (const auto &tid : unique_tokens) {
-      std::cerr << "    " << tid << std::endl;
-    }
-    std::cerr << "  By operator:" << std::endl;
-    for (const auto &[addr, cnt] : by_op) {
-      std::string label = addr;
-      if (addr == CTF_EXCHANGE)
-        label = "CTF_EXCHANGE";
-      else if (addr == NEG_RISK_CTF_EXCHANGE)
-        label = "NEG_RISK_CTF_EXCHANGE";
-      else if (addr == NEG_RISK_ADAPTER)
-        label = "NEG_RISK_ADAPTER";
-      else if (addr == CONDITIONAL_TOKENS)
-        label = "CONDITIONAL_TOKENS";
-      else if (fpmm_map_.count(addr)) {
-        uint32_t cond_idx = fpmm_map_.at(addr).cond_idx;
-        label = "FPMM(" + addr.substr(0, 10) + "...) cond_idx=" + std::to_string(cond_idx);
-        // 打印该 condition 对应的已知 token
-        std::cerr << "    Known tokens for cond_idx=" << cond_idx << ":" << std::endl;
-        for (const auto &[tid, tinfo] : token_map_) {
-          if (tinfo.cond_idx == cond_idx) {
-            std::cerr << "      " << tid << " (is_yes=" << (int)tinfo.is_yes << ")" << std::endl;
-          }
-        }
-      }
-      std::cerr << "    " << label << ": " << cnt << std::endl;
-    }
-    std::cerr << "  Sample unknown tokens (first 3):" << std::endl;
-    for (size_t i = 0; i < std::min(unknown_tokens_.size(), size_t(3)); ++i) {
-      const auto &t = unknown_tokens_[i];
-      std::cerr << "    block=" << t.block
-                << ", op=" << t.op.substr(0, 10) << "..."
-                << ", from=" << (t.from == ZERO_ADDR ? "0x0(mint)" : t.from.substr(0, 10) + "...")
-                << ", to=" << (t.to == ZERO_ADDR ? "0x0(burn)" : t.to.substr(0, 10) + "...")
-                << ", token=" << t.token_id.substr(0, 20) << "..."
-                << ", amt=" << t.amount << std::endl;
-    }
-    unknown_tokens_.clear();
-  }
-
-  void print_non_usdc_stats() {
-    if (non_usdc_by_collat_.empty())
-      return;
-    int64_t total = 0;
-    for (const auto &[_, cnt] : non_usdc_by_collat_)
-      total += cnt;
-    std::cerr << "[DEBUG] Non-USDC FPMM transfers: " << total << " total" << std::endl;
-    std::cerr << "  By collateral:" << std::endl;
-    for (const auto &[collateral, cnt] : non_usdc_by_collat_) {
-      std::cerr << "    " << collateral << ": " << cnt << std::endl;
-    }
-    non_usdc_by_collat_.clear();
   }
 
   TransferClass classify_and_emit(int64_t sort_key, const std::array<uint8_t, 32> &tx_hash,
