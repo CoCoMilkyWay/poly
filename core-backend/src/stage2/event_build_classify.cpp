@@ -28,7 +28,14 @@ TransferClass EventBuilder::classify_and_emit(
     if (to == NEG_RISK_ADAPTER)
       return TransferClass::InternalMint;
 
-    if (fpmm_map_.count(to) > 0) {
+    auto fpmm_mint_it = fpmm_map_.find(to);
+    if (fpmm_mint_it != fpmm_map_.end()) {
+      // 非 USDC 抵押品的 FPMM，跳过处理并统计
+      if (!fpmm_mint_it->second.is_usdc) {
+        non_usdc_by_collat_[fpmm_mint_it->second.collateral]++;
+        return TransferClass::NonUsdcFpmm;
+      }
+
       TxFPMMKey tx_fpmm_key{block, tx_hash, to};
       auto fit = tx_fpmm_funding_.find(tx_fpmm_key);
       if (fit != tx_fpmm_funding_.end() && fit->second.side == 1) {
@@ -69,8 +76,15 @@ TransferClass EventBuilder::classify_and_emit(
     if (from == NEG_RISK_ADAPTER)
       return TransferClass::InternalBurn;
 
-    if (fpmm_map_.count(from) > 0)
+    auto fpmm_burn_it = fpmm_map_.find(from);
+    if (fpmm_burn_it != fpmm_map_.end()) {
+      // 非 USDC 抵押品的 FPMM，跳过处理并统计
+      if (!fpmm_burn_it->second.is_usdc) {
+        non_usdc_by_collat_[fpmm_burn_it->second.collateral]++;
+        return TransferClass::NonUsdcFpmm;
+      }
       return TransferClass::InternalBurn;
+    }
 
     auto mit = tx_merge_.find(tx_cond_key);
     if (mit != tx_merge_.end()) {
@@ -231,6 +245,12 @@ TransferClass EventBuilder::classify_and_emit(
   // ========== FPMM operator ==========
   auto fpmm_it = fpmm_map_.find(op);
   if (fpmm_it != fpmm_map_.end()) {
+    // 非 USDC 抵押品的 FPMM，跳过处理并统计
+    if (!fpmm_it->second.is_usdc) {
+      non_usdc_by_collat_[fpmm_it->second.collateral]++;
+      return TransferClass::NonUsdcFpmm;
+    }
+
     TxFPMMKey tx_fpmm_key{block, tx_hash, op};
     auto tit = tx_fpmm_trade_.find(tx_fpmm_key);
     auto fit = tx_fpmm_funding_.find(tx_fpmm_key);

@@ -11,8 +11,13 @@ static constexpr const char *ZERO_ADDR = "0x000000000000000000000000000000000000
 static constexpr const char *CTF_EXCHANGE = "0x4bfb41d5b3570defd03c39a9a4d8de6bd8b8982e";
 static constexpr const char *NEG_RISK_CTF_EXCHANGE = "0xc5d563a36ae78145c45a50134d48a1215220f80a";
 static constexpr const char *NEG_RISK_ADAPTER = "0xd91e80cf2e7be2e162c6513ced06f1dd0da35296";
-static constexpr const char *USDC_E = "0x2791bca1f2de4661ed88a30c99a7a9449aa84174";
+static constexpr const char *USDC_E = "0x2791bca1f2de4661ed88a30c99a7a9449aa84174";      // bridged USDC
+static constexpr const char *USDC_NATIVE = "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359"; // native USDC
 static constexpr const char *CONDITIONAL_TOKENS = "0x4d97dcd97ec945f40cf65f87097ace5ea0476045";
+
+inline bool is_usdc_collateral(const std::string &addr) {
+  return addr == USDC_E || addr == USDC_NATIVE;
+}
 static constexpr const char *NO_TOKEN_BURN_ADDRESS = "0x36a0e974a7083ea0ad4dea6a27b90fab22e93a32";
 
 struct ScanStats {
@@ -37,6 +42,7 @@ enum class TransferClass {
   InternalMint,
   InternalBurn,
   InternalTransfer,
+  NonUsdcFpmm,   // 非 USDC.e 抵押品的 FPMM 操作
   UnknownToken,
   Unclassified,
 };
@@ -59,6 +65,7 @@ struct TransferStats {
   int64_t internal_mint = 0;
   int64_t internal_burn = 0;
   int64_t internal_transfer = 0;
+  int64_t non_usdc_fpmm = 0;
   int64_t unknown_token = 0;
   int64_t unclassified = 0;
 
@@ -113,6 +120,9 @@ struct TransferStats {
     case TransferClass::InternalTransfer:
       ++internal_transfer;
       break;
+    case TransferClass::NonUsdcFpmm:
+      ++non_usdc_fpmm;
+      break;
     case TransferClass::UnknownToken:
       ++unknown_token;
       break;
@@ -128,10 +138,11 @@ struct TransferStats {
                        fpmm_buy + fpmm_sell + fpmm_lp_add + fpmm_lp_remove + fpmm_lp_return;
     int64_t user_xfer = transfer_in + transfer_out;
     int64_t internal = internal_mint + internal_burn + internal_transfer;
+    int64_t skipped = non_usdc_fpmm;
     int64_t unknown = unknown_token;
     int64_t bad = unclassified;
 
-    int64_t sum = semantic + user_xfer + internal + unknown + bad;
+    int64_t sum = semantic + user_xfer + internal + skipped + unknown + bad;
     if (sum != total) {
       std::cerr << "[ERROR] Transfer stats don't add up: sum=" << sum << ", total=" << total << std::endl;
       assert(false);
@@ -158,6 +169,8 @@ struct TransferStats {
     std::cerr << "    TransferIn: " << transfer_in << ", TransferOut: " << transfer_out << std::endl;
     std::cerr << "  Internal:" << std::endl;
     std::cerr << "    InternalMint: " << internal_mint << ", InternalBurn: " << internal_burn << ", InternalTransfer: " << internal_transfer << std::endl;
+    std::cerr << "  Skipped:" << std::endl;
+    std::cerr << "    NonUsdcFpmm: " << non_usdc_fpmm << std::endl;
     std::cerr << "  Errors:" << std::endl;
     std::cerr << "    UnknownToken: " << unknown_token << ", Unclassified: " << unclassified << std::endl;
   }

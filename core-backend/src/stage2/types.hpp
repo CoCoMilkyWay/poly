@@ -37,6 +37,8 @@ struct TokenInfo {
 
 struct FPMMInfo {
   uint32_t cond_idx;
+  bool is_usdc = true;         // 是否使用 USDC 抵押品
+  std::string collateral;      // 抵押品地址
 };
 
 struct RawEvent {

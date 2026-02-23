@@ -72,7 +72,14 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
     } else {
       cond_idx = it->second;
     }
-    intern_fpmm(addr, cond_idx);
+
+    bool is_usdc = is_usdc_collateral(collateral);
+    intern_fpmm(addr, cond_idx, is_usdc, collateral);
+
+    if (!is_usdc) {
+      // 非 USDC FPMM，跳过 token 计算
+      continue;
+    }
 
     auto cond_bytes = hex_to_blob(lower_cid);
     auto collateral_bytes = hex_to_blob(collateral);
@@ -368,9 +375,12 @@ void EventBuilder::commit_chunk(int64_t new_cursor) {
 
   for (auto &nf : new_fpmms_) {
     std::string blob = hex_to_blob(nf.addr);
+    std::string collateral_val = nf.collateral.empty() ? "NULL" : blob_to_hex_literal(hex_to_blob(nf.collateral));
     conn->Query("INSERT OR IGNORE INTO rb_fpmm VALUES (" +
                 blob_to_hex_literal(blob) + ", " +
-                std::to_string(nf.cond_idx) + ")");
+                std::to_string(nf.cond_idx) + ", " +
+                std::to_string(nf.is_usdc ? 1 : 0) + ", " +
+                collateral_val + ")");
   }
 
   for (auto &nm : new_neg_risk_markets_) {
