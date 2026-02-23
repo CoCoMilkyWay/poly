@@ -62,6 +62,8 @@ message(STATUS "Found Arrow: ${Arrow_VERSION}")
 # 源文件
 set(SOURCES
     ${SRC_DIR}/main.cpp
+    ${SRC_DIR}/stage2/event_build_classify.cpp
+    ${SRC_DIR}/stage2/event_build_phases.cpp
 )
 
 if(PROFILE_MODE)
