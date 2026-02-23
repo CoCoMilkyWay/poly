@@ -280,9 +280,9 @@
       "xfer",
       "user_events",
       "internal",
-      "skipped",
       "split",
       "merge",
+      "redemption",
       "order",
       "fpmm_trade",
       "fpmm_lp",
@@ -292,7 +292,6 @@
       "internal_mint",
       "internal_burn",
       "internal_transfer",
-      "non_poly",
     ]);
     let s2AllExpanded = true;
 
@@ -577,44 +576,6 @@
       };
     }
 
-    // 构建非Polymarket节点（协议->tokens两层结构）
-    function s2BuildNonPolyNode(s) {
-      const protos = s.xfer_non_poly_protos || [];
-
-      const children = protos.map((proto, idx) => {
-        const isAddr = proto.name.startsWith("0x");
-        const label = isAddr ? proto.name : `${proto.name} (${proto.addr})`;
-
-        const tokenChildren = proto.tokens.map((t, tidx) => ({
-          id: `non_poly_${idx}_t${tidx}`,
-          label: t.id,
-          value: t.count,
-          color: "#fde68a",
-          desc: "token_id",
-        }));
-
-        return {
-          id: `non_poly_proto_${idx}`,
-          label: label,
-          value: proto.total,
-          color: "#fcd34d",
-          desc: isAddr ? "未知协议" : "已识别协议",
-          scene: isAddr ? "合约地址未标注" : "",
-          children: tokenChildren.length > 0 ? tokenChildren : undefined,
-        };
-      });
-
-      return {
-        id: "non_poly",
-        label: "非Poly",
-        value: s.xfer_non_poly || 0,
-        color: "#fbbf24",
-        desc: "token未知",
-        scene: "token不属于已知Poly市场",
-        children: children.length > 0 ? children : undefined,
-      };
-    }
-
     // EventType常量 (与后端types.hpp对应)
     const EventType = {
       Buy: 0,
@@ -687,29 +648,52 @@
 
     // 构建Transfer树
     function s2BuildXferTree(s) {
-      // 保持原有恒等式树结构
-      const split = (s.xfer_split_normal || 0) + (s.xfer_split_negrisk || 0);
-      const merge = (s.xfer_merge_normal || 0) + (s.xfer_merge_negrisk || 0);
+      // Split/Merge/Redemption 包含 Poly + NonPoly
+      const split_poly =
+        (s.xfer_split_normal || 0) + (s.xfer_split_negrisk || 0);
+      const split_non_poly = s.xfer_split_non_poly || 0;
+      const split = split_poly + split_non_poly;
+
+      const merge_poly =
+        (s.xfer_merge_normal || 0) + (s.xfer_merge_negrisk || 0);
+      const merge_non_poly = s.xfer_merge_non_poly || 0;
+      const merge = merge_poly + merge_non_poly;
+
+      const redemption_poly = s.xfer_redemption || 0;
+      const redemption_non_poly = s.xfer_redemption_non_poly || 0;
+      const redemption = redemption_poly + redemption_non_poly;
+
+      // Polymarket 专属操作
       const order = (s.xfer_order_buy || 0) + (s.xfer_order_sell || 0);
       const fpmm_trade = (s.xfer_fpmm_buy || 0) + (s.xfer_fpmm_sell || 0);
       const fpmm_lp =
         (s.xfer_lp_add || 0) +
         (s.xfer_lp_remove || 0) +
         (s.xfer_lp_return || 0);
-      const transfer_in =
+
+      // Transfer 包含 Poly + NonPoly
+      const transfer_in_poly =
         (s.xfer_transfer_in_negrisk || 0) + (s.xfer_transfer_in_other || 0);
-      const transfer_out =
+      const transfer_in_non_poly = s.xfer_transfer_in_non_poly || 0;
+      const transfer_in = transfer_in_poly + transfer_in_non_poly;
+
+      const transfer_out_poly =
         (s.xfer_transfer_out_negrisk || 0) + (s.xfer_transfer_out_other || 0);
+      const transfer_out_non_poly = s.xfer_transfer_out_non_poly || 0;
+      const transfer_out = transfer_out_poly + transfer_out_non_poly;
+
       const transfer = transfer_in + transfer_out;
+
       const user_events =
         split +
         merge +
-        (s.xfer_redemption || 0) +
+        redemption +
         (s.xfer_convert || 0) +
         order +
         fpmm_trade +
         fpmm_lp +
         transfer;
+
       const internal_mint =
         (s.xfer_internal_mint_negrisk || 0) + (s.xfer_internal_mint_fpmm || 0);
       const internal_burn =
@@ -723,7 +707,6 @@
         (s.xfer_internal_transfer_fpmm || 0) +
         (s.xfer_internal_transfer_other || 0);
       const internal = internal_mint + internal_burn + internal_transfer;
-      const skipped = s.xfer_non_poly || 0;
 
       return {
         id: "xfer",
@@ -747,23 +730,41 @@
                 value: split,
                 color: "#86efac",
                 desc: "PositionSplit",
-                scene: "用户存入USDC铸造YES+NO",
+                scene: "用户存入抵押物铸造YES+NO",
                 children: [
                   {
-                    id: "split_normal",
-                    label: "普通",
-                    value: s.xfer_split_normal || 0,
+                    id: "split_poly",
+                    label: "Poly",
+                    value: split_poly,
                     color: "#bbf7d0",
-                    desc: "0x0→用户",
-                    scene: "用户直接调用CTF.split",
+                    desc: "Polymarket市场",
+                    scene: "已知Polymarket condition",
+                    children: [
+                      {
+                        id: "split_normal",
+                        label: "普通",
+                        value: s.xfer_split_normal || 0,
+                        color: "#dcfce7",
+                        desc: "0x0→用户",
+                        scene: "用户直接调用CTF.split",
+                      },
+                      {
+                        id: "split_negrisk",
+                        label: "NegRisk",
+                        value: s.xfer_split_negrisk || 0,
+                        color: "#dcfce7",
+                        desc: "Adapter→用户",
+                        scene: "Adapter代理铸造后转给用户",
+                      },
+                    ],
                   },
                   {
-                    id: "split_negrisk",
-                    label: "NegRisk",
-                    value: s.xfer_split_negrisk || 0,
-                    color: "#bbf7d0",
-                    desc: "Adapter→用户",
-                    scene: "Adapter代理铸造后转给用户",
+                    id: "split_non_poly",
+                    label: "NonPoly",
+                    value: split_non_poly,
+                    color: "#fde68a",
+                    desc: "非Polymarket",
+                    scene: "其他协议的CTF操作",
                   },
                   s2BuildCollateralSection(
                     s,
@@ -779,23 +780,41 @@
                 value: merge,
                 color: "#86efac",
                 desc: "PositionsMerge",
-                scene: "用户销毁YES+NO取回USDC",
+                scene: "用户销毁YES+NO取回抵押物",
                 children: [
                   {
-                    id: "merge_normal",
-                    label: "普通",
-                    value: s.xfer_merge_normal || 0,
+                    id: "merge_poly",
+                    label: "Poly",
+                    value: merge_poly,
                     color: "#bbf7d0",
-                    desc: "用户→0x0",
-                    scene: "用户直接调用CTF.merge",
+                    desc: "Polymarket市场",
+                    scene: "已知Polymarket condition",
+                    children: [
+                      {
+                        id: "merge_normal",
+                        label: "普通",
+                        value: s.xfer_merge_normal || 0,
+                        color: "#dcfce7",
+                        desc: "用户→0x0",
+                        scene: "用户直接调用CTF.merge",
+                      },
+                      {
+                        id: "merge_negrisk",
+                        label: "NegRisk",
+                        value: s.xfer_merge_negrisk || 0,
+                        color: "#dcfce7",
+                        desc: "用户→Adapter",
+                        scene: "用户转给Adapter代理销毁",
+                      },
+                    ],
                   },
                   {
-                    id: "merge_negrisk",
-                    label: "NegRisk",
-                    value: s.xfer_merge_negrisk || 0,
-                    color: "#bbf7d0",
-                    desc: "用户→Adapter",
-                    scene: "用户转给Adapter代理销毁",
+                    id: "merge_non_poly",
+                    label: "NonPoly",
+                    value: merge_non_poly,
+                    color: "#fde68a",
+                    desc: "非Polymarket",
+                    scene: "其他协议的CTF操作",
                   },
                   s2BuildCollateralSection(
                     s,
@@ -808,11 +827,27 @@
               {
                 id: "redemption",
                 label: "赎回",
-                value: s.xfer_redemption || 0,
+                value: redemption,
                 color: "#86efac",
                 desc: "PayoutRedemption",
-                scene: "市场结算后兑换USDC",
+                scene: "市场结算后兑换抵押物",
                 children: [
+                  {
+                    id: "redemption_poly",
+                    label: "Poly",
+                    value: redemption_poly,
+                    color: "#bbf7d0",
+                    desc: "Polymarket市场",
+                    scene: "已知Polymarket condition",
+                  },
+                  {
+                    id: "redemption_non_poly",
+                    label: "NonPoly",
+                    value: redemption_non_poly,
+                    color: "#fde68a",
+                    desc: "非Polymarket",
+                    scene: "其他协议的CTF操作",
+                  },
                   s2BuildCollateralSection(
                     s,
                     [EventType.Redemption],
@@ -958,20 +993,38 @@
                     scene: "用户收到代币",
                     children: [
                       {
-                        id: "transfer_in_negrisk",
-                        label: "Adapter",
-                        value: s.xfer_transfer_in_negrisk || 0,
+                        id: "transfer_in_poly",
+                        label: "Poly",
+                        value: transfer_in_poly,
                         color: "#dcfce7",
-                        desc: "Adapter→用户",
-                        scene: "Adapter转出但无Split事件",
+                        desc: "Polymarket token",
+                        scene: "已知Polymarket token",
+                        children: [
+                          {
+                            id: "transfer_in_negrisk",
+                            label: "Adapter",
+                            value: s.xfer_transfer_in_negrisk || 0,
+                            color: "#f0fdf4",
+                            desc: "Adapter→用户",
+                            scene: "Adapter转出但无Split事件",
+                          },
+                          {
+                            id: "transfer_in_other",
+                            label: "其他",
+                            value: s.xfer_transfer_in_other || 0,
+                            color: "#f0fdf4",
+                            desc: "其他→用户",
+                            scene: "用户间转账/协议空投",
+                          },
+                        ],
                       },
                       {
-                        id: "transfer_in_other",
-                        label: "其他",
-                        value: s.xfer_transfer_in_other || 0,
-                        color: "#dcfce7",
-                        desc: "其他→用户",
-                        scene: "用户间转账/协议空投",
+                        id: "transfer_in_non_poly",
+                        label: "NonPoly",
+                        value: transfer_in_non_poly,
+                        color: "#fde68a",
+                        desc: "非Polymarket",
+                        scene: "其他协议CTF token转入",
                       },
                     ],
                   },
@@ -984,20 +1037,38 @@
                     scene: "用户发出代币",
                     children: [
                       {
-                        id: "transfer_out_negrisk",
-                        label: "Adapter",
-                        value: s.xfer_transfer_out_negrisk || 0,
+                        id: "transfer_out_poly",
+                        label: "Poly",
+                        value: transfer_out_poly,
                         color: "#dcfce7",
-                        desc: "用户→Adapter",
-                        scene: "用户转入但无Merge事件",
+                        desc: "Polymarket token",
+                        scene: "已知Polymarket token",
+                        children: [
+                          {
+                            id: "transfer_out_negrisk",
+                            label: "Adapter",
+                            value: s.xfer_transfer_out_negrisk || 0,
+                            color: "#f0fdf4",
+                            desc: "用户→Adapter",
+                            scene: "用户转入但无Merge事件",
+                          },
+                          {
+                            id: "transfer_out_other",
+                            label: "其他",
+                            value: s.xfer_transfer_out_other || 0,
+                            color: "#f0fdf4",
+                            desc: "用户→其他",
+                            scene: "用户间转账/转入协议",
+                          },
+                        ],
                       },
                       {
-                        id: "transfer_out_other",
-                        label: "其他",
-                        value: s.xfer_transfer_out_other || 0,
-                        color: "#dcfce7",
-                        desc: "用户→其他",
-                        scene: "用户间转账/转入协议",
+                        id: "transfer_out_non_poly",
+                        label: "NonPoly",
+                        value: transfer_out_non_poly,
+                        color: "#fde68a",
+                        desc: "非Polymarket",
+                        scene: "其他协议CTF token转出",
                       },
                     ],
                   },
@@ -1131,15 +1202,6 @@
               },
             ],
           },
-          {
-            id: "skipped",
-            label: "跳过",
-            value: skipped,
-            color: "#f59e0b",
-            desc: "非Poly token",
-            scene: "不处理,跳过",
-            children: [s2BuildNonPolyNode(s)],
-          },
         ],
       };
     }
@@ -1222,19 +1284,22 @@
         "xfer",
         "user_events",
         "internal",
-        "skipped",
         "split",
+        "split_poly",
         "merge",
+        "merge_poly",
+        "redemption",
         "order",
         "fpmm_trade",
         "fpmm_lp",
         "transfer",
         "transfer_in",
+        "transfer_in_poly",
         "transfer_out",
+        "transfer_out_poly",
         "internal_mint",
         "internal_burn",
         "internal_transfer",
-        "non_poly",
       ]);
       s2AllExpanded = true;
       s2RenderAllTrees(window._s2LastData || {});

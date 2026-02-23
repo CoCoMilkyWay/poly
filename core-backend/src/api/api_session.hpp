@@ -387,9 +387,12 @@ private:
         {"xfer_total", p.xfer_total},
         {"xfer_split_normal", p.xfer_split_normal},
         {"xfer_split_negrisk", p.xfer_split_negrisk},
+        {"xfer_split_non_poly", p.xfer_split_non_poly},
         {"xfer_merge_normal", p.xfer_merge_normal},
         {"xfer_merge_negrisk", p.xfer_merge_negrisk},
+        {"xfer_merge_non_poly", p.xfer_merge_non_poly},
         {"xfer_redemption", p.xfer_redemption},
+        {"xfer_redemption_non_poly", p.xfer_redemption_non_poly},
         {"xfer_convert", p.xfer_convert},
         {"xfer_order_buy", p.xfer_order_buy},
         {"xfer_order_sell", p.xfer_order_sell},
@@ -400,8 +403,10 @@ private:
         {"xfer_lp_return", p.xfer_lp_return},
         {"xfer_transfer_in_negrisk", p.xfer_transfer_in_negrisk},
         {"xfer_transfer_in_other", p.xfer_transfer_in_other},
+        {"xfer_transfer_in_non_poly", p.xfer_transfer_in_non_poly},
         {"xfer_transfer_out_negrisk", p.xfer_transfer_out_negrisk},
         {"xfer_transfer_out_other", p.xfer_transfer_out_other},
+        {"xfer_transfer_out_non_poly", p.xfer_transfer_out_non_poly},
         {"xfer_internal_mint_negrisk", p.xfer_internal_mint_negrisk},
         {"xfer_internal_mint_fpmm", p.xfer_internal_mint_fpmm},
         {"xfer_internal_burn_negrisk", p.xfer_internal_burn_negrisk},
@@ -412,21 +417,7 @@ private:
         {"xfer_internal_transfer_negrisk", p.xfer_internal_transfer_negrisk},
         {"xfer_internal_transfer_fpmm", p.xfer_internal_transfer_fpmm},
         {"xfer_internal_transfer_other", p.xfer_internal_transfer_other},
-        {"xfer_non_poly", p.xfer_non_poly},
     };
-    // 添加 non_poly 协议->token 明细
-    json protos = json::array();
-    for (const auto &npp : p.xfer_non_poly_protos) {
-      json tokens = json::array();
-      std::vector<std::pair<std::string, int64_t>> sorted_tokens(npp.tokens.begin(), npp.tokens.end());
-      std::sort(sorted_tokens.begin(), sorted_tokens.end(),
-                [](const auto &a, const auto &b) { return a.second > b.second; });
-      for (const auto &[tid, cnt] : sorted_tokens) {
-        tokens.push_back({{"id", tid}, {"count", cnt}});
-      }
-      protos.push_back({{"name", npp.name}, {"addr", npp.addr}, {"total", npp.total}, {"tokens", tokens}});
-    }
-    result["xfer_non_poly_protos"] = protos;
 
     // 按(EventType, Collateral)分组的统计
     json event_by_coll = json::array();

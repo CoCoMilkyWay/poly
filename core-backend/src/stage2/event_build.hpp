@@ -355,12 +355,6 @@ public:
     progress_.xfer_stats.internal_transfer_negrisk += chunk_xfer_stats_.internal_transfer_negrisk;
     progress_.xfer_stats.internal_transfer_fpmm += chunk_xfer_stats_.internal_transfer_fpmm;
     progress_.xfer_stats.internal_transfer_other += chunk_xfer_stats_.internal_transfer_other;
-    progress_.xfer_stats.non_polymarket += chunk_xfer_stats_.non_polymarket;
-    for (const auto &[op, tokens] : chunk_xfer_stats_.non_poly_by_op_token) {
-      for (const auto &[token_id, cnt] : tokens) {
-        progress_.xfer_stats.non_poly_by_op_token[op][token_id] += cnt;
-      }
-    }
 
     commit_chunk(chunk_end);
 
@@ -393,9 +387,10 @@ private:
   std::unordered_set<uint32_t> negrisk_cond_idxs_;              // NegRisk 对应的 cond_idx
   std::unordered_map<uint32_t, Collateral> cond_collateral_;    // cond_idx -> 抵押品类型
 
-  std::unordered_map<TxCondKey, std::vector<SplitInfo>> tx_split_;
-  std::unordered_map<TxCondKey, std::vector<MergeInfo>> tx_merge_;
-  std::unordered_map<TxCondKey, std::vector<RedemptionInfo>> tx_redemption_;
+  // 按 TxKey (tx_hash) 索引，统一处理已知和未知 token
+  std::unordered_map<TxKey, std::vector<SplitInfo>> tx_split_;
+  std::unordered_map<TxKey, std::vector<MergeInfo>> tx_merge_;
+  std::unordered_map<TxKey, std::vector<RedemptionInfo>> tx_redemption_;
   std::unordered_map<TxMarketKey, std::vector<ConvertInfo>> tx_convert_;
   std::unordered_map<TxTokenKey, OrderInfo> tx_order_;
   std::unordered_map<TxFPMMKey, FPMMTradeInfo> tx_fpmm_trade_;

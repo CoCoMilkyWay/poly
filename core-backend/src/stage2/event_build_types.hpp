@@ -200,16 +200,21 @@ struct ScanStats {
 };
 
 enum class TransferClass {
-  // === Split 铸造 (2) ===
+  // === Split 铸造 (3) ===
   SplitNormal,  // mint→用户, stakeholder==to (普通市场)
   SplitNegRisk, // Adapter→用户, stakeholder==Adapter (NegRisk)
+  SplitNonPoly, // 非Polymarket condition的Split
 
-  // === Merge 合并 (2) ===
+  // === Merge 合并 (3) ===
   MergeNormal,  // 用户→burn, stakeholder==from (普通市场)
   MergeNegRisk, // 用户→Adapter, stakeholder==Adapter (NegRisk)
+  MergeNonPoly, // 非Polymarket condition的Merge
 
-  // === 其他用户事件 (7) ===
-  Redemption,   // 用户→burn with PayoutRedemption
+  // === Redemption 赎回 (2) ===
+  Redemption,       // Polymarket condition的Redemption
+  RedemptionNonPoly, // 非Polymarket condition的Redemption
+
+  // === Polymarket专属操作 (8) ===
   Convert,      // 用户→BurnAddr with PositionsConverted
   OrderBuy,     // Exchange to用户
   OrderSell,    // Exchange from用户
@@ -219,11 +224,13 @@ enum class TransferClass {
   FPMMLPRemove, // FPMM→用户 with FundingRemoved
   FPMMLPReturn, // FPMM→用户 with FundingAdded (返还多余)
 
-  // === Transfer 转账 (4) ===
-  TransferInNegRisk,  // Adapter→用户 无Split
-  TransferInOther,    // 其他→用户
-  TransferOutNegRisk, // 用户→Adapter 无Merge
-  TransferOutOther,   // 用户→其他
+  // === Transfer 转账 (6) ===
+  TransferInNegRisk,  // Adapter→用户 无Split (Poly)
+  TransferInOther,    // 其他→用户 (Poly)
+  TransferInNonPoly,  // 非Polymarket token转入
+  TransferOutNegRisk, // 用户→Adapter 无Merge (Poly)
+  TransferOutOther,   // 用户→其他 (Poly)
+  TransferOutNonPoly, // 非Polymarket token转出
 
   // === InternalMint 内铸 (2) ===
   InternalMintNegRisk, // mint→Adapter
@@ -241,24 +248,28 @@ enum class TransferClass {
   InternalTransferFPMM,    // FPMM Funding其他
   InternalTransferOther,   // 其他协议间
 
-  // === 其他 (2) ===
-  NonPolymarket, // 非Polymarket token
+  // === 其他 (1) ===
   Unclassified,  // ERROR
 };
 
 struct TransferStats {
   int64_t total = 0;
 
-  // === Split 铸造 (叶子节点) ===
+  // === Split 铸造 ===
   int64_t split_normal = 0;
   int64_t split_negrisk = 0;
+  int64_t split_non_poly = 0;
 
-  // === Merge 合并 (叶子节点) ===
+  // === Merge 合并 ===
   int64_t merge_normal = 0;
   int64_t merge_negrisk = 0;
+  int64_t merge_non_poly = 0;
 
-  // === 其他用户事件 (叶子节点) ===
+  // === Redemption 赎回 ===
   int64_t redemption = 0;
+  int64_t redemption_non_poly = 0;
+
+  // === Polymarket专属操作 ===
   int64_t convert = 0;
   int64_t order_buy = 0;
   int64_t order_sell = 0;
@@ -268,44 +279,46 @@ struct TransferStats {
   int64_t fpmm_lp_remove = 0;
   int64_t fpmm_lp_return = 0;
 
-  // === Transfer 转账 (叶子节点) ===
+  // === Transfer 转账 ===
   int64_t transfer_in_negrisk = 0;
   int64_t transfer_in_other = 0;
+  int64_t transfer_in_non_poly = 0;
   int64_t transfer_out_negrisk = 0;
   int64_t transfer_out_other = 0;
+  int64_t transfer_out_non_poly = 0;
 
-  // === InternalMint 内铸 (叶子节点) ===
+  // === InternalMint 内铸 ===
   int64_t internal_mint_negrisk = 0;
   int64_t internal_mint_fpmm = 0;
 
-  // === InternalBurn 内燃 (叶子节点) ===
+  // === InternalBurn 内燃 ===
   int64_t internal_burn_negrisk = 0;
   int64_t internal_burn_fpmm = 0;
   int64_t internal_burn_convert = 0;
 
-  // === InternalTransfer 内转 (叶子节点) ===
+  // === InternalTransfer 内转 ===
   int64_t internal_transfer_zero = 0;
   int64_t internal_transfer_order = 0;
   int64_t internal_transfer_negrisk = 0;
   int64_t internal_transfer_fpmm = 0;
   int64_t internal_transfer_other = 0;
 
-  // === 其他 (叶子节点) ===
-  int64_t non_polymarket = 0;
+  // === 其他 ===
   int64_t unclassified = 0;
 
-  // non_polymarket按operator->token细分（累积统计）
-  // key: operator地址, value: map<token_id, count>
-  std::unordered_map<std::string, std::unordered_map<std::string, int64_t>> non_poly_by_op_token;
-
   // === 汇总字段 (由叶子节点计算) ===
-  int64_t split() const { return split_normal + split_negrisk; }
-  int64_t merge() const { return merge_normal + merge_negrisk; }
+  int64_t split() const { return split_normal + split_negrisk + split_non_poly; }
+  int64_t split_poly() const { return split_normal + split_negrisk; }
+  int64_t merge() const { return merge_normal + merge_negrisk + merge_non_poly; }
+  int64_t merge_poly() const { return merge_normal + merge_negrisk; }
+  int64_t redemption_all() const { return redemption + redemption_non_poly; }
   int64_t order() const { return order_buy + order_sell; }
   int64_t fpmm_trade() const { return fpmm_buy + fpmm_sell; }
   int64_t fpmm_lp() const { return fpmm_lp_add + fpmm_lp_remove + fpmm_lp_return; }
-  int64_t transfer_in() const { return transfer_in_negrisk + transfer_in_other; }
-  int64_t transfer_out() const { return transfer_out_negrisk + transfer_out_other; }
+  int64_t transfer_in() const { return transfer_in_negrisk + transfer_in_other + transfer_in_non_poly; }
+  int64_t transfer_in_poly() const { return transfer_in_negrisk + transfer_in_other; }
+  int64_t transfer_out() const { return transfer_out_negrisk + transfer_out_other + transfer_out_non_poly; }
+  int64_t transfer_out_poly() const { return transfer_out_negrisk + transfer_out_other; }
   int64_t transfer() const { return transfer_in() + transfer_out(); }
   int64_t internal_mint() const { return internal_mint_negrisk + internal_mint_fpmm; }
   int64_t internal_burn() const { return internal_burn_negrisk + internal_burn_fpmm + internal_burn_convert; }
@@ -313,14 +326,15 @@ struct TransferStats {
 
   // === 一级汇总 ===
   int64_t user_events() const {
-    return split() + merge() + redemption + convert + order() + fpmm_trade() + fpmm_lp() + transfer();
+    return split() + merge() + redemption_all() + convert + order() + fpmm_trade() + fpmm_lp() + transfer();
   }
   int64_t internal() const {
     return internal_mint() + internal_burn() + internal_transfer();
   }
-  int64_t skipped() const {
-    return non_polymarket;
+  int64_t non_polymarket() const {
+    return split_non_poly + merge_non_poly + redemption_non_poly + transfer_in_non_poly + transfer_out_non_poly;
   }
+  int64_t skipped() const { return non_polymarket(); }
 
   void add(TransferClass cls) {
     ++total;
@@ -331,14 +345,23 @@ struct TransferStats {
     case TransferClass::SplitNegRisk:
       ++split_negrisk;
       break;
+    case TransferClass::SplitNonPoly:
+      ++split_non_poly;
+      break;
     case TransferClass::MergeNormal:
       ++merge_normal;
       break;
     case TransferClass::MergeNegRisk:
       ++merge_negrisk;
       break;
+    case TransferClass::MergeNonPoly:
+      ++merge_non_poly;
+      break;
     case TransferClass::Redemption:
       ++redemption;
+      break;
+    case TransferClass::RedemptionNonPoly:
+      ++redemption_non_poly;
       break;
     case TransferClass::Convert:
       ++convert;
@@ -370,11 +393,17 @@ struct TransferStats {
     case TransferClass::TransferInOther:
       ++transfer_in_other;
       break;
+    case TransferClass::TransferInNonPoly:
+      ++transfer_in_non_poly;
+      break;
     case TransferClass::TransferOutNegRisk:
       ++transfer_out_negrisk;
       break;
     case TransferClass::TransferOutOther:
       ++transfer_out_other;
+      break;
+    case TransferClass::TransferOutNonPoly:
+      ++transfer_out_non_poly;
       break;
     case TransferClass::InternalMintNegRisk:
       ++internal_mint_negrisk;
@@ -406,41 +435,34 @@ struct TransferStats {
     case TransferClass::InternalTransferOther:
       ++internal_transfer_other;
       break;
-    case TransferClass::NonPolymarket:
-      ++non_polymarket;
-      break;
     case TransferClass::Unclassified:
       ++unclassified;
       break;
     }
   }
 
-  void add_non_poly_op(const std::string &op, const std::string &token_id) {
-    non_poly_by_op_token[op][token_id]++;
-  }
-
   void verify() const {
-    int64_t sum = user_events() + internal() + skipped() + unclassified;
-    assert(sum == total && "total = user_events + internal + skipped + unclassified");
+    int64_t sum = user_events() + internal() + unclassified;
+    assert(sum == total && "total = user_events + internal + unclassified");
     assert(unclassified == 0 && "unclassified must be 0");
   }
 
   void print_summary() const {
     std::cerr << "Transfer Stats Summary: total=" << total << std::endl;
     std::cerr << "  UserEvents: " << user_events() << std::endl;
-    std::cerr << "    Split: " << split() << " (normal=" << split_normal << ", negrisk=" << split_negrisk << ")" << std::endl;
-    std::cerr << "    Merge: " << merge() << " (normal=" << merge_normal << ", negrisk=" << merge_negrisk << ")" << std::endl;
-    std::cerr << "    Redemption: " << redemption << ", Convert: " << convert << std::endl;
+    std::cerr << "    Split: " << split() << " (poly=" << split_poly() << ", non_poly=" << split_non_poly << ")" << std::endl;
+    std::cerr << "    Merge: " << merge() << " (poly=" << merge_poly() << ", non_poly=" << merge_non_poly << ")" << std::endl;
+    std::cerr << "    Redemption: " << redemption_all() << " (poly=" << redemption << ", non_poly=" << redemption_non_poly << ")" << std::endl;
+    std::cerr << "    Convert: " << convert << std::endl;
     std::cerr << "    Order: " << order() << " (buy=" << order_buy << ", sell=" << order_sell << ")" << std::endl;
     std::cerr << "    FPMMTrade: " << fpmm_trade() << " (buy=" << fpmm_buy << ", sell=" << fpmm_sell << ")" << std::endl;
     std::cerr << "    FPMMLP: " << fpmm_lp() << " (add=" << fpmm_lp_add << ", remove=" << fpmm_lp_remove << ", return=" << fpmm_lp_return << ")" << std::endl;
-    std::cerr << "    Transfer: " << transfer() << " (in=" << transfer_in() << "[nr=" << transfer_in_negrisk << ",oth=" << transfer_in_other << "], out=" << transfer_out() << "[nr=" << transfer_out_negrisk << ",oth=" << transfer_out_other << "])" << std::endl;
+    std::cerr << "    TransferIn: " << transfer_in() << " (poly=" << transfer_in_poly() << ", non_poly=" << transfer_in_non_poly << ")" << std::endl;
+    std::cerr << "    TransferOut: " << transfer_out() << " (poly=" << transfer_out_poly() << ", non_poly=" << transfer_out_non_poly << ")" << std::endl;
     std::cerr << "  Internal: " << internal() << std::endl;
     std::cerr << "    Mint: " << internal_mint() << " (negrisk=" << internal_mint_negrisk << ", fpmm=" << internal_mint_fpmm << ")" << std::endl;
     std::cerr << "    Burn: " << internal_burn() << " (negrisk=" << internal_burn_negrisk << ", fpmm=" << internal_burn_fpmm << ", convert=" << internal_burn_convert << ")" << std::endl;
     std::cerr << "    Transfer: " << internal_transfer() << " (zero=" << internal_transfer_zero << ", order=" << internal_transfer_order << ", negrisk=" << internal_transfer_negrisk << ", fpmm=" << internal_transfer_fpmm << ", other=" << internal_transfer_other << ")" << std::endl;
-    std::cerr << "  Skipped: " << skipped() << std::endl;
-    std::cerr << "    NonPolymarket: " << non_polymarket << std::endl;
     if (unclassified > 0)
       std::cerr << "  ERROR Unclassified: " << unclassified << std::endl;
   }
@@ -483,7 +505,7 @@ struct TransferStats {
     line("  内转.FPMM", chunk.internal_transfer_fpmm, acc.internal_transfer_fpmm);
     line("  内转.其他", chunk.internal_transfer_other, acc.internal_transfer_other);
     oss << "Skipped: +" << chunk.skipped() << " (=" << acc.skipped() << ")\n";
-    line("  非Polymarket", chunk.non_polymarket, acc.non_polymarket);
+    line("  非Polymarket", chunk.non_polymarket(), acc.non_polymarket());
     return oss.str();
   }
 };

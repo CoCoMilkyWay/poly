@@ -74,15 +74,18 @@ public:
     TokenTree token_tree;
 
     // Transfer partition (树状结构)
-    // total = user_events + internal + skipped
+    // total = user_events + internal
     int64_t xfer_total = 0;
 
     // user_events = split + merge + redemption + convert + order + fpmm_trade + fpmm_lp + transfer
     int64_t xfer_split_normal = 0;
     int64_t xfer_split_negrisk = 0;
+    int64_t xfer_split_non_poly = 0;
     int64_t xfer_merge_normal = 0;
     int64_t xfer_merge_negrisk = 0;
+    int64_t xfer_merge_non_poly = 0;
     int64_t xfer_redemption = 0;
+    int64_t xfer_redemption_non_poly = 0;
     int64_t xfer_convert = 0;
     int64_t xfer_order_buy = 0;
     int64_t xfer_order_sell = 0;
@@ -93,8 +96,10 @@ public:
     int64_t xfer_lp_return = 0;
     int64_t xfer_transfer_in_negrisk = 0;
     int64_t xfer_transfer_in_other = 0;
+    int64_t xfer_transfer_in_non_poly = 0;
     int64_t xfer_transfer_out_negrisk = 0;
     int64_t xfer_transfer_out_other = 0;
+    int64_t xfer_transfer_out_non_poly = 0;
 
     // internal = internal_mint + internal_burn + internal_transfer
     int64_t xfer_internal_mint_negrisk = 0;
@@ -108,16 +113,6 @@ public:
     int64_t xfer_internal_transfer_fpmm = 0;
     int64_t xfer_internal_transfer_other = 0;
 
-    // skipped = non_poly
-    int64_t xfer_non_poly = 0;
-    // non_poly按operator->token细分: { 协议名: { total: N, tokens: { token_id: count, ... } }, ... }
-    struct NonPolyProto {
-      std::string name; // 协议名或地址
-      std::string addr; // 原始地址
-      int64_t total = 0;
-      std::unordered_map<std::string, int64_t> tokens; // token_id -> count
-    };
-    std::vector<NonPolyProto> xfer_non_poly_protos;
     // 按(EventType, Collateral)分组统计
     std::unordered_map<uint16_t, int64_t> event_by_collateral;
   };
@@ -135,9 +130,12 @@ public:
     p.xfer_total = bp.xfer_stats.total;
     p.xfer_split_normal = bp.xfer_stats.split_normal;
     p.xfer_split_negrisk = bp.xfer_stats.split_negrisk;
+    p.xfer_split_non_poly = bp.xfer_stats.split_non_poly;
     p.xfer_merge_normal = bp.xfer_stats.merge_normal;
     p.xfer_merge_negrisk = bp.xfer_stats.merge_negrisk;
+    p.xfer_merge_non_poly = bp.xfer_stats.merge_non_poly;
     p.xfer_redemption = bp.xfer_stats.redemption;
+    p.xfer_redemption_non_poly = bp.xfer_stats.redemption_non_poly;
     p.xfer_convert = bp.xfer_stats.convert;
     p.xfer_order_buy = bp.xfer_stats.order_buy;
     p.xfer_order_sell = bp.xfer_stats.order_sell;
@@ -148,8 +146,10 @@ public:
     p.xfer_lp_return = bp.xfer_stats.fpmm_lp_return;
     p.xfer_transfer_in_negrisk = bp.xfer_stats.transfer_in_negrisk;
     p.xfer_transfer_in_other = bp.xfer_stats.transfer_in_other;
+    p.xfer_transfer_in_non_poly = bp.xfer_stats.transfer_in_non_poly;
     p.xfer_transfer_out_negrisk = bp.xfer_stats.transfer_out_negrisk;
     p.xfer_transfer_out_other = bp.xfer_stats.transfer_out_other;
+    p.xfer_transfer_out_non_poly = bp.xfer_stats.transfer_out_non_poly;
     p.xfer_internal_mint_negrisk = bp.xfer_stats.internal_mint_negrisk;
     p.xfer_internal_mint_fpmm = bp.xfer_stats.internal_mint_fpmm;
     p.xfer_internal_burn_negrisk = bp.xfer_stats.internal_burn_negrisk;
@@ -160,22 +160,6 @@ public:
     p.xfer_internal_transfer_negrisk = bp.xfer_stats.internal_transfer_negrisk;
     p.xfer_internal_transfer_fpmm = bp.xfer_stats.internal_transfer_fpmm;
     p.xfer_internal_transfer_other = bp.xfer_stats.internal_transfer_other;
-    p.xfer_non_poly = bp.xfer_stats.non_polymarket;
-    for (const auto &[op, tokens] : bp.xfer_stats.non_poly_by_op_token) {
-      Protocol proto = identify_protocol(op);
-      std::string name = (proto == Protocol::Unknown) ? op : protocol_name(proto);
-      RebuildProgress::NonPolyProto npp;
-      npp.name = name;
-      npp.addr = op;
-      npp.total = 0;
-      for (const auto &[token_id, cnt] : tokens) {
-        npp.tokens[token_id] = cnt;
-        npp.total += cnt;
-      }
-      p.xfer_non_poly_protos.push_back(std::move(npp));
-    }
-    std::sort(p.xfer_non_poly_protos.begin(), p.xfer_non_poly_protos.end(),
-              [](const auto &a, const auto &b) { return a.total > b.total; });
     p.event_by_collateral = bp.event_by_collateral;
     return p;
   }

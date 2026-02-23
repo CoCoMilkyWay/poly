@@ -118,16 +118,6 @@ struct ReplayState {
 // Key 格式: block_number * 1e9 + log_index 的低 32 位 tx_hash 哈希拼接
 // ============================================================================
 
-struct TxCondKey {
-  int64_t block;
-  std::array<uint8_t, 32> tx_hash;
-  std::string cond_id;
-
-  bool operator==(const TxCondKey &o) const {
-    return block == o.block && tx_hash == o.tx_hash && cond_id == o.cond_id;
-  }
-};
-
 struct TxKey {
   int64_t block;
   std::array<uint8_t, 32> tx_hash;
@@ -222,17 +212,6 @@ struct FPMMFundingInfo {
 
 namespace std {
 template <>
-struct hash<stage2::TxCondKey> {
-  size_t operator()(const stage2::TxCondKey &k) const {
-    size_t h = std::hash<int64_t>()(k.block);
-    for (size_t i = 0; i < 8; ++i)
-      h ^= std::hash<uint8_t>()(k.tx_hash[i]) << (i % 8);
-    h ^= std::hash<std::string>()(k.cond_id);
-    return h;
-  }
-};
-
-template <>
 struct hash<stage2::TxKey> {
   size_t operator()(const stage2::TxKey &k) const {
     size_t h = std::hash<int64_t>()(k.block);
@@ -274,4 +253,5 @@ struct hash<stage2::TxFPMMKey> {
     return h;
   }
 };
+
 } // namespace std

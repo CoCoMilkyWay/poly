@@ -176,14 +176,13 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
       stage1_db_.feather_table_range("split", start, end) +
       " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
   for (idx_t i = 0; i < split->RowCount(); ++i) {
-    TxCondKey key;
+    TxKey key;
     key.block = split->GetValue(0, i).GetValue<int64_t>();
     key.tx_hash = hex_to_bytes32(blob_to_hex(split->GetValue(1, i).GetValueUnsafe<std::string>()));
-    key.cond_id = to_lower(blob_to_hex(split->GetValue(2, i).GetValueUnsafe<std::string>()));
     SplitInfo info;
     info.amount = split->GetValue(3, i).GetValue<int64_t>();
     info.stakeholder = to_lower(blob_to_hex(split->GetValue(4, i).GetValueUnsafe<std::string>()));
-    info.cond_id = key.cond_id;
+    info.cond_id = to_lower(blob_to_hex(split->GetValue(2, i).GetValueUnsafe<std::string>()));
     tx_split_[key].push_back(info);
   }
 
@@ -192,14 +191,13 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
       stage1_db_.feather_table_range("merge", start, end) +
       " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
   for (idx_t i = 0; i < merge->RowCount(); ++i) {
-    TxCondKey key;
+    TxKey key;
     key.block = merge->GetValue(0, i).GetValue<int64_t>();
     key.tx_hash = hex_to_bytes32(blob_to_hex(merge->GetValue(1, i).GetValueUnsafe<std::string>()));
-    key.cond_id = to_lower(blob_to_hex(merge->GetValue(2, i).GetValueUnsafe<std::string>()));
     MergeInfo info;
     info.amount = merge->GetValue(3, i).GetValue<int64_t>();
     info.stakeholder = to_lower(blob_to_hex(merge->GetValue(4, i).GetValueUnsafe<std::string>()));
-    info.cond_id = key.cond_id;
+    info.cond_id = to_lower(blob_to_hex(merge->GetValue(2, i).GetValueUnsafe<std::string>()));
     tx_merge_[key].push_back(info);
   }
 
@@ -208,14 +206,13 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
       stage1_db_.feather_table_range("redemption", start, end) +
       " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
   for (idx_t i = 0; i < redemption->RowCount(); ++i) {
-    TxCondKey key;
+    TxKey key;
     key.block = redemption->GetValue(0, i).GetValue<int64_t>();
     key.tx_hash = hex_to_bytes32(blob_to_hex(redemption->GetValue(1, i).GetValueUnsafe<std::string>()));
-    key.cond_id = to_lower(blob_to_hex(redemption->GetValue(2, i).GetValueUnsafe<std::string>()));
     RedemptionInfo info;
     info.payout = redemption->GetValue(3, i).GetValue<int64_t>();
     info.redeemer = to_lower(blob_to_hex(redemption->GetValue(4, i).GetValueUnsafe<std::string>()));
-    info.cond_id = key.cond_id;
+    info.cond_id = to_lower(blob_to_hex(redemption->GetValue(2, i).GetValueUnsafe<std::string>()));
     tx_redemption_[key].push_back(info);
   }
 
@@ -365,7 +362,7 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
     auto tx_hash = hex_to_bytes32(r.tx_hash);
 
     auto tit = token_map_.find(token_id);
-    
+
     if (tit == token_map_.end()) {
       // 未知token：加入 token_map_，使用特殊值表示未知 condition
       intern_token(token_id, UNKNOWN_COND_IDX, UNKNOWN_IS_YES, TokenSource::TransferInferred);
@@ -384,11 +381,6 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
 
     TransferClass cls = classify_and_emit(sort_key, tx_hash, r.block, op, from, to, token_id, r.amount, cond_idx, token_idx, collateral);
     chunk_xfer_stats_.add(cls);
-
-    if (cls == TransferClass::NonPolymarket) {
-      chunk_xfer_stats_.add_non_poly_op(op, token_id);
-      chunk_log_.log_non_polymarket(r.block, r.tx_hash, op, from, to, token_id, r.amount);
-    }
   }
 }
 

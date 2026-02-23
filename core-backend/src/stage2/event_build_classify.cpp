@@ -13,23 +13,26 @@ TransferClass EventBuilder::classify_and_emit(
   if (amount == 0)
     return TransferClass::InternalTransferZero;
 
-  // TransferInferred token：没有 condition 信息，归类为 NonPolymarket
-  if (cond_idx == UNKNOWN_COND_IDX)
-    return TransferClass::NonPolymarket;
-
-  assert(cond_idx < conditions_.size() && "Invalid cond_idx");
-  assert(token_idx < 2 && "Invalid token_idx");
+  // 对于未知 token，只做基本检查
+  bool known_token = (cond_idx != UNKNOWN_COND_IDX);
+  if (known_token) {
+    assert(cond_idx < conditions_.size() && "Invalid cond_idx");
+    assert(token_idx < 2 && "Invalid token_idx");
+  }
   assert(from != to && "from and to must be different");
 
   uint8_t coll = static_cast<uint8_t>(collateral);
-
-  std::string cond_id = cond_ids_[cond_idx];
-  TxCondKey tx_cond_key{block, tx_hash, cond_id};
+  std::string cond_id = known_token ? cond_ids_[cond_idx] : "";
+  TxKey tx_key{block, tx_hash};
   TxTokenKey tx_token_key{block, tx_hash, token_id};
 
-  uint8_t outcome_cnt = conditions_[cond_idx].outcome_count;
-  // 非USDC的price设为0
-  int64_t split_price = is_usdc_collateral(collateral) ? (1000000 / outcome_cnt) : 0;
+  uint8_t outcome_cnt = known_token ? conditions_[cond_idx].outcome_count : 2;
+  int64_t split_price = (known_token && is_usdc_collateral(collateral)) ? (1000000 / outcome_cnt) : 0;
+
+  // Lambda: 匹配 Split/Merge/Redemption 时，已知 token 需要检查 cond_id
+  auto cond_matches = [&](const std::string &info_cond_id) {
+    return !known_token || cond_id == info_cond_id;
+  };
 
   // ========== mint 分支 (from == 0x0) ==========
   if (from == ZERO_ADDR) {
@@ -53,22 +56,27 @@ TransferClass EventBuilder::classify_and_emit(
       return TransferClass::InternalMintFPMM;
     }
 
-    auto sit = tx_split_.find(tx_cond_key);
+    auto sit = tx_split_.find(tx_key);
     if (sit != tx_split_.end()) {
       for (const auto &info : sit->second) {
-        if (info.stakeholder == to) {
-          assert(amount == info.amount && "Split amount mismatch");
-          if (!is_protocol_contract(to)) {
-            RawEvent evt{sort_key, cond_idx, EventType::Split, token_idx, coll, 0, amount, split_price};
-            push_event(to, evt);
+        if (info.stakeholder == to && info.amount == amount && cond_matches(info.cond_id)) {
+          if (known_token) {
+            if (!is_protocol_contract(to)) {
+              RawEvent evt{sort_key, cond_idx, EventType::Split, token_idx, coll, 0, amount, split_price};
+              push_event(to, evt);
+            }
+            return TransferClass::SplitNormal;
+          } else {
+            return TransferClass::SplitNonPoly;
           }
-          return TransferClass::SplitNormal;
         }
       }
     }
+
     std::cerr << "[ERROR] Unmatched mint transfer: block=" << block
               << ", to=" << to << ", token_id=" << token_id
-              << ", amount=" << amount << ", cond_idx=" << cond_idx << std::endl;
+              << ", amount=" << amount << ", cond_idx=" << cond_idx
+              << ", known=" << known_token << std::endl;
     assert(false && "Unmatched mint transfer");
     return TransferClass::Unclassified;
   }
@@ -83,41 +91,50 @@ TransferClass EventBuilder::classify_and_emit(
       return TransferClass::InternalBurnFPMM;
     }
 
-    auto mit = tx_merge_.find(tx_cond_key);
+    auto mit = tx_merge_.find(tx_key);
     if (mit != tx_merge_.end()) {
       for (const auto &info : mit->second) {
-        if (info.stakeholder == from) {
-          assert(amount == info.amount && "Merge amount mismatch");
-          if (!is_protocol_contract(from)) {
-            RawEvent evt{sort_key, cond_idx, EventType::Merge, token_idx, coll, 0, -amount, split_price};
-            push_event(from, evt);
+        if (info.stakeholder == from && info.amount == amount && cond_matches(info.cond_id)) {
+          if (known_token) {
+            if (!is_protocol_contract(from)) {
+              RawEvent evt{sort_key, cond_idx, EventType::Merge, token_idx, coll, 0, -amount, split_price};
+              push_event(from, evt);
+            }
+            return TransferClass::MergeNormal;
+          } else {
+            return TransferClass::MergeNonPoly;
           }
-          return TransferClass::MergeNormal;
         }
       }
     }
 
-    auto rit = tx_redemption_.find(tx_cond_key);
+    auto rit = tx_redemption_.find(tx_key);
     if (rit != tx_redemption_.end()) {
       for (const auto &info : rit->second) {
-        if (info.redeemer == from) {
-          if (!is_protocol_contract(from)) {
-            auto &payouts = conditions_[cond_idx].payout_numerators;
-            int64_t payout_price = is_usdc_collateral(collateral)
-                                       ? ((token_idx < payouts.size() && payouts[token_idx] >= 0)
-                                              ? payouts[token_idx]
-                                              : 1000000)
-                                       : 0;
-            RawEvent evt{sort_key, cond_idx, EventType::Redemption, token_idx, coll, 0, -amount, payout_price};
-            push_event(from, evt);
+        if (info.redeemer == from && cond_matches(info.cond_id)) {
+          if (known_token) {
+            if (!is_protocol_contract(from)) {
+              auto &payouts = conditions_[cond_idx].payout_numerators;
+              int64_t payout_price = is_usdc_collateral(collateral)
+                                         ? ((token_idx < payouts.size() && payouts[token_idx] >= 0)
+                                                ? payouts[token_idx]
+                                                : 1000000)
+                                         : 0;
+              RawEvent evt{sort_key, cond_idx, EventType::Redemption, token_idx, coll, 0, -amount, payout_price};
+              push_event(from, evt);
+            }
+            return TransferClass::Redemption;
+          } else {
+            return TransferClass::RedemptionNonPoly;
           }
-          return TransferClass::Redemption;
         }
       }
     }
+
     std::cerr << "[ERROR] Unmatched burn transfer: block=" << block
               << ", from=" << from << ", token_id=" << token_id
-              << ", amount=" << amount << ", cond_idx=" << cond_idx << std::endl;
+              << ", amount=" << amount << ", cond_idx=" << cond_idx
+              << ", known=" << known_token << std::endl;
     assert(false && "Unmatched burn transfer");
     return TransferClass::Unclassified;
   }
@@ -149,6 +166,11 @@ TransferClass EventBuilder::classify_and_emit(
       else
         return TransferClass::InternalTransferOrder;
     }
+
+    // 未知 token 的 Exchange 操作，归类为 NonPolymarket（不应该发生）
+    if (!known_token)
+      return TransferClass::Unclassified;
+
     std::cerr << "[ERROR] Exchange transfer without order: block=" << block
               << ", op=" << op << ", from=" << from << ", to=" << to << std::endl;
     assert(false && "Exchange transfer without order");
@@ -158,12 +180,12 @@ TransferClass EventBuilder::classify_and_emit(
   // ========== NegRisk Adapter operator ==========
   if (op == NEG_RISK_ADAPTER) {
     if (from == NEG_RISK_ADAPTER) {
-      auto sit = tx_split_.find(tx_cond_key);
+      auto sit = tx_split_.find(tx_key);
       if (sit != tx_split_.end()) {
         for (const auto &info : sit->second) {
-          if (info.stakeholder == NEG_RISK_ADAPTER) {
+          if (info.stakeholder == NEG_RISK_ADAPTER && cond_matches(info.cond_id)) {
             bool is_convert_output = false;
-            if (token_idx == 0 && !conditions_[cond_idx].question_id.empty()) {
+            if (known_token && token_idx == 0 && !conditions_[cond_idx].question_id.empty()) {
               auto market_it = cond_to_market_.find(conditions_[cond_idx].question_id);
               if (market_it != cond_to_market_.end()) {
                 TxMarketKey tx_market_key{block, tx_hash, market_it->second};
@@ -188,10 +210,10 @@ TransferClass EventBuilder::classify_and_emit(
     }
 
     if (to == NEG_RISK_ADAPTER) {
-      auto mit = tx_merge_.find(tx_cond_key);
+      auto mit = tx_merge_.find(tx_key);
       if (mit != tx_merge_.end()) {
         for (const auto &info : mit->second) {
-          if (info.stakeholder == NEG_RISK_ADAPTER) {
+          if (info.stakeholder == NEG_RISK_ADAPTER && cond_matches(info.cond_id)) {
             assert(amount == info.amount && "NegRisk Merge mismatch");
             if (!is_protocol_contract(from)) {
               push_event(from, RawEvent{sort_key, cond_idx, EventType::Merge, token_idx, coll, 0, -amount, split_price});
@@ -206,7 +228,7 @@ TransferClass EventBuilder::classify_and_emit(
     }
 
     if (to == NO_TOKEN_BURN_ADDRESS) {
-      assert(token_idx == 1 && "Convert should only burn NO tokens");
+      assert(known_token && token_idx == 1 && "Convert should only burn NO tokens");
       if (from == NEG_RISK_ADAPTER)
         return TransferClass::InternalBurnConvert;
 
@@ -216,95 +238,97 @@ TransferClass EventBuilder::classify_and_emit(
           TxMarketKey tx_market_key{block, tx_hash, market_it->second};
           auto cit = tx_convert_.find(tx_market_key);
           if (cit != tx_convert_.end()) {
-            for (const auto &info : cit->second) {
-              if (info.stakeholder == from) {
-                assert(amount == info.amount && "Convert amount mismatch");
-                int M = __builtin_popcountll(info.index_set);
-                assert(M >= 2 && "Convert requires at least 2 positions");
-                if (!is_protocol_contract(from)) {
-                  int64_t conv_price = is_usdc_collateral(collateral) ? (1000000 * (M - 1) / M) : 0;
-                  push_event(from, RawEvent{sort_key, cond_idx, EventType::Convert, token_idx, coll, 0, -amount, conv_price});
-                }
+            for (const auto &ci : cit->second) {
+              if (ci.stakeholder == from && ci.amount == amount) {
+                if (!is_protocol_contract(from))
+                  push_event(from, RawEvent{sort_key, cond_idx, EventType::Convert, token_idx, coll, 0, -amount, 0});
                 return TransferClass::Convert;
               }
             }
           }
         }
       }
-      std::cerr << "[ERROR] Transfer to burn addr without convert: block=" << block
-                << ", from=" << from << std::endl;
-      assert(false && "Transfer to burn addr without convert");
+      std::cerr << "[ERROR] Convert burn without event: block=" << block
+                << ", from=" << from << ", amount=" << amount << std::endl;
+      assert(false && "Convert burn without event");
       return TransferClass::Unclassified;
     }
-    return TransferClass::InternalTransferNegRisk;
   }
 
   // ========== FPMM operator ==========
   auto fpmm_it = fpmm_map_.find(op);
   if (fpmm_it != fpmm_map_.end()) {
     TxFPMMKey tx_fpmm_key{block, tx_hash, op};
-    auto tit = tx_fpmm_trade_.find(tx_fpmm_key);
-    auto fit = tx_fpmm_funding_.find(tx_fpmm_key);
 
-    if (tit != tx_fpmm_trade_.end()) {
-      assert(amount == tit->second.tokens && "FPMM trade amount mismatch");
-      assert(tit->second.outcome_idx == token_idx && "FPMM trade outcome mismatch");
-      if (tit->second.side == 1) {
-        assert(from == op && "FPMM buy should transfer from FPMM");
-        assert(to == tit->second.trader && "FPMM buy recipient mismatch");
-      } else {
-        assert(to == op && "FPMM sell should transfer to FPMM");
-        assert(from == tit->second.trader && "FPMM sell sender mismatch");
+    if (from == op) {
+      auto fit = tx_fpmm_funding_.find(tx_fpmm_key);
+      if (fit != tx_fpmm_funding_.end() && fit->second.side == 1) {
+        assert(fit->second.amount0 != fit->second.amount1 && "LP Add should have asymmetric amounts");
+        int64_t refund_amt = std::abs(fit->second.amount0 - fit->second.amount1);
+        assert(amount == refund_amt && "LP Add refund amount mismatch");
+        int64_t refund_idx = (fit->second.amount0 < fit->second.amount1) ? 0 : 1;
+        assert(token_idx == refund_idx && "LP Add refund token mismatch");
+        if (!is_protocol_contract(to)) {
+          push_event(to, RawEvent{sort_key, cond_idx, EventType::FPMMLPAdd, token_idx, coll, 0, -amount, split_price});
+        }
+        return TransferClass::FPMMLPReturn;
       }
 
-      if (!is_protocol_contract(tit->second.trader)) {
-        assert(tit->second.tokens > 0 && "FPMM trade tokens must be positive");
+      auto tit = tx_fpmm_trade_.find(tx_fpmm_key);
+      if (tit != tx_fpmm_trade_.end() && tit->second.side == 1) {
+        assert(amount == tit->second.tokens && "FPMM Buy amount mismatch");
         int64_t price = is_usdc_collateral(collateral) ? (tit->second.usdc * 1000000 / tit->second.tokens) : 0;
-        if (tit->second.side == 1) {
-          push_event(tit->second.trader, RawEvent{sort_key, cond_idx, EventType::FPMMBuy, token_idx, coll, 0, amount, price});
-          return TransferClass::FPMMBuy;
-        } else {
-          push_event(tit->second.trader, RawEvent{sort_key, cond_idx, EventType::FPMMSell, token_idx, coll, 0, -amount, price});
-          return TransferClass::FPMMSell;
+        if (!is_protocol_contract(to)) {
+          push_event(to, RawEvent{sort_key, cond_idx, EventType::FPMMBuy, token_idx, coll, 0, amount, price});
         }
+        return TransferClass::FPMMBuy;
       }
-      return (tit->second.side == 1) ? TransferClass::FPMMBuy : TransferClass::FPMMSell;
+
+      if (!is_protocol_contract(to)) {
+        push_event(to, RawEvent{sort_key, cond_idx, EventType::FPMMLPRemove, token_idx, coll, 0, amount, split_price});
+      }
+      return TransferClass::FPMMLPRemove;
     }
 
-    if (fit != tx_fpmm_funding_.end()) {
-      if (from == op && !is_protocol_contract(to)) {
-        if (fit->second.side == 2) {
-          int64_t expected_amt = (token_idx == 0) ? fit->second.amount0 : fit->second.amount1;
-          assert(amount == expected_amt && "LP Remove amount mismatch");
-          push_event(to, RawEvent{sort_key, cond_idx, EventType::FPMMLPRemove, token_idx, coll, 0, amount, split_price});
-          return TransferClass::FPMMLPRemove;
-        } else {
-          return TransferClass::FPMMLPReturn;
+    if (to == op) {
+      auto tit = tx_fpmm_trade_.find(tx_fpmm_key);
+      if (tit != tx_fpmm_trade_.end() && tit->second.side == 2) {
+        assert(amount == tit->second.tokens && "FPMM Sell amount mismatch");
+        int64_t price = is_usdc_collateral(collateral) ? (tit->second.usdc * 1000000 / tit->second.tokens) : 0;
+        if (!is_protocol_contract(from)) {
+          push_event(from, RawEvent{sort_key, cond_idx, EventType::FPMMSell, token_idx, coll, 0, -amount, price});
         }
+        return TransferClass::FPMMSell;
       }
-      return TransferClass::InternalTransferFPMM;
     }
-
-    std::cerr << "[ERROR] FPMM transfer without trade/funding: block=" << block
-              << ", op=" << op << ", from=" << from << ", to=" << to << std::endl;
-    assert(false && "FPMM transfer without trade/funding");
-    return TransferClass::Unclassified;
   }
 
-  // ========== 其他：用户间直接转账 ==========
-  if (!is_protocol_contract(to))
-    push_event(to, RawEvent{sort_key, cond_idx, EventType::TransferIn, token_idx, coll, 0, amount, 0});
-  if (!is_protocol_contract(from))
-    push_event(from, RawEvent{sort_key, cond_idx, EventType::TransferOut, token_idx, coll, 0, -amount, 0});
+  // ========== 普通用户转账 ==========
+  if (known_token) {
+    if (!is_protocol_contract(to))
+      push_event(to, RawEvent{sort_key, cond_idx, EventType::TransferIn, token_idx, coll, 0, amount, 0});
+    if (!is_protocol_contract(from))
+      push_event(from, RawEvent{sort_key, cond_idx, EventType::TransferOut, token_idx, coll, 0, -amount, 0});
 
-  if (!is_protocol_contract(to) && !is_protocol_contract(from))
-    return TransferClass::TransferInOther;
-  else if (!is_protocol_contract(to))
-    return TransferClass::TransferInOther;
-  else if (!is_protocol_contract(from))
-    return TransferClass::TransferOutOther;
-  else
-    return TransferClass::InternalTransferOther;
+    if (!is_protocol_contract(to) && !is_protocol_contract(from))
+      return TransferClass::TransferInOther;
+    else if (!is_protocol_contract(to))
+      return TransferClass::TransferInOther;
+    else if (!is_protocol_contract(from))
+      return TransferClass::TransferOutOther;
+    else
+      return TransferClass::InternalTransferOther;
+  } else {
+    // NonPoly token 不记录 user_event，只统计
+    if (!is_protocol_contract(to) && !is_protocol_contract(from))
+      return TransferClass::TransferInNonPoly;
+    else if (!is_protocol_contract(to))
+      return TransferClass::TransferInNonPoly;
+    else if (!is_protocol_contract(from))
+      return TransferClass::TransferOutNonPoly;
+    else
+      return TransferClass::InternalTransferOther;
+  }
 }
 
 } // namespace stage2
