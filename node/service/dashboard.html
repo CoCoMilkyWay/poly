@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Polygon Node</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0a0a;--card:#141414;--border:#232323;
+  --text:#e0e0e0;--dim:#666;--accent:#6c5ce7;
+  --green:#00b894;--yellow:#fdcb6e;--red:#d63031;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text)}
+.w{max-width:1200px;margin:0 auto;padding:24px}
+header{display:flex;align-items:center;gap:16px;margin-bottom:20px}
+header h1{font-size:1.5em;font-weight:600}
+.badge{padding:4px 14px;border-radius:12px;font-size:.8em;font-weight:500}
+.badge.g{background:rgba(0,184,148,.15);color:var(--green)}
+.badge.y{background:rgba(253,203,110,.15);color:var(--yellow)}
+.badge.r{background:rgba(214,48,49,.15);color:var(--red)}
+.badge.x{background:rgba(102,102,102,.15);color:var(--dim)}
+
+.sec{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px}
+.sec h3{font-size:.88em;color:var(--dim);margin-bottom:14px}
+
+.prog-row{margin-bottom:14px}
+.prog-hd{display:flex;justify-content:space-between;font-size:.82em;margin-bottom:6px}
+.prog-hd .dim{color:var(--dim)}
+.prog-bar{height:20px;background:#1a1a1a;border-radius:10px;overflow:hidden}
+.prog-fill{height:100%;border-radius:10px;transition:width .6s ease}
+.prog-fill.a{background:linear-gradient(90deg,#6c5ce7,#a29bfe)}
+.prog-fill.b{background:linear-gradient(90deg,#00b894,#55efc4)}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.stat{background:#0e0e0e;border-radius:8px;padding:12px 14px}
+.stat .k{font-size:.68em;color:var(--dim);text-transform:uppercase;letter-spacing:.3px;margin-bottom:4px}
+.stat .v{font-size:1.05em;font-weight:600;font-variant-numeric:tabular-nums}
+
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:16px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px}
+.card .l{font-size:.72em;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.card .val{font-size:1.4em;font-weight:600;font-variant-numeric:tabular-nums}
+.card .sub{font-size:.78em;color:var(--dim);margin-top:4px}
+
+.stg-table{width:100%;border-collapse:collapse;margin-top:10px}
+.stg-table td,.stg-table th{padding:5px 10px;text-align:left;font-size:.82em}
+.stg-table th{color:var(--dim);font-weight:500}
+.stg-table tr:not(:last-child) td{border-bottom:1px solid var(--border)}
+
+#log-box{height:240px;overflow-y:auto;background:#0c0c0c;border-radius:8px;padding:12px;
+  font-family:'SF Mono','Fira Code','Cascadia Code',monospace;font-size:.75em;line-height:1.6;color:#555}
+#log-box .ln{white-space:pre-wrap;word-break:break-all}
+#log-box .ln:hover{color:#aaa}
+</style>
+</head>
+<body>
+<div class="w">
+
+<header>
+  <h1>Polygon Node</h1>
+  <span id="bd" class="badge x">启动中</span>
+  <span style="flex:1"></span>
+  <span style="color:var(--dim);font-size:.82em">bor-mainnet &middot; Erigon 3.3.7</span>
+</header>
+
+<!-- ======== Real Download Progress ======== -->
+<div class="sec" id="dl-sec">
+  <h3>Download Progress (磁盘扫描)</h3>
+  <div class="prog-row">
+    <div class="prog-hd"><span>Total</span><span class="dim" id="dl-total-txt">-</span></div>
+    <div class="prog-bar"><div id="dl-total-bar" class="prog-fill b" style="width:0"></div></div>
+  </div>
+  <div id="dl-cats"></div>
+</div>
+
+<!-- ======== Snapshot Download (OtterSync) ======== -->
+<div class="sec" id="snap-sec">
+  <h3>OtterSync (Hashing / Torrent)</h3>
+  <div class="prog-row">
+    <div class="prog-hd"><span>Hashing</span><span class="dim" id="ov-txt">-</span></div>
+    <div class="prog-bar"><div id="ov-bar" class="prog-fill a" style="width:0"></div></div>
+  </div>
+  <div class="grid">
+    <div class="stat"><div class="k">ETA</div><div class="v" id="s-eta">-</div></div>
+    <div class="stat"><div class="k">Elapsed</div><div class="v" id="s-time">-</div></div>
+    <div class="stat"><div class="k">Webseed DL</div><div class="v" id="s-ws">-</div></div>
+    <div class="stat"><div class="k">Peer DL</div><div class="v" id="s-pd">-</div></div>
+    <div class="stat"><div class="k">Hashing</div><div class="v" id="s-hash">-</div></div>
+    <div class="stat"><div class="k">Peers</div><div class="v" id="s-peers">-</div></div>
+    <div class="stat"><div class="k">Upload</div><div class="v" id="s-up">-</div></div>
+    <div class="stat"><div class="k">Memory</div><div class="v" id="s-mem">-</div></div>
+  </div>
+</div>
+
+<!-- ======== Info Cards ======== -->
+<div class="cards">
+  <div class="card"><div class="l">当前区块</div><div class="val" id="cur">-</div><div class="sub" id="cur-sub"></div></div>
+  <div class="card"><div class="l">最高区块</div><div class="val" id="hi">-</div><div class="sub" id="eta-sub"></div></div>
+  <div class="card"><div class="l">同步速度</div><div class="val" id="spd">-</div><div class="sub">block/s</div></div>
+  <div class="card"><div class="l">磁盘剩余</div><div class="val" id="df">-</div><div class="sub" id="dd"></div></div>
+  <div class="card"><div class="l">运行时间</div><div class="val" id="up">-</div></div>
+</div>
+
+<!-- ======== Block Sync ======== -->
+<div class="sec" id="block-sec" style="display:none">
+  <h3>Block Sync</h3>
+  <div class="prog-row">
+    <div class="prog-hd"><span>Progress</span><span class="dim" id="bp-txt">-</span></div>
+    <div class="prog-bar"><div id="bp-bar" class="prog-fill b" style="width:0"></div></div>
+  </div>
+  <table class="stg-table" id="stg-tb"></table>
+</div>
+
+<!-- ======== Logs ======== -->
+<div class="sec">
+  <h3 style="display:flex;justify-content:space-between">
+    <span>Logs</span><span id="lc" style="font-weight:400;font-size:.85em"></span>
+  </h3>
+  <div id="log-box"></div>
+</div>
+
+</div>
+<script>
+// ── DOM & 工具函数 ──
+const $ = id => document.getElementById(id);
+const N = n => n > 0 ? n.toLocaleString() : '-';
+const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+function hms(s) {
+  const h = Math.floor(s/3600), m = Math.floor(s%3600/60), sc = s%60;
+  return h > 0 ? h+'h '+m+'m' : m > 0 ? m+'m '+sc+'s' : sc+'s';
+}
+
+function sz(b) {
+  if (b>=1e12) return (b/1e12).toFixed(2)+' TB';
+  if (b>=1e9)  return (b/1e9).toFixed(1)+' GB';
+  if (b>=1e6)  return (b/1e6).toFixed(0)+' MB';
+  return (b/1e3).toFixed(0)+' KB';
+}
+
+// ── 常量 ──
+const CAT_KEYS   = ['segments','domain','history','idx','accessor'];
+const CAT_LABELS = {
+  segments: 'Segments (.seg/.idx)',
+  domain:   'Domain (state)',
+  history:  'History',
+  idx:      'Indexes',
+  accessor: 'Accessor'
+};
+
+// ── 更新函数: Badge ──
+function updateBadge(d, sn) {
+  const b = $('bd');
+  if      (!d.alive)                { b.textContent = '已停止' + (d.exit_code != null ? ` (${d.exit_code})` : ''); b.className = 'badge r'; }
+  else if (sn.phase === 'snapshot') { b.textContent = '下载 Snapshots'; b.className = 'badge y'; }
+  else if (d.syncing)               { b.textContent = '同步区块';       b.className = 'badge y'; }
+  else if (d.pct >= 100)            { b.textContent = '已同步';         b.className = 'badge g'; }
+  else if (d.rpc)                   { b.textContent = '等待中';         b.className = 'badge x'; }
+  else                              { b.textContent = '启动中...';      b.className = 'badge x'; }
+}
+
+// ── 更新函数: Download Progress (磁盘扫描) ──
+function updateDownload(sp) {
+  const tot = sp.total || {};
+  if (tot.expected <= 0) {
+    $('dl-sec').style.display = 'none';
+    return;
+  }
+  
+  $('dl-sec').style.display = '';
+  $('dl-total-txt').textContent = `${sz(tot.actual)} / ${sz(tot.expected)} (${tot.pct}%)`;
+  $('dl-total-bar').style.width = Math.min(tot.pct, 100) + '%';
+  
+  let html = '';
+  for (const k of CAT_KEYS) {
+    const c = sp[k];
+    if (!c) continue;
+    html += `<div class="prog-row" style="margin-top:10px">
+      <div class="prog-hd">
+        <span style="font-size:.78em">${CAT_LABELS[k]||k}</span>
+        <span class="dim" style="font-size:.78em">${sz(c.actual)}/${sz(c.expected)} &middot; ${c.pct}% &middot; ${c.complete} done, ${c.partial} partial</span>
+      </div>
+      <div class="prog-bar" style="height:10px">
+        <div class="prog-fill b" style="width:${Math.min(c.pct,100)}%;height:100%"></div>
+      </div>
+    </div>`;
+  }
+  $('dl-cats').innerHTML = html;
+}
+
+// ── 更新函数: OtterSync (Hashing / Torrent) ──
+function updateOtterSync(sn) {
+  if (sn.phase !== 'snapshot') {
+    $('snap-sec').style.display = 'none';
+    return;
+  }
+  
+  $('snap-sec').style.display = '';
+  $('ov-txt').textContent  = sn['data'] || '-';
+  $('ov-bar').style.width  = (sn['data_pct'] || 0) + '%';
+  $('s-eta').textContent   = sn['time-left'] || '-';
+  $('s-time').textContent  = sn['total-time'] || '-';
+  $('s-ws').textContent    = sn['webseed-download'] || '-';
+  $('s-pd').textContent    = sn['peer-download'] || '-';
+  $('s-hash').textContent  = sn['hashing-rate'] || '-';
+  $('s-peers').textContent = (sn['peers']||0) + ' peers / ' + (sn['conns']||0) + ' conns';
+  $('s-up').textContent    = sn['upload'] || '-';
+  $('s-mem').textContent   = (sn['alloc']||'-') + ' / ' + (sn['sys']||'-');
+}
+
+// ── 更新函数: Block Sync ──
+function updateBlockSync(d) {
+  const sync = d.sync || {};
+  
+  if (d.current <= 0 && !(d.stages && d.stages.length) && sync.phase !== 'execution') {
+    $('block-sec').style.display = 'none';
+    return;
+  }
+  
+  $('block-sec').style.display = '';
+  
+  // 如果在 execution 阶段，显示实时进度
+  let displayCurrent = d.current;
+  let displaySpeed = d.speed;
+  
+  if (sync.phase === 'execution' && sync.exec_block) {
+    displayCurrent = sync.exec_block;
+    if (sync.exec_blk_per_sec > 0) {
+      displaySpeed = sync.exec_blk_per_sec;
+    }
+  }
+  
+  const pct = d.highest > 0 ? (displayCurrent / d.highest * 100).toFixed(2) : 0;
+  $('bp-txt').textContent = pct + '%' + (d.highest > 0 ? ` (${N(displayCurrent)} / ${N(d.highest)})` : '');
+  $('bp-bar').style.width = Math.min(pct, 100) + '%';
+  
+  if (d.stages && d.stages.length) {
+    const rows = d.stages.map(s => {
+      const bn = typeof s.block_number === 'string' ? parseInt(s.block_number, 16) : (s.block_number || 0);
+      const isActive = (sync.phase === 'execution' && s.stage_name === 'Execution');
+      const blockNum = isActive && sync.exec_block ? sync.exec_block : bn;
+      const style = isActive ? 'font-weight:600;color:var(--green)' : '';
+      return `<tr><td style="${style}">${s.stage_name||s.id||'-'}</td><td style="font-variant-numeric:tabular-nums;${style}">${N(blockNum)}</td></tr>`;
+    }).join('');
+    $('stg-tb').innerHTML = '<tr><th>Stage</th><th>Block</th></tr>' + rows;
+  } else {
+    $('stg-tb').innerHTML = '';
+  }
+}
+
+// ── 更新函数: Info Cards ──
+function updateCards(d) {
+  const sync = d.sync || {};
+  
+  // 当前区块：优先显示 execution 的实时进度
+  let current = d.current;
+  if (sync.phase === 'execution' && sync.exec_block) {
+    current = sync.exec_block;
+  }
+  $('cur').textContent = N(current);
+  
+  // 当前区块副标题：显示阶段信息
+  let curSub = '';
+  if (sync.phase === 'execution') {
+    curSub = 'Execution 阶段';
+  } else if (sync.phase === 'senders') {
+    curSub = 'Senders 阶段';
+  } else if (sync.phase === 'snapshot') {
+    curSub = '下载 Snapshots';
+  }
+  $('cur-sub').textContent = curSub;
+  
+  $('hi').textContent = N(d.highest);
+  
+  // ETA 计算
+  let etaSub = '';
+  if (d.highest > current && d.speed > 0) {
+    const remaining = d.highest - current;
+    const seconds = Math.floor(remaining / d.speed);
+    const days = Math.floor(seconds / 86400);
+    const hours = Math.floor((seconds % 86400) / 3600);
+    if (days > 0) {
+      etaSub = `预计 ${days}天${hours}时`;
+    } else if (hours > 0) {
+      etaSub = `预计 ${hours}小时`;
+    } else {
+      etaSub = `预计 ${Math.floor(seconds / 60)}分钟`;
+    }
+  }
+  $('eta-sub').textContent = etaSub;
+  
+  // 速度：优先显示 execution 日志中的速度
+  let speed = d.speed;
+  if (sync.phase === 'execution' && sync.exec_blk_per_sec > 0) {
+    speed = sync.exec_blk_per_sec;
+  }
+  $('spd').textContent = speed > 0 ? speed.toFixed(1) : '-';
+  
+  $('up').textContent = hms(d.uptime);
+  if (d.disk) {
+    $('df').textContent = d.disk.free + ' GB';
+    $('dd').textContent = d.disk.used + ' / ' + d.disk.total + ' GB';
+  }
+}
+
+// ── 数据获取和渲染 ──
+async function fetchStatus() {
+  try {
+    const data = await (await fetch('/api/status')).json();
+    const sync = data.sync || {};
+    updateBadge(data, sync);
+    updateDownload(data.snap_progress || {});
+    updateOtterSync(sync);
+    updateBlockSync(data);
+    updateCards(data);
+  } catch(e) {}
+}
+
+async function fetchLogs() {
+  try {
+    const lines = await (await fetch('/api/logs')).json();
+    const box = $('log-box');
+    const atEnd = box.scrollHeight - box.scrollTop - box.clientHeight < 60;
+    box.innerHTML = lines.map(l => '<div class="ln">' + esc(l) + '</div>').join('');
+    $('lc').textContent = lines.length + ' lines';
+    if (atEnd) box.scrollTop = box.scrollHeight;
+  } catch(e) {}
+}
+
+// ── 主循环 ──
+setInterval(fetchStatus, 2000);
+setInterval(fetchLogs, 3000);
+fetchStatus();
+fetchLogs();
+</script>
+</body>
+</html>
