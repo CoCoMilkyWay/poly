@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../core/ctf_helpers.hpp"
 #include "../core/database.hpp"
 #include "../core/keccak256.hpp"
 #include "event_build_types.hpp"
@@ -477,16 +478,8 @@ private:
     auto cond_bytes = hex_to_blob(lower_cid);
     auto collateral_bytes = hex_to_blob(collateral_hex);
     for (int index_set = 1; index_set <= 2; ++index_set) {
-      std::string collection_input(96, '\0');
-      std::memcpy(collection_input.data() + 32, cond_bytes.data(), std::min(size_t(32), cond_bytes.size()));
-      collection_input[95] = static_cast<char>(index_set);
-      auto collection_hash = crypto::keccak256(collection_input);
-
-      std::string position_input(52, '\0');
-      std::memcpy(position_input.data(), collateral_bytes.data(), std::min(size_t(20), collateral_bytes.size()));
-      std::memcpy(position_input.data() + 20, collection_hash.data(), 32);
-      auto position_hash = crypto::keccak256(position_input);
-
+      auto collection_id = ctf::get_collection_id(cond_bytes, index_set);
+      auto position_hash = ctf::get_position_id(collateral_bytes, collection_id);
       std::string token_id = crypto::Keccak256::to_hex(position_hash);
       intern_token(token_id, cond_idx, index_set == 1 ? 1 : 0, source);
     }
