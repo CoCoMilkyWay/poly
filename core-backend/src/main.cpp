@@ -62,7 +62,7 @@ int main(int argc, char *argv[]) {
     TraceN("start/stage1_sync");
     chain_sync.start(sync_ioc);
   }
-  std::thread sync_thread([&sync_ioc]() {
+  std::thread stage1_thread([&sync_ioc]() {
     TraceThread("Stage1-Sync");
     sync_ioc.run();
   });
@@ -102,7 +102,7 @@ int main(int argc, char *argv[]) {
   std::cout << "[Main] 服务已启动" << std::endl;
   api_ioc.run();
 
-  sync_thread.join();
+  stage1_thread.join();
   stage2_thread->join();
 
   std::cout << "[Main] 已退出" << std::endl;
