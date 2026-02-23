@@ -441,6 +441,44 @@ struct TransferStats {
     }
   }
 
+  TransferStats &operator+=(const TransferStats &o) {
+    total += o.total;
+    split_normal += o.split_normal;
+    split_negrisk += o.split_negrisk;
+    split_non_poly += o.split_non_poly;
+    merge_normal += o.merge_normal;
+    merge_negrisk += o.merge_negrisk;
+    merge_non_poly += o.merge_non_poly;
+    redemption += o.redemption;
+    redemption_non_poly += o.redemption_non_poly;
+    convert += o.convert;
+    order_buy += o.order_buy;
+    order_sell += o.order_sell;
+    fpmm_buy += o.fpmm_buy;
+    fpmm_sell += o.fpmm_sell;
+    fpmm_lp_add += o.fpmm_lp_add;
+    fpmm_lp_remove += o.fpmm_lp_remove;
+    fpmm_lp_return += o.fpmm_lp_return;
+    transfer_in_negrisk += o.transfer_in_negrisk;
+    transfer_in_other += o.transfer_in_other;
+    transfer_in_non_poly += o.transfer_in_non_poly;
+    transfer_out_negrisk += o.transfer_out_negrisk;
+    transfer_out_other += o.transfer_out_other;
+    transfer_out_non_poly += o.transfer_out_non_poly;
+    internal_mint_negrisk += o.internal_mint_negrisk;
+    internal_mint_fpmm += o.internal_mint_fpmm;
+    internal_burn_negrisk += o.internal_burn_negrisk;
+    internal_burn_fpmm += o.internal_burn_fpmm;
+    internal_burn_convert += o.internal_burn_convert;
+    internal_transfer_zero += o.internal_transfer_zero;
+    internal_transfer_order += o.internal_transfer_order;
+    internal_transfer_negrisk += o.internal_transfer_negrisk;
+    internal_transfer_fpmm += o.internal_transfer_fpmm;
+    internal_transfer_other += o.internal_transfer_other;
+    unclassified += o.unclassified;
+    return *this;
+  }
+
   void verify() const {
     int64_t sum = user_events() + internal() + unclassified;
     assert(sum == total && "total = user_events + internal + unclassified");

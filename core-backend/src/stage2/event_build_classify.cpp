@@ -229,9 +229,6 @@ TransferClass EventBuilder::classify_and_emit(
 
     if (to == NO_TOKEN_BURN_ADDRESS) {
       assert(known_token && token_idx == 1 && "Convert should only burn NO tokens");
-      if (from == NEG_RISK_ADAPTER)
-        return TransferClass::InternalBurnConvert;
-
       if (!conditions_[cond_idx].question_id.empty()) {
         auto market_it = cond_to_market_.find(conditions_[cond_idx].question_id);
         if (market_it != cond_to_market_.end()) {
@@ -310,9 +307,7 @@ TransferClass EventBuilder::classify_and_emit(
     if (!is_protocol_contract(from))
       push_event(from, RawEvent{sort_key, cond_idx, EventType::TransferOut, token_idx, coll, 0, -amount, 0});
 
-    if (!is_protocol_contract(to) && !is_protocol_contract(from))
-      return TransferClass::TransferInOther;
-    else if (!is_protocol_contract(to))
+    if (!is_protocol_contract(to))
       return TransferClass::TransferInOther;
     else if (!is_protocol_contract(from))
       return TransferClass::TransferOutOther;
@@ -320,9 +315,7 @@ TransferClass EventBuilder::classify_and_emit(
       return TransferClass::InternalTransferOther;
   } else {
     // NonPoly token 不记录 user_event，只统计
-    if (!is_protocol_contract(to) && !is_protocol_contract(from))
-      return TransferClass::TransferInNonPoly;
-    else if (!is_protocol_contract(to))
+    if (!is_protocol_contract(to))
       return TransferClass::TransferInNonPoly;
     else if (!is_protocol_contract(from))
       return TransferClass::TransferOutNonPoly;

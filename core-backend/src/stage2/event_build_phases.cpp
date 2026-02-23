@@ -42,14 +42,7 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
     std::string token0 = blob_to_hex(tm->GetValue(0, i).GetValueUnsafe<std::string>());
     std::string token1 = blob_to_hex(tm->GetValue(1, i).GetValueUnsafe<std::string>());
     std::string cid = blob_to_hex(tm->GetValue(2, i).GetValueUnsafe<std::string>());
-    std::string lower_cid = to_lower(cid);
-    auto it = cond_map_.find(lower_cid);
-    uint32_t cond_idx;
-    if (it == cond_map_.end()) {
-      cond_idx = intern_condition(cid, 2, ConditionSource::PolymarketTokenReg);
-    } else {
-      cond_idx = it->second;
-    }
+    uint32_t cond_idx = intern_condition(cid, 2, ConditionSource::PolymarketTokenReg);
     intern_token(token0, cond_idx, 1, TokenSource::PolymarketTokenReg);
     intern_token(token1, cond_idx, 0, TokenSource::PolymarketTokenReg);
   }
@@ -66,34 +59,11 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
     assert(!cids_arr.empty());
     std::string cid = cids_arr[0].get<std::string>();
     std::string lower_cid = to_lower(cid);
-    auto it = cond_map_.find(lower_cid);
-    uint32_t cond_idx;
-    if (it == cond_map_.end()) {
-      cond_idx = intern_condition(cid, 2, ConditionSource::PolymarketFPMM);
-    } else {
-      cond_idx = it->second;
-    }
+    uint32_t cond_idx = intern_condition(cid, 2, ConditionSource::PolymarketFPMM);
 
-    Collateral coll = addr_to_collateral(collateral);
-    intern_fpmm(addr, cond_idx, coll);
-
+    intern_fpmm(addr, cond_idx, addr_to_collateral(collateral));
     // 为所有 FPMM 计算 token_id（包括非 USDC 的，以便识别用户的 merge/burn 操作）
-    auto cond_bytes = hex_to_blob(lower_cid);
-    auto collateral_bytes = hex_to_blob(collateral);
-    for (int index_set = 1; index_set <= 2; ++index_set) {
-      std::string collection_input(96, '\0');
-      std::memcpy(collection_input.data() + 32, cond_bytes.data(), std::min(size_t(32), cond_bytes.size()));
-      collection_input[95] = static_cast<char>(index_set);
-      auto collection_hash = crypto::keccak256(collection_input);
-
-      std::string position_input(52, '\0');
-      std::memcpy(position_input.data(), collateral_bytes.data(), std::min(size_t(20), collateral_bytes.size()));
-      std::memcpy(position_input.data() + 20, collection_hash.data(), 32);
-      auto position_hash = crypto::keccak256(position_input);
-
-      std::string token_id = crypto::Keccak256::to_hex(position_hash);
-      intern_token(token_id, cond_idx, index_set == 1 ? 1 : 0, TokenSource::PolymarketFPMM);
-    }
+    intern_condition_tokens(lower_cid, collateral, cond_idx, TokenSource::PolymarketFPMM);
   }
 
   // 从 split 事件中提取 token_id（覆盖没有经过 FPMM 的 condition）
@@ -105,35 +75,9 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
     std::string lower_cid = to_lower(cid);
     std::string collateral = to_lower(blob_to_hex(split_for_tokens->GetValue(1, i).GetValueUnsafe<std::string>()));
 
-    auto it = cond_map_.find(lower_cid);
-    uint32_t cond_idx;
-    if (it == cond_map_.end()) {
-      cond_idx = intern_condition(cid, 2, ConditionSource::SplitEvent);
-    } else {
-      cond_idx = it->second;
-    }
-
-    // 记录抵押品类型
-    Collateral coll = addr_to_collateral(collateral);
-    cond_collateral_[cond_idx] = coll;
-
-    // 计算 token_id（如果还没计算过）
-    auto cond_bytes = hex_to_blob(lower_cid);
-    auto collateral_bytes = hex_to_blob(collateral);
-    for (int index_set = 1; index_set <= 2; ++index_set) {
-      std::string collection_input(96, '\0');
-      std::memcpy(collection_input.data() + 32, cond_bytes.data(), std::min(size_t(32), cond_bytes.size()));
-      collection_input[95] = static_cast<char>(index_set);
-      auto collection_hash = crypto::keccak256(collection_input);
-
-      std::string position_input(52, '\0');
-      std::memcpy(position_input.data(), collateral_bytes.data(), std::min(size_t(20), collateral_bytes.size()));
-      std::memcpy(position_input.data() + 20, collection_hash.data(), 32);
-      auto position_hash = crypto::keccak256(position_input);
-
-      std::string token_id = crypto::Keccak256::to_hex(position_hash);
-      intern_token(token_id, cond_idx, index_set == 1 ? 1 : 0, TokenSource::SplitEvent);
-    }
+    uint32_t cond_idx = intern_condition(cid, 2, ConditionSource::SplitEvent);
+    cond_collateral_[cond_idx] = addr_to_collateral(collateral);
+    intern_condition_tokens(lower_cid, collateral, cond_idx, TokenSource::SplitEvent);
   }
 
   auto nrq = conn->Query(
