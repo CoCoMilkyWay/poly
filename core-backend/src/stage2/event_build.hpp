@@ -341,7 +341,8 @@ public:
 
     commit_chunk(chunk_end);
 
-    // 结束 chunk log（只有异常才写文件）
+    // 记录统计信息并结束 chunk log
+    chunk_log_.set_xfer_stats(TransferStats::format_log(chunk_xfer_stats_, progress_.xfer_stats));
     chunk_log_.finish();
 
     progress_.cursor = chunk_end;

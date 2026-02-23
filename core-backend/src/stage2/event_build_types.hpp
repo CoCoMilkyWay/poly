@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -27,6 +28,7 @@ public:
     non_usdc_by_collat_.clear();
     header_info_.clear();
     token_sample_.clear();
+    xfer_stats_str_.clear();
   }
 
   void finish() {
@@ -79,6 +81,11 @@ public:
         ofs << "  " << collat << ": " << cnt << "\n";
       }
     }
+
+    // Transfer 统计
+    if (!xfer_stats_str_.empty()) {
+      ofs << "\n" << xfer_stats_str_;
+    }
   }
 
   void log_non_polymarket(int64_t block, const std::string &tx_hash,
@@ -114,10 +121,14 @@ public:
                     " cond_idx=" + std::to_string(cond_idx) + " is_yes=" + std::to_string(is_yes) + "\n";
   }
 
+  void set_xfer_stats(const std::string &stats_str) {
+    xfer_stats_str_ = stats_str;
+  }
+
 private:
   std::string log_dir_;
   int64_t start_ = 0, end_ = 0;
-  std::string header_info_, token_sample_;
+  std::string header_info_, token_sample_, xfer_stats_str_;
 
   struct Sample {
     int64_t block;
@@ -344,6 +355,50 @@ struct TransferStats {
     std::cerr << "    NonPolymarket: " << non_polymarket << std::endl;
     if (unclassified > 0)
       std::cerr << "  ERROR Unclassified: " << unclassified << std::endl;
+  }
+
+  static std::string format_log(const TransferStats &chunk, const TransferStats &acc) {
+    std::ostringstream oss;
+    auto line = [&](const char *name, int64_t c, int64_t a) {
+      if (c > 0 || a > 0) oss << "  " << name << ": +" << c << " (=" << a << ")\n";
+    };
+    oss << "=== Transfer Stats (chunk / accumulated) ===\n";
+    oss << "Total: +" << chunk.total << " (=" << acc.total << ")\n";
+    oss << "UserEvents: +" << chunk.user_events() << " (=" << acc.user_events() << ")\n";
+    line("  铸造.普通", chunk.split_normal, acc.split_normal);
+    line("  铸造.NegRisk", chunk.split_negrisk, acc.split_negrisk);
+    line("  合并.普通", chunk.merge_normal, acc.merge_normal);
+    line("  合并.NegRisk", chunk.merge_negrisk, acc.merge_negrisk);
+    line("  赎回", chunk.redemption, acc.redemption);
+    line("  转换", chunk.convert, acc.convert);
+    line("  订单.买", chunk.order_buy, acc.order_buy);
+    line("  订单.卖", chunk.order_sell, acc.order_sell);
+    line("  AMM.买", chunk.fpmm_buy, acc.fpmm_buy);
+    line("  AMM.卖", chunk.fpmm_sell, acc.fpmm_sell);
+    line("  LP.加", chunk.fpmm_lp_add, acc.fpmm_lp_add);
+    line("  LP.减", chunk.fpmm_lp_remove, acc.fpmm_lp_remove);
+    line("  LP.返", chunk.fpmm_lp_return, acc.fpmm_lp_return);
+    line("  转入.Adapter", chunk.transfer_in_negrisk, acc.transfer_in_negrisk);
+    line("  转入.其他", chunk.transfer_in_other, acc.transfer_in_other);
+    line("  转出.Adapter", chunk.transfer_out_negrisk, acc.transfer_out_negrisk);
+    line("  转出.其他", chunk.transfer_out_other, acc.transfer_out_other);
+    oss << "Internal: +" << chunk.internal() << " (=" << acc.internal() << ")\n";
+    line("  内铸.Adapter", chunk.internal_mint_negrisk, acc.internal_mint_negrisk);
+    line("  内铸.FPMM", chunk.internal_mint_fpmm, acc.internal_mint_fpmm);
+    line("  内燃.Adapter", chunk.internal_burn_negrisk, acc.internal_burn_negrisk);
+    line("  内燃.FPMM", chunk.internal_burn_fpmm, acc.internal_burn_fpmm);
+    line("  内燃.Convert", chunk.internal_burn_convert, acc.internal_burn_convert);
+    line("  内转.零值", chunk.internal_transfer_zero, acc.internal_transfer_zero);
+    line("  内转.订单", chunk.internal_transfer_order, acc.internal_transfer_order);
+    line("  内转.Adapter", chunk.internal_transfer_negrisk, acc.internal_transfer_negrisk);
+    line("  内转.FPMM", chunk.internal_transfer_fpmm, acc.internal_transfer_fpmm);
+    line("  内转.其他", chunk.internal_transfer_other, acc.internal_transfer_other);
+    oss << "Skipped: +" << chunk.skipped() << " (=" << acc.skipped() << ")\n";
+    line("  非U.铸", chunk.non_usdc_mint, acc.non_usdc_mint);
+    line("  非U.燃", chunk.non_usdc_burn, acc.non_usdc_burn);
+    line("  非U.操作", chunk.non_usdc_op, acc.non_usdc_op);
+    line("  非Polymarket", chunk.non_polymarket, acc.non_polymarket);
+    return oss.str();
   }
 };
 

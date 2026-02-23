@@ -129,6 +129,11 @@
   .stage2-tree-leaf .stage2-tree-label {
     color: #666;
   }
+  .stage2-tree-desc {
+    color: #555;
+    font-size: 0.9em;
+    margin-left: 4px;
+  }
 
   .stage2-stats {
     display: flex;
@@ -236,7 +241,7 @@
 
     let s2LastCursor = 0;
     let s2LastTime = Date.now();
-    let s2ExpandedNodes = new Set(["xfer", "user_events"]);
+    let s2ExpandedNodes = new Set(["xfer", "user_events", "internal", "skipped"]);
 
     function s2UpdateStats(s) {
       const sync = s.stage2_sync || {};
@@ -291,73 +296,73 @@
       const skipped = non_usdc + (s.xfer_non_poly || 0);
 
       return {
-        id: "xfer", label: "Transfer", value: s.xfer_total || 0, color: "#60a5fa",
+        id: "xfer", label: "Transfer", value: s.xfer_total || 0, color: "#60a5fa", desc: "ConditionalTokens.TransferSingle/Batch",
         children: [
-          { id: "user_events", label: "用户事件", value: user_events, color: "#4ade80",
+          { id: "user_events", label: "用户事件", value: user_events, color: "#4ade80", desc: "影响用户持仓",
             children: [
-              { id: "split", label: "铸", value: split, children: [
-                { id: "split_normal", label: "普通", value: s.xfer_split_normal || 0 },
-                { id: "split_negrisk", label: "NegRisk", value: s.xfer_split_negrisk || 0 }
+              { id: "split", label: "铸造", value: split, desc: "PositionSplit: USDC→YES+NO", children: [
+                { id: "split_normal", label: "普通", value: s.xfer_split_normal || 0, desc: "0x0→用户" },
+                { id: "split_negrisk", label: "NegRisk", value: s.xfer_split_negrisk || 0, desc: "Adapter→用户" }
               ]},
-              { id: "merge", label: "合", value: merge, children: [
-                { id: "merge_normal", label: "普通", value: s.xfer_merge_normal || 0 },
-                { id: "merge_negrisk", label: "NegRisk", value: s.xfer_merge_negrisk || 0 }
+              { id: "merge", label: "合并", value: merge, desc: "PositionsMerge: YES+NO→USDC", children: [
+                { id: "merge_normal", label: "普通", value: s.xfer_merge_normal || 0, desc: "用户→0x0" },
+                { id: "merge_negrisk", label: "NegRisk", value: s.xfer_merge_negrisk || 0, desc: "用户→Adapter" }
               ]},
-              { id: "redemption", label: "赎", value: s.xfer_redemption || 0 },
-              { id: "convert", label: "转换", value: s.xfer_convert || 0 },
-              { id: "order", label: "订单", value: order, children: [
-                { id: "order_buy", label: "买", value: s.xfer_order_buy || 0 },
-                { id: "order_sell", label: "卖", value: s.xfer_order_sell || 0 }
+              { id: "redemption", label: "赎回", value: s.xfer_redemption || 0, desc: "PayoutRedemption: 结算后兑USDC" },
+              { id: "convert", label: "转换", value: s.xfer_convert || 0, desc: "PositionsConverted: M个NO→1个YES" },
+              { id: "order", label: "订单", value: order, desc: "CTFExchange/NegRiskExchange", children: [
+                { id: "order_buy", label: "买入", value: s.xfer_order_buy || 0, desc: "OrderFilled: 协议→用户" },
+                { id: "order_sell", label: "卖出", value: s.xfer_order_sell || 0, desc: "OrderFilled: 用户→协议" }
               ]},
-              { id: "fpmm_trade", label: "AMM", value: fpmm_trade, color: "#d4a574", children: [
-                { id: "fpmm_buy", label: "买", value: s.xfer_fpmm_buy || 0 },
-                { id: "fpmm_sell", label: "卖", value: s.xfer_fpmm_sell || 0 }
+              { id: "fpmm_trade", label: "AMM交易", value: fpmm_trade, color: "#d4a574", desc: "FPMM.Buy/Sell", children: [
+                { id: "fpmm_buy", label: "买入", value: s.xfer_fpmm_buy || 0, desc: "FPMMBuy: FPMM→用户" },
+                { id: "fpmm_sell", label: "卖出", value: s.xfer_fpmm_sell || 0, desc: "FPMMSell: 用户→FPMM" }
               ]},
-              { id: "fpmm_lp", label: "LP", value: fpmm_lp, color: "#74b4d4", children: [
-                { id: "lp_add", label: "加", value: s.xfer_lp_add || 0 },
-                { id: "lp_remove", label: "减", value: s.xfer_lp_remove || 0 },
-                { id: "lp_return", label: "返", value: s.xfer_lp_return || 0 }
+              { id: "fpmm_lp", label: "AMM流动性", value: fpmm_lp, color: "#74b4d4", desc: "FPMM LP操作", children: [
+                { id: "lp_add", label: "添加", value: s.xfer_lp_add || 0, desc: "FundingAdded: 0x0→FPMM" },
+                { id: "lp_remove", label: "移除", value: s.xfer_lp_remove || 0, desc: "FundingRemoved: FPMM→用户" },
+                { id: "lp_return", label: "返还", value: s.xfer_lp_return || 0, desc: "FundingAdded余额: FPMM→用户" }
               ]},
-              { id: "transfer", label: "转账", value: transfer, children: [
-                { id: "transfer_in", label: "入", value: transfer_in, children: [
-                  { id: "transfer_in_negrisk", label: "NegRisk", value: s.xfer_transfer_in_negrisk || 0 },
-                  { id: "transfer_in_other", label: "其他", value: s.xfer_transfer_in_other || 0 }
+              { id: "transfer", label: "转账", value: transfer, desc: "无语义事件的直接转账", children: [
+                { id: "transfer_in", label: "转入", value: transfer_in, desc: "收到token", children: [
+                  { id: "transfer_in_negrisk", label: "Adapter", value: s.xfer_transfer_in_negrisk || 0, desc: "Adapter→用户(无Split)" },
+                  { id: "transfer_in_other", label: "其他", value: s.xfer_transfer_in_other || 0, desc: "用户/协议→用户" }
                 ]},
-                { id: "transfer_out", label: "出", value: transfer_out, children: [
-                  { id: "transfer_out_negrisk", label: "NegRisk", value: s.xfer_transfer_out_negrisk || 0 },
-                  { id: "transfer_out_other", label: "其他", value: s.xfer_transfer_out_other || 0 }
+                { id: "transfer_out", label: "转出", value: transfer_out, desc: "发出token", children: [
+                  { id: "transfer_out_negrisk", label: "Adapter", value: s.xfer_transfer_out_negrisk || 0, desc: "用户→Adapter(无Merge)" },
+                  { id: "transfer_out_other", label: "其他", value: s.xfer_transfer_out_other || 0, desc: "用户→用户/协议" }
                 ]}
               ]}
             ]
           },
-          { id: "internal", label: "内部", value: internal, color: "#666",
+          { id: "internal", label: "内部操作", value: internal, color: "#666", desc: "协议内部,不影响用户",
             children: [
-              { id: "internal_mint", label: "铸", value: internal_mint, children: [
-                { id: "internal_mint_negrisk", label: "NegRisk", value: s.xfer_internal_mint_negrisk || 0 },
-                { id: "internal_mint_fpmm", label: "FPMM", value: s.xfer_internal_mint_fpmm || 0 }
+              { id: "internal_mint", label: "内部铸造", value: internal_mint, desc: "0x0→协议合约", children: [
+                { id: "internal_mint_negrisk", label: "Adapter", value: s.xfer_internal_mint_negrisk || 0, desc: "0x0→NegRiskAdapter" },
+                { id: "internal_mint_fpmm", label: "FPMM", value: s.xfer_internal_mint_fpmm || 0, desc: "0x0→FPMM(无Funding)" }
               ]},
-              { id: "internal_burn", label: "燃", value: internal_burn, children: [
-                { id: "internal_burn_negrisk", label: "NegRisk", value: s.xfer_internal_burn_negrisk || 0 },
-                { id: "internal_burn_fpmm", label: "FPMM", value: s.xfer_internal_burn_fpmm || 0 },
-                { id: "internal_burn_convert", label: "Convert", value: s.xfer_internal_burn_convert || 0 }
+              { id: "internal_burn", label: "内部销毁", value: internal_burn, desc: "协议合约→0x0/BurnAddr", children: [
+                { id: "internal_burn_negrisk", label: "Adapter", value: s.xfer_internal_burn_negrisk || 0, desc: "NegRiskAdapter→0x0" },
+                { id: "internal_burn_fpmm", label: "FPMM", value: s.xfer_internal_burn_fpmm || 0, desc: "FPMM→0x0" },
+                { id: "internal_burn_convert", label: "Convert", value: s.xfer_internal_burn_convert || 0, desc: "Adapter→BurnAddr(NO)" }
               ]},
-              { id: "internal_transfer", label: "转", value: internal_transfer, children: [
-                { id: "internal_transfer_zero", label: "零值", value: s.xfer_internal_transfer_zero || 0 },
-                { id: "internal_transfer_order", label: "订单", value: s.xfer_internal_transfer_order || 0 },
-                { id: "internal_transfer_negrisk", label: "NegRisk", value: s.xfer_internal_transfer_negrisk || 0 },
-                { id: "internal_transfer_fpmm", label: "FPMM", value: s.xfer_internal_transfer_fpmm || 0 },
-                { id: "internal_transfer_other", label: "其他", value: s.xfer_internal_transfer_other || 0 }
+              { id: "internal_transfer", label: "内部转移", value: internal_transfer, desc: "协议间转移", children: [
+                { id: "internal_transfer_zero", label: "零值", value: s.xfer_internal_transfer_zero || 0, desc: "amount=0的Transfer" },
+                { id: "internal_transfer_order", label: "订单", value: s.xfer_internal_transfer_order || 0, desc: "Exchange双方均为协议" },
+                { id: "internal_transfer_negrisk", label: "Adapter", value: s.xfer_internal_transfer_negrisk || 0, desc: "Adapter相关其他" },
+                { id: "internal_transfer_fpmm", label: "FPMM", value: s.xfer_internal_transfer_fpmm || 0, desc: "FPMM Funding其他" },
+                { id: "internal_transfer_other", label: "其他", value: s.xfer_internal_transfer_other || 0, desc: "其他协议间转移" }
               ]}
             ]
           },
-          { id: "skipped", label: "跳过", value: skipped, color: "#888",
+          { id: "skipped", label: "跳过", value: skipped, color: "#888", desc: "非标准Polymarket",
             children: [
-              { id: "non_usdc", label: "非U", value: non_usdc, children: [
-                { id: "non_usdc_mint", label: "铸", value: s.xfer_non_usdc_mint || 0 },
-                { id: "non_usdc_burn", label: "燃", value: s.xfer_non_usdc_burn || 0 },
-                { id: "non_usdc_op", label: "操作", value: s.xfer_non_usdc_op || 0 }
+              { id: "non_usdc", label: "非USDC", value: non_usdc, desc: "非USDC抵押品FPMM", children: [
+                { id: "non_usdc_mint", label: "铸造", value: s.xfer_non_usdc_mint || 0, desc: "0x0→非USDC FPMM" },
+                { id: "non_usdc_burn", label: "销毁", value: s.xfer_non_usdc_burn || 0, desc: "非USDC FPMM→0x0" },
+                { id: "non_usdc_op", label: "操作", value: s.xfer_non_usdc_op || 0, desc: "op=非USDC FPMM" }
               ]},
-              { id: "non_poly", label: "非P", value: s.xfer_non_poly || 0 }
+              { id: "non_poly", label: "非Polymarket", value: s.xfer_non_poly || 0, desc: "token不在Polymarket(如Omen)" }
             ]
           }
         ]
@@ -369,6 +374,7 @@
       const isExpanded = s2ExpandedNodes.has(node.id);
       const valueClass = node.value ? "" : " zero";
       const color = node.color || "#fff";
+      const desc = node.desc ? ` <span class="stage2-tree-desc">${node.desc}</span>` : "";
 
       let html = `<div class="${hasChildren ? "stage2-tree-node" : "stage2-tree-leaf"}" data-id="${node.id}">`;
       if (hasChildren) {
@@ -376,6 +382,7 @@
       }
       html += `<span class="stage2-tree-label">${node.label}</span> `;
       html += `<span class="stage2-tree-value${valueClass}" style="color:${color}">${s2Fmt(node.value)}</span>`;
+      html += desc;
       html += `</div>`;
 
       if (hasChildren) {
