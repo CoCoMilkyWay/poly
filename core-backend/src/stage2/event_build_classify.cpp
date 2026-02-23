@@ -11,7 +11,7 @@ TransferClass EventBuilder::classify_and_emit(
 
   assert(amount >= 0 && "Transfer amount must be non-negative");
   if (amount == 0)
-    return TransferClass::InternalTransfer;
+    return TransferClass::InternalTransferZero;
   assert(cond_idx < conditions_.size() && "Invalid cond_idx");
   assert(token_idx < 2 && "Invalid token_idx");
   assert(from != to && "from and to must be different");
@@ -26,14 +26,14 @@ TransferClass EventBuilder::classify_and_emit(
   // ========== mint 分支 (from == 0x0) ==========
   if (from == ZERO_ADDR) {
     if (to == NEG_RISK_ADAPTER)
-      return TransferClass::InternalMint;
+      return TransferClass::InternalMintNegRisk;
 
     auto fpmm_mint_it = fpmm_map_.find(to);
     if (fpmm_mint_it != fpmm_map_.end()) {
       // 非 USDC 抵押品的 FPMM，跳过处理并统计
       if (!fpmm_mint_it->second.is_usdc) {
         non_usdc_by_collat_[fpmm_mint_it->second.collateral]++;
-        return TransferClass::NonUsdcFpmm;
+        return TransferClass::NonUsdcMint;
       }
 
       TxFPMMKey tx_fpmm_key{block, tx_hash, to};
@@ -48,7 +48,7 @@ TransferClass EventBuilder::classify_and_emit(
         }
         return TransferClass::FPMMLPAdd;
       }
-      return TransferClass::InternalMint;
+      return TransferClass::InternalMintFPMM;
     }
 
     auto sit = tx_split_.find(tx_cond_key);
@@ -60,7 +60,7 @@ TransferClass EventBuilder::classify_and_emit(
             RawEvent evt{sort_key, cond_idx, EventType::Split, token_idx, 0, amount, split_price};
             push_event(to, evt);
           }
-          return TransferClass::Split;
+          return TransferClass::SplitNormal;
         }
       }
     }
@@ -74,16 +74,16 @@ TransferClass EventBuilder::classify_and_emit(
   // ========== burn 分支 (to == 0x0) ==========
   if (to == ZERO_ADDR) {
     if (from == NEG_RISK_ADAPTER)
-      return TransferClass::InternalBurn;
+      return TransferClass::InternalBurnNegRisk;
 
     auto fpmm_burn_it = fpmm_map_.find(from);
     if (fpmm_burn_it != fpmm_map_.end()) {
       // 非 USDC 抵押品的 FPMM，跳过处理并统计
       if (!fpmm_burn_it->second.is_usdc) {
         non_usdc_by_collat_[fpmm_burn_it->second.collateral]++;
-        return TransferClass::NonUsdcFpmm;
+        return TransferClass::NonUsdcBurn;
       }
-      return TransferClass::InternalBurn;
+      return TransferClass::InternalBurnFPMM;
     }
 
     auto mit = tx_merge_.find(tx_cond_key);
@@ -95,7 +95,7 @@ TransferClass EventBuilder::classify_and_emit(
             RawEvent evt{sort_key, cond_idx, EventType::Merge, token_idx, 0, -amount, split_price};
             push_event(from, evt);
           }
-          return TransferClass::Merge;
+          return TransferClass::MergeNormal;
         }
       }
     }
@@ -150,7 +150,7 @@ TransferClass EventBuilder::classify_and_emit(
       else if (!is_protocol_contract(from))
         return TransferClass::OrderSell;
       else
-        return TransferClass::InternalTransfer;
+        return TransferClass::InternalTransferOrder;
     }
     std::cerr << "[ERROR] Exchange transfer without order: block=" << block
               << ", op=" << op << ", from=" << from << ", to=" << to << std::endl;
@@ -181,13 +181,13 @@ TransferClass EventBuilder::classify_and_emit(
             if (!is_protocol_contract(to)) {
               push_event(to, RawEvent{sort_key, cond_idx, EventType::Split, token_idx, 0, amount, split_price});
             }
-            return TransferClass::Split;
+            return TransferClass::SplitNegRisk;
           }
         }
       }
       if (!is_protocol_contract(to))
         push_event(to, RawEvent{sort_key, cond_idx, EventType::TransferIn, token_idx, 0, amount, 0});
-      return TransferClass::TransferIn;
+      return TransferClass::TransferInNegRisk;
     }
 
     if (to == NEG_RISK_ADAPTER) {
@@ -199,19 +199,19 @@ TransferClass EventBuilder::classify_and_emit(
             if (!is_protocol_contract(from)) {
               push_event(from, RawEvent{sort_key, cond_idx, EventType::Merge, token_idx, 0, -amount, split_price});
             }
-            return TransferClass::Merge;
+            return TransferClass::MergeNegRisk;
           }
         }
       }
       if (!is_protocol_contract(from))
         push_event(from, RawEvent{sort_key, cond_idx, EventType::TransferOut, token_idx, 0, -amount, 0});
-      return TransferClass::TransferOut;
+      return TransferClass::TransferOutNegRisk;
     }
 
     if (to == NO_TOKEN_BURN_ADDRESS) {
       assert(token_idx == 1 && "Convert should only burn NO tokens");
       if (from == NEG_RISK_ADAPTER)
-        return TransferClass::InternalBurn;
+        return TransferClass::InternalBurnConvert;
 
       if (!conditions_[cond_idx].question_id.empty()) {
         auto market_it = cond_to_market_.find(conditions_[cond_idx].question_id);
@@ -239,7 +239,7 @@ TransferClass EventBuilder::classify_and_emit(
       assert(false && "Transfer to burn addr without convert");
       return TransferClass::Unclassified;
     }
-    return TransferClass::InternalTransfer;
+    return TransferClass::InternalTransferNegRisk;
   }
 
   // ========== FPMM operator ==========
@@ -248,7 +248,7 @@ TransferClass EventBuilder::classify_and_emit(
     // 非 USDC 抵押品的 FPMM，跳过处理并统计
     if (!fpmm_it->second.is_usdc) {
       non_usdc_by_collat_[fpmm_it->second.collateral]++;
-      return TransferClass::NonUsdcFpmm;
+      return TransferClass::NonUsdcOp;
     }
 
     TxFPMMKey tx_fpmm_key{block, tx_hash, op};
@@ -292,7 +292,7 @@ TransferClass EventBuilder::classify_and_emit(
           return TransferClass::FPMMLPReturn;
         }
       }
-      return TransferClass::InternalTransfer;
+      return TransferClass::InternalTransferFPMM;
     }
 
     std::cerr << "[ERROR] FPMM transfer without trade/funding: block=" << block
@@ -308,13 +308,13 @@ TransferClass EventBuilder::classify_and_emit(
     push_event(from, RawEvent{sort_key, cond_idx, EventType::TransferOut, token_idx, 0, -amount, 0});
 
   if (!is_protocol_contract(to) && !is_protocol_contract(from))
-    return TransferClass::TransferIn;
+    return TransferClass::TransferInOther;
   else if (!is_protocol_contract(to))
-    return TransferClass::TransferIn;
+    return TransferClass::TransferInOther;
   else if (!is_protocol_contract(from))
-    return TransferClass::TransferOut;
+    return TransferClass::TransferOutOther;
   else
-    return TransferClass::InternalTransfer;
+    return TransferClass::InternalTransferOther;
 }
 
 } // namespace stage2

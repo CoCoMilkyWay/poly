@@ -305,9 +305,12 @@ public:
     chunk_xfer_stats_.verify();
     // 清理临时数据
     non_usdc_by_collat_.clear();
+    // 累加所有细分字段
     progress_.xfer_stats.total += chunk_xfer_stats_.total;
-    progress_.xfer_stats.split += chunk_xfer_stats_.split;
-    progress_.xfer_stats.merge += chunk_xfer_stats_.merge;
+    progress_.xfer_stats.split_normal += chunk_xfer_stats_.split_normal;
+    progress_.xfer_stats.split_negrisk += chunk_xfer_stats_.split_negrisk;
+    progress_.xfer_stats.merge_normal += chunk_xfer_stats_.merge_normal;
+    progress_.xfer_stats.merge_negrisk += chunk_xfer_stats_.merge_negrisk;
     progress_.xfer_stats.redemption += chunk_xfer_stats_.redemption;
     progress_.xfer_stats.convert += chunk_xfer_stats_.convert;
     progress_.xfer_stats.order_buy += chunk_xfer_stats_.order_buy;
@@ -317,12 +320,23 @@ public:
     progress_.xfer_stats.fpmm_lp_add += chunk_xfer_stats_.fpmm_lp_add;
     progress_.xfer_stats.fpmm_lp_remove += chunk_xfer_stats_.fpmm_lp_remove;
     progress_.xfer_stats.fpmm_lp_return += chunk_xfer_stats_.fpmm_lp_return;
-    progress_.xfer_stats.transfer_in += chunk_xfer_stats_.transfer_in;
-    progress_.xfer_stats.transfer_out += chunk_xfer_stats_.transfer_out;
-    progress_.xfer_stats.internal_mint += chunk_xfer_stats_.internal_mint;
-    progress_.xfer_stats.internal_burn += chunk_xfer_stats_.internal_burn;
-    progress_.xfer_stats.internal_transfer += chunk_xfer_stats_.internal_transfer;
-    progress_.xfer_stats.non_usdc_fpmm += chunk_xfer_stats_.non_usdc_fpmm;
+    progress_.xfer_stats.transfer_in_negrisk += chunk_xfer_stats_.transfer_in_negrisk;
+    progress_.xfer_stats.transfer_in_other += chunk_xfer_stats_.transfer_in_other;
+    progress_.xfer_stats.transfer_out_negrisk += chunk_xfer_stats_.transfer_out_negrisk;
+    progress_.xfer_stats.transfer_out_other += chunk_xfer_stats_.transfer_out_other;
+    progress_.xfer_stats.internal_mint_negrisk += chunk_xfer_stats_.internal_mint_negrisk;
+    progress_.xfer_stats.internal_mint_fpmm += chunk_xfer_stats_.internal_mint_fpmm;
+    progress_.xfer_stats.internal_burn_negrisk += chunk_xfer_stats_.internal_burn_negrisk;
+    progress_.xfer_stats.internal_burn_fpmm += chunk_xfer_stats_.internal_burn_fpmm;
+    progress_.xfer_stats.internal_burn_convert += chunk_xfer_stats_.internal_burn_convert;
+    progress_.xfer_stats.internal_transfer_zero += chunk_xfer_stats_.internal_transfer_zero;
+    progress_.xfer_stats.internal_transfer_order += chunk_xfer_stats_.internal_transfer_order;
+    progress_.xfer_stats.internal_transfer_negrisk += chunk_xfer_stats_.internal_transfer_negrisk;
+    progress_.xfer_stats.internal_transfer_fpmm += chunk_xfer_stats_.internal_transfer_fpmm;
+    progress_.xfer_stats.internal_transfer_other += chunk_xfer_stats_.internal_transfer_other;
+    progress_.xfer_stats.non_usdc_mint += chunk_xfer_stats_.non_usdc_mint;
+    progress_.xfer_stats.non_usdc_burn += chunk_xfer_stats_.non_usdc_burn;
+    progress_.xfer_stats.non_usdc_op += chunk_xfer_stats_.non_usdc_op;
     progress_.xfer_stats.non_polymarket += chunk_xfer_stats_.non_polymarket;
 
     commit_chunk(chunk_end);

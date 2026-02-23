@@ -113,9 +113,9 @@ def main():
     (ROOT / "data").mkdir(exist_ok=True)
     build_backend()
 
-    if ENABLE_PROFILE:
-        launch_tracy_ui()
-        time.sleep(1.0)
+    # if ENABLE_PROFILE:
+    #     launch_tracy_ui()
+    #     time.sleep(1.0)
 
     print("[run.py] 启动 backend...")
     backend = subprocess.Popen(

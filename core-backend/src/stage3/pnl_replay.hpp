@@ -82,10 +82,15 @@ public:
     int64_t token_non_usdc = 0;
     int64_t token_norm = 0;
 
-    // Transfer partition: xfer_total = sum of all below
+    // Transfer partition (树状结构)
+    // total = user_events + internal + skipped
     int64_t xfer_total = 0;
-    int64_t xfer_split = 0;
-    int64_t xfer_merge = 0;
+
+    // user_events = split + merge + redemption + convert + order + fpmm_trade + fpmm_lp + transfer
+    int64_t xfer_split_normal = 0;
+    int64_t xfer_split_negrisk = 0;
+    int64_t xfer_merge_normal = 0;
+    int64_t xfer_merge_negrisk = 0;
     int64_t xfer_redemption = 0;
     int64_t xfer_convert = 0;
     int64_t xfer_order_buy = 0;
@@ -95,12 +100,27 @@ public:
     int64_t xfer_lp_add = 0;
     int64_t xfer_lp_remove = 0;
     int64_t xfer_lp_return = 0;
-    int64_t xfer_transfer_in = 0;
-    int64_t xfer_transfer_out = 0;
-    int64_t xfer_internal_mint = 0;
-    int64_t xfer_internal_burn = 0;
-    int64_t xfer_internal_transfer = 0;
-    int64_t xfer_non_usdc = 0;
+    int64_t xfer_transfer_in_negrisk = 0;
+    int64_t xfer_transfer_in_other = 0;
+    int64_t xfer_transfer_out_negrisk = 0;
+    int64_t xfer_transfer_out_other = 0;
+
+    // internal = internal_mint + internal_burn + internal_transfer
+    int64_t xfer_internal_mint_negrisk = 0;
+    int64_t xfer_internal_mint_fpmm = 0;
+    int64_t xfer_internal_burn_negrisk = 0;
+    int64_t xfer_internal_burn_fpmm = 0;
+    int64_t xfer_internal_burn_convert = 0;
+    int64_t xfer_internal_transfer_zero = 0;
+    int64_t xfer_internal_transfer_order = 0;
+    int64_t xfer_internal_transfer_negrisk = 0;
+    int64_t xfer_internal_transfer_fpmm = 0;
+    int64_t xfer_internal_transfer_other = 0;
+
+    // skipped = non_usdc + non_poly
+    int64_t xfer_non_usdc_mint = 0;
+    int64_t xfer_non_usdc_burn = 0;
+    int64_t xfer_non_usdc_op = 0;
     int64_t xfer_non_poly = 0;
   };
 
@@ -122,8 +142,10 @@ public:
     p.token_non_usdc = bp.cnt_token_non_usdc;
     p.token_norm = bp.cnt_token_norm;
     p.xfer_total = bp.xfer_stats.total;
-    p.xfer_split = bp.xfer_stats.split;
-    p.xfer_merge = bp.xfer_stats.merge;
+    p.xfer_split_normal = bp.xfer_stats.split_normal;
+    p.xfer_split_negrisk = bp.xfer_stats.split_negrisk;
+    p.xfer_merge_normal = bp.xfer_stats.merge_normal;
+    p.xfer_merge_negrisk = bp.xfer_stats.merge_negrisk;
     p.xfer_redemption = bp.xfer_stats.redemption;
     p.xfer_convert = bp.xfer_stats.convert;
     p.xfer_order_buy = bp.xfer_stats.order_buy;
@@ -133,12 +155,23 @@ public:
     p.xfer_lp_add = bp.xfer_stats.fpmm_lp_add;
     p.xfer_lp_remove = bp.xfer_stats.fpmm_lp_remove;
     p.xfer_lp_return = bp.xfer_stats.fpmm_lp_return;
-    p.xfer_transfer_in = bp.xfer_stats.transfer_in;
-    p.xfer_transfer_out = bp.xfer_stats.transfer_out;
-    p.xfer_internal_mint = bp.xfer_stats.internal_mint;
-    p.xfer_internal_burn = bp.xfer_stats.internal_burn;
-    p.xfer_internal_transfer = bp.xfer_stats.internal_transfer;
-    p.xfer_non_usdc = bp.xfer_stats.non_usdc_fpmm;
+    p.xfer_transfer_in_negrisk = bp.xfer_stats.transfer_in_negrisk;
+    p.xfer_transfer_in_other = bp.xfer_stats.transfer_in_other;
+    p.xfer_transfer_out_negrisk = bp.xfer_stats.transfer_out_negrisk;
+    p.xfer_transfer_out_other = bp.xfer_stats.transfer_out_other;
+    p.xfer_internal_mint_negrisk = bp.xfer_stats.internal_mint_negrisk;
+    p.xfer_internal_mint_fpmm = bp.xfer_stats.internal_mint_fpmm;
+    p.xfer_internal_burn_negrisk = bp.xfer_stats.internal_burn_negrisk;
+    p.xfer_internal_burn_fpmm = bp.xfer_stats.internal_burn_fpmm;
+    p.xfer_internal_burn_convert = bp.xfer_stats.internal_burn_convert;
+    p.xfer_internal_transfer_zero = bp.xfer_stats.internal_transfer_zero;
+    p.xfer_internal_transfer_order = bp.xfer_stats.internal_transfer_order;
+    p.xfer_internal_transfer_negrisk = bp.xfer_stats.internal_transfer_negrisk;
+    p.xfer_internal_transfer_fpmm = bp.xfer_stats.internal_transfer_fpmm;
+    p.xfer_internal_transfer_other = bp.xfer_stats.internal_transfer_other;
+    p.xfer_non_usdc_mint = bp.xfer_stats.non_usdc_mint;
+    p.xfer_non_usdc_burn = bp.xfer_stats.non_usdc_burn;
+    p.xfer_non_usdc_op = bp.xfer_stats.non_usdc_op;
     p.xfer_non_poly = bp.xfer_stats.non_polymarket;
     return p;
   }

@@ -87,6 +87,49 @@
     margin: 0 2px;
   }
 
+  .stage2-tree {
+    font-size: 0.75em;
+    font-family: monospace;
+  }
+  .stage2-tree-node {
+    cursor: pointer;
+    user-select: none;
+  }
+  .stage2-tree-node:hover {
+    background: #252525;
+    margin: 0 -8px;
+    padding: 0 8px;
+  }
+  .stage2-tree-toggle {
+    display: inline-block;
+    width: 12px;
+    color: #555;
+    text-align: center;
+  }
+  .stage2-tree-label {
+    color: #888;
+  }
+  .stage2-tree-value {
+    color: #fff;
+    font-weight: 500;
+  }
+  .stage2-tree-value.zero {
+    color: #444;
+  }
+  .stage2-tree-children {
+    padding-left: 16px;
+    display: none;
+  }
+  .stage2-tree-children.expanded {
+    display: block;
+  }
+  .stage2-tree-leaf {
+    padding-left: 16px;
+  }
+  .stage2-tree-leaf .stage2-tree-label {
+    color: #666;
+  }
+
   .stage2-stats {
     display: flex;
     gap: 8px;
@@ -176,30 +219,7 @@
     </span>
   </div>
 
-  <div class="stage2-row">
-    <span class="stage2-item">
-      <span class="stage2-label">Transfer</span>
-      <span class="stage2-value highlight" id="s2-xfer-total">0</span>
-      <span style="color:#555">(</span><span style="color:#aaa">铸</span><span class="stage2-value" id="s2-xfer-split">0</span>
-      <span style="color:#aaa">合</span><span class="stage2-value" id="s2-xfer-merge">0</span>
-      <span style="color:#aaa">赎</span><span class="stage2-value" id="s2-xfer-redemption">0</span>
-      <span style="color:#aaa">转换</span><span class="stage2-value" id="s2-xfer-convert">0</span>
-      <span style="color:#aaa">订买</span><span class="stage2-value" id="s2-xfer-order-buy">0</span>
-      <span style="color:#aaa">订卖</span><span class="stage2-value" id="s2-xfer-order-sell">0</span>
-      <span style="color:#d4a574">AMM买</span><span class="stage2-value" id="s2-xfer-fpmm-buy">0</span>
-      <span style="color:#d4a574">AMM卖</span><span class="stage2-value" id="s2-xfer-fpmm-sell">0</span>
-      <span style="color:#74b4d4">LP加</span><span class="stage2-value" id="s2-xfer-lp-add">0</span>
-      <span style="color:#74b4d4">LP减</span><span class="stage2-value" id="s2-xfer-lp-remove">0</span>
-      <span style="color:#74b4d4">LP返</span><span class="stage2-value" id="s2-xfer-lp-return">0</span>
-      <span style="color:#aaa">转入</span><span class="stage2-value" id="s2-xfer-transfer-in">0</span>
-      <span style="color:#aaa">转出</span><span class="stage2-value" id="s2-xfer-transfer-out">0</span>
-      <span style="color:#555">内铸</span><span class="stage2-value" style="color:#444" id="s2-xfer-internal-mint">0</span>
-      <span style="color:#555">内燃</span><span class="stage2-value" style="color:#444" id="s2-xfer-internal-burn">0</span>
-      <span style="color:#555">内转</span><span class="stage2-value" style="color:#444" id="s2-xfer-internal-transfer">0</span>
-      <span style="color:#888">非U</span><span class="stage2-value" style="color:#666" id="s2-xfer-non-usdc">0</span>
-      <span style="color:#888">非P</span><span class="stage2-value" style="color:#666" id="s2-xfer-non-poly">0</span><span style="color:#555">)</span>
-    </span>
-  </div>
+  <div class="stage2-tree" id="s2-xfer-tree"></div>
 </div>
 
 <script>
@@ -216,6 +236,7 @@
 
     let s2LastCursor = 0;
     let s2LastTime = Date.now();
+    let s2ExpandedNodes = new Set(["xfer", "user_events"]);
 
     function s2UpdateStats(s) {
       const sync = s.stage2_sync || {};
@@ -224,27 +245,19 @@
       const behind = headBlock - cursor;
 
       document.getElementById("s2-last-block").textContent = s2FmtNum(cursor);
-      document.getElementById("s2-head-block").textContent =
-        s2FmtNum(headBlock);
+      document.getElementById("s2-head-block").textContent = s2FmtNum(headBlock);
       document.getElementById("s2-behind").textContent = s2FmtNum(behind);
 
       const now = Date.now();
       const dt = (now - s2LastTime) / 1000;
       if (dt > 0 && cursor > s2LastCursor) {
         const speed = (cursor - s2LastCursor) / dt;
-        document.getElementById("s2-speed").textContent =
-          s2Fmt(Math.round(speed)) + "/s";
+        document.getElementById("s2-speed").textContent = s2Fmt(Math.round(speed)) + "/s";
         if (speed > 0 && behind > 0) {
           const eta = behind / speed;
-          if (eta < 60)
-            document.getElementById("s2-eta").textContent =
-              Math.round(eta) + "s";
-          else if (eta < 3600)
-            document.getElementById("s2-eta").textContent =
-              Math.round(eta / 60) + "m";
-          else
-            document.getElementById("s2-eta").textContent =
-              (eta / 3600).toFixed(1) + "h";
+          if (eta < 60) document.getElementById("s2-eta").textContent = Math.round(eta) + "s";
+          else if (eta < 3600) document.getElementById("s2-eta").textContent = Math.round(eta / 60) + "m";
+          else document.getElementById("s2-eta").textContent = (eta / 3600).toFixed(1) + "h";
         } else {
           document.getElementById("s2-eta").textContent = "-";
         }
@@ -255,11 +268,144 @@
 
     function s2Set(id, value) {
       const el = document.getElementById(id);
+      if (!el) return;
       el.textContent = s2Fmt(value || 0);
       el.classList.toggle("zero", !value);
     }
 
+    function s2BuildTree(s) {
+      const split = (s.xfer_split_normal || 0) + (s.xfer_split_negrisk || 0);
+      const merge = (s.xfer_merge_normal || 0) + (s.xfer_merge_negrisk || 0);
+      const order = (s.xfer_order_buy || 0) + (s.xfer_order_sell || 0);
+      const fpmm_trade = (s.xfer_fpmm_buy || 0) + (s.xfer_fpmm_sell || 0);
+      const fpmm_lp = (s.xfer_lp_add || 0) + (s.xfer_lp_remove || 0) + (s.xfer_lp_return || 0);
+      const transfer_in = (s.xfer_transfer_in_negrisk || 0) + (s.xfer_transfer_in_other || 0);
+      const transfer_out = (s.xfer_transfer_out_negrisk || 0) + (s.xfer_transfer_out_other || 0);
+      const transfer = transfer_in + transfer_out;
+      const user_events = split + merge + (s.xfer_redemption||0) + (s.xfer_convert||0) + order + fpmm_trade + fpmm_lp + transfer;
+      const internal_mint = (s.xfer_internal_mint_negrisk || 0) + (s.xfer_internal_mint_fpmm || 0);
+      const internal_burn = (s.xfer_internal_burn_negrisk || 0) + (s.xfer_internal_burn_fpmm || 0) + (s.xfer_internal_burn_convert || 0);
+      const internal_transfer = (s.xfer_internal_transfer_zero || 0) + (s.xfer_internal_transfer_order || 0) + (s.xfer_internal_transfer_negrisk || 0) + (s.xfer_internal_transfer_fpmm || 0) + (s.xfer_internal_transfer_other || 0);
+      const internal = internal_mint + internal_burn + internal_transfer;
+      const non_usdc = (s.xfer_non_usdc_mint || 0) + (s.xfer_non_usdc_burn || 0) + (s.xfer_non_usdc_op || 0);
+      const skipped = non_usdc + (s.xfer_non_poly || 0);
+
+      return {
+        id: "xfer", label: "Transfer", value: s.xfer_total || 0, color: "#60a5fa",
+        children: [
+          { id: "user_events", label: "用户事件", value: user_events, color: "#4ade80",
+            children: [
+              { id: "split", label: "铸", value: split, children: [
+                { id: "split_normal", label: "普通", value: s.xfer_split_normal || 0 },
+                { id: "split_negrisk", label: "NegRisk", value: s.xfer_split_negrisk || 0 }
+              ]},
+              { id: "merge", label: "合", value: merge, children: [
+                { id: "merge_normal", label: "普通", value: s.xfer_merge_normal || 0 },
+                { id: "merge_negrisk", label: "NegRisk", value: s.xfer_merge_negrisk || 0 }
+              ]},
+              { id: "redemption", label: "赎", value: s.xfer_redemption || 0 },
+              { id: "convert", label: "转换", value: s.xfer_convert || 0 },
+              { id: "order", label: "订单", value: order, children: [
+                { id: "order_buy", label: "买", value: s.xfer_order_buy || 0 },
+                { id: "order_sell", label: "卖", value: s.xfer_order_sell || 0 }
+              ]},
+              { id: "fpmm_trade", label: "AMM", value: fpmm_trade, color: "#d4a574", children: [
+                { id: "fpmm_buy", label: "买", value: s.xfer_fpmm_buy || 0 },
+                { id: "fpmm_sell", label: "卖", value: s.xfer_fpmm_sell || 0 }
+              ]},
+              { id: "fpmm_lp", label: "LP", value: fpmm_lp, color: "#74b4d4", children: [
+                { id: "lp_add", label: "加", value: s.xfer_lp_add || 0 },
+                { id: "lp_remove", label: "减", value: s.xfer_lp_remove || 0 },
+                { id: "lp_return", label: "返", value: s.xfer_lp_return || 0 }
+              ]},
+              { id: "transfer", label: "转账", value: transfer, children: [
+                { id: "transfer_in", label: "入", value: transfer_in, children: [
+                  { id: "transfer_in_negrisk", label: "NegRisk", value: s.xfer_transfer_in_negrisk || 0 },
+                  { id: "transfer_in_other", label: "其他", value: s.xfer_transfer_in_other || 0 }
+                ]},
+                { id: "transfer_out", label: "出", value: transfer_out, children: [
+                  { id: "transfer_out_negrisk", label: "NegRisk", value: s.xfer_transfer_out_negrisk || 0 },
+                  { id: "transfer_out_other", label: "其他", value: s.xfer_transfer_out_other || 0 }
+                ]}
+              ]}
+            ]
+          },
+          { id: "internal", label: "内部", value: internal, color: "#666",
+            children: [
+              { id: "internal_mint", label: "铸", value: internal_mint, children: [
+                { id: "internal_mint_negrisk", label: "NegRisk", value: s.xfer_internal_mint_negrisk || 0 },
+                { id: "internal_mint_fpmm", label: "FPMM", value: s.xfer_internal_mint_fpmm || 0 }
+              ]},
+              { id: "internal_burn", label: "燃", value: internal_burn, children: [
+                { id: "internal_burn_negrisk", label: "NegRisk", value: s.xfer_internal_burn_negrisk || 0 },
+                { id: "internal_burn_fpmm", label: "FPMM", value: s.xfer_internal_burn_fpmm || 0 },
+                { id: "internal_burn_convert", label: "Convert", value: s.xfer_internal_burn_convert || 0 }
+              ]},
+              { id: "internal_transfer", label: "转", value: internal_transfer, children: [
+                { id: "internal_transfer_zero", label: "零值", value: s.xfer_internal_transfer_zero || 0 },
+                { id: "internal_transfer_order", label: "订单", value: s.xfer_internal_transfer_order || 0 },
+                { id: "internal_transfer_negrisk", label: "NegRisk", value: s.xfer_internal_transfer_negrisk || 0 },
+                { id: "internal_transfer_fpmm", label: "FPMM", value: s.xfer_internal_transfer_fpmm || 0 },
+                { id: "internal_transfer_other", label: "其他", value: s.xfer_internal_transfer_other || 0 }
+              ]}
+            ]
+          },
+          { id: "skipped", label: "跳过", value: skipped, color: "#888",
+            children: [
+              { id: "non_usdc", label: "非U", value: non_usdc, children: [
+                { id: "non_usdc_mint", label: "铸", value: s.xfer_non_usdc_mint || 0 },
+                { id: "non_usdc_burn", label: "燃", value: s.xfer_non_usdc_burn || 0 },
+                { id: "non_usdc_op", label: "操作", value: s.xfer_non_usdc_op || 0 }
+              ]},
+              { id: "non_poly", label: "非P", value: s.xfer_non_poly || 0 }
+            ]
+          }
+        ]
+      };
+    }
+
+    function s2RenderNode(node, depth = 0) {
+      const hasChildren = node.children && node.children.length > 0;
+      const isExpanded = s2ExpandedNodes.has(node.id);
+      const valueClass = node.value ? "" : " zero";
+      const color = node.color || "#fff";
+
+      let html = `<div class="${hasChildren ? "stage2-tree-node" : "stage2-tree-leaf"}" data-id="${node.id}">`;
+      if (hasChildren) {
+        html += `<span class="stage2-tree-toggle">${isExpanded ? "▼" : "▶"}</span>`;
+      }
+      html += `<span class="stage2-tree-label">${node.label}</span> `;
+      html += `<span class="stage2-tree-value${valueClass}" style="color:${color}">${s2Fmt(node.value)}</span>`;
+      html += `</div>`;
+
+      if (hasChildren) {
+        html += `<div class="stage2-tree-children${isExpanded ? " expanded" : ""}">`;
+        for (const child of node.children) {
+          html += s2RenderNode(child, depth + 1);
+        }
+        html += `</div>`;
+      }
+      return html;
+    }
+
+    function s2RenderTree(s) {
+      const tree = s2BuildTree(s);
+      const container = document.getElementById("s2-xfer-tree");
+      if (container) {
+        container.innerHTML = s2RenderNode(tree);
+        container.querySelectorAll(".stage2-tree-node").forEach(el => {
+          el.addEventListener("click", () => {
+            const id = el.dataset.id;
+            if (s2ExpandedNodes.has(id)) s2ExpandedNodes.delete(id);
+            else s2ExpandedNodes.add(id);
+            s2RenderTree(window._s2LastData || {});
+          });
+        });
+      }
+    }
+
     function s2UpdateProgress(s) {
+      window._s2LastData = s;
       const bar = document.getElementById("stage2-progress-bar");
       const badge = document.getElementById("stage2-badge");
 
@@ -282,25 +428,8 @@
       s2Set("s2-token-norm", s.token_norm);
       s2Set("s2-token-negrisk", s.token_negrisk);
       s2Set("s2-token-non-usdc", s.token_non_usdc);
-      s2Set("s2-xfer-total", s.xfer_total);
-      s2Set("s2-xfer-split", s.xfer_split);
-      s2Set("s2-xfer-merge", s.xfer_merge);
-      s2Set("s2-xfer-redemption", s.xfer_redemption);
-      s2Set("s2-xfer-convert", s.xfer_convert);
-      s2Set("s2-xfer-order-buy", s.xfer_order_buy);
-      s2Set("s2-xfer-order-sell", s.xfer_order_sell);
-      s2Set("s2-xfer-fpmm-buy", s.xfer_fpmm_buy);
-      s2Set("s2-xfer-fpmm-sell", s.xfer_fpmm_sell);
-      s2Set("s2-xfer-lp-add", s.xfer_lp_add);
-      s2Set("s2-xfer-lp-remove", s.xfer_lp_remove);
-      s2Set("s2-xfer-lp-return", s.xfer_lp_return);
-      s2Set("s2-xfer-transfer-in", s.xfer_transfer_in);
-      s2Set("s2-xfer-transfer-out", s.xfer_transfer_out);
-      s2Set("s2-xfer-internal-mint", s.xfer_internal_mint);
-      s2Set("s2-xfer-internal-burn", s.xfer_internal_burn);
-      s2Set("s2-xfer-internal-transfer", s.xfer_internal_transfer);
-      s2Set("s2-xfer-non-usdc", s.xfer_non_usdc);
-      s2Set("s2-xfer-non-poly", s.xfer_non_poly);
+
+      s2RenderTree(s);
 
       if (sync.syncing) {
         badge.className = "badge badge-warning";
@@ -319,11 +448,7 @@
         const resp = await fetch("/api/rebuild-status");
         const status = await resp.json();
         s2UpdateProgress(status);
-        if (
-          status.phase === 7 &&
-          !status.running &&
-          typeof rpOnRebuildDone === "function"
-        ) {
+        if (status.phase === 7 && !status.running && typeof rpOnRebuildDone === "function") {
           rpOnRebuildDone();
         }
       } catch (e) {}
