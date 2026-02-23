@@ -274,10 +274,6 @@ public:
     }
     std::cerr << "[Stage2] Restored: " << conditions_.size() << " conditions, "
               << token_map_.size() << " tokens, " << fpmm_map_.size() << " FPMMs" << std::endl;
-    std::cerr << "[Stage2] FPMMs by collateral:" << std::endl;
-    for (const auto &[coll, cnt] : fpmm_by_collateral) {
-      std::cerr << "    " << collateral_name(coll) << ": " << cnt << std::endl;
-    }
   }
 
   int64_t cursor() const { return progress_.cursor; }
@@ -491,8 +487,13 @@ private:
 
   void intern_token(const std::string &token_id, uint32_t cond_idx, uint8_t is_yes, TokenSource source) {
     std::string lower = to_lower(token_id);
-    if (token_map_.count(lower))
+    auto it = token_map_.find(lower);
+    if (it != token_map_.end()) {
+      // 已存在：不应该出现 TransferInferred 后又从其他来源发现的情况
+      // 因为事件按时间顺序处理，FPMM/Split 等事件应该先于 Transfer
+      assert(!(it->second.source == TokenSource::TransferInferred && source != TokenSource::TransferInferred));
       return;
+    }
     token_map_[lower] = {cond_idx, is_yes, source};
     new_tokens_.push_back({lower, cond_idx, is_yes, source});
     progress_.total_tokens = token_map_.size();
@@ -510,26 +511,33 @@ private:
 
   void update_cond_type_stats() {
     // 问题树状partition: total = polymarket + other
+    // 优先检查 fpmm_cond_idxs_/negrisk_cond_idxs_ 来判断是否是 Polymarket
     ConditionTree ct{};
     for (size_t i = 0; i < conditions_.size(); ++i) {
       ct.total++;
       uint32_t idx = static_cast<uint32_t>(i);
       auto src = conditions_[i].source;
+      bool has_fpmm = fpmm_cond_idxs_.count(idx) > 0;
+      bool has_negrisk = negrisk_cond_idxs_.count(idx) > 0;
+      bool has_token_reg = (src == ConditionSource::PolymarketTokenReg);
 
-      if (src == ConditionSource::PolymarketTokenReg) {
+      if (has_token_reg) {
+        // 有 TokenReg 的都是 Polymarket
         ct.polymarket.total++;
         ct.polymarket.token_reg.total++;
-        if (fpmm_cond_idxs_.count(idx)) {
+        if (has_fpmm) {
           ct.polymarket.token_reg.amm++;
-        } else if (negrisk_cond_idxs_.count(idx)) {
+        } else if (has_negrisk) {
           ct.polymarket.token_reg.negrisk++;
         } else {
           ct.polymarket.token_reg.normal++;
         }
-      } else if (src == ConditionSource::PolymarketFPMM) {
+      } else if (has_fpmm) {
+        // 没有 TokenReg 但有 FPMM（早期 Polymarket 或只创建了池子）
         ct.polymarket.total++;
         ct.polymarket.fpmm_only++;
       } else {
+        // 既没有 TokenReg 也没有 FPMM → 其他协议
         ct.other.total++;
         switch (src) {
         case ConditionSource::ConditionPrep:
@@ -541,9 +549,6 @@ private:
         case ConditionSource::SplitEvent:
           ct.other.split++;
           break;
-        case ConditionSource::TransferInferred:
-          ct.other.transfer_inferred++;
-          break;
         default:
           break;
         }
@@ -553,26 +558,40 @@ private:
     assert(ct.total == ct.polymarket.total + ct.other.total);
     assert(ct.polymarket.total == ct.polymarket.token_reg.total + ct.polymarket.fpmm_only);
     assert(ct.polymarket.token_reg.total == ct.polymarket.token_reg.amm + ct.polymarket.token_reg.negrisk + ct.polymarket.token_reg.normal);
-    assert(ct.other.total == ct.other.prep + ct.other.other_fpmm + ct.other.split + ct.other.transfer_inferred);
+    assert(ct.other.total == ct.other.prep + ct.other.other_fpmm + ct.other.split);
     progress_.cond_tree = ct;
 
     // 代币树状partition: total = polymarket + other
+    // 优先检查 fpmm_cond_idxs_ 来判断是否是 Polymarket
+    // TransferInferred 的 token 用 UNKNOWN_COND_IDX 标识
     TokenTree tt{};
     for (const auto &[tid, info] : token_map_) {
       tt.total++;
       auto src = info.source;
 
-      if (src == TokenSource::PolymarketTokenReg) {
+      // TransferInferred 的 token 没有 condition 信息
+      if (info.cond_idx == UNKNOWN_COND_IDX) {
+        tt.other.total++;
+        tt.other.transfer_inferred++;
+        continue;
+      }
+
+      bool has_fpmm = fpmm_cond_idxs_.count(info.cond_idx) > 0;
+      bool has_token_reg = (src == TokenSource::PolymarketTokenReg);
+
+      if (has_token_reg) {
+        // 有 TokenReg 的都是 Polymarket
         tt.polymarket.total++;
         tt.polymarket.token_reg.total++;
-        if (fpmm_cond_idxs_.count(info.cond_idx)) {
+        if (has_fpmm) {
           tt.polymarket.token_reg.amm++;
         } else if (negrisk_cond_idxs_.count(info.cond_idx)) {
           tt.polymarket.token_reg.negrisk++;
         } else {
           tt.polymarket.token_reg.normal++;
         }
-      } else if (src == TokenSource::PolymarketFPMM) {
+      } else if (has_fpmm) {
+        // 没有 TokenReg 但有 FPMM（早期 Polymarket 或只创建了池子）
         tt.polymarket.total++;
         tt.polymarket.fpmm_only.total++;
         auto cit = cond_collateral_.find(info.cond_idx);
@@ -582,6 +601,7 @@ private:
           tt.polymarket.fpmm_only.usdc++;
         }
       } else {
+        // 既没有 TokenReg 也没有 FPMM → 其他协议
         tt.other.total++;
         switch (src) {
         case TokenSource::OtherFPMM:
@@ -589,9 +609,6 @@ private:
           break;
         case TokenSource::SplitEvent:
           tt.other.split++;
-          break;
-        case TokenSource::TransferInferred:
-          tt.other.transfer_inferred++;
           break;
         default:
           break;

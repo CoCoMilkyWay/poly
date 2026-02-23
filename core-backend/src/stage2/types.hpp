@@ -8,6 +8,8 @@
 namespace stage2 {
 
 static constexpr int MAX_OUTCOMES = 8;
+static constexpr uint32_t UNKNOWN_COND_IDX = UINT32_MAX; // TransferInferred token 的特殊值
+static constexpr uint8_t UNKNOWN_IS_YES = 0xFF;          // TransferInferred token 的特殊值
 
 enum EventType : uint8_t {
   Buy = 0,

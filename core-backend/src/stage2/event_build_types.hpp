@@ -503,10 +503,9 @@ struct ConditionTree {
   } polymarket;
   struct Other {
     int64_t total = 0;
-    int64_t prep = 0;             // source=ConditionPrep
-    int64_t other_fpmm = 0;       // source=OtherFPMM
-    int64_t split = 0;            // source=SplitEvent
-    int64_t transfer_inferred = 0; // source=TransferInferred
+    int64_t prep = 0;       // source=ConditionPrep
+    int64_t other_fpmm = 0; // source=OtherFPMM (预期=0)
+    int64_t split = 0;      // source=SplitEvent (预期=0)
   } other;
 };
 
@@ -529,9 +528,9 @@ struct TokenTree {
   } polymarket;
   struct Other {
     int64_t total = 0;
-    int64_t other_fpmm = 0;       // source=OtherFPMM
-    int64_t split = 0;            // source=SplitEvent
-    int64_t transfer_inferred = 0; // source=TransferInferred
+    int64_t other_fpmm = 0;        // source=OtherFPMM (预期=0)
+    int64_t split = 0;             // source=SplitEvent (预期=0)
+    int64_t transfer_inferred = 0; // 从Transfer中发现的未知token（无condition信息）
   } other;
 };
 
