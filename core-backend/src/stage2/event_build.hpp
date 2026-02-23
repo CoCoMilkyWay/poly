@@ -282,8 +282,18 @@ public:
     chunk_xfer_stats_ = {};
     non_usdc_by_collat_.clear();
 
+    // 打开 chunk log
+    chunk_log_.open(log_dir_, chunk_start, chunk_end);
+
     progress_.phase = 1;
     phase1_update_mappings(chunk_start, chunk_end);
+
+    // 写入 log header（phase1 之后，此时 token_map 已更新）
+    chunk_log_.write_header(token_map_.size(), fpmm_map_.size(), cond_map_.size());
+    if (!token_map_.empty()) {
+      auto it = token_map_.begin();
+      chunk_log_.write_token_sample(it->first, it->second.cond_idx, it->second.is_yes);
+    }
 
     progress_.phase = 2;
     phase2_build_semantic_index(chunk_start, chunk_end);
@@ -316,6 +326,9 @@ public:
     progress_.xfer_stats.non_polymarket += chunk_xfer_stats_.non_polymarket;
 
     commit_chunk(chunk_end);
+
+    // 关闭 chunk log
+    chunk_log_.close();
 
     progress_.cursor = chunk_end;
     progress_.running = false;
@@ -352,6 +365,8 @@ private:
   std::unordered_map<TxFPMMKey, FPMMFundingInfo> tx_fpmm_funding_;
   TransferStats chunk_xfer_stats_;                              // 当前 chunk 的 transfer 统计
   std::unordered_map<std::string, int64_t> non_usdc_by_collat_; // 按抵押品统计非 USDC FPMM transfer
+  ChunkLog chunk_log_;                                          // 当前 chunk 的日志
+  std::string log_dir_ = "data/stage2/log";                     // 日志目录
 
   struct NewCondition {
     uint32_t idx;

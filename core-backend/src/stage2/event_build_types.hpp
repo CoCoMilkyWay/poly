@@ -2,10 +2,133 @@
 
 #include <cassert>
 #include <cstdint>
+#include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
 namespace stage2 {
+
+// Chunk 日志系统：每个 chunk 一个 log 文件，记录异常情况
+class ChunkLog {
+public:
+  void open(const std::string &log_dir, int64_t start, int64_t end) {
+    std::filesystem::create_directories(log_dir);
+    std::string path = log_dir + "/chunk_" + std::to_string(start) + "_" + std::to_string(end) + ".log";
+    ofs_.open(path);
+    start_ = start;
+    end_ = end;
+    non_poly_samples_.clear();
+    non_poly_by_op_.clear();
+    non_poly_token_ids_.clear();
+    non_usdc_samples_.clear();
+  }
+
+  void close() {
+    if (ofs_.is_open()) {
+      flush_summary();
+      ofs_.close();
+    }
+  }
+
+  bool is_open() const { return ofs_.is_open(); }
+
+  // 记录找不到 token 的 transfer（采样前 N 条详情，统计全部）
+  void log_non_polymarket(int64_t block, const std::string &tx_hash,
+                          const std::string &op, const std::string &from,
+                          const std::string &to, const std::string &token_id,
+                          int64_t amount) {
+    non_poly_by_op_[op]++;
+    non_poly_token_ids_.insert(token_id);
+    if (non_poly_samples_.size() < 20) {
+      non_poly_samples_.push_back({block, tx_hash, op, from, to, token_id, amount});
+    }
+  }
+
+  // 记录非 USDC FPMM 的 transfer
+  void log_non_usdc_fpmm(int64_t block, const std::string &tx_hash,
+                         const std::string &op, const std::string &from,
+                         const std::string &to, const std::string &token_id,
+                         int64_t amount, const std::string &collateral) {
+    non_usdc_by_collat_[collateral]++;
+    if (non_usdc_samples_.size() < 10) {
+      non_usdc_samples_.push_back({block, tx_hash, op, from, to, token_id, amount, collateral});
+    }
+  }
+
+  // 写入 chunk 开始时的状态快照
+  void write_header(size_t token_map_size, size_t fpmm_map_size, size_t cond_map_size) {
+    if (!ofs_.is_open()) return;
+    ofs_ << "=== Chunk [" << start_ << ", " << end_ << "] ===\n";
+    ofs_ << "token_map.size=" << token_map_size << "\n";
+    ofs_ << "fpmm_map.size=" << fpmm_map_size << "\n";
+    ofs_ << "cond_map.size=" << cond_map_size << "\n\n";
+  }
+
+  // 写入一个 token_map 中的样本（用于对比格式）
+  void write_token_sample(const std::string &token_id, uint32_t cond_idx, bool is_yes) {
+    if (!ofs_.is_open()) return;
+    ofs_ << "[TOKEN_SAMPLE] len=" << token_id.size() << " id=" << token_id
+         << " cond_idx=" << cond_idx << " is_yes=" << is_yes << "\n";
+  }
+
+private:
+  void flush_summary() {
+    if (!ofs_.is_open()) return;
+
+    // NonPolymarket 汇总
+    int64_t total_non_poly = 0;
+    for (const auto &[op, cnt] : non_poly_by_op_) total_non_poly += cnt;
+
+    ofs_ << "\n=== NonPolymarket Summary ===\n";
+    ofs_ << "total=" << total_non_poly << ", unique_tokens=" << non_poly_token_ids_.size() << "\n";
+    ofs_ << "by_operator:\n";
+    for (const auto &[op, cnt] : non_poly_by_op_) {
+      ofs_ << "  " << op << ": " << cnt << "\n";
+    }
+    ofs_ << "samples (first 20):\n";
+    for (const auto &s : non_poly_samples_) {
+      ofs_ << "  block=" << s.block << " tx=" << s.tx_hash.substr(0, 18) << "..."
+           << " op=" << s.op.substr(0, 12) << "..."
+           << " token_len=" << s.token_id.size()
+           << " token=" << s.token_id.substr(0, 20) << "..."
+           << " amt=" << s.amount << "\n";
+    }
+
+    // NonUsdc 汇总
+    int64_t total_non_usdc = 0;
+    for (const auto &[collat, cnt] : non_usdc_by_collat_) total_non_usdc += cnt;
+
+    if (total_non_usdc > 0) {
+      ofs_ << "\n=== NonUsdcFpmm Summary ===\n";
+      ofs_ << "total=" << total_non_usdc << "\n";
+      ofs_ << "by_collateral:\n";
+      for (const auto &[collat, cnt] : non_usdc_by_collat_) {
+        ofs_ << "  " << collat << ": " << cnt << "\n";
+      }
+    }
+  }
+
+  std::ofstream ofs_;
+  int64_t start_ = 0, end_ = 0;
+
+  struct Sample {
+    int64_t block;
+    std::string tx_hash, op, from, to, token_id;
+    int64_t amount;
+    std::string collateral; // only for non_usdc
+  };
+
+  std::vector<Sample> non_poly_samples_;
+  std::unordered_map<std::string, int64_t> non_poly_by_op_;
+  std::unordered_set<std::string> non_poly_token_ids_;
+
+  std::vector<Sample> non_usdc_samples_;
+  std::unordered_map<std::string, int64_t> non_usdc_by_collat_;
+};
 
 static constexpr const char *ZERO_ADDR = "0x0000000000000000000000000000000000000000";
 static constexpr const char *CTF_EXCHANGE = "0x4bfb41d5b3570defd03c39a9a4d8de6bd8b8982e";

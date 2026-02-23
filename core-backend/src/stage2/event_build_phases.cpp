@@ -367,21 +367,27 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
     auto tx_hash = hex_to_bytes32(r.tx_hash);
 
     // 优先检查是否涉及 non-USDC FPMM（在 token lookup 之前）
-    auto check_non_usdc_fpmm = [&](const std::string &addr) -> bool {
+    auto check_non_usdc_fpmm = [&](const std::string &addr) -> std::string {
       auto it = fpmm_map_.find(addr);
       if (it != fpmm_map_.end() && !it->second.is_usdc) {
-        non_usdc_by_collat_[it->second.collateral]++;
-        chunk_xfer_stats_.add(TransferClass::NonUsdcFpmm);
-        return true;
+        return it->second.collateral;
       }
-      return false;
+      return "";
     };
-    if (check_non_usdc_fpmm(op) || check_non_usdc_fpmm(from) || check_non_usdc_fpmm(to))
+    std::string non_usdc_collat;
+    if (!(non_usdc_collat = check_non_usdc_fpmm(op)).empty() ||
+        !(non_usdc_collat = check_non_usdc_fpmm(from)).empty() ||
+        !(non_usdc_collat = check_non_usdc_fpmm(to)).empty()) {
+      non_usdc_by_collat_[non_usdc_collat]++;
+      chunk_xfer_stats_.add(TransferClass::NonUsdcFpmm);
+      chunk_log_.log_non_usdc_fpmm(r.block, r.tx_hash, op, from, to, token_id, r.amount, non_usdc_collat);
       continue;
+    }
 
     auto tit = token_map_.find(token_id);
     if (tit == token_map_.end()) {
       chunk_xfer_stats_.add(TransferClass::NonPolymarket);
+      chunk_log_.log_non_polymarket(r.block, r.tx_hash, op, from, to, token_id, r.amount);
       continue;
     }
     uint32_t cond_idx = tit->second.cond_idx;
