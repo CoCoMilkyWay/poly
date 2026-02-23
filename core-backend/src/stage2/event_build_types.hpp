@@ -84,7 +84,8 @@ public:
 
     // Transfer 统计
     if (!xfer_stats_str_.empty()) {
-      ofs << "\n" << xfer_stats_str_;
+      ofs << "\n"
+          << xfer_stats_str_;
     }
   }
 
@@ -164,54 +165,54 @@ struct ScanStats {
 
 enum class TransferClass {
   // === Split 铸造 (2) ===
-  SplitNormal,           // mint→用户, stakeholder==to (普通市场)
-  SplitNegRisk,          // Adapter→用户, stakeholder==Adapter (NegRisk)
+  SplitNormal,  // mint→用户, stakeholder==to (普通市场)
+  SplitNegRisk, // Adapter→用户, stakeholder==Adapter (NegRisk)
 
   // === Merge 合并 (2) ===
-  MergeNormal,           // 用户→burn, stakeholder==from (普通市场)
-  MergeNegRisk,          // 用户→Adapter, stakeholder==Adapter (NegRisk)
+  MergeNormal,  // 用户→burn, stakeholder==from (普通市场)
+  MergeNegRisk, // 用户→Adapter, stakeholder==Adapter (NegRisk)
 
   // === 其他用户事件 (7) ===
-  Redemption,            // 用户→burn with PayoutRedemption
-  Convert,               // 用户→BurnAddr with PositionsConverted
-  OrderBuy,              // Exchange to用户
-  OrderSell,             // Exchange from用户
-  FPMMBuy,               // FPMM→用户
-  FPMMSell,              // 用户→FPMM
-  FPMMLPAdd,             // mint→FPMM with FundingAdded
-  FPMMLPRemove,          // FPMM→用户 with FundingRemoved
-  FPMMLPReturn,          // FPMM→用户 with FundingAdded (返还多余)
+  Redemption,   // 用户→burn with PayoutRedemption
+  Convert,      // 用户→BurnAddr with PositionsConverted
+  OrderBuy,     // Exchange to用户
+  OrderSell,    // Exchange from用户
+  FPMMBuy,      // FPMM→用户
+  FPMMSell,     // 用户→FPMM
+  FPMMLPAdd,    // mint→FPMM with FundingAdded
+  FPMMLPRemove, // FPMM→用户 with FundingRemoved
+  FPMMLPReturn, // FPMM→用户 with FundingAdded (返还多余)
 
   // === Transfer 转账 (4) ===
-  TransferInNegRisk,     // Adapter→用户 无Split
-  TransferInOther,       // 其他→用户
-  TransferOutNegRisk,    // 用户→Adapter 无Merge
-  TransferOutOther,      // 用户→其他
+  TransferInNegRisk,  // Adapter→用户 无Split
+  TransferInOther,    // 其他→用户
+  TransferOutNegRisk, // 用户→Adapter 无Merge
+  TransferOutOther,   // 用户→其他
 
   // === InternalMint 内铸 (2) ===
-  InternalMintNegRisk,   // mint→Adapter
-  InternalMintFPMM,      // mint→FPMM 无Funding
+  InternalMintNegRisk, // mint→Adapter
+  InternalMintFPMM,    // mint→FPMM 无Funding
 
   // === InternalBurn 内燃 (3) ===
-  InternalBurnNegRisk,   // Adapter→burn
-  InternalBurnFPMM,      // FPMM→burn (USDC)
-  InternalBurnConvert,   // Adapter→BurnAddr (Convert NO)
+  InternalBurnNegRisk, // Adapter→burn
+  InternalBurnFPMM,    // FPMM→burn (USDC)
+  InternalBurnConvert, // Adapter→BurnAddr (Convert NO)
 
   // === InternalTransfer 内转 (5) ===
-  InternalTransferZero,      // amount==0
-  InternalTransferOrder,     // Exchange双方协议
-  InternalTransferNegRisk,   // NegRisk其他
-  InternalTransferFPMM,      // FPMM Funding其他
-  InternalTransferOther,     // 其他协议间
+  InternalTransferZero,    // amount==0
+  InternalTransferOrder,   // Exchange双方协议
+  InternalTransferNegRisk, // NegRisk其他
+  InternalTransferFPMM,    // FPMM Funding其他
+  InternalTransferOther,   // 其他协议间
 
   // === NonUsdc 非U (3) ===
-  NonUsdcMint,           // mint→非USDC FPMM
-  NonUsdcBurn,           // 非USDC FPMM→burn
-  NonUsdcOp,             // op==非USDC FPMM
+  NonUsdcMint, // mint→非USDC FPMM
+  NonUsdcBurn, // 非USDC FPMM→burn
+  NonUsdcOp,   // op==非USDC FPMM
 
   // === 其他 (2) ===
-  NonPolymarket,         // 非Polymarket token
-  Unclassified,          // ERROR
+  NonPolymarket, // 非Polymarket token
+  Unclassified,  // ERROR
 };
 
 struct TransferStats {
@@ -295,38 +296,102 @@ struct TransferStats {
   void add(TransferClass cls) {
     ++total;
     switch (cls) {
-    case TransferClass::SplitNormal: ++split_normal; break;
-    case TransferClass::SplitNegRisk: ++split_negrisk; break;
-    case TransferClass::MergeNormal: ++merge_normal; break;
-    case TransferClass::MergeNegRisk: ++merge_negrisk; break;
-    case TransferClass::Redemption: ++redemption; break;
-    case TransferClass::Convert: ++convert; break;
-    case TransferClass::OrderBuy: ++order_buy; break;
-    case TransferClass::OrderSell: ++order_sell; break;
-    case TransferClass::FPMMBuy: ++fpmm_buy; break;
-    case TransferClass::FPMMSell: ++fpmm_sell; break;
-    case TransferClass::FPMMLPAdd: ++fpmm_lp_add; break;
-    case TransferClass::FPMMLPRemove: ++fpmm_lp_remove; break;
-    case TransferClass::FPMMLPReturn: ++fpmm_lp_return; break;
-    case TransferClass::TransferInNegRisk: ++transfer_in_negrisk; break;
-    case TransferClass::TransferInOther: ++transfer_in_other; break;
-    case TransferClass::TransferOutNegRisk: ++transfer_out_negrisk; break;
-    case TransferClass::TransferOutOther: ++transfer_out_other; break;
-    case TransferClass::InternalMintNegRisk: ++internal_mint_negrisk; break;
-    case TransferClass::InternalMintFPMM: ++internal_mint_fpmm; break;
-    case TransferClass::InternalBurnNegRisk: ++internal_burn_negrisk; break;
-    case TransferClass::InternalBurnFPMM: ++internal_burn_fpmm; break;
-    case TransferClass::InternalBurnConvert: ++internal_burn_convert; break;
-    case TransferClass::InternalTransferZero: ++internal_transfer_zero; break;
-    case TransferClass::InternalTransferOrder: ++internal_transfer_order; break;
-    case TransferClass::InternalTransferNegRisk: ++internal_transfer_negrisk; break;
-    case TransferClass::InternalTransferFPMM: ++internal_transfer_fpmm; break;
-    case TransferClass::InternalTransferOther: ++internal_transfer_other; break;
-    case TransferClass::NonUsdcMint: ++non_usdc_mint; break;
-    case TransferClass::NonUsdcBurn: ++non_usdc_burn; break;
-    case TransferClass::NonUsdcOp: ++non_usdc_op; break;
-    case TransferClass::NonPolymarket: ++non_polymarket; break;
-    case TransferClass::Unclassified: ++unclassified; break;
+    case TransferClass::SplitNormal:
+      ++split_normal;
+      break;
+    case TransferClass::SplitNegRisk:
+      ++split_negrisk;
+      break;
+    case TransferClass::MergeNormal:
+      ++merge_normal;
+      break;
+    case TransferClass::MergeNegRisk:
+      ++merge_negrisk;
+      break;
+    case TransferClass::Redemption:
+      ++redemption;
+      break;
+    case TransferClass::Convert:
+      ++convert;
+      break;
+    case TransferClass::OrderBuy:
+      ++order_buy;
+      break;
+    case TransferClass::OrderSell:
+      ++order_sell;
+      break;
+    case TransferClass::FPMMBuy:
+      ++fpmm_buy;
+      break;
+    case TransferClass::FPMMSell:
+      ++fpmm_sell;
+      break;
+    case TransferClass::FPMMLPAdd:
+      ++fpmm_lp_add;
+      break;
+    case TransferClass::FPMMLPRemove:
+      ++fpmm_lp_remove;
+      break;
+    case TransferClass::FPMMLPReturn:
+      ++fpmm_lp_return;
+      break;
+    case TransferClass::TransferInNegRisk:
+      ++transfer_in_negrisk;
+      break;
+    case TransferClass::TransferInOther:
+      ++transfer_in_other;
+      break;
+    case TransferClass::TransferOutNegRisk:
+      ++transfer_out_negrisk;
+      break;
+    case TransferClass::TransferOutOther:
+      ++transfer_out_other;
+      break;
+    case TransferClass::InternalMintNegRisk:
+      ++internal_mint_negrisk;
+      break;
+    case TransferClass::InternalMintFPMM:
+      ++internal_mint_fpmm;
+      break;
+    case TransferClass::InternalBurnNegRisk:
+      ++internal_burn_negrisk;
+      break;
+    case TransferClass::InternalBurnFPMM:
+      ++internal_burn_fpmm;
+      break;
+    case TransferClass::InternalBurnConvert:
+      ++internal_burn_convert;
+      break;
+    case TransferClass::InternalTransferZero:
+      ++internal_transfer_zero;
+      break;
+    case TransferClass::InternalTransferOrder:
+      ++internal_transfer_order;
+      break;
+    case TransferClass::InternalTransferNegRisk:
+      ++internal_transfer_negrisk;
+      break;
+    case TransferClass::InternalTransferFPMM:
+      ++internal_transfer_fpmm;
+      break;
+    case TransferClass::InternalTransferOther:
+      ++internal_transfer_other;
+      break;
+    case TransferClass::NonUsdcMint:
+      ++non_usdc_mint;
+      break;
+    case TransferClass::NonUsdcBurn:
+      ++non_usdc_burn;
+      break;
+    case TransferClass::NonUsdcOp:
+      ++non_usdc_op;
+      break;
+    case TransferClass::NonPolymarket:
+      ++non_polymarket;
+      break;
+    case TransferClass::Unclassified:
+      ++unclassified;
+      break;
     }
   }
 
@@ -360,7 +425,8 @@ struct TransferStats {
   static std::string format_log(const TransferStats &chunk, const TransferStats &acc) {
     std::ostringstream oss;
     auto line = [&](const char *name, int64_t c, int64_t a) {
-      if (c > 0 || a > 0) oss << "  " << name << ": +" << c << " (=" << a << ")\n";
+      if (c > 0 || a > 0)
+        oss << "  " << name << ": +" << c << " (=" << a << ")\n";
     };
     oss << "=== Transfer Stats (chunk / accumulated) ===\n";
     oss << "Total: +" << chunk.total << " (=" << acc.total << ")\n";
