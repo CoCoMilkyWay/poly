@@ -604,7 +604,6 @@ private:
     assert(tt.polymarket.token_reg.total == tt.polymarket.token_reg.amm + tt.polymarket.token_reg.negrisk + tt.polymarket.token_reg.normal);
     assert(tt.polymarket.fpmm_only.total == tt.polymarket.fpmm_only.usdc + tt.polymarket.fpmm_only.non_usdc);
     assert(tt.other.total == tt.other.other_fpmm + tt.other.split + tt.other.transfer_inferred);
-    assert(tt.other.total == tt.other.other_fpmm + tt.other.split);
     progress_.token_tree = tt;
   }
 
