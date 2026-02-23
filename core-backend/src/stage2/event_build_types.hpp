@@ -503,9 +503,10 @@ struct ConditionTree {
   } polymarket;
   struct Other {
     int64_t total = 0;
-    int64_t prep = 0;       // source=ConditionPrep
-    int64_t other_fpmm = 0; // source=OtherFPMM
-    int64_t split = 0;      // source=SplitEvent
+    int64_t prep = 0;             // source=ConditionPrep
+    int64_t other_fpmm = 0;       // source=OtherFPMM
+    int64_t split = 0;            // source=SplitEvent
+    int64_t transfer_inferred = 0; // source=TransferInferred
   } other;
 };
 
@@ -528,8 +529,9 @@ struct TokenTree {
   } polymarket;
   struct Other {
     int64_t total = 0;
-    int64_t other_fpmm = 0; // source=OtherFPMM
-    int64_t split = 0;      // source=SplitEvent
+    int64_t other_fpmm = 0;       // source=OtherFPMM
+    int64_t split = 0;            // source=SplitEvent
+    int64_t transfer_inferred = 0; // source=TransferInferred
   } other;
 };
 

@@ -30,6 +30,7 @@ enum class ConditionSource : uint8_t {
   PolymarketFPMM = 2,     // Polymarket FPMM Factory创建
   OtherFPMM = 3,          // 其他协议FPMM创建（预留，需要扫描其他Factory才有数据）
   SplitEvent = 4,         // 从Split事件推断（无法确定协议）
+  TransferInferred = 5,   // 从Transfer事件推断（未知协议，无condition信息）
 };
 
 enum class TokenSource : uint8_t {
@@ -37,6 +38,7 @@ enum class TokenSource : uint8_t {
   PolymarketFPMM = 1,     // Polymarket FPMM Factory计算
   OtherFPMM = 2,          // 其他协议FPMM计算（预留，需要扫描其他Factory才有数据）
   SplitEvent = 3,         // 从Split事件计算（无法确定协议）
+  TransferInferred = 4,   // 从Transfer事件推断（未知协议）
 };
 
 enum class Collateral : uint8_t {

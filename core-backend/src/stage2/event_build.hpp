@@ -250,6 +250,20 @@ public:
     }
     progress_.total_users = seen_users_.size();
 
+    // 恢复 event_by_collateral 统计
+    auto evt_stats = conn->Query("SELECT event_type, collateral, COUNT(*) FROM user_event GROUP BY event_type, collateral");
+    for (idx_t i = 0; i < evt_stats->RowCount(); ++i) {
+      uint8_t event_type = evt_stats->GetValue(0, i).GetValue<uint8_t>();
+      uint8_t collateral = evt_stats->GetValue(1, i).GetValue<uint8_t>();
+      int64_t count = evt_stats->GetValue(2, i).GetValue<int64_t>();
+      uint16_t key = static_cast<uint16_t>(event_type) * 16 + collateral;
+      progress_.event_by_collateral[key] = count;
+    }
+    progress_.total_events = 0;
+    for (const auto &[k, v] : progress_.event_by_collateral) {
+      progress_.total_events += v;
+    }
+
     if (progress_.cursor > 0)
       progress_.phase = 3;
 
@@ -527,6 +541,9 @@ private:
         case ConditionSource::SplitEvent:
           ct.other.split++;
           break;
+        case ConditionSource::TransferInferred:
+          ct.other.transfer_inferred++;
+          break;
         default:
           break;
         }
@@ -536,7 +553,7 @@ private:
     assert(ct.total == ct.polymarket.total + ct.other.total);
     assert(ct.polymarket.total == ct.polymarket.token_reg.total + ct.polymarket.fpmm_only);
     assert(ct.polymarket.token_reg.total == ct.polymarket.token_reg.amm + ct.polymarket.token_reg.negrisk + ct.polymarket.token_reg.normal);
-    assert(ct.other.total == ct.other.prep + ct.other.other_fpmm + ct.other.split);
+    assert(ct.other.total == ct.other.prep + ct.other.other_fpmm + ct.other.split + ct.other.transfer_inferred);
     progress_.cond_tree = ct;
 
     // 代币树状partition: total = polymarket + other
@@ -573,6 +590,9 @@ private:
         case TokenSource::SplitEvent:
           tt.other.split++;
           break;
+        case TokenSource::TransferInferred:
+          tt.other.transfer_inferred++;
+          break;
         default:
           break;
         }
@@ -583,6 +603,7 @@ private:
     assert(tt.polymarket.total == tt.polymarket.token_reg.total + tt.polymarket.fpmm_only.total);
     assert(tt.polymarket.token_reg.total == tt.polymarket.token_reg.amm + tt.polymarket.token_reg.negrisk + tt.polymarket.token_reg.normal);
     assert(tt.polymarket.fpmm_only.total == tt.polymarket.fpmm_only.usdc + tt.polymarket.fpmm_only.non_usdc);
+    assert(tt.other.total == tt.other.other_fpmm + tt.other.split + tt.other.transfer_inferred);
     assert(tt.other.total == tt.other.other_fpmm + tt.other.split);
     progress_.token_tree = tt;
   }

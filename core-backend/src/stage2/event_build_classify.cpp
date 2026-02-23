@@ -16,6 +16,23 @@ TransferClass EventBuilder::classify_and_emit(
   assert(token_idx < 2 && "Invalid token_idx");
   assert(from != to && "from and to must be different");
 
+  uint8_t coll = static_cast<uint8_t>(collateral);
+
+  // 对于推断的token（没有Split/Merge等事件），直接分类为TransferIn/TransferOut
+  if (conditions_[cond_idx].source == ConditionSource::TransferInferred) {
+    if (!is_protocol_contract(to))
+      push_event(to, RawEvent{sort_key, cond_idx, EventType::TransferIn, token_idx, coll, 0, amount, 0});
+    if (!is_protocol_contract(from))
+      push_event(from, RawEvent{sort_key, cond_idx, EventType::TransferOut, token_idx, coll, 0, -amount, 0});
+    
+    if (!is_protocol_contract(to))
+      return TransferClass::TransferInOther;
+    else if (!is_protocol_contract(from))
+      return TransferClass::TransferOutOther;
+    else
+      return TransferClass::InternalTransferOther;
+  }
+
   std::string cond_id = cond_ids_[cond_idx];
   TxCondKey tx_cond_key{block, tx_hash, cond_id};
   TxTokenKey tx_token_key{block, tx_hash, token_id};
@@ -23,7 +40,6 @@ TransferClass EventBuilder::classify_and_emit(
   uint8_t outcome_cnt = conditions_[cond_idx].outcome_count;
   // 非USDC的price设为0
   int64_t split_price = is_usdc_collateral(collateral) ? (1000000 / outcome_cnt) : 0;
-  uint8_t coll = static_cast<uint8_t>(collateral);
 
   // ========== mint 分支 (from == 0x0) ==========
   if (from == ZERO_ADDR) {

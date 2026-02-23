@@ -343,7 +343,7 @@
     // total = polymarket + other
     // polymarket = token_reg + fpmm_only
     // token_reg = amm + negrisk + normal
-    // other = prep + other_fpmm + split
+    // other = prep + other_fpmm + split + transfer_inferred
     function s2BuildCondTree(s) {
       const ct = s.cond_tree || {};
       const poly = ct.polymarket || {};
@@ -442,6 +442,14 @@
                 desc: "PositionSplit推断",
                 scene: "从用户铸造操作推断",
               },
+              {
+                id: "cond_transfer",
+                label: "Transfer",
+                value: other.transfer_inferred || 0,
+                color: "#d1d5db",
+                desc: "从Transfer推断",
+                scene: "未知协议,从转账推断",
+              },
             ],
           },
         ],
@@ -453,7 +461,7 @@
     // polymarket = token_reg + fpmm_only
     // token_reg = amm + negrisk + normal
     // fpmm_only = usdc + non_usdc
-    // other = other_fpmm + split
+    // other = other_fpmm + split + transfer_inferred
     function s2BuildTokenTree(s) {
       const tt = s.token_tree || {};
       const poly = tt.polymarket || {};
@@ -562,6 +570,14 @@
                 color: "#d1d5db",
                 desc: "PositionSplit计算",
                 scene: "从用户铸造操作推断",
+              },
+              {
+                id: "token_transfer",
+                label: "Transfer",
+                value: other.transfer_inferred || 0,
+                color: "#d1d5db",
+                desc: "从Transfer推断",
+                scene: "未知协议,从转账推断",
               },
             ],
           },

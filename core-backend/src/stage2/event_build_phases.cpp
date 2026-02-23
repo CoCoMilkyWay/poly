@@ -365,17 +365,27 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
     auto tx_hash = hex_to_bytes32(r.tx_hash);
 
     auto tit = token_map_.find(token_id);
+    uint32_t cond_idx;
+    uint8_t token_idx;
+    
     if (tit == token_map_.end()) {
+      // 未知token：创建一个推断的condition和token条目
+      // 使用token_id作为虚拟condition_id，确保同一token映射到同一condition
+      cond_idx = intern_condition(token_id, 2, ConditionSource::TransferInferred);
+      token_idx = 0; // 默认为YES（对于推断的token，is_yes无意义）
+      intern_token(token_id, cond_idx, 1, TokenSource::TransferInferred);
+      
       chunk_xfer_stats_.add(TransferClass::NonPolymarket);
       chunk_xfer_stats_.add_non_poly_op(op, token_id);
       chunk_log_.log_non_polymarket(r.block, r.tx_hash, op, from, to, token_id, r.amount);
-      continue;
+      // 继续处理，不跳过
+    } else {
+      cond_idx = tit->second.cond_idx;
+      token_idx = tit->second.is_yes ? 0 : 1;
     }
-    uint32_t cond_idx = tit->second.cond_idx;
-    uint8_t token_idx = tit->second.is_yes ? 0 : 1;
 
     // 获取抵押品类型
-    Collateral collateral = Collateral::USDC;
+    Collateral collateral = Collateral::Unknown;
     auto coll_it = cond_collateral_.find(cond_idx);
     if (coll_it != cond_collateral_.end()) {
       collateral = coll_it->second;
