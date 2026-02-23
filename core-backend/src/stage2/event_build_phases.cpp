@@ -379,7 +379,9 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
         !(non_usdc_collat = check_non_usdc_fpmm(from)).empty() ||
         !(non_usdc_collat = check_non_usdc_fpmm(to)).empty()) {
       non_usdc_by_collat_[non_usdc_collat]++;
-      chunk_xfer_stats_.add(TransferClass::NonUsdcFpmm);
+      if (from == ZERO_ADDR) chunk_xfer_stats_.add(TransferClass::NonUsdcMint);
+      else if (to == ZERO_ADDR) chunk_xfer_stats_.add(TransferClass::NonUsdcBurn);
+      else chunk_xfer_stats_.add(TransferClass::NonUsdcOp);
       chunk_log_.log_non_usdc_fpmm(r.block, r.tx_hash, op, from, to, token_id, r.amount, non_usdc_collat);
       continue;
     }
@@ -407,7 +409,9 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
           }
         }
       }
-      chunk_xfer_stats_.add(TransferClass::NonUsdcFpmm);
+      if (from == ZERO_ADDR) chunk_xfer_stats_.add(TransferClass::NonUsdcMint);
+      else if (to == ZERO_ADDR) chunk_xfer_stats_.add(TransferClass::NonUsdcBurn);
+      else chunk_xfer_stats_.add(TransferClass::NonUsdcOp);
       continue;
     }
 
