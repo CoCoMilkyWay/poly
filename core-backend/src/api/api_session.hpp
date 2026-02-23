@@ -1,13 +1,14 @@
 #pragma once
 
+#include <atomic>
 #include <filesystem>
+#include <fstream>
 #include <functional>
 #include <future>
 #include <memory>
 #include <mutex>
 #include <string>
 #include <unordered_map>
-#include <unordered_set>
 
 #include <arrow/io/file.h>
 #include <arrow/ipc/reader.h>
@@ -155,11 +156,30 @@ private:
         "order_filled", "token_map", "neg_risk_market", "neg_risk_question", "convert"};
 
     struct TableCache {
-      std::unordered_set<std::string> files;
+      std::unordered_map<std::string, int64_t> files;
       int64_t total = 0;
       std::mutex mtx;
     };
     static std::unordered_map<std::string, TableCache> table_cache;
+    static std::once_flag cache_loaded_flag;
+    static std::atomic<bool> cache_dirty{false};
+    static std::mutex save_mutex;
+
+    std::string cache_path = db_.data_dir() + "/counts_cache.json";
+    std::call_once(cache_loaded_flag, [cache_path]() {
+      if (!std::filesystem::exists(cache_path))
+        return;
+      std::ifstream f(cache_path);
+      json cached = json::parse(f);
+      for (auto &[table, files] : cached.items()) {
+        auto &tc = table_cache[table];
+        for (auto &[fname, cnt] : files.items()) {
+          int64_t c = cnt.get<int64_t>();
+          tc.files[fname] = c;
+          tc.total += c;
+        }
+      }
+    });
 
     std::vector<std::future<std::pair<std::string, int64_t>>> futures;
     for (const char *name : feather_names) {
@@ -181,8 +201,10 @@ private:
           }
           int64_t cnt = feather_row_count(entry.path().string());
           std::lock_guard<std::mutex> lock(cache.mtx);
-          if (cache.files.insert(filename).second)
+          if (cache.files.emplace(filename, cnt).second) {
             cache.total += cnt;
+            cache_dirty = true;
+          }
         }
         std::lock_guard<std::mutex> lock(cache.mtx);
         return {table_name, cache.total};
@@ -195,6 +217,19 @@ private:
       feather_files.push_back({{"name", name}, {"count", count}});
     }
     result["feather"] = feather_files;
+
+    if (cache_dirty.exchange(false)) {
+      std::lock_guard<std::mutex> slock(save_mutex);
+      json cache_json = json::object();
+      for (auto &[tname, tc] : table_cache) {
+        cache_json[tname] = json::object();
+        std::lock_guard<std::mutex> tlock(tc.mtx);
+        for (auto &[fname, cnt] : tc.files)
+          cache_json[tname][fname] = cnt;
+      }
+      std::ofstream ofs(cache_path);
+      ofs << cache_json.dump(2);
+    }
 
     res_.result(http::status::ok);
     res_.body() = result.dump();
