@@ -94,6 +94,7 @@ struct FpmmEvent {
   int64_t block_number;
   std::string tx_hash;
   int64_t log_index;
+  std::string factory;  // FPMM Factory地址
   std::string creator, fpmm_addr, conditional_tokens, collateral_token;
   std::string condition_ids;
   int64_t fee;
@@ -180,12 +181,15 @@ public:
   static DecodedEvents decode_logs(const std::vector<json> &results) {
     DecodedEvents events;
     std::set<std::string> fpmm_addrs;
-    // 第一趟: FPMM创建
+    // 第一趟: FPMM创建（扫描所有Factory，不只是Polymarket的）
     for (const auto &result : results) {
       for (const auto &log : result) {
-        std::string addr = to_lower(log["address"].get<std::string>());
-        if (addr == contracts::FPMM_FACTORY) {
-          auto new_addr = parse_fpmm_create(log, events);
+        const auto &topics_arr = log["topics"];
+        if (topics_arr.empty()) continue;
+        std::string topic0 = to_lower(topics_arr[0].get<std::string>());
+        if (topic0 == topics::FPMM_CREATE) {
+          std::string factory_addr = to_lower(log["address"].get<std::string>());
+          auto new_addr = parse_fpmm_create(log, factory_addr, events);
           if (new_addr)
             fpmm_addrs.insert(*new_addr);
         }
@@ -495,7 +499,7 @@ private:
         question_data});
   }
 
-  static std::optional<std::string> parse_fpmm_create(const json &log, DecodedEvents &events) {
+  static std::optional<std::string> parse_fpmm_create(const json &log, const std::string &factory_addr, DecodedEvents &events) {
     const auto &topics_arr = log["topics"];
     std::string topic0 = to_lower(topics_arr[0].get<std::string>());
     if (topic0 != topics::FPMM_CREATE)
@@ -521,6 +525,7 @@ private:
 
     events.fpmm.push_back({
         block_number, tx_hash, log_index,
+        factory_addr,  // 记录factory地址
         extract_address_from_topic(topics_arr[1].get<std::string>()),
         fpmm_addr,
         extract_address_from_topic(topics_arr[2].get<std::string>()),

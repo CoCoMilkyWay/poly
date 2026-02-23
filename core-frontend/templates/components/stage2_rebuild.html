@@ -212,7 +212,16 @@
       <span class="stage2-value highlight" id="s2-cond-total">0</span>
       <span style="color:#555">(</span><span style="color:#d4a574">AMM</span><span class="stage2-value" id="s2-cond-amm">0</span>
       <span style="color:#a5d474">Norm</span><span class="stage2-value" id="s2-cond-norm">0</span>
-      <span style="color:#d474d4">Neg</span><span class="stage2-value" id="s2-cond-negrisk">0</span><span style="color:#555">)</span>
+      <span style="color:#d474d4">Neg</span><span class="stage2-value" id="s2-cond-negrisk">0</span>
+      <span style="color:#888">Other</span><span class="stage2-value" style="color:#666" id="s2-cond-other">0</span><span style="color:#555">)</span>
+    </span>
+    <span class="stage2-item">
+      <span class="stage2-label">问题来源</span>
+      <span style="color:#555">(</span><span style="color:#74b4d4">Prep</span><span class="stage2-value" id="s2-cond-src-prep">0</span>
+      <span style="color:#d4a574">PolyReg</span><span class="stage2-value" id="s2-cond-src-poly-reg">0</span>
+      <span style="color:#a5d474">PolyFPMM</span><span class="stage2-value" id="s2-cond-src-poly-fpmm">0</span>
+      <span style="color:#888">OtherFPMM</span><span class="stage2-value" style="color:#666" id="s2-cond-src-other-fpmm">0</span>
+      <span style="color:#666">Split</span><span class="stage2-value" style="color:#555" id="s2-cond-src-split">0</span><span style="color:#555">)</span>
     </span>
     <span class="stage2-item">
       <span class="stage2-label">代币</span>
@@ -220,7 +229,15 @@
       <span style="color:#555">(</span><span style="color:#d4a574">AMM</span><span class="stage2-value" id="s2-token-amm">0</span>
       <span style="color:#a5d474">Norm</span><span class="stage2-value" id="s2-token-norm">0</span>
       <span style="color:#d474d4">Neg</span><span class="stage2-value" id="s2-token-negrisk">0</span>
-      <span style="color:#888">非U</span><span class="stage2-value" style="color:#666" id="s2-token-non-usdc">0</span><span style="color:#555">)</span>
+      <span style="color:#888">非U</span><span class="stage2-value" style="color:#666" id="s2-token-non-usdc">0</span>
+      <span style="color:#666">Other</span><span class="stage2-value" style="color:#555" id="s2-token-other">0</span><span style="color:#555">)</span>
+    </span>
+    <span class="stage2-item">
+      <span class="stage2-label">代币来源</span>
+      <span style="color:#555">(</span><span style="color:#d4a574">PolyReg</span><span class="stage2-value" id="s2-token-src-poly-reg">0</span>
+      <span style="color:#a5d474">PolyFPMM</span><span class="stage2-value" id="s2-token-src-poly-fpmm">0</span>
+      <span style="color:#888">OtherFPMM</span><span class="stage2-value" style="color:#666" id="s2-token-src-other-fpmm">0</span>
+      <span style="color:#666">Split</span><span class="stage2-value" style="color:#555" id="s2-token-src-split">0</span><span style="color:#555">)</span>
     </span>
   </div>
 
@@ -430,11 +447,22 @@
       s2Set("s2-cond-amm", s.cond_amm);
       s2Set("s2-cond-norm", s.cond_norm);
       s2Set("s2-cond-negrisk", s.cond_negrisk);
+      s2Set("s2-cond-other", s.cond_other);
+      s2Set("s2-cond-src-prep", s.cond_src_prep);
+      s2Set("s2-cond-src-poly-reg", s.cond_src_poly_token_reg);
+      s2Set("s2-cond-src-poly-fpmm", s.cond_src_poly_fpmm);
+      s2Set("s2-cond-src-other-fpmm", s.cond_src_other_fpmm);
+      s2Set("s2-cond-src-split", s.cond_src_split);
       s2Set("s2-token-total", s.token_total);
       s2Set("s2-token-amm", s.token_amm);
       s2Set("s2-token-norm", s.token_norm);
       s2Set("s2-token-negrisk", s.token_negrisk);
       s2Set("s2-token-non-usdc", s.token_non_usdc);
+      s2Set("s2-token-other", s.token_other);
+      s2Set("s2-token-src-poly-reg", s.token_src_poly_reg);
+      s2Set("s2-token-src-poly-fpmm", s.token_src_poly_fpmm);
+      s2Set("s2-token-src-other-fpmm", s.token_src_other_fpmm);
+      s2Set("s2-token-src-split", s.token_src_split);
 
       s2RenderTree(s);
 

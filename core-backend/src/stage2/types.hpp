@@ -24,21 +24,40 @@ enum EventType : uint8_t {
   TransferOut = 11,
 };
 
+enum class ConditionSource : uint8_t {
+  ConditionPrep = 0,       // 直接从ConditionPreparation事件（通用）
+  PolymarketTokenReg = 1,  // Polymarket Exchange的TokenRegistered
+  PolymarketFPMM = 2,      // Polymarket FPMM Factory创建
+  OtherFPMM = 3,           // 其他FPMM Factory创建
+  SplitEvent = 4,          // 从Split事件推断（无法确定协议）
+};
+
+enum class TokenSource : uint8_t {
+  PolymarketTokenReg = 0,  // Polymarket Exchange的TokenRegistered
+  PolymarketFPMM = 1,      // Polymarket FPMM Factory计算
+  OtherFPMM = 2,           // 其他FPMM Factory计算
+  SplitEvent = 3,          // 从Split事件计算
+};
+
 struct ConditionInfo {
   uint8_t outcome_count = 2;
   std::vector<int64_t> payout_numerators;
-  std::string question_id;  // 用于NegRisk convert的market查找
+  std::string question_id;
+  ConditionSource source = ConditionSource::ConditionPrep;
 };
 
 struct TokenInfo {
   uint32_t cond_idx;
   uint8_t is_yes;
+  TokenSource source = TokenSource::PolymarketTokenReg;
 };
 
 struct FPMMInfo {
   uint32_t cond_idx;
   bool is_usdc = true;         // 是否使用 USDC 抵押品
+  bool is_polymarket = true;   // 是否是Polymarket的FPMM
   std::string collateral;      // 抵押品地址
+  std::string factory;         // Factory地址
 };
 
 struct RawEvent {

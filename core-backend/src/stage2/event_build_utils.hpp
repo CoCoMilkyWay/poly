@@ -8,6 +8,13 @@
 
 namespace stage2 {
 
+// Polymarket 合约地址
+constexpr const char *POLYMARKET_FPMM_FACTORY = "0x8b9805a2f595b6705e74f7310829f2d299d21522";
+
+inline bool is_polymarket_factory(const std::string &factory) {
+  return factory == POLYMARKET_FPMM_FACTORY;
+}
+
 inline std::string blob_to_hex(const std::string &blob) {
   static const char hex_chars[] = "0123456789abcdef";
   std::string result = "0x";

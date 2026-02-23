@@ -327,13 +327,14 @@ private:
     if (events.empty())
       return;
     arrow::Int64Builder block_number, log_index, fee;
-    arrow::BinaryBuilder tx_hash, creator, fpmm_addr, conditional_tokens, collateral_token;
+    arrow::BinaryBuilder tx_hash, factory, creator, fpmm_addr, conditional_tokens, collateral_token;
     arrow::StringBuilder condition_ids;
 
     for (const auto &e : events) {
       assert(block_number.Append(e.block_number).ok());
       assert(tx_hash.Append(hex_to_bytes(e.tx_hash)).ok());
       assert(log_index.Append(e.log_index).ok());
+      assert(factory.Append(hex_to_bytes(e.factory)).ok());
       assert(creator.Append(hex_to_bytes(e.creator)).ok());
       assert(fpmm_addr.Append(hex_to_bytes(e.fpmm_addr)).ok());
       assert(conditional_tokens.Append(hex_to_bytes(e.conditional_tokens)).ok());
@@ -346,6 +347,7 @@ private:
         arrow::field("block_number", arrow::int64()),
         arrow::field("tx_hash", arrow::binary()),
         arrow::field("log_index", arrow::int64()),
+        arrow::field("factory", arrow::binary()),
         arrow::field("creator", arrow::binary()),
         arrow::field("fpmm_addr", arrow::binary()),
         arrow::field("conditional_tokens", arrow::binary()),
@@ -354,18 +356,19 @@ private:
         arrow::field("fee", arrow::int64()),
     });
 
-    std::shared_ptr<arrow::Array> a1, a2, a3, a4, a5, a6, a7, a8, a9;
+    std::shared_ptr<arrow::Array> a1, a2, a3, a4, a5, a6, a7, a8, a9, a10;
     assert(block_number.Finish(&a1).ok());
     assert(tx_hash.Finish(&a2).ok());
     assert(log_index.Finish(&a3).ok());
-    assert(creator.Finish(&a4).ok());
-    assert(fpmm_addr.Finish(&a5).ok());
-    assert(conditional_tokens.Finish(&a6).ok());
-    assert(collateral_token.Finish(&a7).ok());
-    assert(condition_ids.Finish(&a8).ok());
-    assert(fee.Finish(&a9).ok());
+    assert(factory.Finish(&a4).ok());
+    assert(creator.Finish(&a5).ok());
+    assert(fpmm_addr.Finish(&a6).ok());
+    assert(conditional_tokens.Finish(&a7).ok());
+    assert(collateral_token.Finish(&a8).ok());
+    assert(condition_ids.Finish(&a9).ok());
+    assert(fee.Finish(&a10).ok());
 
-    auto table = arrow::Table::Make(schema, {a1, a2, a3, a4, a5, a6, a7, a8, a9});
+    auto table = arrow::Table::Make(schema, {a1, a2, a3, a4, a5, a6, a7, a8, a9, a10});
     atomic_write_feather(partition_path("fpmm", start_block), table);
   }
 
