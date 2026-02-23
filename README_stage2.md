@@ -86,7 +86,7 @@ Collateral: Unknown=0, USDC=1 (bridged), USDCe=2 (native), WETH=3, DAI=4, WMATIC
 **token*map* 有四个来源** (按优先级):
 
 1. TokenRegistered 事件直接提供 token0(YES) 和 token1(NO) — `PolymarketTokenReg`
-2. FPMMCreation 需要 keccak256 计算 — `PolymarketFPMM`
+2. FPMMCreation 需要 BN128 CTF position ID 计算 — `PolymarketFPMM`
 3. Split 事件中的 condition_id + collateral_token 计算 — `SplitEvent`
 4. Transfer 中发现未知 token_id → `TransferInferred` (cond_idx=UNKNOWN_COND_IDX, is_yes=0xFF)
 
@@ -141,8 +141,8 @@ price:      i64   price * 1e6, 非USDC时为0
 ① condition_preparation → intern_condition(cid, cnt, ConditionPrep, question_id)
 ② condition_resolution → update_condition_payout(idx, payouts)
 ③ token_map           → intern_condition(cid, 2, PolymarketTokenReg) + intern_token(YES/NO)
-④ fpmm               → intern_condition(cid, 2, PolymarketFPMM) + intern_fpmm + intern_condition_tokens(keccak256)
-⑤ split (DISTINCT)    → intern_condition(cid, 2, SplitEvent) + intern_condition_tokens(keccak256)
+④ fpmm               → intern_condition(cid, 2, PolymarketFPMM) + intern_fpmm + intern_condition_tokens(BN128)
+⑤ split (DISTINCT)    → intern_condition(cid, 2, SplitEvent) + intern_condition_tokens(BN128)
 ⑥ neg_risk_question   → cond_to_market_ + negrisk_cond_idxs_ (keccak256反推conditionId)
 → update_cond_type_stats() 更新 ConditionTree / TokenTree
 ```

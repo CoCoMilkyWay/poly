@@ -459,6 +459,6 @@ fpmm_trade (Taker) + fpmm_funding (LP Maker结算) = 订单簿时代的 order_fi
 | ID                                                | 计算方式                                                   |
 | ------------------------------------------------- | ---------------------------------------------------------- |
 | conditionId                                       | keccak256(oracle, questionId, outcomeSlotCount)            |
-| collectionId (parentCollectionId=0x0, indexSet=1) | keccak256(conditionId, 1) → YES                            |
-| collectionId (parentCollectionId=0x0, indexSet=2) | keccak256(conditionId, 2) → NO                             |
+| collectionId (parentCollectionId=0x0, indexSet=1) | BN128点运算(keccak256(conditionId,1)) → YES                |
+| collectionId (parentCollectionId=0x0, indexSet=2) | BN128点运算(keccak256(conditionId,2)) → NO                 |
 | positionId                                        | keccak256(collateralToken, collectionId) → ERC1155 tokenId |
