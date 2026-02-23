@@ -362,6 +362,8 @@ private:
         {"cnt_fpmm_trade", p.cnt_fpmm_trade},
         {"cnt_fpmm_funding", p.cnt_fpmm_funding},
         {"cnt_transfer", p.cnt_transfer},
+        {"cnt_non_usdc_fpmm", p.xfer_stats.non_usdc_fpmm},
+        {"cnt_non_polymarket", p.xfer_stats.non_polymarket},
     };
 
     if (stage2_getter_) {
