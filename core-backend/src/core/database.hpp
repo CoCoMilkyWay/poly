@@ -4,6 +4,7 @@
 #include <duckdb.hpp>
 #include <fcntl.h>
 #include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <mutex>
 #include <nlohmann/json.hpp>
@@ -189,12 +190,6 @@ public:
   void init_schema() {
     execute("INSTALL nanoarrow FROM community");
     execute("LOAD nanoarrow");
-    execute(R"(
-      CREATE TABLE IF NOT EXISTS sync_state (
-        key TEXT PRIMARY KEY,
-        value TEXT
-      )
-    )");
     cleanup_incomplete_partitions();
   }
 
@@ -270,19 +265,44 @@ public:
   const std::string &data_dir() const { return data_dir_; }
 
   int64_t get_last_block() {
-    auto rows = query_json("SELECT value FROM sync_state WHERE key='last_block'");
-    if (rows.empty() || rows[0]["value"].is_null())
-      return -1;
-    return std::stoll(rows[0]["value"].get<std::string>());
+    std::string path = data_dir_ + "/sync_state.json";
+    if (fs::exists(path)) {
+      std::ifstream f(path);
+      json j = json::parse(f);
+      return j.value("last_block", (int64_t)-1);
+    }
+    return recover_last_block_from_feather();
   }
 
   void set_last_block(int64_t block) {
-    execute("INSERT OR REPLACE INTO sync_state (key, value) VALUES ('last_block', '" +
-            std::to_string(block) + "')");
+    std::string path = data_dir_ + "/sync_state.json";
+    std::ofstream f(path);
+    f << json{{"last_block", block}}.dump();
   }
 
 private:
   static constexpr int64_t PARTITION_SIZE = 100000;
+
+  int64_t recover_last_block_from_feather() {
+    static const char *tables[] = {
+        "transfer", "condition_preparation", "condition_resolution",
+        "split", "merge", "redemption", "fpmm", "fpmm_trade", "fpmm_funding",
+        "order_filled", "token_map", "neg_risk_market", "neg_risk_question", "convert"};
+    int64_t max_block = -1;
+    for (const char *table : tables) {
+      std::string dir = feather_dir(table);
+      if (!fs::exists(dir))
+        continue;
+      for (const auto &entry : fs::directory_iterator(dir)) {
+        std::string filename = entry.path().filename().string();
+        if (!filename.ends_with(".feather"))
+          continue;
+        int64_t start = std::stoll(filename.substr(0, filename.size() - 8));
+        max_block = std::max(max_block, start + PARTITION_SIZE - 1);
+      }
+    }
+    return max_block;
+  }
 
   bool partition_exists(const std::string &table, int64_t partition_start) {
     std::string key = table + "/" + std::to_string(partition_start);

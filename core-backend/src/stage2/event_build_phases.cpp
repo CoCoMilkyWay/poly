@@ -252,18 +252,6 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
     info.amount1 = amounts_arr.size() > 1 ? amounts_arr[1].get<int64_t>() : 0;
     tx_fpmm_funding_[key] = info;
   }
-
-  for (const auto &kv : tx_split_)
-    progress_.cnt_split += kv.second.size();
-  for (const auto &kv : tx_merge_)
-    progress_.cnt_merge += kv.second.size();
-  for (const auto &kv : tx_redemption_)
-    progress_.cnt_redemption += kv.second.size();
-  for (const auto &kv : tx_convert_)
-    progress_.cnt_convert += kv.second.size();
-  progress_.cnt_order += tx_order_.size();
-  progress_.cnt_fpmm_trade += tx_fpmm_trade_.size();
-  progress_.cnt_fpmm_funding += tx_fpmm_funding_.size();
 }
 
 void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
@@ -333,52 +321,96 @@ void EventBuilder::commit_chunk(int64_t new_cursor) {
   auto conn = stage2_db_.create_connection();
   conn->Query("BEGIN TRANSACTION");
 
-  for (auto &nc : new_conditions_) {
-    std::string blob = hex_to_blob(nc.cond_id);
-    std::string pvals;
-    for (int i = 0; i < 8; ++i) {
-      if (i > 0)
-        pvals += ", ";
-      if (i < static_cast<int>(nc.info.payout_numerators.size()) && nc.info.payout_numerators[i] >= 0) {
-        pvals += std::to_string(nc.info.payout_numerators[i]);
-      } else {
-        pvals += "NULL";
+  auto append_blob = [](duckdb::Appender &ap, const std::string &hex) {
+    std::string b = hex_to_blob(hex);
+    ap.Append(duckdb::Value::BLOB(reinterpret_cast<duckdb::const_data_ptr_t>(b.data()), b.size()));
+  };
+
+  if (!new_conditions_.empty()) {
+    conn->Query("CREATE TEMP TABLE IF NOT EXISTS tmp_rb_condition ("
+                "cond_idx INTEGER, cond_id BLOB, outcome_cnt INTEGER, "
+                "payout_0 BIGINT, payout_1 BIGINT, payout_2 BIGINT, payout_3 BIGINT, "
+                "payout_4 BIGINT, payout_5 BIGINT, payout_6 BIGINT, payout_7 BIGINT, "
+                "question_id BLOB, source INTEGER)");
+    conn->Query("DELETE FROM tmp_rb_condition");
+    {
+      duckdb::Appender ap(*conn, "tmp_rb_condition");
+      for (auto &nc : new_conditions_) {
+        ap.BeginRow();
+        ap.Append(static_cast<int32_t>(nc.idx));
+        append_blob(ap, nc.cond_id);
+        ap.Append(static_cast<int32_t>(nc.info.outcome_count));
+        for (int i = 0; i < 8; ++i) {
+          if (i < static_cast<int>(nc.info.payout_numerators.size()) && nc.info.payout_numerators[i] >= 0)
+            ap.Append(nc.info.payout_numerators[i]);
+          else
+            ap.Append(duckdb::Value());
+        }
+        if (nc.info.question_id.empty())
+          ap.Append(duckdb::Value());
+        else
+          append_blob(ap, nc.info.question_id);
+        ap.Append(static_cast<int32_t>(nc.info.source));
+        ap.EndRow();
       }
+      ap.Close();
     }
-    std::string qid_val = nc.info.question_id.empty() ? "NULL" : blob_to_hex_literal(hex_to_blob(nc.info.question_id));
-    conn->Query("INSERT OR REPLACE INTO rb_condition (cond_idx, cond_id, outcome_cnt, "
-                "payout_0, payout_1, payout_2, payout_3, payout_4, payout_5, payout_6, payout_7, "
-                "question_id, source) VALUES (" +
-                std::to_string(nc.idx) + ", " +
-                blob_to_hex_literal(blob) + ", " +
-                std::to_string(nc.info.outcome_count) + ", " + pvals + ", " + qid_val + ", " +
-                std::to_string(static_cast<int>(nc.info.source)) + ")");
+    conn->Query("INSERT OR REPLACE INTO rb_condition SELECT * FROM tmp_rb_condition");
   }
 
-  for (auto &nt : new_tokens_) {
-    std::string blob = hex_to_blob(nt.token_id);
-    int32_t db_cond_idx = (nt.cond_idx == UNKNOWN_COND_IDX) ? -1 : static_cast<int32_t>(nt.cond_idx);
-    conn->Query("INSERT OR IGNORE INTO rb_token (token_id, cond_idx, is_yes, source) VALUES (" +
-                blob_to_hex_literal(blob) + ", " +
-                std::to_string(db_cond_idx) + ", " +
-                std::to_string(nt.is_yes) + ", " +
-                std::to_string(static_cast<int>(nt.source)) + ")");
+  if (!new_tokens_.empty()) {
+    conn->Query("CREATE TEMP TABLE IF NOT EXISTS tmp_rb_token ("
+                "token_id BLOB, cond_idx INTEGER, is_yes INTEGER, source INTEGER)");
+    conn->Query("DELETE FROM tmp_rb_token");
+    {
+      duckdb::Appender ap(*conn, "tmp_rb_token");
+      for (auto &nt : new_tokens_) {
+        int32_t db_cond_idx = (nt.cond_idx == UNKNOWN_COND_IDX) ? -1 : static_cast<int32_t>(nt.cond_idx);
+        ap.BeginRow();
+        append_blob(ap, nt.token_id);
+        ap.Append(db_cond_idx);
+        ap.Append(static_cast<int32_t>(nt.is_yes));
+        ap.Append(static_cast<int32_t>(nt.source));
+        ap.EndRow();
+      }
+      ap.Close();
+    }
+    conn->Query("INSERT OR IGNORE INTO rb_token SELECT * FROM tmp_rb_token");
   }
 
-  for (auto &nf : new_fpmms_) {
-    std::string blob = hex_to_blob(nf.addr);
-    conn->Query("INSERT OR IGNORE INTO rb_fpmm (fpmm_addr, cond_idx, collateral) VALUES (" +
-                blob_to_hex_literal(blob) + ", " +
-                std::to_string(nf.cond_idx) + ", " +
-                std::to_string(static_cast<int>(nf.collateral)) + ")");
+  if (!new_fpmms_.empty()) {
+    conn->Query("CREATE TEMP TABLE IF NOT EXISTS tmp_rb_fpmm ("
+                "fpmm_addr BLOB, cond_idx INTEGER, collateral INTEGER)");
+    conn->Query("DELETE FROM tmp_rb_fpmm");
+    {
+      duckdb::Appender ap(*conn, "tmp_rb_fpmm");
+      for (auto &nf : new_fpmms_) {
+        ap.BeginRow();
+        append_blob(ap, nf.addr);
+        ap.Append(static_cast<int32_t>(nf.cond_idx));
+        ap.Append(static_cast<int32_t>(nf.collateral));
+        ap.EndRow();
+      }
+      ap.Close();
+    }
+    conn->Query("INSERT OR IGNORE INTO rb_fpmm SELECT * FROM tmp_rb_fpmm");
   }
 
-  for (auto &nm : new_neg_risk_markets_) {
-    std::string qid_blob = hex_to_blob(nm.question_id);
-    std::string mid_blob = hex_to_blob(nm.market_id);
-    conn->Query("INSERT OR IGNORE INTO rb_neg_risk_market VALUES (" +
-                blob_to_hex_literal(qid_blob) + ", " +
-                blob_to_hex_literal(mid_blob) + ")");
+  if (!new_neg_risk_markets_.empty()) {
+    conn->Query("CREATE TEMP TABLE IF NOT EXISTS tmp_rb_neg_risk_market ("
+                "question_id BLOB, market_id BLOB)");
+    conn->Query("DELETE FROM tmp_rb_neg_risk_market");
+    {
+      duckdb::Appender ap(*conn, "tmp_rb_neg_risk_market");
+      for (auto &nm : new_neg_risk_markets_) {
+        ap.BeginRow();
+        append_blob(ap, nm.question_id);
+        append_blob(ap, nm.market_id);
+        ap.EndRow();
+      }
+      ap.Close();
+    }
+    conn->Query("INSERT OR IGNORE INTO rb_neg_risk_market SELECT * FROM tmp_rb_neg_risk_market");
   }
 
   if (!new_events_.empty()) {

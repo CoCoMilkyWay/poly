@@ -212,10 +212,6 @@ private:
     }
 
     std::cout << "[Sync] 本轮同步完成, " << interval_seconds_ << "s 后检查更新" << std::endl;
-    std::thread([this] {
-      TraceN("s1/checkpoint");
-      db_.checkpoint();
-    }).detach();
     is_syncing_ = false;
     schedule_sync(interval_seconds_);
   }
