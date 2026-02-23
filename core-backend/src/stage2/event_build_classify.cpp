@@ -12,26 +12,16 @@ TransferClass EventBuilder::classify_and_emit(
   assert(amount >= 0 && "Transfer amount must be non-negative");
   if (amount == 0)
     return TransferClass::InternalTransferZero;
+
+  // TransferInferred token：没有 condition 信息，归类为 NonPolymarket
+  if (cond_idx == UNKNOWN_COND_IDX)
+    return TransferClass::NonPolymarket;
+
   assert(cond_idx < conditions_.size() && "Invalid cond_idx");
   assert(token_idx < 2 && "Invalid token_idx");
   assert(from != to && "from and to must be different");
 
   uint8_t coll = static_cast<uint8_t>(collateral);
-
-  // 对于推断的token（没有Split/Merge等事件），直接分类为TransferIn/TransferOut
-  if (conditions_[cond_idx].source == ConditionSource::TransferInferred) {
-    if (!is_protocol_contract(to))
-      push_event(to, RawEvent{sort_key, cond_idx, EventType::TransferIn, token_idx, coll, 0, amount, 0});
-    if (!is_protocol_contract(from))
-      push_event(from, RawEvent{sort_key, cond_idx, EventType::TransferOut, token_idx, coll, 0, -amount, 0});
-    
-    if (!is_protocol_contract(to))
-      return TransferClass::TransferInOther;
-    else if (!is_protocol_contract(from))
-      return TransferClass::TransferOutOther;
-    else
-      return TransferClass::InternalTransferOther;
-  }
 
   std::string cond_id = cond_ids_[cond_idx];
   TxCondKey tx_cond_key{block, tx_hash, cond_id};

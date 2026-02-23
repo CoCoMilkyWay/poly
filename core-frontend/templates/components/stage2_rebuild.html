@@ -343,7 +343,7 @@
     // total = polymarket + other
     // polymarket = token_reg + fpmm_only
     // token_reg = amm + negrisk + normal
-    // other = prep + other_fpmm + split + transfer_inferred
+    // other = prep + other_fpmm + split
     function s2BuildCondTree(s) {
       const ct = s.cond_tree || {};
       const poly = ct.polymarket || {};

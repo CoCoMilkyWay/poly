@@ -365,14 +365,11 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
     auto tx_hash = hex_to_bytes32(r.tx_hash);
 
     auto tit = token_map_.find(token_id);
-
+    
     if (tit == token_map_.end()) {
       // 未知token：加入 token_map_，使用特殊值表示未知 condition
       intern_token(token_id, UNKNOWN_COND_IDX, UNKNOWN_IS_YES, TokenSource::TransferInferred);
-      chunk_xfer_stats_.add(TransferClass::NonPolymarket);
-      chunk_xfer_stats_.add_non_poly_op(op, token_id);
-      chunk_log_.log_non_polymarket(r.block, r.tx_hash, op, from, to, token_id, r.amount);
-      continue;
+      tit = token_map_.find(token_id); // 重新获取迭代器
     }
 
     uint32_t cond_idx = tit->second.cond_idx;
@@ -387,6 +384,11 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
 
     TransferClass cls = classify_and_emit(sort_key, tx_hash, r.block, op, from, to, token_id, r.amount, cond_idx, token_idx, collateral);
     chunk_xfer_stats_.add(cls);
+
+    if (cls == TransferClass::NonPolymarket) {
+      chunk_xfer_stats_.add_non_poly_op(op, token_id);
+      chunk_log_.log_non_polymarket(r.block, r.tx_hash, op, from, to, token_id, r.amount);
+    }
   }
 }
 
