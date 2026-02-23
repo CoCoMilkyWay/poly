@@ -141,6 +141,15 @@ struct TransferStats {
   }
 };
 
+struct UnknownTokenInfo {
+  int64_t block;
+  std::string op;
+  std::string from;
+  std::string to;
+  std::string token_id;
+  int64_t amount;
+};
+
 struct BuildProgress {
   int64_t cursor = 0;
   int64_t target = 0;
@@ -418,6 +427,8 @@ public:
 
     // 验证 transfer 分类完整性
     chunk_xfer_stats_.verify();
+    // 打印 unknown token 详情（如果有）
+    print_unknown_tokens();
     progress_.xfer_stats.total += chunk_xfer_stats_.total;
     progress_.xfer_stats.split += chunk_xfer_stats_.split;
     progress_.xfer_stats.merge += chunk_xfer_stats_.merge;
@@ -471,6 +482,7 @@ private:
   std::unordered_map<TxFPMMKey, FPMMTradeInfo> tx_fpmm_trade_;
   std::unordered_map<TxFPMMKey, FPMMFundingInfo> tx_fpmm_funding_;
   TransferStats chunk_xfer_stats_;  // 当前 chunk 的 transfer 统计
+  std::vector<UnknownTokenInfo> unknown_tokens_;  // 未知 token 详情
 
   struct NewCondition {
     uint32_t idx;
@@ -1009,6 +1021,8 @@ private:
       auto tit = token_map_.find(token_id);
       if (tit == token_map_.end()) {
         chunk_xfer_stats_.add(TransferClass::UnknownToken);
+        // 记录 unknown token 详情用于诊断
+        unknown_tokens_.push_back({r.block, op, from, to, token_id, r.amount});
         continue;
       }
       uint32_t cond_idx = tit->second.cond_idx;
@@ -1024,6 +1038,59 @@ private:
     return addr == ZERO_ADDR || addr == CTF_EXCHANGE || addr == NEG_RISK_CTF_EXCHANGE ||
            addr == NEG_RISK_ADAPTER || addr == CONDITIONAL_TOKENS ||
            addr == NO_TOKEN_BURN_ADDRESS || fpmm_map_.count(addr) > 0;
+  }
+
+  // 打印 unknown token 详情
+  void print_unknown_tokens() {
+    if (unknown_tokens_.empty()) return;
+    
+    // 按 operator 和 token_id 统计
+    std::unordered_map<std::string, int> by_op;
+    std::unordered_set<std::string> unique_tokens;
+    bool is_mint = false, is_burn = false, is_transfer = false;
+    for (const auto &t : unknown_tokens_) {
+      by_op[t.op]++;
+      unique_tokens.insert(t.token_id);
+      if (t.from == ZERO_ADDR) is_mint = true;
+      else if (t.to == ZERO_ADDR) is_burn = true;
+      else is_transfer = true;
+    }
+    
+    std::cerr << "[DEBUG] Unknown tokens breakdown (" << unknown_tokens_.size() << " transfers, "
+              << unique_tokens.size() << " unique tokens):" << std::endl;
+    
+    // 类型分布
+    std::cerr << "  Transfer types: ";
+    if (is_mint) std::cerr << "MINT ";
+    if (is_burn) std::cerr << "BURN ";
+    if (is_transfer) std::cerr << "TRANSFER ";
+    std::cerr << std::endl;
+    
+    std::cerr << "  By operator:" << std::endl;
+    for (const auto &[addr, cnt] : by_op) {
+      std::string label = addr;
+      if (addr == CTF_EXCHANGE) label = "CTF_EXCHANGE";
+      else if (addr == NEG_RISK_CTF_EXCHANGE) label = "NEG_RISK_CTF_EXCHANGE";
+      else if (addr == NEG_RISK_ADAPTER) label = "NEG_RISK_ADAPTER";
+      else if (addr == CONDITIONAL_TOKENS) label = "CONDITIONAL_TOKENS";
+      else if (fpmm_map_.count(addr)) label = "FPMM(" + addr.substr(0, 10) + "...)";
+      std::cerr << "    " << label << ": " << cnt << std::endl;
+    }
+    
+    // 打印前 3 个样本
+    std::cerr << "  Sample unknown tokens (first 3):" << std::endl;
+    for (size_t i = 0; i < std::min(unknown_tokens_.size(), size_t(3)); ++i) {
+      const auto &t = unknown_tokens_[i];
+      std::cerr << "    block=" << t.block 
+                << ", op=" << t.op.substr(0, 10) << "..."
+                << ", from=" << (t.from == ZERO_ADDR ? "0x0(mint)" : t.from.substr(0, 10) + "...")
+                << ", to=" << (t.to == ZERO_ADDR ? "0x0(burn)" : t.to.substr(0, 10) + "...")
+                << ", token=" << t.token_id.substr(0, 20) << "..."
+                << ", amt=" << t.amount << std::endl;
+    }
+    
+    // 清空以便下一个 chunk
+    unknown_tokens_.clear();
   }
 
   TransferClass classify_and_emit(int64_t sort_key, const std::array<uint8_t, 32> &tx_hash,
