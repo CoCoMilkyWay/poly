@@ -134,6 +134,16 @@
     font-size: 0.9em;
     margin-left: 4px;
   }
+  /* 恒等式样式 */
+  .stage2-tree-node,
+  .stage2-tree-leaf {
+    line-height: 1.5;
+  }
+  .stage2-tree-node .stage2-tree-value,
+  .stage2-tree-leaf .stage2-tree-value {
+    padding: 0 2px;
+    border-radius: 2px;
+  }
 
   .stage2-stats {
     display: flex;
@@ -245,22 +255,17 @@
     let s2LastTime = Date.now();
     // 默认全部展开的节点集合
     let s2ExpandedNodes = new Set([
-      // 问题树
+      // 问题树 (树状partition: total→polymarket/other→...)
       "cond",
-      "cond_type",
-      "cond_src",
       "cond_poly",
-      "cond_other_proto",
-      "cond_src_poly",
-      "cond_src_other",
-      // 代币树
+      "cond_tr",
+      "cond_other",
+      // 代币树 (树状partition: total→polymarket/other→...)
       "token",
-      "token_type",
-      "token_src",
       "token_poly",
-      "token_other_proto",
-      "token_src_poly",
-      "token_src_other",
+      "token_tr",
+      "token_fpmm",
+      "token_other",
       // Transfer树
       "xfer",
       "user_events",
@@ -325,154 +330,97 @@
       el.classList.toggle("zero", !value);
     }
 
-    // 构建问题(Condition)树
-    // Partition恒等式（按类型）: total = Polymarket + Other = (AMM + Norm + NegRisk) + Other
-    // Partition恒等式（按来源）: total = Prep + PolyTokenReg + PolyFPMM + OtherFPMM + Split
+    // 构建问题(Condition)树 - 树状partition
+    // total = polymarket + other
+    // polymarket = token_reg + fpmm_only
+    // token_reg = amm + negrisk + normal
+    // other = prep + other_fpmm + split
     function s2BuildCondTree(s) {
-      const polyType =
-        (s.cond_amm || 0) + (s.cond_norm || 0) + (s.cond_negrisk || 0);
-      const polySrc =
-        (s.cond_src_poly_token_reg || 0) + (s.cond_src_poly_fpmm || 0);
-      const otherSrc =
-        (s.cond_src_prep || 0) +
-        (s.cond_src_other_fpmm || 0) +
-        (s.cond_src_split || 0);
+      const ct = s.cond_tree || {};
+      const poly = ct.polymarket || {};
+      const tr = poly.token_reg || {};
+      const other = ct.other || {};
 
       return {
         id: "cond",
         label: "问题",
-        value: s.cond_total || 0,
+        value: ct.total || 0,
         color: "#60a5fa",
-        desc: "ConditionalTokens.ConditionPreparation",
+        desc: `ConditionalTokens.ConditionPreparation (${s2Fmt(poly.total || 0)} + ${s2Fmt(other.total || 0)})`,
         children: [
           {
-            id: "cond_type",
-            label: "按类型",
-            value: s.cond_total || 0,
+            id: "cond_poly",
+            label: "Polymarket",
+            value: poly.total || 0,
             color: "#4ade80",
-            desc: "total = Polymarket + Other",
+            desc: `明确来自Polymarket协议 (source=PolyTokenReg|PolyFPMM) (${s2Fmt(tr.total || 0)} + ${s2Fmt(poly.fpmm_only || 0)})`,
             children: [
               {
-                id: "cond_poly",
-                label: "Polymarket",
-                value: polyType,
-                color: "#4ade80",
-                desc: "Polymarket预测市场的问题",
+                id: "cond_tr",
+                label: "TokenReg来源",
+                value: tr.total || 0,
+                color: "#22c55e",
+                desc: `Exchange.TokenRegistered事件 (source=PolyTokenReg) (${s2Fmt(tr.amm || 0)} + ${s2Fmt(tr.negrisk || 0)} + ${s2Fmt(tr.normal || 0)})`,
                 children: [
                   {
-                    id: "cond_amm",
+                    id: "cond_tr_amm",
                     label: "AMM",
-                    value: s.cond_amm || 0,
-                    color: "#d4a574",
-                    desc: "通过FPMM交易的问题",
+                    value: tr.amm || 0,
+                    color: "#f59e0b",
+                    desc: "TokenReg后来创建了FPMM池(FPMM Factory Creation事件)",
                   },
                   {
-                    id: "cond_norm",
-                    label: "普通",
-                    value: s.cond_norm || 0,
-                    color: "#a5d474",
-                    desc: "通过Exchange注册,订单簿交易",
-                  },
-                  {
-                    id: "cond_negrisk",
+                    id: "cond_tr_nr",
                     label: "NegRisk",
-                    value: s.cond_negrisk || 0,
-                    color: "#d474d4",
-                    desc: "负风险市场(多选题)",
+                    value: tr.negrisk || 0,
+                    color: "#c084fc",
+                    desc: "负风险市场/多选题(NegRiskAdapter相关事件)",
+                  },
+                  {
+                    id: "cond_tr_norm",
+                    label: "普通",
+                    value: tr.normal || 0,
+                    color: "#a3e635",
+                    desc: "无FPMM池，通过Exchange订单簿交易",
                   },
                 ],
               },
               {
-                id: "cond_other_proto",
-                label: "其他协议",
-                value: s.cond_other || 0,
-                color: "#888",
-                desc: "非Polymarket协议的问题(待识别)",
-                children: [
-                  {
-                    id: "cond_other_prep",
-                    label: "ConditionPrep",
-                    value: s.cond_other_prep || 0,
-                    color: "#777",
-                    desc: "来自ConditionPreparation事件",
-                  },
-                  {
-                    id: "cond_other_other_fpmm",
-                    label: "其他FPMM",
-                    value: s.cond_other_other_fpmm || 0,
-                    color: "#777",
-                    desc: "来自其他协议FPMM创建",
-                  },
-                  {
-                    id: "cond_other_split",
-                    label: "Split事件",
-                    value: s.cond_other_split || 0,
-                    color: "#777",
-                    desc: "来自Split事件推断",
-                  },
-                ],
+                id: "cond_fpmm",
+                label: "FPMM来源",
+                value: poly.fpmm_only || 0,
+                color: "#a3e635",
+                desc: "只从Polymarket FPMM Factory创建推断(source=PolyFPMM，无TokenReg)",
               },
             ],
           },
           {
-            id: "cond_src",
-            label: "按来源",
-            value: s.cond_total || 0,
-            color: "#74b4d4",
-            desc: "total = Polymarket来源 + 其他来源",
+            id: "cond_other",
+            label: "其他来源",
+            value: other.total || 0,
+            color: "#6b7280",
+            desc: `无法确定Polymarket协议归属 (source=Prep|OtherFPMM|Split) (${s2Fmt(other.prep || 0)} + ${s2Fmt(other.other_fpmm || 0)} + ${s2Fmt(other.split || 0)})`,
             children: [
               {
-                id: "cond_src_poly",
-                label: "Polymarket来源",
-                value: polySrc,
-                color: "#4ade80",
-                desc: "明确来自Polymarket",
-                children: [
-                  {
-                    id: "cond_src_poly_reg",
-                    label: "TokenRegistered",
-                    value: s.cond_src_poly_token_reg || 0,
-                    color: "#d4a574",
-                    desc: "从Exchange.TokenRegistered推断",
-                  },
-                  {
-                    id: "cond_src_poly_fpmm",
-                    label: "FPMM创建",
-                    value: s.cond_src_poly_fpmm || 0,
-                    color: "#a5d474",
-                    desc: "从Polymarket FPMM Factory创建推断",
-                  },
-                ],
+                id: "cond_prep",
+                label: "ConditionPrep",
+                value: other.prep || 0,
+                color: "#9ca3af",
+                desc: "直接监听ConditionalTokens.ConditionPreparation事件(通用，无法确定协议)",
               },
               {
-                id: "cond_src_other",
-                label: "其他来源",
-                value: otherSrc,
-                color: "#888",
-                desc: "无法确定协议归属",
-                children: [
-                  {
-                    id: "cond_src_prep",
-                    label: "ConditionPreparation",
-                    value: s.cond_src_prep || 0,
-                    color: "#74b4d4",
-                    desc: "直接监听到准备事件(通用)",
-                  },
-                  {
-                    id: "cond_src_other_fpmm",
-                    label: "其他协议FPMM",
-                    value: s.cond_src_other_fpmm || 0,
-                    color: "#888",
-                    desc: "从其他协议FPMM创建推断(预留)",
-                  },
-                  {
-                    id: "cond_src_split",
-                    label: "Split事件",
-                    value: s.cond_src_split || 0,
-                    color: "#666",
-                    desc: "从PositionSplit推断(无法确定协议)",
-                  },
-                ],
+                id: "cond_ofpmm",
+                label: "其他FPMM",
+                value: other.other_fpmm || 0,
+                color: "#9ca3af",
+                desc: "从其他协议FPMM创建推断(非Polymarket Factory)",
+              },
+              {
+                id: "cond_split",
+                label: "Split推断",
+                value: other.split || 0,
+                color: "#9ca3af",
+                desc: "从ConditionalTokens.PositionSplit事件推断(无法确定协议)",
               },
             ],
           },
@@ -480,147 +428,108 @@
       };
     }
 
-    // 构建代币(Token)树
-    // Partition恒等式（按类型）: total = Polymarket + Other = (AMM + Norm + NegRisk + 非USDC) + Other
-    // Partition恒等式（按来源）: total = PolyReg + PolyFPMM + OtherFPMM + Split
+    // 构建代币(Token)树 - 树状partition
+    // total = polymarket + other
+    // polymarket = token_reg + fpmm_only
+    // token_reg = amm + negrisk + normal
+    // fpmm_only = usdc + non_usdc
+    // other = other_fpmm + split
     function s2BuildTokenTree(s) {
-      const polyType =
-        (s.token_amm || 0) +
-        (s.token_norm || 0) +
-        (s.token_negrisk || 0) +
-        (s.token_non_usdc || 0);
-      const polySrc =
-        (s.token_src_poly_reg || 0) + (s.token_src_poly_fpmm || 0);
-      const otherSrc = (s.token_src_other_fpmm || 0) + (s.token_src_split || 0);
+      const tt = s.token_tree || {};
+      const poly = tt.polymarket || {};
+      const tr = poly.token_reg || {};
+      const fo = poly.fpmm_only || {};
+      const other = tt.other || {};
 
       return {
         id: "token",
         label: "代币",
-        value: s.token_total || 0,
+        value: tt.total || 0,
         color: "#f59e0b",
-        desc: "ERC1155 token_id (每个问题2个:YES/NO)",
+        desc: `ERC1155 token_id (${s2Fmt(poly.total || 0)} + ${s2Fmt(other.total || 0)})`,
         children: [
           {
-            id: "token_type",
-            label: "按类型",
-            value: s.token_total || 0,
+            id: "token_poly",
+            label: "Polymarket",
+            value: poly.total || 0,
             color: "#4ade80",
-            desc: "total = Polymarket + Other",
+            desc: `明确来自Polymarket协议 (source=PolyTokenReg|PolyFPMM) (${s2Fmt(tr.total || 0)} + ${s2Fmt(fo.total || 0)})`,
             children: [
               {
-                id: "token_poly",
-                label: "Polymarket",
-                value: polyType,
-                color: "#4ade80",
-                desc: "Polymarket预测市场的代币",
+                id: "token_tr",
+                label: "TokenReg来源",
+                value: tr.total || 0,
+                color: "#22c55e",
+                desc: `Exchange.TokenRegistered直接记录 (source=PolyTokenReg) (${s2Fmt(tr.amm || 0)} + ${s2Fmt(tr.negrisk || 0)} + ${s2Fmt(tr.normal || 0)})`,
                 children: [
                   {
-                    id: "token_amm",
+                    id: "token_tr_amm",
                     label: "AMM",
-                    value: s.token_amm || 0,
-                    color: "#d4a574",
-                    desc: "通过FPMM交易的代币",
+                    value: tr.amm || 0,
+                    color: "#f59e0b",
+                    desc: "TokenReg后来创建了FPMM池(FPMM Factory Creation事件)",
                   },
                   {
-                    id: "token_norm",
-                    label: "普通",
-                    value: s.token_norm || 0,
-                    color: "#a5d474",
-                    desc: "通过Exchange注册,订单簿交易",
-                  },
-                  {
-                    id: "token_negrisk",
+                    id: "token_tr_nr",
                     label: "NegRisk",
-                    value: s.token_negrisk || 0,
-                    color: "#d474d4",
-                    desc: "负风险市场代币",
+                    value: tr.negrisk || 0,
+                    color: "#c084fc",
+                    desc: "负风险市场/多选题代币(NegRiskAdapter相关事件)",
                   },
                   {
-                    id: "token_non_usdc",
-                    label: "非USDC",
-                    value: s.token_non_usdc || 0,
-                    color: "#74a5d4",
-                    desc: "非USDC抵押品(如WETH)",
+                    id: "token_tr_norm",
+                    label: "普通",
+                    value: tr.normal || 0,
+                    color: "#a3e635",
+                    desc: "无FPMM池，通过Exchange订单簿交易",
                   },
                 ],
               },
               {
-                id: "token_other_proto",
-                label: "其他协议",
-                value: s.token_other || 0,
-                color: "#888",
-                desc: "非Polymarket协议的代币(待识别)",
+                id: "token_fpmm",
+                label: "FPMM来源",
+                value: fo.total || 0,
+                color: "#a3e635",
+                desc: `从Polymarket FPMM Factory创建计算 (source=PolyFPMM) (${s2Fmt(fo.usdc || 0)} + ${s2Fmt(fo.non_usdc || 0)})`,
                 children: [
                   {
-                    id: "token_other_other_fpmm",
-                    label: "其他FPMM",
-                    value: s.token_other_other_fpmm || 0,
-                    color: "#777",
-                    desc: "来自其他协议FPMM计算",
+                    id: "token_fpmm_usdc",
+                    label: "USDC",
+                    value: fo.usdc || 0,
+                    color: "#38bdf8",
+                    desc: "USDC抵押品(Polymarket标准抵押品)",
                   },
                   {
-                    id: "token_other_split",
-                    label: "Split事件",
-                    value: s.token_other_split || 0,
-                    color: "#777",
-                    desc: "来自Split事件计算",
+                    id: "token_fpmm_non",
+                    label: "非USDC",
+                    value: fo.non_usdc || 0,
+                    color: "#818cf8",
+                    desc: "WETH等其他抵押品(非标准Polymarket)",
                   },
                 ],
               },
             ],
           },
           {
-            id: "token_src",
-            label: "按来源",
-            value: s.token_total || 0,
-            color: "#74b4d4",
-            desc: "total = Polymarket来源 + 其他来源",
+            id: "token_other",
+            label: "其他来源",
+            value: other.total || 0,
+            color: "#6b7280",
+            desc: `无法确定Polymarket协议归属 (source=OtherFPMM|Split) (${s2Fmt(other.other_fpmm || 0)} + ${s2Fmt(other.split || 0)})`,
             children: [
               {
-                id: "token_src_poly",
-                label: "Polymarket来源",
-                value: polySrc,
-                color: "#4ade80",
-                desc: "明确来自Polymarket",
-                children: [
-                  {
-                    id: "token_src_poly_reg",
-                    label: "TokenRegistered",
-                    value: s.token_src_poly_reg || 0,
-                    color: "#d4a574",
-                    desc: "Exchange.TokenRegistered直接记录",
-                  },
-                  {
-                    id: "token_src_poly_fpmm",
-                    label: "FPMM创建",
-                    value: s.token_src_poly_fpmm || 0,
-                    color: "#a5d474",
-                    desc: "从Polymarket FPMM Factory创建计算",
-                  },
-                ],
+                id: "token_ofpmm",
+                label: "其他FPMM",
+                value: other.other_fpmm || 0,
+                color: "#9ca3af",
+                desc: "从其他协议FPMM创建计算(非Polymarket Factory)",
               },
               {
-                id: "token_src_other",
-                label: "其他来源",
-                value: otherSrc,
-                color: "#888",
-                desc: "无法确定协议归属",
-                children: [
-                  {
-                    id: "token_src_other_fpmm",
-                    label: "其他协议FPMM",
-                    value: s.token_src_other_fpmm || 0,
-                    color: "#888",
-                    desc: "从其他协议FPMM创建计算(预留)",
-                  },
-                  {
-                    id: "token_src_split",
-                    label: "Split事件",
-                    value: s.token_src_split || 0,
-                    color: "#666",
-                    desc: "从PositionSplit事件计算(无法确定协议)",
-                  },
-                ],
+                id: "token_split",
+                label: "Split推断",
+                value: other.split || 0,
+                color: "#9ca3af",
+                desc: "从ConditionalTokens.PositionSplit事件计算(无法确定协议)",
               },
             ],
           },
@@ -1083,16 +992,18 @@
 
     function s2ExpandAll() {
       s2ExpandedNodes = new Set([
+        // 问题树 (树状partition: total→polymarket/other→...)
         "cond",
-        "cond_type",
-        "cond_src",
         "cond_poly",
-        "cond_other_proto",
+        "cond_tr",
+        "cond_other",
+        // 代币树 (树状partition: total→polymarket/other→...)
         "token",
-        "token_type",
-        "token_src",
         "token_poly",
-        "token_other_proto",
+        "token_tr",
+        "token_fpmm",
+        "token_other",
+        // Transfer树
         "xfer",
         "user_events",
         "internal",

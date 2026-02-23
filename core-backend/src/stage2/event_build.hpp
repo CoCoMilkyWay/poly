@@ -520,123 +520,95 @@ private:
   }
 
   void update_cond_type_stats() {
-    // Partition（按类型）: total = AMM + Norm + NegRisk + Other
-    int64_t amm = 0, negrisk = 0, normal = 0, other = 0;
-    // other细分（按来源）
-    int64_t other_prep = 0, other_other_fpmm = 0, other_split = 0;
-    // Partition（按来源）: total = Prep + PolyTokenReg + PolyFPMM + OtherFPMM + Split
-    int64_t src_prep = 0, src_poly_token_reg = 0, src_poly_fpmm = 0, src_other_fpmm = 0, src_split = 0;
+    // 问题树状partition: total = polymarket + other
+    ConditionTree ct{};
     for (size_t i = 0; i < conditions_.size(); ++i) {
+      ct.total++;
       uint32_t idx = static_cast<uint32_t>(i);
-      if (fpmm_cond_idxs_.count(idx)) {
-        ++amm;
-      } else if (negrisk_cond_idxs_.count(idx)) {
-        ++negrisk;
-      } else if (conditions_[i].source == ConditionSource::PolymarketTokenReg ||
-                 conditions_[i].source == ConditionSource::PolymarketFPMM) {
-        ++normal; // 明确来自Polymarket但不是AMM/NegRisk
+      auto src = conditions_[i].source;
+
+      if (src == ConditionSource::PolymarketTokenReg) {
+        ct.polymarket.total++;
+        ct.polymarket.token_reg.total++;
+        if (fpmm_cond_idxs_.count(idx)) {
+          ct.polymarket.token_reg.amm++;
+        } else if (negrisk_cond_idxs_.count(idx)) {
+          ct.polymarket.token_reg.negrisk++;
+        } else {
+          ct.polymarket.token_reg.normal++;
+        }
+      } else if (src == ConditionSource::PolymarketFPMM) {
+        ct.polymarket.total++;
+        ct.polymarket.fpmm_only++;
       } else {
-        ++other; // 来源不确定(ConditionPrep/OtherFPMM/Split)，可能是其他协议
-        switch (conditions_[i].source) {
+        ct.other.total++;
+        switch (src) {
         case ConditionSource::ConditionPrep:
-          ++other_prep;
+          ct.other.prep++;
           break;
         case ConditionSource::OtherFPMM:
-          ++other_other_fpmm;
+          ct.other.other_fpmm++;
           break;
         case ConditionSource::SplitEvent:
-          ++other_split;
+          ct.other.split++;
           break;
         default:
           break;
         }
       }
-      switch (conditions_[i].source) {
-      case ConditionSource::ConditionPrep:
-        ++src_prep;
-        break;
-      case ConditionSource::PolymarketTokenReg:
-        ++src_poly_token_reg;
-        break;
-      case ConditionSource::PolymarketFPMM:
-        ++src_poly_fpmm;
-        break;
-      case ConditionSource::OtherFPMM:
-        ++src_other_fpmm;
-        break;
-      case ConditionSource::SplitEvent:
-        ++src_split;
-        break;
-      }
     }
-    progress_.cnt_cond_amm = amm;
-    progress_.cnt_cond_negrisk = negrisk;
-    progress_.cnt_cond_normal = normal;
-    progress_.cnt_cond_other = other;
-    progress_.cnt_cond_other_prep = other_prep;
-    progress_.cnt_cond_other_other_fpmm = other_other_fpmm;
-    progress_.cnt_cond_other_split = other_split;
-    progress_.cnt_cond_src_prep = src_prep;
-    progress_.cnt_cond_src_poly_token_reg = src_poly_token_reg;
-    progress_.cnt_cond_src_poly_fpmm = src_poly_fpmm;
-    progress_.cnt_cond_src_other_fpmm = src_other_fpmm;
-    progress_.cnt_cond_src_split = src_split;
+    // 恒等式验证
+    assert(ct.total == ct.polymarket.total + ct.other.total);
+    assert(ct.polymarket.total == ct.polymarket.token_reg.total + ct.polymarket.fpmm_only);
+    assert(ct.polymarket.token_reg.total == ct.polymarket.token_reg.amm + ct.polymarket.token_reg.negrisk + ct.polymarket.token_reg.normal);
+    assert(ct.other.total == ct.other.prep + ct.other.other_fpmm + ct.other.split);
+    progress_.cond_tree = ct;
 
-    // Partition（按类型）: total = AMM + Norm + NegRisk + 非USDC + Other
-    int64_t t_amm = 0, t_negrisk = 0, t_non_usdc = 0, t_norm = 0, t_other = 0;
-    // other细分（按来源）
-    int64_t t_other_other_fpmm = 0, t_other_split = 0;
-    // Partition（按来源）: total = PolyReg + PolyFPMM + OtherFPMM + Split
-    int64_t t_src_poly_reg = 0, t_src_poly_fpmm = 0, t_src_other_fpmm = 0, t_src_split = 0;
+    // 代币树状partition: total = polymarket + other
+    TokenTree tt{};
     for (const auto &[tid, info] : token_map_) {
-      if (fpmm_cond_idxs_.count(info.cond_idx))
-        ++t_amm;
-      else if (negrisk_cond_idxs_.count(info.cond_idx))
-        ++t_negrisk;
-      else if (non_usdc_cond_idxs_.count(info.cond_idx))
-        ++t_non_usdc;
-      else if (info.source == TokenSource::PolymarketTokenReg ||
-               info.source == TokenSource::PolymarketFPMM)
-        ++t_norm; // 明确来自Polymarket
-      else {
-        ++t_other; // 来源不确定(OtherFPMM/Split)，可能是其他协议
-        switch (info.source) {
+      tt.total++;
+      auto src = info.source;
+
+      if (src == TokenSource::PolymarketTokenReg) {
+        tt.polymarket.total++;
+        tt.polymarket.token_reg.total++;
+        if (fpmm_cond_idxs_.count(info.cond_idx)) {
+          tt.polymarket.token_reg.amm++;
+        } else if (negrisk_cond_idxs_.count(info.cond_idx)) {
+          tt.polymarket.token_reg.negrisk++;
+        } else {
+          tt.polymarket.token_reg.normal++;
+        }
+      } else if (src == TokenSource::PolymarketFPMM) {
+        tt.polymarket.total++;
+        tt.polymarket.fpmm_only.total++;
+        if (non_usdc_cond_idxs_.count(info.cond_idx)) {
+          tt.polymarket.fpmm_only.non_usdc++;
+        } else {
+          tt.polymarket.fpmm_only.usdc++;
+        }
+      } else {
+        tt.other.total++;
+        switch (src) {
         case TokenSource::OtherFPMM:
-          ++t_other_other_fpmm;
+          tt.other.other_fpmm++;
           break;
         case TokenSource::SplitEvent:
-          ++t_other_split;
+          tt.other.split++;
           break;
         default:
           break;
         }
       }
-      switch (info.source) {
-      case TokenSource::PolymarketTokenReg:
-        ++t_src_poly_reg;
-        break;
-      case TokenSource::PolymarketFPMM:
-        ++t_src_poly_fpmm;
-        break;
-      case TokenSource::OtherFPMM:
-        ++t_src_other_fpmm;
-        break;
-      case TokenSource::SplitEvent:
-        ++t_src_split;
-        break;
-      }
     }
-    progress_.cnt_token_amm = t_amm;
-    progress_.cnt_token_negrisk = t_negrisk;
-    progress_.cnt_token_non_usdc = t_non_usdc;
-    progress_.cnt_token_norm = t_norm;
-    progress_.cnt_token_other = t_other;
-    progress_.cnt_token_other_other_fpmm = t_other_other_fpmm;
-    progress_.cnt_token_other_split = t_other_split;
-    progress_.cnt_token_src_poly_reg = t_src_poly_reg;
-    progress_.cnt_token_src_poly_fpmm = t_src_poly_fpmm;
-    progress_.cnt_token_src_other_fpmm = t_src_other_fpmm;
-    progress_.cnt_token_src_split = t_src_split;
+    // 恒等式验证
+    assert(tt.total == tt.polymarket.total + tt.other.total);
+    assert(tt.polymarket.total == tt.polymarket.token_reg.total + tt.polymarket.fpmm_only.total);
+    assert(tt.polymarket.token_reg.total == tt.polymarket.token_reg.amm + tt.polymarket.token_reg.negrisk + tt.polymarket.token_reg.normal);
+    assert(tt.polymarket.fpmm_only.total == tt.polymarket.fpmm_only.usdc + tt.polymarket.fpmm_only.non_usdc);
+    assert(tt.other.total == tt.other.other_fpmm + tt.other.split);
+    progress_.token_tree = tt;
   }
 
   void push_event(const std::string &user_addr, const RawEvent &evt) {

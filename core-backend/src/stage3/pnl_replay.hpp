@@ -69,40 +69,9 @@ public:
     int64_t total_markets = 0;
     int64_t total_events = 0;
 
-    // 问题分类（按类型）: cond_total = cond_amm + cond_norm + cond_negrisk + cond_other
-    int64_t cond_total = 0;
-    int64_t cond_amm = 0;     // Polymarket AMM
-    int64_t cond_norm = 0;    // Polymarket普通
-    int64_t cond_negrisk = 0; // Polymarket NegRisk
-    int64_t cond_other = 0;   // 其他（来源不确定）
-    // cond_other按来源细分
-    int64_t cond_other_prep = 0;       // 其他-来自ConditionPrep
-    int64_t cond_other_other_fpmm = 0; // 其他-来自OtherFPMM
-    int64_t cond_other_split = 0;      // 其他-来自SplitEvent
-
-    // 问题分类（按来源）: cond_total = prep + poly_token_reg + poly_fpmm + other_fpmm + split
-    int64_t cond_src_prep = 0;           // ConditionPreparation事件（通用）
-    int64_t cond_src_poly_token_reg = 0; // Polymarket TokenRegistered
-    int64_t cond_src_poly_fpmm = 0;      // Polymarket FPMM创建
-    int64_t cond_src_other_fpmm = 0;     // 其他协议FPMM创建（预留）
-    int64_t cond_src_split = 0;          // Split事件推断
-
-    // 代币分类（按类型）: token_total = token_amm + token_norm + token_negrisk + token_non_usdc + token_other
-    int64_t token_total = 0;
-    int64_t token_amm = 0;      // Polymarket AMM
-    int64_t token_negrisk = 0;  // Polymarket NegRisk
-    int64_t token_non_usdc = 0; // 非USDC抵押品
-    int64_t token_norm = 0;     // Polymarket普通
-    int64_t token_other = 0;    // 其他（来源不确定）
-    // token_other按来源细分
-    int64_t token_other_other_fpmm = 0; // 其他-来自OtherFPMM
-    int64_t token_other_split = 0;      // 其他-来自SplitEvent
-
-    // 代币分类（按来源）: token_total = poly_reg + poly_fpmm + other_fpmm + split
-    int64_t token_src_poly_reg = 0;   // Polymarket TokenRegistered
-    int64_t token_src_poly_fpmm = 0;  // Polymarket FPMM计算
-    int64_t token_src_other_fpmm = 0; // 其他协议FPMM计算（预留）
-    int64_t token_src_split = 0;      // Split事件计算
+    // 树状partition统计
+    ConditionTree cond_tree;
+    TokenTree token_tree;
 
     // Transfer partition (树状结构)
     // total = user_events + internal + skipped
@@ -146,8 +115,8 @@ public:
     int64_t xfer_non_poly = 0;
     // non_poly按operator->token细分: { 协议名: { total: N, tokens: { token_id: count, ... } }, ... }
     struct NonPolyProto {
-      std::string name;  // 协议名或地址
-      std::string addr;  // 原始地址
+      std::string name; // 协议名或地址
+      std::string addr; // 原始地址
       int64_t total = 0;
       std::unordered_map<std::string, int64_t> tokens; // token_id -> count
     };
@@ -162,31 +131,8 @@ public:
     p.total_users = bp.total_users;
     p.total_markets = bp.total_markets;
     p.total_events = bp.total_events;
-    p.cond_total = bp.total_conditions;
-    p.cond_amm = bp.cnt_cond_amm;
-    p.cond_norm = bp.cnt_cond_normal;
-    p.cond_negrisk = bp.cnt_cond_negrisk;
-    p.cond_other = bp.cnt_cond_other;
-    p.cond_other_prep = bp.cnt_cond_other_prep;
-    p.cond_other_other_fpmm = bp.cnt_cond_other_other_fpmm;
-    p.cond_other_split = bp.cnt_cond_other_split;
-    p.cond_src_prep = bp.cnt_cond_src_prep;
-    p.cond_src_poly_token_reg = bp.cnt_cond_src_poly_token_reg;
-    p.cond_src_poly_fpmm = bp.cnt_cond_src_poly_fpmm;
-    p.cond_src_other_fpmm = bp.cnt_cond_src_other_fpmm;
-    p.cond_src_split = bp.cnt_cond_src_split;
-    p.token_total = bp.total_tokens;
-    p.token_amm = bp.cnt_token_amm;
-    p.token_negrisk = bp.cnt_token_negrisk;
-    p.token_non_usdc = bp.cnt_token_non_usdc;
-    p.token_norm = bp.cnt_token_norm;
-    p.token_other = bp.cnt_token_other;
-    p.token_other_other_fpmm = bp.cnt_token_other_other_fpmm;
-    p.token_other_split = bp.cnt_token_other_split;
-    p.token_src_poly_reg = bp.cnt_token_src_poly_reg;
-    p.token_src_poly_fpmm = bp.cnt_token_src_poly_fpmm;
-    p.token_src_other_fpmm = bp.cnt_token_src_other_fpmm;
-    p.token_src_split = bp.cnt_token_src_split;
+    p.cond_tree = bp.cond_tree;
+    p.token_tree = bp.token_tree;
     p.xfer_total = bp.xfer_stats.total;
     p.xfer_split_normal = bp.xfer_stats.split_normal;
     p.xfer_split_negrisk = bp.xfer_stats.split_negrisk;
