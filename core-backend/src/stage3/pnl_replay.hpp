@@ -64,54 +64,82 @@ public:
 
   struct RebuildProgress {
     int phase = 0;
-    int64_t total_conditions = 0;
-    int64_t total_tokens = 0;
-    int64_t total_events = 0;
+    bool running = false;
     int64_t total_users = 0;
     int64_t total_markets = 0;
-    int64_t cnt_cond_amm = 0;
-    int64_t cnt_cond_normal = 0;
-    int64_t cnt_cond_negrisk = 0;
-    int64_t processed_users = 0;
-    bool running = false;
-    double phase1_ms = 0;
-    double phase2_ms = 0;
-    double phase3_ms = 0;
-    int64_t cnt_split = 0;
-    int64_t cnt_merge = 0;
-    int64_t cnt_redemption = 0;
-    int64_t cnt_convert = 0;
-    int64_t cnt_order = 0;
-    int64_t cnt_fpmm_trade = 0;
-    int64_t cnt_fpmm_funding = 0;
-    int64_t cnt_transfer = 0;
-    int64_t cnt_non_usdc_fpmm = 0;
-    int64_t cnt_non_polymarket = 0;
+    int64_t total_events = 0;
+
+    // 问题 partition: cond_total = cond_amm + cond_norm + cond_negrisk
+    int64_t cond_total = 0;
+    int64_t cond_amm = 0;
+    int64_t cond_norm = 0;
+    int64_t cond_negrisk = 0;
+
+    // 代币 partition: token_total = token_amm + token_negrisk + token_non_usdc + token_norm
+    int64_t token_total = 0;
+    int64_t token_amm = 0;
+    int64_t token_negrisk = 0;
+    int64_t token_non_usdc = 0;
+    int64_t token_norm = 0;
+
+    // Transfer partition: xfer_total = sum of all below
+    int64_t xfer_total = 0;
+    int64_t xfer_split = 0;
+    int64_t xfer_merge = 0;
+    int64_t xfer_redemption = 0;
+    int64_t xfer_convert = 0;
+    int64_t xfer_order_buy = 0;
+    int64_t xfer_order_sell = 0;
+    int64_t xfer_fpmm_buy = 0;
+    int64_t xfer_fpmm_sell = 0;
+    int64_t xfer_lp_add = 0;
+    int64_t xfer_lp_remove = 0;
+    int64_t xfer_lp_return = 0;
+    int64_t xfer_transfer_in = 0;
+    int64_t xfer_transfer_out = 0;
+    int64_t xfer_internal_mint = 0;
+    int64_t xfer_internal_burn = 0;
+    int64_t xfer_internal_transfer = 0;
+    int64_t xfer_non_usdc = 0;
+    int64_t xfer_non_poly = 0;
   };
 
   RebuildProgress progress() const {
     const auto &bp = builder_.progress();
     RebuildProgress p;
     p.phase = bp.phase;
-    p.total_conditions = bp.total_conditions;
-    p.total_tokens = bp.total_tokens;
-    p.total_events = bp.total_events;
+    p.running = bp.running;
     p.total_users = bp.total_users;
     p.total_markets = bp.total_markets;
-    p.cnt_cond_amm = bp.cnt_cond_amm;
-    p.cnt_cond_normal = bp.cnt_cond_normal;
-    p.cnt_cond_negrisk = bp.cnt_cond_negrisk;
-    p.running = bp.running;
-    p.cnt_split = bp.cnt_split;
-    p.cnt_merge = bp.cnt_merge;
-    p.cnt_redemption = bp.cnt_redemption;
-    p.cnt_convert = bp.cnt_convert;
-    p.cnt_order = bp.cnt_order;
-    p.cnt_fpmm_trade = bp.cnt_fpmm_trade;
-    p.cnt_fpmm_funding = bp.cnt_fpmm_funding;
-    p.cnt_transfer = bp.cnt_transfer;
-    p.cnt_non_usdc_fpmm = bp.xfer_stats.non_usdc_fpmm;
-    p.cnt_non_polymarket = bp.xfer_stats.non_polymarket;
+    p.total_events = bp.total_events;
+    p.cond_total = bp.total_conditions;
+    p.cond_amm = bp.cnt_cond_amm;
+    p.cond_norm = bp.cnt_cond_normal;
+    p.cond_negrisk = bp.cnt_cond_negrisk;
+    p.token_total = bp.total_tokens;
+    p.token_amm = bp.cnt_token_amm;
+    p.token_negrisk = bp.cnt_token_negrisk;
+    p.token_non_usdc = bp.cnt_token_non_usdc;
+    p.token_norm = bp.cnt_token_norm;
+    p.xfer_total = bp.xfer_stats.total;
+    p.xfer_split = bp.xfer_stats.split;
+    p.xfer_merge = bp.xfer_stats.merge;
+    p.xfer_redemption = bp.xfer_stats.redemption;
+    p.xfer_convert = bp.xfer_stats.convert;
+    p.xfer_order_buy = bp.xfer_stats.order_buy;
+    p.xfer_order_sell = bp.xfer_stats.order_sell;
+    p.xfer_fpmm_buy = bp.xfer_stats.fpmm_buy;
+    p.xfer_fpmm_sell = bp.xfer_stats.fpmm_sell;
+    p.xfer_lp_add = bp.xfer_stats.fpmm_lp_add;
+    p.xfer_lp_remove = bp.xfer_stats.fpmm_lp_remove;
+    p.xfer_lp_return = bp.xfer_stats.fpmm_lp_return;
+    p.xfer_transfer_in = bp.xfer_stats.transfer_in;
+    p.xfer_transfer_out = bp.xfer_stats.transfer_out;
+    p.xfer_internal_mint = bp.xfer_stats.internal_mint;
+    p.xfer_internal_burn = bp.xfer_stats.internal_burn;
+    p.xfer_internal_transfer = bp.xfer_stats.internal_transfer;
+    p.xfer_non_usdc = bp.xfer_stats.non_usdc_fpmm;
+    p.xfer_non_poly = bp.xfer_stats.non_polymarket;
     return p;
   }
 

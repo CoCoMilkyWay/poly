@@ -161,62 +161,43 @@
     </span>
     <span class="stage2-item">
       <span class="stage2-label">问题</span>
-      <span class="stage2-value highlight" id="s2-total-conditions">0</span>
-      <span style="color: #555">(</span><span style="color: #d4a574">AMM</span
-      ><span class="stage2-value" id="s2-cnt-cond-amm">0</span>
-      <span style="color: #a5d474">Norm</span
-      ><span class="stage2-value" id="s2-cnt-cond-normal">0</span>
-      <span style="color: #d474d4">Neg</span
-      ><span class="stage2-value" id="s2-cnt-cond-negrisk">0</span
-      ><span style="color: #555">)</span>
+      <span class="stage2-value highlight" id="s2-cond-total">0</span>
+      <span style="color:#555">(</span><span style="color:#d4a574">AMM</span><span class="stage2-value" id="s2-cond-amm">0</span>
+      <span style="color:#a5d474">Norm</span><span class="stage2-value" id="s2-cond-norm">0</span>
+      <span style="color:#d474d4">Neg</span><span class="stage2-value" id="s2-cond-negrisk">0</span><span style="color:#555">)</span>
     </span>
     <span class="stage2-item">
       <span class="stage2-label">代币</span>
-      <span class="stage2-value highlight" id="s2-total-tokens">0</span>
+      <span class="stage2-value highlight" id="s2-token-total">0</span>
+      <span style="color:#555">(</span><span style="color:#d4a574">AMM</span><span class="stage2-value" id="s2-token-amm">0</span>
+      <span style="color:#a5d474">Norm</span><span class="stage2-value" id="s2-token-norm">0</span>
+      <span style="color:#d474d4">Neg</span><span class="stage2-value" id="s2-token-negrisk">0</span>
+      <span style="color:#888">非U</span><span class="stage2-value" style="color:#666" id="s2-token-non-usdc">0</span><span style="color:#555">)</span>
     </span>
   </div>
 
   <div class="stage2-row">
     <span class="stage2-item">
-      <span class="stage2-label">订单</span>
-      <span class="stage2-value" id="s2-cnt-order">0</span>
-    </span>
-    <span class="stage2-item">
-      <span class="stage2-label">铸币</span>
-      <span class="stage2-value" id="s2-cnt-split">0</span>
-    </span>
-    <span class="stage2-item">
-      <span class="stage2-label">合币</span>
-      <span class="stage2-value" id="s2-cnt-merge">0</span>
-    </span>
-    <span class="stage2-item">
-      <span class="stage2-label">赎回</span>
-      <span class="stage2-value" id="s2-cnt-redemption">0</span>
-    </span>
-    <span class="stage2-item">
-      <span class="stage2-label">转换</span>
-      <span class="stage2-value" id="s2-cnt-convert">0</span>
-    </span>
-    <span class="stage2-item">
-      <span class="stage2-label">AMM</span>
-      <span class="stage2-value" id="s2-cnt-fpmm-trade">0</span>
-    </span>
-    <span class="stage2-item">
-      <span class="stage2-label">LP</span>
-      <span class="stage2-value" id="s2-cnt-fpmm-funding">0</span>
-    </span>
-    <span class="stage2-item">
-      <span class="stage2-label">转账</span>
-      <span class="stage2-value" id="s2-cnt-transfer">0</span>
-    </span>
-    <span class="stage2-sep">|</span>
-    <span class="stage2-item">
-      <span class="stage2-label" style="color:#888">非USDC</span>
-      <span class="stage2-value" style="color:#666" id="s2-cnt-non-usdc">0</span>
-    </span>
-    <span class="stage2-item">
-      <span class="stage2-label" style="color:#888">非Poly</span>
-      <span class="stage2-value" style="color:#666" id="s2-cnt-non-poly">0</span>
+      <span class="stage2-label">Transfer</span>
+      <span class="stage2-value highlight" id="s2-xfer-total">0</span>
+      <span style="color:#555">(</span><span style="color:#aaa">铸</span><span class="stage2-value" id="s2-xfer-split">0</span>
+      <span style="color:#aaa">合</span><span class="stage2-value" id="s2-xfer-merge">0</span>
+      <span style="color:#aaa">赎</span><span class="stage2-value" id="s2-xfer-redemption">0</span>
+      <span style="color:#aaa">转换</span><span class="stage2-value" id="s2-xfer-convert">0</span>
+      <span style="color:#aaa">订买</span><span class="stage2-value" id="s2-xfer-order-buy">0</span>
+      <span style="color:#aaa">订卖</span><span class="stage2-value" id="s2-xfer-order-sell">0</span>
+      <span style="color:#d4a574">AMM买</span><span class="stage2-value" id="s2-xfer-fpmm-buy">0</span>
+      <span style="color:#d4a574">AMM卖</span><span class="stage2-value" id="s2-xfer-fpmm-sell">0</span>
+      <span style="color:#74b4d4">LP加</span><span class="stage2-value" id="s2-xfer-lp-add">0</span>
+      <span style="color:#74b4d4">LP减</span><span class="stage2-value" id="s2-xfer-lp-remove">0</span>
+      <span style="color:#74b4d4">LP返</span><span class="stage2-value" id="s2-xfer-lp-return">0</span>
+      <span style="color:#aaa">转入</span><span class="stage2-value" id="s2-xfer-transfer-in">0</span>
+      <span style="color:#aaa">转出</span><span class="stage2-value" id="s2-xfer-transfer-out">0</span>
+      <span style="color:#555">内铸</span><span class="stage2-value" style="color:#444" id="s2-xfer-internal-mint">0</span>
+      <span style="color:#555">内燃</span><span class="stage2-value" style="color:#444" id="s2-xfer-internal-burn">0</span>
+      <span style="color:#555">内转</span><span class="stage2-value" style="color:#444" id="s2-xfer-internal-transfer">0</span>
+      <span style="color:#888">非U</span><span class="stage2-value" style="color:#666" id="s2-xfer-non-usdc">0</span>
+      <span style="color:#888">非P</span><span class="stage2-value" style="color:#666" id="s2-xfer-non-poly">0</span><span style="color:#555">)</span>
     </span>
   </div>
 </div>
@@ -292,21 +273,34 @@
 
       s2Set("s2-total-users", s.total_users);
       s2Set("s2-total-markets", s.total_markets);
-      s2Set("s2-total-conditions", s.total_conditions);
-      s2Set("s2-total-tokens", s.total_tokens);
-      s2Set("s2-cnt-cond-amm", s.cnt_cond_amm);
-      s2Set("s2-cnt-cond-normal", s.cnt_cond_normal);
-      s2Set("s2-cnt-cond-negrisk", s.cnt_cond_negrisk);
-      s2Set("s2-cnt-order", s.cnt_order);
-      s2Set("s2-cnt-split", s.cnt_split);
-      s2Set("s2-cnt-merge", s.cnt_merge);
-      s2Set("s2-cnt-redemption", s.cnt_redemption);
-      s2Set("s2-cnt-convert", s.cnt_convert);
-      s2Set("s2-cnt-fpmm-trade", s.cnt_fpmm_trade);
-      s2Set("s2-cnt-fpmm-funding", s.cnt_fpmm_funding);
-      s2Set("s2-cnt-transfer", s.cnt_transfer);
-      s2Set("s2-cnt-non-usdc", s.cnt_non_usdc_fpmm);
-      s2Set("s2-cnt-non-poly", s.cnt_non_polymarket);
+      s2Set("s2-cond-total", s.cond_total);
+      s2Set("s2-cond-amm", s.cond_amm);
+      s2Set("s2-cond-norm", s.cond_norm);
+      s2Set("s2-cond-negrisk", s.cond_negrisk);
+      s2Set("s2-token-total", s.token_total);
+      s2Set("s2-token-amm", s.token_amm);
+      s2Set("s2-token-norm", s.token_norm);
+      s2Set("s2-token-negrisk", s.token_negrisk);
+      s2Set("s2-token-non-usdc", s.token_non_usdc);
+      s2Set("s2-xfer-total", s.xfer_total);
+      s2Set("s2-xfer-split", s.xfer_split);
+      s2Set("s2-xfer-merge", s.xfer_merge);
+      s2Set("s2-xfer-redemption", s.xfer_redemption);
+      s2Set("s2-xfer-convert", s.xfer_convert);
+      s2Set("s2-xfer-order-buy", s.xfer_order_buy);
+      s2Set("s2-xfer-order-sell", s.xfer_order_sell);
+      s2Set("s2-xfer-fpmm-buy", s.xfer_fpmm_buy);
+      s2Set("s2-xfer-fpmm-sell", s.xfer_fpmm_sell);
+      s2Set("s2-xfer-lp-add", s.xfer_lp_add);
+      s2Set("s2-xfer-lp-remove", s.xfer_lp_remove);
+      s2Set("s2-xfer-lp-return", s.xfer_lp_return);
+      s2Set("s2-xfer-transfer-in", s.xfer_transfer_in);
+      s2Set("s2-xfer-transfer-out", s.xfer_transfer_out);
+      s2Set("s2-xfer-internal-mint", s.xfer_internal_mint);
+      s2Set("s2-xfer-internal-burn", s.xfer_internal_burn);
+      s2Set("s2-xfer-internal-transfer", s.xfer_internal_transfer);
+      s2Set("s2-xfer-non-usdc", s.xfer_non_usdc);
+      s2Set("s2-xfer-non-poly", s.xfer_non_poly);
 
       if (sync.syncing) {
         badge.className = "badge badge-warning";

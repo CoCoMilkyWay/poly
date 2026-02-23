@@ -335,12 +335,12 @@ private:
   std::unordered_map<std::string, uint32_t> cond_map_;
   std::unordered_map<std::string, TokenInfo> token_map_;
   std::unordered_map<std::string, FPMMInfo> fpmm_map_;
-  std::unordered_map<std::string, std::string> cond_to_market_; // condition_id -> market_id
-  std::unordered_set<std::string> seen_users_;                  // 实时统计唯一用户
-  std::unordered_set<std::string> seen_markets_;                // 统计唯一 NegRisk 市场
-  std::unordered_set<uint32_t> fpmm_cond_idxs_;                 // AMM 对应的 cond_idx
-  std::unordered_set<uint32_t> negrisk_cond_idxs_;              // NegRisk 对应的 cond_idx
-  std::unordered_set<uint32_t> non_usdc_cond_idxs_;             // 非 USDC 抵押品的 cond_idx
+  std::unordered_map<std::string, std::string> cond_to_market_;    // condition_id -> market_id
+  std::unordered_set<std::string> seen_users_;                     // 实时统计唯一用户
+  std::unordered_set<std::string> seen_markets_;                   // 统计唯一 NegRisk 市场
+  std::unordered_set<uint32_t> fpmm_cond_idxs_;                    // AMM 对应的 cond_idx
+  std::unordered_set<uint32_t> negrisk_cond_idxs_;                 // NegRisk 对应的 cond_idx
+  std::unordered_set<uint32_t> non_usdc_cond_idxs_;                // 非 USDC 抵押品的 cond_idx
   std::unordered_map<uint32_t, std::string> non_usdc_collaterals_; // cond_idx -> collateral address
 
   std::unordered_map<TxCondKey, std::vector<SplitInfo>> tx_split_;
@@ -468,6 +468,22 @@ private:
     progress_.cnt_cond_amm = amm;
     progress_.cnt_cond_negrisk = negrisk;
     progress_.cnt_cond_normal = normal;
+
+    int64_t t_amm = 0, t_negrisk = 0, t_non_usdc = 0, t_norm = 0;
+    for (const auto &[tid, info] : token_map_) {
+      if (fpmm_cond_idxs_.count(info.cond_idx))
+        ++t_amm;
+      else if (negrisk_cond_idxs_.count(info.cond_idx))
+        ++t_negrisk;
+      else if (non_usdc_cond_idxs_.count(info.cond_idx))
+        ++t_non_usdc;
+      else
+        ++t_norm;
+    }
+    progress_.cnt_token_amm = t_amm;
+    progress_.cnt_token_negrisk = t_negrisk;
+    progress_.cnt_token_non_usdc = t_non_usdc;
+    progress_.cnt_token_norm = t_norm;
   }
 
   void push_event(const std::string &user_addr, const RawEvent &evt) {

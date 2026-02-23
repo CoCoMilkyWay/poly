@@ -189,6 +189,10 @@ struct BuildProgress {
   int64_t cnt_cond_amm = 0;
   int64_t cnt_cond_normal = 0;
   int64_t cnt_cond_negrisk = 0;
+  int64_t cnt_token_amm = 0;
+  int64_t cnt_token_negrisk = 0;
+  int64_t cnt_token_non_usdc = 0;
+  int64_t cnt_token_norm = 0;
   int64_t cnt_split = 0;
   int64_t cnt_merge = 0;
   int64_t cnt_redemption = 0;
