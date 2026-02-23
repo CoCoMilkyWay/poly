@@ -71,31 +71,31 @@ public:
 
     // 问题分类（按类型）: cond_total = cond_amm + cond_norm + cond_negrisk + cond_other
     int64_t cond_total = 0;
-    int64_t cond_amm = 0;       // Polymarket AMM
-    int64_t cond_norm = 0;      // Polymarket普通
-    int64_t cond_negrisk = 0;   // Polymarket NegRisk
-    int64_t cond_other = 0;     // 其他协议
+    int64_t cond_amm = 0;     // Polymarket AMM
+    int64_t cond_norm = 0;    // Polymarket普通
+    int64_t cond_negrisk = 0; // Polymarket NegRisk
+    int64_t cond_other = 0;   // 其他（来源不确定）
 
-    // 问题分类（按来源）
-    int64_t cond_src_prep = 0;           // ConditionPreparation事件
+    // 问题分类（按来源）: cond_total = prep + poly_token_reg + poly_fpmm + other_fpmm + split
+    int64_t cond_src_prep = 0;           // ConditionPreparation事件（通用）
     int64_t cond_src_poly_token_reg = 0; // Polymarket TokenRegistered
     int64_t cond_src_poly_fpmm = 0;      // Polymarket FPMM创建
-    int64_t cond_src_other_fpmm = 0;     // 其他FPMM创建
+    int64_t cond_src_other_fpmm = 0;     // 其他协议FPMM创建（预留）
     int64_t cond_src_split = 0;          // Split事件推断
 
-    // 代币分类（按类型）: token_total = token_amm + token_negrisk + token_non_usdc + token_norm + token_other
+    // 代币分类（按类型）: token_total = token_amm + token_norm + token_negrisk + token_non_usdc + token_other
     int64_t token_total = 0;
-    int64_t token_amm = 0;       // Polymarket AMM
-    int64_t token_negrisk = 0;   // Polymarket NegRisk
-    int64_t token_non_usdc = 0;  // 非USDC抵押品
-    int64_t token_norm = 0;      // Polymarket普通
-    int64_t token_other = 0;     // 其他协议
+    int64_t token_amm = 0;      // Polymarket AMM
+    int64_t token_negrisk = 0;  // Polymarket NegRisk
+    int64_t token_non_usdc = 0; // 非USDC抵押品
+    int64_t token_norm = 0;     // Polymarket普通
+    int64_t token_other = 0;    // 其他（来源不确定）
 
-    // 代币分类（按来源）
-    int64_t token_src_poly_reg = 0;    // Polymarket TokenRegistered
-    int64_t token_src_poly_fpmm = 0;   // Polymarket FPMM计算
-    int64_t token_src_other_fpmm = 0;  // 其他FPMM计算
-    int64_t token_src_split = 0;       // Split事件计算
+    // 代币分类（按来源）: token_total = poly_reg + poly_fpmm + other_fpmm + split
+    int64_t token_src_poly_reg = 0;   // Polymarket TokenRegistered
+    int64_t token_src_poly_fpmm = 0;  // Polymarket FPMM计算
+    int64_t token_src_other_fpmm = 0; // 其他协议FPMM计算（预留）
+    int64_t token_src_split = 0;      // Split事件计算
 
     // Transfer partition (树状结构)
     // total = user_events + internal + skipped

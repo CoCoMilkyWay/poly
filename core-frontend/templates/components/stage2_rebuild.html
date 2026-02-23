@@ -207,40 +207,25 @@
       <span class="stage2-label">市场</span>
       <span class="stage2-value highlight" id="s2-total-markets">0</span>
     </span>
-    <span class="stage2-item">
-      <span class="stage2-label">问题</span>
-      <span class="stage2-value highlight" id="s2-cond-total">0</span>
-      <span style="color:#555">(</span><span style="color:#d4a574">AMM</span><span class="stage2-value" id="s2-cond-amm">0</span>
-      <span style="color:#a5d474">Norm</span><span class="stage2-value" id="s2-cond-norm">0</span>
-      <span style="color:#d474d4">Neg</span><span class="stage2-value" id="s2-cond-negrisk">0</span>
-      <span style="color:#888">Other</span><span class="stage2-value" style="color:#666" id="s2-cond-other">0</span><span style="color:#555">)</span>
-    </span>
-    <span class="stage2-item">
-      <span class="stage2-label">问题来源</span>
-      <span style="color:#555">(</span><span style="color:#74b4d4">Prep</span><span class="stage2-value" id="s2-cond-src-prep">0</span>
-      <span style="color:#d4a574">PolyReg</span><span class="stage2-value" id="s2-cond-src-poly-reg">0</span>
-      <span style="color:#a5d474">PolyFPMM</span><span class="stage2-value" id="s2-cond-src-poly-fpmm">0</span>
-      <span style="color:#888">OtherFPMM</span><span class="stage2-value" style="color:#666" id="s2-cond-src-other-fpmm">0</span>
-      <span style="color:#666">Split</span><span class="stage2-value" style="color:#555" id="s2-cond-src-split">0</span><span style="color:#555">)</span>
-    </span>
-    <span class="stage2-item">
-      <span class="stage2-label">代币</span>
-      <span class="stage2-value highlight" id="s2-token-total">0</span>
-      <span style="color:#555">(</span><span style="color:#d4a574">AMM</span><span class="stage2-value" id="s2-token-amm">0</span>
-      <span style="color:#a5d474">Norm</span><span class="stage2-value" id="s2-token-norm">0</span>
-      <span style="color:#d474d4">Neg</span><span class="stage2-value" id="s2-token-negrisk">0</span>
-      <span style="color:#888">非U</span><span class="stage2-value" style="color:#666" id="s2-token-non-usdc">0</span>
-      <span style="color:#666">Other</span><span class="stage2-value" style="color:#555" id="s2-token-other">0</span><span style="color:#555">)</span>
-    </span>
-    <span class="stage2-item">
-      <span class="stage2-label">代币来源</span>
-      <span style="color:#555">(</span><span style="color:#d4a574">PolyReg</span><span class="stage2-value" id="s2-token-src-poly-reg">0</span>
-      <span style="color:#a5d474">PolyFPMM</span><span class="stage2-value" id="s2-token-src-poly-fpmm">0</span>
-      <span style="color:#888">OtherFPMM</span><span class="stage2-value" style="color:#666" id="s2-token-src-other-fpmm">0</span>
-      <span style="color:#666">Split</span><span class="stage2-value" style="color:#555" id="s2-token-src-split">0</span><span style="color:#555">)</span>
-    </span>
+    <button
+      id="s2-collapse-all"
+      style="
+        margin-left: auto;
+        background: #333;
+        border: 1px solid #555;
+        color: #aaa;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.7em;
+        cursor: pointer;
+      "
+    >
+      全部折叠
+    </button>
   </div>
 
+  <div class="stage2-tree" id="s2-cond-tree"></div>
+  <div class="stage2-tree" id="s2-token-tree"></div>
   <div class="stage2-tree" id="s2-xfer-tree"></div>
 </div>
 
@@ -258,7 +243,43 @@
 
     let s2LastCursor = 0;
     let s2LastTime = Date.now();
-    let s2ExpandedNodes = new Set(["xfer", "user_events", "internal", "skipped"]);
+    // 默认全部展开的节点集合
+    let s2ExpandedNodes = new Set([
+      // 问题树
+      "cond",
+      "cond_type",
+      "cond_src",
+      "cond_poly",
+      "cond_other_proto",
+      "cond_src_poly",
+      "cond_src_other",
+      // 代币树
+      "token",
+      "token_type",
+      "token_src",
+      "token_poly",
+      "token_other_proto",
+      "token_src_poly",
+      "token_src_other",
+      // Transfer树
+      "xfer",
+      "user_events",
+      "internal",
+      "skipped",
+      "split",
+      "merge",
+      "order",
+      "fpmm_trade",
+      "fpmm_lp",
+      "transfer",
+      "transfer_in",
+      "transfer_out",
+      "internal_mint",
+      "internal_burn",
+      "internal_transfer",
+      "non_usdc",
+    ]);
+    let s2AllExpanded = true;
 
     function s2UpdateStats(s) {
       const sync = s.stage2_sync || {};
@@ -267,19 +288,27 @@
       const behind = headBlock - cursor;
 
       document.getElementById("s2-last-block").textContent = s2FmtNum(cursor);
-      document.getElementById("s2-head-block").textContent = s2FmtNum(headBlock);
+      document.getElementById("s2-head-block").textContent =
+        s2FmtNum(headBlock);
       document.getElementById("s2-behind").textContent = s2FmtNum(behind);
 
       const now = Date.now();
       const dt = (now - s2LastTime) / 1000;
       if (dt > 0 && cursor > s2LastCursor) {
         const speed = (cursor - s2LastCursor) / dt;
-        document.getElementById("s2-speed").textContent = s2Fmt(Math.round(speed)) + "/s";
+        document.getElementById("s2-speed").textContent =
+          s2Fmt(Math.round(speed)) + "/s";
         if (speed > 0 && behind > 0) {
           const eta = behind / speed;
-          if (eta < 60) document.getElementById("s2-eta").textContent = Math.round(eta) + "s";
-          else if (eta < 3600) document.getElementById("s2-eta").textContent = Math.round(eta / 60) + "m";
-          else document.getElementById("s2-eta").textContent = (eta / 3600).toFixed(1) + "h";
+          if (eta < 60)
+            document.getElementById("s2-eta").textContent =
+              Math.round(eta) + "s";
+          else if (eta < 3600)
+            document.getElementById("s2-eta").textContent =
+              Math.round(eta / 60) + "m";
+          else
+            document.getElementById("s2-eta").textContent =
+              (eta / 3600).toFixed(1) + "h";
         } else {
           document.getElementById("s2-eta").textContent = "-";
         }
@@ -295,94 +324,632 @@
       el.classList.toggle("zero", !value);
     }
 
-    function s2BuildTree(s) {
+    // 构建问题(Condition)树
+    // Partition恒等式（按类型）: total = Polymarket + Other = (AMM + Norm + NegRisk) + Other
+    // Partition恒等式（按来源）: total = Prep + PolyTokenReg + PolyFPMM + OtherFPMM + Split
+    function s2BuildCondTree(s) {
+      const polyType =
+        (s.cond_amm || 0) + (s.cond_norm || 0) + (s.cond_negrisk || 0);
+      const polySrc =
+        (s.cond_src_poly_token_reg || 0) + (s.cond_src_poly_fpmm || 0);
+      const otherSrc =
+        (s.cond_src_prep || 0) +
+        (s.cond_src_other_fpmm || 0) +
+        (s.cond_src_split || 0);
+
+      return {
+        id: "cond",
+        label: "问题",
+        value: s.cond_total || 0,
+        color: "#60a5fa",
+        desc: "ConditionalTokens.ConditionPreparation",
+        children: [
+          {
+            id: "cond_type",
+            label: "按类型",
+            value: s.cond_total || 0,
+            color: "#4ade80",
+            desc: "total = Polymarket + Other",
+            children: [
+              {
+                id: "cond_poly",
+                label: "Polymarket",
+                value: polyType,
+                color: "#4ade80",
+                desc: "Polymarket预测市场的问题",
+                children: [
+                  {
+                    id: "cond_amm",
+                    label: "AMM",
+                    value: s.cond_amm || 0,
+                    color: "#d4a574",
+                    desc: "通过FPMM交易的问题",
+                  },
+                  {
+                    id: "cond_norm",
+                    label: "普通",
+                    value: s.cond_norm || 0,
+                    color: "#a5d474",
+                    desc: "通过Exchange注册,订单簿交易",
+                  },
+                  {
+                    id: "cond_negrisk",
+                    label: "NegRisk",
+                    value: s.cond_negrisk || 0,
+                    color: "#d474d4",
+                    desc: "负风险市场(多选题)",
+                  },
+                ],
+              },
+              {
+                id: "cond_other_proto",
+                label: "其他协议",
+                value: s.cond_other || 0,
+                color: "#888",
+                desc: "非Polymarket协议的问题(待识别)",
+              },
+            ],
+          },
+          {
+            id: "cond_src",
+            label: "按来源",
+            value: s.cond_total || 0,
+            color: "#74b4d4",
+            desc: "total = Polymarket来源 + 其他来源",
+            children: [
+              {
+                id: "cond_src_poly",
+                label: "Polymarket来源",
+                value: polySrc,
+                color: "#4ade80",
+                desc: "明确来自Polymarket",
+                children: [
+                  {
+                    id: "cond_src_poly_reg",
+                    label: "TokenRegistered",
+                    value: s.cond_src_poly_token_reg || 0,
+                    color: "#d4a574",
+                    desc: "从Exchange.TokenRegistered推断",
+                  },
+                  {
+                    id: "cond_src_poly_fpmm",
+                    label: "FPMM创建",
+                    value: s.cond_src_poly_fpmm || 0,
+                    color: "#a5d474",
+                    desc: "从Polymarket FPMM Factory创建推断",
+                  },
+                ],
+              },
+              {
+                id: "cond_src_other",
+                label: "其他来源",
+                value: otherSrc,
+                color: "#888",
+                desc: "无法确定协议归属",
+                children: [
+                  {
+                    id: "cond_src_prep",
+                    label: "ConditionPreparation",
+                    value: s.cond_src_prep || 0,
+                    color: "#74b4d4",
+                    desc: "直接监听到准备事件(通用)",
+                  },
+                  {
+                    id: "cond_src_other_fpmm",
+                    label: "其他协议FPMM",
+                    value: s.cond_src_other_fpmm || 0,
+                    color: "#888",
+                    desc: "从其他协议FPMM创建推断(预留)",
+                  },
+                  {
+                    id: "cond_src_split",
+                    label: "Split事件",
+                    value: s.cond_src_split || 0,
+                    color: "#666",
+                    desc: "从PositionSplit推断(无法确定协议)",
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      };
+    }
+
+    // 构建代币(Token)树
+    // Partition恒等式（按类型）: total = Polymarket + Other = (AMM + Norm + NegRisk + 非USDC) + Other
+    // Partition恒等式（按来源）: total = PolyReg + PolyFPMM + OtherFPMM + Split
+    function s2BuildTokenTree(s) {
+      const polyType =
+        (s.token_amm || 0) +
+        (s.token_norm || 0) +
+        (s.token_negrisk || 0) +
+        (s.token_non_usdc || 0);
+      const polySrc =
+        (s.token_src_poly_reg || 0) + (s.token_src_poly_fpmm || 0);
+      const otherSrc = (s.token_src_other_fpmm || 0) + (s.token_src_split || 0);
+
+      return {
+        id: "token",
+        label: "代币",
+        value: s.token_total || 0,
+        color: "#f59e0b",
+        desc: "ERC1155 token_id (每个问题2个:YES/NO)",
+        children: [
+          {
+            id: "token_type",
+            label: "按类型",
+            value: s.token_total || 0,
+            color: "#4ade80",
+            desc: "total = Polymarket + Other",
+            children: [
+              {
+                id: "token_poly",
+                label: "Polymarket",
+                value: polyType,
+                color: "#4ade80",
+                desc: "Polymarket预测市场的代币",
+                children: [
+                  {
+                    id: "token_amm",
+                    label: "AMM",
+                    value: s.token_amm || 0,
+                    color: "#d4a574",
+                    desc: "通过FPMM交易的代币",
+                  },
+                  {
+                    id: "token_norm",
+                    label: "普通",
+                    value: s.token_norm || 0,
+                    color: "#a5d474",
+                    desc: "通过Exchange注册,订单簿交易",
+                  },
+                  {
+                    id: "token_negrisk",
+                    label: "NegRisk",
+                    value: s.token_negrisk || 0,
+                    color: "#d474d4",
+                    desc: "负风险市场代币",
+                  },
+                  {
+                    id: "token_non_usdc",
+                    label: "非USDC",
+                    value: s.token_non_usdc || 0,
+                    color: "#74a5d4",
+                    desc: "非USDC抵押品(如WETH)",
+                  },
+                ],
+              },
+              {
+                id: "token_other_proto",
+                label: "其他协议",
+                value: s.token_other || 0,
+                color: "#888",
+                desc: "非Polymarket协议的代币(待识别)",
+              },
+            ],
+          },
+          {
+            id: "token_src",
+            label: "按来源",
+            value: s.token_total || 0,
+            color: "#74b4d4",
+            desc: "total = Polymarket来源 + 其他来源",
+            children: [
+              {
+                id: "token_src_poly",
+                label: "Polymarket来源",
+                value: polySrc,
+                color: "#4ade80",
+                desc: "明确来自Polymarket",
+                children: [
+                  {
+                    id: "token_src_poly_reg",
+                    label: "TokenRegistered",
+                    value: s.token_src_poly_reg || 0,
+                    color: "#d4a574",
+                    desc: "Exchange.TokenRegistered直接记录",
+                  },
+                  {
+                    id: "token_src_poly_fpmm",
+                    label: "FPMM创建",
+                    value: s.token_src_poly_fpmm || 0,
+                    color: "#a5d474",
+                    desc: "从Polymarket FPMM Factory创建计算",
+                  },
+                ],
+              },
+              {
+                id: "token_src_other",
+                label: "其他来源",
+                value: otherSrc,
+                color: "#888",
+                desc: "无法确定协议归属",
+                children: [
+                  {
+                    id: "token_src_other_fpmm",
+                    label: "其他协议FPMM",
+                    value: s.token_src_other_fpmm || 0,
+                    color: "#888",
+                    desc: "从其他协议FPMM创建计算(预留)",
+                  },
+                  {
+                    id: "token_src_split",
+                    label: "Split事件",
+                    value: s.token_src_split || 0,
+                    color: "#666",
+                    desc: "从PositionSplit事件计算(无法确定协议)",
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      };
+    }
+
+    // 构建Transfer树
+    function s2BuildXferTree(s) {
       const split = (s.xfer_split_normal || 0) + (s.xfer_split_negrisk || 0);
       const merge = (s.xfer_merge_normal || 0) + (s.xfer_merge_negrisk || 0);
       const order = (s.xfer_order_buy || 0) + (s.xfer_order_sell || 0);
       const fpmm_trade = (s.xfer_fpmm_buy || 0) + (s.xfer_fpmm_sell || 0);
-      const fpmm_lp = (s.xfer_lp_add || 0) + (s.xfer_lp_remove || 0) + (s.xfer_lp_return || 0);
-      const transfer_in = (s.xfer_transfer_in_negrisk || 0) + (s.xfer_transfer_in_other || 0);
-      const transfer_out = (s.xfer_transfer_out_negrisk || 0) + (s.xfer_transfer_out_other || 0);
+      const fpmm_lp =
+        (s.xfer_lp_add || 0) +
+        (s.xfer_lp_remove || 0) +
+        (s.xfer_lp_return || 0);
+      const transfer_in =
+        (s.xfer_transfer_in_negrisk || 0) + (s.xfer_transfer_in_other || 0);
+      const transfer_out =
+        (s.xfer_transfer_out_negrisk || 0) + (s.xfer_transfer_out_other || 0);
       const transfer = transfer_in + transfer_out;
-      const user_events = split + merge + (s.xfer_redemption||0) + (s.xfer_convert||0) + order + fpmm_trade + fpmm_lp + transfer;
-      const internal_mint = (s.xfer_internal_mint_negrisk || 0) + (s.xfer_internal_mint_fpmm || 0);
-      const internal_burn = (s.xfer_internal_burn_negrisk || 0) + (s.xfer_internal_burn_fpmm || 0) + (s.xfer_internal_burn_convert || 0);
-      const internal_transfer = (s.xfer_internal_transfer_zero || 0) + (s.xfer_internal_transfer_order || 0) + (s.xfer_internal_transfer_negrisk || 0) + (s.xfer_internal_transfer_fpmm || 0) + (s.xfer_internal_transfer_other || 0);
+      const user_events =
+        split +
+        merge +
+        (s.xfer_redemption || 0) +
+        (s.xfer_convert || 0) +
+        order +
+        fpmm_trade +
+        fpmm_lp +
+        transfer;
+      const internal_mint =
+        (s.xfer_internal_mint_negrisk || 0) + (s.xfer_internal_mint_fpmm || 0);
+      const internal_burn =
+        (s.xfer_internal_burn_negrisk || 0) +
+        (s.xfer_internal_burn_fpmm || 0) +
+        (s.xfer_internal_burn_convert || 0);
+      const internal_transfer =
+        (s.xfer_internal_transfer_zero || 0) +
+        (s.xfer_internal_transfer_order || 0) +
+        (s.xfer_internal_transfer_negrisk || 0) +
+        (s.xfer_internal_transfer_fpmm || 0) +
+        (s.xfer_internal_transfer_other || 0);
       const internal = internal_mint + internal_burn + internal_transfer;
-      const non_usdc = (s.xfer_non_usdc_mint || 0) + (s.xfer_non_usdc_burn || 0) + (s.xfer_non_usdc_op || 0);
+      const non_usdc =
+        (s.xfer_non_usdc_mint || 0) +
+        (s.xfer_non_usdc_burn || 0) +
+        (s.xfer_non_usdc_op || 0);
       const skipped = non_usdc + (s.xfer_non_poly || 0);
 
       return {
-        id: "xfer", label: "Transfer", value: s.xfer_total || 0, color: "#60a5fa", desc: "ConditionalTokens.TransferSingle/Batch",
+        id: "xfer",
+        label: "Transfer",
+        value: s.xfer_total || 0,
+        color: "#60a5fa",
+        desc: "ConditionalTokens.TransferSingle/Batch",
         children: [
-          { id: "user_events", label: "用户事件", value: user_events, color: "#4ade80", desc: "影响用户持仓",
+          {
+            id: "user_events",
+            label: "用户事件",
+            value: user_events,
+            color: "#4ade80",
+            desc: "影响用户持仓",
             children: [
-              { id: "split", label: "铸造", value: split, desc: "PositionSplit: USDC→YES+NO", children: [
-                { id: "split_normal", label: "普通", value: s.xfer_split_normal || 0, desc: "0x0→用户" },
-                { id: "split_negrisk", label: "NegRisk", value: s.xfer_split_negrisk || 0, desc: "Adapter→用户" }
-              ]},
-              { id: "merge", label: "合并", value: merge, desc: "PositionsMerge: YES+NO→USDC", children: [
-                { id: "merge_normal", label: "普通", value: s.xfer_merge_normal || 0, desc: "用户→0x0" },
-                { id: "merge_negrisk", label: "NegRisk", value: s.xfer_merge_negrisk || 0, desc: "用户→Adapter" }
-              ]},
-              { id: "redemption", label: "赎回", value: s.xfer_redemption || 0, desc: "PayoutRedemption: 结算后兑USDC" },
-              { id: "convert", label: "转换", value: s.xfer_convert || 0, desc: "PositionsConverted: M个NO→1个YES" },
-              { id: "order", label: "订单", value: order, desc: "CTFExchange/NegRiskExchange", children: [
-                { id: "order_buy", label: "买入", value: s.xfer_order_buy || 0, desc: "OrderFilled: 协议→用户" },
-                { id: "order_sell", label: "卖出", value: s.xfer_order_sell || 0, desc: "OrderFilled: 用户→协议" }
-              ]},
-              { id: "fpmm_trade", label: "AMM交易", value: fpmm_trade, color: "#d4a574", desc: "FPMM.Buy/Sell", children: [
-                { id: "fpmm_buy", label: "买入", value: s.xfer_fpmm_buy || 0, desc: "FPMMBuy: FPMM→用户" },
-                { id: "fpmm_sell", label: "卖出", value: s.xfer_fpmm_sell || 0, desc: "FPMMSell: 用户→FPMM" }
-              ]},
-              { id: "fpmm_lp", label: "AMM流动性", value: fpmm_lp, color: "#74b4d4", desc: "FPMM LP操作", children: [
-                { id: "lp_add", label: "添加", value: s.xfer_lp_add || 0, desc: "FundingAdded: 0x0→FPMM" },
-                { id: "lp_remove", label: "移除", value: s.xfer_lp_remove || 0, desc: "FundingRemoved: FPMM→用户" },
-                { id: "lp_return", label: "返还", value: s.xfer_lp_return || 0, desc: "FundingAdded余额: FPMM→用户" }
-              ]},
-              { id: "transfer", label: "转账", value: transfer, desc: "无语义事件的直接转账", children: [
-                { id: "transfer_in", label: "转入", value: transfer_in, desc: "收到token", children: [
-                  { id: "transfer_in_negrisk", label: "Adapter", value: s.xfer_transfer_in_negrisk || 0, desc: "Adapter→用户(无Split)" },
-                  { id: "transfer_in_other", label: "其他", value: s.xfer_transfer_in_other || 0, desc: "用户/协议→用户" }
-                ]},
-                { id: "transfer_out", label: "转出", value: transfer_out, desc: "发出token", children: [
-                  { id: "transfer_out_negrisk", label: "Adapter", value: s.xfer_transfer_out_negrisk || 0, desc: "用户→Adapter(无Merge)" },
-                  { id: "transfer_out_other", label: "其他", value: s.xfer_transfer_out_other || 0, desc: "用户→用户/协议" }
-                ]}
-              ]}
-            ]
+              {
+                id: "split",
+                label: "铸造",
+                value: split,
+                desc: "PositionSplit: USDC→YES+NO",
+                children: [
+                  {
+                    id: "split_normal",
+                    label: "普通",
+                    value: s.xfer_split_normal || 0,
+                    desc: "0x0→用户",
+                  },
+                  {
+                    id: "split_negrisk",
+                    label: "NegRisk",
+                    value: s.xfer_split_negrisk || 0,
+                    desc: "Adapter→用户",
+                  },
+                ],
+              },
+              {
+                id: "merge",
+                label: "合并",
+                value: merge,
+                desc: "PositionsMerge: YES+NO→USDC",
+                children: [
+                  {
+                    id: "merge_normal",
+                    label: "普通",
+                    value: s.xfer_merge_normal || 0,
+                    desc: "用户→0x0",
+                  },
+                  {
+                    id: "merge_negrisk",
+                    label: "NegRisk",
+                    value: s.xfer_merge_negrisk || 0,
+                    desc: "用户→Adapter",
+                  },
+                ],
+              },
+              {
+                id: "redemption",
+                label: "赎回",
+                value: s.xfer_redemption || 0,
+                desc: "PayoutRedemption: 结算后兑USDC",
+              },
+              {
+                id: "convert",
+                label: "转换",
+                value: s.xfer_convert || 0,
+                desc: "PositionsConverted: M个NO→1个YES",
+              },
+              {
+                id: "order",
+                label: "订单",
+                value: order,
+                desc: "CTFExchange/NegRiskExchange",
+                children: [
+                  {
+                    id: "order_buy",
+                    label: "买入",
+                    value: s.xfer_order_buy || 0,
+                    desc: "OrderFilled: 协议→用户",
+                  },
+                  {
+                    id: "order_sell",
+                    label: "卖出",
+                    value: s.xfer_order_sell || 0,
+                    desc: "OrderFilled: 用户→协议",
+                  },
+                ],
+              },
+              {
+                id: "fpmm_trade",
+                label: "AMM交易",
+                value: fpmm_trade,
+                color: "#d4a574",
+                desc: "FPMM.Buy/Sell",
+                children: [
+                  {
+                    id: "fpmm_buy",
+                    label: "买入",
+                    value: s.xfer_fpmm_buy || 0,
+                    desc: "FPMMBuy: FPMM→用户",
+                  },
+                  {
+                    id: "fpmm_sell",
+                    label: "卖出",
+                    value: s.xfer_fpmm_sell || 0,
+                    desc: "FPMMSell: 用户→FPMM",
+                  },
+                ],
+              },
+              {
+                id: "fpmm_lp",
+                label: "AMM流动性",
+                value: fpmm_lp,
+                color: "#74b4d4",
+                desc: "FPMM LP操作",
+                children: [
+                  {
+                    id: "lp_add",
+                    label: "添加",
+                    value: s.xfer_lp_add || 0,
+                    desc: "FundingAdded: 0x0→FPMM",
+                  },
+                  {
+                    id: "lp_remove",
+                    label: "移除",
+                    value: s.xfer_lp_remove || 0,
+                    desc: "FundingRemoved: FPMM→用户",
+                  },
+                  {
+                    id: "lp_return",
+                    label: "返还",
+                    value: s.xfer_lp_return || 0,
+                    desc: "FundingAdded余额: FPMM→用户",
+                  },
+                ],
+              },
+              {
+                id: "transfer",
+                label: "转账",
+                value: transfer,
+                desc: "无语义事件的直接转账",
+                children: [
+                  {
+                    id: "transfer_in",
+                    label: "转入",
+                    value: transfer_in,
+                    desc: "收到token",
+                    children: [
+                      {
+                        id: "transfer_in_negrisk",
+                        label: "Adapter",
+                        value: s.xfer_transfer_in_negrisk || 0,
+                        desc: "Adapter→用户(无Split)",
+                      },
+                      {
+                        id: "transfer_in_other",
+                        label: "其他",
+                        value: s.xfer_transfer_in_other || 0,
+                        desc: "用户/协议→用户",
+                      },
+                    ],
+                  },
+                  {
+                    id: "transfer_out",
+                    label: "转出",
+                    value: transfer_out,
+                    desc: "发出token",
+                    children: [
+                      {
+                        id: "transfer_out_negrisk",
+                        label: "Adapter",
+                        value: s.xfer_transfer_out_negrisk || 0,
+                        desc: "用户→Adapter(无Merge)",
+                      },
+                      {
+                        id: "transfer_out_other",
+                        label: "其他",
+                        value: s.xfer_transfer_out_other || 0,
+                        desc: "用户→用户/协议",
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
           },
-          { id: "internal", label: "内部操作", value: internal, color: "#666", desc: "协议内部,不影响用户",
+          {
+            id: "internal",
+            label: "内部操作",
+            value: internal,
+            color: "#666",
+            desc: "协议内部,不影响用户",
             children: [
-              { id: "internal_mint", label: "内部铸造", value: internal_mint, desc: "0x0→协议合约", children: [
-                { id: "internal_mint_negrisk", label: "Adapter", value: s.xfer_internal_mint_negrisk || 0, desc: "0x0→NegRiskAdapter" },
-                { id: "internal_mint_fpmm", label: "FPMM", value: s.xfer_internal_mint_fpmm || 0, desc: "0x0→FPMM(无Funding)" }
-              ]},
-              { id: "internal_burn", label: "内部销毁", value: internal_burn, desc: "协议合约→0x0/BurnAddr", children: [
-                { id: "internal_burn_negrisk", label: "Adapter", value: s.xfer_internal_burn_negrisk || 0, desc: "NegRiskAdapter→0x0" },
-                { id: "internal_burn_fpmm", label: "FPMM", value: s.xfer_internal_burn_fpmm || 0, desc: "FPMM→0x0" },
-                { id: "internal_burn_convert", label: "Convert", value: s.xfer_internal_burn_convert || 0, desc: "Adapter→BurnAddr(NO)" }
-              ]},
-              { id: "internal_transfer", label: "内部转移", value: internal_transfer, desc: "协议间转移", children: [
-                { id: "internal_transfer_zero", label: "零值", value: s.xfer_internal_transfer_zero || 0, desc: "amount=0的Transfer" },
-                { id: "internal_transfer_order", label: "订单", value: s.xfer_internal_transfer_order || 0, desc: "Exchange双方均为协议" },
-                { id: "internal_transfer_negrisk", label: "Adapter", value: s.xfer_internal_transfer_negrisk || 0, desc: "Adapter相关其他" },
-                { id: "internal_transfer_fpmm", label: "FPMM", value: s.xfer_internal_transfer_fpmm || 0, desc: "FPMM Funding其他" },
-                { id: "internal_transfer_other", label: "其他", value: s.xfer_internal_transfer_other || 0, desc: "其他协议间转移" }
-              ]}
-            ]
+              {
+                id: "internal_mint",
+                label: "内部铸造",
+                value: internal_mint,
+                desc: "0x0→协议合约",
+                children: [
+                  {
+                    id: "internal_mint_negrisk",
+                    label: "Adapter",
+                    value: s.xfer_internal_mint_negrisk || 0,
+                    desc: "0x0→NegRiskAdapter",
+                  },
+                  {
+                    id: "internal_mint_fpmm",
+                    label: "FPMM",
+                    value: s.xfer_internal_mint_fpmm || 0,
+                    desc: "0x0→FPMM(无Funding)",
+                  },
+                ],
+              },
+              {
+                id: "internal_burn",
+                label: "内部销毁",
+                value: internal_burn,
+                desc: "协议合约→0x0/BurnAddr",
+                children: [
+                  {
+                    id: "internal_burn_negrisk",
+                    label: "Adapter",
+                    value: s.xfer_internal_burn_negrisk || 0,
+                    desc: "NegRiskAdapter→0x0",
+                  },
+                  {
+                    id: "internal_burn_fpmm",
+                    label: "FPMM",
+                    value: s.xfer_internal_burn_fpmm || 0,
+                    desc: "FPMM→0x0",
+                  },
+                  {
+                    id: "internal_burn_convert",
+                    label: "Convert",
+                    value: s.xfer_internal_burn_convert || 0,
+                    desc: "Adapter→BurnAddr(NO)",
+                  },
+                ],
+              },
+              {
+                id: "internal_transfer",
+                label: "内部转移",
+                value: internal_transfer,
+                desc: "协议间转移",
+                children: [
+                  {
+                    id: "internal_transfer_zero",
+                    label: "零值",
+                    value: s.xfer_internal_transfer_zero || 0,
+                    desc: "amount=0的Transfer",
+                  },
+                  {
+                    id: "internal_transfer_order",
+                    label: "订单",
+                    value: s.xfer_internal_transfer_order || 0,
+                    desc: "Exchange双方均为协议",
+                  },
+                  {
+                    id: "internal_transfer_negrisk",
+                    label: "Adapter",
+                    value: s.xfer_internal_transfer_negrisk || 0,
+                    desc: "Adapter相关其他",
+                  },
+                  {
+                    id: "internal_transfer_fpmm",
+                    label: "FPMM",
+                    value: s.xfer_internal_transfer_fpmm || 0,
+                    desc: "FPMM Funding其他",
+                  },
+                  {
+                    id: "internal_transfer_other",
+                    label: "其他",
+                    value: s.xfer_internal_transfer_other || 0,
+                    desc: "其他协议间转移",
+                  },
+                ],
+              },
+            ],
           },
-          { id: "skipped", label: "跳过", value: skipped, color: "#888", desc: "非标准Polymarket",
+          {
+            id: "skipped",
+            label: "跳过",
+            value: skipped,
+            color: "#888",
+            desc: "非标准Polymarket",
             children: [
-              { id: "non_usdc", label: "非USDC", value: non_usdc, desc: "非USDC抵押品FPMM", children: [
-                { id: "non_usdc_mint", label: "铸造", value: s.xfer_non_usdc_mint || 0, desc: "0x0→非USDC FPMM" },
-                { id: "non_usdc_burn", label: "销毁", value: s.xfer_non_usdc_burn || 0, desc: "非USDC FPMM→0x0" },
-                { id: "non_usdc_op", label: "操作", value: s.xfer_non_usdc_op || 0, desc: "op=非USDC FPMM" }
-              ]},
-              { id: "non_poly", label: "非Polymarket", value: s.xfer_non_poly || 0, desc: "token不在Polymarket(如Omen)" }
-            ]
-          }
-        ]
+              {
+                id: "non_usdc",
+                label: "非USDC",
+                value: non_usdc,
+                desc: "非USDC抵押品FPMM",
+                children: [
+                  {
+                    id: "non_usdc_mint",
+                    label: "铸造",
+                    value: s.xfer_non_usdc_mint || 0,
+                    desc: "0x0→非USDC FPMM",
+                  },
+                  {
+                    id: "non_usdc_burn",
+                    label: "销毁",
+                    value: s.xfer_non_usdc_burn || 0,
+                    desc: "非USDC FPMM→0x0",
+                  },
+                  {
+                    id: "non_usdc_op",
+                    label: "操作",
+                    value: s.xfer_non_usdc_op || 0,
+                    desc: "op=非USDC FPMM",
+                  },
+                ],
+              },
+              {
+                id: "non_poly",
+                label: "非Polymarket",
+                value: s.xfer_non_poly || 0,
+                desc: "token不在Polymarket(如Omen)",
+              },
+            ],
+          },
+        ],
       };
     }
 
@@ -391,7 +958,9 @@
       const isExpanded = s2ExpandedNodes.has(node.id);
       const valueClass = node.value ? "" : " zero";
       const color = node.color || "#fff";
-      const desc = node.desc ? ` <span class="stage2-tree-desc">${node.desc}</span>` : "";
+      const desc = node.desc
+        ? ` <span class="stage2-tree-desc">${node.desc}</span>`
+        : "";
 
       let html = `<div class="${hasChildren ? "stage2-tree-node" : "stage2-tree-leaf"}" data-id="${node.id}">`;
       if (hasChildren) {
@@ -412,20 +981,67 @@
       return html;
     }
 
-    function s2RenderTree(s) {
-      const tree = s2BuildTree(s);
-      const container = document.getElementById("s2-xfer-tree");
+    function s2RenderTreeToContainer(tree, containerId) {
+      const container = document.getElementById(containerId);
       if (container) {
         container.innerHTML = s2RenderNode(tree);
-        container.querySelectorAll(".stage2-tree-node").forEach(el => {
-          el.addEventListener("click", () => {
+        container.querySelectorAll(".stage2-tree-node").forEach((el) => {
+          el.addEventListener("click", (e) => {
+            e.stopPropagation();
             const id = el.dataset.id;
             if (s2ExpandedNodes.has(id)) s2ExpandedNodes.delete(id);
             else s2ExpandedNodes.add(id);
-            s2RenderTree(window._s2LastData || {});
+            s2RenderAllTrees(window._s2LastData || {});
           });
         });
       }
+    }
+
+    function s2RenderAllTrees(s) {
+      s2RenderTreeToContainer(s2BuildCondTree(s), "s2-cond-tree");
+      s2RenderTreeToContainer(s2BuildTokenTree(s), "s2-token-tree");
+      s2RenderTreeToContainer(s2BuildXferTree(s), "s2-xfer-tree");
+    }
+
+    function s2CollapseAll() {
+      s2ExpandedNodes.clear();
+      s2AllExpanded = false;
+      s2RenderAllTrees(window._s2LastData || {});
+      document.getElementById("s2-collapse-all").textContent = "全部展开";
+    }
+
+    function s2ExpandAll() {
+      s2ExpandedNodes = new Set([
+        "cond",
+        "cond_type",
+        "cond_src",
+        "cond_poly",
+        "cond_other_proto",
+        "token",
+        "token_type",
+        "token_src",
+        "token_poly",
+        "token_other_proto",
+        "xfer",
+        "user_events",
+        "internal",
+        "skipped",
+        "split",
+        "merge",
+        "order",
+        "fpmm_trade",
+        "fpmm_lp",
+        "transfer",
+        "transfer_in",
+        "transfer_out",
+        "internal_mint",
+        "internal_burn",
+        "internal_transfer",
+        "non_usdc",
+      ]);
+      s2AllExpanded = true;
+      s2RenderAllTrees(window._s2LastData || {});
+      document.getElementById("s2-collapse-all").textContent = "全部折叠";
     }
 
     function s2UpdateProgress(s) {
@@ -443,28 +1059,8 @@
 
       s2Set("s2-total-users", s.total_users);
       s2Set("s2-total-markets", s.total_markets);
-      s2Set("s2-cond-total", s.cond_total);
-      s2Set("s2-cond-amm", s.cond_amm);
-      s2Set("s2-cond-norm", s.cond_norm);
-      s2Set("s2-cond-negrisk", s.cond_negrisk);
-      s2Set("s2-cond-other", s.cond_other);
-      s2Set("s2-cond-src-prep", s.cond_src_prep);
-      s2Set("s2-cond-src-poly-reg", s.cond_src_poly_token_reg);
-      s2Set("s2-cond-src-poly-fpmm", s.cond_src_poly_fpmm);
-      s2Set("s2-cond-src-other-fpmm", s.cond_src_other_fpmm);
-      s2Set("s2-cond-src-split", s.cond_src_split);
-      s2Set("s2-token-total", s.token_total);
-      s2Set("s2-token-amm", s.token_amm);
-      s2Set("s2-token-norm", s.token_norm);
-      s2Set("s2-token-negrisk", s.token_negrisk);
-      s2Set("s2-token-non-usdc", s.token_non_usdc);
-      s2Set("s2-token-other", s.token_other);
-      s2Set("s2-token-src-poly-reg", s.token_src_poly_reg);
-      s2Set("s2-token-src-poly-fpmm", s.token_src_poly_fpmm);
-      s2Set("s2-token-src-other-fpmm", s.token_src_other_fpmm);
-      s2Set("s2-token-src-split", s.token_src_split);
 
-      s2RenderTree(s);
+      s2RenderAllTrees(s);
 
       if (sync.syncing) {
         badge.className = "badge badge-warning";
@@ -483,7 +1079,11 @@
         const resp = await fetch("/api/rebuild-status");
         const status = await resp.json();
         s2UpdateProgress(status);
-        if (status.phase === 7 && !status.running && typeof rpOnRebuildDone === "function") {
+        if (
+          status.phase === 7 &&
+          !status.running &&
+          typeof rpOnRebuildDone === "function"
+        ) {
           rpOnRebuildDone();
         }
       } catch (e) {}
@@ -492,6 +1092,18 @@
     document.addEventListener("DOMContentLoaded", () => {
       s2Poll();
       setInterval(s2Poll, 2000);
+
+      // 折叠/展开按钮
+      const collapseBtn = document.getElementById("s2-collapse-all");
+      if (collapseBtn) {
+        collapseBtn.addEventListener("click", () => {
+          if (s2AllExpanded) {
+            s2CollapseAll();
+          } else {
+            s2ExpandAll();
+          }
+        });
+      }
     });
   })();
 </script>

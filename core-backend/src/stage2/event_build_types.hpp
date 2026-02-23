@@ -480,27 +480,27 @@ struct BuildProgress {
   int64_t total_events = 0;
   int64_t total_users = 0;
   int64_t total_markets = 0;
-  // condition分类（按类型）
+  // condition分类（按类型）: total = AMM + Norm + NegRisk + Other
   int64_t cnt_cond_amm = 0;       // Polymarket AMM
   int64_t cnt_cond_normal = 0;    // Polymarket Exchange (普通)
   int64_t cnt_cond_negrisk = 0;   // Polymarket NegRisk
-  int64_t cnt_cond_other = 0;     // 其他协议
-  // condition分类（按来源）
+  int64_t cnt_cond_other = 0;     // 其他（不属于上面三类的）
+  // condition分类（按来源）: total = Prep + PolyTokenReg + PolyFPMM + OtherFPMM + Split
   int64_t cnt_cond_src_prep = 0;           // 直接从ConditionPreparation（通用）
   int64_t cnt_cond_src_poly_token_reg = 0; // Polymarket TokenRegistered
   int64_t cnt_cond_src_poly_fpmm = 0;      // Polymarket FPMM创建
-  int64_t cnt_cond_src_other_fpmm = 0;     // 其他FPMM创建
+  int64_t cnt_cond_src_other_fpmm = 0;     // 其他协议FPMM创建（预留）
   int64_t cnt_cond_src_split = 0;          // 从Split事件推断
-  // token分类（按类型）
+  // token分类（按类型）: total = AMM + Norm + NegRisk + 非USDC + Other
   int64_t cnt_token_amm = 0;       // Polymarket AMM
   int64_t cnt_token_negrisk = 0;   // Polymarket NegRisk
   int64_t cnt_token_non_usdc = 0;  // 非USDC抵押品
   int64_t cnt_token_norm = 0;      // Polymarket普通
-  int64_t cnt_token_other = 0;     // 其他协议
-  // token分类（按来源）
+  int64_t cnt_token_other = 0;     // 其他（不属于上面四类的）
+  // token分类（按来源）: total = PolyReg + PolyFPMM + OtherFPMM + Split
   int64_t cnt_token_src_poly_reg = 0;    // Polymarket TokenRegistered
   int64_t cnt_token_src_poly_fpmm = 0;   // Polymarket FPMM计算
-  int64_t cnt_token_src_other_fpmm = 0;  // 其他FPMM计算
+  int64_t cnt_token_src_other_fpmm = 0;  // 其他协议FPMM计算（预留）
   int64_t cnt_token_src_split = 0;       // 从Split事件计算
   // 事件统计
   int64_t cnt_split = 0;

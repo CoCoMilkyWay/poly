@@ -94,7 +94,7 @@ struct FpmmEvent {
   int64_t block_number;
   std::string tx_hash;
   int64_t log_index;
-  std::string factory;  // FPMM Factory地址
+  std::string factory; // FPMM Factory地址
   std::string creator, fpmm_addr, conditional_tokens, collateral_token;
   std::string condition_ids;
   int64_t fee;
@@ -185,7 +185,8 @@ public:
     for (const auto &result : results) {
       for (const auto &log : result) {
         const auto &topics_arr = log["topics"];
-        if (topics_arr.empty()) continue;
+        if (topics_arr.empty())
+          continue;
         std::string topic0 = to_lower(topics_arr[0].get<std::string>());
         if (topic0 == topics::FPMM_CREATE) {
           std::string factory_addr = to_lower(log["address"].get<std::string>());
@@ -302,13 +303,12 @@ private:
   static void parse_transfer_single(const json &topics, const std::string &data,
                                     const std::string &tx_hash, int64_t block_number,
                                     int64_t log_index, DecodedEvents &events) {
-    events.transfer.push_back({
-        block_number, tx_hash, log_index * 1000,
-        extract_address_from_topic(topics[1].get<std::string>()),
-        extract_address_from_topic(topics[2].get<std::string>()),
-        extract_address_from_topic(topics[3].get<std::string>()),
-        extract_bytes32_from_data(data, 0),
-        extract_uint256_from_data(data, 1)});
+    events.transfer.push_back({block_number, tx_hash, log_index * 1000,
+                               extract_address_from_topic(topics[1].get<std::string>()),
+                               extract_address_from_topic(topics[2].get<std::string>()),
+                               extract_address_from_topic(topics[3].get<std::string>()),
+                               extract_bytes32_from_data(data, 0),
+                               extract_uint256_from_data(data, 1)});
   }
 
   static void parse_transfer_batch(const json &topics, const std::string &data,
@@ -326,11 +326,10 @@ private:
     assert(ids_len == values_len);
 
     for (int64_t i = 0; i < ids_len; ++i) {
-      events.transfer.push_back({
-          block_number, tx_hash, log_index * 1000 + i,
-          op, from, to,
-          extract_bytes32_from_data(data, ids_offset / 32 + 1 + i),
-          extract_uint256_from_data(data, values_offset / 32 + 1 + i)});
+      events.transfer.push_back({block_number, tx_hash, log_index * 1000 + i,
+                                 op, from, to,
+                                 extract_bytes32_from_data(data, ids_offset / 32 + 1 + i),
+                                 extract_uint256_from_data(data, values_offset / 32 + 1 + i)});
     }
   }
 
@@ -348,14 +347,13 @@ private:
     }
     partition_ss << "]";
 
-    out.push_back({
-        block_number, tx_hash, log_index,
-        extract_address_from_topic(topics[1].get<std::string>()),
-        extract_address_from_topic("0x" + data.substr(2, 64)),
-        topics[2].get<std::string>(),
-        topics[3].get<std::string>(),
-        partition_ss.str(),
-        extract_uint256_from_data(data, 2)});
+    out.push_back({block_number, tx_hash, log_index,
+                   extract_address_from_topic(topics[1].get<std::string>()),
+                   extract_address_from_topic("0x" + data.substr(2, 64)),
+                   topics[2].get<std::string>(),
+                   topics[3].get<std::string>(),
+                   partition_ss.str(),
+                   extract_uint256_from_data(data, 2)});
   }
 
   static void parse_redemption(const json &topics, const std::string &data,
@@ -372,25 +370,23 @@ private:
     }
     index_sets_ss << "]";
 
-    events.redemption.push_back({
-        block_number, tx_hash, log_index,
-        extract_address_from_topic(topics[1].get<std::string>()),
-        extract_address_from_topic(topics[2].get<std::string>()),
-        topics[3].get<std::string>(),
-        extract_bytes32_from_data(data, 0),
-        index_sets_ss.str(),
-        extract_uint256_from_data(data, 2)});
+    events.redemption.push_back({block_number, tx_hash, log_index,
+                                 extract_address_from_topic(topics[1].get<std::string>()),
+                                 extract_address_from_topic(topics[2].get<std::string>()),
+                                 topics[3].get<std::string>(),
+                                 extract_bytes32_from_data(data, 0),
+                                 index_sets_ss.str(),
+                                 extract_uint256_from_data(data, 2)});
   }
 
   static void parse_condition_preparation(const json &topics, const std::string &data,
                                           const std::string &tx_hash, int64_t block_number,
                                           int64_t log_index, DecodedEvents &events) {
-    events.condition_preparation.push_back({
-        block_number, tx_hash, log_index,
-        topics[1].get<std::string>(),
-        extract_address_from_topic(topics[2].get<std::string>()),
-        topics[3].get<std::string>(),
-        extract_uint256_from_data(data, 0)});
+    events.condition_preparation.push_back({block_number, tx_hash, log_index,
+                                            topics[1].get<std::string>(),
+                                            extract_address_from_topic(topics[2].get<std::string>()),
+                                            topics[3].get<std::string>(),
+                                            extract_uint256_from_data(data, 0)});
   }
 
   static void parse_condition_resolution(const json &topics, const std::string &data,
@@ -407,52 +403,48 @@ private:
     }
     payout_ss << "]";
 
-    events.condition_resolution.push_back({
-        block_number, tx_hash, log_index,
-        topics[1].get<std::string>(),
-        extract_address_from_topic(topics[2].get<std::string>()),
-        topics[3].get<std::string>(),
-        extract_uint256_from_data(data, 0),
-        payout_ss.str()});
+    events.condition_resolution.push_back({block_number, tx_hash, log_index,
+                                           topics[1].get<std::string>(),
+                                           extract_address_from_topic(topics[2].get<std::string>()),
+                                           topics[3].get<std::string>(),
+                                           extract_uint256_from_data(data, 0),
+                                           payout_ss.str()});
   }
 
   static void parse_order_filled(const json &topics, const std::string &data,
                                  const std::string &tx_hash, int64_t block_number,
                                  int64_t log_index, const std::string &exchange,
                                  DecodedEvents &events) {
-    events.order_filled.push_back({
-        block_number, tx_hash, log_index,
-        exchange,
-        topics[1].get<std::string>(),
-        extract_address_from_topic(topics[2].get<std::string>()),
-        extract_address_from_topic(topics[3].get<std::string>()),
-        extract_bytes32_from_data(data, 0),
-        extract_bytes32_from_data(data, 1),
-        extract_uint256_from_data(data, 2),
-        extract_uint256_from_data(data, 3),
-        extract_uint256_from_data(data, 4)});
+    events.order_filled.push_back({block_number, tx_hash, log_index,
+                                   exchange,
+                                   topics[1].get<std::string>(),
+                                   extract_address_from_topic(topics[2].get<std::string>()),
+                                   extract_address_from_topic(topics[3].get<std::string>()),
+                                   extract_bytes32_from_data(data, 0),
+                                   extract_bytes32_from_data(data, 1),
+                                   extract_uint256_from_data(data, 2),
+                                   extract_uint256_from_data(data, 3),
+                                   extract_uint256_from_data(data, 4)});
   }
 
   static void parse_token_map(const json &topics, const std::string &tx_hash,
                               int64_t block_number, int64_t log_index,
                               const std::string &exchange, DecodedEvents &events) {
-    events.token_map.push_back({
-        block_number, tx_hash, log_index,
-        exchange,
-        topics[1].get<std::string>(),
-        topics[2].get<std::string>(),
-        topics[3].get<std::string>()});
+    events.token_map.push_back({block_number, tx_hash, log_index,
+                                exchange,
+                                topics[1].get<std::string>(),
+                                topics[2].get<std::string>(),
+                                topics[3].get<std::string>()});
   }
 
   static void parse_convert(const json &topics, const std::string &data,
                             const std::string &tx_hash, int64_t block_number,
                             int64_t log_index, DecodedEvents &events) {
-    events.convert.push_back({
-        block_number, tx_hash, log_index,
-        extract_address_from_topic(topics[1].get<std::string>()),
-        topics[2].get<std::string>(),
-        hex_to_int64(topics[3].get<std::string>()),
-        extract_uint256_from_data(data, 0)});
+    events.convert.push_back({block_number, tx_hash, log_index,
+                              extract_address_from_topic(topics[1].get<std::string>()),
+                              topics[2].get<std::string>(),
+                              hex_to_int64(topics[3].get<std::string>()),
+                              extract_uint256_from_data(data, 0)});
   }
 
   static void parse_neg_risk_market(const json &topics, const std::string &data,
@@ -469,12 +461,11 @@ private:
       }
     }
 
-    events.neg_risk_market.push_back({
-        block_number, tx_hash, log_index,
-        topics[1].get<std::string>(),
-        extract_address_from_topic(topics[2].get<std::string>()),
-        extract_uint256_from_data(data, 0),
-        market_data});
+    events.neg_risk_market.push_back({block_number, tx_hash, log_index,
+                                      topics[1].get<std::string>(),
+                                      extract_address_from_topic(topics[2].get<std::string>()),
+                                      extract_uint256_from_data(data, 0),
+                                      market_data});
   }
 
   static void parse_neg_risk_question(const json &topics, const std::string &data,
@@ -491,12 +482,11 @@ private:
       }
     }
 
-    events.neg_risk_question.push_back({
-        block_number, tx_hash, log_index,
-        topics[1].get<std::string>(),
-        topics[2].get<std::string>(),
-        extract_uint256_from_data(data, 0),
-        question_data});
+    events.neg_risk_question.push_back({block_number, tx_hash, log_index,
+                                        topics[1].get<std::string>(),
+                                        topics[2].get<std::string>(),
+                                        extract_uint256_from_data(data, 0),
+                                        question_data});
   }
 
   static std::optional<std::string> parse_fpmm_create(const json &log, const std::string &factory_addr, DecodedEvents &events) {
@@ -523,15 +513,14 @@ private:
     }
     cond_ids_ss << "]";
 
-    events.fpmm.push_back({
-        block_number, tx_hash, log_index,
-        factory_addr,  // 记录factory地址
-        extract_address_from_topic(topics_arr[1].get<std::string>()),
-        fpmm_addr,
-        extract_address_from_topic(topics_arr[2].get<std::string>()),
-        extract_address_from_topic(topics_arr[3].get<std::string>()),
-        cond_ids_ss.str(),
-        extract_uint256_from_data(data, 2)});
+    events.fpmm.push_back({block_number, tx_hash, log_index,
+                           factory_addr, // 记录factory地址
+                           extract_address_from_topic(topics_arr[1].get<std::string>()),
+                           fpmm_addr,
+                           extract_address_from_topic(topics_arr[2].get<std::string>()),
+                           extract_address_from_topic(topics_arr[3].get<std::string>()),
+                           cond_ids_ss.str(),
+                           extract_uint256_from_data(data, 2)});
 
     return to_lower(fpmm_addr);
   }
@@ -541,25 +530,23 @@ private:
                                const std::string &tx_hash, int64_t block_number,
                                int64_t log_index, DecodedEvents &events) {
     if (topic0 == topics::FPMM_BUY) {
-      events.fpmm_trade.push_back({
-          block_number, tx_hash, log_index,
-          fpmm_addr,
-          extract_address_from_topic(topics[1].get<std::string>()),
-          1,
-          hex_to_int64(topics[2].get<std::string>()),
-          extract_uint256_from_data(data, 0),
-          extract_uint256_from_data(data, 2),
-          extract_uint256_from_data(data, 1)});
+      events.fpmm_trade.push_back({block_number, tx_hash, log_index,
+                                   fpmm_addr,
+                                   extract_address_from_topic(topics[1].get<std::string>()),
+                                   1,
+                                   hex_to_int64(topics[2].get<std::string>()),
+                                   extract_uint256_from_data(data, 0),
+                                   extract_uint256_from_data(data, 2),
+                                   extract_uint256_from_data(data, 1)});
     } else if (topic0 == topics::FPMM_SELL) {
-      events.fpmm_trade.push_back({
-          block_number, tx_hash, log_index,
-          fpmm_addr,
-          extract_address_from_topic(topics[1].get<std::string>()),
-          2,
-          hex_to_int64(topics[2].get<std::string>()),
-          extract_uint256_from_data(data, 0),
-          extract_uint256_from_data(data, 2),
-          extract_uint256_from_data(data, 1)});
+      events.fpmm_trade.push_back({block_number, tx_hash, log_index,
+                                   fpmm_addr,
+                                   extract_address_from_topic(topics[1].get<std::string>()),
+                                   2,
+                                   hex_to_int64(topics[2].get<std::string>()),
+                                   extract_uint256_from_data(data, 0),
+                                   extract_uint256_from_data(data, 2),
+                                   extract_uint256_from_data(data, 1)});
     } else if (topic0 == topics::FPMM_FUNDING_ADD) {
       int64_t amounts_offset = extract_uint256_from_data(data, 0);
       int64_t amounts_len = extract_uint256_from_data(data, amounts_offset / 32);
@@ -572,14 +559,13 @@ private:
       }
       amounts_ss << "]";
 
-      events.fpmm_funding.push_back({
-          block_number, tx_hash, log_index,
-          fpmm_addr,
-          extract_address_from_topic(topics[1].get<std::string>()),
-          1,
-          amounts_ss.str(),
-          0,
-          extract_uint256_from_data(data, 1)});
+      events.fpmm_funding.push_back({block_number, tx_hash, log_index,
+                                     fpmm_addr,
+                                     extract_address_from_topic(topics[1].get<std::string>()),
+                                     1,
+                                     amounts_ss.str(),
+                                     0,
+                                     extract_uint256_from_data(data, 1)});
     } else if (topic0 == topics::FPMM_FUNDING_REMOVE) {
       int64_t amounts_offset = extract_uint256_from_data(data, 0);
       int64_t amounts_len = extract_uint256_from_data(data, amounts_offset / 32);
@@ -592,14 +578,13 @@ private:
       }
       amounts_ss << "]";
 
-      events.fpmm_funding.push_back({
-          block_number, tx_hash, log_index,
-          fpmm_addr,
-          extract_address_from_topic(topics[1].get<std::string>()),
-          2,
-          amounts_ss.str(),
-          extract_uint256_from_data(data, 1),
-          extract_uint256_from_data(data, 2)});
+      events.fpmm_funding.push_back({block_number, tx_hash, log_index,
+                                     fpmm_addr,
+                                     extract_address_from_topic(topics[1].get<std::string>()),
+                                     2,
+                                     amounts_ss.str(),
+                                     extract_uint256_from_data(data, 1),
+                                     extract_uint256_from_data(data, 2)});
     }
   }
 };

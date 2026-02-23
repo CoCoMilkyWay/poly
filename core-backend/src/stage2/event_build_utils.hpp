@@ -5,14 +5,70 @@
 #include <cstdint>
 #include <iostream>
 #include <string>
+#include <unordered_map>
 
 namespace stage2 {
 
-// Polymarket 合约地址
-constexpr const char *POLYMARKET_FPMM_FACTORY = "0x8b9805a2f595b6705e74f7310829f2d299d21522";
+// 已知协议的合约地址列表
+// 用于识别NonPolymarket transfer属于哪个协议
+// 通过transfer事件的operator字段来匹配
 
-inline bool is_polymarket_factory(const std::string &factory) {
-  return factory == POLYMARKET_FPMM_FACTORY;
+enum class Protocol : uint8_t {
+  Unknown = 0,
+  Polymarket = 1,
+  Omen = 2,           // Gnosis预测市场
+  Azuro = 3,          // 体育博彩
+  Thales = 4,         // 二元期权
+  Overtime = 5,       // 体育博彩
+  PredictIt = 6,      // 预测市场
+  // 预留更多协议...
+};
+
+inline const char *protocol_name(Protocol p) {
+  switch (p) {
+    case Protocol::Polymarket: return "Polymarket";
+    case Protocol::Omen: return "Omen";
+    case Protocol::Azuro: return "Azuro";
+    case Protocol::Thales: return "Thales";
+    case Protocol::Overtime: return "Overtime";
+    case Protocol::PredictIt: return "PredictIt";
+    default: return "Unknown";
+  }
+}
+
+// 已知协议的合约地址 -> 协议枚举
+// 包括：Factory、Exchange、Router、Market等合约
+inline const std::unordered_map<std::string, Protocol> &known_protocol_contracts() {
+  static const std::unordered_map<std::string, Protocol> contracts = {
+      // ========== Polymarket ==========
+      {"0x8b9805a2f595b6705e74f7310829f2d299d21522", Protocol::Polymarket}, // FPMM Factory
+      {"0x4bfb41d5b3570defd03c39a9a4d8de6bd8b8982e", Protocol::Polymarket}, // CTF Exchange
+      {"0xc5d563a36ae78145c45a50134d48a1215220f80a", Protocol::Polymarket}, // NegRisk CTF Exchange
+      {"0xd91e80cf2e7be2e162c6513ced06f1dd0da35296", Protocol::Polymarket}, // NegRisk Adapter
+
+      // ========== Omen (Gnosis预测市场, Polygon部署) ==========
+      {"0x0000000000000000000000000000000000000000", Protocol::Omen}, // 占位，需要填入实际地址
+      // Omen在Polygon上的Factory/Market合约地址需要查证
+
+      // ========== Azuro (体育博彩) ==========
+      // Azuro在Polygon上的合约地址需要查证
+
+      // ========== Thales (二元期权) ==========
+      // Thales主要在Optimism，Polygon上可能有部署
+
+      // ========== Overtime (体育博彩) ==========
+      // Overtime主要在Optimism，Polygon上可能有部署
+  };
+  return contracts;
+}
+
+// 通过地址识别协议
+inline Protocol identify_protocol(const std::string &addr) {
+  auto it = known_protocol_contracts().find(addr);
+  if (it != known_protocol_contracts().end()) {
+    return it->second;
+  }
+  return Protocol::Unknown;
 }
 
 inline std::string blob_to_hex(const std::string &blob) {

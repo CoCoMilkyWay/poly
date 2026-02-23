@@ -48,8 +48,10 @@ public:
       bool has_question_id = false, has_source = false;
       for (idx_t i = 0; i < cols->RowCount(); ++i) {
         std::string name = cols->GetValue(1, i).GetValueUnsafe<std::string>();
-        if (name == "question_id") has_question_id = true;
-        if (name == "source") has_source = true;
+        if (name == "question_id")
+          has_question_id = true;
+        if (name == "source")
+          has_source = true;
       }
       if (!has_question_id) {
         stage2_db_.execute("ALTER TABLE rb_condition ADD COLUMN question_id BLOB");
@@ -87,27 +89,9 @@ public:
         fpmm_addr    BLOB PRIMARY KEY,
         cond_idx     INTEGER NOT NULL,
         is_usdc      INTEGER NOT NULL DEFAULT 1,
-        is_polymarket INTEGER NOT NULL DEFAULT 1,
-        collateral   BLOB,
-        factory      BLOB
+        collateral   BLOB
       )
     )");
-    {
-      auto conn = stage2_db_.create_connection();
-      auto cols = conn->Query("PRAGMA table_info(rb_fpmm)");
-      bool has_is_poly = false, has_factory = false;
-      for (idx_t i = 0; i < cols->RowCount(); ++i) {
-        std::string name = cols->GetValue(1, i).GetValueUnsafe<std::string>();
-        if (name == "is_polymarket") has_is_poly = true;
-        if (name == "factory") has_factory = true;
-      }
-      if (!has_is_poly) {
-        stage2_db_.execute("ALTER TABLE rb_fpmm ADD COLUMN is_polymarket INTEGER NOT NULL DEFAULT 1");
-      }
-      if (!has_factory) {
-        stage2_db_.execute("ALTER TABLE rb_fpmm ADD COLUMN factory BLOB");
-      }
-    }
 
     stage2_db_.execute(R"(
       CREATE TABLE IF NOT EXISTS rb_neg_risk_market (
@@ -218,7 +202,7 @@ public:
       token_map_[to_lower(tid)] = info;
     }
 
-    auto fpmm_r = conn->Query("SELECT fpmm_addr, cond_idx, is_usdc, collateral, is_polymarket, factory FROM rb_fpmm");
+    auto fpmm_r = conn->Query("SELECT fpmm_addr, cond_idx, is_usdc, collateral FROM rb_fpmm");
     for (idx_t i = 0; i < fpmm_r->RowCount(); ++i) {
       std::string addr = blob_to_hex(fpmm_r->GetValue(0, i).GetValueUnsafe<std::string>());
       FPMMInfo info;
@@ -227,19 +211,11 @@ public:
       auto collateral_val = fpmm_r->GetValue(3, i);
       if (!collateral_val.IsNull())
         info.collateral = to_lower(blob_to_hex(collateral_val.GetValueUnsafe<std::string>()));
-      info.is_polymarket = fpmm_r->GetValue(4, i).GetValue<int32_t>() != 0;
-      auto factory_val = fpmm_r->GetValue(5, i);
-      if (!factory_val.IsNull())
-        info.factory = to_lower(blob_to_hex(factory_val.GetValueUnsafe<std::string>()));
       fpmm_map_[to_lower(addr)] = info;
-      if (info.is_polymarket) {
-        if (info.is_usdc) {
-          fpmm_cond_idxs_.insert(info.cond_idx);
-        } else {
-          non_usdc_cond_idxs_.insert(info.cond_idx);
-        }
+      if (info.is_usdc) {
+        fpmm_cond_idxs_.insert(info.cond_idx);
       } else {
-        other_fpmm_cond_idxs_.insert(info.cond_idx);
+        non_usdc_cond_idxs_.insert(info.cond_idx);
       }
     }
 
@@ -420,7 +396,6 @@ private:
   std::unordered_set<uint32_t> fpmm_cond_idxs_;                    // Polymarket AMM 对应的 cond_idx
   std::unordered_set<uint32_t> negrisk_cond_idxs_;                 // NegRisk 对应的 cond_idx
   std::unordered_set<uint32_t> non_usdc_cond_idxs_;                // 非 USDC 抵押品的 cond_idx
-  std::unordered_set<uint32_t> other_fpmm_cond_idxs_;              // 其他协议FPMM的 cond_idx
   std::unordered_map<uint32_t, std::string> non_usdc_collaterals_; // cond_idx -> collateral address
 
   std::unordered_map<TxCondKey, std::vector<SplitInfo>> tx_split_;
@@ -450,9 +425,7 @@ private:
     std::string addr;
     uint32_t cond_idx;
     bool is_usdc;
-    bool is_polymarket;
     std::string collateral;
-    std::string factory;
   };
 
   struct NewNegRiskMarket {
@@ -528,26 +501,23 @@ private:
     progress_.total_tokens = token_map_.size();
   }
 
-  void intern_fpmm(const std::string &addr, uint32_t cond_idx, bool is_usdc, bool is_polymarket,
-                   const std::string &collateral, const std::string &factory) {
+  void intern_fpmm(const std::string &addr, uint32_t cond_idx, bool is_usdc = true, const std::string &collateral = "") {
     std::string lower = to_lower(addr);
     if (fpmm_map_.count(lower))
       return;
-    fpmm_map_[lower] = {cond_idx, is_usdc, is_polymarket, collateral, factory};
-    new_fpmms_.push_back({lower, cond_idx, is_usdc, is_polymarket, collateral, factory});
-    if (is_polymarket) {
-      if (is_usdc) {
-        fpmm_cond_idxs_.insert(cond_idx);
-      } else {
-        non_usdc_cond_idxs_.insert(cond_idx);
-      }
+    fpmm_map_[lower] = {cond_idx, is_usdc, collateral};
+    new_fpmms_.push_back({lower, cond_idx, is_usdc, collateral});
+    if (is_usdc) {
+      fpmm_cond_idxs_.insert(cond_idx);
     } else {
-      other_fpmm_cond_idxs_.insert(cond_idx);
+      non_usdc_cond_idxs_.insert(cond_idx);
     }
   }
 
   void update_cond_type_stats() {
+    // Partition（按类型）: total = AMM + Norm + NegRisk + Other
     int64_t amm = 0, negrisk = 0, normal = 0, other = 0;
+    // Partition（按来源）: total = Prep + PolyTokenReg + PolyFPMM + OtherFPMM + Split
     int64_t src_prep = 0, src_poly_token_reg = 0, src_poly_fpmm = 0, src_other_fpmm = 0, src_split = 0;
     for (size_t i = 0; i < conditions_.size(); ++i) {
       uint32_t idx = static_cast<uint32_t>(i);
@@ -555,17 +525,28 @@ private:
         ++amm;
       } else if (negrisk_cond_idxs_.count(idx)) {
         ++negrisk;
-      } else if (other_fpmm_cond_idxs_.count(idx)) {
-        ++other;
+      } else if (conditions_[i].source == ConditionSource::PolymarketTokenReg ||
+                 conditions_[i].source == ConditionSource::PolymarketFPMM) {
+        ++normal; // 明确来自Polymarket但不是AMM/NegRisk
       } else {
-        ++normal;
+        ++other; // 来源不确定(ConditionPrep/OtherFPMM/Split)，可能是其他协议
       }
       switch (conditions_[i].source) {
-        case ConditionSource::ConditionPrep: ++src_prep; break;
-        case ConditionSource::PolymarketTokenReg: ++src_poly_token_reg; break;
-        case ConditionSource::PolymarketFPMM: ++src_poly_fpmm; break;
-        case ConditionSource::OtherFPMM: ++src_other_fpmm; break;
-        case ConditionSource::SplitEvent: ++src_split; break;
+      case ConditionSource::ConditionPrep:
+        ++src_prep;
+        break;
+      case ConditionSource::PolymarketTokenReg:
+        ++src_poly_token_reg;
+        break;
+      case ConditionSource::PolymarketFPMM:
+        ++src_poly_fpmm;
+        break;
+      case ConditionSource::OtherFPMM:
+        ++src_other_fpmm;
+        break;
+      case ConditionSource::SplitEvent:
+        ++src_split;
+        break;
       }
     }
     progress_.cnt_cond_amm = amm;
@@ -578,7 +559,9 @@ private:
     progress_.cnt_cond_src_other_fpmm = src_other_fpmm;
     progress_.cnt_cond_src_split = src_split;
 
+    // Partition（按类型）: total = AMM + Norm + NegRisk + 非USDC + Other
     int64_t t_amm = 0, t_negrisk = 0, t_non_usdc = 0, t_norm = 0, t_other = 0;
+    // Partition（按来源）: total = PolyReg + PolyFPMM + OtherFPMM + Split
     int64_t t_src_poly_reg = 0, t_src_poly_fpmm = 0, t_src_other_fpmm = 0, t_src_split = 0;
     for (const auto &[tid, info] : token_map_) {
       if (fpmm_cond_idxs_.count(info.cond_idx))
@@ -587,15 +570,24 @@ private:
         ++t_negrisk;
       else if (non_usdc_cond_idxs_.count(info.cond_idx))
         ++t_non_usdc;
-      else if (other_fpmm_cond_idxs_.count(info.cond_idx))
-        ++t_other;
+      else if (info.source == TokenSource::PolymarketTokenReg ||
+               info.source == TokenSource::PolymarketFPMM)
+        ++t_norm; // 明确来自Polymarket
       else
-        ++t_norm;
+        ++t_other; // 来源不确定(OtherFPMM/Split)，可能是其他协议
       switch (info.source) {
-        case TokenSource::PolymarketTokenReg: ++t_src_poly_reg; break;
-        case TokenSource::PolymarketFPMM: ++t_src_poly_fpmm; break;
-        case TokenSource::OtherFPMM: ++t_src_other_fpmm; break;
-        case TokenSource::SplitEvent: ++t_src_split; break;
+      case TokenSource::PolymarketTokenReg:
+        ++t_src_poly_reg;
+        break;
+      case TokenSource::PolymarketFPMM:
+        ++t_src_poly_fpmm;
+        break;
+      case TokenSource::OtherFPMM:
+        ++t_src_other_fpmm;
+        break;
+      case TokenSource::SplitEvent:
+        ++t_src_split;
+        break;
       }
     }
     progress_.cnt_token_amm = t_amm;

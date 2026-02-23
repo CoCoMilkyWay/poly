@@ -55,14 +55,12 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
   }
 
   auto fpmm = conn->Query(
-      "SELECT fpmm_addr, condition_ids, collateral_token, factory FROM " + stage1_db_.feather_table_range("fpmm", start, end) +
+      "SELECT fpmm_addr, condition_ids, collateral_token FROM " + stage1_db_.feather_table_range("fpmm", start, end) +
       " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
   for (idx_t i = 0; i < fpmm->RowCount(); ++i) {
     std::string addr = blob_to_hex(fpmm->GetValue(0, i).GetValueUnsafe<std::string>());
     std::string cids_json = fpmm->GetValue(1, i).GetValueUnsafe<std::string>();
     std::string collateral = to_lower(blob_to_hex(fpmm->GetValue(2, i).GetValueUnsafe<std::string>()));
-    std::string factory = to_lower(blob_to_hex(fpmm->GetValue(3, i).GetValueUnsafe<std::string>()));
-    bool is_polymarket = is_polymarket_factory(factory);
 
     auto cids_arr = nlohmann::json::parse(cids_json);
     assert(!cids_arr.empty());
@@ -71,19 +69,17 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
     auto it = cond_map_.find(lower_cid);
     uint32_t cond_idx;
     if (it == cond_map_.end()) {
-      ConditionSource cond_src = is_polymarket ? ConditionSource::PolymarketFPMM : ConditionSource::OtherFPMM;
-      cond_idx = intern_condition(cid, 2, cond_src);
+      cond_idx = intern_condition(cid, 2, ConditionSource::PolymarketFPMM);
     } else {
       cond_idx = it->second;
     }
 
     bool is_usdc = is_usdc_collateral(collateral);
-    intern_fpmm(addr, cond_idx, is_usdc, is_polymarket, collateral, factory);
+    intern_fpmm(addr, cond_idx, is_usdc, collateral);
 
     // 为所有 FPMM 计算 token_id（包括非 USDC 的，以便识别用户的 merge/burn 操作）
     auto cond_bytes = hex_to_blob(lower_cid);
     auto collateral_bytes = hex_to_blob(collateral);
-    TokenSource token_src = is_polymarket ? TokenSource::PolymarketFPMM : TokenSource::OtherFPMM;
     for (int index_set = 1; index_set <= 2; ++index_set) {
       std::string collection_input(96, '\0');
       std::memcpy(collection_input.data() + 32, cond_bytes.data(), std::min(size_t(32), cond_bytes.size()));
@@ -96,7 +92,7 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
       auto position_hash = crypto::keccak256(position_input);
 
       std::string token_id = crypto::Keccak256::to_hex(position_hash);
-      intern_token(token_id, cond_idx, index_set == 1 ? 1 : 0, token_src);
+      intern_token(token_id, cond_idx, index_set == 1 ? 1 : 0, TokenSource::PolymarketFPMM);
     }
   }
 
@@ -464,14 +460,11 @@ void EventBuilder::commit_chunk(int64_t new_cursor) {
   for (auto &nf : new_fpmms_) {
     std::string blob = hex_to_blob(nf.addr);
     std::string collateral_val = nf.collateral.empty() ? "NULL" : blob_to_hex_literal(hex_to_blob(nf.collateral));
-    std::string factory_val = nf.factory.empty() ? "NULL" : blob_to_hex_literal(hex_to_blob(nf.factory));
-    conn->Query("INSERT OR IGNORE INTO rb_fpmm (fpmm_addr, cond_idx, is_usdc, collateral, is_polymarket, factory) VALUES (" +
+    conn->Query("INSERT OR IGNORE INTO rb_fpmm (fpmm_addr, cond_idx, is_usdc, collateral) VALUES (" +
                 blob_to_hex_literal(blob) + ", " +
                 std::to_string(nf.cond_idx) + ", " +
                 std::to_string(nf.is_usdc ? 1 : 0) + ", " +
-                collateral_val + ", " +
-                std::to_string(nf.is_polymarket ? 1 : 0) + ", " +
-                factory_val + ")");
+                collateral_val + ")");
   }
 
   for (auto &nm : new_neg_risk_markets_) {
