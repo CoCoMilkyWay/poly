@@ -18,10 +18,127 @@ static constexpr const char *NEG_RISK_CTF_EXCHANGE = "0xc5d563a36ae78145c45a5013
 static constexpr const char *NEG_RISK_ADAPTER = "0xd91e80cf2e7be2e162c6513ced06f1dd0da35296";
 static constexpr const char *USDC_E = "0x2791bca1f2de4661ed88a30c99a7a9449aa84174";
 static constexpr const char *CONDITIONAL_TOKENS = "0x4d97dcd97ec945f40cf65f87097ace5ea0476045";
+// NegRisk Convert burn address: keccak256("NO_TOKEN_BURN_ADDRESS")[0:20]
+static constexpr const char *NO_TOKEN_BURN_ADDRESS = "0x36a0e974a7083ea0ad4dea6a27b90fab22e93a32";
 
 struct ScanStats {
   int64_t rows = 0;
   int64_t events = 0;
+};
+
+// Transfer 分类结果 - 用于验证每笔 transfer 都被正确处理
+enum class TransferClass {
+  // 语义事件 (有对应的语义事件匹配)
+  Split,            // mint: 普通/NegRisk split
+  Merge,            // burn: 普通/NegRisk merge
+  Redemption,       // burn: 赎回
+  Convert,          // to=Adapter: NegRisk convert
+  OrderBuy,         // Exchange: 订单买方
+  OrderSell,        // Exchange: 订单卖方
+  FPMMBuy,          // FPMM: AMM买
+  FPMMSell,         // FPMM: AMM卖
+  FPMMLPAdd,        // mint to FPMM: LP添加
+  FPMMLPRemove,     // burn from FPMM: LP移除
+  FPMMLPReturn,     // FPMM→user: LP多余token返还
+
+  // 用户转账 (无语义事件匹配)
+  TransferIn,       // 用户直接转账入
+  TransferOut,      // 用户直接转账出
+
+  // 内部操作 (跳过，不记录给任何用户)
+  InternalMint,     // 协议内部mint (NegRisk/FPMM)
+  InternalBurn,     // 协议内部burn (NegRisk/FPMM)
+  InternalTransfer, // 协议内部转账
+
+  // 错误 (不应该发生)
+  UnknownToken,     // token_id 不在 token_map 中
+  Unclassified,     // 无法分类 (bug)
+};
+
+struct TransferStats {
+  int64_t total = 0;
+  int64_t split = 0;
+  int64_t merge = 0;
+  int64_t redemption = 0;
+  int64_t convert = 0;
+  int64_t order_buy = 0;
+  int64_t order_sell = 0;
+  int64_t fpmm_buy = 0;
+  int64_t fpmm_sell = 0;
+  int64_t fpmm_lp_add = 0;
+  int64_t fpmm_lp_remove = 0;
+  int64_t fpmm_lp_return = 0;
+  int64_t transfer_in = 0;
+  int64_t transfer_out = 0;
+  int64_t internal_mint = 0;
+  int64_t internal_burn = 0;
+  int64_t internal_transfer = 0;
+  int64_t unknown_token = 0;
+  int64_t unclassified = 0;
+
+  void add(TransferClass cls) {
+    ++total;
+    switch (cls) {
+    case TransferClass::Split: ++split; break;
+    case TransferClass::Merge: ++merge; break;
+    case TransferClass::Redemption: ++redemption; break;
+    case TransferClass::Convert: ++convert; break;
+    case TransferClass::OrderBuy: ++order_buy; break;
+    case TransferClass::OrderSell: ++order_sell; break;
+    case TransferClass::FPMMBuy: ++fpmm_buy; break;
+    case TransferClass::FPMMSell: ++fpmm_sell; break;
+    case TransferClass::FPMMLPAdd: ++fpmm_lp_add; break;
+    case TransferClass::FPMMLPRemove: ++fpmm_lp_remove; break;
+    case TransferClass::FPMMLPReturn: ++fpmm_lp_return; break;
+    case TransferClass::TransferIn: ++transfer_in; break;
+    case TransferClass::TransferOut: ++transfer_out; break;
+    case TransferClass::InternalMint: ++internal_mint; break;
+    case TransferClass::InternalBurn: ++internal_burn; break;
+    case TransferClass::InternalTransfer: ++internal_transfer; break;
+    case TransferClass::UnknownToken: ++unknown_token; break;
+    case TransferClass::Unclassified: ++unclassified; break;
+    }
+  }
+
+  void verify() const {
+    int64_t semantic = split + merge + redemption + convert +
+                       order_buy + order_sell +
+                       fpmm_buy + fpmm_sell + fpmm_lp_add + fpmm_lp_remove + fpmm_lp_return;
+    int64_t user_xfer = transfer_in + transfer_out;
+    int64_t internal = internal_mint + internal_burn + internal_transfer;
+    int64_t unknown = unknown_token;
+    int64_t bad = unclassified;
+
+    int64_t sum = semantic + user_xfer + internal + unknown + bad;
+    if (sum != total) {
+      std::cerr << "[ERROR] Transfer stats don't add up: sum=" << sum << ", total=" << total << std::endl;
+      assert(false);
+    }
+    if (bad > 0) {
+      std::cerr << "[ERROR] Unclassified transfers: " << bad << std::endl;
+      assert(false);
+    }
+    if (unknown > 0) {
+      std::cerr << "[WARN] Unknown token transfers: " << unknown << std::endl;
+    }
+  }
+
+  void print_summary() const {
+    std::cerr << "Transfer Stats Summary:" << std::endl;
+    std::cerr << "  Total: " << total << std::endl;
+    std::cerr << "  Semantic Events:" << std::endl;
+    std::cerr << "    Split: " << split << ", Merge: " << merge << ", Redemption: " << redemption << std::endl;
+    std::cerr << "    Convert: " << convert << std::endl;
+    std::cerr << "    OrderBuy: " << order_buy << ", OrderSell: " << order_sell << std::endl;
+    std::cerr << "    FPMMBuy: " << fpmm_buy << ", FPMMSell: " << fpmm_sell << std::endl;
+    std::cerr << "    FPMMLPAdd: " << fpmm_lp_add << ", FPMMLPRemove: " << fpmm_lp_remove << ", FPMMLPReturn: " << fpmm_lp_return << std::endl;
+    std::cerr << "  User Transfers:" << std::endl;
+    std::cerr << "    TransferIn: " << transfer_in << ", TransferOut: " << transfer_out << std::endl;
+    std::cerr << "  Internal:" << std::endl;
+    std::cerr << "    InternalMint: " << internal_mint << ", InternalBurn: " << internal_burn << ", InternalTransfer: " << internal_transfer << std::endl;
+    std::cerr << "  Errors:" << std::endl;
+    std::cerr << "    UnknownToken: " << unknown_token << ", Unclassified: " << unclassified << std::endl;
+  }
 };
 
 struct BuildProgress {
@@ -47,6 +164,7 @@ struct BuildProgress {
   int64_t cnt_fpmm_trade = 0;
   int64_t cnt_fpmm_funding = 0;
   int64_t cnt_transfer = 0;
+  TransferStats xfer_stats;     // Transfer 分类统计
 };
 
 class EventBuilder {
@@ -287,6 +405,7 @@ public:
     tx_order_.clear();
     tx_fpmm_trade_.clear();
     tx_fpmm_funding_.clear();
+    chunk_xfer_stats_ = {};
 
     progress_.phase = 1;
     phase1_update_mappings(chunk_start, chunk_end);
@@ -296,6 +415,27 @@ public:
 
     progress_.phase = 3;
     phase3_process_transfers(chunk_start, chunk_end);
+
+    // 验证 transfer 分类完整性
+    chunk_xfer_stats_.verify();
+    progress_.xfer_stats.total += chunk_xfer_stats_.total;
+    progress_.xfer_stats.split += chunk_xfer_stats_.split;
+    progress_.xfer_stats.merge += chunk_xfer_stats_.merge;
+    progress_.xfer_stats.redemption += chunk_xfer_stats_.redemption;
+    progress_.xfer_stats.convert += chunk_xfer_stats_.convert;
+    progress_.xfer_stats.order_buy += chunk_xfer_stats_.order_buy;
+    progress_.xfer_stats.order_sell += chunk_xfer_stats_.order_sell;
+    progress_.xfer_stats.fpmm_buy += chunk_xfer_stats_.fpmm_buy;
+    progress_.xfer_stats.fpmm_sell += chunk_xfer_stats_.fpmm_sell;
+    progress_.xfer_stats.fpmm_lp_add += chunk_xfer_stats_.fpmm_lp_add;
+    progress_.xfer_stats.fpmm_lp_remove += chunk_xfer_stats_.fpmm_lp_remove;
+    progress_.xfer_stats.fpmm_lp_return += chunk_xfer_stats_.fpmm_lp_return;
+    progress_.xfer_stats.transfer_in += chunk_xfer_stats_.transfer_in;
+    progress_.xfer_stats.transfer_out += chunk_xfer_stats_.transfer_out;
+    progress_.xfer_stats.internal_mint += chunk_xfer_stats_.internal_mint;
+    progress_.xfer_stats.internal_burn += chunk_xfer_stats_.internal_burn;
+    progress_.xfer_stats.internal_transfer += chunk_xfer_stats_.internal_transfer;
+    progress_.xfer_stats.unknown_token += chunk_xfer_stats_.unknown_token;
 
     commit_chunk(chunk_end);
 
@@ -330,6 +470,7 @@ private:
   std::unordered_map<TxTokenKey, OrderInfo> tx_order_;
   std::unordered_map<TxFPMMKey, FPMMTradeInfo> tx_fpmm_trade_;
   std::unordered_map<TxFPMMKey, FPMMFundingInfo> tx_fpmm_funding_;
+  TransferStats chunk_xfer_stats_;  // 当前 chunk 的 transfer 统计
 
   struct NewCondition {
     uint32_t idx;
@@ -755,6 +896,8 @@ private:
       std::string token_id = maker_is_usdc ? taker_asset : maker_asset;
 
       TxTokenKey key{block, tx_hash, to_lower(token_id)};
+      // 同一 tx 同一 token 不应有多个 order (每个 OrderFilled 对应一笔 Transfer)
+      assert(tx_order_.count(key) == 0 && "Duplicate order for same token in same tx");
       OrderInfo info;
       info.maker = maker;
       info.taker = taker;
@@ -776,6 +919,8 @@ private:
       key.block = fpmm_trade->GetValue(0, i).GetValue<int64_t>();
       key.tx_hash = hex_to_bytes32(blob_to_hex(fpmm_trade->GetValue(1, i).GetValueUnsafe<std::string>()));
       key.fpmm_addr = fpmm_addr;
+      // 同一 tx 同一 FPMM 不应有多个 trade 事件
+      assert(tx_fpmm_trade_.count(key) == 0 && "Duplicate FPMM trade in same tx");
       FPMMTradeInfo info;
       info.fpmm_addr = fpmm_addr;
       info.trader = to_lower(blob_to_hex(fpmm_trade->GetValue(3, i).GetValueUnsafe<std::string>()));
@@ -796,6 +941,8 @@ private:
       key.block = fpmm_funding->GetValue(0, i).GetValue<int64_t>();
       key.tx_hash = hex_to_bytes32(blob_to_hex(fpmm_funding->GetValue(1, i).GetValueUnsafe<std::string>()));
       key.fpmm_addr = fpmm_addr;
+      // 同一 tx 同一 FPMM 不应有多个 funding 事件
+      assert(tx_fpmm_funding_.count(key) == 0 && "Duplicate FPMM funding in same tx");
       FPMMFundingInfo info;
       info.fpmm_addr = fpmm_addr;
       info.funder = to_lower(blob_to_hex(fpmm_funding->GetValue(3, i).GetValueUnsafe<std::string>()));
@@ -860,12 +1007,15 @@ private:
       auto tx_hash = hex_to_bytes32(r.tx_hash);
 
       auto tit = token_map_.find(token_id);
-      if (tit == token_map_.end())
+      if (tit == token_map_.end()) {
+        chunk_xfer_stats_.add(TransferClass::UnknownToken);
         continue;
+      }
       uint32_t cond_idx = tit->second.cond_idx;
       uint8_t token_idx = tit->second.is_yes ? 0 : 1;
 
-      classify_and_emit(sort_key, tx_hash, r.block, op, from, to, token_id, r.amount, cond_idx, token_idx);
+      TransferClass cls = classify_and_emit(sort_key, tx_hash, r.block, op, from, to, token_id, r.amount, cond_idx, token_idx);
+      chunk_xfer_stats_.add(cls);
     }
   }
 
@@ -873,10 +1023,10 @@ private:
   bool is_protocol_contract(const std::string &addr) const {
     return addr == ZERO_ADDR || addr == CTF_EXCHANGE || addr == NEG_RISK_CTF_EXCHANGE ||
            addr == NEG_RISK_ADAPTER || addr == CONDITIONAL_TOKENS ||
-           fpmm_map_.count(addr) > 0;
+           addr == NO_TOKEN_BURN_ADDRESS || fpmm_map_.count(addr) > 0;
   }
 
-  void classify_and_emit(int64_t sort_key, const std::array<uint8_t, 32> &tx_hash,
+  TransferClass classify_and_emit(int64_t sort_key, const std::array<uint8_t, 32> &tx_hash,
                          int64_t block, const std::string &op,
                          const std::string &from, const std::string &to,
                          const std::string &token_id, int64_t amount,
@@ -884,7 +1034,7 @@ private:
     // ===== 基础验证 =====
     assert(amount >= 0 && "Transfer amount must be non-negative");
     if (amount == 0)
-      return; // 0-amount transfer 无意义，跳过
+      return TransferClass::InternalTransfer; // 0-amount 视为内部操作
     assert(cond_idx < conditions_.size() && "Invalid cond_idx");
     assert(token_idx < 2 && "Invalid token_idx");
     assert(from != to && "from and to must be different");
@@ -900,135 +1050,217 @@ private:
     if (from == ZERO_ADDR) {
       // NegRisk 内部 mint → 跳过（用户通过后续 transfer 获取）
       if (to == NEG_RISK_ADAPTER)
-        return;
+        return TransferClass::InternalMint;
 
       // FPMM 内部 mint → 检查是否是 LP Add（必须先于 Split 检查！）
       if (fpmm_map_.count(to) > 0) {
         TxFPMMKey tx_fpmm_key{block, tx_hash, to};
         auto fit = tx_fpmm_funding_.find(tx_fpmm_key);
-        if (fit != tx_fpmm_funding_.end() && fit->second.side == 1 &&
-            !is_protocol_contract(fit->second.funder)) {
-          RawEvent evt{sort_key, cond_idx, EventType::FPMMLPAdd, token_idx, 0, amount, split_price};
-          push_event(fit->second.funder, evt);
+        if (fit != tx_fpmm_funding_.end() && fit->second.side == 1) {
+          // LP Add: mint 的量是 max(amount0, amount1)，因为 split 生成等量 YES+NO
+          int64_t split_amt = std::max(fit->second.amount0, fit->second.amount1);
+          assert(amount == split_amt && "LP Add split amount mismatch");
+          // 记录进入池子的量（不是 mint 的量）
+          if (!is_protocol_contract(fit->second.funder)) {
+            int64_t pool_amt = (token_idx == 0) ? fit->second.amount0 : fit->second.amount1;
+            RawEvent evt{sort_key, cond_idx, EventType::FPMMLPAdd, token_idx, 0, pool_amt, split_price};
+            push_event(fit->second.funder, evt);
+          }
+          return TransferClass::FPMMLPAdd;
         }
-        return;
+        // FPMM 内部 split (无 funding 事件)
+        return TransferClass::InternalMint;
       }
 
       // 普通 Split: stakeholder == to (用户直接 split)
       auto sit = tx_split_.find(tx_cond_key);
       if (sit != tx_split_.end()) {
         for (const auto &info : sit->second) {
-          if (info.stakeholder == to && !is_protocol_contract(to)) {
-            RawEvent evt{sort_key, cond_idx, EventType::Split, token_idx, 0, amount, split_price};
-            push_event(to, evt);
-            return;
+          if (info.stakeholder == to) {
+            // 验证 amount 与 split 事件一致
+            assert(amount == info.amount && "Split amount mismatch");
+            if (!is_protocol_contract(to)) {
+              RawEvent evt{sort_key, cond_idx, EventType::Split, token_idx, 0, amount, split_price};
+              push_event(to, evt);
+            }
+            return TransferClass::Split;
           }
         }
       }
-      return;
+      // 无法匹配的 mint → 不应该发生
+      std::cerr << "[ERROR] Unmatched mint transfer: block=" << block 
+                << ", to=" << to << ", token_id=" << token_id 
+                << ", amount=" << amount << ", cond_idx=" << cond_idx << std::endl;
+      assert(false && "Unmatched mint transfer");
+      return TransferClass::Unclassified;
     }
 
     // ========== burn 分支 (to == 0x0) ==========
     if (to == ZERO_ADDR) {
       // NegRisk 内部 burn → 跳过（用户已通过 transfer 记录）
       if (from == NEG_RISK_ADAPTER)
-        return;
+        return TransferClass::InternalBurn;
 
-      // FPMM 内部 burn → 检查是否是 LP Remove（必须先于 Merge 检查！）
+      // FPMM 内部 burn：只会在 FPMM sell 时发生（内部 merge）
+      // 注意：LP Remove 不涉及 burn，而是 transfer（见 FPMM operator 分支）
       if (fpmm_map_.count(from) > 0) {
-        TxFPMMKey tx_fpmm_key{block, tx_hash, from};
-        auto fit = tx_fpmm_funding_.find(tx_fpmm_key);
-        if (fit != tx_fpmm_funding_.end() && fit->second.side == 2 &&
-            !is_protocol_contract(fit->second.funder)) {
-          RawEvent evt{sort_key, cond_idx, EventType::FPMMLPRemove, token_idx, 0, -amount, split_price};
-          push_event(fit->second.funder, evt);
-        }
-        return;
+        // FPMM 内部 merge for sell
+        return TransferClass::InternalBurn;
       }
 
       // 普通 Merge: stakeholder == from (用户直接 merge)
       auto mit = tx_merge_.find(tx_cond_key);
       if (mit != tx_merge_.end()) {
         for (const auto &info : mit->second) {
-          if (info.stakeholder == from && !is_protocol_contract(from)) {
-            RawEvent evt{sort_key, cond_idx, EventType::Merge, token_idx, 0, -amount, split_price};
-            push_event(from, evt);
-            return;
+          if (info.stakeholder == from) {
+            // 验证 amount 与 merge 事件一致
+            assert(amount == info.amount && "Merge amount mismatch");
+            if (!is_protocol_contract(from)) {
+              RawEvent evt{sort_key, cond_idx, EventType::Merge, token_idx, 0, -amount, split_price};
+              push_event(from, evt);
+            }
+            return TransferClass::Merge;
           }
         }
       }
+
       // Redemption: redeemer == from
       auto rit = tx_redemption_.find(tx_cond_key);
       if (rit != tx_redemption_.end()) {
         for (const auto &info : rit->second) {
-          if (info.redeemer == from && !is_protocol_contract(from)) {
-            auto &payouts = conditions_[cond_idx].payout_numerators;
-            int64_t payout_price = (token_idx < payouts.size() && payouts[token_idx] >= 0)
-                                       ? payouts[token_idx]
-                                       : 1000000;
-            assert(payout_price >= 0 && payout_price <= 1000000 && "Invalid payout price");
-            RawEvent evt{sort_key, cond_idx, EventType::Redemption, token_idx, 0, -amount, payout_price};
-            push_event(from, evt);
-            return;
+          if (info.redeemer == from) {
+            if (!is_protocol_contract(from)) {
+              auto &payouts = conditions_[cond_idx].payout_numerators;
+              int64_t payout_price = (token_idx < payouts.size() && payouts[token_idx] >= 0)
+                                         ? payouts[token_idx]
+                                         : 1000000;
+              assert(payout_price >= 0 && payout_price <= 1000000 && "Invalid payout price");
+              RawEvent evt{sort_key, cond_idx, EventType::Redemption, token_idx, 0, -amount, payout_price};
+              push_event(from, evt);
+            }
+            return TransferClass::Redemption;
           }
         }
       }
-      return;
+      // 无法匹配的 burn → 不应该发生
+      std::cerr << "[ERROR] Unmatched burn transfer: block=" << block 
+                << ", from=" << from << ", token_id=" << token_id 
+                << ", amount=" << amount << ", cond_idx=" << cond_idx << std::endl;
+      assert(false && "Unmatched burn transfer");
+      return TransferClass::Unclassified;
     }
 
     // ========== Exchange operator ==========
     if (op == CTF_EXCHANGE || op == NEG_RISK_CTF_EXCHANGE) {
       auto oit = tx_order_.find(tx_token_key);
       if (oit != tx_order_.end()) {
+        // 验证订单数据
         assert(oit->second.tokens > 0 && "Order tokens must be positive");
+        // 验证 amount 与订单一致 (1 transfer = 1 order_filled，应该完全匹配)
+        assert(amount == oit->second.tokens && "Order amount mismatch: transfer amount != order tokens");
+        // 验证 from/to 与 maker/taker 一致
+        // maker_side=1 表示 maker 买入(出 USDC 收 token), 则 to=maker, from=taker
+        // maker_side=2 表示 maker 卖出(出 token 收 USDC), 则 from=maker, to=taker
+        if (oit->second.maker_side == 1) {
+          assert(to == oit->second.maker && "Order buyer mismatch: to != maker");
+          assert(from == oit->second.taker && "Order seller mismatch: from != taker");
+        } else {
+          assert(from == oit->second.maker && "Order seller mismatch: from != maker");
+          assert(to == oit->second.taker && "Order buyer mismatch: to != taker");
+        }
+
         int64_t price = oit->second.usdc * 1000000 / oit->second.tokens;
         assert(price >= 0 && price <= 1000000 && "Price out of range [0,1]");
-        // 只给非协议方记录事件（FPMM 等可能通过 Exchange 交易）
+        // 只给非协议方记录事件
         if (!is_protocol_contract(to))
           push_event(to, RawEvent{sort_key, cond_idx, EventType::Buy, token_idx, 0, amount, price});
         if (!is_protocol_contract(from))
           push_event(from, RawEvent{sort_key, cond_idx, EventType::Sell, token_idx, 0, -amount, price});
-        return;
+
+        // 一笔 transfer 只统计一次
+        bool to_user = !is_protocol_contract(to);
+        bool from_user = !is_protocol_contract(from);
+        if (to_user) {
+          return TransferClass::OrderBuy;
+        } else if (from_user) {
+          return TransferClass::OrderSell;
+        } else {
+          return TransferClass::InternalTransfer;
+        }
       }
-      // 无对应 order → TransferIn/Out（Exchange 内部转账，罕见）
-      if (!is_protocol_contract(to))
-        push_event(to, RawEvent{sort_key, cond_idx, EventType::TransferIn, token_idx, 0, amount, 0});
-      if (!is_protocol_contract(from))
-        push_event(from, RawEvent{sort_key, cond_idx, EventType::TransferOut, token_idx, 0, -amount, 0});
-      return;
+      // 无对应 order → 不应该发生（Exchange 只会在有 order 时操作）
+      std::cerr << "[ERROR] Exchange transfer without order event: block=" << block 
+                << ", op=" << op << ", from=" << from << ", to=" << to 
+                << ", token_id=" << token_id << ", amount=" << amount << std::endl;
+      assert(false && "Exchange transfer without order event");
+      return TransferClass::Unclassified;
     }
 
     // ========== NegRisk Adapter operator ==========
     if (op == NEG_RISK_ADAPTER) {
-      // Adapter → 用户: NegRisk Split
+      // Adapter → 用户: NegRisk Split (或 Convert 的 YES 输出)
       if (from == NEG_RISK_ADAPTER) {
         auto sit = tx_split_.find(tx_cond_key);
         if (sit != tx_split_.end()) {
           for (const auto &info : sit->second) {
-            if (info.stakeholder == NEG_RISK_ADAPTER && !is_protocol_contract(to)) {
-              push_event(to, RawEvent{sort_key, cond_idx, EventType::Split, token_idx, 0, amount, split_price});
-              return;
+            if (info.stakeholder == NEG_RISK_ADAPTER) {
+              // 验证 amount: 对于 Convert 操作，transfer_amount <= split_amount (因为有手续费)
+              // 检查是否是 Convert 的一部分（YES token，即 token_idx=0）
+              bool is_convert_output = false;
+              if (token_idx == 0 && !conditions_[cond_idx].question_id.empty()) {
+                auto market_it = cond_to_market_.find(conditions_[cond_idx].question_id);
+                if (market_it != cond_to_market_.end()) {
+                  TxMarketKey tx_market_key{block, tx_hash, market_it->second};
+                  is_convert_output = (tx_convert_.count(tx_market_key) > 0);
+                }
+              }
+              if (is_convert_output) {
+                // Convert 的 YES 输出：允许 amount <= info.amount (扣除手续费)
+                assert(amount <= info.amount && "Convert YES output amount exceeds split amount");
+              } else {
+                // 普通 NegRisk Split：amount 必须精确匹配
+                assert(amount == info.amount && "NegRisk Split amount mismatch");
+              }
+              if (!is_protocol_contract(to)) {
+                push_event(to, RawEvent{sort_key, cond_idx, EventType::Split, token_idx, 0, amount, split_price});
+              }
+              return TransferClass::Split;
             }
           }
         }
         // 无 split 事件 → TransferIn（罕见）
         if (!is_protocol_contract(to))
           push_event(to, RawEvent{sort_key, cond_idx, EventType::TransferIn, token_idx, 0, amount, 0});
-        return;
+        return TransferClass::TransferIn;
       }
-      // 用户 → Adapter: NegRisk Merge 或 Convert
+      // 用户 → Adapter: NegRisk Merge
       if (to == NEG_RISK_ADAPTER) {
-        // Merge
         auto mit = tx_merge_.find(tx_cond_key);
         if (mit != tx_merge_.end()) {
           for (const auto &info : mit->second) {
-            if (info.stakeholder == NEG_RISK_ADAPTER && !is_protocol_contract(from)) {
-              push_event(from, RawEvent{sort_key, cond_idx, EventType::Merge, token_idx, 0, -amount, split_price});
-              return;
+            if (info.stakeholder == NEG_RISK_ADAPTER) {
+              assert(amount == info.amount && "NegRisk Merge amount mismatch");
+              if (!is_protocol_contract(from)) {
+                push_event(from, RawEvent{sort_key, cond_idx, EventType::Merge, token_idx, 0, -amount, split_price});
+              }
+              return TransferClass::Merge;
             }
           }
         }
-        // Convert
+        if (!is_protocol_contract(from))
+          push_event(from, RawEvent{sort_key, cond_idx, EventType::TransferOut, token_idx, 0, -amount, 0});
+        return TransferClass::TransferOut;
+      }
+      // 用户/Adapter → BurnAddr: NegRisk Convert (NO tokens 销毁)
+      // convertPositions: user's NO → burn, adapter's accumulated NO → burn
+      if (to == NO_TOKEN_BURN_ADDRESS) {
+        // 只有 NO token (token_idx=1) 会被发送到 burn address
+        assert(token_idx == 1 && "Convert should only burn NO tokens");
+        // 如果是 adapter → burn，是内部操作，跳过
+        if (from == NEG_RISK_ADAPTER) {
+          return TransferClass::InternalBurn;
+        }
+        // 用户 → burn: 查找 Convert 事件
         if (!conditions_[cond_idx].question_id.empty()) {
           auto market_it = cond_to_market_.find(conditions_[cond_idx].question_id);
           if (market_it != cond_to_market_.end()) {
@@ -1036,31 +1268,32 @@ private:
             auto cit = tx_convert_.find(tx_market_key);
             if (cit != tx_convert_.end()) {
               for (const auto &info : cit->second) {
-                if (info.stakeholder == from && !is_protocol_contract(from)) {
+                if (info.stakeholder == from) {
+                  assert(amount == info.amount && "Convert amount mismatch");
                   int M = __builtin_popcountll(info.index_set);
                   assert(M >= 2 && "Convert requires at least 2 positions");
-                  int64_t conv_price = 1000000 * (M - 1) / M;
-                  push_event(from, RawEvent{sort_key, cond_idx, EventType::Convert, token_idx, 0, -amount, conv_price});
-                  return;
+                  if (!is_protocol_contract(from)) {
+                    int64_t conv_price = 1000000 * (M - 1) / M;
+                    push_event(from, RawEvent{sort_key, cond_idx, EventType::Convert, token_idx, 0, -amount, conv_price});
+                  }
+                  return TransferClass::Convert;
                 }
               }
             }
           }
         }
-        // 无 merge/convert 事件 → TransferOut（罕见）
-        if (!is_protocol_contract(from))
-          push_event(from, RawEvent{sort_key, cond_idx, EventType::TransferOut, token_idx, 0, -amount, 0});
-        return;
+        // 没有匹配的 convert 事件，但发送到 burn addr → 错误
+        std::cerr << "[ERROR] Transfer to NO_TOKEN_BURN_ADDRESS without convert event: block=" << block 
+                  << ", from=" << from << ", token_id=" << token_id 
+                  << ", amount=" << amount << std::endl;
+        assert(false && "Transfer to NO_TOKEN_BURN_ADDRESS without convert event");
+        return TransferClass::Unclassified;
       }
       // Adapter 内部 → 跳过
-      return;
+      return TransferClass::InternalTransfer;
     }
 
     // ========== FPMM operator ==========
-    // FPMM buy:  Transfer(op=FPMM, from=FPMM, to=user) + FPMMBuy event
-    // FPMM sell: Transfer(op=FPMM, from=user, to=FPMM) + FPMMSell event
-    // LP add 返还: Transfer(op=FPMM, from=FPMM, to=user) + FPMMFundingAdded event
-    // LP remove:  Transfer(op=FPMM, from=user, to=FPMM) + FPMMFundingRemoved event (罕见单独 transfer)
     auto fpmm_it = fpmm_map_.find(op);
     if (fpmm_it != fpmm_map_.end()) {
       TxFPMMKey tx_fpmm_key{block, tx_hash, op};
@@ -1069,32 +1302,62 @@ private:
 
       // FPMM buy/sell (有 trade 事件)
       if (tit != tx_fpmm_trade_.end()) {
+        // 验证 amount 与 trade 事件一致
+        assert(amount == tit->second.tokens && "FPMM trade amount mismatch");
+        // 验证 outcome_index 与 token_idx 一致 (0=YES, 1=NO)
+        assert(tit->second.outcome_idx == token_idx && "FPMM trade outcome mismatch");
+        // 验证方向：buy 时 from=FPMM, sell 时 to=FPMM
+        if (tit->second.side == 1) {
+          assert(from == op && "FPMM buy should transfer from FPMM");
+          assert(to == tit->second.trader && "FPMM buy recipient mismatch");
+        } else {
+          assert(to == op && "FPMM sell should transfer to FPMM");
+          assert(from == tit->second.trader && "FPMM sell sender mismatch");
+        }
+
         if (!is_protocol_contract(tit->second.trader)) {
           assert(tit->second.tokens > 0 && "FPMM trade tokens must be positive");
           int64_t price = tit->second.usdc * 1000000 / tit->second.tokens;
           assert(price >= 0 && price <= 1000000 && "FPMM price out of range");
           if (tit->second.side == 1) {
             push_event(tit->second.trader, RawEvent{sort_key, cond_idx, EventType::FPMMBuy, token_idx, 0, amount, price});
+            return TransferClass::FPMMBuy;
           } else {
             push_event(tit->second.trader, RawEvent{sort_key, cond_idx, EventType::FPMMSell, token_idx, 0, -amount, price});
+            return TransferClass::FPMMSell;
           }
         }
-        return;
+        return (tit->second.side == 1) ? TransferClass::FPMMBuy : TransferClass::FPMMSell;
       }
 
       // LP 操作 (有 funding 事件)
       if (fit != tx_fpmm_funding_.end()) {
-        // LP add 时返还多余 token 给用户 (from=FPMM)
+        // FPMM → 用户 的 transfer
         if (from == op && !is_protocol_contract(to)) {
-          push_event(to, RawEvent{sort_key, cond_idx, EventType::TransferIn, token_idx, 0, amount, 0});
+          if (fit->second.side == 2) {
+            // LP Remove: FPMM 将 YES+NO token 转给用户（这是 LP 撤出！）
+            // FPMMFundingRemoved 事件的 amountsRemoved 就是转给用户的量
+            int64_t expected_amt = (token_idx == 0) ? fit->second.amount0 : fit->second.amount1;
+            assert(amount == expected_amt && "LP Remove amount mismatch");
+            push_event(to, RawEvent{sort_key, cond_idx, EventType::FPMMLPRemove, token_idx, 0, amount, split_price});
+            return TransferClass::FPMMLPRemove;
+          } else {
+            // LP Add 时返还多余 token 给用户（这只是返还，不影响 LP 头寸）
+            // 这些返还的 token 不应该记录为 TransferIn，因为它们是 split 的一部分
+            // 用户的净 delta 应该通过 FPMMLPAdd 事件的 pool_amt 来计算
+            return TransferClass::FPMMLPReturn;
+          }
         }
-        // LP remove 时用户转 token 给 FPMM (to=FPMM) → 不记录，已在 burn 分支处理
-        return;
+        // 其他 funding 相关的内部转账
+        return TransferClass::InternalTransfer;
       }
 
       // 无 trade/funding 事件，但 operator 是 FPMM → 应该不发生
+      std::cerr << "[ERROR] FPMM transfer without trade/funding event: block=" << block 
+                << ", op=" << op << ", from=" << from << ", to=" << to 
+                << ", token_id=" << token_id << ", amount=" << amount << std::endl;
       assert(false && "FPMM transfer without trade/funding event");
-      return;
+      return TransferClass::Unclassified;
     }
 
     // ========== 其他：用户间直接转账 ==========
@@ -1103,6 +1366,19 @@ private:
       push_event(to, RawEvent{sort_key, cond_idx, EventType::TransferIn, token_idx, 0, amount, 0});
     if (!is_protocol_contract(from))
       push_event(from, RawEvent{sort_key, cond_idx, EventType::TransferOut, token_idx, 0, -amount, 0});
+
+    // 一笔转账产生 TransferIn 和 TransferOut 各一个事件，但统计只算一次
+    if (!is_protocol_contract(to) && !is_protocol_contract(from)) {
+      // 用户间转账，两边都记录，统计算 TransferIn+TransferOut 的组合
+      // 这里返回 TransferIn，TransferOut 的数量会少一半，但这是设计如此
+      return TransferClass::TransferIn;
+    } else if (!is_protocol_contract(to)) {
+      return TransferClass::TransferIn;
+    } else if (!is_protocol_contract(from)) {
+      return TransferClass::TransferOut;
+    } else {
+      return TransferClass::InternalTransfer;
+    }
   }
 
   void commit_chunk(int64_t new_cursor) {

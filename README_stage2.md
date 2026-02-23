@@ -27,6 +27,7 @@ ERC1155.sol 中所有修改余额的地方：
 | FPMM.buy                 | splitPosition + safeTransferFrom          | FPMMBuy            | 同一函数 |
 | FPMM.sell                | safeTransferFrom + mergePositions         | FPMMSell           | 同一函数 |
 | FPMM.addFunding          | splitPosition + safeBatchTransferFrom     | FPMMFundingAdded   | 同一函数 |
+| FPMM.removeFunding       | safeBatchTransferFrom (NOT burn!)         | FPMMFundingRemoved | 同一函数 |
 | NegRisk.convertPositions | splitPosition + safeBatchTransferFrom × 3 | PositionsConverted | 同一函数 |
 
 **边界情况**：用户直接调用 `safeTransferFrom` 只有 Transfer、无语义事件 → 分类为 TransferIn/Out
@@ -40,6 +41,19 @@ ERC1155.sol 中所有修改余额的地方：
 | 3. token 流水被精确还原             | 语义事件提供精确价格 | `price ∈ [0, 1e6]`, `tokens > 0`               |
 | 4. 事件只记录给用户                 | 协议合约地址不记录   | `!is_protocol_contract(user)`                  |
 | 5. from/to 不同                     | Transfer 语义保证    | `from != to`                                   |
+
+### 关键 Assert 验证 (基于合约代码分析)
+
+| 操作          | Assert 验证                                | 合约依据                                      |
+| ------------- | ------------------------------------------ | --------------------------------------------- |
+| LP Add mint   | `amount == max(amount0, amount1)`          | split 生成 addedFunds 份 YES+NO               |
+| LP Remove     | `amount == amountsRemoved[token_idx]`      | FPMMFundingRemoved.amounts = transfer 量      |
+| NegRisk Split | `amount == info.amount`                    | Adapter 转给用户的量 = PositionSplit.amount   |
+| NegRisk Merge | `amount == info.amount`                    | 用户转给 Adapter 的量 = PositionsMerge.amount |
+| Convert NO    | `token_idx == 1`, `amount == info.amount`  | 只有 NO token 发到 BurnAddr                   |
+| Convert YES   | `amount <= info.amount`                    | 扣手续费后可能小于 split 量                   |
+| Order         | `amount == tokens`                         | 1 个 OrderFilled = 1 次 transfer              |
+| FPMM Trade    | `amount == tokens`, `outcome == token_idx` | FPMMBuy/Sell 精确记录                         |
 
 ## 执行流程
 
@@ -156,11 +170,20 @@ apply_event(token_idx, amount, price):
 
 ### NegRisk vs 普通市场的关键区别
 
-| 操作    | 普通市场                        | NegRisk 市场                                         |
-| ------- | ------------------------------- | ---------------------------------------------------- |
-| Split   | 用户直接 mint，stakeholder=用户 | Adapter mint 后 transfer 给用户，stakeholder=Adapter |
-| Merge   | 用户直接 burn，stakeholder=用户 | 用户 transfer 给 Adapter 后 Adapter burn             |
-| Convert | N/A                             | 用户 transfer 给 Adapter 后 Adapter burn             |
+| 操作    | 普通市场                        | NegRisk 市场                                          |
+| ------- | ------------------------------- | ----------------------------------------------------- |
+| Split   | 用户直接 mint，stakeholder=用户 | Adapter mint 后 transfer 给用户，stakeholder=Adapter  |
+| Merge   | 用户直接 burn，stakeholder=用户 | 用户 transfer 给 Adapter 后 Adapter burn              |
+| Convert | N/A                             | 用户 NO → BurnAddr，Adapter split YES+NO → 用户收 YES |
+
+### FPMM LP 操作的关键区别
+
+| 操作      | Transfer 类型                           | 说明                                |
+| --------- | --------------------------------------- | ----------------------------------- |
+| LP Add    | mint (from=0x0, to=FPMM) + transfer返还 | splitPosition 后返还多余 token      |
+| LP Remove | transfer (from=FPMM, to=user)           | **不是 burn！** 直接转给用户        |
+| Buy       | mint + transfer                         | splitPosition 后转 outcome 给用户   |
+| Sell      | transfer + burn                         | 用户转入后 FPMM 内部 merge (有burn) |
 
 ### 分类决策树
 
@@ -173,7 +196,7 @@ Transfer(operator, from, to, token_id, amount)
     │   │
     │   ├─ to in fpmm_map_ (FPMM 内部 mint，必须先检查！)
     │   │   ├─ tx_fpmm_funding_ 存在 且 side=Added → FPMMLPAdd: user=funder
-    │   │   └─ 否则 → 跳过 (FPMM 内部 split)
+    │   │   └─ 否则 → 跳过 (FPMM 内部 split for buy)
     │   │
     │   ├─ tx_split_ 存在 且 stakeholder == to
     │   │   └─ Split: user=to (普通市场用户直接 split)
@@ -184,9 +207,8 @@ Transfer(operator, from, to, token_id, amount)
     │   │
     │   ├─ from == NEG_RISK_ADAPTER → 跳过 (NegRisk 内部 burn)
     │   │
-    │   ├─ from in fpmm_map_ (FPMM 内部 burn，必须先检查！)
-    │   │   ├─ tx_fpmm_funding_ 存在 且 side=Removed → FPMMLPRemove: user=funder
-    │   │   └─ 否则 → 跳过 (FPMM 内部 merge)
+    │   ├─ from in fpmm_map_ → 跳过 (FPMM 内部 merge for sell)
+    │   │   # 注意: LP Remove 不是 burn！是 FPMM→user 的 transfer
     │   │
     │   ├─ tx_merge_ 存在 且 stakeholder == from
     │   │   └─ Merge: user=from (普通市场用户直接 merge)
@@ -204,18 +226,28 @@ Transfer(operator, from, to, token_id, amount)
     │   │
     │   ├─ from == NEG_RISK_ADAPTER (Adapter → 用户)
     │   │   ├─ tx_split_ 存在 且 stakeholder == Adapter → Split: user=to
+    │   │   │   # 包括 Convert 时输出的 YES token (可能有手续费扣减)
     │   │   └─ 否则 → TransferIn: user=to
     │   │
     │   ├─ to == NEG_RISK_ADAPTER (用户 → Adapter)
     │   │   ├─ tx_merge_ 存在 且 stakeholder == Adapter → Merge: user=from
-    │   │   ├─ tx_convert_ 存在 且 stakeholder == from → Convert: user=from
     │   │   └─ 否则 → TransferOut: user=from
+    │   │
+    │   ├─ to == NO_TOKEN_BURN_ADDRESS (Convert 专用销毁)
+    │   │   ├─ from == NEG_RISK_ADAPTER → 跳过 (Adapter 内部 NO burn)
+    │   │   ├─ tx_convert_ 存在 且 stakeholder == from → Convert: user=from
+    │   │   └─ 否则 → 错误 (不应发生)
     │   │
     │   └─ 否则 → 跳过 (Adapter 内部)
     │
     ├─ operator in fpmm_map_
+    │   │
     │   ├─ tx_fpmm_trade_ 存在 → FPMMBuy/FPMMSell: user=trader
-    │   ├─ from == fpmm → TransferIn: user=to (LP 返还)
+    │   │
+    │   ├─ tx_fpmm_funding_ 存在 且 from == fpmm (FPMM → 用户)
+    │   │   ├─ side == Removed → FPMMLPRemove: user=to (LP 撤出！)
+    │   │   └─ side == Added   → 跳过 (LP Add 时返还多余 token)
+    │   │
     │   └─ 否则 → 跳过 (FPMM 内部)
     │
     └─ 其他 → TransferIn(to) + TransferOut(from)
@@ -229,7 +261,11 @@ CTF_EXCHANGE         = 0x4bfb41d5b3570defd03c39a9a4d8de6bd8b8982e
 NEG_RISK_CTF_EXCHANGE= 0xc5d563a36ae78145c45a50134d48a1215220f80a
 NEG_RISK_ADAPTER     = 0xd91e80cf2e7be2e162c6513ced06f1dd0da35296
 CONDITIONAL_TOKENS   = 0x4d97dcd97ec945f40cf65f87097ace5ea0476045
+NO_TOKEN_BURN_ADDRESS= 0x36a0e974a7083ea0ad4dea6a27b90fab22e93a32  # Convert 专用销毁地址
 ```
+
+**注意**: `NO_TOKEN_BURN_ADDRESS` 是 NegRisk Convert 操作中销毁 NO token 的专用地址，
+由 `keccak256("NO_TOKEN_BURN_ADDRESS")` 的前 20 字节确定，不是零地址！
 
 ### 关键处理逻辑
 
@@ -239,27 +275,30 @@ CONDITIONAL_TOKENS   = 0x4d97dcd97ec945f40cf65f87097ace5ea0476045
 
 **跳过内部操作** (确保不会给协议合约地址记录事件):
 
-| 跳过条件                         | 原因                                        |
-| -------------------------------- | ------------------------------------------- |
-| mint && to == NEG_RISK_ADAPTER   | NegRisk 内部 mint，用户通过 transfer 获取   |
-| burn && from == NEG_RISK_ADAPTER | NegRisk 内部 burn，用户已通过 transfer 记录 |
-| mint && stakeholder != to        | FPMM 内部 split (stakeholder=FPMM)          |
-| burn && stakeholder != from      | FPMM 内部 merge (stakeholder=FPMM)          |
-| operator=FPMM && 无语义事件      | FPMM 内部 transfer                          |
+| 跳过条件                          | 原因                                        |
+| --------------------------------- | ------------------------------------------- |
+| mint && to == NEG_RISK_ADAPTER    | NegRisk 内部 mint，用户通过 transfer 获取   |
+| burn && from == NEG_RISK_ADAPTER  | NegRisk 内部 burn，用户已通过 transfer 记录 |
+| mint && stakeholder != to (FPMM)  | FPMM 内部 split (stakeholder=FPMM)          |
+| burn && from in fpmm*map*         | FPMM sell 时的内部 merge                    |
+| to == BurnAddr && from == Adapter | Convert 时 Adapter 的内部 NO burn           |
+| operator=FPMM && LP Add 返还      | LP Add 返还多余 token，不影响 LP 头寸       |
 
 **用户识别**:
 
-| 场景          | 用户来源                   | 说明                           |
-| ------------- | -------------------------- | ------------------------------ |
-| 普通 Split    | Transfer.to (mint)         | stakeholder == to              |
-| NegRisk Split | Transfer.to (from=Adapter) | stakeholder == Adapter         |
-| 普通 Merge    | Transfer.from (burn)       | stakeholder == from            |
-| NegRisk Merge | Transfer.from (to=Adapter) | stakeholder == Adapter         |
-| Convert       | Transfer.from (to=Adapter) | stakeholder == from (用户地址) |
-| Redemption    | Transfer.from (burn)       | redeemer == from               |
-| OrderFilled   | Transfer.from/to           | 不用 maker/taker，避免覆盖问题 |
-| FPMMTrade     | tx*fpmm_trade*.trader      |                                |
-| FPMMFunding   | tx*fpmm_funding*.funder    | 不是 Transfer.to/from          |
+| 场景          | 用户来源                    | 说明                           |
+| ------------- | --------------------------- | ------------------------------ |
+| 普通 Split    | Transfer.to (mint)          | stakeholder == to              |
+| NegRisk Split | Transfer.to (from=Adapter)  | stakeholder == Adapter         |
+| 普通 Merge    | Transfer.from (burn)        | stakeholder == from            |
+| NegRisk Merge | Transfer.from (to=Adapter)  | stakeholder == Adapter         |
+| Convert NO    | Transfer.from (to=BurnAddr) | stakeholder == from (用户地址) |
+| Convert YES   | Transfer.to (from=Adapter)  | 通过 Split 记录 (可能扣手续费) |
+| Redemption    | Transfer.from (burn)        | redeemer == from               |
+| OrderFilled   | Transfer.from/to            | 不用 maker/taker，避免覆盖问题 |
+| FPMMTrade     | tx*fpmm_trade*.trader       |                                |
+| FPMMLPAdd     | tx*fpmm_funding*.funder     | mint 时 to=FPMM，不是用户      |
+| FPMMLPRemove  | Transfer.to (from=FPMM)     | transfer 不是 burn！user=to    |
 
 **价格计算**:
 
