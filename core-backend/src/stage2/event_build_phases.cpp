@@ -413,9 +413,10 @@ void EventBuilder::commit_chunk(int64_t new_cursor) {
 
   for (auto &nt : new_tokens_) {
     std::string blob = hex_to_blob(nt.token_id);
+    int32_t db_cond_idx = (nt.cond_idx == UNKNOWN_COND_IDX) ? -1 : static_cast<int32_t>(nt.cond_idx);
     conn->Query("INSERT OR IGNORE INTO rb_token (token_id, cond_idx, is_yes, source) VALUES (" +
                 blob_to_hex_literal(blob) + ", " +
-                std::to_string(nt.cond_idx) + ", " +
+                std::to_string(db_cond_idx) + ", " +
                 std::to_string(nt.is_yes) + ", " +
                 std::to_string(static_cast<int>(nt.source)) + ")");
   }

@@ -196,7 +196,8 @@ public:
     for (idx_t i = 0; i < token_r->RowCount(); ++i) {
       std::string tid = blob_to_hex(token_r->GetValue(0, i).GetValueUnsafe<std::string>());
       TokenInfo info;
-      info.cond_idx = token_r->GetValue(1, i).GetValue<uint32_t>();
+      int32_t db_cond_idx = token_r->GetValue(1, i).GetValue<int32_t>();
+      info.cond_idx = (db_cond_idx == -1) ? UNKNOWN_COND_IDX : static_cast<uint32_t>(db_cond_idx);
       info.is_yes = token_r->GetValue(2, i).GetValue<uint8_t>();
       info.source = static_cast<TokenSource>(token_r->GetValue(3, i).GetValue<int>());
       token_map_[to_lower(tid)] = info;
