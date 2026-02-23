@@ -85,6 +85,8 @@ public:
     int64_t cnt_fpmm_trade = 0;
     int64_t cnt_fpmm_funding = 0;
     int64_t cnt_transfer = 0;
+    int64_t cnt_non_usdc_fpmm = 0;
+    int64_t cnt_non_polymarket = 0;
   };
 
   RebuildProgress progress() const {
@@ -108,6 +110,8 @@ public:
     p.cnt_fpmm_trade = bp.cnt_fpmm_trade;
     p.cnt_fpmm_funding = bp.cnt_fpmm_funding;
     p.cnt_transfer = bp.cnt_transfer;
+    p.cnt_non_usdc_fpmm = bp.xfer_stats.non_usdc_fpmm;
+    p.cnt_non_polymarket = bp.xfer_stats.non_polymarket;
     return p;
   }
 
