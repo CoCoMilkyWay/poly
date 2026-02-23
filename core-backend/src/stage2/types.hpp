@@ -39,6 +39,17 @@ enum class TokenSource : uint8_t {
   SplitEvent = 3,         // 从Split事件计算（无法确定协议）
 };
 
+enum class Collateral : uint8_t {
+  Unknown = 0,
+  USDC = 1,   // 0x2791bca1f2de4661ed88a30c99a7a9449aa84174 (PoS bridged)
+  USDCe = 2,  // 0x3c499c542cef5e3811e1192ce70d8cc03d5c3359 (native)
+  WETH = 3,   // 0x7ceb23fd6bc0add59e62ac25578270cff1b9f619
+  DAI = 4,    // 0x8f3cf7ad23cd3cadbd9735aff958023239c6a063
+  WMATIC = 5, // 0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270
+  USDT = 6,   // 0xc2132d05d31c914a87c6611c10748aeb04b58e8f
+  // 预留更多...
+};
+
 struct ConditionInfo {
   uint8_t outcome_count = 2;
   std::vector<int64_t> payout_numerators;
@@ -54,18 +65,18 @@ struct TokenInfo {
 
 struct FPMMInfo {
   uint32_t cond_idx;
-  bool is_usdc = true;    // 是否使用 USDC 抵押品
-  std::string collateral; // 抵押品地址
+  Collateral collateral = Collateral::USDC;
 };
 
 struct RawEvent {
-  int64_t sort_key;  // 8  block_number * 1e9 + log_index
-  uint32_t cond_idx; // 4
-  uint8_t type;      // 1  EventType
-  uint8_t token_idx; // 1  0=YES, 1=NO
-  uint16_t _pad;     // 2
-  int64_t amount;    // 8  raw units (1e6 = $1)
-  int64_t price;     // 8  price * 1e6
+  int64_t sort_key;   // 8  block_number * 1e9 + log_index
+  uint32_t cond_idx;  // 4
+  uint8_t type;       // 1  EventType
+  uint8_t token_idx;  // 1  0=YES, 1=NO
+  uint8_t collateral; // 1  Collateral enum
+  uint8_t _pad;       // 1
+  int64_t amount;     // 8  raw units (1e6 = $1)
+  int64_t price;      // 8  price * 1e6, 非USDC时为0
 };
 static_assert(sizeof(RawEvent) == 32);
 

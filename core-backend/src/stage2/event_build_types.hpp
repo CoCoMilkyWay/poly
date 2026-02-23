@@ -1,5 +1,7 @@
 #pragma once
 
+#include "types.hpp"
+
 #include <cassert>
 #include <cstdint>
 #include <filesystem>
@@ -24,27 +26,22 @@ public:
     non_poly_samples_.clear();
     non_poly_by_op_.clear();
     non_poly_token_ids_.clear();
-    non_usdc_samples_.clear();
-    non_usdc_by_collat_.clear();
     header_info_.clear();
     token_sample_.clear();
     xfer_stats_str_.clear();
   }
 
   void finish() {
-    int64_t total_np = 0, total_nu = 0;
+    int64_t total_np = 0;
     for (const auto &[_, cnt] : non_poly_by_op_)
       total_np += cnt;
-    for (const auto &[_, cnt] : non_usdc_by_collat_)
-      total_nu += cnt;
 
     // 没有异常，不写文件
-    if (total_np == 0 && total_nu == 0)
+    if (total_np == 0)
       return;
 
     std::filesystem::create_directories(log_dir_);
-    std::string path = log_dir_ + "/chunk_" + std::to_string(start_) + "_" +
-                       std::to_string(total_np) + "NP_" + std::to_string(total_nu) + "NU.log";
+    std::string path = log_dir_ + "/chunk_" + std::to_string(start_) + "_" + std::to_string(total_np) + "NP.log";
     std::ofstream ofs(path);
     if (!ofs)
       return;
@@ -72,16 +69,6 @@ public:
       }
     }
 
-    // NonUsdc 汇总
-    if (total_nu > 0) {
-      ofs << "\n=== NonUsdcFpmm Summary ===\n";
-      ofs << "total=" << total_nu << "\n";
-      ofs << "by_collateral:\n";
-      for (const auto &[collat, cnt] : non_usdc_by_collat_) {
-        ofs << "  " << collat << ": " << cnt << "\n";
-      }
-    }
-
     // Transfer 统计
     if (!xfer_stats_str_.empty()) {
       ofs << "\n"
@@ -97,16 +84,6 @@ public:
     non_poly_token_ids_.insert(token_id);
     if (non_poly_samples_.size() < 20) {
       non_poly_samples_.push_back({block, tx_hash, op, from, to, token_id, amount});
-    }
-  }
-
-  void log_non_usdc_fpmm(int64_t block, const std::string &tx_hash,
-                         const std::string &op, const std::string &from,
-                         const std::string &to, const std::string &token_id,
-                         int64_t amount, const std::string &collateral) {
-    non_usdc_by_collat_[collateral]++;
-    if (non_usdc_samples_.size() < 10) {
-      non_usdc_samples_.push_back({block, tx_hash, op, from, to, token_id, amount, collateral});
     }
   }
 
@@ -135,14 +112,11 @@ private:
     int64_t block;
     std::string tx_hash, op, from, to, token_id;
     int64_t amount;
-    std::string collateral;
   };
 
   std::vector<Sample> non_poly_samples_;
   std::unordered_map<std::string, int64_t> non_poly_by_op_;
   std::unordered_set<std::string> non_poly_token_ids_;
-  std::vector<Sample> non_usdc_samples_;
-  std::unordered_map<std::string, int64_t> non_usdc_by_collat_;
 };
 
 static constexpr const char *ZERO_ADDR = "0x0000000000000000000000000000000000000000";
@@ -151,12 +125,74 @@ static constexpr const char *NEG_RISK_CTF_EXCHANGE = "0xc5d563a36ae78145c45a5013
 static constexpr const char *NEG_RISK_ADAPTER = "0xd91e80cf2e7be2e162c6513ced06f1dd0da35296";
 static constexpr const char *USDC_E = "0x2791bca1f2de4661ed88a30c99a7a9449aa84174";      // bridged USDC
 static constexpr const char *USDC_NATIVE = "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359"; // native USDC
+static constexpr const char *WETH = "0x7ceb23fd6bc0add59e62ac25578270cff1b9f619";
+static constexpr const char *DAI = "0x8f3cf7ad23cd3cadbd9735aff958023239c6a063";
+static constexpr const char *WMATIC = "0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270";
+static constexpr const char *USDT = "0xc2132d05d31c914a87c6611c10748aeb04b58e8f";
 static constexpr const char *CONDITIONAL_TOKENS = "0x4d97dcd97ec945f40cf65f87097ace5ea0476045";
+static constexpr const char *NO_TOKEN_BURN_ADDRESS = "0x36a0e974a7083ea0ad4dea6a27b90fab22e93a32";
+
+inline Collateral addr_to_collateral(const std::string &addr) {
+  if (addr == USDC_E)
+    return Collateral::USDC;
+  if (addr == USDC_NATIVE)
+    return Collateral::USDCe;
+  if (addr == WETH)
+    return Collateral::WETH;
+  if (addr == DAI)
+    return Collateral::DAI;
+  if (addr == WMATIC)
+    return Collateral::WMATIC;
+  if (addr == USDT)
+    return Collateral::USDT;
+  return Collateral::Unknown;
+}
 
 inline bool is_usdc_collateral(const std::string &addr) {
   return addr == USDC_E || addr == USDC_NATIVE;
 }
-static constexpr const char *NO_TOKEN_BURN_ADDRESS = "0x36a0e974a7083ea0ad4dea6a27b90fab22e93a32";
+
+inline bool is_usdc_collateral(Collateral c) {
+  return c == Collateral::USDC || c == Collateral::USDCe;
+}
+
+inline const char *collateral_name(Collateral c) {
+  switch (c) {
+  case Collateral::USDC:
+    return "USDC";
+  case Collateral::USDCe:
+    return "USDC.e";
+  case Collateral::WETH:
+    return "WETH";
+  case Collateral::DAI:
+    return "DAI";
+  case Collateral::WMATIC:
+    return "WMATIC";
+  case Collateral::USDT:
+    return "USDT";
+  default:
+    return "Unknown";
+  }
+}
+
+inline const char *collateral_addr(Collateral c) {
+  switch (c) {
+  case Collateral::USDC:
+    return USDC_E;
+  case Collateral::USDCe:
+    return USDC_NATIVE;
+  case Collateral::WETH:
+    return WETH;
+  case Collateral::DAI:
+    return DAI;
+  case Collateral::WMATIC:
+    return WMATIC;
+  case Collateral::USDT:
+    return USDT;
+  default:
+    return "";
+  }
+}
 
 struct ScanStats {
   int64_t rows = 0;
@@ -204,11 +240,6 @@ enum class TransferClass {
   InternalTransferNegRisk, // NegRisk其他
   InternalTransferFPMM,    // FPMM Funding其他
   InternalTransferOther,   // 其他协议间
-
-  // === NonUsdc 非U (3) ===
-  NonUsdcMint, // mint→非USDC FPMM
-  NonUsdcBurn, // 非USDC FPMM→burn
-  NonUsdcOp,   // op==非USDC FPMM
 
   // === 其他 (2) ===
   NonPolymarket, // 非Polymarket token
@@ -259,11 +290,6 @@ struct TransferStats {
   int64_t internal_transfer_fpmm = 0;
   int64_t internal_transfer_other = 0;
 
-  // === NonUsdc 非U (叶子节点) ===
-  int64_t non_usdc_mint = 0;
-  int64_t non_usdc_burn = 0;
-  int64_t non_usdc_op = 0;
-
   // === 其他 (叶子节点) ===
   int64_t non_polymarket = 0;
   int64_t unclassified = 0;
@@ -284,7 +310,6 @@ struct TransferStats {
   int64_t internal_mint() const { return internal_mint_negrisk + internal_mint_fpmm; }
   int64_t internal_burn() const { return internal_burn_negrisk + internal_burn_fpmm + internal_burn_convert; }
   int64_t internal_transfer() const { return internal_transfer_zero + internal_transfer_order + internal_transfer_negrisk + internal_transfer_fpmm + internal_transfer_other; }
-  int64_t non_usdc() const { return non_usdc_mint + non_usdc_burn + non_usdc_op; }
 
   // === 一级汇总 ===
   int64_t user_events() const {
@@ -294,7 +319,7 @@ struct TransferStats {
     return internal_mint() + internal_burn() + internal_transfer();
   }
   int64_t skipped() const {
-    return non_usdc() + non_polymarket;
+    return non_polymarket;
   }
 
   void add(TransferClass cls) {
@@ -381,15 +406,6 @@ struct TransferStats {
     case TransferClass::InternalTransferOther:
       ++internal_transfer_other;
       break;
-    case TransferClass::NonUsdcMint:
-      ++non_usdc_mint;
-      break;
-    case TransferClass::NonUsdcBurn:
-      ++non_usdc_burn;
-      break;
-    case TransferClass::NonUsdcOp:
-      ++non_usdc_op;
-      break;
     case TransferClass::NonPolymarket:
       ++non_polymarket;
       break;
@@ -424,7 +440,6 @@ struct TransferStats {
     std::cerr << "    Burn: " << internal_burn() << " (negrisk=" << internal_burn_negrisk << ", fpmm=" << internal_burn_fpmm << ", convert=" << internal_burn_convert << ")" << std::endl;
     std::cerr << "    Transfer: " << internal_transfer() << " (zero=" << internal_transfer_zero << ", order=" << internal_transfer_order << ", negrisk=" << internal_transfer_negrisk << ", fpmm=" << internal_transfer_fpmm << ", other=" << internal_transfer_other << ")" << std::endl;
     std::cerr << "  Skipped: " << skipped() << std::endl;
-    std::cerr << "    NonUsdc: " << non_usdc() << " (mint=" << non_usdc_mint << ", burn=" << non_usdc_burn << ", op=" << non_usdc_op << ")" << std::endl;
     std::cerr << "    NonPolymarket: " << non_polymarket << std::endl;
     if (unclassified > 0)
       std::cerr << "  ERROR Unclassified: " << unclassified << std::endl;
@@ -468,9 +483,6 @@ struct TransferStats {
     line("  内转.FPMM", chunk.internal_transfer_fpmm, acc.internal_transfer_fpmm);
     line("  内转.其他", chunk.internal_transfer_other, acc.internal_transfer_other);
     oss << "Skipped: +" << chunk.skipped() << " (=" << acc.skipped() << ")\n";
-    line("  非U.铸", chunk.non_usdc_mint, acc.non_usdc_mint);
-    line("  非U.燃", chunk.non_usdc_burn, acc.non_usdc_burn);
-    line("  非U.操作", chunk.non_usdc_op, acc.non_usdc_op);
     line("  非Polymarket", chunk.non_polymarket, acc.non_polymarket);
     return oss.str();
   }
@@ -546,6 +558,9 @@ struct BuildProgress {
   int64_t cnt_fpmm_funding = 0;
   int64_t cnt_transfer = 0;
   TransferStats xfer_stats;
+  // 按(EventType, Collateral)分组统计 user_event
+  // key: EventType * 16 + Collateral
+  std::unordered_map<uint16_t, int64_t> event_by_collateral;
 };
 
 } // namespace stage2

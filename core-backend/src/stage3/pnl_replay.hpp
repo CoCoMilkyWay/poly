@@ -108,10 +108,7 @@ public:
     int64_t xfer_internal_transfer_fpmm = 0;
     int64_t xfer_internal_transfer_other = 0;
 
-    // skipped = non_usdc + non_poly
-    int64_t xfer_non_usdc_mint = 0;
-    int64_t xfer_non_usdc_burn = 0;
-    int64_t xfer_non_usdc_op = 0;
+    // skipped = non_poly
     int64_t xfer_non_poly = 0;
     // non_poly按operator->token细分: { 协议名: { total: N, tokens: { token_id: count, ... } }, ... }
     struct NonPolyProto {
@@ -121,6 +118,8 @@ public:
       std::unordered_map<std::string, int64_t> tokens; // token_id -> count
     };
     std::vector<NonPolyProto> xfer_non_poly_protos;
+    // 按(EventType, Collateral)分组统计
+    std::unordered_map<uint16_t, int64_t> event_by_collateral;
   };
 
   RebuildProgress progress() const {
@@ -161,9 +160,6 @@ public:
     p.xfer_internal_transfer_negrisk = bp.xfer_stats.internal_transfer_negrisk;
     p.xfer_internal_transfer_fpmm = bp.xfer_stats.internal_transfer_fpmm;
     p.xfer_internal_transfer_other = bp.xfer_stats.internal_transfer_other;
-    p.xfer_non_usdc_mint = bp.xfer_stats.non_usdc_mint;
-    p.xfer_non_usdc_burn = bp.xfer_stats.non_usdc_burn;
-    p.xfer_non_usdc_op = bp.xfer_stats.non_usdc_op;
     p.xfer_non_poly = bp.xfer_stats.non_polymarket;
     for (const auto &[op, tokens] : bp.xfer_stats.non_poly_by_op_token) {
       Protocol proto = identify_protocol(op);
@@ -180,6 +176,7 @@ public:
     }
     std::sort(p.xfer_non_poly_protos.begin(), p.xfer_non_poly_protos.end(),
               [](const auto &a, const auto &b) { return a.total > b.total; });
+    p.event_by_collateral = bp.event_by_collateral;
     return p;
   }
 

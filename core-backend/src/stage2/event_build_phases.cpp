@@ -74,8 +74,8 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
       cond_idx = it->second;
     }
 
-    bool is_usdc = is_usdc_collateral(collateral);
-    intern_fpmm(addr, cond_idx, is_usdc, collateral);
+    Collateral coll = addr_to_collateral(collateral);
+    intern_fpmm(addr, cond_idx, coll);
 
     // 为所有 FPMM 计算 token_id（包括非 USDC 的，以便识别用户的 merge/burn 操作）
     auto cond_bytes = hex_to_blob(lower_cid);
@@ -113,12 +113,9 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
       cond_idx = it->second;
     }
 
-    // 如果是非 USDC collateral，记录到 non_usdc_cond_idxs_
-    bool is_usdc = is_usdc_collateral(collateral);
-    if (!is_usdc) {
-      non_usdc_cond_idxs_.insert(cond_idx);
-      non_usdc_collaterals_[cond_idx] = collateral;
-    }
+    // 记录抵押品类型
+    Collateral coll = addr_to_collateral(collateral);
+    cond_collateral_[cond_idx] = coll;
 
     // 计算 token_id（如果还没计算过）
     auto cond_bytes = hex_to_blob(lower_cid);
@@ -367,26 +364,6 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
     int64_t sort_key = r.block * 1000000000LL + r.log_idx;
     auto tx_hash = hex_to_bytes32(r.tx_hash);
 
-    // 优先检查是否涉及 non-USDC FPMM（在 token lookup 之前）
-    auto check_non_usdc_fpmm = [&](const std::string &addr) -> std::string {
-      auto it = fpmm_map_.find(addr);
-      if (it != fpmm_map_.end() && !it->second.is_usdc) {
-        return it->second.collateral;
-      }
-      return "";
-    };
-    std::string non_usdc_collat;
-    if (!(non_usdc_collat = check_non_usdc_fpmm(op)).empty() ||
-        !(non_usdc_collat = check_non_usdc_fpmm(from)).empty() ||
-        !(non_usdc_collat = check_non_usdc_fpmm(to)).empty()) {
-      non_usdc_by_collat_[non_usdc_collat]++;
-      if (from == ZERO_ADDR) chunk_xfer_stats_.add(TransferClass::NonUsdcMint);
-      else if (to == ZERO_ADDR) chunk_xfer_stats_.add(TransferClass::NonUsdcBurn);
-      else chunk_xfer_stats_.add(TransferClass::NonUsdcOp);
-      chunk_log_.log_non_usdc_fpmm(r.block, r.tx_hash, op, from, to, token_id, r.amount, non_usdc_collat);
-      continue;
-    }
-
     auto tit = token_map_.find(token_id);
     if (tit == token_map_.end()) {
       chunk_xfer_stats_.add(TransferClass::NonPolymarket);
@@ -397,27 +374,14 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
     uint32_t cond_idx = tit->second.cond_idx;
     uint8_t token_idx = tit->second.is_yes ? 0 : 1;
 
-    // 检查 token 是否属于非 USDC condition（用户直接操作如 merge/burn）
-    if (non_usdc_cond_idxs_.count(cond_idx)) {
-      // 从 non_usdc_collaterals_ 或 fpmm_map_ 找到 collateral 地址
-      auto collat_it = non_usdc_collaterals_.find(cond_idx);
-      if (collat_it != non_usdc_collaterals_.end()) {
-        non_usdc_by_collat_[collat_it->second]++;
-      } else {
-        for (const auto &[addr, info] : fpmm_map_) {
-          if (info.cond_idx == cond_idx && !info.is_usdc) {
-            non_usdc_by_collat_[info.collateral]++;
-            break;
-          }
-        }
-      }
-      if (from == ZERO_ADDR) chunk_xfer_stats_.add(TransferClass::NonUsdcMint);
-      else if (to == ZERO_ADDR) chunk_xfer_stats_.add(TransferClass::NonUsdcBurn);
-      else chunk_xfer_stats_.add(TransferClass::NonUsdcOp);
-      continue;
+    // 获取抵押品类型
+    Collateral collateral = Collateral::USDC;
+    auto coll_it = cond_collateral_.find(cond_idx);
+    if (coll_it != cond_collateral_.end()) {
+      collateral = coll_it->second;
     }
 
-    TransferClass cls = classify_and_emit(sort_key, tx_hash, r.block, op, from, to, token_id, r.amount, cond_idx, token_idx);
+    TransferClass cls = classify_and_emit(sort_key, tx_hash, r.block, op, from, to, token_id, r.amount, cond_idx, token_idx, collateral);
     chunk_xfer_stats_.add(cls);
   }
 }
@@ -460,12 +424,10 @@ void EventBuilder::commit_chunk(int64_t new_cursor) {
 
   for (auto &nf : new_fpmms_) {
     std::string blob = hex_to_blob(nf.addr);
-    std::string collateral_val = nf.collateral.empty() ? "NULL" : blob_to_hex_literal(hex_to_blob(nf.collateral));
-    conn->Query("INSERT OR IGNORE INTO rb_fpmm (fpmm_addr, cond_idx, is_usdc, collateral) VALUES (" +
+    conn->Query("INSERT OR IGNORE INTO rb_fpmm (fpmm_addr, cond_idx, collateral) VALUES (" +
                 blob_to_hex_literal(blob) + ", " +
                 std::to_string(nf.cond_idx) + ", " +
-                std::to_string(nf.is_usdc ? 1 : 0) + ", " +
-                collateral_val + ")");
+                std::to_string(static_cast<int>(nf.collateral)) + ")");
   }
 
   for (auto &nm : new_neg_risk_markets_) {
@@ -479,7 +441,7 @@ void EventBuilder::commit_chunk(int64_t new_cursor) {
   if (!new_events_.empty()) {
     conn->Query("CREATE TEMP TABLE IF NOT EXISTS tmp_user_event ("
                 "user_addr BLOB, sort_key BIGINT, cond_idx INTEGER, "
-                "event_type INTEGER, token_idx INTEGER, amount BIGINT, price BIGINT)");
+                "event_type INTEGER, token_idx INTEGER, collateral INTEGER, amount BIGINT, price BIGINT)");
     conn->Query("DELETE FROM tmp_user_event");
 
     {
@@ -492,6 +454,7 @@ void EventBuilder::commit_chunk(int64_t new_cursor) {
         appender.Append(static_cast<int32_t>(evt.cond_idx));
         appender.Append(static_cast<int32_t>(evt.type));
         appender.Append(static_cast<int32_t>(evt.token_idx));
+        appender.Append(static_cast<int32_t>(evt.collateral));
         appender.Append(evt.amount);
         appender.Append(evt.price);
         appender.EndRow();

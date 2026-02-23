@@ -292,7 +292,6 @@
       "internal_mint",
       "internal_burn",
       "internal_transfer",
-      "non_usdc",
       "non_poly",
     ]);
     let s2AllExpanded = true;
@@ -608,8 +607,79 @@
       };
     }
 
+    // EventType常量 (与后端types.hpp对应)
+    const EventType = {
+      Buy: 0,
+      Sell: 1,
+      Split: 2,
+      Merge: 3,
+      Redemption: 4,
+      FPMMBuy: 5,
+      FPMMSell: 6,
+      FPMMLPAdd: 7,
+      FPMMLPRemove: 8,
+      Convert: 9,
+      TransferIn: 10,
+      TransferOut: 11,
+    };
+
+    // 根据event_by_collateral构建按抵押品分组的节点
+    // 返回一个包装节点"按抵押品"，其子节点是各抵押品统计
+    function s2BuildCollateralSection(s, eventTypes, parentColor, prefix) {
+      if (!s.event_by_collateral) return null;
+
+      // 收集这些eventType的所有collateral统计
+      const byCollateral = {};
+      let total = 0;
+      for (const item of s.event_by_collateral) {
+        if (eventTypes.includes(item.event_type)) {
+          const key = item.collateral;
+          if (!byCollateral[key]) {
+            byCollateral[key] = {
+              collateral: key,
+              name: item.collateral_name,
+              addr: item.collateral_addr,
+              count: 0,
+            };
+          }
+          byCollateral[key].count += item.count;
+          total += item.count;
+        }
+      }
+
+      // 转换为节点数组，按count排序
+      const children = Object.values(byCollateral)
+        .filter((c) => c.count > 0)
+        .sort((a, b) => b.count - a.count)
+        .map((c) => ({
+          id: `${prefix}_coll_${c.collateral}`,
+          label: c.name,
+          value: c.count,
+          color: "#fef3c7",
+          desc: c.addr ? c.addr.substring(0, 10) + "..." : "",
+          scene: c.addr || "未知抵押品",
+        }));
+
+      // 如果只有一种抵押品且是USDC，不显示此分区
+      if (children.length <= 1) {
+        return null;
+      }
+
+      return {
+        id: `${prefix}_by_collateral`,
+        label: "按抵押品",
+        value: total,
+        color: "#fcd34d",
+        desc: "=父节点",
+        scene: "按抵押品类型分组统计",
+        children: children,
+        isCollateralSection: true,
+      };
+    }
+
     // 构建Transfer树
     function s2BuildXferTree(s) {
+      // 保持原有恒等式树结构
       const split = (s.xfer_split_normal || 0) + (s.xfer_split_negrisk || 0);
       const merge = (s.xfer_merge_normal || 0) + (s.xfer_merge_negrisk || 0);
       const order = (s.xfer_order_buy || 0) + (s.xfer_order_sell || 0);
@@ -645,11 +715,7 @@
         (s.xfer_internal_transfer_fpmm || 0) +
         (s.xfer_internal_transfer_other || 0);
       const internal = internal_mint + internal_burn + internal_transfer;
-      const non_usdc =
-        (s.xfer_non_usdc_mint || 0) +
-        (s.xfer_non_usdc_burn || 0) +
-        (s.xfer_non_usdc_op || 0);
-      const skipped = non_usdc + (s.xfer_non_poly || 0);
+      const skipped = s.xfer_non_poly || 0;
 
       return {
         id: "xfer",
@@ -691,7 +757,13 @@
                     desc: "Adapter→用户",
                     scene: "Adapter代理铸造后转给用户",
                   },
-                ],
+                  s2BuildCollateralSection(
+                    s,
+                    [EventType.Split],
+                    "#86efac",
+                    "split",
+                  ),
+                ].filter(Boolean),
               },
               {
                 id: "merge",
@@ -717,7 +789,13 @@
                     desc: "用户→Adapter",
                     scene: "用户转给Adapter代理销毁",
                   },
-                ],
+                  s2BuildCollateralSection(
+                    s,
+                    [EventType.Merge],
+                    "#86efac",
+                    "merge",
+                  ),
+                ].filter(Boolean),
               },
               {
                 id: "redemption",
@@ -726,6 +804,14 @@
                 color: "#86efac",
                 desc: "PayoutRedemption",
                 scene: "市场结算后兑换USDC",
+                children: [
+                  s2BuildCollateralSection(
+                    s,
+                    [EventType.Redemption],
+                    "#86efac",
+                    "redemption",
+                  ),
+                ].filter(Boolean),
               },
               {
                 id: "convert",
@@ -734,6 +820,14 @@
                 color: "#86efac",
                 desc: "PositionsConverted",
                 scene: "多选题M个NO换1个YES",
+                children: [
+                  s2BuildCollateralSection(
+                    s,
+                    [EventType.Convert],
+                    "#86efac",
+                    "convert",
+                  ),
+                ].filter(Boolean),
               },
               {
                 id: "order",
@@ -741,7 +835,7 @@
                 value: order,
                 color: "#86efac",
                 desc: "OrderFilled",
-                scene: "Exchange订单簿撮合",
+                scene: "Exchange订单簿撮合(仅USDC)",
                 children: [
                   {
                     id: "order_buy",
@@ -759,7 +853,13 @@
                     desc: "from=用户",
                     scene: "用户卖代币得USDC",
                   },
-                ],
+                  s2BuildCollateralSection(
+                    s,
+                    [EventType.Buy, EventType.Sell],
+                    "#86efac",
+                    "order",
+                  ),
+                ].filter(Boolean),
               },
               {
                 id: "fpmm_trade",
@@ -785,7 +885,13 @@
                     desc: "用户→FPMM",
                     scene: "用户向池子卖代币",
                   },
-                ],
+                  s2BuildCollateralSection(
+                    s,
+                    [EventType.FPMMBuy, EventType.FPMMSell],
+                    "#86efac",
+                    "fpmm_trade",
+                  ),
+                ].filter(Boolean),
               },
               {
                 id: "fpmm_lp",
@@ -819,7 +925,13 @@
                     desc: "FPMM→用户",
                     scene: "添加时返还多余代币",
                   },
-                ],
+                  s2BuildCollateralSection(
+                    s,
+                    [EventType.FPMMLPAdd, EventType.FPMMLPRemove],
+                    "#86efac",
+                    "fpmm_lp",
+                  ),
+                ].filter(Boolean),
               },
               {
                 id: "transfer",
@@ -881,7 +993,13 @@
                       },
                     ],
                   },
-                ],
+                  s2BuildCollateralSection(
+                    s,
+                    [EventType.TransferIn, EventType.TransferOut],
+                    "#86efac",
+                    "transfer",
+                  ),
+                ].filter(Boolean),
               },
             ],
           },
@@ -1010,45 +1128,9 @@
             label: "跳过",
             value: skipped,
             color: "#f59e0b",
-            desc: "非标准Poly",
+            desc: "非Poly token",
             scene: "不处理,跳过",
-            children: [
-              {
-                id: "non_usdc",
-                label: "非USDC",
-                value: non_usdc,
-                color: "#fbbf24",
-                desc: "WETH等抵押",
-                scene: "非USDC抵押的FPMM操作",
-                children: [
-                  {
-                    id: "non_usdc_mint",
-                    label: "铸造",
-                    value: s.xfer_non_usdc_mint || 0,
-                    color: "#fcd34d",
-                    desc: "0x0→FPMM",
-                    scene: "非USDC池的mint",
-                  },
-                  {
-                    id: "non_usdc_burn",
-                    label: "销毁",
-                    value: s.xfer_non_usdc_burn || 0,
-                    color: "#fcd34d",
-                    desc: "FPMM→0x0",
-                    scene: "非USDC池的burn",
-                  },
-                  {
-                    id: "non_usdc_op",
-                    label: "操作",
-                    value: s.xfer_non_usdc_op || 0,
-                    color: "#fcd34d",
-                    desc: "op=FPMM",
-                    scene: "非USDC池的交易/LP",
-                  },
-                ],
-              },
-              s2BuildNonPolyNode(s),
-            ],
+            children: [s2BuildNonPolyNode(s)],
           },
         ],
       };
@@ -1144,7 +1226,6 @@
         "internal_mint",
         "internal_burn",
         "internal_transfer",
-        "non_usdc",
         "non_poly",
       ]);
       s2AllExpanded = true;

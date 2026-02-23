@@ -88,8 +88,7 @@ public:
       CREATE TABLE IF NOT EXISTS rb_fpmm (
         fpmm_addr    BLOB PRIMARY KEY,
         cond_idx     INTEGER NOT NULL,
-        is_usdc      INTEGER NOT NULL DEFAULT 1,
-        collateral   BLOB
+        collateral   INTEGER NOT NULL DEFAULT 1
       )
     )");
 
@@ -107,6 +106,7 @@ public:
         cond_idx    INTEGER NOT NULL,
         event_type  INTEGER NOT NULL,
         token_idx   INTEGER NOT NULL,
+        collateral  INTEGER NOT NULL DEFAULT 1,
         amount      BIGINT NOT NULL,
         price       BIGINT NOT NULL,
         PRIMARY KEY (user_addr, sort_key, cond_idx, event_type, token_idx)
@@ -202,21 +202,15 @@ public:
       token_map_[to_lower(tid)] = info;
     }
 
-    auto fpmm_r = conn->Query("SELECT fpmm_addr, cond_idx, is_usdc, collateral FROM rb_fpmm");
+    auto fpmm_r = conn->Query("SELECT fpmm_addr, cond_idx, collateral FROM rb_fpmm");
     for (idx_t i = 0; i < fpmm_r->RowCount(); ++i) {
       std::string addr = blob_to_hex(fpmm_r->GetValue(0, i).GetValueUnsafe<std::string>());
       FPMMInfo info;
       info.cond_idx = fpmm_r->GetValue(1, i).GetValue<uint32_t>();
-      info.is_usdc = fpmm_r->GetValue(2, i).GetValue<int32_t>() != 0;
-      auto collateral_val = fpmm_r->GetValue(3, i);
-      if (!collateral_val.IsNull())
-        info.collateral = to_lower(blob_to_hex(collateral_val.GetValueUnsafe<std::string>()));
+      info.collateral = static_cast<Collateral>(fpmm_r->GetValue(2, i).GetValue<int32_t>());
       fpmm_map_[to_lower(addr)] = info;
-      if (info.is_usdc) {
-        fpmm_cond_idxs_.insert(info.cond_idx);
-      } else {
-        non_usdc_cond_idxs_.insert(info.cond_idx);
-      }
+      fpmm_cond_idxs_.insert(info.cond_idx);
+      cond_collateral_[info.cond_idx] = info.collateral;
     }
 
     // 从 rb_neg_risk_market 表加载 question_id -> market_id 映射，并标记 NegRisk 条件
@@ -260,22 +254,15 @@ public:
       progress_.phase = 3;
 
     // 恢复后诊断
-    int64_t usdc_fpmm = 0;
-    std::unordered_map<std::string, int64_t> non_usdc_by_collateral;
+    std::unordered_map<Collateral, int64_t> fpmm_by_collateral;
     for (const auto &[addr, info] : fpmm_map_) {
-      if (info.is_usdc) {
-        ++usdc_fpmm;
-      } else {
-        non_usdc_by_collateral[info.collateral]++;
-      }
+      fpmm_by_collateral[info.collateral]++;
     }
     std::cerr << "[Stage2] Restored: " << conditions_.size() << " conditions, "
-              << token_map_.size() << " tokens, " << usdc_fpmm << " USDC FPMMs" << std::endl;
-    if (!non_usdc_by_collateral.empty()) {
-      std::cerr << "[Stage2] Non-USDC FPMMs by collateral:" << std::endl;
-      for (const auto &[collateral, cnt] : non_usdc_by_collateral) {
-        std::cerr << "    " << collateral << ": " << cnt << std::endl;
-      }
+              << token_map_.size() << " tokens, " << fpmm_map_.size() << " FPMMs" << std::endl;
+    std::cerr << "[Stage2] FPMMs by collateral:" << std::endl;
+    for (const auto &[coll, cnt] : fpmm_by_collateral) {
+      std::cerr << "    " << collateral_name(coll) << ": " << cnt << std::endl;
     }
   }
 
@@ -307,7 +294,6 @@ public:
     tx_fpmm_trade_.clear();
     tx_fpmm_funding_.clear();
     chunk_xfer_stats_ = {};
-    non_usdc_by_collat_.clear();
 
     // 开始 chunk log
     chunk_log_.begin(log_dir_, chunk_start, chunk_end);
@@ -330,8 +316,6 @@ public:
 
     // 验证 transfer 分类完整性
     chunk_xfer_stats_.verify();
-    // 清理临时数据
-    non_usdc_by_collat_.clear();
     // 累加所有细分字段
     progress_.xfer_stats.total += chunk_xfer_stats_.total;
     progress_.xfer_stats.split_normal += chunk_xfer_stats_.split_normal;
@@ -361,9 +345,6 @@ public:
     progress_.xfer_stats.internal_transfer_negrisk += chunk_xfer_stats_.internal_transfer_negrisk;
     progress_.xfer_stats.internal_transfer_fpmm += chunk_xfer_stats_.internal_transfer_fpmm;
     progress_.xfer_stats.internal_transfer_other += chunk_xfer_stats_.internal_transfer_other;
-    progress_.xfer_stats.non_usdc_mint += chunk_xfer_stats_.non_usdc_mint;
-    progress_.xfer_stats.non_usdc_burn += chunk_xfer_stats_.non_usdc_burn;
-    progress_.xfer_stats.non_usdc_op += chunk_xfer_stats_.non_usdc_op;
     progress_.xfer_stats.non_polymarket += chunk_xfer_stats_.non_polymarket;
     for (const auto &[op, tokens] : chunk_xfer_stats_.non_poly_by_op_token) {
       for (const auto &[token_id, cnt] : tokens) {
@@ -395,13 +376,12 @@ private:
   std::unordered_map<std::string, uint32_t> cond_map_;
   std::unordered_map<std::string, TokenInfo> token_map_;
   std::unordered_map<std::string, FPMMInfo> fpmm_map_;
-  std::unordered_map<std::string, std::string> cond_to_market_;    // condition_id -> market_id
-  std::unordered_set<std::string> seen_users_;                     // 实时统计唯一用户
-  std::unordered_set<std::string> seen_markets_;                   // 统计唯一 NegRisk 市场
-  std::unordered_set<uint32_t> fpmm_cond_idxs_;                    // Polymarket AMM 对应的 cond_idx
-  std::unordered_set<uint32_t> negrisk_cond_idxs_;                 // NegRisk 对应的 cond_idx
-  std::unordered_set<uint32_t> non_usdc_cond_idxs_;                // 非 USDC 抵押品的 cond_idx
-  std::unordered_map<uint32_t, std::string> non_usdc_collaterals_; // cond_idx -> collateral address
+  std::unordered_map<std::string, std::string> cond_to_market_; // condition_id -> market_id
+  std::unordered_set<std::string> seen_users_;                  // 实时统计唯一用户
+  std::unordered_set<std::string> seen_markets_;                // 统计唯一 NegRisk 市场
+  std::unordered_set<uint32_t> fpmm_cond_idxs_;                 // Polymarket AMM 对应的 cond_idx
+  std::unordered_set<uint32_t> negrisk_cond_idxs_;              // NegRisk 对应的 cond_idx
+  std::unordered_map<uint32_t, Collateral> cond_collateral_;    // cond_idx -> 抵押品类型
 
   std::unordered_map<TxCondKey, std::vector<SplitInfo>> tx_split_;
   std::unordered_map<TxCondKey, std::vector<MergeInfo>> tx_merge_;
@@ -410,10 +390,9 @@ private:
   std::unordered_map<TxTokenKey, OrderInfo> tx_order_;
   std::unordered_map<TxFPMMKey, FPMMTradeInfo> tx_fpmm_trade_;
   std::unordered_map<TxFPMMKey, FPMMFundingInfo> tx_fpmm_funding_;
-  TransferStats chunk_xfer_stats_;                              // 当前 chunk 的 transfer 统计
-  std::unordered_map<std::string, int64_t> non_usdc_by_collat_; // 按抵押品统计非 USDC FPMM transfer
-  ChunkLog chunk_log_;                                          // 当前 chunk 的日志
-  std::string log_dir_ = "data/stage2/log";                     // 日志目录
+  TransferStats chunk_xfer_stats_;          // 当前 chunk 的 transfer 统计
+  ChunkLog chunk_log_;                      // 当前 chunk 的日志
+  std::string log_dir_ = "data/stage2/log"; // 日志目录
 
   struct NewCondition {
     uint32_t idx;
@@ -429,8 +408,7 @@ private:
   struct NewFPMM {
     std::string addr;
     uint32_t cond_idx;
-    bool is_usdc;
-    std::string collateral;
+    Collateral collateral;
   };
 
   struct NewNegRiskMarket {
@@ -506,17 +484,14 @@ private:
     progress_.total_tokens = token_map_.size();
   }
 
-  void intern_fpmm(const std::string &addr, uint32_t cond_idx, bool is_usdc = true, const std::string &collateral = "") {
+  void intern_fpmm(const std::string &addr, uint32_t cond_idx, Collateral collateral) {
     std::string lower = to_lower(addr);
     if (fpmm_map_.count(lower))
       return;
-    fpmm_map_[lower] = {cond_idx, is_usdc, collateral};
-    new_fpmms_.push_back({lower, cond_idx, is_usdc, collateral});
-    if (is_usdc) {
-      fpmm_cond_idxs_.insert(cond_idx);
-    } else {
-      non_usdc_cond_idxs_.insert(cond_idx);
-    }
+    fpmm_map_[lower] = {cond_idx, collateral};
+    new_fpmms_.push_back({lower, cond_idx, collateral});
+    fpmm_cond_idxs_.insert(cond_idx);
+    cond_collateral_[cond_idx] = collateral;
   }
 
   void update_cond_type_stats() {
@@ -583,7 +558,8 @@ private:
       } else if (src == TokenSource::PolymarketFPMM) {
         tt.polymarket.total++;
         tt.polymarket.fpmm_only.total++;
-        if (non_usdc_cond_idxs_.count(info.cond_idx)) {
+        auto cit = cond_collateral_.find(info.cond_idx);
+        if (cit != cond_collateral_.end() && !is_usdc_collateral(cit->second)) {
           tt.polymarket.fpmm_only.non_usdc++;
         } else {
           tt.polymarket.fpmm_only.usdc++;
@@ -620,6 +596,10 @@ private:
     if (seen_users_.insert(lower).second) {
       progress_.total_users = seen_users_.size();
     }
+
+    // 按(EventType, Collateral)分组统计
+    uint16_t key = static_cast<uint16_t>(evt.type) * 16 + evt.collateral;
+    progress_.event_by_collateral[key]++;
 
     // 更新事件计数
     switch (evt.type) {
@@ -669,7 +649,7 @@ private:
                                   int64_t block, const std::string &op,
                                   const std::string &from, const std::string &to,
                                   const std::string &token_id, int64_t amount,
-                                  uint32_t cond_idx, uint8_t token_idx);
+                                  uint32_t cond_idx, uint8_t token_idx, Collateral collateral);
 };
 
 } // namespace stage2

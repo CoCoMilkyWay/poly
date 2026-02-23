@@ -411,9 +411,6 @@ private:
         {"xfer_internal_transfer_negrisk", p.xfer_internal_transfer_negrisk},
         {"xfer_internal_transfer_fpmm", p.xfer_internal_transfer_fpmm},
         {"xfer_internal_transfer_other", p.xfer_internal_transfer_other},
-        {"xfer_non_usdc_mint", p.xfer_non_usdc_mint},
-        {"xfer_non_usdc_burn", p.xfer_non_usdc_burn},
-        {"xfer_non_usdc_op", p.xfer_non_usdc_op},
         {"xfer_non_poly", p.xfer_non_poly},
     };
     // 添加 non_poly 协议->token 明细
@@ -429,6 +426,21 @@ private:
       protos.push_back({{"name", npp.name}, {"addr", npp.addr}, {"total", npp.total}, {"tokens", tokens}});
     }
     result["xfer_non_poly_protos"] = protos;
+
+    // 按(EventType, Collateral)分组的统计
+    json event_by_coll = json::array();
+    for (const auto &[key, cnt] : p.event_by_collateral) {
+      uint8_t event_type = key / 16;
+      uint8_t coll = key % 16;
+      event_by_coll.push_back({
+          {"event_type", event_type},
+          {"collateral", coll},
+          {"collateral_name", stage2::collateral_name(static_cast<stage2::Collateral>(coll))},
+          {"collateral_addr", stage2::collateral_addr(static_cast<stage2::Collateral>(coll))},
+          {"count", cnt},
+      });
+    }
+    result["event_by_collateral"] = event_by_coll;
 
     if (stage2_getter_) {
       auto s2 = stage2_getter_();
