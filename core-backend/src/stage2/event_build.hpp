@@ -365,8 +365,10 @@ public:
     progress_.xfer_stats.non_usdc_burn += chunk_xfer_stats_.non_usdc_burn;
     progress_.xfer_stats.non_usdc_op += chunk_xfer_stats_.non_usdc_op;
     progress_.xfer_stats.non_polymarket += chunk_xfer_stats_.non_polymarket;
-    for (const auto &[op, cnt] : chunk_xfer_stats_.non_poly_by_op) {
-      progress_.xfer_stats.non_poly_by_op[op] += cnt;
+    for (const auto &[op, tokens] : chunk_xfer_stats_.non_poly_by_op_token) {
+      for (const auto &[token_id, cnt] : tokens) {
+        progress_.xfer_stats.non_poly_by_op_token[op][token_id] += cnt;
+      }
     }
 
     commit_chunk(chunk_end);

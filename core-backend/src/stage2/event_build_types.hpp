@@ -268,8 +268,9 @@ struct TransferStats {
   int64_t non_polymarket = 0;
   int64_t unclassified = 0;
 
-  // non_polymarket按operator细分（累积统计）
-  std::unordered_map<std::string, int64_t> non_poly_by_op;
+  // non_polymarket按operator->token细分（累积统计）
+  // key: operator地址, value: map<token_id, count>
+  std::unordered_map<std::string, std::unordered_map<std::string, int64_t>> non_poly_by_op_token;
 
   // === 汇总字段 (由叶子节点计算) ===
   int64_t split() const { return split_normal + split_negrisk; }
@@ -398,8 +399,8 @@ struct TransferStats {
     }
   }
 
-  void add_non_poly_op(const std::string &op) {
-    non_poly_by_op[op]++;
+  void add_non_poly_op(const std::string &op, const std::string &token_id) {
+    non_poly_by_op_token[op][token_id]++;
   }
 
   void verify() const {

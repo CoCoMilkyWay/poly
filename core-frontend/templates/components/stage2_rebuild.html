@@ -628,19 +628,29 @@
       };
     }
 
-    // 构建非Polymarket节点（动态显示按协议的细分，协议名由后端解析）
+    // 构建非Polymarket节点（协议->tokens两层结构）
     function s2BuildNonPolyNode(s) {
-      const byOp = s.xfer_non_poly_by_op || {};
-      const entries = Object.entries(byOp).sort((a, b) => b[1] - a[1]); // 按数量降序
+      const protos = s.xfer_non_poly_protos || [];
 
-      const children = entries.map(([name, cnt], idx) => {
-        const isAddr = name.startsWith("0x");
+      const children = protos.map((proto, idx) => {
+        const isAddr = proto.name.startsWith("0x");
+        const label = isAddr ? proto.name : `${proto.name} (${proto.addr})`;
+
+        const tokenChildren = proto.tokens.map((t, tidx) => ({
+          id: `non_poly_${idx}_t${tidx}`,
+          label: t.id,
+          value: t.count,
+          color: "#555",
+          desc: "",
+        }));
+
         return {
-          id: `non_poly_op_${idx}`,
-          label: isAddr ? name.slice(0, 10) + "..." : name,
-          value: cnt,
-          color: "#777",
-          desc: isAddr ? `未识别: ${name}` : name,
+          id: `non_poly_proto_${idx}`,
+          label: label,
+          value: proto.total,
+          color: isAddr ? "#666" : "#8b8",
+          desc: isAddr ? "未识别协议" : "",
+          children: tokenChildren.length > 0 ? tokenChildren : undefined,
         };
       });
 

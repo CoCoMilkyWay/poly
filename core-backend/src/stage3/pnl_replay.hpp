@@ -144,8 +144,14 @@ public:
     int64_t xfer_non_usdc_burn = 0;
     int64_t xfer_non_usdc_op = 0;
     int64_t xfer_non_poly = 0;
-    // non_poly按operator细分
-    std::unordered_map<std::string, int64_t> xfer_non_poly_by_op;
+    // non_poly按operator->token细分: { 协议名: { total: N, tokens: { token_id: count, ... } }, ... }
+    struct NonPolyProto {
+      std::string name;  // 协议名或地址
+      std::string addr;  // 原始地址
+      int64_t total = 0;
+      std::unordered_map<std::string, int64_t> tokens; // token_id -> count
+    };
+    std::vector<NonPolyProto> xfer_non_poly_protos;
   };
 
   RebuildProgress progress() const {
@@ -213,13 +219,21 @@ public:
     p.xfer_non_usdc_burn = bp.xfer_stats.non_usdc_burn;
     p.xfer_non_usdc_op = bp.xfer_stats.non_usdc_op;
     p.xfer_non_poly = bp.xfer_stats.non_polymarket;
-    for (const auto &[op, cnt] : bp.xfer_stats.non_poly_by_op) {
+    for (const auto &[op, tokens] : bp.xfer_stats.non_poly_by_op_token) {
       Protocol proto = identify_protocol(op);
-      std::string name = (proto == Protocol::Unknown)
-                             ? op  // 未知协议显示地址
-                             : protocol_name(proto);
-      p.xfer_non_poly_by_op[name] += cnt;
+      std::string name = (proto == Protocol::Unknown) ? op : protocol_name(proto);
+      RebuildProgress::NonPolyProto npp;
+      npp.name = name;
+      npp.addr = op;
+      npp.total = 0;
+      for (const auto &[token_id, cnt] : tokens) {
+        npp.tokens[token_id] = cnt;
+        npp.total += cnt;
+      }
+      p.xfer_non_poly_protos.push_back(std::move(npp));
     }
+    std::sort(p.xfer_non_poly_protos.begin(), p.xfer_non_poly_protos.end(),
+              [](const auto &a, const auto &b) { return a.total > b.total; });
     return p;
   }
 

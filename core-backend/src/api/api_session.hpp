@@ -406,8 +406,20 @@ private:
         {"xfer_non_usdc_burn", p.xfer_non_usdc_burn},
         {"xfer_non_usdc_op", p.xfer_non_usdc_op},
         {"xfer_non_poly", p.xfer_non_poly},
-        {"xfer_non_poly_by_op", p.xfer_non_poly_by_op},
     };
+    // 添加 non_poly 协议->token 明细
+    json protos = json::array();
+    for (const auto &npp : p.xfer_non_poly_protos) {
+      json tokens = json::array();
+      std::vector<std::pair<std::string, int64_t>> sorted_tokens(npp.tokens.begin(), npp.tokens.end());
+      std::sort(sorted_tokens.begin(), sorted_tokens.end(),
+                [](const auto &a, const auto &b) { return a.second > b.second; });
+      for (const auto &[tid, cnt] : sorted_tokens) {
+        tokens.push_back({{"id", tid}, {"count", cnt}});
+      }
+      protos.push_back({{"name", npp.name}, {"addr", npp.addr}, {"total", npp.total}, {"tokens", tokens}});
+    }
+    result["xfer_non_poly_protos"] = protos;
 
     if (stage2_getter_) {
       auto s2 = stage2_getter_();
