@@ -390,6 +390,7 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
     auto tit = token_map_.find(token_id);
     if (tit == token_map_.end()) {
       chunk_xfer_stats_.add(TransferClass::NonPolymarket);
+      chunk_xfer_stats_.add_non_poly_op(op);
       chunk_log_.log_non_polymarket(r.block, r.tx_hash, op, from, to, token_id, r.amount);
       continue;
     }

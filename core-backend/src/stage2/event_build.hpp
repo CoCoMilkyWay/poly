@@ -365,6 +365,9 @@ public:
     progress_.xfer_stats.non_usdc_burn += chunk_xfer_stats_.non_usdc_burn;
     progress_.xfer_stats.non_usdc_op += chunk_xfer_stats_.non_usdc_op;
     progress_.xfer_stats.non_polymarket += chunk_xfer_stats_.non_polymarket;
+    for (const auto &[op, cnt] : chunk_xfer_stats_.non_poly_by_op) {
+      progress_.xfer_stats.non_poly_by_op[op] += cnt;
+    }
 
     commit_chunk(chunk_end);
 
@@ -517,6 +520,8 @@ private:
   void update_cond_type_stats() {
     // Partition（按类型）: total = AMM + Norm + NegRisk + Other
     int64_t amm = 0, negrisk = 0, normal = 0, other = 0;
+    // other细分（按来源）
+    int64_t other_prep = 0, other_other_fpmm = 0, other_split = 0;
     // Partition（按来源）: total = Prep + PolyTokenReg + PolyFPMM + OtherFPMM + Split
     int64_t src_prep = 0, src_poly_token_reg = 0, src_poly_fpmm = 0, src_other_fpmm = 0, src_split = 0;
     for (size_t i = 0; i < conditions_.size(); ++i) {
@@ -530,6 +535,19 @@ private:
         ++normal; // 明确来自Polymarket但不是AMM/NegRisk
       } else {
         ++other; // 来源不确定(ConditionPrep/OtherFPMM/Split)，可能是其他协议
+        switch (conditions_[i].source) {
+        case ConditionSource::ConditionPrep:
+          ++other_prep;
+          break;
+        case ConditionSource::OtherFPMM:
+          ++other_other_fpmm;
+          break;
+        case ConditionSource::SplitEvent:
+          ++other_split;
+          break;
+        default:
+          break;
+        }
       }
       switch (conditions_[i].source) {
       case ConditionSource::ConditionPrep:
@@ -553,6 +571,9 @@ private:
     progress_.cnt_cond_negrisk = negrisk;
     progress_.cnt_cond_normal = normal;
     progress_.cnt_cond_other = other;
+    progress_.cnt_cond_other_prep = other_prep;
+    progress_.cnt_cond_other_other_fpmm = other_other_fpmm;
+    progress_.cnt_cond_other_split = other_split;
     progress_.cnt_cond_src_prep = src_prep;
     progress_.cnt_cond_src_poly_token_reg = src_poly_token_reg;
     progress_.cnt_cond_src_poly_fpmm = src_poly_fpmm;
@@ -561,6 +582,8 @@ private:
 
     // Partition（按类型）: total = AMM + Norm + NegRisk + 非USDC + Other
     int64_t t_amm = 0, t_negrisk = 0, t_non_usdc = 0, t_norm = 0, t_other = 0;
+    // other细分（按来源）
+    int64_t t_other_other_fpmm = 0, t_other_split = 0;
     // Partition（按来源）: total = PolyReg + PolyFPMM + OtherFPMM + Split
     int64_t t_src_poly_reg = 0, t_src_poly_fpmm = 0, t_src_other_fpmm = 0, t_src_split = 0;
     for (const auto &[tid, info] : token_map_) {
@@ -573,8 +596,19 @@ private:
       else if (info.source == TokenSource::PolymarketTokenReg ||
                info.source == TokenSource::PolymarketFPMM)
         ++t_norm; // 明确来自Polymarket
-      else
+      else {
         ++t_other; // 来源不确定(OtherFPMM/Split)，可能是其他协议
+        switch (info.source) {
+        case TokenSource::OtherFPMM:
+          ++t_other_other_fpmm;
+          break;
+        case TokenSource::SplitEvent:
+          ++t_other_split;
+          break;
+        default:
+          break;
+        }
+      }
       switch (info.source) {
       case TokenSource::PolymarketTokenReg:
         ++t_src_poly_reg;
@@ -595,6 +629,8 @@ private:
     progress_.cnt_token_non_usdc = t_non_usdc;
     progress_.cnt_token_norm = t_norm;
     progress_.cnt_token_other = t_other;
+    progress_.cnt_token_other_other_fpmm = t_other_other_fpmm;
+    progress_.cnt_token_other_split = t_other_split;
     progress_.cnt_token_src_poly_reg = t_src_poly_reg;
     progress_.cnt_token_src_poly_fpmm = t_src_poly_fpmm;
     progress_.cnt_token_src_other_fpmm = t_src_other_fpmm;

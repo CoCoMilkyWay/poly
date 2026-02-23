@@ -75,6 +75,10 @@ public:
     int64_t cond_norm = 0;    // Polymarket普通
     int64_t cond_negrisk = 0; // Polymarket NegRisk
     int64_t cond_other = 0;   // 其他（来源不确定）
+    // cond_other按来源细分
+    int64_t cond_other_prep = 0;       // 其他-来自ConditionPrep
+    int64_t cond_other_other_fpmm = 0; // 其他-来自OtherFPMM
+    int64_t cond_other_split = 0;      // 其他-来自SplitEvent
 
     // 问题分类（按来源）: cond_total = prep + poly_token_reg + poly_fpmm + other_fpmm + split
     int64_t cond_src_prep = 0;           // ConditionPreparation事件（通用）
@@ -90,6 +94,9 @@ public:
     int64_t token_non_usdc = 0; // 非USDC抵押品
     int64_t token_norm = 0;     // Polymarket普通
     int64_t token_other = 0;    // 其他（来源不确定）
+    // token_other按来源细分
+    int64_t token_other_other_fpmm = 0; // 其他-来自OtherFPMM
+    int64_t token_other_split = 0;      // 其他-来自SplitEvent
 
     // 代币分类（按来源）: token_total = poly_reg + poly_fpmm + other_fpmm + split
     int64_t token_src_poly_reg = 0;   // Polymarket TokenRegistered
@@ -137,6 +144,8 @@ public:
     int64_t xfer_non_usdc_burn = 0;
     int64_t xfer_non_usdc_op = 0;
     int64_t xfer_non_poly = 0;
+    // non_poly按operator细分
+    std::unordered_map<std::string, int64_t> xfer_non_poly_by_op;
   };
 
   RebuildProgress progress() const {
@@ -152,6 +161,9 @@ public:
     p.cond_norm = bp.cnt_cond_normal;
     p.cond_negrisk = bp.cnt_cond_negrisk;
     p.cond_other = bp.cnt_cond_other;
+    p.cond_other_prep = bp.cnt_cond_other_prep;
+    p.cond_other_other_fpmm = bp.cnt_cond_other_other_fpmm;
+    p.cond_other_split = bp.cnt_cond_other_split;
     p.cond_src_prep = bp.cnt_cond_src_prep;
     p.cond_src_poly_token_reg = bp.cnt_cond_src_poly_token_reg;
     p.cond_src_poly_fpmm = bp.cnt_cond_src_poly_fpmm;
@@ -163,6 +175,8 @@ public:
     p.token_non_usdc = bp.cnt_token_non_usdc;
     p.token_norm = bp.cnt_token_norm;
     p.token_other = bp.cnt_token_other;
+    p.token_other_other_fpmm = bp.cnt_token_other_other_fpmm;
+    p.token_other_split = bp.cnt_token_other_split;
     p.token_src_poly_reg = bp.cnt_token_src_poly_reg;
     p.token_src_poly_fpmm = bp.cnt_token_src_poly_fpmm;
     p.token_src_other_fpmm = bp.cnt_token_src_other_fpmm;
@@ -199,6 +213,13 @@ public:
     p.xfer_non_usdc_burn = bp.xfer_stats.non_usdc_burn;
     p.xfer_non_usdc_op = bp.xfer_stats.non_usdc_op;
     p.xfer_non_poly = bp.xfer_stats.non_polymarket;
+    for (const auto &[op, cnt] : bp.xfer_stats.non_poly_by_op) {
+      Protocol proto = identify_protocol(op);
+      std::string name = (proto == Protocol::Unknown)
+                             ? op  // 未知协议显示地址
+                             : protocol_name(proto);
+      p.xfer_non_poly_by_op[name] += cnt;
+    }
     return p;
   }
 

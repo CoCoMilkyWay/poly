@@ -268,6 +268,9 @@ struct TransferStats {
   int64_t non_polymarket = 0;
   int64_t unclassified = 0;
 
+  // non_polymarket按operator细分（累积统计）
+  std::unordered_map<std::string, int64_t> non_poly_by_op;
+
   // === 汇总字段 (由叶子节点计算) ===
   int64_t split() const { return split_normal + split_negrisk; }
   int64_t merge() const { return merge_normal + merge_negrisk; }
@@ -395,6 +398,10 @@ struct TransferStats {
     }
   }
 
+  void add_non_poly_op(const std::string &op) {
+    non_poly_by_op[op]++;
+  }
+
   void verify() const {
     int64_t sum = user_events() + internal() + skipped() + unclassified;
     assert(sum == total && "total = user_events + internal + skipped + unclassified");
@@ -485,6 +492,10 @@ struct BuildProgress {
   int64_t cnt_cond_normal = 0;    // Polymarket Exchange (普通)
   int64_t cnt_cond_negrisk = 0;   // Polymarket NegRisk
   int64_t cnt_cond_other = 0;     // 其他（不属于上面三类的）
+  // cond_other按来源细分
+  int64_t cnt_cond_other_prep = 0;       // 其他-来自ConditionPrep
+  int64_t cnt_cond_other_other_fpmm = 0; // 其他-来自OtherFPMM
+  int64_t cnt_cond_other_split = 0;      // 其他-来自SplitEvent
   // condition分类（按来源）: total = Prep + PolyTokenReg + PolyFPMM + OtherFPMM + Split
   int64_t cnt_cond_src_prep = 0;           // 直接从ConditionPreparation（通用）
   int64_t cnt_cond_src_poly_token_reg = 0; // Polymarket TokenRegistered
@@ -497,6 +508,9 @@ struct BuildProgress {
   int64_t cnt_token_non_usdc = 0;  // 非USDC抵押品
   int64_t cnt_token_norm = 0;      // Polymarket普通
   int64_t cnt_token_other = 0;     // 其他（不属于上面四类的）
+  // token_other按来源细分
+  int64_t cnt_token_other_other_fpmm = 0; // 其他-来自OtherFPMM
+  int64_t cnt_token_other_split = 0;      // 其他-来自SplitEvent
   // token分类（按来源）: total = PolyReg + PolyFPMM + OtherFPMM + Split
   int64_t cnt_token_src_poly_reg = 0;    // Polymarket TokenRegistered
   int64_t cnt_token_src_poly_fpmm = 0;   // Polymarket FPMM计算

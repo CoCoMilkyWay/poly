@@ -278,6 +278,7 @@
       "internal_burn",
       "internal_transfer",
       "non_usdc",
+      "non_poly",
     ]);
     let s2AllExpanded = true;
 
@@ -387,6 +388,29 @@
                 value: s.cond_other || 0,
                 color: "#888",
                 desc: "非Polymarket协议的问题(待识别)",
+                children: [
+                  {
+                    id: "cond_other_prep",
+                    label: "ConditionPrep",
+                    value: s.cond_other_prep || 0,
+                    color: "#777",
+                    desc: "来自ConditionPreparation事件",
+                  },
+                  {
+                    id: "cond_other_other_fpmm",
+                    label: "其他FPMM",
+                    value: s.cond_other_other_fpmm || 0,
+                    color: "#777",
+                    desc: "来自其他协议FPMM创建",
+                  },
+                  {
+                    id: "cond_other_split",
+                    label: "Split事件",
+                    value: s.cond_other_split || 0,
+                    color: "#777",
+                    desc: "来自Split事件推断",
+                  },
+                ],
               },
             ],
           },
@@ -526,6 +550,22 @@
                 value: s.token_other || 0,
                 color: "#888",
                 desc: "非Polymarket协议的代币(待识别)",
+                children: [
+                  {
+                    id: "token_other_other_fpmm",
+                    label: "其他FPMM",
+                    value: s.token_other_other_fpmm || 0,
+                    color: "#777",
+                    desc: "来自其他协议FPMM计算",
+                  },
+                  {
+                    id: "token_other_split",
+                    label: "Split事件",
+                    value: s.token_other_split || 0,
+                    color: "#777",
+                    desc: "来自Split事件计算",
+                  },
+                ],
               },
             ],
           },
@@ -585,6 +625,32 @@
             ],
           },
         ],
+      };
+    }
+
+    // 构建非Polymarket节点（动态显示按协议的细分，协议名由后端解析）
+    function s2BuildNonPolyNode(s) {
+      const byOp = s.xfer_non_poly_by_op || {};
+      const entries = Object.entries(byOp).sort((a, b) => b[1] - a[1]); // 按数量降序
+
+      const children = entries.map(([name, cnt], idx) => {
+        const isAddr = name.startsWith("0x");
+        return {
+          id: `non_poly_op_${idx}`,
+          label: isAddr ? name.slice(0, 10) + "..." : name,
+          value: cnt,
+          color: "#777",
+          desc: isAddr ? `未识别: ${name}` : name,
+        };
+      });
+
+      return {
+        id: "non_poly",
+        label: "非Polymarket",
+        value: s.xfer_non_poly || 0,
+        color: "#888",
+        desc: "token不在Polymarket(如Omen)",
+        children: children.length > 0 ? children : undefined,
       };
     }
 
@@ -941,12 +1007,7 @@
                   },
                 ],
               },
-              {
-                id: "non_poly",
-                label: "非Polymarket",
-                value: s.xfer_non_poly || 0,
-                desc: "token不在Polymarket(如Omen)",
-              },
+              s2BuildNonPolyNode(s),
             ],
           },
         ],
@@ -1038,6 +1099,7 @@
         "internal_burn",
         "internal_transfer",
         "non_usdc",
+        "non_poly",
       ]);
       s2AllExpanded = true;
       s2RenderAllTrees(window._s2LastData || {});

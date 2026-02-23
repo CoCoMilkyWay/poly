@@ -354,6 +354,9 @@ private:
         {"cond_norm", p.cond_norm},
         {"cond_negrisk", p.cond_negrisk},
         {"cond_other", p.cond_other},
+        {"cond_other_prep", p.cond_other_prep},
+        {"cond_other_other_fpmm", p.cond_other_other_fpmm},
+        {"cond_other_split", p.cond_other_split},
         {"cond_src_prep", p.cond_src_prep},
         {"cond_src_poly_token_reg", p.cond_src_poly_token_reg},
         {"cond_src_poly_fpmm", p.cond_src_poly_fpmm},
@@ -365,6 +368,8 @@ private:
         {"token_non_usdc", p.token_non_usdc},
         {"token_norm", p.token_norm},
         {"token_other", p.token_other},
+        {"token_other_other_fpmm", p.token_other_other_fpmm},
+        {"token_other_split", p.token_other_split},
         {"token_src_poly_reg", p.token_src_poly_reg},
         {"token_src_poly_fpmm", p.token_src_poly_fpmm},
         {"token_src_other_fpmm", p.token_src_other_fpmm},
@@ -401,6 +406,7 @@ private:
         {"xfer_non_usdc_burn", p.xfer_non_usdc_burn},
         {"xfer_non_usdc_op", p.xfer_non_usdc_op},
         {"xfer_non_poly", p.xfer_non_poly},
+        {"xfer_non_poly_by_op", p.xfer_non_poly_by_op},
     };
 
     if (stage2_getter_) {
