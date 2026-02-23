@@ -2,11 +2,15 @@
 
 #include <filesystem>
 #include <functional>
+#include <future>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
 
+#include <arrow/io/file.h>
+#include <arrow/ipc/reader.h>
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
 #include <nlohmann/json.hpp>
@@ -128,6 +132,16 @@ private:
     res_.body() = R"({"status":"ok"})";
   }
 
+  static int64_t feather_row_count(const std::string &path) {
+    auto file = arrow::io::ReadableFile::Open(path);
+    assert(file.ok());
+    auto reader = arrow::ipc::RecordBatchFileReader::Open(*file);
+    assert(reader.ok());
+    auto count = (*reader)->CountRows();
+    assert(count.ok());
+    return *count;
+  }
+
   void handle_tables() {
     TraceN("api/tables");
     res_.set(http::field::content_type, "application/json");
@@ -143,27 +157,42 @@ private:
     struct TableCache {
       std::unordered_set<std::string> files;
       int64_t total = 0;
+      std::mutex mtx;
     };
     static std::unordered_map<std::string, TableCache> table_cache;
 
-    json feather_files = json::array();
+    std::vector<std::future<std::pair<std::string, int64_t>>> futures;
     for (const char *name : feather_names) {
+      std::string table_name = name;
       std::string dir = db_.feather_dir(name);
       if (!std::filesystem::exists(dir) || std::filesystem::is_empty(dir))
         continue;
 
-      auto &cache = table_cache[name];
-      for (const auto &entry : std::filesystem::directory_iterator(dir)) {
-        std::string filename = entry.path().filename().string();
-        if (!filename.ends_with(".feather"))
-          continue;
-        if (cache.files.count(filename))
-          continue;
-        int64_t cnt = db_.query_single_int("SELECT COUNT(*) FROM read_arrow('" + entry.path().string() + "')");
-        cache.files.insert(filename);
-        cache.total += cnt;
-      }
-      feather_files.push_back({{"name", name}, {"count", cache.total}});
+      futures.push_back(std::async(std::launch::async, [table_name, dir]() -> std::pair<std::string, int64_t> {
+        auto &cache = table_cache[table_name];
+        for (const auto &entry : std::filesystem::directory_iterator(dir)) {
+          std::string filename = entry.path().filename().string();
+          if (!filename.ends_with(".feather"))
+            continue;
+          {
+            std::lock_guard<std::mutex> lock(cache.mtx);
+            if (cache.files.count(filename))
+              continue;
+          }
+          int64_t cnt = feather_row_count(entry.path().string());
+          std::lock_guard<std::mutex> lock(cache.mtx);
+          if (cache.files.insert(filename).second)
+            cache.total += cnt;
+        }
+        std::lock_guard<std::mutex> lock(cache.mtx);
+        return {table_name, cache.total};
+      }));
+    }
+
+    json feather_files = json::array();
+    for (auto &f : futures) {
+      auto [name, count] = f.get();
+      feather_files.push_back({{"name", name}, {"count", count}});
     }
     result["feather"] = feather_files;
 
