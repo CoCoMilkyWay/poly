@@ -282,8 +282,8 @@ public:
     chunk_xfer_stats_ = {};
     non_usdc_by_collat_.clear();
 
-    // 打开 chunk log
-    chunk_log_.open(log_dir_, chunk_start, chunk_end);
+    // 开始 chunk log
+    chunk_log_.begin(log_dir_, chunk_start, chunk_end);
 
     progress_.phase = 1;
     phase1_update_mappings(chunk_start, chunk_end);
@@ -327,8 +327,8 @@ public:
 
     commit_chunk(chunk_end);
 
-    // 关闭 chunk log
-    chunk_log_.close();
+    // 结束 chunk log（只有异常才写文件）
+    chunk_log_.finish();
 
     progress_.cursor = chunk_end;
     progress_.running = false;
