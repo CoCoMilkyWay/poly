@@ -2,6 +2,8 @@
 
 #include <algorithm>
 #include <cassert>
+#include <exception>
+#include <iostream>
 #include <nlohmann/json.hpp>
 #include <optional>
 #include <set>
@@ -205,7 +207,22 @@ public:
     return events;
   }
 
+public:
+  static const std::string &current_log_json() { return current_log_json_; }
+
 private:
+  inline static thread_local std::string current_log_json_;
+
+  inline static const bool crash_handler_installed_ = []() {
+    std::set_terminate([]() {
+      std::cerr << "\n[CRASH] terminate called\n";
+      const auto &log = current_log_json_;
+      if (!log.empty()) std::cerr << "[CRASH] stage1 current log: " << log << "\n";
+      std::abort();
+    });
+    return true;
+  }();
+
   static std::string to_lower(std::string s) {
     std::transform(s.begin(), s.end(), s.begin(), ::tolower);
     return s;
@@ -213,6 +230,20 @@ private:
 
   static int64_t hex_to_int64(const std::string &hex) {
     return static_cast<int64_t>(std::stoull(hex, nullptr, 16));
+  }
+
+  // TODO:
+  // 问题1:
+  //    PositionConverted 事件的 topics[3] 是 indexed uint256 的 indexSet（bitmask），
+  //    当 NegRisk 市场有 65+ 个 outcome 时，高位被置位，超出 uint64 导致 stoull 崩溃。
+  //    截取低 64 位可以防止崩溃。截断值存入 feather 后是错的，但暂时不是问题：
+  //    stage2 读取 indexSet 后不参与任何匹配或计算，convert 事件的识别依赖的是
+  //    同一笔 tx 里 TransferSingle 的 burn 记录，indexSet 字段完全冗余。
+  static int64_t hex_to_int64_trunc(const std::string &hex) {
+    std::string s = hex;
+    if (s.size() >= 2 && s[0] == '0' && (s[1] == 'x' || s[1] == 'X')) s = s.substr(2);
+    if (s.size() > 16) s = s.substr(s.size() - 16);
+    return static_cast<int64_t>(std::stoull(s, nullptr, 16));
   }
 
   static std::string extract_address_from_topic(const std::string &topic) {
@@ -230,6 +261,7 @@ private:
   }
 
   static void parse_log(const json &log, const std::set<std::string> &fpmm_addrs, DecodedEvents &events) {
+    current_log_json_ = log.dump();
     std::string address = to_lower(log["address"].get<std::string>());
     const auto &topics_arr = log["topics"];
     assert(!topics_arr.empty());
@@ -443,7 +475,7 @@ private:
     events.convert.push_back({block_number, tx_hash, log_index,
                               extract_address_from_topic(topics[1].get<std::string>()),
                               topics[2].get<std::string>(),
-                              hex_to_int64(topics[3].get<std::string>()),
+                              hex_to_int64_trunc(topics[3].get<std::string>()), // indexed uint256 indexSet，见 hex_to_int64_trunc
                               extract_uint256_from_data(data, 0)});
   }
 
