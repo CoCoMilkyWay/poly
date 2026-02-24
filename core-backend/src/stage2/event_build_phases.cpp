@@ -2,6 +2,17 @@
 #include "misc/profiler.hpp"
 
 namespace stage2 {
+namespace {
+
+inline std::string block_range_query(Database &db, const std::string &select_sql,
+                                     const std::string &table_name,
+                                     int64_t start, int64_t end) {
+  return select_sql + db.feather_table_range(table_name, start, end) +
+         " WHERE block_number > " + std::to_string(start) +
+         " AND block_number <= " + std::to_string(end);
+}
+
+} // namespace
 
 void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
   TraceN("s2/phase1_map");
@@ -16,9 +27,9 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
     return to_lower(get_hex(tbl, col, row));
   };
 
-  auto cp = conn->Query(
-      "SELECT condition_id, outcome_slot_count, question_id FROM " + stage1_db_.feather_table_range("condition_preparation", start, end) +
-      " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
+  auto cp = conn->Query(block_range_query(
+      stage1_db_, "SELECT condition_id, outcome_slot_count, question_id FROM ",
+      "condition_preparation", start, end));
   for (idx_t i = 0; i < cp->RowCount(); ++i) {
     std::string cid = get_hex(cp, 0, i);
     int cnt = get_i32(cp, 1, i);
@@ -26,9 +37,9 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
     intern_condition(cid, cnt, ConditionSource::ConditionPrep, qid);
   }
 
-  auto cr = conn->Query(
-      "SELECT condition_id, payout_numerators FROM " + stage1_db_.feather_table_range("condition_resolution", start, end) +
-      " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
+  auto cr = conn->Query(block_range_query(
+      stage1_db_, "SELECT condition_id, payout_numerators FROM ",
+      "condition_resolution", start, end));
   for (idx_t i = 0; i < cr->RowCount(); ++i) {
     std::string cid = get_hex(cr, 0, i);
     std::string lower = to_lower(cid);
@@ -44,9 +55,8 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
     update_condition_payout(it->second, payouts);
   }
 
-  auto tm = conn->Query(
-      "SELECT token0, token1, condition_id FROM " + stage1_db_.feather_table_range("token_map", start, end) +
-      " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
+  auto tm = conn->Query(block_range_query(
+      stage1_db_, "SELECT token0, token1, condition_id FROM ", "token_map", start, end));
   for (idx_t i = 0; i < tm->RowCount(); ++i) {
     std::string token0 = get_hex(tm, 0, i);
     std::string token1 = get_hex(tm, 1, i);
@@ -56,9 +66,9 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
     intern_token(token1, cond_idx, 0, TokenSource::PolymarketTokenReg);
   }
 
-  auto fpmm = conn->Query(
-      "SELECT fpmm_addr, condition_ids, collateral_token FROM " + stage1_db_.feather_table_range("fpmm", start, end) +
-      " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
+  auto fpmm = conn->Query(block_range_query(
+      stage1_db_, "SELECT fpmm_addr, condition_ids, collateral_token FROM ",
+      "fpmm", start, end));
   for (idx_t i = 0; i < fpmm->RowCount(); ++i) {
     std::string addr = get_hex(fpmm, 0, i);
     std::string cids_json = fpmm->GetValue(1, i).GetValueUnsafe<std::string>();
@@ -88,9 +98,9 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
   }
 
   // 从 split 事件中提取 token_id（覆盖没有经过 FPMM 的 condition）
-  auto split_for_tokens = conn->Query(
-      "SELECT DISTINCT condition_id, collateral_token FROM " + stage1_db_.feather_table_range("split", start, end) +
-      " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
+  auto split_for_tokens = conn->Query(block_range_query(
+      stage1_db_, "SELECT DISTINCT condition_id, collateral_token FROM ",
+      "split", start, end));
   for (idx_t i = 0; i < split_for_tokens->RowCount(); ++i) {
     std::string cid = get_hex(split_for_tokens, 0, i);
     std::string lower_cid = to_lower(cid);
@@ -102,9 +112,9 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
     intern_condition_tokens(lower_cid, collateral, cond_idx, TokenSource::SplitEvent);
   }
 
-  auto nrq = conn->Query(
-      "SELECT market_id, question_id FROM " + stage1_db_.feather_table_range("neg_risk_question", start, end) +
-      " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
+  auto nrq = conn->Query(block_range_query(
+      stage1_db_, "SELECT market_id, question_id FROM ", "neg_risk_question",
+      start, end));
   for (idx_t i = 0; i < nrq->RowCount(); ++i) {
     std::string market_id = get_hex_lower(nrq, 0, i);
     std::string question_id = get_hex_lower(nrq, 1, i);
@@ -152,10 +162,10 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
     return key;
   };
 
-  auto split = conn->Query(
-      "SELECT block_number, tx_hash, condition_id, amount, stakeholder FROM " +
-      stage1_db_.feather_table_range("split", start, end) +
-      " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
+  auto split = conn->Query(block_range_query(
+      stage1_db_,
+      "SELECT block_number, tx_hash, condition_id, amount, stakeholder FROM ",
+      "split", start, end));
   for (idx_t i = 0; i < split->RowCount(); ++i) {
     TxKey key = build_tx_key(split, i);
     SplitInfo info;
@@ -165,10 +175,10 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
     tx_split_[key].push_back(info);
   }
 
-  auto merge = conn->Query(
-      "SELECT block_number, tx_hash, condition_id, amount, stakeholder FROM " +
-      stage1_db_.feather_table_range("merge", start, end) +
-      " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
+  auto merge = conn->Query(block_range_query(
+      stage1_db_,
+      "SELECT block_number, tx_hash, condition_id, amount, stakeholder FROM ",
+      "merge", start, end));
   for (idx_t i = 0; i < merge->RowCount(); ++i) {
     TxKey key = build_tx_key(merge, i);
     MergeInfo info;
@@ -178,10 +188,10 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
     tx_merge_[key].push_back(info);
   }
 
-  auto redemption = conn->Query(
-      "SELECT block_number, tx_hash, condition_id, payout, redeemer FROM " +
-      stage1_db_.feather_table_range("redemption", start, end) +
-      " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
+  auto redemption = conn->Query(block_range_query(
+      stage1_db_,
+      "SELECT block_number, tx_hash, condition_id, payout, redeemer FROM ",
+      "redemption", start, end));
   for (idx_t i = 0; i < redemption->RowCount(); ++i) {
     TxKey key = build_tx_key(redemption, i);
     RedemptionInfo info;
@@ -191,10 +201,10 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
     tx_redemption_[key].push_back(info);
   }
 
-  auto convert = conn->Query(
-      "SELECT block_number, tx_hash, market_id, index_set, amount, stakeholder FROM " +
-      stage1_db_.feather_table_range("convert", start, end) +
-      " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
+  auto convert = conn->Query(block_range_query(
+      stage1_db_,
+      "SELECT block_number, tx_hash, market_id, index_set, amount, stakeholder FROM ",
+      "convert", start, end));
   for (idx_t i = 0; i < convert->RowCount(); ++i) {
     std::string market_id = get_hex_lower(convert, 2, i);
     TxMarketKey key;
@@ -209,11 +219,11 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
     tx_convert_[key].push_back(info);
   }
 
-  auto order = conn->Query(
+  auto order = conn->Query(block_range_query(
+      stage1_db_,
       "SELECT block_number, tx_hash, maker, taker, maker_asset_id, taker_asset_id, "
-      "maker_amount, taker_amount, fee FROM " +
-      stage1_db_.feather_table_range("order_filled", start, end) +
-      " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
+      "maker_amount, taker_amount, fee FROM ",
+      "order_filled", start, end));
   static const std::string ZERO_TOKEN_ID =
       "0x0000000000000000000000000000000000000000000000000000000000000000";
   for (idx_t i = 0; i < order->RowCount(); ++i) {
@@ -242,11 +252,11 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
     tx_order_[key] = info;
   }
 
-  auto fpmm_trade = conn->Query(
+  auto fpmm_trade = conn->Query(block_range_query(
+      stage1_db_,
       "SELECT block_number, tx_hash, fpmm_addr, trader, side, outcome_index, "
-      "usdc_amount, token_amount FROM " +
-      stage1_db_.feather_table_range("fpmm_trade", start, end) +
-      " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
+      "usdc_amount, token_amount FROM ",
+      "fpmm_trade", start, end));
   for (idx_t i = 0; i < fpmm_trade->RowCount(); ++i) {
     std::string fpmm_addr = get_hex_lower(fpmm_trade, 2, i);
     TxFPMMKey key;
@@ -264,10 +274,10 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
     tx_fpmm_trade_[key] = info;
   }
 
-  auto fpmm_funding = conn->Query(
-      "SELECT block_number, tx_hash, fpmm_addr, funder, side, amounts FROM " +
-      stage1_db_.feather_table_range("fpmm_funding", start, end) +
-      " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
+  auto fpmm_funding = conn->Query(block_range_query(
+      stage1_db_,
+      "SELECT block_number, tx_hash, fpmm_addr, funder, side, amounts FROM ",
+      "fpmm_funding", start, end));
   for (idx_t i = 0; i < fpmm_funding->RowCount(); ++i) {
     std::string fpmm_addr = get_hex_lower(fpmm_funding, 2, i);
     TxFPMMKey key;
@@ -291,10 +301,16 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
 void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
   TraceN("s2/phase3_xfer");
   auto conn = stage1_db_.create_connection();
-  auto transfers = conn->Query(
-      "SELECT block_number, tx_hash, log_index, operator, from_addr, to_addr, token_id, amount FROM " +
-      stage1_db_.feather_table_range("transfer", start, end) +
-      " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
+  auto get_i64 = [](const duckdb::unique_ptr<duckdb::MaterializedQueryResult> &tbl, int col, idx_t row) {
+    return tbl->GetValue(col, row).GetValue<int64_t>();
+  };
+  auto get_hex = [](const duckdb::unique_ptr<duckdb::MaterializedQueryResult> &tbl, int col, idx_t row) {
+    return blob_to_hex(tbl->GetValue(col, row).GetValueUnsafe<std::string>());
+  };
+  auto transfers = conn->Query(block_range_query(
+      stage1_db_,
+      "SELECT block_number, tx_hash, log_index, operator, from_addr, to_addr, token_id, amount FROM ",
+      "transfer", start, end));
 
   struct TransferRow {
     int64_t block, log_idx, amount;
@@ -302,17 +318,20 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
   };
   std::vector<TransferRow> rows;
   rows.reserve(transfers->RowCount());
+  auto make_transfer_row = [&](idx_t i) {
+    return TransferRow{
+        get_i64(transfers, 0, i),
+        get_i64(transfers, 2, i),
+        get_i64(transfers, 7, i),
+        get_hex(transfers, 1, i),
+        get_hex(transfers, 3, i),
+        get_hex(transfers, 4, i),
+        get_hex(transfers, 5, i),
+        get_hex(transfers, 6, i),
+    };
+  };
   for (idx_t i = 0; i < transfers->RowCount(); ++i) {
-    rows.push_back({
-        transfers->GetValue(0, i).GetValue<int64_t>(),
-        transfers->GetValue(2, i).GetValue<int64_t>(),
-        transfers->GetValue(7, i).GetValue<int64_t>(),
-        blob_to_hex(transfers->GetValue(1, i).GetValueUnsafe<std::string>()),
-        blob_to_hex(transfers->GetValue(3, i).GetValueUnsafe<std::string>()),
-        blob_to_hex(transfers->GetValue(4, i).GetValueUnsafe<std::string>()),
-        blob_to_hex(transfers->GetValue(5, i).GetValueUnsafe<std::string>()),
-        blob_to_hex(transfers->GetValue(6, i).GetValueUnsafe<std::string>()),
-    });
+    rows.push_back(make_transfer_row(i));
   }
   std::sort(rows.begin(), rows.end(), [](const TransferRow &a, const TransferRow &b) {
     return a.block != b.block ? a.block < b.block : a.log_idx < b.log_idx;

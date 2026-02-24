@@ -116,6 +116,8 @@ DATA_PCT_RE = re.compile(r'([\d.]+)%')
 # ══════════════════════════════════════════════════════════
 
 # ═══════════════════════ 解析函数 ═══════════════════════
+
+
 def parse_kv(line):
     """Parse key=value and key="quoted value" pairs from a log line."""
     kv = {}
@@ -179,7 +181,8 @@ def parse_log(line):
     else:
         m = STAGE_RE.search(line)
         if m:
-            sync_state.update(phase="stage", stage_cur=m.group(1), stage_total=m.group(2), stage_name=m.group(3), ts=time.time())
+            sync_state.update(phase="stage", stage_cur=m.group(
+                1), stage_total=m.group(2), stage_name=m.group(3), ts=time.time())
 # ════════════════════════════════════════════════════════════
 
 
@@ -189,7 +192,7 @@ def scan_snapshot_dir(subdir):
     path = str(SNAP_DIR / subdir) if subdir else str(SNAP_DIR)
     if not os.path.isdir(path):
         return None
-    
+
     expected = actual = complete = partial = 0
     for f in os.listdir(path):
         fp = os.path.join(path, f)
@@ -203,7 +206,7 @@ def scan_snapshot_dir(subdir):
         else:
             actual += st.st_size
             complete += 1
-    
+
     name = subdir if subdir else 'segments'
     return name, {
         "expected": expected,
@@ -223,7 +226,7 @@ def scan_snapshot_progress():
 
     result = {}
     total_expected = total_actual = 0
-    
+
     for subdir in SNAP_SUBDIRS:
         scan_result = scan_snapshot_dir(subdir)
         if scan_result:
@@ -237,7 +240,7 @@ def scan_snapshot_progress():
         "actual": total_actual,
         "pct": round(total_actual / total_expected * 100, 1) if total_expected > 0 else 100.0,
     }
-    
+
     snap_cache = result
     snap_cache_time = now
     return result
@@ -247,7 +250,8 @@ def scan_snapshot_progress():
 # ═══════════════════════ RPC 调用 ═══════════════════════
 def rpc_call(method, params=None):
     """调用 Erigon JSON-RPC 接口。"""
-    body = json.dumps({"jsonrpc": "2.0", "method": method, "params": params or [], "id": 1}).encode()
+    body = json.dumps({"jsonrpc": "2.0", "method": method,
+                      "params": params or [], "id": 1}).encode()
     req = urllib.request.Request(
         f"http://{RPC_ADDR}:{RPC_PORT}",
         data=body,
@@ -263,10 +267,10 @@ def rpc_call(method, params=None):
 def get_rpc_status():
     """获取区块同步状态。"""
     global highest_block_seen, block_history
-    
+
     syncing = rpc_call("eth_syncing")
     block_num = rpc_call("eth_blockNumber")
-    
+
     status = {
         "rpc": syncing is not None or block_num is not None,
         "syncing": False,
@@ -276,10 +280,10 @@ def get_rpc_status():
         "stages": [],
         "speed": 0.0,
     }
-    
+
     if isinstance(block_num, str):
         status["current"] = int(block_num, 16)
-    
+
     if isinstance(syncing, dict):
         status["syncing"] = True
         status["current"] = int(syncing.get("currentBlock", "0x0"), 16)
@@ -288,15 +292,16 @@ def get_rpc_status():
         status["highest"] = highest_block_seen
         status["stages"] = syncing.get("stages", [])
         if status["highest"] > 0:
-            status["pct"] = round(status["current"] / status["highest"] * 100, 2)
+            status["pct"] = round(status["current"] /
+                                  status["highest"] * 100, 2)
     elif syncing is False and status["current"] > 0:
         status["pct"] = 100.0
-    
+
     # 记录区块历史并计算速度
     now = time.time()
     if status["current"] > 0:
         block_history.append((now, status["current"]))
-        
+
         # 计算最近60秒的平均速度
         if len(block_history) >= 2:
             cutoff_time = now - 60
@@ -306,7 +311,7 @@ def get_rpc_status():
                 block_span = recent[-1][1] - recent[0][1]
                 if time_span > 0:
                     status["speed"] = round(block_span / time_span, 2)
-    
+
     return status
 
 
@@ -324,18 +329,18 @@ def get_status():
     """获取完整的节点状态信息。"""
     alive = proc is not None and proc.poll() is None
     rpc_status = get_rpc_status()
-    
+
     status = {
         "alive": alive,
         "uptime": int(time.time() - proc_start_time) if alive else 0,
         "exit_code": proc.returncode if proc and not alive else None,
     }
-    
+
     status.update(rpc_status)
     status["disk"] = get_disk_status()
     status["sync"] = dict(sync_state)
     status["snap_progress"] = scan_snapshot_progress()
-    
+
     return status
 # ════════════════════════════════════════════════════════════
 
@@ -355,7 +360,8 @@ def read_stream(stream):
 class DashboardHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == "/":
-            self.send_response_data(200, "text/html; charset=utf-8", HTML_FILE.read_bytes())
+            self.send_response_data(
+                200, "text/html; charset=utf-8", HTML_FILE.read_bytes())
         elif self.path == "/api/status":
             self.send_response_json(200, get_status())
         elif self.path == "/api/logs":
@@ -370,7 +376,8 @@ class DashboardHandler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def send_response_json(self, code, data):
-        self.send_response_data(code, "application/json", json.dumps(data).encode())
+        self.send_response_data(code, "application/json",
+                                json.dumps(data).encode())
 
     def log_message(self, *_):
         pass
@@ -385,7 +392,6 @@ def build_erigon_command():
         f"--datadir={DATADIR}",
         "--chain=bor-mainnet",
         "--prune.mode=blocks",
-        "--persist.receipts",
         f"--bor.heimdall={HEIMDALL}",
         "--http", f"--http.addr={RPC_ADDR}", f"--http.port={RPC_PORT}",
         "--http.api=eth,erigon,net,web3,debug,trace",
@@ -394,10 +400,11 @@ def build_erigon_command():
         "--port=30303",
         "--torrent.port=42069",
         "--torrent.conns.perfile=20",
-        "--batchSize=8g",
-        "--sync.loop.block.limit=20000",
+        "--batchSize=4g",
+        "--sync.loop.block.limit=4000",
         "--log.console.verbosity=info",
     ]
+    # "--persist.receipts",
 
 
 def build_clean_env():
@@ -411,15 +418,17 @@ def build_clean_env():
 def start_erigon_process():
     """启动 Erigon 进程。"""
     global proc, proc_start_time
-    
+
     cmd = build_erigon_command()
     env = build_clean_env()
-    
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
+
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE, env=env)
     proc_start_time = time.time()
-    
+
     for stream in (proc.stdout, proc.stderr):
-        threading.Thread(target=read_stream, args=(stream,), daemon=True).start()
+        threading.Thread(target=read_stream, args=(
+            stream,), daemon=True).start()
 
 
 def stop_erigon_process(sig=None, frame=None):
@@ -450,7 +459,7 @@ def main():
     logging.info(f"RPC      → http://{RPC_ADDR}:{RPC_PORT}")
 
     start_erigon_process()
-    
+
     signal.signal(signal.SIGINT, stop_erigon_process)
     signal.signal(signal.SIGTERM, stop_erigon_process)
 
