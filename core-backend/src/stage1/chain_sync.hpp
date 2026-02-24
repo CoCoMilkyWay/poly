@@ -7,7 +7,6 @@
 #include <iostream>
 #include <memory>
 #include <optional>
-#include <thread>
 #include <vector>
 
 #include <boost/asio.hpp>

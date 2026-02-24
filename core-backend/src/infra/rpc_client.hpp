@@ -161,8 +161,8 @@ private:
     auto result = future.get();
     if (!result.success) {
       std::cerr << "[RPC] Request failed: " << result.error_msg << std::endl;
+      throw std::runtime_error(result.error_msg);
     }
-    assert(result.success && "RPC request failed");
     return result.raw_body;
   }
 
