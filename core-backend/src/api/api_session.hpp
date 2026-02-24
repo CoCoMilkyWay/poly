@@ -380,6 +380,23 @@ private:
     const auto &p = pnl_engine_.progress();
     const auto &ct = p.cond_tree;
     const auto &tt = p.token_tree;
+    std::unordered_map<uint8_t, std::string> coll_id_to_addr;
+    {
+      auto conn = db_.create_connection();
+      auto coll_rows = conn->Query("SELECT coll_id, lower(hex(collateral_addr)) AS addr FROM rb_collateral");
+      for (idx_t i = 0; i < coll_rows->RowCount(); ++i) {
+        uint8_t coll_id = static_cast<uint8_t>(coll_rows->GetValue(0, i).GetValue<int32_t>());
+        std::string addr = "0x" + coll_rows->GetValue(1, i).GetValueUnsafe<std::string>();
+        coll_id_to_addr[coll_id] = addr;
+      }
+    }
+    auto resolve_collateral = [&](uint8_t coll_id) {
+      auto it = coll_id_to_addr.find(coll_id);
+      std::string addr = (it != coll_id_to_addr.end()) ? it->second : stage2::collateral_addr(static_cast<stage2::Collateral>(coll_id));
+      const char *known_name = stage2::collateral_name(static_cast<stage2::Collateral>(coll_id));
+      std::string name = std::string(known_name).empty() ? addr : std::string(known_name);
+      return std::make_pair(addr, name);
+    };
     json cond_tree = {
         {"total", ct.total},
         {"polymarket",
@@ -411,15 +428,27 @@ private:
             {"by_collateral", [&]() {
                json arr = json::array();
                for (const auto &[coll, cnt] : tt.polymarket.fpmm_only.by_collateral) {
+                 auto [addr, name] = resolve_collateral(coll);
                  arr.push_back({
-                     {"addr", stage2::collateral_addr(static_cast<stage2::Collateral>(coll))},
-                     {"name", stage2::collateral_name(static_cast<stage2::Collateral>(coll))},
+                     {"addr", addr},
+                     {"name", name},
                      {"count", cnt},
                  });
                }
                return arr;
              }()}}}}},
-        {"other", {{"total", tt.other.total}, {"other_fpmm", tt.other.other_fpmm}, {"split", tt.other.split}, {"transfer_inferred", tt.other.transfer_inferred}}},
+        {"other",
+         {{"total", tt.other.total},
+          {"other_fpmm", tt.other.other_fpmm},
+          {"split", tt.other.split},
+          {"transfer_inferred", tt.other.transfer_inferred},
+          {"transfer_inferred_by_token", [&]() {
+             json arr = json::array();
+             for (const auto &[token, cnt] : tt.other.transfer_inferred_by_token) {
+               arr.push_back({{"token", token}, {"count", cnt}});
+             }
+             return arr;
+           }()}}},
     };
 
     json transfer_tree = {
@@ -473,13 +502,12 @@ private:
     // 格式: {"event_type_int": [{"addr": "0x...", "name": "USDC", "count": 100}, ...]}
     json event_by_coll = json::object();
     for (const auto &[key, cnt] : p.event_by_collateral) {
-      uint8_t event_type = key / 16;
-      uint8_t coll = key % 16;
+      uint8_t event_type = key / 256;
+      uint8_t coll = key % 256;
       std::string et_key = std::to_string(event_type);
       if (!event_by_coll.contains(et_key))
         event_by_coll[et_key] = json::array();
-      const char *addr = stage2::collateral_addr(static_cast<stage2::Collateral>(coll));
-      const char *name = stage2::collateral_name(static_cast<stage2::Collateral>(coll));
+      auto [addr, name] = resolve_collateral(coll);
       event_by_coll[et_key].push_back({{"addr", addr}, {"name", name}, {"count", cnt}});
     }
     result["event_by_collateral"] = event_by_coll;

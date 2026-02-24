@@ -113,7 +113,7 @@ public:
     int64_t xfer_internal_transfer_fpmm = 0;
     int64_t xfer_internal_transfer_other = 0;
 
-    // 按(EventType, Collateral)分组统计
+    // 按(EventType, CollateralId)分组统计
     std::unordered_map<uint16_t, int64_t> event_by_collateral;
   };
 

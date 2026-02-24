@@ -5,6 +5,7 @@ import webbrowser
 import time
 import sys
 import socket
+import shutil
 from pathlib import Path
 from typing import Optional
 
@@ -77,18 +78,45 @@ def build_backend():
     print("[run.py] 编译 C++ backend...")
     BACKEND_BUILD.mkdir(parents=True, exist_ok=True)
 
-    cmake_args = [
-        "cmake", "..",
-        "-DCMAKE_C_COMPILER=clang",
-        "-DCMAKE_CXX_COMPILER=clang++",
-        f"-DPROFILE_MODE={'ON' if ENABLE_PROFILE else 'OFF'}",
-    ]
+    cmake_lists = BACKEND_DIR / "projects" / "core" / "CMakeLists.txt"
+    cmake_cache = BACKEND_BUILD / "CMakeCache.txt"
+    expected_profile = "ON" if ENABLE_PROFILE else "OFF"
+    cached_profile = None
+    if cmake_cache.exists():
+        for line in cmake_cache.read_text().splitlines():
+            if line.startswith("PROFILE_MODE:BOOL="):
+                cached_profile = line.split("=", 1)[1].strip()
+                break
 
-    result = subprocess.run(cmake_args, cwd=BACKEND_BUILD)
-    assert result.returncode == 0, "cmake 配置失败"
+    need_configure = (
+        (not cmake_cache.exists())
+        or (cmake_lists.stat().st_mtime > cmake_cache.stat().st_mtime)
+        or (cached_profile != expected_profile)
+    )
+
+    if need_configure:
+        cmake_args = [
+            "cmake", "..",
+            "-DCMAKE_C_COMPILER=clang",
+            "-DCMAKE_CXX_COMPILER=clang++",
+            f"-DPROFILE_MODE={'ON' if ENABLE_PROFILE else 'OFF'}",
+        ]
+        ccache_bin = shutil.which("ccache")
+        if ccache_bin:
+            cmake_args += [
+                f"-DCMAKE_C_COMPILER_LAUNCHER={ccache_bin}",
+                f"-DCMAKE_CXX_COMPILER_LAUNCHER={ccache_bin}",
+            ]
+
+        result = subprocess.run(cmake_args, cwd=BACKEND_BUILD)
+        assert result.returncode == 0, "cmake 配置失败"
+    else:
+        print("[run.py] 跳过 cmake 配置 (缓存有效)")
 
     result = subprocess.run(
-        ["cmake", "--build", ".", "--config", "Release"], cwd=BACKEND_BUILD)
+        ["cmake", "--build", ".", "--config", "Release", "--parallel"],
+        cwd=BACKEND_BUILD,
+    )
     assert result.returncode == 0, "编译失败"
 
     mode = "PROFILE" if ENABLE_PROFILE else (

@@ -132,20 +132,20 @@ static constexpr const char *USDT = "0xc2132d05d31c914a87c6611c10748aeb04b58e8f"
 static constexpr const char *CONDITIONAL_TOKENS = "0x4d97dcd97ec945f40cf65f87097ace5ea0476045";
 static constexpr const char *NO_TOKEN_BURN_ADDRESS = "0x36a0e974a7083ea0ad4dea6a27b90fab22e93a32";
 
-inline Collateral addr_to_collateral(const std::string &addr) {
+inline uint8_t addr_to_known_collateral_id(const std::string &addr) {
   if (addr == USDC_NATIVE)
-    return Collateral::USDC;
+    return static_cast<uint8_t>(Collateral::USDC);
   if (addr == USDC_E)
-    return Collateral::USDCe;
+    return static_cast<uint8_t>(Collateral::USDCe);
   if (addr == WETH)
-    return Collateral::WETH;
+    return static_cast<uint8_t>(Collateral::WETH);
   if (addr == DAI)
-    return Collateral::DAI;
+    return static_cast<uint8_t>(Collateral::DAI);
   if (addr == WMATIC)
-    return Collateral::WMATIC;
+    return static_cast<uint8_t>(Collateral::WMATIC);
   if (addr == USDT)
-    return Collateral::USDT;
-  return Collateral::Unknown;
+    return static_cast<uint8_t>(Collateral::USDT);
+  return static_cast<uint8_t>(Collateral::Unknown);
 }
 
 inline bool is_usdc_collateral(const std::string &addr) {
@@ -590,6 +590,7 @@ struct TokenTree {
     int64_t other_fpmm = 0;        // source=OtherFPMM (预期=0)
     int64_t split = 0;             // source=SplitEvent (预期=0)
     int64_t transfer_inferred = 0; // 从Transfer中发现的未知token（无condition信息）
+    std::unordered_map<std::string, int64_t> transfer_inferred_by_token;
   } other;
 };
 
@@ -618,8 +619,8 @@ struct BuildProgress {
   int64_t cnt_fpmm_funding = 0;
   int64_t cnt_transfer = 0;
   TransferStats xfer_stats;
-  // 按(EventType, Collateral)分组统计 user_event
-  // key: EventType * 16 + Collateral
+  // 按(EventType, CollateralId)分组统计 user_event
+  // key: EventType * 256 + CollateralId
   std::unordered_map<uint16_t, int64_t> event_by_collateral;
 };
 

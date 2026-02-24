@@ -70,7 +70,7 @@ struct TokenInfo {
 
 struct FPMMInfo {
   uint32_t cond_idx;
-  Collateral collateral = Collateral::USDC;
+  uint8_t collateral = static_cast<uint8_t>(Collateral::USDC);
 };
 
 struct RawEvent {

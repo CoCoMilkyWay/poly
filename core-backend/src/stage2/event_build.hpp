@@ -94,6 +94,20 @@ public:
     )");
 
     stage2_db_.execute(R"(
+      CREATE TABLE IF NOT EXISTS rb_collateral (
+        coll_id         INTEGER PRIMARY KEY,
+        collateral_addr BLOB NOT NULL UNIQUE
+      )
+    )");
+
+    stage2_db_.execute(R"(
+      CREATE TABLE IF NOT EXISTS rb_cond_collateral (
+        cond_idx INTEGER PRIMARY KEY,
+        coll_id  INTEGER NOT NULL
+      )
+    )");
+
+    stage2_db_.execute(R"(
       CREATE TABLE IF NOT EXISTS rb_neg_risk_market (
         question_id BLOB PRIMARY KEY,
         market_id   BLOB NOT NULL
@@ -123,6 +137,36 @@ public:
 
   void load_from_rb() {
     auto conn = stage2_db_.create_connection();
+
+    collateral_addr_to_id_.clear();
+    collateral_id_to_addr_.clear();
+    next_collateral_id_ = static_cast<uint8_t>(Collateral::USDT) + 1;
+    // 预置已知抵押品，保持固定 ID 兼容历史数据
+    collateral_addr_to_id_[ZERO_ADDR] = static_cast<uint8_t>(Collateral::Unknown);
+    collateral_id_to_addr_[static_cast<uint8_t>(Collateral::Unknown)] = ZERO_ADDR;
+    collateral_addr_to_id_[USDC_NATIVE] = static_cast<uint8_t>(Collateral::USDC);
+    collateral_id_to_addr_[static_cast<uint8_t>(Collateral::USDC)] = USDC_NATIVE;
+    collateral_addr_to_id_[USDC_E] = static_cast<uint8_t>(Collateral::USDCe);
+    collateral_id_to_addr_[static_cast<uint8_t>(Collateral::USDCe)] = USDC_E;
+    collateral_addr_to_id_[WETH] = static_cast<uint8_t>(Collateral::WETH);
+    collateral_id_to_addr_[static_cast<uint8_t>(Collateral::WETH)] = WETH;
+    collateral_addr_to_id_[DAI] = static_cast<uint8_t>(Collateral::DAI);
+    collateral_id_to_addr_[static_cast<uint8_t>(Collateral::DAI)] = DAI;
+    collateral_addr_to_id_[WMATIC] = static_cast<uint8_t>(Collateral::WMATIC);
+    collateral_id_to_addr_[static_cast<uint8_t>(Collateral::WMATIC)] = WMATIC;
+    collateral_addr_to_id_[USDT] = static_cast<uint8_t>(Collateral::USDT);
+    collateral_id_to_addr_[static_cast<uint8_t>(Collateral::USDT)] = USDT;
+
+    auto coll_r = conn->Query("SELECT coll_id, collateral_addr FROM rb_collateral");
+    for (idx_t i = 0; i < coll_r->RowCount(); ++i) {
+      uint8_t coll_id = static_cast<uint8_t>(coll_r->GetValue(0, i).GetValue<int32_t>());
+      std::string addr = to_lower(blob_to_hex(coll_r->GetValue(1, i).GetValueUnsafe<std::string>()));
+      collateral_addr_to_id_[addr] = coll_id;
+      collateral_id_to_addr_[coll_id] = addr;
+      if (coll_id >= next_collateral_id_) {
+        next_collateral_id_ = coll_id + 1;
+      }
+    }
 
     auto cur = conn->Query("SELECT value FROM stage2_cursor WHERE key='last_block'");
     progress_.cursor = cur->RowCount() > 0 ? cur->GetValue(0, 0).GetValue<int64_t>() : 0;
@@ -204,15 +248,24 @@ public:
       token_map_[to_lower(tid)] = info;
     }
 
+    auto cond_coll_r = conn->Query("SELECT cond_idx, coll_id FROM rb_cond_collateral");
+    for (idx_t i = 0; i < cond_coll_r->RowCount(); ++i) {
+      uint32_t cond_idx = cond_coll_r->GetValue(0, i).GetValue<uint32_t>();
+      uint8_t coll_id = static_cast<uint8_t>(cond_coll_r->GetValue(1, i).GetValue<int32_t>());
+      cond_collateral_[cond_idx] = coll_id;
+    }
+
     auto fpmm_r = conn->Query("SELECT fpmm_addr, cond_idx, collateral FROM rb_fpmm");
     for (idx_t i = 0; i < fpmm_r->RowCount(); ++i) {
       std::string addr = blob_to_hex(fpmm_r->GetValue(0, i).GetValueUnsafe<std::string>());
       FPMMInfo info;
       info.cond_idx = fpmm_r->GetValue(1, i).GetValue<uint32_t>();
-      info.collateral = static_cast<Collateral>(fpmm_r->GetValue(2, i).GetValue<int32_t>());
+      info.collateral = static_cast<uint8_t>(fpmm_r->GetValue(2, i).GetValue<int32_t>());
       fpmm_map_[to_lower(addr)] = info;
       fpmm_cond_idxs_.insert(info.cond_idx);
-      cond_collateral_[info.cond_idx] = info.collateral;
+      if (!cond_collateral_.count(info.cond_idx)) {
+        cond_collateral_[info.cond_idx] = info.collateral;
+      }
     }
 
     // 从 rb_neg_risk_market 表加载 question_id -> market_id 映射，并标记 NegRisk 条件
@@ -258,7 +311,7 @@ public:
       uint8_t event_type = evt_stats->GetValue(0, i).GetValue<uint8_t>();
       uint8_t collateral = evt_stats->GetValue(1, i).GetValue<uint8_t>();
       int64_t count = evt_stats->GetValue(2, i).GetValue<int64_t>();
-      uint16_t key = static_cast<uint16_t>(event_type) * 16 + collateral;
+      uint16_t key = static_cast<uint16_t>(event_type) * 256 + collateral;
       progress_.event_by_collateral[key] = count;
     }
     progress_.total_events = 0;
@@ -290,6 +343,8 @@ public:
     new_conditions_.clear();
     new_tokens_.clear();
     new_fpmms_.clear();
+    new_collaterals_.clear();
+    new_cond_collaterals_.clear();
     new_neg_risk_markets_.clear();
     new_events_.clear();
 
@@ -354,7 +409,10 @@ private:
   std::unordered_set<std::string> seen_markets_;                // 统计唯一 NegRisk 市场
   std::unordered_set<uint32_t> fpmm_cond_idxs_;                 // Polymarket AMM 对应的 cond_idx
   std::unordered_set<uint32_t> negrisk_cond_idxs_;              // NegRisk 对应的 cond_idx
-  std::unordered_map<uint32_t, Collateral> cond_collateral_;    // cond_idx -> 抵押品类型
+  std::unordered_map<uint32_t, uint8_t> cond_collateral_;       // cond_idx -> collateral_id
+  std::unordered_map<std::string, uint8_t> collateral_addr_to_id_;
+  std::unordered_map<uint8_t, std::string> collateral_id_to_addr_;
+  uint8_t next_collateral_id_ = static_cast<uint8_t>(Collateral::USDT) + 1;
 
   // 按 TxKey (tx_hash) 索引，统一处理已知和未知 token
   std::unordered_map<TxKey, std::vector<SplitInfo>> tx_split_;
@@ -382,7 +440,17 @@ private:
   struct NewFPMM {
     std::string addr;
     uint32_t cond_idx;
-    Collateral collateral;
+    uint8_t collateral;
+  };
+
+  struct NewCollateral {
+    uint8_t coll_id;
+    std::string addr;
+  };
+
+  struct NewCondCollateral {
+    uint32_t cond_idx;
+    uint8_t coll_id;
   };
 
   struct NewNegRiskMarket {
@@ -393,6 +461,8 @@ private:
   std::vector<NewCondition> new_conditions_;
   std::vector<NewToken> new_tokens_;
   std::vector<NewFPMM> new_fpmms_;
+  std::vector<NewCollateral> new_collaterals_;
+  std::vector<NewCondCollateral> new_cond_collaterals_;
   std::vector<NewNegRiskMarket> new_neg_risk_markets_;
   std::vector<std::tuple<std::string, RawEvent>> new_events_;
 
@@ -463,14 +533,37 @@ private:
     progress_.total_tokens = token_map_.size();
   }
 
-  void intern_fpmm(const std::string &addr, uint32_t cond_idx, Collateral collateral) {
+  uint8_t intern_collateral(const std::string &collateral_addr) {
+    std::string lower = to_lower(collateral_addr);
+    auto it = collateral_addr_to_id_.find(lower);
+    if (it != collateral_addr_to_id_.end()) {
+      return it->second;
+    }
+    assert(next_collateral_id_ != 0);
+    uint8_t coll_id = next_collateral_id_++;
+    collateral_addr_to_id_[lower] = coll_id;
+    collateral_id_to_addr_[coll_id] = lower;
+    new_collaterals_.push_back({coll_id, lower});
+    return coll_id;
+  }
+
+  void set_cond_collateral(uint32_t cond_idx, uint8_t coll_id) {
+    auto it = cond_collateral_.find(cond_idx);
+    if (it != cond_collateral_.end() && it->second == coll_id) {
+      return;
+    }
+    cond_collateral_[cond_idx] = coll_id;
+    new_cond_collaterals_.push_back({cond_idx, coll_id});
+  }
+
+  void intern_fpmm(const std::string &addr, uint32_t cond_idx, uint8_t collateral) {
     std::string lower = to_lower(addr);
     if (fpmm_map_.count(lower))
       return;
     fpmm_map_[lower] = {cond_idx, collateral};
     new_fpmms_.push_back({lower, cond_idx, collateral});
     fpmm_cond_idxs_.insert(cond_idx);
-    cond_collateral_[cond_idx] = collateral;
+    set_cond_collateral(cond_idx, collateral);
   }
 
   void intern_condition_tokens(const std::string &lower_cid, const std::string &collateral_hex,
@@ -549,6 +642,7 @@ private:
       if (info.cond_idx == UNKNOWN_COND_IDX) {
         tt.other.total++;
         tt.other.transfer_inferred++;
+        tt.other.transfer_inferred_by_token[tid]++;
         continue;
       }
 
@@ -571,7 +665,7 @@ private:
         tt.polymarket.total++;
         tt.polymarket.fpmm_only.total++;
         auto cit = cond_collateral_.find(info.cond_idx);
-        uint8_t coll = cit != cond_collateral_.end() ? static_cast<uint8_t>(cit->second) : static_cast<uint8_t>(Collateral::Unknown);
+        uint8_t coll = cit != cond_collateral_.end() ? cit->second : static_cast<uint8_t>(Collateral::Unknown);
         tt.polymarket.fpmm_only.by_collateral[coll]++;
       } else {
         // 既没有 TokenReg 也没有 FPMM → 其他协议
@@ -594,7 +688,8 @@ private:
     assert(tt.polymarket.token_reg.total == tt.polymarket.token_reg.amm + tt.polymarket.token_reg.negrisk + tt.polymarket.token_reg.normal);
     {
       int64_t sum = 0;
-      for (const auto &[k, v] : tt.polymarket.fpmm_only.by_collateral) sum += v;
+      for (const auto &[k, v] : tt.polymarket.fpmm_only.by_collateral)
+        sum += v;
       assert(tt.polymarket.fpmm_only.total == sum);
     }
     assert(tt.other.total == tt.other.other_fpmm + tt.other.split + tt.other.transfer_inferred);
@@ -612,7 +707,7 @@ private:
     }
 
     // 按(EventType, Collateral)分组统计
-    uint16_t key = static_cast<uint16_t>(evt.type) * 16 + evt.collateral;
+    uint16_t key = static_cast<uint16_t>(evt.type) * 256 + evt.collateral;
     progress_.event_by_collateral[key]++;
 
     // 更新事件计数

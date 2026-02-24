@@ -91,64 +91,79 @@
     font-size: 0.75em;
     font-family: monospace;
   }
+
   .stage2-tree-node {
     cursor: pointer;
     user-select: none;
   }
+
   .stage2-tree-node:hover {
     background: #252525;
     margin: 0 -8px;
     padding: 0 8px;
   }
+
   .stage2-tree-toggle {
     display: inline-block;
     width: 12px;
     color: #555;
     text-align: center;
   }
+
   .stage2-tree-label {
     color: #888;
   }
+
   .stage2-tree-value {
     color: #fff;
     font-weight: 500;
   }
+
   .stage2-tree-value.zero {
     color: #444;
   }
+
   .stage2-tree-children {
     padding-left: 16px;
     display: none;
   }
+
   .stage2-tree-children.expanded {
     display: block;
   }
+
   .stage2-tree-leaf {
     padding-left: 16px;
   }
+
   .stage2-tree-leaf .stage2-tree-label {
     color: #666;
   }
+
   .stage2-tree-desc {
     color: #777;
     font-size: 0.9em;
     margin-left: 6px;
   }
+
   .stage2-tree-scene {
     color: #555;
     font-size: 0.85em;
     margin-left: 6px;
     font-style: italic;
   }
+
   .stage2-tree-scene::before {
     content: "// ";
     color: #444;
   }
+
   /* 恒等式样式 */
   .stage2-tree-node,
   .stage2-tree-leaf {
     line-height: 1.5;
   }
+
   .stage2-tree-node .stage2-tree-value,
   .stage2-tree-leaf .stage2-tree-value {
     padding: 0 2px;
@@ -188,11 +203,7 @@
   </div>
 
   <div class="stage2-progress">
-    <div
-      class="stage2-progress-bar"
-      id="stage2-progress-bar"
-      style="width: 0%"
-    ></div>
+    <div class="stage2-progress-bar" id="stage2-progress-bar" style="width: 0%"></div>
   </div>
 
   <div class="stage2-stats">
@@ -227,9 +238,7 @@
       <span class="stage2-label">市场</span>
       <span class="stage2-value highlight" id="s2-total-markets">0</span>
     </span>
-    <button
-      id="s2-collapse-all"
-      style="
+    <button id="s2-collapse-all" style="
         margin-left: auto;
         background: #333;
         border: 1px solid #555;
@@ -238,8 +247,7 @@
         border-radius: 4px;
         font-size: 0.7em;
         cursor: pointer;
-      "
-    >
+      ">
       全部折叠
     </button>
   </div>
@@ -451,7 +459,7 @@
     // total = polymarket + other
     // polymarket = token_reg + fpmm_only
     // token_reg = amm + negrisk + normal
-    // fpmm_only = by_collateral (各抵押品地址)
+    // fpmm_only = by_collateral (这里展示为“代币类别”)
     // other = other_fpmm + split + transfer_inferred
     function s2BuildTokenTree(s) {
       const tt = s.token_tree || {};
@@ -516,13 +524,13 @@
                 value: fo.total || 0,
                 color: "#fcd34d",
                 desc: "keccak256计算",
-                scene: "从FPMM创建事件计算",
+                scene: "从FPMM创建事件计算(未被归类到TokenReg, 按代币类别分组)",
                 children: (fo.by_collateral || [])
                   .slice()
                   .sort((a, b) => b.count - a.count)
                   .map((c) => ({
                     id: `token_fpmm_coll_${c.addr || c.name}`,
-                    label: c.name || "未知抵押品",
+                    label: c.name || "未知代币",
                     value: c.count,
                     color: "#fde68a",
                     desc: c.addr || "",
@@ -562,6 +570,17 @@
                 color: "#d1d5db",
                 desc: "从Transfer发现",
                 scene: "未知token,无condition信息",
+                children: (other.transfer_inferred_by_token || [])
+                  .slice()
+                  .sort((a, b) => b.count - a.count)
+                  .map((t) => ({
+                    id: `token_transfer_token_${t.token}`,
+                    label: "代币",
+                    value: t.count,
+                    color: "#e5e7eb",
+                    desc: t.token || "",
+                    scene: "",
+                  })),
               },
             ],
           },
@@ -597,7 +616,7 @@
         const entries = s.event_by_collateral[String(et)] || [];
         for (const item of entries) {
           const key = item.addr || item.name;
-          if (!byAddr[key]) byAddr[key] = {addr: item.addr, name: item.name, count: 0};
+          if (!byAddr[key]) byAddr[key] = { addr: item.addr, name: item.name, count: 0 };
           byAddr[key].count += item.count;
           total += item.count;
         }
@@ -1333,7 +1352,7 @@
         ) {
           rpOnRebuildDone();
         }
-      } catch (e) {}
+      } catch (e) { }
     }
 
     document.addEventListener("DOMContentLoaded", () => {

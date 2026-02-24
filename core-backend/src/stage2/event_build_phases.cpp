@@ -61,7 +61,8 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
     std::string lower_cid = to_lower(cid);
     uint32_t cond_idx = intern_condition(cid, 2, ConditionSource::PolymarketFPMM);
 
-    intern_fpmm(addr, cond_idx, addr_to_collateral(collateral));
+    uint8_t coll_id = intern_collateral(collateral);
+    intern_fpmm(addr, cond_idx, coll_id);
     // 为所有 FPMM 计算 token_id（包括非 USDC 的，以便识别用户的 merge/burn 操作）
     intern_condition_tokens(lower_cid, collateral, cond_idx, TokenSource::PolymarketFPMM);
   }
@@ -76,7 +77,8 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
     std::string collateral = to_lower(blob_to_hex(split_for_tokens->GetValue(1, i).GetValueUnsafe<std::string>()));
 
     uint32_t cond_idx = intern_condition(cid, 2, ConditionSource::SplitEvent);
-    cond_collateral_[cond_idx] = addr_to_collateral(collateral);
+    uint8_t coll_id = intern_collateral(collateral);
+    set_cond_collateral(cond_idx, coll_id);
     intern_condition_tokens(lower_cid, collateral, cond_idx, TokenSource::SplitEvent);
   }
 
@@ -308,7 +310,7 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
     Collateral collateral = Collateral::Unknown;
     auto coll_it = cond_collateral_.find(cond_idx);
     if (coll_it != cond_collateral_.end()) {
-      collateral = coll_it->second;
+      collateral = static_cast<Collateral>(coll_it->second);
     }
 
     TransferClass cls = classify_and_emit(sort_key, tx_hash, r.block, op, from, to, token_id, r.amount, cond_idx, token_idx, collateral);
@@ -394,6 +396,40 @@ void EventBuilder::commit_chunk(int64_t new_cursor) {
       ap.Close();
     }
     conn->Query("INSERT OR IGNORE INTO rb_fpmm SELECT * FROM tmp_rb_fpmm");
+  }
+
+  if (!new_collaterals_.empty()) {
+    conn->Query("CREATE TEMP TABLE IF NOT EXISTS tmp_rb_collateral ("
+                "coll_id INTEGER, collateral_addr BLOB)");
+    conn->Query("DELETE FROM tmp_rb_collateral");
+    {
+      duckdb::Appender ap(*conn, "tmp_rb_collateral");
+      for (auto &nc : new_collaterals_) {
+        ap.BeginRow();
+        ap.Append(static_cast<int32_t>(nc.coll_id));
+        append_blob(ap, nc.addr);
+        ap.EndRow();
+      }
+      ap.Close();
+    }
+    conn->Query("INSERT OR IGNORE INTO rb_collateral SELECT * FROM tmp_rb_collateral");
+  }
+
+  if (!new_cond_collaterals_.empty()) {
+    conn->Query("CREATE TEMP TABLE IF NOT EXISTS tmp_rb_cond_collateral ("
+                "cond_idx INTEGER, coll_id INTEGER)");
+    conn->Query("DELETE FROM tmp_rb_cond_collateral");
+    {
+      duckdb::Appender ap(*conn, "tmp_rb_cond_collateral");
+      for (auto &nc : new_cond_collaterals_) {
+        ap.BeginRow();
+        ap.Append(static_cast<int32_t>(nc.cond_idx));
+        ap.Append(static_cast<int32_t>(nc.coll_id));
+        ap.EndRow();
+      }
+      ap.Close();
+    }
+    conn->Query("INSERT OR REPLACE INTO rb_cond_collateral SELECT * FROM tmp_rb_cond_collateral");
   }
 
   if (!new_neg_risk_markets_.empty()) {
