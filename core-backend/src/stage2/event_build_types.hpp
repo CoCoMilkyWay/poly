@@ -129,6 +129,7 @@ static constexpr const char *WETH = "0x7ceb23fd6bc0add59e62ac25578270cff1b9f619"
 static constexpr const char *DAI = "0x8f3cf7ad23cd3cadbd9735aff958023239c6a063";
 static constexpr const char *WMATIC = "0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270";
 static constexpr const char *USDT = "0xc2132d05d31c914a87c6611c10748aeb04b58e8f";
+static constexpr const char *WRAPPED_USDC_E = "0x3a3bd7bb9528e159577f7c2e685cc81a765002e2";
 static constexpr const char *CONDITIONAL_TOKENS = "0x4d97dcd97ec945f40cf65f87097ace5ea0476045";
 static constexpr const char *NO_TOKEN_BURN_ADDRESS = "0x36a0e974a7083ea0ad4dea6a27b90fab22e93a32";
 
@@ -145,6 +146,8 @@ inline uint8_t addr_to_known_collateral_id(const std::string &addr) {
     return static_cast<uint8_t>(Collateral::WMATIC);
   if (addr == USDT)
     return static_cast<uint8_t>(Collateral::USDT);
+  if (addr == WRAPPED_USDC_E)
+    return static_cast<uint8_t>(Collateral::WrappedUSDCe);
   return static_cast<uint8_t>(Collateral::Unknown);
 }
 
@@ -153,7 +156,7 @@ inline bool is_usdc_collateral(const std::string &addr) {
 }
 
 inline bool is_usdc_collateral(Collateral c) {
-  return c == Collateral::USDC || c == Collateral::USDCe;
+  return c == Collateral::USDC || c == Collateral::USDCe || c == Collateral::WrappedUSDCe;
 }
 
 inline const char *collateral_name(Collateral c) {
@@ -170,6 +173,8 @@ inline const char *collateral_name(Collateral c) {
     return "WMATIC";
   case Collateral::USDT:
     return "USDT";
+  case Collateral::WrappedUSDCe:
+    return "wUSDC.e";
   default:
     return "";
   }
@@ -189,6 +194,8 @@ inline const char *collateral_addr(Collateral c) {
     return WMATIC;
   case Collateral::USDT:
     return USDT;
+  case Collateral::WrappedUSDCe:
+    return WRAPPED_USDC_E;
   default:
     return ZERO_ADDR;
   }

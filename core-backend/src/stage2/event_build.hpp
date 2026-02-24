@@ -7,6 +7,7 @@
 #include "event_build_utils.hpp"
 #include "types.hpp"
 #include <cassert>
+#include <functional>
 #include <nlohmann/json.hpp>
 #include <unordered_map>
 #include <unordered_set>
@@ -140,7 +141,7 @@ public:
 
     collateral_addr_to_id_.clear();
     collateral_id_to_addr_.clear();
-    next_collateral_id_ = static_cast<uint8_t>(Collateral::USDT) + 1;
+    next_collateral_id_ = static_cast<uint8_t>(Collateral::WrappedUSDCe) + 1;
     // 预置已知抵押品，保持固定 ID 兼容历史数据
     collateral_addr_to_id_[ZERO_ADDR] = static_cast<uint8_t>(Collateral::Unknown);
     collateral_id_to_addr_[static_cast<uint8_t>(Collateral::Unknown)] = ZERO_ADDR;
@@ -156,6 +157,8 @@ public:
     collateral_id_to_addr_[static_cast<uint8_t>(Collateral::WMATIC)] = WMATIC;
     collateral_addr_to_id_[USDT] = static_cast<uint8_t>(Collateral::USDT);
     collateral_id_to_addr_[static_cast<uint8_t>(Collateral::USDT)] = USDT;
+    collateral_addr_to_id_[WRAPPED_USDC_E] = static_cast<uint8_t>(Collateral::WrappedUSDCe);
+    collateral_id_to_addr_[static_cast<uint8_t>(Collateral::WrappedUSDCe)] = WRAPPED_USDC_E;
 
     auto coll_r = conn->Query("SELECT coll_id, collateral_addr FROM rb_collateral");
     for (idx_t i = 0; i < coll_r->RowCount(); ++i) {
@@ -306,7 +309,19 @@ public:
     progress_.total_users = seen_users_.size();
 
     // 恢复 event_by_collateral 统计
-    auto evt_stats = conn->Query("SELECT event_type, collateral, COUNT(*) FROM user_event GROUP BY event_type, collateral");
+    auto evt_stats = conn->Query(
+        "SELECT ue.event_type, "
+        "CASE "
+        "  WHEN ue.collateral = 0 AND cc.coll_id IS NOT NULL THEN cc.coll_id "
+        "  WHEN ue.collateral = 0 AND nrm.question_id IS NOT NULL THEN " + std::to_string(static_cast<int>(Collateral::WrappedUSDCe)) + " "
+        "  ELSE ue.collateral "
+        "END AS effective_collateral, "
+        "COUNT(*) "
+        "FROM user_event ue "
+        "LEFT JOIN rb_cond_collateral cc ON ue.cond_idx = cc.cond_idx "
+        "LEFT JOIN rb_condition rc ON ue.cond_idx = rc.cond_idx "
+        "LEFT JOIN rb_neg_risk_market nrm ON rc.question_id = nrm.question_id "
+        "GROUP BY ue.event_type, effective_collateral");
     for (idx_t i = 0; i < evt_stats->RowCount(); ++i) {
       uint8_t event_type = evt_stats->GetValue(0, i).GetValue<uint8_t>();
       uint8_t collateral = evt_stats->GetValue(1, i).GetValue<uint8_t>();
@@ -412,7 +427,7 @@ private:
   std::unordered_map<uint32_t, uint8_t> cond_collateral_;       // cond_idx -> collateral_id
   std::unordered_map<std::string, uint8_t> collateral_addr_to_id_;
   std::unordered_map<uint8_t, std::string> collateral_id_to_addr_;
-  uint8_t next_collateral_id_ = static_cast<uint8_t>(Collateral::USDT) + 1;
+  uint8_t next_collateral_id_ = static_cast<uint8_t>(Collateral::WrappedUSDCe) + 1;
 
   // 按 TxKey (tx_hash) 索引，统一处理已知和未知 token
   std::unordered_map<TxKey, std::vector<SplitInfo>> tx_split_;
@@ -576,6 +591,51 @@ private:
       std::string token_id = crypto::Keccak256::to_hex(position_hash);
       intern_token(token_id, cond_idx, index_set == 1 ? 1 : 0, source);
     }
+  }
+
+  void intern_fpmm_tokens(const std::vector<std::string> &condition_ids,
+                          const std::string &collateral_hex,
+                          uint32_t primary_cond_idx) {
+    assert(!condition_ids.empty());
+    auto collateral_bytes = hex_to_blob(collateral_hex);
+
+    std::vector<std::string> cond_bytes;
+    std::vector<uint8_t> outcome_counts;
+    cond_bytes.reserve(condition_ids.size());
+    outcome_counts.reserve(condition_ids.size());
+    for (const auto &cid : condition_ids) {
+      std::string lower = to_lower(cid);
+      auto it = cond_map_.find(lower);
+      assert(it != cond_map_.end());
+      cond_bytes.push_back(hex_to_blob(lower));
+      outcome_counts.push_back(conditions_[it->second].outcome_count);
+      assert(outcome_counts.back() > 0 && outcome_counts.back() <= MAX_OUTCOMES);
+    }
+
+    // 必须与 FPMMFactory._recordCollectionIDsForAllConditions 一致：
+    // 递归时按 conditionIds 的倒序处理（conditionsLeft-- 后取 conditionIds[conditionsLeft]）。
+    std::function<void(int, const std::string &, int)> dfs =
+        [&](int cond_pos, const std::string &parent_collection_id, int first_condition_outcome) {
+          if (cond_pos < 0) {
+            auto position_hash = ctf::get_position_id(collateral_bytes, parent_collection_id);
+            std::string token_id = crypto::Keccak256::to_hex(position_hash);
+            uint8_t is_yes = (first_condition_outcome == 0) ? 1 : 0;
+            intern_token(token_id, primary_cond_idx, is_yes, TokenSource::PolymarketFPMM);
+            return;
+          }
+
+          uint8_t outcome_cnt = outcome_counts[cond_pos];
+          for (uint8_t outcome = 0; outcome < outcome_cnt; ++outcome) {
+            assert(outcome < 31);
+            uint32_t index_set = (1u << outcome);
+            std::string child_collection_id = ctf::get_collection_id(parent_collection_id, cond_bytes[cond_pos], index_set);
+            int next_first = (cond_pos == 0) ? static_cast<int>(outcome) : first_condition_outcome;
+            dfs(cond_pos - 1, child_collection_id, next_first);
+          }
+        };
+
+    std::string root_collection_id(32, '\0');
+    dfs(static_cast<int>(cond_bytes.size()) - 1, root_collection_id, 0);
   }
 
   void update_cond_type_stats() {

@@ -52,6 +52,7 @@ enum class Collateral : uint8_t {
   DAI = 4,    // 0x8f3cf7ad23cd3cadbd9735aff958023239c6a063
   WMATIC = 5, // 0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270
   USDT = 6,   // 0xc2132d05d31c914a87c6611c10748aeb04b58e8f
+  WrappedUSDCe = 7, // 0x3a3bd7bb9528e159577f7c2e685cc81a765002e2 (NegRisk wrapped collateral)
   // 预留更多...
 };
 
@@ -207,6 +208,7 @@ struct FPMMFundingInfo {
   int side; // 1=Added, 2=Removed
   int64_t amount0;
   int64_t amount1;
+  int amounts_count = 0;
 };
 
 } // namespace stage2

@@ -87,7 +87,7 @@ logging.basicConfig(
 # ═══════════════════════ 配置 ═══════════════════════
 PROJECT_DIR = Path(__file__).parent.parent
 NODE_DIR = PROJECT_DIR / "polygon-node"
-ERIGON = NODE_DIR / "erigon_v3.3.7_linux_amd64v2" / "erigon"
+ERIGON = NODE_DIR / "erigon_v3.3.8_linux_amd64v2" / "erigon"
 DATADIR = NODE_DIR / "data"
 SNAP_DIR = DATADIR / "snapshots"
 SNAP_SUBDIRS = ['', 'domain', 'history', 'idx', 'accessor']

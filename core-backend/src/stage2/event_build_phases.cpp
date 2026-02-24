@@ -6,14 +6,23 @@ namespace stage2 {
 void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
   TraceN("s2/phase1_map");
   auto conn = stage1_db_.create_connection();
+  auto get_i32 = [](const duckdb::unique_ptr<duckdb::MaterializedQueryResult> &tbl, int col, idx_t row) {
+    return tbl->GetValue(col, row).GetValue<int>();
+  };
+  auto get_hex = [](const duckdb::unique_ptr<duckdb::MaterializedQueryResult> &tbl, int col, idx_t row) {
+    return blob_to_hex(tbl->GetValue(col, row).GetValueUnsafe<std::string>());
+  };
+  auto get_hex_lower = [&](const duckdb::unique_ptr<duckdb::MaterializedQueryResult> &tbl, int col, idx_t row) {
+    return to_lower(get_hex(tbl, col, row));
+  };
 
   auto cp = conn->Query(
       "SELECT condition_id, outcome_slot_count, question_id FROM " + stage1_db_.feather_table_range("condition_preparation", start, end) +
       " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
   for (idx_t i = 0; i < cp->RowCount(); ++i) {
-    std::string cid = blob_to_hex(cp->GetValue(0, i).GetValueUnsafe<std::string>());
-    int cnt = cp->GetValue(1, i).GetValue<int>();
-    std::string qid = to_lower(blob_to_hex(cp->GetValue(2, i).GetValueUnsafe<std::string>()));
+    std::string cid = get_hex(cp, 0, i);
+    int cnt = get_i32(cp, 1, i);
+    std::string qid = get_hex_lower(cp, 2, i);
     intern_condition(cid, cnt, ConditionSource::ConditionPrep, qid);
   }
 
@@ -21,7 +30,7 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
       "SELECT condition_id, payout_numerators FROM " + stage1_db_.feather_table_range("condition_resolution", start, end) +
       " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
   for (idx_t i = 0; i < cr->RowCount(); ++i) {
-    std::string cid = blob_to_hex(cr->GetValue(0, i).GetValueUnsafe<std::string>());
+    std::string cid = get_hex(cr, 0, i);
     std::string lower = to_lower(cid);
     auto it = cond_map_.find(lower);
     if (it == cond_map_.end())
@@ -39,9 +48,9 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
       "SELECT token0, token1, condition_id FROM " + stage1_db_.feather_table_range("token_map", start, end) +
       " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
   for (idx_t i = 0; i < tm->RowCount(); ++i) {
-    std::string token0 = blob_to_hex(tm->GetValue(0, i).GetValueUnsafe<std::string>());
-    std::string token1 = blob_to_hex(tm->GetValue(1, i).GetValueUnsafe<std::string>());
-    std::string cid = blob_to_hex(tm->GetValue(2, i).GetValueUnsafe<std::string>());
+    std::string token0 = get_hex(tm, 0, i);
+    std::string token1 = get_hex(tm, 1, i);
+    std::string cid = get_hex(tm, 2, i);
     uint32_t cond_idx = intern_condition(cid, 2, ConditionSource::PolymarketTokenReg);
     intern_token(token0, cond_idx, 1, TokenSource::PolymarketTokenReg);
     intern_token(token1, cond_idx, 0, TokenSource::PolymarketTokenReg);
@@ -51,20 +60,31 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
       "SELECT fpmm_addr, condition_ids, collateral_token FROM " + stage1_db_.feather_table_range("fpmm", start, end) +
       " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
   for (idx_t i = 0; i < fpmm->RowCount(); ++i) {
-    std::string addr = blob_to_hex(fpmm->GetValue(0, i).GetValueUnsafe<std::string>());
+    std::string addr = get_hex(fpmm, 0, i);
     std::string cids_json = fpmm->GetValue(1, i).GetValueUnsafe<std::string>();
-    std::string collateral = to_lower(blob_to_hex(fpmm->GetValue(2, i).GetValueUnsafe<std::string>()));
+    std::string collateral = get_hex_lower(fpmm, 2, i);
 
     auto cids_arr = nlohmann::json::parse(cids_json);
     assert(!cids_arr.empty());
-    std::string cid = cids_arr[0].get<std::string>();
-    std::string lower_cid = to_lower(cid);
-    uint32_t cond_idx = intern_condition(cid, 2, ConditionSource::PolymarketFPMM);
+    std::vector<std::string> cids;
+    cids.reserve(cids_arr.size());
+    uint32_t primary_cond_idx = 0;
+    bool has_primary = false;
+    for (const auto &v : cids_arr) {
+      std::string cid = v.get<std::string>();
+      cids.push_back(to_lower(cid));
+      uint32_t idx = intern_condition(cid, 2, ConditionSource::PolymarketFPMM);
+      if (!has_primary) {
+        primary_cond_idx = idx;
+        has_primary = true;
+      }
+    }
+    assert(has_primary);
 
     uint8_t coll_id = intern_collateral(collateral);
-    intern_fpmm(addr, cond_idx, coll_id);
-    // 为所有 FPMM 计算 token_id（包括非 USDC 的，以便识别用户的 merge/burn 操作）
-    intern_condition_tokens(lower_cid, collateral, cond_idx, TokenSource::PolymarketFPMM);
+    intern_fpmm(addr, primary_cond_idx, coll_id);
+    // 为 FPMM 计算所有 atomic position token_id（覆盖多条件组合头寸）
+    intern_fpmm_tokens(cids, collateral, primary_cond_idx);
   }
 
   // 从 split 事件中提取 token_id（覆盖没有经过 FPMM 的 condition）
@@ -72,9 +92,9 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
       "SELECT DISTINCT condition_id, collateral_token FROM " + stage1_db_.feather_table_range("split", start, end) +
       " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
   for (idx_t i = 0; i < split_for_tokens->RowCount(); ++i) {
-    std::string cid = blob_to_hex(split_for_tokens->GetValue(0, i).GetValueUnsafe<std::string>());
+    std::string cid = get_hex(split_for_tokens, 0, i);
     std::string lower_cid = to_lower(cid);
-    std::string collateral = to_lower(blob_to_hex(split_for_tokens->GetValue(1, i).GetValueUnsafe<std::string>()));
+    std::string collateral = get_hex_lower(split_for_tokens, 1, i);
 
     uint32_t cond_idx = intern_condition(cid, 2, ConditionSource::SplitEvent);
     uint8_t coll_id = intern_collateral(collateral);
@@ -86,8 +106,8 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
       "SELECT market_id, question_id FROM " + stage1_db_.feather_table_range("neg_risk_question", start, end) +
       " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
   for (idx_t i = 0; i < nrq->RowCount(); ++i) {
-    std::string market_id = to_lower(blob_to_hex(nrq->GetValue(0, i).GetValueUnsafe<std::string>()));
-    std::string question_id = to_lower(blob_to_hex(nrq->GetValue(1, i).GetValueUnsafe<std::string>()));
+    std::string market_id = get_hex_lower(nrq, 0, i);
+    std::string question_id = get_hex_lower(nrq, 1, i);
 
     if (!cond_to_market_.count(question_id)) {
       cond_to_market_[question_id] = market_id;
@@ -116,19 +136,32 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
 void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
   TraceN("s2/phase2_idx");
   auto conn = stage1_db_.create_connection();
+  auto get_i64 = [](const duckdb::unique_ptr<duckdb::MaterializedQueryResult> &tbl, int col, idx_t row) {
+    return tbl->GetValue(col, row).GetValue<int64_t>();
+  };
+  auto get_hex = [](const duckdb::unique_ptr<duckdb::MaterializedQueryResult> &tbl, int col, idx_t row) {
+    return blob_to_hex(tbl->GetValue(col, row).GetValueUnsafe<std::string>());
+  };
+  auto get_hex_lower = [&](const duckdb::unique_ptr<duckdb::MaterializedQueryResult> &tbl, int col, idx_t row) {
+    return to_lower(get_hex(tbl, col, row));
+  };
+  auto build_tx_key = [&](const duckdb::unique_ptr<duckdb::MaterializedQueryResult> &tbl, idx_t row) {
+    TxKey key;
+    key.block = get_i64(tbl, 0, row);
+    key.tx_hash = hex_to_bytes32(get_hex(tbl, 1, row));
+    return key;
+  };
 
   auto split = conn->Query(
       "SELECT block_number, tx_hash, condition_id, amount, stakeholder FROM " +
       stage1_db_.feather_table_range("split", start, end) +
       " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
   for (idx_t i = 0; i < split->RowCount(); ++i) {
-    TxKey key;
-    key.block = split->GetValue(0, i).GetValue<int64_t>();
-    key.tx_hash = hex_to_bytes32(blob_to_hex(split->GetValue(1, i).GetValueUnsafe<std::string>()));
+    TxKey key = build_tx_key(split, i);
     SplitInfo info;
-    info.amount = split->GetValue(3, i).GetValue<int64_t>();
-    info.stakeholder = to_lower(blob_to_hex(split->GetValue(4, i).GetValueUnsafe<std::string>()));
-    info.cond_id = to_lower(blob_to_hex(split->GetValue(2, i).GetValueUnsafe<std::string>()));
+    info.amount = get_i64(split, 3, i);
+    info.stakeholder = get_hex_lower(split, 4, i);
+    info.cond_id = get_hex_lower(split, 2, i);
     tx_split_[key].push_back(info);
   }
 
@@ -137,13 +170,11 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
       stage1_db_.feather_table_range("merge", start, end) +
       " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
   for (idx_t i = 0; i < merge->RowCount(); ++i) {
-    TxKey key;
-    key.block = merge->GetValue(0, i).GetValue<int64_t>();
-    key.tx_hash = hex_to_bytes32(blob_to_hex(merge->GetValue(1, i).GetValueUnsafe<std::string>()));
+    TxKey key = build_tx_key(merge, i);
     MergeInfo info;
-    info.amount = merge->GetValue(3, i).GetValue<int64_t>();
-    info.stakeholder = to_lower(blob_to_hex(merge->GetValue(4, i).GetValueUnsafe<std::string>()));
-    info.cond_id = to_lower(blob_to_hex(merge->GetValue(2, i).GetValueUnsafe<std::string>()));
+    info.amount = get_i64(merge, 3, i);
+    info.stakeholder = get_hex_lower(merge, 4, i);
+    info.cond_id = get_hex_lower(merge, 2, i);
     tx_merge_[key].push_back(info);
   }
 
@@ -152,13 +183,11 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
       stage1_db_.feather_table_range("redemption", start, end) +
       " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
   for (idx_t i = 0; i < redemption->RowCount(); ++i) {
-    TxKey key;
-    key.block = redemption->GetValue(0, i).GetValue<int64_t>();
-    key.tx_hash = hex_to_bytes32(blob_to_hex(redemption->GetValue(1, i).GetValueUnsafe<std::string>()));
+    TxKey key = build_tx_key(redemption, i);
     RedemptionInfo info;
-    info.payout = redemption->GetValue(3, i).GetValue<int64_t>();
-    info.redeemer = to_lower(blob_to_hex(redemption->GetValue(4, i).GetValueUnsafe<std::string>()));
-    info.cond_id = to_lower(blob_to_hex(redemption->GetValue(2, i).GetValueUnsafe<std::string>()));
+    info.payout = get_i64(redemption, 3, i);
+    info.redeemer = get_hex_lower(redemption, 4, i);
+    info.cond_id = get_hex_lower(redemption, 2, i);
     tx_redemption_[key].push_back(info);
   }
 
@@ -167,16 +196,16 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
       stage1_db_.feather_table_range("convert", start, end) +
       " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
   for (idx_t i = 0; i < convert->RowCount(); ++i) {
-    std::string market_id = to_lower(blob_to_hex(convert->GetValue(2, i).GetValueUnsafe<std::string>()));
+    std::string market_id = get_hex_lower(convert, 2, i);
     TxMarketKey key;
-    key.block = convert->GetValue(0, i).GetValue<int64_t>();
-    key.tx_hash = hex_to_bytes32(blob_to_hex(convert->GetValue(1, i).GetValueUnsafe<std::string>()));
+    key.block = get_i64(convert, 0, i);
+    key.tx_hash = hex_to_bytes32(get_hex(convert, 1, i));
     key.market_id = market_id;
     ConvertInfo info;
     info.market_id = market_id;
-    info.index_set = convert->GetValue(3, i).GetValue<int64_t>();
-    info.amount = convert->GetValue(4, i).GetValue<int64_t>();
-    info.stakeholder = to_lower(blob_to_hex(convert->GetValue(5, i).GetValueUnsafe<std::string>()));
+    info.index_set = get_i64(convert, 3, i);
+    info.amount = get_i64(convert, 4, i);
+    info.stakeholder = get_hex_lower(convert, 5, i);
     tx_convert_[key].push_back(info);
   }
 
@@ -185,18 +214,20 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
       "maker_amount, taker_amount, fee FROM " +
       stage1_db_.feather_table_range("order_filled", start, end) +
       " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
+  static const std::string ZERO_TOKEN_ID =
+      "0x0000000000000000000000000000000000000000000000000000000000000000";
   for (idx_t i = 0; i < order->RowCount(); ++i) {
-    int64_t block = order->GetValue(0, i).GetValue<int64_t>();
-    auto tx_hash = hex_to_bytes32(blob_to_hex(order->GetValue(1, i).GetValueUnsafe<std::string>()));
-    std::string maker = to_lower(blob_to_hex(order->GetValue(2, i).GetValueUnsafe<std::string>()));
-    std::string taker = to_lower(blob_to_hex(order->GetValue(3, i).GetValueUnsafe<std::string>()));
-    std::string maker_asset = blob_to_hex(order->GetValue(4, i).GetValueUnsafe<std::string>());
-    std::string taker_asset = blob_to_hex(order->GetValue(5, i).GetValueUnsafe<std::string>());
-    int64_t maker_amt = order->GetValue(6, i).GetValue<int64_t>();
-    int64_t taker_amt = order->GetValue(7, i).GetValue<int64_t>();
-    int64_t fee = order->GetValue(8, i).GetValue<int64_t>();
+    int64_t block = get_i64(order, 0, i);
+    auto tx_hash = hex_to_bytes32(get_hex(order, 1, i));
+    std::string maker = get_hex_lower(order, 2, i);
+    std::string taker = get_hex_lower(order, 3, i);
+    std::string maker_asset = get_hex(order, 4, i);
+    std::string taker_asset = get_hex(order, 5, i);
+    int64_t maker_amt = get_i64(order, 6, i);
+    int64_t taker_amt = get_i64(order, 7, i);
+    int64_t fee = get_i64(order, 8, i);
 
-    bool maker_is_usdc = maker_asset == "0x0000000000000000000000000000000000000000000000000000000000000000";
+    bool maker_is_usdc = maker_asset == ZERO_TOKEN_ID;
     std::string token_id = maker_is_usdc ? taker_asset : maker_asset;
 
     TxTokenKey key{block, tx_hash, to_lower(token_id)};
@@ -217,19 +248,19 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
       stage1_db_.feather_table_range("fpmm_trade", start, end) +
       " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
   for (idx_t i = 0; i < fpmm_trade->RowCount(); ++i) {
-    std::string fpmm_addr = to_lower(blob_to_hex(fpmm_trade->GetValue(2, i).GetValueUnsafe<std::string>()));
+    std::string fpmm_addr = get_hex_lower(fpmm_trade, 2, i);
     TxFPMMKey key;
-    key.block = fpmm_trade->GetValue(0, i).GetValue<int64_t>();
-    key.tx_hash = hex_to_bytes32(blob_to_hex(fpmm_trade->GetValue(1, i).GetValueUnsafe<std::string>()));
+    key.block = get_i64(fpmm_trade, 0, i);
+    key.tx_hash = hex_to_bytes32(get_hex(fpmm_trade, 1, i));
     key.fpmm_addr = fpmm_addr;
     assert(tx_fpmm_trade_.count(key) == 0 && "Duplicate FPMM trade");
     FPMMTradeInfo info;
     info.fpmm_addr = fpmm_addr;
-    info.trader = to_lower(blob_to_hex(fpmm_trade->GetValue(3, i).GetValueUnsafe<std::string>()));
+    info.trader = get_hex_lower(fpmm_trade, 3, i);
     info.side = fpmm_trade->GetValue(4, i).GetValue<int>();
     info.outcome_idx = fpmm_trade->GetValue(5, i).GetValue<int>();
-    info.usdc = fpmm_trade->GetValue(6, i).GetValue<int64_t>();
-    info.tokens = fpmm_trade->GetValue(7, i).GetValue<int64_t>();
+    info.usdc = get_i64(fpmm_trade, 6, i);
+    info.tokens = get_i64(fpmm_trade, 7, i);
     tx_fpmm_trade_[key] = info;
   }
 
@@ -238,18 +269,19 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
       stage1_db_.feather_table_range("fpmm_funding", start, end) +
       " WHERE block_number > " + std::to_string(start) + " AND block_number <= " + std::to_string(end));
   for (idx_t i = 0; i < fpmm_funding->RowCount(); ++i) {
-    std::string fpmm_addr = to_lower(blob_to_hex(fpmm_funding->GetValue(2, i).GetValueUnsafe<std::string>()));
+    std::string fpmm_addr = get_hex_lower(fpmm_funding, 2, i);
     TxFPMMKey key;
-    key.block = fpmm_funding->GetValue(0, i).GetValue<int64_t>();
-    key.tx_hash = hex_to_bytes32(blob_to_hex(fpmm_funding->GetValue(1, i).GetValueUnsafe<std::string>()));
+    key.block = get_i64(fpmm_funding, 0, i);
+    key.tx_hash = hex_to_bytes32(get_hex(fpmm_funding, 1, i));
     key.fpmm_addr = fpmm_addr;
     assert(tx_fpmm_funding_.count(key) == 0 && "Duplicate FPMM funding");
     FPMMFundingInfo info;
     info.fpmm_addr = fpmm_addr;
-    info.funder = to_lower(blob_to_hex(fpmm_funding->GetValue(3, i).GetValueUnsafe<std::string>()));
+    info.funder = get_hex_lower(fpmm_funding, 3, i);
     info.side = fpmm_funding->GetValue(4, i).GetValue<int>();
     std::string amounts_json = fpmm_funding->GetValue(5, i).GetValueUnsafe<std::string>();
     auto amounts_arr = nlohmann::json::parse(amounts_json);
+    info.amounts_count = static_cast<int>(amounts_arr.size());
     info.amount0 = amounts_arr.size() > 0 ? amounts_arr[0].get<int64_t>() : 0;
     info.amount1 = amounts_arr.size() > 1 ? amounts_arr[1].get<int64_t>() : 0;
     tx_fpmm_funding_[key] = info;
@@ -286,6 +318,18 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
     return a.block != b.block ? a.block < b.block : a.log_idx < b.log_idx;
   });
 
+  auto resolve_transfer_collateral = [&](uint32_t cid_idx, const std::string &operator_addr) {
+    auto coll_it = cond_collateral_.find(cid_idx);
+    if (coll_it != cond_collateral_.end())
+      return static_cast<Collateral>(coll_it->second);
+    // 对 TransferInferred token，优先用 FPMM operator 的 collateral 回填
+    // 避免在 FPMM Buy/Sell/LP 事件中出现无意义的 0x000...000
+    auto fit = fpmm_map_.find(operator_addr);
+    if (fit != fpmm_map_.end())
+      return static_cast<Collateral>(fit->second.collateral);
+    return Collateral::Unknown;
+  };
+
   for (const auto &r : rows) {
     std::string op = to_lower(r.op);
     std::string from = to_lower(r.from);
@@ -307,11 +351,7 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
     uint8_t token_idx = tit->second.is_yes ? 0 : 1;
 
     // 获取抵押品类型
-    Collateral collateral = Collateral::Unknown;
-    auto coll_it = cond_collateral_.find(cond_idx);
-    if (coll_it != cond_collateral_.end()) {
-      collateral = static_cast<Collateral>(coll_it->second);
-    }
+    Collateral collateral = resolve_transfer_collateral(cond_idx, op);
 
     TransferClass cls = classify_and_emit(sort_key, tx_hash, r.block, op, from, to, token_id, r.amount, cond_idx, token_idx, collateral);
     chunk_xfer_stats_.add(cls);
