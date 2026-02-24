@@ -380,45 +380,49 @@ private:
     const auto &p = pnl_engine_.progress();
     const auto &ct = p.cond_tree;
     const auto &tt = p.token_tree;
-    json result = {
-        {"phase", p.phase},
-        {"running", p.running},
-        {"total_users", p.total_users},
-        {"total_markets", p.total_markets},
-        {"total_events", p.total_events},
-        {"cond_tree",
-         {{"total", ct.total},
-          {"polymarket",
-           {{"total", ct.polymarket.total},
-            {"token_reg",
-             {{"total", ct.polymarket.token_reg.total},
-              {"amm", ct.polymarket.token_reg.amm},
-              {"negrisk", ct.polymarket.token_reg.negrisk},
-              {"normal", ct.polymarket.token_reg.normal}}},
-            {"fpmm_only", ct.polymarket.fpmm_only}}},
-          {"other",
-           {{"total", ct.other.total},
-            {"prep", ct.other.prep},
-            {"other_fpmm", ct.other.other_fpmm},
-            {"split", ct.other.split}}}}},
-        {"token_tree",
-         {{"total", tt.total},
-          {"polymarket",
-           {{"total", tt.polymarket.total},
-            {"token_reg",
-             {{"total", tt.polymarket.token_reg.total},
-              {"amm", tt.polymarket.token_reg.amm},
-              {"negrisk", tt.polymarket.token_reg.negrisk},
-              {"normal", tt.polymarket.token_reg.normal}}},
-            {"fpmm_only",
-             {{"total", tt.polymarket.fpmm_only.total},
-              {"usdc", tt.polymarket.fpmm_only.usdc},
-              {"non_usdc", tt.polymarket.fpmm_only.non_usdc}}}}},
-          {"other",
-           {{"total", tt.other.total},
-            {"other_fpmm", tt.other.other_fpmm},
-            {"split", tt.other.split},
-            {"transfer_inferred", tt.other.transfer_inferred}}}}},
+    json cond_tree = {
+        {"total", ct.total},
+        {"polymarket",
+         {{"total", ct.polymarket.total},
+          {"token_reg",
+           {{"total", ct.polymarket.token_reg.total},
+            {"amm", ct.polymarket.token_reg.amm},
+            {"negrisk", ct.polymarket.token_reg.negrisk},
+            {"normal", ct.polymarket.token_reg.normal}}},
+          {"fpmm_only", ct.polymarket.fpmm_only}}},
+        {"other",
+         {{"total", ct.other.total},
+          {"prep", ct.other.prep},
+          {"other_fpmm", ct.other.other_fpmm},
+          {"split", ct.other.split}}},
+    };
+
+    json token_tree = {
+        {"total", tt.total},
+        {"polymarket",
+         {{"total", tt.polymarket.total},
+          {"token_reg",
+           {{"total", tt.polymarket.token_reg.total},
+            {"amm", tt.polymarket.token_reg.amm},
+            {"negrisk", tt.polymarket.token_reg.negrisk},
+            {"normal", tt.polymarket.token_reg.normal}}},
+          {"fpmm_only",
+           {{"total", tt.polymarket.fpmm_only.total},
+            {"by_collateral", [&]() {
+               json arr = json::array();
+               for (const auto &[coll, cnt] : tt.polymarket.fpmm_only.by_collateral) {
+                 arr.push_back({
+                     {"addr", stage2::collateral_addr(static_cast<stage2::Collateral>(coll))},
+                     {"name", stage2::collateral_name(static_cast<stage2::Collateral>(coll))},
+                     {"count", cnt},
+                 });
+               }
+               return arr;
+             }()}}}}},
+        {"other", {{"total", tt.other.total}, {"other_fpmm", tt.other.other_fpmm}, {"split", tt.other.split}, {"transfer_inferred", tt.other.transfer_inferred}}},
+    };
+
+    json transfer_tree = {
         {"xfer_total", p.xfer_total},
         {"xfer_split_normal", p.xfer_split_normal},
         {"xfer_split_negrisk", p.xfer_split_negrisk},
@@ -454,18 +458,29 @@ private:
         {"xfer_internal_transfer_other", p.xfer_internal_transfer_other},
     };
 
-    // 按(EventType, Collateral)分组的统计
-    json event_by_coll = json::array();
+    json result = {
+        {"phase", p.phase},
+        {"running", p.running},
+        {"total_users", p.total_users},
+        {"total_markets", p.total_markets},
+        {"total_events", p.total_events},
+        {"cond_tree", cond_tree},
+        {"token_tree", token_tree},
+    };
+    result.update(transfer_tree);
+
+    // 按 event_type 分组，每组内以 collateral_addr 为 key 的统计 dict
+    // 格式: {"event_type_int": [{"addr": "0x...", "name": "USDC", "count": 100}, ...]}
+    json event_by_coll = json::object();
     for (const auto &[key, cnt] : p.event_by_collateral) {
       uint8_t event_type = key / 16;
       uint8_t coll = key % 16;
-      event_by_coll.push_back({
-          {"event_type", event_type},
-          {"collateral", coll},
-          {"collateral_name", stage2::collateral_name(static_cast<stage2::Collateral>(coll))},
-          {"collateral_addr", stage2::collateral_addr(static_cast<stage2::Collateral>(coll))},
-          {"count", cnt},
-      });
+      std::string et_key = std::to_string(event_type);
+      if (!event_by_coll.contains(et_key))
+        event_by_coll[et_key] = json::array();
+      const char *addr = stage2::collateral_addr(static_cast<stage2::Collateral>(coll));
+      const char *name = stage2::collateral_name(static_cast<stage2::Collateral>(coll));
+      event_by_coll[et_key].push_back({{"addr", addr}, {"name", name}, {"count", cnt}});
     }
     result["event_by_collateral"] = event_by_coll;
 

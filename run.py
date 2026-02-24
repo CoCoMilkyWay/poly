@@ -113,8 +113,9 @@ def main():
     (ROOT / "data").mkdir(exist_ok=True)
     build_backend()
 
+    tracy_proc = None
     if ENABLE_PROFILE:
-        launch_tracy_ui()
+        tracy_proc = launch_tracy_ui()
         time.sleep(1.0)
 
     print("[run.py] 启动 backend...")
@@ -143,10 +144,11 @@ def main():
         pass
     finally:
         print("[run.py] 正在关闭...")
-        for proc in [backend, frontend]:
+        procs = [p for p in [backend, frontend, tracy_proc] if p is not None]
+        for proc in procs:
             if proc.poll() is None:
                 proc.terminate()
-        for proc in [backend, frontend]:
+        for proc in procs:
             proc.wait()  # 等待进程结束，不设置timeout
         print("[run.py] 已退出")
 

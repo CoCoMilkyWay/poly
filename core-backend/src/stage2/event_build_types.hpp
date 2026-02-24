@@ -133,9 +133,9 @@ static constexpr const char *CONDITIONAL_TOKENS = "0x4d97dcd97ec945f40cf65f87097
 static constexpr const char *NO_TOKEN_BURN_ADDRESS = "0x36a0e974a7083ea0ad4dea6a27b90fab22e93a32";
 
 inline Collateral addr_to_collateral(const std::string &addr) {
-  if (addr == USDC_E)
-    return Collateral::USDC;
   if (addr == USDC_NATIVE)
+    return Collateral::USDC;
+  if (addr == USDC_E)
     return Collateral::USDCe;
   if (addr == WETH)
     return Collateral::WETH;
@@ -171,16 +171,16 @@ inline const char *collateral_name(Collateral c) {
   case Collateral::USDT:
     return "USDT";
   default:
-    return "Unknown";
+    return "";
   }
 }
 
 inline const char *collateral_addr(Collateral c) {
   switch (c) {
   case Collateral::USDC:
-    return USDC_E;
-  case Collateral::USDCe:
     return USDC_NATIVE;
+  case Collateral::USDCe:
+    return USDC_E;
   case Collateral::WETH:
     return WETH;
   case Collateral::DAI:
@@ -190,7 +190,7 @@ inline const char *collateral_addr(Collateral c) {
   case Collateral::USDT:
     return USDT;
   default:
-    return "";
+    return ZERO_ADDR;
   }
 }
 
@@ -582,8 +582,7 @@ struct TokenTree {
     } token_reg;
     struct FpmmOnly {
       int64_t total = 0;
-      int64_t usdc = 0;     // USDC抵押品
-      int64_t non_usdc = 0; // WETH等其他抵押品
+      std::unordered_map<uint8_t, int64_t> by_collateral; // Collateral enum → token count
     } fpmm_only;
   } polymarket;
   struct Other {

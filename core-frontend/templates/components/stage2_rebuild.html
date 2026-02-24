@@ -451,7 +451,7 @@
     // total = polymarket + other
     // polymarket = token_reg + fpmm_only
     // token_reg = amm + negrisk + normal
-    // fpmm_only = usdc + non_usdc
+    // fpmm_only = by_collateral (各抵押品地址)
     // other = other_fpmm + split + transfer_inferred
     function s2BuildTokenTree(s) {
       const tt = s.token_tree || {};
@@ -517,24 +517,17 @@
                 color: "#fcd34d",
                 desc: "keccak256计算",
                 scene: "从FPMM创建事件计算",
-                children: [
-                  {
-                    id: "token_fpmm_usdc",
-                    label: "USDC",
-                    value: fo.usdc || 0,
+                children: (fo.by_collateral || [])
+                  .slice()
+                  .sort((a, b) => b.count - a.count)
+                  .map((c) => ({
+                    id: `token_fpmm_coll_${c.addr || c.name}`,
+                    label: c.name || "未知抵押品",
+                    value: c.count,
                     color: "#fde68a",
-                    desc: "标准抵押品",
-                    scene: "Polymarket主流市场",
-                  },
-                  {
-                    id: "token_fpmm_non",
-                    label: "非USDC",
-                    value: fo.non_usdc || 0,
-                    color: "#fde68a",
-                    desc: "WETH等",
-                    scene: "早期测试或特殊市场",
-                  },
-                ],
+                    desc: c.addr || "",
+                    scene: "",
+                  })),
               },
             ],
           },
@@ -593,44 +586,36 @@
     };
 
     // 根据event_by_collateral构建按抵押品分组的节点
-    // 返回一个包装节点"按抵押品"，其子节点是各抵押品统计
+    // s.event_by_collateral 格式: {"event_type_int": [{addr, name, count}, ...]}
     function s2BuildCollateralSection(s, eventTypes, parentColor, prefix) {
       if (!s.event_by_collateral) return null;
 
-      // 收集这些eventType的所有collateral统计
-      const byCollateral = {};
+      // 按 addr 合并多个 eventType 的统计
+      const byAddr = {};
       let total = 0;
-      for (const item of s.event_by_collateral) {
-        if (eventTypes.includes(item.event_type)) {
-          const key = item.collateral;
-          if (!byCollateral[key]) {
-            byCollateral[key] = {
-              collateral: key,
-              name: item.collateral_name,
-              addr: item.collateral_addr,
-              count: 0,
-            };
-          }
-          byCollateral[key].count += item.count;
+      for (const et of eventTypes) {
+        const entries = s.event_by_collateral[String(et)] || [];
+        for (const item of entries) {
+          const key = item.addr || item.name;
+          if (!byAddr[key]) byAddr[key] = {addr: item.addr, name: item.name, count: 0};
+          byAddr[key].count += item.count;
           total += item.count;
         }
       }
 
-      // 转换为节点数组，按count排序
-      const children = Object.values(byCollateral)
+      const children = Object.values(byAddr)
         .filter((c) => c.count > 0)
         .sort((a, b) => b.count - a.count)
         .map((c) => ({
-          id: `${prefix}_coll_${c.collateral}`,
-          label: c.name,
+          id: `${prefix}_coll_${c.addr || c.name}`,
+          label: c.name || "未知抵押品",
           value: c.count,
           color: "#fef3c7",
-          desc: c.addr ? c.addr.substring(0, 10) + "..." : "",
-          scene: c.addr || "未知抵押品",
+          desc: c.addr || "",
+          scene: "",
         }));
 
-      // 如果只有一种抵押品且是USDC，不显示此分区
-      if (children.length <= 1) {
+      if (children.length === 0) {
         return null;
       }
 

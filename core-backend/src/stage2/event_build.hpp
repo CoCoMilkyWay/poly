@@ -571,11 +571,8 @@ private:
         tt.polymarket.total++;
         tt.polymarket.fpmm_only.total++;
         auto cit = cond_collateral_.find(info.cond_idx);
-        if (cit != cond_collateral_.end() && !is_usdc_collateral(cit->second)) {
-          tt.polymarket.fpmm_only.non_usdc++;
-        } else {
-          tt.polymarket.fpmm_only.usdc++;
-        }
+        uint8_t coll = cit != cond_collateral_.end() ? static_cast<uint8_t>(cit->second) : static_cast<uint8_t>(Collateral::Unknown);
+        tt.polymarket.fpmm_only.by_collateral[coll]++;
       } else {
         // 既没有 TokenReg 也没有 FPMM → 其他协议
         tt.other.total++;
@@ -595,7 +592,11 @@ private:
     assert(tt.total == tt.polymarket.total + tt.other.total);
     assert(tt.polymarket.total == tt.polymarket.token_reg.total + tt.polymarket.fpmm_only.total);
     assert(tt.polymarket.token_reg.total == tt.polymarket.token_reg.amm + tt.polymarket.token_reg.negrisk + tt.polymarket.token_reg.normal);
-    assert(tt.polymarket.fpmm_only.total == tt.polymarket.fpmm_only.usdc + tt.polymarket.fpmm_only.non_usdc);
+    {
+      int64_t sum = 0;
+      for (const auto &[k, v] : tt.polymarket.fpmm_only.by_collateral) sum += v;
+      assert(tt.polymarket.fpmm_only.total == sum);
+    }
     assert(tt.other.total == tt.other.other_fpmm + tt.other.split + tt.other.transfer_inferred);
     progress_.token_tree = tt;
   }
