@@ -307,35 +307,12 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
   auto get_hex = [](const duckdb::unique_ptr<duckdb::MaterializedQueryResult> &tbl, int col, idx_t row) {
     return blob_to_hex(tbl->GetValue(col, row).GetValueUnsafe<std::string>());
   };
-  auto transfers = conn->Query(block_range_query(
-      stage1_db_,
-      "SELECT block_number, tx_hash, log_index, operator, from_addr, to_addr, token_id, amount FROM ",
-      "transfer", start, end));
-
-  struct TransferRow {
-    int64_t block, log_idx, amount;
-    std::string tx_hash, op, from, to, token_id;
-  };
-  std::vector<TransferRow> rows;
-  rows.reserve(transfers->RowCount());
-  auto make_transfer_row = [&](idx_t i) {
-    return TransferRow{
-        get_i64(transfers, 0, i),
-        get_i64(transfers, 2, i),
-        get_i64(transfers, 7, i),
-        get_hex(transfers, 1, i),
-        get_hex(transfers, 3, i),
-        get_hex(transfers, 4, i),
-        get_hex(transfers, 5, i),
-        get_hex(transfers, 6, i),
-    };
-  };
-  for (idx_t i = 0; i < transfers->RowCount(); ++i) {
-    rows.push_back(make_transfer_row(i));
-  }
-  std::sort(rows.begin(), rows.end(), [](const TransferRow &a, const TransferRow &b) {
-    return a.block != b.block ? a.block < b.block : a.log_idx < b.log_idx;
-  });
+  auto transfers = conn->Query(
+      block_range_query(
+          stage1_db_,
+          "SELECT block_number, tx_hash, log_index, operator, from_addr, to_addr, token_id, amount FROM ",
+          "transfer", start, end) +
+      " ORDER BY block_number, log_index");
 
   auto resolve_transfer_collateral = [&](uint32_t cid_idx, const std::string &operator_addr) {
     auto coll_it = cond_collateral_.find(cid_idx);
@@ -349,14 +326,17 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
     return Collateral::Unknown;
   };
 
-  for (const auto &r : rows) {
-    std::string op = to_lower(r.op);
-    std::string from = to_lower(r.from);
-    std::string to = to_lower(r.to);
-    std::string token_id = to_lower(r.token_id);
+  for (idx_t i = 0; i < transfers->RowCount(); ++i) {
+    int64_t block = get_i64(transfers, 0, i);
+    int64_t log_idx = get_i64(transfers, 2, i);
+    int64_t amount = get_i64(transfers, 7, i);
+    std::string op = to_lower(get_hex(transfers, 3, i));
+    std::string from = to_lower(get_hex(transfers, 4, i));
+    std::string to = to_lower(get_hex(transfers, 5, i));
+    std::string token_id = to_lower(get_hex(transfers, 6, i));
 
-    int64_t sort_key = r.block * 1000000000LL + r.log_idx;
-    auto tx_hash = hex_to_bytes32(r.tx_hash);
+    int64_t sort_key = block * 1000000000LL + log_idx;
+    auto tx_hash = hex_to_bytes32(get_hex(transfers, 1, i));
 
     auto tit = token_map_.find(token_id);
 
@@ -372,7 +352,23 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
     // 获取抵押品类型
     Collateral collateral = resolve_transfer_collateral(cond_idx, op);
 
-    TransferClass cls = classify_and_emit(sort_key, tx_hash, r.block, op, from, to, token_id, r.amount, cond_idx, token_idx, collateral);
+    {
+      std::ostringstream oss;
+      oss << "block=" << block
+          << " tx=" << get_hex(transfers, 1, i)
+          << " log_index=" << log_idx
+          << " op=" << op
+          << " from=" << from
+          << " to=" << to
+          << " token_id=" << token_id
+          << " amount=" << amount
+          << " cond_idx=" << cond_idx
+          << " token_idx=" << static_cast<int>(token_idx)
+          << " collateral=" << static_cast<int>(collateral);
+      current_transfer_context_ = oss.str();
+    }
+
+    TransferClass cls = classify_and_emit(sort_key, tx_hash, block, op, from, to, token_id, amount, cond_idx, token_idx, collateral);
     chunk_xfer_stats_.add(cls);
   }
 }

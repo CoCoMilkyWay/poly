@@ -260,6 +260,13 @@ private:
     return hex_to_int64(hex);
   }
 
+  static bool is_fpmm_topic(const std::string &topic0) {
+    return topic0 == topics::FPMM_BUY ||
+           topic0 == topics::FPMM_SELL ||
+           topic0 == topics::FPMM_FUNDING_ADD ||
+           topic0 == topics::FPMM_FUNDING_REMOVE;
+  }
+
   static void parse_log(const json &log, const std::set<std::string> &fpmm_addrs, DecodedEvents &events) {
     current_log_json_ = log.dump();
     std::string address = to_lower(log["address"].get<std::string>());
@@ -282,7 +289,8 @@ private:
       parse_neg_risk_adapter_event(topic0, topics_arr, data, tx_hash, block_number, log_index, events);
     } else if (address == contracts::FPMM_FACTORY) {
       // 第一趟已处理，跳过
-    } else if (fpmm_addrs.contains(address)) {
+    } else if (is_fpmm_topic(topic0)) {
+      // stage1 只按 topic 记录 FPMM 事件，不依赖当前批次是否出现 FPMM_CREATE。
       parse_fpmm_event(topic0, address, topics_arr, data, tx_hash, block_number, log_index, events);
     }
   }

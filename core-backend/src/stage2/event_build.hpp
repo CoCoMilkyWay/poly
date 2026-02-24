@@ -8,7 +8,9 @@
 #include "types.hpp"
 #include <cassert>
 #include <functional>
+#include <iostream>
 #include <nlohmann/json.hpp>
+#include <sstream>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -480,6 +482,7 @@ private:
   std::vector<NewCondCollateral> new_cond_collaterals_;
   std::vector<NewNegRiskMarket> new_neg_risk_markets_;
   std::vector<std::tuple<std::string, RawEvent>> new_events_;
+  std::string current_transfer_context_;
 
   uint32_t intern_condition(const std::string &cond_id, uint8_t outcome_cnt,
                             ConditionSource source = ConditionSource::ConditionPrep,
@@ -807,6 +810,21 @@ private:
   void phase2_build_semantic_index(int64_t start, int64_t end);
   void phase3_process_transfers(int64_t start, int64_t end);
   void commit_chunk(int64_t new_cursor);
+
+  [[noreturn]] void fail_transfer_assert(const char *msg) const {
+    std::cerr << "[Stage2][ASSERT] " << msg << std::endl;
+    if (!current_transfer_context_.empty()) {
+      std::cerr << "[Stage2][ASSERT] current transfer: " << current_transfer_context_ << std::endl;
+    }
+    assert(false && "stage2 transfer assertion");
+    std::abort();
+  }
+
+  void assert_transfer(bool cond, const char *msg) const {
+    if (!cond) {
+      fail_transfer_assert(msg);
+    }
+  }
 
   bool is_protocol_contract(const std::string &addr) const {
     return addr == ZERO_ADDR || addr == CTF_EXCHANGE || addr == NEG_RISK_CTF_EXCHANGE ||

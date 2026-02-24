@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <string>
@@ -211,25 +212,37 @@ struct FPMMFundingInfo {
   int amounts_count = 0;
 };
 
+inline size_t hash_combine(size_t lhs, size_t rhs) {
+  lhs ^= rhs + 0x9e3779b97f4a7c15ULL + (lhs << 6) + (lhs >> 2);
+  return lhs;
+}
+
+inline size_t hash_bytes32(const std::array<uint8_t, 32> &bytes) {
+  size_t h = 0xcbf29ce484222325ULL;
+  for (uint8_t b : bytes) {
+    h ^= static_cast<size_t>(b);
+    h *= 0x100000001b3ULL;
+  }
+  return h;
+}
+
 } // namespace stage2
 
 namespace std {
 template <>
 struct hash<stage2::TxKey> {
   size_t operator()(const stage2::TxKey &k) const {
-    size_t h;
-    std::memcpy(&h, k.tx_hash.data(), sizeof(h));
-    return h ^ std::hash<int64_t>()(k.block);
+    size_t h = stage2::hash_bytes32(k.tx_hash);
+    return stage2::hash_combine(h, std::hash<int64_t>()(k.block));
   }
 };
 
 template <>
 struct hash<stage2::TxTokenKey> {
   size_t operator()(const stage2::TxTokenKey &k) const {
-    size_t h;
-    std::memcpy(&h, k.tx_hash.data(), sizeof(h));
-    h ^= std::hash<int64_t>()(k.block);
-    h ^= std::hash<std::string>()(k.token_id);
+    size_t h = stage2::hash_bytes32(k.tx_hash);
+    h = stage2::hash_combine(h, std::hash<int64_t>()(k.block));
+    h = stage2::hash_combine(h, std::hash<std::string>()(k.token_id));
     return h;
   }
 };
@@ -237,10 +250,9 @@ struct hash<stage2::TxTokenKey> {
 template <>
 struct hash<stage2::TxMarketKey> {
   size_t operator()(const stage2::TxMarketKey &k) const {
-    size_t h;
-    std::memcpy(&h, k.tx_hash.data(), sizeof(h));
-    h ^= std::hash<int64_t>()(k.block);
-    h ^= std::hash<std::string>()(k.market_id);
+    size_t h = stage2::hash_bytes32(k.tx_hash);
+    h = stage2::hash_combine(h, std::hash<int64_t>()(k.block));
+    h = stage2::hash_combine(h, std::hash<std::string>()(k.market_id));
     return h;
   }
 };
@@ -248,10 +260,9 @@ struct hash<stage2::TxMarketKey> {
 template <>
 struct hash<stage2::TxFPMMKey> {
   size_t operator()(const stage2::TxFPMMKey &k) const {
-    size_t h;
-    std::memcpy(&h, k.tx_hash.data(), sizeof(h));
-    h ^= std::hash<int64_t>()(k.block);
-    h ^= std::hash<std::string>()(k.fpmm_addr);
+    size_t h = stage2::hash_bytes32(k.tx_hash);
+    h = stage2::hash_combine(h, std::hash<int64_t>()(k.block));
+    h = stage2::hash_combine(h, std::hash<std::string>()(k.fpmm_addr));
     return h;
   }
 };

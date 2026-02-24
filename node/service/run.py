@@ -389,22 +389,29 @@ def build_erigon_command():
     """构建 Erigon 启动命令。"""
     return [
         str(ERIGON),
-        f"--datadir={DATADIR}",
+        f"--datadir={DATADIR}",              # 数据目录
         "--chain=bor-mainnet",
-        "--prune.mode=blocks",
-        f"--bor.heimdall={HEIMDALL}",
+        "--prune.mode=blocks",               # 保留 blocks, 不存 state 历史
+        f"--bor.heimdall={HEIMDALL}",        # Heimdall 服务
         "--http", f"--http.addr={RPC_ADDR}", f"--http.port={RPC_PORT}",
-        "--http.api=eth,erigon,net,web3,debug,trace",
+        "--http.api=eth,net,web3",
         "--ws", "--ws.port=8546",
         "--private.api.addr=127.0.0.1:9090",
         "--port=30303",
         "--torrent.port=42069",
-        "--torrent.conns.perfile=20",
-        "--batchSize=4g",
-        "--sync.loop.block.limit=4000",
-        "--log.console.verbosity=info",
+        "--torrent.conns.perfile=50",        # 增加 torrent 并发，快抓快下 segments
+        "--torrent.upload.rate=0",           # 不限制上传
+        "--torrent.download.rate=0",         # 不限制下载，快速获取 segments
+        "--batchSize=6g",                    # 执行阶段批量提高（依赖 RAM）
+        "--sync.loop.block.limit=5000",      # 每轮最多处理 2048 个块，快追高度
+        "--snap.keepblocks=true",            # 保留 snapshot 避免丢数据
+        "--snap.state.stop=false",           # 允许 snapshot state 自动生成
+        "--sync.parallel-state-flushing",    # 并行写 state，加速 rebuild
+        "--db.writemap",                     # MDBX 写入映射加速磁盘提交
+        "--db.read.concurrency=512",         # 提高并行读取，加快 replay
+        "--state.cache=16G",                 # RAM 足够的话，加大 state cache
+        "--sync.loop.throttle=0s",           # 不限制循环延迟
     ]
-    # "--persist.receipts",
 
 
 def build_clean_env():

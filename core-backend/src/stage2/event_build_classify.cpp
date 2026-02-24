@@ -9,17 +9,17 @@ TransferClass EventBuilder::classify_and_emit(
     const std::string &token_id, int64_t amount,
     uint32_t cond_idx, uint8_t token_idx, Collateral collateral) {
 
-  assert(amount >= 0 && "Transfer amount must be non-negative");
+  assert_transfer(amount >= 0, "Transfer amount must be non-negative");
   if (amount == 0)
     return TransferClass::InternalTransferZero;
 
   // 对于未知 token，只做基本检查
   bool known_token = (cond_idx != UNKNOWN_COND_IDX);
   if (known_token) {
-    assert(cond_idx < conditions_.size() && "Invalid cond_idx");
-    assert(token_idx < 2 && "Invalid token_idx");
+    assert_transfer(cond_idx < conditions_.size(), "Invalid cond_idx");
+    assert_transfer(token_idx < 2, "Invalid token_idx");
   }
-  assert(from != to && "from and to must be different");
+  assert_transfer(from != to, "from and to must be different");
 
   uint8_t coll = static_cast<uint8_t>(collateral);
   std::string cond_id = known_token ? cond_ids_[cond_idx] : "";
@@ -92,7 +92,7 @@ TransferClass EventBuilder::classify_and_emit(
       if (fit != tx_fpmm_funding_.end() && fit->second.side == 1 &&
           fit->second.amounts_count == 2 && known_token) {
         int64_t split_amt = std::max(fit->second.amount0, fit->second.amount1);
-        assert(amount == split_amt && "LP Add split amount mismatch");
+        assert_transfer(amount == split_amt, "LP Add split amount mismatch");
         if (is_user_addr(fit->second.funder)) {
           int64_t pool_amt = (token_idx == 0) ? fit->second.amount0 : fit->second.amount1;
           RawEvent evt{sort_key, cond_idx, EventType::FPMMLPAdd, token_idx, coll, 0, pool_amt, split_price};
@@ -116,7 +116,7 @@ TransferClass EventBuilder::classify_and_emit(
               << ", to=" << to << ", token_id=" << token_id
               << ", amount=" << amount << ", cond_idx=" << cond_idx
               << ", known=" << known_token << std::endl;
-    assert(false && "Unmatched mint transfer");
+    fail_transfer_assert("Unmatched mint transfer");
     return TransferClass::Unclassified;
   }
 
@@ -160,7 +160,7 @@ TransferClass EventBuilder::classify_and_emit(
               << ", from=" << from << ", token_id=" << token_id
               << ", amount=" << amount << ", cond_idx=" << cond_idx
               << ", known=" << known_token << std::endl;
-    assert(false && "Unmatched burn transfer");
+    fail_transfer_assert("Unmatched burn transfer");
     return TransferClass::Unclassified;
   }
 
@@ -168,14 +168,14 @@ TransferClass EventBuilder::classify_and_emit(
   if (op == CTF_EXCHANGE || op == NEG_RISK_CTF_EXCHANGE) {
     auto oit = tx_order_.find(tx_token_key);
     if (oit != tx_order_.end()) {
-      assert(oit->second.tokens > 0 && "Order tokens must be positive");
-      assert(amount == oit->second.tokens && "Order amount mismatch");
+      assert_transfer(oit->second.tokens > 0, "Order tokens must be positive");
+      assert_transfer(amount == oit->second.tokens, "Order amount mismatch");
       if (oit->second.maker_side == 1) {
-        assert(to == oit->second.maker && "Order buyer mismatch");
-        assert(from == oit->second.taker && "Order seller mismatch");
+        assert_transfer(to == oit->second.maker, "Order buyer mismatch");
+        assert_transfer(from == oit->second.taker, "Order seller mismatch");
       } else {
-        assert(from == oit->second.maker && "Order seller mismatch");
-        assert(to == oit->second.taker && "Order buyer mismatch");
+        assert_transfer(from == oit->second.maker, "Order seller mismatch");
+        assert_transfer(to == oit->second.taker, "Order buyer mismatch");
       }
 
       int64_t price = usdc_price(oit->second.usdc, oit->second.tokens);
@@ -191,7 +191,7 @@ TransferClass EventBuilder::classify_and_emit(
 
     std::cerr << "[ERROR] Exchange transfer without order: block=" << block
               << ", op=" << op << ", from=" << from << ", to=" << to << std::endl;
-    assert(false && "Exchange transfer without order");
+    fail_transfer_assert("Exchange transfer without order");
     return TransferClass::Unclassified;
   }
 
@@ -220,9 +220,9 @@ TransferClass EventBuilder::classify_and_emit(
           }
         }
         if (is_convert_output) {
-          assert(amount <= split_info->amount && "Convert YES output exceeds split");
+          assert_transfer(amount <= split_info->amount, "Convert YES output exceeds split");
         } else {
-          assert(amount == split_info->amount && "NegRisk Split mismatch");
+          assert_transfer(amount == split_info->amount, "NegRisk Split mismatch");
         }
         emit_if_user(to, RawEvent{sort_key, cond_idx, EventType::Split, token_idx, coll, 0, amount, split_price});
         return TransferClass::SplitNegRisk;
@@ -242,7 +242,10 @@ TransferClass EventBuilder::classify_and_emit(
     }
 
     if (to == NO_TOKEN_BURN_ADDRESS) {
-      assert(known_token && token_idx == 1 && "Convert should only burn NO tokens");
+      if (from == NEG_RISK_ADAPTER)
+        return TransferClass::InternalBurnConvert;
+
+      assert_transfer(known_token && token_idx == 1, "Convert should only burn NO tokens");
       if (!conditions_[cond_idx].question_id.empty()) {
         auto market_it = cond_to_market_.find(conditions_[cond_idx].question_id);
         if (market_it != cond_to_market_.end()) {
@@ -260,9 +263,11 @@ TransferClass EventBuilder::classify_and_emit(
       }
       std::cerr << "[ERROR] Convert burn without event: block=" << block
                 << ", from=" << from << ", amount=" << amount << std::endl;
-      assert(false && "Convert burn without event");
+      fail_transfer_assert("Convert burn without event");
       return TransferClass::Unclassified;
     }
+    fail_transfer_assert("Unexpected NegRisk adapter transfer pattern");
+    return TransferClass::Unclassified;
   }
 
   // ========== FPMM operator ==========
@@ -274,9 +279,9 @@ TransferClass EventBuilder::classify_and_emit(
       auto fit = tx_fpmm_funding_.find(tx_fpmm_key);
       if (fit != tx_fpmm_funding_.end() && fit->second.side == 1 &&
           fit->second.amounts_count == 2 && known_token) {
-        assert(fit->second.amount0 != fit->second.amount1 && "LP Add should have asymmetric amounts");
+        assert_transfer(fit->second.amount0 != fit->second.amount1, "LP Add should have asymmetric amounts");
         int64_t refund_amt = std::abs(fit->second.amount0 - fit->second.amount1);
-        assert(amount == refund_amt && "LP Add refund amount mismatch");
+        assert_transfer(amount == refund_amt, "LP Add refund amount mismatch");
         int64_t refund_idx = (fit->second.amount0 < fit->second.amount1) ? 0 : 1;
         if (token_idx == refund_idx) {
           emit_if_user(to, RawEvent{sort_key, cond_idx, EventType::FPMMLPAdd, token_idx, coll, 0, -amount, split_price});
@@ -287,7 +292,7 @@ TransferClass EventBuilder::classify_and_emit(
 
       auto tit = tx_fpmm_trade_.find(tx_fpmm_key);
       if (tit != tx_fpmm_trade_.end() && tit->second.side == 1) {
-        assert(amount == tit->second.tokens && "FPMM Buy amount mismatch");
+        assert_transfer(amount == tit->second.tokens, "FPMM Buy amount mismatch");
         int64_t price = usdc_price(tit->second.usdc, tit->second.tokens);
         emit_if_user(to, RawEvent{sort_key, cond_idx, EventType::FPMMBuy, token_idx, coll, 0, amount, price});
         return TransferClass::FPMMBuy;
@@ -300,12 +305,14 @@ TransferClass EventBuilder::classify_and_emit(
     if (to == op) {
       auto tit = tx_fpmm_trade_.find(tx_fpmm_key);
       if (tit != tx_fpmm_trade_.end() && tit->second.side == 2) {
-        assert(amount == tit->second.tokens && "FPMM Sell amount mismatch");
+        assert_transfer(amount == tit->second.tokens, "FPMM Sell amount mismatch");
         int64_t price = usdc_price(tit->second.usdc, tit->second.tokens);
         emit_if_user(from, RawEvent{sort_key, cond_idx, EventType::FPMMSell, token_idx, coll, 0, -amount, price});
         return TransferClass::FPMMSell;
       }
     }
+    fail_transfer_assert("Unexpected FPMM transfer pattern");
+    return TransferClass::Unclassified;
   }
 
   // ========== 普通用户转账 ==========
