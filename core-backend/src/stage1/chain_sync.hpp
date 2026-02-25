@@ -131,19 +131,6 @@ private:
   void do_sync() {
     is_syncing_ = true;
 
-    // 暂停 stage1 的 RPC 访问：不调用 eth_blockNumber / eth_getLogs。
-    // try {
-    //   head_block_ = rpc_.eth_blockNumber();
-    // } catch (...) {
-    //   std::cerr << "[Sync] 获取区块高度失败, " << interval_seconds_ << "s 后重试" << std::endl;
-    //   is_syncing_ = false;
-    //   schedule_sync(interval_seconds_);
-    //   return;
-    // }
-    is_syncing_ = false;
-    schedule_sync(interval_seconds_);
-    return;
-
     try {
       head_block_ = rpc_.eth_blockNumber();
     } catch (...) {
@@ -152,7 +139,6 @@ private:
       schedule_sync(interval_seconds_);
       return;
     }
-
     int64_t last_block = db_.get_last_block();
     int64_t from_block = (last_block < 0) ? config_.initial_block : last_block + 1;
 

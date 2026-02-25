@@ -411,6 +411,7 @@ def build_erigon_command():
         "--db.read.concurrency=512",         # 提高并行读取，加快 replay
         "--state.cache=16G",                 # RAM 足够的话，加大 state cache
         "--sync.loop.throttle=0s",           # 不限制循环延迟
+        "--downloader.verify=true",             # 验证并重新下载损坏的快照
     ]
 
 

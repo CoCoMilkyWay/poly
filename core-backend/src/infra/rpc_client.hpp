@@ -58,7 +58,9 @@ public:
 
     std::string response_body = execute_request(request.dump());
     json response = json::parse(response_body);
-    assert(!response.contains("error") && "eth_blockNumber RPC error");
+    if (response.contains("error")) {
+      throw std::runtime_error("eth_blockNumber RPC error: " + response["error"].dump());
+    }
     return from_hex(response["result"].get<std::string>());
   }
 
@@ -131,7 +133,11 @@ private:
           std::string response_body = http_post(body);
           result.response_bytes = last_response_size_;
           if (count > 0) {
-            result.results = parse_batch_response(response_body, count);
+            try {
+              result.results = parse_batch_response(response_body, count);
+            } catch (const std::exception &e) {
+              throw std::runtime_error(std::string(e.what()) + " | response=" + response_body);
+            }
           } else {
             result.raw_body = std::move(response_body);
           }
@@ -190,7 +196,10 @@ private:
     json responses = json::parse(response_body);
     std::vector<json> results(count);
     for (const auto &resp : responses) {
-      assert(!resp.contains("error") && "RPC batch response error");
+      if (resp.contains("error")) {
+        size_t id = resp.value("id", 0);
+        throw std::runtime_error("RPC batch response error, id=" + std::to_string(id) + ": " + resp["error"].dump());
+      }
       size_t id = resp["id"].get<size_t>();
       results[id] = resp["result"];
     }
