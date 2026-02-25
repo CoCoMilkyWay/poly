@@ -7,7 +7,15 @@ from pathlib import Path
 
 _cfg = json.loads((Path(__file__).parent.parent / "config.json").read_text())
 _nodes = {n["name"]: n for n in _cfg["rpc_nodes"]}
-ACTIVE_RPC_NODE = _nodes[_cfg["active_rpc"]]
+_sync_chunk_blocks = 100_000
+_sync_chunk_basics = int(_cfg["stage1_rpc_sync_chunk_basics"])
+assert _sync_chunk_basics > 0
+assert _sync_chunk_blocks % _sync_chunk_basics == 0
+ACTIVE_RPC_NODE = {
+    **_nodes[_cfg["active_rpc"]],
+    "chunk": _sync_chunk_blocks // _sync_chunk_basics,
+    "threads": int(_cfg["stage1_rpc_query_threads"]),
+}
 
 app = FastAPI(title="Polymarket Explorer")
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")

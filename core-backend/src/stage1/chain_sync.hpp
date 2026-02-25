@@ -64,15 +64,19 @@ public:
   int64_t get_head_block() const { return head_block_; }
 
   double get_blocks_per_second() const {
-    if (chunk_history_.size() < 2)
+    if (chunk_history_.empty())
       return 0.0;
-    double time_diff = chunk_history_.back().time_s - chunk_history_.front().time_s;
-    if (time_diff <= 0)
+    size_t n = std::min<size_t>(20, chunk_history_.size());
+    double total_blocks = 0.0;
+    double total_duration = 0.0;
+    for (size_t i = chunk_history_.size() - n; i < chunk_history_.size(); ++i) {
+      const auto &r = chunk_history_[i];
+      total_blocks += static_cast<double>(r.block_count);
+      total_duration += r.duration_s;
+    }
+    if (total_duration <= 0.0)
       return 0.0;
-    double total_blocks = 0;
-    for (const auto &r : chunk_history_)
-      total_blocks += r.block_count;
-    return total_blocks / time_diff;
+    return total_blocks / total_duration;
   }
 
   double get_bytes_per_block() const {
@@ -110,6 +114,7 @@ private:
     int slot = 0; // ping-pong: 0/1
     int64_t from_block = 0;
     int64_t to_block = 0;
+    std::chrono::steady_clock::time_point started_at = std::chrono::steady_clock::now();
     std::vector<BasicTask> basics;
     int done_count = 0;
   };
@@ -250,6 +255,7 @@ private:
     out.sync_id = sync_id;
     out.slot = slot;
     out.from_block = cursor;
+    out.started_at = std::chrono::steady_clock::now();
     out.done_count = 0;
     for (int i = 0; i < sync_chunk_basic_count_ && cursor <= head_block; ++i) {
       int64_t to_block = std::min(cursor + basic_chunk_size_ - 1, head_block);
@@ -357,10 +363,22 @@ private:
         TraceN("s1/sync_chunk_done");
         auto finished = std::move(window.front());
         window.pop_front();
+        int64_t finished_blocks = 0;
+        size_t finished_bytes = 0;
         for (auto &task : finished.basics) {
           assert(task.result.has_value());
+          finished_blocks += (task.to_block - task.from_block + 1);
+          finished_bytes += task.result->response_bytes;
           process_batch(*task.result, task.from_block, task.to_block);
         }
+        double duration_s = std::chrono::duration<double>(
+                                std::chrono::steady_clock::now() - finished.started_at)
+                                .count();
+        if (duration_s <= 0.0)
+          duration_s = 1e-6;
+        chunk_history_.push_back({finished.to_block, duration_s, finished_bytes, finished_blocks});
+        if (chunk_history_.size() > 20)
+          chunk_history_.pop_front();
         fill_window();
         progressed = true;
       }
@@ -403,11 +421,6 @@ private:
       current_partition_start_ += FeatherWriter::PARTITION_SIZE;
       std::cout << "[Sync] 分区 " << (current_partition_start_ - FeatherWriter::PARTITION_SIZE) << " 已落地" << std::endl;
     }
-
-    double now = std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();
-    chunk_history_.push_back({to_block, now, r.response_bytes, to_block - from_block + 1});
-    if (chunk_history_.size() > 20)
-      chunk_history_.pop_front();
   }
 
   static void merge_events(DecodedEvents &dst, const DecodedEvents &src) {
@@ -453,7 +466,7 @@ private:
 
   struct ChunkRecord {
     int64_t to_block;
-    double time_s;
+    double duration_s;
     size_t body_bytes;
     int64_t block_count;
   };
