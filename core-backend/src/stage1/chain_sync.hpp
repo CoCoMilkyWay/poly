@@ -40,7 +40,7 @@ public:
     assert(sync_chunk_basic_count_ > 0);
     assert(kSyncChunkBlocks % sync_chunk_basic_count_ == 0);
     assert(basic_chunk_size_ > 0);
-    done_list_.resize(super_sync_chunk_count_); // 2 sync chunks per super chunk
+    done_list_.resize(super_sync_chunk_count_);
     rpc_workers_.reserve(num_rpc_threads_);
     for (int i = 0; i < num_rpc_threads_; ++i) {
       rpc_workers_.push_back(std::make_unique<RpcClient>(
@@ -311,9 +311,12 @@ private:
             RpcClient::BatchResult result;
             try {
               result = task.future.get();
+            } catch (const std::exception &e) {
+              result.success = false;
+              result.error_msg = std::string("future.get exception: ") + e.what();
             } catch (...) {
               result.success = false;
-              result.error_msg = "future.get exception";
+              result.error_msg = "future.get unknown exception";
             }
             task.in_flight = false;
             if (result.success) {

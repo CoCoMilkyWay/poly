@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <condition_variable>
+#include <deque>
 #include <future>
 #include <iostream>
 #include <mutex>
@@ -72,10 +73,11 @@ public:
 
     {
       std::lock_guard<std::mutex> lock(worker_mutex_);
-      request_body_ = std::move(body);
-      request_promise_ = promise;
-      request_count_ = count;
-      has_request_ = true;
+      request_queue_.push_back(PendingRequest{
+          .body = std::move(body),
+          .promise = promise,
+          .count = count,
+      });
       worker_cv_.notify_one();
     }
 
@@ -83,6 +85,12 @@ public:
   }
 
 private:
+  struct PendingRequest {
+    std::string body;
+    std::shared_ptr<std::promise<BatchResult>> promise;
+    size_t count = 0;
+  };
+
   void start_worker() {
     worker_running_ = true;
     worker_thread_ = std::thread([this]() {
@@ -112,17 +120,18 @@ private:
       {
         std::unique_lock<std::mutex> lock(worker_mutex_);
         TraceN("rpc/wait");
-        worker_cv_.wait(lock, [this] { return !worker_running_ || has_request_; });
+        worker_cv_.wait(lock, [this] { return !worker_running_ || !request_queue_.empty(); });
 
-        if (!worker_running_ && !has_request_) {
+        if (!worker_running_ && request_queue_.empty()) {
           break;
         }
 
-        if (has_request_) {
-          body = std::move(request_body_);
-          promise = std::move(request_promise_);
-          count = request_count_;
-          has_request_ = false;
+        if (!request_queue_.empty()) {
+          auto req = std::move(request_queue_.front());
+          request_queue_.pop_front();
+          body = std::move(req.body);
+          promise = std::move(req.promise);
+          count = req.count;
         }
       }
 
@@ -159,10 +168,11 @@ private:
 
     {
       std::lock_guard<std::mutex> lock(worker_mutex_);
-      request_body_ = body;
-      request_promise_ = promise;
-      request_count_ = 0;
-      has_request_ = true;
+      request_queue_.push_back(PendingRequest{
+          .body = body,
+          .promise = promise,
+          .count = 0,
+      });
       worker_cv_.notify_one();
     }
 
@@ -344,8 +354,5 @@ private:
   std::mutex worker_mutex_;
   std::condition_variable worker_cv_;
   bool worker_running_ = false;
-  bool has_request_ = false;
-  std::string request_body_;
-  std::shared_ptr<std::promise<BatchResult>> request_promise_;
-  size_t request_count_ = 0;
+  std::deque<PendingRequest> request_queue_;
 };
