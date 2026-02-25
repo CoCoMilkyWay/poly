@@ -210,19 +210,24 @@ private:
 
   std::vector<json> parse_batch_response(const std::string &response_body, size_t count) {
     json responses = json::parse(response_body);
-    assert(responses.is_array());
-    std::vector<json> results(count);
-    std::vector<uint8_t> seen(count, 0);
+    // 不是数组说明服务端返回了顶层错误，抛出让 retry 处理
+    if (!responses.is_array()) {
+      throw std::runtime_error("batch response not array: " + response_body.substr(0, 300));
+    }
+    assert(responses.size() == count && "batch response count mismatch");
+    std::vector<json> results(count); // 默认 null，用于检测重复/缺失
     for (const auto &resp : responses) {
-      assert(!resp.contains("error") && "RPC batch response has error");
+      if (resp.contains("error")) {
+        size_t id = resp.value("id", 0);
+        throw std::runtime_error("RPC error id=" + std::to_string(id) + ": " + resp["error"].dump());
+      }
       size_t id = resp["id"].get<size_t>();
-      assert(id < count && "RPC batch response id out of range");
-      assert(seen[id] == 0 && "RPC batch response id duplicated");
-      seen[id] = 1;
+      assert(id < count && "batch response id out of range");
+      assert(results[id].is_null() && "batch response id duplicated");
       results[id] = resp["result"];
     }
     for (size_t i = 0; i < count; ++i) {
-      assert(seen[i] == 1 && "RPC batch response missing item");
+      assert(!results[i].is_null() && "batch response missing item");
     }
     return results;
   }
@@ -257,10 +262,10 @@ private:
 
     // 3. 发送 CONNECT 请求 (ATYP=0x03 域名)
     std::vector<uint8_t> req;
-    req.push_back(0x05);                          // version
-    req.push_back(0x01);                          // cmd=CONNECT
-    req.push_back(0x00);                          // reserved
-    req.push_back(0x03);                          // atyp=domain
+    req.push_back(0x05); // version
+    req.push_back(0x01); // cmd=CONNECT
+    req.push_back(0x00); // reserved
+    req.push_back(0x03); // atyp=domain
     req.push_back(static_cast<uint8_t>(dst_host.size()));
     req.insert(req.end(), dst_host.begin(), dst_host.end());
     req.push_back(static_cast<uint8_t>((dst_port >> 8) & 0xff));
@@ -273,13 +278,17 @@ private:
     assert(resp[0] == 0x05 && resp[1] == 0x00 && "SOCKS5 CONNECT 失败");
 
     // 5. 读取并丢弃 BND.ADDR + BND.PORT
-    if (resp[3] == 0x01) {          // IPv4: 4 + 2
-      uint8_t buf[6]; asio::read(sock, asio::buffer(buf, 6));
-    } else if (resp[3] == 0x03) {   // domain: len + domain + 2
-      uint8_t len; asio::read(sock, asio::buffer(&len, 1));
-      std::vector<uint8_t> buf(len + 2); asio::read(sock, asio::buffer(buf));
-    } else if (resp[3] == 0x04) {   // IPv6: 16 + 2
-      uint8_t buf[18]; asio::read(sock, asio::buffer(buf, 18));
+    if (resp[3] == 0x01) { // IPv4: 4 + 2
+      uint8_t buf[6];
+      asio::read(sock, asio::buffer(buf, 6));
+    } else if (resp[3] == 0x03) { // domain: len + domain + 2
+      uint8_t len;
+      asio::read(sock, asio::buffer(&len, 1));
+      std::vector<uint8_t> buf(len + 2);
+      asio::read(sock, asio::buffer(buf));
+    } else if (resp[3] == 0x04) { // IPv6: 16 + 2
+      uint8_t buf[18];
+      asio::read(sock, asio::buffer(buf, 18));
     }
     // 隧道建立完毕，后续直接走 TLS
   }

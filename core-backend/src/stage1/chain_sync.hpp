@@ -95,8 +95,8 @@ public:
 
 private:
   static constexpr int64_t kSyncChunkBlocks = 100000;
-  static constexpr int kRetryDelayMs = 300;
-  static constexpr int kSchedulerSleepMs = 5;
+  static constexpr int kRetryDelayMs = 100;
+  static constexpr int kSchedulerSleepMs = 1;
 
   struct BasicTask {
     int64_t from_block = 0;
