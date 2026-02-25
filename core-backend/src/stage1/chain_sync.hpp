@@ -6,7 +6,10 @@
 #include <future>
 #include <iostream>
 #include <memory>
+#include <mutex>
 #include <optional>
+#include <string>
+#include <thread>
 #include <vector>
 
 #include <boost/asio.hpp>
@@ -29,10 +32,20 @@ public:
   ChainSync(const Config &config, Database &db)
       : config_(config), db_(db),
         feather_writer_(db.data_dir()),
-        rpc_(config.rpc_url, config.rpc_api_key),
-        batch_size_(config.rpc_chunk),
-        current_batch_size_(config.rpc_chunk),
-        interval_seconds_(config.sync_interval_seconds) {
+        rpc_head_(config.rpc_url, config.rpc_api_key, "RPC-Head"),
+        num_rpc_threads_(config.stage1_rpc_query_threads),
+        sync_chunk_basic_count_(config.stage1_rpc_sync_chunk_basics),
+        basic_chunk_size_(kSyncChunkBlocks / config.stage1_rpc_sync_chunk_basics) {
+    assert(num_rpc_threads_ > 0);
+    assert(sync_chunk_basic_count_ > 0);
+    assert(kSyncChunkBlocks % sync_chunk_basic_count_ == 0);
+    assert(basic_chunk_size_ > 0);
+    done_list_.resize(2); // 2 sync chunks per super chunk
+    rpc_workers_.reserve(num_rpc_threads_);
+    for (int i = 0; i < num_rpc_threads_; ++i) {
+      rpc_workers_.push_back(std::make_unique<RpcClient>(
+          config.rpc_url, config.rpc_api_key, "RPC-Worker-" + std::to_string(i)));
+    }
     int64_t cursor = db_.get_last_block();
     current_partition_start_ = (cursor < 0) ? FeatherWriter::partition_start(config_.initial_block)
                                             : FeatherWriter::partition_start(cursor) + FeatherWriter::PARTITION_SIZE;
@@ -77,15 +90,29 @@ public:
   }
 
 private:
-  struct PendingFetch {
-    std::future<RpcClient::BatchResult> future;
+  static constexpr int64_t kSyncChunkBlocks = 100000;
+  static constexpr int kRetryDelayMs = 300;
+  static constexpr int kSchedulerSleepMs = 5;
+
+  struct BasicTask {
     int64_t from_block = 0;
     int64_t to_block = 0;
+    int worker_idx = 0;
+    bool in_flight = false;
+    bool done = false;
+    std::future<RpcClient::BatchResult> future;
+    std::optional<RpcClient::BatchResult> result;
+    std::chrono::steady_clock::time_point retry_at = std::chrono::steady_clock::now();
   };
 
-  PendingFetch prefetch_async(int64_t from, int64_t to) {
-    return {rpc_.eth_getLogs_batch_async(build_queries(from, to)), from, to};
-  }
+  struct SyncChunkState {
+    int sync_id = 0;
+    int slot = 0; // ping-pong: 0/1
+    int64_t from_block = 0;
+    int64_t to_block = 0;
+    std::vector<BasicTask> basics;
+    int done_count = 0;
+  };
 
   static const std::vector<std::string> &ct_topics() {
     static const std::vector<std::string> v = {
@@ -132,7 +159,7 @@ private:
     is_syncing_ = true;
 
     try {
-      head_block_ = rpc_.eth_blockNumber();
+      head_block_ = rpc_head_.eth_blockNumber();
     } catch (...) {
       std::cerr << "[Sync] 获取区块高度失败, " << interval_seconds_ << "s 后重试" << std::endl;
       is_syncing_ = false;
@@ -154,61 +181,199 @@ private:
     sync_loop(from_block, head_block_);
   }
 
-  void sync_loop(int64_t from_block, int64_t head_block) {
-    std::optional<PendingFetch> pending;
+  void init_done_slot(int slot, size_t nbits) {
+    std::lock_guard<std::mutex> lock(done_list_mutex_);
+    done_list_[slot].assign(nbits, 0);
+  }
 
-    int64_t to_block = std::min(from_block + current_batch_size_ - 1, head_block);
-    {
-      TraceN("s1/prefetch");
-      pending = prefetch_async(from_block, to_block);
+  void set_done_bit(int slot, size_t idx, uint8_t v) {
+    std::lock_guard<std::mutex> lock(done_list_mutex_);
+    assert(idx < done_list_[slot].size());
+    done_list_[slot][idx] = v;
+  }
+
+  int ordered_done_in_slot(int slot) {
+    std::lock_guard<std::mutex> lock(done_list_mutex_);
+    int count = 0;
+    for (uint8_t b : done_list_[slot]) {
+      if (b == 0)
+        break;
+      ++count;
     }
+    return count;
+  }
 
-    while (!stop_requested_ && pending) {
-      TraceN("s1/batch");
+  int all_done_in_slot(int slot) {
+    std::lock_guard<std::mutex> lock(done_list_mutex_);
+    int count = 0;
+    for (uint8_t b : done_list_[slot]) {
+      if (b != 0)
+        ++count;
+    }
+    return count;
+  }
 
-      int64_t cur_from = pending->from_block;
-      int64_t cur_to = pending->to_block;
-      RpcClient::BatchResult rpc_result;
-      {
-        // TraceN("s1/wait_rpc");
-        // TraceColor(C_Gray);
-        rpc_result = pending->future.get();
+  int total_in_slot(int slot) {
+    std::lock_guard<std::mutex> lock(done_list_mutex_);
+    return static_cast<int>(done_list_[slot].size());
+  }
+
+  void render_progress_inline(const SyncChunkState &front) {
+    int ordered = ordered_done_in_slot(front.slot);
+    int all_done = all_done_in_slot(front.slot);
+    int total = total_in_slot(front.slot);
+    std::string line = "[Sync] progress (" + std::to_string(ordered) + "/" + std::to_string(all_done) +
+                       "/" + std::to_string(total) + ") sync=" + std::to_string(front.sync_id) +
+                       " range=" + std::to_string(front.from_block) + "-" + std::to_string(front.to_block);
+    if (line.size() < progress_line_len_) {
+      line += std::string(progress_line_len_ - line.size(), ' ');
+    }
+    std::cout << "\r" << line << std::flush;
+    progress_line_len_ = line.size();
+    progress_line_active_ = true;
+  }
+
+  void clear_progress_inline() {
+    if (!progress_line_active_) {
+      return;
+    }
+    std::cout << "\r" << std::string(progress_line_len_, ' ') << "\r" << std::flush;
+    progress_line_len_ = 0;
+    progress_line_active_ = false;
+  }
+
+  std::optional<SyncChunkState> build_sync_chunk(int sync_id, int slot, int64_t &cursor, int64_t head_block, size_t &rr_worker) {
+    if (cursor > head_block) {
+      return std::nullopt;
+    }
+    SyncChunkState out;
+    out.sync_id = sync_id;
+    out.slot = slot;
+    out.from_block = cursor;
+    out.done_count = 0;
+    for (int i = 0; i < sync_chunk_basic_count_ && cursor <= head_block; ++i) {
+      int64_t to_block = std::min(cursor + basic_chunk_size_ - 1, head_block);
+      out.basics.push_back(BasicTask{
+          .from_block = cursor,
+          .to_block = to_block,
+          .worker_idx = static_cast<int>(rr_worker % rpc_workers_.size()),
+      });
+      rr_worker += 1;
+      cursor = to_block + 1;
+      out.to_block = to_block;
+    }
+    init_done_slot(slot, out.basics.size());
+    return out;
+  }
+
+  void submit_basic_task(BasicTask &task) {
+    TraceN("s1/basic_submit");
+    task.future = rpc_workers_[task.worker_idx]->eth_getLogs_batch_async(build_queries(task.from_block, task.to_block));
+    task.in_flight = true;
+  }
+
+  void sync_loop(int64_t from_block, int64_t head_block) {
+    std::deque<SyncChunkState> window;
+    int sync_id = 0;
+    int64_t cursor = from_block;
+    size_t rr_worker = 0;
+
+    auto fill_window = [&]() {
+      while (window.size() < static_cast<size_t>(super_sync_chunk_count_) && cursor <= head_block) {
+        int slot = sync_id % super_sync_chunk_count_;
+        auto chunk = build_sync_chunk(sync_id + 1, slot, cursor, head_block, rr_worker);
+        assert(chunk.has_value());
+        for (auto &task : chunk->basics) {
+          TraceN("s1/prefetch");
+          submit_basic_task(task);
+        }
+        window.push_back(std::move(*chunk));
+        sync_id += 1;
       }
-      pending.reset();
+    };
+    fill_window();
 
-      if (!rpc_result.success) {
-        int64_t reduced = std::max(current_batch_size_ / 2, (int64_t)1);
-        std::cerr << "[Sync] eth_getLogs 失败: " << rpc_result.error_msg
-                  << ", chunk " << current_batch_size_ << " -> " << reduced << ", 5s 后重试" << std::endl;
-        current_batch_size_ = reduced;
+    auto last_progress_print = std::chrono::steady_clock::now();
+    while (!stop_requested_ && !window.empty()) {
+      bool progressed = false;
+      auto now = std::chrono::steady_clock::now();
 
-        auto timer = std::make_shared<asio::steady_timer>(*ioc_);
-        timer->expires_after(std::chrono::seconds(5));
-        timer->async_wait([this, timer, cur_from, head_block](boost::system::error_code ec) {
-          if (!ec && !stop_requested_) {
-            sync_loop(cur_from, head_block);
+      for (auto &sync : window) {
+        for (size_t i = 0; i < sync.basics.size(); ++i) {
+          auto &task = sync.basics[i];
+          if (task.done) {
+            continue;
           }
-        });
-        return;
+          if (task.in_flight) {
+            if (task.future.wait_for(std::chrono::milliseconds(0)) != std::future_status::ready) {
+              continue;
+            }
+            RpcClient::BatchResult result;
+            try {
+              result = task.future.get();
+            } catch (...) {
+              result.success = false;
+              result.error_msg = "future.get exception";
+            }
+            task.in_flight = false;
+            if (result.success) {
+              TraceN("s1/basic_done");
+              task.done = true;
+              task.result = std::move(result);
+              sync.done_count += 1;
+              set_done_bit(sync.slot, i, 1);
+            } else {
+              TraceN("s1/basic_retry");
+              clear_progress_inline();
+              task.retry_at = now + std::chrono::milliseconds(kRetryDelayMs);
+              std::cerr << "[Sync] rpc失败 from=" << task.from_block
+                        << " to=" << task.to_block << " err=" << result.error_msg
+                        << " -> retry" << std::endl;
+            }
+            progressed = true;
+          } else if (now >= task.retry_at) {
+            TraceN("s1/prefetch");
+            submit_basic_task(task);
+            progressed = true;
+          }
+        }
       }
 
-      current_batch_size_ = batch_size_;
-
-      int64_t next_from = cur_to + 1;
-      if (next_from <= head_block && !stop_requested_) {
-        TraceN("s1/prefetch");
-        int64_t next_to = std::min(next_from + current_batch_size_ - 1, head_block);
-        pending = prefetch_async(next_from, next_to);
+      if (!window.empty()) {
+        auto print_now = std::chrono::steady_clock::now();
+        if (print_now - last_progress_print >= std::chrono::milliseconds(500)) {
+          TraceN("s1/progress");
+          const auto &front = window.front();
+          render_progress_inline(front);
+          last_progress_print = print_now;
+        }
       }
 
-      process_batch(rpc_result, cur_from, cur_to);
+      while (!window.empty() && window.front().done_count == static_cast<int>(window.front().basics.size())) {
+        clear_progress_inline();
+        TraceN("s1/sync_chunk_done");
+        auto finished = std::move(window.front());
+        window.pop_front();
+        for (auto &task : finished.basics) {
+          assert(task.result.has_value());
+          process_batch(*task.result, task.from_block, task.to_block);
+        }
+        fill_window();
+        progressed = true;
+      }
+
+      if (!progressed) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(kSchedulerSleepMs));
+      }
     }
 
     if (stop_requested_) {
+      clear_progress_inline();
       is_syncing_ = false;
       return;
     }
 
+    clear_progress_inline();
     std::cout << "[Sync] 本轮同步完成, " << interval_seconds_ << "s 后检查更新" << std::endl;
     is_syncing_ = false;
     schedule_sync(interval_seconds_);
@@ -263,15 +428,22 @@ private:
   const Config &config_;
   Database &db_;
   FeatherWriter feather_writer_;
-  RpcClient rpc_;
+  RpcClient rpc_head_;
+  int num_rpc_threads_;
+  int64_t basic_chunk_size_;
+  int sync_chunk_basic_count_;
+  int super_sync_chunk_count_;
+  std::vector<std::unique_ptr<RpcClient>> rpc_workers_;
+  std::vector<std::vector<uint8_t>> done_list_;
+  std::mutex done_list_mutex_;
   asio::io_context *ioc_ = nullptr;
 
-  int64_t batch_size_;
-  int64_t current_batch_size_;
-  int interval_seconds_;
+  int interval_seconds_ = 30; // 30s 冷静期
   std::atomic<bool> is_syncing_{false};
   std::atomic<bool> stop_requested_{false};
   std::atomic<int64_t> head_block_{0};
+  bool progress_line_active_ = false;
+  size_t progress_line_len_ = 0;
 
   DecodedEvents cached_events_;
   int64_t current_partition_start_ = 0;

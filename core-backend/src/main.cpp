@@ -35,13 +35,16 @@ int main(int argc, char *argv[]) {
   std::cout << "========================================" << std::endl;
 
   Config config = Config::load(config_path);
+  constexpr int64_t kStage1SyncChunkBlocks = 100000;
+  assert(config.stage1_rpc_sync_chunk_basics > 0);
+  assert(kStage1SyncChunkBlocks % config.stage1_rpc_sync_chunk_basics == 0);
+  int64_t stage1_basic_chunk_blocks = kStage1SyncChunkBlocks / config.stage1_rpc_sync_chunk_basics;
 
   std::cout << "[Main] Stage1 DB: " << config.db_path_stage1 << std::endl;
   std::cout << "[Main] Stage2 DB: " << config.db_path_stage2 << std::endl;
   std::cout << "[Main] RPC Node: " << config.rpc_name << " (" << config.rpc_url << ")" << std::endl;
-  std::cout << "[Main] RPC Chunk: " << config.rpc_chunk << " blocks" << std::endl;
+  std::cout << "[Main] RPC Chunk: " << stage1_basic_chunk_blocks << " blocks (computed)" << std::endl;
   std::cout << "[Main] API Port: " << config.backend_port << std::endl;
-  std::cout << "[Main] Sync Interval: " << config.sync_interval_seconds << "s" << std::endl;
 
   Database stage1_db(config.db_path_stage1);
   Database stage2_db(config.db_path_stage2);
@@ -67,7 +70,7 @@ int main(int argc, char *argv[]) {
     sync_ioc.run();
   });
 
-  stage2::EventSync event_sync(stage1_db, stage2_db, config.rpc_chunk);
+  stage2::EventSync event_sync(stage1_db, stage2_db);
   boost::asio::io_context stage2_ioc;
   std::optional<std::thread> stage2_thread;
   // {

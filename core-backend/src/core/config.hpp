@@ -13,10 +13,10 @@ struct Config {
   std::string rpc_name;
   std::string rpc_url;
   std::string rpc_api_key;
-  int rpc_chunk;
+  int stage1_rpc_query_threads;
+  int stage1_rpc_sync_chunk_basics;
   int backend_port;
   int frontend_port;
-  int sync_interval_seconds;
   int64_t initial_block;
 
   static Config load(const std::string &path) {
@@ -36,8 +36,9 @@ struct Config {
     config.db_path_stage2 = require("db_path_stage2").get<std::string>();
     config.backend_port = require("backend_port").get<int>();
     config.frontend_port = require("frontend_port").get<int>();
-    config.sync_interval_seconds = require("sync_interval_seconds").get<int>();
     config.initial_block = require("initial_block").get<int64_t>();
+    config.stage1_rpc_query_threads = require("stage1_rpc_query_threads").get<int>();
+    config.stage1_rpc_sync_chunk_basics = require("stage1_rpc_sync_chunk_basics").get<int>();
 
     std::string active = require("active_rpc").get<std::string>();
     const auto &nodes = require("rpc_nodes");
@@ -46,7 +47,6 @@ struct Config {
         config.rpc_name = node["name"].get<std::string>();
         config.rpc_url = node["url"].get<std::string>();
         config.rpc_api_key = node.value("key", "");
-        config.rpc_chunk = node["chunk"].get<int>();
         break;
       }
     }

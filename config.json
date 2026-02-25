@@ -3,21 +3,20 @@
   "db_path_stage2": "data/stage2/users.duckdb",
   "frontend_port": 8000,
   "backend_port": 8001,
-  "sync_interval_seconds": 30,
   "initial_block": 0,
+  "stage1_rpc_query_threads": 5,
+  "stage1_rpc_sync_chunk_basics": 40,
   "active_rpc": "dRPC",
   "rpc_nodes": [
     {
       "name": "Erigon",
       "url": "http://127.0.0.1:8545",
-      "key": "",
-      "chunk": 5000
+      "key": ""
     },
     {
       "name": "dRPC",
       "url": "https://lb.drpc.org/ogrpc?network=polygon&dkey=Aj9Y8zpk1EVEkcL8w3Z1mGcHAZE3DdUR8biw-uF7NYYO",
-      "key": "Aj9Y8zpk1EVEkcL8w3Z1mGcHAZE3DdUR8biw-uF7NYYO",
-      "chunk": 2000
+      "key": "Aj9Y8zpk1EVEkcL8w3Z1mGcHAZE3DdUR8biw-uF7NYYO"
     }
   ]
 }

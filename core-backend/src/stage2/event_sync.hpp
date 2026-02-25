@@ -6,6 +6,7 @@
 #include <boost/asio.hpp>
 
 #include "../core/database.hpp"
+#include "../core/feather_writer.hpp"
 #include "event_build.hpp"
 #include "misc/profiler.hpp"
 
@@ -25,10 +26,10 @@ struct SyncProgress {
 
 class EventSync {
 public:
-  EventSync(Database &stage1_db, Database &stage2_db, int chunk_size, int base_interval = 30)
+  EventSync(Database &stage1_db, Database &stage2_db, int base_interval = 30)
       : stage1_db_(stage1_db), stage2_db_(stage2_db),
-        builder_(stage1_db, stage2_db, chunk_size),
-        chunk_size_(chunk_size), base_interval_(base_interval) {
+        builder_(stage1_db, stage2_db, kStage2ChunkBlocks),
+        chunk_size_(kStage2ChunkBlocks), base_interval_(base_interval) {
     builder_.init_schema();
     builder_.load_from_rb();
     progress_.stage2_cursor = builder_.cursor();
@@ -47,11 +48,15 @@ public:
   EventBuilder &builder() { return builder_; }
 
 private:
+  static constexpr int kStage2ChunkBlocks = FeatherWriter::PARTITION_SIZE;
+
   void schedule_sync(int delay_seconds) {
-    if (stop_requested_) return;
+    if (stop_requested_)
+      return;
     auto timer = std::make_shared<asio::steady_timer>(*ioc_, std::chrono::seconds(delay_seconds));
     timer->async_wait([this, timer](const boost::system::error_code &ec) {
-      if (ec || stop_requested_) return;
+      if (ec || stop_requested_)
+        return;
       do_sync();
     });
   }

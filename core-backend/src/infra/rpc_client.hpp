@@ -36,8 +36,8 @@ public:
     std::string error_msg;
   };
 
-  RpcClient(const std::string &url, const std::string &api_key = "")
-      : api_key_(api_key), ioc_(), ssl_ctx_(asio::ssl::context::tls_client) {
+  RpcClient(const std::string &url, const std::string &api_key = "", const std::string &worker_name = "RPC-Worker")
+      : api_key_(api_key), worker_name_(worker_name), ioc_(), ssl_ctx_(asio::ssl::context::tls_client) {
     parse_url(url);
     ssl_ctx_.set_default_verify_paths();
     ssl_ctx_.set_verify_mode(asio::ssl::verify_peer);
@@ -86,7 +86,8 @@ private:
   void start_worker() {
     worker_running_ = true;
     worker_thread_ = std::thread([this]() {
-      TraceThread("RPC-Worker");
+      TraceThread(worker_name_.c_str());
+      TraceN("rpc/thread_start");
       worker_loop();
     });
   }
@@ -110,8 +111,7 @@ private:
 
       {
         std::unique_lock<std::mutex> lock(worker_mutex_);
-        // TraceN("rpc/wait");
-        // TraceColor(C_Gray);
+        TraceN("rpc/wait");
         worker_cv_.wait(lock, [this] { return !worker_running_ || has_request_; });
 
         if (!worker_running_ && !has_request_) {
@@ -127,7 +127,7 @@ private:
       }
 
       if (promise) {
-        TraceN("rpc/post");
+        TraceN("rpc/dispatch");
         BatchResult result;
         try {
           std::string response_body = http_post(body);
@@ -142,9 +142,11 @@ private:
             result.raw_body = std::move(response_body);
           }
           result.success = true;
+          TraceN("rpc/success");
         } catch (const std::exception &e) {
           result.success = false;
           result.error_msg = e.what();
+          TraceN("rpc/fail");
         }
         promise->set_value(std::move(result));
       }
@@ -328,6 +330,7 @@ private:
   std::string port_;
   std::string target_;
   std::string api_key_;
+  std::string worker_name_;
   bool use_ssl_ = false;
   size_t last_response_size_ = 0;
 
