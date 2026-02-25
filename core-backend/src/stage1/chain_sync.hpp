@@ -40,7 +40,7 @@ public:
     assert(sync_chunk_basic_count_ > 0);
     assert(kSyncChunkBlocks % sync_chunk_basic_count_ == 0);
     assert(basic_chunk_size_ > 0);
-    done_list_.resize(2); // 2 sync chunks per super chunk
+    done_list_.resize(super_sync_chunk_count_); // 2 sync chunks per super chunk
     rpc_workers_.reserve(num_rpc_threads_);
     for (int i = 0; i < num_rpc_threads_; ++i) {
       rpc_workers_.push_back(std::make_unique<RpcClient>(
@@ -432,7 +432,7 @@ private:
   int num_rpc_threads_;
   int64_t basic_chunk_size_;
   int sync_chunk_basic_count_;
-  int super_sync_chunk_count_;
+  int super_sync_chunk_count_ = 2;
   std::vector<std::unique_ptr<RpcClient>> rpc_workers_;
   std::vector<std::vector<uint8_t>> done_list_;
   std::mutex done_list_mutex_;
