@@ -208,25 +208,16 @@ private:
     return count;
   }
 
-  int all_done_in_slot(int slot) {
-    std::lock_guard<std::mutex> lock(done_list_mutex_);
-    int count = 0;
-    for (uint8_t b : done_list_[slot]) {
-      if (b != 0)
-        ++count;
+  void render_progress_inline(const std::deque<SyncChunkState> &window) {
+    assert(!window.empty());
+    const auto &front = window.front();
+    int ordered = ordered_done_in_slot(front.slot); // active sync chunk 的有序完成
+    int all_done = 0;                               // 当前 super chunk（窗口）总完成
+    int total = 0;                                  // 当前 super chunk（窗口）总 basic
+    for (const auto &sync : window) {
+      all_done += sync.done_count;
+      total += static_cast<int>(sync.basics.size());
     }
-    return count;
-  }
-
-  int total_in_slot(int slot) {
-    std::lock_guard<std::mutex> lock(done_list_mutex_);
-    return static_cast<int>(done_list_[slot].size());
-  }
-
-  void render_progress_inline(const SyncChunkState &front) {
-    int ordered = ordered_done_in_slot(front.slot);
-    int all_done = all_done_in_slot(front.slot);
-    int total = total_in_slot(front.slot);
     std::string line = "[Sync] progress (" + std::to_string(ordered) + "/" + std::to_string(all_done) +
                        "/" + std::to_string(total) + ") sync=" + std::to_string(front.sync_id) +
                        " range=" + std::to_string(front.from_block) + "-" + std::to_string(front.to_block);
@@ -297,10 +288,21 @@ private:
         sync_id += 1;
       }
     };
+    auto has_inflight = [&]() {
+      for (const auto &sync : window) {
+        for (const auto &task : sync.basics) {
+          if (task.in_flight) {
+            return true;
+          }
+        }
+      }
+      return false;
+    };
     fill_window();
 
     auto last_progress_print = std::chrono::steady_clock::now();
-    while (!stop_requested_ && !window.empty()) {
+    while (!window.empty()) {
+      bool stopping = stop_requested_.load();
       bool progressed = false;
       auto now = std::chrono::steady_clock::now();
 
@@ -332,15 +334,21 @@ private:
               sync.done_count += 1;
               set_done_bit(sync.slot, i, 1);
             } else {
-              TraceN("s1/basic_retry");
-              clear_progress_inline();
-              task.retry_at = now + std::chrono::milliseconds(kRetryDelayMs);
-              std::cerr << "[Sync] rpc失败 from=" << task.from_block
-                        << " to=" << task.to_block << " err=" << result.error_msg
-                        << " -> retry" << std::endl;
+              if (stopping) {
+                // Stop mode: do not retry; this request has already completed.
+                task.done = true;
+                sync.done_count += 1;
+              } else {
+                TraceN("s1/basic_retry");
+                clear_progress_inline();
+                task.retry_at = now + std::chrono::milliseconds(kRetryDelayMs);
+                std::cerr << "[Sync] rpc失败 from=" << task.from_block
+                          << " to=" << task.to_block << " err=" << result.error_msg
+                          << " -> retry" << std::endl;
+              }
             }
             progressed = true;
-          } else if (now >= task.retry_at) {
+          } else if (!stopping && now >= task.retry_at) {
             TraceN("s1/prefetch");
             submit_basic_task(task);
             progressed = true;
@@ -348,17 +356,17 @@ private:
         }
       }
 
-      if (!window.empty()) {
+      if (!stopping && !window.empty()) {
         auto print_now = std::chrono::steady_clock::now();
         if (print_now - last_progress_print >= std::chrono::milliseconds(500)) {
           TraceN("s1/progress");
-          const auto &front = window.front();
-          render_progress_inline(front);
+          render_progress_inline(window);
           last_progress_print = print_now;
         }
       }
 
-      while (!window.empty() && window.front().done_count == static_cast<int>(window.front().basics.size())) {
+      while (!stopping && !window.empty() &&
+             window.front().done_count == static_cast<int>(window.front().basics.size())) {
         clear_progress_inline();
         TraceN("s1/sync_chunk_done");
         auto finished = std::move(window.front());
@@ -381,6 +389,13 @@ private:
           chunk_history_.pop_front();
         fill_window();
         progressed = true;
+      }
+
+      if (stopping) {
+        clear_progress_inline();
+        if (!has_inflight()) {
+          break;
+        }
       }
 
       if (!progressed) {
