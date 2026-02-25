@@ -28,6 +28,7 @@ DecodedEvents EventDecoder::decode_logs(const std::vector<json> &results) {
   [[maybe_unused]] bool installed = crash_handler_installed_;
   DecodedEvents events;
   std::set<std::string> fpmm_addrs;
+  // 第一趟: FPMM创建（扫描所有Factory，不只是Polymarket的）
   for (const auto &result : results) {
     for (const auto &log : result) {
       const auto &topics_arr = log["topics"];
@@ -45,6 +46,7 @@ DecodedEvents EventDecoder::decode_logs(const std::vector<json> &results) {
     }
   }
 
+  // 第二趟: 所有事件
   for (const auto &result : results) {
     for (const auto &log : result) {
       parse_log(log, fpmm_addrs, events);
@@ -149,7 +151,9 @@ void EventDecoder::parse_log(const json &log, const std::set<std::string> &fpmm_
   } else if (address == contracts::NEG_RISK_ADAPTER) {
     parse_neg_risk_adapter_event(topic0, topics_arr, data, tx_hash, block_number, log_index, events);
   } else if (address == contracts::FPMM_FACTORY) {
+    // 第一趟已处理，跳过
   } else if (is_fpmm_topic(topic0)) {
+    // stage1 只按 topic 记录 FPMM 事件，不依赖当前批次是否出现 FPMM_CREATE。
     parse_fpmm_event(topic0, address, topics_arr, data, tx_hash, block_number, log_index, events);
   }
 }
@@ -418,7 +422,7 @@ std::optional<std::string> EventDecoder::parse_fpmm_create(const json &log, cons
   cond_ids_ss << "]";
 
   events.fpmm.push_back({block_number, tx_hash, log_index,
-                         factory_addr,
+                         factory_addr, // 记录factory地址
                          extract_address_from_topic(topics_arr[1].get<std::string>()),
                          fpmm_addr,
                          extract_address_from_topic(topics_arr[2].get<std::string>()),
