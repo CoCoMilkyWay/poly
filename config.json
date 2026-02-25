@@ -4,14 +4,19 @@
   "frontend_port": 8000,
   "backend_port": 8001,
   "initial_block": 0,
-  "stage1_rpc_query_threads": 10,
+  "stage1_rpc_query_threads": 1,
   "stage1_rpc_sync_chunk_basics": 80,
-  "active_rpc": "dRPC",
+  "active_rpc": "Alchemy",
   "rpc_nodes": [
     {
       "name": "Erigon",
       "url": "http://127.0.0.1:8545",
       "key": ""
+    },
+    {
+      "name": "Alchemy",
+      "url": "https://polygon-mainnet.g.alchemy.com/v2/BkfGdYfzIqosg_dYeRWop",
+      "key": "BkfGdYfzIqosg_dYeRWop"
     },
     {
       "name": "dRPC",

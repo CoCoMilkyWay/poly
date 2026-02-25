@@ -40,8 +40,7 @@ public:
   RpcClient(const std::string &url, const std::string &api_key = "", const std::string &worker_name = "RPC-Worker")
       : api_key_(api_key), worker_name_(worker_name), ioc_(), ssl_ctx_(asio::ssl::context::tls_client) {
     parse_url(url);
-    ssl_ctx_.set_default_verify_paths();
-    ssl_ctx_.set_verify_mode(asio::ssl::verify_peer);
+    ssl_ctx_.set_verify_mode(asio::ssl::verify_none);
     start_worker();
   }
 
