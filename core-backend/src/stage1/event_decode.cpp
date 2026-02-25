@@ -420,14 +420,18 @@ std::optional<std::string> EventDecoder::parse_fpmm_create(const json &log, cons
   int64_t cond_ids_offset = 0;
   std::string fee;
 
-  assert(topics_arr.size() == 2 || topics_arr.size() == 4);
-  if (topics_arr.size() == 4) {
+  int64_t creation_topics_count = static_cast<int64_t>(topics_arr.size());
+  assert(creation_topics_count == 2 || creation_topics_count == 4);
+  std::string creation_layout;
+  if (creation_topics_count == 4) {
+    creation_layout = "fixed_factory_v1";
     fpmm_addr = extract_address_from_topic("0x" + data.substr(2, 64));
     conditional_tokens = extract_address_from_topic(topics_arr[2].get<std::string>());
     collateral_token = extract_address_from_topic(topics_arr[3].get<std::string>());
     cond_ids_offset = extract_uint256_i64_from_data(data, 1);
     fee = extract_uint256_hex_from_data(data, 2);
   } else {
+    creation_layout = "deterministic_factory_v1";
     fpmm_addr = extract_address_from_topic("0x" + data.substr(2, 64));
     conditional_tokens = extract_address_from_topic("0x" + data.substr(2 + 64, 64));
     collateral_token = extract_address_from_topic("0x" + data.substr(2 + 128, 64));
@@ -449,6 +453,8 @@ std::optional<std::string> EventDecoder::parse_fpmm_create(const json &log, cons
 
   events.fpmm.push_back({block_number, tx_hash, log_index,
                          factory_addr, // 记录factory地址
+                         creation_topics_count,
+                         creation_layout,
                          extract_address_from_topic(topics_arr[1].get<std::string>()),
                          fpmm_addr,
                          conditional_tokens,

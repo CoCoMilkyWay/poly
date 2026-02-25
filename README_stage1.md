@@ -92,17 +92,20 @@ TransferBatch 拆分为多行，每个 token 一行，通过 sub_index 区分。
 
 ### fpmm (FPMMCreation)
 
-| column             | 类型           | 来源         | 说明                      |
-| ------------------ | -------------- | ------------ | ------------------------- |
-| block_number       | BIGINT         | log          |                           |
-| tx_hash            | BLOB(32)       | log          |                           |
-| log_index          | INTEGER        | log          |                           |
-| creator            | BLOB(20)       | FPMMCreation |                           |
-| fpmm_addr          | BLOB(20) PK    | FPMMCreation | fixedProductMarketMaker   |
-| conditional_tokens | BLOB(20)       | FPMMCreation | ConditionalTokens合约地址 |
-| collateral_token   | BLOB(20)       | FPMMCreation | USDC.e                    |
-| condition_ids      | LIST<BLOB(32)> | FPMMCreation | bytes32[]（无损）         |
-| fee                | BLOB(32)       | FPMMCreation | uint256（无损）           |
+| column                | 类型        | 来源         | 说明                                                                      |
+| --------------------- | ----------- | ------------ | ------------------------------------------------------------------------- |
+| block_number          | BIGINT      | log          |                                                                           |
+| tx_hash               | BLOB(32)    | log          |                                                                           |
+| log_index             | INTEGER     | log          |                                                                           |
+| factory               | BLOB(20)    | log.address  | 发出 `FixedProductMarketMakerCreation` 的工厂地址                         |
+| creation_topics_count | BIGINT      | log.topics   | 创建事件 topics 长度（4=FixedProductMarketMakerFactory, 2=Deterministic） |
+| creation_layout       | VARCHAR     | 解析标记     | `fixed_factory_v1` / `deterministic_factory_v1`                           |
+| creator               | BLOB(20)    | FPMMCreation |                                                                           |
+| fpmm_addr             | BLOB(20) PK | FPMMCreation | fixedProductMarketMaker                                                   |
+| conditional_tokens    | BLOB(20)    | FPMMCreation | ConditionalTokens 合约地址                                                |
+| collateral_token      | BLOB(20)    | FPMMCreation | USDC.e                                                                    |
+| condition_ids         | VARCHAR     | FPMMCreation | bytes32[] 的 JSON 字符串（无损内容保留）                                  |
+| fee                   | BLOB(32)    | FPMMCreation | uint256（无损）                                                           |
 
 ### fpmm_trade (FPMMBuy / FPMMSell)
 

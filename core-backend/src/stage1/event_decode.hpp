@@ -93,6 +93,8 @@ struct FpmmEvent {
   std::string tx_hash;
   int64_t log_index;
   std::string factory; // FPMM Factory地址
+  int64_t creation_topics_count; // FixedProductMarketMakerCreation topics长度（2/4）
+  std::string creation_layout;   // 按 topics 布局标记: fixed_factory_v1 / deterministic_factory_v1
   std::string creator, fpmm_addr, conditional_tokens, collateral_token;
   std::string condition_ids;
   std::string fee;
