@@ -386,14 +386,31 @@ NegRisk转换: M 个 NO tokens burn → (M-1) Wrapped Collateral (利用互斥�
 
 **FixedProductMarketMakerCreation** (FPMMFactory发出)
 
-| 字段                    | 类型      | indexed | 说明                      |
-| ----------------------- | --------- | ------- | ------------------------- |
-| creator                 | address   | yes     | FPMM创建者                |
-| fixedProductMarketMaker | address   | no      | **新部署的FPMM合约地址**  |
-| conditionalTokens       | address   | yes     | ConditionalTokens合约地址 |
-| collateralToken         | address   | yes     | collateral地址 (USDC.e)   |
-| conditionIds            | bytes32[] | no      | 关联的conditionId数组     |
-| fee                     | uint256   | no      | 手续费率 (1e18 = 100%)    |
+数据结构（正式定义）：
+- `topic0` 一致：`FixedProductMarketMakerCreation`
+- 不同 factory 存在两套 ABI
+
+**结构 A: `FixedProductMarketMakerFactory`**
+
+| 字段                    | 类型      | indexed | 位置   |
+| ----------------------- | --------- | ------- | ------ |
+| creator                 | address   | yes     | topic1 |
+| fixedProductMarketMaker | address   | no      | data0  |
+| conditionalTokens       | address   | yes     | topic2 |
+| collateralToken         | address   | yes     | topic3 |
+| conditionIds            | bytes32[] | no      | data1  |
+| fee                     | uint256   | no      | data2  |
+
+**结构 B: `FPMMDeterministicFactory`**
+
+| 字段                    | 类型      | indexed | 位置   |
+| ----------------------- | --------- | ------- | ------ |
+| creator                 | address   | yes     | topic1 |
+| fixedProductMarketMaker | address   | no      | data0  |
+| conditionalTokens       | address   | no      | data1  |
+| collateralToken         | address   | no      | data2  |
+| conditionIds            | bytes32[] | no      | data3  |
+| fee                     | uint256   | no      | data4  |
 
 ### FPMM合约 (动态部署, 每市场一个)
 

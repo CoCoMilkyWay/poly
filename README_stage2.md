@@ -85,7 +85,7 @@ Collateral: Unknown=0, USDC=1 (bridged), USDCe=2 (native), WETH=3, DAI=4, WMATIC
 **token*map* 有四个来源** (按优先级):
 
 1. TokenRegistered 事件直接提供 token0(YES) 和 token1(NO) — `PolymarketTokenReg`
-2. FPMMCreation 需要 BN128 CTF position ID 计算 — `PolymarketFPMM`
+2. FPMMCreation 需要 BN128 CTF position ID 计算 — `PolymarketFPMM`（Stage1 兼容不同 factory 的 creation 事件布局）
 3. Split 事件中的 condition_id + collateral_token 计算 — `SplitEvent`
 4. Transfer 中发现未知 token_id → `TransferInferred` (cond_idx=UNKNOWN_COND_IDX, is_yes=0xFF)
 

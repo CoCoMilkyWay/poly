@@ -407,8 +407,34 @@ std::optional<std::string> EventDecoder::parse_fpmm_create(const json &log, cons
   int64_t block_number = hex_to_int64(log["blockNumber"].get<std::string>());
   int64_t log_index = hex_to_int64(log["logIndex"].get<std::string>());
 
-  std::string fpmm_addr = extract_address_from_topic("0x" + data.substr(2, 64));
-  int64_t cond_ids_offset = extract_uint256_i64_from_data(data, 1);
+  // 两种工厂都发同名事件（topic0 相同），但 indexed 布局不同：
+  // 1) FixedProductMarketMakerFactory:
+  //    topics: [sig, creator, conditionalTokens, collateralToken]
+  //    data  : [fixedProductMarketMaker, conditionIds(offset), fee]
+  // 2) FPMMDeterministicFactory:
+  //    topics: [sig, creator]
+  //    data  : [fixedProductMarketMaker, conditionalTokens, collateralToken, conditionIds(offset), fee]
+  std::string fpmm_addr;
+  std::string conditional_tokens;
+  std::string collateral_token;
+  int64_t cond_ids_offset = 0;
+  std::string fee;
+
+  assert(topics_arr.size() == 2 || topics_arr.size() == 4);
+  if (topics_arr.size() == 4) {
+    fpmm_addr = extract_address_from_topic("0x" + data.substr(2, 64));
+    conditional_tokens = extract_address_from_topic(topics_arr[2].get<std::string>());
+    collateral_token = extract_address_from_topic(topics_arr[3].get<std::string>());
+    cond_ids_offset = extract_uint256_i64_from_data(data, 1);
+    fee = extract_uint256_hex_from_data(data, 2);
+  } else {
+    fpmm_addr = extract_address_from_topic("0x" + data.substr(2, 64));
+    conditional_tokens = extract_address_from_topic("0x" + data.substr(2 + 64, 64));
+    collateral_token = extract_address_from_topic("0x" + data.substr(2 + 128, 64));
+    cond_ids_offset = extract_uint256_i64_from_data(data, 3);
+    fee = extract_uint256_hex_from_data(data, 4);
+  }
+
   int64_t cond_ids_len = extract_uint256_i64_from_data(data, cond_ids_offset / 32);
 
   std::ostringstream cond_ids_ss;
@@ -425,10 +451,10 @@ std::optional<std::string> EventDecoder::parse_fpmm_create(const json &log, cons
                          factory_addr, // 记录factory地址
                          extract_address_from_topic(topics_arr[1].get<std::string>()),
                          fpmm_addr,
-                         extract_address_from_topic(topics_arr[2].get<std::string>()),
-                         extract_address_from_topic(topics_arr[3].get<std::string>()),
+                         conditional_tokens,
+                         collateral_token,
                          cond_ids_ss.str(),
-                         extract_uint256_hex_from_data(data, 2)});
+                         fee});
 
   return to_lower(fpmm_addr);
 }
