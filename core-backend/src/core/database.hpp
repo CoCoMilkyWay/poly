@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cassert>
+#include <cstdio>
 #include <duckdb.hpp>
 #include <fcntl.h>
 #include <filesystem>
@@ -345,8 +346,35 @@ private:
   }
 
   void write_state_unlocked(const json &state) const {
-    std::ofstream f(state_path());
-    f << state.dump(2);
+    std::string path = state_path();
+    std::string tmp_path = path + ".tmp";
+    {
+      std::ofstream f(tmp_path, std::ios::binary | std::ios::trunc);
+      assert(f.is_open());
+      f << state.dump(2);
+      f.flush();
+      assert(f.good());
+    }
+
+    int fd = open(tmp_path.c_str(), O_RDONLY);
+    assert(fd >= 0);
+    int ret = fsync(fd);
+    assert(ret == 0);
+    int close_ret = close(fd);
+    assert(close_ret == 0);
+
+    ret = std::rename(tmp_path.c_str(), path.c_str());
+    assert(ret == 0);
+
+    std::string dir = fs::path(path).parent_path().string();
+    if (dir.empty())
+      dir = ".";
+    int dir_fd = open(dir.c_str(), O_RDONLY | O_DIRECTORY);
+    assert(dir_fd >= 0);
+    ret = fsync(dir_fd);
+    assert(ret == 0);
+    close_ret = close(dir_fd);
+    assert(close_ret == 0);
   }
 
   std::string data_dir_;

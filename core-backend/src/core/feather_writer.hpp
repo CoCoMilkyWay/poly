@@ -6,7 +6,9 @@
 #include <cassert>
 #include <cstdio>
 #include <filesystem>
+#include <fcntl.h>
 #include <string>
+#include <unistd.h>
 #include <vector>
 
 #include "../stage1/event_decode.hpp"
@@ -41,6 +43,24 @@ public:
 
 private:
   std::string stage1_dir_;
+
+  static void fsync_file(const std::string &path) {
+    int fd = open(path.c_str(), O_RDONLY);
+    assert(fd >= 0);
+    int ret = fsync(fd);
+    assert(ret == 0);
+    int close_ret = close(fd);
+    assert(close_ret == 0);
+  }
+
+  static void fsync_dir(const std::string &path) {
+    int fd = open(path.c_str(), O_RDONLY | O_DIRECTORY);
+    assert(fd >= 0);
+    int ret = fsync(fd);
+    assert(ret == 0);
+    int close_ret = close(fd);
+    assert(close_ret == 0);
+  }
 
   std::string table_dir(const std::string &table) {
     std::string dir = stage1_dir_ + "/" + table;
@@ -100,9 +120,16 @@ private:
       }
       auto close_status = (*writer)->Close();
       assert(close_status.ok());
+      auto file_close_status = (*outfile)->Close();
+      assert(file_close_status.ok());
     }
+    fsync_file(tmp_path);
     int ret = std::rename(tmp_path.c_str(), path.c_str());
     assert(ret == 0);
+    std::string dir = fs::path(path).parent_path().string();
+    if (dir.empty())
+      dir = ".";
+    fsync_dir(dir);
   }
 
   void write_transfer(int64_t start_block, const std::vector<stage1::TransferEvent> &events) {

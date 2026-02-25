@@ -210,14 +210,19 @@ private:
 
   std::vector<json> parse_batch_response(const std::string &response_body, size_t count) {
     json responses = json::parse(response_body);
+    assert(responses.is_array());
     std::vector<json> results(count);
+    std::vector<uint8_t> seen(count, 0);
     for (const auto &resp : responses) {
-      if (resp.contains("error")) {
-        size_t id = resp.value("id", 0);
-        throw std::runtime_error("RPC batch response error, id=" + std::to_string(id) + ": " + resp["error"].dump());
-      }
+      assert(!resp.contains("error") && "RPC batch response has error");
       size_t id = resp["id"].get<size_t>();
+      assert(id < count && "RPC batch response id out of range");
+      assert(seen[id] == 0 && "RPC batch response id duplicated");
+      seen[id] = 1;
       results[id] = resp["result"];
+    }
+    for (size_t i = 0; i < count; ++i) {
+      assert(seen[i] == 1 && "RPC batch response missing item");
     }
     return results;
   }
