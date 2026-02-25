@@ -265,19 +265,35 @@ public:
   const std::string &data_dir() const { return data_dir_; }
 
   int64_t get_last_block() {
-    std::string path = data_dir_ + "/sync_state.json";
-    if (fs::exists(path)) {
-      std::ifstream f(path);
-      json j = json::parse(f);
-      return j.value("last_block", (int64_t)-1);
+    std::lock_guard<std::mutex> lock(state_mutex_);
+    json state = read_state_unlocked();
+    if (state.contains("last_block")) {
+      return state.value("last_block", (int64_t)-1);
     }
     return recover_last_block_from_feather();
   }
 
   void set_last_block(int64_t block) {
-    std::string path = data_dir_ + "/sync_state.json";
-    std::ofstream f(path);
-    f << json{{"last_block", block}}.dump();
+    std::lock_guard<std::mutex> lock(state_mutex_);
+    json state = read_state_unlocked();
+    state["last_block"] = block;
+    write_state_unlocked(state);
+  }
+
+  json load_counts_cache() {
+    std::lock_guard<std::mutex> lock(state_mutex_);
+    json state = read_state_unlocked();
+    if (!state.contains("counts_cache")) {
+      return json::object();
+    }
+    return state["counts_cache"];
+  }
+
+  void save_counts_cache(const json &cache) {
+    std::lock_guard<std::mutex> lock(state_mutex_);
+    json state = read_state_unlocked();
+    state["counts_cache"] = cache;
+    write_state_unlocked(state);
   }
 
 private:
@@ -317,6 +333,22 @@ private:
     return exists;
   }
 
+  std::string state_path() const { return data_dir_ + "/state.json"; }
+
+  json read_state_unlocked() const {
+    std::string path = state_path();
+    if (!fs::exists(path)) {
+      return json::object();
+    }
+    std::ifstream f(path);
+    return json::parse(f);
+  }
+
+  void write_state_unlocked(const json &state) const {
+    std::ofstream f(state_path());
+    f << state.dump(2);
+  }
+
   std::string data_dir_;
   std::string db_path_;
   std::string lock_path_;
@@ -327,6 +359,7 @@ private:
   std::unique_ptr<duckdb::Connection> write_conn_;
   std::mutex read_mutex_;
   std::mutex write_mutex_;
+  mutable std::mutex state_mutex_;
   std::string cached_partition_key_;
   bool cached_partition_exists_ = false;
 };

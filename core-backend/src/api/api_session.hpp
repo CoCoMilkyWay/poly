@@ -2,7 +2,6 @@
 
 #include <atomic>
 #include <filesystem>
-#include <fstream>
 #include <functional>
 #include <future>
 #include <memory>
@@ -165,12 +164,8 @@ private:
     static std::atomic<bool> cache_dirty{false};
     static std::mutex save_mutex;
 
-    std::string cache_path = db_.data_dir() + "/counts_cache.json";
-    std::call_once(cache_loaded_flag, [cache_path]() {
-      if (!std::filesystem::exists(cache_path))
-        return;
-      std::ifstream f(cache_path);
-      json cached = json::parse(f);
+    std::call_once(cache_loaded_flag, [this]() {
+      json cached = db_.load_counts_cache();
       for (auto &[table, files] : cached.items()) {
         auto &tc = table_cache[table];
         for (auto &[fname, cnt] : files.items()) {
@@ -227,8 +222,7 @@ private:
         for (auto &[fname, cnt] : tc.files)
           cache_json[tname][fname] = cnt;
       }
-      std::ofstream ofs(cache_path);
-      ofs << cache_json.dump(2);
+      db_.save_counts_cache(cache_json);
     }
 
     res_.result(http::status::ok);
@@ -437,18 +431,13 @@ private:
                }
                return arr;
              }()}}}}},
-        {"other",
-         {{"total", tt.other.total},
-          {"other_fpmm", tt.other.other_fpmm},
-          {"split", tt.other.split},
-          {"transfer_inferred", tt.other.transfer_inferred},
-          {"transfer_inferred_by_token", [&]() {
-             json arr = json::array();
-             for (const auto &[token, cnt] : tt.other.transfer_inferred_by_token) {
-               arr.push_back({{"token", token}, {"count", cnt}});
-             }
-             return arr;
-           }()}}},
+        {"other", {{"total", tt.other.total}, {"other_fpmm", tt.other.other_fpmm}, {"split", tt.other.split}, {"transfer_inferred", tt.other.transfer_inferred}, {"transfer_inferred_by_token", [&]() {
+                                                                                                                                                                    json arr = json::array();
+                                                                                                                                                                    for (const auto &[token, cnt] : tt.other.transfer_inferred_by_token) {
+                                                                                                                                                                      arr.push_back({{"token", token}, {"count", cnt}});
+                                                                                                                                                                    }
+                                                                                                                                                                    return arr;
+                                                                                                                                                                  }()}}},
     };
 
     json transfer_tree = {
