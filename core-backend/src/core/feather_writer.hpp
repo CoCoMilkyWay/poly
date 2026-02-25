@@ -75,6 +75,12 @@ private:
     return bytes;
   }
 
+  static std::string uint256_hex_to_bytes32(const std::string &hex) {
+    std::string b = hex_to_bytes(hex);
+    assert(b.size() == 32);
+    return b;
+  }
+
   void atomic_write_feather(const std::string &path, std::shared_ptr<arrow::Table> table) {
     std::string tmp_path = path + ".tmp";
     {
@@ -102,8 +108,8 @@ private:
   void write_transfer(int64_t start_block, const std::vector<stage1::TransferEvent> &events) {
     if (events.empty())
       return;
-    arrow::Int64Builder block_number, log_index, amount;
-    arrow::BinaryBuilder tx_hash, op, from, to, token_id;
+    arrow::Int64Builder block_number, log_index;
+    arrow::BinaryBuilder tx_hash, op, from, to, token_id, amount;
 
     for (const auto &e : events) {
       assert(block_number.Append(e.block_number).ok());
@@ -113,7 +119,7 @@ private:
       assert(from.Append(hex_to_bytes(e.from)).ok());
       assert(to.Append(hex_to_bytes(e.to)).ok());
       assert(token_id.Append(hex_to_bytes(e.token_id)).ok());
-      assert(amount.Append(e.amount).ok());
+      assert(amount.Append(uint256_hex_to_bytes32(e.amount)).ok());
     }
 
     auto schema = arrow::schema({
@@ -124,7 +130,7 @@ private:
         arrow::field("from_addr", arrow::binary()),
         arrow::field("to_addr", arrow::binary()),
         arrow::field("token_id", arrow::binary()),
-        arrow::field("amount", arrow::int64()),
+        arrow::field("amount", arrow::binary()),
     });
 
     std::shared_ptr<arrow::Array> a1, a2, a3, a4, a5, a6, a7, a8;
@@ -144,8 +150,8 @@ private:
   void write_condition_preparation(int64_t start_block, const std::vector<stage1::ConditionPrepEvent> &events) {
     if (events.empty())
       return;
-    arrow::Int64Builder block_number, log_index, outcome_slot_count;
-    arrow::BinaryBuilder tx_hash, condition_id, oracle, question_id;
+    arrow::Int64Builder block_number, log_index;
+    arrow::BinaryBuilder tx_hash, condition_id, oracle, question_id, outcome_slot_count;
 
     for (const auto &e : events) {
       assert(block_number.Append(e.block_number).ok());
@@ -154,7 +160,7 @@ private:
       assert(condition_id.Append(hex_to_bytes(e.condition_id)).ok());
       assert(oracle.Append(hex_to_bytes(e.oracle)).ok());
       assert(question_id.Append(hex_to_bytes(e.question_id)).ok());
-      assert(outcome_slot_count.Append(e.outcome_slot_count).ok());
+      assert(outcome_slot_count.Append(uint256_hex_to_bytes32(e.outcome_slot_count)).ok());
     }
 
     auto schema = arrow::schema({
@@ -164,7 +170,7 @@ private:
         arrow::field("condition_id", arrow::binary()),
         arrow::field("oracle", arrow::binary()),
         arrow::field("question_id", arrow::binary()),
-        arrow::field("outcome_slot_count", arrow::int64()),
+        arrow::field("outcome_slot_count", arrow::binary()),
     });
 
     std::shared_ptr<arrow::Array> a1, a2, a3, a4, a5, a6, a7;
@@ -183,8 +189,8 @@ private:
   void write_condition_resolution(int64_t start_block, const std::vector<stage1::ConditionResolveEvent> &events) {
     if (events.empty())
       return;
-    arrow::Int64Builder block_number, log_index, outcome_slot_count;
-    arrow::BinaryBuilder tx_hash, condition_id, oracle, question_id;
+    arrow::Int64Builder block_number, log_index;
+    arrow::BinaryBuilder tx_hash, condition_id, oracle, question_id, outcome_slot_count;
     arrow::StringBuilder payout_numerators;
 
     for (const auto &e : events) {
@@ -194,7 +200,7 @@ private:
       assert(condition_id.Append(hex_to_bytes(e.condition_id)).ok());
       assert(oracle.Append(hex_to_bytes(e.oracle)).ok());
       assert(question_id.Append(hex_to_bytes(e.question_id)).ok());
-      assert(outcome_slot_count.Append(e.outcome_slot_count).ok());
+      assert(outcome_slot_count.Append(uint256_hex_to_bytes32(e.outcome_slot_count)).ok());
       assert(payout_numerators.Append(e.payout_numerators).ok());
     }
 
@@ -205,7 +211,7 @@ private:
         arrow::field("condition_id", arrow::binary()),
         arrow::field("oracle", arrow::binary()),
         arrow::field("question_id", arrow::binary()),
-        arrow::field("outcome_slot_count", arrow::int64()),
+        arrow::field("outcome_slot_count", arrow::binary()),
         arrow::field("payout_numerators", arrow::utf8()),
     });
 
@@ -226,8 +232,8 @@ private:
   void write_split_merge_impl(int64_t start_block, const std::vector<stage1::SplitMergeEvent> &events, const std::string &table_name) {
     if (events.empty())
       return;
-    arrow::Int64Builder block_number, log_index, amount;
-    arrow::BinaryBuilder tx_hash, stakeholder, collateral_token, parent_collection_id, condition_id;
+    arrow::Int64Builder block_number, log_index;
+    arrow::BinaryBuilder tx_hash, stakeholder, collateral_token, parent_collection_id, condition_id, amount;
     arrow::StringBuilder partition;
 
     for (const auto &e : events) {
@@ -239,7 +245,7 @@ private:
       assert(parent_collection_id.Append(hex_to_bytes(e.parent_collection_id)).ok());
       assert(condition_id.Append(hex_to_bytes(e.condition_id)).ok());
       assert(partition.Append(e.partition).ok());
-      assert(amount.Append(e.amount).ok());
+      assert(amount.Append(uint256_hex_to_bytes32(e.amount)).ok());
     }
 
     auto schema = arrow::schema({
@@ -251,7 +257,7 @@ private:
         arrow::field("parent_collection_id", arrow::binary()),
         arrow::field("condition_id", arrow::binary()),
         arrow::field("partition", arrow::utf8()),
-        arrow::field("amount", arrow::int64()),
+        arrow::field("amount", arrow::binary()),
     });
 
     std::shared_ptr<arrow::Array> a1, a2, a3, a4, a5, a6, a7, a8, a9;
@@ -280,8 +286,8 @@ private:
   void write_redemption(int64_t start_block, const std::vector<stage1::RedemptionEvent> &events) {
     if (events.empty())
       return;
-    arrow::Int64Builder block_number, log_index, payout;
-    arrow::BinaryBuilder tx_hash, redeemer, collateral_token, parent_collection_id, condition_id;
+    arrow::Int64Builder block_number, log_index;
+    arrow::BinaryBuilder tx_hash, redeemer, collateral_token, parent_collection_id, condition_id, payout;
     arrow::StringBuilder index_sets;
 
     for (const auto &e : events) {
@@ -293,7 +299,7 @@ private:
       assert(parent_collection_id.Append(hex_to_bytes(e.parent_collection_id)).ok());
       assert(condition_id.Append(hex_to_bytes(e.condition_id)).ok());
       assert(index_sets.Append(e.index_sets).ok());
-      assert(payout.Append(e.payout).ok());
+      assert(payout.Append(uint256_hex_to_bytes32(e.payout)).ok());
     }
 
     auto schema = arrow::schema({
@@ -305,7 +311,7 @@ private:
         arrow::field("parent_collection_id", arrow::binary()),
         arrow::field("condition_id", arrow::binary()),
         arrow::field("index_sets", arrow::utf8()),
-        arrow::field("payout", arrow::int64()),
+        arrow::field("payout", arrow::binary()),
     });
 
     std::shared_ptr<arrow::Array> a1, a2, a3, a4, a5, a6, a7, a8, a9;
@@ -326,8 +332,8 @@ private:
   void write_fpmm(int64_t start_block, const std::vector<stage1::FpmmEvent> &events) {
     if (events.empty())
       return;
-    arrow::Int64Builder block_number, log_index, fee;
-    arrow::BinaryBuilder tx_hash, factory, creator, fpmm_addr, conditional_tokens, collateral_token;
+    arrow::Int64Builder block_number, log_index;
+    arrow::BinaryBuilder tx_hash, factory, creator, fpmm_addr, conditional_tokens, collateral_token, fee;
     arrow::StringBuilder condition_ids;
 
     for (const auto &e : events) {
@@ -340,7 +346,7 @@ private:
       assert(conditional_tokens.Append(hex_to_bytes(e.conditional_tokens)).ok());
       assert(collateral_token.Append(hex_to_bytes(e.collateral_token)).ok());
       assert(condition_ids.Append(e.condition_ids).ok());
-      assert(fee.Append(e.fee).ok());
+      assert(fee.Append(uint256_hex_to_bytes32(e.fee)).ok());
     }
 
     auto schema = arrow::schema({
@@ -353,7 +359,7 @@ private:
         arrow::field("conditional_tokens", arrow::binary()),
         arrow::field("collateral_token", arrow::binary()),
         arrow::field("condition_ids", arrow::utf8()),
-        arrow::field("fee", arrow::int64()),
+        arrow::field("fee", arrow::binary()),
     });
 
     std::shared_ptr<arrow::Array> a1, a2, a3, a4, a5, a6, a7, a8, a9, a10;
@@ -375,8 +381,8 @@ private:
   void write_fpmm_trade(int64_t start_block, const std::vector<stage1::FpmmTradeEvent> &events) {
     if (events.empty())
       return;
-    arrow::Int64Builder block_number, log_index, side, outcome_index, usdc_amount, token_amount, fee;
-    arrow::BinaryBuilder tx_hash, fpmm_addr, trader;
+    arrow::Int64Builder block_number, log_index, side;
+    arrow::BinaryBuilder tx_hash, fpmm_addr, trader, outcome_index, usdc_amount, token_amount, fee;
 
     for (const auto &e : events) {
       assert(block_number.Append(e.block_number).ok());
@@ -385,10 +391,10 @@ private:
       assert(fpmm_addr.Append(hex_to_bytes(e.fpmm_addr)).ok());
       assert(trader.Append(hex_to_bytes(e.trader)).ok());
       assert(side.Append(e.side).ok());
-      assert(outcome_index.Append(e.outcome_index).ok());
-      assert(usdc_amount.Append(e.usdc_amount).ok());
-      assert(token_amount.Append(e.token_amount).ok());
-      assert(fee.Append(e.fee).ok());
+      assert(outcome_index.Append(uint256_hex_to_bytes32(e.outcome_index)).ok());
+      assert(usdc_amount.Append(uint256_hex_to_bytes32(e.usdc_amount)).ok());
+      assert(token_amount.Append(uint256_hex_to_bytes32(e.token_amount)).ok());
+      assert(fee.Append(uint256_hex_to_bytes32(e.fee)).ok());
     }
 
     auto schema = arrow::schema({
@@ -398,10 +404,10 @@ private:
         arrow::field("fpmm_addr", arrow::binary()),
         arrow::field("trader", arrow::binary()),
         arrow::field("side", arrow::int64()),
-        arrow::field("outcome_index", arrow::int64()),
-        arrow::field("usdc_amount", arrow::int64()),
-        arrow::field("token_amount", arrow::int64()),
-        arrow::field("fee", arrow::int64()),
+        arrow::field("outcome_index", arrow::binary()),
+        arrow::field("usdc_amount", arrow::binary()),
+        arrow::field("token_amount", arrow::binary()),
+        arrow::field("fee", arrow::binary()),
     });
 
     std::shared_ptr<arrow::Array> a1, a2, a3, a4, a5, a6, a7, a8, a9, a10;
@@ -423,8 +429,8 @@ private:
   void write_fpmm_funding(int64_t start_block, const std::vector<stage1::FpmmFundingEvent> &events) {
     if (events.empty())
       return;
-    arrow::Int64Builder block_number, log_index, side, collateral_from_fee_pool, shares;
-    arrow::BinaryBuilder tx_hash, fpmm_addr, funder;
+    arrow::Int64Builder block_number, log_index, side;
+    arrow::BinaryBuilder tx_hash, fpmm_addr, funder, collateral_from_fee_pool, shares;
     arrow::StringBuilder amounts;
 
     for (const auto &e : events) {
@@ -435,8 +441,8 @@ private:
       assert(funder.Append(hex_to_bytes(e.funder)).ok());
       assert(side.Append(e.side).ok());
       assert(amounts.Append(e.amounts).ok());
-      assert(collateral_from_fee_pool.Append(e.collateral_from_fee_pool).ok());
-      assert(shares.Append(e.shares).ok());
+      assert(collateral_from_fee_pool.Append(uint256_hex_to_bytes32(e.collateral_from_fee_pool)).ok());
+      assert(shares.Append(uint256_hex_to_bytes32(e.shares)).ok());
     }
 
     auto schema = arrow::schema({
@@ -447,8 +453,8 @@ private:
         arrow::field("funder", arrow::binary()),
         arrow::field("side", arrow::int64()),
         arrow::field("amounts", arrow::utf8()),
-        arrow::field("collateral_from_fee_pool", arrow::int64()),
-        arrow::field("shares", arrow::int64()),
+        arrow::field("collateral_from_fee_pool", arrow::binary()),
+        arrow::field("shares", arrow::binary()),
     });
 
     std::shared_ptr<arrow::Array> a1, a2, a3, a4, a5, a6, a7, a8, a9;
@@ -469,8 +475,8 @@ private:
   void write_order_filled(int64_t start_block, const std::vector<stage1::OrderFilledEvent> &events) {
     if (events.empty())
       return;
-    arrow::Int64Builder block_number, log_index, maker_amount, taker_amount, fee;
-    arrow::BinaryBuilder tx_hash, order_hash, maker, taker, maker_asset_id, taker_asset_id;
+    arrow::Int64Builder block_number, log_index;
+    arrow::BinaryBuilder tx_hash, order_hash, maker, taker, maker_asset_id, taker_asset_id, maker_amount, taker_amount, fee;
     arrow::StringBuilder exchange;
 
     for (const auto &e : events) {
@@ -483,9 +489,9 @@ private:
       assert(taker.Append(hex_to_bytes(e.taker)).ok());
       assert(maker_asset_id.Append(hex_to_bytes(e.maker_asset_id)).ok());
       assert(taker_asset_id.Append(hex_to_bytes(e.taker_asset_id)).ok());
-      assert(maker_amount.Append(e.maker_amount).ok());
-      assert(taker_amount.Append(e.taker_amount).ok());
-      assert(fee.Append(e.fee).ok());
+      assert(maker_amount.Append(uint256_hex_to_bytes32(e.maker_amount)).ok());
+      assert(taker_amount.Append(uint256_hex_to_bytes32(e.taker_amount)).ok());
+      assert(fee.Append(uint256_hex_to_bytes32(e.fee)).ok());
     }
 
     auto schema = arrow::schema({
@@ -498,9 +504,9 @@ private:
         arrow::field("taker", arrow::binary()),
         arrow::field("maker_asset_id", arrow::binary()),
         arrow::field("taker_asset_id", arrow::binary()),
-        arrow::field("maker_amount", arrow::int64()),
-        arrow::field("taker_amount", arrow::int64()),
-        arrow::field("fee", arrow::int64()),
+        arrow::field("maker_amount", arrow::binary()),
+        arrow::field("taker_amount", arrow::binary()),
+        arrow::field("fee", arrow::binary()),
     });
 
     std::shared_ptr<arrow::Array> a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12;
@@ -564,8 +570,8 @@ private:
   void write_neg_risk_market(int64_t start_block, const std::vector<stage1::NegRiskMarketEvent> &events) {
     if (events.empty())
       return;
-    arrow::Int64Builder block_number, log_index, fee_bips;
-    arrow::BinaryBuilder tx_hash, market_id, oracle, data;
+    arrow::Int64Builder block_number, log_index;
+    arrow::BinaryBuilder tx_hash, market_id, oracle, fee_bips, data;
 
     for (const auto &e : events) {
       assert(block_number.Append(e.block_number).ok());
@@ -573,7 +579,7 @@ private:
       assert(log_index.Append(e.log_index).ok());
       assert(market_id.Append(hex_to_bytes(e.market_id)).ok());
       assert(oracle.Append(hex_to_bytes(e.oracle)).ok());
-      assert(fee_bips.Append(e.fee_bips).ok());
+      assert(fee_bips.Append(uint256_hex_to_bytes32(e.fee_bips)).ok());
       if (e.data) {
         assert(data.Append(hex_to_bytes(*e.data)).ok());
       } else {
@@ -587,7 +593,7 @@ private:
         arrow::field("log_index", arrow::int64()),
         arrow::field("market_id", arrow::binary()),
         arrow::field("oracle", arrow::binary()),
-        arrow::field("fee_bips", arrow::int64()),
+        arrow::field("fee_bips", arrow::binary()),
         arrow::field("data", arrow::binary()),
     });
 
@@ -607,8 +613,8 @@ private:
   void write_neg_risk_question(int64_t start_block, const std::vector<stage1::NegRiskQuestionEvent> &events) {
     if (events.empty())
       return;
-    arrow::Int64Builder block_number, log_index, question_index;
-    arrow::BinaryBuilder tx_hash, market_id, question_id, data;
+    arrow::Int64Builder block_number, log_index;
+    arrow::BinaryBuilder tx_hash, market_id, question_id, question_index, data;
 
     for (const auto &e : events) {
       assert(block_number.Append(e.block_number).ok());
@@ -616,7 +622,7 @@ private:
       assert(log_index.Append(e.log_index).ok());
       assert(market_id.Append(hex_to_bytes(e.market_id)).ok());
       assert(question_id.Append(hex_to_bytes(e.question_id)).ok());
-      assert(question_index.Append(e.question_index).ok());
+      assert(question_index.Append(uint256_hex_to_bytes32(e.question_index)).ok());
       if (e.data) {
         assert(data.Append(hex_to_bytes(*e.data)).ok());
       } else {
@@ -630,7 +636,7 @@ private:
         arrow::field("log_index", arrow::int64()),
         arrow::field("market_id", arrow::binary()),
         arrow::field("question_id", arrow::binary()),
-        arrow::field("question_index", arrow::int64()),
+        arrow::field("question_index", arrow::binary()),
         arrow::field("data", arrow::binary()),
     });
 
@@ -650,8 +656,8 @@ private:
   void write_convert(int64_t start_block, const std::vector<stage1::ConvertEvent> &events) {
     if (events.empty())
       return;
-    arrow::Int64Builder block_number, log_index, index_set, amount;
-    arrow::BinaryBuilder tx_hash, stakeholder, market_id;
+    arrow::Int64Builder block_number, log_index;
+    arrow::BinaryBuilder tx_hash, stakeholder, market_id, index_set, amount;
 
     for (const auto &e : events) {
       assert(block_number.Append(e.block_number).ok());
@@ -659,8 +665,8 @@ private:
       assert(log_index.Append(e.log_index).ok());
       assert(stakeholder.Append(hex_to_bytes(e.stakeholder)).ok());
       assert(market_id.Append(hex_to_bytes(e.market_id)).ok());
-      assert(index_set.Append(e.index_set).ok());
-      assert(amount.Append(e.amount).ok());
+      assert(index_set.Append(uint256_hex_to_bytes32(e.index_set)).ok());
+      assert(amount.Append(uint256_hex_to_bytes32(e.amount)).ok());
     }
 
     auto schema = arrow::schema({
@@ -669,8 +675,8 @@ private:
         arrow::field("log_index", arrow::int64()),
         arrow::field("stakeholder", arrow::binary()),
         arrow::field("market_id", arrow::binary()),
-        arrow::field("index_set", arrow::int64()),
-        arrow::field("amount", arrow::int64()),
+        arrow::field("index_set", arrow::binary()),
+        arrow::field("amount", arrow::binary()),
     });
 
     std::shared_ptr<arrow::Array> a1, a2, a3, a4, a5, a6, a7;

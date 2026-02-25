@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cctype>
 #include <exception>
 #include <iostream>
 #include <nlohmann/json.hpp>
@@ -54,7 +55,7 @@ struct TransferEvent {
   std::string tx_hash;
   int64_t log_index;
   std::string op, from, to, token_id;
-  int64_t amount;
+  std::string amount;
 };
 
 struct ConditionPrepEvent {
@@ -62,7 +63,7 @@ struct ConditionPrepEvent {
   std::string tx_hash;
   int64_t log_index;
   std::string condition_id, oracle, question_id;
-  int64_t outcome_slot_count;
+  std::string outcome_slot_count;
 };
 
 struct ConditionResolveEvent {
@@ -70,7 +71,7 @@ struct ConditionResolveEvent {
   std::string tx_hash;
   int64_t log_index;
   std::string condition_id, oracle, question_id;
-  int64_t outcome_slot_count;
+  std::string outcome_slot_count;
   std::string payout_numerators;
 };
 
@@ -80,7 +81,7 @@ struct SplitMergeEvent {
   int64_t log_index;
   std::string stakeholder, collateral_token, parent_collection_id, condition_id;
   std::string partition;
-  int64_t amount;
+  std::string amount;
 };
 
 struct RedemptionEvent {
@@ -89,7 +90,7 @@ struct RedemptionEvent {
   int64_t log_index;
   std::string redeemer, collateral_token, parent_collection_id, condition_id;
   std::string index_sets;
-  int64_t payout;
+  std::string payout;
 };
 
 struct FpmmEvent {
@@ -99,7 +100,7 @@ struct FpmmEvent {
   std::string factory; // FPMM Factory地址
   std::string creator, fpmm_addr, conditional_tokens, collateral_token;
   std::string condition_ids;
-  int64_t fee;
+  std::string fee;
 };
 
 struct FpmmTradeEvent {
@@ -107,7 +108,8 @@ struct FpmmTradeEvent {
   std::string tx_hash;
   int64_t log_index;
   std::string fpmm_addr, trader;
-  int64_t side, outcome_index, usdc_amount, token_amount, fee;
+  int64_t side;
+  std::string outcome_index, usdc_amount, token_amount, fee;
 };
 
 struct FpmmFundingEvent {
@@ -117,7 +119,7 @@ struct FpmmFundingEvent {
   std::string fpmm_addr, funder;
   int64_t side;
   std::string amounts;
-  int64_t collateral_from_fee_pool, shares;
+  std::string collateral_from_fee_pool, shares;
 };
 
 struct OrderFilledEvent {
@@ -125,7 +127,7 @@ struct OrderFilledEvent {
   std::string tx_hash;
   int64_t log_index;
   std::string exchange, order_hash, maker, taker, maker_asset_id, taker_asset_id;
-  int64_t maker_amount, taker_amount, fee;
+  std::string maker_amount, taker_amount, fee;
 };
 
 struct TokenMapEvent {
@@ -140,7 +142,7 @@ struct NegRiskMarketEvent {
   std::string tx_hash;
   int64_t log_index;
   std::string market_id, oracle;
-  int64_t fee_bips;
+  std::string fee_bips;
   std::optional<std::string> data;
 };
 
@@ -149,7 +151,7 @@ struct NegRiskQuestionEvent {
   std::string tx_hash;
   int64_t log_index;
   std::string market_id, question_id;
-  int64_t question_index;
+  std::string question_index;
   std::optional<std::string> data;
 };
 
@@ -158,7 +160,7 @@ struct ConvertEvent {
   std::string tx_hash;
   int64_t log_index;
   std::string stakeholder, market_id;
-  int64_t index_set, amount;
+  std::string index_set, amount;
 };
 
 struct DecodedEvents {
@@ -229,21 +231,28 @@ private:
   }
 
   static int64_t hex_to_int64(const std::string &hex) {
-    return static_cast<int64_t>(std::stoull(hex, nullptr, 16));
-  }
-
-  // TODO:
-  // 问题1:
-  //    PositionConverted 事件的 topics[3] 是 indexed uint256 的 indexSet（bitmask），
-  //    当 NegRisk 市场有 65+ 个 outcome 时，高位被置位，超出 uint64 导致 stoull 崩溃。
-  //    截取低 64 位可以防止崩溃。截断值存入 feather 后是错的，但暂时不是问题：
-  //    stage2 读取 indexSet 后不参与任何匹配或计算，convert 事件的识别依赖的是
-  //    同一笔 tx 里 TransferSingle 的 burn 记录，indexSet 字段完全冗余。
-  static int64_t hex_to_int64_trunc(const std::string &hex) {
     std::string s = hex;
     if (s.size() >= 2 && s[0] == '0' && (s[1] == 'x' || s[1] == 'X')) s = s.substr(2);
-    if (s.size() > 16) s = s.substr(s.size() - 16);
+    if (s.empty()) return 0;
+    assert(std::all_of(s.begin(), s.end(), [](unsigned char c) { return std::isxdigit(c) != 0; }));
+    size_t first_non_zero = s.find_first_not_of('0');
+    if (first_non_zero == std::string::npos) return 0;
+    s = s.substr(first_non_zero);
+    assert(s.size() <= 16);
     return static_cast<int64_t>(std::stoull(s, nullptr, 16));
+  }
+
+  static std::string normalize_uint256_hex(const std::string &hex) {
+    std::string s = hex;
+    if (s.size() >= 2 && s[0] == '0' && (s[1] == 'x' || s[1] == 'X')) s = s.substr(2);
+    if (s.empty()) s = "0";
+    assert(std::all_of(s.begin(), s.end(), [](unsigned char c) { return std::isxdigit(c) != 0; }));
+    size_t first_non_zero = s.find_first_not_of('0');
+    if (first_non_zero == std::string::npos) s = "0";
+    else s = s.substr(first_non_zero);
+    assert(s.size() <= 64);
+    if (s.size() < 64) s = std::string(64 - s.size(), '0') + s;
+    return "0x" + s;
   }
 
   static std::string extract_address_from_topic(const std::string &topic) {
@@ -255,9 +264,13 @@ private:
     return "0x" + data.substr(start, 64);
   }
 
-  static int64_t extract_uint256_from_data(const std::string &data, size_t index) {
+  static std::string extract_uint256_hex_from_data(const std::string &data, size_t index) {
     std::string hex = extract_bytes32_from_data(data, index);
-    return hex_to_int64(hex);
+    return normalize_uint256_hex(hex);
+  }
+
+  static int64_t extract_uint256_i64_from_data(const std::string &data, size_t index) {
+    return hex_to_int64(extract_uint256_hex_from_data(data, index));
   }
 
   static bool is_fpmm_topic(const std::string &topic0) {
@@ -348,7 +361,7 @@ private:
                                extract_address_from_topic(topics[2].get<std::string>()),
                                extract_address_from_topic(topics[3].get<std::string>()),
                                extract_bytes32_from_data(data, 0),
-                               extract_uint256_from_data(data, 1)});
+                               extract_uint256_hex_from_data(data, 1)});
   }
 
   static void parse_transfer_batch(const json &topics, const std::string &data,
@@ -358,32 +371,32 @@ private:
     std::string from = extract_address_from_topic(topics[2].get<std::string>());
     std::string to = extract_address_from_topic(topics[3].get<std::string>());
 
-    int64_t ids_offset = extract_uint256_from_data(data, 0);
-    int64_t values_offset = extract_uint256_from_data(data, 1);
+    int64_t ids_offset = extract_uint256_i64_from_data(data, 0);
+    int64_t values_offset = extract_uint256_i64_from_data(data, 1);
 
-    int64_t ids_len = extract_uint256_from_data(data, ids_offset / 32);
-    int64_t values_len = extract_uint256_from_data(data, values_offset / 32);
+    int64_t ids_len = extract_uint256_i64_from_data(data, ids_offset / 32);
+    int64_t values_len = extract_uint256_i64_from_data(data, values_offset / 32);
     assert(ids_len == values_len);
 
     for (int64_t i = 0; i < ids_len; ++i) {
       events.transfer.push_back({block_number, tx_hash, log_index * 1000 + i,
                                  op, from, to,
                                  extract_bytes32_from_data(data, ids_offset / 32 + 1 + i),
-                                 extract_uint256_from_data(data, values_offset / 32 + 1 + i)});
+                                 extract_uint256_hex_from_data(data, values_offset / 32 + 1 + i)});
     }
   }
 
   static void parse_split_or_merge(const json &topics, const std::string &data,
                                    const std::string &tx_hash, int64_t block_number,
                                    int64_t log_index, std::vector<SplitMergeEvent> &out) {
-    int64_t partition_offset = extract_uint256_from_data(data, 1);
-    int64_t partition_len = extract_uint256_from_data(data, partition_offset / 32);
+    int64_t partition_offset = extract_uint256_i64_from_data(data, 1);
+    int64_t partition_len = extract_uint256_i64_from_data(data, partition_offset / 32);
     std::ostringstream partition_ss;
     partition_ss << "[";
     for (int64_t i = 0; i < partition_len; ++i) {
       if (i > 0)
         partition_ss << ",";
-      partition_ss << extract_uint256_from_data(data, partition_offset / 32 + 1 + i);
+      partition_ss << "\"" << extract_uint256_hex_from_data(data, partition_offset / 32 + 1 + i) << "\"";
     }
     partition_ss << "]";
 
@@ -393,20 +406,20 @@ private:
                    topics[2].get<std::string>(),
                    topics[3].get<std::string>(),
                    partition_ss.str(),
-                   extract_uint256_from_data(data, 2)});
+                   extract_uint256_hex_from_data(data, 2)});
   }
 
   static void parse_redemption(const json &topics, const std::string &data,
                                const std::string &tx_hash, int64_t block_number,
                                int64_t log_index, DecodedEvents &events) {
-    int64_t index_sets_offset = extract_uint256_from_data(data, 1);
-    int64_t index_sets_len = extract_uint256_from_data(data, index_sets_offset / 32);
+    int64_t index_sets_offset = extract_uint256_i64_from_data(data, 1);
+    int64_t index_sets_len = extract_uint256_i64_from_data(data, index_sets_offset / 32);
     std::ostringstream index_sets_ss;
     index_sets_ss << "[";
     for (int64_t i = 0; i < index_sets_len; ++i) {
       if (i > 0)
         index_sets_ss << ",";
-      index_sets_ss << extract_uint256_from_data(data, index_sets_offset / 32 + 1 + i);
+      index_sets_ss << "\"" << extract_uint256_hex_from_data(data, index_sets_offset / 32 + 1 + i) << "\"";
     }
     index_sets_ss << "]";
 
@@ -416,7 +429,7 @@ private:
                                  topics[3].get<std::string>(),
                                  extract_bytes32_from_data(data, 0),
                                  index_sets_ss.str(),
-                                 extract_uint256_from_data(data, 2)});
+                                 extract_uint256_hex_from_data(data, 2)});
   }
 
   static void parse_condition_preparation(const json &topics, const std::string &data,
@@ -426,20 +439,20 @@ private:
                                             topics[1].get<std::string>(),
                                             extract_address_from_topic(topics[2].get<std::string>()),
                                             topics[3].get<std::string>(),
-                                            extract_uint256_from_data(data, 0)});
+                                            extract_uint256_hex_from_data(data, 0)});
   }
 
   static void parse_condition_resolution(const json &topics, const std::string &data,
                                          const std::string &tx_hash, int64_t block_number,
                                          int64_t log_index, DecodedEvents &events) {
-    int64_t payout_offset = extract_uint256_from_data(data, 1);
-    int64_t payout_len = extract_uint256_from_data(data, payout_offset / 32);
+    int64_t payout_offset = extract_uint256_i64_from_data(data, 1);
+    int64_t payout_len = extract_uint256_i64_from_data(data, payout_offset / 32);
     std::ostringstream payout_ss;
     payout_ss << "[";
     for (int64_t i = 0; i < payout_len; ++i) {
       if (i > 0)
         payout_ss << ",";
-      payout_ss << extract_uint256_from_data(data, payout_offset / 32 + 1 + i);
+      payout_ss << "\"" << extract_uint256_hex_from_data(data, payout_offset / 32 + 1 + i) << "\"";
     }
     payout_ss << "]";
 
@@ -447,7 +460,7 @@ private:
                                            topics[1].get<std::string>(),
                                            extract_address_from_topic(topics[2].get<std::string>()),
                                            topics[3].get<std::string>(),
-                                           extract_uint256_from_data(data, 0),
+                                           extract_uint256_hex_from_data(data, 0),
                                            payout_ss.str()});
   }
 
@@ -462,9 +475,9 @@ private:
                                    extract_address_from_topic(topics[3].get<std::string>()),
                                    extract_bytes32_from_data(data, 0),
                                    extract_bytes32_from_data(data, 1),
-                                   extract_uint256_from_data(data, 2),
-                                   extract_uint256_from_data(data, 3),
-                                   extract_uint256_from_data(data, 4)});
+                                   extract_uint256_hex_from_data(data, 2),
+                                   extract_uint256_hex_from_data(data, 3),
+                                   extract_uint256_hex_from_data(data, 4)});
   }
 
   static void parse_token_map(const json &topics, const std::string &tx_hash,
@@ -483,15 +496,15 @@ private:
     events.convert.push_back({block_number, tx_hash, log_index,
                               extract_address_from_topic(topics[1].get<std::string>()),
                               topics[2].get<std::string>(),
-                              hex_to_int64_trunc(topics[3].get<std::string>()), // indexed uint256 indexSet，见 hex_to_int64_trunc
-                              extract_uint256_from_data(data, 0)});
+                              normalize_uint256_hex(topics[3].get<std::string>()),
+                              extract_uint256_hex_from_data(data, 0)});
   }
 
   static void parse_neg_risk_market(const json &topics, const std::string &data,
                                     const std::string &tx_hash, int64_t block_number,
                                     int64_t log_index, DecodedEvents &events) {
-    int64_t data_offset = extract_uint256_from_data(data, 1);
-    int64_t data_len = extract_uint256_from_data(data, data_offset / 32);
+    int64_t data_offset = extract_uint256_i64_from_data(data, 1);
+    int64_t data_len = extract_uint256_i64_from_data(data, data_offset / 32);
     std::optional<std::string> market_data;
     if (data_len > 0) {
       size_t start = 2 + (data_offset / 32 + 1) * 64;
@@ -504,15 +517,15 @@ private:
     events.neg_risk_market.push_back({block_number, tx_hash, log_index,
                                       topics[1].get<std::string>(),
                                       extract_address_from_topic(topics[2].get<std::string>()),
-                                      extract_uint256_from_data(data, 0),
+                                      extract_uint256_hex_from_data(data, 0),
                                       market_data});
   }
 
   static void parse_neg_risk_question(const json &topics, const std::string &data,
                                       const std::string &tx_hash, int64_t block_number,
                                       int64_t log_index, DecodedEvents &events) {
-    int64_t data_offset = extract_uint256_from_data(data, 1);
-    int64_t data_len = extract_uint256_from_data(data, data_offset / 32);
+    int64_t data_offset = extract_uint256_i64_from_data(data, 1);
+    int64_t data_len = extract_uint256_i64_from_data(data, data_offset / 32);
     std::optional<std::string> question_data;
     if (data_len > 0) {
       size_t start = 2 + (data_offset / 32 + 1) * 64;
@@ -525,7 +538,7 @@ private:
     events.neg_risk_question.push_back({block_number, tx_hash, log_index,
                                         topics[1].get<std::string>(),
                                         topics[2].get<std::string>(),
-                                        extract_uint256_from_data(data, 0),
+                                        extract_uint256_hex_from_data(data, 0),
                                         question_data});
   }
 
@@ -541,8 +554,8 @@ private:
     int64_t log_index = hex_to_int64(log["logIndex"].get<std::string>());
 
     std::string fpmm_addr = extract_address_from_topic("0x" + data.substr(2, 64));
-    int64_t cond_ids_offset = extract_uint256_from_data(data, 1);
-    int64_t cond_ids_len = extract_uint256_from_data(data, cond_ids_offset / 32);
+    int64_t cond_ids_offset = extract_uint256_i64_from_data(data, 1);
+    int64_t cond_ids_len = extract_uint256_i64_from_data(data, cond_ids_offset / 32);
 
     std::ostringstream cond_ids_ss;
     cond_ids_ss << "[";
@@ -560,7 +573,7 @@ private:
                            extract_address_from_topic(topics_arr[2].get<std::string>()),
                            extract_address_from_topic(topics_arr[3].get<std::string>()),
                            cond_ids_ss.str(),
-                           extract_uint256_from_data(data, 2)});
+                           extract_uint256_hex_from_data(data, 2)});
 
     return to_lower(fpmm_addr);
   }
@@ -574,28 +587,28 @@ private:
                                    fpmm_addr,
                                    extract_address_from_topic(topics[1].get<std::string>()),
                                    1,
-                                   hex_to_int64(topics[2].get<std::string>()),
-                                   extract_uint256_from_data(data, 0),
-                                   extract_uint256_from_data(data, 2),
-                                   extract_uint256_from_data(data, 1)});
+                                   normalize_uint256_hex(topics[2].get<std::string>()),
+                                   extract_uint256_hex_from_data(data, 0),
+                                   extract_uint256_hex_from_data(data, 2),
+                                   extract_uint256_hex_from_data(data, 1)});
     } else if (topic0 == topics::FPMM_SELL) {
       events.fpmm_trade.push_back({block_number, tx_hash, log_index,
                                    fpmm_addr,
                                    extract_address_from_topic(topics[1].get<std::string>()),
                                    2,
-                                   hex_to_int64(topics[2].get<std::string>()),
-                                   extract_uint256_from_data(data, 0),
-                                   extract_uint256_from_data(data, 2),
-                                   extract_uint256_from_data(data, 1)});
+                                   normalize_uint256_hex(topics[2].get<std::string>()),
+                                   extract_uint256_hex_from_data(data, 0),
+                                   extract_uint256_hex_from_data(data, 2),
+                                   extract_uint256_hex_from_data(data, 1)});
     } else if (topic0 == topics::FPMM_FUNDING_ADD) {
-      int64_t amounts_offset = extract_uint256_from_data(data, 0);
-      int64_t amounts_len = extract_uint256_from_data(data, amounts_offset / 32);
+      int64_t amounts_offset = extract_uint256_i64_from_data(data, 0);
+      int64_t amounts_len = extract_uint256_i64_from_data(data, amounts_offset / 32);
       std::ostringstream amounts_ss;
       amounts_ss << "[";
       for (int64_t i = 0; i < amounts_len; ++i) {
         if (i > 0)
           amounts_ss << ",";
-        amounts_ss << extract_uint256_from_data(data, amounts_offset / 32 + 1 + i);
+        amounts_ss << "\"" << extract_uint256_hex_from_data(data, amounts_offset / 32 + 1 + i) << "\"";
       }
       amounts_ss << "]";
 
@@ -604,17 +617,17 @@ private:
                                      extract_address_from_topic(topics[1].get<std::string>()),
                                      1,
                                      amounts_ss.str(),
-                                     0,
-                                     extract_uint256_from_data(data, 1)});
+                                     normalize_uint256_hex("0x0"),
+                                     extract_uint256_hex_from_data(data, 1)});
     } else if (topic0 == topics::FPMM_FUNDING_REMOVE) {
-      int64_t amounts_offset = extract_uint256_from_data(data, 0);
-      int64_t amounts_len = extract_uint256_from_data(data, amounts_offset / 32);
+      int64_t amounts_offset = extract_uint256_i64_from_data(data, 0);
+      int64_t amounts_len = extract_uint256_i64_from_data(data, amounts_offset / 32);
       std::ostringstream amounts_ss;
       amounts_ss << "[";
       for (int64_t i = 0; i < amounts_len; ++i) {
         if (i > 0)
           amounts_ss << ",";
-        amounts_ss << extract_uint256_from_data(data, amounts_offset / 32 + 1 + i);
+        amounts_ss << "\"" << extract_uint256_hex_from_data(data, amounts_offset / 32 + 1 + i) << "\"";
       }
       amounts_ss << "]";
 
@@ -623,8 +636,8 @@ private:
                                      extract_address_from_topic(topics[1].get<std::string>()),
                                      2,
                                      amounts_ss.str(),
-                                     extract_uint256_from_data(data, 1),
-                                     extract_uint256_from_data(data, 2)});
+                                     extract_uint256_hex_from_data(data, 1),
+                                     extract_uint256_hex_from_data(data, 2)});
     }
   }
 };

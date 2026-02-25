@@ -1,5 +1,6 @@
 #include "event_build.hpp"
 #include "misc/profiler.hpp"
+#include <limits>
 
 namespace stage2 {
 namespace {
@@ -12,6 +13,20 @@ inline std::string block_range_query(Database &db, const std::string &select_sql
          " AND block_number <= " + std::to_string(end);
 }
 
+inline int64_t u256_blob_to_i64(const duckdb::Value &v) {
+  std::string blob = v.GetValueUnsafe<std::string>();
+  assert(blob.size() == 32);
+  for (size_t i = 0; i < 24; ++i) {
+    assert(static_cast<unsigned char>(blob[i]) == 0);
+  }
+  uint64_t low = 0;
+  for (size_t i = 24; i < 32; ++i) {
+    low = (low << 8) | static_cast<unsigned char>(blob[i]);
+  }
+  assert(low <= static_cast<uint64_t>(std::numeric_limits<int64_t>::max()));
+  return static_cast<int64_t>(low);
+}
+
 } // namespace
 
 void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
@@ -19,6 +34,11 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
   auto conn = stage1_db_.create_connection();
   auto get_i32 = [](const duckdb::unique_ptr<duckdb::MaterializedQueryResult> &tbl, int col, idx_t row) {
     return tbl->GetValue(col, row).GetValue<int>();
+  };
+  auto get_u256_i32 = [](const duckdb::unique_ptr<duckdb::MaterializedQueryResult> &tbl, int col, idx_t row) {
+    int64_t v = u256_blob_to_i64(tbl->GetValue(col, row));
+    assert(v >= 0 && v <= std::numeric_limits<int>::max());
+    return static_cast<int>(v);
   };
   auto get_hex = [](const duckdb::unique_ptr<duckdb::MaterializedQueryResult> &tbl, int col, idx_t row) {
     return blob_to_hex(tbl->GetValue(col, row).GetValueUnsafe<std::string>());
@@ -32,7 +52,7 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
       "condition_preparation", start, end));
   for (idx_t i = 0; i < cp->RowCount(); ++i) {
     std::string cid = get_hex(cp, 0, i);
-    int cnt = get_i32(cp, 1, i);
+    int cnt = get_u256_i32(cp, 1, i);
     std::string qid = get_hex_lower(cp, 2, i);
     intern_condition(cid, cnt, ConditionSource::ConditionPrep, qid);
   }
@@ -50,7 +70,7 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
     std::vector<int64_t> payouts;
     auto payout_arr = nlohmann::json::parse(payout_str);
     for (const auto &v : payout_arr) {
-      payouts.push_back(v.get<int64_t>());
+      payouts.push_back(u256_blob_to_i64(duckdb::Value::BLOB(hex_to_blob(v.get<std::string>()))));
     }
     update_condition_payout(it->second, payouts);
   }
@@ -149,6 +169,9 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
   auto get_i64 = [](const duckdb::unique_ptr<duckdb::MaterializedQueryResult> &tbl, int col, idx_t row) {
     return tbl->GetValue(col, row).GetValue<int64_t>();
   };
+  auto get_u256_i64 = [](const duckdb::unique_ptr<duckdb::MaterializedQueryResult> &tbl, int col, idx_t row) {
+    return u256_blob_to_i64(tbl->GetValue(col, row));
+  };
   auto get_hex = [](const duckdb::unique_ptr<duckdb::MaterializedQueryResult> &tbl, int col, idx_t row) {
     return blob_to_hex(tbl->GetValue(col, row).GetValueUnsafe<std::string>());
   };
@@ -169,7 +192,7 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
   for (idx_t i = 0; i < split->RowCount(); ++i) {
     TxKey key = build_tx_key(split, i);
     SplitInfo info;
-    info.amount = get_i64(split, 3, i);
+    info.amount = get_u256_i64(split, 3, i);
     info.stakeholder = get_hex_lower(split, 4, i);
     info.cond_id = get_hex_lower(split, 2, i);
     tx_split_[key].push_back(info);
@@ -182,7 +205,7 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
   for (idx_t i = 0; i < merge->RowCount(); ++i) {
     TxKey key = build_tx_key(merge, i);
     MergeInfo info;
-    info.amount = get_i64(merge, 3, i);
+    info.amount = get_u256_i64(merge, 3, i);
     info.stakeholder = get_hex_lower(merge, 4, i);
     info.cond_id = get_hex_lower(merge, 2, i);
     tx_merge_[key].push_back(info);
@@ -195,7 +218,7 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
   for (idx_t i = 0; i < redemption->RowCount(); ++i) {
     TxKey key = build_tx_key(redemption, i);
     RedemptionInfo info;
-    info.payout = get_i64(redemption, 3, i);
+    info.payout = get_u256_i64(redemption, 3, i);
     info.redeemer = get_hex_lower(redemption, 4, i);
     info.cond_id = get_hex_lower(redemption, 2, i);
     tx_redemption_[key].push_back(info);
@@ -213,8 +236,8 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
     key.market_id = market_id;
     ConvertInfo info;
     info.market_id = market_id;
-    info.index_set = get_i64(convert, 3, i);
-    info.amount = get_i64(convert, 4, i);
+    info.index_set = get_u256_i64(convert, 3, i);
+    info.amount = get_u256_i64(convert, 4, i);
     info.stakeholder = get_hex_lower(convert, 5, i);
     tx_convert_[key].push_back(info);
   }
@@ -233,9 +256,9 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
     std::string taker = get_hex_lower(order, 3, i);
     std::string maker_asset = get_hex(order, 4, i);
     std::string taker_asset = get_hex(order, 5, i);
-    int64_t maker_amt = get_i64(order, 6, i);
-    int64_t taker_amt = get_i64(order, 7, i);
-    int64_t fee = get_i64(order, 8, i);
+    int64_t maker_amt = get_u256_i64(order, 6, i);
+    int64_t taker_amt = get_u256_i64(order, 7, i);
+    int64_t fee = get_u256_i64(order, 8, i);
 
     bool maker_is_usdc = maker_asset == ZERO_TOKEN_ID;
     std::string token_id = maker_is_usdc ? taker_asset : maker_asset;
@@ -267,9 +290,11 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
     info.fpmm_addr = fpmm_addr;
     info.trader = get_hex_lower(fpmm_trade, 3, i);
     info.side = fpmm_trade->GetValue(4, i).GetValue<int>();
-    info.outcome_idx = fpmm_trade->GetValue(5, i).GetValue<int>();
-    info.usdc = get_i64(fpmm_trade, 6, i);
-    info.tokens = get_i64(fpmm_trade, 7, i);
+    int64_t outcome_idx = get_u256_i64(fpmm_trade, 5, i);
+    assert(outcome_idx >= 0 && outcome_idx <= std::numeric_limits<int>::max());
+    info.outcome_idx = static_cast<int>(outcome_idx);
+    info.usdc = get_u256_i64(fpmm_trade, 6, i);
+    info.tokens = get_u256_i64(fpmm_trade, 7, i);
     tx_fpmm_trade_[key].push_back(info);
   }
 
@@ -290,8 +315,8 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
     std::string amounts_json = fpmm_funding->GetValue(5, i).GetValueUnsafe<std::string>();
     auto amounts_arr = nlohmann::json::parse(amounts_json);
     info.amounts_count = static_cast<int>(amounts_arr.size());
-    info.amount0 = amounts_arr.size() > 0 ? amounts_arr[0].get<int64_t>() : 0;
-    info.amount1 = amounts_arr.size() > 1 ? amounts_arr[1].get<int64_t>() : 0;
+    info.amount0 = amounts_arr.size() > 0 ? u256_blob_to_i64(duckdb::Value::BLOB(hex_to_blob(amounts_arr[0].get<std::string>()))) : 0;
+    info.amount1 = amounts_arr.size() > 1 ? u256_blob_to_i64(duckdb::Value::BLOB(hex_to_blob(amounts_arr[1].get<std::string>()))) : 0;
     tx_fpmm_funding_[key].push_back(info);
   }
 }
@@ -301,6 +326,9 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
   auto conn = stage1_db_.create_connection();
   auto get_i64 = [](const duckdb::unique_ptr<duckdb::MaterializedQueryResult> &tbl, int col, idx_t row) {
     return tbl->GetValue(col, row).GetValue<int64_t>();
+  };
+  auto get_u256_i64 = [](const duckdb::unique_ptr<duckdb::MaterializedQueryResult> &tbl, int col, idx_t row) {
+    return u256_blob_to_i64(tbl->GetValue(col, row));
   };
   auto get_hex = [](const duckdb::unique_ptr<duckdb::MaterializedQueryResult> &tbl, int col, idx_t row) {
     return blob_to_hex(tbl->GetValue(col, row).GetValueUnsafe<std::string>());
@@ -327,7 +355,7 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
   for (idx_t i = 0; i < transfers->RowCount(); ++i) {
     int64_t block = get_i64(transfers, 0, i);
     int64_t log_idx = get_i64(transfers, 2, i);
-    int64_t amount = get_i64(transfers, 7, i);
+    int64_t amount = get_u256_i64(transfers, 7, i);
     std::string op = to_lower(get_hex(transfers, 3, i));
     std::string from = to_lower(get_hex(transfers, 4, i));
     std::string to = to_lower(get_hex(transfers, 5, i));

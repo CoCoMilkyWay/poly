@@ -35,13 +35,12 @@ ERC1155.sol 中所有修改余额的地方：
 ## 架构
 
 ```
-EventSync (timer驱动, boost::asio)
+Stage2Sync (timer驱动, boost::asio)
   ├─ 检查 stage1_last_block vs stage2_cursor
   ├─ behind > 0 → build_chunk(cursor + chunk_size)
   │   ├─ Phase 1: phase1_update_mappings
   │   ├─ Phase 2: phase2_build_semantic_index
-  │   ├─ Phase 3: phase3_process_transfers → classify_and_emit
-  │   ├─ chunk_xfer_stats_.verify()
+  │   ├─ Phase 3: phase3_process_transfers
   │   └─ commit_chunk (单事务: rb_* + user_event + cursor)
   └─ behind == 0 → sleep(base_interval)
 ```
@@ -350,15 +349,3 @@ total
 ### ChunkLog
 
 只在有 NonPolymarket transfer 时写文件: `data/stage2/log/chunk_{start}_{NP数量}NP.log`
-
-## Stage 3 用户状态
-
-```
-ReplayState (回放中间态):
-    positions[8]: i64   每个 outcome 的持仓
-    cost[8]:      i64   每个 outcome 的成本
-    realized_pnl: i64   已实现盈亏
-
-Snapshot (快照, 112字节):
-    sort_key, delta, price, positions[8], cost_basis, realized_pnl, event_type, token_idx, outcome_count
-```

@@ -197,28 +197,28 @@ TransferSingle + TransferBatch 覆盖**所有**持仓变化, 不会重合:
 
 **ConditionPreparation**
 
-| 字段             | 类型    | indexed | 说明                |
-| ---------------- | ------- | ------- | ------------------- |
-| conditionId      | bytes32 | yes     | 条件 ID             |
-| oracle           | address | yes     | oracle 地址         |
-| questionId       | bytes32 | yes     | 问题 ID             |
-| outcomeSlotCount | uint256 | no      | 固定为 2            |
-| tx_hash          | bytes32 | meta    | log.transactionHash |
-| block_number     | uint64  | meta    | log.blockNumber     |
-| log_index        | uint32  | meta    | log.logIndex        |
+| 字段             | 类型    | indexed | 说明                  |
+| ---------------- | ------- | ------- | --------------------- |
+| conditionId      | bytes32 | yes     | 条件 ID               |
+| oracle           | address | yes     | oracle 地址           |
+| questionId       | bytes32 | yes     | 问题 ID               |
+| outcomeSlotCount | uint256 | no      | 协议约束: >1 且 <=256 |
+| tx_hash          | bytes32 | meta    | log.transactionHash   |
+| block_number     | uint64  | meta    | log.blockNumber       |
+| log_index        | uint32  | meta    | log.logIndex          |
 
 **ConditionResolution**
 
-| 字段             | 类型      | indexed | 说明                                |
-| ---------------- | --------- | ------- | ----------------------------------- |
-| conditionId      | bytes32   | yes     | 条件 ID                             |
-| oracle           | address   | yes     | UmaCtfAdapter 地址                  |
-| questionId       | bytes32   | yes     | 问题 ID                             |
-| outcomeSlotCount | uint256   | no      | 固定为 2                            |
-| payoutNumerators | uint256[] | no      | [1,0]=YES赢, [0,1]=NO赢, [1,1]=平局 |
-| tx_hash          | bytes32   | meta    | log.transactionHash                 |
-| block_number     | uint64    | meta    | log.blockNumber                     |
-| log_index        | uint32    | meta    | log.logIndex                        |
+| 字段             | 类型      | indexed | 说明                                                   |
+| ---------------- | --------- | ------- | ------------------------------------------------------ |
+| conditionId      | bytes32   | yes     | 条件 ID                                                |
+| oracle           | address   | yes     | UmaCtfAdapter 地址                                     |
+| questionId       | bytes32   | yes     | 问题 ID                                                |
+| outcomeSlotCount | uint256   | no      | 实际值为 payoutNumerators.length，协议约束 >1 且 <=256 |
+| payoutNumerators | uint256[] | no      | [1,0]=YES赢, [0,1]=NO赢, [1,1]=平局                    |
+| tx_hash          | bytes32   | meta    | log.transactionHash                                    |
+| block_number     | uint64    | meta    | log.blockNumber                                        |
+| log_index        | uint32    | meta    | log.logIndex                                           |
 
 **PositionSplit**
 
@@ -408,25 +408,25 @@ fpmm_trade (Taker) + fpmm_funding (LP Maker结算) = 订单簿时代的 order_fi
 
 **FPMMBuy** (FPMM合约发出)
 
-| 字段                | 类型    | indexed | 说明                                   |
-| ------------------- | ------- | ------- | -------------------------------------- |
-| fpmm                | address | meta    | log.address (动态部署, 需记录合约地址) |
-| buyer               | address | yes     | 买家地址                               |
-| investmentAmount    | uint256 | no      | 投入的USDC数量 (含手续费, 6 decimals)  |
-| feeAmount           | uint256 | no      | 手续费 (6 decimals)                    |
-| outcomeIndex        | uint256 | yes     | 0=YES, 1=NO                            |
-| outcomeTokensBought | uint256 | no      | 获得的token数量 (6 decimals)           |
+| 字段                | 类型    | indexed | 说明                                      |
+| ------------------- | ------- | ------- | ----------------------------------------- |
+| fpmm                | address | meta    | log.address (动态部署, 需记录合约地址)    |
+| buyer               | address | yes     | 买家地址                                  |
+| investmentAmount    | uint256 | no      | 投入的USDC数量 (含手续费, 6 decimals)     |
+| feeAmount           | uint256 | no      | 手续费 (6 decimals)                       |
+| outcomeIndex        | uint256 | yes     | 结果槽位索引（由市场的 outcome 排序决定） |
+| outcomeTokensBought | uint256 | no      | 获得的token数量 (6 decimals)              |
 
 **FPMMSell** (FPMM合约发出)
 
-| 字段              | 类型    | indexed | 说明                                    |
-| ----------------- | ------- | ------- | --------------------------------------- |
-| fpmm              | address | meta    | log.address (动态部署, 需记录合约地址)  |
-| seller            | address | yes     | 卖家地址                                |
-| returnAmount      | uint256 | no      | 获得的USDC数量 (不含手续费, 6 decimals) |
-| feeAmount         | uint256 | no      | 手续费 (6 decimals)                     |
-| outcomeIndex      | uint256 | yes     | 0=YES, 1=NO                             |
-| outcomeTokensSold | uint256 | no      | 卖出的token数量 (6 decimals)            |
+| 字段              | 类型    | indexed | 说明                                      |
+| ----------------- | ------- | ------- | ----------------------------------------- |
+| fpmm              | address | meta    | log.address (动态部署, 需记录合约地址)    |
+| seller            | address | yes     | 卖家地址                                  |
+| returnAmount      | uint256 | no      | 获得的USDC数量 (不含手续费, 6 decimals)   |
+| feeAmount         | uint256 | no      | 手续费 (6 decimals)                       |
+| outcomeIndex      | uint256 | yes     | 结果槽位索引（由市场的 outcome 排序决定） |
+| outcomeTokensSold | uint256 | no      | 卖出的token数量 (6 decimals)              |
 
 **FPMMFundingAdded** (FPMM合约发出)
 
