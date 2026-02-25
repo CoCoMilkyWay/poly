@@ -37,9 +37,11 @@ public:
     std::string error_msg;
   };
 
-  RpcClient(const std::string &url, const std::string &api_key = "", const std::string &worker_name = "RPC-Worker")
+  RpcClient(const std::string &url, const std::string &api_key = "", const std::string &worker_name = "RPC-Worker",
+            const std::string &proxy_url = "")
       : api_key_(api_key), worker_name_(worker_name), ioc_(), ssl_ctx_(asio::ssl::context::tls_client) {
     parse_url(url);
+    parse_proxy_url(proxy_url);
     ssl_ctx_.set_verify_mode(asio::ssl::verify_none);
     start_worker();
   }
@@ -220,6 +222,63 @@ private:
     return results;
   }
 
+  void parse_proxy_url(const std::string &proxy_url) {
+    if (proxy_url.empty())
+      return;
+    std::string u = proxy_url;
+    if (u.starts_with("socks5://"))
+      u = u.substr(9);
+    else if (u.starts_with("http://"))
+      u = u.substr(7);
+    auto colon_pos = u.rfind(':');
+    if (colon_pos != std::string::npos) {
+      proxy_host_ = u.substr(0, colon_pos);
+      proxy_port_ = u.substr(colon_pos + 1);
+    } else {
+      proxy_host_ = u;
+      proxy_port_ = "8080";
+    }
+  }
+
+  static void socks5_handshake(asio::ip::tcp::socket &sock, const std::string &dst_host, int dst_port) {
+    // 1. 发送 greeting: version=5, nmethods=1, method=no-auth
+    uint8_t greeting[3] = {0x05, 0x01, 0x00};
+    asio::write(sock, asio::buffer(greeting, 3));
+
+    // 2. 读取代理选择的 method
+    uint8_t method_resp[2];
+    asio::read(sock, asio::buffer(method_resp, 2));
+    assert(method_resp[0] == 0x05 && method_resp[1] == 0x00 && "SOCKS5 不支持无认证");
+
+    // 3. 发送 CONNECT 请求 (ATYP=0x03 域名)
+    std::vector<uint8_t> req;
+    req.push_back(0x05);                          // version
+    req.push_back(0x01);                          // cmd=CONNECT
+    req.push_back(0x00);                          // reserved
+    req.push_back(0x03);                          // atyp=domain
+    req.push_back(static_cast<uint8_t>(dst_host.size()));
+    req.insert(req.end(), dst_host.begin(), dst_host.end());
+    req.push_back(static_cast<uint8_t>((dst_port >> 8) & 0xff));
+    req.push_back(static_cast<uint8_t>(dst_port & 0xff));
+    asio::write(sock, asio::buffer(req));
+
+    // 4. 读取响应头 (固定 4 字节)
+    uint8_t resp[4];
+    asio::read(sock, asio::buffer(resp, 4));
+    assert(resp[0] == 0x05 && resp[1] == 0x00 && "SOCKS5 CONNECT 失败");
+
+    // 5. 读取并丢弃 BND.ADDR + BND.PORT
+    if (resp[3] == 0x01) {          // IPv4: 4 + 2
+      uint8_t buf[6]; asio::read(sock, asio::buffer(buf, 6));
+    } else if (resp[3] == 0x03) {   // domain: len + domain + 2
+      uint8_t len; asio::read(sock, asio::buffer(&len, 1));
+      std::vector<uint8_t> buf(len + 2); asio::read(sock, asio::buffer(buf));
+    } else if (resp[3] == 0x04) {   // IPv6: 16 + 2
+      uint8_t buf[18]; asio::read(sock, asio::buffer(buf, 18));
+    }
+    // 隧道建立完毕，后续直接走 TLS
+  }
+
   void parse_url(const std::string &url) {
     std::string u = url;
     if (u.starts_with("https://")) {
@@ -255,15 +314,25 @@ private:
       return;
 
     tcp::resolver resolver(ioc_);
-    auto const endpoints = resolver.resolve(host_, port_);
 
     if (use_ssl_) {
       ssl_stream_ = std::make_unique<beast::ssl_stream<beast::tcp_stream>>(ioc_, ssl_ctx_);
       SSL_set_tlsext_host_name(ssl_stream_->native_handle(), host_.c_str());
-      beast::get_lowest_layer(*ssl_stream_).connect(endpoints);
+
+      if (!proxy_host_.empty()) {
+        // 通过 SOCKS5 代理连接
+        auto proxy_endpoints = resolver.resolve(proxy_host_, proxy_port_);
+        beast::get_lowest_layer(*ssl_stream_).connect(proxy_endpoints);
+        socks5_handshake(beast::get_lowest_layer(*ssl_stream_).socket(), host_, std::stoi(port_));
+      } else {
+        auto const endpoints = resolver.resolve(host_, port_);
+        beast::get_lowest_layer(*ssl_stream_).connect(endpoints);
+      }
+
       ssl_stream_->handshake(asio::ssl::stream_base::client);
     } else {
       tcp_stream_ = std::make_unique<beast::tcp_stream>(ioc_);
+      auto const endpoints = resolver.resolve(host_, port_);
       tcp_stream_->connect(endpoints);
     }
     connected_ = true;
@@ -343,6 +412,8 @@ private:
   std::string target_;
   std::string api_key_;
   std::string worker_name_;
+  std::string proxy_host_;
+  std::string proxy_port_;
   bool use_ssl_ = false;
   size_t last_response_size_ = 0;
 

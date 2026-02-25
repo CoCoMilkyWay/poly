@@ -1,11 +1,12 @@
 {
+  "proxy": "socks5://127.0.0.1:10808",
   "db_path_stage1": "data/stage1/polymarket.duckdb",
   "db_path_stage2": "data/stage2/users.duckdb",
   "frontend_port": 8000,
   "backend_port": 8001,
   "initial_block": 0,
-  "stage1_rpc_query_threads": 1,
-  "stage1_rpc_sync_chunk_basics": 80,
+  "stage1_rpc_query_threads": 10,
+  "stage1_rpc_sync_chunk_basics": 40,
   "active_rpc": "Alchemy",
   "rpc_nodes": [
     {

@@ -13,6 +13,7 @@ struct Config {
   std::string rpc_name;
   std::string rpc_url;
   std::string rpc_api_key;
+  std::string proxy_url;
   int stage1_rpc_query_threads;
   int stage1_rpc_sync_chunk_basics;
   int backend_port;
@@ -51,6 +52,7 @@ struct Config {
       }
     }
     assert(!config.rpc_url.empty() && "active_rpc 在 rpc_nodes 中未找到");
+    config.proxy_url = j.value("proxy", "");
 
     return config;
   }
