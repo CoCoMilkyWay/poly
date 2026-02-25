@@ -157,17 +157,18 @@ def main():
         [str(BACKEND_EXE), "--config", str(CONFIG_FILE)],
         cwd=ROOT,
     )
-
-    print("[run.py] 启动 frontend...")
-    frontend = subprocess.Popen(
-        [sys.executable, "-m", "uvicorn", "main:app", "--host",
-            "0.0.0.0", "--port", str(FRONTEND_PORT), "--log-level", "warning"],
-        cwd=FRONTEND_DIR,
-    )
+    frontend = None
 
     try:
         assert wait_for_port(BACKEND_PORT, timeout=BACKEND_STARTUP_TIMEOUT, proc=backend), (
             f"backend 启动失败 (timeout={BACKEND_STARTUP_TIMEOUT}s, exit={backend.poll()})"
+        )
+
+        print("[run.py] 启动 frontend...")
+        frontend = subprocess.Popen(
+            [sys.executable, "-m", "uvicorn", "main:app", "--host",
+             "0.0.0.0", "--port", str(FRONTEND_PORT), "--log-level", "warning"],
+            cwd=FRONTEND_DIR,
         )
         assert wait_for_port(FRONTEND_PORT, timeout=FRONTEND_STARTUP_TIMEOUT, proc=frontend), (
             f"frontend 启动失败 (timeout={FRONTEND_STARTUP_TIMEOUT}s, exit={frontend.poll()})"

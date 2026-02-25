@@ -104,6 +104,9 @@ private:
     {
       std::lock_guard<std::mutex> lock(worker_mutex_);
       worker_running_ = false;
+      // Graceful stop: do not feed workers with queued requests anymore.
+      // Keep only currently executing request; queued promises will break immediately.
+      request_queue_.clear();
       worker_cv_.notify_one();
     }
     if (worker_thread_.joinable()) {
