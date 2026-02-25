@@ -62,6 +62,11 @@ message(STATUS "Found Arrow: ${Arrow_VERSION}")
 # 源文件
 set(SOURCES
     ${SRC_DIR}/main.cpp
+    ${SRC_DIR}/api/api_session.cpp
+    ${SRC_DIR}/core/database.cpp
+    ${SRC_DIR}/infra/rpc_client.cpp
+    ${SRC_DIR}/stage1/chain_sync.cpp
+    ${SRC_DIR}/stage1/event_decode.cpp
     ${SRC_DIR}/stage2/event_build_classify.cpp
     ${SRC_DIR}/stage2/event_build_phases.cpp
 )
