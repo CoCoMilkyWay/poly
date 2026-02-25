@@ -20,7 +20,7 @@ option(PROFILE_MODE "Profile mode: enable Tracy profiling" OFF)
 # 编译选项
 if(PROFILE_MODE)
     message(STATUS "Build mode: PROFILE (tracy instrumentation)")
-    add_compile_definitions(PROFILE_MODE TRACY_ENABLE TRACY_NO_SYSTEM_TRACING TRACY_NO_SAMPLING)
+    add_compile_definitions(PROFILE_MODE TRACY_ENABLE TRACY_NO_SYSTEM_TRACING TRACY_NO_SAMPLING TRACY_TIMER_FALLBACK)
     if(WIN32)
         add_compile_options(/O2 /Zi -march=native)
     else()

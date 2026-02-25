@@ -19,6 +19,8 @@ BACKEND_EXE = BACKEND_BUILD / \
     ("core.exe" if sys.platform == "win32" else "core")
 BACKEND_PORT = 8001
 FRONTEND_PORT = 8000
+BACKEND_STARTUP_TIMEOUT = 120
+FRONTEND_STARTUP_TIMEOUT = 30
 
 # Build modes (set ONLY ONE to True)
 ENABLE_PROFILE = True
@@ -61,6 +63,8 @@ def launch_tracy_ui() -> Optional[subprocess.Popen]:
             cwd=tracy_exe.parent,
             creationflags=creationflags,
             start_new_session=(sys.platform != "win32"),
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
         )
         print(f"[Tracy] UI launched: {tracy_exe}")
         return proc
@@ -124,11 +128,13 @@ def build_backend():
     print(f"[run.py] 编译完成 (mode: {mode})")
 
 
-def wait_for_port(port: int, timeout: int = 10):
+def wait_for_port(port: int, timeout: int = 10, proc: Optional[subprocess.Popen] = None):
     start = time.time()
     while time.time() - start < timeout:
         if port_in_use(port):
             return True
+        if proc is not None and proc.poll() is not None:
+            return False
         time.sleep(0.2)
     return False
 
@@ -160,8 +166,12 @@ def main():
     )
 
     try:
-        assert wait_for_port(BACKEND_PORT), "backend 启动失败"
-        assert wait_for_port(FRONTEND_PORT), "frontend 启动失败"
+        assert wait_for_port(BACKEND_PORT, timeout=BACKEND_STARTUP_TIMEOUT, proc=backend), (
+            f"backend 启动失败 (timeout={BACKEND_STARTUP_TIMEOUT}s, exit={backend.poll()})"
+        )
+        assert wait_for_port(FRONTEND_PORT, timeout=FRONTEND_STARTUP_TIMEOUT, proc=frontend), (
+            f"frontend 启动失败 (timeout={FRONTEND_STARTUP_TIMEOUT}s, exit={frontend.poll()})"
+        )
 
         url = f"http://localhost:{FRONTEND_PORT}"
         print(f"[run.py] 服务已启动: {url}")
