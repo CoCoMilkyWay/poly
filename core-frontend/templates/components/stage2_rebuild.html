@@ -605,9 +605,48 @@
       TransferOut: 11,
     };
 
-    // 根据event_by_collateral构建按抵押品分组的节点
-    // s.event_by_collateral 格式: {"event_type_int": [{addr, name, count}, ...]}
-    function s2BuildCollateralSection(s, eventTypes, parentColor, prefix) {
+    // 根据 event_by_token 构建按结果代币(YES/NO)分组的节点
+    // s.event_by_token 格式: {"event_type_int": [{token_id,name,count}, ...]}
+    function s2BuildTokenIdxSection(s, eventTypes, prefix) {
+      if (!s.event_by_token) return null;
+      const byIdx = {};
+      let total = 0;
+      for (const et of eventTypes) {
+        const entries = s.event_by_token[String(et)] || [];
+        for (const item of entries) {
+          const key = String(item.token_id);
+          if (!byIdx[key]) byIdx[key] = { idx: item.token_id, name: item.name, count: 0 };
+          byIdx[key].count += item.count;
+          total += item.count;
+        }
+      }
+
+      const children = Object.values(byIdx)
+        .filter((c) => c.count > 0)
+        .sort((a, b) => b.count - a.count)
+        .map((c) => ({
+          id: `${prefix}_token_idx_${c.idx}`,
+          label: c.name || "Unknown",
+          value: c.count,
+          color: "#e0e7ff",
+          desc: `token_idx=${c.idx}`,
+          scene: "结果代币方向",
+        }));
+
+      if (children.length === 0) return null;
+      return {
+        id: `${prefix}_by_token_idx`,
+        label: "按结果代币",
+        value: total,
+        color: "#c7d2fe",
+        desc: "YES/NO",
+        scene: "按 token_idx 统计(0=YES, 1=NO)",
+        children: children,
+      };
+    }
+
+    // 根据 event_by_collateral 构建按结算币(collateral)分组的节点
+    function s2BuildCollateralSection(s, eventTypes, prefix) {
       if (!s.event_by_collateral) return null;
 
       // 按 addr 合并多个 eventType 的统计
@@ -641,14 +680,21 @@
 
       return {
         id: `${prefix}_by_collateral`,
-        label: "按抵押品",
+        label: "按结算币",
         value: total,
         color: "#fcd34d",
         desc: "=父节点",
-        scene: "按抵押品类型分组统计",
+        scene: "按 collateral 统计",
         children: children,
         isCollateralSection: true,
       };
+    }
+
+    function s2BuildAssetSections(s, eventTypes, prefix) {
+      return [
+        s2BuildTokenIdxSection(s, eventTypes, prefix),
+        s2BuildCollateralSection(s, eventTypes, prefix),
+      ].filter(Boolean);
     }
 
     // 构建Transfer树
@@ -771,12 +817,7 @@
                     desc: "非Polymarket",
                     scene: "其他协议的CTF操作",
                   },
-                  s2BuildCollateralSection(
-                    s,
-                    [EventType.Split],
-                    "#86efac",
-                    "split",
-                  ),
+                  ...s2BuildAssetSections(s, [EventType.Split], "split"),
                 ].filter(Boolean),
               },
               {
@@ -821,12 +862,7 @@
                     desc: "非Polymarket",
                     scene: "其他协议的CTF操作",
                   },
-                  s2BuildCollateralSection(
-                    s,
-                    [EventType.Merge],
-                    "#86efac",
-                    "merge",
-                  ),
+                  ...s2BuildAssetSections(s, [EventType.Merge], "merge"),
                 ].filter(Boolean),
               },
               {
@@ -853,10 +889,9 @@
                     desc: "非Polymarket",
                     scene: "其他协议的CTF操作",
                   },
-                  s2BuildCollateralSection(
+                  ...s2BuildAssetSections(
                     s,
                     [EventType.Redemption],
-                    "#86efac",
                     "redemption",
                   ),
                 ].filter(Boolean),
@@ -869,12 +904,7 @@
                 desc: "PositionsConverted",
                 scene: "多选题M个NO换1个YES",
                 children: [
-                  s2BuildCollateralSection(
-                    s,
-                    [EventType.Convert],
-                    "#86efac",
-                    "convert",
-                  ),
+                  ...s2BuildAssetSections(s, [EventType.Convert], "convert"),
                 ].filter(Boolean),
               },
               {
@@ -901,10 +931,9 @@
                     desc: "from=用户",
                     scene: "用户卖代币得USDC",
                   },
-                  s2BuildCollateralSection(
+                  ...s2BuildAssetSections(
                     s,
                     [EventType.Buy, EventType.Sell],
-                    "#86efac",
                     "order",
                   ),
                 ].filter(Boolean),
@@ -933,10 +962,9 @@
                     desc: "用户→FPMM",
                     scene: "用户向池子卖代币",
                   },
-                  s2BuildCollateralSection(
+                  ...s2BuildAssetSections(
                     s,
                     [EventType.FPMMBuy, EventType.FPMMSell],
-                    "#86efac",
                     "fpmm_trade",
                   ),
                 ].filter(Boolean),
@@ -973,10 +1001,9 @@
                     desc: "FPMM→用户",
                     scene: "添加时返还多余代币",
                   },
-                  s2BuildCollateralSection(
+                  ...s2BuildAssetSections(
                     s,
                     [EventType.FPMMLPAdd, EventType.FPMMLPRemove],
-                    "#86efac",
                     "fpmm_lp",
                   ),
                 ].filter(Boolean),
@@ -1077,10 +1104,9 @@
                       },
                     ],
                   },
-                  s2BuildCollateralSection(
+                  ...s2BuildAssetSections(
                     s,
                     [EventType.TransferIn, EventType.TransferOut],
-                    "#86efac",
                     "transfer",
                   ),
                 ].filter(Boolean),

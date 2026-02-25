@@ -10,7 +10,6 @@
 #include <functional>
 #include <iostream>
 #include <nlohmann/json.hpp>
-#include <sstream>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -310,6 +309,9 @@ public:
     }
     progress_.total_users = seen_users_.size();
 
+    progress_.event_by_collateral.clear();
+    progress_.event_by_token.clear();
+
     // 恢复 event_by_collateral 统计
     auto evt_stats = conn->Query(
         "SELECT ue.event_type, "
@@ -331,10 +333,21 @@ public:
       uint16_t key = static_cast<uint16_t>(event_type) * 256 + collateral;
       progress_.event_by_collateral[key] = count;
     }
-    progress_.total_events = 0;
-    for (const auto &[k, v] : progress_.event_by_collateral) {
-      progress_.total_events += v;
+
+    // 恢复 event_by_token 统计
+    auto token_stats = conn->Query(
+        "SELECT event_type, token_idx, COUNT(*) "
+        "FROM user_event "
+        "GROUP BY event_type, token_idx");
+    for (idx_t i = 0; i < token_stats->RowCount(); ++i) {
+      uint8_t event_type = token_stats->GetValue(0, i).GetValue<uint8_t>();
+      uint8_t token_idx = token_stats->GetValue(1, i).GetValue<uint8_t>();
+      int64_t count = token_stats->GetValue(2, i).GetValue<int64_t>();
+      uint16_t key = static_cast<uint16_t>(event_type) * 256 + token_idx;
+      progress_.event_by_token[key] = count;
     }
+    auto evt_total = conn->Query("SELECT COUNT(*) FROM user_event");
+    progress_.total_events = evt_total->RowCount() > 0 ? evt_total->GetValue(0, 0).GetValue<int64_t>() : 0;
 
     if (progress_.cursor > 0)
       progress_.phase = 3;
@@ -437,8 +450,8 @@ private:
   std::unordered_map<TxKey, std::vector<RedemptionInfo>> tx_redemption_;
   std::unordered_map<TxMarketKey, std::vector<ConvertInfo>> tx_convert_;
   std::unordered_map<TxTokenKey, OrderInfo> tx_order_;
-  std::unordered_map<TxFPMMKey, FPMMTradeInfo> tx_fpmm_trade_;
-  std::unordered_map<TxFPMMKey, FPMMFundingInfo> tx_fpmm_funding_;
+  std::unordered_map<TxFPMMKey, std::vector<FPMMTradeInfo>> tx_fpmm_trade_;
+  std::unordered_map<TxFPMMKey, std::vector<FPMMFundingInfo>> tx_fpmm_funding_;
   TransferStats chunk_xfer_stats_;          // 当前 chunk 的 transfer 统计
   ChunkLog chunk_log_;                      // 当前 chunk 的日志
   std::string log_dir_ = "data/stage2/log"; // 日志目录
@@ -769,9 +782,11 @@ private:
       progress_.total_users = seen_users_.size();
     }
 
-    // 按(EventType, Collateral)分组统计
-    uint16_t key = static_cast<uint16_t>(evt.type) * 256 + evt.collateral;
-    progress_.event_by_collateral[key]++;
+    // 维护两套统计：Token 维度 + Collateral 维度
+    uint16_t coll_key = static_cast<uint16_t>(evt.type) * 256 + evt.collateral;
+    progress_.event_by_collateral[coll_key]++;
+    uint16_t token_key = static_cast<uint16_t>(evt.type) * 256 + evt.token_idx;
+    progress_.event_by_token[token_key]++;
 
     // 更新事件计数
     switch (evt.type) {

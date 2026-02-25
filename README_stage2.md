@@ -139,11 +139,11 @@ price:      i64   price * 1e6, 非USDC时为0
 
 ```
 ① condition_preparation → intern_condition(cid, cnt, ConditionPrep, question_id)
-② condition_resolution → update_condition_payout(idx, payouts)
-③ token_map           → intern_condition(cid, 2, PolymarketTokenReg) + intern_token(YES/NO)
-④ fpmm               → intern_condition(cid, 2, PolymarketFPMM) + intern_fpmm + intern_condition_tokens(BN128)
-⑤ split (DISTINCT)    → intern_condition(cid, 2, SplitEvent) + intern_condition_tokens(BN128)
-⑥ neg_risk_question   → cond_to_market_ + negrisk_cond_idxs_ (keccak256反推conditionId)
+② condition_resolution  → update_condition_payout(idx, payouts)
+③ token_map             → intern_condition(cid, 2, PolymarketTokenReg) + intern_token(YES/NO)
+④ fpmm                  → intern_condition(cid, 2, PolymarketFPMM) + intern_fpmm + intern_condition_tokens(BN128)
+⑤ split (DISTINCT)      → intern_condition(cid, 2, SplitEvent) + intern_condition_tokens(BN128)
+⑥ neg_risk_question     → cond_to_market_ + negrisk_cond_idxs_ (keccak256反推conditionId)
 → update_cond_type_stats() 更新 ConditionTree / TokenTree
 ```
 

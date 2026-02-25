@@ -498,19 +498,40 @@ private:
     };
     result.update(transfer_tree);
 
-    // 按 event_type 分组，每组内以 collateral_addr 为 key 的统计 dict
-    // 格式: {"event_type_int": [{"addr": "0x...", "name": "USDC", "count": 100}, ...]}
-    json event_by_coll = json::object();
+    // 按 token_id 统计（token_id 当前为 token_idx: 0=YES,1=NO）
+    json event_by_token = json::object();
+    for (const auto &[key, cnt] : p.event_by_token) {
+      uint8_t event_type = key / 256;
+      uint8_t token_id = key % 256;
+      std::string et_key = std::to_string(event_type);
+      if (!event_by_token.contains(et_key))
+        event_by_token[et_key] = json::array();
+      const char *name = token_id == 0 ? "YES" : (token_id == 1 ? "NO" : "Unknown");
+      event_by_token[et_key].push_back({
+          {"token_id", token_id},
+          {"name", name},
+          {"count", cnt},
+      });
+    }
+    result["event_by_token"] = event_by_token;
+
+    // 按 collateral_id 统计
+    json event_by_collateral = json::object();
     for (const auto &[key, cnt] : p.event_by_collateral) {
       uint8_t event_type = key / 256;
-      uint8_t coll = key % 256;
+      uint8_t coll_id = key % 256;
       std::string et_key = std::to_string(event_type);
-      if (!event_by_coll.contains(et_key))
-        event_by_coll[et_key] = json::array();
-      auto [addr, name] = resolve_collateral(coll);
-      event_by_coll[et_key].push_back({{"addr", addr}, {"name", name}, {"count", cnt}});
+      if (!event_by_collateral.contains(et_key))
+        event_by_collateral[et_key] = json::array();
+      auto [addr, name] = resolve_collateral(coll_id);
+      event_by_collateral[et_key].push_back({
+          {"collateral_id", coll_id},
+          {"addr", addr},
+          {"name", name},
+          {"count", cnt},
+      });
     }
-    result["event_by_collateral"] = event_by_coll;
+    result["event_by_collateral"] = event_by_collateral;
 
     if (stage2_getter_) {
       auto s2 = stage2_getter_();

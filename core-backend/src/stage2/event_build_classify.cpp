@@ -79,6 +79,32 @@ TransferClass EventBuilder::classify_and_emit(
     }
     return false;
   };
+  auto find_fpmm_trade_info = [&](const TxFPMMKey &key, int side, int64_t token_amount) -> const FPMMTradeInfo * {
+    auto it = tx_fpmm_trade_.find(key);
+    if (it == tx_fpmm_trade_.end())
+      return nullptr;
+    for (const auto &info : it->second) {
+      if (info.side == side && info.tokens == token_amount)
+        return &info;
+    }
+    return nullptr;
+  };
+  auto find_fpmm_funding_info = [&](const TxFPMMKey &key, int64_t transfer_amount,
+                                    bool expect_refund) -> const FPMMFundingInfo * {
+    auto it = tx_fpmm_funding_.find(key);
+    if (it == tx_fpmm_funding_.end())
+      return nullptr;
+    for (const auto &info : it->second) {
+      if (info.side != 1 || info.amounts_count != 2)
+        continue;
+      int64_t expected_amount = expect_refund
+                                    ? std::abs(info.amount0 - info.amount1)
+                                    : std::max(info.amount0, info.amount1);
+      if (expected_amount == transfer_amount)
+        return &info;
+    }
+    return nullptr;
+  };
 
   // ========== mint 分支 (from == 0x0) ==========
   if (from == ZERO_ADDR) {
@@ -88,15 +114,14 @@ TransferClass EventBuilder::classify_and_emit(
     auto fpmm_mint_it = fpmm_map_.find(to);
     if (fpmm_mint_it != fpmm_map_.end()) {
       TxFPMMKey tx_fpmm_key{block, tx_hash, to};
-      auto fit = tx_fpmm_funding_.find(tx_fpmm_key);
-      if (fit != tx_fpmm_funding_.end() && fit->second.side == 1 &&
-          fit->second.amounts_count == 2 && known_token) {
-        int64_t split_amt = std::max(fit->second.amount0, fit->second.amount1);
+      const FPMMFundingInfo *fit = find_fpmm_funding_info(tx_fpmm_key, amount, false);
+      if (fit != nullptr && known_token) {
+        int64_t split_amt = std::max(fit->amount0, fit->amount1);
         assert_transfer(amount == split_amt, "LP Add split amount mismatch");
-        if (is_user_addr(fit->second.funder)) {
-          int64_t pool_amt = (token_idx == 0) ? fit->second.amount0 : fit->second.amount1;
+        if (is_user_addr(fit->funder)) {
+          int64_t pool_amt = (token_idx == 0) ? fit->amount0 : fit->amount1;
           RawEvent evt{sort_key, cond_idx, EventType::FPMMLPAdd, token_idx, coll, 0, pool_amt, split_price};
-          push_event(fit->second.funder, evt);
+          push_event(fit->funder, evt);
         }
         return TransferClass::FPMMLPAdd;
       }
@@ -276,13 +301,12 @@ TransferClass EventBuilder::classify_and_emit(
     TxFPMMKey tx_fpmm_key{block, tx_hash, op};
 
     if (from == op) {
-      auto fit = tx_fpmm_funding_.find(tx_fpmm_key);
-      if (fit != tx_fpmm_funding_.end() && fit->second.side == 1 &&
-          fit->second.amounts_count == 2 && known_token) {
-        assert_transfer(fit->second.amount0 != fit->second.amount1, "LP Add should have asymmetric amounts");
-        int64_t refund_amt = std::abs(fit->second.amount0 - fit->second.amount1);
+      const FPMMFundingInfo *fit = find_fpmm_funding_info(tx_fpmm_key, amount, true);
+      if (fit != nullptr && known_token) {
+        assert_transfer(fit->amount0 != fit->amount1, "LP Add should have asymmetric amounts");
+        int64_t refund_amt = std::abs(fit->amount0 - fit->amount1);
         assert_transfer(amount == refund_amt, "LP Add refund amount mismatch");
-        int64_t refund_idx = (fit->second.amount0 < fit->second.amount1) ? 0 : 1;
+        int64_t refund_idx = (fit->amount0 < fit->amount1) ? 0 : 1;
         if (token_idx == refund_idx) {
           emit_if_user(to, RawEvent{sort_key, cond_idx, EventType::FPMMLPAdd, token_idx, coll, 0, -amount, split_price});
           return TransferClass::FPMMLPReturn;
@@ -290,10 +314,10 @@ TransferClass EventBuilder::classify_and_emit(
         // 多 outcome / 组合 token 无法用二元 token_idx 映射，降级到后续通用分支
       }
 
-      auto tit = tx_fpmm_trade_.find(tx_fpmm_key);
-      if (tit != tx_fpmm_trade_.end() && tit->second.side == 1) {
-        assert_transfer(amount == tit->second.tokens, "FPMM Buy amount mismatch");
-        int64_t price = usdc_price(tit->second.usdc, tit->second.tokens);
+      const FPMMTradeInfo *tit = find_fpmm_trade_info(tx_fpmm_key, 1, amount);
+      if (tit != nullptr) {
+        assert_transfer(amount == tit->tokens, "FPMM Buy amount mismatch");
+        int64_t price = usdc_price(tit->usdc, tit->tokens);
         emit_if_user(to, RawEvent{sort_key, cond_idx, EventType::FPMMBuy, token_idx, coll, 0, amount, price});
         return TransferClass::FPMMBuy;
       }
@@ -303,10 +327,10 @@ TransferClass EventBuilder::classify_and_emit(
     }
 
     if (to == op) {
-      auto tit = tx_fpmm_trade_.find(tx_fpmm_key);
-      if (tit != tx_fpmm_trade_.end() && tit->second.side == 2) {
-        assert_transfer(amount == tit->second.tokens, "FPMM Sell amount mismatch");
-        int64_t price = usdc_price(tit->second.usdc, tit->second.tokens);
+      const FPMMTradeInfo *tit = find_fpmm_trade_info(tx_fpmm_key, 2, amount);
+      if (tit != nullptr) {
+        assert_transfer(amount == tit->tokens, "FPMM Sell amount mismatch");
+        int64_t price = usdc_price(tit->usdc, tit->tokens);
         emit_if_user(from, RawEvent{sort_key, cond_idx, EventType::FPMMSell, token_idx, coll, 0, -amount, price});
         return TransferClass::FPMMSell;
       }

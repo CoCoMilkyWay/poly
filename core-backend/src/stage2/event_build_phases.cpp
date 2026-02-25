@@ -263,7 +263,6 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
     key.block = get_i64(fpmm_trade, 0, i);
     key.tx_hash = hex_to_bytes32(get_hex(fpmm_trade, 1, i));
     key.fpmm_addr = fpmm_addr;
-    assert(tx_fpmm_trade_.count(key) == 0 && "Duplicate FPMM trade");
     FPMMTradeInfo info;
     info.fpmm_addr = fpmm_addr;
     info.trader = get_hex_lower(fpmm_trade, 3, i);
@@ -271,7 +270,7 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
     info.outcome_idx = fpmm_trade->GetValue(5, i).GetValue<int>();
     info.usdc = get_i64(fpmm_trade, 6, i);
     info.tokens = get_i64(fpmm_trade, 7, i);
-    tx_fpmm_trade_[key] = info;
+    tx_fpmm_trade_[key].push_back(info);
   }
 
   auto fpmm_funding = conn->Query(block_range_query(
@@ -284,7 +283,6 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
     key.block = get_i64(fpmm_funding, 0, i);
     key.tx_hash = hex_to_bytes32(get_hex(fpmm_funding, 1, i));
     key.fpmm_addr = fpmm_addr;
-    assert(tx_fpmm_funding_.count(key) == 0 && "Duplicate FPMM funding");
     FPMMFundingInfo info;
     info.fpmm_addr = fpmm_addr;
     info.funder = get_hex_lower(fpmm_funding, 3, i);
@@ -294,7 +292,7 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
     info.amounts_count = static_cast<int>(amounts_arr.size());
     info.amount0 = amounts_arr.size() > 0 ? amounts_arr[0].get<int64_t>() : 0;
     info.amount1 = amounts_arr.size() > 1 ? amounts_arr[1].get<int64_t>() : 0;
-    tx_fpmm_funding_[key] = info;
+    tx_fpmm_funding_[key].push_back(info);
   }
 }
 
