@@ -67,7 +67,7 @@ struct ConditionResolveEvent {
   int64_t log_index;
   std::string condition_id, oracle, question_id;
   std::string outcome_slot_count;
-  std::string payout_numerators;
+  std::vector<std::string> payout_numerators;
 };
 
 struct SplitMergeEvent {
@@ -75,7 +75,7 @@ struct SplitMergeEvent {
   std::string tx_hash;
   int64_t log_index;
   std::string stakeholder, collateral_token, parent_collection_id, condition_id;
-  std::string partition;
+  std::vector<std::string> partition;
   std::string amount;
 };
 
@@ -84,7 +84,7 @@ struct RedemptionEvent {
   std::string tx_hash;
   int64_t log_index;
   std::string redeemer, collateral_token, parent_collection_id, condition_id;
-  std::string index_sets;
+  std::vector<std::string> index_sets;
   std::string payout;
 };
 
@@ -96,7 +96,7 @@ struct FpmmEvent {
   int64_t creation_topics_count; // FixedProductMarketMakerCreation topics长度（2/4）
   std::string creation_layout;   // 按 topics 布局标记: fixed_factory_v1 / deterministic_factory_v1
   std::string creator, fpmm_addr, conditional_tokens, collateral_token;
-  std::string condition_ids;
+  std::vector<std::string> condition_ids;
   std::string fee;
 };
 
@@ -115,7 +115,7 @@ struct FpmmFundingEvent {
   int64_t log_index;
   std::string fpmm_addr, funder;
   int64_t side;
-  std::string amounts;
+  std::vector<std::string> amounts;
   std::string collateral_from_fee_pool, shares;
 };
 

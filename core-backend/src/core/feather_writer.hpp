@@ -101,6 +101,16 @@ private:
     return b;
   }
 
+  static void append_hex32_list(arrow::ListBuilder &list_builder,
+                                arrow::BinaryBuilder *value_builder,
+                                const std::vector<std::string> &hex_values) {
+    assert(list_builder.Append().ok());
+    for (const auto &hex : hex_values) {
+      std::string b = uint256_hex_to_bytes32(hex);
+      assert(value_builder->Append(b).ok());
+    }
+  }
+
   void atomic_write_feather(const std::string &path, std::shared_ptr<arrow::Table> table) {
     std::string tmp_path = path + ".tmp";
     {
@@ -218,7 +228,9 @@ private:
       return;
     arrow::Int64Builder block_number, log_index;
     arrow::BinaryBuilder tx_hash, condition_id, oracle, question_id, outcome_slot_count;
-    arrow::StringBuilder payout_numerators;
+    auto payout_values_ptr = std::make_shared<arrow::BinaryBuilder>();
+    arrow::ListBuilder payout_numerators(arrow::default_memory_pool(), payout_values_ptr);
+    auto *payout_values = static_cast<arrow::BinaryBuilder *>(payout_numerators.value_builder());
 
     for (const auto &e : events) {
       assert(block_number.Append(e.block_number).ok());
@@ -228,7 +240,7 @@ private:
       assert(oracle.Append(hex_to_bytes(e.oracle)).ok());
       assert(question_id.Append(hex_to_bytes(e.question_id)).ok());
       assert(outcome_slot_count.Append(uint256_hex_to_bytes32(e.outcome_slot_count)).ok());
-      assert(payout_numerators.Append(e.payout_numerators).ok());
+      append_hex32_list(payout_numerators, payout_values, e.payout_numerators);
     }
 
     auto schema = arrow::schema({
@@ -239,7 +251,7 @@ private:
         arrow::field("oracle", arrow::binary()),
         arrow::field("question_id", arrow::binary()),
         arrow::field("outcome_slot_count", arrow::binary()),
-        arrow::field("payout_numerators", arrow::utf8()),
+        arrow::field("payout_numerators", arrow::list(arrow::binary())),
     });
 
     std::shared_ptr<arrow::Array> a1, a2, a3, a4, a5, a6, a7, a8;
@@ -261,7 +273,9 @@ private:
       return;
     arrow::Int64Builder block_number, log_index;
     arrow::BinaryBuilder tx_hash, stakeholder, collateral_token, parent_collection_id, condition_id, amount;
-    arrow::StringBuilder partition;
+    auto partition_values_ptr = std::make_shared<arrow::BinaryBuilder>();
+    arrow::ListBuilder partition(arrow::default_memory_pool(), partition_values_ptr);
+    auto *partition_values = static_cast<arrow::BinaryBuilder *>(partition.value_builder());
 
     for (const auto &e : events) {
       assert(block_number.Append(e.block_number).ok());
@@ -271,7 +285,7 @@ private:
       assert(collateral_token.Append(hex_to_bytes(e.collateral_token)).ok());
       assert(parent_collection_id.Append(hex_to_bytes(e.parent_collection_id)).ok());
       assert(condition_id.Append(hex_to_bytes(e.condition_id)).ok());
-      assert(partition.Append(e.partition).ok());
+      append_hex32_list(partition, partition_values, e.partition);
       assert(amount.Append(uint256_hex_to_bytes32(e.amount)).ok());
     }
 
@@ -283,7 +297,7 @@ private:
         arrow::field("collateral_token", arrow::binary()),
         arrow::field("parent_collection_id", arrow::binary()),
         arrow::field("condition_id", arrow::binary()),
-        arrow::field("partition", arrow::utf8()),
+        arrow::field("partition", arrow::list(arrow::binary())),
         arrow::field("amount", arrow::binary()),
     });
 
@@ -315,7 +329,9 @@ private:
       return;
     arrow::Int64Builder block_number, log_index;
     arrow::BinaryBuilder tx_hash, redeemer, collateral_token, parent_collection_id, condition_id, payout;
-    arrow::StringBuilder index_sets;
+    auto index_set_values_ptr = std::make_shared<arrow::BinaryBuilder>();
+    arrow::ListBuilder index_sets(arrow::default_memory_pool(), index_set_values_ptr);
+    auto *index_set_values = static_cast<arrow::BinaryBuilder *>(index_sets.value_builder());
 
     for (const auto &e : events) {
       assert(block_number.Append(e.block_number).ok());
@@ -325,7 +341,7 @@ private:
       assert(collateral_token.Append(hex_to_bytes(e.collateral_token)).ok());
       assert(parent_collection_id.Append(hex_to_bytes(e.parent_collection_id)).ok());
       assert(condition_id.Append(hex_to_bytes(e.condition_id)).ok());
-      assert(index_sets.Append(e.index_sets).ok());
+      append_hex32_list(index_sets, index_set_values, e.index_sets);
       assert(payout.Append(uint256_hex_to_bytes32(e.payout)).ok());
     }
 
@@ -337,7 +353,7 @@ private:
         arrow::field("collateral_token", arrow::binary()),
         arrow::field("parent_collection_id", arrow::binary()),
         arrow::field("condition_id", arrow::binary()),
-        arrow::field("index_sets", arrow::utf8()),
+        arrow::field("index_sets", arrow::list(arrow::binary())),
         arrow::field("payout", arrow::binary()),
     });
 
@@ -361,7 +377,10 @@ private:
       return;
     arrow::Int64Builder block_number, log_index, creation_topics_count;
     arrow::BinaryBuilder tx_hash, factory, creator, fpmm_addr, conditional_tokens, collateral_token, fee;
-    arrow::StringBuilder condition_ids, creation_layout;
+    auto condition_id_values_ptr = std::make_shared<arrow::BinaryBuilder>();
+    arrow::ListBuilder condition_ids(arrow::default_memory_pool(), condition_id_values_ptr);
+    auto *condition_id_values = static_cast<arrow::BinaryBuilder *>(condition_ids.value_builder());
+    arrow::StringBuilder creation_layout;
 
     for (const auto &e : events) {
       assert(block_number.Append(e.block_number).ok());
@@ -374,7 +393,7 @@ private:
       assert(fpmm_addr.Append(hex_to_bytes(e.fpmm_addr)).ok());
       assert(conditional_tokens.Append(hex_to_bytes(e.conditional_tokens)).ok());
       assert(collateral_token.Append(hex_to_bytes(e.collateral_token)).ok());
-      assert(condition_ids.Append(e.condition_ids).ok());
+      append_hex32_list(condition_ids, condition_id_values, e.condition_ids);
       assert(fee.Append(uint256_hex_to_bytes32(e.fee)).ok());
     }
 
@@ -389,7 +408,7 @@ private:
         arrow::field("fpmm_addr", arrow::binary()),
         arrow::field("conditional_tokens", arrow::binary()),
         arrow::field("collateral_token", arrow::binary()),
-        arrow::field("condition_ids", arrow::utf8()),
+        arrow::field("condition_ids", arrow::list(arrow::binary())),
         arrow::field("fee", arrow::binary()),
     });
 
@@ -464,7 +483,9 @@ private:
       return;
     arrow::Int64Builder block_number, log_index, side;
     arrow::BinaryBuilder tx_hash, fpmm_addr, funder, collateral_from_fee_pool, shares;
-    arrow::StringBuilder amounts;
+    auto amount_values_ptr = std::make_shared<arrow::BinaryBuilder>();
+    arrow::ListBuilder amounts(arrow::default_memory_pool(), amount_values_ptr);
+    auto *amount_values = static_cast<arrow::BinaryBuilder *>(amounts.value_builder());
 
     for (const auto &e : events) {
       assert(block_number.Append(e.block_number).ok());
@@ -473,7 +494,7 @@ private:
       assert(fpmm_addr.Append(hex_to_bytes(e.fpmm_addr)).ok());
       assert(funder.Append(hex_to_bytes(e.funder)).ok());
       assert(side.Append(e.side).ok());
-      assert(amounts.Append(e.amounts).ok());
+      append_hex32_list(amounts, amount_values, e.amounts);
       assert(collateral_from_fee_pool.Append(uint256_hex_to_bytes32(e.collateral_from_fee_pool)).ok());
       assert(shares.Append(uint256_hex_to_bytes32(e.shares)).ok());
     }
@@ -485,7 +506,7 @@ private:
         arrow::field("fpmm_addr", arrow::binary()),
         arrow::field("funder", arrow::binary()),
         arrow::field("side", arrow::int64()),
-        arrow::field("amounts", arrow::utf8()),
+        arrow::field("amounts", arrow::list(arrow::binary())),
         arrow::field("collateral_from_fee_pool", arrow::binary()),
         arrow::field("shares", arrow::binary()),
     });

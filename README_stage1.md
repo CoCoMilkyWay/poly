@@ -6,7 +6,7 @@ Stage 1 保留原始事件的全部字段，不做过滤、不做计算字段。
 
 数值字段约定:
 - 所有链上 `uint256` 字段一律用 `BLOB(32)` 存储（大端，无损）。
-- 所有链上 `uint256[]` 字段一律用 `LIST<BLOB(32)>` 存储（无损），不再用 JSON 文本。
+- 所有链上 `uint256[]` / `bytes32[]` 字段一律用 `LIST<BLOB(32)>` 存储（无损），不再用 JSON 文本。
 
 ### transfer (TransferSingle / TransferBatch)
 
@@ -104,7 +104,7 @@ TransferBatch 拆分为多行，每个 token 一行，通过 sub_index 区分。
 | fpmm_addr             | BLOB(20) PK | FPMMCreation | fixedProductMarketMaker                                                   |
 | conditional_tokens    | BLOB(20)    | FPMMCreation | ConditionalTokens 合约地址                                                |
 | collateral_token      | BLOB(20)    | FPMMCreation | USDC.e                                                                    |
-| condition_ids         | VARCHAR     | FPMMCreation | bytes32[] 的 JSON 字符串（无损内容保留）                                  |
+| condition_ids         | LIST<BLOB(32)> | FPMMCreation | bytes32[]（无损）                                                      |
 | fee                   | BLOB(32)    | FPMMCreation | uint256（无损）                                                           |
 
 ### fpmm_trade (FPMMBuy / FPMMSell)

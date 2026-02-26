@@ -49,6 +49,30 @@ inline int64_t u256_blob_to_i64(const duckdb::Value &v) {
   return static_cast<int64_t>(low);
 }
 
+inline std::vector<int64_t> parse_u256_list_i64(const duckdb::Value &v) {
+  assert(v.type().id() == duckdb::LogicalTypeId::LIST);
+  auto arr = duckdb::ListValue::GetChildren(v);
+  std::vector<int64_t> out;
+  out.reserve(arr.size());
+  for (const auto &item : arr) {
+    out.push_back(u256_blob_to_i64(item));
+  }
+  return out;
+}
+
+inline std::vector<std::string> parse_bytes32_list_hex_lower(const duckdb::Value &v) {
+  assert(v.type().id() == duckdb::LogicalTypeId::LIST);
+  auto arr = duckdb::ListValue::GetChildren(v);
+  std::vector<std::string> out;
+  out.reserve(arr.size());
+  for (const auto &item : arr) {
+    std::string b = item.GetValueUnsafe<std::string>();
+    assert(b.size() == 32);
+    out.push_back(to_lower(blob_to_hex(b)));
+  }
+  return out;
+}
+
 } // namespace
 
 void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
@@ -92,12 +116,7 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
       auto it = cond_map_.find(lower);
       if (it == cond_map_.end())
         continue;
-      std::string payout_str = cr->GetValue(1, i).GetValueUnsafe<std::string>();
-      std::vector<int64_t> payouts;
-      auto payout_arr = nlohmann::json::parse(payout_str);
-      for (const auto &v : payout_arr) {
-        payouts.push_back(u256_blob_to_i64(duckdb::Value::BLOB(hex_to_blob(v.get<std::string>()))));
-      }
+      std::vector<int64_t> payouts = parse_u256_list_i64(cr->GetValue(1, i));
       update_condition_payout(it->second, payouts);
     }
   }
@@ -123,18 +142,13 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
   if (fpmm) {
     for (idx_t i = 0; i < fpmm->RowCount(); ++i) {
       std::string addr = get_hex(fpmm, 0, i);
-      std::string cids_json = fpmm->GetValue(1, i).GetValueUnsafe<std::string>();
       std::string collateral = get_hex_lower(fpmm, 2, i);
 
-      auto cids_arr = nlohmann::json::parse(cids_json);
-      assert(!cids_arr.empty());
-      std::vector<std::string> cids;
-      cids.reserve(cids_arr.size());
+      std::vector<std::string> cids = parse_bytes32_list_hex_lower(fpmm->GetValue(1, i));
+      assert(!cids.empty());
       uint32_t primary_cond_idx = 0;
       bool has_primary = false;
-      for (const auto &v : cids_arr) {
-        std::string cid = v.get<std::string>();
-        cids.push_back(to_lower(cid));
+      for (const auto &cid : cids) {
         uint32_t idx = intern_condition(cid, 2, ConditionSource::PolymarketFPMM);
         if (!has_primary) {
           primary_cond_idx = idx;
@@ -364,11 +378,10 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
       info.fpmm_addr = fpmm_addr;
       info.funder = get_hex_lower(fpmm_funding, 3, i);
       info.side = fpmm_funding->GetValue(4, i).GetValue<int>();
-      std::string amounts_json = fpmm_funding->GetValue(5, i).GetValueUnsafe<std::string>();
-      auto amounts_arr = nlohmann::json::parse(amounts_json);
-      info.amounts_count = static_cast<int>(amounts_arr.size());
-      info.amount0 = amounts_arr.size() > 0 ? u256_blob_to_i64(duckdb::Value::BLOB(hex_to_blob(amounts_arr[0].get<std::string>()))) : 0;
-      info.amount1 = amounts_arr.size() > 1 ? u256_blob_to_i64(duckdb::Value::BLOB(hex_to_blob(amounts_arr[1].get<std::string>()))) : 0;
+      std::vector<int64_t> amounts = parse_u256_list_i64(fpmm_funding->GetValue(5, i));
+      info.amounts_count = static_cast<int>(amounts.size());
+      info.amount0 = amounts.size() > 0 ? amounts[0] : 0;
+      info.amount1 = amounts.size() > 1 ? amounts[1] : 0;
       tx_fpmm_funding_[key].push_back(info);
     }
   }
