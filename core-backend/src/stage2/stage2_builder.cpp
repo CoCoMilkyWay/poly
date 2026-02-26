@@ -38,7 +38,7 @@ void EventBuilder::init_schema() {
     CREATE TABLE IF NOT EXISTS rb_token (
       token_id  BLOB PRIMARY KEY,
       cond_idx  INTEGER NOT NULL,
-      is_yes    INTEGER NOT NULL,
+      token_idx INTEGER NOT NULL,
       source    INTEGER NOT NULL DEFAULT 0
     )
   )");
@@ -104,7 +104,7 @@ void EventBuilder::init_schema() {
                        {"cond_idx", "cond_id", "outcome_cnt", "payout_0", "payout_1",
                         "payout_2", "payout_3", "payout_4", "payout_5", "payout_6",
                         "payout_7", "question_id", "source"});
-  assert_table_columns("rb_token", {"token_id", "cond_idx", "is_yes", "source"});
+  assert_table_columns("rb_token", {"token_id", "cond_idx", "token_idx", "source"});
 
   auto r = conn->Query("SELECT value FROM stage2_cursor WHERE key='last_block'");
   assert(r && !r->HasError());
@@ -246,7 +246,7 @@ void EventBuilder::load_from_rb() {
     cond_map_[to_lower(cond_id)] = idx;
   }
 
-  auto token_r = conn->Query("SELECT token_id, cond_idx, is_yes, source FROM rb_token");
+  auto token_r = conn->Query("SELECT token_id, cond_idx, token_idx, source FROM rb_token");
   for (idx_t i = 0; i < token_r->RowCount(); ++i) {
     std::string tid = blob_to_hex(token_r->GetValue(0, i).GetValueUnsafe<std::string>());
     TokenInfo info;

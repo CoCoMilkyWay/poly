@@ -278,7 +278,6 @@
       "cond_poly",
       "cond_tr",
       "cond_other",
-      "cond_split",
       // 代币树 (树状partition: total→polymarket/other→...)
       "token",
       "token_poly",
@@ -286,7 +285,6 @@
       "token_fpmm",
       "token_fpmm_by_collateral",
       "token_other",
-      "token_split",
       "token_transfer",
       "token_transfer_by_collateral",
       // Transfer树
@@ -375,8 +373,8 @@
       const other = ct.other || {};
       const trOrderbook = tr.orderbook ?? 0;
       const trOther = tr.other ?? 0;
-      const fpmmPoly = poly.fpmm_poly ?? poly.fpmm_poly ?? 0;
-      const fpmmOther = other.fpmm_other ?? other.fpmm_other ?? 0;
+      const fpmmPoly = poly.fpmm_poly ?? 0;
+      const fpmmOther = other.fpmm_other ?? 0;
 
       return {
         id: "cond",
@@ -470,14 +468,6 @@
                 desc: "!poly & fcreate",
                 scene: "非Polymarket来源的FPMMCreation",
               },
-              {
-                id: "cond_split",
-                label: "Split",
-                value: other.split || 0,
-                color: "#555",
-                desc: "!poly & split_event",
-                scene: "仅由Split事件推断condition",
-              },
             ],
           },
         ],
@@ -494,11 +484,11 @@
       const tt = s.token_tree || {};
       const poly = tt.polymarket || {};
       const tr = poly.token_reg || {};
-      const fo = poly.fpmm_poly || poly.fpmm_poly || {};
+      const fo = poly.fpmm_poly || {};
       const other = tt.other || {};
       const trOrderbook = tr.orderbook ?? 0;
       const trOther = tr.other ?? 0;
-      const fpmmOther = other.fpmm_other ?? other.fpmm_other ?? 0;
+      const fpmmOther = other.fpmm_other ?? 0;
       const transferInferredByCollateral = other.by_collateral_transfer_inferred || [];
 
       return {
@@ -608,14 +598,6 @@
                 color: "#555",
                 desc: "!poly & fcreate",
                 scene: "非Polymarket来源的FPMMCreation",
-              },
-              {
-                id: "token_split",
-                label: "Split",
-                value: other.split || 0,
-                color: "#555",
-                desc: "!poly & split_event",
-                scene: "仅由Split事件推断token",
               },
               {
                 id: "token_transfer",
@@ -1327,7 +1309,6 @@
         "cond_poly",
         "cond_tr",
         "cond_other",
-        "cond_split",
         // 代币树 (树状partition: total→polymarket/other→...)
         "token",
         "token_poly",
@@ -1335,7 +1316,6 @@
         "token_fpmm",
         "token_fpmm_by_collateral",
         "token_other",
-        "token_split",
         "token_transfer",
         "token_transfer_by_collateral",
         // Transfer树

@@ -264,6 +264,7 @@ struct FPMMTradeInfo {
   int64_t usdc;
   int64_t tokens;
   bool consumed = false;
+  bool explained_without_direct_leg = false;
 };
 
 struct FPMMFundingInfo {

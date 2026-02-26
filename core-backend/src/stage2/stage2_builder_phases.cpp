@@ -532,7 +532,8 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
   }
   for (const auto &[_, rows] : tx_fpmm_trade_) {
     for (const auto &row : rows) {
-      assert_transfer(row.consumed, "Unconsumed FPMM trade semantic op");
+      assert_transfer(row.consumed || row.explained_without_direct_leg,
+                      "Unconsumed FPMM trade semantic op");
     }
   }
   for (const auto &[_, rows] : tx_convert_) {
@@ -610,7 +611,7 @@ void EventBuilder::commit_chunk(int64_t new_cursor) {
 
   if (!new_tokens_.empty()) {
     exec_sql("CREATE TEMP TABLE IF NOT EXISTS tmp_rb_token ("
-             "token_id BLOB, cond_idx INTEGER, is_yes INTEGER, source INTEGER)");
+             "token_id BLOB, cond_idx INTEGER, token_idx INTEGER, source INTEGER)");
     exec_sql("DELETE FROM tmp_rb_token");
     {
       duckdb::Appender ap(*conn, "tmp_rb_token");

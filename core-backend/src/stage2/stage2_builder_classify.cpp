@@ -181,6 +181,35 @@ TransferClass EventBuilder::classify_and_emit(
     assert_transfer(match_count <= 1, "Ambiguous FPMM trade semantic candidates");
     return matched;
   };
+  auto mark_fpmm_trade_explained = [&](const TxFPMMKey &key, int side) -> bool {
+    if (!has_semantic(SemanticKind::FPMMTrade))
+      return false;
+    auto it = tx_fpmm_trade_.find(key);
+    if (it == tx_fpmm_trade_.end())
+      return false;
+    FPMMTradeInfo *matched = nullptr;
+    int match_count = 0;
+    bool has_consumed_match = false;
+    for (auto &info : it->second) {
+      if (!semantic_log_matches(info.log_index))
+        continue;
+      if (info.side != side)
+        continue;
+      if (info.consumed) {
+        has_consumed_match = true;
+        continue;
+      }
+      matched = &info;
+      match_count++;
+    }
+    assert_transfer(match_count <= 1, "Ambiguous explainable FPMM trade semantic candidates");
+    if (has_consumed_match)
+      return true;
+    if (matched == nullptr)
+      return false;
+    matched->explained_without_direct_leg = true;
+    return true;
+  };
   auto find_fpmm_funding_info = [&](const TxFPMMKey &key, int64_t transfer_amount,
                                     bool expect_refund) -> FPMMFundingInfo * {
     if (!has_semantic(SemanticKind::FPMMFunding))
@@ -319,6 +348,10 @@ TransferClass EventBuilder::classify_and_emit(
         }
         return TransferClass::FPMMLPAdd;
       }
+      if (has_semantic(SemanticKind::FPMMTrade)) {
+        bool explained = mark_fpmm_trade_explained(tx_fpmm_key, 1);
+        assert_transfer(explained, "FPMM buy semantic not explainable on internal mint");
+      }
       return TransferClass::InternalMintFPMM;
     }
 
@@ -363,6 +396,11 @@ TransferClass EventBuilder::classify_and_emit(
 
     auto fpmm_burn_it = fpmm_map_.find(from);
     if (fpmm_burn_it != fpmm_map_.end()) {
+      TxFPMMKey tx_fpmm_key{block, tx_hash, from};
+      if (has_semantic(SemanticKind::FPMMTrade)) {
+        bool explained = mark_fpmm_trade_explained(tx_fpmm_key, 2);
+        assert_transfer(explained, "FPMM sell semantic not explainable on internal burn");
+      }
       return TransferClass::InternalBurnFPMM;
     }
 
