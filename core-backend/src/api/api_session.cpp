@@ -368,6 +368,35 @@ void ApiSession::handle_rebuild_status() {
     std::string name = std::string(known_name).empty() ? addr : std::string(known_name);
     return std::make_pair(addr, name);
   };
+  auto by_collateral_from_events = [&](std::initializer_list<uint8_t> event_types) {
+    std::unordered_map<uint8_t, int64_t> merged;
+    for (const auto &[key, cnt] : p.event_by_collateral) {
+      uint8_t event_type = key / 256;
+      bool matched = false;
+      for (uint8_t et : event_types) {
+        if (event_type == et) {
+          matched = true;
+          break;
+        }
+      }
+      if (!matched) {
+        continue;
+      }
+      uint8_t coll_id = key % 256;
+      merged[coll_id] += cnt;
+    }
+    json arr = json::array();
+    for (const auto &[coll_id, cnt] : merged) {
+      auto [addr, name] = resolve_collateral(coll_id);
+      arr.push_back({
+          {"collateral_id", coll_id},
+          {"addr", addr},
+          {"name", name},
+          {"count", cnt},
+      });
+    }
+    return arr;
+  };
   json cond_tree = {
       {"total", ct.total},
       {"polymarket",
@@ -376,12 +405,13 @@ void ApiSession::handle_rebuild_status() {
          {{"total", ct.polymarket.token_reg.total},
           {"amm", ct.polymarket.token_reg.amm},
           {"negrisk", ct.polymarket.token_reg.negrisk},
-          {"normal", ct.polymarket.token_reg.normal}}},
-        {"fpmm_only", ct.polymarket.fpmm_only}}},
+          {"orderbook", ct.polymarket.token_reg.orderbook},
+          {"other", ct.polymarket.token_reg.other}}},
+        {"fpmm_poly", ct.polymarket.fpmm_poly}}},
       {"other",
        {{"total", ct.other.total},
         {"prep", ct.other.prep},
-        {"other_fpmm", ct.other.other_fpmm},
+        {"fpmm_other", ct.other.fpmm_other},
         {"split", ct.other.split}}},
   };
 
@@ -393,12 +423,13 @@ void ApiSession::handle_rebuild_status() {
          {{"total", tt.polymarket.token_reg.total},
           {"amm", tt.polymarket.token_reg.amm},
           {"negrisk", tt.polymarket.token_reg.negrisk},
-          {"normal", tt.polymarket.token_reg.normal}}},
-        {"fpmm_only",
-         {{"total", tt.polymarket.fpmm_only.total},
+          {"orderbook", tt.polymarket.token_reg.orderbook},
+          {"other", tt.polymarket.token_reg.other}}},
+        {"fpmm_poly",
+         {{"total", tt.polymarket.fpmm_poly.total},
           {"by_collateral", [&]() {
              json arr = json::array();
-             for (const auto &[coll, cnt] : tt.polymarket.fpmm_only.by_collateral) {
+             for (const auto &[coll, cnt] : tt.polymarket.fpmm_poly.by_collateral) {
                auto [addr, name] = resolve_collateral(coll);
                arr.push_back({
                    {"addr", addr},
@@ -407,14 +438,30 @@ void ApiSession::handle_rebuild_status() {
                });
              }
              return arr;
+           }()},
+          {"by_collateral_fpmm", [&]() {
+             json arr = json::array();
+             for (const auto &[coll, cnt] : tt.polymarket.fpmm_poly.by_collateral) {
+               auto [addr, name] = resolve_collateral(coll);
+               arr.push_back({
+                   {"collateral_id", coll},
+                   {"addr", addr},
+                   {"name", name},
+                   {"count", cnt},
+               });
+             }
+             return arr;
            }()}}}}},
-      {"other", {{"total", tt.other.total}, {"other_fpmm", tt.other.other_fpmm}, {"split", tt.other.split}, {"transfer_inferred", tt.other.transfer_inferred}, {"transfer_inferred_by_token", [&]() {
-                                                                                                                                                                  json arr = json::array();
-                                                                                                                                                                  for (const auto &[token, cnt] : tt.other.transfer_inferred_by_token) {
-                                                                                                                                                                    arr.push_back({{"token", token}, {"count", cnt}});
-                                                                                                                                                                  }
-                                                                                                                                                                  return arr;
-                                                                                                                                                                }()}}},
+      {"other",
+       {{"total", tt.other.total},
+        {"fpmm_other", tt.other.fpmm_other},
+        {"split", tt.other.split},
+        {"transfer_inferred", tt.other.transfer_inferred},
+        {"by_collateral_transfer_inferred",
+         by_collateral_from_events({
+             static_cast<uint8_t>(stage2::EventType::TransferInNonPoly),
+             static_cast<uint8_t>(stage2::EventType::TransferOutNonPoly),
+         })}}},
   };
 
   json transfer_tree = {
@@ -464,32 +511,6 @@ void ApiSession::handle_rebuild_status() {
   };
   result.update(transfer_tree);
 
-  json event_by_token = json::object();
-  for (const auto &[key, cnt] : p.event_by_token) {
-    uint8_t event_type = key / 256;
-    uint8_t token_id = key % 256;
-    std::string et_key = std::to_string(event_type);
-    if (!event_by_token.contains(et_key)) {
-      event_by_token[et_key] = json::array();
-    }
-    std::string name;
-    if (token_id == stage2::UNKNOWN_TOKEN_IDX) {
-      name = "Unknown";
-    } else if (token_id == 0) {
-      name = "OUTCOME_0";
-    } else if (token_id == 1) {
-      name = "OUTCOME_1";
-    } else {
-      name = "OUTCOME_" + std::to_string(token_id);
-    }
-    event_by_token[et_key].push_back({
-        {"token_id", token_id},
-        {"name", name},
-        {"count", cnt},
-    });
-  }
-  result["event_by_token"] = event_by_token;
-
   json event_by_collateral = json::object();
   for (const auto &[key, cnt] : p.event_by_collateral) {
     uint8_t event_type = key / 256;
@@ -507,6 +528,19 @@ void ApiSession::handle_rebuild_status() {
     });
   }
   result["event_by_collateral"] = event_by_collateral;
+  result["by_collateral_split"] = by_collateral_from_events(
+      {static_cast<uint8_t>(stage2::EventType::SplitNonPoly)});
+  result["by_collateral_merge"] = by_collateral_from_events(
+      {static_cast<uint8_t>(stage2::EventType::MergeNonPoly)});
+  result["by_collateral_redemption"] = by_collateral_from_events(
+      {static_cast<uint8_t>(stage2::EventType::RedemptionNonPoly)});
+  result["by_collateral_fpmm_trade"] = by_collateral_from_events(
+      {static_cast<uint8_t>(stage2::EventType::FPMMBuy),
+       static_cast<uint8_t>(stage2::EventType::FPMMSell)});
+  result["by_collateral_fpmm_lp"] = by_collateral_from_events(
+      {static_cast<uint8_t>(stage2::EventType::FPMMLPAdd),
+       static_cast<uint8_t>(stage2::EventType::FPMMLPRemove),
+       static_cast<uint8_t>(stage2::EventType::FPMMLPReturn)});
 
   if (stage2_getter_) {
     auto s2 = stage2_getter_();

@@ -315,7 +315,6 @@ void EventBuilder::load_from_rb() {
   progress_.total_users = seen_users_.size();
 
   progress_.event_by_collateral.clear();
-  progress_.event_by_token.clear();
 
   // 恢复 event_by_collateral 统计
   auto evt_stats = conn->Query(
@@ -340,18 +339,6 @@ void EventBuilder::load_from_rb() {
     progress_.event_by_collateral[key] = count;
   }
 
-  // 恢复 event_by_token 统计
-  auto token_stats = conn->Query(
-      "SELECT event_type, token_idx, COUNT(*) "
-      "FROM user_event "
-      "GROUP BY event_type, token_idx");
-  for (idx_t i = 0; i < token_stats->RowCount(); ++i) {
-    uint8_t event_type = token_stats->GetValue(0, i).GetValue<uint8_t>();
-    uint8_t token_idx = token_stats->GetValue(1, i).GetValue<uint8_t>();
-    int64_t count = token_stats->GetValue(2, i).GetValue<int64_t>();
-    uint16_t key = static_cast<uint16_t>(event_type) * 256 + token_idx;
-    progress_.event_by_token[key] = count;
-  }
   auto evt_total = conn->Query("SELECT COUNT(*) FROM user_event");
   progress_.total_events = evt_total->RowCount() > 0 ? evt_total->GetValue(0, 0).GetValue<int64_t>() : 0;
 

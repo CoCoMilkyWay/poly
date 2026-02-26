@@ -373,10 +373,10 @@
       const poly = ct.polymarket || {};
       const tr = poly.token_reg || {};
       const other = ct.other || {};
-      const trOrderbook = tr.orderbook ?? tr.normal ?? 0;
+      const trOrderbook = tr.orderbook ?? 0;
       const trOther = tr.other ?? 0;
-      const fpmmPoly = poly.fpmm_poly ?? poly.fpmm_only ?? 0;
-      const fpmmOther = other.fpmm_other ?? other.other_fpmm ?? 0;
+      const fpmmPoly = poly.fpmm_poly ?? poly.fpmm_poly ?? 0;
+      const fpmmOther = other.fpmm_other ?? other.fpmm_other ?? 0;
 
       return {
         id: "cond",
@@ -494,13 +494,12 @@
       const tt = s.token_tree || {};
       const poly = tt.polymarket || {};
       const tr = poly.token_reg || {};
-      const fo = poly.fpmm_poly || poly.fpmm_only || {};
+      const fo = poly.fpmm_poly || poly.fpmm_poly || {};
       const other = tt.other || {};
-      const trOrderbook = tr.orderbook ?? tr.normal ?? 0;
+      const trOrderbook = tr.orderbook ?? 0;
       const trOther = tr.other ?? 0;
-      const fpmmOther = other.fpmm_other ?? other.other_fpmm ?? 0;
+      const fpmmOther = other.fpmm_other ?? other.fpmm_other ?? 0;
       const transferInferredByCollateral = other.by_collateral_transfer_inferred || [];
-      const transferInferredByToken = other.transfer_inferred_by_token || [];
 
       return {
         id: "token",
@@ -629,43 +628,24 @@
                   {
                     id: "token_transfer_by_collateral",
                     label: "按抵押品",
-                    value:
-                      transferInferredByCollateral.length > 0
-                        ? transferInferredByCollateral.reduce(
-                          (acc, c) => acc + Number(c.count || 0),
-                          0,
-                        )
-                        : transferInferredByToken.reduce(
-                          (acc, t) => acc + Number(t.count || 0),
-                          0,
-                        ),
+                    value: transferInferredByCollateral.reduce(
+                      (acc, c) => acc + Number(c.count || 0),
+                      0,
+                    ),
                     color: "#e5e7eb",
                     desc: "group_by(collateral)",
                     scene: "按字段collateral聚合",
-                    children:
-                      transferInferredByCollateral.length > 0
-                        ? transferInferredByCollateral
-                          .slice()
-                          .sort((a, b) => b.count - a.count)
-                          .map((c) => ({
-                            id: `token_transfer_coll_${c.addr || c.name}`,
-                            label: c.name || "未知代币",
-                            value: c.count,
-                            color: "#f3f4f6",
-                            desc: c.addr || "",
-                            scene: "",
-                          }))
-                        : transferInferredByToken
-                          .slice()
-                          .sort((a, b) => b.count - a.count)
-                          .map((t) => ({
-                            id: `token_transfer_token_${t.token}`,
-                            label: "代币",
-                            value: t.count,
-                            color: "#f3f4f6",
-                            desc: t.token || "",
-                            scene: "",
-                          })),
+                    children: transferInferredByCollateral
+                      .slice()
+                      .sort((a, b) => b.count - a.count)
+                      .map((c) => ({
+                        id: `token_transfer_coll_${c.addr || c.name}`,
+                        label: c.name || "未知代币",
+                        value: c.count,
+                        color: "#f3f4f6",
+                        desc: c.addr || "",
+                        scene: "",
+                      })),
                   },
                 ].filter((x) => x.value > 0),
               },
@@ -673,51 +653,6 @@
           },
         ],
       };
-    }
-
-    // EventType常量 (与后端types.hpp对应)
-    const EventType = {
-      OrderBuy: 0,
-      OrderSell: 1,
-      SplitNormal: 2,
-      SplitNegRisk: 3,
-      SplitNonPoly: 4,
-      MergeNormal: 5,
-      MergeNegRisk: 6,
-      MergeNonPoly: 7,
-      Redemption: 8,
-      RedemptionNonPoly: 9,
-      Convert: 10,
-      FPMMBuy: 11,
-      FPMMSell: 12,
-      FPMMLPAdd: 13,
-      FPMMLPRemove: 14,
-      FPMMLPReturn: 15,
-      TransferInNegRisk: 16,
-      TransferInOther: 17,
-      TransferInNonPoly: 18,
-      TransferOutNegRisk: 19,
-      TransferOutOther: 20,
-      TransferOutNonPoly: 21,
-    };
-
-    function s2MergeByCollateralFromEventTypes(s, eventTypes) {
-      const src = s.event_by_collateral || {};
-      const byKey = {};
-      for (const et of eventTypes) {
-        const entries = src[String(et)] || [];
-        for (const item of entries) {
-          const key = item.addr || item.name;
-          if (!key) continue;
-          if (!byKey[key]) {
-            byKey[key] = { addr: item.addr || "", name: item.name || "", count: 0 };
-          }
-          byKey[key].count += Number(item.count || 0);
-        }
-      }
-      return Object.values(byKey)
-        .filter((x) => x.count > 0)
-        .sort((a, b) => b.count - a.count);
     }
 
     function s2NormalizeByCollateralEntries(entries) {
@@ -732,15 +667,14 @@
         .sort((a, b) => b.count - a.count);
     }
 
-    function s2GetByCollateralEntries(s, directKeys, fallbackEventTypes) {
+    function s2GetByCollateralEntries(s, directKeys) {
       for (const key of directKeys) {
         const direct = s[key];
         if (Array.isArray(direct) && direct.length > 0) {
           return s2NormalizeByCollateralEntries(direct);
         }
       }
-      if (!fallbackEventTypes || fallbackEventTypes.length === 0) return [];
-      return s2MergeByCollateralFromEventTypes(s, fallbackEventTypes);
+      return [];
     }
 
     function s2BuildByCollateralNode(nodeId, label, entries, scene, prefix) {
@@ -825,30 +759,16 @@
         (s.xfer_internal_transfer_other || 0);
       const internal = internal_mint + internal_burn + internal_transfer;
 
-      const byCollSplit = s2GetByCollateralEntries(
-        s,
-        ["by_collateral_split"],
-        [EventType.SplitNonPoly],
-      );
-      const byCollMerge = s2GetByCollateralEntries(
-        s,
-        ["by_collateral_merge"],
-        [EventType.MergeNonPoly],
-      );
-      const byCollRedemption = s2GetByCollateralEntries(
-        s,
-        ["by_collateral_redemption"],
-        [EventType.RedemptionNonPoly],
-      );
+      const byCollSplit = s2GetByCollateralEntries(s, ["by_collateral_split"]);
+      const byCollMerge = s2GetByCollateralEntries(s, ["by_collateral_merge"]);
+      const byCollRedemption = s2GetByCollateralEntries(s, ["by_collateral_redemption"]);
       const byCollFpmmTrade = s2GetByCollateralEntries(
         s,
-        ["by_collateral_fpmm_trade", "by_collateral_fpmm_buy", "by_collateral_fpmm_sell"],
-        [EventType.FPMMBuy, EventType.FPMMSell],
+        ["by_collateral_fpmm_trade"],
       );
       const byCollFpmmLp = s2GetByCollateralEntries(
         s,
-        ["by_collateral_fpmm_lp", "by_collateral_lp_add", "by_collateral_lp_remove", "by_collateral_lp_return"],
-        [EventType.FPMMLPAdd, EventType.FPMMLPRemove, EventType.FPMMLPReturn],
+        ["by_collateral_fpmm_lp"],
       );
       return {
         id: "xfer",

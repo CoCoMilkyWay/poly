@@ -295,12 +295,12 @@ private:
         } else if (has_negrisk) {
           ct.polymarket.token_reg.negrisk++;
         } else {
-          ct.polymarket.token_reg.normal++;
+          ct.polymarket.token_reg.orderbook++;
         }
       } else if (has_fpmm) {
         // 没有 TokenReg 但有 FPMM（早期 Polymarket 或只创建了池子）
         ct.polymarket.total++;
-        ct.polymarket.fpmm_only++;
+        ct.polymarket.fpmm_poly++;
       } else {
         // 既没有 TokenReg 也没有 FPMM → 其他协议
         ct.other.total++;
@@ -309,7 +309,7 @@ private:
           ct.other.prep++;
           break;
         case ConditionSource::OtherFPMM:
-          ct.other.other_fpmm++;
+          ct.other.fpmm_other++;
           break;
         case ConditionSource::SplitEvent:
           ct.other.split++;
@@ -321,9 +321,11 @@ private:
     }
     // 恒等式验证
     assert(ct.total == ct.polymarket.total + ct.other.total);
-    assert(ct.polymarket.total == ct.polymarket.token_reg.total + ct.polymarket.fpmm_only);
-    assert(ct.polymarket.token_reg.total == ct.polymarket.token_reg.amm + ct.polymarket.token_reg.negrisk + ct.polymarket.token_reg.normal);
-    assert(ct.other.total == ct.other.prep + ct.other.other_fpmm + ct.other.split);
+    assert(ct.polymarket.total == ct.polymarket.token_reg.total + ct.polymarket.fpmm_poly);
+    assert(ct.polymarket.token_reg.total ==
+           ct.polymarket.token_reg.amm + ct.polymarket.token_reg.negrisk +
+               ct.polymarket.token_reg.orderbook + ct.polymarket.token_reg.other);
+    assert(ct.other.total == ct.other.prep + ct.other.fpmm_other + ct.other.split);
     progress_.cond_tree = ct;
 
     // 代币树状partition: total = polymarket + other
@@ -338,7 +340,6 @@ private:
       if (info.cond_idx == UNKNOWN_COND_IDX) {
         tt.other.total++;
         tt.other.transfer_inferred++;
-        tt.other.transfer_inferred_by_token[tid]++;
         continue;
       }
 
@@ -354,21 +355,21 @@ private:
         } else if (negrisk_cond_idxs_.count(info.cond_idx)) {
           tt.polymarket.token_reg.negrisk++;
         } else {
-          tt.polymarket.token_reg.normal++;
+          tt.polymarket.token_reg.orderbook++;
         }
       } else if (has_fpmm) {
         // 没有 TokenReg 但有 FPMM（早期 Polymarket 或只创建了池子）
         tt.polymarket.total++;
-        tt.polymarket.fpmm_only.total++;
+        tt.polymarket.fpmm_poly.total++;
         auto cit = cond_collateral_.find(info.cond_idx);
         uint8_t coll = cit != cond_collateral_.end() ? cit->second : static_cast<uint8_t>(Collateral::Unknown);
-        tt.polymarket.fpmm_only.by_collateral[coll]++;
+        tt.polymarket.fpmm_poly.by_collateral[coll]++;
       } else {
         // 既没有 TokenReg 也没有 FPMM → 其他协议
         tt.other.total++;
         switch (src) {
         case TokenSource::OtherFPMM:
-          tt.other.other_fpmm++;
+          tt.other.fpmm_other++;
           break;
         case TokenSource::SplitEvent:
           tt.other.split++;
@@ -380,15 +381,17 @@ private:
     }
     // 恒等式验证
     assert(tt.total == tt.polymarket.total + tt.other.total);
-    assert(tt.polymarket.total == tt.polymarket.token_reg.total + tt.polymarket.fpmm_only.total);
-    assert(tt.polymarket.token_reg.total == tt.polymarket.token_reg.amm + tt.polymarket.token_reg.negrisk + tt.polymarket.token_reg.normal);
+    assert(tt.polymarket.total == tt.polymarket.token_reg.total + tt.polymarket.fpmm_poly.total);
+    assert(tt.polymarket.token_reg.total ==
+           tt.polymarket.token_reg.amm + tt.polymarket.token_reg.negrisk +
+               tt.polymarket.token_reg.orderbook + tt.polymarket.token_reg.other);
     {
       int64_t sum = 0;
-      for (const auto &[k, v] : tt.polymarket.fpmm_only.by_collateral)
+      for (const auto &[k, v] : tt.polymarket.fpmm_poly.by_collateral)
         sum += v;
-      assert(tt.polymarket.fpmm_only.total == sum);
+      assert(tt.polymarket.fpmm_poly.total == sum);
     }
-    assert(tt.other.total == tt.other.other_fpmm + tt.other.split + tt.other.transfer_inferred);
+    assert(tt.other.total == tt.other.fpmm_other + tt.other.split + tt.other.transfer_inferred);
     progress_.token_tree = tt;
   }
 
@@ -402,11 +405,9 @@ private:
       progress_.total_users = seen_users_.size();
     }
 
-    // 维护两套统计：Token 维度 + Collateral 维度
+    // 维护 Collateral 维度统计
     uint16_t coll_key = static_cast<uint16_t>(evt.type) * 256 + evt.collateral;
     progress_.event_by_collateral[coll_key]++;
-    uint16_t token_key = static_cast<uint16_t>(evt.type) * 256 + evt.token_idx;
-    progress_.event_by_token[token_key]++;
 
     // 更新事件计数
     switch (evt.type) {

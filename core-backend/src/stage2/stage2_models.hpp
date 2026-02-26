@@ -223,14 +223,15 @@ struct ConditionTree {
       int64_t total = 0;
       int64_t amm = 0;     // 后来创建了FPMM
       int64_t negrisk = 0; // 负风险市场
-      int64_t normal = 0;  // 无FPMM，非NegRisk
+      int64_t orderbook = 0; // 无FPMM，非NegRisk（订单簿）
+      int64_t other = 0;     // TokenReg 兜底未覆盖项（预期=0）
     } token_reg;
-    int64_t fpmm_only = 0; // 只从FPMM推断(source=PolyFPMM)
+    int64_t fpmm_poly = 0; // 只从FPMM推断(source=PolyFPMM)
   } polymarket;
   struct Other {
     int64_t total = 0;
     int64_t prep = 0;       // source=ConditionPrep
-    int64_t other_fpmm = 0; // source=OtherFPMM (预期=0)
+    int64_t fpmm_other = 0; // source=OtherFPMM (预期=0)
     int64_t split = 0;      // source=SplitEvent (预期=0)
   } other;
 };
@@ -244,19 +245,19 @@ struct TokenTree {
       int64_t total = 0;
       int64_t amm = 0;     // 后来创建了FPMM
       int64_t negrisk = 0; // 负风险市场
-      int64_t normal = 0;  // 无FPMM，非NegRisk
+      int64_t orderbook = 0; // 无FPMM，非NegRisk（订单簿）
+      int64_t other = 0;     // TokenReg 兜底未覆盖项（预期=0）
     } token_reg;
     struct FpmmOnly {
       int64_t total = 0;
       std::unordered_map<uint8_t, int64_t> by_collateral; // Collateral enum → token count
-    } fpmm_only;
+    } fpmm_poly;
   } polymarket;
   struct Other {
     int64_t total = 0;
-    int64_t other_fpmm = 0;        // source=OtherFPMM (预期=0)
+    int64_t fpmm_other = 0;        // source=OtherFPMM (预期=0)
     int64_t split = 0;             // source=SplitEvent (预期=0)
     int64_t transfer_inferred = 0; // 从Transfer中发现的未知token（无condition信息）
-    std::unordered_map<std::string, int64_t> transfer_inferred_by_token;
   } other;
 };
 
@@ -285,9 +286,6 @@ struct BuildProgress {
   int64_t cnt_fpmm_funding = 0;
   int64_t cnt_transfer = 0;
   TransferStats xfer_stats;
-  // 按(EventType, TokenId)分组统计 user_event（token_id = token_idx, unknown=255）
-  // key: EventType * 256 + TokenId
-  std::unordered_map<uint16_t, int64_t> event_by_token;
   // 按(EventType, CollateralId)分组统计 user_event
   // key: EventType * 256 + CollateralId
   std::unordered_map<uint16_t, int64_t> event_by_collateral;

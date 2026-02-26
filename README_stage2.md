@@ -46,7 +46,7 @@ Stage2Sync (timer驱动, boost::asio)
    │  └─ FPMM  // desc: poly & fcreate & !treg; scene: 只创建AMM池,未注册Exchange; 对应: cond_tree.polymarket.fpmm_poly
    └─ 其他  // desc: 非Polymarket子树; scene: 无法确认属于Polymarket; 对应: cond_tree.other.total
       ├─ Prep  // desc: !poly & cprep; scene: 早期或其他协议(如Omen); 对应: cond_tree.other.prep
-      ├─ FPMM  // desc: !poly & fcreate; scene: 非Polymarket来源的FPMMCreation; 对应: cond_tree.other.fpmm_other
+      └─ FPMM  // desc: !poly & fcreate; scene: 非Polymarket来源的FPMMCreation; 对应: cond_tree.other.fpmm_other
 
 代币树 (`s2-token-tree`)
 └─ 代币  // desc: token分类总览; scene: ERC1155 token_id来源分层; 对应: token_tree.total
@@ -61,7 +61,7 @@ Stage2Sync (timer驱动, boost::asio)
    └─ 其他  // desc: 非Polymarket子树; scene: 无法确认属于Polymarket; 对应: token_tree.other.total
       ├─ FPMM  // desc: !poly & fcreate; scene: 非Polymarket来源的FPMMCreation; 对应: token_tree.other.fpmm_other
       └─ Transfer  // desc: !poly & xfer_inf; scene: 未知token,无condition信息; 对应: token_tree.other.transfer_inferred
-         └─ (动态) by_collateral_transfer_inferred
+      └─ (动态) by_collateral_transfer_inferred
 
 Transfer树 (`s2-xfer-tree`)
 └─ Transfer  // desc: TransferSingle/Batch; scene: ERC1155代币转移事件;
@@ -135,7 +135,7 @@ abbr(all)
 | ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
 | `cond_idx_map[cond_id] -> cond_idx`                                                 | `condition_preparation` / `token_map` / `fpmm` / `split` / `merge` / `redemption` |
 | `cond_info_map[cond_idx] -> cond_info:{outcome_count, payout, question_id, source}` | `condition_preparation` / `condition_resolution`                                  |
-| `token_info_map[token_id] -> token_info:{cond_idx, is_yes, source}`                 | `token_map` / `fpmm` / `split` / `merge` / `redemption` / `transfer`              |
+| `token_info_map[token_id] -> token_info:{cond_idx, token_idx, source}`              | `token_map` / `fpmm` / `split` / `merge` / `redemption` / `transfer`              |
 | `fpmm_info_map[fpmm_addr] -> fpmm_info:{cond_idx, coll}`                            | `fpmm`                                                                            |
 | `coll_map[cond_idx] -> coll`                                                        | `fpmm` / `split` / `merge` / `redemption`                                         |
 | `mid_map[qid] -> mid`                                                               | `neg_risk_question`                                                               |
@@ -250,7 +250,8 @@ phase3_process_transfers(chunk)
 │  ├─ assert(n_total == n_user + n_internal + n_unclass)
 │  ├─ assert(n_unclass == 0)
 │  ├─ assert(每条transfer消费次数 <= 1)
-│  ├─ assert(op消费约束成立: split/merge/redeem/convert/order/trade/lp 均满足最小腿要求)
+│  ├─ assert(op消费约束成立: split/merge/redeem/convert/order/lp 均满足最小腿要求)
+│  ├─ assert(trade消费约束成立: direct token leg 命中，或可被同tx内部 split/merge/internal burn/mint 路径解释)
 │  ├─ assert(order/trade/funding 候选不重复消费)
 │  ├─ assert(Poly类=>is_poly, NegRisk类=>is_nr, NonPoly类=>!is_poly或!known_cond)
 │  ├─ assert(convert 在 market 维度的路径与金额关系成立)
@@ -276,9 +277,10 @@ phase3_process_transfers(chunk)
    └─ FPMMFunding*       -> m(lp_add/lp_refund/lp_remove)
 
 匹配原则
-├─ 先操作后Transfer：先确定操作，再绑定Transfer腿
-├─ 同tx内按 op_log_index 切片
-└─ fallback 仅处理“未绑定”transfer
+├─ 语义窗口先行：先按 op_log_index 切片，再在片内绑定 transfer
+├─ 绑定与分类可同一遍完成，但结果必须等价于“先绑定后分类”
+├─ 判定只依赖硬约束；地址命名仅作上下文，不作放宽条件
+└─ fallback 仅处理“未绑定 transfer”，且必须可解释
 
 TransferClass输出事件(33类, 唯一落类)
 ├─ 用户操作(22类)
@@ -317,16 +319,17 @@ Phase3中间结构 (chunk内存)
 │  ├─ merge_ops[]        {op_id, stakeholder, cond_id, collateral_token, parent_collection_id, partition[], amount, consumed_count}
 │  ├─ redeem_ops[]       {op_id, redeemer, cond_id, collateral_token, parent_collection_id, index_sets[], payout, consumed_count}
 │  ├─ convert_ops[]      {op_id, market_id, stakeholder, index_set, amount, consumed_count}
-│  ├─ order_ops[]        {op_id, token_id, maker, taker, maker_side, usdc, tokens, fee, consumed}
-│  ├─ fpmm_trade_ops[]   {op_id, fpmm_addr, trader, side, outcome_idx, usdc, tokens, consumed}
-│  ├─ fpmm_lp_ops[]      {op_id, fpmm_addr, funder, side, amount0, amount1, amounts_count, consumed}
-│  └─ transfer_bind[]    {transfer_id -> (op_id, leg_type)}  // 未绑定为 null
+│  ├─ order_ops[]        {op_id, token_id, maker, taker, maker_side, usdc, tokens, fee, consumed_count}
+│  ├─ fpmm_trade_ops[]   {op_id, fpmm_addr, trader, side, outcome_idx, usdc, tokens, consumed_count, explainable_without_leg}
+│  ├─ fpmm_lp_ops[]      {op_id, fpmm_addr, funder, side, amount0, amount1, amounts_count, consumed_count}
+│  ├─ op_required[]      {op_id -> min_required_legs, optional_legs_mask}
+│  └─ transfer_bind[]    {transfer_id -> (op_id, leg_type, rule_id)}  // 未绑定为 null
 ├─ MatchHit
 │  └─ {matched:bool, op_id, op_type, leg_type, score}
 ├─ Phase3Counters
 │  └─ {n_total, n_user, n_internal, n_unclass}
 └─ XferTreeAcc
-   └─ {fixed_nodes[33], by_collateral_split, by_collateral_merge, by_collateral_redemption, by_collateral_order, by_collateral_fpmm_buy, by_collateral_fpmm_sell, by_collateral_lp_add, by_collateral_lp_remove, by_collateral_lp_return, by_collateral_transfer}
+   └─ {fixed_nodes[33], by_collateral_split, by_collateral_merge, by_collateral_redemption, by_collateral_fpmm_trade, by_collateral_fpmm_lp, by_collateral_transfer_inferred}
 
 Phase3输出结构
 ├─ user_event (持久化)

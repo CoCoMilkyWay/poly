@@ -113,8 +113,6 @@ public:
     int64_t xfer_internal_transfer_fpmm = 0;
     int64_t xfer_internal_transfer_other = 0;
 
-    // 按(EventType, TokenId)分组统计
-    std::unordered_map<uint16_t, int64_t> event_by_token;
     // 按(EventType, CollateralId)分组统计
     std::unordered_map<uint16_t, int64_t> event_by_collateral;
   };
@@ -163,7 +161,6 @@ public:
     p.xfer_internal_transfer_negrisk = bp.xfer_stats.internal_transfer_negrisk;
     p.xfer_internal_transfer_fpmm = bp.xfer_stats.internal_transfer_fpmm;
     p.xfer_internal_transfer_other = bp.xfer_stats.internal_transfer_other;
-    p.event_by_token = bp.event_by_token;
     p.event_by_collateral = bp.event_by_collateral;
     return p;
   }
