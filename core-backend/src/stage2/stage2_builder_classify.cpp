@@ -10,29 +10,29 @@ TransferClass EventBuilder::classify_and_emit(
     const std::string &token_id, int64_t amount,
     uint32_t cond_idx, uint8_t token_idx, Collateral collateral) {
 
-  assert_stage2(amount >= 0, AssertLevel::L0, "Input", "NonNegativeAmount");
+  stage2_assert(amount >= 0, AssertLevel::L0, "Input", "NonNegativeAmount");
 
   // Validate token identity before any semantic matching.
   bool known_token = (cond_idx != UNKNOWN_COND_IDX);
   uint8_t outcome_cnt = 0;
   if (known_token) {
-    assert_stage2(cond_idx < conditions_.size(), AssertLevel::L0, "Input", "CondIdxInRange");
+    stage2_assert(cond_idx < conditions_.size(), AssertLevel::L0, "Input", "CondIdxInRange");
     outcome_cnt = conditions_[cond_idx].outcome_count;
-    assert_stage2(outcome_cnt > 0, AssertLevel::L0, "Input", "OutcomeCountPositive");
-    assert_stage2(token_idx < outcome_cnt, AssertLevel::L0, "Input", "TokenIdxInOutcomeRange");
+    stage2_assert(outcome_cnt > 0, AssertLevel::L0, "Input", "OutcomeCountPositive");
+    stage2_assert(token_idx < outcome_cnt, AssertLevel::L0, "Input", "TokenIdxInOutcomeRange");
   } else {
-    assert_stage2(token_idx == UNKNOWN_TOKEN_IDX, AssertLevel::L0, "Input", "UnknownTokenIdx255");
+    stage2_assert(token_idx == UNKNOWN_TOKEN_IDX, AssertLevel::L0, "Input", "UnknownTokenIdx255");
   }
-  assert_stage2(from != to, AssertLevel::L0, "Input", "FromToDifferent");
+  stage2_assert(from != to, AssertLevel::L0, "Input", "FromToDifferent");
 
   uint8_t coll = static_cast<uint8_t>(collateral);
   std::string cond_id = known_token ? cond_ids_[cond_idx] : "";
   TxKey tx_key{block, tx_hash};
   TxTokenKey tx_token_key{block, tx_hash, token_id};
   int64_t transfer_log_index = sort_key - block * SORT_KEY_SCALE;
-  assert_stage2(transfer_log_index >= 0, AssertLevel::L0, "Input", "TransferLogIndexNonNegative");
+  stage2_assert(transfer_log_index >= 0, AssertLevel::L0, "Input", "TransferLogIndexNonNegative");
   int64_t sub_idx = transfer_log_index % TRANSFER_FLAT_LOG_SCALE;
-  assert_stage2(sub_idx >= 0 && sub_idx < TRANSFER_FLAT_LOG_SCALE, AssertLevel::L0, "Input", "TransferSubIdxRange");
+  stage2_assert(sub_idx >= 0 && sub_idx < TRANSFER_FLAT_LOG_SCALE, AssertLevel::L0, "Input", "TransferSubIdxRange");
   int64_t base_log_index = transfer_log_index / TRANSFER_FLAT_LOG_SCALE;
 
   int64_t active_semantic_log = -1;
@@ -116,7 +116,7 @@ TransferClass EventBuilder::classify_and_emit(
         match_count++;
       }
     }
-    assert_stage2(match_count <= 1, AssertLevel::L2, "Match", "SplitUniqueCandidate");
+    stage2_assert(match_count <= 1, AssertLevel::L2, "Match", "SplitUniqueCandidate");
     return matched;
   };
   auto find_merge_info = [&](const std::string &stakeholder, int64_t amt) -> MergeInfo * {
@@ -137,7 +137,7 @@ TransferClass EventBuilder::classify_and_emit(
         match_count++;
       }
     }
-    assert_stage2(match_count <= 1, AssertLevel::L2, "Match", "MergeUniqueCandidate");
+    stage2_assert(match_count <= 1, AssertLevel::L2, "Match", "MergeUniqueCandidate");
     return matched;
   };
   auto find_redemption_info = [&](const std::string &redeemer) -> RedemptionInfo * {
@@ -158,7 +158,7 @@ TransferClass EventBuilder::classify_and_emit(
         match_count++;
       }
     }
-    assert_stage2(match_count <= 1, AssertLevel::L2, "Match", "RedeemUniqueCandidate");
+    stage2_assert(match_count <= 1, AssertLevel::L2, "Match", "RedeemUniqueCandidate");
     return matched;
   };
   auto find_fpmm_trade_info = [&](const TxFPMMKey &key, int side,
@@ -180,7 +180,7 @@ TransferClass EventBuilder::classify_and_emit(
         match_count++;
       }
     }
-    assert_stage2(match_count <= 1, AssertLevel::L2, "Match", "FPMMTradeUniqueCandidate");
+    stage2_assert(match_count <= 1, AssertLevel::L2, "Match", "FPMMTradeUniqueCandidate");
     return matched;
   };
   auto mark_fpmm_trade_explained = [&](const TxFPMMKey &key, int side) -> bool {
@@ -202,7 +202,7 @@ TransferClass EventBuilder::classify_and_emit(
       matched = &info;
       match_count++;
     }
-    assert_stage2(match_count <= 1, AssertLevel::L2, "Match", "FPMMTradeExplainUniqueCandidate");
+    stage2_assert(match_count <= 1, AssertLevel::L2, "Match", "FPMMTradeExplainUniqueCandidate");
     if (has_consumed_match)
       return true;
     if (matched == nullptr)
@@ -211,7 +211,7 @@ TransferClass EventBuilder::classify_and_emit(
     return true;
   };
   auto funding_split_amount = [&](const FPMMFundingInfo &info) -> int64_t {
-    assert_stage2(!info.amounts.empty(), AssertLevel::L0, "Input", "FundingAmountsNonEmpty");
+    stage2_assert(!info.amounts.empty(), AssertLevel::L0, "Input", "FundingAmountsNonEmpty");
     return *std::max_element(info.amounts.begin(), info.amounts.end());
   };
   auto funding_matches_remove_amount = [&](const FPMMFundingInfo &info, int64_t transfer_amount) {
@@ -260,7 +260,7 @@ TransferClass EventBuilder::classify_and_emit(
         match_count++;
       }
     }
-    assert_stage2(match_count <= 1, AssertLevel::L2, "Match", "FPMMFundingUniqueCandidate");
+    stage2_assert(match_count <= 1, AssertLevel::L2, "Match", "FPMMFundingUniqueCandidate");
     return matched;
   };
   auto find_fpmm_remove_info = [&](const TxFPMMKey &key, const std::string &funder,
@@ -283,7 +283,7 @@ TransferClass EventBuilder::classify_and_emit(
         match_count++;
       }
     }
-    assert_stage2(match_count <= 1, AssertLevel::L2, "Match", "FPMMRemoveUniqueCandidate");
+    stage2_assert(match_count <= 1, AssertLevel::L2, "Match", "FPMMRemoveUniqueCandidate");
     return matched;
   };
   auto consume_active_funding_semantic = [&](const TxFPMMKey &key) {
@@ -298,7 +298,7 @@ TransferClass EventBuilder::classify_and_emit(
       matched = &info;
       match_count++;
     }
-    assert_stage2(match_count <= 1, AssertLevel::L2, "Match", "FPMMActiveFundingUniqueCandidate");
+    stage2_assert(match_count <= 1, AssertLevel::L2, "Match", "FPMMActiveFundingUniqueCandidate");
     if (matched == nullptr)
       return false;
     matched->consumed_count++;
@@ -322,7 +322,7 @@ TransferClass EventBuilder::classify_and_emit(
         match_count++;
       }
     }
-    assert_stage2(match_count <= 1, AssertLevel::L2, "Match", "OrderUniqueCandidate");
+    stage2_assert(match_count <= 1, AssertLevel::L2, "Match", "OrderUniqueCandidate");
     return matched;
   };
 
@@ -381,10 +381,10 @@ TransferClass EventBuilder::classify_and_emit(
       FPMMFundingInfo *fit = find_fpmm_funding_info(tx_fpmm_key, amount, false);
       if (fit != nullptr) {
         int64_t split_amt = funding_split_amount(*fit);
-        assert_stage2(amount == split_amt, AssertLevel::L3, "FPMMFunding", "LPAddSplitAmountMatch");
+        stage2_assert(amount == split_amt, AssertLevel::L3, "FPMMFunding", "LPAddSplitAmountMatch");
         fit->consumed_count++;
         if (known_token) {
-          assert_stage2(token_idx < fit->amounts.size(), AssertLevel::L3, "FPMMFunding", "LPAddTokenIdxInRange");
+          stage2_assert(token_idx < fit->amounts.size(), AssertLevel::L3, "FPMMFunding", "LPAddTokenIdxInRange");
           if (is_user_addr(fit->funder)) {
             int64_t pool_amt = fit->amounts[token_idx];
             RawEvent evt{sort_key, cond_idx, EventType::FPMMLPAdd, token_idx, coll, 0, pool_amt, split_price};
@@ -395,7 +395,7 @@ TransferClass EventBuilder::classify_and_emit(
         return TransferClass::InternalMintFPMM;
       }
       bool explained = mark_fpmm_trade_explained(tx_fpmm_key, 1);
-      assert_stage2(explained || !tx_fpmm_trade_.count(tx_fpmm_key),
+      stage2_assert(explained || !tx_fpmm_trade_.count(tx_fpmm_key),
                       AssertLevel::L3, "FPMMTrade", "BuyExplainableOnInternalMint");
       return TransferClass::InternalMintFPMM;
     }
@@ -443,7 +443,7 @@ TransferClass EventBuilder::classify_and_emit(
     if (fpmm_burn_it != fpmm_map_.end()) {
       TxFPMMKey tx_fpmm_key{block, tx_hash, from};
       bool explained = mark_fpmm_trade_explained(tx_fpmm_key, 2);
-      assert_stage2(explained || !tx_fpmm_trade_.count(tx_fpmm_key),
+      stage2_assert(explained || !tx_fpmm_trade_.count(tx_fpmm_key),
                       AssertLevel::L3, "FPMMTrade", "SellExplainableOnInternalBurn");
       return TransferClass::InternalBurnFPMM;
     }
@@ -495,14 +495,14 @@ TransferClass EventBuilder::classify_and_emit(
   if (op == CTF_EXCHANGE || op == NEG_RISK_CTF_EXCHANGE) {
     OrderInfo *oit = find_order_info();
     if (oit != nullptr) {
-      assert_stage2(oit->tokens > 0, AssertLevel::L3, "Order", "TokensPositive");
-      assert_stage2(amount == oit->tokens, AssertLevel::L3, "Order", "TransferAmountMatch");
+      stage2_assert(oit->tokens > 0, AssertLevel::L3, "Order", "TokensPositive");
+      stage2_assert(amount == oit->tokens, AssertLevel::L3, "Order", "TransferAmountMatch");
       if (oit->maker_side == 1) {
-        assert_stage2(to == oit->maker, AssertLevel::L3, "Order", "BuyerAddressMatch");
-        assert_stage2(from == oit->taker, AssertLevel::L3, "Order", "SellerAddressMatch");
+        stage2_assert(to == oit->maker, AssertLevel::L3, "Order", "BuyerAddressMatch");
+        stage2_assert(from == oit->taker, AssertLevel::L3, "Order", "SellerAddressMatch");
       } else {
-        assert_stage2(from == oit->maker, AssertLevel::L3, "Order", "SellerAddressMatch");
-        assert_stage2(to == oit->taker, AssertLevel::L3, "Order", "BuyerAddressMatch");
+        stage2_assert(from == oit->maker, AssertLevel::L3, "Order", "SellerAddressMatch");
+        stage2_assert(to == oit->taker, AssertLevel::L3, "Order", "BuyerAddressMatch");
       }
       oit->consumed = true;
 
@@ -516,7 +516,7 @@ TransferClass EventBuilder::classify_and_emit(
     if (has_semantic(SemanticKind::Order)) {
       std::cerr << "[ERROR] Exchange transfer without matching order: block=" << block
                 << ", op=" << op << ", from=" << from << ", to=" << to << std::endl;
-      fail_stage2_assert(AssertLevel::L3, "Order", "ExchangeTransferWithoutOrder");
+      stage2_assert(false, AssertLevel::L3, "Order", "ExchangeTransferWithoutOrder");
       return TransferClass::Unclassified;
     }
     // Without order semantics, fall through to generic transfer classification.
@@ -552,9 +552,9 @@ TransferClass EventBuilder::classify_and_emit(
           }
         }
         if (is_convert_output) {
-          assert_stage2(amount <= split_info->amount, AssertLevel::L3, "Convert", "YesOutputWithinSplit");
+          stage2_assert(amount <= split_info->amount, AssertLevel::L3, "Convert", "YesOutputWithinSplit");
         } else {
-          assert_stage2(amount == split_info->amount, AssertLevel::L3, "NegRisk", "SplitAmountMatch");
+          stage2_assert(amount == split_info->amount, AssertLevel::L3, "NegRisk", "SplitAmountMatch");
         }
         emit_if_user(to, RawEvent{sort_key, cond_idx, EventType::SplitNegRisk, token_idx, coll, 0, amount, split_price});
         return TransferClass::SplitNegRisk;
@@ -578,8 +578,8 @@ TransferClass EventBuilder::classify_and_emit(
       if (from == NEG_RISK_ADAPTER)
         return TransferClass::InternalBurnConvert;
 
-      assert_stage2(known_token && token_idx == 1, AssertLevel::L3, "Convert", "BurnTokenIsNO");
-      assert_stage2(has_semantic(SemanticKind::Convert), AssertLevel::L3, "Convert", "SemanticPresentForBurn");
+      stage2_assert(known_token && token_idx == 1, AssertLevel::L3, "Convert", "BurnTokenIsNO");
+      stage2_assert(has_semantic(SemanticKind::Convert), AssertLevel::L3, "Convert", "SemanticPresentForBurn");
       if (!conditions_[cond_idx].question_id.empty()) {
         auto market_it = cond_to_market_.find(conditions_[cond_idx].question_id);
         if (market_it != cond_to_market_.end()) {
@@ -600,10 +600,10 @@ TransferClass EventBuilder::classify_and_emit(
       }
       std::cerr << "[ERROR] Convert burn without event: block=" << block
                 << ", from=" << from << ", amount=" << amount << std::endl;
-      fail_stage2_assert(AssertLevel::L3, "Convert", "BurnWithoutSemanticEvent");
+      stage2_assert(false, AssertLevel::L3, "Convert", "BurnWithoutSemanticEvent");
       return TransferClass::Unclassified;
     }
-    fail_stage2_assert(AssertLevel::L3, "NegRisk", "UnexpectedAdapterTransferPattern");
+    stage2_assert(false, AssertLevel::L3, "NegRisk", "UnexpectedAdapterTransferPattern");
     return TransferClass::Unclassified;
   }
 
@@ -629,7 +629,7 @@ TransferClass EventBuilder::classify_and_emit(
           chosen_log = log_index;
           return;
         }
-        assert_stage2(log_index != chosen_log, AssertLevel::L2, "Match", "FPMMSemanticSameLogTie");
+        stage2_assert(log_index != chosen_log, AssertLevel::L2, "Match", "FPMMSemanticSameLogTie");
       };
       if (refund_info != nullptr)
         consider(FromFPMMMatch::Refund, refund_info->log_index);
@@ -642,9 +642,9 @@ TransferClass EventBuilder::classify_and_emit(
         int64_t split_amt = funding_split_amount(*refund_info);
         refund_info->consumed_count++;
         if (known_token) {
-          assert_stage2(token_idx < refund_info->amounts.size(), AssertLevel::L3, "FPMMFunding", "LPReturnTokenIdxInRange");
+          stage2_assert(token_idx < refund_info->amounts.size(), AssertLevel::L3, "FPMMFunding", "LPReturnTokenIdxInRange");
           int64_t expected_refund = split_amt - refund_info->amounts[token_idx];
-          assert_stage2(amount == expected_refund, AssertLevel::L3, "FPMMFunding", "LPReturnAmountMatch");
+          stage2_assert(amount == expected_refund, AssertLevel::L3, "FPMMFunding", "LPReturnAmountMatch");
           emit_if_user(to, RawEvent{sort_key, cond_idx, EventType::FPMMLPReturn, token_idx, coll, 0, amount, split_price});
           return TransferClass::FPMMLPReturn;
         }
@@ -655,12 +655,12 @@ TransferClass EventBuilder::classify_and_emit(
             break;
           }
         }
-        assert_stage2(refund_match, AssertLevel::L3, "FPMMFunding", "LPReturnAmountMatch");
+        stage2_assert(refund_match, AssertLevel::L3, "FPMMFunding", "LPReturnAmountMatch");
         return TransferClass::InternalTransferFPMM;
       }
       if (chosen == FromFPMMMatch::TradeBuy) {
         buy_info->consumed = true;
-        assert_stage2(amount == buy_info->tokens, AssertLevel::L3, "FPMMTrade", "BuyAmountMatch");
+        stage2_assert(amount == buy_info->tokens, AssertLevel::L3, "FPMMTrade", "BuyAmountMatch");
         int64_t price = usdc_price(buy_info->usdc, buy_info->tokens);
         emit_if_user(to, RawEvent{sort_key, cond_idx, EventType::FPMMBuy, token_idx, coll, 0, amount, price});
         return TransferClass::FPMMBuy;
@@ -673,7 +673,7 @@ TransferClass EventBuilder::classify_and_emit(
 
       if (tx_fpmm_funding_.count(tx_fpmm_key) > 0) {
         bool consumed = consume_active_funding_semantic(tx_fpmm_key);
-        assert_stage2(consumed, AssertLevel::L3, "FPMMFunding", "SemanticMustMatchFundingRow");
+        stage2_assert(consumed, AssertLevel::L3, "FPMMFunding", "SemanticMustMatchFundingRow");
         emit_if_user(to, RawEvent{sort_key, cond_idx, EventType::FPMMLPRemove, token_idx, coll, 0, amount, split_price});
         return TransferClass::FPMMLPRemove;
       }
@@ -693,7 +693,7 @@ TransferClass EventBuilder::classify_and_emit(
       FPMMTradeInfo *tit = find_fpmm_trade_info(tx_fpmm_key, 2, from, amount);
       if (tit != nullptr) {
         tit->consumed = true;
-        assert_stage2(amount == tit->tokens, AssertLevel::L3, "FPMMTrade", "SellAmountMatch");
+        stage2_assert(amount == tit->tokens, AssertLevel::L3, "FPMMTrade", "SellAmountMatch");
         int64_t price = usdc_price(tit->usdc, tit->tokens);
         emit_if_user(from, RawEvent{sort_key, cond_idx, EventType::FPMMSell, token_idx, coll, 0, -amount, price});
         return TransferClass::FPMMSell;

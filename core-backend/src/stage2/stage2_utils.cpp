@@ -42,7 +42,7 @@ std::array<uint8_t, 32> hex_to_bytes32(const std::string &hex) {
     try {
       result[i] = static_cast<uint8_t>(std::stoul(h.substr(i * 2, 2), nullptr, 16));
     } catch (const std::exception &) {
-      fail_stage2_assert(AssertLevel::L0, "Parse", "HexToBytes32InvalidHex");
+      stage2_assert(false, AssertLevel::L0, "Parse", "HexToBytes32InvalidHex");
     }
   }
   return result;
@@ -58,7 +58,7 @@ std::string hex_to_blob(const std::string &hex) {
     try {
       result.push_back(static_cast<char>(std::stoul(h.substr(i, 2), nullptr, 16)));
     } catch (const std::exception &) {
-      fail_stage2_assert(AssertLevel::L0, "Parse", "HexToBlobInvalidHex");
+      stage2_assert(false, AssertLevel::L0, "Parse", "HexToBlobInvalidHex");
     }
   }
   return result;

@@ -111,7 +111,7 @@ private:
   uint32_t intern_condition(const std::string &cond_id, uint8_t outcome_cnt,
                             ConditionSource source = ConditionSource::ConditionPrep,
                             const std::string &question_id = "") {
-    assert_stage2(outcome_cnt > 0 && outcome_cnt <= MAX_OUTCOMES,
+    stage2_assert(outcome_cnt > 0 && outcome_cnt <= MAX_OUTCOMES,
                     AssertLevel::L1, "Mapping", "OutcomeCountRange");
     std::string lower = to_lower(cond_id);
     auto it = cond_map_.find(lower);
@@ -176,7 +176,7 @@ private:
     if (it != token_map_.end()) {
       // 已存在：不应该出现 TransferInferred 后又从其他来源发现的情况
       // 因为事件按时间顺序处理，FPMM/Split 等事件应该先于 Transfer
-      assert_stage2(!(it->second.source == TokenSource::TransferInferred && source != TokenSource::TransferInferred),
+      stage2_assert(!(it->second.source == TokenSource::TransferInferred && source != TokenSource::TransferInferred),
                       AssertLevel::L1, "Mapping", "TransferInferredNotOverwritten");
       return;
     }
@@ -191,7 +191,7 @@ private:
     if (it != collateral_addr_to_id_.end()) {
       return it->second;
     }
-    assert_stage2(next_collateral_id_ != 0, AssertLevel::L1, "Mapping", "CollateralIdNotOverflow");
+    stage2_assert(next_collateral_id_ != 0, AssertLevel::L1, "Mapping", "CollateralIdNotOverflow");
     uint8_t coll_id = next_collateral_id_++;
     collateral_addr_to_id_[lower] = coll_id;
     collateral_id_to_addr_[coll_id] = lower;
@@ -222,12 +222,12 @@ private:
                                uint32_t cond_idx, TokenSource source) {
     auto cond_bytes = hex_to_blob(lower_cid);
     auto collateral_bytes = hex_to_blob(collateral_hex);
-    assert_stage2(cond_idx < conditions_.size(), AssertLevel::L1, "Mapping", "CondIdxInRangeForTokenIntern");
+    stage2_assert(cond_idx < conditions_.size(), AssertLevel::L1, "Mapping", "CondIdxInRangeForTokenIntern");
     uint8_t outcome_count = conditions_[cond_idx].outcome_count;
-    assert_stage2(outcome_count > 0 && outcome_count <= MAX_OUTCOMES,
+    stage2_assert(outcome_count > 0 && outcome_count <= MAX_OUTCOMES,
                     AssertLevel::L1, "Mapping", "OutcomeCountRangeForTokenIntern");
     for (uint8_t outcome = 0; outcome < outcome_count; ++outcome) {
-      assert_stage2(outcome < 31, AssertLevel::L1, "Mapping", "OutcomeBitWidthLt31");
+      stage2_assert(outcome < 31, AssertLevel::L1, "Mapping", "OutcomeBitWidthLt31");
       int index_set = (1 << outcome);
       auto collection_id = ctf::get_collection_id(cond_bytes, index_set);
       auto position_hash = ctf::get_position_id(collateral_bytes, collection_id);
@@ -239,7 +239,7 @@ private:
   void intern_fpmm_tokens(const std::vector<std::string> &condition_ids,
                           const std::string &collateral_hex,
                           uint32_t primary_cond_idx) {
-    assert_stage2(!condition_ids.empty(), AssertLevel::L1, "Mapping", "FPMMConditionIdsNonEmpty");
+    stage2_assert(!condition_ids.empty(), AssertLevel::L1, "Mapping", "FPMMConditionIdsNonEmpty");
     auto collateral_bytes = hex_to_blob(collateral_hex);
 
     std::vector<std::string> cond_bytes;
@@ -249,10 +249,10 @@ private:
     for (const auto &cid : condition_ids) {
       std::string lower = to_lower(cid);
       auto it = cond_map_.find(lower);
-      assert_stage2(it != cond_map_.end(), AssertLevel::L1, "Mapping", "FPMMCondKnown");
+      stage2_assert(it != cond_map_.end(), AssertLevel::L1, "Mapping", "FPMMCondKnown");
       cond_bytes.push_back(hex_to_blob(lower));
       outcome_counts.push_back(conditions_[it->second].outcome_count);
-      assert_stage2(outcome_counts.back() > 0 && outcome_counts.back() <= MAX_OUTCOMES,
+      stage2_assert(outcome_counts.back() > 0 && outcome_counts.back() <= MAX_OUTCOMES,
                       AssertLevel::L1, "Mapping", "FPMMOutcomeCountRange");
     }
 
@@ -263,7 +263,7 @@ private:
           if (cond_pos < 0) {
             auto position_hash = ctf::get_position_id(collateral_bytes, parent_collection_id);
             std::string token_id = crypto::Keccak256::to_hex(position_hash);
-            assert_stage2(first_condition_outcome >= 0 &&
+            stage2_assert(first_condition_outcome >= 0 &&
                                 first_condition_outcome <= std::numeric_limits<uint8_t>::max(),
                             AssertLevel::L1, "Mapping", "FPMMFirstOutcomeFitsU8");
             uint8_t token_idx = static_cast<uint8_t>(first_condition_outcome);
@@ -273,7 +273,7 @@ private:
 
           uint8_t outcome_cnt = outcome_counts[cond_pos];
           for (uint8_t outcome = 0; outcome < outcome_cnt; ++outcome) {
-            assert_stage2(outcome < 31, AssertLevel::L1, "Mapping", "FPMMOutcomeBitWidthLt31");
+            stage2_assert(outcome < 31, AssertLevel::L1, "Mapping", "FPMMOutcomeBitWidthLt31");
             uint32_t index_set = (1u << outcome);
             std::string child_collection_id = ctf::get_collection_id(parent_collection_id, cond_bytes[cond_pos], index_set);
             int next_first = (cond_pos == 0) ? static_cast<int>(outcome) : first_condition_outcome;
@@ -337,15 +337,15 @@ private:
       }
     }
     // 恒等式验证
-    assert_stage2(ct.total == ct.polymarket.total + ct.other.total,
+    stage2_assert(ct.total == ct.polymarket.total + ct.other.total,
                     AssertLevel::L5, "Partition", "ConditionTreeTotal");
-    assert_stage2(ct.polymarket.total == ct.polymarket.token_reg.total + ct.polymarket.fpmm_poly,
+    stage2_assert(ct.polymarket.total == ct.polymarket.token_reg.total + ct.polymarket.fpmm_poly,
                     AssertLevel::L5, "Partition", "ConditionTreePolymarketTotal");
-    assert_stage2(ct.polymarket.token_reg.total ==
+    stage2_assert(ct.polymarket.token_reg.total ==
                         ct.polymarket.token_reg.amm + ct.polymarket.token_reg.negrisk +
                             ct.polymarket.token_reg.orderbook + ct.polymarket.token_reg.other,
                     AssertLevel::L5, "Partition", "ConditionTreeTokenRegTotal");
-    assert_stage2(ct.other.total == ct.other.prep + ct.other.fpmm_other + ct.other.split +
+    stage2_assert(ct.other.total == ct.other.prep + ct.other.fpmm_other + ct.other.split +
                                           ct.other.merge + ct.other.redemption,
                     AssertLevel::L5, "Partition", "ConditionTreeOtherTotal");
     progress_.cond_tree = ct;
@@ -408,11 +408,11 @@ private:
       }
     }
     // 恒等式验证
-    assert_stage2(tt.total == tt.polymarket.total + tt.other.total,
+    stage2_assert(tt.total == tt.polymarket.total + tt.other.total,
                     AssertLevel::L5, "Partition", "TokenTreeTotal");
-    assert_stage2(tt.polymarket.total == tt.polymarket.token_reg.total + tt.polymarket.fpmm_poly.total,
+    stage2_assert(tt.polymarket.total == tt.polymarket.token_reg.total + tt.polymarket.fpmm_poly.total,
                     AssertLevel::L5, "Partition", "TokenTreePolymarketTotal");
-    assert_stage2(tt.polymarket.token_reg.total ==
+    stage2_assert(tt.polymarket.token_reg.total ==
                         tt.polymarket.token_reg.amm + tt.polymarket.token_reg.negrisk +
                             tt.polymarket.token_reg.orderbook + tt.polymarket.token_reg.other,
                     AssertLevel::L5, "Partition", "TokenTreeTokenRegTotal");
@@ -420,10 +420,10 @@ private:
       int64_t sum = 0;
       for (const auto &[k, v] : tt.polymarket.fpmm_poly.by_collateral)
         sum += v;
-      assert_stage2(tt.polymarket.fpmm_poly.total == sum,
+      stage2_assert(tt.polymarket.fpmm_poly.total == sum,
                       AssertLevel::L5, "Partition", "TokenTreeFPMMByCollateralTotal");
     }
-    assert_stage2(tt.other.total == tt.other.fpmm_other + tt.other.split + tt.other.merge +
+    stage2_assert(tt.other.total == tt.other.fpmm_other + tt.other.split + tt.other.merge +
                                           tt.other.redemption + tt.other.transfer_inferred,
                     AssertLevel::L5, "Partition", "TokenTreeOtherTotal");
     progress_.token_tree = tt;
@@ -484,7 +484,7 @@ private:
       progress_.cnt_transfer++;
       break;
     default:
-      fail_stage2_assert(AssertLevel::L0, "Input", "UnknownEventTypeInCounter");
+      stage2_assert(false, AssertLevel::L0, "Input", "UnknownEventTypeInCounter");
       break;
     }
   }

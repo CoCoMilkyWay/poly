@@ -34,16 +34,6 @@ inline const char *assert_level_tag(AssertLevel level) {
   return "L?";
 }
 
-inline std::string build_assert_message(AssertLevel level, const char *domain,
-                                        const char *rule, const char *detail = nullptr) {
-  std::string msg = std::string("[S2][") + assert_level_tag(level) + "][" + domain + "][" + rule + "]";
-  if (detail != nullptr && detail[0] != '\0') {
-    msg += " ";
-    msg += detail;
-  }
-  return msg;
-}
-
 inline void stage2_log_info(const std::string &msg) {
   std::cerr << "[Stage2] " << msg << std::endl;
 }
@@ -52,34 +42,56 @@ inline void stage2_log_assert(const std::string &msg) {
   std::cerr << "[Stage2][ASSERT] " << msg << std::endl;
 }
 
-inline thread_local const std::string *g_stage2_assert_context = nullptr;
+namespace detail {
 
-class Stage2AssertContextScope {
-public:
-  explicit Stage2AssertContextScope(const std::string *ctx)
-      : prev_(g_stage2_assert_context) {
-    g_stage2_assert_context = ctx;
+inline const std::string *&assert_context_slot() {
+  static thread_local const std::string *ctx = nullptr;
+  return ctx;
+}
+
+inline std::string format_assert_message(AssertLevel level, const char *domain,
+                                         const char *rule, const char *detail) {
+  std::string msg =
+      std::string("[S2][") + assert_level_tag(level) + "][" + domain + "][" + rule + "]";
+  if (detail != nullptr && detail[0] != '\0') {
+    msg += " ";
+    msg += detail;
   }
-  ~Stage2AssertContextScope() { g_stage2_assert_context = prev_; }
+  return msg;
+}
 
-private:
-  const std::string *prev_;
-};
-
-[[noreturn]] inline void fail_stage2_assert(AssertLevel level, const char *domain,
-                                             const char *rule, const char *detail = nullptr) {
-  stage2_log_assert(build_assert_message(level, domain, rule, detail));
-  if (g_stage2_assert_context != nullptr && !g_stage2_assert_context->empty()) {
-    stage2_log_assert(std::string("context: ") + *g_stage2_assert_context);
+[[noreturn]] inline void fail_with(AssertLevel level, const char *domain,
+                                   const char *rule, const char *msg_detail) {
+  stage2_log_assert(format_assert_message(level, domain, rule, msg_detail));
+  const std::string *ctx = assert_context_slot();
+  if (ctx != nullptr && !ctx->empty()) {
+    stage2_log_assert(std::string("context: ") + *ctx);
   }
   assert(false && "stage2 assertion");
   std::abort();
 }
 
-inline void assert_stage2(bool cond, AssertLevel level, const char *domain,
-                          const char *rule, const char *detail = nullptr) {
+} // namespace detail
+
+class Stage2AssertContextScope {
+public:
+  explicit Stage2AssertContextScope(const std::string *ctx)
+      : prev_(detail::assert_context_slot()) {
+    detail::assert_context_slot() = ctx;
+  }
+  ~Stage2AssertContextScope() { detail::assert_context_slot() = prev_; }
+
+  Stage2AssertContextScope(const Stage2AssertContextScope &) = delete;
+  Stage2AssertContextScope &operator=(const Stage2AssertContextScope &) = delete;
+
+private:
+  const std::string *prev_;
+};
+
+inline void stage2_assert(bool cond, AssertLevel level, const char *domain,
+                          const char *rule, const char *msg_detail = nullptr) {
   if (!cond) {
-    fail_stage2_assert(level, domain, rule, detail);
+    detail::fail_with(level, domain, rule, msg_detail);
   }
 }
 

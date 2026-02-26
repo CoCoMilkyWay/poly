@@ -299,8 +299,8 @@ TransferStats &TransferStats::operator+=(const TransferStats &o) {
 
 void TransferStats::verify() const {
   int64_t sum = user_events() + internal() + unclassified;
-  assert_stage2(sum == total, AssertLevel::L5, "Conservation", "TransferStatsTotal");
-  assert_stage2(unclassified == 0, AssertLevel::L5, "Conservation", "TransferStatsUnclassifiedZero");
+  stage2_assert(sum == total, AssertLevel::L5, "Conservation", "TransferStatsTotal");
+  stage2_assert(unclassified == 0, AssertLevel::L5, "Conservation", "TransferStatsUnclassifiedZero");
 }
 
 void TransferStats::print_summary() const {
