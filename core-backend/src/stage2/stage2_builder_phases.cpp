@@ -297,10 +297,8 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
     return key;
   };
   std::unordered_map<TxKey, std::vector<int64_t>> tx_op_logs;
-  auto record_semantic = [&](const TxKey &key, int64_t log_index, SemanticKind kind) {
+  auto record_semantic = [&](const TxKey &key, int64_t log_index) {
     tx_op_logs[key].push_back(log_index);
-    TxLogKey log_key{key.block, key.tx_hash, log_index};
-    tx_op_type_mask_[log_key] |= semantic_mask_bit(kind);
   };
 
   auto split = query_block_range(
@@ -319,7 +317,7 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
       info.parent_collection_id = get_hex_lower(split, 7, i);
       info.partition = parse_bytes32_list_hex_lower(split->GetValue(8, i));
       tx_split_[key].push_back(info);
-      record_semantic(key, info.log_index, SemanticKind::Split);
+      record_semantic(key, info.log_index);
     }
   }
 
@@ -339,7 +337,7 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
       info.parent_collection_id = get_hex_lower(merge, 7, i);
       info.partition = parse_bytes32_list_hex_lower(merge->GetValue(8, i));
       tx_merge_[key].push_back(info);
-      record_semantic(key, info.log_index, SemanticKind::Merge);
+      record_semantic(key, info.log_index);
     }
   }
 
@@ -359,7 +357,7 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
       info.parent_collection_id = get_hex_lower(redemption, 7, i);
       info.index_sets = parse_bytes32_list_hex_lower(redemption->GetValue(8, i));
       tx_redemption_[key].push_back(info);
-      record_semantic(key, info.log_index, SemanticKind::Redemption);
+      record_semantic(key, info.log_index);
     }
   }
 
@@ -384,7 +382,7 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
       info.amount = get_u256_i64(convert, 5, i);
       info.stakeholder = get_hex_lower(convert, 6, i);
       tx_convert_[key].push_back(info);
-      record_semantic(tx_key, info.log_index, SemanticKind::Convert);
+      record_semantic(tx_key, info.log_index);
     }
   }
 
@@ -424,7 +422,7 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
       info.tokens = maker_is_usdc ? taker_amt : maker_amt;
       info.fee = fee;
       tx_order_[key].push_back(info);
-      record_semantic(tx_key, info.log_index, SemanticKind::Order);
+      record_semantic(tx_key, info.log_index);
     }
   }
 
@@ -453,7 +451,7 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
       info.usdc = get_u256_i64(fpmm_trade, 7, i);
       info.tokens = get_u256_i64(fpmm_trade, 8, i);
       tx_fpmm_trade_[key].push_back(info);
-      record_semantic(tx_key, info.log_index, SemanticKind::FPMMTrade);
+      record_semantic(tx_key, info.log_index);
     }
   }
 
@@ -476,7 +474,7 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
       info.side = fpmm_funding->GetValue(5, i).GetValue<int>();
       info.amounts = parse_u256_list_i64(fpmm_funding->GetValue(6, i));
       tx_fpmm_funding_[key].push_back(info);
-      record_semantic(tx_key, info.log_index, SemanticKind::FPMMFunding);
+      record_semantic(tx_key, info.log_index);
     }
   }
 
@@ -585,17 +583,20 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
   // Semantic coverage assertions: every semantic op in this chunk must be consumed by at least one transfer leg.
   for (const auto &[_, rows] : tx_split_) {
     for (const auto &row : rows) {
-      stage2_assert(row.consumed_count > 0, AssertLevel::L4, "Consume", "SplitConsumed");
+      stage2_assert(row.consumed_count > 0 || row.covered_by_parent,
+                    AssertLevel::L4, "Consume", "SplitConsumedOrCoveredByParent");
     }
   }
   for (const auto &[_, rows] : tx_merge_) {
     for (const auto &row : rows) {
-      stage2_assert(row.consumed_count > 0, AssertLevel::L4, "Consume", "MergeConsumed");
+      stage2_assert(row.consumed_count > 0 || row.covered_by_parent,
+                    AssertLevel::L4, "Consume", "MergeConsumedOrCoveredByParent");
     }
   }
   for (const auto &[_, rows] : tx_redemption_) {
     for (const auto &row : rows) {
-      stage2_assert(row.consumed_count > 0, AssertLevel::L4, "Consume", "RedeemConsumed");
+      stage2_assert(row.consumed_count > 0 || row.covered_by_parent,
+                    AssertLevel::L4, "Consume", "RedeemConsumedOrCoveredByParent");
     }
   }
   for (const auto &[_, rows] : tx_order_) {

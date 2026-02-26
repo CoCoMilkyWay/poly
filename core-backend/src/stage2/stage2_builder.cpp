@@ -438,7 +438,6 @@ bool EventBuilder::build_chunk(int64_t target_block) {
   tx_fpmm_trade_.clear();
   tx_fpmm_funding_.clear();
   tx_op_bounds_.clear();
-  tx_op_type_mask_.clear();
   chunk_xfer_stats_ = {};
 
   // 开始 chunk log

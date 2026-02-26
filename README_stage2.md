@@ -200,19 +200,19 @@ phase3_process_transfers(chunk)
 │  │  └─ sort_key = block_number * 1e9 + flat_log_index
 │  ├─ build_tx_op_state
 │  │  ├─ 将 split/merge/redeem/convert/order/trade/funding 统一映射为 SemanticOp
+│  │  ├─ 按协议关系分层: RootOp(可直接分类) / ChildOp(仅约束校验,可被父语义覆盖)
 │  │  ├─ 每个 op 保留完整约束: actor/cond/market/fpmm/collateral/parent/partition/index_sets/amount/side
-│  │  ├─ 同 tx 内按 op_log_index 排序
-│  │  ├─ 读取 tx_op_bounds_idx 生成 op 作用区间（由相邻语义事件自动切片）
-│  │  └─ 初始化 op_consumed 计数与 transfer->op 绑定表
+│  │  ├─ 同 tx 内按 op_log_index 排序，RootOp 生成 op 作用区间
+│  │  └─ 初始化 root/child consumed、covered_by_parent 与 transfer->root_op 绑定表
 │  └─ build_transfer_ctx
 │     ├─ token_info_map 命中 -> known_cond=true
 │     ├─ token_info_map 未命中 -> TransferInferred{cond_idx=UNKNOWN_COND_IDX, token_idx=255}
 │     ├─ coll = coll_map[cond_idx], miss=>UnknownCollateral
 │     └─ known_cond=false 且命中FPMM语义 且 operator in fpmm_info_map -> coll回填为fpmm.coll
 ├─ 主循环 for unit in transfers(by sort_key)
-│  ├─ Pass A: transfer -> SemanticOp 绑定（每条 transfer 最多绑定一次）
+│  ├─ Pass A: transfer -> RootOp 绑定（每条 transfer 最多绑定一次）
 │  │  ├─ 双通道绑定:
-│  │  │  ├─ 窗口通道: split/merge/redeem/convert/order 先按 tx_key + op_bounds 取候选 op
+│  │  │  ├─ 窗口通道: root(split/merge/redeem/convert/order) 先按 tx_key + op_bounds 取候选 op
 │  │  │  └─ FPMM通道: trade/funding 按 tx_key + fpmm_addr 在同tx内前向匹配（log_index >= 当前transfer）
 │  │  ├─ 再按硬约束过滤:
 │  │  │  ├─ split/merge: stakeholder + cond_id + collateral + parent + partition + direction + amount
@@ -223,11 +223,12 @@ phase3_process_transfers(chunk)
 │  │  │  └─ unknown token 仅在通过结构约束时可绑定，不以“地址像不像”放宽
 │  │  ├─ FPMM from==pool 多候选决策: 取最近未来语义log；同log并列 -> assert(false)
 │  │  ├─ 多候选同时命中 -> assert(false)
-│  │  └─ 唯一命中 -> 记录 op_id + leg_type 并更新 op_consumed
+│  │  ├─ 唯一命中 -> 记录 root_op_id + leg_type 并更新 root_op_consumed
+│  │  └─ ChildOp 不直接抢占 transfer；由命中的 RootOp 按协议关系标记 covered_by_parent 或 direct_consumed
 │  ├─ Pass B: 分类与事件产出
-│  │  ├─ 已绑定 transfer: 由 op_type + leg_type 驱动分类（不靠单条 transfer 猜语义）
-│  │  │  ├─ split: 支持 parent burn + child mint 多腿消费；含 0->FPMM 内部 mint 腿先消费 split 再落 InternalMintFPMM
-│  │  │  ├─ merge: 支持多条 burn + parent mint（若存在）；含 FPMM->0 内部 burn 腿先消费 merge 再落 InternalBurnFPMM
+│  │  ├─ 已绑定 transfer: 由 root_op_type + leg_type 驱动分类（不靠单条 transfer 猜语义）
+│  │  │  ├─ split: 支持 parent burn + child mint 多腿消费；被 FPMMFunding/FPMMTrade/Order(MINT)/Convert 覆盖的 split 腿记为 child covered
+│  │  │  ├─ merge: 支持多条 burn + parent mint（若存在）；被 FPMMTrade/Order(MERGE) 覆盖的 merge 腿记为 child covered
 │  │  │  ├─ redemption: 支持 index_sets 对应的多条 burn
 │  │  │  └─ convert: 保持 InternalBurnConvert + Convert + (YES侧 SplitNegRisk/TransferInNegRisk) 三段路径
 │  │  ├─ 未绑定 transfer: fallback 到 TransferIn*/TransferOut*/Internal*
@@ -260,12 +261,12 @@ phase3_process_transfers(chunk)
 │  ├─ assert(n_total == n_user + n_internal + n_unclass)
 │  ├─ assert(n_unclass == 0)
 │  ├─ assert(每条transfer消费次数 <= 1)
-│  ├─ assert(op消费闭环: 每个语义 op 都满足“已消费或可解释例外”)
-│  │  ├─ order: consumed=true
-│  │  ├─ trade: consumed=true 或 explained_without_direct_leg=true
-│  │  ├─ convert: consumed_count>0
-│  │  ├─ funding: consumed_count>0；FundingRemoved amounts 全零允许零腿
-│  │  └─ split/merge/redeem: consumed_count>0
+│  ├─ assert(op消费闭环: RootOp 满足必需腿消费；ChildOp 满足 direct_consumed 或 covered_by_parent)
+│  │  ├─ root(order): consumed=true
+│  │  ├─ root(trade): consumed=true 或 explained_without_direct_leg=true
+│  │  ├─ root(convert): consumed_count>0
+│  │  ├─ root(funding): consumed_count>0；FundingRemoved amounts 全零允许零腿
+│  │  └─ child(split/merge/redeem): consumed_count>0 或 covered_by_parent=true
 │  ├─ assert(op候选唯一性: order/trade/funding/split/merge/redeem/convert 均无重复消费和歧义并列)
 │  ├─ assert(语义硬约束成立: actor/cond/collateral/parent/index_set/amount/side/log-window)
 │  ├─ assert(Poly类=>is_poly, NegRisk类=>is_nr, NonPoly类=>!is_poly或!known_cond)
@@ -292,7 +293,9 @@ phase3_process_transfers(chunk)
    └─ FPMMFunding*       -> m(lp_add/lp_refund/lp_remove)
 
 匹配原则
-├─ 先绑定再分类：实现可单遍，但语义等价于“先确定绑定，再按绑定结果分类”
+├─ 语义优先分层：先确定 RootOp/ChildOp；ChildOp 仅做约束与闭环，不直接抢占 transfer
+├─ 先绑定再分类：实现可单遍，但语义等价于“先确定 transfer->RootOp，再按绑定结果分类”
+├─ 一次绑定：每条 transfer 最多绑定一个 RootOp，命中后不再回溯其他语义
 ├─ 绑定边界：仅同 tx；窗口通道处理通用语义，FPMM通道允许前向匹配未来语义（不回看过去，不跨 tx/block）
 ├─ 判定规则：只用硬约束；多候选并列一律 assert(false)
 └─ fallback：仅处理未绑定 transfer，且必须可解释
@@ -337,6 +340,7 @@ Phase3中间结构 (chunk内存)
 │      partition/index_sets, amount, usdc, tokens, side, fee}
 ├─ TxOpState
 │  ├─ op_seq[]           {op_id, op_type, op_log_index}
+│  ├─ op_meta[]          {op_id, op_role(root|child), parent_op_id(optional)}
 │  ├─ op_bounds[]        {op_id, left_exclusive, right_inclusive}
 │  ├─ split_ops[]        {op_id, stakeholder, cond_id, collateral_token, parent_collection_id, partition[], amount, consumed_count}
 │  ├─ merge_ops[]        {op_id, stakeholder, cond_id, collateral_token, parent_collection_id, partition[], amount, consumed_count}
@@ -345,8 +349,8 @@ Phase3中间结构 (chunk内存)
 │  ├─ order_ops[]        {op_id, token_id, maker, taker, maker_side, usdc, tokens, fee, consumed_count}
 │  ├─ fpmm_trade_ops[]   {op_id, fpmm_addr, trader, side, outcome_idx, usdc, tokens, consumed_count, explainable_without_leg}
 │  ├─ fpmm_lp_ops[]      {op_id, fpmm_addr, funder, side, amounts[], consumed_count}
-│  ├─ op_required[]      {op_id -> min_required_legs, optional_legs_mask}
-│  └─ transfer_bind[]    {transfer_id -> (op_id, leg_type, rule_id)}  // 未绑定为 null
+│  ├─ op_required[]      {root_op_id -> min_required_legs, optional_legs_mask}
+│  └─ transfer_bind[]    {transfer_id -> (root_op_id, leg_type, rule_id)}  // 未绑定为 null
 ├─ MatchHit
 │  └─ {matched:bool, op_id, op_type, leg_type, score}
 ├─ Phase3Counters

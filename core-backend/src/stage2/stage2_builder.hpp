@@ -62,7 +62,6 @@ private:
   std::unordered_map<TxFPMMKey, std::vector<FPMMFundingInfo>> tx_fpmm_funding_;
   // Tx-level semantic bounds built from ordered semantic log_index sequence.
   std::unordered_map<TxKey, std::vector<TxOpBounds>> tx_op_bounds_;
-  std::unordered_map<TxLogKey, uint32_t> tx_op_type_mask_;
   TransferStats chunk_xfer_stats_;          // 当前 chunk 的 transfer 统计
   ChunkLog chunk_log_;                      // 当前 chunk 的日志
   std::string log_dir_ = "data/stage2/log"; // 日志目录

@@ -176,16 +176,6 @@ struct TxFPMMKey {
   }
 };
 
-struct TxLogKey {
-  int64_t block;
-  std::array<uint8_t, 32> tx_hash;
-  int64_t log_index;
-
-  bool operator==(const TxLogKey &o) const {
-    return block == o.block && tx_hash == o.tx_hash && log_index == o.log_index;
-  }
-};
-
 struct TxOpBounds {
   int64_t left_exclusive = -1;
   int64_t right_inclusive = -1;
@@ -201,10 +191,6 @@ enum class SemanticKind : uint8_t {
   FPMMFunding = 6,
 };
 
-inline uint32_t semantic_mask_bit(SemanticKind kind) {
-  return 1u << static_cast<uint8_t>(kind);
-}
-
 struct SplitInfo {
   int64_t log_index = -1;
   std::string stakeholder;
@@ -214,6 +200,7 @@ struct SplitInfo {
   std::vector<std::string> partition;
   int64_t amount;
   int consumed_count = 0;
+  bool covered_by_parent = false;
 };
 
 struct MergeInfo {
@@ -225,6 +212,7 @@ struct MergeInfo {
   std::vector<std::string> partition;
   int64_t amount;
   int consumed_count = 0;
+  bool covered_by_parent = false;
 };
 
 struct RedemptionInfo {
@@ -236,6 +224,7 @@ struct RedemptionInfo {
   std::vector<std::string> index_sets;
   int64_t payout;
   int consumed_count = 0;
+  bool covered_by_parent = false;
 };
 
 struct ConvertInfo {
@@ -331,16 +320,6 @@ struct hash<stage2::TxFPMMKey> {
     size_t h = stage2::hash_bytes32(k.tx_hash);
     h = stage2::hash_combine(h, std::hash<int64_t>()(k.block));
     h = stage2::hash_combine(h, std::hash<std::string>()(k.fpmm_addr));
-    return h;
-  }
-};
-
-template <>
-struct hash<stage2::TxLogKey> {
-  size_t operator()(const stage2::TxLogKey &k) const {
-    size_t h = stage2::hash_bytes32(k.tx_hash);
-    h = stage2::hash_combine(h, std::hash<int64_t>()(k.block));
-    h = stage2::hash_combine(h, std::hash<int64_t>()(k.log_index));
     return h;
   }
 };
