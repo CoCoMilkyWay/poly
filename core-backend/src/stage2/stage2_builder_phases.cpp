@@ -214,6 +214,21 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
       uint8_t outcome_count = 0;
     };
     std::unordered_map<std::string, CondInference> inferred_map;
+    auto choose_canonical_collateral = [&](const std::string &lhs, const std::string &rhs) {
+      if (lhs == rhs)
+        return lhs;
+      uint8_t lhs_id = addr_to_known_collateral_id(lhs);
+      uint8_t rhs_id = addr_to_known_collateral_id(rhs);
+      bool lhs_known = lhs_id != static_cast<uint8_t>(Collateral::Unknown);
+      bool rhs_known = rhs_id != static_cast<uint8_t>(Collateral::Unknown);
+      // Prefer known collateral over unknown dynamic addresses.
+      if (lhs_known && !rhs_known)
+        return lhs;
+      if (!lhs_known && rhs_known)
+        return rhs;
+      // Deterministic tie-breaker keeps merge stable across runs.
+      return (lhs < rhs) ? lhs : rhs;
+    };
     for (idx_t i = 0; i < rows->RowCount(); ++i) {
       std::string lower_cid = get_hex_lower(rows, 0, i);
       std::string collateral = get_hex_lower(rows, 1, i);
@@ -224,8 +239,7 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
         inferred_map.emplace(lower_cid, CondInference{collateral, inferred_count});
         continue;
       }
-      stage2_assert(it->second.collateral == collateral,
-                      AssertLevel::L1, "Mapping", "ConditionCollateralStable");
+      it->second.collateral = choose_canonical_collateral(it->second.collateral, collateral);
       if (inferred_count > it->second.outcome_count) {
         it->second.outcome_count = inferred_count;
       }

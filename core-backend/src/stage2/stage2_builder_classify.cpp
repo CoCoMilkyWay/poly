@@ -75,6 +75,8 @@ TransferClass EventBuilder::classify_and_emit(
       }
     }
   }
+  bool tx_has_semantic_windows = (op_bounds_it != tx_op_bounds_.end() &&
+                                  !op_bounds_it->second.empty());
 
   int64_t split_price = (known_token && is_usdc_collateral(collateral)) ? (1000000 / outcome_cnt) : 0;
 
@@ -84,6 +86,20 @@ TransferClass EventBuilder::classify_and_emit(
   };
   auto semantic_log_matches = [&](int64_t info_log_index) {
     return active_semantic_log >= 0 && info_log_index == active_semantic_log;
+  };
+  auto select_window_or_tx = [&](auto *window_matched, auto *tx_matched,
+                                 int window_match_count, int tx_match_count,
+                                 const char *window_rule, const char *tx_rule) {
+    using PtrT = decltype(window_matched);
+    stage2_assert(window_match_count <= 1, AssertLevel::L2, "Match", window_rule);
+    if (window_matched != nullptr)
+      return window_matched;
+    // Window channel is strict: once this tx has semantic windows,
+    // generic semantic binding must come from window hits only.
+    if (tx_has_semantic_windows)
+      return static_cast<PtrT>(nullptr);
+    stage2_assert(tx_match_count <= 1, AssertLevel::L2, "Match", tx_rule);
+    return tx_matched;
   };
   auto collateral_matches = [&](const std::string &semantic_collateral_addr) {
     if (semantic_collateral_addr.empty())
@@ -131,11 +147,9 @@ TransferClass EventBuilder::classify_and_emit(
         }
       }
     }
-    stage2_assert(window_match_count <= 1, AssertLevel::L2, "Match", "SplitWindowUniqueCandidate");
-    stage2_assert(tx_match_count <= 1, AssertLevel::L2, "Match", "SplitTxUniqueCandidate");
-    if (window_matched != nullptr)
-      return window_matched;
-    return tx_matched;
+    return select_window_or_tx(window_matched, tx_matched,
+                               window_match_count, tx_match_count,
+                               "SplitWindowUniqueCandidate", "SplitTxUniqueCandidate");
   };
   auto find_merge_info = [&](const std::string &stakeholder, int64_t amt) -> MergeInfo * {
     auto it = tx_merge_.find(tx_key);
@@ -157,11 +171,9 @@ TransferClass EventBuilder::classify_and_emit(
         }
       }
     }
-    stage2_assert(window_match_count <= 1, AssertLevel::L2, "Match", "MergeWindowUniqueCandidate");
-    stage2_assert(tx_match_count <= 1, AssertLevel::L2, "Match", "MergeTxUniqueCandidate");
-    if (window_matched != nullptr)
-      return window_matched;
-    return tx_matched;
+    return select_window_or_tx(window_matched, tx_matched,
+                               window_match_count, tx_match_count,
+                               "MergeWindowUniqueCandidate", "MergeTxUniqueCandidate");
   };
   auto find_redemption_info = [&](const std::string &redeemer) -> RedemptionInfo * {
     auto it = tx_redemption_.find(tx_key);
@@ -183,11 +195,9 @@ TransferClass EventBuilder::classify_and_emit(
         }
       }
     }
-    stage2_assert(window_match_count <= 1, AssertLevel::L2, "Match", "RedeemWindowUniqueCandidate");
-    stage2_assert(tx_match_count <= 1, AssertLevel::L2, "Match", "RedeemTxUniqueCandidate");
-    if (window_matched != nullptr)
-      return window_matched;
-    return tx_matched;
+    return select_window_or_tx(window_matched, tx_matched,
+                               window_match_count, tx_match_count,
+                               "RedeemWindowUniqueCandidate", "RedeemTxUniqueCandidate");
   };
   auto find_fpmm_trade_info = [&](const TxFPMMKey &key, int side,
                                   const std::string &trader, int64_t token_amount) -> FPMMTradeInfo * {
@@ -373,11 +383,9 @@ TransferClass EventBuilder::classify_and_emit(
         }
       }
     }
-    stage2_assert(window_match_count <= 1, AssertLevel::L2, "Match", "OrderWindowUniqueCandidate");
-    stage2_assert(tx_match_count <= 1, AssertLevel::L2, "Match", "OrderTxUniqueCandidate");
-    if (window_matched != nullptr)
-      return window_matched;
-    return tx_matched;
+    return select_window_or_tx(window_matched, tx_matched,
+                               window_match_count, tx_match_count,
+                               "OrderWindowUniqueCandidate", "OrderTxUniqueCandidate");
   };
   auto find_convert_info = [&](const std::string &market_id,
                                const std::string &stakeholder,
@@ -400,11 +408,9 @@ TransferClass EventBuilder::classify_and_emit(
         window_match_count++;
       }
     }
-    stage2_assert(window_match_count <= 1, AssertLevel::L2, "Match", "ConvertWindowUniqueCandidate");
-    stage2_assert(tx_match_count <= 1, AssertLevel::L2, "Match", "ConvertTxUniqueCandidate");
-    if (window_matched != nullptr)
-      return window_matched;
-    return tx_matched;
+    return select_window_or_tx(window_matched, tx_matched,
+                               window_match_count, tx_match_count,
+                               "ConvertWindowUniqueCandidate", "ConvertTxUniqueCandidate");
   };
   auto consume_split = [&](SplitInfo *info) {
     if (info != nullptr)

@@ -155,7 +155,7 @@ abbr(all)
 ② `condition_resolution`                    → `cond_info_map`(payout)
 ③ `token_map`                               → `cond_idx_map` + `cond_info_map`(source) + `token_info_map`
 ④ `fpmm`                                    → `cond_idx_map` + `cond_info_map`(source) + `fpmm_info_map` + `token_info_map` + `coll_map` + `pm_cond_set`
-⑤ `split` / `merge` / `redemption` 增量更新 → `cond_idx_map` + `cond_info_map`(source/outcome_count按index_set最高位推断并扩展) + `token_info_map` + `coll_map`
+⑤ `split` / `merge` / `redemption` 增量更新 → `cond_idx_map` + `cond_info_map`(source/outcome_count按index_set最高位推断并扩展) + `token_info_map` + `coll_map`(同condition若出现多collateral，按“已知优先+确定性tie-break”规范化)
 ⑥ `neg_risk_question`                       → `mid_map` + `nr_cond_set`
 → `update_cond_type_stats()`                → `ConditionTree` / `TokenTree`
 ```
@@ -201,7 +201,7 @@ phase3_process_transfers(chunk)
 ├─ 主循环 for transfer in transfers(by sort_key)
 │  ├─ Pass A: transfer -> RootOp 绑定（每条 transfer 最多绑定一次）
 │  │  ├─ 双通道绑定:
-│  │  │  ├─ 窗口通道: split/merge/redeem/convert/order 先按 tx_key + op_bounds 取候选 op
+│  │  │  ├─ 窗口通道: split/merge/redeem/convert/order 先按 tx_key + op_bounds 取候选 op（窗口命中才绑定）
 │  │  │  └─ FPMM通道: trade/funding 按 tx_key + fpmm_addr 在同tx内前向匹配（log_index >= 当前transfer）
 │  │  ├─ 再按硬约束过滤:
 │  │  │  ├─ split/merge: stakeholder + cond_id + collateral + parent + partition + direction + amount
@@ -286,15 +286,17 @@ phase3_process_transfers(chunk)
 ├─ 一次绑定：每条 transfer 最多绑定一个 root，重复绑定直接 assert(L2)
 ├─ 先绑定再分类：实现可单遍，但语义等价于“先确定绑定，再按绑定结果分类”
 ├─ 绑定边界：仅同 tx；窗口通道处理通用语义，FPMM通道允许前向匹配未来语义（不回看过去，不跨 tx/block）
+├─ 窗口优先：若该 tx 存在语义窗口(op_bounds 命中)，split/merge/redeem/convert/order 仅接受窗口命中
+├─ tx回退：仅当该 tx 不存在语义窗口(op_bounds 缺失)时，才允许上述语义按 tx 级回退匹配
 ├─ 判定规则：只用硬约束；多候选并列一律 assert(false)
 └─ fallback：仅处理未绑定 transfer，且必须可解释
 
 断言层级（Assertion Hierarchy）
 ├─ L0 输入/结构层：schema/type/range/u256解析合法
-├─ L1 映射不变量层：cond/token/collateral/fpmm 映射一致；outcome_count 合法且仅扩展不回退
-├─ L2 匹配唯一性层：候选命中数 <= 1；并列歧义直接失败
+├─ L1 映射不变量层：cond/token/collateral/fpmm 映射一致；outcome_count 合法且仅扩展不回退；coll_map 对多来源冲突做确定性规范化
+├─ L2 匹配唯一性层：窗口候选命中数 <= 1；tx级候选仅在无窗口回退时要求 <= 1
 ├─ L3 语义约束层：命中后必须满足 actor/cond/collateral/amount/direction/window 等硬约束
-├─ L4 语义消费闭环层：chunk 收尾每类语义 op 必须“已消费或显式例外（含 split/merge amount==0 零腿）”
+├─ L4 语义消费闭环层：chunk 收尾每类语义 op 必须“已消费或显式例外（含 split/merge amount==0、redeem payout==0 零腿）”
 └─ L5 结果守恒层：total 守恒、unclassified==0、树统计恒等式成立
 
 TransferClass输出事件(33类, 唯一落类)
