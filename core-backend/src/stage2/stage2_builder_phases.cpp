@@ -631,11 +631,11 @@ void EventBuilder::commit_chunk(int64_t new_cursor) {
              "SELECT * FROM tmp_user_event");
   }
 
-  exec_sql("INSERT OR REPLACE INTO stage2_cursor VALUES ('last_block', " +
+  exec_sql("INSERT OR REPLACE INTO stage2_cursor(key, value) VALUES ('last_block', " +
            std::to_string(new_cursor) + ")");
 
   auto save_cnt = [&](const char *key, int64_t val) {
-    exec_sql("INSERT OR REPLACE INTO stage2_cursor VALUES ('" + std::string(key) +
+    exec_sql("INSERT OR REPLACE INTO stage2_cursor(key, value) VALUES ('" + std::string(key) +
              "', " + std::to_string(val) + ")");
   };
   save_cnt("cnt_split", progress_.cnt_split);

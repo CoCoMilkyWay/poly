@@ -33,24 +33,6 @@ void EventBuilder::init_schema() {
       source      INTEGER NOT NULL DEFAULT 0
     )
   )");
-  {
-    auto conn = stage2_db_.create_connection();
-    auto cols = conn->Query("PRAGMA table_info(rb_condition)");
-    bool has_question_id = false, has_source = false;
-    for (idx_t i = 0; i < cols->RowCount(); ++i) {
-      std::string name = cols->GetValue(1, i).GetValueUnsafe<std::string>();
-      if (name == "question_id")
-        has_question_id = true;
-      if (name == "source")
-        has_source = true;
-    }
-    if (!has_question_id) {
-      stage2_db_.execute("ALTER TABLE rb_condition ADD COLUMN question_id BLOB");
-    }
-    if (!has_source) {
-      stage2_db_.execute("ALTER TABLE rb_condition ADD COLUMN source INTEGER NOT NULL DEFAULT 0");
-    }
-  }
 
   stage2_db_.execute(R"(
     CREATE TABLE IF NOT EXISTS rb_token (
@@ -60,20 +42,6 @@ void EventBuilder::init_schema() {
       source    INTEGER NOT NULL DEFAULT 0
     )
   )");
-  {
-    auto conn = stage2_db_.create_connection();
-    auto cols = conn->Query("PRAGMA table_info(rb_token)");
-    bool has_source = false;
-    for (idx_t i = 0; i < cols->RowCount(); ++i) {
-      if (cols->GetValue(1, i).GetValueUnsafe<std::string>() == "source") {
-        has_source = true;
-        break;
-      }
-    }
-    if (!has_source) {
-      stage2_db_.execute("ALTER TABLE rb_token ADD COLUMN source INTEGER NOT NULL DEFAULT 0");
-    }
-  }
 
   stage2_db_.execute(R"(
     CREATE TABLE IF NOT EXISTS rb_fpmm (
@@ -119,9 +87,30 @@ void EventBuilder::init_schema() {
   )");
 
   auto conn = stage2_db_.create_connection();
+  auto assert_table_columns = [&](const char *table_name, std::initializer_list<const char *> expected_cols) {
+    auto cols = conn->Query("PRAGMA table_info(" + std::string(table_name) + ")");
+    assert(cols && !cols->HasError());
+    assert(cols->RowCount() == static_cast<idx_t>(expected_cols.size()));
+    idx_t i = 0;
+    for (const char *expect : expected_cols) {
+      std::string got = cols->GetValue(1, i).GetValueUnsafe<std::string>();
+      assert(got == expect);
+      i++;
+    }
+  };
+
+  assert_table_columns("stage2_cursor", {"key", "value"});
+  assert_table_columns("rb_condition",
+                       {"cond_idx", "cond_id", "outcome_cnt", "payout_0", "payout_1",
+                        "payout_2", "payout_3", "payout_4", "payout_5", "payout_6",
+                        "payout_7", "question_id", "source"});
+  assert_table_columns("rb_token", {"token_id", "cond_idx", "is_yes", "source"});
+
   auto r = conn->Query("SELECT value FROM stage2_cursor WHERE key='last_block'");
+  assert(r && !r->HasError());
   if (r->RowCount() == 0) {
-    conn->Query("INSERT INTO stage2_cursor VALUES ('last_block', 0)");
+    auto ins = conn->Query("INSERT INTO stage2_cursor(key, value) VALUES ('last_block', 0)");
+    assert(ins && !ins->HasError());
   }
 }
 
@@ -145,7 +134,7 @@ void EventBuilder::load_from_rb() {
   collateral_addr_to_id_.clear();
   collateral_id_to_addr_.clear();
   next_collateral_id_ = static_cast<uint8_t>(Collateral::WrappedUSDCe) + 1;
-  // 预置已知抵押品，保持固定 ID 兼容历史数据
+  // 预置已知抵押品，保持固定 ID 和稳定编码
   collateral_addr_to_id_[ZERO_ADDR] = static_cast<uint8_t>(Collateral::Unknown);
   collateral_id_to_addr_[static_cast<uint8_t>(Collateral::Unknown)] = ZERO_ADDR;
   collateral_addr_to_id_[USDC_NATIVE] = static_cast<uint8_t>(Collateral::USDC);
@@ -175,6 +164,7 @@ void EventBuilder::load_from_rb() {
   }
 
   auto cur = conn->Query("SELECT value FROM stage2_cursor WHERE key='last_block'");
+  assert(cur && !cur->HasError());
   progress_.cursor = cur->RowCount() > 0 ? cur->GetValue(0, 0).GetValue<int64_t>() : 0;
 
   // 从 user_event 表重新计算事件计数（保证数据一致性）
@@ -360,7 +350,10 @@ void EventBuilder::load_from_rb() {
     int64_t value = xfer_kv->GetValue(1, i).GetValue<int64_t>();
     xfer_saved[key] = value;
   }
-  if (!xfer_saved.empty()) {
+  assert(!(progress_.cursor > 0 && progress_.total_events > 0 &&
+           xfer_saved.count("xfer_total") == 0) &&
+         "stage2 db missing persisted xfer stats snapshot; rebuild stage2 once");
+  if (xfer_saved.count("xfer_total") > 0) {
     auto load = [&](const char *key) -> int64_t {
       auto it = xfer_saved.find(key);
       return it == xfer_saved.end() ? 0 : it->second;
