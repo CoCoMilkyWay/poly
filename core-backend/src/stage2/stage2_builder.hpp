@@ -28,12 +28,14 @@ public:
   bool build_chunk(int64_t target_block);
 
   const BuildProgress &progress() const;
+  const BuildProgress &committed_progress() const;
 
 private:
   Database &stage1_db_;
   Database &stage2_db_;
   int chunk_size_;
   BuildProgress progress_;
+  BuildProgress committed_progress_;
 
   std::vector<ConditionInfo> conditions_;
   std::vector<std::string> cond_ids_;

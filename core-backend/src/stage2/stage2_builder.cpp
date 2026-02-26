@@ -127,6 +127,20 @@ void EventBuilder::init_schema() {
 
 void EventBuilder::load_from_rb() {
   auto conn = stage2_db_.create_connection();
+  progress_ = BuildProgress{};
+  committed_progress_ = BuildProgress{};
+
+  conditions_.clear();
+  cond_ids_.clear();
+  cond_map_.clear();
+  token_map_.clear();
+  fpmm_map_.clear();
+  cond_to_market_.clear();
+  seen_users_.clear();
+  seen_markets_.clear();
+  fpmm_cond_idxs_.clear();
+  negrisk_cond_idxs_.clear();
+  cond_collateral_.clear();
 
   collateral_addr_to_id_.clear();
   collateral_id_to_addr_.clear();
@@ -338,21 +352,75 @@ void EventBuilder::load_from_rb() {
   auto evt_total = conn->Query("SELECT COUNT(*) FROM user_event");
   progress_.total_events = evt_total->RowCount() > 0 ? evt_total->GetValue(0, 0).GetValue<int64_t>() : 0;
 
+  // 恢复 TransferStats（包含 internal 类，无法从 user_event 反推）
+  auto xfer_kv = conn->Query("SELECT key, value FROM stage2_cursor WHERE key LIKE 'xfer_%'");
+  std::unordered_map<std::string, int64_t> xfer_saved;
+  for (idx_t i = 0; i < xfer_kv->RowCount(); ++i) {
+    std::string key = xfer_kv->GetValue(0, i).GetValueUnsafe<std::string>();
+    int64_t value = xfer_kv->GetValue(1, i).GetValue<int64_t>();
+    xfer_saved[key] = value;
+  }
+  if (!xfer_saved.empty()) {
+    auto load = [&](const char *key) -> int64_t {
+      auto it = xfer_saved.find(key);
+      return it == xfer_saved.end() ? 0 : it->second;
+    };
+    auto &xs = progress_.xfer_stats;
+    xs.total = load("xfer_total");
+    xs.split_normal = load("xfer_split_normal");
+    xs.split_negrisk = load("xfer_split_negrisk");
+    xs.split_non_poly = load("xfer_split_non_poly");
+    xs.merge_normal = load("xfer_merge_normal");
+    xs.merge_negrisk = load("xfer_merge_negrisk");
+    xs.merge_non_poly = load("xfer_merge_non_poly");
+    xs.redemption = load("xfer_redemption");
+    xs.redemption_non_poly = load("xfer_redemption_non_poly");
+    xs.convert = load("xfer_convert");
+    xs.order_buy = load("xfer_order_buy");
+    xs.order_sell = load("xfer_order_sell");
+    xs.fpmm_buy = load("xfer_fpmm_buy");
+    xs.fpmm_sell = load("xfer_fpmm_sell");
+    xs.fpmm_lp_add = load("xfer_lp_add");
+    xs.fpmm_lp_remove = load("xfer_lp_remove");
+    xs.fpmm_lp_return = load("xfer_lp_return");
+    xs.transfer_in_negrisk = load("xfer_transfer_in_negrisk");
+    xs.transfer_in_other = load("xfer_transfer_in_other");
+    xs.transfer_in_non_poly = load("xfer_transfer_in_non_poly");
+    xs.transfer_out_negrisk = load("xfer_transfer_out_negrisk");
+    xs.transfer_out_other = load("xfer_transfer_out_other");
+    xs.transfer_out_non_poly = load("xfer_transfer_out_non_poly");
+    xs.internal_mint_negrisk = load("xfer_internal_mint_negrisk");
+    xs.internal_mint_fpmm = load("xfer_internal_mint_fpmm");
+    xs.internal_burn_negrisk = load("xfer_internal_burn_negrisk");
+    xs.internal_burn_fpmm = load("xfer_internal_burn_fpmm");
+    xs.internal_burn_convert = load("xfer_internal_burn_convert");
+    xs.internal_transfer_zero = load("xfer_internal_transfer_zero");
+    xs.internal_transfer_order = load("xfer_internal_transfer_order");
+    xs.internal_transfer_negrisk = load("xfer_internal_transfer_negrisk");
+    xs.internal_transfer_fpmm = load("xfer_internal_transfer_fpmm");
+    xs.internal_transfer_other = load("xfer_internal_transfer_other");
+    xs.unclassified = load("xfer_unclassified");
+    xs.verify();
+  }
+
   if (progress_.cursor > 0)
     progress_.phase = 3;
+
+  committed_progress_ = progress_;
 
   std::cerr << "[Stage2] Restored: " << conditions_.size() << " conditions, "
             << token_map_.size() << " tokens, " << fpmm_map_.size() << " FPMMs" << std::endl;
 }
 
-int64_t EventBuilder::cursor() const { return progress_.cursor; }
+int64_t EventBuilder::cursor() const { return committed_progress_.cursor; }
 
 bool EventBuilder::build_chunk(int64_t target_block) {
-  if (progress_.cursor >= target_block)
+  if (committed_progress_.cursor >= target_block)
     return false;
 
-  int64_t chunk_start = progress_.cursor;
-  int64_t chunk_end = std::min(progress_.cursor + chunk_size_, target_block);
+  progress_ = committed_progress_;
+  int64_t chunk_start = committed_progress_.cursor;
+  int64_t chunk_end = std::min(committed_progress_.cursor + chunk_size_, target_block);
   // std::cerr << "[Stage2] Processing chunk: " << chunk_start << " -> " << chunk_end << std::endl;
   progress_.target = target_block;
   progress_.chunk_start = chunk_start;
@@ -407,9 +475,11 @@ bool EventBuilder::build_chunk(int64_t target_block) {
 
   progress_.cursor = chunk_end;
   progress_.running = false;
+  committed_progress_ = progress_;
   return true;
 }
 
 const BuildProgress &EventBuilder::progress() const { return progress_; }
+const BuildProgress &EventBuilder::committed_progress() const { return committed_progress_; }
 
 } // namespace stage2

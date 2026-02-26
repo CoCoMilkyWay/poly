@@ -120,10 +120,11 @@ public:
   };
 
   RebuildProgress progress() const {
-    const auto &bp = builder_.progress();
+    const auto &wp = builder_.progress();
+    const auto &bp = builder_.committed_progress();
     RebuildProgress p;
-    p.phase = bp.phase;
-    p.running = bp.running;
+    p.phase = wp.phase;
+    p.running = wp.running;
     p.total_users = bp.total_users;
     p.total_markets = bp.total_markets;
     p.total_events = bp.total_events;

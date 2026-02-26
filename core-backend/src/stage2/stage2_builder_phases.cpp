@@ -471,7 +471,11 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
 void EventBuilder::commit_chunk(int64_t new_cursor) {
   TraceN("s2/commit");
   auto conn = stage2_db_.create_connection();
-  conn->Query("BEGIN TRANSACTION");
+  auto exec_sql = [&](const std::string &sql) {
+    auto r = conn->Query(sql);
+    assert(r && !r->HasError());
+  };
+  exec_sql("BEGIN TRANSACTION");
 
   auto append_blob = [](duckdb::Appender &ap, const std::string &hex) {
     std::string b = hex_to_blob(hex);
@@ -479,12 +483,12 @@ void EventBuilder::commit_chunk(int64_t new_cursor) {
   };
 
   if (!new_conditions_.empty()) {
-    conn->Query("CREATE TEMP TABLE IF NOT EXISTS tmp_rb_condition ("
-                "cond_idx INTEGER, cond_id BLOB, outcome_cnt INTEGER, "
-                "payout_0 BIGINT, payout_1 BIGINT, payout_2 BIGINT, payout_3 BIGINT, "
-                "payout_4 BIGINT, payout_5 BIGINT, payout_6 BIGINT, payout_7 BIGINT, "
-                "question_id BLOB, source INTEGER)");
-    conn->Query("DELETE FROM tmp_rb_condition");
+    exec_sql("CREATE TEMP TABLE IF NOT EXISTS tmp_rb_condition ("
+             "cond_idx INTEGER, cond_id BLOB, outcome_cnt INTEGER, "
+             "payout_0 BIGINT, payout_1 BIGINT, payout_2 BIGINT, payout_3 BIGINT, "
+             "payout_4 BIGINT, payout_5 BIGINT, payout_6 BIGINT, payout_7 BIGINT, "
+             "question_id BLOB, source INTEGER)");
+    exec_sql("DELETE FROM tmp_rb_condition");
     {
       duckdb::Appender ap(*conn, "tmp_rb_condition");
       for (auto &nc : new_conditions_) {
@@ -507,13 +511,13 @@ void EventBuilder::commit_chunk(int64_t new_cursor) {
       }
       ap.Close();
     }
-    conn->Query("INSERT OR REPLACE INTO rb_condition SELECT * FROM tmp_rb_condition");
+    exec_sql("INSERT OR REPLACE INTO rb_condition SELECT * FROM tmp_rb_condition");
   }
 
   if (!new_tokens_.empty()) {
-    conn->Query("CREATE TEMP TABLE IF NOT EXISTS tmp_rb_token ("
-                "token_id BLOB, cond_idx INTEGER, is_yes INTEGER, source INTEGER)");
-    conn->Query("DELETE FROM tmp_rb_token");
+    exec_sql("CREATE TEMP TABLE IF NOT EXISTS tmp_rb_token ("
+             "token_id BLOB, cond_idx INTEGER, is_yes INTEGER, source INTEGER)");
+    exec_sql("DELETE FROM tmp_rb_token");
     {
       duckdb::Appender ap(*conn, "tmp_rb_token");
       for (auto &nt : new_tokens_) {
@@ -527,13 +531,13 @@ void EventBuilder::commit_chunk(int64_t new_cursor) {
       }
       ap.Close();
     }
-    conn->Query("INSERT OR IGNORE INTO rb_token SELECT * FROM tmp_rb_token");
+    exec_sql("INSERT OR IGNORE INTO rb_token SELECT * FROM tmp_rb_token");
   }
 
   if (!new_fpmms_.empty()) {
-    conn->Query("CREATE TEMP TABLE IF NOT EXISTS tmp_rb_fpmm ("
-                "fpmm_addr BLOB, cond_idx INTEGER, collateral INTEGER)");
-    conn->Query("DELETE FROM tmp_rb_fpmm");
+    exec_sql("CREATE TEMP TABLE IF NOT EXISTS tmp_rb_fpmm ("
+             "fpmm_addr BLOB, cond_idx INTEGER, collateral INTEGER)");
+    exec_sql("DELETE FROM tmp_rb_fpmm");
     {
       duckdb::Appender ap(*conn, "tmp_rb_fpmm");
       for (auto &nf : new_fpmms_) {
@@ -545,13 +549,13 @@ void EventBuilder::commit_chunk(int64_t new_cursor) {
       }
       ap.Close();
     }
-    conn->Query("INSERT OR IGNORE INTO rb_fpmm SELECT * FROM tmp_rb_fpmm");
+    exec_sql("INSERT OR IGNORE INTO rb_fpmm SELECT * FROM tmp_rb_fpmm");
   }
 
   if (!new_collaterals_.empty()) {
-    conn->Query("CREATE TEMP TABLE IF NOT EXISTS tmp_rb_collateral ("
-                "coll_id INTEGER, collateral_addr BLOB)");
-    conn->Query("DELETE FROM tmp_rb_collateral");
+    exec_sql("CREATE TEMP TABLE IF NOT EXISTS tmp_rb_collateral ("
+             "coll_id INTEGER, collateral_addr BLOB)");
+    exec_sql("DELETE FROM tmp_rb_collateral");
     {
       duckdb::Appender ap(*conn, "tmp_rb_collateral");
       for (auto &nc : new_collaterals_) {
@@ -562,13 +566,13 @@ void EventBuilder::commit_chunk(int64_t new_cursor) {
       }
       ap.Close();
     }
-    conn->Query("INSERT OR IGNORE INTO rb_collateral SELECT * FROM tmp_rb_collateral");
+    exec_sql("INSERT OR IGNORE INTO rb_collateral SELECT * FROM tmp_rb_collateral");
   }
 
   if (!new_cond_collaterals_.empty()) {
-    conn->Query("CREATE TEMP TABLE IF NOT EXISTS tmp_rb_cond_collateral ("
-                "cond_idx INTEGER, coll_id INTEGER)");
-    conn->Query("DELETE FROM tmp_rb_cond_collateral");
+    exec_sql("CREATE TEMP TABLE IF NOT EXISTS tmp_rb_cond_collateral ("
+             "cond_idx INTEGER, coll_id INTEGER)");
+    exec_sql("DELETE FROM tmp_rb_cond_collateral");
     {
       duckdb::Appender ap(*conn, "tmp_rb_cond_collateral");
       for (auto &nc : new_cond_collaterals_) {
@@ -579,13 +583,13 @@ void EventBuilder::commit_chunk(int64_t new_cursor) {
       }
       ap.Close();
     }
-    conn->Query("INSERT OR REPLACE INTO rb_cond_collateral SELECT * FROM tmp_rb_cond_collateral");
+    exec_sql("INSERT OR REPLACE INTO rb_cond_collateral SELECT * FROM tmp_rb_cond_collateral");
   }
 
   if (!new_neg_risk_markets_.empty()) {
-    conn->Query("CREATE TEMP TABLE IF NOT EXISTS tmp_rb_neg_risk_market ("
-                "question_id BLOB, market_id BLOB)");
-    conn->Query("DELETE FROM tmp_rb_neg_risk_market");
+    exec_sql("CREATE TEMP TABLE IF NOT EXISTS tmp_rb_neg_risk_market ("
+             "question_id BLOB, market_id BLOB)");
+    exec_sql("DELETE FROM tmp_rb_neg_risk_market");
     {
       duckdb::Appender ap(*conn, "tmp_rb_neg_risk_market");
       for (auto &nm : new_neg_risk_markets_) {
@@ -596,14 +600,14 @@ void EventBuilder::commit_chunk(int64_t new_cursor) {
       }
       ap.Close();
     }
-    conn->Query("INSERT OR IGNORE INTO rb_neg_risk_market SELECT * FROM tmp_rb_neg_risk_market");
+    exec_sql("INSERT OR IGNORE INTO rb_neg_risk_market SELECT * FROM tmp_rb_neg_risk_market");
   }
 
   if (!new_events_.empty()) {
-    conn->Query("CREATE TEMP TABLE IF NOT EXISTS tmp_user_event ("
-                "user_addr BLOB, sort_key BIGINT, cond_idx INTEGER, "
-                "event_type INTEGER, token_idx INTEGER, collateral INTEGER, amount BIGINT, price BIGINT)");
-    conn->Query("DELETE FROM tmp_user_event");
+    exec_sql("CREATE TEMP TABLE IF NOT EXISTS tmp_user_event ("
+             "user_addr BLOB, sort_key BIGINT, cond_idx INTEGER, "
+             "event_type INTEGER, token_idx INTEGER, collateral INTEGER, amount BIGINT, price BIGINT)");
+    exec_sql("DELETE FROM tmp_user_event");
 
     {
       duckdb::Appender appender(*conn, "tmp_user_event");
@@ -623,16 +627,16 @@ void EventBuilder::commit_chunk(int64_t new_cursor) {
       appender.Close();
     }
 
-    conn->Query("INSERT OR IGNORE INTO user_event "
-                "SELECT * FROM tmp_user_event");
+    exec_sql("INSERT OR IGNORE INTO user_event "
+             "SELECT * FROM tmp_user_event");
   }
 
-  conn->Query("INSERT OR REPLACE INTO stage2_cursor VALUES ('last_block', " +
-              std::to_string(new_cursor) + ")");
+  exec_sql("INSERT OR REPLACE INTO stage2_cursor VALUES ('last_block', " +
+           std::to_string(new_cursor) + ")");
 
   auto save_cnt = [&](const char *key, int64_t val) {
-    conn->Query("INSERT OR REPLACE INTO stage2_cursor VALUES ('" + std::string(key) +
-                "', " + std::to_string(val) + ")");
+    exec_sql("INSERT OR REPLACE INTO stage2_cursor VALUES ('" + std::string(key) +
+             "', " + std::to_string(val) + ")");
   };
   save_cnt("cnt_split", progress_.cnt_split);
   save_cnt("cnt_merge", progress_.cnt_merge);
@@ -644,9 +648,46 @@ void EventBuilder::commit_chunk(int64_t new_cursor) {
   save_cnt("cnt_transfer", progress_.cnt_transfer);
   save_cnt("total_events", progress_.total_events);
 
-  conn->Query("COMMIT");
+  const auto &xs = progress_.xfer_stats;
+  save_cnt("xfer_total", xs.total);
+  save_cnt("xfer_split_normal", xs.split_normal);
+  save_cnt("xfer_split_negrisk", xs.split_negrisk);
+  save_cnt("xfer_split_non_poly", xs.split_non_poly);
+  save_cnt("xfer_merge_normal", xs.merge_normal);
+  save_cnt("xfer_merge_negrisk", xs.merge_negrisk);
+  save_cnt("xfer_merge_non_poly", xs.merge_non_poly);
+  save_cnt("xfer_redemption", xs.redemption);
+  save_cnt("xfer_redemption_non_poly", xs.redemption_non_poly);
+  save_cnt("xfer_convert", xs.convert);
+  save_cnt("xfer_order_buy", xs.order_buy);
+  save_cnt("xfer_order_sell", xs.order_sell);
+  save_cnt("xfer_fpmm_buy", xs.fpmm_buy);
+  save_cnt("xfer_fpmm_sell", xs.fpmm_sell);
+  save_cnt("xfer_lp_add", xs.fpmm_lp_add);
+  save_cnt("xfer_lp_remove", xs.fpmm_lp_remove);
+  save_cnt("xfer_lp_return", xs.fpmm_lp_return);
+  save_cnt("xfer_transfer_in_negrisk", xs.transfer_in_negrisk);
+  save_cnt("xfer_transfer_in_other", xs.transfer_in_other);
+  save_cnt("xfer_transfer_in_non_poly", xs.transfer_in_non_poly);
+  save_cnt("xfer_transfer_out_negrisk", xs.transfer_out_negrisk);
+  save_cnt("xfer_transfer_out_other", xs.transfer_out_other);
+  save_cnt("xfer_transfer_out_non_poly", xs.transfer_out_non_poly);
+  save_cnt("xfer_internal_mint_negrisk", xs.internal_mint_negrisk);
+  save_cnt("xfer_internal_mint_fpmm", xs.internal_mint_fpmm);
+  save_cnt("xfer_internal_burn_negrisk", xs.internal_burn_negrisk);
+  save_cnt("xfer_internal_burn_fpmm", xs.internal_burn_fpmm);
+  save_cnt("xfer_internal_burn_convert", xs.internal_burn_convert);
+  save_cnt("xfer_internal_transfer_zero", xs.internal_transfer_zero);
+  save_cnt("xfer_internal_transfer_order", xs.internal_transfer_order);
+  save_cnt("xfer_internal_transfer_negrisk", xs.internal_transfer_negrisk);
+  save_cnt("xfer_internal_transfer_fpmm", xs.internal_transfer_fpmm);
+  save_cnt("xfer_internal_transfer_other", xs.internal_transfer_other);
+  save_cnt("xfer_unclassified", xs.unclassified);
+
+  exec_sql("COMMIT");
 
   auto user_cnt = conn->Query("SELECT COUNT(DISTINCT user_addr) FROM user_event");
+  assert(user_cnt && !user_cnt->HasError());
   progress_.total_users = user_cnt->RowCount() > 0 ? user_cnt->GetValue(0, 0).GetValue<int64_t>() : 0;
 }
 
