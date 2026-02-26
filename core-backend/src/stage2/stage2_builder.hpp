@@ -107,6 +107,15 @@ private:
   std::vector<std::tuple<std::string, RawEvent>> new_events_;
   std::string current_transfer_context_;
 
+  void update_xfer_tree(TransferClass cls) {
+    chunk_xfer_stats_.add(cls);
+  }
+
+  void update_xfer_tree(const RawEvent &evt) {
+    uint16_t coll_key = static_cast<uint16_t>(evt.type) * 256 + evt.collateral;
+    progress_.event_by_collateral[coll_key]++;
+  }
+
   uint32_t intern_condition(const std::string &cond_id, uint8_t outcome_cnt,
                             ConditionSource source = ConditionSource::ConditionPrep,
                             const std::string &question_id = "") {
@@ -438,9 +447,7 @@ private:
       progress_.total_users = seen_users_.size();
     }
 
-    // 维护 Collateral 维度统计
-    uint16_t coll_key = static_cast<uint16_t>(evt.type) * 256 + evt.collateral;
-    progress_.event_by_collateral[coll_key]++;
+    update_xfer_tree(evt);
 
     // 更新事件计数
     switch (evt.type) {

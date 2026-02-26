@@ -181,16 +181,6 @@ struct TxOpBounds {
   int64_t right_inclusive = -1;
 };
 
-enum class SemanticKind : uint8_t {
-  Split = 0,
-  Merge = 1,
-  Redemption = 2,
-  Convert = 3,
-  Order = 4,
-  FPMMTrade = 5,
-  FPMMFunding = 6,
-};
-
 struct SplitInfo {
   int64_t log_index = -1;
   std::string stakeholder;

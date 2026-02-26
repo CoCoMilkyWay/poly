@@ -37,6 +37,28 @@ TransferClass EventBuilder::classify_and_emit(
   stage2_assert(sub_idx >= 0 && sub_idx < TRANSFER_FLAT_LOG_SCALE, AssertLevel::L0, "Input", "TransferSubIdxRange");
   int64_t base_log_index = transfer_log_index / TRANSFER_FLAT_LOG_SCALE;
 
+  enum class RootOpType : uint8_t {
+    None = 0,
+    Split = 1,
+    Merge = 2,
+    Redemption = 3,
+    Convert = 4,
+    Order = 5,
+    FPMMTrade = 6,
+    FPMMFunding = 7,
+  };
+  struct RootBind {
+    RootOpType op = RootOpType::None;
+    const char *leg = "none";
+  };
+  RootBind root_bind;
+  auto bind_root = [&](RootOpType op_type, const char *leg) {
+    stage2_assert(root_bind.op == RootOpType::None, AssertLevel::L2, "Bind",
+                  "TransferBindAtMostOneRootOp", root_bind.leg);
+    root_bind.op = op_type;
+    root_bind.leg = leg;
+  };
+
   int64_t active_semantic_log = -1;
   auto op_bounds_it = tx_op_bounds_.find(tx_key);
   if (op_bounds_it != tx_op_bounds_.end()) {
@@ -189,6 +211,20 @@ TransferClass EventBuilder::classify_and_emit(
     stage2_assert(match_count <= 1, AssertLevel::L2, "Match", "FPMMTradeUniqueCandidate");
     return matched;
   };
+  auto has_pending_future_fpmm_trade = [&](const TxFPMMKey &key, int side) {
+    auto it = tx_fpmm_trade_.find(key);
+    if (it == tx_fpmm_trade_.end())
+      return false;
+    for (const auto &info : it->second) {
+      if (info.log_index < base_log_index)
+        continue;
+      if (info.side != side)
+        continue;
+      if (!info.consumed && !info.explained_without_direct_leg)
+        return true;
+    }
+    return false;
+  };
   auto mark_fpmm_trade_explained = [&](const TxFPMMKey &key, int side) -> bool {
     auto it = tx_fpmm_trade_.find(key);
     if (it == tx_fpmm_trade_.end())
@@ -268,6 +304,31 @@ TransferClass EventBuilder::classify_and_emit(
     }
     stage2_assert(match_count <= 1, AssertLevel::L2, "Match", "FPMMFundingUniqueCandidate");
     return matched;
+  };
+  auto has_pending_future_fpmm_funding = [&](const TxFPMMKey &key, int side) {
+    auto it = tx_fpmm_funding_.find(key);
+    if (it == tx_fpmm_funding_.end())
+      return false;
+    for (const auto &info : it->second) {
+      if (info.log_index < base_log_index)
+        continue;
+      if (info.side != side)
+        continue;
+      if (side == 2) {
+        bool all_zero = true;
+        for (int64_t amount_i : info.amounts) {
+          if (amount_i != 0) {
+            all_zero = false;
+            break;
+          }
+        }
+        if (all_zero)
+          continue;
+      }
+      if (info.consumed_count == 0)
+        return true;
+    }
+    return false;
   };
   auto find_fpmm_remove_info = [&](const TxFPMMKey &key, const std::string &funder,
                                    int64_t transfer_amount) -> FPMMFundingInfo * {
@@ -372,12 +433,15 @@ TransferClass EventBuilder::classify_and_emit(
       TxFPMMKey tx_fpmm_key{block, tx_hash, op};
       if (to == op) {
         if (FPMMTradeInfo *tit = find_fpmm_trade_info(tx_fpmm_key, 2, from, 0); tit != nullptr) {
+          bind_root(RootOpType::FPMMTrade, "sell_zero_to_pool");
           tit->consumed = true;
         }
       } else if (from == op) {
         if (FPMMTradeInfo *tit = find_fpmm_trade_info(tx_fpmm_key, 1, to, 0); tit != nullptr) {
+          bind_root(RootOpType::FPMMTrade, "buy_zero_from_pool");
           tit->consumed = true;
         } else if (to == ZERO_ADDR) {
+          bind_root(RootOpType::FPMMTrade, "sell_zero_internal_burn");
           (void)mark_fpmm_trade_explained(tx_fpmm_key, 2);
         }
       }
@@ -391,6 +455,7 @@ TransferClass EventBuilder::classify_and_emit(
       return TransferClass::InternalMintNegRisk;
 
     if (MergeInfo *mit = find_merge_info(to, amount); mit != nullptr) {
+      bind_root(RootOpType::Merge, "mint_parent");
       consume_merge(mit);
       if (known_token) {
         emit_if_user(to, RawEvent{sort_key, cond_idx, EventType::MergeNormal, token_idx, coll, 0, amount, split_price});
@@ -401,6 +466,7 @@ TransferClass EventBuilder::classify_and_emit(
     }
 
     if (RedemptionInfo *rit = find_redemption_info(to); rit != nullptr) {
+      bind_root(RootOpType::Redemption, "mint_parent");
       consume_redeem(rit);
       if (known_token) {
         int64_t payout_price = 0;
@@ -416,6 +482,7 @@ TransferClass EventBuilder::classify_and_emit(
     }
 
     if (SplitInfo *split_match = find_split_info(to, amount); split_match != nullptr) {
+      bind_root(RootOpType::Split, "mint_child");
       consume_split(split_match);
       if (known_token) {
         emit_if_user(to, RawEvent{sort_key, cond_idx, EventType::SplitNormal, token_idx, coll, 0, amount, split_price});
@@ -442,6 +509,7 @@ TransferClass EventBuilder::classify_and_emit(
   // ========== burn 分支 (to == 0x0, 非FPMM operator) ==========
   if (to == ZERO_ADDR && !op_is_fpmm) {
     if (SplitInfo *sit = find_split_info(from, amount); sit != nullptr) {
+      bind_root(RootOpType::Split, "burn_parent");
       consume_split(sit);
       if (known_token) {
         emit_if_user(from, RawEvent{sort_key, cond_idx, EventType::SplitNormal, token_idx, coll, 0, -amount, split_price});
@@ -455,6 +523,7 @@ TransferClass EventBuilder::classify_and_emit(
       return TransferClass::InternalBurnNegRisk;
 
     if (MergeInfo *merge_match = find_merge_info(from, amount); merge_match != nullptr) {
+      bind_root(RootOpType::Merge, "burn_child");
       consume_merge(merge_match);
       if (known_token) {
         emit_if_user(from, RawEvent{sort_key, cond_idx, EventType::MergeNormal, token_idx, coll, 0, -amount, split_price});
@@ -466,6 +535,7 @@ TransferClass EventBuilder::classify_and_emit(
     }
 
     if (RedemptionInfo *rit = find_redemption_info(from); rit != nullptr) {
+      bind_root(RootOpType::Redemption, "burn_child");
       consume_redeem(rit);
       if (known_token) {
         if (is_user_addr(from)) {
@@ -501,6 +571,7 @@ TransferClass EventBuilder::classify_and_emit(
   if (op_is_exchange) {
     OrderInfo *oit = find_order_info();
     if (oit != nullptr) {
+      bind_root(RootOpType::Order, "exchange_transfer");
       stage2_assert(oit->tokens > 0, AssertLevel::L3, "Order", "TokensPositive");
       stage2_assert(amount == oit->tokens, AssertLevel::L3, "Order", "TransferAmountMatch");
       if (oit->maker_side == 1) {
@@ -548,6 +619,7 @@ TransferClass EventBuilder::classify_and_emit(
         }
       }
       if (split_info != nullptr) {
+        bind_root(RootOpType::Split, "adapter_out_split_child");
         consume_split(split_info);
         bool is_convert_output = false;
         if (known_token && token_idx == 0 && !conditions_[cond_idx].question_id.empty()) {
@@ -571,6 +643,7 @@ TransferClass EventBuilder::classify_and_emit(
 
     if (to == NEG_RISK_ADAPTER) {
       if (MergeInfo *merge_info = find_merge_info(NEG_RISK_ADAPTER, amount); merge_info != nullptr) {
+        bind_root(RootOpType::Merge, "adapter_in_merge_child");
         consume_merge(merge_info);
         (void)merge_info;
         emit_if_user(from, RawEvent{sort_key, cond_idx, EventType::MergeNegRisk, token_idx, coll, 0, -amount, split_price});
@@ -589,6 +662,7 @@ TransferClass EventBuilder::classify_and_emit(
         auto market_it = cond_to_market_.find(conditions_[cond_idx].question_id);
         if (market_it != cond_to_market_.end()) {
           if (ConvertInfo *ci = find_convert_info(market_it->second, from, amount); ci != nullptr) {
+            bind_root(RootOpType::Convert, "convert_no_burn");
             ci->consumed_count++;
             emit_if_user(from, RawEvent{sort_key, cond_idx, EventType::Convert, token_idx, coll, 0, -amount, 0});
             return TransferClass::Convert;
@@ -614,6 +688,7 @@ TransferClass EventBuilder::classify_and_emit(
       SplitInfo *split_match = find_split_info(to, amount);
       FPMMFundingInfo *fit = find_fpmm_funding_info(tx_fpmm_key, amount, false);
       if (fit != nullptr) {
+        bind_root(RootOpType::FPMMFunding, "lp_add_mint_to_pool");
         cover_split(split_match);
         int64_t split_amt = funding_split_amount(*fit);
         stage2_assert(amount == split_amt, AssertLevel::L3, "FPMMFunding", "LPAddSplitAmountMatch");
@@ -629,6 +704,9 @@ TransferClass EventBuilder::classify_and_emit(
         }
         return TransferClass::InternalMintFPMM;
       }
+      stage2_assert(!has_pending_future_fpmm_funding(tx_fpmm_key, 1),
+                    AssertLevel::L3, "FPMMFunding", "LPAddMintLegMatchOrNoFunding");
+      bind_root(RootOpType::FPMMTrade, "buy_internal_split_mint");
       cover_split(split_match);
       bool explained = mark_fpmm_trade_explained(tx_fpmm_key, 1);
       stage2_assert(explained || !tx_fpmm_trade_.count(tx_fpmm_key),
@@ -638,6 +716,7 @@ TransferClass EventBuilder::classify_and_emit(
 
     // FPMM -> 0x0: internal merge burn leg
     if (from == op && to == ZERO_ADDR) {
+      bind_root(RootOpType::FPMMTrade, "sell_internal_merge_burn");
       cover_merge(find_merge_info(from, amount));
       bool explained = mark_fpmm_trade_explained(tx_fpmm_key, 2);
       stage2_assert(explained || !tx_fpmm_trade_.count(tx_fpmm_key),
@@ -672,6 +751,7 @@ TransferClass EventBuilder::classify_and_emit(
         consider(FromFPMMMatch::Remove, remove_info->log_index);
 
       if (chosen == FromFPMMMatch::Refund) {
+        bind_root(RootOpType::FPMMFunding, "lp_add_refund_from_pool");
         int64_t split_amt = funding_split_amount(*refund_info);
         refund_info->consumed_count++;
         if (known_token) {
@@ -692,6 +772,7 @@ TransferClass EventBuilder::classify_and_emit(
         return TransferClass::InternalTransferFPMM;
       }
       if (chosen == FromFPMMMatch::TradeBuy) {
+        bind_root(RootOpType::FPMMTrade, "buy_from_pool");
         buy_info->consumed = true;
         stage2_assert(amount == buy_info->tokens, AssertLevel::L3, "FPMMTrade", "BuyAmountMatch");
         int64_t price = usdc_price(buy_info->usdc, buy_info->tokens);
@@ -699,13 +780,18 @@ TransferClass EventBuilder::classify_and_emit(
         return TransferClass::FPMMBuy;
       }
       if (chosen == FromFPMMMatch::Remove) {
+        bind_root(RootOpType::FPMMFunding, "lp_remove_from_pool");
         remove_info->consumed_count++;
         emit_if_user(to, RawEvent{sort_key, cond_idx, EventType::FPMMLPRemove, token_idx, coll, 0, amount, split_price});
         return TransferClass::FPMMLPRemove;
       }
 
-      stage2_assert(tx_fpmm_funding_.count(tx_fpmm_key) == 0,
+      stage2_assert(!has_pending_future_fpmm_funding(tx_fpmm_key, 1),
                     AssertLevel::L3, "FPMMFunding", "TransferWithoutFundingLegMatch");
+      stage2_assert(!has_pending_future_fpmm_funding(tx_fpmm_key, 2),
+                    AssertLevel::L3, "FPMMFunding", "TransferWithoutFundingLegMatch");
+      stage2_assert(!has_pending_future_fpmm_trade(tx_fpmm_key, 1),
+                    AssertLevel::L3, "FPMMTrade", "TransferWithoutTradeLegMatch");
       if (known_token) {
         emit_if_user(to, RawEvent{sort_key, cond_idx, EventType::TransferInOther, token_idx, coll, 0, amount, 0});
         return classify_transfer_by_counterparty(TransferClass::TransferInOther,
@@ -721,12 +807,15 @@ TransferClass EventBuilder::classify_and_emit(
     if (to == op) {
       FPMMTradeInfo *tit = find_fpmm_trade_info(tx_fpmm_key, 2, from, amount);
       if (tit != nullptr) {
+        bind_root(RootOpType::FPMMTrade, "sell_to_pool");
         tit->consumed = true;
         stage2_assert(amount == tit->tokens, AssertLevel::L3, "FPMMTrade", "SellAmountMatch");
         int64_t price = usdc_price(tit->usdc, tit->tokens);
         emit_if_user(from, RawEvent{sort_key, cond_idx, EventType::FPMMSell, token_idx, coll, 0, -amount, price});
         return TransferClass::FPMMSell;
       }
+      stage2_assert(!has_pending_future_fpmm_trade(tx_fpmm_key, 2),
+                    AssertLevel::L3, "FPMMTrade", "TransferWithoutTradeLegMatch");
       if (known_token) {
         emit_if_user(from, RawEvent{sort_key, cond_idx, EventType::TransferOutOther, token_idx, coll, 0, -amount, 0});
         return classify_transfer_by_counterparty(TransferClass::TransferInOther,
@@ -743,12 +832,16 @@ TransferClass EventBuilder::classify_and_emit(
 
   // ========== 普通用户转账 ==========
   if (known_token) {
+    stage2_assert(root_bind.op == RootOpType::None, AssertLevel::L2, "Bind",
+                  "FallbackWithoutRootBind", root_bind.leg);
     emit_if_user(to, RawEvent{sort_key, cond_idx, EventType::TransferInOther, token_idx, coll, 0, amount, 0});
     emit_if_user(from, RawEvent{sort_key, cond_idx, EventType::TransferOutOther, token_idx, coll, 0, -amount, 0});
     return classify_transfer_by_counterparty(TransferClass::TransferInOther,
                                              TransferClass::TransferOutOther,
                                              TransferClass::InternalTransferOther);
   } else {
+    stage2_assert(root_bind.op == RootOpType::None, AssertLevel::L2, "Bind",
+                  "FallbackWithoutRootBind", root_bind.leg);
     emit_if_user(to, RawEvent{sort_key, cond_idx, EventType::TransferInNonPoly, token_idx, coll, 0, amount, 0});
     emit_if_user(from, RawEvent{sort_key, cond_idx, EventType::TransferOutNonPoly, token_idx, coll, 0, -amount, 0});
     return classify_transfer_by_counterparty(TransferClass::TransferInNonPoly,

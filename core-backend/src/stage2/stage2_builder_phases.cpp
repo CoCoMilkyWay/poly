@@ -577,7 +577,7 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
     Stage2AssertContextScope assert_scope(&current_transfer_context_);
     TransferClass cls = classify_and_emit(sort_key, tx_hash, block, op, from, to, token_id,
                                           amount, cond_idx, token_idx, collateral);
-    chunk_xfer_stats_.add(cls);
+    update_xfer_tree(cls);
   }
 
   // Semantic coverage assertions: every semantic op in this chunk must be consumed by at least one transfer leg.

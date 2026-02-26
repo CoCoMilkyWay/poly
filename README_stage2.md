@@ -171,13 +171,12 @@ abbr(all)
 | `tx_order_idx[tx_token_key:{block, tx_hash, token_id}] -> [{log_index, maker, taker, maker_side, usdc, tokens, fee}]`                          | `order_filled`                                                        |
 | `tx_fpmm_trade_idx[tx_fpmm_key:{block, tx_hash, fpmm_addr}] -> [{log_index, fpmm_addr, trader, side, outcome_idx, usdc, tokens}]`              | `fpmm_trade`                                                          |
 | `tx_fpmm_funding_idx[tx_fpmm_key:{block, tx_hash, fpmm_addr}] -> [{log_index, fpmm_addr, funder, side, amounts[]}]`                            | `fpmm_funding`                                                        |
-| `tx_op_seq_idx[tx_key:{block, tx_hash}] -> [{op_type, op_log_index, ref_kind, ref_index}]`                                                     | `split/merge/redemption/convert/order_filled/fpmm_trade/fpmm_funding` |
-| `tx_op_bounds_idx[tx_key:{block, tx_hash}] -> [{op_log_index, left_exclusive, right_inclusive}]`                                               | `tx_op_seq_idx`                                                       |
+| `tx_op_bounds_idx[tx_key:{block, tx_hash}] -> [{left_exclusive, right_inclusive}]`                                                             | `split/merge/redemption/convert/order_filled/fpmm_trade/fpmm_funding` |
 
 索引构建规则：
 ```
 1) 先按事件类型入各自索引 (split/merge/redeem/convert/order/trade/funding)
-2) 再统一投影到 tx_op_seq_idx，按 op_log_index 升序
+2) 每个 tx 汇总全部语义 log_index，升序去重
 3) 基于相邻 op_log_index 生成 tx_op_bounds_idx：
    left_exclusive = prev_op_log_index
    right_inclusive = curr_op_log_index
@@ -188,31 +187,21 @@ abbr(all)
 ```
 phase3_process_transfers(chunk)
 ├─ 输入(只读)
-│  ├─ transfer流: TransferSingle/Batch (按 block_number, log_index, sub_idx)
+│  ├─ transfer流: stage1.transfer (按 block_number, log_index)
 │  ├─ phase1映射: cond_idx_map/cond_info_map/token_info_map/fpmm_info_map/coll_map/pm_cond_set/nr_cond_set
-│  └─ phase2索引: tx_split/merge/redeem/convert/order/trade/funding + tx_op_seq_idx + tx_op_bounds_idx
+│  └─ phase2索引: tx_split/merge/redeem/convert/order/trade/funding + tx_op_bounds_idx
 ├─ 预处理
-│  ├─ expand_transfer_units
-│  │  ├─ single -> 1个TransferUnit(sub_idx=0)
-│  │  ├─ batch  -> N个TransferUnit(sub_idx=i, 保持链上顺序)
-│  │  ├─ flat_log_index = log_index * 10000 + sub_idx
-│  │  ├─ assert(flat_log_index < 1e9)
-│  │  └─ sort_key = block_number * 1e9 + flat_log_index
-│  ├─ build_tx_op_state
-│  │  ├─ 将 split/merge/redeem/convert/order/trade/funding 统一映射为 SemanticOp
-│  │  ├─ 按协议关系分层: RootOp(可直接分类) / ChildOp(仅约束校验,可被父语义覆盖)
-│  │  ├─ 每个 op 保留完整约束: actor/cond/market/fpmm/collateral/parent/partition/index_sets/amount/side
-│  │  ├─ 同 tx 内按 op_log_index 排序，RootOp 生成 op 作用区间
-│  │  └─ 初始化 root/child consumed、covered_by_parent 与 transfer->root_op 绑定表
+│  ├─ sort_key = block_number * 1e9 + log_index
+│  ├─ 读取 tx_op_bounds_idx 作为语义窗口边界
 │  └─ build_transfer_ctx
 │     ├─ token_info_map 命中 -> known_cond=true
 │     ├─ token_info_map 未命中 -> TransferInferred{cond_idx=UNKNOWN_COND_IDX, token_idx=255}
 │     ├─ coll = coll_map[cond_idx], miss=>UnknownCollateral
 │     └─ known_cond=false 且命中FPMM语义 且 operator in fpmm_info_map -> coll回填为fpmm.coll
-├─ 主循环 for unit in transfers(by sort_key)
+├─ 主循环 for transfer in transfers(by sort_key)
 │  ├─ Pass A: transfer -> RootOp 绑定（每条 transfer 最多绑定一次）
 │  │  ├─ 双通道绑定:
-│  │  │  ├─ 窗口通道: root(split/merge/redeem/convert/order) 先按 tx_key + op_bounds 取候选 op
+│  │  │  ├─ 窗口通道: split/merge/redeem/convert/order 先按 tx_key + op_bounds 取候选 op
 │  │  │  └─ FPMM通道: trade/funding 按 tx_key + fpmm_addr 在同tx内前向匹配（log_index >= 当前transfer）
 │  │  ├─ 再按硬约束过滤:
 │  │  │  ├─ split/merge: stakeholder + cond_id + collateral + parent + partition + direction + amount
@@ -223,12 +212,11 @@ phase3_process_transfers(chunk)
 │  │  │  └─ unknown token 仅在通过结构约束时可绑定，不以“地址像不像”放宽
 │  │  ├─ FPMM from==pool 多候选决策: 取最近未来语义log；同log并列 -> assert(false)
 │  │  ├─ 多候选同时命中 -> assert(false)
-│  │  ├─ 唯一命中 -> 记录 root_op_id + leg_type 并更新 root_op_consumed
-│  │  └─ ChildOp 不直接抢占 transfer；由命中的 RootOp 按协议关系标记 covered_by_parent 或 direct_consumed
+│  │  └─ 唯一命中 -> 记录 root_op + leg_type，并更新 consumed/covered
 │  ├─ Pass B: 分类与事件产出
 │  │  ├─ 已绑定 transfer: 由 root_op_type + leg_type 驱动分类（不靠单条 transfer 猜语义）
-│  │  │  ├─ split: 支持 parent burn + child mint 多腿消费；被 FPMMFunding/FPMMTrade/Order(MINT)/Convert 覆盖的 split 腿记为 child covered
-│  │  │  ├─ merge: 支持多条 burn + parent mint（若存在）；被 FPMMTrade/Order(MERGE) 覆盖的 merge 腿记为 child covered
+│  │  │  ├─ split: 支持 parent burn + child mint 多腿消费；含 0->FPMM 内部 mint 腿先消费 split 再落 InternalMintFPMM
+│  │  │  ├─ merge: 支持多条 burn + parent mint（若存在）；含 FPMM->0 内部 burn 腿先消费 merge 再落 InternalBurnFPMM
 │  │  │  ├─ redemption: 支持 index_sets 对应的多条 burn
 │  │  │  └─ convert: 保持 InternalBurnConvert + Convert + (YES侧 SplitNegRisk/TransferInNegRisk) 三段路径
 │  │  ├─ 未绑定 transfer: fallback 到 TransferIn*/TransferOut*/Internal*
@@ -261,12 +249,12 @@ phase3_process_transfers(chunk)
 │  ├─ assert(n_total == n_user + n_internal + n_unclass)
 │  ├─ assert(n_unclass == 0)
 │  ├─ assert(每条transfer消费次数 <= 1)
-│  ├─ assert(op消费闭环: RootOp 满足必需腿消费；ChildOp 满足 direct_consumed 或 covered_by_parent)
-│  │  ├─ root(order): consumed=true
-│  │  ├─ root(trade): consumed=true 或 explained_without_direct_leg=true
-│  │  ├─ root(convert): consumed_count>0
-│  │  ├─ root(funding): consumed_count>0；FundingRemoved amounts 全零允许零腿
-│  │  └─ child(split/merge/redeem): consumed_count>0 或 covered_by_parent=true
+│  ├─ assert(op消费闭环: 每个语义 op 都满足“已消费或可解释例外”)
+│  │  ├─ order: consumed=true
+│  │  ├─ trade: consumed=true 或 explained_without_direct_leg=true
+│  │  ├─ convert: consumed_count>0
+│  │  ├─ funding: consumed_count>0；FundingRemoved amounts 全零允许零腿
+│  │  └─ split/merge/redeem: consumed_count>0 或 covered_by_parent=true
 │  ├─ assert(op候选唯一性: order/trade/funding/split/merge/redeem/convert 均无重复消费和歧义并列)
 │  ├─ assert(语义硬约束成立: actor/cond/collateral/parent/index_set/amount/side/log-window)
 │  ├─ assert(Poly类=>is_poly, NegRisk类=>is_nr, NonPoly类=>!is_poly或!known_cond)
@@ -274,7 +262,7 @@ phase3_process_transfers(chunk)
 │  └─ assert(token_idx==255 -> cond_idx==UNKNOWN_COND_IDX)
 └─ 输出
    ├─ user_events(RawEvent序列, 用户22类全写)
-   └─ s2-xfer-tree计数增量
+   └─ xfer_stats/event_by_collateral 增量
 ```
 
 ### 2. 事件类型
@@ -293,9 +281,8 @@ phase3_process_transfers(chunk)
    └─ FPMMFunding*       -> m(lp_add/lp_refund/lp_remove)
 
 匹配原则
-├─ 语义优先分层：先确定 RootOp/ChildOp；ChildOp 仅做约束与闭环，不直接抢占 transfer
-├─ 先绑定再分类：实现可单遍，但语义等价于“先确定 transfer->RootOp，再按绑定结果分类”
-├─ 一次绑定：每条 transfer 最多绑定一个 RootOp，命中后不再回溯其他语义
+├─ 一次绑定：每条 transfer 最多绑定一个 root，重复绑定直接 assert(L2)
+├─ 先绑定再分类：实现可单遍，但语义等价于“先确定绑定，再按绑定结果分类”
 ├─ 绑定边界：仅同 tx；窗口通道处理通用语义，FPMM通道允许前向匹配未来语义（不回看过去，不跨 tx/block）
 ├─ 判定规则：只用硬约束；多候选并列一律 assert(false)
 └─ fallback：仅处理未绑定 transfer，且必须可解释
@@ -329,39 +316,27 @@ RawEvent.type
 ### 3. 中间/输出的数据结构
 ```
 Phase3中间结构 (chunk内存)
-├─ TransferUnit
-│  └─ {tx_key{block,tx_hash}, log_index, sub_idx, flat_log_index, sort_key, operator, from, to, token_id, amount}
+├─ TransferRow
+│  └─ {block, tx_hash, log_index, sort_key, operator, from, to, token_id, amount}
 ├─ TransferCtx
-│  └─ {cond_idx, token_idx, coll, known_cond, is_poly, is_nr, from_is_user, to_is_user, from_is_proto, to_is_proto, from_is_adapter, to_is_adapter, from_is_fpmm, to_is_fpmm}
+│  └─ {cond_idx, token_idx, coll, known_cond}
 │     ├─ known token: token_idx in [0, outcome_count)
 │     └─ unknown token: token_idx=255, cond_idx=UNKNOWN_COND_IDX
-├─ SemanticOp
-│  └─ {op_id, op_type, tx_key, op_log_index, actor, cond_id, market_id, fpmm_addr, collateral_token, parent_collection_id,
-│      partition/index_sets, amount, usdc, tokens, side, fee}
-├─ TxOpState
-│  ├─ op_seq[]           {op_id, op_type, op_log_index}
-│  ├─ op_meta[]          {op_id, op_role(root|child), parent_op_id(optional)}
-│  ├─ op_bounds[]        {op_id, left_exclusive, right_inclusive}
-│  ├─ split_ops[]        {op_id, stakeholder, cond_id, collateral_token, parent_collection_id, partition[], amount, consumed_count}
-│  ├─ merge_ops[]        {op_id, stakeholder, cond_id, collateral_token, parent_collection_id, partition[], amount, consumed_count}
-│  ├─ redeem_ops[]       {op_id, redeemer, cond_id, collateral_token, parent_collection_id, index_sets[], payout, consumed_count}
-│  ├─ convert_ops[]      {op_id, market_id, stakeholder, index_set, amount, consumed_count}
-│  ├─ order_ops[]        {op_id, token_id, maker, taker, maker_side, usdc, tokens, fee, consumed_count}
-│  ├─ fpmm_trade_ops[]   {op_id, fpmm_addr, trader, side, outcome_idx, usdc, tokens, consumed_count, explainable_without_leg}
-│  ├─ fpmm_lp_ops[]      {op_id, fpmm_addr, funder, side, amounts[], consumed_count}
-│  ├─ op_required[]      {root_op_id -> min_required_legs, optional_legs_mask}
-│  └─ transfer_bind[]    {transfer_id -> (root_op_id, leg_type, rule_id)}  // 未绑定为 null
-├─ MatchHit
-│  └─ {matched:bool, op_id, op_type, leg_type, score}
-├─ Phase3Counters
-│  └─ {n_total, n_user, n_internal, n_unclass}
-└─ XferTreeAcc
-   └─ {fixed_nodes[33], by_collateral_split, by_collateral_merge, by_collateral_redemption, by_collateral_fpmm_trade, by_collateral_fpmm_lp, by_collateral_transfer_inferred}
+├─ RootBind (classify_and_emit 局部状态)
+│  └─ {root_op_type, leg_type}，每条 transfer 最多绑定一个 root
+├─ Semantic索引行
+│  ├─ SplitInfo/MergeInfo/RedemptionInfo {consumed_count, covered_by_parent}
+│  ├─ ConvertInfo {consumed_count}
+│  ├─ OrderInfo {consumed}
+│  ├─ FPMMTradeInfo {consumed, explained_without_direct_leg}
+│  └─ FPMMFundingInfo {consumed_count}
+└─ TxOpBounds
+   └─ {left_exclusive, right_inclusive}
 
 Phase3输出结构
 ├─ user_event (持久化)
 │  └─ RawEvent(32B)
-│     ├─ sort_key:   i64   = block_number * 1e9 + flat_log_index
+│     ├─ sort_key:   i64   = block_number * 1e9 + log_index
 │     ├─ cond_idx:   u32   (runtime, unknown=UNKNOWN_COND_IDX)
 │     ├─ type:       u8    (22个用户类之一)
 │     ├─ token_idx:  u8    (known: 0..outcome_count-1, unknown: 255)
@@ -372,9 +347,8 @@ Phase3输出结构
 ├─ user_event_row (落库)
 │  ├─ cond_idx_i32: int32 (unknown写-1)
 │  └─ PK: (user_addr, sort_key, cond_idx_i32, event_type, token_idx)
-└─ xfer_tree_delta (提交时并入s2-xfer-tree)
-   ├─ user_events_total/internal_total/unclassified_total
-   ├─ 33类固定节点增量
-   └─ by_collateral_*动态节点增量
+└─ xfer_stats_delta + event_by_collateral_delta (提交时写入 stage2_cursor 快照)
+   ├─ TransferStats: user/internal/unclassified 与 33类固定节点计数
+   └─ event_by_collateral: (EventType, Collateral) 维度增量
 ```
 
