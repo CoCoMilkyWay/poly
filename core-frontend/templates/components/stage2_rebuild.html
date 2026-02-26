@@ -283,8 +283,10 @@
       "token_poly",
       "token_tr",
       "token_fpmm",
+      "token_fpmm_by_collateral",
       "token_other",
       "token_transfer",
+      "token_transfer_by_collateral",
       // Transfer树
       "xfer",
       "user_events",
@@ -298,6 +300,11 @@
       "transfer",
       "transfer_in",
       "transfer_out",
+      "split_non_poly_coll",
+      "merge_non_poly_coll",
+      "redemption_non_poly_coll",
+      "fpmm_trade_coll",
+      "fpmm_lp_coll",
       "internal_mint",
       "internal_burn",
       "internal_transfer",
@@ -349,45 +356,49 @@
 
     // 构建问题(Condition)树 - 树状partition
     // total = polymarket + other
-    // polymarket = token_reg + fpmm_only
-    // token_reg = amm + negrisk + normal
-    // other = prep + other_fpmm + split
+    // polymarket = token_reg + fpmm_poly
+    // token_reg = amm + negrisk + orderbook + other
+    // other = prep + fpmm_other
     function s2BuildCondTree(s) {
       const ct = s.cond_tree || {};
       const poly = ct.polymarket || {};
       const tr = poly.token_reg || {};
       const other = ct.other || {};
+      const trOrderbook = tr.orderbook ?? tr.normal ?? 0;
+      const trOther = tr.other ?? 0;
+      const fpmmPoly = poly.fpmm_poly ?? poly.fpmm_only ?? 0;
+      const fpmmOther = other.fpmm_other ?? other.other_fpmm ?? 0;
 
       return {
         id: "cond",
         label: "问题",
         value: ct.total || 0,
         color: "#60a5fa",
-        desc: "ConditionPreparation",
-        scene: "CTF合约创建的所有问题",
+        desc: "condition分类总览",
+        scene: "CTF问题来源分层",
         children: [
           {
             id: "cond_poly",
             label: "Polymarket",
             value: poly.total || 0,
             color: "#4ade80",
-            desc: "TokenReg|FPMM",
-            scene: "确认属于Polymarket协议",
+            desc: "Polymarket子树",
+            scene: "已确认归属Polymarket",
             children: [
               {
                 id: "cond_tr",
                 label: "TokenReg",
                 value: tr.total || 0,
                 color: "#86efac",
-                desc: "Exchange.TokenRegistered",
-                scene: "在Exchange注册过代币",
+                desc: "TokenRegistered子类",
+                scene: "在Exchange登记过",
                 children: [
                   {
                     id: "cond_tr_amm",
                     label: "AMM",
                     value: tr.amm || 0,
                     color: "#bbf7d0",
-                    desc: "有FPMM池",
+                    desc: "poly & treg & amm",
                     scene: "注册后又创建了AMM池",
                   },
                   {
@@ -395,25 +406,33 @@
                     label: "NegRisk",
                     value: tr.negrisk || 0,
                     color: "#bbf7d0",
-                    desc: "NegRiskAdapter",
+                    desc: "poly & treg & nr",
                     scene: "多选题市场(谁当选总统)",
                   },
                   {
                     id: "cond_tr_norm",
-                    label: "普通",
-                    value: tr.normal || 0,
+                    label: "OB",
+                    value: trOrderbook,
                     color: "#bbf7d0",
-                    desc: "纯订单簿",
+                    desc: "poly & treg & ob",
                     scene: "无AMM池,只有挂单交易",
+                  },
+                  {
+                    id: "cond_tr_other",
+                    label: "Other(预期=0)",
+                    value: trOther,
+                    color: "#555",
+                    desc: "poly & treg & other0",
+                    scene: "Polymarket-TokenReg未覆盖项",
                   },
                 ],
               },
               {
                 id: "cond_fpmm",
                 label: "FPMM",
-                value: poly.fpmm_only || 0,
+                value: fpmmPoly,
                 color: "#86efac",
-                desc: "FPMMFactory.Creation",
+                desc: "poly & fcreate & !treg",
                 scene: "只创建AMM池,未注册Exchange",
               },
             ],
@@ -423,7 +442,7 @@
             label: "其他",
             value: other.total || 0,
             color: "#9ca3af",
-            desc: "无Poly标识",
+            desc: "非Polymarket子树",
             scene: "无法确认属于Polymarket",
             children: [
               {
@@ -431,24 +450,16 @@
                 label: "Prep",
                 value: other.prep || 0,
                 color: "#d1d5db",
-                desc: "ConditionPreparation",
+                desc: "!poly & cprep",
                 scene: "早期或其他协议(如Omen)",
               },
               {
                 id: "cond_ofpmm",
-                label: "OtherFPMM",
-                value: other.other_fpmm || 0,
+                label: "FPMM",
+                value: fpmmOther,
                 color: "#555",
-                desc: "预期=0",
-                scene: "只监听PolyFactory,其他Factory不会收到",
-              },
-              {
-                id: "cond_split",
-                label: "Split",
-                value: other.split || 0,
-                color: "#555",
-                desc: "预期=0",
-                scene: "Split前必有Prep,已包含在Prep中",
+                desc: "!poly & fcreate",
+                scene: "非Polymarket来源的FPMMCreation",
               },
             ],
           },
@@ -458,47 +469,52 @@
 
     // 构建代币(Token)树 - 树状partition
     // total = polymarket + other
-    // polymarket = token_reg + fpmm_only
-    // token_reg = amm + negrisk + normal
-    // fpmm_only = by_collateral (这里展示为“代币类别”)
-    // other = other_fpmm + split + transfer_inferred
+    // polymarket = token_reg + fpmm_poly
+    // token_reg = amm + negrisk + orderbook + other
+    // fpmm_poly = by_collateral_fpmm
+    // other = fpmm_other + transfer_inferred
     function s2BuildTokenTree(s) {
       const tt = s.token_tree || {};
       const poly = tt.polymarket || {};
       const tr = poly.token_reg || {};
-      const fo = poly.fpmm_only || {};
+      const fo = poly.fpmm_poly || poly.fpmm_only || {};
       const other = tt.other || {};
+      const trOrderbook = tr.orderbook ?? tr.normal ?? 0;
+      const trOther = tr.other ?? 0;
+      const fpmmOther = other.fpmm_other ?? other.other_fpmm ?? 0;
+      const transferInferredByCollateral = other.by_collateral_transfer_inferred || [];
+      const transferInferredByToken = other.transfer_inferred_by_token || [];
 
       return {
         id: "token",
         label: "代币",
         value: tt.total || 0,
         color: "#f59e0b",
-        desc: "ERC1155 token_id",
-        scene: "所有已知的条件代币",
+        desc: "token分类总览",
+        scene: "ERC1155 token_id来源分层",
         children: [
           {
             id: "token_poly",
             label: "Polymarket",
             value: poly.total || 0,
             color: "#fbbf24",
-            desc: "TokenReg|FPMM",
-            scene: "确认属于Polymarket协议",
+            desc: "Polymarket子树",
+            scene: "已确认归属Polymarket",
             children: [
               {
                 id: "token_tr",
                 label: "TokenReg",
                 value: tr.total || 0,
                 color: "#fcd34d",
-                desc: "事件直接提供",
-                scene: "Exchange.TokenRegistered记录",
+                desc: "TokenRegistered子类",
+                scene: "Exchange事件直接给token",
                 children: [
                   {
                     id: "token_tr_amm",
                     label: "AMM",
                     value: tr.amm || 0,
                     color: "#fde68a",
-                    desc: "有FPMM池",
+                    desc: "poly & treg & amm",
                     scene: "注册后又创建了AMM池",
                   },
                   {
@@ -506,16 +522,24 @@
                     label: "NegRisk",
                     value: tr.negrisk || 0,
                     color: "#fde68a",
-                    desc: "NegRiskAdapter",
+                    desc: "poly & treg & nr",
                     scene: "多选题市场代币",
                   },
                   {
                     id: "token_tr_norm",
-                    label: "普通",
-                    value: tr.normal || 0,
+                    label: "OB",
+                    value: trOrderbook,
                     color: "#fde68a",
-                    desc: "纯订单簿",
+                    desc: "poly & treg & ob",
                     scene: "无AMM池,只有挂单",
+                  },
+                  {
+                    id: "token_tr_other",
+                    label: "Other(预期=0)",
+                    value: trOther,
+                    color: "#555",
+                    desc: "poly & treg & other0",
+                    scene: "Polymarket-TokenReg未覆盖项",
                   },
                 ],
               },
@@ -524,19 +548,32 @@
                 label: "FPMM",
                 value: fo.total || 0,
                 color: "#fcd34d",
-                desc: "keccak256计算",
-                scene: "从FPMM创建事件计算(未被归类到TokenReg, 按代币类别分组)",
-                children: (fo.by_collateral || [])
-                  .slice()
-                  .sort((a, b) => b.count - a.count)
-                  .map((c) => ({
-                    id: `token_fpmm_coll_${c.addr || c.name}`,
-                    label: c.name || "未知代币",
-                    value: c.count,
+                desc: "poly & fcreate & !treg",
+                scene: "只创建AMM池,未注册Exchange",
+                children: [
+                  {
+                    id: "token_fpmm_by_collateral",
+                    label: "(动态) by_collateral_fpmm",
+                    value: (fo.by_collateral_fpmm || fo.by_collateral || []).reduce(
+                      (acc, c) => acc + Number(c.count || 0),
+                      0,
+                    ),
                     color: "#fde68a",
-                    desc: c.addr || "",
-                    scene: "",
-                  })),
+                    desc: "group_by(collateral)",
+                    scene: "按字段collateral聚合",
+                    children: (fo.by_collateral_fpmm || fo.by_collateral || [])
+                      .slice()
+                      .sort((a, b) => b.count - a.count)
+                      .map((c) => ({
+                        id: `token_fpmm_coll_${c.addr || c.name}`,
+                        label: c.name || "未知代币",
+                        value: c.count,
+                        color: "#fef3c7",
+                        desc: c.addr || "",
+                        scene: "",
+                      })),
+                  },
+                ].filter((x) => x.value > 0),
               },
             ],
           },
@@ -545,43 +582,67 @@
             label: "其他",
             value: other.total || 0,
             color: "#9ca3af",
-            desc: "无Poly标识",
+            desc: "非Polymarket子树",
             scene: "无法确认属于Polymarket",
             children: [
               {
                 id: "token_ofpmm",
-                label: "OtherFPMM",
-                value: other.other_fpmm || 0,
+                label: "FPMM",
+                value: fpmmOther,
                 color: "#555",
-                desc: "预期=0",
-                scene: "只监听PolyFactory,其他Factory不会收到",
-              },
-              {
-                id: "token_split",
-                label: "Split",
-                value: other.split || 0,
-                color: "#555",
-                desc: "预期=0",
-                scene: "Split前必有FPMM/Prep,token已从中计算",
+                desc: "!poly & fcreate",
+                scene: "非Polymarket来源的FPMMCreation",
               },
               {
                 id: "token_transfer",
                 label: "Transfer",
                 value: other.transfer_inferred || 0,
                 color: "#d1d5db",
-                desc: "从Transfer发现",
+                desc: "!poly & xfer_inf",
                 scene: "未知token,无condition信息",
-                children: (other.transfer_inferred_by_token || [])
-                  .slice()
-                  .sort((a, b) => b.count - a.count)
-                  .map((t) => ({
-                    id: `token_transfer_token_${t.token}`,
-                    label: "代币",
-                    value: t.count,
+                children: [
+                  {
+                    id: "token_transfer_by_collateral",
+                    label: "(动态) by_collateral_transfer_inferred",
+                    value:
+                      transferInferredByCollateral.length > 0
+                        ? transferInferredByCollateral.reduce(
+                          (acc, c) => acc + Number(c.count || 0),
+                          0,
+                        )
+                        : transferInferredByToken.reduce(
+                          (acc, t) => acc + Number(t.count || 0),
+                          0,
+                        ),
                     color: "#e5e7eb",
-                    desc: t.token || "",
-                    scene: "",
-                  })),
+                    desc: "group_by(collateral)",
+                    scene: "按字段collateral聚合",
+                    children:
+                      transferInferredByCollateral.length > 0
+                        ? transferInferredByCollateral
+                          .slice()
+                          .sort((a, b) => b.count - a.count)
+                          .map((c) => ({
+                            id: `token_transfer_coll_${c.addr || c.name}`,
+                            label: c.name || "未知代币",
+                            value: c.count,
+                            color: "#f3f4f6",
+                            desc: c.addr || "",
+                            scene: "",
+                          }))
+                        : transferInferredByToken
+                          .slice()
+                          .sort((a, b) => b.count - a.count)
+                          .map((t) => ({
+                            id: `token_transfer_token_${t.token}`,
+                            label: "代币",
+                            value: t.count,
+                            color: "#f3f4f6",
+                            desc: t.token || "",
+                            scene: "",
+                          })),
+                  },
+                ].filter((x) => x.value > 0),
               },
             ],
           },
@@ -605,99 +666,69 @@
       TransferOut: 11,
     };
 
-    // 根据 event_by_token 构建按结果代币(YES/NO)分组的节点
-    // s.event_by_token 格式: {"event_type_int": [{token_id,name,count}, ...]}
-    function s2BuildTokenIdxSection(s, eventTypes, prefix) {
-      if (!s.event_by_token) return null;
-      const byIdx = {};
-      let total = 0;
+    function s2MergeByCollateralFromEventTypes(s, eventTypes) {
+      const src = s.event_by_collateral || {};
+      const byKey = {};
       for (const et of eventTypes) {
-        const entries = s.event_by_token[String(et)] || [];
-        for (const item of entries) {
-          const key = String(item.token_id);
-          if (!byIdx[key]) byIdx[key] = { idx: item.token_id, name: item.name, count: 0 };
-          byIdx[key].count += item.count;
-          total += item.count;
-        }
-      }
-
-      const children = Object.values(byIdx)
-        .filter((c) => c.count > 0)
-        .sort((a, b) => b.count - a.count)
-        .map((c) => ({
-          id: `${prefix}_token_idx_${c.idx}`,
-          label: c.name || "Unknown",
-          value: c.count,
-          color: "#e0e7ff",
-          desc: `token_idx=${c.idx}`,
-          scene: "结果代币方向",
-        }));
-
-      if (children.length === 0) return null;
-      return {
-        id: `${prefix}_by_token_idx`,
-        label: "按结果代币",
-        value: total,
-        color: "#c7d2fe",
-        desc: "YES/NO",
-        scene: "按 token_idx 统计(0=YES, 1=NO)",
-        children: children,
-      };
-    }
-
-    // 根据 event_by_collateral 构建按结算币(collateral)分组的节点
-    function s2BuildCollateralSection(s, eventTypes, prefix) {
-      if (!s.event_by_collateral) return null;
-
-      // 按 addr 合并多个 eventType 的统计
-      const byAddr = {};
-      let total = 0;
-      for (const et of eventTypes) {
-        const entries = s.event_by_collateral[String(et)] || [];
+        const entries = src[String(et)] || [];
         for (const item of entries) {
           const key = item.addr || item.name;
-          if (!byAddr[key]) byAddr[key] = { addr: item.addr, name: item.name, count: 0 };
-          byAddr[key].count += item.count;
-          total += item.count;
+          if (!key) continue;
+          if (!byKey[key]) {
+            byKey[key] = { addr: item.addr || "", name: item.name || "", count: 0 };
+          }
+          byKey[key].count += Number(item.count || 0);
         }
       }
+      return Object.values(byKey)
+        .filter((x) => x.count > 0)
+        .sort((a, b) => b.count - a.count);
+    }
 
-      const children = Object.values(byAddr)
-        .filter((c) => c.count > 0)
-        .sort((a, b) => b.count - a.count)
-        .map((c) => ({
+    function s2NormalizeByCollateralEntries(entries) {
+      if (!Array.isArray(entries)) return [];
+      return entries
+        .map((x) => ({
+          addr: x.addr || "",
+          name: x.name || "",
+          count: Number(x.count || 0),
+        }))
+        .filter((x) => x.count > 0)
+        .sort((a, b) => b.count - a.count);
+    }
+
+    function s2GetByCollateralEntries(s, directKeys, fallbackEventTypes) {
+      for (const key of directKeys) {
+        const direct = s[key];
+        if (Array.isArray(direct) && direct.length > 0) {
+          return s2NormalizeByCollateralEntries(direct);
+        }
+      }
+      if (!fallbackEventTypes || fallbackEventTypes.length === 0) return [];
+      return s2MergeByCollateralFromEventTypes(s, fallbackEventTypes);
+    }
+
+    function s2BuildByCollateralNode(nodeId, label, entries, scene, prefix) {
+      if (!entries || entries.length === 0) return null;
+      return {
+        id: nodeId,
+        label: label,
+        value: entries.reduce((acc, x) => acc + x.count, 0),
+        color: "#fcd34d",
+        desc: "",
+        scene: scene || "",
+        children: entries.map((c) => ({
           id: `${prefix}_coll_${c.addr || c.name}`,
           label: c.name || "未知抵押品",
           value: c.count,
-          color: "#fef3c7",
+          color: "#fde68a",
           desc: c.addr || "",
           scene: "",
-        }));
-
-      if (children.length === 0) {
-        return null;
-      }
-
-      return {
-        id: `${prefix}_by_collateral`,
-        label: "按结算币",
-        value: total,
-        color: "#fcd34d",
-        desc: "=父节点",
-        scene: "按 collateral 统计",
-        children: children,
-        isCollateralSection: true,
+        })),
       };
     }
 
-    function s2BuildAssetSections(s, eventTypes, prefix) {
-      return [
-        s2BuildTokenIdxSection(s, eventTypes, prefix),
-        s2BuildCollateralSection(s, eventTypes, prefix),
-      ].filter(Boolean);
-    }
-
-    // 构建Transfer树
+    // 构建Transfer树 (s2-xfer-tree)
     function s2BuildXferTree(s) {
       // Split/Merge/Redemption 包含 Poly + NonPoly
       const split_poly =
@@ -759,53 +790,78 @@
         (s.xfer_internal_transfer_other || 0);
       const internal = internal_mint + internal_burn + internal_transfer;
 
+      const byCollSplit = s2GetByCollateralEntries(
+        s,
+        ["by_collateral_split"],
+        [EventType.Split],
+      );
+      const byCollMerge = s2GetByCollateralEntries(
+        s,
+        ["by_collateral_merge"],
+        [EventType.Merge],
+      );
+      const byCollRedemption = s2GetByCollateralEntries(
+        s,
+        ["by_collateral_redemption"],
+        [EventType.Redemption],
+      );
+      const byCollFpmmTrade = s2GetByCollateralEntries(
+        s,
+        ["by_collateral_fpmm_trade", "by_collateral_fpmm_buy", "by_collateral_fpmm_sell"],
+        [EventType.FPMMBuy, EventType.FPMMSell],
+      );
+      const byCollFpmmLp = s2GetByCollateralEntries(
+        s,
+        ["by_collateral_fpmm_lp", "by_collateral_lp_add", "by_collateral_lp_remove", "by_collateral_lp_return"],
+        [EventType.FPMMLPAdd, EventType.FPMMLPRemove],
+      );
       return {
         id: "xfer",
         label: "Transfer",
         value: s.xfer_total || 0,
         color: "#93c5fd",
         desc: "TransferSingle/Batch",
-        scene: "ERC1155代币转移事件",
+        scene: "ERC1155代币转移事件;",
         children: [
           {
             id: "user_events",
             label: "用户操作",
             value: user_events,
             color: "#4ade80",
-            desc: "→user_event表",
-            scene: "影响用户持仓,写入数据库",
+            desc: "用户事件汇总",
+            scene: "影响用户资产",
             children: [
               {
                 id: "split",
                 label: "铸造",
                 value: split,
                 color: "#86efac",
-                desc: "PositionSplit",
-                scene: "用户存入抵押物铸造YES+NO",
+                desc: "split分类",
+                scene: "用户拆仓",
                 children: [
                   {
                     id: "split_poly",
                     label: "Poly",
                     value: split_poly,
                     color: "#bbf7d0",
-                    desc: "Polymarket市场",
-                    scene: "已知Polymarket condition",
+                    desc: "Polymarket子类",
+                    scene: "已知条件",
                     children: [
                       {
                         id: "split_normal",
-                        label: "普通",
+                        label: "CTF",
                         value: s.xfer_split_normal || 0,
                         color: "#dcfce7",
-                        desc: "0x0→用户",
-                        scene: "用户直接调用CTF.split",
+                        desc: "*:0->用户 & amt>0 & m(split) & holder=to & known",
+                        scene: "用户直连CTF split收到仓位",
                       },
                       {
                         id: "split_negrisk",
                         label: "NegRisk",
                         value: s.xfer_split_negrisk || 0,
                         color: "#dcfce7",
-                        desc: "Adapter→用户",
-                        scene: "Adapter代理铸造后转给用户",
+                        desc: "Adapter:Adapter->用户 & amt>0 & m(split) & holder=Adapter & known",
+                        scene: "Adapter代split后给用户",
                       },
                     ],
                   },
@@ -814,10 +870,18 @@
                     label: "NonPoly",
                     value: split_non_poly,
                     color: "#fde68a",
-                    desc: "非Polymarket",
-                    scene: "其他协议的CTF操作",
+                    desc: "*:*->用户 & amt>0 & m(split) & !known",
+                    scene: "非Polymarket split",
+                    children: [
+                      s2BuildByCollateralNode(
+                        "split_non_poly_coll",
+                        "(动态) by_collateral_split",
+                        byCollSplit,
+                        "",
+                        "split_np",
+                      ),
+                    ].filter(Boolean),
                   },
-                  ...s2BuildAssetSections(s, [EventType.Split], "split"),
                 ].filter(Boolean),
               },
               {
@@ -825,32 +889,32 @@
                 label: "合并",
                 value: merge,
                 color: "#86efac",
-                desc: "PositionsMerge",
-                scene: "用户销毁YES+NO取回抵押物",
+                desc: "merge分类",
+                scene: "用户合仓",
                 children: [
                   {
                     id: "merge_poly",
                     label: "Poly",
                     value: merge_poly,
                     color: "#bbf7d0",
-                    desc: "Polymarket市场",
-                    scene: "已知Polymarket condition",
+                    desc: "Polymarket子类",
+                    scene: "已知条件",
                     children: [
                       {
                         id: "merge_normal",
-                        label: "普通",
+                        label: "CTF",
                         value: s.xfer_merge_normal || 0,
                         color: "#dcfce7",
-                        desc: "用户→0x0",
-                        scene: "用户直接调用CTF.merge",
+                        desc: "*:用户->0 & amt>0 & m(merge) & holder=from & known",
+                        scene: "用户直连CTF merge销毁仓位",
                       },
                       {
                         id: "merge_negrisk",
                         label: "NegRisk",
                         value: s.xfer_merge_negrisk || 0,
                         color: "#dcfce7",
-                        desc: "用户→Adapter",
-                        scene: "用户转给Adapter代理销毁",
+                        desc: "Adapter:用户->Adapter & amt>0 & m(merge) & holder=Adapter & known",
+                        scene: "用户给Adapter代理merge",
                       },
                     ],
                   },
@@ -859,10 +923,18 @@
                     label: "NonPoly",
                     value: merge_non_poly,
                     color: "#fde68a",
-                    desc: "非Polymarket",
-                    scene: "其他协议的CTF操作",
+                    desc: "*:用户->* & amt>0 & m(merge) & !known",
+                    scene: "非Polymarket merge",
+                    children: [
+                      s2BuildByCollateralNode(
+                        "merge_non_poly_coll",
+                        "(动态) by_collateral_merge",
+                        byCollMerge,
+                        "",
+                        "merge_np",
+                      ),
+                    ].filter(Boolean),
                   },
-                  ...s2BuildAssetSections(s, [EventType.Merge], "merge"),
                 ].filter(Boolean),
               },
               {
@@ -870,30 +942,34 @@
                 label: "赎回",
                 value: redemption,
                 color: "#86efac",
-                desc: "PayoutRedemption",
-                scene: "市场结算后兑换抵押物",
+                desc: "redemption分类",
+                scene: "用户结算赎回",
                 children: [
                   {
                     id: "redemption_poly",
                     label: "Poly",
                     value: redemption_poly,
                     color: "#bbf7d0",
-                    desc: "Polymarket市场",
-                    scene: "已知Polymarket condition",
+                    desc: "Polymarket子类",
+                    scene: "已知条件",
                   },
                   {
                     id: "redemption_non_poly",
                     label: "NonPoly",
                     value: redemption_non_poly,
                     color: "#fde68a",
-                    desc: "非Polymarket",
-                    scene: "其他协议的CTF操作",
+                    desc: "*:用户->0 & amt>0 & m(redeem) & !known",
+                    scene: "非Polymarket结算赎回",
+                    children: [
+                      s2BuildByCollateralNode(
+                        "redemption_non_poly_coll",
+                        "(动态) by_collateral_redemption",
+                        byCollRedemption,
+                        "",
+                        "redemption_np",
+                      ),
+                    ].filter(Boolean),
                   },
-                  ...s2BuildAssetSections(
-                    s,
-                    [EventType.Redemption],
-                    "redemption",
-                  ),
                 ].filter(Boolean),
               },
               {
@@ -901,41 +977,33 @@
                 label: "转换",
                 value: s.xfer_convert || 0,
                 color: "#86efac",
-                desc: "PositionsConverted",
-                scene: "多选题M个NO换1个YES",
-                children: [
-                  ...s2BuildAssetSections(s, [EventType.Convert], "convert"),
-                ].filter(Boolean),
+                desc: "convert分类",
+                scene: "NO转YES",
               },
               {
                 id: "order",
                 label: "订单",
                 value: order,
                 color: "#86efac",
-                desc: "OrderFilled",
-                scene: "Exchange订单簿撮合(仅USDC)",
+                desc: "order分类",
+                scene: "订单簿撮合",
                 children: [
                   {
                     id: "order_buy",
                     label: "买入",
                     value: s.xfer_order_buy || 0,
                     color: "#bbf7d0",
-                    desc: "to=用户",
-                    scene: "用户花USDC买代币",
+                    desc: "CTF|NEG_RISK:taker->用户 & amt>0 & m(order) & maker_side=buy",
+                    scene: "用户买入条件token",
                   },
                   {
                     id: "order_sell",
                     label: "卖出",
                     value: s.xfer_order_sell || 0,
                     color: "#bbf7d0",
-                    desc: "from=用户",
-                    scene: "用户卖代币得USDC",
+                    desc: "CTF|NEG_RISK:用户->taker & amt>0 & m(order) & maker_side=sell",
+                    scene: "用户卖出条件token",
                   },
-                  ...s2BuildAssetSections(
-                    s,
-                    [EventType.Buy, EventType.Sell],
-                    "order",
-                  ),
                 ].filter(Boolean),
               },
               {
@@ -943,28 +1011,30 @@
                 label: "池交易",
                 value: fpmm_trade,
                 color: "#86efac",
-                desc: "FPMMBuy/Sell",
-                scene: "AMM池内买卖",
+                desc: "FPMM交易分类(通过 m(trade) 配对后从FPMM取 collateral)",
+                scene: "用户与池交易",
                 children: [
                   {
                     id: "fpmm_buy",
                     label: "买入",
                     value: s.xfer_fpmm_buy || 0,
                     color: "#bbf7d0",
-                    desc: "FPMM→用户",
-                    scene: "用户从池子买代币",
+                    desc: "FPMM:FPMM->用户 & amt>0 & m(trade) & side=buy",
+                    scene: "用户从池子买入token",
                   },
                   {
                     id: "fpmm_sell",
                     label: "卖出",
                     value: s.xfer_fpmm_sell || 0,
                     color: "#bbf7d0",
-                    desc: "用户→FPMM",
-                    scene: "用户向池子卖代币",
+                    desc: "FPMM:用户->FPMM & amt>0 & m(trade) & side=sell",
+                    scene: "用户向池子卖出token",
                   },
-                  ...s2BuildAssetSections(
-                    s,
-                    [EventType.FPMMBuy, EventType.FPMMSell],
+                  s2BuildByCollateralNode(
+                    "fpmm_trade_coll",
+                    "(动态) by_collateral_fpmm_trade",
+                    byCollFpmmTrade,
+                    "",
                     "fpmm_trade",
                   ),
                 ].filter(Boolean),
@@ -974,36 +1044,38 @@
                 label: "池流动性",
                 value: fpmm_lp,
                 color: "#86efac",
-                desc: "FPMMFunding",
-                scene: "做市商添加/移除流动性",
+                desc: "LP分类(通过 m(lp_add|lp_refund) 配对后从FPMM取 collateral)",
+                scene: "用户加减流动性",
                 children: [
                   {
                     id: "lp_add",
                     label: "添加",
                     value: s.xfer_lp_add || 0,
                     color: "#bbf7d0",
-                    desc: "0x0→FPMM",
-                    scene: "LP存入USDC铸造池份额",
+                    desc: "*:0->FPMM & amt>0 & m(lp_add)",
+                    scene: "LP加池触发铸仓位到FPMM",
                   },
                   {
                     id: "lp_remove",
                     label: "移除",
                     value: s.xfer_lp_remove || 0,
                     color: "#bbf7d0",
-                    desc: "FPMM→用户",
-                    scene: "LP取回代币(非burn!)",
+                    desc: "FPMM:FPMM->用户 & amt>0 & !m(trade) & !m(lp_refund)",
+                    scene: "LP移除流动性取回仓位",
                   },
                   {
                     id: "lp_return",
                     label: "返还",
                     value: s.xfer_lp_return || 0,
                     color: "#bbf7d0",
-                    desc: "FPMM→用户",
-                    scene: "添加时返还多余代币",
+                    desc: "FPMM:FPMM->用户 & amt>0 & m(lp_refund)",
+                    scene: "LP加池不对称部分退回",
                   },
-                  ...s2BuildAssetSections(
-                    s,
-                    [EventType.FPMMLPAdd, EventType.FPMMLPRemove],
+                  s2BuildByCollateralNode(
+                    "fpmm_lp_coll",
+                    "(动态) by_collateral_fpmm_lp",
+                    byCollFpmmLp,
+                    "",
                     "fpmm_lp",
                   ),
                 ].filter(Boolean),
@@ -1013,40 +1085,40 @@
                 label: "转账",
                 value: transfer,
                 color: "#86efac",
-                desc: "safeTransferFrom",
-                scene: "无语义事件的直接转账",
+                desc: "普通转账分类",
+                scene: "用户地址参与",
                 children: [
                   {
                     id: "transfer_in",
                     label: "转入",
                     value: transfer_in,
                     color: "#bbf7d0",
-                    desc: "→用户",
-                    scene: "用户收到代币",
+                    desc: "转入分类",
+                    scene: "用户收到token",
                     children: [
                       {
                         id: "transfer_in_poly",
                         label: "Poly",
                         value: transfer_in_poly,
                         color: "#dcfce7",
-                        desc: "Polymarket token",
-                        scene: "已知Polymarket token",
+                        desc: "已知token子类",
+                        scene: "Polymarket token转入",
                         children: [
                           {
                             id: "transfer_in_negrisk",
                             label: "Adapter",
                             value: s.xfer_transfer_in_negrisk || 0,
                             color: "#f0fdf4",
-                            desc: "Adapter→用户",
-                            scene: "Adapter转出但无Split事件",
+                            desc: "Adapter:Adapter->用户 & amt>0 & known & !m(split)",
+                            scene: "Adapter直接转token给用户",
                           },
                           {
                             id: "transfer_in_other",
                             label: "其他",
                             value: s.xfer_transfer_in_other || 0,
                             color: "#f0fdf4",
-                            desc: "其他→用户",
-                            scene: "用户间转账/协议空投",
+                            desc: "*:其他->用户 & amt>0 & known & !m(split) & op!=Adapter",
+                            scene: "用户间转账或协议空投",
                           },
                         ],
                       },
@@ -1055,8 +1127,8 @@
                         label: "NonPoly",
                         value: transfer_in_non_poly,
                         color: "#fde68a",
-                        desc: "非Polymarket",
-                        scene: "其他协议CTF token转入",
+                        desc: "*:*->用户 & amt>0 & !known",
+                        scene: "非Polymarket token转入",
                       },
                     ],
                   },
@@ -1065,32 +1137,32 @@
                     label: "转出",
                     value: transfer_out,
                     color: "#bbf7d0",
-                    desc: "用户→",
-                    scene: "用户发出代币",
+                    desc: "转出分类",
+                    scene: "用户发出token",
                     children: [
                       {
                         id: "transfer_out_poly",
                         label: "Poly",
                         value: transfer_out_poly,
                         color: "#dcfce7",
-                        desc: "Polymarket token",
-                        scene: "已知Polymarket token",
+                        desc: "已知token子类",
+                        scene: "Polymarket token转出",
                         children: [
                           {
                             id: "transfer_out_negrisk",
                             label: "Adapter",
                             value: s.xfer_transfer_out_negrisk || 0,
                             color: "#f0fdf4",
-                            desc: "用户→Adapter",
-                            scene: "用户转入但无Merge事件",
+                            desc: "Adapter:用户->Adapter & amt>0 & known & !m(merge)",
+                            scene: "用户直接把token转给Adapter",
                           },
                           {
                             id: "transfer_out_other",
                             label: "其他",
                             value: s.xfer_transfer_out_other || 0,
                             color: "#f0fdf4",
-                            desc: "用户→其他",
-                            scene: "用户间转账/转入协议",
+                            desc: "*:用户->其他 & amt>0 & known & !m(merge) & op!=Adapter",
+                            scene: "用户转账给他人或外部协议",
                           },
                         ],
                       },
@@ -1099,16 +1171,11 @@
                         label: "NonPoly",
                         value: transfer_out_non_poly,
                         color: "#fde68a",
-                        desc: "非Polymarket",
-                        scene: "其他协议CTF token转出",
+                        desc: "*:用户->* & amt>0 & !known",
+                        scene: "非Polymarket token转出",
                       },
                     ],
                   },
-                  ...s2BuildAssetSections(
-                    s,
-                    [EventType.TransferIn, EventType.TransferOut],
-                    "transfer",
-                  ),
                 ].filter(Boolean),
               },
             ],
@@ -1118,23 +1185,23 @@
             label: "内部操作",
             value: internal,
             color: "#9ca3af",
-            desc: "协议内部",
-            scene: "不影响用户持仓,跳过",
+            desc: "协议内部分类",
+            scene: "不影响用户持仓",
             children: [
               {
                 id: "internal_mint",
-                label: "铸造",
+                label: "内铸",
                 value: internal_mint,
                 color: "#d1d5db",
-                desc: "0x0→协议",
-                scene: "协议合约接收mint",
+                desc: "InternalMint子类",
+                scene: "协议接收mint",
                 children: [
                   {
                     id: "internal_mint_negrisk",
                     label: "Adapter",
                     value: s.xfer_internal_mint_negrisk || 0,
                     color: "#e5e7eb",
-                    desc: "0x0→Adapter",
+                    desc: "*:0->Adapter & amt>0",
                     scene: "Adapter代理split的mint",
                   },
                   {
@@ -1142,25 +1209,25 @@
                     label: "FPMM",
                     value: s.xfer_internal_mint_fpmm || 0,
                     color: "#e5e7eb",
-                    desc: "0x0→FPMM",
+                    desc: "*:0->FPMM & amt>0 & in_fpmm_map(to) & !m(lp_add)",
                     scene: "AMM买入时内部split",
                   },
                 ],
               },
               {
                 id: "internal_burn",
-                label: "销毁",
+                label: "内燃",
                 value: internal_burn,
                 color: "#d1d5db",
-                desc: "协议→0x0",
-                scene: "协议合约发起burn",
+                desc: "InternalBurn子类",
+                scene: "协议发起burn",
                 children: [
                   {
                     id: "internal_burn_negrisk",
                     label: "Adapter",
                     value: s.xfer_internal_burn_negrisk || 0,
                     color: "#e5e7eb",
-                    desc: "Adapter→0x0",
+                    desc: "*:Adapter->0 & amt>0",
                     scene: "Adapter代理merge的burn",
                   },
                   {
@@ -1168,7 +1235,7 @@
                     label: "FPMM",
                     value: s.xfer_internal_burn_fpmm || 0,
                     color: "#e5e7eb",
-                    desc: "FPMM→0x0",
+                    desc: "*:FPMM->0 & amt>0 & in_fpmm_map(from)",
                     scene: "AMM卖出时内部merge",
                   },
                   {
@@ -1176,25 +1243,25 @@
                     label: "Convert",
                     value: s.xfer_internal_burn_convert || 0,
                     color: "#e5e7eb",
-                    desc: "Adapter→BurnAddr",
+                    desc: "Adapter:Adapter->BurnAddr & amt>0",
                     scene: "Convert时Adapter烧NO",
                   },
                 ],
               },
               {
                 id: "internal_transfer",
-                label: "转移",
+                label: "内转",
                 value: internal_transfer,
                 color: "#d1d5db",
-                desc: "协议↔协议",
-                scene: "协议间代币流转",
+                desc: "InternalTransfer子类",
+                scene: "协议间转移",
                 children: [
                   {
                     id: "internal_transfer_zero",
                     label: "零值",
                     value: s.xfer_internal_transfer_zero || 0,
                     color: "#e5e7eb",
-                    desc: "amount=0",
+                    desc: "*:*->* & amt=0",
                     scene: "零数量Transfer事件",
                   },
                   {
@@ -1202,7 +1269,7 @@
                     label: "订单",
                     value: s.xfer_internal_transfer_order || 0,
                     color: "#e5e7eb",
-                    desc: "协议↔协议",
+                    desc: "CTF|NEG_RISK:*->* & m(order) & is_proto(from) & is_proto(to)",
                     scene: "订单双方都是协议合约",
                   },
                   {
@@ -1210,23 +1277,23 @@
                     label: "Adapter",
                     value: s.xfer_internal_transfer_negrisk || 0,
                     color: "#e5e7eb",
-                    desc: "Adapter相关",
-                    scene: "Adapter其他内部操作",
+                    desc: "Adapter:*->* & amt>0 & internal_adapter_transfer_path",
+                    scene: "Adapter其他内部操作(当前实现无直接命中分支,预期=0)",
                   },
                   {
                     id: "internal_transfer_fpmm",
                     label: "FPMM",
                     value: s.xfer_internal_transfer_fpmm || 0,
                     color: "#e5e7eb",
-                    desc: "FPMM相关",
-                    scene: "FPMM其他内部操作",
+                    desc: "FPMM:*->* & amt>0 & internal_fpmm_transfer_path",
+                    scene: "FPMM其他内部操作(当前实现无直接命中分支,预期=0)",
                   },
                   {
                     id: "internal_transfer_other",
                     label: "其他",
                     value: s.xfer_internal_transfer_other || 0,
                     color: "#e5e7eb",
-                    desc: "其他协议",
+                    desc: "*:*->* & amt>0 & !is_user(from) & !is_user(to) & !m(order)",
                     scene: "其他协议间转移",
                   },
                 ],
@@ -1310,20 +1377,27 @@
         "token_poly",
         "token_tr",
         "token_fpmm",
+        "token_fpmm_by_collateral",
         "token_other",
         "token_transfer",
+        "token_transfer_by_collateral",
         // Transfer树
         "xfer",
         "user_events",
         "internal",
         "split",
         "split_poly",
+        "split_non_poly_coll",
         "merge",
         "merge_poly",
+        "merge_non_poly_coll",
         "redemption",
+        "redemption_non_poly_coll",
         "order",
         "fpmm_trade",
+        "fpmm_trade_coll",
         "fpmm_lp",
+        "fpmm_lp_coll",
         "transfer",
         "transfer_in",
         "transfer_in_poly",
