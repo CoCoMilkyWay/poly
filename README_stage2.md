@@ -254,7 +254,9 @@ phase3_process_transfers(chunk)
 │  │  ├─ trade: consumed=true 或 explained_without_direct_leg=true
 │  │  ├─ convert: consumed_count>0
 │  │  ├─ funding: consumed_count>0；FundingRemoved amounts 全零允许零腿
-│  │  └─ split/merge/redeem: consumed_count>0 或 covered_by_parent=true
+│  │  ├─ split: consumed_count>0 或 covered_by_parent=true；amount==0 允许零腿
+│  │  ├─ merge: consumed_count>0 或 covered_by_parent=true；amount==0 允许零腿
+│  │  └─ redeem: consumed_count>0 或 covered_by_parent=true
 │  ├─ assert(op候选唯一性: order/trade/funding/split/merge/redeem/convert 均无重复消费和歧义并列)
 │  ├─ assert(语义硬约束成立: actor/cond/collateral/parent/index_set/amount/side/log-window)
 │  ├─ assert(Poly类=>is_poly, NegRisk类=>is_nr, NonPoly类=>!is_poly或!known_cond)
@@ -292,7 +294,7 @@ phase3_process_transfers(chunk)
 ├─ L1 映射不变量层：cond/token/collateral/fpmm 映射一致；outcome_count 合法且仅扩展不回退
 ├─ L2 匹配唯一性层：候选命中数 <= 1；并列歧义直接失败
 ├─ L3 语义约束层：命中后必须满足 actor/cond/collateral/amount/direction/window 等硬约束
-├─ L4 语义消费闭环层：chunk 收尾每类语义 op 必须“已消费或显式例外”
+├─ L4 语义消费闭环层：chunk 收尾每类语义 op 必须“已消费或显式例外（含 split/merge amount==0 零腿）”
 └─ L5 结果守恒层：total 守恒、unclassified==0、树统计恒等式成立
 
 TransferClass输出事件(33类, 唯一落类)

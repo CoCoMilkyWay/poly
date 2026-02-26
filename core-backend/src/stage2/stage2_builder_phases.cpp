@@ -583,13 +583,17 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
   // Semantic coverage assertions: every semantic op in this chunk must be consumed by at least one transfer leg.
   for (const auto &[_, rows] : tx_split_) {
     for (const auto &row : rows) {
-      stage2_assert(row.consumed_count > 0 || row.covered_by_parent,
+      // split amount==0 is a valid semantic marker with no effective ERC1155 leg.
+      bool zero_amount_split = (row.amount == 0);
+      stage2_assert(row.consumed_count > 0 || row.covered_by_parent || zero_amount_split,
                     AssertLevel::L4, "Consume", "SplitConsumedOrCoveredByParent");
     }
   }
   for (const auto &[_, rows] : tx_merge_) {
     for (const auto &row : rows) {
-      stage2_assert(row.consumed_count > 0 || row.covered_by_parent,
+      // merge amount==0 is a valid semantic marker with no effective ERC1155 leg.
+      bool zero_amount_merge = (row.amount == 0);
+      stage2_assert(row.consumed_count > 0 || row.covered_by_parent || zero_amount_merge,
                     AssertLevel::L4, "Consume", "MergeConsumedOrCoveredByParent");
     }
   }
