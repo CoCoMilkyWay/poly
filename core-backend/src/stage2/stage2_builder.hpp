@@ -314,6 +314,12 @@ private:
         case ConditionSource::SplitEvent:
           ct.other.split++;
           break;
+        case ConditionSource::MergeEvent:
+          ct.other.merge++;
+          break;
+        case ConditionSource::RedemptionEvent:
+          ct.other.redemption++;
+          break;
         default:
           break;
         }
@@ -325,7 +331,8 @@ private:
     assert(ct.polymarket.token_reg.total ==
            ct.polymarket.token_reg.amm + ct.polymarket.token_reg.negrisk +
                ct.polymarket.token_reg.orderbook + ct.polymarket.token_reg.other);
-    assert(ct.other.total == ct.other.prep + ct.other.fpmm_other + ct.other.split);
+    assert(ct.other.total == ct.other.prep + ct.other.fpmm_other + ct.other.split +
+                                 ct.other.merge + ct.other.redemption);
     progress_.cond_tree = ct;
 
     // 代币树状partition: total = polymarket + other
@@ -374,6 +381,12 @@ private:
         case TokenSource::SplitEvent:
           tt.other.split++;
           break;
+        case TokenSource::MergeEvent:
+          tt.other.merge++;
+          break;
+        case TokenSource::RedemptionEvent:
+          tt.other.redemption++;
+          break;
         default:
           break;
         }
@@ -391,7 +404,8 @@ private:
         sum += v;
       assert(tt.polymarket.fpmm_poly.total == sum);
     }
-    assert(tt.other.total == tt.other.fpmm_other + tt.other.split + tt.other.transfer_inferred);
+    assert(tt.other.total == tt.other.fpmm_other + tt.other.split + tt.other.merge +
+                                 tt.other.redemption + tt.other.transfer_inferred);
     progress_.token_tree = tt;
   }
 

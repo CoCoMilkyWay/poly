@@ -166,23 +166,29 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
     }
   }
 
-  // 从 split 事件中提取 token_id（覆盖没有经过 FPMM 的 condition）
-  auto split_for_tokens = query_block_range(
-      *conn, stage1_db_,
-      "SELECT DISTINCT condition_id, collateral_token FROM ",
-      "split", start, end);
-  if (split_for_tokens) {
-    for (idx_t i = 0; i < split_for_tokens->RowCount(); ++i) {
-      std::string cid = get_hex(split_for_tokens, 0, i);
+  // 从 split/merge/redemption 事件中提取 token_id（覆盖没有经过 FPMM 的 condition）
+  auto update_from_condition_event = [&](const char *table_name, ConditionSource cond_source, TokenSource token_source) {
+    auto rows = query_block_range(
+        *conn, stage1_db_,
+        "SELECT DISTINCT condition_id, collateral_token FROM ",
+        table_name, start, end);
+    if (!rows) {
+      return;
+    }
+    for (idx_t i = 0; i < rows->RowCount(); ++i) {
+      std::string cid = get_hex(rows, 0, i);
       std::string lower_cid = to_lower(cid);
-      std::string collateral = get_hex_lower(split_for_tokens, 1, i);
+      std::string collateral = get_hex_lower(rows, 1, i);
 
-      uint32_t cond_idx = intern_condition(cid, 2, ConditionSource::SplitEvent);
+      uint32_t cond_idx = intern_condition(cid, 2, cond_source);
       uint8_t coll_id = intern_collateral(collateral);
       set_cond_collateral(cond_idx, coll_id);
-      intern_condition_tokens(lower_cid, collateral, cond_idx, TokenSource::SplitEvent);
+      intern_condition_tokens(lower_cid, collateral, cond_idx, token_source);
     }
-  }
+  };
+  update_from_condition_event("split", ConditionSource::SplitEvent, TokenSource::SplitEvent);
+  update_from_condition_event("merge", ConditionSource::MergeEvent, TokenSource::MergeEvent);
+  update_from_condition_event("redemption", ConditionSource::RedemptionEvent, TokenSource::RedemptionEvent);
 
   auto nrq = query_block_range(
       *conn, stage1_db_,

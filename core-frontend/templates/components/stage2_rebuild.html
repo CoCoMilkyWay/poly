@@ -278,6 +278,9 @@
       "cond_poly",
       "cond_tr",
       "cond_other",
+      "cond_split",
+      "cond_merge",
+      "cond_redemption",
       // 代币树 (树状partition: total→polymarket/other→...)
       "token",
       "token_poly",
@@ -285,6 +288,9 @@
       "token_fpmm",
       "token_fpmm_by_collateral",
       "token_other",
+      "token_split",
+      "token_merge",
+      "token_redemption",
       "token_transfer",
       "token_transfer_by_collateral",
       // Transfer树
@@ -365,7 +371,7 @@
     // total = polymarket + other
     // polymarket = token_reg + fpmm_poly
     // token_reg = amm + negrisk + orderbook + other
-    // other = prep + fpmm_other
+    // other = prep + fpmm_other + split + merge + redemption
     function s2BuildCondTree(s) {
       const ct = s.cond_tree || {};
       const poly = ct.polymarket || {};
@@ -375,6 +381,9 @@
       const trOther = tr.other ?? 0;
       const fpmmPoly = poly.fpmm_poly ?? 0;
       const fpmmOther = other.fpmm_other ?? 0;
+      const splitOther = other.split ?? 0;
+      const mergeOther = other.merge ?? 0;
+      const redemptionOther = other.redemption ?? 0;
 
       return {
         id: "cond",
@@ -468,6 +477,30 @@
                 desc: "!poly & fcreate",
                 scene: "非Polymarket来源的FPMMCreation",
               },
+              {
+                id: "cond_split",
+                label: "Split",
+                value: splitOther,
+                color: "#555",
+                desc: "!poly & split_event",
+                scene: "仅由Split事件推断condition",
+              },
+              {
+                id: "cond_merge",
+                label: "Merge",
+                value: mergeOther,
+                color: "#555",
+                desc: "!poly & merge_event",
+                scene: "仅由Merge事件推断condition",
+              },
+              {
+                id: "cond_redemption",
+                label: "Redemption",
+                value: redemptionOther,
+                color: "#555",
+                desc: "!poly & redemption_event",
+                scene: "仅由Redemption事件推断condition",
+              },
             ],
           },
         ],
@@ -479,7 +512,7 @@
     // polymarket = token_reg + fpmm_poly
     // token_reg = amm + negrisk + orderbook + other
     // fpmm_poly = by_collateral_fpmm
-    // other = fpmm_other + transfer_inferred
+    // other = fpmm_other + split + merge + redemption + transfer_inferred
     function s2BuildTokenTree(s) {
       const tt = s.token_tree || {};
       const poly = tt.polymarket || {};
@@ -489,6 +522,9 @@
       const trOrderbook = tr.orderbook ?? 0;
       const trOther = tr.other ?? 0;
       const fpmmOther = other.fpmm_other ?? 0;
+      const splitOther = other.split ?? 0;
+      const mergeOther = other.merge ?? 0;
+      const redemptionOther = other.redemption ?? 0;
       const transferInferredByCollateral = other.by_collateral_transfer_inferred || [];
 
       return {
@@ -598,6 +634,30 @@
                 color: "#555",
                 desc: "!poly & fcreate",
                 scene: "非Polymarket来源的FPMMCreation",
+              },
+              {
+                id: "token_split",
+                label: "Split",
+                value: splitOther,
+                color: "#555",
+                desc: "!poly & split_event",
+                scene: "仅由Split事件推断token",
+              },
+              {
+                id: "token_merge",
+                label: "Merge",
+                value: mergeOther,
+                color: "#555",
+                desc: "!poly & merge_event",
+                scene: "仅由Merge事件推断token",
+              },
+              {
+                id: "token_redemption",
+                label: "Redemption",
+                value: redemptionOther,
+                color: "#555",
+                desc: "!poly & redemption_event",
+                scene: "仅由Redemption事件推断token",
               },
               {
                 id: "token_transfer",
@@ -1309,6 +1369,9 @@
         "cond_poly",
         "cond_tr",
         "cond_other",
+        "cond_split",
+        "cond_merge",
+        "cond_redemption",
         // 代币树 (树状partition: total→polymarket/other→...)
         "token",
         "token_poly",
@@ -1316,6 +1379,9 @@
         "token_fpmm",
         "token_fpmm_by_collateral",
         "token_other",
+        "token_split",
+        "token_merge",
+        "token_redemption",
         "token_transfer",
         "token_transfer_by_collateral",
         // Transfer树

@@ -46,7 +46,10 @@ Stage2Sync (timer驱动, boost::asio)
    │  └─ FPMM  // desc: poly & fcreate & !treg; scene: 只创建AMM池,未注册Exchange; 对应: cond_tree.polymarket.fpmm_poly
    └─ 其他  // desc: 非Polymarket子树; scene: 无法确认属于Polymarket; 对应: cond_tree.other.total
       ├─ Prep  // desc: !poly & cprep; scene: 早期或其他协议(如Omen); 对应: cond_tree.other.prep
-      └─ FPMM  // desc: !poly & fcreate; scene: 非Polymarket来源的FPMMCreation; 对应: cond_tree.other.fpmm_other
+      ├─ FPMM  // desc: !poly & fcreate; scene: 非Polymarket来源的FPMMCreation; 对应: cond_tree.other.fpmm_other
+      ├─ Split  // desc: !poly & split_event; scene: 仅由Split事件推断condition; 对应: cond_tree.other.split
+      ├─ Merge  // desc: !poly & merge_event; scene: 仅由Merge事件推断condition; 对应: cond_tree.other.merge
+      └─ Redemption  // desc: !poly & redemption_event; scene: 仅由Redemption事件推断condition; 对应: cond_tree.other.redemption
 
 代币树 (`s2-token-tree`)
 └─ 代币  // desc: token分类总览; scene: ERC1155 token_id来源分层; 对应: token_tree.total
@@ -60,8 +63,11 @@ Stage2Sync (timer驱动, boost::asio)
    │     └─ (动态) by_collateral_fpmm
    └─ 其他  // desc: 非Polymarket子树; scene: 无法确认属于Polymarket; 对应: token_tree.other.total
       ├─ FPMM  // desc: !poly & fcreate; scene: 非Polymarket来源的FPMMCreation; 对应: token_tree.other.fpmm_other
+      ├─ Split  // desc: !poly & split_event; scene: 仅由Split事件推断token; 对应: token_tree.other.split
+      ├─ Merge  // desc: !poly & merge_event; scene: 仅由Merge事件推断token; 对应: token_tree.other.merge
+      ├─ Redemption  // desc: !poly & redemption_event; scene: 仅由Redemption事件推断token; 对应: token_tree.other.redemption
       └─ Transfer  // desc: !poly & xfer_inf; scene: 未知token,无condition信息; 对应: token_tree.other.transfer_inferred
-      └─ (动态) by_collateral_transfer_inferred
+         └─ (动态) by_collateral_transfer_inferred
 
 Transfer树 (`s2-xfer-tree`)
 └─ Transfer  // desc: TransferSingle/Batch; scene: ERC1155代币转移事件;
@@ -124,6 +130,7 @@ Transfer树 (`s2-xfer-tree`)
 abbr(all)
 ├─ cond/token: poly=归属Polymarket, treg=出现TokenRegistered, cprep=出现ConditionPreparation, fcreate=出现FPMMCreation
 ├─ cond/token: fpmm=该condition后续有关联FPMM, nr=命中NegRisk路径, ob=普通订单簿(!fpmm & !nr), xfer_inf=从Transfer推断
+├─ cond/token: split_event/merge_event/redemption_event=仅由对应语义事件反推得到
 ├─ cond/token: other0=兜底未覆盖(!fpmm & !nr & !ob), group_by(x)=按字段x聚合
 ├─ transfer: amt=amount, known=known_cond, m(x)=match_x, holder=stakeholder, evt=event, tidx=token_idx, coll=collateral
 └─ transfer: is_proto=is_protocol, is_user=is_user

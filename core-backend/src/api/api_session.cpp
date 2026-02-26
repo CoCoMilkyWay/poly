@@ -412,7 +412,9 @@ void ApiSession::handle_rebuild_status() {
        {{"total", ct.other.total},
         {"prep", ct.other.prep},
         {"fpmm_other", ct.other.fpmm_other},
-        {"split", ct.other.split}}},
+        {"split", ct.other.split},
+        {"merge", ct.other.merge},
+        {"redemption", ct.other.redemption}}},
   };
 
   json token_tree = {
@@ -456,6 +458,8 @@ void ApiSession::handle_rebuild_status() {
        {{"total", tt.other.total},
         {"fpmm_other", tt.other.fpmm_other},
         {"split", tt.other.split},
+        {"merge", tt.other.merge},
+        {"redemption", tt.other.redemption},
         {"transfer_inferred", tt.other.transfer_inferred},
         {"by_collateral_transfer_inferred",
          by_collateral_from_events({

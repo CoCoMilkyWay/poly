@@ -233,6 +233,8 @@ struct ConditionTree {
     int64_t prep = 0;       // source=ConditionPrep
     int64_t fpmm_other = 0; // source=OtherFPMM (预期=0)
     int64_t split = 0;      // source=SplitEvent (预期=0)
+    int64_t merge = 0;      // source=MergeEvent (预期=0)
+    int64_t redemption = 0; // source=RedemptionEvent (预期=0)
   } other;
 };
 
@@ -257,6 +259,8 @@ struct TokenTree {
     int64_t total = 0;
     int64_t fpmm_other = 0;        // source=OtherFPMM (预期=0)
     int64_t split = 0;             // source=SplitEvent (预期=0)
+    int64_t merge = 0;             // source=MergeEvent (预期=0)
+    int64_t redemption = 0;        // source=RedemptionEvent (预期=0)
     int64_t transfer_inferred = 0; // 从Transfer中发现的未知token（无condition信息）
   } other;
 };
