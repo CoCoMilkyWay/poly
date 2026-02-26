@@ -5,7 +5,7 @@
   "frontend_port": 8000,
   "backend_port": 8001,
   "initial_block": 0,
-  "stage1_rpc_query_threads": 5,
+  "stage1_rpc_query_threads": 10,
   "stage1_rpc_sync_chunk_basics": 50,
   "active_rpc": "Alchemy",
   "rpc_nodes": [

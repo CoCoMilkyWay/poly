@@ -211,7 +211,9 @@ phase3_process_transfers(chunk)
 │     └─ known_cond=false 且命中FPMM语义 且 operator in fpmm_info_map -> coll回填为fpmm.coll
 ├─ 主循环 for unit in transfers(by sort_key)
 │  ├─ Pass A: transfer -> SemanticOp 绑定（每条 transfer 最多绑定一次）
-│  │  ├─ 先按 tx_key + op_bounds 取候选 op
+│  │  ├─ 双通道绑定:
+│  │  │  ├─ 窗口通道: split/merge/redeem/convert/order 先按 tx_key + op_bounds 取候选 op
+│  │  │  └─ FPMM通道: trade/funding 按 tx_key + fpmm_addr 在同tx内前向匹配（log_index >= 当前transfer）
 │  │  ├─ 再按硬约束过滤:
 │  │  │  ├─ split/merge: stakeholder + cond_id + collateral + parent + partition + direction + amount
 │  │  │  ├─ redemption: redeemer + cond_id + collateral + parent + index_sets + direction
@@ -219,6 +221,7 @@ phase3_process_transfers(chunk)
 │  │  │  ├─ order: token_id + maker/taker + maker_side + usdc/tokens
 │  │  │  ├─ trade/lp: fpmm_addr + side + token_amount/transfer_amount
 │  │  │  └─ unknown token 仅在通过结构约束时可绑定，不以“地址像不像”放宽
+│  │  ├─ FPMM from==pool 多候选决策: 取最近未来语义log；同log并列 -> assert(false)
 │  │  ├─ 多候选同时命中 -> assert(false)
 │  │  └─ 唯一命中 -> 记录 op_id + leg_type 并更新 op_consumed
 │  ├─ Pass B: 分类与事件产出
@@ -228,7 +231,7 @@ phase3_process_transfers(chunk)
 │  │  │  ├─ redemption: 支持 index_sets 对应的多条 burn
 │  │  │  └─ convert: 保持 InternalBurnConvert + Convert + (YES侧 SplitNegRisk/TransferInNegRisk) 三段路径
 │  │  ├─ 未绑定 transfer: fallback 到 TransferIn*/TransferOut*/Internal*
-│  │  ├─ amount==0 -> InternalTransferZero
+│  │  ├─ amount==0 -> InternalTransferZero（若命中FPMM trade语义则先消费语义，再按零值分类）
 │  │  ├─ N outcome 支持: known token_idx ∈ [0, outcome_count), unknown=255
 │  │  └─ 未落类 -> Unclassified -> assert(false)
 │  ├─ emit_raw_event（用户22类全部写入，含NonPoly）
@@ -257,7 +260,7 @@ phase3_process_transfers(chunk)
 │  ├─ assert(n_total == n_user + n_internal + n_unclass)
 │  ├─ assert(n_unclass == 0)
 │  ├─ assert(每条transfer消费次数 <= 1)
-│  ├─ assert(op消费约束成立: split/merge/redeem/convert/order/lp 均满足最小腿要求)
+│  ├─ assert(op消费约束成立: split/merge/redeem/convert/order/lp 均满足最小腿要求；FundingRemoved amounts=[0,0] 允许零腿)
 │  ├─ assert(trade消费约束成立: direct token leg 命中，或可被同tx内部 split/merge/internal burn/mint 路径解释)
 │  ├─ assert(order/trade/funding 候选不重复消费)
 │  ├─ assert(Poly类=>is_poly, NegRisk类=>is_nr, NonPoly类=>!is_poly或!known_cond)
@@ -284,10 +287,10 @@ phase3_process_transfers(chunk)
    └─ FPMMFunding*       -> m(lp_add/lp_refund/lp_remove)
 
 匹配原则
-├─ 语义窗口先行：先按 op_log_index 切片，再在片内绑定 transfer
-├─ 绑定与分类可同一遍完成，但结果必须等价于“先绑定后分类”
-├─ 判定只依赖硬约束；地址命名仅作上下文，不作放宽条件
-└─ fallback 仅处理“未绑定 transfer”，且必须可解释
+├─ 先绑定再分类：实现可单遍，但语义等价于“先确定绑定，再按绑定结果分类”
+├─ 绑定边界：仅同 tx；窗口通道处理通用语义，FPMM通道允许前向匹配未来语义（不回看过去，不跨 tx/block）
+├─ 判定规则：只用硬约束；多候选并列一律 assert(false)
+└─ fallback：仅处理未绑定 transfer，且必须可解释
 
 TransferClass输出事件(33类, 唯一落类)
 ├─ 用户操作(22类)

@@ -549,7 +549,11 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
   }
   for (const auto &[_, rows] : tx_fpmm_funding_) {
     for (const auto &row : rows) {
-      assert_transfer(row.consumed_count > 0, "Unconsumed FPMM funding semantic op");
+      // Some FPMMFundingRemoved rows have zero token legs (amounts=[0,0]):
+      // they are valid semantic markers with no ERC1155 transfer to consume.
+      bool zero_leg_funding_remove = (row.side == 2 && row.amount0 == 0 && row.amount1 == 0);
+      assert_transfer(row.consumed_count > 0 || zero_leg_funding_remove,
+                      "Unconsumed FPMM funding semantic op");
     }
   }
 }

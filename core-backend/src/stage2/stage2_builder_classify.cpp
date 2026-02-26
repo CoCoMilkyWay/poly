@@ -11,8 +11,6 @@ TransferClass EventBuilder::classify_and_emit(
     uint32_t cond_idx, uint8_t token_idx, Collateral collateral) {
 
   assert_transfer(amount >= 0, "Transfer amount must be non-negative");
-  if (amount == 0)
-    return TransferClass::InternalTransferZero;
 
   // Validate token identity before any semantic matching.
   bool known_token = (cond_idx != UNKNOWN_COND_IDX);
@@ -47,10 +45,13 @@ TransferClass EventBuilder::classify_and_emit(
         [](const TxOpBounds &b, int64_t transfer_base_log) {
           return b.right_inclusive < transfer_base_log;
         });
-    if (bound_it != bounds.end() &&
-        base_log_index > bound_it->left_exclusive &&
-        base_log_index <= bound_it->right_inclusive) {
-      active_semantic_log = bound_it->right_inclusive;
+    if (bound_it != bounds.end()) {
+      if (base_log_index > bound_it->left_exclusive &&
+          base_log_index <= bound_it->right_inclusive) {
+        active_semantic_log = bound_it->right_inclusive;
+      }
+    }
+    if (active_semantic_log >= 0) {
       TxLogKey log_key{block, tx_hash, active_semantic_log};
       auto mask_it = tx_op_type_mask_.find(log_key);
       if (mask_it != tx_op_type_mask_.end()) {
@@ -160,9 +161,8 @@ TransferClass EventBuilder::classify_and_emit(
     assert_transfer(match_count <= 1, "Ambiguous redemption semantic candidates");
     return matched;
   };
-  auto find_fpmm_trade_info = [&](const TxFPMMKey &key, int side, int64_t token_amount) -> FPMMTradeInfo * {
-    if (!has_semantic(SemanticKind::FPMMTrade))
-      return nullptr;
+  auto find_fpmm_trade_info = [&](const TxFPMMKey &key, int side,
+                                  const std::string &trader, int64_t token_amount) -> FPMMTradeInfo * {
     auto it = tx_fpmm_trade_.find(key);
     if (it == tx_fpmm_trade_.end())
       return nullptr;
@@ -171,9 +171,11 @@ TransferClass EventBuilder::classify_and_emit(
     for (auto &info : it->second) {
       if (info.consumed)
         continue;
-      if (!semantic_log_matches(info.log_index))
+      // FPMM emits FPMMBuy/FPMMSell after transfer legs in the same tx.
+      // Only allow forward matching within this tx; never match past semantic logs.
+      if (info.log_index < base_log_index)
         continue;
-      if (info.side == side && info.tokens == token_amount) {
+      if (info.side == side && info.trader == trader && info.tokens == token_amount) {
         matched = &info;
         match_count++;
       }
@@ -182,8 +184,6 @@ TransferClass EventBuilder::classify_and_emit(
     return matched;
   };
   auto mark_fpmm_trade_explained = [&](const TxFPMMKey &key, int side) -> bool {
-    if (!has_semantic(SemanticKind::FPMMTrade))
-      return false;
     auto it = tx_fpmm_trade_.find(key);
     if (it == tx_fpmm_trade_.end())
       return false;
@@ -191,7 +191,7 @@ TransferClass EventBuilder::classify_and_emit(
     int match_count = 0;
     bool has_consumed_match = false;
     for (auto &info : it->second) {
-      if (!semantic_log_matches(info.log_index))
+      if (info.log_index < base_log_index)
         continue;
       if (info.side != side)
         continue;
@@ -212,15 +212,13 @@ TransferClass EventBuilder::classify_and_emit(
   };
   auto find_fpmm_funding_info = [&](const TxFPMMKey &key, int64_t transfer_amount,
                                     bool expect_refund) -> FPMMFundingInfo * {
-    if (!has_semantic(SemanticKind::FPMMFunding))
-      return nullptr;
     auto it = tx_fpmm_funding_.find(key);
     if (it == tx_fpmm_funding_.end())
       return nullptr;
     FPMMFundingInfo *matched = nullptr;
     int match_count = 0;
     for (auto &info : it->second) {
-      if (!semantic_log_matches(info.log_index))
+      if (info.log_index < base_log_index)
         continue;
       if (info.side != 1 || info.amounts_count != 2)
         continue;
@@ -237,15 +235,13 @@ TransferClass EventBuilder::classify_and_emit(
   };
   auto find_fpmm_remove_info = [&](const TxFPMMKey &key, const std::string &funder,
                                    int64_t transfer_amount) -> FPMMFundingInfo * {
-    if (!has_semantic(SemanticKind::FPMMFunding))
-      return nullptr;
     auto it = tx_fpmm_funding_.find(key);
     if (it == tx_fpmm_funding_.end())
       return nullptr;
     FPMMFundingInfo *matched = nullptr;
     int match_count = 0;
     for (auto &info : it->second) {
-      if (!semantic_log_matches(info.log_index))
+      if (info.log_index < base_log_index)
         continue;
       if (info.side != 2)
         continue;
@@ -269,7 +265,7 @@ TransferClass EventBuilder::classify_and_emit(
     FPMMFundingInfo *matched = nullptr;
     int match_count = 0;
     for (auto &info : it->second) {
-      if (!semantic_log_matches(info.log_index))
+      if (info.log_index < base_log_index)
         continue;
       matched = &info;
       match_count++;
@@ -301,6 +297,25 @@ TransferClass EventBuilder::classify_and_emit(
     assert_transfer(match_count <= 1, "Ambiguous order semantic candidates");
     return matched;
   };
+
+  if (amount == 0) {
+    auto fpmm_zero_it = fpmm_map_.find(op);
+    if (fpmm_zero_it != fpmm_map_.end()) {
+      TxFPMMKey tx_fpmm_key{block, tx_hash, op};
+      if (to == op) {
+        if (FPMMTradeInfo *tit = find_fpmm_trade_info(tx_fpmm_key, 2, from, 0); tit != nullptr) {
+          tit->consumed = true;
+        }
+      } else if (from == op) {
+        if (FPMMTradeInfo *tit = find_fpmm_trade_info(tx_fpmm_key, 1, to, 0); tit != nullptr) {
+          tit->consumed = true;
+        } else if (to == ZERO_ADDR) {
+          (void)mark_fpmm_trade_explained(tx_fpmm_key, 2);
+        }
+      }
+    }
+    return TransferClass::InternalTransferZero;
+  }
 
   // ========== mint 分支 (from == 0x0) ==========
   if (from == ZERO_ADDR) {
@@ -336,22 +351,24 @@ TransferClass EventBuilder::classify_and_emit(
     if (fpmm_mint_it != fpmm_map_.end()) {
       TxFPMMKey tx_fpmm_key{block, tx_hash, to};
       FPMMFundingInfo *fit = find_fpmm_funding_info(tx_fpmm_key, amount, false);
-      if (fit != nullptr && known_token) {
+      if (fit != nullptr) {
         int64_t split_amt = std::max(fit->amount0, fit->amount1);
         assert_transfer(amount == split_amt, "LP Add split amount mismatch");
-        assert_transfer(token_idx < 2, "LP Add requires binary token_idx");
         fit->consumed_count++;
-        if (is_user_addr(fit->funder)) {
-          int64_t pool_amt = (token_idx == 0) ? fit->amount0 : fit->amount1;
-          RawEvent evt{sort_key, cond_idx, EventType::FPMMLPAdd, token_idx, coll, 0, pool_amt, split_price};
-          push_event(fit->funder, evt);
+        if (known_token) {
+          assert_transfer(token_idx < 2, "LP Add requires binary token_idx");
+          if (is_user_addr(fit->funder)) {
+            int64_t pool_amt = (token_idx == 0) ? fit->amount0 : fit->amount1;
+            RawEvent evt{sort_key, cond_idx, EventType::FPMMLPAdd, token_idx, coll, 0, pool_amt, split_price};
+            push_event(fit->funder, evt);
+          }
+          return TransferClass::FPMMLPAdd;
         }
-        return TransferClass::FPMMLPAdd;
+        return TransferClass::InternalMintFPMM;
       }
-      if (has_semantic(SemanticKind::FPMMTrade)) {
-        bool explained = mark_fpmm_trade_explained(tx_fpmm_key, 1);
-        assert_transfer(explained, "FPMM buy semantic not explainable on internal mint");
-      }
+      bool explained = mark_fpmm_trade_explained(tx_fpmm_key, 1);
+      assert_transfer(explained || !tx_fpmm_trade_.count(tx_fpmm_key),
+                      "FPMM buy semantic not explainable on internal mint");
       return TransferClass::InternalMintFPMM;
     }
 
@@ -397,10 +414,9 @@ TransferClass EventBuilder::classify_and_emit(
     auto fpmm_burn_it = fpmm_map_.find(from);
     if (fpmm_burn_it != fpmm_map_.end()) {
       TxFPMMKey tx_fpmm_key{block, tx_hash, from};
-      if (has_semantic(SemanticKind::FPMMTrade)) {
-        bool explained = mark_fpmm_trade_explained(tx_fpmm_key, 2);
-        assert_transfer(explained, "FPMM sell semantic not explainable on internal burn");
-      }
+      bool explained = mark_fpmm_trade_explained(tx_fpmm_key, 2);
+      assert_transfer(explained || !tx_fpmm_trade_.count(tx_fpmm_key),
+                      "FPMM sell semantic not explainable on internal burn");
       return TransferClass::InternalBurnFPMM;
     }
 
@@ -569,37 +585,57 @@ TransferClass EventBuilder::classify_and_emit(
     TxFPMMKey tx_fpmm_key{block, tx_hash, op};
 
     if (from == op) {
-      FPMMFundingInfo *fit = find_fpmm_funding_info(tx_fpmm_key, amount, true);
-      if (fit != nullptr && known_token) {
-        assert_transfer(fit->amount0 != fit->amount1, "LP Add should have asymmetric amounts");
-        int64_t refund_amt = std::abs(fit->amount0 - fit->amount1);
+      FPMMFundingInfo *refund_info = find_fpmm_funding_info(tx_fpmm_key, amount, true);
+      FPMMTradeInfo *buy_info = find_fpmm_trade_info(tx_fpmm_key, 1, to, amount);
+      FPMMFundingInfo *remove_info = find_fpmm_remove_info(tx_fpmm_key, to, amount);
+
+      enum class FromFPMMMatch { None,
+                                 Refund,
+                                 TradeBuy,
+                                 Remove };
+      FromFPMMMatch chosen = FromFPMMMatch::None;
+      int64_t chosen_log = 0;
+      auto consider = [&](FromFPMMMatch kind, int64_t log_index) {
+        if (chosen == FromFPMMMatch::None || log_index < chosen_log) {
+          chosen = kind;
+          chosen_log = log_index;
+          return;
+        }
+        assert_transfer(log_index != chosen_log, "Ambiguous FPMM semantic candidates at same log");
+      };
+      if (refund_info != nullptr)
+        consider(FromFPMMMatch::Refund, refund_info->log_index);
+      if (buy_info != nullptr)
+        consider(FromFPMMMatch::TradeBuy, buy_info->log_index);
+      if (remove_info != nullptr)
+        consider(FromFPMMMatch::Remove, remove_info->log_index);
+
+      if (chosen == FromFPMMMatch::Refund) {
+        assert_transfer(refund_info->amount0 != refund_info->amount1, "LP Add should have asymmetric amounts");
+        int64_t refund_amt = std::abs(refund_info->amount0 - refund_info->amount1);
         assert_transfer(amount == refund_amt, "LP Add refund amount mismatch");
-        int64_t refund_idx = (fit->amount0 < fit->amount1) ? 0 : 1;
-        if (token_idx == refund_idx) {
-          fit->consumed_count++;
+        int64_t refund_idx = (refund_info->amount0 < refund_info->amount1) ? 0 : 1;
+        refund_info->consumed_count++;
+        if (known_token && token_idx == refund_idx) {
           emit_if_user(to, RawEvent{sort_key, cond_idx, EventType::FPMMLPReturn, token_idx, coll, 0, amount, split_price});
           return TransferClass::FPMMLPReturn;
         }
-        // 多 outcome / 组合 token 无法用二元 token_idx 映射，降级到后续通用分支
+        return TransferClass::InternalTransferFPMM;
       }
-
-      FPMMTradeInfo *tit = find_fpmm_trade_info(tx_fpmm_key, 1, amount);
-      if (tit != nullptr) {
-        tit->consumed = true;
-        assert_transfer(amount == tit->tokens, "FPMM Buy amount mismatch");
-        int64_t price = usdc_price(tit->usdc, tit->tokens);
+      if (chosen == FromFPMMMatch::TradeBuy) {
+        buy_info->consumed = true;
+        assert_transfer(amount == buy_info->tokens, "FPMM Buy amount mismatch");
+        int64_t price = usdc_price(buy_info->usdc, buy_info->tokens);
         emit_if_user(to, RawEvent{sort_key, cond_idx, EventType::FPMMBuy, token_idx, coll, 0, amount, price});
         return TransferClass::FPMMBuy;
       }
-
-      FPMMFundingInfo *remove_info = find_fpmm_remove_info(tx_fpmm_key, to, amount);
-      if (remove_info != nullptr) {
+      if (chosen == FromFPMMMatch::Remove) {
         remove_info->consumed_count++;
         emit_if_user(to, RawEvent{sort_key, cond_idx, EventType::FPMMLPRemove, token_idx, coll, 0, amount, split_price});
         return TransferClass::FPMMLPRemove;
       }
 
-      if (has_semantic(SemanticKind::FPMMFunding)) {
+      if (tx_fpmm_funding_.count(tx_fpmm_key) > 0) {
         bool consumed = consume_active_funding_semantic(tx_fpmm_key);
         assert_transfer(consumed, "FPMM funding semantic without matching funding row");
         emit_if_user(to, RawEvent{sort_key, cond_idx, EventType::FPMMLPRemove, token_idx, coll, 0, amount, split_price});
@@ -618,7 +654,7 @@ TransferClass EventBuilder::classify_and_emit(
     }
 
     if (to == op) {
-      FPMMTradeInfo *tit = find_fpmm_trade_info(tx_fpmm_key, 2, amount);
+      FPMMTradeInfo *tit = find_fpmm_trade_info(tx_fpmm_key, 2, from, amount);
       if (tit != nullptr) {
         tit->consumed = true;
         assert_transfer(amount == tit->tokens, "FPMM Sell amount mismatch");
