@@ -293,9 +293,12 @@
       "internal",
       "split",
       "split_poly",
+      "split_non_poly",
       "merge",
       "merge_poly",
+      "merge_non_poly",
       "redemption",
+      "redemption_non_poly",
       "order",
       "fpmm_trade",
       "fpmm_lp",
@@ -557,7 +560,7 @@
                 children: [
                   {
                     id: "token_fpmm_by_collateral",
-                    label: "(动态) by_collateral_fpmm",
+                    label: "按抵押品",
                     value: (fo.by_collateral_fpmm || fo.by_collateral || []).reduce(
                       (acc, c) => acc + Number(c.count || 0),
                       0,
@@ -607,7 +610,7 @@
                 children: [
                   {
                     id: "token_transfer_by_collateral",
-                    label: "(动态) by_collateral_transfer_inferred",
+                    label: "按抵押品",
                     value:
                       transferInferredByCollateral.length > 0
                         ? transferInferredByCollateral.reduce(
@@ -879,7 +882,7 @@
                     children: [
                       s2BuildByCollateralNode(
                         "split_non_poly_coll",
-                        "(动态) by_collateral_split",
+                        "按抵押品",
                         byCollSplit,
                         "",
                         "split_np",
@@ -932,7 +935,7 @@
                     children: [
                       s2BuildByCollateralNode(
                         "merge_non_poly_coll",
-                        "(动态) by_collateral_merge",
+                        "按抵押品",
                         byCollMerge,
                         "",
                         "merge_np",
@@ -967,7 +970,7 @@
                     children: [
                       s2BuildByCollateralNode(
                         "redemption_non_poly_coll",
-                        "(动态) by_collateral_redemption",
+                        "按抵押品",
                         byCollRedemption,
                         "",
                         "redemption_np",
@@ -1036,7 +1039,7 @@
                   },
                   s2BuildByCollateralNode(
                     "fpmm_trade_coll",
-                    "(动态) by_collateral_fpmm_trade",
+                    "按抵押品",
                     byCollFpmmTrade,
                     "",
                     "fpmm_trade",
@@ -1077,7 +1080,7 @@
                   },
                   s2BuildByCollateralNode(
                     "fpmm_lp_coll",
-                    "(动态) by_collateral_fpmm_lp",
+                    "按抵押品",
                     byCollFpmmLp,
                     "",
                     "fpmm_lp",
@@ -1391,11 +1394,14 @@
         "internal",
         "split",
         "split_poly",
+        "split_non_poly",
         "split_non_poly_coll",
         "merge",
         "merge_poly",
+        "merge_non_poly",
         "merge_non_poly_coll",
         "redemption",
+        "redemption_non_poly",
         "redemption_non_poly_coll",
         "order",
         "fpmm_trade",
