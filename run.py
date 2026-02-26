@@ -38,7 +38,6 @@ LINUX_REQUIRED_PACKAGES = [
     "libssl-dev",
     "libprotobuf-dev",
     "protobuf-compiler",
-    "libarrow-dev",
     "ninja-build",
 ]
 

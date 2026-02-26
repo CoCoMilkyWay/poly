@@ -10,7 +10,7 @@
 #include "core/database.hpp"
 #include "misc/profiler.hpp"
 #include "stage1/chain_sync.hpp"
-#include "stage2/event_sync.hpp"
+#include "stage2/stage2_sync.hpp"
 #include "stage3/pnl_replay.hpp"
 
 void print_usage(const char *prog) {
@@ -73,14 +73,14 @@ int main(int argc, char *argv[]) {
   stage2::EventSync event_sync(stage1_db, stage2_db);
   boost::asio::io_context stage2_ioc;
   std::optional<std::thread> stage2_thread;
-  // {
-  //   TraceN("start/stage2_sync");
-  //   event_sync.start(stage2_ioc);
-  // }
-  // stage2_thread.emplace([&stage2_ioc]() {
-  //   TraceThread("Stage2-Sync");
-  //   stage2_ioc.run();
-  // });
+  {
+    TraceN("start/stage2_sync");
+    event_sync.start(stage2_ioc);
+  }
+  stage2_thread.emplace([&stage2_ioc]() {
+    TraceThread("Stage2-Sync");
+    stage2_ioc.run();
+  });
 
   stage3::PnlEngine pnl_engine(event_sync.builder());
 
@@ -106,7 +106,7 @@ int main(int argc, char *argv[]) {
   api_ioc.run();
 
   stage1_thread.join();
-  // stage2_thread->join();
+  stage2_thread->join();
 
   std::cout << "[Main] 已退出" << std::endl;
   return 0;

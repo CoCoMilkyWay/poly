@@ -55,9 +55,21 @@ if(NOT OpenSSL_FOUND)
     endif()
 endif()
 
-# Arrow (for Feather file writing)
-find_package(Arrow REQUIRED)
-message(STATUS "Found Arrow: ${Arrow_VERSION}")
+# Arrow (vendored under packages/arrow)
+set(ARROW_DIR ${PACKAGES_DIR}/arrow)
+set(ARROW_INCLUDE_DIR ${ARROW_DIR}/include)
+if(WIN32)
+    set(ARROW_LIBRARY ${ARROW_DIR}/lib/arrow.lib)
+else()
+    set(ARROW_LIBRARY ${ARROW_DIR}/lib/libarrow.so)
+endif()
+
+if(NOT EXISTS ${ARROW_INCLUDE_DIR}/arrow/api.h)
+    message(FATAL_ERROR "未找到 Arrow 头文件: ${ARROW_INCLUDE_DIR}/arrow/api.h")
+endif()
+if(NOT EXISTS ${ARROW_LIBRARY})
+    message(FATAL_ERROR "未找到 Arrow 库文件: ${ARROW_LIBRARY}")
+endif()
 
 # 源文件
 set(SOURCES
@@ -67,8 +79,12 @@ set(SOURCES
     ${SRC_DIR}/infra/rpc_client.cpp
     ${SRC_DIR}/stage1/chain_sync.cpp
     ${SRC_DIR}/stage1/event_decode.cpp
-    ${SRC_DIR}/stage2/event_build_classify.cpp
-    ${SRC_DIR}/stage2/event_build_phases.cpp
+    ${SRC_DIR}/stage2/stage2_utils.cpp
+    ${SRC_DIR}/stage2/stage2_models.cpp
+    ${SRC_DIR}/stage2/stage2_builder.cpp
+    ${SRC_DIR}/stage2/stage2_builder_classify.cpp
+    ${SRC_DIR}/stage2/stage2_builder_phases.cpp
+    ${SRC_DIR}/stage2/stage2_sync.cpp
 )
 
 if(PROFILE_MODE)
@@ -80,6 +96,7 @@ add_executable(core ${SOURCES})
 target_include_directories(core PRIVATE
     ${SRC_DIR}
     ${PACKAGES_DIR}/duckdb
+    ${ARROW_INCLUDE_DIR}
     ${PACKAGES_DIR}/tracy/public/tracy
     ${INCLUDE_DIR}
     ${INCLUDE_DIR}/package
@@ -99,7 +116,7 @@ if(WIN32)
         ${PACKAGES_DIR}/duckdb/duckdb.lib
         OpenSSL::SSL
         OpenSSL::Crypto
-        Arrow::arrow_shared
+        ${ARROW_LIBRARY}
     )
     if(PROFILE_MODE)
         target_link_libraries(core PRIVATE ws2_32 dbghelp)
@@ -109,12 +126,12 @@ else()
         ${PACKAGES_DIR}/duckdb/libduckdb.so
         OpenSSL::SSL
         OpenSSL::Crypto
-        Arrow::arrow_shared
+        ${ARROW_LIBRARY}
         pthread
         dl
     )
     set_target_properties(core PROPERTIES
-        BUILD_RPATH ${PACKAGES_DIR}/duckdb
-        INSTALL_RPATH ${PACKAGES_DIR}/duckdb
+        BUILD_RPATH "${PACKAGES_DIR}/duckdb;${ARROW_DIR}/lib"
+        INSTALL_RPATH "${PACKAGES_DIR}/duckdb;${ARROW_DIR}/lib"
     )
 endif()

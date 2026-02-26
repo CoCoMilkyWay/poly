@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../stage2/event_build.hpp"
-#include "../stage2/types.hpp"
+#include "../stage2/stage2_builder.hpp"
+#include "../stage2/stage2_types.hpp"
 #include "misc/profiler.hpp"
 #include <algorithm>
 #include <atomic>
