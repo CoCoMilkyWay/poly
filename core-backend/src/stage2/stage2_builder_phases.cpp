@@ -85,7 +85,7 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
   };
   auto get_u256_i32 = [&](const duckdb::unique_ptr<duckdb::MaterializedQueryResult> &tbl, int col, idx_t row) {
     int64_t v = u256_blob_to_i64(tbl->GetValue(col, row));
-    assert_transfer(v >= 0 && v <= std::numeric_limits<int>::max(),
+    assert_stage2(v >= 0 && v <= std::numeric_limits<int>::max(),
                     AssertLevel::L0, "Parse", "U256FitsInt32");
     return static_cast<int>(v);
   };
@@ -149,15 +149,15 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
       std::string collateral = get_hex_lower(fpmm, 2, i);
 
       std::vector<std::string> cids = parse_bytes32_list_hex_lower(fpmm->GetValue(1, i));
-      assert_transfer(!cids.empty(), AssertLevel::L1, "Mapping", "FPMMHasConditionIds");
+      assert_stage2(!cids.empty(), AssertLevel::L1, "Mapping", "FPMMHasConditionIds");
       uint32_t primary_cond_idx = 0;
       bool has_primary = false;
       for (const auto &cid : cids) {
         std::string lower_cid = to_lower(cid);
         auto it = cond_map_.find(lower_cid);
-        assert_transfer(it != cond_map_.end(), AssertLevel::L1, "Mapping", "FPMMConditionKnown");
+        assert_stage2(it != cond_map_.end(), AssertLevel::L1, "Mapping", "FPMMConditionKnown");
         uint8_t outcome_cnt = conditions_[it->second].outcome_count;
-        assert_transfer(outcome_cnt > 0 && outcome_cnt <= MAX_OUTCOMES,
+        assert_stage2(outcome_cnt > 0 && outcome_cnt <= MAX_OUTCOMES,
                         AssertLevel::L1, "Mapping", "OutcomeCountRange");
         uint32_t idx = intern_condition(cid, outcome_cnt, ConditionSource::PolymarketFPMM);
         if (!has_primary) {
@@ -165,7 +165,7 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
           has_primary = true;
         }
       }
-      assert_transfer(has_primary, AssertLevel::L1, "Mapping", "FPMMHasPrimaryCondition");
+      assert_stage2(has_primary, AssertLevel::L1, "Mapping", "FPMMHasPrimaryCondition");
 
       uint8_t coll_id = intern_collateral(collateral);
       intern_fpmm(addr, primary_cond_idx, coll_id);
@@ -177,7 +177,7 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
   auto infer_outcome_count = [&](const std::string &lower_cid, const std::vector<int64_t> &index_sets) -> uint8_t {
     uint8_t inferred = 0;
     for (int64_t index_set_i64 : index_sets) {
-      assert_transfer(index_set_i64 >= 0, AssertLevel::L0, "Parse", "IndexSetNonNegative");
+      assert_stage2(index_set_i64 >= 0, AssertLevel::L0, "Parse", "IndexSetNonNegative");
       uint64_t index_set = static_cast<uint64_t>(index_set_i64);
       if (index_set == 0) {
         continue;
@@ -189,10 +189,10 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
     }
     if (inferred == 0) {
       auto it = cond_map_.find(lower_cid);
-      assert_transfer(it != cond_map_.end(), AssertLevel::L1, "Mapping", "InferOutcomeCondKnown");
+      assert_stage2(it != cond_map_.end(), AssertLevel::L1, "Mapping", "InferOutcomeCondKnown");
       inferred = conditions_[it->second].outcome_count;
     }
-    assert_transfer(inferred > 0 && inferred <= MAX_OUTCOMES,
+    assert_stage2(inferred > 0 && inferred <= MAX_OUTCOMES,
                     AssertLevel::L1, "Mapping", "InferOutcomeCountRange");
     return inferred;
   };
@@ -224,7 +224,7 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
         inferred_map.emplace(lower_cid, CondInference{collateral, inferred_count});
         continue;
       }
-      assert_transfer(it->second.collateral == collateral,
+      assert_stage2(it->second.collateral == collateral,
                       AssertLevel::L1, "Mapping", "ConditionCollateralStable");
       if (inferred_count > it->second.outcome_count) {
         it->second.outcome_count = inferred_count;
@@ -447,7 +447,7 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
       info.trader = get_hex_lower(fpmm_trade, 4, i);
       info.side = fpmm_trade->GetValue(5, i).GetValue<int>();
       int64_t outcome_idx = get_u256_i64(fpmm_trade, 6, i);
-      assert_transfer(outcome_idx >= 0 && outcome_idx <= std::numeric_limits<int>::max(),
+      assert_stage2(outcome_idx >= 0 && outcome_idx <= std::numeric_limits<int>::max(),
                       AssertLevel::L0, "Input", "OutcomeIdxFitsInt");
       info.outcome_idx = static_cast<int>(outcome_idx);
       info.usdc = get_u256_i64(fpmm_trade, 7, i);
@@ -487,7 +487,7 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
     bounds.reserve(logs.size());
     int64_t prev = -1;
     for (int64_t log_index : logs) {
-      assert_transfer(log_index >= 0, AssertLevel::L0, "Input", "SemanticLogIndexNonNegative");
+      assert_stage2(log_index >= 0, AssertLevel::L0, "Input", "SemanticLogIndexNonNegative");
       bounds.push_back(TxOpBounds{prev, log_index});
       prev = log_index;
     }
@@ -532,7 +532,7 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
   for (idx_t i = 0; i < transfers->RowCount(); ++i) {
     int64_t block = get_i64(transfers, 0, i);
     int64_t log_idx = get_i64(transfers, 2, i);
-    assert_transfer(log_idx >= 0 && log_idx < SORT_KEY_SCALE,
+    assert_stage2(log_idx >= 0 && log_idx < SORT_KEY_SCALE,
                     AssertLevel::L0, "Input", "TransferLogIndexRange");
     int64_t amount = get_u256_i64(transfers, 7, i);
     std::string op = to_lower(get_hex(transfers, 3, i));
@@ -576,40 +576,42 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
       current_transfer_context_ = oss.str();
     }
 
-    TransferClass cls = classify_and_emit(sort_key, tx_hash, block, op, from, to, token_id, amount, cond_idx, token_idx, collateral);
+    Stage2AssertContextScope assert_scope(&current_transfer_context_);
+    TransferClass cls = classify_and_emit(sort_key, tx_hash, block, op, from, to, token_id,
+                                          amount, cond_idx, token_idx, collateral);
     chunk_xfer_stats_.add(cls);
   }
 
   // Semantic coverage assertions: every semantic op in this chunk must be consumed by at least one transfer leg.
   for (const auto &[_, rows] : tx_split_) {
     for (const auto &row : rows) {
-      assert_transfer(row.consumed_count > 0, AssertLevel::L4, "Consume", "SplitConsumed");
+      assert_stage2(row.consumed_count > 0, AssertLevel::L4, "Consume", "SplitConsumed");
     }
   }
   for (const auto &[_, rows] : tx_merge_) {
     for (const auto &row : rows) {
-      assert_transfer(row.consumed_count > 0, AssertLevel::L4, "Consume", "MergeConsumed");
+      assert_stage2(row.consumed_count > 0, AssertLevel::L4, "Consume", "MergeConsumed");
     }
   }
   for (const auto &[_, rows] : tx_redemption_) {
     for (const auto &row : rows) {
-      assert_transfer(row.consumed_count > 0, AssertLevel::L4, "Consume", "RedeemConsumed");
+      assert_stage2(row.consumed_count > 0, AssertLevel::L4, "Consume", "RedeemConsumed");
     }
   }
   for (const auto &[_, rows] : tx_order_) {
     for (const auto &row : rows) {
-      assert_transfer(row.consumed, AssertLevel::L4, "Consume", "OrderConsumed");
+      assert_stage2(row.consumed, AssertLevel::L4, "Consume", "OrderConsumed");
     }
   }
   for (const auto &[_, rows] : tx_fpmm_trade_) {
     for (const auto &row : rows) {
-      assert_transfer(row.consumed || row.explained_without_direct_leg,
+      assert_stage2(row.consumed || row.explained_without_direct_leg,
                       AssertLevel::L4, "Consume", "FPMMTradeConsumedOrExplained");
     }
   }
   for (const auto &[_, rows] : tx_convert_) {
     for (const auto &row : rows) {
-      assert_transfer(row.consumed_count > 0, AssertLevel::L4, "Consume", "ConvertConsumed");
+      assert_stage2(row.consumed_count > 0, AssertLevel::L4, "Consume", "ConvertConsumed");
     }
   }
   for (const auto &[_, rows] : tx_fpmm_funding_) {
@@ -623,7 +625,7 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
           break;
         }
       }
-      assert_transfer(row.consumed_count > 0 || zero_leg_funding_remove,
+      assert_stage2(row.consumed_count > 0 || zero_leg_funding_remove,
                       AssertLevel::L4, "Consume", "FPMMFundingConsumedOrZeroLegRemove");
     }
   }
@@ -634,7 +636,7 @@ void EventBuilder::commit_chunk(int64_t new_cursor) {
   auto conn = stage2_db_.create_connection();
   auto exec_sql = [&](const std::string &sql) {
     auto r = conn->Query(sql);
-    assert_transfer(r && !r->HasError(), AssertLevel::L0, "DB", "CommitSQLSuccess");
+    assert_stage2(r && !r->HasError(), AssertLevel::L0, "DB", "CommitSQLSuccess");
   };
   exec_sql("BEGIN TRANSACTION");
 
@@ -864,7 +866,7 @@ void EventBuilder::commit_chunk(int64_t new_cursor) {
   exec_sql("COMMIT");
 
   auto user_cnt = conn->Query("SELECT COUNT(DISTINCT user_addr) FROM user_event");
-  assert_transfer(user_cnt && !user_cnt->HasError(), AssertLevel::L0, "DB", "UserCountQuerySuccess");
+  assert_stage2(user_cnt && !user_cnt->HasError(), AssertLevel::L0, "DB", "UserCountQuerySuccess");
   progress_.total_users = user_cnt->RowCount() > 0 ? user_cnt->GetValue(0, 0).GetValue<int64_t>() : 0;
 }
 

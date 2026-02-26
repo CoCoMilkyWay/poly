@@ -89,12 +89,13 @@ void EventBuilder::init_schema() {
   auto conn = stage2_db_.create_connection();
   auto assert_table_columns = [&](const char *table_name, std::initializer_list<const char *> expected_cols) {
     auto cols = conn->Query("PRAGMA table_info(" + std::string(table_name) + ")");
-    assert(cols && !cols->HasError());
-    assert(cols->RowCount() == static_cast<idx_t>(expected_cols.size()));
+    assert_stage2(cols && !cols->HasError(), AssertLevel::L0, "DB", "TableInfoQuerySuccess");
+    assert_stage2(cols->RowCount() == static_cast<idx_t>(expected_cols.size()),
+                  AssertLevel::L0, "DB", "TableColumnCountMatch");
     idx_t i = 0;
     for (const char *expect : expected_cols) {
       std::string got = cols->GetValue(1, i).GetValueUnsafe<std::string>();
-      assert(got == expect);
+      assert_stage2(got == expect, AssertLevel::L0, "DB", "TableColumnNameMatch");
       i++;
     }
   };
@@ -107,10 +108,10 @@ void EventBuilder::init_schema() {
   assert_table_columns("rb_token", {"token_id", "cond_idx", "token_idx", "source"});
 
   auto r = conn->Query("SELECT value FROM stage2_cursor WHERE key='last_block'");
-  assert(r && !r->HasError());
+  assert_stage2(r && !r->HasError(), AssertLevel::L0, "DB", "CursorQuerySuccess");
   if (r->RowCount() == 0) {
     auto ins = conn->Query("INSERT INTO stage2_cursor(key, value) VALUES ('last_block', 0)");
-    assert(ins && !ins->HasError());
+    assert_stage2(ins && !ins->HasError(), AssertLevel::L0, "DB", "CursorInitInsertSuccess");
   }
 }
 
@@ -164,7 +165,7 @@ void EventBuilder::load_from_rb() {
   }
 
   auto cur = conn->Query("SELECT value FROM stage2_cursor WHERE key='last_block'");
-  assert(cur && !cur->HasError());
+  assert_stage2(cur && !cur->HasError(), AssertLevel::L0, "DB", "CursorLoadSuccess");
   progress_.cursor = cur->RowCount() > 0 ? cur->GetValue(0, 0).GetValue<int64_t>() : 0;
 
   // 从 user_event 表重新计算事件计数（保证数据一致性）
@@ -214,7 +215,7 @@ void EventBuilder::load_from_rb() {
       progress_.cnt_transfer += cnt;
       break;
     default:
-      assert(false);
+      fail_stage2_assert(AssertLevel::L0, "Input", "UnknownEventTypeInRestoreCounter");
       break;
     }
     progress_.total_events += cnt;
@@ -350,9 +351,10 @@ void EventBuilder::load_from_rb() {
     int64_t value = xfer_kv->GetValue(1, i).GetValue<int64_t>();
     xfer_saved[key] = value;
   }
-  assert(!(progress_.cursor > 0 && progress_.total_events > 0 &&
-           xfer_saved.count("xfer_total") == 0) &&
-         "stage2 db missing persisted xfer stats snapshot; rebuild stage2 once");
+  assert_stage2(!(progress_.cursor > 0 && progress_.total_events > 0 &&
+                  xfer_saved.count("xfer_total") == 0),
+                AssertLevel::L0, "DB", "TransferStatsSnapshotPersisted",
+                "stage2 db missing persisted xfer stats snapshot; rebuild stage2 once");
   if (xfer_saved.count("xfer_total") > 0) {
     auto load = [&](const char *key) -> int64_t {
       auto it = xfer_saved.find(key);

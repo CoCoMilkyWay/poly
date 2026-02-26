@@ -52,9 +52,26 @@ inline void stage2_log_assert(const std::string &msg) {
   std::cerr << "[Stage2][ASSERT] " << msg << std::endl;
 }
 
+inline thread_local const std::string *g_stage2_assert_context = nullptr;
+
+class Stage2AssertContextScope {
+public:
+  explicit Stage2AssertContextScope(const std::string *ctx)
+      : prev_(g_stage2_assert_context) {
+    g_stage2_assert_context = ctx;
+  }
+  ~Stage2AssertContextScope() { g_stage2_assert_context = prev_; }
+
+private:
+  const std::string *prev_;
+};
+
 [[noreturn]] inline void fail_stage2_assert(AssertLevel level, const char *domain,
                                              const char *rule, const char *detail = nullptr) {
   stage2_log_assert(build_assert_message(level, domain, rule, detail));
+  if (g_stage2_assert_context != nullptr && !g_stage2_assert_context->empty()) {
+    stage2_log_assert(std::string("context: ") + *g_stage2_assert_context);
+  }
   assert(false && "stage2 assertion");
   std::abort();
 }
