@@ -511,7 +511,22 @@ void EventBuilder::commit_chunk(int64_t new_cursor) {
       }
       ap.Close();
     }
-    exec_sql("INSERT OR REPLACE INTO rb_condition SELECT * FROM tmp_rb_condition");
+    exec_sql(
+        "INSERT INTO rb_condition "
+        "SELECT * FROM tmp_rb_condition "
+        "ON CONFLICT(cond_idx) DO UPDATE SET "
+        "cond_id=excluded.cond_id, "
+        "outcome_cnt=excluded.outcome_cnt, "
+        "payout_0=excluded.payout_0, "
+        "payout_1=excluded.payout_1, "
+        "payout_2=excluded.payout_2, "
+        "payout_3=excluded.payout_3, "
+        "payout_4=excluded.payout_4, "
+        "payout_5=excluded.payout_5, "
+        "payout_6=excluded.payout_6, "
+        "payout_7=excluded.payout_7, "
+        "question_id=excluded.question_id, "
+        "source=excluded.source");
   }
 
   if (!new_tokens_.empty()) {
