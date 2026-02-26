@@ -32,26 +32,27 @@ query_block_range(duckdb::Connection &conn, Database &db,
     return nullptr;
   }
   auto result = conn.Query(*sql + suffix_sql);
-  assert(!result->HasError());
+  assert_stage2(!result->HasError(), AssertLevel::L0, "DB", "RangeQuerySuccess");
   return result;
 }
 
 inline int64_t u256_blob_to_i64(const duckdb::Value &v) {
   std::string blob = v.GetValueUnsafe<std::string>();
-  assert(blob.size() == 32);
+  assert_stage2(blob.size() == 32, AssertLevel::L0, "Parse", "U256BlobSize32");
   for (size_t i = 0; i < 24; ++i) {
-    assert(static_cast<unsigned char>(blob[i]) == 0);
+    assert_stage2(static_cast<unsigned char>(blob[i]) == 0, AssertLevel::L0, "Parse", "U256HighBitsZero");
   }
   uint64_t low = 0;
   for (size_t i = 24; i < 32; ++i) {
     low = (low << 8) | static_cast<unsigned char>(blob[i]);
   }
-  assert(low <= static_cast<uint64_t>(std::numeric_limits<int64_t>::max()));
+  assert_stage2(low <= static_cast<uint64_t>(std::numeric_limits<int64_t>::max()),
+                AssertLevel::L0, "Parse", "U256FitsInt64");
   return static_cast<int64_t>(low);
 }
 
 inline std::vector<int64_t> parse_u256_list_i64(const duckdb::Value &v) {
-  assert(v.type().id() == duckdb::LogicalTypeId::LIST);
+  assert_stage2(v.type().id() == duckdb::LogicalTypeId::LIST, AssertLevel::L0, "Parse", "U256ListType");
   auto arr = duckdb::ListValue::GetChildren(v);
   std::vector<int64_t> out;
   out.reserve(arr.size());
@@ -62,13 +63,13 @@ inline std::vector<int64_t> parse_u256_list_i64(const duckdb::Value &v) {
 }
 
 inline std::vector<std::string> parse_bytes32_list_hex_lower(const duckdb::Value &v) {
-  assert(v.type().id() == duckdb::LogicalTypeId::LIST);
+  assert_stage2(v.type().id() == duckdb::LogicalTypeId::LIST, AssertLevel::L0, "Parse", "Bytes32ListType");
   auto arr = duckdb::ListValue::GetChildren(v);
   std::vector<std::string> out;
   out.reserve(arr.size());
   for (const auto &item : arr) {
     std::string b = item.GetValueUnsafe<std::string>();
-    assert(b.size() == 32);
+    assert_stage2(b.size() == 32, AssertLevel::L0, "Parse", "Bytes32ItemSize");
     out.push_back(to_lower(blob_to_hex(b)));
   }
   return out;
@@ -82,9 +83,10 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
   auto get_i32 = [](const duckdb::unique_ptr<duckdb::MaterializedQueryResult> &tbl, int col, idx_t row) {
     return tbl->GetValue(col, row).GetValue<int>();
   };
-  auto get_u256_i32 = [](const duckdb::unique_ptr<duckdb::MaterializedQueryResult> &tbl, int col, idx_t row) {
+  auto get_u256_i32 = [&](const duckdb::unique_ptr<duckdb::MaterializedQueryResult> &tbl, int col, idx_t row) {
     int64_t v = u256_blob_to_i64(tbl->GetValue(col, row));
-    assert(v >= 0 && v <= std::numeric_limits<int>::max());
+    assert_transfer(v >= 0 && v <= std::numeric_limits<int>::max(),
+                    AssertLevel::L0, "Parse", "U256FitsInt32");
     return static_cast<int>(v);
   };
   auto get_hex = [](const duckdb::unique_ptr<duckdb::MaterializedQueryResult> &tbl, int col, idx_t row) {
@@ -147,17 +149,23 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
       std::string collateral = get_hex_lower(fpmm, 2, i);
 
       std::vector<std::string> cids = parse_bytes32_list_hex_lower(fpmm->GetValue(1, i));
-      assert(!cids.empty());
+      assert_transfer(!cids.empty(), AssertLevel::L1, "Mapping", "FPMMHasConditionIds");
       uint32_t primary_cond_idx = 0;
       bool has_primary = false;
       for (const auto &cid : cids) {
-        uint32_t idx = intern_condition(cid, 2, ConditionSource::PolymarketFPMM);
+        std::string lower_cid = to_lower(cid);
+        auto it = cond_map_.find(lower_cid);
+        assert_transfer(it != cond_map_.end(), AssertLevel::L1, "Mapping", "FPMMConditionKnown");
+        uint8_t outcome_cnt = conditions_[it->second].outcome_count;
+        assert_transfer(outcome_cnt > 0 && outcome_cnt <= MAX_OUTCOMES,
+                        AssertLevel::L1, "Mapping", "OutcomeCountRange");
+        uint32_t idx = intern_condition(cid, outcome_cnt, ConditionSource::PolymarketFPMM);
         if (!has_primary) {
           primary_cond_idx = idx;
           has_primary = true;
         }
       }
-      assert(has_primary);
+      assert_transfer(has_primary, AssertLevel::L1, "Mapping", "FPMMHasPrimaryCondition");
 
       uint8_t coll_id = intern_collateral(collateral);
       intern_fpmm(addr, primary_cond_idx, coll_id);
@@ -166,29 +174,72 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
     }
   }
 
+  auto infer_outcome_count = [&](const std::string &lower_cid, const std::vector<int64_t> &index_sets) -> uint8_t {
+    uint8_t inferred = 0;
+    for (int64_t index_set_i64 : index_sets) {
+      assert_transfer(index_set_i64 >= 0, AssertLevel::L0, "Parse", "IndexSetNonNegative");
+      uint64_t index_set = static_cast<uint64_t>(index_set_i64);
+      if (index_set == 0) {
+        continue;
+      }
+      uint8_t bits = static_cast<uint8_t>(64 - __builtin_clzll(index_set));
+      if (bits > inferred) {
+        inferred = bits;
+      }
+    }
+    if (inferred == 0) {
+      auto it = cond_map_.find(lower_cid);
+      assert_transfer(it != cond_map_.end(), AssertLevel::L1, "Mapping", "InferOutcomeCondKnown");
+      inferred = conditions_[it->second].outcome_count;
+    }
+    assert_transfer(inferred > 0 && inferred <= MAX_OUTCOMES,
+                    AssertLevel::L1, "Mapping", "InferOutcomeCountRange");
+    return inferred;
+  };
+
   // 从 split/merge/redemption 事件中提取 token_id（覆盖没有经过 FPMM 的 condition）
-  auto update_from_condition_event = [&](const char *table_name, ConditionSource cond_source, TokenSource token_source) {
+  auto update_from_condition_event = [&](const char *table_name,
+                                         const char *index_sets_col,
+                                         ConditionSource cond_source,
+                                         TokenSource token_source) {
     auto rows = query_block_range(
         *conn, stage1_db_,
-        "SELECT DISTINCT condition_id, collateral_token FROM ",
+        std::string("SELECT condition_id, collateral_token, ") + index_sets_col + " FROM ",
         table_name, start, end);
     if (!rows) {
       return;
     }
+    struct CondInference {
+      std::string collateral;
+      uint8_t outcome_count = 0;
+    };
+    std::unordered_map<std::string, CondInference> inferred_map;
     for (idx_t i = 0; i < rows->RowCount(); ++i) {
-      std::string cid = get_hex(rows, 0, i);
-      std::string lower_cid = to_lower(cid);
+      std::string lower_cid = get_hex_lower(rows, 0, i);
       std::string collateral = get_hex_lower(rows, 1, i);
-
-      uint32_t cond_idx = intern_condition(cid, 2, cond_source);
-      uint8_t coll_id = intern_collateral(collateral);
+      std::vector<int64_t> index_sets = parse_u256_list_i64(rows->GetValue(2, i));
+      uint8_t inferred_count = infer_outcome_count(lower_cid, index_sets);
+      auto it = inferred_map.find(lower_cid);
+      if (it == inferred_map.end()) {
+        inferred_map.emplace(lower_cid, CondInference{collateral, inferred_count});
+        continue;
+      }
+      assert_transfer(it->second.collateral == collateral,
+                      AssertLevel::L1, "Mapping", "ConditionCollateralStable");
+      if (inferred_count > it->second.outcome_count) {
+        it->second.outcome_count = inferred_count;
+      }
+    }
+    for (const auto &[lower_cid, inf] : inferred_map) {
+      uint32_t cond_idx = intern_condition(lower_cid, inf.outcome_count, cond_source);
+      uint8_t coll_id = intern_collateral(inf.collateral);
       set_cond_collateral(cond_idx, coll_id);
-      intern_condition_tokens(lower_cid, collateral, cond_idx, token_source);
+      intern_condition_tokens(lower_cid, inf.collateral, cond_idx, token_source);
     }
   };
-  update_from_condition_event("split", ConditionSource::SplitEvent, TokenSource::SplitEvent);
-  update_from_condition_event("merge", ConditionSource::MergeEvent, TokenSource::MergeEvent);
-  update_from_condition_event("redemption", ConditionSource::RedemptionEvent, TokenSource::RedemptionEvent);
+  update_from_condition_event("split", "partition", ConditionSource::SplitEvent, TokenSource::SplitEvent);
+  update_from_condition_event("merge", "partition", ConditionSource::MergeEvent, TokenSource::MergeEvent);
+  update_from_condition_event("redemption", "index_sets", ConditionSource::RedemptionEvent, TokenSource::RedemptionEvent);
 
   auto nrq = query_block_range(
       *conn, stage1_db_,
@@ -396,7 +447,8 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
       info.trader = get_hex_lower(fpmm_trade, 4, i);
       info.side = fpmm_trade->GetValue(5, i).GetValue<int>();
       int64_t outcome_idx = get_u256_i64(fpmm_trade, 6, i);
-      assert(outcome_idx >= 0 && outcome_idx <= std::numeric_limits<int>::max());
+      assert_transfer(outcome_idx >= 0 && outcome_idx <= std::numeric_limits<int>::max(),
+                      AssertLevel::L0, "Input", "OutcomeIdxFitsInt");
       info.outcome_idx = static_cast<int>(outcome_idx);
       info.usdc = get_u256_i64(fpmm_trade, 7, i);
       info.tokens = get_u256_i64(fpmm_trade, 8, i);
@@ -422,10 +474,7 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
       info.fpmm_addr = fpmm_addr;
       info.funder = get_hex_lower(fpmm_funding, 4, i);
       info.side = fpmm_funding->GetValue(5, i).GetValue<int>();
-      std::vector<int64_t> amounts = parse_u256_list_i64(fpmm_funding->GetValue(6, i));
-      info.amounts_count = static_cast<int>(amounts.size());
-      info.amount0 = amounts.size() > 0 ? amounts[0] : 0;
-      info.amount1 = amounts.size() > 1 ? amounts[1] : 0;
+      info.amounts = parse_u256_list_i64(fpmm_funding->GetValue(6, i));
       tx_fpmm_funding_[key].push_back(info);
       record_semantic(tx_key, info.log_index, SemanticKind::FPMMFunding);
     }
@@ -438,7 +487,7 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
     bounds.reserve(logs.size());
     int64_t prev = -1;
     for (int64_t log_index : logs) {
-      assert(log_index >= 0);
+      assert_transfer(log_index >= 0, AssertLevel::L0, "Input", "SemanticLogIndexNonNegative");
       bounds.push_back(TxOpBounds{prev, log_index});
       prev = log_index;
     }
@@ -483,7 +532,8 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
   for (idx_t i = 0; i < transfers->RowCount(); ++i) {
     int64_t block = get_i64(transfers, 0, i);
     int64_t log_idx = get_i64(transfers, 2, i);
-    assert(log_idx >= 0 && log_idx < SORT_KEY_SCALE);
+    assert_transfer(log_idx >= 0 && log_idx < SORT_KEY_SCALE,
+                    AssertLevel::L0, "Input", "TransferLogIndexRange");
     int64_t amount = get_u256_i64(transfers, 7, i);
     std::string op = to_lower(get_hex(transfers, 3, i));
     std::string from = to_lower(get_hex(transfers, 4, i));
@@ -531,29 +581,50 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
   }
 
   // Semantic coverage assertions: every semantic op in this chunk must be consumed by at least one transfer leg.
+  for (const auto &[_, rows] : tx_split_) {
+    for (const auto &row : rows) {
+      assert_transfer(row.consumed_count > 0, AssertLevel::L4, "Consume", "SplitConsumed");
+    }
+  }
+  for (const auto &[_, rows] : tx_merge_) {
+    for (const auto &row : rows) {
+      assert_transfer(row.consumed_count > 0, AssertLevel::L4, "Consume", "MergeConsumed");
+    }
+  }
+  for (const auto &[_, rows] : tx_redemption_) {
+    for (const auto &row : rows) {
+      assert_transfer(row.consumed_count > 0, AssertLevel::L4, "Consume", "RedeemConsumed");
+    }
+  }
   for (const auto &[_, rows] : tx_order_) {
     for (const auto &row : rows) {
-      assert_transfer(row.consumed, "Unconsumed order semantic op");
+      assert_transfer(row.consumed, AssertLevel::L4, "Consume", "OrderConsumed");
     }
   }
   for (const auto &[_, rows] : tx_fpmm_trade_) {
     for (const auto &row : rows) {
       assert_transfer(row.consumed || row.explained_without_direct_leg,
-                      "Unconsumed FPMM trade semantic op");
+                      AssertLevel::L4, "Consume", "FPMMTradeConsumedOrExplained");
     }
   }
   for (const auto &[_, rows] : tx_convert_) {
     for (const auto &row : rows) {
-      assert_transfer(row.consumed_count > 0, "Unconsumed convert semantic op");
+      assert_transfer(row.consumed_count > 0, AssertLevel::L4, "Consume", "ConvertConsumed");
     }
   }
   for (const auto &[_, rows] : tx_fpmm_funding_) {
     for (const auto &row : rows) {
       // Some FPMMFundingRemoved rows have zero token legs (amounts=[0,0]):
       // they are valid semantic markers with no ERC1155 transfer to consume.
-      bool zero_leg_funding_remove = (row.side == 2 && row.amount0 == 0 && row.amount1 == 0);
+      bool zero_leg_funding_remove = row.side == 2;
+      for (int64_t amount : row.amounts) {
+        if (amount != 0) {
+          zero_leg_funding_remove = false;
+          break;
+        }
+      }
       assert_transfer(row.consumed_count > 0 || zero_leg_funding_remove,
-                      "Unconsumed FPMM funding semantic op");
+                      AssertLevel::L4, "Consume", "FPMMFundingConsumedOrZeroLegRemove");
     }
   }
 }
@@ -563,7 +634,7 @@ void EventBuilder::commit_chunk(int64_t new_cursor) {
   auto conn = stage2_db_.create_connection();
   auto exec_sql = [&](const std::string &sql) {
     auto r = conn->Query(sql);
-    assert(r && !r->HasError());
+    assert_transfer(r && !r->HasError(), AssertLevel::L0, "DB", "CommitSQLSuccess");
   };
   exec_sql("BEGIN TRANSACTION");
 
@@ -793,7 +864,7 @@ void EventBuilder::commit_chunk(int64_t new_cursor) {
   exec_sql("COMMIT");
 
   auto user_cnt = conn->Query("SELECT COUNT(DISTINCT user_addr) FROM user_event");
-  assert(user_cnt && !user_cnt->HasError());
+  assert_transfer(user_cnt && !user_cnt->HasError(), AssertLevel::L0, "DB", "UserCountQuerySuccess");
   progress_.total_users = user_cnt->RowCount() > 0 ? user_cnt->GetValue(0, 0).GetValue<int64_t>() : 0;
 }
 

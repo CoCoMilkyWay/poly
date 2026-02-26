@@ -74,7 +74,7 @@ enum class Collateral : uint8_t {
 };
 
 struct ConditionInfo {
-  uint8_t outcome_count = 2;
+  uint8_t outcome_count = 0;
   std::vector<int64_t> payout_numerators;
   std::string question_id;
   ConditionSource source = ConditionSource::ConditionPrep;
@@ -276,9 +276,7 @@ struct FPMMFundingInfo {
   std::string fpmm_addr;
   std::string funder;
   int side; // 1=Added, 2=Removed
-  int64_t amount0;
-  int64_t amount1;
-  int amounts_count = 0;
+  std::vector<int64_t> amounts;
   int consumed_count = 0;
 };
 

@@ -155,7 +155,7 @@ abbr(all)
 ② `condition_resolution`                    → `cond_info_map`(payout)
 ③ `token_map`                               → `cond_idx_map` + `cond_info_map`(source) + `token_info_map`
 ④ `fpmm`                                    → `cond_idx_map` + `cond_info_map`(source) + `fpmm_info_map` + `token_info_map` + `coll_map` + `pm_cond_set`
-⑤ `split` / `merge` / `redemption` 增量更新 → `cond_idx_map` + `cond_info_map`(source) + `token_info_map` + `coll_map`
+⑤ `split` / `merge` / `redemption` 增量更新 → `cond_idx_map` + `cond_info_map`(source/outcome_count按index_set最高位推断并扩展) + `token_info_map` + `coll_map`
 ⑥ `neg_risk_question`                       → `mid_map` + `nr_cond_set`
 → `update_cond_type_stats()`                → `ConditionTree` / `TokenTree`
 ```
@@ -170,7 +170,7 @@ abbr(all)
 | `tx_convert_idx[tx_market_key:{block, tx_hash, market_id}] -> [{log_index, market_id, index_set, amount, stakeholder}]`                        | `convert`                                                             |
 | `tx_order_idx[tx_token_key:{block, tx_hash, token_id}] -> [{log_index, maker, taker, maker_side, usdc, tokens, fee}]`                          | `order_filled`                                                        |
 | `tx_fpmm_trade_idx[tx_fpmm_key:{block, tx_hash, fpmm_addr}] -> [{log_index, fpmm_addr, trader, side, outcome_idx, usdc, tokens}]`              | `fpmm_trade`                                                          |
-| `tx_fpmm_funding_idx[tx_fpmm_key:{block, tx_hash, fpmm_addr}] -> [{log_index, fpmm_addr, funder, side, amount0, amount1, amounts_count}]`      | `fpmm_funding`                                                        |
+| `tx_fpmm_funding_idx[tx_fpmm_key:{block, tx_hash, fpmm_addr}] -> [{log_index, fpmm_addr, funder, side, amounts[]}]`                            | `fpmm_funding`                                                        |
 | `tx_op_seq_idx[tx_key:{block, tx_hash}] -> [{op_type, op_log_index, ref_kind, ref_index}]`                                                     | `split/merge/redemption/convert/order_filled/fpmm_trade/fpmm_funding` |
 | `tx_op_bounds_idx[tx_key:{block, tx_hash}] -> [{op_log_index, left_exclusive, right_inclusive}]`                                               | `tx_op_seq_idx`                                                       |
 
@@ -260,9 +260,14 @@ phase3_process_transfers(chunk)
 │  ├─ assert(n_total == n_user + n_internal + n_unclass)
 │  ├─ assert(n_unclass == 0)
 │  ├─ assert(每条transfer消费次数 <= 1)
-│  ├─ assert(op消费约束成立: split/merge/redeem/convert/order/lp 均满足最小腿要求；FundingRemoved amounts=[0,0] 允许零腿)
-│  ├─ assert(trade消费约束成立: direct token leg 命中，或可被同tx内部 split/merge/internal burn/mint 路径解释)
-│  ├─ assert(order/trade/funding 候选不重复消费)
+│  ├─ assert(op消费闭环: 每个语义 op 都满足“已消费或可解释例外”)
+│  │  ├─ order: consumed=true
+│  │  ├─ trade: consumed=true 或 explained_without_direct_leg=true
+│  │  ├─ convert: consumed_count>0
+│  │  ├─ funding: consumed_count>0；FundingRemoved amounts 全零允许零腿
+│  │  └─ split/merge/redeem: consumed_count>0
+│  ├─ assert(op候选唯一性: order/trade/funding/split/merge/redeem/convert 均无重复消费和歧义并列)
+│  ├─ assert(语义硬约束成立: actor/cond/collateral/parent/index_set/amount/side/log-window)
 │  ├─ assert(Poly类=>is_poly, NegRisk类=>is_nr, NonPoly类=>!is_poly或!known_cond)
 │  ├─ assert(convert 在 market 维度的路径与金额关系成立)
 │  └─ assert(token_idx==255 -> cond_idx==UNKNOWN_COND_IDX)
@@ -291,6 +296,14 @@ phase3_process_transfers(chunk)
 ├─ 绑定边界：仅同 tx；窗口通道处理通用语义，FPMM通道允许前向匹配未来语义（不回看过去，不跨 tx/block）
 ├─ 判定规则：只用硬约束；多候选并列一律 assert(false)
 └─ fallback：仅处理未绑定 transfer，且必须可解释
+
+断言层级（Assertion Hierarchy）
+├─ L0 输入/结构层：schema/type/range/u256解析合法
+├─ L1 映射不变量层：cond/token/collateral/fpmm 映射一致；outcome_count 合法且仅扩展不回退
+├─ L2 匹配唯一性层：候选命中数 <= 1；并列歧义直接失败
+├─ L3 语义约束层：命中后必须满足 actor/cond/collateral/amount/direction/window 等硬约束
+├─ L4 语义消费闭环层：chunk 收尾每类语义 op 必须“已消费或显式例外”
+└─ L5 结果守恒层：total 守恒、unclassified==0、树统计恒等式成立
 
 TransferClass输出事件(33类, 唯一落类)
 ├─ 用户操作(22类)
@@ -331,7 +344,7 @@ Phase3中间结构 (chunk内存)
 │  ├─ convert_ops[]      {op_id, market_id, stakeholder, index_set, amount, consumed_count}
 │  ├─ order_ops[]        {op_id, token_id, maker, taker, maker_side, usdc, tokens, fee, consumed_count}
 │  ├─ fpmm_trade_ops[]   {op_id, fpmm_addr, trader, side, outcome_idx, usdc, tokens, consumed_count, explainable_without_leg}
-│  ├─ fpmm_lp_ops[]      {op_id, fpmm_addr, funder, side, amount0, amount1, amounts_count, consumed_count}
+│  ├─ fpmm_lp_ops[]      {op_id, fpmm_addr, funder, side, amounts[], consumed_count}
 │  ├─ op_required[]      {op_id -> min_required_legs, optional_legs_mask}
 │  └─ transfer_bind[]    {transfer_id -> (op_id, leg_type, rule_id)}  // 未绑定为 null
 ├─ MatchHit

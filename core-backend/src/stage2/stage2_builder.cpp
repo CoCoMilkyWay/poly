@@ -401,8 +401,9 @@ void EventBuilder::load_from_rb() {
 
   committed_progress_ = progress_;
 
-  std::cerr << "[Stage2] Restored: " << conditions_.size() << " conditions, "
-            << token_map_.size() << " tokens, " << fpmm_map_.size() << " FPMMs" << std::endl;
+  stage2_log_info("Restored: " + std::to_string(conditions_.size()) + " conditions, " +
+                  std::to_string(token_map_.size()) + " tokens, " +
+                  std::to_string(fpmm_map_.size()) + " FPMMs");
 }
 
 int64_t EventBuilder::cursor() const { return committed_progress_.cursor; }
@@ -414,7 +415,6 @@ bool EventBuilder::build_chunk(int64_t target_block) {
   progress_ = committed_progress_;
   int64_t chunk_start = committed_progress_.cursor;
   int64_t chunk_end = std::min(committed_progress_.cursor + chunk_size_, target_block);
-  // std::cerr << "[Stage2] Processing chunk: " << chunk_start << " -> " << chunk_end << std::endl;
   progress_.target = target_block;
   progress_.chunk_start = chunk_start;
   progress_.chunk_end = chunk_end;

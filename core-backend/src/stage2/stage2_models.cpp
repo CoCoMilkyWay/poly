@@ -1,4 +1,5 @@
 #include "stage2_models.hpp"
+#include "stage2_assert.hpp"
 
 #include <filesystem>
 #include <fstream>
@@ -298,8 +299,8 @@ TransferStats &TransferStats::operator+=(const TransferStats &o) {
 
 void TransferStats::verify() const {
   int64_t sum = user_events() + internal() + unclassified;
-  assert(sum == total && "total = user_events + internal + unclassified");
-  assert(unclassified == 0 && "unclassified must be 0");
+  assert_stage2(sum == total, AssertLevel::L5, "Conservation", "TransferStatsTotal");
+  assert_stage2(unclassified == 0, AssertLevel::L5, "Conservation", "TransferStatsUnclassifiedZero");
 }
 
 void TransferStats::print_summary() const {

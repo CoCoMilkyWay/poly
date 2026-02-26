@@ -1,5 +1,5 @@
 {
-  "proxy": "socks5://172.17.112.1:19999",
+  "proxy": "socks5://127.0.0.1:10808",
   "db_path_stage1": "data/stage1/polymarket.duckdb",
   "db_path_stage2": "data/stage2/users.duckdb",
   "frontend_port": 8000,

@@ -3,12 +3,12 @@
 #include "../core/ctf_helpers.hpp"
 #include "../core/database.hpp"
 #include "../core/keccak256.hpp"
+#include "stage2_assert.hpp"
 #include "stage2_models.hpp"
 #include "stage2_types.hpp"
 #include "stage2_utils.hpp"
 #include <cassert>
 #include <functional>
-#include <iostream>
 #include <limits>
 #include <nlohmann/json.hpp>
 #include <unordered_map>
@@ -112,27 +112,36 @@ private:
   uint32_t intern_condition(const std::string &cond_id, uint8_t outcome_cnt,
                             ConditionSource source = ConditionSource::ConditionPrep,
                             const std::string &question_id = "") {
+    assert_transfer(outcome_cnt > 0 && outcome_cnt <= MAX_OUTCOMES,
+                    AssertLevel::L1, "Mapping", "OutcomeCountRange");
     std::string lower = to_lower(cond_id);
     auto it = cond_map_.find(lower);
     if (it != cond_map_.end()) {
+      uint32_t idx = it->second;
+      bool changed = false;
+      if (conditions_[idx].outcome_count < outcome_cnt) {
+        conditions_[idx].outcome_count = outcome_cnt;
+        changed = true;
+      }
       // 更新question_id（如果之前没有）
-      if (!question_id.empty() && conditions_[it->second].question_id.empty()) {
-        conditions_[it->second].question_id = question_id;
-        // 确保更新被持久化
+      if (!question_id.empty() && conditions_[idx].question_id.empty()) {
+        conditions_[idx].question_id = question_id;
+        changed = true;
+      }
+      if (changed) {
         bool found = false;
         for (auto &nc : new_conditions_) {
-          if (nc.idx == it->second) {
-            nc.info.question_id = question_id;
+          if (nc.idx == idx) {
+            nc.info = conditions_[idx];
             found = true;
             break;
           }
         }
         if (!found) {
-          // 条件在之前 chunk 创建，需要添加到 new_conditions_ 以持久化更新
-          new_conditions_.push_back({it->second, cond_ids_[it->second], conditions_[it->second]});
+          new_conditions_.push_back({idx, cond_ids_[idx], conditions_[idx]});
         }
       }
-      return it->second;
+      return idx;
     }
 
     uint32_t idx = static_cast<uint32_t>(conditions_.size());
@@ -168,7 +177,8 @@ private:
     if (it != token_map_.end()) {
       // 已存在：不应该出现 TransferInferred 后又从其他来源发现的情况
       // 因为事件按时间顺序处理，FPMM/Split 等事件应该先于 Transfer
-      assert(!(it->second.source == TokenSource::TransferInferred && source != TokenSource::TransferInferred));
+      assert_transfer(!(it->second.source == TokenSource::TransferInferred && source != TokenSource::TransferInferred),
+                      AssertLevel::L1, "Mapping", "TransferInferredNotOverwritten");
       return;
     }
     token_map_[lower] = {cond_idx, token_idx, source};
@@ -182,7 +192,7 @@ private:
     if (it != collateral_addr_to_id_.end()) {
       return it->second;
     }
-    assert(next_collateral_id_ != 0);
+    assert_transfer(next_collateral_id_ != 0, AssertLevel::L1, "Mapping", "CollateralIdNotOverflow");
     uint8_t coll_id = next_collateral_id_++;
     collateral_addr_to_id_[lower] = coll_id;
     collateral_id_to_addr_[coll_id] = lower;
@@ -213,13 +223,12 @@ private:
                                uint32_t cond_idx, TokenSource source) {
     auto cond_bytes = hex_to_blob(lower_cid);
     auto collateral_bytes = hex_to_blob(collateral_hex);
-    uint8_t outcome_count = 2;
-    if (cond_idx < conditions_.size()) {
-      outcome_count = conditions_[cond_idx].outcome_count;
-    }
-    assert(outcome_count > 0 && outcome_count <= MAX_OUTCOMES);
+    assert_transfer(cond_idx < conditions_.size(), AssertLevel::L1, "Mapping", "CondIdxInRangeForTokenIntern");
+    uint8_t outcome_count = conditions_[cond_idx].outcome_count;
+    assert_transfer(outcome_count > 0 && outcome_count <= MAX_OUTCOMES,
+                    AssertLevel::L1, "Mapping", "OutcomeCountRangeForTokenIntern");
     for (uint8_t outcome = 0; outcome < outcome_count; ++outcome) {
-      assert(outcome < 31);
+      assert_transfer(outcome < 31, AssertLevel::L1, "Mapping", "OutcomeBitWidthLt31");
       int index_set = (1 << outcome);
       auto collection_id = ctf::get_collection_id(cond_bytes, index_set);
       auto position_hash = ctf::get_position_id(collateral_bytes, collection_id);
@@ -231,7 +240,7 @@ private:
   void intern_fpmm_tokens(const std::vector<std::string> &condition_ids,
                           const std::string &collateral_hex,
                           uint32_t primary_cond_idx) {
-    assert(!condition_ids.empty());
+    assert_transfer(!condition_ids.empty(), AssertLevel::L1, "Mapping", "FPMMConditionIdsNonEmpty");
     auto collateral_bytes = hex_to_blob(collateral_hex);
 
     std::vector<std::string> cond_bytes;
@@ -241,10 +250,11 @@ private:
     for (const auto &cid : condition_ids) {
       std::string lower = to_lower(cid);
       auto it = cond_map_.find(lower);
-      assert(it != cond_map_.end());
+      assert_transfer(it != cond_map_.end(), AssertLevel::L1, "Mapping", "FPMMCondKnown");
       cond_bytes.push_back(hex_to_blob(lower));
       outcome_counts.push_back(conditions_[it->second].outcome_count);
-      assert(outcome_counts.back() > 0 && outcome_counts.back() <= MAX_OUTCOMES);
+      assert_transfer(outcome_counts.back() > 0 && outcome_counts.back() <= MAX_OUTCOMES,
+                      AssertLevel::L1, "Mapping", "FPMMOutcomeCountRange");
     }
 
     // 必须与 FPMMFactory._recordCollectionIDsForAllConditions 一致：
@@ -254,7 +264,9 @@ private:
           if (cond_pos < 0) {
             auto position_hash = ctf::get_position_id(collateral_bytes, parent_collection_id);
             std::string token_id = crypto::Keccak256::to_hex(position_hash);
-            assert(first_condition_outcome >= 0 && first_condition_outcome <= std::numeric_limits<uint8_t>::max());
+            assert_transfer(first_condition_outcome >= 0 &&
+                                first_condition_outcome <= std::numeric_limits<uint8_t>::max(),
+                            AssertLevel::L1, "Mapping", "FPMMFirstOutcomeFitsU8");
             uint8_t token_idx = static_cast<uint8_t>(first_condition_outcome);
             intern_token(token_id, primary_cond_idx, token_idx, TokenSource::PolymarketFPMM);
             return;
@@ -262,7 +274,7 @@ private:
 
           uint8_t outcome_cnt = outcome_counts[cond_pos];
           for (uint8_t outcome = 0; outcome < outcome_cnt; ++outcome) {
-            assert(outcome < 31);
+            assert_transfer(outcome < 31, AssertLevel::L1, "Mapping", "FPMMOutcomeBitWidthLt31");
             uint32_t index_set = (1u << outcome);
             std::string child_collection_id = ctf::get_collection_id(parent_collection_id, cond_bytes[cond_pos], index_set);
             int next_first = (cond_pos == 0) ? static_cast<int>(outcome) : first_condition_outcome;
@@ -326,13 +338,17 @@ private:
       }
     }
     // 恒等式验证
-    assert(ct.total == ct.polymarket.total + ct.other.total);
-    assert(ct.polymarket.total == ct.polymarket.token_reg.total + ct.polymarket.fpmm_poly);
-    assert(ct.polymarket.token_reg.total ==
-           ct.polymarket.token_reg.amm + ct.polymarket.token_reg.negrisk +
-               ct.polymarket.token_reg.orderbook + ct.polymarket.token_reg.other);
-    assert(ct.other.total == ct.other.prep + ct.other.fpmm_other + ct.other.split +
-                                 ct.other.merge + ct.other.redemption);
+    assert_transfer(ct.total == ct.polymarket.total + ct.other.total,
+                    AssertLevel::L5, "Partition", "ConditionTreeTotal");
+    assert_transfer(ct.polymarket.total == ct.polymarket.token_reg.total + ct.polymarket.fpmm_poly,
+                    AssertLevel::L5, "Partition", "ConditionTreePolymarketTotal");
+    assert_transfer(ct.polymarket.token_reg.total ==
+                        ct.polymarket.token_reg.amm + ct.polymarket.token_reg.negrisk +
+                            ct.polymarket.token_reg.orderbook + ct.polymarket.token_reg.other,
+                    AssertLevel::L5, "Partition", "ConditionTreeTokenRegTotal");
+    assert_transfer(ct.other.total == ct.other.prep + ct.other.fpmm_other + ct.other.split +
+                                          ct.other.merge + ct.other.redemption,
+                    AssertLevel::L5, "Partition", "ConditionTreeOtherTotal");
     progress_.cond_tree = ct;
 
     // 代币树状partition: total = polymarket + other
@@ -393,19 +409,24 @@ private:
       }
     }
     // 恒等式验证
-    assert(tt.total == tt.polymarket.total + tt.other.total);
-    assert(tt.polymarket.total == tt.polymarket.token_reg.total + tt.polymarket.fpmm_poly.total);
-    assert(tt.polymarket.token_reg.total ==
-           tt.polymarket.token_reg.amm + tt.polymarket.token_reg.negrisk +
-               tt.polymarket.token_reg.orderbook + tt.polymarket.token_reg.other);
+    assert_transfer(tt.total == tt.polymarket.total + tt.other.total,
+                    AssertLevel::L5, "Partition", "TokenTreeTotal");
+    assert_transfer(tt.polymarket.total == tt.polymarket.token_reg.total + tt.polymarket.fpmm_poly.total,
+                    AssertLevel::L5, "Partition", "TokenTreePolymarketTotal");
+    assert_transfer(tt.polymarket.token_reg.total ==
+                        tt.polymarket.token_reg.amm + tt.polymarket.token_reg.negrisk +
+                            tt.polymarket.token_reg.orderbook + tt.polymarket.token_reg.other,
+                    AssertLevel::L5, "Partition", "TokenTreeTokenRegTotal");
     {
       int64_t sum = 0;
       for (const auto &[k, v] : tt.polymarket.fpmm_poly.by_collateral)
         sum += v;
-      assert(tt.polymarket.fpmm_poly.total == sum);
+      assert_transfer(tt.polymarket.fpmm_poly.total == sum,
+                      AssertLevel::L5, "Partition", "TokenTreeFPMMByCollateralTotal");
     }
-    assert(tt.other.total == tt.other.fpmm_other + tt.other.split + tt.other.merge +
-                                 tt.other.redemption + tt.other.transfer_inferred);
+    assert_transfer(tt.other.total == tt.other.fpmm_other + tt.other.split + tt.other.merge +
+                                          tt.other.redemption + tt.other.transfer_inferred,
+                    AssertLevel::L5, "Partition", "TokenTreeOtherTotal");
     progress_.token_tree = tt;
   }
 
@@ -464,7 +485,7 @@ private:
       progress_.cnt_transfer++;
       break;
     default:
-      assert(false);
+      fail_transfer_assert(build_assert_message(AssertLevel::L0, "Input", "UnknownEventTypeInCounter"));
       break;
     }
   }
@@ -474,18 +495,19 @@ private:
   void phase3_process_transfers(int64_t start, int64_t end);
   void commit_chunk(int64_t new_cursor);
 
-  [[noreturn]] void fail_transfer_assert(const char *msg) const {
-    std::cerr << "[Stage2][ASSERT] " << msg << std::endl;
+  [[noreturn]] void fail_transfer_assert(const std::string &msg) const {
+    stage2_log_assert(msg);
     if (!current_transfer_context_.empty()) {
-      std::cerr << "[Stage2][ASSERT] current transfer: " << current_transfer_context_ << std::endl;
+      stage2_log_assert(std::string("current transfer: ") + current_transfer_context_);
     }
     assert(false && "stage2 transfer assertion");
     std::abort();
   }
 
-  void assert_transfer(bool cond, const char *msg) const {
+  void assert_transfer(bool cond, AssertLevel level, const char *domain,
+                       const char *rule, const char *detail = nullptr) const {
     if (!cond) {
-      fail_transfer_assert(msg);
+      fail_transfer_assert(build_assert_message(level, domain, rule, detail));
     }
   }
 
