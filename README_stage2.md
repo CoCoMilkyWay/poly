@@ -226,8 +226,8 @@ phase3_process_transfers(chunk)
 │  │  └─ 唯一命中 -> 记录 op_id + leg_type 并更新 op_consumed
 │  ├─ Pass B: 分类与事件产出
 │  │  ├─ 已绑定 transfer: 由 op_type + leg_type 驱动分类（不靠单条 transfer 猜语义）
-│  │  │  ├─ split: 支持 parent burn + child mint 多腿消费
-│  │  │  ├─ merge: 支持多条 burn + parent mint（若存在）
+│  │  │  ├─ split: 支持 parent burn + child mint 多腿消费；含 0->FPMM 内部 mint 腿先消费 split 再落 InternalMintFPMM
+│  │  │  ├─ merge: 支持多条 burn + parent mint（若存在）；含 FPMM->0 内部 burn 腿先消费 merge 再落 InternalBurnFPMM
 │  │  │  ├─ redemption: 支持 index_sets 对应的多条 burn
 │  │  │  └─ convert: 保持 InternalBurnConvert + Convert + (YES侧 SplitNegRisk/TransferInNegRisk) 三段路径
 │  │  ├─ 未绑定 transfer: fallback 到 TransferIn*/TransferOut*/Internal*

@@ -375,6 +375,8 @@ TransferClass EventBuilder::classify_and_emit(
       return TransferClass::RedemptionNonPoly;
     }
 
+    SplitInfo *split_match = find_split_info(to, amount);
+
     auto fpmm_mint_it = fpmm_map_.find(to);
     if (fpmm_mint_it != fpmm_map_.end()) {
       TxFPMMKey tx_fpmm_key{block, tx_hash, to};
@@ -394,14 +396,18 @@ TransferClass EventBuilder::classify_and_emit(
         }
         return TransferClass::InternalMintFPMM;
       }
+      // 0x0 -> FPMM 也可能是 split 的内部 mint 腿，先消费 split 语义再走内部分类。
+      if (split_match != nullptr) {
+        split_match->consumed_count++;
+      }
       bool explained = mark_fpmm_trade_explained(tx_fpmm_key, 1);
       stage2_assert(explained || !tx_fpmm_trade_.count(tx_fpmm_key),
                       AssertLevel::L3, "FPMMTrade", "BuyExplainableOnInternalMint");
       return TransferClass::InternalMintFPMM;
     }
 
-    if (SplitInfo *sit = find_split_info(to, amount); sit != nullptr) {
-      sit->consumed_count++;
+    if (split_match != nullptr) {
+      split_match->consumed_count++;
       if (known_token) {
         emit_if_user(to, RawEvent{sort_key, cond_idx, EventType::SplitNormal, token_idx, coll, 0, amount, split_price});
         return TransferClass::SplitNormal;
@@ -439,17 +445,23 @@ TransferClass EventBuilder::classify_and_emit(
     if (from == NEG_RISK_ADAPTER)
       return TransferClass::InternalBurnNegRisk;
 
+    MergeInfo *merge_match = find_merge_info(from, amount);
+
     auto fpmm_burn_it = fpmm_map_.find(from);
     if (fpmm_burn_it != fpmm_map_.end()) {
       TxFPMMKey tx_fpmm_key{block, tx_hash, from};
+      // FPMM -> 0x0 也可能是 merge 的内部 burn 腿，先消费 merge 语义再走内部分类。
+      if (merge_match != nullptr) {
+        merge_match->consumed_count++;
+      }
       bool explained = mark_fpmm_trade_explained(tx_fpmm_key, 2);
       stage2_assert(explained || !tx_fpmm_trade_.count(tx_fpmm_key),
                       AssertLevel::L3, "FPMMTrade", "SellExplainableOnInternalBurn");
       return TransferClass::InternalBurnFPMM;
     }
 
-    if (MergeInfo *mit = find_merge_info(from, amount); mit != nullptr) {
-      mit->consumed_count++;
+    if (merge_match != nullptr) {
+      merge_match->consumed_count++;
       if (known_token) {
         emit_if_user(from, RawEvent{sort_key, cond_idx, EventType::MergeNormal, token_idx, coll, 0, -amount, split_price});
         return TransferClass::MergeNormal;
