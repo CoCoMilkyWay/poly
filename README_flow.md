@@ -180,18 +180,127 @@ price:      i64   price * 1e6, 非USDC时为0
 | `tx_fpmm_funding_idx[tx_fpmm_key:{block, tx_hash, fpmm_addr}] -> [{fpmm_addr, funder, side, amount0, amount1, amounts_count}]` | `fpmm_funding`   |
 
 ## Phase 3: Transfer 分类 (classify_and_emit)
-TransferClass 完整分类 (33类)
+### 1. 超密集详细流程（树状）
 ```
-Split(3):        SplitNormal, SplitNegRisk, SplitNonPoly
-Merge(3):        MergeNormal, MergeNegRisk, MergeNonPoly
-Redemption(2):   Redemption, RedemptionNonPoly
-Poly专属(8):     Convert, OrderBuy, OrderSell, FPMMBuy, FPMMSell, FPMMLPAdd, FPMMLPRemove, FPMMLPReturn
-Transfer(6):     TransferIn{NegRisk,Other,NonPoly}, TransferOut{NegRisk,Other,NonPoly}
-InternalMint(2): InternalMintNegRisk, InternalMintFPMM
-InternalBurn(3): InternalBurnNegRisk, InternalBurnFPMM, InternalBurnConvert
-InternalXfer(5): InternalTransferZero, InternalTransferOrder, InternalTransferNegRisk, InternalTransferFPMM, InternalTransferOther
-Error(1):        Unclassified (必须=0, assert验证)
+phase3_process_transfers(chunk)
+├─ 输入(只读)
+│  ├─ transfer流: TransferSingle/Batch (按 block_number, log_index)
+│  ├─ phase1映射: cond_idx_map/cond_info_map/token_info_map/fpmm_info_map/coll_map/pm_cond_set/nr_cond_set
+│  └─ phase2索引: tx_split_idx/tx_merge_idx/tx_redemption_idx/tx_convert_idx/tx_order_idx/tx_fpmm_trade_idx/tx_fpmm_funding_idx
+├─ 预处理
+│  ├─ expand_transfer_units
+│  │  ├─ single -> 1个TransferUnit
+│  │  └─ batch  -> N个TransferUnit (保持链上顺序)
+│  └─ build_tx_match_state
+│     └─ 每个tx建立候选池 + consumed位(候选只能消费1次)
+├─ 主循环 for unit in units(by sort_key)
+│  ├─ 计数: n_total++
+│  ├─ enrich_ctx(unit)
+│  │  ├─ token_info_map[token_id] -> cond_idx/is_yes/source; miss => known_cond=false
+│  │  ├─ cond/token树约束 -> is_poly/is_nr/known_cond
+│  │  ├─ coll_map[cond_idx] -> coll; miss => UnknownCollateral
+│  │  └─ 地址角色 -> from/to: is_user/is_proto/is_adapter/is_fpmm
+│  ├─ semantic_match(unit, tx_state) [首命中即停]
+│  │  ├─ P1: m(split)|m(merge)|m(redeem)
+│  │  ├─ P2: m(convert)
+│  │  ├─ P3: m(order)
+│  │  ├─ P4: m(trade)
+│  │  └─ P5: m(lp_add)|m(lp_refund)|m(lp_remove)
+│  ├─ 命中候选 => 标记consumed=true
+│  ├─ classify_decision_tree(unit, ctx, hit) [必须唯一落类]
+│  │  ├─ amount==0 -> InternalTransferZero
+│  │  ├─ 命中语义 -> 对应33类之一
+│  │  ├─ 未命中且用户参与 -> TransferIn*/TransferOut*
+│  │  ├─ 未命中且无用户参与 -> InternalMint*/InternalBurn*/InternalTransfer*
+│  │  └─ 未落类 -> Unclassified -> assert(false)
+│  ├─ 用户类?
+│  │  ├─ yes: emit_raw_event
+│  │  │  ├─ amount按用户视角定符号(流入+,流出-)
+│  │  │  └─ price仅Order/FPMM可定价场景写入, 其他=0
+│  │  └─ no: 仅记内部计数
+│  └─ update_xfer_tree
+│     ├─ 固定节点 +1
+│     └─ 动态节点by_collateral_* +1
+├─ 收尾校验
+│  ├─ n_unclass = n_total - n_user - n_internal
+│  ├─ assert(n_total == n_user + n_internal + n_unclass)
+│  ├─ assert(n_unclass == 0)
+│  ├─ assert(candidate消费不越界且不重复)
+│  └─ assert(Poly类=>is_poly, NegRisk类=>is_nr, NonPoly类=>!is_poly或!known_cond)
+└─ 输出
+   ├─ user_events(RawEvent序列, 仅用户类)
+   └─ s2-xfer-tree计数增量
 ```
 
-`verify()`: `total == user_events + internal + unclassified`, `unclassified == 0`
+### 2. 事件类型
+```
+输入事件
+├─ Transfer原始事件
+│  ├─ TransferSingle
+│  └─ TransferBatch
+└─ 语义事件(由Phase2索引提供匹配能力)
+   ├─ PositionSplit      -> m(split)
+   ├─ PositionsMerge     -> m(merge)
+   ├─ PayoutRedemption   -> m(redeem)
+   ├─ PositionsConverted -> m(convert)
+   ├─ OrderFilled        -> m(order)
+   ├─ FPMMBuy/FPMMSell   -> m(trade)
+   └─ FPMMFunding*       -> m(lp_add/lp_refund/lp_remove)
+
+TransferClass输出事件(33类, 唯一落类)
+├─ 用户操作(22类)
+│  ├─ Split(3):        SplitNormal, SplitNegRisk, SplitNonPoly
+│  ├─ Merge(3):        MergeNormal, MergeNegRisk, MergeNonPoly
+│  ├─ Redemption(2):   Redemption, RedemptionNonPoly
+│  ├─ Poly专属(8):     Convert, OrderBuy, OrderSell, FPMMBuy, FPMMSell, FPMMLPAdd, FPMMLPRemove, FPMMLPReturn
+│  └─ Transfer(6):     TransferIn{NegRisk,Other,NonPoly}, TransferOut{NegRisk,Other,NonPoly}
+├─ 内部操作(10类)
+│  ├─ InternalMint(2): InternalMintNegRisk, InternalMintFPMM
+│  ├─ InternalBurn(3): InternalBurnNegRisk, InternalBurnFPMM, InternalBurnConvert
+│  └─ InternalXfer(5): InternalTransferZero, InternalTransferOrder, InternalTransferNegRisk, InternalTransferFPMM, InternalTransferOther
+└─ 错误(1类)
+   └─ Unclassified (必须=0, assert)
+
+RawEvent.type
+└─ 仅用户操作22类进入RawEvent; 内部10类不产出RawEvent(仅计数)
+```
+
+### 3. 中间/输出的数据结构
+```
+Phase3中间结构 (chunk内存)
+├─ TransferUnit
+│  └─ {tx_key{block,tx_hash}, sort_key, operator, from, to, token_id, amount}
+├─ TransferCtx
+│  └─ {cond_idx, token_idx(YES/NO), coll, known_cond, is_poly, is_nr, from_is_user, to_is_user, from_is_proto, to_is_proto, from_is_adapter, to_is_adapter, from_is_fpmm, to_is_fpmm}
+├─ TxMatchState
+│  ├─ split_cands[]      {amount, stakeholder, cond_id, consumed}
+│  ├─ merge_cands[]      {amount, stakeholder, cond_id, consumed}
+│  ├─ redeem_cands[]     {payout, redeemer, cond_id, consumed}
+│  ├─ convert_cands[]    {market_id, index_set, amount, stakeholder, consumed}
+│  ├─ order_cands[]      {token_id, maker, taker, maker_side, usdc, tokens, fee, consumed}
+│  ├─ fpmm_trade_cands[] {fpmm_addr, trader, side, outcome_idx, usdc, tokens, consumed}
+│  └─ fpmm_lp_cands[]    {fpmm_addr, funder, side, amount0, amount1, amounts_count, consumed}
+├─ MatchHit
+│  └─ {matched:bool, match_type, candidate_ref, side_opt, stakeholder_opt, price_opt}
+├─ Phase3Counters
+│  └─ {n_total, n_user, n_internal, n_unclass}
+└─ XferTreeAcc
+   └─ {fixed_nodes[33], by_collateral_split, by_collateral_merge, by_collateral_redemption, by_collateral_fpmm_trade, by_collateral_fpmm_lp}
+
+Phase3输出结构
+├─ user_event (持久化)
+│  └─ RawEvent(32B)
+│     ├─ sort_key:   i64   = block_number * 1e9 + log_index
+│     ├─ cond_idx:   u32
+│     ├─ type:       u8    (22个用户类之一)
+│     ├─ token_idx:  u8    (0=YES, 1=NO)
+│     ├─ collateral: u8
+│     ├─ _pad:       u8
+│     ├─ amount:     i64   (raw units, 1e6=$1, 用户流入+,流出-)
+│     └─ price:      i64   (price*1e6, 非可定价场景=0)
+└─ xfer_tree_delta (提交时并入s2-xfer-tree)
+   ├─ user_events_total/internal_total/unclassified_total
+   ├─ 33类固定节点增量
+   └─ by_collateral_*动态节点增量
+```
 

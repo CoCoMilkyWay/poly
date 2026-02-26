@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import os
 import subprocess
-import webbrowser
 import time
 import sys
 import socket
@@ -21,10 +20,27 @@ BACKEND_PORT = 8001
 FRONTEND_PORT = 8000
 BACKEND_STARTUP_TIMEOUT = 120
 FRONTEND_STARTUP_TIMEOUT = 30
+GRACEFUL_SHUTDOWN_TIMEOUT = 30
 
 # Build modes (set ONLY ONE to True)
 ENABLE_PROFILE = True
 ENABLE_PRODUCTION = False
+
+LINUX_REQUIRED_TOOLS = [
+    "cmake",
+    "clang",
+    "clang++",
+    "ninja",
+]
+
+LINUX_REQUIRED_PACKAGES = [
+    "build-essential",
+    "libssl-dev",
+    "libprotobuf-dev",
+    "protobuf-compiler",
+    "libarrow-dev",
+    "ninja-build",
+]
 
 
 def find_tracy_profiler() -> Optional[Path]:
@@ -78,44 +94,47 @@ def port_in_use(port: int) -> bool:
         return s.connect_ex(("127.0.0.1", port)) == 0
 
 
+def dpkg_package_installed(pkg: str) -> bool:
+    result = subprocess.run(
+        ["dpkg-query", "-W", "-f=${Status}", pkg],
+        capture_output=True,
+        text=True,
+    )
+    return result.returncode == 0 and "install ok installed" in result.stdout
+
+
+def assert_linux_dependencies():
+    if sys.platform != "linux":
+        return
+
+    missing_tools = any(shutil.which(t) is None for t in LINUX_REQUIRED_TOOLS)
+    missing_packages = any(not dpkg_package_installed(p) for p in LINUX_REQUIRED_PACKAGES)
+    assert not (missing_tools or missing_packages), (
+        "[run.py] Linux 依赖未安装完整\n"
+        "sudo apt update && sudo apt install -y "
+        + " ".join(LINUX_REQUIRED_PACKAGES)
+    )
+
+
 def build_backend():
     print("[run.py] 编译 C++ backend...")
     BACKEND_BUILD.mkdir(parents=True, exist_ok=True)
 
-    cmake_lists = BACKEND_DIR / "projects" / "core" / "CMakeLists.txt"
-    cmake_cache = BACKEND_BUILD / "CMakeCache.txt"
-    expected_profile = "ON" if ENABLE_PROFILE else "OFF"
-    cached_profile = None
-    if cmake_cache.exists():
-        for line in cmake_cache.read_text().splitlines():
-            if line.startswith("PROFILE_MODE:BOOL="):
-                cached_profile = line.split("=", 1)[1].strip()
-                break
-
-    need_configure = (
-        (not cmake_cache.exists())
-        or (cmake_lists.stat().st_mtime > cmake_cache.stat().st_mtime)
-        or (cached_profile != expected_profile)
-    )
-
-    if need_configure:
-        cmake_args = [
-            "cmake", "..",
-            "-DCMAKE_C_COMPILER=clang",
-            "-DCMAKE_CXX_COMPILER=clang++",
-            f"-DPROFILE_MODE={'ON' if ENABLE_PROFILE else 'OFF'}",
+    cmake_args = [
+        "cmake", "..",
+        "-G", "Ninja",
+        "-DCMAKE_C_COMPILER=clang",
+        "-DCMAKE_CXX_COMPILER=clang++",
+        f"-DPROFILE_MODE={'ON' if ENABLE_PROFILE else 'OFF'}",
+    ]
+    ccache_bin = shutil.which("ccache")
+    if ccache_bin:
+        cmake_args += [
+            f"-DCMAKE_C_COMPILER_LAUNCHER={ccache_bin}",
+            f"-DCMAKE_CXX_COMPILER_LAUNCHER={ccache_bin}",
         ]
-        ccache_bin = shutil.which("ccache")
-        if ccache_bin:
-            cmake_args += [
-                f"-DCMAKE_C_COMPILER_LAUNCHER={ccache_bin}",
-                f"-DCMAKE_CXX_COMPILER_LAUNCHER={ccache_bin}",
-            ]
-
-        result = subprocess.run(cmake_args, cwd=BACKEND_BUILD)
-        assert result.returncode == 0, "cmake 配置失败"
-    else:
-        print("[run.py] 跳过 cmake 配置 (缓存有效)")
+    result = subprocess.run(cmake_args, cwd=BACKEND_BUILD)
+    assert result.returncode == 0, "cmake 配置失败"
 
     result = subprocess.run(
         ["cmake", "--build", ".", "--config", "Release", "--parallel"],
@@ -141,6 +160,7 @@ def wait_for_port(port: int, timeout: int = 10, proc: Optional[subprocess.Popen]
 
 def main():
     assert CONFIG_FILE.exists(), f"配置文件 {CONFIG_FILE} 不存在"
+    assert_linux_dependencies()
     assert not port_in_use(BACKEND_PORT), f"端口 {BACKEND_PORT} 已被占用"
     assert not port_in_use(FRONTEND_PORT), f"端口 {FRONTEND_PORT} 已被占用"
 
@@ -187,8 +207,15 @@ def main():
         for proc in procs:
             if proc.poll() is None:
                 proc.terminate()
+        deadline = time.time() + GRACEFUL_SHUTDOWN_TIMEOUT
+        while time.time() < deadline and any(p.poll() is None for p in procs):
+            time.sleep(0.2)
         for proc in procs:
-            proc.wait()  # 等待进程结束，不设置timeout
+            if proc.poll() is None:
+                proc.kill()
+        for proc in procs:
+            if proc.poll() is None:
+                proc.wait()
         print("[run.py] 已退出")
 
 
