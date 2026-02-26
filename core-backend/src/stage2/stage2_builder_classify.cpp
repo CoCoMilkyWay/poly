@@ -103,15 +103,20 @@ TransferClass EventBuilder::classify_and_emit(
     auto it = tx_split_.find(tx_key);
     if (it == tx_split_.end())
       return nullptr;
+    SplitInfo *matched = nullptr;
+    int match_count = 0;
     for (auto &info : it->second) {
       if (!semantic_log_matches(info.log_index))
         continue;
       if (!collateral_matches(info.collateral_token))
         continue;
-      if (info.stakeholder == stakeholder && info.amount == amt && cond_matches(info.cond_id))
-        return &info;
+      if (info.stakeholder == stakeholder && info.amount == amt && cond_matches(info.cond_id)) {
+        matched = &info;
+        match_count++;
+      }
     }
-    return nullptr;
+    assert_transfer(match_count <= 1, "Ambiguous split semantic candidates");
+    return matched;
   };
   auto find_merge_info = [&](const std::string &stakeholder, int64_t amt) -> MergeInfo * {
     if (!has_semantic(SemanticKind::Merge))
@@ -119,15 +124,20 @@ TransferClass EventBuilder::classify_and_emit(
     auto it = tx_merge_.find(tx_key);
     if (it == tx_merge_.end())
       return nullptr;
+    MergeInfo *matched = nullptr;
+    int match_count = 0;
     for (auto &info : it->second) {
       if (!semantic_log_matches(info.log_index))
         continue;
       if (!collateral_matches(info.collateral_token))
         continue;
-      if (info.stakeholder == stakeholder && info.amount == amt && cond_matches(info.cond_id))
-        return &info;
+      if (info.stakeholder == stakeholder && info.amount == amt && cond_matches(info.cond_id)) {
+        matched = &info;
+        match_count++;
+      }
     }
-    return nullptr;
+    assert_transfer(match_count <= 1, "Ambiguous merge semantic candidates");
+    return matched;
   };
   auto find_redemption_info = [&](const std::string &redeemer) -> RedemptionInfo * {
     if (!has_semantic(SemanticKind::Redemption))
@@ -135,15 +145,20 @@ TransferClass EventBuilder::classify_and_emit(
     auto it = tx_redemption_.find(tx_key);
     if (it == tx_redemption_.end())
       return nullptr;
+    RedemptionInfo *matched = nullptr;
+    int match_count = 0;
     for (auto &info : it->second) {
       if (!semantic_log_matches(info.log_index))
         continue;
       if (!collateral_matches(info.collateral_token))
         continue;
-      if (info.redeemer == redeemer && cond_matches(info.cond_id))
-        return &info;
+      if (info.redeemer == redeemer && cond_matches(info.cond_id)) {
+        matched = &info;
+        match_count++;
+      }
     }
-    return nullptr;
+    assert_transfer(match_count <= 1, "Ambiguous redemption semantic candidates");
+    return matched;
   };
   auto find_fpmm_trade_info = [&](const TxFPMMKey &key, int side, int64_t token_amount) -> FPMMTradeInfo * {
     if (!has_semantic(SemanticKind::FPMMTrade))
@@ -151,15 +166,20 @@ TransferClass EventBuilder::classify_and_emit(
     auto it = tx_fpmm_trade_.find(key);
     if (it == tx_fpmm_trade_.end())
       return nullptr;
+    FPMMTradeInfo *matched = nullptr;
+    int match_count = 0;
     for (auto &info : it->second) {
       if (info.consumed)
         continue;
       if (!semantic_log_matches(info.log_index))
         continue;
-      if (info.side == side && info.tokens == token_amount)
-        return &info;
+      if (info.side == side && info.tokens == token_amount) {
+        matched = &info;
+        match_count++;
+      }
     }
-    return nullptr;
+    assert_transfer(match_count <= 1, "Ambiguous FPMM trade semantic candidates");
+    return matched;
   };
   auto find_fpmm_funding_info = [&](const TxFPMMKey &key, int64_t transfer_amount,
                                     bool expect_refund) -> FPMMFundingInfo * {
@@ -168,6 +188,8 @@ TransferClass EventBuilder::classify_and_emit(
     auto it = tx_fpmm_funding_.find(key);
     if (it == tx_fpmm_funding_.end())
       return nullptr;
+    FPMMFundingInfo *matched = nullptr;
+    int match_count = 0;
     for (auto &info : it->second) {
       if (!semantic_log_matches(info.log_index))
         continue;
@@ -176,10 +198,58 @@ TransferClass EventBuilder::classify_and_emit(
       int64_t expected_amount = expect_refund
                                     ? std::abs(info.amount0 - info.amount1)
                                     : std::max(info.amount0, info.amount1);
-      if (expected_amount == transfer_amount)
-        return &info;
+      if (expected_amount == transfer_amount) {
+        matched = &info;
+        match_count++;
+      }
     }
-    return nullptr;
+    assert_transfer(match_count <= 1, "Ambiguous FPMM funding semantic candidates");
+    return matched;
+  };
+  auto find_fpmm_remove_info = [&](const TxFPMMKey &key, const std::string &funder,
+                                   int64_t transfer_amount) -> FPMMFundingInfo * {
+    if (!has_semantic(SemanticKind::FPMMFunding))
+      return nullptr;
+    auto it = tx_fpmm_funding_.find(key);
+    if (it == tx_fpmm_funding_.end())
+      return nullptr;
+    FPMMFundingInfo *matched = nullptr;
+    int match_count = 0;
+    for (auto &info : it->second) {
+      if (!semantic_log_matches(info.log_index))
+        continue;
+      if (info.side != 2)
+        continue;
+      if (info.funder != funder)
+        continue;
+      bool amount_match = (transfer_amount == info.amount0) ||
+                          (transfer_amount == info.amount1) ||
+                          (info.amounts_count == 1 && transfer_amount == info.amount0);
+      if (amount_match) {
+        matched = &info;
+        match_count++;
+      }
+    }
+    assert_transfer(match_count <= 1, "Ambiguous FPMM remove semantic candidates");
+    return matched;
+  };
+  auto consume_active_funding_semantic = [&](const TxFPMMKey &key) {
+    auto it = tx_fpmm_funding_.find(key);
+    if (it == tx_fpmm_funding_.end())
+      return false;
+    FPMMFundingInfo *matched = nullptr;
+    int match_count = 0;
+    for (auto &info : it->second) {
+      if (!semantic_log_matches(info.log_index))
+        continue;
+      matched = &info;
+      match_count++;
+    }
+    assert_transfer(match_count <= 1, "Ambiguous active FPMM funding semantic");
+    if (matched == nullptr)
+      return false;
+    matched->consumed_count++;
+    return true;
   };
   auto find_order_info = [&]() -> OrderInfo * {
     if (!has_semantic(SemanticKind::Order))
@@ -187,15 +257,20 @@ TransferClass EventBuilder::classify_and_emit(
     auto it = tx_order_.find(tx_token_key);
     if (it == tx_order_.end())
       return nullptr;
+    OrderInfo *matched = nullptr;
+    int match_count = 0;
     for (auto &info : it->second) {
       if (info.consumed)
         continue;
       if (!semantic_log_matches(info.log_index))
         continue;
-      if (info.tokens == amount)
-        return &info;
+      if (info.tokens == amount) {
+        matched = &info;
+        match_count++;
+      }
     }
-    return nullptr;
+    assert_transfer(match_count <= 1, "Ambiguous order semantic candidates");
+    return matched;
   };
 
   // ========== mint 分支 (from == 0x0) ==========
@@ -464,7 +539,7 @@ TransferClass EventBuilder::classify_and_emit(
         int64_t refund_idx = (fit->amount0 < fit->amount1) ? 0 : 1;
         if (token_idx == refund_idx) {
           fit->consumed_count++;
-          emit_if_user(to, RawEvent{sort_key, cond_idx, EventType::FPMMLPReturn, token_idx, coll, 0, -amount, split_price});
+          emit_if_user(to, RawEvent{sort_key, cond_idx, EventType::FPMMLPReturn, token_idx, coll, 0, amount, split_price});
           return TransferClass::FPMMLPReturn;
         }
         // 多 outcome / 组合 token 无法用二元 token_idx 映射，降级到后续通用分支
@@ -479,7 +554,16 @@ TransferClass EventBuilder::classify_and_emit(
         return TransferClass::FPMMBuy;
       }
 
+      FPMMFundingInfo *remove_info = find_fpmm_remove_info(tx_fpmm_key, to, amount);
+      if (remove_info != nullptr) {
+        remove_info->consumed_count++;
+        emit_if_user(to, RawEvent{sort_key, cond_idx, EventType::FPMMLPRemove, token_idx, coll, 0, amount, split_price});
+        return TransferClass::FPMMLPRemove;
+      }
+
       if (has_semantic(SemanticKind::FPMMFunding)) {
+        bool consumed = consume_active_funding_semantic(tx_fpmm_key);
+        assert_transfer(consumed, "FPMM funding semantic without matching funding row");
         emit_if_user(to, RawEvent{sort_key, cond_idx, EventType::FPMMLPRemove, token_idx, coll, 0, amount, split_price});
         return TransferClass::FPMMLPRemove;
       }

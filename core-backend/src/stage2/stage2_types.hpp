@@ -12,7 +12,6 @@ namespace stage2 {
 static constexpr int MAX_OUTCOMES = 8;
 static constexpr uint32_t UNKNOWN_COND_IDX = UINT32_MAX; // TransferInferred token 的特殊值
 static constexpr uint8_t UNKNOWN_TOKEN_IDX = 0xFF;       // TransferInferred token 的特殊值
-static constexpr uint8_t UNKNOWN_IS_YES = UNKNOWN_TOKEN_IDX;
 static constexpr int64_t SORT_KEY_SCALE = 1000000000LL;
 static constexpr int64_t TRANSFER_FLAT_LOG_SCALE = 10000;
 
@@ -79,7 +78,7 @@ struct ConditionInfo {
 
 struct TokenInfo {
   uint32_t cond_idx;
-  uint8_t is_yes;
+  uint8_t token_idx;
   TokenSource source = TokenSource::PolymarketTokenReg;
 };
 

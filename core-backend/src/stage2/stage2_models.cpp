@@ -78,9 +78,9 @@ void ChunkLog::write_header(size_t token_map_size, size_t fpmm_map_size, size_t 
                  "cond_map.size=" + std::to_string(cond_map_size) + "\n\n";
 }
 
-void ChunkLog::write_token_sample(const std::string &token_id, uint32_t cond_idx, bool is_yes) {
+void ChunkLog::write_token_sample(const std::string &token_id, uint32_t cond_idx, uint8_t token_idx) {
   token_sample_ = "[TOKEN_SAMPLE] len=" + std::to_string(token_id.size()) + " id=" + token_id +
-                  " cond_idx=" + std::to_string(cond_idx) + " is_yes=" + std::to_string(is_yes) + "\n";
+                  " cond_idx=" + std::to_string(cond_idx) + " token_idx=" + std::to_string(token_idx) + "\n";
 }
 
 void ChunkLog::set_xfer_stats(const std::string &stats_str) { xfer_stats_str_ = stats_str; }

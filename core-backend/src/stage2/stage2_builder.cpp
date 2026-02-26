@@ -252,7 +252,7 @@ void EventBuilder::load_from_rb() {
     TokenInfo info;
     int32_t db_cond_idx = token_r->GetValue(1, i).GetValue<int32_t>();
     info.cond_idx = (db_cond_idx == -1) ? UNKNOWN_COND_IDX : static_cast<uint32_t>(db_cond_idx);
-    info.is_yes = token_r->GetValue(2, i).GetValue<uint8_t>();
+    info.token_idx = token_r->GetValue(2, i).GetValue<uint8_t>();
     info.source = static_cast<TokenSource>(token_r->GetValue(3, i).GetValue<int>());
     token_map_[to_lower(tid)] = info;
   }
@@ -462,7 +462,7 @@ bool EventBuilder::build_chunk(int64_t target_block) {
   chunk_log_.write_header(token_map_.size(), fpmm_map_.size(), cond_map_.size());
   if (!token_map_.empty()) {
     auto it = token_map_.begin();
-    chunk_log_.write_token_sample(it->first, it->second.cond_idx, it->second.is_yes);
+    chunk_log_.write_token_sample(it->first, it->second.cond_idx, it->second.token_idx);
   }
 
   progress_.phase = 2;

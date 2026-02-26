@@ -131,8 +131,9 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
       std::string token1 = get_hex(tm, 1, i);
       std::string cid = get_hex(tm, 2, i);
       uint32_t cond_idx = intern_condition(cid, 2, ConditionSource::PolymarketTokenReg);
-      intern_token(token0, cond_idx, 1, TokenSource::PolymarketTokenReg);
-      intern_token(token1, cond_idx, 0, TokenSource::PolymarketTokenReg);
+      // TokenRegistered keeps a binary market ordering: token0 -> outcome 0, token1 -> outcome 1.
+      intern_token(token0, cond_idx, 0, TokenSource::PolymarketTokenReg);
+      intern_token(token1, cond_idx, 1, TokenSource::PolymarketTokenReg);
     }
   }
 
@@ -490,14 +491,14 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
 
     if (tit == token_map_.end()) {
       // 未知token：加入 token_map_，使用特殊值表示未知 condition
-      intern_token(token_id, UNKNOWN_COND_IDX, UNKNOWN_IS_YES, TokenSource::TransferInferred);
+      intern_token(token_id, UNKNOWN_COND_IDX, UNKNOWN_TOKEN_IDX, TokenSource::TransferInferred);
       tit = token_map_.find(token_id); // 重新获取迭代器
     }
 
     uint32_t cond_idx = tit->second.cond_idx;
     uint8_t token_idx = UNKNOWN_TOKEN_IDX;
-    if (tit->second.is_yes != UNKNOWN_IS_YES) {
-      token_idx = tit->second.is_yes ? 0 : 1;
+    if (tit->second.token_idx != UNKNOWN_TOKEN_IDX) {
+      token_idx = tit->second.token_idx;
     }
 
     // 获取抵押品类型
@@ -521,6 +522,28 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
 
     TransferClass cls = classify_and_emit(sort_key, tx_hash, block, op, from, to, token_id, amount, cond_idx, token_idx, collateral);
     chunk_xfer_stats_.add(cls);
+  }
+
+  // Semantic coverage assertions: every semantic op in this chunk must be consumed by at least one transfer leg.
+  for (const auto &[_, rows] : tx_order_) {
+    for (const auto &row : rows) {
+      assert_transfer(row.consumed, "Unconsumed order semantic op");
+    }
+  }
+  for (const auto &[_, rows] : tx_fpmm_trade_) {
+    for (const auto &row : rows) {
+      assert_transfer(row.consumed, "Unconsumed FPMM trade semantic op");
+    }
+  }
+  for (const auto &[_, rows] : tx_convert_) {
+    for (const auto &row : rows) {
+      assert_transfer(row.consumed_count > 0, "Unconsumed convert semantic op");
+    }
+  }
+  for (const auto &[_, rows] : tx_fpmm_funding_) {
+    for (const auto &row : rows) {
+      assert_transfer(row.consumed_count > 0, "Unconsumed FPMM funding semantic op");
+    }
   }
 }
 
@@ -596,7 +619,7 @@ void EventBuilder::commit_chunk(int64_t new_cursor) {
         ap.BeginRow();
         append_blob(ap, nt.token_id);
         ap.Append(db_cond_idx);
-        ap.Append(static_cast<int32_t>(nt.is_yes));
+        ap.Append(static_cast<int32_t>(nt.token_idx));
         ap.Append(static_cast<int32_t>(nt.source));
         ap.EndRow();
       }

@@ -9,6 +9,7 @@
 #include <cassert>
 #include <functional>
 #include <iostream>
+#include <limits>
 #include <nlohmann/json.hpp>
 #include <unordered_map>
 #include <unordered_set>
@@ -75,7 +76,7 @@ private:
   struct NewToken {
     std::string token_id;
     uint32_t cond_idx;
-    uint8_t is_yes;
+    uint8_t token_idx;
     TokenSource source;
   };
   struct NewFPMM {
@@ -161,7 +162,7 @@ private:
     }
   }
 
-  void intern_token(const std::string &token_id, uint32_t cond_idx, uint8_t is_yes, TokenSource source) {
+  void intern_token(const std::string &token_id, uint32_t cond_idx, uint8_t token_idx, TokenSource source) {
     std::string lower = to_lower(token_id);
     auto it = token_map_.find(lower);
     if (it != token_map_.end()) {
@@ -170,8 +171,8 @@ private:
       assert(!(it->second.source == TokenSource::TransferInferred && source != TokenSource::TransferInferred));
       return;
     }
-    token_map_[lower] = {cond_idx, is_yes, source};
-    new_tokens_.push_back({lower, cond_idx, is_yes, source});
+    token_map_[lower] = {cond_idx, token_idx, source};
+    new_tokens_.push_back({lower, cond_idx, token_idx, source});
     progress_.total_tokens = token_map_.size();
   }
 
@@ -212,11 +213,18 @@ private:
                                uint32_t cond_idx, TokenSource source) {
     auto cond_bytes = hex_to_blob(lower_cid);
     auto collateral_bytes = hex_to_blob(collateral_hex);
-    for (int index_set = 1; index_set <= 2; ++index_set) {
+    uint8_t outcome_count = 2;
+    if (cond_idx < conditions_.size()) {
+      outcome_count = conditions_[cond_idx].outcome_count;
+    }
+    assert(outcome_count > 0 && outcome_count <= MAX_OUTCOMES);
+    for (uint8_t outcome = 0; outcome < outcome_count; ++outcome) {
+      assert(outcome < 31);
+      int index_set = (1 << outcome);
       auto collection_id = ctf::get_collection_id(cond_bytes, index_set);
       auto position_hash = ctf::get_position_id(collateral_bytes, collection_id);
       std::string token_id = crypto::Keccak256::to_hex(position_hash);
-      intern_token(token_id, cond_idx, index_set == 1 ? 1 : 0, source);
+      intern_token(token_id, cond_idx, outcome, source);
     }
   }
 
@@ -246,8 +254,9 @@ private:
           if (cond_pos < 0) {
             auto position_hash = ctf::get_position_id(collateral_bytes, parent_collection_id);
             std::string token_id = crypto::Keccak256::to_hex(position_hash);
-            uint8_t is_yes = (first_condition_outcome == 0) ? 1 : 0;
-            intern_token(token_id, primary_cond_idx, is_yes, TokenSource::PolymarketFPMM);
+            assert(first_condition_outcome >= 0 && first_condition_outcome <= std::numeric_limits<uint8_t>::max());
+            uint8_t token_idx = static_cast<uint8_t>(first_condition_outcome);
+            intern_token(token_id, primary_cond_idx, token_idx, TokenSource::PolymarketFPMM);
             return;
           }
 

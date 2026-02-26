@@ -22,7 +22,7 @@ public:
                           const std::string &to, const std::string &token_id,
                           int64_t amount);
   void write_header(size_t token_map_size, size_t fpmm_map_size, size_t cond_map_size);
-  void write_token_sample(const std::string &token_id, uint32_t cond_idx, bool is_yes);
+  void write_token_sample(const std::string &token_id, uint32_t cond_idx, uint8_t token_idx);
   void set_xfer_stats(const std::string &stats_str);
 
 private:

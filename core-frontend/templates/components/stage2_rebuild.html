@@ -278,6 +278,7 @@
       "cond_poly",
       "cond_tr",
       "cond_other",
+      "cond_split",
       // 代币树 (树状partition: total→polymarket/other→...)
       "token",
       "token_poly",
@@ -285,6 +286,7 @@
       "token_fpmm",
       "token_fpmm_by_collateral",
       "token_other",
+      "token_split",
       "token_transfer",
       "token_transfer_by_collateral",
       // Transfer树
@@ -468,6 +470,14 @@
                 desc: "!poly & fcreate",
                 scene: "非Polymarket来源的FPMMCreation",
               },
+              {
+                id: "cond_split",
+                label: "Split",
+                value: other.split || 0,
+                color: "#555",
+                desc: "!poly & split_event",
+                scene: "仅由Split事件推断condition",
+              },
             ],
           },
         ],
@@ -601,6 +611,14 @@
                 scene: "非Polymarket来源的FPMMCreation",
               },
               {
+                id: "token_split",
+                label: "Split",
+                value: other.split || 0,
+                color: "#555",
+                desc: "!poly & split_event",
+                scene: "仅由Split事件推断token",
+              },
+              {
                 id: "token_transfer",
                 label: "Transfer",
                 value: other.transfer_inferred || 0,
@@ -659,18 +677,28 @@
 
     // EventType常量 (与后端types.hpp对应)
     const EventType = {
-      Buy: 0,
-      Sell: 1,
-      Split: 2,
-      Merge: 3,
-      Redemption: 4,
-      FPMMBuy: 5,
-      FPMMSell: 6,
-      FPMMLPAdd: 7,
-      FPMMLPRemove: 8,
-      Convert: 9,
-      TransferIn: 10,
-      TransferOut: 11,
+      OrderBuy: 0,
+      OrderSell: 1,
+      SplitNormal: 2,
+      SplitNegRisk: 3,
+      SplitNonPoly: 4,
+      MergeNormal: 5,
+      MergeNegRisk: 6,
+      MergeNonPoly: 7,
+      Redemption: 8,
+      RedemptionNonPoly: 9,
+      Convert: 10,
+      FPMMBuy: 11,
+      FPMMSell: 12,
+      FPMMLPAdd: 13,
+      FPMMLPRemove: 14,
+      FPMMLPReturn: 15,
+      TransferInNegRisk: 16,
+      TransferInOther: 17,
+      TransferInNonPoly: 18,
+      TransferOutNegRisk: 19,
+      TransferOutOther: 20,
+      TransferOutNonPoly: 21,
     };
 
     function s2MergeByCollateralFromEventTypes(s, eventTypes) {
@@ -800,17 +828,17 @@
       const byCollSplit = s2GetByCollateralEntries(
         s,
         ["by_collateral_split"],
-        [EventType.Split],
+        [EventType.SplitNonPoly],
       );
       const byCollMerge = s2GetByCollateralEntries(
         s,
         ["by_collateral_merge"],
-        [EventType.Merge],
+        [EventType.MergeNonPoly],
       );
       const byCollRedemption = s2GetByCollateralEntries(
         s,
         ["by_collateral_redemption"],
-        [EventType.Redemption],
+        [EventType.RedemptionNonPoly],
       );
       const byCollFpmmTrade = s2GetByCollateralEntries(
         s,
@@ -820,7 +848,7 @@
       const byCollFpmmLp = s2GetByCollateralEntries(
         s,
         ["by_collateral_fpmm_lp", "by_collateral_lp_add", "by_collateral_lp_remove", "by_collateral_lp_return"],
-        [EventType.FPMMLPAdd, EventType.FPMMLPRemove],
+        [EventType.FPMMLPAdd, EventType.FPMMLPRemove, EventType.FPMMLPReturn],
       );
       return {
         id: "xfer",
@@ -1379,6 +1407,7 @@
         "cond_poly",
         "cond_tr",
         "cond_other",
+        "cond_split",
         // 代币树 (树状partition: total→polymarket/other→...)
         "token",
         "token_poly",
@@ -1386,6 +1415,7 @@
         "token_fpmm",
         "token_fpmm_by_collateral",
         "token_other",
+        "token_split",
         "token_transfer",
         "token_transfer_by_collateral",
         // Transfer树
