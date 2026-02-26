@@ -285,7 +285,7 @@ struct BuildProgress {
   int64_t cnt_fpmm_funding = 0;
   int64_t cnt_transfer = 0;
   TransferStats xfer_stats;
-  // 按(EventType, TokenId)分组统计 user_event（token_id 目前为 token_idx: 0=YES,1=NO）
+  // 按(EventType, TokenId)分组统计 user_event（token_id = token_idx, unknown=255）
   // key: EventType * 256 + TokenId
   std::unordered_map<uint16_t, int64_t> event_by_token;
   // 按(EventType, CollateralId)分组统计 user_event

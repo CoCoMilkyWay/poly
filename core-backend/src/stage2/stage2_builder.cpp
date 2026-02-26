@@ -175,17 +175,22 @@ void EventBuilder::load_from_rb() {
     int type = cnt_r->GetValue(0, i).GetValue<int>();
     int64_t cnt = cnt_r->GetValue(1, i).GetValue<int64_t>();
     switch (static_cast<EventType>(type)) {
-    case EventType::Buy:
-    case EventType::Sell:
+    case EventType::OrderBuy:
+    case EventType::OrderSell:
       progress_.cnt_order += cnt;
       break;
-    case EventType::Split:
+    case EventType::SplitNormal:
+    case EventType::SplitNegRisk:
+    case EventType::SplitNonPoly:
       progress_.cnt_split += cnt;
       break;
-    case EventType::Merge:
+    case EventType::MergeNormal:
+    case EventType::MergeNegRisk:
+    case EventType::MergeNonPoly:
       progress_.cnt_merge += cnt;
       break;
     case EventType::Redemption:
+    case EventType::RedemptionNonPoly:
       progress_.cnt_redemption += cnt;
       break;
     case EventType::FPMMBuy:
@@ -194,14 +199,22 @@ void EventBuilder::load_from_rb() {
       break;
     case EventType::FPMMLPAdd:
     case EventType::FPMMLPRemove:
+    case EventType::FPMMLPReturn:
       progress_.cnt_fpmm_funding += cnt;
       break;
     case EventType::Convert:
       progress_.cnt_convert += cnt;
       break;
-    case EventType::TransferIn:
-    case EventType::TransferOut:
+    case EventType::TransferInNegRisk:
+    case EventType::TransferInOther:
+    case EventType::TransferInNonPoly:
+    case EventType::TransferOutNegRisk:
+    case EventType::TransferOutOther:
+    case EventType::TransferOutNonPoly:
       progress_.cnt_transfer += cnt;
+      break;
+    default:
+      assert(false);
       break;
     }
     progress_.total_events += cnt;
@@ -435,6 +448,8 @@ bool EventBuilder::build_chunk(int64_t target_block) {
   tx_order_.clear();
   tx_fpmm_trade_.clear();
   tx_fpmm_funding_.clear();
+  tx_op_bounds_.clear();
+  tx_op_type_mask_.clear();
   chunk_xfer_stats_ = {};
 
   // 开始 chunk log

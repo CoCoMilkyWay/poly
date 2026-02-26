@@ -205,7 +205,7 @@ void EventDecoder::parse_neg_risk_adapter_event(const std::string &topic0, const
 void EventDecoder::parse_transfer_single(const json &topics, const std::string &data,
                                          const std::string &tx_hash, int64_t block_number,
                                          int64_t log_index, DecodedEvents &events) {
-  events.transfer.push_back({block_number, tx_hash, log_index * 1000,
+  events.transfer.push_back({block_number, tx_hash, log_index * TRANSFER_FLAT_LOG_SCALE,
                              extract_address_from_topic(topics[1].get<std::string>()),
                              extract_address_from_topic(topics[2].get<std::string>()),
                              extract_address_from_topic(topics[3].get<std::string>()),
@@ -226,9 +226,10 @@ void EventDecoder::parse_transfer_batch(const json &topics, const std::string &d
   int64_t ids_len = extract_uint256_i64_from_data(data, ids_offset / 32);
   int64_t values_len = extract_uint256_i64_from_data(data, values_offset / 32);
   assert(ids_len == values_len);
+  assert(ids_len < TRANSFER_FLAT_LOG_SCALE);
 
   for (int64_t i = 0; i < ids_len; ++i) {
-    events.transfer.push_back({block_number, tx_hash, log_index * 1000 + i,
+    events.transfer.push_back({block_number, tx_hash, log_index * TRANSFER_FLAT_LOG_SCALE + i,
                                op, from, to,
                                extract_bytes32_from_data(data, ids_offset / 32 + 1 + i),
                                extract_uint256_hex_from_data(data, values_offset / 32 + 1 + i)});

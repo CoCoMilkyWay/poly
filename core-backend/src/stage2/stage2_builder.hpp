@@ -57,9 +57,12 @@ private:
   std::unordered_map<TxKey, std::vector<MergeInfo>> tx_merge_;
   std::unordered_map<TxKey, std::vector<RedemptionInfo>> tx_redemption_;
   std::unordered_map<TxMarketKey, std::vector<ConvertInfo>> tx_convert_;
-  std::unordered_map<TxTokenKey, OrderInfo> tx_order_;
+  std::unordered_map<TxTokenKey, std::vector<OrderInfo>> tx_order_;
   std::unordered_map<TxFPMMKey, std::vector<FPMMTradeInfo>> tx_fpmm_trade_;
   std::unordered_map<TxFPMMKey, std::vector<FPMMFundingInfo>> tx_fpmm_funding_;
+  // Tx-level semantic bounds built from ordered semantic log_index sequence.
+  std::unordered_map<TxKey, std::vector<TxOpBounds>> tx_op_bounds_;
+  std::unordered_map<TxLogKey, uint32_t> tx_op_type_mask_;
   TransferStats chunk_xfer_stats_;          // 当前 chunk 的 transfer 统计
   ChunkLog chunk_log_;                      // 当前 chunk 的日志
   std::string log_dir_ = "data/stage2/log"; // 日志目录
@@ -398,17 +401,22 @@ private:
 
     // 更新事件计数
     switch (evt.type) {
-    case EventType::Buy:
-    case EventType::Sell:
+    case EventType::OrderBuy:
+    case EventType::OrderSell:
       progress_.cnt_order++;
       break;
-    case EventType::Split:
+    case EventType::SplitNormal:
+    case EventType::SplitNegRisk:
+    case EventType::SplitNonPoly:
       progress_.cnt_split++;
       break;
-    case EventType::Merge:
+    case EventType::MergeNormal:
+    case EventType::MergeNegRisk:
+    case EventType::MergeNonPoly:
       progress_.cnt_merge++;
       break;
     case EventType::Redemption:
+    case EventType::RedemptionNonPoly:
       progress_.cnt_redemption++;
       break;
     case EventType::FPMMBuy:
@@ -417,14 +425,22 @@ private:
       break;
     case EventType::FPMMLPAdd:
     case EventType::FPMMLPRemove:
+    case EventType::FPMMLPReturn:
       progress_.cnt_fpmm_funding++;
       break;
     case EventType::Convert:
       progress_.cnt_convert++;
       break;
-    case EventType::TransferIn:
-    case EventType::TransferOut:
+    case EventType::TransferInNegRisk:
+    case EventType::TransferInOther:
+    case EventType::TransferInNonPoly:
+    case EventType::TransferOutNegRisk:
+    case EventType::TransferOutOther:
+    case EventType::TransferOutNonPoly:
       progress_.cnt_transfer++;
+      break;
+    default:
+      assert(false);
       break;
     }
   }

@@ -45,6 +45,8 @@ constexpr const char *POSITION_CONVERT = "0xb03d19dddbc72a87e735ff0ea3b57bef133e
 
 namespace stage1 {
 
+static constexpr int64_t TRANSFER_FLAT_LOG_SCALE = 10000;
+
 struct TransferEvent {
   int64_t block_number;
   std::string tx_hash;

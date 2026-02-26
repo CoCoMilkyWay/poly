@@ -39,6 +39,7 @@ public:
 private:
   static constexpr int64_t kSyncChunkBlocks = 100000;
   static constexpr int kRetryDelayMs = 300;
+  static constexpr int kRetryDelayMaxMs = 10000;
   static constexpr int kSchedulerSleepMs = 5;
 
   struct BasicTask {
@@ -50,6 +51,7 @@ private:
     std::future<RpcClient::BatchResult> future;
     std::optional<RpcClient::BatchResult> result;
     std::chrono::steady_clock::time_point retry_at = std::chrono::steady_clock::now();
+    int retry_count = 0;
   };
 
   struct SyncChunkState {

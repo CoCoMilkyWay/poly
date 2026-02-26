@@ -472,7 +472,16 @@ void ApiSession::handle_rebuild_status() {
     if (!event_by_token.contains(et_key)) {
       event_by_token[et_key] = json::array();
     }
-    const char *name = token_id == 0 ? "YES" : (token_id == 1 ? "NO" : "Unknown");
+    std::string name;
+    if (token_id == stage2::UNKNOWN_TOKEN_IDX) {
+      name = "Unknown";
+    } else if (token_id == 0) {
+      name = "OUTCOME_0";
+    } else if (token_id == 1) {
+      name = "OUTCOME_1";
+    } else {
+      name = "OUTCOME_" + std::to_string(token_id);
+    }
     event_by_token[et_key].push_back({
         {"token_id", token_id},
         {"name", name},
@@ -662,8 +671,8 @@ void ApiSession::handle_replay() {
     return;
   }
 
-  int64_t first_ts = timeline.front().sort_key / 1000000000LL;
-  int64_t last_ts = timeline.back().sort_key / 1000000000LL;
+  int64_t first_ts = timeline.front().sort_key / stage2::SORT_KEY_SCALE;
+  int64_t last_ts = timeline.back().sort_key / stage2::SORT_KEY_SCALE;
 
   json timeline_arr = json::array();
   for (const auto &e : timeline) {

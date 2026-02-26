@@ -1,5 +1,6 @@
 #include "misc/profiler.hpp"
 #include "stage2_builder.hpp"
+#include <algorithm>
 #include <limits>
 #include <optional>
 #include <string_view>
@@ -237,75 +238,101 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
     key.tx_hash = hex_to_bytes32(get_hex(tbl, 1, row));
     return key;
   };
+  std::unordered_map<TxKey, std::vector<int64_t>> tx_op_logs;
+  auto record_semantic = [&](const TxKey &key, int64_t log_index, SemanticKind kind) {
+    tx_op_logs[key].push_back(log_index);
+    TxLogKey log_key{key.block, key.tx_hash, log_index};
+    tx_op_type_mask_[log_key] |= semantic_mask_bit(kind);
+  };
 
   auto split = query_block_range(
       *conn, stage1_db_,
-      "SELECT block_number, tx_hash, condition_id, amount, stakeholder FROM ",
+      "SELECT block_number, tx_hash, log_index, condition_id, amount, stakeholder, collateral_token, parent_collection_id, partition FROM ",
       "split", start, end);
   if (split) {
     for (idx_t i = 0; i < split->RowCount(); ++i) {
       TxKey key = build_tx_key(split, i);
       SplitInfo info;
-      info.amount = get_u256_i64(split, 3, i);
-      info.stakeholder = get_hex_lower(split, 4, i);
-      info.cond_id = get_hex_lower(split, 2, i);
+      info.log_index = get_i64(split, 2, i);
+      info.cond_id = get_hex_lower(split, 3, i);
+      info.amount = get_u256_i64(split, 4, i);
+      info.stakeholder = get_hex_lower(split, 5, i);
+      info.collateral_token = get_hex_lower(split, 6, i);
+      info.parent_collection_id = get_hex_lower(split, 7, i);
+      info.partition = parse_bytes32_list_hex_lower(split->GetValue(8, i));
       tx_split_[key].push_back(info);
+      record_semantic(key, info.log_index, SemanticKind::Split);
     }
   }
 
   auto merge = query_block_range(
       *conn, stage1_db_,
-      "SELECT block_number, tx_hash, condition_id, amount, stakeholder FROM ",
+      "SELECT block_number, tx_hash, log_index, condition_id, amount, stakeholder, collateral_token, parent_collection_id, partition FROM ",
       "merge", start, end);
   if (merge) {
     for (idx_t i = 0; i < merge->RowCount(); ++i) {
       TxKey key = build_tx_key(merge, i);
       MergeInfo info;
-      info.amount = get_u256_i64(merge, 3, i);
-      info.stakeholder = get_hex_lower(merge, 4, i);
-      info.cond_id = get_hex_lower(merge, 2, i);
+      info.log_index = get_i64(merge, 2, i);
+      info.cond_id = get_hex_lower(merge, 3, i);
+      info.amount = get_u256_i64(merge, 4, i);
+      info.stakeholder = get_hex_lower(merge, 5, i);
+      info.collateral_token = get_hex_lower(merge, 6, i);
+      info.parent_collection_id = get_hex_lower(merge, 7, i);
+      info.partition = parse_bytes32_list_hex_lower(merge->GetValue(8, i));
       tx_merge_[key].push_back(info);
+      record_semantic(key, info.log_index, SemanticKind::Merge);
     }
   }
 
   auto redemption = query_block_range(
       *conn, stage1_db_,
-      "SELECT block_number, tx_hash, condition_id, payout, redeemer FROM ",
+      "SELECT block_number, tx_hash, log_index, condition_id, payout, redeemer, collateral_token, parent_collection_id, index_sets FROM ",
       "redemption", start, end);
   if (redemption) {
     for (idx_t i = 0; i < redemption->RowCount(); ++i) {
       TxKey key = build_tx_key(redemption, i);
       RedemptionInfo info;
-      info.payout = get_u256_i64(redemption, 3, i);
-      info.redeemer = get_hex_lower(redemption, 4, i);
-      info.cond_id = get_hex_lower(redemption, 2, i);
+      info.log_index = get_i64(redemption, 2, i);
+      info.cond_id = get_hex_lower(redemption, 3, i);
+      info.payout = get_u256_i64(redemption, 4, i);
+      info.redeemer = get_hex_lower(redemption, 5, i);
+      info.collateral_token = get_hex_lower(redemption, 6, i);
+      info.parent_collection_id = get_hex_lower(redemption, 7, i);
+      info.index_sets = parse_bytes32_list_hex_lower(redemption->GetValue(8, i));
       tx_redemption_[key].push_back(info);
+      record_semantic(key, info.log_index, SemanticKind::Redemption);
     }
   }
 
   auto convert = query_block_range(
       *conn, stage1_db_,
-      "SELECT block_number, tx_hash, market_id, index_set, amount, stakeholder FROM ",
+      "SELECT block_number, tx_hash, log_index, market_id, index_set, amount, stakeholder FROM ",
       "convert", start, end);
   if (convert) {
     for (idx_t i = 0; i < convert->RowCount(); ++i) {
-      std::string market_id = get_hex_lower(convert, 2, i);
+      std::string market_id = get_hex_lower(convert, 3, i);
       TxMarketKey key;
       key.block = get_i64(convert, 0, i);
       key.tx_hash = hex_to_bytes32(get_hex(convert, 1, i));
       key.market_id = market_id;
+      TxKey tx_key;
+      tx_key.block = key.block;
+      tx_key.tx_hash = key.tx_hash;
       ConvertInfo info;
+      info.log_index = get_i64(convert, 2, i);
       info.market_id = market_id;
-      info.index_set = get_u256_i64(convert, 3, i);
-      info.amount = get_u256_i64(convert, 4, i);
-      info.stakeholder = get_hex_lower(convert, 5, i);
+      info.index_set = get_u256_i64(convert, 4, i);
+      info.amount = get_u256_i64(convert, 5, i);
+      info.stakeholder = get_hex_lower(convert, 6, i);
       tx_convert_[key].push_back(info);
+      record_semantic(tx_key, info.log_index, SemanticKind::Convert);
     }
   }
 
   auto order = query_block_range(
       *conn, stage1_db_,
-      "SELECT block_number, tx_hash, maker, taker, maker_asset_id, taker_asset_id, "
+      "SELECT block_number, tx_hash, log_index, maker, taker, maker_asset_id, taker_asset_id, "
       "maker_amount, taker_amount, fee FROM ",
       "order_filled", start, end);
   static const std::string ZERO_TOKEN_ID =
@@ -314,76 +341,101 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
     for (idx_t i = 0; i < order->RowCount(); ++i) {
       int64_t block = get_i64(order, 0, i);
       auto tx_hash = hex_to_bytes32(get_hex(order, 1, i));
-      std::string maker = get_hex_lower(order, 2, i);
-      std::string taker = get_hex_lower(order, 3, i);
-      std::string maker_asset = get_hex(order, 4, i);
-      std::string taker_asset = get_hex(order, 5, i);
-      int64_t maker_amt = get_u256_i64(order, 6, i);
-      int64_t taker_amt = get_u256_i64(order, 7, i);
-      int64_t fee = get_u256_i64(order, 8, i);
+      int64_t log_index = get_i64(order, 2, i);
+      std::string maker = get_hex_lower(order, 3, i);
+      std::string taker = get_hex_lower(order, 4, i);
+      std::string maker_asset = get_hex(order, 5, i);
+      std::string taker_asset = get_hex(order, 6, i);
+      int64_t maker_amt = get_u256_i64(order, 7, i);
+      int64_t taker_amt = get_u256_i64(order, 8, i);
+      int64_t fee = get_u256_i64(order, 9, i);
 
       bool maker_is_usdc = maker_asset == ZERO_TOKEN_ID;
       std::string token_id = maker_is_usdc ? taker_asset : maker_asset;
+      std::string token_id_lower = to_lower(token_id);
 
-      TxTokenKey key{block, tx_hash, to_lower(token_id)};
-      assert(tx_order_.count(key) == 0 && "Duplicate order");
+      TxTokenKey key{block, tx_hash, token_id_lower};
+      TxKey tx_key{block, tx_hash};
       OrderInfo info;
+      info.log_index = log_index;
+      info.token_id = token_id_lower;
       info.maker = maker;
       info.taker = taker;
       info.maker_side = maker_is_usdc ? 1 : 2;
       info.usdc = maker_is_usdc ? maker_amt : taker_amt;
       info.tokens = maker_is_usdc ? taker_amt : maker_amt;
       info.fee = fee;
-      tx_order_[key] = info;
+      tx_order_[key].push_back(info);
+      record_semantic(tx_key, info.log_index, SemanticKind::Order);
     }
   }
 
   auto fpmm_trade = query_block_range(
       *conn, stage1_db_,
-      "SELECT block_number, tx_hash, fpmm_addr, trader, side, outcome_index, "
+      "SELECT block_number, tx_hash, log_index, fpmm_addr, trader, side, outcome_index, "
       "usdc_amount, token_amount FROM ",
       "fpmm_trade", start, end);
   if (fpmm_trade) {
     for (idx_t i = 0; i < fpmm_trade->RowCount(); ++i) {
-      std::string fpmm_addr = get_hex_lower(fpmm_trade, 2, i);
+      std::string fpmm_addr = get_hex_lower(fpmm_trade, 3, i);
       TxFPMMKey key;
       key.block = get_i64(fpmm_trade, 0, i);
       key.tx_hash = hex_to_bytes32(get_hex(fpmm_trade, 1, i));
       key.fpmm_addr = fpmm_addr;
+      TxKey tx_key{key.block, key.tx_hash};
       FPMMTradeInfo info;
+      info.log_index = get_i64(fpmm_trade, 2, i);
       info.fpmm_addr = fpmm_addr;
-      info.trader = get_hex_lower(fpmm_trade, 3, i);
-      info.side = fpmm_trade->GetValue(4, i).GetValue<int>();
-      int64_t outcome_idx = get_u256_i64(fpmm_trade, 5, i);
+      info.trader = get_hex_lower(fpmm_trade, 4, i);
+      info.side = fpmm_trade->GetValue(5, i).GetValue<int>();
+      int64_t outcome_idx = get_u256_i64(fpmm_trade, 6, i);
       assert(outcome_idx >= 0 && outcome_idx <= std::numeric_limits<int>::max());
       info.outcome_idx = static_cast<int>(outcome_idx);
-      info.usdc = get_u256_i64(fpmm_trade, 6, i);
-      info.tokens = get_u256_i64(fpmm_trade, 7, i);
+      info.usdc = get_u256_i64(fpmm_trade, 7, i);
+      info.tokens = get_u256_i64(fpmm_trade, 8, i);
       tx_fpmm_trade_[key].push_back(info);
+      record_semantic(tx_key, info.log_index, SemanticKind::FPMMTrade);
     }
   }
 
   auto fpmm_funding = query_block_range(
       *conn, stage1_db_,
-      "SELECT block_number, tx_hash, fpmm_addr, funder, side, amounts FROM ",
+      "SELECT block_number, tx_hash, log_index, fpmm_addr, funder, side, amounts FROM ",
       "fpmm_funding", start, end);
   if (fpmm_funding) {
     for (idx_t i = 0; i < fpmm_funding->RowCount(); ++i) {
-      std::string fpmm_addr = get_hex_lower(fpmm_funding, 2, i);
+      std::string fpmm_addr = get_hex_lower(fpmm_funding, 3, i);
       TxFPMMKey key;
       key.block = get_i64(fpmm_funding, 0, i);
       key.tx_hash = hex_to_bytes32(get_hex(fpmm_funding, 1, i));
       key.fpmm_addr = fpmm_addr;
+      TxKey tx_key{key.block, key.tx_hash};
       FPMMFundingInfo info;
+      info.log_index = get_i64(fpmm_funding, 2, i);
       info.fpmm_addr = fpmm_addr;
-      info.funder = get_hex_lower(fpmm_funding, 3, i);
-      info.side = fpmm_funding->GetValue(4, i).GetValue<int>();
-      std::vector<int64_t> amounts = parse_u256_list_i64(fpmm_funding->GetValue(5, i));
+      info.funder = get_hex_lower(fpmm_funding, 4, i);
+      info.side = fpmm_funding->GetValue(5, i).GetValue<int>();
+      std::vector<int64_t> amounts = parse_u256_list_i64(fpmm_funding->GetValue(6, i));
       info.amounts_count = static_cast<int>(amounts.size());
       info.amount0 = amounts.size() > 0 ? amounts[0] : 0;
       info.amount1 = amounts.size() > 1 ? amounts[1] : 0;
       tx_fpmm_funding_[key].push_back(info);
+      record_semantic(tx_key, info.log_index, SemanticKind::FPMMFunding);
     }
+  }
+
+  for (auto &[tx_key, logs] : tx_op_logs) {
+    std::sort(logs.begin(), logs.end());
+    logs.erase(std::unique(logs.begin(), logs.end()), logs.end());
+    std::vector<TxOpBounds> bounds;
+    bounds.reserve(logs.size());
+    int64_t prev = -1;
+    for (int64_t log_index : logs) {
+      assert(log_index >= 0);
+      bounds.push_back(TxOpBounds{prev, log_index});
+      prev = log_index;
+    }
+    tx_op_bounds_[tx_key] = std::move(bounds);
   }
 }
 
@@ -424,13 +476,14 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
   for (idx_t i = 0; i < transfers->RowCount(); ++i) {
     int64_t block = get_i64(transfers, 0, i);
     int64_t log_idx = get_i64(transfers, 2, i);
+    assert(log_idx >= 0 && log_idx < SORT_KEY_SCALE);
     int64_t amount = get_u256_i64(transfers, 7, i);
     std::string op = to_lower(get_hex(transfers, 3, i));
     std::string from = to_lower(get_hex(transfers, 4, i));
     std::string to = to_lower(get_hex(transfers, 5, i));
     std::string token_id = to_lower(get_hex(transfers, 6, i));
 
-    int64_t sort_key = block * 1000000000LL + log_idx;
+    int64_t sort_key = block * SORT_KEY_SCALE + log_idx;
     auto tx_hash = hex_to_bytes32(get_hex(transfers, 1, i));
 
     auto tit = token_map_.find(token_id);
@@ -442,7 +495,10 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
     }
 
     uint32_t cond_idx = tit->second.cond_idx;
-    uint8_t token_idx = tit->second.is_yes ? 0 : 1;
+    uint8_t token_idx = UNKNOWN_TOKEN_IDX;
+    if (tit->second.is_yes != UNKNOWN_IS_YES) {
+      token_idx = tit->second.is_yes ? 0 : 1;
+    }
 
     // 获取抵押品类型
     Collateral collateral = resolve_transfer_collateral(cond_idx, op);
@@ -628,10 +684,11 @@ void EventBuilder::commit_chunk(int64_t new_cursor) {
       duckdb::Appender appender(*conn, "tmp_user_event");
       for (auto &[user, evt] : new_events_) {
         std::string user_blob = hex_to_blob(user);
+        int32_t db_cond_idx = (evt.cond_idx == UNKNOWN_COND_IDX) ? -1 : static_cast<int32_t>(evt.cond_idx);
         appender.BeginRow();
         appender.Append(duckdb::Value::BLOB(reinterpret_cast<duckdb::const_data_ptr_t>(user_blob.data()), user_blob.size()));
         appender.Append(evt.sort_key);
-        appender.Append(static_cast<int32_t>(evt.cond_idx));
+        appender.Append(db_cond_idx);
         appender.Append(static_cast<int32_t>(evt.type));
         appender.Append(static_cast<int32_t>(evt.token_idx));
         appender.Append(static_cast<int32_t>(evt.collateral));

@@ -5,57 +5,6 @@
 
 namespace stage2 {
 
-const char *protocol_name(Protocol p) {
-  switch (p) {
-  case Protocol::Polymarket:
-    return "Polymarket";
-  case Protocol::Omen:
-    return "Omen";
-  case Protocol::Azuro:
-    return "Azuro";
-  case Protocol::Thales:
-    return "Thales";
-  case Protocol::Overtime:
-    return "Overtime";
-  case Protocol::PredictIt:
-    return "PredictIt";
-  default:
-    return "Unknown";
-  }
-}
-
-const std::unordered_map<std::string, Protocol> &known_protocol_contracts() {
-  static const std::unordered_map<std::string, Protocol> contracts = {
-      // ========== Polymarket ==========
-      {"0x8b9805a2f595b6705e74f7310829f2d299d21522", Protocol::Polymarket}, // FPMM Factory
-      {"0x4bfb41d5b3570defd03c39a9a4d8de6bd8b8982e", Protocol::Polymarket}, // CTF Exchange
-      {"0xc5d563a36ae78145c45a50134d48a1215220f80a", Protocol::Polymarket}, // NegRisk CTF Exchange
-      {"0xd91e80cf2e7be2e162c6513ced06f1dd0da35296", Protocol::Polymarket}, // NegRisk Adapter
-
-      // ========== Omen (Gnosis预测市场, Polygon部署) ==========
-      {"0x0000000000000000000000000000000000000000", Protocol::Omen}, // 占位，需要填入实际地址
-                                                                      // Omen在Polygon上的Factory/Market合约地址需要查证
-
-      // ========== Azuro (体育博彩) ==========
-      // Azuro在Polygon上的合约地址需要查证
-
-      // ========== Thales (二元期权) ==========
-      // Thales主要在Optimism，Polygon上可能有部署
-
-      // ========== Overtime (体育博彩) ==========
-      // Overtime主要在Optimism，Polygon上可能有部署
-  };
-  return contracts;
-}
-
-Protocol identify_protocol(const std::string &addr) {
-  auto it = known_protocol_contracts().find(addr);
-  if (it != known_protocol_contracts().end()) {
-    return it->second;
-  }
-  return Protocol::Unknown;
-}
-
 std::string blob_to_hex(const std::string &blob) {
   static const char hex_chars[] = "0123456789abcdef";
   std::string result = "0x";

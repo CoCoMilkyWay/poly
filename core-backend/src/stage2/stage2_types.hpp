@@ -11,21 +11,34 @@ namespace stage2 {
 
 static constexpr int MAX_OUTCOMES = 8;
 static constexpr uint32_t UNKNOWN_COND_IDX = UINT32_MAX; // TransferInferred token 的特殊值
-static constexpr uint8_t UNKNOWN_IS_YES = 0xFF;          // TransferInferred token 的特殊值
+static constexpr uint8_t UNKNOWN_TOKEN_IDX = 0xFF;       // TransferInferred token 的特殊值
+static constexpr uint8_t UNKNOWN_IS_YES = UNKNOWN_TOKEN_IDX;
+static constexpr int64_t SORT_KEY_SCALE = 1000000000LL;
+static constexpr int64_t TRANSFER_FLAT_LOG_SCALE = 10000;
 
 enum EventType : uint8_t {
-  Buy = 0,
-  Sell = 1,
-  Split = 2,
-  Merge = 3,
-  Redemption = 4,
-  FPMMBuy = 5,
-  FPMMSell = 6,
-  FPMMLPAdd = 7,
-  FPMMLPRemove = 8,
-  Convert = 9,
-  TransferIn = 10,
-  TransferOut = 11,
+  OrderBuy = 0,
+  OrderSell = 1,
+  SplitNormal = 2,
+  SplitNegRisk = 3,
+  SplitNonPoly = 4,
+  MergeNormal = 5,
+  MergeNegRisk = 6,
+  MergeNonPoly = 7,
+  Redemption = 8,
+  RedemptionNonPoly = 9,
+  Convert = 10,
+  FPMMBuy = 11,
+  FPMMSell = 12,
+  FPMMLPAdd = 13,
+  FPMMLPRemove = 14,
+  FPMMLPReturn = 15,
+  TransferInNegRisk = 16,
+  TransferInOther = 17,
+  TransferInNonPoly = 18,
+  TransferOutNegRisk = 19,
+  TransferOutOther = 20,
+  TransferOutNonPoly = 21,
 };
 
 enum class ConditionSource : uint8_t {
@@ -76,10 +89,10 @@ struct FPMMInfo {
 };
 
 struct RawEvent {
-  int64_t sort_key;   // 8  block_number * 1e9 + log_index
+  int64_t sort_key;   // 8  block_number * SORT_KEY_SCALE + flat_log_index
   uint32_t cond_idx;  // 4
   uint8_t type;       // 1  EventType
-  uint8_t token_idx;  // 1  0=YES, 1=NO
+  uint8_t token_idx;  // 1  known: 0..outcome_count-1, unknown: 255
   uint8_t collateral; // 1  Collateral enum
   uint8_t _pad;       // 1
   int64_t amount;     // 8  raw units (1e6 = $1)
@@ -118,7 +131,7 @@ struct ReplayState {
 
 // ============================================================================
 // 语义索引结构体 (Phase 2 构建, 供 Transfer 分类使用)
-// Key 格式: block_number * 1e9 + log_index 的低 32 位 tx_hash 哈希拼接
+// Transfer sort_key: block_number * SORT_KEY_SCALE + flat_log_index
 // ============================================================================
 
 struct TxKey {
@@ -160,56 +173,109 @@ struct TxFPMMKey {
   }
 };
 
+struct TxLogKey {
+  int64_t block;
+  std::array<uint8_t, 32> tx_hash;
+  int64_t log_index;
+
+  bool operator==(const TxLogKey &o) const {
+    return block == o.block && tx_hash == o.tx_hash && log_index == o.log_index;
+  }
+};
+
+struct TxOpBounds {
+  int64_t left_exclusive = -1;
+  int64_t right_inclusive = -1;
+};
+
+enum class SemanticKind : uint8_t {
+  Split = 0,
+  Merge = 1,
+  Redemption = 2,
+  Convert = 3,
+  Order = 4,
+  FPMMTrade = 5,
+  FPMMFunding = 6,
+};
+
+inline uint32_t semantic_mask_bit(SemanticKind kind) {
+  return 1u << static_cast<uint8_t>(kind);
+}
+
 struct SplitInfo {
-  int64_t amount;
+  int64_t log_index = -1;
   std::string stakeholder;
+  std::string collateral_token;
+  std::string parent_collection_id;
   std::string cond_id;
+  std::vector<std::string> partition;
+  int64_t amount;
+  int consumed_count = 0;
 };
 
 struct MergeInfo {
-  int64_t amount;
+  int64_t log_index = -1;
   std::string stakeholder;
+  std::string collateral_token;
+  std::string parent_collection_id;
   std::string cond_id;
+  std::vector<std::string> partition;
+  int64_t amount;
+  int consumed_count = 0;
 };
 
 struct RedemptionInfo {
-  int64_t payout;
+  int64_t log_index = -1;
   std::string redeemer;
+  std::string collateral_token;
+  std::string parent_collection_id;
   std::string cond_id;
+  std::vector<std::string> index_sets;
+  int64_t payout;
+  int consumed_count = 0;
 };
 
 struct ConvertInfo {
+  int64_t log_index = -1;
   std::string market_id;
   int64_t index_set;
   int64_t amount;
   std::string stakeholder;
+  int consumed_count = 0;
 };
 
 struct OrderInfo {
+  int64_t log_index = -1;
+  std::string token_id;
   std::string maker;
   std::string taker;
   int maker_side; // 1=maker买, 2=maker卖
   int64_t usdc;
   int64_t tokens;
   int64_t fee;
+  bool consumed = false;
 };
 
 struct FPMMTradeInfo {
+  int64_t log_index = -1;
   std::string fpmm_addr;
   std::string trader;
   int side; // 1=Buy, 2=Sell
   int outcome_idx;
   int64_t usdc;
   int64_t tokens;
+  bool consumed = false;
 };
 
 struct FPMMFundingInfo {
+  int64_t log_index = -1;
   std::string fpmm_addr;
   std::string funder;
   int side; // 1=Added, 2=Removed
   int64_t amount0;
   int64_t amount1;
   int amounts_count = 0;
+  int consumed_count = 0;
 };
 
 inline size_t hash_combine(size_t lhs, size_t rhs) {
@@ -263,6 +329,16 @@ struct hash<stage2::TxFPMMKey> {
     size_t h = stage2::hash_bytes32(k.tx_hash);
     h = stage2::hash_combine(h, std::hash<int64_t>()(k.block));
     h = stage2::hash_combine(h, std::hash<std::string>()(k.fpmm_addr));
+    return h;
+  }
+};
+
+template <>
+struct hash<stage2::TxLogKey> {
+  size_t operator()(const stage2::TxLogKey &k) const {
+    size_t h = stage2::hash_bytes32(k.tx_hash);
+    h = stage2::hash_combine(h, std::hash<int64_t>()(k.block));
+    h = stage2::hash_combine(h, std::hash<int64_t>()(k.log_index));
     return h;
   }
 };

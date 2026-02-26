@@ -432,25 +432,32 @@ private:
   }
 
   static void apply_event(const RawEvent &evt, ReplayState &st, const ConditionInfo &cond) {
+    (void)cond;
     switch (static_cast<EventType>(evt.type)) {
-    case EventType::Buy:
+    case EventType::OrderBuy:
     case EventType::FPMMBuy:
       apply_buy(evt, st);
       break;
-    case EventType::Sell:
+    case EventType::OrderSell:
     case EventType::FPMMSell:
       apply_sell(evt, st);
       break;
-    case EventType::Split:
+    case EventType::SplitNormal:
+    case EventType::SplitNegRisk:
+    case EventType::SplitNonPoly:
       apply_split(evt, st);
       break;
-    case EventType::Merge:
+    case EventType::MergeNormal:
+    case EventType::MergeNegRisk:
+    case EventType::MergeNonPoly:
       apply_merge(evt, st);
       break;
     case EventType::Redemption:
+    case EventType::RedemptionNonPoly:
       apply_redemption(evt, st);
       break;
     case EventType::FPMMLPAdd:
+    case EventType::FPMMLPReturn:
       apply_lp_add(evt, st);
       break;
     case EventType::FPMMLPRemove:
@@ -459,11 +466,18 @@ private:
     case EventType::Convert:
       apply_convert(evt, st);
       break;
-    case EventType::TransferIn:
+    case EventType::TransferInNegRisk:
+    case EventType::TransferInOther:
+    case EventType::TransferInNonPoly:
       apply_transfer_in(evt, st);
       break;
-    case EventType::TransferOut:
+    case EventType::TransferOutNegRisk:
+    case EventType::TransferOutOther:
+    case EventType::TransferOutNonPoly:
       apply_transfer_out(evt, st);
+      break;
+    default:
+      assert(false);
       break;
     }
   }

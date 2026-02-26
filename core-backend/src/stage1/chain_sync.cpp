@@ -1,5 +1,6 @@
 #include "chain_sync.hpp"
 #include "misc/profiler.hpp"
+#include <algorithm>
 
 namespace stage1 {
 
@@ -294,6 +295,7 @@ void ChainSync::sync_loop(int64_t from_block, int64_t head_block) {
           if (result.success) {
             TraceN("s1/basic_done");
             task.done = true;
+            task.retry_count = 0;
             task.result = std::move(result);
             sync.done_count += 1;
             set_done_bit(sync.slot, i, 1);
@@ -304,10 +306,15 @@ void ChainSync::sync_loop(int64_t from_block, int64_t head_block) {
             } else {
               TraceN("s1/basic_retry");
               clear_progress_inline();
-              task.retry_at = now + std::chrono::milliseconds(kRetryDelayMs);
+              task.retry_count += 1;
+              int shift = std::max(0, task.retry_count - 1);
+              shift = std::min(shift, 20);
+              int64_t delay_ms = static_cast<int64_t>(kRetryDelayMs) << shift;
+              delay_ms = std::min<int64_t>(delay_ms, kRetryDelayMaxMs);
+              task.retry_at = now + std::chrono::milliseconds(delay_ms);
               std::cerr << "[Sync] rpc失败 from=" << task.from_block
                         << " to=" << task.to_block << " err=" << result.error_msg
-                        << " -> retry" << std::endl;
+                        << " -> retry_in=" << delay_ms << "ms" << std::endl;
             }
           }
           progressed = true;

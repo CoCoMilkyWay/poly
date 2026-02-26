@@ -9,19 +9,17 @@ ERC1155.sol 中所有修改余额的地方：
 ```
 
 ### 原理 2: 语义事件和 Transfer 在同一个 tx ✅
-所有协议操作都是**原子的**，在同一个函数调用中完成 Transfer 和 emit 语义事件：
-| 操作                     | Transfer                                  | 语义事件           | 来源     |
-| ------------------------ | ----------------------------------------- | ------------------ | -------- |
-| CTF.splitPosition        | `_batchMint` → TransferBatch              | PositionSplit      | 同一函数 |
-| CTF.mergePositions       | `_batchBurn` → TransferBatch              | PositionsMerge     | 同一函数 |
-| CTF.redeemPositions      | `_burn` → TransferSingle                  | PayoutRedemption   | 同一函数 |
-| Exchange.fillOrder       | `safeTransferFrom` × 2                    | OrderFilled        | 同一函数 |
-| FPMM.buy                 | splitPosition + safeTransferFrom          | FPMMBuy            | 同一函数 |
-| FPMM.sell                | safeTransferFrom + mergePositions         | FPMMSell           | 同一函数 |
-| FPMM.addFunding          | splitPosition + safeBatchTransferFrom     | FPMMFundingAdded   | 同一函数 |
-| FPMM.removeFunding       | safeBatchTransferFrom (NOT burn!)         | FPMMFundingRemoved | 同一函数 |
-| NegRisk.convertPositions | splitPosition + safeBatchTransferFrom × 3 | PositionsConverted | 同一函数 |
-**边界情况**：用户直接调用 `safeTransferFrom` 只有 Transfer、无语义事件 → 分类为 TransferIn/Out
+协议操作是原子的，但**同一语义可能包含多条 Transfer 组合**，不能只看单一方向：
+| 操作                     | Transfer 真实形态                                                                                                            | 语义事件                 | 来源     |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------ | -------- |
+| CTF.splitPosition        | 可能是 `burn + mint` 组合：`stakeholder->0x0`（当 `parentCollectionId != 0` 或子集拆分）+ `0x0->stakeholder`                 | PositionSplit            | 同一函数 |
+| CTF.mergePositions       | `stakeholder` 按 partition 批量 burn；然后要么发 collateral（ERC20，不在 ERC1155 transfer 表），要么 mint 回 parent position | PositionsMerge           | 同一函数 |
+| CTF.redeemPositions      | 对 indexSets 对应持仓逐个 burn（可能多条/可能部分为0）；再发 payout（ERC20 或 parent position mint）                         | PayoutRedemption         | 同一函数 |
+| Exchange.fillOrder       | `safeTransferFrom` × 2（token 对手盘互换）                                                                                   | OrderFilled              | 同一函数 |
+| FPMM.buy/sell            | 交易转账 + 内部 split/merge 触发的 mint/burn                                                                                 | FPMMBuy / FPMMSell       | 同一函数 |
+| FPMM.add/removeFunding   | 资金进出 + 条件仓位转移（remove 不是 burn）                                                                                  | FPMMFundingAdded/Removed | 同一函数 |
+| NegRisk.convertPositions | Adapter 内部 split 产生仓位，再把 NO 批量转到 `NO_TOKEN_BURN_ADDRESS`，并把 YES/费用转给用户或 vault                         | PositionsConverted       | 同一函数 |
+**边界情况**：用户直接 `safeTransferFrom` 只有 Transfer、无语义事件 → TransferIn/Out
 
 
 ```
@@ -157,24 +155,35 @@ abbr(all)
 
 ## Phase 2: 构建语义索引
 ### 语义索引表 (chunk内存)
-| 索引                                                                                                                           | Stage1表作为输入 |
-| ------------------------------------------------------------------------------------------------------------------------------ | ---------------- |
-| `tx_split_idx[tx_key:{block, tx_hash}] -> [{amount, stakeholder, cond_id}]`                                                    | `split`          |
-| `tx_merge_idx[tx_key:{block, tx_hash}] -> [{amount, stakeholder, cond_id}]`                                                    | `merge`          |
-| `tx_redemption_idx[tx_key:{block, tx_hash}] -> [{payout, redeemer, cond_id}]`                                                  | `redemption`     |
-| `tx_convert_idx[tx_market_key:{block, tx_hash, market_id}] -> [{market_id, index_set, amount, stakeholder}]`                   | `convert`        |
-| `tx_order_idx[tx_token_key:{block, tx_hash, token_id}] -> {maker, taker, maker_side, usdc, tokens, fee}`                       | `order_filled`   |
-| `tx_fpmm_trade_idx[tx_fpmm_key:{block, tx_hash, fpmm_addr}] -> [{fpmm_addr, trader, side, outcome_idx, usdc, tokens}]`         | `fpmm_trade`     |
-| `tx_fpmm_funding_idx[tx_fpmm_key:{block, tx_hash, fpmm_addr}] -> [{fpmm_addr, funder, side, amount0, amount1, amounts_count}]` | `fpmm_funding`   |
+| 索引                                                                                                                                           | Stage1表作为输入                                                      |
+| ---------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `tx_split_idx[tx_key:{block, tx_hash}] -> [{log_index, stakeholder, collateral_token, parent_collection_id, cond_id, partition[], amount}]`    | `split`                                                               |
+| `tx_merge_idx[tx_key:{block, tx_hash}] -> [{log_index, stakeholder, collateral_token, parent_collection_id, cond_id, partition[], amount}]`    | `merge`                                                               |
+| `tx_redemption_idx[tx_key:{block, tx_hash}] -> [{log_index, redeemer, collateral_token, parent_collection_id, cond_id, index_sets[], payout}]` | `redemption`                                                          |
+| `tx_convert_idx[tx_market_key:{block, tx_hash, market_id}] -> [{log_index, market_id, index_set, amount, stakeholder}]`                        | `convert`                                                             |
+| `tx_order_idx[tx_token_key:{block, tx_hash, token_id}] -> [{log_index, maker, taker, maker_side, usdc, tokens, fee}]`                          | `order_filled`                                                        |
+| `tx_fpmm_trade_idx[tx_fpmm_key:{block, tx_hash, fpmm_addr}] -> [{log_index, fpmm_addr, trader, side, outcome_idx, usdc, tokens}]`              | `fpmm_trade`                                                          |
+| `tx_fpmm_funding_idx[tx_fpmm_key:{block, tx_hash, fpmm_addr}] -> [{log_index, fpmm_addr, funder, side, amount0, amount1, amounts_count}]`      | `fpmm_funding`                                                        |
+| `tx_op_seq_idx[tx_key:{block, tx_hash}] -> [{op_type, op_log_index, ref_kind, ref_index}]`                                                     | `split/merge/redemption/convert/order_filled/fpmm_trade/fpmm_funding` |
+| `tx_op_bounds_idx[tx_key:{block, tx_hash}] -> [{op_log_index, left_exclusive, right_inclusive}]`                                               | `tx_op_seq_idx`                                                       |
+
+索引构建规则：
+```
+1) 先按事件类型入各自索引 (split/merge/redeem/convert/order/trade/funding)
+2) 再统一投影到 tx_op_seq_idx，按 op_log_index 升序
+3) 基于相邻 op_log_index 生成 tx_op_bounds_idx：
+   left_exclusive = prev_op_log_index
+   right_inclusive = curr_op_log_index
+```
 
 ## Phase 3: Transfer 分类 (classify_and_emit)
 ### 1. 详细流程（树状）
 ```
 phase3_process_transfers(chunk)
 ├─ 输入(只读)
-│  ├─ transfer流: TransferSingle/Batch (按 block_number, log_index)
+│  ├─ transfer流: TransferSingle/Batch (按 block_number, log_index, sub_idx)
 │  ├─ phase1映射: cond_idx_map/cond_info_map/token_info_map/fpmm_info_map/coll_map/pm_cond_set/nr_cond_set
-│  └─ phase2索引: tx_split_idx/tx_merge_idx/tx_redemption_idx/tx_convert_idx/tx_order_idx/tx_fpmm_trade_idx/tx_fpmm_funding_idx
+│  └─ phase2索引: tx_split/merge/redeem/convert/order/trade/funding + tx_op_seq_idx + tx_op_bounds_idx
 ├─ 预处理
 │  ├─ expand_transfer_units
 │  │  ├─ single -> 1个TransferUnit(sub_idx=0)
@@ -182,50 +191,50 @@ phase3_process_transfers(chunk)
 │  │  ├─ flat_log_index = log_index * 10000 + sub_idx
 │  │  ├─ assert(flat_log_index < 1e9)
 │  │  └─ sort_key = block_number * 1e9 + flat_log_index
-│  └─ build_tx_match_state
-│     ├─ split/merge/redeem/convert/order/trade/funding 统一转候选数组
-│     ├─ tx_order_idx 在phase3一律视为 order_cands[] (允许同tx同token多条)
-│     └─ 每个候选附 consumed=false (候选只能消费1次)
-├─ 主循环 for unit in units(by sort_key)
-│  ├─ 计数: n_total++
-│  ├─ enrich_ctx(unit)
-│  │  ├─ token_info_map[token_id] 命中 -> {cond_idx, token_idx, source}, known_cond=true
-│  │  ├─ token_info_map[token_id] 未命中 -> TransferInferred{cond_idx=UNKNOWN_COND_IDX, token_idx=255}, known_cond=false
-│  │  ├─ cond/token树约束 -> is_poly/is_nr/known_cond
-│  │  ├─ coll = coll_map[cond_idx], miss => UnknownCollateral
-│  │  └─ 若 known_cond=false 且命中FPMM相关语义 且 operator in fpmm_info_map -> coll回填为fpmm.coll (仅局部统计与event写入)
-│  │  └─ 地址角色 -> from/to: is_user/is_proto/is_adapter/is_fpmm
-│  ├─ semantic_match(unit, tx_state) [首命中即停]
-│  │  ├─ P1: m(split)|m(merge)|m(redeem)
-│  │  ├─ P2: m(convert)
-│  │  ├─ P3: m(order)
-│  │  ├─ P4: m(trade)
-│  │  └─ P5: m(lp_add)|m(lp_refund)|m(lp_remove)
-│  │  ├─ unknown token 允许参与 m(split|merge|redeem|order|trade|lp)；cond_id在unknown场景不参与比较
-│  │  ├─ 匹配键: tx_key + stakeholder/redeemer + amount (+token_id/side/op)
-│  │  ├─ 同优先级若出现多个可命中候选 -> assert(false)
-│  │  └─ 命中候选 => 标记consumed=true
-│  ├─ classify_decision_tree(unit, ctx, hit) [必须唯一落类]
+│  ├─ build_tx_op_state
+│  │  ├─ 将 split/merge/redeem/convert/order/trade/funding 统一映射为 SemanticOp
+│  │  ├─ 每个 op 保留完整约束: actor/cond/market/fpmm/collateral/parent/partition/index_sets/amount/side
+│  │  ├─ 同 tx 内按 op_log_index 排序
+│  │  ├─ 读取 tx_op_bounds_idx 生成 op 作用区间（由相邻语义事件自动切片）
+│  │  └─ 初始化 op_consumed 计数与 transfer->op 绑定表
+│  └─ build_transfer_ctx
+│     ├─ token_info_map 命中 -> known_cond=true
+│     ├─ token_info_map 未命中 -> TransferInferred{cond_idx=UNKNOWN_COND_IDX, token_idx=255}
+│     ├─ coll = coll_map[cond_idx], miss=>UnknownCollateral
+│     └─ known_cond=false 且命中FPMM语义 且 operator in fpmm_info_map -> coll回填为fpmm.coll
+├─ 主循环 for unit in transfers(by sort_key)
+│  ├─ Pass A: transfer -> SemanticOp 绑定（每条 transfer 最多绑定一次）
+│  │  ├─ 先按 tx_key + op_bounds 取候选 op
+│  │  ├─ 再按硬约束过滤:
+│  │  │  ├─ split/merge: stakeholder + cond_id + collateral + parent + partition + direction + amount
+│  │  │  ├─ redemption: redeemer + cond_id + collateral + parent + index_sets + direction
+│  │  │  ├─ convert: market_id + stakeholder + index_set + operator路径(NEG_RISK_ADAPTER)
+│  │  │  ├─ order: token_id + maker/taker + maker_side + usdc/tokens
+│  │  │  ├─ trade/lp: fpmm_addr + side + token_amount/transfer_amount
+│  │  │  └─ unknown token 仅在通过结构约束时可绑定，不以“地址像不像”放宽
+│  │  ├─ 多候选同时命中 -> assert(false)
+│  │  └─ 唯一命中 -> 记录 op_id + leg_type 并更新 op_consumed
+│  ├─ Pass B: 分类与事件产出
+│  │  ├─ 已绑定 transfer: 由 op_type + leg_type 驱动分类（不靠单条 transfer 猜语义）
+│  │  │  ├─ split: 支持 parent burn + child mint 多腿消费
+│  │  │  ├─ merge: 支持多条 burn + parent mint（若存在）
+│  │  │  ├─ redemption: 支持 index_sets 对应的多条 burn
+│  │  │  └─ convert: 保持 InternalBurnConvert + Convert + (YES侧 SplitNegRisk/TransferInNegRisk) 三段路径
+│  │  ├─ 未绑定 transfer: fallback 到 TransferIn*/TransferOut*/Internal*
 │  │  ├─ amount==0 -> InternalTransferZero
-│  │  ├─ 命中语义 -> 对应33类之一
-│  │  ├─ Convert保持三段路径: InternalBurnConvert + Convert + (YES侧 SplitNegRisk/TransferInNegRisk)
-│  │  ├─ N outcome支持: token_idx 可为 0..outcome_count-1 (unknown为255)
-│  │  ├─ 未命中且用户参与 -> TransferIn*/TransferOut*
-│  │  ├─ 未命中且无用户参与 -> InternalMint*/InternalBurn*/InternalTransfer*
+│  │  ├─ N outcome 支持: known token_idx ∈ [0, outcome_count), unknown=255
 │  │  └─ 未落类 -> Unclassified -> assert(false)
-│  ├─ 用户类? (22类全部写RawEvent, 含NonPoly)
-│  │  ├─ yes: emit_raw_event
-│  │  │  ├─ amount按用户视角定符号(流入+,流出-)
-│  │  │  ├─ price规则:
-│  │  │  │  ├─ Split/Merge/FPMMLPAdd/FPMMLPRemove/FPMMLPReturn: USDC类coll -> 1e6/outcome_count, 否则0
-│  │  │  │  ├─ OrderBuy/Sell/FPMMBuy/Sell: USDC类coll -> usdc*1e6/tokens, 否则0
-│  │  │  │  ├─ Redemption: USDC类coll -> payout_numerator[token_idx], 否则0
-│  │  │  │  └─ Convert/TransferIn/TransferOut: 0
-│  │  │  └─ 落库编码: cond_idx=UNKNOWN_COND_IDX 时写 -1; token_idx 保留 255
-│  │  └─ no: 仅记内部计数
+│  ├─ emit_raw_event（用户22类全部写入，含NonPoly）
+│  │  ├─ amount 按用户视角定符号(流入+,流出-)
+│  │  ├─ price规则:
+│  │  │  ├─ Split/Merge/FPMMLPAdd/FPMMLPRemove/FPMMLPReturn: USDC类coll -> 1e6/outcome_count，否则0
+│  │  │  ├─ OrderBuy/Sell/FPMMBuy/Sell: USDC类coll -> usdc*1e6/tokens，否则0
+│  │  │  ├─ Redemption: USDC类coll -> payout_numerator[token_idx]，否则0
+│  │  │  └─ Convert/TransferIn/TransferOut: 0
+│  │  └─ 落库编码: cond_idx=UNKNOWN_COND_IDX 时写 -1；token_idx 保留 255
 │  └─ update_xfer_tree
 │     ├─ 固定节点 +1
-│     └─ 动态节点by_collateral_* 独立维护(局部维护, 不做全局回补)
+│     └─ 动态节点by_collateral_* 独立维护（局部维护）
 │        ├─ by_collateral_split
 │        ├─ by_collateral_merge
 │        ├─ by_collateral_redemption
@@ -240,8 +249,11 @@ phase3_process_transfers(chunk)
 │  ├─ n_unclass = n_total - n_user - n_internal
 │  ├─ assert(n_total == n_user + n_internal + n_unclass)
 │  ├─ assert(n_unclass == 0)
-│  ├─ assert(candidate消费不越界且不重复)
+│  ├─ assert(每条transfer消费次数 <= 1)
+│  ├─ assert(op消费约束成立: split/merge/redeem/convert/order/trade/lp 均满足最小腿要求)
+│  ├─ assert(order/trade/funding 候选不重复消费)
 │  ├─ assert(Poly类=>is_poly, NegRisk类=>is_nr, NonPoly类=>!is_poly或!known_cond)
+│  ├─ assert(convert 在 market 维度的路径与金额关系成立)
 │  └─ assert(token_idx==255 -> cond_idx==UNKNOWN_COND_IDX)
 └─ 输出
    ├─ user_events(RawEvent序列, 用户22类全写)
@@ -262,6 +274,11 @@ phase3_process_transfers(chunk)
    ├─ OrderFilled        -> m(order)
    ├─ FPMMBuy/FPMMSell   -> m(trade)
    └─ FPMMFunding*       -> m(lp_add/lp_refund/lp_remove)
+
+匹配原则
+├─ 先操作后Transfer：先确定操作，再绑定Transfer腿
+├─ 同tx内按 op_log_index 切片
+└─ fallback 仅处理“未绑定”transfer
 
 TransferClass输出事件(33类, 唯一落类)
 ├─ 用户操作(22类)
@@ -290,16 +307,22 @@ Phase3中间结构 (chunk内存)
 │  └─ {cond_idx, token_idx, coll, known_cond, is_poly, is_nr, from_is_user, to_is_user, from_is_proto, to_is_proto, from_is_adapter, to_is_adapter, from_is_fpmm, to_is_fpmm}
 │     ├─ known token: token_idx in [0, outcome_count)
 │     └─ unknown token: token_idx=255, cond_idx=UNKNOWN_COND_IDX
-├─ TxMatchState
-│  ├─ split_cands[]      {amount, stakeholder, cond_id, consumed}
-│  ├─ merge_cands[]      {amount, stakeholder, cond_id, consumed}
-│  ├─ redeem_cands[]     {payout, redeemer, cond_id, consumed}
-│  ├─ convert_cands[]    {market_id, index_set, amount, stakeholder, consumed}
-│  ├─ order_cands[]      {token_id, maker, taker, maker_side, usdc, tokens, fee, consumed}
-│  ├─ fpmm_trade_cands[] {fpmm_addr, trader, side, outcome_idx, usdc, tokens, consumed}
-│  └─ fpmm_lp_cands[]    {fpmm_addr, funder, side, amount0, amount1, amounts_count, consumed}
+├─ SemanticOp
+│  └─ {op_id, op_type, tx_key, op_log_index, actor, cond_id, market_id, fpmm_addr, collateral_token, parent_collection_id,
+│      partition/index_sets, amount, usdc, tokens, side, fee}
+├─ TxOpState
+│  ├─ op_seq[]           {op_id, op_type, op_log_index}
+│  ├─ op_bounds[]        {op_id, left_exclusive, right_inclusive}
+│  ├─ split_ops[]        {op_id, stakeholder, cond_id, collateral_token, parent_collection_id, partition[], amount, consumed_count}
+│  ├─ merge_ops[]        {op_id, stakeholder, cond_id, collateral_token, parent_collection_id, partition[], amount, consumed_count}
+│  ├─ redeem_ops[]       {op_id, redeemer, cond_id, collateral_token, parent_collection_id, index_sets[], payout, consumed_count}
+│  ├─ convert_ops[]      {op_id, market_id, stakeholder, index_set, amount, consumed_count}
+│  ├─ order_ops[]        {op_id, token_id, maker, taker, maker_side, usdc, tokens, fee, consumed}
+│  ├─ fpmm_trade_ops[]   {op_id, fpmm_addr, trader, side, outcome_idx, usdc, tokens, consumed}
+│  ├─ fpmm_lp_ops[]      {op_id, fpmm_addr, funder, side, amount0, amount1, amounts_count, consumed}
+│  └─ transfer_bind[]    {transfer_id -> (op_id, leg_type)}  // 未绑定为 null
 ├─ MatchHit
-│  └─ {matched:bool, match_type, candidate_ref, side_opt, stakeholder_opt, price_opt}
+│  └─ {matched:bool, op_id, op_type, leg_type, score}
 ├─ Phase3Counters
 │  └─ {n_total, n_user, n_internal, n_unclass}
 └─ XferTreeAcc
