@@ -599,7 +599,9 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
   }
   for (const auto &[_, rows] : tx_redemption_) {
     for (const auto &row : rows) {
-      stage2_assert(row.consumed_count > 0 || row.covered_by_parent,
+      // redemption payout==0 is a valid semantic marker with no effective ERC1155 leg.
+      bool zero_payout_redemption = (row.payout == 0);
+      stage2_assert(row.consumed_count > 0 || row.covered_by_parent || zero_payout_redemption,
                     AssertLevel::L4, "Consume", "RedeemConsumedOrCoveredByParent");
     }
   }

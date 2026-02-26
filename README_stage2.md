@@ -256,7 +256,7 @@ phase3_process_transfers(chunk)
 │  │  ├─ funding: consumed_count>0；FundingRemoved amounts 全零允许零腿
 │  │  ├─ split: consumed_count>0 或 covered_by_parent=true；amount==0 允许零腿
 │  │  ├─ merge: consumed_count>0 或 covered_by_parent=true；amount==0 允许零腿
-│  │  └─ redeem: consumed_count>0 或 covered_by_parent=true
+│  │  └─ redeem: consumed_count>0 或 covered_by_parent=true；payout==0 允许零腿
 │  ├─ assert(op候选唯一性: order/trade/funding/split/merge/redeem/convert 均无重复消费和歧义并列)
 │  ├─ assert(语义硬约束成立: actor/cond/collateral/parent/index_set/amount/side/log-window)
 │  ├─ assert(Poly类=>is_poly, NegRisk类=>is_nr, NonPoly类=>!is_poly或!known_cond)
