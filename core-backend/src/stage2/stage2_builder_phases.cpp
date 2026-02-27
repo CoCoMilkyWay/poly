@@ -976,20 +976,8 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
                     AssertLevel::L4, "Consume", assert_rule);
     };
     auto bump_convert_question_bucket = [&](int64_t qcnt) {
-      if (qcnt <= 0) {
-        chunk_convert_sem_tree_.q_unknown++;
-        return;
-      }
-      switch (qcnt) {
-      case 1: chunk_convert_sem_tree_.q1++; return;
-      case 2: chunk_convert_sem_tree_.q2++; return;
-      case 3: chunk_convert_sem_tree_.q3++; return;
-      case 4: chunk_convert_sem_tree_.q4++; return;
-      case 5: chunk_convert_sem_tree_.q5++; return;
-      case 6: chunk_convert_sem_tree_.q6++; return;
-      case 7: chunk_convert_sem_tree_.q7++; return;
-      default: chunk_convert_sem_tree_.q8_plus++; return;
-      }
+      int64_t key = (qcnt <= 0) ? -1 : qcnt;
+      chunk_convert_sem_tree_.by_question_count[key]++;
     };
     for (const auto &[tx_key, rows] : tx_split_) {
       for (const auto &row : rows) {
@@ -1420,15 +1408,11 @@ BuildProgress EventBuilder::commit_chunk(CommitPayload payload) {
     save_cnt("sem_convert_total", cst.total);
     save_cnt("sem_convert_amount_zero", cst.amount_zero);
     save_cnt("sem_convert_amount_positive", cst.amount_positive);
-    save_cnt("sem_convert_q_unknown", cst.q_unknown);
-    save_cnt("sem_convert_q1", cst.q1);
-    save_cnt("sem_convert_q2", cst.q2);
-    save_cnt("sem_convert_q3", cst.q3);
-    save_cnt("sem_convert_q4", cst.q4);
-    save_cnt("sem_convert_q5", cst.q5);
-    save_cnt("sem_convert_q6", cst.q6);
-    save_cnt("sem_convert_q7", cst.q7);
-    save_cnt("sem_convert_q8_plus", cst.q8_plus);
+    for (const auto &[qcnt, cnt] : cst.by_question_count) {
+      std::string key = (qcnt < 0) ? "sem_convert_qcnt_unknown"
+                                   : ("sem_convert_qcnt_" + std::to_string(qcnt));
+      save_cnt(key.c_str(), cnt);
+    }
     save_cnt("sem_convert_consumed", cst.consumed);
 
     const auto &ost = progress_.order_sem_tree;

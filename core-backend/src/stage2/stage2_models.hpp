@@ -324,30 +324,17 @@ struct ConvertSemanticTree {
   int64_t total = 0;
   int64_t amount_zero = 0;
   int64_t amount_positive = 0;
-  int64_t q_unknown = 0;
-  int64_t q1 = 0;
-  int64_t q2 = 0;
-  int64_t q3 = 0;
-  int64_t q4 = 0;
-  int64_t q5 = 0;
-  int64_t q6 = 0;
-  int64_t q7 = 0;
-  int64_t q8_plus = 0;
+  // key: question_count, -1 means unknown(q_count <= 0)
+  std::unordered_map<int64_t, int64_t> by_question_count;
   int64_t consumed = 0;
 
   ConvertSemanticTree &operator+=(const ConvertSemanticTree &o) {
     total += o.total;
     amount_zero += o.amount_zero;
     amount_positive += o.amount_positive;
-    q_unknown += o.q_unknown;
-    q1 += o.q1;
-    q2 += o.q2;
-    q3 += o.q3;
-    q4 += o.q4;
-    q5 += o.q5;
-    q6 += o.q6;
-    q7 += o.q7;
-    q8_plus += o.q8_plus;
+    for (const auto &[qcnt, cnt] : o.by_question_count) {
+      by_question_count[qcnt] += cnt;
+    }
     consumed += o.consumed;
     return *this;
   }

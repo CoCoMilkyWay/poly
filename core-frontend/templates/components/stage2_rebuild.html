@@ -352,14 +352,25 @@
       ];
     }
 
+    function s2FmtSig(n, sig = 5) {
+      if (!Number.isFinite(n)) return "-";
+      if (n === 0) return "0";
+      if (Number.isInteger(n)) return String(n);
+      return Number(n).toPrecision(sig).replace(/\.?0+$/g, "");
+    }
+
     function s2Fmt(n) {
-      if (n >= 1000000) return (n / 1000000).toFixed(1) + "M";
-      if (n >= 1000) return (n / 1000).toFixed(1) + "K";
-      return String(n);
+      const v = Number(n || 0);
+      const abs = Math.abs(v);
+      if (abs >= 1000000) return s2FmtSig(v / 1000000, 5) + "M";
+      if (abs >= 1000) return s2FmtSig(v / 1000, 5) + "K";
+      return s2FmtSig(v, 5);
     }
 
     function s2FmtNum(n) {
-      return n.toLocaleString();
+      const v = Number(n || 0);
+      if (Number.isInteger(v)) return v.toLocaleString();
+      return s2FmtSig(v, 5);
     }
 
     let s2LastCursor = 0;
@@ -1531,6 +1542,18 @@
 
     function s2BuildConvertSemTree(s) {
       const t = s.convert_sem_tree || {};
+      const qDict = t.question_counts || {};
+      const qEntries = Object.entries(qDict)
+        .map(([k, v]) => [k, Number(v || 0)])
+        .filter(([, v]) => v > 0)
+        .sort((a, b) => b[1] - a[1]);
+      const qChildren = qEntries.map(([k, v]) => ({
+        id: `convert_sem_q_${k}`,
+        label: k === "unknown" ? "Unknown" : `Q=${k}`,
+        value: v,
+        color: "#67e8f9",
+      }));
+      const qTotal = qEntries.reduce((acc, [, v]) => acc + v, 0);
       return {
         id: "convert_sem",
         label: "Convert语义表",
@@ -1552,21 +1575,9 @@
           {
             id: "convert_sem_questions",
             label: "Question数",
-            value:
-              (t.q_unknown || 0) + (t.q1 || 0) + (t.q2 || 0) + (t.q3 || 0) + (t.q4 || 0) +
-              (t.q5 || 0) + (t.q6 || 0) + (t.q7 || 0) + (t.q8_plus || 0),
+            value: qTotal,
             color: "#22d3ee",
-            children: [
-              { id: "convert_sem_q_unknown", label: "Unknown", value: t.q_unknown || 0, color: "#67e8f9" },
-              { id: "convert_sem_q1", label: "Q=1", value: t.q1 || 0, color: "#67e8f9" },
-              { id: "convert_sem_q2", label: "Q=2", value: t.q2 || 0, color: "#67e8f9" },
-              { id: "convert_sem_q3", label: "Q=3", value: t.q3 || 0, color: "#67e8f9" },
-              { id: "convert_sem_q4", label: "Q=4", value: t.q4 || 0, color: "#67e8f9" },
-              { id: "convert_sem_q5", label: "Q=5", value: t.q5 || 0, color: "#67e8f9" },
-              { id: "convert_sem_q6", label: "Q=6", value: t.q6 || 0, color: "#67e8f9" },
-              { id: "convert_sem_q7", label: "Q=7", value: t.q7 || 0, color: "#67e8f9" },
-              { id: "convert_sem_q8_plus", label: "Q>=8", value: t.q8_plus || 0, color: "#67e8f9" },
-            ],
+            children: qChildren,
           },
           {
             id: "convert_sem_consume",

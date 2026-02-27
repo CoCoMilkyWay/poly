@@ -530,17 +530,14 @@ void ApiSession::handle_rebuild_status() {
       {"total", cst.total},
       {"amount_zero", cst.amount_zero},
       {"amount_positive", cst.amount_positive},
-      {"q_unknown", cst.q_unknown},
-      {"q1", cst.q1},
-      {"q2", cst.q2},
-      {"q3", cst.q3},
-      {"q4", cst.q4},
-      {"q5", cst.q5},
-      {"q6", cst.q6},
-      {"q7", cst.q7},
-      {"q8_plus", cst.q8_plus},
       {"consumed", cst.consumed},
   };
+  json question_counts = json::object();
+  for (const auto &[qcnt, cnt] : cst.by_question_count) {
+    std::string key = (qcnt < 0) ? "unknown" : std::to_string(qcnt);
+    question_counts[key] = cnt;
+  }
+  convert_sem_tree["question_counts"] = question_counts;
   json order_sem_tree = {
       {"total", ost.total},
       {"maker_buy", ost.maker_buy},

@@ -451,15 +451,20 @@ void EventBuilder::load_from_rb() {
     cst.total = load("sem_convert_total");
     cst.amount_zero = load("sem_convert_amount_zero");
     cst.amount_positive = load("sem_convert_amount_positive");
-    cst.q_unknown = load("sem_convert_q_unknown");
-    cst.q1 = load("sem_convert_q1");
-    cst.q2 = load("sem_convert_q2");
-    cst.q3 = load("sem_convert_q3");
-    cst.q4 = load("sem_convert_q4");
-    cst.q5 = load("sem_convert_q5");
-    cst.q6 = load("sem_convert_q6");
-    cst.q7 = load("sem_convert_q7");
-    cst.q8_plus = load("sem_convert_q8_plus");
+    cst.by_question_count.clear();
+    static const std::string kConvertQPrefix = "sem_convert_qcnt_";
+    for (const auto &[key, value] : sem_saved) {
+      if (key.rfind(kConvertQPrefix, 0) != 0) {
+        continue;
+      }
+      std::string suffix = key.substr(kConvertQPrefix.size());
+      if (suffix == "unknown") {
+        cst.by_question_count[-1] += value;
+        continue;
+      }
+      int64_t qcnt = std::stoll(suffix);
+      cst.by_question_count[qcnt] += value;
+    }
     cst.consumed = load("sem_convert_consumed");
 
     auto &ost = progress_.order_sem_tree;
