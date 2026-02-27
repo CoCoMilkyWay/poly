@@ -75,9 +75,6 @@ TransferClass EventBuilder::classify_and_emit(
       }
     }
   }
-  bool tx_has_semantic_windows = (op_bounds_it != tx_op_bounds_.end() &&
-                                  !op_bounds_it->second.empty());
-
   int64_t split_price = (known_token && is_usdc_collateral(collateral)) ? (1000000 / outcome_cnt) : 0;
 
   // Lambda: 匹配 Split/Merge/Redemption 时，已知 token 需要检查 cond_id
@@ -87,19 +84,11 @@ TransferClass EventBuilder::classify_and_emit(
   auto semantic_log_matches = [&](int64_t info_log_index) {
     return active_semantic_log >= 0 && info_log_index == active_semantic_log;
   };
-  auto select_window_or_tx = [&](auto *window_matched, auto *tx_matched,
-                                 int window_match_count, int tx_match_count,
-                                 const char *window_rule, const char *tx_rule) {
-    using PtrT = decltype(window_matched);
+  auto select_window_only = [&](auto *window_matched,
+                                int window_match_count,
+                                const char *window_rule) {
     stage2_assert(window_match_count <= 1, AssertLevel::L2, "Match", window_rule);
-    if (window_matched != nullptr)
-      return window_matched;
-    // Window channel is strict: once this tx has semantic windows,
-    // generic semantic binding must come from window hits only.
-    if (tx_has_semantic_windows)
-      return static_cast<PtrT>(nullptr);
-    stage2_assert(tx_match_count <= 1, AssertLevel::L2, "Match", tx_rule);
-    return tx_matched;
+    return window_matched;
   };
   auto collateral_matches = [&](const std::string &semantic_collateral_addr) {
     if (semantic_collateral_addr.empty())
@@ -132,72 +121,57 @@ TransferClass EventBuilder::classify_and_emit(
     if (it == tx_split_.end())
       return nullptr;
     SplitInfo *window_matched = nullptr;
-    SplitInfo *tx_matched = nullptr;
     int window_match_count = 0;
-    int tx_match_count = 0;
     for (auto &info : it->second) {
       if (!collateral_matches(info.collateral_token))
         continue;
       if (info.stakeholder == stakeholder && info.amount == amt && cond_matches(info.cond_id)) {
-        tx_matched = &info;
-        tx_match_count++;
         if (semantic_log_matches(info.log_index)) {
           window_matched = &info;
           window_match_count++;
         }
       }
     }
-    return select_window_or_tx(window_matched, tx_matched,
-                               window_match_count, tx_match_count,
-                               "SplitWindowUniqueCandidate", "SplitTxUniqueCandidate");
+    return select_window_only(window_matched, window_match_count,
+                              "SplitWindowUniqueCandidate");
   };
   auto find_merge_info = [&](const std::string &stakeholder, int64_t amt) -> MergeInfo * {
     auto it = tx_merge_.find(tx_key);
     if (it == tx_merge_.end())
       return nullptr;
     MergeInfo *window_matched = nullptr;
-    MergeInfo *tx_matched = nullptr;
     int window_match_count = 0;
-    int tx_match_count = 0;
     for (auto &info : it->second) {
       if (!collateral_matches(info.collateral_token))
         continue;
       if (info.stakeholder == stakeholder && info.amount == amt && cond_matches(info.cond_id)) {
-        tx_matched = &info;
-        tx_match_count++;
         if (semantic_log_matches(info.log_index)) {
           window_matched = &info;
           window_match_count++;
         }
       }
     }
-    return select_window_or_tx(window_matched, tx_matched,
-                               window_match_count, tx_match_count,
-                               "MergeWindowUniqueCandidate", "MergeTxUniqueCandidate");
+    return select_window_only(window_matched, window_match_count,
+                              "MergeWindowUniqueCandidate");
   };
   auto find_redemption_info = [&](const std::string &redeemer) -> RedemptionInfo * {
     auto it = tx_redemption_.find(tx_key);
     if (it == tx_redemption_.end())
       return nullptr;
     RedemptionInfo *window_matched = nullptr;
-    RedemptionInfo *tx_matched = nullptr;
     int window_match_count = 0;
-    int tx_match_count = 0;
     for (auto &info : it->second) {
       if (!collateral_matches(info.collateral_token))
         continue;
       if (info.redeemer == redeemer && cond_matches(info.cond_id)) {
-        tx_matched = &info;
-        tx_match_count++;
         if (semantic_log_matches(info.log_index)) {
           window_matched = &info;
           window_match_count++;
         }
       }
     }
-    return select_window_or_tx(window_matched, tx_matched,
-                               window_match_count, tx_match_count,
-                               "RedeemWindowUniqueCandidate", "RedeemTxUniqueCandidate");
+    return select_window_only(window_matched, window_match_count,
+                              "RedeemWindowUniqueCandidate");
   };
   auto find_fpmm_trade_info = [&](const TxFPMMKey &key, int side,
                                   const std::string &trader, int64_t token_amount) -> FPMMTradeInfo * {
@@ -207,7 +181,11 @@ TransferClass EventBuilder::classify_and_emit(
     FPMMTradeInfo *matched = nullptr;
     int match_count = 0;
     for (auto &info : it->second) {
+      if (!info.requires_erc1155_leg)
+        continue;
       if (info.consumed)
+        continue;
+      if (info.explained_without_direct_leg)
         continue;
       // FPMM emits FPMMBuy/FPMMSell after transfer legs in the same tx.
       // Only allow forward matching within this tx; never match past semantic logs.
@@ -221,11 +199,41 @@ TransferClass EventBuilder::classify_and_emit(
     stage2_assert(match_count <= 1, AssertLevel::L2, "Match", "FPMMTradeUniqueCandidate");
     return matched;
   };
-  auto has_pending_future_fpmm_trade = [&](const TxFPMMKey &key, int side) {
+  auto mark_fpmm_trade_explained = [&](const TxFPMMKey &key, int side) -> bool {
+    auto it = tx_fpmm_trade_.find(key);
+    if (it == tx_fpmm_trade_.end())
+      return false;
+    FPMMTradeInfo *matched = nullptr;
+    int64_t matched_log = 0;
+    for (auto &info : it->second) {
+      if (!info.requires_erc1155_leg)
+        continue;
+      if (info.log_index < base_log_index)
+        continue;
+      if (info.side != side)
+        continue;
+      if (info.consumed || info.explained_without_direct_leg)
+        continue;
+      if (matched == nullptr || info.log_index < matched_log) {
+        matched = &info;
+        matched_log = info.log_index;
+        continue;
+      }
+      stage2_assert(info.log_index != matched_log, AssertLevel::L2, "Match",
+                    "FPMMTradeExplainSameLogTie");
+    }
+    if (matched == nullptr)
+      return false;
+    matched->explained_without_direct_leg = true;
+    return true;
+  };
+  auto has_pending_future_fpmm_trade_side = [&](const TxFPMMKey &key, int side) {
     auto it = tx_fpmm_trade_.find(key);
     if (it == tx_fpmm_trade_.end())
       return false;
     for (const auto &info : it->second) {
+      if (!info.requires_erc1155_leg)
+        continue;
       if (info.log_index < base_log_index)
         continue;
       if (info.side != side)
@@ -234,33 +242,6 @@ TransferClass EventBuilder::classify_and_emit(
         return true;
     }
     return false;
-  };
-  auto mark_fpmm_trade_explained = [&](const TxFPMMKey &key, int side) -> bool {
-    auto it = tx_fpmm_trade_.find(key);
-    if (it == tx_fpmm_trade_.end())
-      return false;
-    FPMMTradeInfo *matched = nullptr;
-    int match_count = 0;
-    bool has_consumed_match = false;
-    for (auto &info : it->second) {
-      if (info.log_index < base_log_index)
-        continue;
-      if (info.side != side)
-        continue;
-      if (info.consumed) {
-        has_consumed_match = true;
-        continue;
-      }
-      matched = &info;
-      match_count++;
-    }
-    stage2_assert(match_count <= 1, AssertLevel::L2, "Match", "FPMMTradeExplainUniqueCandidate");
-    if (has_consumed_match)
-      return true;
-    if (matched == nullptr)
-      return false;
-    matched->explained_without_direct_leg = true;
-    return true;
   };
   auto funding_split_amount = [&](const FPMMFundingInfo &info) -> int64_t {
     stage2_assert(!info.amounts.empty(), AssertLevel::L0, "Input", "FundingAmountsNonEmpty");
@@ -315,27 +296,72 @@ TransferClass EventBuilder::classify_and_emit(
     stage2_assert(match_count <= 1, AssertLevel::L2, "Match", "FPMMFundingUniqueCandidate");
     return matched;
   };
-  auto has_pending_future_fpmm_funding = [&](const TxFPMMKey &key, int side) {
+  auto has_pending_future_fpmm_add_for_mint = [&](const TxFPMMKey &key, int64_t transfer_amount) {
     auto it = tx_fpmm_funding_.find(key);
     if (it == tx_fpmm_funding_.end())
       return false;
     for (const auto &info : it->second) {
       if (info.log_index < base_log_index)
         continue;
-      if (info.side != side)
+      if (info.side != 1 || info.amounts.empty())
         continue;
-      if (side == 2) {
-        bool all_zero = true;
-        for (int64_t amount_i : info.amounts) {
-          if (amount_i != 0) {
-            all_zero = false;
-            break;
-          }
-        }
-        if (all_zero)
-          continue;
+      if (info.consumed_count != 0)
+        continue;
+      int64_t split_amount = funding_split_amount(info);
+      if (split_amount == transfer_amount)
+        return true;
+    }
+    return false;
+  };
+  auto has_pending_future_fpmm_add_for_refund = [&](const TxFPMMKey &key, int64_t transfer_amount) {
+    auto it = tx_fpmm_funding_.find(key);
+    if (it == tx_fpmm_funding_.end())
+      return false;
+    for (const auto &info : it->second) {
+      if (info.log_index < base_log_index)
+        continue;
+      if (info.side != 1 || info.amounts.empty())
+        continue;
+      if (info.consumed_count != 0)
+        continue;
+      int64_t split_amount = funding_split_amount(info);
+      if (known_token && token_idx != UNKNOWN_TOKEN_IDX &&
+          token_idx < info.amounts.size()) {
+        int64_t expected_refund = split_amount - info.amounts[token_idx];
+        if (expected_refund == transfer_amount)
+          return true;
+        continue;
       }
-      if (info.consumed_count == 0)
+      for (int64_t amount_i : info.amounts) {
+        if (split_amount - amount_i == transfer_amount)
+          return true;
+      }
+    }
+    return false;
+  };
+  auto has_pending_future_fpmm_remove_for_transfer = [&](const TxFPMMKey &key,
+                                                         const std::string &funder,
+                                                         int64_t transfer_amount) {
+    auto it = tx_fpmm_funding_.find(key);
+    if (it == tx_fpmm_funding_.end())
+      return false;
+    for (const auto &info : it->second) {
+      if (info.log_index < base_log_index)
+        continue;
+      if (info.side != 2)
+        continue;
+      if (info.funder != funder)
+        continue;
+      bool all_zero = true;
+      for (int64_t amount_i : info.amounts) {
+        if (amount_i != 0) {
+          all_zero = false;
+          break;
+        }
+      }
+      if (all_zero || info.consumed_count != 0)
+        continue;
+      if (funding_matches_remove_amount(info, transfer_amount))
         return true;
     }
     return false;
@@ -368,24 +394,19 @@ TransferClass EventBuilder::classify_and_emit(
     if (it == tx_order_.end())
       return nullptr;
     OrderInfo *window_matched = nullptr;
-    OrderInfo *tx_matched = nullptr;
     int window_match_count = 0;
-    int tx_match_count = 0;
     for (auto &info : it->second) {
       if (info.consumed)
         continue;
       if (info.tokens == amount) {
-        tx_matched = &info;
-        tx_match_count++;
         if (semantic_log_matches(info.log_index)) {
           window_matched = &info;
           window_match_count++;
         }
       }
     }
-    return select_window_or_tx(window_matched, tx_matched,
-                               window_match_count, tx_match_count,
-                               "OrderWindowUniqueCandidate", "OrderTxUniqueCandidate");
+    return select_window_only(window_matched, window_match_count,
+                              "OrderWindowUniqueCandidate");
   };
   auto find_convert_info = [&](const std::string &market_id,
                                const std::string &stakeholder,
@@ -395,22 +416,17 @@ TransferClass EventBuilder::classify_and_emit(
     if (it == tx_convert_.end())
       return nullptr;
     ConvertInfo *window_matched = nullptr;
-    ConvertInfo *tx_matched = nullptr;
     int window_match_count = 0;
-    int tx_match_count = 0;
     for (auto &info : it->second) {
       if (info.stakeholder != stakeholder || info.amount != amt)
         continue;
-      tx_matched = &info;
-      tx_match_count++;
       if (semantic_log_matches(info.log_index)) {
         window_matched = &info;
         window_match_count++;
       }
     }
-    return select_window_or_tx(window_matched, tx_matched,
-                               window_match_count, tx_match_count,
-                               "ConvertWindowUniqueCandidate", "ConvertTxUniqueCandidate");
+    return select_window_only(window_matched, window_match_count,
+                              "ConvertWindowUniqueCandidate");
   };
   auto consume_split = [&](SplitInfo *info) {
     if (info != nullptr)
@@ -710,12 +726,12 @@ TransferClass EventBuilder::classify_and_emit(
         }
         return TransferClass::InternalMintFPMM;
       }
-      stage2_assert(!has_pending_future_fpmm_funding(tx_fpmm_key, 1),
+      stage2_assert(!has_pending_future_fpmm_add_for_mint(tx_fpmm_key, amount),
                     AssertLevel::L3, "FPMMFunding", "LPAddMintLegMatchOrNoFunding");
       bind_root(RootOpType::FPMMTrade, "buy_internal_split_mint");
       cover_split(split_match);
       bool explained = mark_fpmm_trade_explained(tx_fpmm_key, 1);
-      stage2_assert(explained || !tx_fpmm_trade_.count(tx_fpmm_key),
+      stage2_assert(explained || !has_pending_future_fpmm_trade_side(tx_fpmm_key, 1),
                     AssertLevel::L3, "FPMMTrade", "BuyExplainableOnInternalMint");
       return TransferClass::InternalMintFPMM;
     }
@@ -725,7 +741,7 @@ TransferClass EventBuilder::classify_and_emit(
       bind_root(RootOpType::FPMMTrade, "sell_internal_merge_burn");
       cover_merge(find_merge_info(from, amount));
       bool explained = mark_fpmm_trade_explained(tx_fpmm_key, 2);
-      stage2_assert(explained || !tx_fpmm_trade_.count(tx_fpmm_key),
+      stage2_assert(explained || !has_pending_future_fpmm_trade_side(tx_fpmm_key, 2),
                     AssertLevel::L3, "FPMMTrade", "SellExplainableOnInternalBurn");
       return TransferClass::InternalBurnFPMM;
     }
@@ -792,12 +808,10 @@ TransferClass EventBuilder::classify_and_emit(
         return TransferClass::FPMMLPRemove;
       }
 
-      stage2_assert(!has_pending_future_fpmm_funding(tx_fpmm_key, 1),
+      stage2_assert(!has_pending_future_fpmm_add_for_refund(tx_fpmm_key, amount),
                     AssertLevel::L3, "FPMMFunding", "TransferWithoutFundingLegMatch");
-      stage2_assert(!has_pending_future_fpmm_funding(tx_fpmm_key, 2),
+      stage2_assert(!has_pending_future_fpmm_remove_for_transfer(tx_fpmm_key, to, amount),
                     AssertLevel::L3, "FPMMFunding", "TransferWithoutFundingLegMatch");
-      stage2_assert(!has_pending_future_fpmm_trade(tx_fpmm_key, 1),
-                    AssertLevel::L3, "FPMMTrade", "TransferWithoutTradeLegMatch");
       if (known_token) {
         emit_if_user(to, RawEvent{sort_key, cond_idx, EventType::TransferInOther, token_idx, coll, 0, amount, 0});
         return classify_transfer_by_counterparty(TransferClass::TransferInOther,
@@ -820,8 +834,6 @@ TransferClass EventBuilder::classify_and_emit(
         emit_if_user(from, RawEvent{sort_key, cond_idx, EventType::FPMMSell, token_idx, coll, 0, -amount, price});
         return TransferClass::FPMMSell;
       }
-      stage2_assert(!has_pending_future_fpmm_trade(tx_fpmm_key, 2),
-                    AssertLevel::L3, "FPMMTrade", "TransferWithoutTradeLegMatch");
       if (known_token) {
         emit_if_user(from, RawEvent{sort_key, cond_idx, EventType::TransferOutOther, token_idx, coll, 0, -amount, 0});
         return classify_transfer_by_counterparty(TransferClass::TransferInOther,

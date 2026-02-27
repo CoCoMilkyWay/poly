@@ -458,12 +458,15 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
       info.fpmm_addr = fpmm_addr;
       info.trader = get_hex_lower(fpmm_trade, 4, i);
       info.side = fpmm_trade->GetValue(5, i).GetValue<int>();
+      stage2_assert(info.side == 1 || info.side == 2,
+                    AssertLevel::L0, "Input", "FPMMTradeSideRange");
       int64_t outcome_idx = get_u256_i64(fpmm_trade, 6, i);
       stage2_assert(outcome_idx >= 0 && outcome_idx <= std::numeric_limits<int>::max(),
                       AssertLevel::L0, "Input", "OutcomeIdxFitsInt");
       info.outcome_idx = static_cast<int>(outcome_idx);
       info.usdc = get_u256_i64(fpmm_trade, 7, i);
       info.tokens = get_u256_i64(fpmm_trade, 8, i);
+      info.requires_erc1155_leg = (info.tokens > 0 && info.trader != info.fpmm_addr);
       tx_fpmm_trade_[key].push_back(info);
       record_semantic(tx_key, info.log_index);
     }
@@ -626,8 +629,8 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
   }
   for (const auto &[_, rows] : tx_fpmm_trade_) {
     for (const auto &row : rows) {
-      stage2_assert(row.consumed || row.explained_without_direct_leg,
-                      AssertLevel::L4, "Consume", "FPMMTradeConsumedOrExplained");
+      stage2_assert(!row.requires_erc1155_leg || row.consumed || row.explained_without_direct_leg,
+                    AssertLevel::L4, "Consume", "FPMMTradeConsumedOrExplained");
     }
   }
   for (const auto &[_, rows] : tx_convert_) {

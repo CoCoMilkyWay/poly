@@ -246,6 +246,8 @@ struct FPMMTradeInfo {
   int outcome_idx;
   int64_t usdc;
   int64_t tokens;
+  // Whether this semantic row is expected to have a consumable ERC1155 leg.
+  bool requires_erc1155_leg = true;
   bool consumed = false;
   bool explained_without_direct_leg = false;
 };

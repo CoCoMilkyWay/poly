@@ -208,9 +208,13 @@ phase3_process_transfers(chunk)
 │  │  │  ├─ redemption: redeemer + cond_id + collateral + parent + index_sets + direction
 │  │  │  ├─ convert: market_id + stakeholder + index_set + operator路径(NEG_RISK_ADAPTER)
 │  │  │  ├─ order: token_id + maker/taker + maker_side + usdc/tokens
-│  │  │  ├─ trade/lp: fpmm_addr + side + token_amount/transfer_amount
+│  │  │  ├─ trade/lp: fpmm_addr + side + actor(trader/funder) + token_amount/transfer_amount
+│  │  │  │  ├─ trade_leg_required = (tokens > 0 && trader != fpmm_addr)
+│  │  │  │  ├─ lp_add_mint: split_amount == transfer_amount(max(amounts))
+│  │  │  │  ├─ lp_add_refund: transfer_amount == split_amount - amounts[token_idx|任意腿]
+│  │  │  │  └─ lp_remove: funder == counterparty 且 transfer_amount ∈ amounts
 │  │  │  └─ unknown token 仅在通过结构约束时可绑定，不以“地址像不像”放宽
-│  │  ├─ FPMM from==pool 多候选决策: 取最近未来语义log；同log并列 -> assert(false)
+│  │  ├─ FPMM trade多候选决策: 在“trade_leg_required 且 未消费 且 未解释”候选中取最近未来语义log；同log并列 -> assert(false)
 │  │  ├─ 多候选同时命中 -> assert(false)
 │  │  └─ 唯一命中 -> 记录 root_op + leg_type，并更新 consumed/covered
 │  ├─ Pass B: 分类与事件产出
@@ -218,7 +222,8 @@ phase3_process_transfers(chunk)
 │  │  │  ├─ split: 支持 parent burn + child mint 多腿消费；含 0->FPMM 内部 mint 腿先消费 split 再落 InternalMintFPMM
 │  │  │  ├─ merge: 支持多条 burn + parent mint（若存在）；含 FPMM->0 内部 burn 腿先消费 merge 再落 InternalBurnFPMM
 │  │  │  ├─ redemption: 支持 index_sets 对应的多条 burn
-│  │  │  └─ convert: 保持 InternalBurnConvert + Convert + (YES侧 SplitNegRisk/TransferInNegRisk) 三段路径
+│  │  │  ├─ convert: 保持 InternalBurnConvert + Convert + (YES侧 SplitNegRisk/TransferInNegRisk) 三段路径
+│  │  │  └─ FPMM内部腿 explain: 在同side的“trade_leg_required 且 未消费 且 未解释”候选中取最近未来语义log；若已无待解释候选则允许直接通过
 │  │  ├─ 未绑定 transfer: fallback 到 TransferIn*/TransferOut*/Internal*
 │  │  ├─ amount==0 -> InternalTransferZero（若命中FPMM trade语义则先消费语义，再按零值分类）
 │  │  ├─ N outcome 支持: known token_idx ∈ [0, outcome_count), unknown=255
@@ -251,7 +256,7 @@ phase3_process_transfers(chunk)
 │  ├─ assert(每条transfer消费次数 <= 1)
 │  ├─ assert(op消费闭环: 每个语义 op 都满足“已消费或可解释例外”)
 │  │  ├─ order: consumed=true
-│  │  ├─ trade: consumed=true 或 explained_without_direct_leg=true
+│  │  ├─ trade: (!trade_leg_required) 或 consumed=true 或 explained_without_direct_leg=true
 │  │  ├─ convert: consumed_count>0
 │  │  ├─ funding: consumed_count>0；FundingRemoved amounts 全零允许零腿
 │  │  ├─ split: consumed_count>0 或 covered_by_parent=true；amount==0 允许零腿
@@ -282,21 +287,12 @@ phase3_process_transfers(chunk)
    ├─ FPMMBuy/FPMMSell   -> m(trade)
    └─ FPMMFunding*       -> m(lp_add/lp_refund/lp_remove)
 
-匹配原则
-├─ 一次绑定：每条 transfer 最多绑定一个 root，重复绑定直接 assert(L2)
-├─ 先绑定再分类：实现可单遍，但语义等价于“先确定绑定，再按绑定结果分类”
-├─ 绑定边界：仅同 tx；窗口通道处理通用语义，FPMM通道允许前向匹配未来语义（不回看过去，不跨 tx/block）
-├─ 窗口优先：若该 tx 存在语义窗口(op_bounds 命中)，split/merge/redeem/convert/order 仅接受窗口命中
-├─ tx回退：仅当该 tx 不存在语义窗口(op_bounds 缺失)时，才允许上述语义按 tx 级回退匹配
-├─ 判定规则：只用硬约束；多候选并列一律 assert(false)
-└─ fallback：仅处理未绑定 transfer，且必须可解释
-
 断言层级（Assertion Hierarchy）
 ├─ L0 输入/结构层：schema/type/range/u256解析合法
 ├─ L1 映射不变量层：cond/token/collateral/fpmm 映射一致；outcome_count 合法且仅扩展不回退；coll_map 对多来源冲突做确定性规范化
-├─ L2 匹配唯一性层：窗口候选命中数 <= 1；tx级候选仅在无窗口回退时要求 <= 1
+├─ L2 匹配唯一性层：窗口候选命中数 <= 1；同层并列歧义直接 assert
 ├─ L3 语义约束层：命中后必须满足 actor/cond/collateral/amount/direction/window 等硬约束
-├─ L4 语义消费闭环层：chunk 收尾每类语义 op 必须“已消费或显式例外（含 split/merge amount==0、redeem payout==0 零腿）”
+├─ L4 语义消费闭环层：chunk 收尾每类语义 op 必须“已消费或显式例外（含 split/merge amount==0、redeem payout==0、trade !trade_leg_required 零腿）”
 └─ L5 结果守恒层：total 守恒、unclassified==0、树统计恒等式成立
 
 TransferClass输出事件(33类, 唯一落类)
@@ -332,7 +328,7 @@ Phase3中间结构 (chunk内存)
 │  ├─ SplitInfo/MergeInfo/RedemptionInfo {consumed_count, covered_by_parent}
 │  ├─ ConvertInfo {consumed_count}
 │  ├─ OrderInfo {consumed}
-│  ├─ FPMMTradeInfo {consumed, explained_without_direct_leg}
+│  ├─ FPMMTradeInfo {requires_erc1155_leg, consumed, explained_without_direct_leg}
 │  └─ FPMMFundingInfo {consumed_count}
 └─ TxOpBounds
    └─ {left_exclusive, right_inclusive}
