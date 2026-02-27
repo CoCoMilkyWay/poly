@@ -118,6 +118,14 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
         std::string cid = q_get_hex(cp, 0, i);
         int cnt = get_u256_i32(cp, 1, i);
         std::string qid = q_get_hex_lower(cp, 2, i);
+        progress_.market_tree.raw_total_rows++;
+        progress_.market_tree.raw_by_outcome_count[cnt]++;
+        if (!qid.empty() &&
+            qid != "0x0000000000000000000000000000000000000000000000000000000000000000") {
+          progress_.market_tree.raw_has_question_id++;
+        } else {
+          progress_.market_tree.raw_no_question_id++;
+        }
         intern_condition(cid, cnt, ConditionSource::ConditionPrep, qid);
       }
     }
@@ -1426,6 +1434,38 @@ BuildProgress EventBuilder::commit_chunk(CommitPayload payload) {
     save_cnt("sem_order_observed_leg", ost.observed_leg);
     save_cnt("sem_order_consumed", ost.consumed);
     save_cnt("sem_order_unobserved_leg", ost.unobserved_leg);
+
+    const auto &mt = progress_.market_tree;
+    save_cnt("sem_market_observed_total", mt.observed_total);
+    save_cnt("sem_market_observed_polymarket", mt.observed_polymarket);
+    save_cnt("sem_market_observed_other", mt.observed_other);
+    save_cnt("sem_market_observed_negrisk", mt.observed_negrisk);
+    save_cnt("sem_market_observed_resolved", mt.observed_resolved);
+    save_cnt("sem_market_observed_unresolved", mt.observed_unresolved);
+    save_cnt("sem_market_observed_has_market_id", mt.observed_has_market_id);
+    save_cnt("sem_market_observed_no_market_id", mt.observed_no_market_id);
+    save_cnt("sem_market_observed_token_none", mt.observed_token_none);
+    save_cnt("sem_market_observed_token_partial", mt.observed_token_partial);
+    save_cnt("sem_market_observed_token_full", mt.observed_token_full);
+    save_cnt("sem_market_raw_total_rows", mt.raw_total_rows);
+    save_cnt("sem_market_raw_has_question_id", mt.raw_has_question_id);
+    save_cnt("sem_market_raw_no_question_id", mt.raw_no_question_id);
+    for (const auto &[k, v] : mt.observed_by_outcome_count) {
+      std::string key = "sem_market_observed_outcome_" + std::to_string(k);
+      save_cnt(key.c_str(), v);
+    }
+    for (const auto &[k, v] : mt.observed_by_source) {
+      std::string key = "sem_market_observed_source_" + std::to_string(k);
+      save_cnt(key.c_str(), v);
+    }
+    for (const auto &[k, v] : mt.observed_by_collateral) {
+      std::string key = "sem_market_observed_collateral_" + std::to_string(static_cast<int>(k));
+      save_cnt(key.c_str(), v);
+    }
+    for (const auto &[k, v] : mt.raw_by_outcome_count) {
+      std::string key = "sem_market_raw_outcome_" + std::to_string(k);
+      save_cnt(key.c_str(), v);
+    }
     ap.Close();
   }
   exec_sql("INSERT OR REPLACE INTO stage2_cursor SELECT * FROM tmp_stage2_cursor");

@@ -500,6 +500,7 @@ void ApiSession::handle_rebuild_status() {
   const auto &mst = p.merge_sem_tree;
   const auto &cst = p.convert_sem_tree;
   const auto &ost = p.order_sem_tree;
+  const auto &mkt = p.market_tree;
   json split_sem_tree = {
       {"total", sst.total},
       {"amount_zero", sst.amount_zero},
@@ -550,6 +551,42 @@ void ApiSession::handle_rebuild_status() {
       {"consumed", ost.consumed},
       {"unobserved_leg", ost.unobserved_leg},
   };
+  json market_tree = {
+      {"observed_total", mkt.observed_total},
+      {"observed_polymarket", mkt.observed_polymarket},
+      {"observed_other", mkt.observed_other},
+      {"observed_negrisk", mkt.observed_negrisk},
+      {"observed_resolved", mkt.observed_resolved},
+      {"observed_unresolved", mkt.observed_unresolved},
+      {"observed_has_market_id", mkt.observed_has_market_id},
+      {"observed_no_market_id", mkt.observed_no_market_id},
+      {"observed_token_none", mkt.observed_token_none},
+      {"observed_token_partial", mkt.observed_token_partial},
+      {"observed_token_full", mkt.observed_token_full},
+      {"raw_total_rows", mkt.raw_total_rows},
+      {"raw_has_question_id", mkt.raw_has_question_id},
+      {"raw_no_question_id", mkt.raw_no_question_id},
+  };
+  json observed_by_outcome = json::object();
+  for (const auto &[k, v] : mkt.observed_by_outcome_count) {
+    observed_by_outcome[std::to_string(k)] = v;
+  }
+  market_tree["observed_by_outcome_count"] = observed_by_outcome;
+  json observed_by_source = json::object();
+  for (const auto &[k, v] : mkt.observed_by_source) {
+    observed_by_source[std::to_string(k)] = v;
+  }
+  market_tree["observed_by_source"] = observed_by_source;
+  json observed_by_coll = json::object();
+  for (const auto &[k, v] : mkt.observed_by_collateral) {
+    observed_by_coll[std::to_string(k)] = v;
+  }
+  market_tree["observed_by_collateral"] = observed_by_coll;
+  json raw_by_outcome = json::object();
+  for (const auto &[k, v] : mkt.raw_by_outcome_count) {
+    raw_by_outcome[std::to_string(k)] = v;
+  }
+  market_tree["raw_by_outcome_count"] = raw_by_outcome;
 
   json result = {
       {"phase", p.phase},
@@ -563,6 +600,7 @@ void ApiSession::handle_rebuild_status() {
       {"merge_sem_tree", merge_sem_tree},
       {"convert_sem_tree", convert_sem_tree},
       {"order_sem_tree", order_sem_tree},
+      {"market_tree", market_tree},
   };
   result.update(transfer_tree);
 

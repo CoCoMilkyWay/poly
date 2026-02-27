@@ -34,6 +34,20 @@ Stage2Sync (timer驱动, boost::asio)
 ```
 **崩溃恢复**: 从 stage2_cursor 断点重做，语义索引不持久化
 
+市场树 (`s2-market-tree`)
+└─ 市场(广义)  // desc: Observed + Raw 双口径总览; scene: 已出现condition与原始market行合并展示
+   ├─ ObservedMarket  // desc: 旧口径; scene: stage2已构建condition实体
+   │  ├─ Ownership  // desc: 归属分布; scene: Polymarket/Other/NegRisk
+   │  ├─ Source  // desc: condition来源分布; scene: ConditionSource动态聚合(by_source)
+   │  ├─ Outcome  // desc: outcome_count分布; scene: 动态聚合(by_outcome_count)
+   │  ├─ Resolve  // desc: 解析状态; scene: Resolved/Unresolved
+   │  ├─ Collateral  // desc: collateral覆盖; scene: 动态聚合(by_collateral)
+   │  ├─ Tokenized  // desc: token映射完整度; scene: NoToken/PartialTokenized/FullyTokenized
+   │  └─ MarketLink  // desc: 市场ID关联; scene: HasMarketId/NoMarketId
+   ├─ RawMarket  // desc: 新口径; scene: 按 condition_preparation 原始行统计
+   │  ├─ Outcome  // desc: outcome_slot_count分布; scene: 动态聚合(raw_by_outcome_count)
+   │  └─ QuestionID  // desc: question_id覆盖; scene: HasQuestionId/NoQuestionId
+   └─ Coverage  // desc: 双口径覆盖对比; scene: Observed/RawRows/Observed÷Raw(%)
 
 问题树 (`s2-cond-tree`)
 └─ 问题  // desc: condition分类总览; scene: CTF问题来源分层; 对应: cond_tree.total

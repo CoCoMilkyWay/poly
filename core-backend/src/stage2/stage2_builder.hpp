@@ -532,6 +532,89 @@ private:
                                         tt.other.redemption + tt.other.transfer_inferred,
                   AssertLevel::L5, "Partition", "TokenTreeOtherTotal");
     progress_.token_tree = tt;
+
+    MarketTree mt = progress_.market_tree;
+    mt.observed_total = 0;
+    mt.observed_polymarket = 0;
+    mt.observed_other = 0;
+    mt.observed_negrisk = 0;
+    mt.observed_resolved = 0;
+    mt.observed_unresolved = 0;
+    mt.observed_has_market_id = 0;
+    mt.observed_no_market_id = 0;
+    mt.observed_token_none = 0;
+    mt.observed_token_partial = 0;
+    mt.observed_token_full = 0;
+    mt.observed_by_outcome_count.clear();
+    mt.observed_by_source.clear();
+    mt.observed_by_collateral.clear();
+
+    std::unordered_map<uint32_t, uint16_t> cond_token_mask;
+    cond_token_mask.reserve(token_map_.size());
+    for (const auto &[_, tinfo] : token_map_) {
+      if (tinfo.cond_idx == UNKNOWN_COND_IDX || tinfo.token_idx == UNKNOWN_TOKEN_IDX) {
+        continue;
+      }
+      if (tinfo.token_idx >= MAX_OUTCOMES) {
+        continue;
+      }
+      cond_token_mask[tinfo.cond_idx] |= static_cast<uint16_t>(1u << tinfo.token_idx);
+    }
+
+    for (size_t i = 0; i < conditions_.size(); ++i) {
+      uint32_t idx = static_cast<uint32_t>(i);
+      const auto &info = conditions_[i];
+      mt.observed_total++;
+      mt.observed_by_outcome_count[info.outcome_count]++;
+      mt.observed_by_source[static_cast<int64_t>(info.source)]++;
+
+      bool has_fpmm = fpmm_cond_idxs_.count(idx) > 0;
+      bool has_token_reg = (info.source == ConditionSource::PolymarketTokenReg);
+      bool is_poly = has_token_reg || has_fpmm;
+      if (is_poly) {
+        mt.observed_polymarket++;
+      } else {
+        mt.observed_other++;
+      }
+      if (negrisk_cond_idxs_.count(idx) > 0) {
+        mt.observed_negrisk++;
+      }
+
+      bool resolved = !info.payout_numerators.empty();
+      if (resolved) {
+        mt.observed_resolved++;
+      } else {
+        mt.observed_unresolved++;
+      }
+
+      bool has_market_id = !info.question_id.empty() && cond_to_market_.count(info.question_id) > 0;
+      if (has_market_id) {
+        mt.observed_has_market_id++;
+      } else {
+        mt.observed_no_market_id++;
+      }
+
+      uint8_t coll = static_cast<uint8_t>(Collateral::Unknown);
+      auto coll_it = cond_collateral_.find(idx);
+      if (coll_it != cond_collateral_.end()) {
+        coll = coll_it->second;
+      }
+      mt.observed_by_collateral[coll]++;
+
+      int tokenized = 0;
+      auto tm_it = cond_token_mask.find(idx);
+      if (tm_it != cond_token_mask.end()) {
+        tokenized = __builtin_popcount(static_cast<unsigned int>(tm_it->second));
+      }
+      if (tokenized == 0) {
+        mt.observed_token_none++;
+      } else if (tokenized >= info.outcome_count) {
+        mt.observed_token_full++;
+      } else {
+        mt.observed_token_partial++;
+      }
+    }
+    progress_.market_tree = mt;
   }
 
   void push_event(const std::string &user_addr, const RawEvent &evt) {

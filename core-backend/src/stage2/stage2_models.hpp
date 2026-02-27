@@ -367,6 +367,30 @@ struct OrderSemanticTree {
   }
 };
 
+struct MarketTree {
+  // Observed markets (condition entities already built in stage2 mappings).
+  int64_t observed_total = 0;
+  int64_t observed_polymarket = 0;
+  int64_t observed_other = 0;
+  int64_t observed_negrisk = 0;
+  int64_t observed_resolved = 0;
+  int64_t observed_unresolved = 0;
+  int64_t observed_has_market_id = 0;
+  int64_t observed_no_market_id = 0;
+  int64_t observed_token_none = 0;
+  int64_t observed_token_partial = 0;
+  int64_t observed_token_full = 0;
+  std::unordered_map<int64_t, int64_t> observed_by_outcome_count; // key: outcome_count
+  std::unordered_map<int64_t, int64_t> observed_by_source;        // key: ConditionSource(int)
+  std::unordered_map<uint8_t, int64_t> observed_by_collateral;     // key: CollateralId
+
+  // Raw markets (condition_preparation row-level view).
+  int64_t raw_total_rows = 0;
+  int64_t raw_has_question_id = 0;
+  int64_t raw_no_question_id = 0;
+  std::unordered_map<int64_t, int64_t> raw_by_outcome_count; // key: outcome_count
+};
+
 struct BuildProgress {
   int64_t cursor = 0;
   int64_t target = 0;
@@ -396,6 +420,7 @@ struct BuildProgress {
   MergeSemanticTree merge_sem_tree;
   ConvertSemanticTree convert_sem_tree;
   OrderSemanticTree order_sem_tree;
+  MarketTree market_tree;
   // 按(EventType, CollateralId)分组统计 user_event
   // key: EventType * 256 + CollateralId
   std::unordered_map<uint16_t, int64_t> event_by_collateral;
