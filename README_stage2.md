@@ -210,6 +210,8 @@ phase3_process_transfers(chunk)
 │  │  │  ├─ order: token_id + maker/taker + maker_side + usdc/tokens
 │  │  │  ├─ trade/lp: fpmm_addr + side + actor(trader/funder) + token_amount/transfer_amount
 │  │  │  │  ├─ trade_leg_required = (tokens > 0 && trader != fpmm_addr)
+│  │  │  │  ├─ observed_trade_leg(side1)=存在 {from=fpmm 或 0->fpmm} 的 amount>0 transfer
+│  │  │  │  ├─ observed_trade_leg(side2)=存在 {to=fpmm 或 fpmm->0} 的 amount>0 transfer
 │  │  │  │  ├─ lp_add_mint: split_amount == transfer_amount(max(amounts))
 │  │  │  │  ├─ lp_add_refund: transfer_amount == split_amount - amounts[token_idx|任意腿]
 │  │  │  │  └─ lp_remove: funder == counterparty 且 transfer_amount ∈ amounts
@@ -256,7 +258,8 @@ phase3_process_transfers(chunk)
 │  ├─ assert(每条transfer消费次数 <= 1)
 │  ├─ assert(op消费闭环: 每个语义 op 都满足“已消费或可解释例外”)
 │  │  ├─ order: consumed=true
-│  │  ├─ trade: (!trade_leg_required) 或 consumed=true 或 explained_without_direct_leg=true
+│  │  ├─ trade: !must_consume_or_explain 或 consumed=true 或 explained_without_direct_leg=true
+│  │  │        其中 must_consume_or_explain = trade_leg_required && observed_trade_leg(side)
 │  │  ├─ convert: consumed_count>0
 │  │  ├─ funding: consumed_count>0；FundingRemoved amounts 全零允许零腿
 │  │  ├─ split: consumed_count>0 或 covered_by_parent=true；amount==0 允许零腿
@@ -292,7 +295,7 @@ phase3_process_transfers(chunk)
 ├─ L1 映射不变量层：cond/token/collateral/fpmm 映射一致；outcome_count 合法且仅扩展不回退；coll_map 对多来源冲突做确定性规范化
 ├─ L2 匹配唯一性层：窗口候选命中数 <= 1；同层并列歧义直接 assert
 ├─ L3 语义约束层：命中后必须满足 actor/cond/collateral/amount/direction/window 等硬约束
-├─ L4 语义消费闭环层：chunk 收尾每类语义 op 必须“已消费或显式例外（含 split/merge amount==0、redeem payout==0、trade !trade_leg_required 零腿）”
+├─ L4 语义消费闭环层：chunk 收尾每类语义 op 必须“已消费或显式例外（含 split/merge amount==0、redeem payout==0、trade !must_consume_or_explain 零腿）”
 └─ L5 结果守恒层：total 守恒、unclassified==0、树统计恒等式成立
 
 TransferClass输出事件(33类, 唯一落类)

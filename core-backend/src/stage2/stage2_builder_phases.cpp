@@ -527,6 +527,7 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
       "SELECT block_number, tx_hash, log_index, operator, from_addr, to_addr, token_id, amount FROM ",
       "transfer", start, end,
       " ORDER BY block_number, log_index");
+  std::unordered_map<TxFPMMKey, uint8_t> observed_fpmm_trade_leg_mask;
 
   auto resolve_transfer_collateral = [&](uint32_t cid_idx, const std::string &operator_addr) {
     auto coll_it = cond_collateral_.find(cid_idx);
@@ -557,6 +558,27 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
 
     int64_t sort_key = block * SORT_KEY_SCALE + log_idx;
     auto tx_hash = hex_to_bytes32(get_hex(transfers, 1, i));
+    if (fpmm_map_.find(op) != fpmm_map_.end()) {
+      TxFPMMKey key{block, tx_hash, op};
+      uint8_t mask = observed_fpmm_trade_leg_mask[key];
+      if (from == op && amount > 0) {
+        // side=1(Buy) direct leg: FPMM -> trader
+        mask |= 0x1;
+      }
+      if (to == op && amount > 0) {
+        // side=2(Sell) direct leg: trader -> FPMM
+        mask |= 0x2;
+      }
+      if (from == ZERO_ADDR && to == op && amount > 0) {
+        // side=1(Buy) internal split mint leg: 0 -> FPMM
+        mask |= 0x1;
+      }
+      if (from == op && to == ZERO_ADDR && amount > 0) {
+        // side=2(Sell) internal merge burn leg: FPMM -> 0
+        mask |= 0x2;
+      }
+      observed_fpmm_trade_leg_mask[key] = mask;
+    }
 
     auto tit = token_map_.find(token_id);
 
@@ -627,9 +649,17 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
       stage2_assert(row.consumed, AssertLevel::L4, "Consume", "OrderConsumed");
     }
   }
-  for (const auto &[_, rows] : tx_fpmm_trade_) {
+  for (const auto &[key, rows] : tx_fpmm_trade_) {
     for (const auto &row : rows) {
-      stage2_assert(!row.requires_erc1155_leg || row.consumed || row.explained_without_direct_leg,
+      uint8_t observed_mask = 0;
+      auto mit = observed_fpmm_trade_leg_mask.find(key);
+      if (mit != observed_fpmm_trade_leg_mask.end()) {
+        observed_mask = mit->second;
+      }
+      bool has_observed_leg = (row.side == 1) ? ((observed_mask & 0x1) != 0)
+                                              : ((observed_mask & 0x2) != 0);
+      bool must_consume_or_explain = row.requires_erc1155_leg && has_observed_leg;
+      stage2_assert(!must_consume_or_explain || row.consumed || row.explained_without_direct_leg,
                     AssertLevel::L4, "Consume", "FPMMTradeConsumedOrExplained");
     }
   }
