@@ -213,9 +213,14 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
     }
   }
 
-  auto infer_outcome_count = [&](const std::string &lower_cid, const std::vector<int64_t> &index_sets) -> uint8_t {
+  auto infer_outcome_count = [&](const std::string &lower_cid,
+                                 const duckdb::Value &index_sets_value) -> uint8_t {
+    stage2_assert(index_sets_value.type().id() == duckdb::LogicalTypeId::LIST,
+                  AssertLevel::L0, "Parse", "U256ListType");
+    auto arr = duckdb::ListValue::GetChildren(index_sets_value);
     uint8_t inferred = 0;
-    for (int64_t index_set_i64 : index_sets) {
+    for (const auto &item : arr) {
+      int64_t index_set_i64 = u256_blob_to_i64(item);
       stage2_assert(index_set_i64 >= 0, AssertLevel::L0, "Parse", "IndexSetNonNegative");
       uint64_t index_set = static_cast<uint64_t>(index_set_i64);
       if (index_set == 0) {
@@ -253,11 +258,23 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
       uint8_t outcome_count = 0;
     };
     std::unordered_map<std::string, CondInference> inferred_map;
+    inferred_map.reserve(rows->RowCount());
+    std::unordered_map<std::string, uint8_t> known_collateral_cache;
+    known_collateral_cache.reserve(16);
+    auto cached_known_collateral_id = [&](const std::string &addr) {
+      auto it = known_collateral_cache.find(addr);
+      if (it != known_collateral_cache.end()) {
+        return it->second;
+      }
+      uint8_t coll_id = addr_to_known_collateral_id(addr);
+      known_collateral_cache.emplace(addr, coll_id);
+      return coll_id;
+    };
     auto choose_canonical_collateral = [&](const std::string &lhs, const std::string &rhs) {
       if (lhs == rhs)
         return lhs;
-      uint8_t lhs_id = addr_to_known_collateral_id(lhs);
-      uint8_t rhs_id = addr_to_known_collateral_id(rhs);
+      uint8_t lhs_id = cached_known_collateral_id(lhs);
+      uint8_t rhs_id = cached_known_collateral_id(rhs);
       bool lhs_known = lhs_id != static_cast<uint8_t>(Collateral::Unknown);
       bool rhs_known = rhs_id != static_cast<uint8_t>(Collateral::Unknown);
       // Prefer known collateral over unknown dynamic addresses.
@@ -271,8 +288,7 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
     for (idx_t i = 0; i < rows->RowCount(); ++i) {
       std::string lower_cid = q_get_hex_lower(rows, 0, i);
       std::string collateral = q_get_hex_lower(rows, 1, i);
-      std::vector<int64_t> index_sets = parse_u256_list_i64(rows->GetValue(2, i));
-      uint8_t inferred_count = infer_outcome_count(lower_cid, index_sets);
+      uint8_t inferred_count = infer_outcome_count(lower_cid, rows->GetValue(2, i));
       auto it = inferred_map.find(lower_cid);
       if (it == inferred_map.end()) {
         inferred_map.emplace(lower_cid, CondInference{collateral, inferred_count});
@@ -392,8 +408,12 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
     if (!rows) {
       return;
     }
-    src_rows = static_cast<int64_t>(rows->RowCount());
-    for (idx_t i = 0; i < rows->RowCount(); ++i) {
+    idx_t row_count = rows->RowCount();
+    src_rows = static_cast<int64_t>(row_count);
+    size_t reserve_hint = static_cast<size_t>(row_count);
+    target_map.reserve(target_map.size() + reserve_hint);
+    tx_op_logs.reserve(tx_op_logs.size() + reserve_hint);
+    for (idx_t i = 0; i < row_count; ++i) {
       TxKey key = build_tx_key(rows, i);
       auto info = build_info(rows, i);
       int64_t semantic_log = info.log_index;
@@ -501,22 +521,25 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
     static const std::string ZERO_TOKEN_ID =
         "0x0000000000000000000000000000000000000000000000000000000000000000";
     if (order) {
-      src_order_rows = static_cast<int64_t>(order->RowCount());
-      for (idx_t i = 0; i < order->RowCount(); ++i) {
+      idx_t row_count = order->RowCount();
+      src_order_rows = static_cast<int64_t>(row_count);
+      size_t reserve_hint = static_cast<size_t>(row_count);
+      tx_order_.reserve(tx_order_.size() + reserve_hint);
+      tx_op_logs.reserve(tx_op_logs.size() + reserve_hint);
+      for (idx_t i = 0; i < row_count; ++i) {
         int64_t block = q_get_i64(order, 0, i);
         auto tx_hash = hex_to_bytes32(q_get_hex(order, 1, i));
         int64_t log_index = q_get_i64(order, 2, i);
         std::string maker = q_get_hex_lower(order, 3, i);
         std::string taker = q_get_hex_lower(order, 4, i);
-        std::string maker_asset = q_get_hex(order, 5, i);
-        std::string taker_asset = q_get_hex(order, 6, i);
+        std::string maker_asset = q_get_hex_lower(order, 5, i);
+        std::string taker_asset = q_get_hex_lower(order, 6, i);
         int64_t maker_amt = q_get_u256_i64(order, 7, i);
         int64_t taker_amt = q_get_u256_i64(order, 8, i);
         int64_t fee = q_get_u256_i64(order, 9, i);
 
         bool maker_is_usdc = maker_asset == ZERO_TOKEN_ID;
-        std::string token_id = maker_is_usdc ? taker_asset : maker_asset;
-        std::string token_id_lower = to_lower(token_id);
+        const std::string &token_id_lower = maker_is_usdc ? taker_asset : maker_asset;
 
         TxTokenKey key{block, tx_hash, token_id_lower};
         TxKey tx_key{block, tx_hash};
@@ -529,7 +552,7 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
         info.usdc = maker_is_usdc ? maker_amt : taker_amt;
         info.tokens = maker_is_usdc ? taker_amt : maker_amt;
         info.fee = fee;
-        tx_order_[key].push_back(info);
+        tx_order_[key].push_back(std::move(info));
         idx_order_rows++;
         record_semantic(tx_key, info.log_index);
       }
@@ -1142,8 +1165,14 @@ void EventBuilder::commit_chunk(int64_t new_cursor) {
 
     {
       duckdb::Appender appender(*conn, "tmp_user_event");
+      std::unordered_map<std::string, std::string> user_blob_cache;
+      user_blob_cache.reserve(std::min<size_t>(new_events_.size(), 4096));
       for (auto &[user, evt] : new_events_) {
-        std::string user_blob = hex_to_blob(user);
+        auto user_blob_it = user_blob_cache.find(user);
+        if (user_blob_it == user_blob_cache.end()) {
+          user_blob_it = user_blob_cache.emplace(user, hex_to_blob(user)).first;
+        }
+        const std::string &user_blob = user_blob_it->second;
         int32_t db_cond_idx = (evt.cond_idx == UNKNOWN_COND_IDX) ? -1 : static_cast<int32_t>(evt.cond_idx);
         appender.BeginRow();
         appender.Append(duckdb::Value::BLOB(reinterpret_cast<duckdb::const_data_ptr_t>(user_blob.data()), user_blob.size()));
@@ -1163,64 +1192,68 @@ void EventBuilder::commit_chunk(int64_t new_cursor) {
              "SELECT * FROM tmp_user_event");
   }
 
-  exec_sql("INSERT OR REPLACE INTO stage2_cursor(key, value) VALUES ('last_block', " +
-           std::to_string(new_cursor) + ")");
+  exec_sql("CREATE TEMP TABLE IF NOT EXISTS tmp_stage2_cursor (key TEXT, value BIGINT)");
+  exec_sql("DELETE FROM tmp_stage2_cursor");
+  {
+    duckdb::Appender ap(*conn, "tmp_stage2_cursor");
+    auto save_cnt = [&](const char *key, int64_t val) {
+      ap.BeginRow();
+      ap.Append(duckdb::Value(std::string(key)));
+      ap.Append(val);
+      ap.EndRow();
+    };
+    save_cnt("last_block", new_cursor);
+    save_cnt("cnt_split", progress_.cnt_split);
+    save_cnt("cnt_merge", progress_.cnt_merge);
+    save_cnt("cnt_redemption", progress_.cnt_redemption);
+    save_cnt("cnt_convert", progress_.cnt_convert);
+    save_cnt("cnt_order", progress_.cnt_order);
+    save_cnt("cnt_fpmm_trade", progress_.cnt_fpmm_trade);
+    save_cnt("cnt_fpmm_funding", progress_.cnt_fpmm_funding);
+    save_cnt("cnt_transfer", progress_.cnt_transfer);
+    save_cnt("total_events", progress_.total_events);
 
-  auto save_cnt = [&](const char *key, int64_t val) {
-    exec_sql("INSERT OR REPLACE INTO stage2_cursor(key, value) VALUES ('" + std::string(key) +
-             "', " + std::to_string(val) + ")");
-  };
-  save_cnt("cnt_split", progress_.cnt_split);
-  save_cnt("cnt_merge", progress_.cnt_merge);
-  save_cnt("cnt_redemption", progress_.cnt_redemption);
-  save_cnt("cnt_convert", progress_.cnt_convert);
-  save_cnt("cnt_order", progress_.cnt_order);
-  save_cnt("cnt_fpmm_trade", progress_.cnt_fpmm_trade);
-  save_cnt("cnt_fpmm_funding", progress_.cnt_fpmm_funding);
-  save_cnt("cnt_transfer", progress_.cnt_transfer);
-  save_cnt("total_events", progress_.total_events);
-
-  const auto &xs = progress_.xfer_stats;
-  save_cnt("xfer_total", xs.total);
-  save_cnt("xfer_split_normal", xs.split_normal);
-  save_cnt("xfer_split_negrisk", xs.split_negrisk);
-  save_cnt("xfer_split_non_poly", xs.split_non_poly);
-  save_cnt("xfer_merge_normal", xs.merge_normal);
-  save_cnt("xfer_merge_negrisk", xs.merge_negrisk);
-  save_cnt("xfer_merge_non_poly", xs.merge_non_poly);
-  save_cnt("xfer_redemption", xs.redemption);
-  save_cnt("xfer_redemption_non_poly", xs.redemption_non_poly);
-  save_cnt("xfer_convert", xs.convert);
-  save_cnt("xfer_order_buy", xs.order_buy);
-  save_cnt("xfer_order_sell", xs.order_sell);
-  save_cnt("xfer_fpmm_buy", xs.fpmm_buy);
-  save_cnt("xfer_fpmm_sell", xs.fpmm_sell);
-  save_cnt("xfer_lp_add", xs.fpmm_lp_add);
-  save_cnt("xfer_lp_remove", xs.fpmm_lp_remove);
-  save_cnt("xfer_lp_return", xs.fpmm_lp_return);
-  save_cnt("xfer_transfer_in_negrisk", xs.transfer_in_negrisk);
-  save_cnt("xfer_transfer_in_other", xs.transfer_in_other);
-  save_cnt("xfer_transfer_in_non_poly", xs.transfer_in_non_poly);
-  save_cnt("xfer_transfer_out_negrisk", xs.transfer_out_negrisk);
-  save_cnt("xfer_transfer_out_other", xs.transfer_out_other);
-  save_cnt("xfer_transfer_out_non_poly", xs.transfer_out_non_poly);
-  save_cnt("xfer_internal_mint_negrisk", xs.internal_mint_negrisk);
-  save_cnt("xfer_internal_mint_fpmm", xs.internal_mint_fpmm);
-  save_cnt("xfer_internal_burn_negrisk", xs.internal_burn_negrisk);
-  save_cnt("xfer_internal_burn_fpmm", xs.internal_burn_fpmm);
-  save_cnt("xfer_internal_burn_convert", xs.internal_burn_convert);
-  save_cnt("xfer_internal_transfer_zero", xs.internal_transfer_zero);
-  save_cnt("xfer_internal_transfer_order", xs.internal_transfer_order);
-  save_cnt("xfer_internal_transfer_negrisk", xs.internal_transfer_negrisk);
-  save_cnt("xfer_internal_transfer_fpmm", xs.internal_transfer_fpmm);
-  save_cnt("xfer_internal_transfer_other", xs.internal_transfer_other);
-  save_cnt("xfer_unclassified", xs.unclassified);
+    const auto &xs = progress_.xfer_stats;
+    save_cnt("xfer_total", xs.total);
+    save_cnt("xfer_split_normal", xs.split_normal);
+    save_cnt("xfer_split_negrisk", xs.split_negrisk);
+    save_cnt("xfer_split_non_poly", xs.split_non_poly);
+    save_cnt("xfer_merge_normal", xs.merge_normal);
+    save_cnt("xfer_merge_negrisk", xs.merge_negrisk);
+    save_cnt("xfer_merge_non_poly", xs.merge_non_poly);
+    save_cnt("xfer_redemption", xs.redemption);
+    save_cnt("xfer_redemption_non_poly", xs.redemption_non_poly);
+    save_cnt("xfer_convert", xs.convert);
+    save_cnt("xfer_order_buy", xs.order_buy);
+    save_cnt("xfer_order_sell", xs.order_sell);
+    save_cnt("xfer_fpmm_buy", xs.fpmm_buy);
+    save_cnt("xfer_fpmm_sell", xs.fpmm_sell);
+    save_cnt("xfer_lp_add", xs.fpmm_lp_add);
+    save_cnt("xfer_lp_remove", xs.fpmm_lp_remove);
+    save_cnt("xfer_lp_return", xs.fpmm_lp_return);
+    save_cnt("xfer_transfer_in_negrisk", xs.transfer_in_negrisk);
+    save_cnt("xfer_transfer_in_other", xs.transfer_in_other);
+    save_cnt("xfer_transfer_in_non_poly", xs.transfer_in_non_poly);
+    save_cnt("xfer_transfer_out_negrisk", xs.transfer_out_negrisk);
+    save_cnt("xfer_transfer_out_other", xs.transfer_out_other);
+    save_cnt("xfer_transfer_out_non_poly", xs.transfer_out_non_poly);
+    save_cnt("xfer_internal_mint_negrisk", xs.internal_mint_negrisk);
+    save_cnt("xfer_internal_mint_fpmm", xs.internal_mint_fpmm);
+    save_cnt("xfer_internal_burn_negrisk", xs.internal_burn_negrisk);
+    save_cnt("xfer_internal_burn_fpmm", xs.internal_burn_fpmm);
+    save_cnt("xfer_internal_burn_convert", xs.internal_burn_convert);
+    save_cnt("xfer_internal_transfer_zero", xs.internal_transfer_zero);
+    save_cnt("xfer_internal_transfer_order", xs.internal_transfer_order);
+    save_cnt("xfer_internal_transfer_negrisk", xs.internal_transfer_negrisk);
+    save_cnt("xfer_internal_transfer_fpmm", xs.internal_transfer_fpmm);
+    save_cnt("xfer_internal_transfer_other", xs.internal_transfer_other);
+    save_cnt("xfer_unclassified", xs.unclassified);
+    ap.Close();
+  }
+  exec_sql("INSERT OR REPLACE INTO stage2_cursor SELECT * FROM tmp_stage2_cursor");
 
   exec_sql("COMMIT");
-
-  auto user_cnt = conn->Query("SELECT COUNT(DISTINCT user_addr) FROM user_event");
-  stage2_assert(user_cnt && !user_cnt->HasError(), AssertLevel::L0, "DB", "UserCountQuerySuccess");
-  progress_.total_users = user_cnt->RowCount() > 0 ? user_cnt->GetValue(0, 0).GetValue<int64_t>() : 0;
+  progress_.total_users = seen_users_.size();
 }
 
 } // namespace stage2
