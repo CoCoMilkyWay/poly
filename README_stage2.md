@@ -35,19 +35,16 @@ Stage2Sync (timer驱动, boost::asio)
 **崩溃恢复**: 从 stage2_cursor 断点重做，语义索引不持久化
 
 市场树 (`s2-market-tree`)
-└─ 市场(广义)  // desc: Observed + Raw 双口径总览; scene: 已出现condition与原始market行合并展示
-   ├─ ObservedMarket  // desc: 旧口径; scene: stage2已构建condition实体
-   │  ├─ Ownership  // desc: 归属分布; scene: Polymarket/Other/NegRisk
-   │  ├─ Source  // desc: condition来源分布; scene: ConditionSource动态聚合(by_source)
-   │  ├─ Outcome  // desc: outcome_count分布; scene: 动态聚合(by_outcome_count)
+└─ 市场质量  // desc: Observed实体质量 + Raw输入覆盖; scene: 去冗余后的市场视图
+   ├─ ObservedQuality  // desc: 实体口径; scene: stage2已构建condition实体质量
    │  ├─ Resolve  // desc: 解析状态; scene: Resolved/Unresolved
-   │  ├─ Collateral  // desc: collateral覆盖; scene: 动态聚合(by_collateral)
+   │  ├─ Collateral  // desc: collateral覆盖; scene: 动态聚合(observed_by_collateral)
    │  ├─ Tokenized  // desc: token映射完整度; scene: NoToken/PartialTokenized/FullyTokenized
    │  └─ MarketLink  // desc: 市场ID关联; scene: HasMarketId/NoMarketId
-   ├─ RawMarket  // desc: 新口径; scene: 按 condition_preparation 原始行统计
+   ├─ RawInput  // desc: 输入口径; scene: 按 condition_preparation 原始行统计
    │  ├─ Outcome  // desc: outcome_slot_count分布; scene: 动态聚合(raw_by_outcome_count)
    │  └─ QuestionID  // desc: question_id覆盖; scene: HasQuestionId/NoQuestionId
-   └─ Coverage  // desc: 双口径覆盖对比; scene: Observed/RawRows/Observed÷Raw(%)
+   └─ Coverage  // desc: 双口径对账; scene: Observed/RawRows/Delta(Obs-Raw)/Observed÷Raw(%)
 
 问题树 (`s2-cond-tree`)
 └─ 问题  // desc: condition分类总览; scene: CTF问题来源分层; 对应: cond_tree.total
@@ -180,16 +177,9 @@ Convert语义表树 (`s2-convert-sem-tree`)
   ├─ Amount  // desc: amount分布; scene: 0值与正值
   │  ├─ Zero  // desc: amount==0; scene: 极少数无效转换行
   │  └─ Positive  // desc: amount>0; scene: 正常转换语义
-  ├─ Question数  // desc: market_id对应问题数分桶; scene: 观察转换复杂度
+  ├─ Question数  // desc: market_id对应问题数分布; scene: 动态聚合(by_question_count)
   │  ├─ Unknown  // desc: q_count<=0; scene: market映射缺失
-  │  ├─ Q=1  // desc: q_count==1; scene: 单问题市场
-  │  ├─ Q=2  // desc: q_count==2; scene: 双问题市场
-  │  ├─ Q=3  // desc: q_count==3; scene: 三问题市场
-  │  ├─ Q=4  // desc: q_count==4; scene: 四问题市场
-  │  ├─ Q=5  // desc: q_count==5; scene: 五问题市场
-  │  ├─ Q=6  // desc: q_count==6; scene: 六问题市场
-  │  ├─ Q=7  // desc: q_count==7; scene: 七问题市场
-  │  └─ Q>=8  // desc: q_count>=8; scene: 高维多问题市场
+  │  └─ Q=n(动态)  // desc: q_count=n; scene: n可取1..N(如3/9/17/33)
   └─ 消费状态  // desc: convert消费闭环; scene: 行是否被消费
      └─ Consumed  // desc: consumed_count>0; scene: 至少命中一条转换相关腿
 
@@ -213,6 +203,7 @@ abbr(all)
 ├─ cond/token: fpmm=该condition后续有关联FPMM, nr=命中NegRisk路径, ob=普通订单簿(!fpmm & !nr), xfer_inf=从Transfer推断
 ├─ cond/token: split_event/merge_event/redemption_event=仅由对应语义事件反推得到
 ├─ cond/token: other0=兜底未覆盖(!fpmm & !nr & !ob), group_by(x)=按字段x聚合
+├─ market: observed=condition实体口径, raw=condition_preparation行口径, delta=observed-raw
 ├─ transfer: amt=amount, known=known_cond, m(x)=match_x, holder=stakeholder, evt=event, tidx=token_idx, coll=collateral
 └─ transfer: is_proto=is_protocol, is_user=is_user
 

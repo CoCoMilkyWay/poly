@@ -211,15 +211,23 @@ TransferClass EventBuilder::classify_and_emit(
       return out_cls;
     return internal_cls;
   };
+  auto generic_transfer_classes = [&]() {
+    if (known_token) {
+      return std::array<TransferClass, 2>{TransferClass::TransferInOther,
+                                          TransferClass::TransferOutOther};
+    }
+    return std::array<TransferClass, 2>{TransferClass::TransferInNonPoly,
+                                        TransferClass::TransferOutNonPoly};
+  };
+  auto generic_transfer_event_types = [&](bool is_inbound) {
+    if (known_token) {
+      return is_inbound ? EventType::TransferInOther : EventType::TransferOutOther;
+    }
+    return is_inbound ? EventType::TransferInNonPoly : EventType::TransferOutNonPoly;
+  };
   auto emit_generic_transfer_event = [&](const std::string &user_addr, bool is_inbound) {
     int64_t signed_amount = is_inbound ? amount : -amount;
-    if (known_token) {
-      EventType event_type = is_inbound ? EventType::TransferInOther : EventType::TransferOutOther;
-      emit_if_user(user_addr, RawEvent{sort_key, cond_idx, event_type, token_idx, coll, 0,
-                                       signed_amount, 0});
-      return;
-    }
-    EventType event_type = is_inbound ? EventType::TransferInNonPoly : EventType::TransferOutNonPoly;
+    EventType event_type = generic_transfer_event_types(is_inbound);
     emit_if_user(user_addr, RawEvent{sort_key, cond_idx, event_type, token_idx, coll, 0,
                                      signed_amount, 0});
   };
@@ -227,14 +235,8 @@ TransferClass EventBuilder::classify_and_emit(
                                               bool is_inbound,
                                               TransferClass internal_cls) {
     emit_generic_transfer_event(user_addr, is_inbound);
-    if (known_token) {
-      return classify_transfer_by_counterparty(TransferClass::TransferInOther,
-                                               TransferClass::TransferOutOther,
-                                               internal_cls);
-    }
-    return classify_transfer_by_counterparty(TransferClass::TransferInNonPoly,
-                                             TransferClass::TransferOutNonPoly,
-                                             internal_cls);
+    auto classes = generic_transfer_classes();
+    return classify_transfer_by_counterparty(classes[0], classes[1], internal_cls);
   };
   auto emit_and_classify_generic_in = [&](const std::string &user_addr,
                                           TransferClass internal_cls) {
@@ -247,35 +249,36 @@ TransferClass EventBuilder::classify_and_emit(
   auto emit_and_classify_generic_in_out = [&](TransferClass internal_cls) {
     emit_generic_transfer_event(to, true);
     emit_generic_transfer_event(from, false);
-    if (known_token) {
-      return classify_transfer_by_counterparty(TransferClass::TransferInOther,
-                                               TransferClass::TransferOutOther,
-                                               internal_cls);
-    }
-    return classify_transfer_by_counterparty(TransferClass::TransferInNonPoly,
-                                             TransferClass::TransferOutNonPoly,
+    auto classes = generic_transfer_classes();
+    return classify_transfer_by_counterparty(classes[0], classes[1], internal_cls);
+  };
+  auto emit_negrisk_transfer = [&](const std::string &user_addr, bool is_inbound) {
+    EventType event_type = is_inbound ? EventType::TransferInNegRisk : EventType::TransferOutNegRisk;
+    int64_t signed_amount = is_inbound ? amount : -amount;
+    emit_if_user(user_addr, RawEvent{sort_key, cond_idx, event_type, token_idx, coll, 0,
+                                     signed_amount, 0});
+  };
+  auto emit_and_classify_negrisk_in_out = [&](TransferClass internal_cls) {
+    emit_negrisk_transfer(to, true);
+    emit_negrisk_transfer(from, false);
+    return classify_transfer_by_counterparty(TransferClass::TransferInNegRisk,
+                                             TransferClass::TransferOutNegRisk,
                                              internal_cls);
   };
   auto emit_split_or_merge = [&](bool is_split, const std::string &user_addr,
                                  int64_t signed_amount) {
+    EventType event_type;
+    TransferClass cls;
     if (is_split) {
-      if (known_token) {
-        emit_if_user(user_addr, RawEvent{sort_key, cond_idx, EventType::SplitNormal, token_idx, coll, 0,
-                                         signed_amount, split_price});
-        return TransferClass::SplitNormal;
-      }
-      emit_if_user(user_addr, RawEvent{sort_key, cond_idx, EventType::SplitNonPoly, token_idx, coll, 0,
-                                       signed_amount, split_price});
-      return TransferClass::SplitNonPoly;
+      event_type = known_token ? EventType::SplitNormal : EventType::SplitNonPoly;
+      cls = known_token ? TransferClass::SplitNormal : TransferClass::SplitNonPoly;
+    } else {
+      event_type = known_token ? EventType::MergeNormal : EventType::MergeNonPoly;
+      cls = known_token ? TransferClass::MergeNormal : TransferClass::MergeNonPoly;
     }
-    if (known_token) {
-      emit_if_user(user_addr, RawEvent{sort_key, cond_idx, EventType::MergeNormal, token_idx, coll, 0,
-                                       signed_amount, split_price});
-      return TransferClass::MergeNormal;
-    }
-    emit_if_user(user_addr, RawEvent{sort_key, cond_idx, EventType::MergeNonPoly, token_idx, coll, 0,
+    emit_if_user(user_addr, RawEvent{sort_key, cond_idx, event_type, token_idx, coll, 0,
                                      signed_amount, split_price});
-    return TransferClass::MergeNonPoly;
+    return cls;
   };
   std::vector<SplitInfo> *tx_split_rows = nullptr;
   if (auto split_it = tx_split_.find(tx_key); split_it != tx_split_.end()) {
@@ -737,7 +740,7 @@ TransferClass EventBuilder::classify_and_emit(
   };
 
   if (amount == 0) {
-    if (is_known_fpmm(op)) {
+    if (op_is_fpmm) {
       TxFPMMKey tx_fpmm_key{block, tx_hash, op};
       if (to == op) {
         if (FPMMTradeInfo *tit = find_fpmm_trade_info(tx_fpmm_key, 2, from, 0); tit != nullptr) {
@@ -914,7 +917,7 @@ TransferClass EventBuilder::classify_and_emit(
         emit_if_user(to, RawEvent{sort_key, cond_idx, EventType::SplitNegRisk, token_idx, coll, 0, amount, split_price});
         return TransferClass::SplitNegRisk;
       }
-      emit_if_user(to, RawEvent{sort_key, cond_idx, EventType::TransferInNegRisk, token_idx, coll, 0, amount, 0});
+      emit_negrisk_transfer(to, true);
       return TransferClass::TransferInNegRisk;
     }
 
@@ -926,7 +929,7 @@ TransferClass EventBuilder::classify_and_emit(
         emit_if_user(from, RawEvent{sort_key, cond_idx, EventType::MergeNegRisk, token_idx, coll, 0, -amount, split_price});
         return TransferClass::MergeNegRisk;
       }
-      emit_if_user(from, RawEvent{sort_key, cond_idx, EventType::TransferOutNegRisk, token_idx, coll, 0, -amount, 0});
+      emit_negrisk_transfer(from, false);
       return TransferClass::TransferOutNegRisk;
     }
     // Adapter may operate transfers on behalf of users/vaults in paths that are
@@ -934,17 +937,13 @@ TransferClass EventBuilder::classify_and_emit(
     // is explicitly in NegRisk set; otherwise use generic transfer classes.
     bool is_negrisk_known = known_token && (negrisk_cond_idxs_.count(cond_idx) > 0);
     if (is_negrisk_known) {
-      emit_if_user(to, RawEvent{sort_key, cond_idx, EventType::TransferInNegRisk, token_idx, coll, 0, amount, 0});
-      emit_if_user(from, RawEvent{sort_key, cond_idx, EventType::TransferOutNegRisk, token_idx, coll, 0, -amount, 0});
-      return classify_transfer_by_counterparty(TransferClass::TransferInNegRisk,
-                                               TransferClass::TransferOutNegRisk,
-                                               TransferClass::InternalTransferNegRisk);
+      return emit_and_classify_negrisk_in_out(TransferClass::InternalTransferNegRisk);
     }
     return emit_and_classify_generic_in_out(TransferClass::InternalTransferOther);
   }
 
   // ========== FPMM operator ==========
-  if (is_known_fpmm(op)) {
+  if (op_is_fpmm) {
     TxFPMMKey tx_fpmm_key{block, tx_hash, op};
 
     // 0x0 -> FPMM: LP add / internal split mint leg
