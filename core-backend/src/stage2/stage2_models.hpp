@@ -370,9 +370,6 @@ struct OrderSemanticTree {
 struct MarketTree {
   // Observed markets (condition entities already built in stage2 mappings).
   int64_t observed_total = 0;
-  int64_t observed_polymarket = 0;
-  int64_t observed_other = 0;
-  int64_t observed_negrisk = 0;
   int64_t observed_resolved = 0;
   int64_t observed_unresolved = 0;
   int64_t observed_has_market_id = 0;
@@ -380,9 +377,7 @@ struct MarketTree {
   int64_t observed_token_none = 0;
   int64_t observed_token_partial = 0;
   int64_t observed_token_full = 0;
-  std::unordered_map<int64_t, int64_t> observed_by_outcome_count; // key: outcome_count
-  std::unordered_map<int64_t, int64_t> observed_by_source;        // key: ConditionSource(int)
-  std::unordered_map<uint8_t, int64_t> observed_by_collateral;     // key: CollateralId
+  std::unordered_map<uint8_t, int64_t> observed_by_collateral; // key: CollateralId
 
   // Raw markets (condition_preparation row-level view).
   int64_t raw_total_rows = 0;

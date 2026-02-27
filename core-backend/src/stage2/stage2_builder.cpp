@@ -481,9 +481,6 @@ void EventBuilder::load_from_rb() {
 
     auto &mt = progress_.market_tree;
     mt.observed_total = load("sem_market_observed_total");
-    mt.observed_polymarket = load("sem_market_observed_polymarket");
-    mt.observed_other = load("sem_market_observed_other");
-    mt.observed_negrisk = load("sem_market_observed_negrisk");
     mt.observed_resolved = load("sem_market_observed_resolved");
     mt.observed_unresolved = load("sem_market_observed_unresolved");
     mt.observed_has_market_id = load("sem_market_observed_has_market_id");
@@ -494,22 +491,12 @@ void EventBuilder::load_from_rb() {
     mt.raw_total_rows = load("sem_market_raw_total_rows");
     mt.raw_has_question_id = load("sem_market_raw_has_question_id");
     mt.raw_no_question_id = load("sem_market_raw_no_question_id");
-    mt.observed_by_outcome_count.clear();
-    mt.observed_by_source.clear();
     mt.observed_by_collateral.clear();
     mt.raw_by_outcome_count.clear();
-    static const std::string kObsOutcomePrefix = "sem_market_observed_outcome_";
-    static const std::string kObsSourcePrefix = "sem_market_observed_source_";
     static const std::string kObsCollPrefix = "sem_market_observed_collateral_";
     static const std::string kRawOutcomePrefix = "sem_market_raw_outcome_";
     for (const auto &[key, value] : sem_saved) {
-      if (key.rfind(kObsOutcomePrefix, 0) == 0) {
-        int64_t k = std::stoll(key.substr(kObsOutcomePrefix.size()));
-        mt.observed_by_outcome_count[k] += value;
-      } else if (key.rfind(kObsSourcePrefix, 0) == 0) {
-        int64_t k = std::stoll(key.substr(kObsSourcePrefix.size()));
-        mt.observed_by_source[k] += value;
-      } else if (key.rfind(kObsCollPrefix, 0) == 0) {
+      if (key.rfind(kObsCollPrefix, 0) == 0) {
         uint8_t k = static_cast<uint8_t>(std::stoll(key.substr(kObsCollPrefix.size())));
         mt.observed_by_collateral[k] += value;
       } else if (key.rfind(kRawOutcomePrefix, 0) == 0) {

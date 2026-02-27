@@ -535,9 +535,6 @@ private:
 
     MarketTree mt = progress_.market_tree;
     mt.observed_total = 0;
-    mt.observed_polymarket = 0;
-    mt.observed_other = 0;
-    mt.observed_negrisk = 0;
     mt.observed_resolved = 0;
     mt.observed_unresolved = 0;
     mt.observed_has_market_id = 0;
@@ -545,8 +542,6 @@ private:
     mt.observed_token_none = 0;
     mt.observed_token_partial = 0;
     mt.observed_token_full = 0;
-    mt.observed_by_outcome_count.clear();
-    mt.observed_by_source.clear();
     mt.observed_by_collateral.clear();
 
     std::unordered_map<uint32_t, uint16_t> cond_token_mask;
@@ -565,20 +560,6 @@ private:
       uint32_t idx = static_cast<uint32_t>(i);
       const auto &info = conditions_[i];
       mt.observed_total++;
-      mt.observed_by_outcome_count[info.outcome_count]++;
-      mt.observed_by_source[static_cast<int64_t>(info.source)]++;
-
-      bool has_fpmm = fpmm_cond_idxs_.count(idx) > 0;
-      bool has_token_reg = (info.source == ConditionSource::PolymarketTokenReg);
-      bool is_poly = has_token_reg || has_fpmm;
-      if (is_poly) {
-        mt.observed_polymarket++;
-      } else {
-        mt.observed_other++;
-      }
-      if (negrisk_cond_idxs_.count(idx) > 0) {
-        mt.observed_negrisk++;
-      }
 
       bool resolved = !info.payout_numerators.empty();
       if (resolved) {

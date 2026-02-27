@@ -235,7 +235,7 @@
       <span class="stage2-value highlight" id="s2-total-users">0</span>
     </span>
     <span class="stage2-item">
-      <span class="stage2-label">市场</span>
+      <span class="stage2-label">NegRisk市场ID</span>
       <span class="stage2-value highlight" id="s2-total-markets">0</span>
     </span>
     <button id="s2-collapse-all" style="
@@ -252,8 +252,8 @@
     </button>
   </div>
 
-  <div class="stage2-tree" id="s2-cond-tree"></div>
   <div class="stage2-tree" id="s2-market-tree"></div>
+  <div class="stage2-tree" id="s2-cond-tree"></div>
   <div class="stage2-tree" id="s2-token-tree"></div>
   <div class="stage2-tree" id="s2-xfer-tree"></div>
   <div class="stage2-tree" id="s2-split-sem-tree"></div>
@@ -294,9 +294,6 @@
         "cond_redemption",
         "market",
         "market_observed",
-        "market_observed_ownership",
-        "market_observed_source",
-        "market_observed_outcome",
         "market_observed_resolve",
         "market_observed_collateral",
         "market_observed_tokenized",
@@ -448,67 +445,28 @@
         }));
     }
 
-    function s2CondSourceLabel(codeStr) {
-      const code = Number(codeStr);
-      if (code === 0) return "ConditionPrep";
-      if (code === 1) return "PolymarketTokenReg";
-      if (code === 2) return "PolymarketFPMM";
-      if (code === 3) return "OtherFPMM";
-      if (code === 4) return "SplitEvent";
-      if (code === 6) return "MergeEvent";
-      if (code === 7) return "RedemptionEvent";
-      return `Source=${code}`;
-    }
-
     function s2BuildMarketTree(s) {
       const mt = s.market_tree || {};
       const observedTotal = Number(mt.observed_total || 0);
       const rawTotal = Number(mt.raw_total_rows || 0);
       const coverage = rawTotal > 0 ? (observedTotal / rawTotal) * 100 : 0;
+      const delta = observedTotal - rawTotal;
       return {
         id: "market",
-        label: "市场(广义)",
-        value: observedTotal + rawTotal,
+        label: "市场质量",
+        value: observedTotal,
         color: "#22c55e",
-        desc: "Observed + Raw 双口径",
-        scene: "condition实体与原始market行合并展示",
+        desc: "Observed实体质量 + Raw输入覆盖",
+        scene: "避免与问题树重复口径",
         children: [
           {
             id: "market_observed",
-            label: "ObservedMarket",
+            label: "ObservedQuality",
             value: observedTotal,
             color: "#4ade80",
+            desc: "condition实体质量视图",
+            scene: "只看已构建condition",
             children: [
-              {
-                id: "market_observed_ownership",
-                label: "归属",
-                value: Number(mt.observed_polymarket || 0) + Number(mt.observed_other || 0),
-                color: "#86efac",
-                children: [
-                  { id: "market_observed_poly", label: "Polymarket", value: Number(mt.observed_polymarket || 0), color: "#bbf7d0" },
-                  { id: "market_observed_other", label: "Other", value: Number(mt.observed_other || 0), color: "#bbf7d0" },
-                  { id: "market_observed_negrisk", label: "NegRisk", value: Number(mt.observed_negrisk || 0), color: "#bbf7d0" },
-                ],
-              },
-              {
-                id: "market_observed_source",
-                label: "来源类型",
-                value: Object.values(mt.observed_by_source || {}).reduce((a, b) => a + Number(b || 0), 0),
-                color: "#86efac",
-                children: s2SortedDictChildren(mt.observed_by_source, "market_observed_source", s2CondSourceLabel, "#bbf7d0"),
-              },
-              {
-                id: "market_observed_outcome",
-                label: "Outcome数",
-                value: Object.values(mt.observed_by_outcome_count || {}).reduce((a, b) => a + Number(b || 0), 0),
-                color: "#86efac",
-                children: s2SortedDictChildren(
-                  mt.observed_by_outcome_count,
-                  "market_observed_outcome",
-                  (k) => `Outcome=${k}`,
-                  "#bbf7d0",
-                ),
-              },
               {
                 id: "market_observed_resolve",
                 label: "解析状态",
@@ -524,6 +482,8 @@
                 label: "Collateral覆盖",
                 value: Object.values(mt.observed_by_collateral || {}).reduce((a, b) => a + Number(b || 0), 0),
                 color: "#86efac",
+                desc: "按condition主抵押品分组",
+                scene: "观测到的抵押品覆盖面",
                 children: s2SortedDictChildren(
                   mt.observed_by_collateral,
                   "market_observed_coll",
@@ -556,9 +516,11 @@
           },
           {
             id: "market_raw",
-            label: "RawMarket",
+            label: "RawInput",
             value: rawTotal,
             color: "#16a34a",
+            desc: "condition_preparation原始输入",
+            scene: "行口径",
             children: [
               {
                 id: "market_raw_outcome",
@@ -589,9 +551,12 @@
             label: "Coverage",
             value: observedTotal,
             color: "#22c55e",
+            desc: "Observed与Raw对账",
+            scene: "识别推断补全或缺失",
             children: [
               { id: "market_cov_observed", label: "Observed", value: observedTotal, color: "#4ade80" },
               { id: "market_cov_raw", label: "RawRows", value: rawTotal, color: "#4ade80" },
+              { id: "market_cov_delta", label: "Delta(Obs-Raw)", value: delta, color: "#4ade80" },
               { id: "market_cov_ratio", label: "Observed/Raw(%)", value: coverage, color: "#4ade80" },
             ],
           },
@@ -1864,8 +1829,8 @@
     }
 
     function s2RenderAllTrees(s) {
-      s2RenderTreeToContainer(s2BuildCondTree(s), "s2-cond-tree");
       s2RenderTreeToContainer(s2BuildMarketTree(s), "s2-market-tree");
+      s2RenderTreeToContainer(s2BuildCondTree(s), "s2-cond-tree");
       s2RenderTreeToContainer(s2BuildTokenTree(s), "s2-token-tree");
       s2RenderTreeToContainer(s2BuildXferTree(s), "s2-xfer-tree");
       s2RenderTreeToContainer(s2BuildSplitSemTree(s), "s2-split-sem-tree");

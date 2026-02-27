@@ -1437,9 +1437,6 @@ BuildProgress EventBuilder::commit_chunk(CommitPayload payload) {
 
     const auto &mt = progress_.market_tree;
     save_cnt("sem_market_observed_total", mt.observed_total);
-    save_cnt("sem_market_observed_polymarket", mt.observed_polymarket);
-    save_cnt("sem_market_observed_other", mt.observed_other);
-    save_cnt("sem_market_observed_negrisk", mt.observed_negrisk);
     save_cnt("sem_market_observed_resolved", mt.observed_resolved);
     save_cnt("sem_market_observed_unresolved", mt.observed_unresolved);
     save_cnt("sem_market_observed_has_market_id", mt.observed_has_market_id);
@@ -1450,14 +1447,6 @@ BuildProgress EventBuilder::commit_chunk(CommitPayload payload) {
     save_cnt("sem_market_raw_total_rows", mt.raw_total_rows);
     save_cnt("sem_market_raw_has_question_id", mt.raw_has_question_id);
     save_cnt("sem_market_raw_no_question_id", mt.raw_no_question_id);
-    for (const auto &[k, v] : mt.observed_by_outcome_count) {
-      std::string key = "sem_market_observed_outcome_" + std::to_string(k);
-      save_cnt(key.c_str(), v);
-    }
-    for (const auto &[k, v] : mt.observed_by_source) {
-      std::string key = "sem_market_observed_source_" + std::to_string(k);
-      save_cnt(key.c_str(), v);
-    }
     for (const auto &[k, v] : mt.observed_by_collateral) {
       std::string key = "sem_market_observed_collateral_" + std::to_string(static_cast<int>(k));
       save_cnt(key.c_str(), v);
@@ -1468,6 +1457,10 @@ BuildProgress EventBuilder::commit_chunk(CommitPayload payload) {
     }
     ap.Close();
   }
+  exec_sql("DELETE FROM stage2_cursor WHERE "
+           "key IN ('sem_market_observed_polymarket', 'sem_market_observed_other', 'sem_market_observed_negrisk') OR "
+           "key LIKE 'sem_market_observed_outcome_%' OR "
+           "key LIKE 'sem_market_observed_source_%'");
   exec_sql("INSERT OR REPLACE INTO stage2_cursor SELECT * FROM tmp_stage2_cursor");
 
   exec_sql("COMMIT");

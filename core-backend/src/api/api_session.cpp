@@ -553,9 +553,6 @@ void ApiSession::handle_rebuild_status() {
   };
   json market_tree = {
       {"observed_total", mkt.observed_total},
-      {"observed_polymarket", mkt.observed_polymarket},
-      {"observed_other", mkt.observed_other},
-      {"observed_negrisk", mkt.observed_negrisk},
       {"observed_resolved", mkt.observed_resolved},
       {"observed_unresolved", mkt.observed_unresolved},
       {"observed_has_market_id", mkt.observed_has_market_id},
@@ -567,16 +564,6 @@ void ApiSession::handle_rebuild_status() {
       {"raw_has_question_id", mkt.raw_has_question_id},
       {"raw_no_question_id", mkt.raw_no_question_id},
   };
-  json observed_by_outcome = json::object();
-  for (const auto &[k, v] : mkt.observed_by_outcome_count) {
-    observed_by_outcome[std::to_string(k)] = v;
-  }
-  market_tree["observed_by_outcome_count"] = observed_by_outcome;
-  json observed_by_source = json::object();
-  for (const auto &[k, v] : mkt.observed_by_source) {
-    observed_by_source[std::to_string(k)] = v;
-  }
-  market_tree["observed_by_source"] = observed_by_source;
   json observed_by_coll = json::object();
   for (const auto &[k, v] : mkt.observed_by_collateral) {
     observed_by_coll[std::to_string(k)] = v;
