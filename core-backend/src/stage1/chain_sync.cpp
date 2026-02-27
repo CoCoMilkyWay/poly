@@ -130,7 +130,7 @@ void ChainSync::do_sync() {
   try {
     head_block_ = rpc_head_.eth_blockNumber();
   } catch (...) {
-    std::cerr << "[Sync] 获取区块高度失败, " << interval_seconds_ << "s 后重试" << std::endl;
+    std::cerr << "[Stage1] 获取区块高度失败, " << interval_seconds_ << "s 后重试" << std::endl;
     is_syncing_ = false;
     schedule_sync(interval_seconds_);
     return;
@@ -138,10 +138,10 @@ void ChainSync::do_sync() {
   int64_t last_block = db_.get_last_block();
   int64_t from_block = (last_block < 0) ? config_.initial_block : last_block + 1;
 
-  std::cout << "[Sync] head=" << head_block_ << ", last=" << last_block << std::endl;
+  std::cout << "[Stage1] head=" << head_block_ << ", last=" << last_block << std::endl;
 
   if (from_block > head_block_) {
-    std::cout << "[Sync] 已同步到最新, " << interval_seconds_ << "s 后检查" << std::endl;
+    std::cout << "[Stage1] 已同步到最新, " << interval_seconds_ << "s 后检查" << std::endl;
     is_syncing_ = false;
     schedule_sync(interval_seconds_);
     return;
@@ -183,7 +183,7 @@ void ChainSync::render_progress_inline(const std::deque<SyncChunkState> &window)
     all_done += sync.done_count;
     total += static_cast<int>(sync.basics.size());
   }
-  std::string line = "[Sync] progress (" + std::to_string(ordered) + "/" + std::to_string(all_done) +
+  std::string line = "[Stage1] progress (" + std::to_string(ordered) + "/" + std::to_string(all_done) +
                      "/" + std::to_string(total) + ") sync=" + std::to_string(front.sync_id) +
                      " range=" + std::to_string(front.from_block) + "-" + std::to_string(front.to_block);
   if (line.size() < progress_line_len_) {
@@ -312,7 +312,7 @@ void ChainSync::sync_loop(int64_t from_block, int64_t head_block) {
               int64_t delay_ms = static_cast<int64_t>(kRetryDelayMs) << shift;
               delay_ms = std::min<int64_t>(delay_ms, kRetryDelayMaxMs);
               task.retry_at = now + std::chrono::milliseconds(delay_ms);
-              std::cerr << "[Sync] rpc失败 from=" << task.from_block
+              std::cerr << "[Stage1] rpc失败 from=" << task.from_block
                         << " to=" << task.to_block << " err=" << result.error_msg
                         << " -> retry_in=" << delay_ms << "ms" << std::endl;
             }
@@ -382,7 +382,7 @@ void ChainSync::sync_loop(int64_t from_block, int64_t head_block) {
   }
 
   clear_progress_inline();
-  std::cout << "[Sync] 本轮同步完成, " << interval_seconds_ << "s 后检查更新" << std::endl;
+  std::cout << "[Stage1] 本轮同步完成, " << interval_seconds_ << "s 后检查更新" << std::endl;
   is_syncing_ = false;
   schedule_sync(interval_seconds_);
 }
@@ -406,7 +406,7 @@ void ChainSync::process_batch(const RpcClient::BatchResult &r, int64_t from_bloc
     }
     cached_events_ = DecodedEvents{};
     current_partition_start_ += FeatherWriter::PARTITION_SIZE;
-    std::cout << "[Sync] 分区 " << (current_partition_start_ - FeatherWriter::PARTITION_SIZE) << " 已落地" << std::endl;
+    std::cout << "[Stage1] 分区 " << (current_partition_start_ - FeatherWriter::PARTITION_SIZE) << " 已落地" << std::endl;
   }
 }
 
