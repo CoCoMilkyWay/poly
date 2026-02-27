@@ -120,58 +120,152 @@ TransferClass EventBuilder::classify_and_emit(
     auto it = tx_split_.find(tx_key);
     if (it == tx_split_.end())
       return nullptr;
-    SplitInfo *window_matched = nullptr;
-    int window_match_count = 0;
-    for (auto &info : it->second) {
-      if (!collateral_matches(info.collateral_token))
-        continue;
-      if (info.stakeholder == stakeholder && info.amount == amt && cond_matches(info.cond_id)) {
-        if (semantic_log_matches(info.log_index)) {
-          window_matched = &info;
-          window_match_count++;
+    auto pick = [&](bool unconsumed_only, bool strict_collateral) -> SplitInfo * {
+      SplitInfo *window_matched = nullptr;
+      int window_match_count = 0;
+      SplitInfo *nearest_matched = nullptr;
+      int64_t nearest_dist = (1LL << 62);
+      int nearest_count = 0;
+      for (auto &info : it->second) {
+        if (unconsumed_only && info.consumed_count > 0) {
+          continue;
+        }
+        if (strict_collateral && !collateral_matches(info.collateral_token))
+          continue;
+        if (info.stakeholder == stakeholder && info.amount == amt && cond_matches(info.cond_id)) {
+          if (semantic_log_matches(info.log_index)) {
+            window_matched = &info;
+            window_match_count++;
+          } else {
+            bool is_future = info.log_index >= base_log_index;
+            int64_t dist = is_future ? (info.log_index - base_log_index)
+                                     : (base_log_index - info.log_index + SORT_KEY_SCALE);
+            if (nearest_matched == nullptr || dist < nearest_dist) {
+              nearest_matched = &info;
+              nearest_dist = dist;
+              nearest_count = 1;
+            } else if (dist == nearest_dist) {
+              nearest_count++;
+            }
+          }
         }
       }
+      SplitInfo *window_only = select_window_only(window_matched, window_match_count,
+                                                  "SplitWindowUniqueCandidate");
+      if (window_only != nullptr) {
+        return window_only;
+      }
+      stage2_assert(nearest_count <= 1, AssertLevel::L2, "Match", "SplitForwardUniqueCandidate");
+      return nearest_matched;
+    };
+    if (SplitInfo *fresh = pick(true, true); fresh != nullptr) {
+      return fresh;
     }
-    return select_window_only(window_matched, window_match_count,
-                              "SplitWindowUniqueCandidate");
+    if (SplitInfo *fresh = pick(true, false); fresh != nullptr) {
+      return fresh;
+    }
+    if (SplitInfo *fallback = pick(false, true); fallback != nullptr) {
+      return fallback;
+    }
+    return pick(false, false);
   };
   auto find_merge_info = [&](const std::string &stakeholder, int64_t amt) -> MergeInfo * {
     auto it = tx_merge_.find(tx_key);
     if (it == tx_merge_.end())
       return nullptr;
-    MergeInfo *window_matched = nullptr;
-    int window_match_count = 0;
-    for (auto &info : it->second) {
-      if (!collateral_matches(info.collateral_token))
-        continue;
-      if (info.stakeholder == stakeholder && info.amount == amt && cond_matches(info.cond_id)) {
-        if (semantic_log_matches(info.log_index)) {
-          window_matched = &info;
-          window_match_count++;
+    auto pick = [&](bool unconsumed_only, bool strict_collateral) -> MergeInfo * {
+      MergeInfo *window_matched = nullptr;
+      int window_match_count = 0;
+      MergeInfo *nearest_matched = nullptr;
+      int64_t nearest_dist = (1LL << 62);
+      int nearest_count = 0;
+      for (auto &info : it->second) {
+        if (unconsumed_only && info.consumed_count > 0) {
+          continue;
+        }
+        if (strict_collateral && !collateral_matches(info.collateral_token))
+          continue;
+        if (info.stakeholder == stakeholder && info.amount == amt && cond_matches(info.cond_id)) {
+          if (semantic_log_matches(info.log_index)) {
+            window_matched = &info;
+            window_match_count++;
+          } else {
+            bool is_future = info.log_index >= base_log_index;
+            int64_t dist = is_future ? (info.log_index - base_log_index)
+                                     : (base_log_index - info.log_index + SORT_KEY_SCALE);
+            if (nearest_matched == nullptr || dist < nearest_dist) {
+              nearest_matched = &info;
+              nearest_dist = dist;
+              nearest_count = 1;
+            } else if (dist == nearest_dist) {
+              nearest_count++;
+            }
+          }
         }
       }
+      MergeInfo *window_only = select_window_only(window_matched, window_match_count,
+                                                  "MergeWindowUniqueCandidate");
+      if (window_only != nullptr) {
+        return window_only;
+      }
+      stage2_assert(nearest_count <= 1, AssertLevel::L2, "Match", "MergeForwardUniqueCandidate");
+      return nearest_matched;
+    };
+    if (MergeInfo *fresh = pick(true, true); fresh != nullptr) {
+      return fresh;
     }
-    return select_window_only(window_matched, window_match_count,
-                              "MergeWindowUniqueCandidate");
+    if (MergeInfo *fresh = pick(true, false); fresh != nullptr) {
+      return fresh;
+    }
+    if (MergeInfo *fallback = pick(false, true); fallback != nullptr) {
+      return fallback;
+    }
+    return pick(false, false);
   };
   auto find_redemption_info = [&](const std::string &redeemer) -> RedemptionInfo * {
     auto it = tx_redemption_.find(tx_key);
     if (it == tx_redemption_.end())
       return nullptr;
-    RedemptionInfo *window_matched = nullptr;
-    int window_match_count = 0;
-    for (auto &info : it->second) {
-      if (!collateral_matches(info.collateral_token))
-        continue;
-      if (info.redeemer == redeemer && cond_matches(info.cond_id)) {
-        if (semantic_log_matches(info.log_index)) {
-          window_matched = &info;
-          window_match_count++;
+    auto pick = [&](bool unconsumed_only) -> RedemptionInfo * {
+      RedemptionInfo *window_matched = nullptr;
+      int window_match_count = 0;
+      RedemptionInfo *nearest_matched = nullptr;
+      int64_t nearest_dist = (1LL << 62);
+      int nearest_count = 0;
+      for (auto &info : it->second) {
+        if (unconsumed_only && info.consumed_count > 0) {
+          continue;
+        }
+        if (info.redeemer == redeemer && cond_matches(info.cond_id)) {
+          if (semantic_log_matches(info.log_index)) {
+            window_matched = &info;
+            window_match_count++;
+          } else {
+            bool is_future = info.log_index >= base_log_index;
+            int64_t dist = is_future ? (info.log_index - base_log_index)
+                                     : (base_log_index - info.log_index + SORT_KEY_SCALE);
+            if (nearest_matched == nullptr || dist < nearest_dist) {
+              nearest_matched = &info;
+              nearest_dist = dist;
+              nearest_count = 1;
+            } else if (dist == nearest_dist) {
+              nearest_count++;
+            }
+          }
         }
       }
+      RedemptionInfo *window_only = select_window_only(window_matched, window_match_count,
+                                                       "RedeemWindowUniqueCandidate");
+      if (window_only != nullptr) {
+        return window_only;
+      }
+      stage2_assert(nearest_count <= 1, AssertLevel::L2, "Match", "RedeemForwardUniqueCandidate");
+      return nearest_matched;
+    };
+    if (RedemptionInfo *fresh = pick(true); fresh != nullptr) {
+      return fresh;
     }
-    return select_window_only(window_matched, window_match_count,
-                              "RedeemWindowUniqueCandidate");
+    return pick(false);
   };
   auto find_fpmm_trade_info = [&](const TxFPMMKey &key, int side,
                                   const std::string &trader, int64_t token_amount) -> FPMMTradeInfo * {
@@ -494,6 +588,43 @@ TransferClass EventBuilder::classify_and_emit(
     if (info != nullptr)
       info->covered_by_parent = true;
   };
+  enum class CondLegKind {
+    None,
+    Split,
+    Merge,
+    Redeem,
+  };
+  auto cond_leg_distance = [&](int64_t semantic_log_index) {
+    if (semantic_log_matches(semantic_log_index)) {
+      return int64_t{0};
+    }
+    bool is_future = semantic_log_index >= base_log_index;
+    return is_future ? (semantic_log_index - base_log_index)
+                     : (base_log_index - semantic_log_index + SORT_KEY_SCALE);
+  };
+  auto choose_cond_leg = [&](SplitInfo *sit, MergeInfo *mit, RedemptionInfo *rit,
+                             const char *rule_tag) {
+    CondLegKind chosen = CondLegKind::None;
+    int64_t best_dist = (1LL << 62);
+    auto consider = [&](CondLegKind kind, int64_t log_index) {
+      int64_t dist = cond_leg_distance(log_index);
+      if (chosen == CondLegKind::None || dist < best_dist) {
+        chosen = kind;
+        best_dist = dist;
+        return;
+      }
+      if (dist == best_dist) {
+        stage2_assert(false, AssertLevel::L2, "Match", rule_tag);
+      }
+    };
+    if (sit != nullptr)
+      consider(CondLegKind::Split, sit->log_index);
+    if (mit != nullptr)
+      consider(CondLegKind::Merge, mit->log_index);
+    if (rit != nullptr)
+      consider(CondLegKind::Redeem, rit->log_index);
+    return chosen;
+  };
 
   if (amount == 0) {
     auto fpmm_zero_it = fpmm_map_.find(op);
@@ -521,8 +652,14 @@ TransferClass EventBuilder::classify_and_emit(
   if (from == ZERO_ADDR && !op_is_fpmm) {
     if (to == NEG_RISK_ADAPTER)
       return TransferClass::InternalMintNegRisk;
+    SplitInfo *split_match = find_split_info(to, amount);
+    MergeInfo *merge_match = find_merge_info(to, amount);
+    // Redemption does not mint ERC1155 legs.
+    CondLegKind chosen = choose_cond_leg(split_match, merge_match, nullptr,
+                                         "MintCondLegUniqueCandidate");
 
-    if (MergeInfo *mit = find_merge_info(to, amount); mit != nullptr) {
+    if (chosen == CondLegKind::Merge) {
+      MergeInfo *mit = merge_match;
       bind_root(RootOpType::Merge, "mint_parent");
       consume_merge(mit);
       if (known_token) {
@@ -533,23 +670,7 @@ TransferClass EventBuilder::classify_and_emit(
       return TransferClass::MergeNonPoly;
     }
 
-    if (RedemptionInfo *rit = find_redemption_info(to); rit != nullptr) {
-      bind_root(RootOpType::Redemption, "mint_parent");
-      consume_redeem(rit);
-      if (known_token) {
-        int64_t payout_price = 0;
-        if (is_usdc_collateral(collateral)) {
-          auto &payouts = conditions_[cond_idx].payout_numerators;
-          payout_price = (token_idx < payouts.size() && payouts[token_idx] >= 0) ? payouts[token_idx] : 1000000;
-        }
-        emit_if_user(to, RawEvent{sort_key, cond_idx, EventType::Redemption, token_idx, coll, 0, amount, payout_price});
-        return TransferClass::Redemption;
-      }
-      emit_if_user(to, RawEvent{sort_key, cond_idx, EventType::RedemptionNonPoly, token_idx, coll, 0, amount, 0});
-      return TransferClass::RedemptionNonPoly;
-    }
-
-    if (SplitInfo *split_match = find_split_info(to, amount); split_match != nullptr) {
+    if (chosen == CondLegKind::Split) {
       bind_root(RootOpType::Split, "mint_child");
       consume_split(split_match);
       if (known_token) {
@@ -576,7 +697,13 @@ TransferClass EventBuilder::classify_and_emit(
 
   // ========== burn 分支 (to == 0x0, 非FPMM operator) ==========
   if (to == ZERO_ADDR && !op_is_fpmm) {
-    if (SplitInfo *sit = find_split_info(from, amount); sit != nullptr) {
+    SplitInfo *split_match = find_split_info(from, amount);
+    MergeInfo *merge_match = find_merge_info(from, amount);
+    RedemptionInfo *redeem_match = find_redemption_info(from);
+    CondLegKind chosen = choose_cond_leg(split_match, merge_match, redeem_match,
+                                         "BurnCondLegUniqueCandidate");
+    if (chosen == CondLegKind::Split) {
+      SplitInfo *sit = split_match;
       bind_root(RootOpType::Split, "burn_parent");
       consume_split(sit);
       if (known_token) {
@@ -587,10 +714,7 @@ TransferClass EventBuilder::classify_and_emit(
       return TransferClass::SplitNonPoly;
     }
 
-    if (from == NEG_RISK_ADAPTER)
-      return TransferClass::InternalBurnNegRisk;
-
-    if (MergeInfo *merge_match = find_merge_info(from, amount); merge_match != nullptr) {
+    if (chosen == CondLegKind::Merge) {
       bind_root(RootOpType::Merge, "burn_child");
       consume_merge(merge_match);
       if (known_token) {
@@ -602,7 +726,8 @@ TransferClass EventBuilder::classify_and_emit(
       }
     }
 
-    if (RedemptionInfo *rit = find_redemption_info(from); rit != nullptr) {
+    if (chosen == CondLegKind::Redeem) {
+      RedemptionInfo *rit = redeem_match;
       bind_root(RootOpType::Redemption, "burn_child");
       consume_redeem(rit);
       if (known_token) {
@@ -621,6 +746,9 @@ TransferClass EventBuilder::classify_and_emit(
         return TransferClass::RedemptionNonPoly;
       }
     }
+
+    if (from == NEG_RISK_ADAPTER && chosen == CondLegKind::None)
+      return TransferClass::InternalBurnNegRisk;
 
     if (known_token) {
       emit_if_user(from, RawEvent{sort_key, cond_idx, EventType::TransferOutOther, token_idx, coll, 0, -amount, 0});

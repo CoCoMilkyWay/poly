@@ -220,6 +220,9 @@ phase3_process_transfers(chunk)
 │  │  │  │  ├─ lp_add_refund: transfer_amount == split_amount - amounts[token_idx|任意腿]
 │  │  │  │  └─ lp_remove: funder == counterparty 且 transfer_amount ∈ amounts
 │  │  │  └─ unknown token 仅在通过结构约束时可绑定，不以“地址像不像”放宽
+│  │  ├─ split/merge/redeem 匹配策略: 窗口内唯一命中优先；窗口无命中时在同tx内按最近语义log兜底；同距离并列 -> assert(false)
+│  │  │  ├─ mint/burn 发生多语义候选时按语义log距离择优（窗口命中优先）；同距离并列 -> assert(false)
+│  │  │  └─ split/merge 的 collateral 约束为“严格优先、结构兜底”：先按 collateral 命中；未命中再按同window结构条件匹配
 │  │  ├─ FPMM trade多候选决策: 在“trade_leg_required 且 未消费 且 未解释”候选中取最近未来语义log；同log并列 -> assert(false)
 │  │  ├─ order 匹配策略: 先按地址腿硬约束筛选，再取窗口内唯一命中；若窗口无命中，取同tx内“未消费且地址腿满足”的最近未来语义log；仅当窗口存在未消费同量候选且不存在可用前向候选时才 assert(false)
 │  │  ├─ 多候选同时命中 -> assert(false)
@@ -268,9 +271,9 @@ phase3_process_transfers(chunk)
 │  │  │        其中 must_consume_or_explain = trade_leg_required && observed_trade_leg(side)
 │  │  ├─ convert: consumed_count>0
 │  │  ├─ funding: consumed_count>0；FundingRemoved amounts 全零允许零腿
-│  │  ├─ split: consumed_count>0 或 covered_by_parent=true；amount==0 允许零腿
-│  │  ├─ merge: consumed_count>0 或 covered_by_parent=true；amount==0 允许零腿
-│  │  └─ redeem: consumed_count>0 或 covered_by_parent=true；payout==0 允许零腿
+│  │  ├─ split: 若在该 split 语义window内观测到可消费CTF mint腿(0->stakeholder)则 consumed_count>0 或 covered_by_parent=true；amount==0 允许零腿
+│  │  ├─ merge: 若在该 merge 语义window内观测到可消费CTF burn腿(stakeholder->0)则 consumed_count>0 或 covered_by_parent=true；amount==0 允许零腿
+│  │  └─ redeem: 仅对 payout>0 且在该 redeem 语义window内观测到可消费CTF burn腿的行强制 consumed_count>0 或 covered_by_parent=true；其余允许零消费
 │  ├─ assert(op候选唯一性: order/trade/funding/split/merge/redeem/convert 均无重复消费和歧义并列)
 │  ├─ assert(语义硬约束成立: actor/cond/collateral/parent/index_set/amount/side/log-window)
 │  ├─ assert(Poly类=>is_poly, NegRisk类=>is_nr, NonPoly类=>!is_poly或!known_cond)

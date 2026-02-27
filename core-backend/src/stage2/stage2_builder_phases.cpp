@@ -560,6 +560,14 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
     int64_t amount = 0;
   };
   std::unordered_map<TxTokenKey, std::vector<ObservedOrderLeg>> observed_order_legs;
+  struct ObservedCondLeg {
+    std::string from;
+    std::string to;
+    int64_t amount = 0;
+    uint32_t cond_idx = UNKNOWN_COND_IDX;
+    int64_t base_log_index = -1;
+  };
+  std::unordered_map<TxKey, std::vector<ObservedCondLeg>> observed_cond_legs;
 
   auto resolve_transfer_collateral = [&](uint32_t cid_idx, const std::string &operator_addr) {
     auto coll_it = cond_collateral_.find(cid_idx);
@@ -629,6 +637,11 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
     if (tit->second.token_idx != UNKNOWN_TOKEN_IDX) {
       token_idx = tit->second.token_idx;
     }
+    if (amount > 0 && cond_idx != UNKNOWN_COND_IDX) {
+      TxKey tx_key{block, tx_hash};
+      observed_cond_legs[tx_key].push_back(
+          ObservedCondLeg{from, to, amount, cond_idx, log_idx / TRANSFER_FLAT_LOG_SCALE});
+    }
 
     // 获取抵押品类型
     Collateral collateral = resolve_transfer_collateral(cond_idx, op);
@@ -656,27 +669,129 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
   }
 
   // Semantic coverage assertions: every semantic op in this chunk must be consumed by at least one transfer leg.
-  for (const auto &[_, rows] : tx_split_) {
+  auto cond_idx_for = [&](const std::string &cond_id) -> uint32_t {
+    auto it = cond_map_.find(cond_id);
+    if (it == cond_map_.end()) {
+      return UNKNOWN_COND_IDX;
+    }
+    return it->second;
+  };
+  auto semantic_window_left = [&](const TxKey &tx_key, int64_t semantic_log_index) {
+    auto bit = tx_op_bounds_.find(tx_key);
+    if (bit == tx_op_bounds_.end()) {
+      return int64_t{-1};
+    }
+    for (const auto &b : bit->second) {
+      if (b.right_inclusive == semantic_log_index) {
+        return b.left_exclusive;
+      }
+    }
+    return int64_t{-1};
+  };
+  auto split_leg_observed = [&](const TxKey &tx_key, const std::string &cond_id,
+                                const std::string &stakeholder, int64_t amount,
+                                int64_t semantic_log_index) {
+    uint32_t cond_idx = cond_idx_for(cond_id);
+    if (cond_idx == UNKNOWN_COND_IDX || amount <= 0) {
+      return false;
+    }
+    int64_t left = semantic_window_left(tx_key, semantic_log_index);
+    auto it = observed_cond_legs.find(tx_key);
+    if (it == observed_cond_legs.end()) {
+      return false;
+    }
+    for (const auto &leg : it->second) {
+      if (leg.base_log_index <= left || leg.base_log_index > semantic_log_index) {
+        continue;
+      }
+      if (leg.cond_idx != cond_idx || leg.amount != amount) {
+        continue;
+      }
+      // Split semantic certainty comes from child mint legs.
+      if (leg.from == ZERO_ADDR && leg.to == stakeholder) {
+        return true;
+      }
+    }
+    return false;
+  };
+  auto merge_leg_observed = [&](const TxKey &tx_key, const std::string &cond_id,
+                                const std::string &stakeholder, int64_t amount,
+                                int64_t semantic_log_index) {
+    uint32_t cond_idx = cond_idx_for(cond_id);
+    if (cond_idx == UNKNOWN_COND_IDX || amount <= 0) {
+      return false;
+    }
+    int64_t left = semantic_window_left(tx_key, semantic_log_index);
+    auto it = observed_cond_legs.find(tx_key);
+    if (it == observed_cond_legs.end()) {
+      return false;
+    }
+    for (const auto &leg : it->second) {
+      if (leg.base_log_index <= left || leg.base_log_index > semantic_log_index) {
+        continue;
+      }
+      if (leg.cond_idx != cond_idx || leg.amount != amount) {
+        continue;
+      }
+      // Merge semantic certainty comes from child burn legs.
+      if (leg.from == stakeholder && leg.to == ZERO_ADDR) {
+        return true;
+      }
+    }
+    return false;
+  };
+  auto redeem_leg_observed = [&](const TxKey &tx_key, const std::string &cond_id,
+                                 const std::string &redeemer,
+                                 int64_t semantic_log_index) {
+    uint32_t cond_idx = cond_idx_for(cond_id);
+    if (cond_idx == UNKNOWN_COND_IDX) {
+      return false;
+    }
+    int64_t left = semantic_window_left(tx_key, semantic_log_index);
+    auto it = observed_cond_legs.find(tx_key);
+    if (it == observed_cond_legs.end()) {
+      return false;
+    }
+    for (const auto &leg : it->second) {
+      if (leg.base_log_index <= left || leg.base_log_index > semantic_log_index) {
+        continue;
+      }
+      if (leg.cond_idx != cond_idx) {
+        continue;
+      }
+      if (leg.from == redeemer && leg.to == ZERO_ADDR && leg.amount > 0) {
+        return true;
+      }
+    }
+    return false;
+  };
+  for (const auto &[tx_key, rows] : tx_split_) {
     for (const auto &row : rows) {
       // split amount==0 is a valid semantic marker with no effective ERC1155 leg.
       bool zero_amount_split = (row.amount == 0);
-      stage2_assert(row.consumed_count > 0 || row.covered_by_parent || zero_amount_split,
+      bool must_consume = split_leg_observed(tx_key, row.cond_id, row.stakeholder,
+                                             row.amount, row.log_index);
+      stage2_assert(row.consumed_count > 0 || row.covered_by_parent || zero_amount_split || !must_consume,
                     AssertLevel::L4, "Consume", "SplitConsumedOrCoveredByParent");
     }
   }
-  for (const auto &[_, rows] : tx_merge_) {
+  for (const auto &[tx_key, rows] : tx_merge_) {
     for (const auto &row : rows) {
       // merge amount==0 is a valid semantic marker with no effective ERC1155 leg.
       bool zero_amount_merge = (row.amount == 0);
-      stage2_assert(row.consumed_count > 0 || row.covered_by_parent || zero_amount_merge,
+      bool must_consume = merge_leg_observed(tx_key, row.cond_id, row.stakeholder,
+                                             row.amount, row.log_index);
+      stage2_assert(row.consumed_count > 0 || row.covered_by_parent || zero_amount_merge || !must_consume,
                     AssertLevel::L4, "Consume", "MergeConsumedOrCoveredByParent");
     }
   }
-  for (const auto &[_, rows] : tx_redemption_) {
+  for (const auto &[tx_key, rows] : tx_redemption_) {
     for (const auto &row : rows) {
-      // redemption payout==0 is a valid semantic marker with no effective ERC1155 leg.
-      bool zero_payout_redemption = (row.payout == 0);
-      stage2_assert(row.consumed_count > 0 || row.covered_by_parent || zero_payout_redemption,
+      // redeem can emit multiple rows in one tx/cond/redeemer key, including zero-payout rows.
+      // Only positive-payout rows require at-least-one matched burn leg when such leg is observable.
+      bool must_consume = (row.payout > 0) &&
+                          redeem_leg_observed(tx_key, row.cond_id, row.redeemer, row.log_index);
+      stage2_assert(row.consumed_count > 0 || row.covered_by_parent || !must_consume,
                     AssertLevel::L4, "Consume", "RedeemConsumedOrCoveredByParent");
     }
   }
