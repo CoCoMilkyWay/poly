@@ -228,11 +228,11 @@ phase3_process_transfers(chunk)
 │  │  │  │  ├─ lp_add_refund: transfer_amount == split_amount - amounts[token_idx|任意腿]
 │  │  │  │  └─ lp_remove: funder == counterparty 且 transfer_amount ∈ amounts
 │  │  │  └─ unknown token 仅在通过结构约束时可绑定，不以“地址像不像”放宽
-│  │  ├─ split/merge/redeem 匹配策略: 窗口内唯一命中优先；窗口无命中时在同tx内按最近语义log兜底；同距离并列 -> assert(false)
+│  │  ├─ split/merge/redeem 匹配策略: 窗口内唯一命中优先；窗口无命中时仅在同tx内按最近未来语义log兜底；同距离并列 -> assert(false)
 │  │  │  ├─ mint/burn 发生多语义候选时按语义log距离择优（窗口命中优先）；同距离并列 -> assert(false)
 │  │  │  └─ split/merge 的 collateral 约束为“严格优先、结构兜底”：先按 collateral 命中；未命中再按同window结构条件匹配
-│  │  ├─ FPMM trade多候选决策: 在“trade_leg_required 且 未消费 且 未解释”候选中取最近未来语义log；同log并列 -> assert(false)
-│  │  ├─ order 匹配策略: 先按地址腿硬约束筛选，再取窗口内唯一命中；若窗口无命中，取同tx内“未消费且地址腿满足”的最近未来语义log；仅当窗口存在未消费同量候选且不存在可用前向候选时才 assert(false)
+│  │  ├─ FPMM trade/funding/remove 多候选决策: 先按结构约束筛选并优先命中当前语义window；窗口无命中再取最近未来语义log；同log并列 -> assert(false)
+│  │  ├─ order 匹配策略: 先按地址腿硬约束筛选，再取窗口内唯一命中；若窗口无命中，取同tx内“未消费且地址腿满足”的最近未来语义log；同log并列 -> assert(false)
 │  │  ├─ 多候选同时命中 -> assert(false)
 │  │  └─ 唯一命中 -> 记录 root_op + leg_type，并更新 consumed/covered
 │  ├─ Pass B: 分类与事件产出
@@ -282,12 +282,11 @@ phase3_process_transfers(chunk)
 │  │  ├─ split: 若在该 split 语义window内观测到可消费CTF mint腿(0->stakeholder)则 consumed_count>0 或 covered_by_parent=true；amount==0 允许零腿
 │  │  ├─ merge: 若在该 merge 语义window内观测到可消费CTF burn腿(stakeholder->0)则 consumed_count>0 或 covered_by_parent=true；amount==0 允许零腿
 │  │  └─ redeem: 仅对 payout>0 且在该 redeem 语义window内观测到可消费CTF burn腿的行强制 consumed_count>0 或 covered_by_parent=true；其余允许零消费
-│  ├─ assert(op候选唯一性: order/trade/funding/split/merge/redeem/convert 均无重复消费和歧义并列)
+│  ├─ assert(op消费与硬约束成立；候选歧义按L2唯一性直接中断，禁止静默择一)
 │  ├─ assert(语义硬约束成立: actor/cond/collateral/parent/index_set/amount/side/log-window)
 │  ├─ assert(Poly类=>is_poly, NegRisk类=>is_nr, NonPoly类=>!is_poly或!known_cond)
 │  ├─ assert(convert 在 market 维度的路径与金额关系成立)
 │  ├─ assert(convert burn分区: `op=Adapter && to=BurnAddr && amt>0` 必须被 `Convert` 或 `InternalBurnConvert` 完整覆盖)
-│  ├─ assert(语义行分区总数: split/merge/redeem/order/trade/convert/funding 每行都落入且仅按优先级计入一个状态桶，桶和=总行数)
 │  ├─ assert(chunk尾refine单调升级: 仅允许 `UNKNOWN->KNOWN` 或 source 升级，不允许跨cond改写)
 │  └─ assert(token_idx==255 -> cond_idx==UNKNOWN_COND_IDX)
 └─ 输出
@@ -315,7 +314,7 @@ phase3_process_transfers(chunk)
 ├─ L1 映射不变量层：cond/token/collateral/fpmm 映射一致；outcome_count 合法且仅扩展不回退；coll_map 对多来源冲突做确定性规范化；Phase2索引覆盖率守恒；chunk尾refine仅允许单向升级
 ├─ L2 匹配唯一性层：窗口候选命中数 <= 1；同层并列歧义直接 assert
 ├─ L3 语义约束层：命中后必须满足 actor/cond/collateral/amount/direction/window 等硬约束
-├─ L4 语义消费闭环层：chunk 收尾每类语义 op 必须“已消费或显式例外（含 split/merge amount==0、redeem payout==0、trade !must_consume_or_explain 零腿）”；并校验 convert-burn 与各语义行状态桶分区总数守恒
+├─ L4 语义消费闭环层：chunk 收尾每类语义 op 必须“已消费或显式例外（含 split/merge amount==0、redeem payout==0、trade !must_consume_or_explain 零腿）”；并校验 convert-burn 覆盖守恒
 └─ L5 结果守恒层：total 守恒、unclassified==0、树统计恒等式成立
 
 TransferClass输出事件(33类, 唯一落类)

@@ -828,11 +828,6 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
     }
     return false;
   };
-  int64_t split_rows_total = 0;
-  int64_t split_rows_consumed = 0;
-  int64_t split_rows_covered = 0;
-  int64_t split_rows_zero = 0;
-  int64_t split_rows_not_required = 0;
   for (const auto &[tx_key, rows] : tx_split_) {
     for (const auto &row : rows) {
       // split amount==0 is a valid semantic marker with no effective ERC1155 leg.
@@ -844,26 +839,9 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
       bool not_required = !must_consume;
       stage2_assert(consumed || covered || zero_amount_split || not_required,
                     AssertLevel::L4, "Consume", "SplitConsumedOrCoveredByParent");
-      split_rows_total++;
-      if (consumed) {
-        split_rows_consumed++;
-      } else if (covered) {
-        split_rows_covered++;
-      } else if (zero_amount_split) {
-        split_rows_zero++;
-      } else {
-        split_rows_not_required++;
-      }
     }
   }
-  stage2_assert(split_rows_total == split_rows_consumed + split_rows_covered + split_rows_zero + split_rows_not_required,
-                AssertLevel::L4, "Partition", "SplitRowPartitionTotal");
 
-  int64_t merge_rows_total = 0;
-  int64_t merge_rows_consumed = 0;
-  int64_t merge_rows_covered = 0;
-  int64_t merge_rows_zero = 0;
-  int64_t merge_rows_not_required = 0;
   for (const auto &[tx_key, rows] : tx_merge_) {
     for (const auto &row : rows) {
       // merge amount==0 is a valid semantic marker with no effective ERC1155 leg.
@@ -875,25 +853,9 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
       bool not_required = !must_consume;
       stage2_assert(consumed || covered || zero_amount_merge || not_required,
                     AssertLevel::L4, "Consume", "MergeConsumedOrCoveredByParent");
-      merge_rows_total++;
-      if (consumed) {
-        merge_rows_consumed++;
-      } else if (covered) {
-        merge_rows_covered++;
-      } else if (zero_amount_merge) {
-        merge_rows_zero++;
-      } else {
-        merge_rows_not_required++;
-      }
     }
   }
-  stage2_assert(merge_rows_total == merge_rows_consumed + merge_rows_covered + merge_rows_zero + merge_rows_not_required,
-                AssertLevel::L4, "Partition", "MergeRowPartitionTotal");
 
-  int64_t redeem_rows_total = 0;
-  int64_t redeem_rows_consumed = 0;
-  int64_t redeem_rows_covered = 0;
-  int64_t redeem_rows_not_required = 0;
   for (const auto &[tx_key, rows] : tx_redemption_) {
     for (const auto &row : rows) {
       // redeem can emit multiple rows in one tx/cond/redeemer key, including zero-payout rows.
@@ -905,22 +867,9 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
       bool not_required = !must_consume;
       stage2_assert(consumed || covered || not_required,
                     AssertLevel::L4, "Consume", "RedeemConsumedOrCoveredByParent");
-      redeem_rows_total++;
-      if (consumed) {
-        redeem_rows_consumed++;
-      } else if (covered) {
-        redeem_rows_covered++;
-      } else {
-        redeem_rows_not_required++;
-      }
     }
   }
-  stage2_assert(redeem_rows_total == redeem_rows_consumed + redeem_rows_covered + redeem_rows_not_required,
-                AssertLevel::L4, "Partition", "RedeemRowPartitionTotal");
 
-  int64_t order_rows_total = 0;
-  int64_t order_rows_consumed = 0;
-  int64_t order_rows_unobserved = 0;
   for (const auto &[key, rows] : tx_order_) {
     auto order_leg_observed = [&](const OrderInfo &row) {
       auto oit = observed_order_legs.find(key);
@@ -950,21 +899,9 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
       bool consumed = row.consumed;
       bool unobserved = !must_consume;
       stage2_assert(consumed || unobserved, AssertLevel::L4, "Consume", "OrderConsumedIfLegObserved");
-      order_rows_total++;
-      if (consumed) {
-        order_rows_consumed++;
-      } else {
-        order_rows_unobserved++;
-      }
     }
   }
-  stage2_assert(order_rows_total == order_rows_consumed + order_rows_unobserved,
-                AssertLevel::L4, "Partition", "OrderRowPartitionTotal");
 
-  int64_t trade_rows_total = 0;
-  int64_t trade_rows_consumed = 0;
-  int64_t trade_rows_explained = 0;
-  int64_t trade_rows_not_required = 0;
   for (const auto &[key, rows] : tx_fpmm_trade_) {
     for (const auto &row : rows) {
       uint8_t observed_mask = 0;
@@ -980,36 +917,15 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
       bool not_required = !must_consume_or_explain;
       stage2_assert(not_required || consumed || explained,
                     AssertLevel::L4, "Consume", "FPMMTradeConsumedOrExplained");
-      trade_rows_total++;
-      if (consumed) {
-        trade_rows_consumed++;
-      } else if (explained) {
-        trade_rows_explained++;
-      } else {
-        trade_rows_not_required++;
-      }
     }
   }
-  stage2_assert(trade_rows_total == trade_rows_consumed + trade_rows_explained + trade_rows_not_required,
-                AssertLevel::L4, "Partition", "FPMMTradeRowPartitionTotal");
 
-  int64_t convert_rows_total = 0;
-  int64_t convert_rows_consumed = 0;
   for (const auto &[_, rows] : tx_convert_) {
     for (const auto &row : rows) {
-      convert_rows_total++;
       stage2_assert(row.consumed_count > 0, AssertLevel::L4, "Consume", "ConvertConsumed");
-      if (row.consumed_count > 0) {
-        convert_rows_consumed++;
-      }
     }
   }
-  stage2_assert(convert_rows_total == convert_rows_consumed,
-                AssertLevel::L4, "Partition", "ConvertRowPartitionTotal");
 
-  int64_t funding_rows_total = 0;
-  int64_t funding_rows_consumed = 0;
-  int64_t funding_rows_zero_leg_remove = 0;
   for (const auto &[_, rows] : tx_fpmm_funding_) {
     for (const auto &row : rows) {
       // Some FPMMFundingRemoved rows have zero token legs (amounts=[0,0]):
@@ -1024,16 +940,8 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
       bool consumed = row.consumed_count > 0;
       stage2_assert(consumed || zero_leg_funding_remove,
                       AssertLevel::L4, "Consume", "FPMMFundingConsumedOrZeroLegRemove");
-      funding_rows_total++;
-      if (consumed) {
-        funding_rows_consumed++;
-      } else {
-        funding_rows_zero_leg_remove++;
-      }
     }
   }
-  stage2_assert(funding_rows_total == funding_rows_consumed + funding_rows_zero_leg_remove,
-                AssertLevel::L4, "Partition", "FPMMFundingRowPartitionTotal");
 }
 
 void EventBuilder::commit_chunk(int64_t new_cursor) {

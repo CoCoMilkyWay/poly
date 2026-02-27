@@ -157,9 +157,10 @@ TransferClass EventBuilder::classify_and_emit(
             window_matched = &info;
             window_match_count++;
           } else {
-            bool is_future = info.log_index >= base_log_index;
-            int64_t dist = is_future ? (info.log_index - base_log_index)
-                                     : (base_log_index - info.log_index + SORT_KEY_SCALE);
+            if (info.log_index < base_log_index) {
+              continue;
+            }
+            int64_t dist = info.log_index - base_log_index;
             if (nearest_matched == nullptr || dist < nearest_dist) {
               nearest_matched = &info;
               nearest_dist = dist;
@@ -210,9 +211,10 @@ TransferClass EventBuilder::classify_and_emit(
             window_matched = &info;
             window_match_count++;
           } else {
-            bool is_future = info.log_index >= base_log_index;
-            int64_t dist = is_future ? (info.log_index - base_log_index)
-                                     : (base_log_index - info.log_index + SORT_KEY_SCALE);
+            if (info.log_index < base_log_index) {
+              continue;
+            }
+            int64_t dist = info.log_index - base_log_index;
             if (nearest_matched == nullptr || dist < nearest_dist) {
               nearest_matched = &info;
               nearest_dist = dist;
@@ -261,9 +263,10 @@ TransferClass EventBuilder::classify_and_emit(
             window_matched = &info;
             window_match_count++;
           } else {
-            bool is_future = info.log_index >= base_log_index;
-            int64_t dist = is_future ? (info.log_index - base_log_index)
-                                     : (base_log_index - info.log_index + SORT_KEY_SCALE);
+            if (info.log_index < base_log_index) {
+              continue;
+            }
+            int64_t dist = info.log_index - base_log_index;
             if (nearest_matched == nullptr || dist < nearest_dist) {
               nearest_matched = &info;
               nearest_dist = dist;
@@ -292,8 +295,11 @@ TransferClass EventBuilder::classify_and_emit(
     auto it = tx_fpmm_trade_.find(key);
     if (it == tx_fpmm_trade_.end())
       return nullptr;
-    FPMMTradeInfo *matched = nullptr;
-    int match_count = 0;
+    FPMMTradeInfo *window_matched = nullptr;
+    int window_match_count = 0;
+    FPMMTradeInfo *forward_matched = nullptr;
+    int64_t forward_log = -1;
+    int forward_same_log_count = 0;
     for (auto &info : it->second) {
       if (!info.requires_erc1155_leg)
         continue;
@@ -307,12 +313,27 @@ TransferClass EventBuilder::classify_and_emit(
       if (info.log_index < base_log_index)
         continue;
       if (info.side == side && info.trader == trader && info.tokens == token_amount) {
-        matched = &info;
-        match_count++;
+        if (semantic_log_matches(info.log_index)) {
+          window_matched = &info;
+          window_match_count++;
+          continue;
+        }
+        if (forward_matched == nullptr || info.log_index < forward_log) {
+          forward_matched = &info;
+          forward_log = info.log_index;
+          forward_same_log_count = 1;
+        } else if (info.log_index == forward_log) {
+          forward_same_log_count++;
+        }
       }
     }
-    stage2_assert(match_count <= 1, AssertLevel::L2, "Match", "FPMMTradeUniqueCandidate");
-    return matched;
+    FPMMTradeInfo *window_only = select_window_only(window_matched, window_match_count,
+                                                    "FPMMTradeWindowUniqueCandidate");
+    if (window_only != nullptr) {
+      return window_only;
+    }
+    stage2_assert(forward_same_log_count <= 1, AssertLevel::L2, "Match", "FPMMTradeUniqueCandidate");
+    return forward_matched;
   };
   auto mark_fpmm_trade_explained = [&](const TxFPMMKey &key, int side) -> bool {
     auto it = tx_fpmm_trade_.find(key);
@@ -375,41 +396,57 @@ TransferClass EventBuilder::classify_and_emit(
     auto it = tx_fpmm_funding_.find(key);
     if (it == tx_fpmm_funding_.end())
       return nullptr;
-    FPMMFundingInfo *matched = nullptr;
-    int match_count = 0;
+    FPMMFundingInfo *window_matched = nullptr;
+    int window_match_count = 0;
+    FPMMFundingInfo *forward_matched = nullptr;
+    int64_t forward_log = -1;
+    int forward_same_log_count = 0;
     for (auto &info : it->second) {
       if (info.log_index < base_log_index)
         continue;
       if (info.side != 1 || info.amounts.empty())
         continue;
       int64_t split_amount = funding_split_amount(info);
+      bool amount_match = false;
       if (!expect_refund) {
-        if (split_amount == transfer_amount) {
-          matched = &info;
-          match_count++;
-        }
-        continue;
-      }
-      bool refund_match = false;
-      if (known_token && token_idx != UNKNOWN_TOKEN_IDX &&
-          token_idx < info.amounts.size()) {
-        int64_t expected_refund = split_amount - info.amounts[token_idx];
-        refund_match = (expected_refund == transfer_amount);
+        amount_match = (split_amount == transfer_amount);
       } else {
-        for (int64_t amount_i : info.amounts) {
-          if (split_amount - amount_i == transfer_amount) {
-            refund_match = true;
-            break;
+        if (known_token && token_idx != UNKNOWN_TOKEN_IDX &&
+            token_idx < info.amounts.size()) {
+          int64_t expected_refund = split_amount - info.amounts[token_idx];
+          amount_match = (expected_refund == transfer_amount);
+        } else {
+          for (int64_t amount_i : info.amounts) {
+            if (split_amount - amount_i == transfer_amount) {
+              amount_match = true;
+              break;
+            }
           }
         }
       }
-      if (refund_match) {
-        matched = &info;
-        match_count++;
+      if (!amount_match) {
+        continue;
+      }
+      if (semantic_log_matches(info.log_index)) {
+        window_matched = &info;
+        window_match_count++;
+        continue;
+      }
+      if (forward_matched == nullptr || info.log_index < forward_log) {
+        forward_matched = &info;
+        forward_log = info.log_index;
+        forward_same_log_count = 1;
+      } else if (info.log_index == forward_log) {
+        forward_same_log_count++;
       }
     }
-    stage2_assert(match_count <= 1, AssertLevel::L2, "Match", "FPMMFundingUniqueCandidate");
-    return matched;
+    FPMMFundingInfo *window_only = select_window_only(window_matched, window_match_count,
+                                                      "FPMMFundingWindowUniqueCandidate");
+    if (window_only != nullptr) {
+      return window_only;
+    }
+    stage2_assert(forward_same_log_count <= 1, AssertLevel::L2, "Match", "FPMMFundingUniqueCandidate");
+    return forward_matched;
   };
   auto has_pending_future_fpmm_add_for_mint = [&](const TxFPMMKey &key, int64_t transfer_amount) {
     auto it = tx_fpmm_funding_.find(key);
@@ -486,8 +523,11 @@ TransferClass EventBuilder::classify_and_emit(
     auto it = tx_fpmm_funding_.find(key);
     if (it == tx_fpmm_funding_.end())
       return nullptr;
-    FPMMFundingInfo *matched = nullptr;
-    int match_count = 0;
+    FPMMFundingInfo *window_matched = nullptr;
+    int window_match_count = 0;
+    FPMMFundingInfo *forward_matched = nullptr;
+    int64_t forward_log = -1;
+    int forward_same_log_count = 0;
     for (auto &info : it->second) {
       if (info.log_index < base_log_index)
         continue;
@@ -497,12 +537,27 @@ TransferClass EventBuilder::classify_and_emit(
         continue;
       bool amount_match = funding_matches_remove_amount(info, transfer_amount);
       if (amount_match) {
-        matched = &info;
-        match_count++;
+        if (semantic_log_matches(info.log_index)) {
+          window_matched = &info;
+          window_match_count++;
+          continue;
+        }
+        if (forward_matched == nullptr || info.log_index < forward_log) {
+          forward_matched = &info;
+          forward_log = info.log_index;
+          forward_same_log_count = 1;
+        } else if (info.log_index == forward_log) {
+          forward_same_log_count++;
+        }
       }
     }
-    stage2_assert(match_count <= 1, AssertLevel::L2, "Match", "FPMMRemoveUniqueCandidate");
-    return matched;
+    FPMMFundingInfo *window_only = select_window_only(window_matched, window_match_count,
+                                                      "FPMMRemoveWindowUniqueCandidate");
+    if (window_only != nullptr) {
+      return window_only;
+    }
+    stage2_assert(forward_same_log_count <= 1, AssertLevel::L2, "Match", "FPMMRemoveUniqueCandidate");
+    return forward_matched;
   };
   auto order_leg_matches = [&](const OrderInfo &info) {
     if (info.maker_side == 1) {
