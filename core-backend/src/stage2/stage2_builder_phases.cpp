@@ -107,46 +107,55 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
     return static_cast<int>(v);
   };
 
-  auto cp = query_block_range(
-      *conn, stage1_db_,
-      "SELECT condition_id, outcome_slot_count, question_id FROM ",
-      "condition_preparation", start, end);
-  if (cp) {
-    for (idx_t i = 0; i < cp->RowCount(); ++i) {
-      std::string cid = q_get_hex(cp, 0, i);
-      int cnt = get_u256_i32(cp, 1, i);
-      std::string qid = q_get_hex_lower(cp, 2, i);
-      intern_condition(cid, cnt, ConditionSource::ConditionPrep, qid);
+  {
+    TraceN("condition_preparation");
+    auto cp = query_block_range(
+        *conn, stage1_db_,
+        "SELECT condition_id, outcome_slot_count, question_id FROM ",
+        "condition_preparation", start, end);
+    if (cp) {
+      for (idx_t i = 0; i < cp->RowCount(); ++i) {
+        std::string cid = q_get_hex(cp, 0, i);
+        int cnt = get_u256_i32(cp, 1, i);
+        std::string qid = q_get_hex_lower(cp, 2, i);
+        intern_condition(cid, cnt, ConditionSource::ConditionPrep, qid);
+      }
     }
   }
 
-  auto cr = query_block_range(
-      *conn, stage1_db_, "SELECT condition_id, payout_numerators FROM ",
-      "condition_resolution", start, end);
-  if (cr) {
-    for (idx_t i = 0; i < cr->RowCount(); ++i) {
-      std::string cid = q_get_hex(cr, 0, i);
-      std::string lower = to_lower(cid);
-      auto it = cond_map_.find(lower);
-      if (it == cond_map_.end())
-        continue;
-      std::vector<int64_t> payouts = parse_u256_list_i64(cr->GetValue(1, i));
-      update_condition_payout(it->second, payouts);
+  {
+    TraceN("condition_resolution");
+    auto cr = query_block_range(
+        *conn, stage1_db_, "SELECT condition_id, payout_numerators FROM ",
+        "condition_resolution", start, end);
+    if (cr) {
+      for (idx_t i = 0; i < cr->RowCount(); ++i) {
+        std::string cid = q_get_hex(cr, 0, i);
+        std::string lower = to_lower(cid);
+        auto it = cond_map_.find(lower);
+        if (it == cond_map_.end())
+          continue;
+        std::vector<int64_t> payouts = parse_u256_list_i64(cr->GetValue(1, i));
+        update_condition_payout(it->second, payouts);
+      }
     }
   }
 
-  auto tm = query_block_range(
-      *conn, stage1_db_, "SELECT token0, token1, condition_id FROM ",
-      "token_map", start, end);
-  if (tm) {
-    for (idx_t i = 0; i < tm->RowCount(); ++i) {
-      std::string token0 = q_get_hex(tm, 0, i);
-      std::string token1 = q_get_hex(tm, 1, i);
-      std::string cid = q_get_hex(tm, 2, i);
-      uint32_t cond_idx = intern_condition(cid, 2, ConditionSource::PolymarketTokenReg);
-      // TokenRegistered keeps a binary market ordering: token0 -> outcome 0, token1 -> outcome 1.
-      intern_token(token0, cond_idx, 0, TokenSource::PolymarketTokenReg);
-      intern_token(token1, cond_idx, 1, TokenSource::PolymarketTokenReg);
+  {
+    TraceN("token_map");
+    auto tm = query_block_range(
+        *conn, stage1_db_, "SELECT token0, token1, condition_id FROM ",
+        "token_map", start, end);
+    if (tm) {
+      for (idx_t i = 0; i < tm->RowCount(); ++i) {
+        std::string token0 = q_get_hex(tm, 0, i);
+        std::string token1 = q_get_hex(tm, 1, i);
+        std::string cid = q_get_hex(tm, 2, i);
+        uint32_t cond_idx = intern_condition(cid, 2, ConditionSource::PolymarketTokenReg);
+        // TokenRegistered keeps a binary market ordering: token0 -> outcome 0, token1 -> outcome 1.
+        intern_token(token0, cond_idx, 0, TokenSource::PolymarketTokenReg);
+        intern_token(token1, cond_idx, 1, TokenSource::PolymarketTokenReg);
+      }
     }
   }
 
@@ -185,19 +194,22 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
     // 为 FPMM 计算所有 atomic position token_id（覆盖多条件组合头寸）
     intern_fpmm_tokens(row.cids, row.collateral, primary_cond_idx);
   };
-  auto fpmm = query_block_range(
-      *conn, stage1_db_,
-      "SELECT fpmm_addr, condition_ids, collateral_token, conditional_tokens FROM ",
-      "fpmm", start, end);
-  if (fpmm) {
-    pending_fpmm_rows.reserve(fpmm->RowCount());
-    for (idx_t i = 0; i < fpmm->RowCount(); ++i) {
-      pending_fpmm_rows.push_back(FPMMRow{
-          .addr = q_get_hex(fpmm, 0, i),
-          .collateral = q_get_hex_lower(fpmm, 2, i),
-          .conditional_tokens = q_get_hex_lower(fpmm, 3, i),
-          .cids = parse_bytes32_list_hex_lower(fpmm->GetValue(1, i)),
-      });
+  {
+    TraceN("fpmm_source_rows");
+    auto fpmm = query_block_range(
+        *conn, stage1_db_,
+        "SELECT fpmm_addr, condition_ids, collateral_token, conditional_tokens FROM ",
+        "fpmm", start, end);
+    if (fpmm) {
+      pending_fpmm_rows.reserve(fpmm->RowCount());
+      for (idx_t i = 0; i < fpmm->RowCount(); ++i) {
+        pending_fpmm_rows.push_back(FPMMRow{
+            .addr = q_get_hex(fpmm, 0, i),
+            .collateral = q_get_hex_lower(fpmm, 2, i),
+            .conditional_tokens = q_get_hex_lower(fpmm, 3, i),
+            .cids = parse_bytes32_list_hex_lower(fpmm->GetValue(1, i)),
+        });
+      }
     }
   }
 
@@ -278,42 +290,51 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
       intern_condition_tokens(lower_cid, inf.collateral, cond_idx, token_source);
     }
   };
-  update_from_condition_event("split", "partition", ConditionSource::SplitEvent, TokenSource::SplitEvent);
-  update_from_condition_event("merge", "partition", ConditionSource::MergeEvent, TokenSource::MergeEvent);
-  update_from_condition_event("redemption", "index_sets", ConditionSource::RedemptionEvent, TokenSource::RedemptionEvent);
-
-  for (const auto &row : pending_fpmm_rows) {
-    process_fpmm_row(row);
+  {
+    TraceN("infer_condition_tokens");
+    update_from_condition_event("split", "partition", ConditionSource::SplitEvent, TokenSource::SplitEvent);
+    update_from_condition_event("merge", "partition", ConditionSource::MergeEvent, TokenSource::MergeEvent);
+    update_from_condition_event("redemption", "index_sets", ConditionSource::RedemptionEvent, TokenSource::RedemptionEvent);
   }
 
-  auto nrq = query_block_range(
-      *conn, stage1_db_,
-      "SELECT market_id, question_id FROM ", "neg_risk_question",
-      start, end);
-  if (nrq) {
-    for (idx_t i = 0; i < nrq->RowCount(); ++i) {
-      std::string market_id = q_get_hex_lower(nrq, 0, i);
-      std::string question_id = q_get_hex_lower(nrq, 1, i);
+  {
+    TraceN("process_fpmm_rows");
+    for (const auto &row : pending_fpmm_rows) {
+      process_fpmm_row(row);
+    }
+  }
 
-      auto [it_market, inserted] = cond_to_market_.emplace(question_id, market_id);
-      if (inserted) {
-        seen_markets_.insert(market_id);
-        new_neg_risk_markets_.push_back({question_id, market_id});
-        progress_.total_markets = seen_markets_.size();
-      }
+  {
+    TraceN("neg_risk_mapping");
+    auto nrq = query_block_range(
+        *conn, stage1_db_,
+        "SELECT market_id, question_id FROM ", "neg_risk_question",
+        start, end);
+    if (nrq) {
+      for (idx_t i = 0; i < nrq->RowCount(); ++i) {
+        std::string market_id = q_get_hex_lower(nrq, 0, i);
+        std::string question_id = q_get_hex_lower(nrq, 1, i);
 
-      auto oracle_bytes = hex_to_blob(NEG_RISK_ADAPTER);
-      auto qid_bytes = hex_to_blob(question_id);
-      std::string input(84, '\0');
-      std::memcpy(input.data(), oracle_bytes.data(), std::min(size_t(20), oracle_bytes.size()));
-      std::memcpy(input.data() + 20, qid_bytes.data(), std::min(size_t(32), qid_bytes.size()));
-      input[83] = 2;
-      auto cond_hash = crypto::keccak256(input);
-      std::string cond_id = to_lower(crypto::Keccak256::to_hex(cond_hash));
+        auto [it_market, inserted] = cond_to_market_.emplace(question_id, market_id);
+        if (inserted) {
+          seen_markets_.insert(market_id);
+          new_neg_risk_markets_.push_back({question_id, market_id});
+          progress_.total_markets = seen_markets_.size();
+        }
 
-      auto it = cond_map_.find(cond_id);
-      if (it != cond_map_.end()) {
-        negrisk_cond_idxs_.insert(it->second);
+        auto oracle_bytes = hex_to_blob(NEG_RISK_ADAPTER);
+        auto qid_bytes = hex_to_blob(question_id);
+        std::string input(84, '\0');
+        std::memcpy(input.data(), oracle_bytes.data(), std::min(size_t(20), oracle_bytes.size()));
+        std::memcpy(input.data() + 20, qid_bytes.data(), std::min(size_t(32), qid_bytes.size()));
+        input[83] = 2;
+        auto cond_hash = crypto::keccak256(input);
+        std::string cond_id = to_lower(crypto::Keccak256::to_hex(cond_hash));
+
+        auto it = cond_map_.find(cond_id);
+        if (it != cond_map_.end()) {
+          negrisk_cond_idxs_.insert(it->second);
+        }
       }
     }
   }
@@ -382,200 +403,221 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
     }
   };
 
-  load_split_or_merge(
-      "split",
-      [&](const duckdb::unique_ptr<duckdb::MaterializedQueryResult> &rows, idx_t i) {
-      SplitInfo info;
-      info.log_index = q_get_i64(rows, 2, i);
-      info.cond_id = q_get_hex_lower(rows, 3, i);
-      info.amount = q_get_u256_i64(rows, 4, i);
-      info.stakeholder = q_get_hex_lower(rows, 5, i);
-      info.collateral_token = q_get_hex_lower(rows, 6, i);
-      info.parent_collection_id = q_get_hex_lower(rows, 7, i);
-      info.partition = parse_bytes32_list_hex_lower(rows->GetValue(8, i));
-      return info;
-      },
-      tx_split_, src_split_rows, idx_split_rows);
+  {
+    TraceN("load_split_merge");
+    load_split_or_merge(
+        "split",
+        [&](const duckdb::unique_ptr<duckdb::MaterializedQueryResult> &rows, idx_t i) {
+        SplitInfo info;
+        info.log_index = q_get_i64(rows, 2, i);
+        info.cond_id = q_get_hex_lower(rows, 3, i);
+        info.amount = q_get_u256_i64(rows, 4, i);
+        info.stakeholder = q_get_hex_lower(rows, 5, i);
+        info.collateral_token = q_get_hex_lower(rows, 6, i);
+        info.parent_collection_id = q_get_hex_lower(rows, 7, i);
+        info.partition = parse_bytes32_list_hex_lower(rows->GetValue(8, i));
+        return info;
+        },
+        tx_split_, src_split_rows, idx_split_rows);
 
-  load_split_or_merge(
-      "merge",
-      [&](const duckdb::unique_ptr<duckdb::MaterializedQueryResult> &rows, idx_t i) {
-      MergeInfo info;
-      info.log_index = q_get_i64(rows, 2, i);
-      info.cond_id = q_get_hex_lower(rows, 3, i);
-      info.amount = q_get_u256_i64(rows, 4, i);
-      info.stakeholder = q_get_hex_lower(rows, 5, i);
-      info.collateral_token = q_get_hex_lower(rows, 6, i);
-      info.parent_collection_id = q_get_hex_lower(rows, 7, i);
-      info.partition = parse_bytes32_list_hex_lower(rows->GetValue(8, i));
-      return info;
-      },
-      tx_merge_, src_merge_rows, idx_merge_rows);
-
-  auto redemption = query_block_range(
-      *conn, stage1_db_,
-      "SELECT block_number, tx_hash, log_index, condition_id, payout, redeemer, collateral_token, parent_collection_id, index_sets FROM ",
-      "redemption", start, end);
-  if (redemption) {
-    src_redemption_rows = static_cast<int64_t>(redemption->RowCount());
-    for (idx_t i = 0; i < redemption->RowCount(); ++i) {
-      TxKey key = build_tx_key(redemption, i);
-      RedemptionInfo info;
-      info.log_index = q_get_i64(redemption, 2, i);
-      info.cond_id = q_get_hex_lower(redemption, 3, i);
-      info.payout = q_get_u256_i64(redemption, 4, i);
-      info.redeemer = q_get_hex_lower(redemption, 5, i);
-      info.collateral_token = q_get_hex_lower(redemption, 6, i);
-      info.parent_collection_id = q_get_hex_lower(redemption, 7, i);
-      info.index_sets = parse_bytes32_list_hex_lower(redemption->GetValue(8, i));
-      tx_redemption_[key].push_back(info);
-      idx_redemption_rows++;
-      record_semantic(key, info.log_index);
-    }
+    load_split_or_merge(
+        "merge",
+        [&](const duckdb::unique_ptr<duckdb::MaterializedQueryResult> &rows, idx_t i) {
+        MergeInfo info;
+        info.log_index = q_get_i64(rows, 2, i);
+        info.cond_id = q_get_hex_lower(rows, 3, i);
+        info.amount = q_get_u256_i64(rows, 4, i);
+        info.stakeholder = q_get_hex_lower(rows, 5, i);
+        info.collateral_token = q_get_hex_lower(rows, 6, i);
+        info.parent_collection_id = q_get_hex_lower(rows, 7, i);
+        info.partition = parse_bytes32_list_hex_lower(rows->GetValue(8, i));
+        return info;
+        },
+        tx_merge_, src_merge_rows, idx_merge_rows);
   }
 
-  auto convert = query_block_range(
-      *conn, stage1_db_,
-      "SELECT block_number, tx_hash, log_index, market_id, index_set, amount, stakeholder FROM ",
-      "convert", start, end);
-  if (convert) {
-    src_convert_rows = static_cast<int64_t>(convert->RowCount());
-    for (idx_t i = 0; i < convert->RowCount(); ++i) {
-      std::string market_id = q_get_hex_lower(convert, 3, i);
-      TxMarketKey key;
-      key.block = q_get_i64(convert, 0, i);
-      key.tx_hash = hex_to_bytes32(q_get_hex(convert, 1, i));
-      key.market_id = market_id;
-      TxKey tx_key;
-      tx_key.block = key.block;
-      tx_key.tx_hash = key.tx_hash;
-      ConvertInfo info;
-      info.log_index = q_get_i64(convert, 2, i);
-      info.market_id = market_id;
-      info.index_set = q_get_u256_i64(convert, 4, i);
-      info.amount = q_get_u256_i64(convert, 5, i);
-      info.stakeholder = q_get_hex_lower(convert, 6, i);
-      tx_convert_[key].push_back(info);
-      idx_convert_rows++;
-      record_semantic(tx_key, info.log_index);
-    }
-  }
-
-  auto order = query_block_range(
-      *conn, stage1_db_,
-      "SELECT block_number, tx_hash, log_index, maker, taker, maker_asset_id, taker_asset_id, "
-      "maker_amount, taker_amount, fee FROM ",
-      "order_filled", start, end);
-  static const std::string ZERO_TOKEN_ID =
-      "0x0000000000000000000000000000000000000000000000000000000000000000";
-  if (order) {
-    src_order_rows = static_cast<int64_t>(order->RowCount());
-    for (idx_t i = 0; i < order->RowCount(); ++i) {
-      int64_t block = q_get_i64(order, 0, i);
-      auto tx_hash = hex_to_bytes32(q_get_hex(order, 1, i));
-      int64_t log_index = q_get_i64(order, 2, i);
-      std::string maker = q_get_hex_lower(order, 3, i);
-      std::string taker = q_get_hex_lower(order, 4, i);
-      std::string maker_asset = q_get_hex(order, 5, i);
-      std::string taker_asset = q_get_hex(order, 6, i);
-      int64_t maker_amt = q_get_u256_i64(order, 7, i);
-      int64_t taker_amt = q_get_u256_i64(order, 8, i);
-      int64_t fee = q_get_u256_i64(order, 9, i);
-
-      bool maker_is_usdc = maker_asset == ZERO_TOKEN_ID;
-      std::string token_id = maker_is_usdc ? taker_asset : maker_asset;
-      std::string token_id_lower = to_lower(token_id);
-
-      TxTokenKey key{block, tx_hash, token_id_lower};
-      TxKey tx_key{block, tx_hash};
-      OrderInfo info;
-      info.log_index = log_index;
-      info.token_id = token_id_lower;
-      info.maker = maker;
-      info.taker = taker;
-      info.maker_side = maker_is_usdc ? 1 : 2;
-      info.usdc = maker_is_usdc ? maker_amt : taker_amt;
-      info.tokens = maker_is_usdc ? taker_amt : maker_amt;
-      info.fee = fee;
-      tx_order_[key].push_back(info);
-      idx_order_rows++;
-      record_semantic(tx_key, info.log_index);
-    }
-  }
-
-  auto fpmm_trade = query_block_range(
-      *conn, stage1_db_,
-      "SELECT block_number, tx_hash, log_index, fpmm_addr, trader, side, outcome_index, "
-      "usdc_amount, token_amount FROM ",
-      "fpmm_trade", start, end);
-  if (fpmm_trade) {
-    src_fpmm_trade_rows = static_cast<int64_t>(fpmm_trade->RowCount());
-    for (idx_t i = 0; i < fpmm_trade->RowCount(); ++i) {
-      std::string fpmm_addr = q_get_hex_lower(fpmm_trade, 3, i);
-      if (!is_known_fpmm(fpmm_addr)) {
-        skipped_fpmm_trade_unknown_fpmm_rows++;
-        continue;
+  {
+    TraceN("load_redemption");
+    auto redemption = query_block_range(
+        *conn, stage1_db_,
+        "SELECT block_number, tx_hash, log_index, condition_id, payout, redeemer, collateral_token, parent_collection_id, index_sets FROM ",
+        "redemption", start, end);
+    if (redemption) {
+      src_redemption_rows = static_cast<int64_t>(redemption->RowCount());
+      for (idx_t i = 0; i < redemption->RowCount(); ++i) {
+        TxKey key = build_tx_key(redemption, i);
+        RedemptionInfo info;
+        info.log_index = q_get_i64(redemption, 2, i);
+        info.cond_id = q_get_hex_lower(redemption, 3, i);
+        info.payout = q_get_u256_i64(redemption, 4, i);
+        info.redeemer = q_get_hex_lower(redemption, 5, i);
+        info.collateral_token = q_get_hex_lower(redemption, 6, i);
+        info.parent_collection_id = q_get_hex_lower(redemption, 7, i);
+        info.index_sets = parse_bytes32_list_hex_lower(redemption->GetValue(8, i));
+        tx_redemption_[key].push_back(info);
+        idx_redemption_rows++;
+        record_semantic(key, info.log_index);
       }
-      TxFPMMKey key = build_tx_fpmm_key(fpmm_trade, i, fpmm_addr);
-      TxKey tx_key{key.block, key.tx_hash};
-      FPMMTradeInfo info;
-      info.log_index = q_get_i64(fpmm_trade, 2, i);
-      info.fpmm_addr = fpmm_addr;
-      info.trader = q_get_hex_lower(fpmm_trade, 4, i);
-      info.side = fpmm_trade->GetValue(5, i).GetValue<int>();
-      stage2_assert(info.side == 1 || info.side == 2,
-                    AssertLevel::L0, "Input", "FPMMTradeSideRange");
-      int64_t outcome_idx = q_get_u256_i64(fpmm_trade, 6, i);
-      stage2_assert(outcome_idx >= 0 && outcome_idx <= std::numeric_limits<int>::max(),
-                      AssertLevel::L0, "Input", "OutcomeIdxFitsInt");
-      info.outcome_idx = static_cast<int>(outcome_idx);
-      info.usdc = q_get_u256_i64(fpmm_trade, 7, i);
-      info.tokens = q_get_u256_i64(fpmm_trade, 8, i);
-      info.requires_erc1155_leg = (info.tokens > 0 && info.trader != info.fpmm_addr);
-      tx_fpmm_trade_[key].push_back(info);
-      idx_fpmm_trade_rows++;
-      record_semantic(tx_key, info.log_index);
     }
   }
 
-  auto fpmm_funding = query_block_range(
-      *conn, stage1_db_,
-      "SELECT block_number, tx_hash, log_index, fpmm_addr, funder, side, amounts FROM ",
-      "fpmm_funding", start, end);
-  if (fpmm_funding) {
-    src_fpmm_funding_rows = static_cast<int64_t>(fpmm_funding->RowCount());
-    for (idx_t i = 0; i < fpmm_funding->RowCount(); ++i) {
-      std::string fpmm_addr = q_get_hex_lower(fpmm_funding, 3, i);
-      if (!is_known_fpmm(fpmm_addr)) {
-        skipped_fpmm_funding_unknown_fpmm_rows++;
-        continue;
+  {
+    TraceN("load_convert");
+    auto convert = query_block_range(
+        *conn, stage1_db_,
+        "SELECT block_number, tx_hash, log_index, market_id, index_set, amount, stakeholder FROM ",
+        "convert", start, end);
+    if (convert) {
+      src_convert_rows = static_cast<int64_t>(convert->RowCount());
+      for (idx_t i = 0; i < convert->RowCount(); ++i) {
+        std::string market_id = q_get_hex_lower(convert, 3, i);
+        TxMarketKey key;
+        key.block = q_get_i64(convert, 0, i);
+        key.tx_hash = hex_to_bytes32(q_get_hex(convert, 1, i));
+        key.market_id = market_id;
+        TxKey tx_key;
+        tx_key.block = key.block;
+        tx_key.tx_hash = key.tx_hash;
+        ConvertInfo info;
+        info.log_index = q_get_i64(convert, 2, i);
+        info.market_id = market_id;
+        info.index_set = q_get_u256_i64(convert, 4, i);
+        info.amount = q_get_u256_i64(convert, 5, i);
+        info.stakeholder = q_get_hex_lower(convert, 6, i);
+        tx_convert_[key].push_back(info);
+        idx_convert_rows++;
+        record_semantic(tx_key, info.log_index);
       }
-      TxFPMMKey key = build_tx_fpmm_key(fpmm_funding, i, fpmm_addr);
-      TxKey tx_key{key.block, key.tx_hash};
-      FPMMFundingInfo info;
-      info.log_index = q_get_i64(fpmm_funding, 2, i);
-      info.fpmm_addr = fpmm_addr;
-      info.funder = q_get_hex_lower(fpmm_funding, 4, i);
-      info.side = fpmm_funding->GetValue(5, i).GetValue<int>();
-      info.amounts = parse_u256_list_i64(fpmm_funding->GetValue(6, i));
-      tx_fpmm_funding_[key].push_back(info);
-      idx_fpmm_funding_rows++;
-      record_semantic(tx_key, info.log_index);
     }
   }
 
-  for (auto &[tx_key, logs] : tx_op_logs) {
-    std::sort(logs.begin(), logs.end());
-    logs.erase(std::unique(logs.begin(), logs.end()), logs.end());
-    std::vector<TxOpBounds> bounds;
-    bounds.reserve(logs.size());
-    int64_t prev = -1;
-    for (int64_t log_index : logs) {
-      stage2_assert(log_index >= 0, AssertLevel::L0, "Input", "SemanticLogIndexNonNegative");
-      bounds.push_back(TxOpBounds{prev, log_index});
-      prev = log_index;
+  {
+    TraceN("load_order");
+    auto order = query_block_range(
+        *conn, stage1_db_,
+        "SELECT block_number, tx_hash, log_index, maker, taker, maker_asset_id, taker_asset_id, "
+        "maker_amount, taker_amount, fee FROM ",
+        "order_filled", start, end);
+    static const std::string ZERO_TOKEN_ID =
+        "0x0000000000000000000000000000000000000000000000000000000000000000";
+    if (order) {
+      src_order_rows = static_cast<int64_t>(order->RowCount());
+      for (idx_t i = 0; i < order->RowCount(); ++i) {
+        int64_t block = q_get_i64(order, 0, i);
+        auto tx_hash = hex_to_bytes32(q_get_hex(order, 1, i));
+        int64_t log_index = q_get_i64(order, 2, i);
+        std::string maker = q_get_hex_lower(order, 3, i);
+        std::string taker = q_get_hex_lower(order, 4, i);
+        std::string maker_asset = q_get_hex(order, 5, i);
+        std::string taker_asset = q_get_hex(order, 6, i);
+        int64_t maker_amt = q_get_u256_i64(order, 7, i);
+        int64_t taker_amt = q_get_u256_i64(order, 8, i);
+        int64_t fee = q_get_u256_i64(order, 9, i);
+
+        bool maker_is_usdc = maker_asset == ZERO_TOKEN_ID;
+        std::string token_id = maker_is_usdc ? taker_asset : maker_asset;
+        std::string token_id_lower = to_lower(token_id);
+
+        TxTokenKey key{block, tx_hash, token_id_lower};
+        TxKey tx_key{block, tx_hash};
+        OrderInfo info;
+        info.log_index = log_index;
+        info.token_id = token_id_lower;
+        info.maker = maker;
+        info.taker = taker;
+        info.maker_side = maker_is_usdc ? 1 : 2;
+        info.usdc = maker_is_usdc ? maker_amt : taker_amt;
+        info.tokens = maker_is_usdc ? taker_amt : maker_amt;
+        info.fee = fee;
+        tx_order_[key].push_back(info);
+        idx_order_rows++;
+        record_semantic(tx_key, info.log_index);
+      }
     }
-    tx_op_bounds_[tx_key] = std::move(bounds);
+  }
+
+  {
+    TraceN("load_fpmm_trade");
+    auto fpmm_trade = query_block_range(
+        *conn, stage1_db_,
+        "SELECT block_number, tx_hash, log_index, fpmm_addr, trader, side, outcome_index, "
+        "usdc_amount, token_amount FROM ",
+        "fpmm_trade", start, end);
+    if (fpmm_trade) {
+      src_fpmm_trade_rows = static_cast<int64_t>(fpmm_trade->RowCount());
+      for (idx_t i = 0; i < fpmm_trade->RowCount(); ++i) {
+        std::string fpmm_addr = q_get_hex_lower(fpmm_trade, 3, i);
+        if (!is_known_fpmm(fpmm_addr)) {
+          skipped_fpmm_trade_unknown_fpmm_rows++;
+          continue;
+        }
+        TxFPMMKey key = build_tx_fpmm_key(fpmm_trade, i, fpmm_addr);
+        TxKey tx_key{key.block, key.tx_hash};
+        FPMMTradeInfo info;
+        info.log_index = q_get_i64(fpmm_trade, 2, i);
+        info.fpmm_addr = fpmm_addr;
+        info.trader = q_get_hex_lower(fpmm_trade, 4, i);
+        info.side = fpmm_trade->GetValue(5, i).GetValue<int>();
+        stage2_assert(info.side == 1 || info.side == 2,
+                      AssertLevel::L0, "Input", "FPMMTradeSideRange");
+        int64_t outcome_idx = q_get_u256_i64(fpmm_trade, 6, i);
+        stage2_assert(outcome_idx >= 0 && outcome_idx <= std::numeric_limits<int>::max(),
+                        AssertLevel::L0, "Input", "OutcomeIdxFitsInt");
+        info.outcome_idx = static_cast<int>(outcome_idx);
+        info.usdc = q_get_u256_i64(fpmm_trade, 7, i);
+        info.tokens = q_get_u256_i64(fpmm_trade, 8, i);
+        info.requires_erc1155_leg = (info.tokens > 0 && info.trader != info.fpmm_addr);
+        tx_fpmm_trade_[key].push_back(info);
+        idx_fpmm_trade_rows++;
+        record_semantic(tx_key, info.log_index);
+      }
+    }
+  }
+
+  {
+    TraceN("load_fpmm_funding");
+    auto fpmm_funding = query_block_range(
+        *conn, stage1_db_,
+        "SELECT block_number, tx_hash, log_index, fpmm_addr, funder, side, amounts FROM ",
+        "fpmm_funding", start, end);
+    if (fpmm_funding) {
+      src_fpmm_funding_rows = static_cast<int64_t>(fpmm_funding->RowCount());
+      for (idx_t i = 0; i < fpmm_funding->RowCount(); ++i) {
+        std::string fpmm_addr = q_get_hex_lower(fpmm_funding, 3, i);
+        if (!is_known_fpmm(fpmm_addr)) {
+          skipped_fpmm_funding_unknown_fpmm_rows++;
+          continue;
+        }
+        TxFPMMKey key = build_tx_fpmm_key(fpmm_funding, i, fpmm_addr);
+        TxKey tx_key{key.block, key.tx_hash};
+        FPMMFundingInfo info;
+        info.log_index = q_get_i64(fpmm_funding, 2, i);
+        info.fpmm_addr = fpmm_addr;
+        info.funder = q_get_hex_lower(fpmm_funding, 4, i);
+        info.side = fpmm_funding->GetValue(5, i).GetValue<int>();
+        info.amounts = parse_u256_list_i64(fpmm_funding->GetValue(6, i));
+        tx_fpmm_funding_[key].push_back(info);
+        idx_fpmm_funding_rows++;
+        record_semantic(tx_key, info.log_index);
+      }
+    }
+  }
+
+  {
+    TraceN("build_op_bounds");
+    for (auto &[tx_key, logs] : tx_op_logs) {
+      std::sort(logs.begin(), logs.end());
+      logs.erase(std::unique(logs.begin(), logs.end()), logs.end());
+      std::vector<TxOpBounds> bounds;
+      bounds.reserve(logs.size());
+      int64_t prev = -1;
+      for (int64_t log_index : logs) {
+        stage2_assert(log_index >= 0, AssertLevel::L0, "Input", "SemanticLogIndexNonNegative");
+        bounds.push_back(TxOpBounds{prev, log_index});
+        prev = log_index;
+      }
+      tx_op_bounds_[tx_key] = std::move(bounds);
+    }
   }
   stage2_assert(idx_split_rows == src_split_rows, AssertLevel::L1, "Index", "SplitIndexCoverage");
   stage2_assert(idx_merge_rows == src_merge_rows, AssertLevel::L1, "Index", "MergeIndexCoverage");
@@ -632,99 +674,103 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
     return;
   }
 
-  for (idx_t i = 0; i < transfers->RowCount(); ++i) {
-    int64_t block = q_get_i64(transfers, 0, i);
-    int64_t log_idx = q_get_i64(transfers, 2, i);
-    stage2_assert(log_idx >= 0 && log_idx < SORT_KEY_SCALE,
-                    AssertLevel::L0, "Input", "TransferLogIndexRange");
-    int64_t amount = q_get_u256_i64(transfers, 7, i);
-    std::string op = q_get_hex_lower(transfers, 3, i);
-    std::string from = q_get_hex_lower(transfers, 4, i);
-    std::string to = q_get_hex_lower(transfers, 5, i);
-    std::string token_id = q_get_hex_lower(transfers, 6, i);
-    if (op == NEG_RISK_ADAPTER && to == NO_TOKEN_BURN_ADDRESS && amount > 0) {
-      if (from == NEG_RISK_ADAPTER) {
-        observed_convert_adapter_burn_rows++;
-      } else {
-        observed_convert_user_burn_rows++;
+  {
+    TraceN("classify_transfer_rows");
+    for (idx_t i = 0; i < transfers->RowCount(); ++i) {
+      int64_t block = q_get_i64(transfers, 0, i);
+      int64_t log_idx = q_get_i64(transfers, 2, i);
+      stage2_assert(log_idx >= 0 && log_idx < SORT_KEY_SCALE,
+                      AssertLevel::L0, "Input", "TransferLogIndexRange");
+      int64_t amount = q_get_u256_i64(transfers, 7, i);
+      std::string tx_hash_hex = q_get_hex(transfers, 1, i);
+      auto tx_hash = hex_to_bytes32(tx_hash_hex);
+      std::string op = q_get_hex_lower(transfers, 3, i);
+      std::string from = q_get_hex_lower(transfers, 4, i);
+      std::string to = q_get_hex_lower(transfers, 5, i);
+      std::string token_id = q_get_hex_lower(transfers, 6, i);
+      if (op == NEG_RISK_ADAPTER && to == NO_TOKEN_BURN_ADDRESS && amount > 0) {
+        if (from == NEG_RISK_ADAPTER) {
+          observed_convert_adapter_burn_rows++;
+        } else {
+          observed_convert_user_burn_rows++;
+        }
       }
-    }
 
-    int64_t sort_key = block * SORT_KEY_SCALE + log_idx;
-    auto tx_hash = hex_to_bytes32(q_get_hex(transfers, 1, i));
-    if (op == CTF_EXCHANGE || op == NEG_RISK_CTF_EXCHANGE) {
-      TxTokenKey order_key{block, tx_hash, token_id};
-      observed_order_legs[order_key].push_back(ObservedOrderLeg{from, to, amount});
-    }
-    if (is_known_fpmm(op)) {
-      TxFPMMKey key{block, tx_hash, op};
-      uint8_t mask = observed_fpmm_trade_leg_mask[key];
-      if (from == op && amount > 0) {
-        // side=1(Buy) direct leg: FPMM -> trader
-        mask |= 0x1;
+      int64_t sort_key = block * SORT_KEY_SCALE + log_idx;
+      if (op == CTF_EXCHANGE || op == NEG_RISK_CTF_EXCHANGE) {
+        TxTokenKey order_key{block, tx_hash, token_id};
+        observed_order_legs[order_key].push_back(ObservedOrderLeg{from, to, amount});
       }
-      if (to == op && amount > 0) {
-        // side=2(Sell) direct leg: trader -> FPMM
-        mask |= 0x2;
+      if (is_known_fpmm(op)) {
+        TxFPMMKey key{block, tx_hash, op};
+        uint8_t mask = observed_fpmm_trade_leg_mask[key];
+        if (from == op && amount > 0) {
+          // side=1(Buy) direct leg: FPMM -> trader
+          mask |= 0x1;
+        }
+        if (to == op && amount > 0) {
+          // side=2(Sell) direct leg: trader -> FPMM
+          mask |= 0x2;
+        }
+        if (from == ZERO_ADDR && to == op && amount > 0) {
+          // side=1(Buy) internal split mint leg: 0 -> FPMM
+          mask |= 0x1;
+        }
+        if (from == op && to == ZERO_ADDR && amount > 0) {
+          // side=2(Sell) internal merge burn leg: FPMM -> 0
+          mask |= 0x2;
+        }
+        observed_fpmm_trade_leg_mask[key] = mask;
       }
-      if (from == ZERO_ADDR && to == op && amount > 0) {
-        // side=1(Buy) internal split mint leg: 0 -> FPMM
-        mask |= 0x1;
+
+      auto tit = token_map_.find(token_id);
+
+      if (tit == token_map_.end()) {
+        // 未知token：加入 token_map_，使用特殊值表示未知 condition
+        intern_token(token_id, UNKNOWN_COND_IDX, UNKNOWN_TOKEN_IDX, TokenSource::TransferInferred);
+        tit = token_map_.find(token_id); // 重新获取迭代器
       }
-      if (from == op && to == ZERO_ADDR && amount > 0) {
-        // side=2(Sell) internal merge burn leg: FPMM -> 0
-        mask |= 0x2;
+
+      uint32_t cond_idx = tit->second.cond_idx;
+      uint8_t token_idx = UNKNOWN_TOKEN_IDX;
+      if (tit->second.token_idx != UNKNOWN_TOKEN_IDX) {
+        token_idx = tit->second.token_idx;
       }
-      observed_fpmm_trade_leg_mask[key] = mask;
-    }
+      if (amount > 0 && cond_idx != UNKNOWN_COND_IDX) {
+        TxKey tx_key{block, tx_hash};
+        observed_cond_legs[tx_key].push_back(
+            ObservedCondLeg{from, to, amount, cond_idx, log_idx / TRANSFER_FLAT_LOG_SCALE});
+      }
 
-    auto tit = token_map_.find(token_id);
+      // 获取抵押品类型
+      Collateral collateral = resolve_transfer_collateral(cond_idx, op);
 
-    if (tit == token_map_.end()) {
-      // 未知token：加入 token_map_，使用特殊值表示未知 condition
-      intern_token(token_id, UNKNOWN_COND_IDX, UNKNOWN_TOKEN_IDX, TokenSource::TransferInferred);
-      tit = token_map_.find(token_id); // 重新获取迭代器
-    }
+      {
+        std::ostringstream oss;
+        oss << "block=" << block
+            << " tx=" << tx_hash_hex
+            << " log_index=" << log_idx
+            << " op=" << op
+            << " from=" << from
+            << " to=" << to
+            << " token_id=" << token_id
+            << " amount=" << amount
+            << " cond_idx=" << cond_idx
+            << " token_idx=" << static_cast<int>(token_idx)
+            << " collateral=" << static_cast<int>(collateral);
+        current_transfer_context_ = oss.str();
+      }
 
-    uint32_t cond_idx = tit->second.cond_idx;
-    uint8_t token_idx = UNKNOWN_TOKEN_IDX;
-    if (tit->second.token_idx != UNKNOWN_TOKEN_IDX) {
-      token_idx = tit->second.token_idx;
+      Stage2AssertContextScope assert_scope(&current_transfer_context_);
+      TransferClass cls = classify_and_emit(sort_key, tx_hash, block, op, from, to, token_id,
+                                            amount, cond_idx, token_idx, collateral);
+      if (cls == TransferClass::Convert) {
+        classified_convert_rows++;
+      } else if (cls == TransferClass::InternalBurnConvert) {
+        classified_internal_burn_convert_rows++;
+      }
+      update_xfer_tree(cls);
     }
-    if (amount > 0 && cond_idx != UNKNOWN_COND_IDX) {
-      TxKey tx_key{block, tx_hash};
-      observed_cond_legs[tx_key].push_back(
-          ObservedCondLeg{from, to, amount, cond_idx, log_idx / TRANSFER_FLAT_LOG_SCALE});
-    }
-
-    // 获取抵押品类型
-    Collateral collateral = resolve_transfer_collateral(cond_idx, op);
-
-    {
-      std::ostringstream oss;
-      oss << "block=" << block
-          << " tx=" << q_get_hex(transfers, 1, i)
-          << " log_index=" << log_idx
-          << " op=" << op
-          << " from=" << from
-          << " to=" << to
-          << " token_id=" << token_id
-          << " amount=" << amount
-          << " cond_idx=" << cond_idx
-          << " token_idx=" << static_cast<int>(token_idx)
-          << " collateral=" << static_cast<int>(collateral);
-      current_transfer_context_ = oss.str();
-    }
-
-    Stage2AssertContextScope assert_scope(&current_transfer_context_);
-    TransferClass cls = classify_and_emit(sort_key, tx_hash, block, op, from, to, token_id,
-                                          amount, cond_idx, token_idx, collateral);
-    if (cls == TransferClass::Convert) {
-      classified_convert_rows++;
-    } else if (cls == TransferClass::InternalBurnConvert) {
-      classified_internal_burn_convert_rows++;
-    }
-    update_xfer_tree(cls);
   }
   stage2_assert(classified_convert_rows == observed_convert_user_burn_rows,
                 AssertLevel::L4, "Partition", "ConvertUserBurnRowsCovered");
@@ -732,200 +778,203 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
                 AssertLevel::L4, "Partition", "ConvertInternalBurnRowsCovered");
 
   // Semantic coverage assertions: every semantic op in this chunk must be consumed by at least one transfer leg.
-  auto cond_idx_for = [&](const std::string &cond_id) -> uint32_t {
-    auto it = cond_map_.find(cond_id);
-    if (it == cond_map_.end()) {
-      return UNKNOWN_COND_IDX;
-    }
-    return it->second;
-  };
-  auto semantic_window_left = [&](const TxKey &tx_key, int64_t semantic_log_index) {
-    auto bit = tx_op_bounds_.find(tx_key);
-    if (bit == tx_op_bounds_.end()) {
+  {
+    TraceN("coverage_asserts");
+    auto cond_idx_for = [&](const std::string &cond_id) -> uint32_t {
+      auto it = cond_map_.find(cond_id);
+      if (it == cond_map_.end()) {
+        return UNKNOWN_COND_IDX;
+      }
+      return it->second;
+    };
+    auto semantic_window_left = [&](const TxKey &tx_key, int64_t semantic_log_index) {
+      auto bit = tx_op_bounds_.find(tx_key);
+      if (bit == tx_op_bounds_.end()) {
+        return int64_t{-1};
+      }
+      for (const auto &b : bit->second) {
+        if (b.right_inclusive == semantic_log_index) {
+          return b.left_exclusive;
+        }
+      }
       return int64_t{-1};
-    }
-    for (const auto &b : bit->second) {
-      if (b.right_inclusive == semantic_log_index) {
-        return b.left_exclusive;
-      }
-    }
-    return int64_t{-1};
-  };
-  auto observed_cond_leg_in_window = [&](const TxKey &tx_key,
-                                         uint32_t cond_idx,
-                                         int64_t semantic_log_index,
-                                         auto &&match_leg) {
-    int64_t left = semantic_window_left(tx_key, semantic_log_index);
-    auto it = observed_cond_legs.find(tx_key);
-    if (it == observed_cond_legs.end()) {
-      return false;
-    }
-    for (const auto &leg : it->second) {
-      if (leg.base_log_index <= left || leg.base_log_index > semantic_log_index) {
-        continue;
-      }
-      if (leg.cond_idx != cond_idx) {
-        continue;
-      }
-      if (match_leg(leg)) {
-        return true;
-      }
-    }
-    return false;
-  };
-  auto split_leg_observed = [&](const TxKey &tx_key, const std::string &cond_id,
-                                const std::string &stakeholder, int64_t amount,
-                                int64_t semantic_log_index) {
-    uint32_t cond_idx = cond_idx_for(cond_id);
-    if (cond_idx == UNKNOWN_COND_IDX || amount <= 0) {
-      return false;
-    }
-    return observed_cond_leg_in_window(
-        tx_key, cond_idx, semantic_log_index,
-        [&](const ObservedCondLeg &leg) {
-          // Split semantic certainty comes from child mint legs.
-          return leg.amount == amount && leg.from == ZERO_ADDR && leg.to == stakeholder;
-        });
-  };
-  auto merge_leg_observed = [&](const TxKey &tx_key, const std::string &cond_id,
-                                const std::string &stakeholder, int64_t amount,
-                                int64_t semantic_log_index) {
-    uint32_t cond_idx = cond_idx_for(cond_id);
-    if (cond_idx == UNKNOWN_COND_IDX || amount <= 0) {
-      return false;
-    }
-    return observed_cond_leg_in_window(
-        tx_key, cond_idx, semantic_log_index,
-        [&](const ObservedCondLeg &leg) {
-          // Merge semantic certainty comes from child burn legs.
-          return leg.amount == amount && leg.from == stakeholder && leg.to == ZERO_ADDR;
-        });
-  };
-  auto redeem_leg_observed = [&](const TxKey &tx_key, const std::string &cond_id,
-                                 const std::string &redeemer,
-                                 int64_t semantic_log_index) {
-    uint32_t cond_idx = cond_idx_for(cond_id);
-    if (cond_idx == UNKNOWN_COND_IDX) {
-      return false;
-    }
-    return observed_cond_leg_in_window(
-        tx_key, cond_idx, semantic_log_index,
-        [&](const ObservedCondLeg &leg) {
-          return leg.from == redeemer && leg.to == ZERO_ADDR && leg.amount > 0;
-        });
-  };
-  for (const auto &[tx_key, rows] : tx_split_) {
-    for (const auto &row : rows) {
-      // split amount==0 is a valid semantic marker with no effective ERC1155 leg.
-      bool zero_amount_split = (row.amount == 0);
-      bool must_consume = split_leg_observed(tx_key, row.cond_id, row.stakeholder,
-                                             row.amount, row.log_index);
-      bool consumed = row.consumed_count > 0;
-      bool covered = row.covered_by_parent;
-      bool not_required = !must_consume;
-      stage2_assert(consumed || covered || zero_amount_split || not_required,
-                    AssertLevel::L4, "Consume", "SplitConsumedOrCoveredByParent");
-    }
-  }
-
-  for (const auto &[tx_key, rows] : tx_merge_) {
-    for (const auto &row : rows) {
-      // merge amount==0 is a valid semantic marker with no effective ERC1155 leg.
-      bool zero_amount_merge = (row.amount == 0);
-      bool must_consume = merge_leg_observed(tx_key, row.cond_id, row.stakeholder,
-                                             row.amount, row.log_index);
-      bool consumed = row.consumed_count > 0;
-      bool covered = row.covered_by_parent;
-      bool not_required = !must_consume;
-      stage2_assert(consumed || covered || zero_amount_merge || not_required,
-                    AssertLevel::L4, "Consume", "MergeConsumedOrCoveredByParent");
-    }
-  }
-
-  for (const auto &[tx_key, rows] : tx_redemption_) {
-    for (const auto &row : rows) {
-      // redeem can emit multiple rows in one tx/cond/redeemer key, including zero-payout rows.
-      // Only positive-payout rows require at-least-one matched burn leg when such leg is observable.
-      bool must_consume = (row.payout > 0) &&
-                          redeem_leg_observed(tx_key, row.cond_id, row.redeemer, row.log_index);
-      bool consumed = row.consumed_count > 0;
-      bool covered = row.covered_by_parent;
-      bool not_required = !must_consume;
-      stage2_assert(consumed || covered || not_required,
-                    AssertLevel::L4, "Consume", "RedeemConsumedOrCoveredByParent");
-    }
-  }
-
-  for (const auto &[key, rows] : tx_order_) {
-    auto order_leg_observed = [&](const OrderInfo &row) {
-      auto oit = observed_order_legs.find(key);
-      if (oit == observed_order_legs.end()) {
+    };
+    auto observed_cond_leg_in_window = [&](const TxKey &tx_key,
+                                           uint32_t cond_idx,
+                                           int64_t semantic_log_index,
+                                           auto &&match_leg) {
+      int64_t left = semantic_window_left(tx_key, semantic_log_index);
+      auto it = observed_cond_legs.find(tx_key);
+      if (it == observed_cond_legs.end()) {
         return false;
       }
-      for (const auto &leg : oit->second) {
-        if (leg.amount != row.tokens) {
+      for (const auto &leg : it->second) {
+        if (leg.base_log_index <= left || leg.base_log_index > semantic_log_index) {
           continue;
         }
-        if (row.maker_side == 1) {
-          if (leg.to == row.maker &&
-              (leg.from == row.taker || leg.from == CTF_EXCHANGE || leg.from == NEG_RISK_CTF_EXCHANGE)) {
-            return true;
-          }
+        if (leg.cond_idx != cond_idx) {
           continue;
         }
-        if (leg.from == row.maker &&
-            (leg.to == row.taker || leg.to == CTF_EXCHANGE || leg.to == NEG_RISK_CTF_EXCHANGE)) {
+        if (match_leg(leg)) {
           return true;
         }
       }
       return false;
     };
-    for (const auto &row : rows) {
-      bool must_consume = order_leg_observed(row);
-      bool consumed = row.consumed;
-      bool unobserved = !must_consume;
-      stage2_assert(consumed || unobserved, AssertLevel::L4, "Consume", "OrderConsumedIfLegObserved");
-    }
-  }
-
-  for (const auto &[key, rows] : tx_fpmm_trade_) {
-    for (const auto &row : rows) {
-      uint8_t observed_mask = 0;
-      auto mit = observed_fpmm_trade_leg_mask.find(key);
-      if (mit != observed_fpmm_trade_leg_mask.end()) {
-        observed_mask = mit->second;
+    auto split_leg_observed = [&](const TxKey &tx_key, const std::string &cond_id,
+                                  const std::string &stakeholder, int64_t amount,
+                                  int64_t semantic_log_index) {
+      uint32_t cond_idx = cond_idx_for(cond_id);
+      if (cond_idx == UNKNOWN_COND_IDX || amount <= 0) {
+        return false;
       }
-      bool has_observed_leg = (row.side == 1) ? ((observed_mask & 0x1) != 0)
-                                              : ((observed_mask & 0x2) != 0);
-      bool must_consume_or_explain = row.requires_erc1155_leg && has_observed_leg;
-      bool consumed = row.consumed;
-      bool explained = row.explained_without_direct_leg;
-      bool not_required = !must_consume_or_explain;
-      stage2_assert(not_required || consumed || explained,
-                    AssertLevel::L4, "Consume", "FPMMTradeConsumedOrExplained");
+      return observed_cond_leg_in_window(
+          tx_key, cond_idx, semantic_log_index,
+          [&](const ObservedCondLeg &leg) {
+            // Split semantic certainty comes from child mint legs.
+            return leg.amount == amount && leg.from == ZERO_ADDR && leg.to == stakeholder;
+          });
+    };
+    auto merge_leg_observed = [&](const TxKey &tx_key, const std::string &cond_id,
+                                  const std::string &stakeholder, int64_t amount,
+                                  int64_t semantic_log_index) {
+      uint32_t cond_idx = cond_idx_for(cond_id);
+      if (cond_idx == UNKNOWN_COND_IDX || amount <= 0) {
+        return false;
+      }
+      return observed_cond_leg_in_window(
+          tx_key, cond_idx, semantic_log_index,
+          [&](const ObservedCondLeg &leg) {
+            // Merge semantic certainty comes from child burn legs.
+            return leg.amount == amount && leg.from == stakeholder && leg.to == ZERO_ADDR;
+          });
+    };
+    auto redeem_leg_observed = [&](const TxKey &tx_key, const std::string &cond_id,
+                                   const std::string &redeemer,
+                                   int64_t semantic_log_index) {
+      uint32_t cond_idx = cond_idx_for(cond_id);
+      if (cond_idx == UNKNOWN_COND_IDX) {
+        return false;
+      }
+      return observed_cond_leg_in_window(
+          tx_key, cond_idx, semantic_log_index,
+          [&](const ObservedCondLeg &leg) {
+            return leg.from == redeemer && leg.to == ZERO_ADDR && leg.amount > 0;
+          });
+    };
+    for (const auto &[tx_key, rows] : tx_split_) {
+      for (const auto &row : rows) {
+        // split amount==0 is a valid semantic marker with no effective ERC1155 leg.
+        bool zero_amount_split = (row.amount == 0);
+        bool must_consume = split_leg_observed(tx_key, row.cond_id, row.stakeholder,
+                                               row.amount, row.log_index);
+        bool consumed = row.consumed_count > 0;
+        bool covered = row.covered_by_parent;
+        bool not_required = !must_consume;
+        stage2_assert(consumed || covered || zero_amount_split || not_required,
+                      AssertLevel::L4, "Consume", "SplitConsumedOrCoveredByParent");
+      }
     }
-  }
 
-  for (const auto &[_, rows] : tx_convert_) {
-    for (const auto &row : rows) {
-      stage2_assert(row.consumed_count > 0, AssertLevel::L4, "Consume", "ConvertConsumed");
+    for (const auto &[tx_key, rows] : tx_merge_) {
+      for (const auto &row : rows) {
+        // merge amount==0 is a valid semantic marker with no effective ERC1155 leg.
+        bool zero_amount_merge = (row.amount == 0);
+        bool must_consume = merge_leg_observed(tx_key, row.cond_id, row.stakeholder,
+                                               row.amount, row.log_index);
+        bool consumed = row.consumed_count > 0;
+        bool covered = row.covered_by_parent;
+        bool not_required = !must_consume;
+        stage2_assert(consumed || covered || zero_amount_merge || not_required,
+                      AssertLevel::L4, "Consume", "MergeConsumedOrCoveredByParent");
+      }
     }
-  }
 
-  for (const auto &[_, rows] : tx_fpmm_funding_) {
-    for (const auto &row : rows) {
-      // Some FPMMFundingRemoved rows have zero token legs (amounts=[0,0]):
-      // they are valid semantic markers with no ERC1155 transfer to consume.
-      bool zero_leg_funding_remove = row.side == 2;
-      for (int64_t amount : row.amounts) {
-        if (amount != 0) {
-          zero_leg_funding_remove = false;
-          break;
+    for (const auto &[tx_key, rows] : tx_redemption_) {
+      for (const auto &row : rows) {
+        // redeem can emit multiple rows in one tx/cond/redeemer key, including zero-payout rows.
+        // Only positive-payout rows require at-least-one matched burn leg when such leg is observable.
+        bool must_consume = (row.payout > 0) &&
+                            redeem_leg_observed(tx_key, row.cond_id, row.redeemer, row.log_index);
+        bool consumed = row.consumed_count > 0;
+        bool covered = row.covered_by_parent;
+        bool not_required = !must_consume;
+        stage2_assert(consumed || covered || not_required,
+                      AssertLevel::L4, "Consume", "RedeemConsumedOrCoveredByParent");
+      }
+    }
+
+    for (const auto &[key, rows] : tx_order_) {
+      auto order_leg_observed = [&](const OrderInfo &row) {
+        auto oit = observed_order_legs.find(key);
+        if (oit == observed_order_legs.end()) {
+          return false;
         }
+        for (const auto &leg : oit->second) {
+          if (leg.amount != row.tokens) {
+            continue;
+          }
+          if (row.maker_side == 1) {
+            if (leg.to == row.maker &&
+                (leg.from == row.taker || leg.from == CTF_EXCHANGE || leg.from == NEG_RISK_CTF_EXCHANGE)) {
+              return true;
+            }
+            continue;
+          }
+          if (leg.from == row.maker &&
+              (leg.to == row.taker || leg.to == CTF_EXCHANGE || leg.to == NEG_RISK_CTF_EXCHANGE)) {
+            return true;
+          }
+        }
+        return false;
+      };
+      for (const auto &row : rows) {
+        bool must_consume = order_leg_observed(row);
+        bool consumed = row.consumed;
+        bool unobserved = !must_consume;
+        stage2_assert(consumed || unobserved, AssertLevel::L4, "Consume", "OrderConsumedIfLegObserved");
       }
-      bool consumed = row.consumed_count > 0;
-      stage2_assert(consumed || zero_leg_funding_remove,
-                      AssertLevel::L4, "Consume", "FPMMFundingConsumedOrZeroLegRemove");
+    }
+
+    for (const auto &[key, rows] : tx_fpmm_trade_) {
+      for (const auto &row : rows) {
+        uint8_t observed_mask = 0;
+        auto mit = observed_fpmm_trade_leg_mask.find(key);
+        if (mit != observed_fpmm_trade_leg_mask.end()) {
+          observed_mask = mit->second;
+        }
+        bool has_observed_leg = (row.side == 1) ? ((observed_mask & 0x1) != 0)
+                                                : ((observed_mask & 0x2) != 0);
+        bool must_consume_or_explain = row.requires_erc1155_leg && has_observed_leg;
+        bool consumed = row.consumed;
+        bool explained = row.explained_without_direct_leg;
+        bool not_required = !must_consume_or_explain;
+        stage2_assert(not_required || consumed || explained,
+                      AssertLevel::L4, "Consume", "FPMMTradeConsumedOrExplained");
+      }
+    }
+
+    for (const auto &[_, rows] : tx_convert_) {
+      for (const auto &row : rows) {
+        stage2_assert(row.consumed_count > 0, AssertLevel::L4, "Consume", "ConvertConsumed");
+      }
+    }
+
+    for (const auto &[_, rows] : tx_fpmm_funding_) {
+      for (const auto &row : rows) {
+        // Some FPMMFundingRemoved rows have zero token legs (amounts=[0,0]):
+        // they are valid semantic markers with no ERC1155 transfer to consume.
+        bool zero_leg_funding_remove = row.side == 2;
+        for (int64_t amount : row.amounts) {
+          if (amount != 0) {
+            zero_leg_funding_remove = false;
+            break;
+          }
+        }
+        bool consumed = row.consumed_count > 0;
+        stage2_assert(consumed || zero_leg_funding_remove,
+                        AssertLevel::L4, "Consume", "FPMMFundingConsumedOrZeroLegRemove");
+      }
     }
   }
 }

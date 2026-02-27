@@ -26,9 +26,8 @@ TransferClass EventBuilder::classify_and_emit(
   }
 
   uint8_t coll = static_cast<uint8_t>(collateral);
-  std::string cond_id = known_token ? cond_ids_[cond_idx] : "";
+  const std::string *cond_id = known_token ? &cond_ids_[cond_idx] : nullptr;
   TxKey tx_key{block, tx_hash};
-  TxTokenKey tx_token_key{block, tx_hash, token_id};
   bool op_is_exchange = (op == CTF_EXCHANGE || op == NEG_RISK_CTF_EXCHANGE);
   bool op_is_fpmm = is_known_fpmm(op);
   int64_t transfer_log_index = sort_key - block * SORT_KEY_SCALE;
@@ -83,7 +82,7 @@ TransferClass EventBuilder::classify_and_emit(
 
   // Lambda: 匹配 Split/Merge/Redemption 时，已知 token 需要检查 cond_id
   auto cond_matches = [&](const std::string &info_cond_id) {
-    return !known_token || cond_id == info_cond_id;
+    return !known_token || *cond_id == info_cond_id;
   };
   auto semantic_log_matches = [&](int64_t info_log_index) {
     return active_semantic_log >= 0 && info_log_index == active_semantic_log;
@@ -290,17 +289,10 @@ TransferClass EventBuilder::classify_and_emit(
     tx_redemption_rows = &redemption_it->second;
   }
   std::vector<OrderInfo> *tx_order_rows = nullptr;
-  if (auto order_it = tx_order_.find(tx_token_key); order_it != tx_order_.end()) {
-    tx_order_rows = &order_it->second;
-  }
-  std::vector<ConvertInfo *> tx_convert_rows_any_market;
-  tx_convert_rows_any_market.reserve(4);
-  for (auto &[tx_market_key, rows] : tx_convert_) {
-    if (tx_market_key.block != block || tx_market_key.tx_hash != tx_hash) {
-      continue;
-    }
-    for (auto &info : rows) {
-      tx_convert_rows_any_market.push_back(&info);
+  if (op_is_exchange) {
+    TxTokenKey tx_token_key{block, tx_hash, token_id};
+    if (auto order_it = tx_order_.find(tx_token_key); order_it != tx_order_.end()) {
+      tx_order_rows = &order_it->second;
     }
   }
   auto find_split_info = [&](const std::string &stakeholder, int64_t amt) -> SplitInfo * {
@@ -691,8 +683,13 @@ TransferClass EventBuilder::classify_and_emit(
                                           int64_t amt) -> ConvertInfo * {
     return find_convert_window_match(
         [&](auto &&accept) {
-          for (ConvertInfo *info : tx_convert_rows_any_market) {
-            accept(*info);
+          for (auto &[tx_market_key, rows] : tx_convert_) {
+            if (tx_market_key.block != block || tx_market_key.tx_hash != tx_hash) {
+              continue;
+            }
+            for (auto &info : rows) {
+              accept(info);
+            }
           }
         },
         stakeholder, amt);
