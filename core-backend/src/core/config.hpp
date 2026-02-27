@@ -14,8 +14,11 @@ struct Config {
   std::string rpc_url;
   std::string rpc_api_key;
   std::string proxy_url;
+  std::string rpc_transport;
   int stage1_rpc_query_threads;
   int stage1_rpc_sync_chunk_basics;
+  int stage1_enable;
+  int stage2_enable;
   int backend_port;
   int frontend_port;
   int64_t initial_block;
@@ -40,6 +43,10 @@ struct Config {
     config.initial_block = require("initial_block").get<int64_t>();
     config.stage1_rpc_query_threads = require("stage1_rpc_query_threads").get<int>();
     config.stage1_rpc_sync_chunk_basics = require("stage1_rpc_sync_chunk_basics").get<int>();
+    config.stage1_enable = j.value("stage1_enable", 1);
+    config.stage2_enable = j.value("stage2_enable", 0);
+    assert((config.stage1_enable == 0 || config.stage1_enable == 1) && "stage1_enable 必须是 0/1");
+    assert((config.stage2_enable == 0 || config.stage2_enable == 1) && "stage2_enable 必须是 0/1");
 
     std::string active = require("active_rpc").get<std::string>();
     const auto &nodes = require("rpc_nodes");
@@ -53,6 +60,7 @@ struct Config {
     }
     assert(!config.rpc_url.empty() && "active_rpc 在 rpc_nodes 中未找到");
     config.proxy_url = j.value("proxy", "");
+    config.rpc_transport = j.value("rpc_transport", "beast");
 
     return config;
   }

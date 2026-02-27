@@ -259,6 +259,77 @@
 
 <script>
   (function () {
+    const S2_EVENT_TYPE = Object.freeze({
+      ORDER_BUY: 0,
+      ORDER_SELL: 1,
+      SPLIT_NON_POLY: 4,
+      MERGE_NON_POLY: 7,
+      REDEMPTION_NON_POLY: 9,
+      FPMM_BUY: 11,
+      FPMM_SELL: 12,
+      FPMM_LP_ADD: 13,
+      FPMM_LP_REMOVE: 14,
+      FPMM_LP_RETURN: 15,
+      TRANSFER_IN_NEGRISK: 16,
+      TRANSFER_IN_OTHER: 17,
+      TRANSFER_IN_NON_POLY: 18,
+      TRANSFER_OUT_NEGRISK: 19,
+      TRANSFER_OUT_OTHER: 20,
+      TRANSFER_OUT_NON_POLY: 21,
+    });
+
+    function s2DefaultExpandedNodeIds() {
+      return [
+        "cond",
+        "cond_poly",
+        "cond_tr",
+        "cond_other",
+        "cond_split",
+        "cond_merge",
+        "cond_redemption",
+        "token",
+        "token_poly",
+        "token_tr",
+        "token_fpmm",
+        "token_fpmm_by_collateral",
+        "token_other",
+        "token_split",
+        "token_merge",
+        "token_redemption",
+        "token_transfer",
+        "token_transfer_by_collateral",
+        "xfer",
+        "user_events",
+        "internal",
+        "split",
+        "split_poly",
+        "split_non_poly",
+        "split_non_poly_coll",
+        "merge",
+        "merge_poly",
+        "merge_non_poly",
+        "merge_non_poly_coll",
+        "redemption",
+        "redemption_non_poly",
+        "redemption_non_poly_coll",
+        "order",
+        "order_coll",
+        "fpmm_trade",
+        "fpmm_trade_coll",
+        "fpmm_lp",
+        "fpmm_lp_coll",
+        "transfer",
+        "transfer_coll",
+        "transfer_in",
+        "transfer_in_poly",
+        "transfer_out",
+        "transfer_out_poly",
+        "internal_mint",
+        "internal_burn",
+        "internal_transfer",
+      ];
+    }
+
     function s2Fmt(n) {
       if (n >= 1000000) return (n / 1000000).toFixed(1) + "M";
       if (n >= 1000) return (n / 1000).toFixed(1) + "K";
@@ -271,57 +342,7 @@
 
     let s2LastCursor = 0;
     let s2LastTime = Date.now();
-    // 默认全部展开的节点集合
-    let s2ExpandedNodes = new Set([
-      // 问题树 (树状partition: total→polymarket/other→...)
-      "cond",
-      "cond_poly",
-      "cond_tr",
-      "cond_other",
-      "cond_split",
-      "cond_merge",
-      "cond_redemption",
-      // 代币树 (树状partition: total→polymarket/other→...)
-      "token",
-      "token_poly",
-      "token_tr",
-      "token_fpmm",
-      "token_fpmm_by_collateral",
-      "token_other",
-      "token_split",
-      "token_merge",
-      "token_redemption",
-      "token_transfer",
-      "token_transfer_by_collateral",
-      // Transfer树
-      "xfer",
-      "user_events",
-      "internal",
-      "split",
-      "split_poly",
-      "split_non_poly",
-      "merge",
-      "merge_poly",
-      "merge_non_poly",
-      "redemption",
-      "redemption_non_poly",
-      "order",
-      "fpmm_trade",
-      "fpmm_lp",
-      "transfer",
-      "transfer_in",
-      "transfer_in_poly",
-      "transfer_out",
-      "transfer_out_poly",
-      "split_non_poly_coll",
-      "merge_non_poly_coll",
-      "redemption_non_poly_coll",
-      "fpmm_trade_coll",
-      "fpmm_lp_coll",
-      "internal_mint",
-      "internal_burn",
-      "internal_transfer",
-    ]);
+    let s2ExpandedNodes = new Set(s2DefaultExpandedNodeIds());
     let s2AllExpanded = true;
 
     function s2UpdateStats(s) {
@@ -596,14 +617,14 @@
                   {
                     id: "token_fpmm_by_collateral",
                     label: "按抵押品",
-                    value: (fo.by_collateral_fpmm || fo.by_collateral || []).reduce(
+                    value: (fo.by_collateral_fpmm || []).reduce(
                       (acc, c) => acc + Number(c.count || 0),
                       0,
                     ),
                     color: "#fde68a",
                     desc: "group_by(collateral)",
                     scene: "按字段collateral聚合",
-                    children: (fo.by_collateral_fpmm || fo.by_collateral || [])
+                    children: (fo.by_collateral_fpmm || [])
                       .slice()
                       .sort((a, b) => b.count - a.count)
                       .map((c) => {
@@ -726,14 +747,35 @@
         .sort((a, b) => b.count - a.count);
     }
 
-    function s2GetByCollateralEntries(s, directKeys) {
-      for (const key of directKeys) {
-        const direct = s[key];
-        if (Array.isArray(direct) && direct.length > 0) {
-          return s2NormalizeByCollateralEntries(direct);
+    function s2MergeByCollateralEntries(groups) {
+      const merged = new Map();
+      for (const group of groups) {
+        for (const x of group) {
+          const key = x.addr || x.name;
+          if (!merged.has(key)) {
+            merged.set(key, {
+              addr: x.addr,
+              name: x.name,
+              count: 0,
+              label: x.label,
+              desc: x.desc,
+            });
+          }
+          const entry = merged.get(key);
+          entry.count += Number(x.count || 0);
         }
       }
-      return [];
+      return Array.from(merged.values()).sort((a, b) => b.count - a.count);
+    }
+
+    function s2GetByCollateralFromEventTypes(s, eventTypes) {
+      const byEvent = s.event_by_collateral || {};
+      const groups = eventTypes.map((eventType) => {
+        const rows = byEvent[String(eventType)];
+        if (!Array.isArray(rows)) return [];
+        return s2NormalizeByCollateralEntries(rows);
+      });
+      return s2MergeByCollateralEntries(groups);
     }
 
     function s2BuildByCollateralNode(nodeId, label, entries, scene, prefix) {
@@ -818,17 +860,30 @@
         (s.xfer_internal_transfer_other || 0);
       const internal = internal_mint + internal_burn + internal_transfer;
 
-      const byCollSplit = s2GetByCollateralEntries(s, ["by_collateral_split"]);
-      const byCollMerge = s2GetByCollateralEntries(s, ["by_collateral_merge"]);
-      const byCollRedemption = s2GetByCollateralEntries(s, ["by_collateral_redemption"]);
-      const byCollFpmmTrade = s2GetByCollateralEntries(
-        s,
-        ["by_collateral_fpmm_trade"],
-      );
-      const byCollFpmmLp = s2GetByCollateralEntries(
-        s,
-        ["by_collateral_fpmm_lp"],
-      );
+      const byCollSplit = s2GetByCollateralFromEventTypes(s, [S2_EVENT_TYPE.SPLIT_NON_POLY]);
+      const byCollMerge = s2GetByCollateralFromEventTypes(s, [S2_EVENT_TYPE.MERGE_NON_POLY]);
+      const byCollRedemption = s2GetByCollateralFromEventTypes(s, [S2_EVENT_TYPE.REDEMPTION_NON_POLY]);
+      const byCollOrder = s2GetByCollateralFromEventTypes(s, [
+        S2_EVENT_TYPE.ORDER_BUY,
+        S2_EVENT_TYPE.ORDER_SELL,
+      ]);
+      const byCollFpmmTrade = s2GetByCollateralFromEventTypes(s, [
+        S2_EVENT_TYPE.FPMM_BUY,
+        S2_EVENT_TYPE.FPMM_SELL,
+      ]);
+      const byCollFpmmLp = s2GetByCollateralFromEventTypes(s, [
+        S2_EVENT_TYPE.FPMM_LP_ADD,
+        S2_EVENT_TYPE.FPMM_LP_REMOVE,
+        S2_EVENT_TYPE.FPMM_LP_RETURN,
+      ]);
+      const byCollTransfer = s2GetByCollateralFromEventTypes(s, [
+        S2_EVENT_TYPE.TRANSFER_IN_NEGRISK,
+        S2_EVENT_TYPE.TRANSFER_IN_OTHER,
+        S2_EVENT_TYPE.TRANSFER_IN_NON_POLY,
+        S2_EVENT_TYPE.TRANSFER_OUT_NEGRISK,
+        S2_EVENT_TYPE.TRANSFER_OUT_OTHER,
+        S2_EVENT_TYPE.TRANSFER_OUT_NON_POLY,
+      ]);
       return {
         id: "xfer",
         label: "Transfer",
@@ -1018,6 +1073,13 @@
                     desc: "CTF|NEG_RISK:用户->taker & amt>0 & m(order) & maker_side=sell",
                     scene: "用户卖出条件token",
                   },
+                  s2BuildByCollateralNode(
+                    "order_coll",
+                    "按抵押品",
+                    byCollOrder,
+                    "",
+                    "order",
+                  ),
                 ].filter(Boolean),
               },
               {
@@ -1102,6 +1164,13 @@
                 desc: "普通转账分类",
                 scene: "用户地址参与",
                 children: [
+                  s2BuildByCollateralNode(
+                    "transfer_coll",
+                    "按抵押品",
+                    byCollTransfer,
+                    "",
+                    "transfer",
+                  ),
                   {
                     id: "transfer_in",
                     label: "转入",
@@ -1318,7 +1387,7 @@
       };
     }
 
-    function s2RenderNode(node, depth = 0) {
+    function s2RenderNode(node) {
       const hasChildren = node.children && node.children.length > 0;
       const isExpanded = s2ExpandedNodes.has(node.id);
       const valueClass = node.value ? "" : " zero";
@@ -1343,7 +1412,7 @@
       if (hasChildren) {
         html += `<div class="stage2-tree-children${isExpanded ? " expanded" : ""}">`;
         for (const child of node.children) {
-          html += s2RenderNode(child, depth + 1);
+          html += s2RenderNode(child);
         }
         html += `</div>`;
       }
@@ -1380,56 +1449,7 @@
     }
 
     function s2ExpandAll() {
-      s2ExpandedNodes = new Set([
-        // 问题树 (树状partition: total→polymarket/other→...)
-        "cond",
-        "cond_poly",
-        "cond_tr",
-        "cond_other",
-        "cond_split",
-        "cond_merge",
-        "cond_redemption",
-        // 代币树 (树状partition: total→polymarket/other→...)
-        "token",
-        "token_poly",
-        "token_tr",
-        "token_fpmm",
-        "token_fpmm_by_collateral",
-        "token_other",
-        "token_split",
-        "token_merge",
-        "token_redemption",
-        "token_transfer",
-        "token_transfer_by_collateral",
-        // Transfer树
-        "xfer",
-        "user_events",
-        "internal",
-        "split",
-        "split_poly",
-        "split_non_poly",
-        "split_non_poly_coll",
-        "merge",
-        "merge_poly",
-        "merge_non_poly",
-        "merge_non_poly_coll",
-        "redemption",
-        "redemption_non_poly",
-        "redemption_non_poly_coll",
-        "order",
-        "fpmm_trade",
-        "fpmm_trade_coll",
-        "fpmm_lp",
-        "fpmm_lp_coll",
-        "transfer",
-        "transfer_in",
-        "transfer_in_poly",
-        "transfer_out",
-        "transfer_out_poly",
-        "internal_mint",
-        "internal_burn",
-        "internal_transfer",
-      ]);
+      s2ExpandedNodes = new Set(s2DefaultExpandedNodeIds());
       s2AllExpanded = true;
       s2RenderAllTrees(window._s2LastData || {});
       document.getElementById("s2-collapse-all").textContent = "全部折叠";

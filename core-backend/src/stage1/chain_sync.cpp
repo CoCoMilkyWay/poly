@@ -7,7 +7,7 @@ namespace stage1 {
 ChainSync::ChainSync(const Config &config, Database &db)
     : config_(config), db_(db),
       feather_writer_(db.data_dir()),
-      rpc_head_(config.rpc_url, config.rpc_api_key, "RPC-Head", config.proxy_url),
+      rpc_head_(config.rpc_url, config.rpc_api_key, "RPC-Head", config.proxy_url, config.rpc_transport),
       num_rpc_threads_(config.stage1_rpc_query_threads),
       basic_chunk_size_(kSyncChunkBlocks / config.stage1_rpc_sync_chunk_basics),
       sync_chunk_basic_count_(config.stage1_rpc_sync_chunk_basics) {
@@ -19,7 +19,7 @@ ChainSync::ChainSync(const Config &config, Database &db)
   rpc_workers_.reserve(num_rpc_threads_);
   for (int i = 0; i < num_rpc_threads_; ++i) {
     rpc_workers_.push_back(std::make_unique<RpcClient>(
-        config.rpc_url, config.rpc_api_key, "RPC-Worker-" + std::to_string(i), config.proxy_url));
+        config.rpc_url, config.rpc_api_key, "RPC-Worker-" + std::to_string(i), config.proxy_url, config.rpc_transport));
   }
   int64_t cursor = db_.get_last_block();
   current_partition_start_ = (cursor < 0) ? FeatherWriter::partition_start(config_.initial_block)

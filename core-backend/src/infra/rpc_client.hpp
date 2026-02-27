@@ -4,6 +4,7 @@
 #include <condition_variable>
 #include <deque>
 #include <future>
+#include <memory>
 #include <mutex>
 #include <nlohmann/json.hpp>
 #include <optional>
@@ -12,15 +13,8 @@
 #include <tuple>
 #include <vector>
 
-#include <boost/asio.hpp>
-#include <boost/asio/ssl.hpp>
-#include <boost/beast.hpp>
-#include <boost/beast/ssl.hpp>
-
-namespace asio = boost::asio;
-namespace beast = boost::beast;
-using tcp = asio::ip::tcp;
 using json = nlohmann::json;
+class RpcTransport;
 
 class RpcClient {
 public:
@@ -35,7 +29,7 @@ public:
   };
 
   RpcClient(const std::string &url, const std::string &api_key = "", const std::string &worker_name = "RPC-Worker",
-            const std::string &proxy_url = "");
+            const std::string &proxy_url = "", const std::string &transport_type = "beast");
 
   ~RpcClient();
 
@@ -55,30 +49,14 @@ private:
   std::string execute_request(const std::string &body);
   std::string build_batch_request(const std::vector<LogsQuery> &queries);
   std::vector<json> parse_batch_response(const std::string &response_body, size_t count);
-  void parse_proxy_url(const std::string &proxy_url);
-  static void socks5_handshake(asio::ip::tcp::socket &sock, const std::string &dst_host, int dst_port);
-  void parse_url(const std::string &url);
-  void ensure_connected();
-  void disconnect();
-  std::string http_post(const std::string &body);
+  std::string post_json(const std::string &body);
   static std::string to_hex(int64_t value);
   static int64_t from_hex(const std::string &hex);
 
-  std::string host_;
-  std::string port_;
-  std::string target_;
-  std::string api_key_;
+  std::string transport_type_;
   std::string worker_name_;
-  std::string proxy_host_;
-  std::string proxy_port_;
-  bool use_ssl_ = false;
   size_t last_response_size_ = 0;
-
-  asio::io_context ioc_;
-  asio::ssl::context ssl_ctx_;
-  std::unique_ptr<beast::ssl_stream<beast::tcp_stream>> ssl_stream_;
-  std::unique_ptr<beast::tcp_stream> tcp_stream_;
-  bool connected_ = false;
+  std::unique_ptr<RpcTransport> transport_;
 
   std::thread worker_thread_;
   std::mutex worker_mutex_;

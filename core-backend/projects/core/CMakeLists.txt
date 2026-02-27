@@ -55,6 +55,9 @@ if(NOT OpenSSL_FOUND)
     endif()
 endif()
 
+# libcurl (for curl rpc transport)
+find_package(CURL REQUIRED)
+
 # Arrow (vendored under packages/arrow)
 set(ARROW_DIR ${PACKAGES_DIR}/arrow)
 set(ARROW_INCLUDE_DIR ${ARROW_DIR}/include)
@@ -77,6 +80,8 @@ set(SOURCES
     ${SRC_DIR}/api/api_session.cpp
     ${SRC_DIR}/core/database.cpp
     ${SRC_DIR}/infra/rpc_client.cpp
+    ${SRC_DIR}/infra/rpc_transport_beast.cpp
+    ${SRC_DIR}/infra/rpc_transport_curl.cpp
     ${SRC_DIR}/stage1/chain_sync.cpp
     ${SRC_DIR}/stage1/event_decode.cpp
     ${SRC_DIR}/stage2/stage2_utils.cpp
@@ -116,6 +121,7 @@ if(WIN32)
         ${PACKAGES_DIR}/duckdb/duckdb.lib
         OpenSSL::SSL
         OpenSSL::Crypto
+        CURL::libcurl
         ${ARROW_LIBRARY}
     )
     if(PROFILE_MODE)
@@ -126,6 +132,7 @@ else()
         ${PACKAGES_DIR}/duckdb/libduckdb.so
         OpenSSL::SSL
         OpenSSL::Crypto
+        CURL::libcurl
         ${ARROW_LIBRARY}
         pthread
         dl

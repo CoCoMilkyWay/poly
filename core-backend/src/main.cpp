@@ -43,6 +43,9 @@ int main(int argc, char *argv[]) {
   std::cout << "[Main] Stage1 DB: " << config.db_path_stage1 << std::endl;
   std::cout << "[Main] Stage2 DB: " << config.db_path_stage2 << std::endl;
   std::cout << "[Main] RPC Node: " << config.rpc_name << " (" << config.rpc_url << ")" << std::endl;
+  std::cout << "[Main] RPC Transport: " << config.rpc_transport << std::endl;
+  std::cout << "[Main] Stage1 Enable: " << config.stage1_enable << std::endl;
+  std::cout << "[Main] Stage2 Enable: " << config.stage2_enable << std::endl;
   std::cout << "[Main] RPC Chunk: " << stage1_basic_chunk_blocks << " blocks (computed)" << std::endl;
   std::cout << "[Main] API Port: " << config.backend_port << std::endl;
 
@@ -61,26 +64,31 @@ int main(int argc, char *argv[]) {
   };
 
   boost::asio::io_context sync_ioc;
-  {
-    TraceN("start/stage1_sync");
-    chain_sync.start(sync_ioc);
+  std::optional<std::thread> stage1_thread;
+  if (config.stage1_enable == 1) {
+    {
+      TraceN("start/stage1_sync");
+      chain_sync.start(sync_ioc);
+    }
+    stage1_thread.emplace([&sync_ioc]() {
+      TraceThread("Stage1-Sync");
+      sync_ioc.run();
+    });
   }
-  std::thread stage1_thread([&sync_ioc]() {
-    TraceThread("Stage1-Sync");
-    sync_ioc.run();
-  });
 
   stage2::EventSync event_sync(stage1_db, stage2_db);
   boost::asio::io_context stage2_ioc;
   std::optional<std::thread> stage2_thread;
-  {
-    TraceN("start/stage2_sync");
-    event_sync.start(stage2_ioc);
+  if (config.stage2_enable == 1) {
+    {
+      TraceN("start/stage2_sync");
+      event_sync.start(stage2_ioc);
+    }
+    stage2_thread.emplace([&stage2_ioc]() {
+      TraceThread("Stage2-Sync");
+      stage2_ioc.run();
+    });
   }
-  stage2_thread.emplace([&stage2_ioc]() {
-    TraceThread("Stage2-Sync");
-    stage2_ioc.run();
-  });
 
   stage3::PnlEngine pnl_engine(event_sync.builder());
 
@@ -95,8 +103,12 @@ int main(int argc, char *argv[]) {
   boost::asio::signal_set signals(api_ioc, SIGINT, SIGTERM);
   signals.async_wait([&](const boost::system::error_code &, int sig) {
     std::cout << "\n[Main] 正在关闭..." << std::endl;
-    chain_sync.stop();
-    event_sync.stop();
+    if (config.stage1_enable == 1) {
+      chain_sync.stop();
+    }
+    if (config.stage2_enable == 1) {
+      event_sync.stop();
+    }
     sync_ioc.stop();
     stage2_ioc.stop();
     api_ioc.stop();
@@ -105,8 +117,12 @@ int main(int argc, char *argv[]) {
   std::cout << "[Main] 服务已启动" << std::endl;
   api_ioc.run();
 
-  stage1_thread.join();
-  stage2_thread->join();
+  if (stage1_thread.has_value()) {
+    stage1_thread->join();
+  }
+  if (stage2_thread.has_value()) {
+    stage2_thread->join();
+  }
 
   std::cout << "[Main] 已退出" << std::endl;
   return 0;
