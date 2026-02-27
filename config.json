@@ -4,7 +4,7 @@
   "backend_port": 8001,
   "proxy": "socks5://127.0.0.1:10808",
   "rpc_transport": "curl",
-  "stage1_enable": 1,
+  "stage1_enable": 0,
   "stage2_enable": 1,
   "db_path_stage1": "data/stage1/polymarket.duckdb",
   "db_path_stage2": "data/stage2/users.duckdb",
