@@ -228,7 +228,7 @@ phase3_process_transfers(chunk)
 │  │  │  │  ├─ lp_add_refund: transfer_amount == split_amount - amounts[token_idx|任意腿]
 │  │  │  │  └─ lp_remove: funder == counterparty 且 transfer_amount ∈ amounts
 │  │  │  └─ unknown token 仅在通过结构约束时可绑定，不以“地址像不像”放宽
-│  │  ├─ split/merge/redeem 匹配策略: 窗口内唯一命中优先；窗口无命中时仅在同tx内按最近未来语义log兜底；同距离并列 -> assert(false)
+│  │  ├─ split/merge/redeem 匹配策略: 窗口内唯一命中优先；窗口无命中时在同tx内按最近语义log兜底（未来优先，历史仅兜底）；同距离并列 -> assert(false)
 │  │  │  ├─ mint/burn 发生多语义候选时按语义log距离择优（窗口命中优先）；同距离并列 -> assert(false)
 │  │  │  └─ split/merge 的 collateral 约束为“严格优先、结构兜底”：先按 collateral 命中；未命中再按同window结构条件匹配
 │  │  ├─ FPMM trade/funding/remove 多候选决策: 先按结构约束筛选并优先命中当前语义window；窗口无命中再取最近未来语义log；同log并列 -> assert(false)

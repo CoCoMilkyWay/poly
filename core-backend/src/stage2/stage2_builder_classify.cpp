@@ -157,10 +157,9 @@ TransferClass EventBuilder::classify_and_emit(
             window_matched = &info;
             window_match_count++;
           } else {
-            if (info.log_index < base_log_index) {
-              continue;
-            }
-            int64_t dist = info.log_index - base_log_index;
+            bool is_future = info.log_index >= base_log_index;
+            int64_t dist = is_future ? (info.log_index - base_log_index)
+                                     : (base_log_index - info.log_index + SORT_KEY_SCALE);
             if (nearest_matched == nullptr || dist < nearest_dist) {
               nearest_matched = &info;
               nearest_dist = dist;
@@ -211,10 +210,9 @@ TransferClass EventBuilder::classify_and_emit(
             window_matched = &info;
             window_match_count++;
           } else {
-            if (info.log_index < base_log_index) {
-              continue;
-            }
-            int64_t dist = info.log_index - base_log_index;
+            bool is_future = info.log_index >= base_log_index;
+            int64_t dist = is_future ? (info.log_index - base_log_index)
+                                     : (base_log_index - info.log_index + SORT_KEY_SCALE);
             if (nearest_matched == nullptr || dist < nearest_dist) {
               nearest_matched = &info;
               nearest_dist = dist;
@@ -263,10 +261,9 @@ TransferClass EventBuilder::classify_and_emit(
             window_matched = &info;
             window_match_count++;
           } else {
-            if (info.log_index < base_log_index) {
-              continue;
-            }
-            int64_t dist = info.log_index - base_log_index;
+            bool is_future = info.log_index >= base_log_index;
+            int64_t dist = is_future ? (info.log_index - base_log_index)
+                                     : (base_log_index - info.log_index + SORT_KEY_SCALE);
             if (nearest_matched == nullptr || dist < nearest_dist) {
               nearest_matched = &info;
               nearest_dist = dist;
