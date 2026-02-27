@@ -113,6 +113,11 @@ public:
     int64_t xfer_internal_transfer_fpmm = 0;
     int64_t xfer_internal_transfer_other = 0;
 
+    SplitSemanticTree split_sem_tree;
+    MergeSemanticTree merge_sem_tree;
+    ConvertSemanticTree convert_sem_tree;
+    OrderSemanticTree order_sem_tree;
+
     // 按(EventType, CollateralId)分组统计
     std::unordered_map<uint16_t, int64_t> event_by_collateral;
   };
@@ -161,6 +166,10 @@ public:
     p.xfer_internal_transfer_negrisk = bp.xfer_stats.internal_transfer_negrisk;
     p.xfer_internal_transfer_fpmm = bp.xfer_stats.internal_transfer_fpmm;
     p.xfer_internal_transfer_other = bp.xfer_stats.internal_transfer_other;
+    p.split_sem_tree = bp.split_sem_tree;
+    p.merge_sem_tree = bp.merge_sem_tree;
+    p.convert_sem_tree = bp.convert_sem_tree;
+    p.order_sem_tree = bp.order_sem_tree;
     p.event_by_collateral = bp.event_by_collateral;
     return p;
   }

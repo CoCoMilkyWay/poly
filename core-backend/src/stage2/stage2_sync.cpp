@@ -61,7 +61,7 @@ void EventSync::do_sync() {
   progress_.syncing = true;
   progress_.chunks_per_rebuild = 1;
 
-  int64_t target = std::min(stage2_cursor + chunk_size_, stage1_last);
+  int64_t target = stage1_last;
   builder_.build_chunk(target);
   progress_.phase = builder_.progress().phase;
   progress_.stage2_cursor = builder_.cursor();

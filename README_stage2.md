@@ -127,6 +127,73 @@ Transfer树 (`s2-xfer-tree`)
         ├─ FPMM  // desc: FPMM:*->* & amt>0 & internal_fpmm_transfer_path; scene: FPMM其他内部操作(当前实现无直接命中分支,预期=0); 对应: InternalTransferFPMM
         └─ 其他  // desc: *:*->* & amt>0 & !is_user(from) & !is_user(to) & !m(order); scene: 其他协议间转移; 对应: InternalTransferOther
 
+Split语义表树 (`s2-split-sem-tree`)
+└─ Split语义表  // desc: split表行分类; scene: 语义行本体(非transfer腿)
+  ├─ Amount  // desc: amount分布; scene: 0值与正值
+  │  ├─ Zero  // desc: amount==0; scene: 语义标记行(允许无可消费腿)
+  │  └─ Positive  // desc: amount>0; scene: 正常拆分语义
+  ├─ Parent  // desc: parent_collection分布; scene: 根仓与嵌套仓
+  │  ├─ Root(parent=0)  // desc: parent_collection_id=0x00..00; scene: 从collateral直拆
+  │  └─ Nested(parent!=0)  // desc: parent_collection_id!=0x00..00; scene: 嵌套collection拆分
+  ├─ Partition  // desc: partition腿数; scene: 单腿与多腿
+  │  ├─ Single(<=1)  // desc: partition.size<=1; scene: 单腿或异常窄分区
+  │  └─ Multi(>1)  // desc: partition.size>1; scene: 常见多腿拆分
+  └─ 消费状态  // desc: 与L4覆盖断言同口径; scene: observed/must_consume vs consumed
+     ├─ ObservedLeg  // desc: must_consume=true; scene: 在语义window观测到可消费CTF mint腿
+     ├─ UnobservedLeg  // desc: must_consume=false; scene: 未观测到可消费腿
+     ├─ Consumed  // desc: consumed_count>0; scene: 至少一条transfer腿命中
+     └─ CoveredByParent  // desc: covered_by_parent=true; scene: 被parent腿覆盖
+
+Merge语义表树 (`s2-merge-sem-tree`)
+└─ Merge语义表  // desc: merge表行分类; scene: 语义行本体(非transfer腿)
+  ├─ Amount  // desc: amount分布; scene: 0值与正值
+  │  ├─ Zero  // desc: amount==0; scene: 语义标记行(允许无可消费腿)
+  │  └─ Positive  // desc: amount>0; scene: 正常合并语义
+  ├─ Parent  // desc: parent_collection分布; scene: 根仓与嵌套仓
+  │  ├─ Root(parent=0)  // desc: parent_collection_id=0x00..00; scene: 合并回collateral
+  │  └─ Nested(parent!=0)  // desc: parent_collection_id!=0x00..00; scene: 合并回上层collection
+  ├─ Partition  // desc: partition腿数; scene: 单腿与多腿
+  │  ├─ Single(<=1)  // desc: partition.size<=1; scene: 单腿或异常窄分区
+  │  └─ Multi(>1)  // desc: partition.size>1; scene: 常见多腿合并
+  └─ 消费状态  // desc: 与L4覆盖断言同口径; scene: observed/must_consume vs consumed
+     ├─ ObservedLeg  // desc: must_consume=true; scene: 在语义window观测到可消费CTF burn腿
+     ├─ UnobservedLeg  // desc: must_consume=false; scene: 未观测到可消费腿
+     ├─ Consumed  // desc: consumed_count>0; scene: 至少一条transfer腿命中
+     └─ CoveredByParent  // desc: covered_by_parent=true; scene: 被parent腿覆盖
+
+Convert语义表树 (`s2-convert-sem-tree`)
+└─ Convert语义表  // desc: convert表行分类; scene: 语义行本体(非transfer腿)
+  ├─ Amount  // desc: amount分布; scene: 0值与正值
+  │  ├─ Zero  // desc: amount==0; scene: 极少数无效转换行
+  │  └─ Positive  // desc: amount>0; scene: 正常转换语义
+  ├─ Question数  // desc: market_id对应问题数分桶; scene: 观察转换复杂度
+  │  ├─ Unknown  // desc: q_count<=0; scene: market映射缺失
+  │  ├─ Q=1  // desc: q_count==1; scene: 单问题市场
+  │  ├─ Q=2  // desc: q_count==2; scene: 双问题市场
+  │  ├─ Q=3  // desc: q_count==3; scene: 三问题市场
+  │  ├─ Q=4  // desc: q_count==4; scene: 四问题市场
+  │  ├─ Q=5  // desc: q_count==5; scene: 五问题市场
+  │  ├─ Q=6  // desc: q_count==6; scene: 六问题市场
+  │  ├─ Q=7  // desc: q_count==7; scene: 七问题市场
+  │  └─ Q>=8  // desc: q_count>=8; scene: 高维多问题市场
+  └─ 消费状态  // desc: convert消费闭环; scene: 行是否被消费
+     └─ Consumed  // desc: consumed_count>0; scene: 至少命中一条转换相关腿
+
+Order语义表树 (`s2-order-sem-tree`)
+└─ Order语义表  // desc: order_filled表行分类; scene: 语义行本体(非transfer腿)
+  ├─ MakerSide  // desc: maker方向分布; scene: maker买/卖
+  │  ├─ MakerBuy  // desc: maker_side=1; scene: maker买token(付USDC)
+  │  └─ MakerSell  // desc: maker_side=2; scene: maker卖token(收USDC)
+  ├─ Amount  // desc: tokens/usdc分布; scene: 识别零腿与非零腿
+  │  ├─ TokenZero  // desc: tokens==0; scene: 无ERC1155 token数量
+  │  ├─ TokenPositive  // desc: tokens>0; scene: 有ERC1155 token数量
+  │  ├─ USDCZero  // desc: usdc==0; scene: 无USDC数量
+  │  └─ USDCPositive  // desc: usdc>0; scene: 有USDC数量
+  └─ 消费状态  // desc: 与L4覆盖断言同口径; scene: observed/must_consume vs consumed
+     ├─ ObservedLeg  // desc: must_consume=true; scene: 观测到地址腿硬约束可消费leg
+     ├─ UnobservedLeg  // desc: must_consume=false; scene: 未观测到可消费leg
+     └─ Consumed  // desc: consumed=true; scene: 该order行被成功绑定消费
+
 abbr(all)
 ├─ cond/token: poly=归属Polymarket, treg=出现TokenRegistered, cprep=出现ConditionPreparation, fcreate=出现FPMMCreation
 ├─ cond/token: fpmm=该condition后续有关联FPMM, nr=命中NegRisk路径, ob=普通订单簿(!fpmm & !nr), xfer_inf=从Transfer推断

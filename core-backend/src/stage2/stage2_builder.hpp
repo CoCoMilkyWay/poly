@@ -7,9 +7,13 @@
 #include "stage2_models.hpp"
 #include "stage2_types.hpp"
 #include "stage2_utils.hpp"
+#include <condition_variable>
 #include <functional>
 #include <limits>
+#include <mutex>
 #include <nlohmann/json.hpp>
+#include <optional>
+#include <thread>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -18,6 +22,7 @@ namespace stage2 {
 class EventBuilder {
 public:
   EventBuilder(Database &stage1_db, Database &stage2_db, int chunk_size);
+  ~EventBuilder();
 
   void init_schema();
 
@@ -58,13 +63,19 @@ private:
   std::unordered_map<TxKey, std::vector<RedemptionInfo>> tx_redemption_;
   std::unordered_map<TxMarketKey, std::vector<ConvertInfo>> tx_convert_;
   std::unordered_map<TxTokenKey, std::vector<OrderInfo>> tx_order_;
+  std::unordered_map<TxKey, std::vector<ConvertInfo *>> tx_convert_by_tx_;
+  std::unordered_map<TxTokenKey, std::unordered_map<int64_t, std::vector<OrderInfo *>>> tx_order_by_amount_;
   std::unordered_map<TxFPMMKey, std::vector<FPMMTradeInfo>> tx_fpmm_trade_;
   std::unordered_map<TxFPMMKey, std::vector<FPMMFundingInfo>> tx_fpmm_funding_;
   // Tx-level semantic bounds built from ordered semantic log_index sequence.
   std::unordered_map<TxKey, std::vector<TxOpBounds>> tx_op_bounds_;
-  TransferStats chunk_xfer_stats_;          // 当前 chunk 的 transfer 统计
-  ChunkLog chunk_log_;                      // 当前 chunk 的日志
-  std::string log_dir_ = "data/stage2/log"; // 日志目录
+  TransferStats chunk_xfer_stats_;             // 当前 chunk 的 transfer 统计
+  SplitSemanticTree chunk_split_sem_tree_;     // 当前 chunk 的 split 语义统计
+  MergeSemanticTree chunk_merge_sem_tree_;     // 当前 chunk 的 merge 语义统计
+  ConvertSemanticTree chunk_convert_sem_tree_; // 当前 chunk 的 convert 语义统计
+  OrderSemanticTree chunk_order_sem_tree_;     // 当前 chunk 的 order 语义统计
+  ChunkLog chunk_log_;                         // 当前 chunk 的日志
+  std::string log_dir_ = "data/stage2/log";    // 日志目录
 
   struct NewCondition {
     uint32_t idx;
@@ -100,12 +111,35 @@ private:
 
   std::vector<NewCondition> new_conditions_;
   std::vector<NewToken> new_tokens_;
+  std::unordered_map<uint32_t, size_t> new_condition_pos_;
+  std::unordered_map<std::string, size_t> new_token_pos_;
   std::vector<NewFPMM> new_fpmms_;
   std::vector<NewCollateral> new_collaterals_;
   std::vector<NewCondCollateral> new_cond_collaterals_;
   std::vector<NewNegRiskMarket> new_neg_risk_markets_;
   std::vector<std::tuple<std::string, RawEvent>> new_events_;
   std::string current_transfer_context_;
+  int64_t build_cursor_ = 0;
+
+  struct CommitPayload {
+    int64_t new_cursor = 0;
+    BuildProgress progress;
+    std::vector<NewCondition> new_conditions;
+    std::vector<NewToken> new_tokens;
+    std::vector<NewFPMM> new_fpmms;
+    std::vector<NewCollateral> new_collaterals;
+    std::vector<NewCondCollateral> new_cond_collaterals;
+    std::vector<NewNegRiskMarket> new_neg_risk_markets;
+    std::vector<std::tuple<std::string, RawEvent>> new_events;
+  };
+  std::thread commit_thread_;
+  std::mutex commit_mu_;
+  std::condition_variable commit_cv_;
+  bool commit_stop_ = false;
+  bool commit_busy_ = false;
+  std::optional<CommitPayload> commit_payload_;
+  std::optional<BuildProgress> commit_result_;
+  std::optional<CommitPayload> commit_reusable_payload_;
 
   void update_xfer_tree(TransferClass cls) {
     chunk_xfer_stats_.add(cls);
@@ -120,7 +154,7 @@ private:
                             ConditionSource source = ConditionSource::ConditionPrep,
                             const std::string &question_id = "") {
     stage2_assert(outcome_cnt > 0 && outcome_cnt <= MAX_OUTCOMES,
-                    AssertLevel::L1, "Mapping", "OutcomeCountRange");
+                  AssertLevel::L1, "Mapping", "OutcomeCountRange");
     std::string lower = to_lower(cond_id);
     auto it = cond_map_.find(lower);
     if (it != cond_map_.end()) {
@@ -136,15 +170,11 @@ private:
         changed = true;
       }
       if (changed) {
-        bool found = false;
-        for (auto &nc : new_conditions_) {
-          if (nc.idx == idx) {
-            nc.info = conditions_[idx];
-            found = true;
-            break;
-          }
-        }
-        if (!found) {
+        auto pos_it = new_condition_pos_.find(idx);
+        if (pos_it != new_condition_pos_.end()) {
+          new_conditions_[pos_it->second].info = conditions_[idx];
+        } else {
+          new_condition_pos_[idx] = new_conditions_.size();
           new_conditions_.push_back({idx, cond_ids_[idx], conditions_[idx]});
         }
       }
@@ -160,6 +190,7 @@ private:
     cond_ids_.push_back(lower);
     cond_map_[lower] = idx;
 
+    new_condition_pos_[idx] = new_conditions_.size();
     new_conditions_.push_back({idx, lower, info});
     progress_.total_conditions = conditions_.size();
     return idx;
@@ -168,12 +199,12 @@ private:
   void update_condition_payout(uint32_t idx, const std::vector<int64_t> &payouts) {
     if (idx < conditions_.size()) {
       conditions_[idx].payout_numerators = payouts;
-      for (auto &nc : new_conditions_) {
-        if (nc.idx == idx) {
-          nc.info.payout_numerators = payouts;
-          return;
-        }
+      auto pos_it = new_condition_pos_.find(idx);
+      if (pos_it != new_condition_pos_.end()) {
+        new_conditions_[pos_it->second].info.payout_numerators = payouts;
+        return;
       }
+      new_condition_pos_[idx] = new_conditions_.size();
       new_conditions_.push_back({idx, cond_ids_[idx], conditions_[idx]});
     }
   }
@@ -200,17 +231,14 @@ private:
         return 0;
       };
       auto patch_pending = [&](uint32_t new_cond_idx, uint8_t new_token_idx, TokenSource new_source) {
-        bool patched = false;
-        for (auto &nt : new_tokens_) {
-          if (nt.token_id == lower) {
-            nt.cond_idx = new_cond_idx;
-            nt.token_idx = new_token_idx;
-            nt.source = new_source;
-            patched = true;
-            break;
-          }
-        }
-        if (!patched) {
+        auto pos_it = new_token_pos_.find(lower);
+        if (pos_it != new_token_pos_.end()) {
+          auto &nt = new_tokens_[pos_it->second];
+          nt.cond_idx = new_cond_idx;
+          nt.token_idx = new_token_idx;
+          nt.source = new_source;
+        } else {
+          new_token_pos_[lower] = new_tokens_.size();
           new_tokens_.push_back({lower, new_cond_idx, new_token_idx, new_source});
         }
       };
@@ -257,6 +285,7 @@ private:
       return;
     }
     token_map_[lower] = {cond_idx, token_idx, source};
+    new_token_pos_[lower] = new_tokens_.size();
     new_tokens_.push_back({lower, cond_idx, token_idx, source});
     progress_.total_tokens = token_map_.size();
   }
@@ -301,7 +330,7 @@ private:
     stage2_assert(cond_idx < conditions_.size(), AssertLevel::L1, "Mapping", "CondIdxInRangeForTokenIntern");
     uint8_t outcome_count = conditions_[cond_idx].outcome_count;
     stage2_assert(outcome_count > 0 && outcome_count <= MAX_OUTCOMES,
-                    AssertLevel::L1, "Mapping", "OutcomeCountRangeForTokenIntern");
+                  AssertLevel::L1, "Mapping", "OutcomeCountRangeForTokenIntern");
     for (uint8_t outcome = 0; outcome < outcome_count; ++outcome) {
       stage2_assert(outcome < 31, AssertLevel::L1, "Mapping", "OutcomeBitWidthLt31");
       int index_set = (1 << outcome);
@@ -329,7 +358,7 @@ private:
       cond_bytes.push_back(hex_to_blob(lower));
       outcome_counts.push_back(conditions_[it->second].outcome_count);
       stage2_assert(outcome_counts.back() > 0 && outcome_counts.back() <= MAX_OUTCOMES,
-                      AssertLevel::L1, "Mapping", "FPMMOutcomeCountRange");
+                    AssertLevel::L1, "Mapping", "FPMMOutcomeCountRange");
     }
 
     // 必须与 FPMMFactory._recordCollectionIDsForAllConditions 一致：
@@ -340,8 +369,8 @@ private:
             auto position_hash = ctf::get_position_id(collateral_bytes, parent_collection_id);
             std::string token_id = crypto::Keccak256::to_hex(position_hash);
             stage2_assert(first_condition_outcome >= 0 &&
-                                first_condition_outcome <= std::numeric_limits<uint8_t>::max(),
-                            AssertLevel::L1, "Mapping", "FPMMFirstOutcomeFitsU8");
+                              first_condition_outcome <= std::numeric_limits<uint8_t>::max(),
+                          AssertLevel::L1, "Mapping", "FPMMFirstOutcomeFitsU8");
             uint8_t token_idx = static_cast<uint8_t>(first_condition_outcome);
             intern_token(token_id, primary_cond_idx, token_idx, TokenSource::PolymarketFPMM);
             return;
@@ -414,16 +443,16 @@ private:
     }
     // 恒等式验证
     stage2_assert(ct.total == ct.polymarket.total + ct.other.total,
-                    AssertLevel::L5, "Partition", "ConditionTreeTotal");
+                  AssertLevel::L5, "Partition", "ConditionTreeTotal");
     stage2_assert(ct.polymarket.total == ct.polymarket.token_reg.total + ct.polymarket.fpmm_poly,
-                    AssertLevel::L5, "Partition", "ConditionTreePolymarketTotal");
+                  AssertLevel::L5, "Partition", "ConditionTreePolymarketTotal");
     stage2_assert(ct.polymarket.token_reg.total ==
-                        ct.polymarket.token_reg.amm + ct.polymarket.token_reg.negrisk +
-                            ct.polymarket.token_reg.orderbook + ct.polymarket.token_reg.other,
-                    AssertLevel::L5, "Partition", "ConditionTreeTokenRegTotal");
+                      ct.polymarket.token_reg.amm + ct.polymarket.token_reg.negrisk +
+                          ct.polymarket.token_reg.orderbook + ct.polymarket.token_reg.other,
+                  AssertLevel::L5, "Partition", "ConditionTreeTokenRegTotal");
     stage2_assert(ct.other.total == ct.other.prep + ct.other.fpmm_other + ct.other.split +
-                                          ct.other.merge + ct.other.redemption,
-                    AssertLevel::L5, "Partition", "ConditionTreeOtherTotal");
+                                        ct.other.merge + ct.other.redemption,
+                  AssertLevel::L5, "Partition", "ConditionTreeOtherTotal");
     progress_.cond_tree = ct;
 
     // 代币树状partition: total = polymarket + other
@@ -485,23 +514,23 @@ private:
     }
     // 恒等式验证
     stage2_assert(tt.total == tt.polymarket.total + tt.other.total,
-                    AssertLevel::L5, "Partition", "TokenTreeTotal");
+                  AssertLevel::L5, "Partition", "TokenTreeTotal");
     stage2_assert(tt.polymarket.total == tt.polymarket.token_reg.total + tt.polymarket.fpmm_poly.total,
-                    AssertLevel::L5, "Partition", "TokenTreePolymarketTotal");
+                  AssertLevel::L5, "Partition", "TokenTreePolymarketTotal");
     stage2_assert(tt.polymarket.token_reg.total ==
-                        tt.polymarket.token_reg.amm + tt.polymarket.token_reg.negrisk +
-                            tt.polymarket.token_reg.orderbook + tt.polymarket.token_reg.other,
-                    AssertLevel::L5, "Partition", "TokenTreeTokenRegTotal");
+                      tt.polymarket.token_reg.amm + tt.polymarket.token_reg.negrisk +
+                          tt.polymarket.token_reg.orderbook + tt.polymarket.token_reg.other,
+                  AssertLevel::L5, "Partition", "TokenTreeTokenRegTotal");
     {
       int64_t sum = 0;
       for (const auto &[k, v] : tt.polymarket.fpmm_poly.by_collateral)
         sum += v;
       stage2_assert(tt.polymarket.fpmm_poly.total == sum,
-                      AssertLevel::L5, "Partition", "TokenTreeFPMMByCollateralTotal");
+                    AssertLevel::L5, "Partition", "TokenTreeFPMMByCollateralTotal");
     }
     stage2_assert(tt.other.total == tt.other.fpmm_other + tt.other.split + tt.other.merge +
-                                          tt.other.redemption + tt.other.transfer_inferred,
-                    AssertLevel::L5, "Partition", "TokenTreeOtherTotal");
+                                        tt.other.redemption + tt.other.transfer_inferred,
+                  AssertLevel::L5, "Partition", "TokenTreeOtherTotal");
     progress_.token_tree = tt;
   }
 
@@ -523,7 +552,9 @@ private:
   void phase1_update_mappings(int64_t start, int64_t end);
   void phase2_build_semantic_index(int64_t start, int64_t end);
   void phase3_process_transfers(int64_t start, int64_t end);
-  void commit_chunk(int64_t new_cursor);
+  BuildProgress commit_chunk(CommitPayload payload);
+  void commit_worker_loop();
+  void reap_commit_result_locked();
   void bump_event_counter(EventType type, int64_t delta) {
     stage2_assert(delta >= 0, AssertLevel::L0, "Input", "CounterDeltaNonNegative");
     switch (type) {

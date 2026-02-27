@@ -454,18 +454,10 @@ void ApiSession::handle_rebuild_status() {
              }
              return arr;
            }()}}}}},
-      {"other",
-       {{"total", tt.other.total},
-        {"fpmm_other", tt.other.fpmm_other},
-        {"split", tt.other.split},
-        {"merge", tt.other.merge},
-        {"redemption", tt.other.redemption},
-        {"transfer_inferred", tt.other.transfer_inferred},
-        {"by_collateral_transfer_inferred",
-         by_collateral_from_events({
-             static_cast<uint8_t>(stage2::EventType::TransferInNonPoly),
-             static_cast<uint8_t>(stage2::EventType::TransferOutNonPoly),
-         })}}},
+      {"other", {{"total", tt.other.total}, {"fpmm_other", tt.other.fpmm_other}, {"split", tt.other.split}, {"merge", tt.other.merge}, {"redemption", tt.other.redemption}, {"transfer_inferred", tt.other.transfer_inferred}, {"by_collateral_transfer_inferred", by_collateral_from_events({
+                                                                                                                                                                                                                                                                       static_cast<uint8_t>(stage2::EventType::TransferInNonPoly),
+                                                                                                                                                                                                                                                                       static_cast<uint8_t>(stage2::EventType::TransferOutNonPoly),
+                                                                                                                                                                                                                                                                   })}}},
   };
 
   json transfer_tree = {
@@ -504,6 +496,64 @@ void ApiSession::handle_rebuild_status() {
       {"xfer_internal_transfer_other", p.xfer_internal_transfer_other},
   };
 
+  const auto &sst = p.split_sem_tree;
+  const auto &mst = p.merge_sem_tree;
+  const auto &cst = p.convert_sem_tree;
+  const auto &ost = p.order_sem_tree;
+  json split_sem_tree = {
+      {"total", sst.total},
+      {"amount_zero", sst.amount_zero},
+      {"amount_positive", sst.amount_positive},
+      {"parent_root", sst.parent_root},
+      {"parent_nested", sst.parent_nested},
+      {"partition_single", sst.partition_single},
+      {"partition_multi", sst.partition_multi},
+      {"observed_leg", sst.observed_leg},
+      {"consumed", sst.consumed},
+      {"covered_by_parent", sst.covered_by_parent},
+      {"unobserved_leg", sst.unobserved_leg},
+  };
+  json merge_sem_tree = {
+      {"total", mst.total},
+      {"amount_zero", mst.amount_zero},
+      {"amount_positive", mst.amount_positive},
+      {"parent_root", mst.parent_root},
+      {"parent_nested", mst.parent_nested},
+      {"partition_single", mst.partition_single},
+      {"partition_multi", mst.partition_multi},
+      {"observed_leg", mst.observed_leg},
+      {"consumed", mst.consumed},
+      {"covered_by_parent", mst.covered_by_parent},
+      {"unobserved_leg", mst.unobserved_leg},
+  };
+  json convert_sem_tree = {
+      {"total", cst.total},
+      {"amount_zero", cst.amount_zero},
+      {"amount_positive", cst.amount_positive},
+      {"q_unknown", cst.q_unknown},
+      {"q1", cst.q1},
+      {"q2", cst.q2},
+      {"q3", cst.q3},
+      {"q4", cst.q4},
+      {"q5", cst.q5},
+      {"q6", cst.q6},
+      {"q7", cst.q7},
+      {"q8_plus", cst.q8_plus},
+      {"consumed", cst.consumed},
+  };
+  json order_sem_tree = {
+      {"total", ost.total},
+      {"maker_buy", ost.maker_buy},
+      {"maker_sell", ost.maker_sell},
+      {"token_zero", ost.token_zero},
+      {"token_positive", ost.token_positive},
+      {"usdc_zero", ost.usdc_zero},
+      {"usdc_positive", ost.usdc_positive},
+      {"observed_leg", ost.observed_leg},
+      {"consumed", ost.consumed},
+      {"unobserved_leg", ost.unobserved_leg},
+  };
+
   json result = {
       {"phase", p.phase},
       {"running", p.running},
@@ -512,6 +562,10 @@ void ApiSession::handle_rebuild_status() {
       {"total_events", p.total_events},
       {"cond_tree", cond_tree},
       {"token_tree", token_tree},
+      {"split_sem_tree", split_sem_tree},
+      {"merge_sem_tree", merge_sem_tree},
+      {"convert_sem_tree", convert_sem_tree},
+      {"order_sem_tree", order_sem_tree},
   };
   result.update(transfer_tree);
 

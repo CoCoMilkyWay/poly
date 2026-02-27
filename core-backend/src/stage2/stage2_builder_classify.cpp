@@ -211,46 +211,47 @@ TransferClass EventBuilder::classify_and_emit(
       return out_cls;
     return internal_cls;
   };
-  auto emit_and_classify_generic_in = [&](const std::string &user_addr,
-                                          TransferClass internal_cls) {
+  auto emit_generic_transfer_event = [&](const std::string &user_addr, bool is_inbound) {
+    int64_t signed_amount = is_inbound ? amount : -amount;
     if (known_token) {
-      emit_if_user(user_addr, RawEvent{sort_key, cond_idx, EventType::TransferInOther,
-                                       token_idx, coll, 0, amount, 0});
+      EventType event_type = is_inbound ? EventType::TransferInOther : EventType::TransferOutOther;
+      emit_if_user(user_addr, RawEvent{sort_key, cond_idx, event_type, token_idx, coll, 0,
+                                       signed_amount, 0});
+      return;
+    }
+    EventType event_type = is_inbound ? EventType::TransferInNonPoly : EventType::TransferOutNonPoly;
+    emit_if_user(user_addr, RawEvent{sort_key, cond_idx, event_type, token_idx, coll, 0,
+                                     signed_amount, 0});
+  };
+  auto emit_and_classify_generic_single = [&](const std::string &user_addr,
+                                              bool is_inbound,
+                                              TransferClass internal_cls) {
+    emit_generic_transfer_event(user_addr, is_inbound);
+    if (known_token) {
       return classify_transfer_by_counterparty(TransferClass::TransferInOther,
                                                TransferClass::TransferOutOther,
                                                internal_cls);
     }
-    emit_if_user(user_addr, RawEvent{sort_key, cond_idx, EventType::TransferInNonPoly,
-                                     token_idx, coll, 0, amount, 0});
     return classify_transfer_by_counterparty(TransferClass::TransferInNonPoly,
                                              TransferClass::TransferOutNonPoly,
                                              internal_cls);
+  };
+  auto emit_and_classify_generic_in = [&](const std::string &user_addr,
+                                          TransferClass internal_cls) {
+    return emit_and_classify_generic_single(user_addr, true, internal_cls);
   };
   auto emit_and_classify_generic_out = [&](const std::string &user_addr,
                                            TransferClass internal_cls) {
-    if (known_token) {
-      emit_if_user(user_addr, RawEvent{sort_key, cond_idx, EventType::TransferOutOther,
-                                       token_idx, coll, 0, -amount, 0});
-      return classify_transfer_by_counterparty(TransferClass::TransferInOther,
-                                               TransferClass::TransferOutOther,
-                                               internal_cls);
-    }
-    emit_if_user(user_addr, RawEvent{sort_key, cond_idx, EventType::TransferOutNonPoly,
-                                     token_idx, coll, 0, -amount, 0});
-    return classify_transfer_by_counterparty(TransferClass::TransferInNonPoly,
-                                             TransferClass::TransferOutNonPoly,
-                                             internal_cls);
+    return emit_and_classify_generic_single(user_addr, false, internal_cls);
   };
   auto emit_and_classify_generic_in_out = [&](TransferClass internal_cls) {
+    emit_generic_transfer_event(to, true);
+    emit_generic_transfer_event(from, false);
     if (known_token) {
-      emit_if_user(to, RawEvent{sort_key, cond_idx, EventType::TransferInOther, token_idx, coll, 0, amount, 0});
-      emit_if_user(from, RawEvent{sort_key, cond_idx, EventType::TransferOutOther, token_idx, coll, 0, -amount, 0});
       return classify_transfer_by_counterparty(TransferClass::TransferInOther,
                                                TransferClass::TransferOutOther,
                                                internal_cls);
     }
-    emit_if_user(to, RawEvent{sort_key, cond_idx, EventType::TransferInNonPoly, token_idx, coll, 0, amount, 0});
-    emit_if_user(from, RawEvent{sort_key, cond_idx, EventType::TransferOutNonPoly, token_idx, coll, 0, -amount, 0});
     return classify_transfer_by_counterparty(TransferClass::TransferInNonPoly,
                                              TransferClass::TransferOutNonPoly,
                                              internal_cls);
@@ -288,20 +289,27 @@ TransferClass EventBuilder::classify_and_emit(
   if (auto redemption_it = tx_redemption_.find(tx_key); redemption_it != tx_redemption_.end()) {
     tx_redemption_rows = &redemption_it->second;
   }
-  std::vector<OrderInfo> *tx_order_rows = nullptr;
+  std::unordered_map<int64_t, std::vector<OrderInfo *>> *tx_order_amount_rows = nullptr;
   if (op_is_exchange) {
     TxTokenKey tx_token_key{block, tx_hash, token_id};
-    if (auto order_it = tx_order_.find(tx_token_key); order_it != tx_order_.end()) {
-      tx_order_rows = &order_it->second;
+    if (auto order_amount_it = tx_order_by_amount_.find(tx_token_key);
+        order_amount_it != tx_order_by_amount_.end()) {
+      tx_order_amount_rows = &order_amount_it->second;
     }
   }
-  auto find_split_info = [&](const std::string &stakeholder, int64_t amt) -> SplitInfo * {
-    if (tx_split_rows == nullptr)
-      return nullptr;
-    auto pick = [&](bool unconsumed_only, bool strict_collateral) -> SplitInfo * {
+  auto find_conditional_info_with_amount = [&](auto *rows,
+                                               const std::string &stakeholder,
+                                               int64_t amt,
+                                               const char *window_rule,
+                                               const char *nearest_rule) {
+    using Row = typename std::remove_reference_t<decltype(*rows)>::value_type;
+    if (rows == nullptr) {
+      return static_cast<Row *>(nullptr);
+    }
+    auto pick = [&](bool unconsumed_only, bool strict_collateral) -> Row * {
       return select_window_or_nearest(
-          *tx_split_rows,
-          [&](const SplitInfo &info) {
+          *rows,
+          [&](const Row &info) {
             if (unconsumed_only && info.consumed_count > 0) {
               return false;
             }
@@ -310,19 +318,25 @@ TransferClass EventBuilder::classify_and_emit(
             return info.stakeholder == stakeholder && info.amount == amt &&
                    cond_matches(info.cond_id);
           },
-          "SplitWindowUniqueCandidate",
-          "SplitForwardUniqueCandidate");
+          window_rule,
+          nearest_rule);
     };
-    if (SplitInfo *fresh = pick(true, true); fresh != nullptr) {
+    if (Row *fresh = pick(true, true); fresh != nullptr) {
       return fresh;
     }
-    if (SplitInfo *fresh = pick(true, false); fresh != nullptr) {
+    if (Row *fresh = pick(true, false); fresh != nullptr) {
       return fresh;
     }
-    if (SplitInfo *fallback = pick(false, true); fallback != nullptr) {
+    if (Row *fallback = pick(false, true); fallback != nullptr) {
       return fallback;
     }
     return pick(false, false);
+  };
+  auto find_split_info = [&](const std::string &stakeholder, int64_t amt) -> SplitInfo * {
+    return find_conditional_info_with_amount(
+        tx_split_rows, stakeholder, amt,
+        "SplitWindowUniqueCandidate",
+        "SplitForwardUniqueCandidate");
   };
   auto find_split_info_window_fallback = [&](const std::string &stakeholder) -> SplitInfo * {
     if (tx_split_rows == nullptr) {
@@ -342,33 +356,10 @@ TransferClass EventBuilder::classify_and_emit(
     return nullptr;
   };
   auto find_merge_info = [&](const std::string &stakeholder, int64_t amt) -> MergeInfo * {
-    if (tx_merge_rows == nullptr)
-      return nullptr;
-    auto pick = [&](bool unconsumed_only, bool strict_collateral) -> MergeInfo * {
-      return select_window_or_nearest(
-          *tx_merge_rows,
-          [&](const MergeInfo &info) {
-            if (unconsumed_only && info.consumed_count > 0) {
-              return false;
-            }
-            if (strict_collateral && !collateral_matches(info.collateral_token))
-              return false;
-            return info.stakeholder == stakeholder && info.amount == amt &&
-                   cond_matches(info.cond_id);
-          },
-          "MergeWindowUniqueCandidate",
-          "MergeForwardUniqueCandidate");
-    };
-    if (MergeInfo *fresh = pick(true, true); fresh != nullptr) {
-      return fresh;
-    }
-    if (MergeInfo *fresh = pick(true, false); fresh != nullptr) {
-      return fresh;
-    }
-    if (MergeInfo *fallback = pick(false, true); fallback != nullptr) {
-      return fallback;
-    }
-    return pick(false, false);
+    return find_conditional_info_with_amount(
+        tx_merge_rows, stakeholder, amt,
+        "MergeWindowUniqueCandidate",
+        "MergeForwardUniqueCandidate");
   };
   auto find_redemption_info = [&](const std::string &redeemer) -> RedemptionInfo * {
     if (tx_redemption_rows == nullptr)
@@ -520,7 +511,9 @@ TransferClass EventBuilder::classify_and_emit(
         "FPMMFundingWindowUniqueCandidate",
         "FPMMFundingUniqueCandidate");
   };
-  auto has_pending_future_fpmm_add_for_mint = [&](const TxFPMMKey &key, int64_t transfer_amount) {
+  auto has_pending_future_fpmm_add = [&](const TxFPMMKey &key,
+                                         int64_t transfer_amount,
+                                         bool expect_refund) {
     auto *rows = fpmm_funding_rows(key);
     if (rows == nullptr)
       return false;
@@ -531,23 +524,7 @@ TransferClass EventBuilder::classify_and_emit(
         continue;
       if (info.consumed_count != 0)
         continue;
-      if (funding_matches_add_amount(info, transfer_amount, false))
-        return true;
-    }
-    return false;
-  };
-  auto has_pending_future_fpmm_add_for_refund = [&](const TxFPMMKey &key, int64_t transfer_amount) {
-    auto *rows = fpmm_funding_rows(key);
-    if (rows == nullptr)
-      return false;
-    for (const auto &info : *rows) {
-      if (info.log_index < base_log_index)
-        continue;
-      if (info.side != 1 || info.amounts.empty())
-        continue;
-      if (info.consumed_count != 0)
-        continue;
-      if (funding_matches_add_amount(info, transfer_amount, true))
+      if (funding_matches_add_amount(info, transfer_amount, expect_refund))
         return true;
     }
     return false;
@@ -613,33 +590,53 @@ TransferClass EventBuilder::classify_and_emit(
   bool order_window_conflict = false;
   auto find_order_info = [&]() -> OrderInfo * {
     order_window_conflict = false;
-    if (tx_order_rows == nullptr)
+    if (tx_order_amount_rows == nullptr)
       return nullptr;
+    auto amount_it = tx_order_amount_rows->find(amount);
+    if (amount_it == tx_order_amount_rows->end()) {
+      return nullptr;
+    }
+    const auto &candidates = amount_it->second;
     bool has_unconsumed_window_same_amount = false;
-    for (auto &info : *tx_order_rows) {
+    OrderInfo *window_matched = nullptr;
+    int window_match_count = 0;
+    OrderInfo *forward_matched = nullptr;
+    int64_t forward_log = -1;
+    int forward_same_log_count = 0;
+    for (OrderInfo *info_ptr : candidates) {
+      OrderInfo &info = *info_ptr;
       if (info.consumed)
-        continue;
-      if (info.tokens != amount)
         continue;
       if (semantic_log_matches(info.log_index)) {
         has_unconsumed_window_same_amount = true;
       }
+      if (!order_leg_matches(info)) {
+        continue;
+      }
+      // In matchOrders paths, transfer legs can happen before the maker order's
+      // own OrderFilled log. Allow nearest-future fallback when window misses.
+      if (semantic_log_matches(info.log_index)) {
+        window_matched = &info;
+        window_match_count++;
+        continue;
+      }
+      if (info.log_index >= base_log_index) {
+        if (forward_matched == nullptr || info.log_index < forward_log) {
+          forward_matched = &info;
+          forward_log = info.log_index;
+          forward_same_log_count = 1;
+        } else if (info.log_index == forward_log) {
+          forward_same_log_count++;
+        }
+      }
     }
-    OrderInfo *matched = select_window_or_forward(
-        *tx_order_rows,
-        [&](const OrderInfo &info) {
-          if (info.consumed || info.tokens != amount) {
-            return false;
-          }
-          if (!order_leg_matches(info)) {
-            return false;
-          }
-          // In matchOrders paths, transfer legs can happen before the maker order's
-          // own OrderFilled log. Allow nearest-future fallback when window misses.
-          return semantic_log_matches(info.log_index) || info.log_index >= base_log_index;
-        },
-        "OrderWindowUniqueCandidate",
-        "OrderForwardUniqueCandidate");
+    OrderInfo *matched = select_window_only(
+        window_matched, window_match_count, "OrderWindowUniqueCandidate");
+    if (matched == nullptr) {
+      stage2_assert(forward_same_log_count <= 1, AssertLevel::L2, "Match",
+                    "OrderForwardUniqueCandidate");
+      matched = forward_matched;
+    }
     // Only treat as hard conflict when the current semantic window has same-amount
     // order legs but none can match address constraints and no future fallback exists.
     order_window_conflict =
@@ -681,15 +678,15 @@ TransferClass EventBuilder::classify_and_emit(
   };
   auto find_convert_info_any_market = [&](const std::string &stakeholder,
                                           int64_t amt) -> ConvertInfo * {
+    TxKey tx_key{block, tx_hash};
+    auto it = tx_convert_by_tx_.find(tx_key);
+    if (it == tx_convert_by_tx_.end()) {
+      return nullptr;
+    }
     return find_convert_window_match(
         [&](auto &&accept) {
-          for (auto &[tx_market_key, rows] : tx_convert_) {
-            if (tx_market_key.block != block || tx_market_key.tx_hash != tx_hash) {
-              continue;
-            }
-            for (auto &info : rows) {
-              accept(info);
-            }
+          for (ConvertInfo *info : it->second) {
+            accept(*info);
           }
         },
         stakeholder, amt);
@@ -715,15 +712,12 @@ TransferClass EventBuilder::classify_and_emit(
     Merge,
     Redeem,
   };
-  auto cond_leg_distance = [&](int64_t semantic_log_index) {
-    return semantic_log_distance(semantic_log_index);
-  };
   auto choose_cond_leg = [&](SplitInfo *sit, MergeInfo *mit, RedemptionInfo *rit,
                              const char *rule_tag) {
     CondLegKind chosen = CondLegKind::None;
     int64_t best_dist = (1LL << 62);
     auto consider = [&](CondLegKind kind, int64_t log_index) {
-      int64_t dist = cond_leg_distance(log_index);
+      int64_t dist = semantic_log_distance(log_index);
       if (chosen == CondLegKind::None || dist < best_dist) {
         chosen = kind;
         best_dist = dist;
@@ -974,7 +968,7 @@ TransferClass EventBuilder::classify_and_emit(
         }
         return TransferClass::InternalMintFPMM;
       }
-      stage2_assert(!has_pending_future_fpmm_add_for_mint(tx_fpmm_key, amount),
+      stage2_assert(!has_pending_future_fpmm_add(tx_fpmm_key, amount, false),
                     AssertLevel::L3, "FPMMFunding", "LPAddMintLegMatchOrNoFunding");
       bind_root(RootOpType::FPMMTrade, "buy_internal_split_mint");
       cover_split(split_match);
@@ -1056,7 +1050,7 @@ TransferClass EventBuilder::classify_and_emit(
         return TransferClass::FPMMLPRemove;
       }
 
-      stage2_assert(!has_pending_future_fpmm_add_for_refund(tx_fpmm_key, amount),
+      stage2_assert(!has_pending_future_fpmm_add(tx_fpmm_key, amount, true),
                     AssertLevel::L3, "FPMMFunding", "TransferWithoutFundingLegMatch");
       stage2_assert(!has_pending_future_fpmm_remove_for_transfer(tx_fpmm_key, to, amount),
                     AssertLevel::L3, "FPMMFunding", "TransferWithoutFundingLegMatch");

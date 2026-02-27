@@ -262,6 +262,124 @@ struct TokenTree {
   } other;
 };
 
+struct SplitSemanticTree {
+  int64_t total = 0;
+  int64_t amount_zero = 0;
+  int64_t amount_positive = 0;
+  int64_t parent_root = 0;
+  int64_t parent_nested = 0;
+  int64_t partition_single = 0;
+  int64_t partition_multi = 0;
+  int64_t observed_leg = 0;
+  int64_t consumed = 0;
+  int64_t covered_by_parent = 0;
+  int64_t unobserved_leg = 0;
+
+  SplitSemanticTree &operator+=(const SplitSemanticTree &o) {
+    total += o.total;
+    amount_zero += o.amount_zero;
+    amount_positive += o.amount_positive;
+    parent_root += o.parent_root;
+    parent_nested += o.parent_nested;
+    partition_single += o.partition_single;
+    partition_multi += o.partition_multi;
+    observed_leg += o.observed_leg;
+    consumed += o.consumed;
+    covered_by_parent += o.covered_by_parent;
+    unobserved_leg += o.unobserved_leg;
+    return *this;
+  }
+};
+
+struct MergeSemanticTree {
+  int64_t total = 0;
+  int64_t amount_zero = 0;
+  int64_t amount_positive = 0;
+  int64_t parent_root = 0;
+  int64_t parent_nested = 0;
+  int64_t partition_single = 0;
+  int64_t partition_multi = 0;
+  int64_t observed_leg = 0;
+  int64_t consumed = 0;
+  int64_t covered_by_parent = 0;
+  int64_t unobserved_leg = 0;
+
+  MergeSemanticTree &operator+=(const MergeSemanticTree &o) {
+    total += o.total;
+    amount_zero += o.amount_zero;
+    amount_positive += o.amount_positive;
+    parent_root += o.parent_root;
+    parent_nested += o.parent_nested;
+    partition_single += o.partition_single;
+    partition_multi += o.partition_multi;
+    observed_leg += o.observed_leg;
+    consumed += o.consumed;
+    covered_by_parent += o.covered_by_parent;
+    unobserved_leg += o.unobserved_leg;
+    return *this;
+  }
+};
+
+struct ConvertSemanticTree {
+  int64_t total = 0;
+  int64_t amount_zero = 0;
+  int64_t amount_positive = 0;
+  int64_t q_unknown = 0;
+  int64_t q1 = 0;
+  int64_t q2 = 0;
+  int64_t q3 = 0;
+  int64_t q4 = 0;
+  int64_t q5 = 0;
+  int64_t q6 = 0;
+  int64_t q7 = 0;
+  int64_t q8_plus = 0;
+  int64_t consumed = 0;
+
+  ConvertSemanticTree &operator+=(const ConvertSemanticTree &o) {
+    total += o.total;
+    amount_zero += o.amount_zero;
+    amount_positive += o.amount_positive;
+    q_unknown += o.q_unknown;
+    q1 += o.q1;
+    q2 += o.q2;
+    q3 += o.q3;
+    q4 += o.q4;
+    q5 += o.q5;
+    q6 += o.q6;
+    q7 += o.q7;
+    q8_plus += o.q8_plus;
+    consumed += o.consumed;
+    return *this;
+  }
+};
+
+struct OrderSemanticTree {
+  int64_t total = 0;
+  int64_t maker_buy = 0;
+  int64_t maker_sell = 0;
+  int64_t token_zero = 0;
+  int64_t token_positive = 0;
+  int64_t usdc_zero = 0;
+  int64_t usdc_positive = 0;
+  int64_t observed_leg = 0;
+  int64_t consumed = 0;
+  int64_t unobserved_leg = 0;
+
+  OrderSemanticTree &operator+=(const OrderSemanticTree &o) {
+    total += o.total;
+    maker_buy += o.maker_buy;
+    maker_sell += o.maker_sell;
+    token_zero += o.token_zero;
+    token_positive += o.token_positive;
+    usdc_zero += o.usdc_zero;
+    usdc_positive += o.usdc_positive;
+    observed_leg += o.observed_leg;
+    consumed += o.consumed;
+    unobserved_leg += o.unobserved_leg;
+    return *this;
+  }
+};
+
 struct BuildProgress {
   int64_t cursor = 0;
   int64_t target = 0;
@@ -287,6 +405,10 @@ struct BuildProgress {
   int64_t cnt_fpmm_funding = 0;
   int64_t cnt_transfer = 0;
   TransferStats xfer_stats;
+  SplitSemanticTree split_sem_tree;
+  MergeSemanticTree merge_sem_tree;
+  ConvertSemanticTree convert_sem_tree;
+  OrderSemanticTree order_sem_tree;
   // 按(EventType, CollateralId)分组统计 user_event
   // key: EventType * 256 + CollateralId
   std::unordered_map<uint16_t, int64_t> event_by_collateral;

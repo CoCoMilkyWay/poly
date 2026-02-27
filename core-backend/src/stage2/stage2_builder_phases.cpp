@@ -103,7 +103,7 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
   auto get_u256_i32 = [&](const duckdb::unique_ptr<duckdb::MaterializedQueryResult> &tbl, int col, idx_t row) {
     int64_t v = u256_blob_to_i64(tbl->GetValue(col, row));
     stage2_assert(v >= 0 && v <= std::numeric_limits<int>::max(),
-                    AssertLevel::L0, "Parse", "U256FitsInt32");
+                  AssertLevel::L0, "Parse", "U256FitsInt32");
     return static_cast<int>(v);
   };
 
@@ -237,7 +237,7 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
       inferred = conditions_[it->second].outcome_count;
     }
     stage2_assert(inferred > 0 && inferred <= MAX_OUTCOMES,
-                    AssertLevel::L1, "Mapping", "InferOutcomeCountRange");
+                  AssertLevel::L1, "Mapping", "InferOutcomeCountRange");
     return inferred;
   };
 
@@ -428,30 +428,30 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
     load_split_or_merge(
         "split",
         [&](const duckdb::unique_ptr<duckdb::MaterializedQueryResult> &rows, idx_t i) {
-        SplitInfo info;
-        info.log_index = q_get_i64(rows, 2, i);
-        info.cond_id = q_get_hex_lower(rows, 3, i);
-        info.amount = q_get_u256_i64(rows, 4, i);
-        info.stakeholder = q_get_hex_lower(rows, 5, i);
-        info.collateral_token = q_get_hex_lower(rows, 6, i);
-        info.parent_collection_id = q_get_hex_lower(rows, 7, i);
-        info.partition = parse_bytes32_list_hex_lower(rows->GetValue(8, i));
-        return info;
+          SplitInfo info;
+          info.log_index = q_get_i64(rows, 2, i);
+          info.cond_id = q_get_hex_lower(rows, 3, i);
+          info.amount = q_get_u256_i64(rows, 4, i);
+          info.stakeholder = q_get_hex_lower(rows, 5, i);
+          info.collateral_token = q_get_hex_lower(rows, 6, i);
+          info.parent_collection_id = q_get_hex_lower(rows, 7, i);
+          info.partition = parse_bytes32_list_hex_lower(rows->GetValue(8, i));
+          return info;
         },
         tx_split_, src_split_rows, idx_split_rows);
 
     load_split_or_merge(
         "merge",
         [&](const duckdb::unique_ptr<duckdb::MaterializedQueryResult> &rows, idx_t i) {
-        MergeInfo info;
-        info.log_index = q_get_i64(rows, 2, i);
-        info.cond_id = q_get_hex_lower(rows, 3, i);
-        info.amount = q_get_u256_i64(rows, 4, i);
-        info.stakeholder = q_get_hex_lower(rows, 5, i);
-        info.collateral_token = q_get_hex_lower(rows, 6, i);
-        info.parent_collection_id = q_get_hex_lower(rows, 7, i);
-        info.partition = parse_bytes32_list_hex_lower(rows->GetValue(8, i));
-        return info;
+          MergeInfo info;
+          info.log_index = q_get_i64(rows, 2, i);
+          info.cond_id = q_get_hex_lower(rows, 3, i);
+          info.amount = q_get_u256_i64(rows, 4, i);
+          info.stakeholder = q_get_hex_lower(rows, 5, i);
+          info.collateral_token = q_get_hex_lower(rows, 6, i);
+          info.parent_collection_id = q_get_hex_lower(rows, 7, i);
+          info.partition = parse_bytes32_list_hex_lower(rows->GetValue(8, i));
+          return info;
         },
         tx_merge_, src_merge_rows, idx_merge_rows);
   }
@@ -585,7 +585,7 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
                       AssertLevel::L0, "Input", "FPMMTradeSideRange");
         int64_t outcome_idx = q_get_u256_i64(fpmm_trade, 6, i);
         stage2_assert(outcome_idx >= 0 && outcome_idx <= std::numeric_limits<int>::max(),
-                        AssertLevel::L0, "Input", "OutcomeIdxFitsInt");
+                      AssertLevel::L0, "Input", "OutcomeIdxFitsInt");
         info.outcome_idx = static_cast<int>(outcome_idx);
         info.usdc = q_get_u256_i64(fpmm_trade, 7, i);
         info.tokens = q_get_u256_i64(fpmm_trade, 8, i);
@@ -642,6 +642,28 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
       tx_op_bounds_[tx_key] = std::move(bounds);
     }
   }
+  {
+    TraceN("build_fast_indexes");
+    tx_convert_by_tx_.clear();
+    tx_convert_by_tx_.reserve(tx_convert_.size());
+    for (auto &[tx_market_key, rows] : tx_convert_) {
+      TxKey tx_key{tx_market_key.block, tx_market_key.tx_hash};
+      auto &bucket = tx_convert_by_tx_[tx_key];
+      bucket.reserve(bucket.size() + rows.size());
+      for (auto &info : rows) {
+        bucket.push_back(&info);
+      }
+    }
+
+    tx_order_by_amount_.clear();
+    tx_order_by_amount_.reserve(tx_order_.size());
+    for (auto &[tx_token_key, rows] : tx_order_) {
+      auto &amount_map = tx_order_by_amount_[tx_token_key];
+      for (auto &info : rows) {
+        amount_map[info.tokens].push_back(&info);
+      }
+    }
+  }
   stage2_assert(idx_split_rows == src_split_rows, AssertLevel::L1, "Index", "SplitIndexCoverage");
   stage2_assert(idx_merge_rows == src_merge_rows, AssertLevel::L1, "Index", "MergeIndexCoverage");
   stage2_assert(idx_redemption_rows == src_redemption_rows, AssertLevel::L1, "Index", "RedemptionIndexCoverage");
@@ -696,6 +718,14 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
   if (!transfers) {
     return;
   }
+  const size_t transfer_rows = static_cast<size_t>(transfers->RowCount());
+  if (transfer_rows == 0) {
+    return;
+  }
+  observed_fpmm_trade_leg_mask.reserve(transfer_rows);
+  observed_order_legs.reserve(transfer_rows);
+  observed_cond_legs.reserve(transfer_rows);
+  new_events_.reserve(new_events_.size() + transfer_rows);
 
   {
     TraceN("classify_transfer_rows");
@@ -703,7 +733,7 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
       int64_t block = q_get_i64(transfers, 0, i);
       int64_t log_idx = q_get_i64(transfers, 2, i);
       stage2_assert(log_idx >= 0 && log_idx < SORT_KEY_SCALE,
-                      AssertLevel::L0, "Input", "TransferLogIndexRange");
+                    AssertLevel::L0, "Input", "TransferLogIndexRange");
       int64_t amount = q_get_u256_i64(transfers, 7, i);
       std::string tx_hash_hex = q_get_hex(transfers, 1, i);
       auto tx_hash = hex_to_bytes32(tx_hash_hex);
@@ -803,6 +833,13 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
   // Semantic coverage assertions: every semantic op in this chunk must be consumed by at least one transfer leg.
   {
     TraceN("coverage_asserts");
+    static const std::string ZERO_BYTES32 =
+        "0x0000000000000000000000000000000000000000000000000000000000000000";
+    std::unordered_map<std::string, int64_t> market_question_count;
+    market_question_count.reserve(cond_to_market_.size());
+    for (const auto &[_, market_id] : cond_to_market_) {
+      market_question_count[market_id]++;
+    }
     auto cond_idx_for = [&](const std::string &cond_id) -> uint32_t {
       auto it = cond_map_.find(cond_id);
       if (it == cond_map_.end()) {
@@ -810,17 +847,25 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
       }
       return it->second;
     };
+    std::unordered_map<TxKey, std::unordered_map<int64_t, int64_t>> semantic_window_left_idx;
+    semantic_window_left_idx.reserve(tx_op_bounds_.size());
+    for (const auto &[tx_key, bounds] : tx_op_bounds_) {
+      auto &idx = semantic_window_left_idx[tx_key];
+      idx.reserve(bounds.size());
+      for (const auto &b : bounds) {
+        idx.emplace(b.right_inclusive, b.left_exclusive);
+      }
+    }
     auto semantic_window_left = [&](const TxKey &tx_key, int64_t semantic_log_index) {
-      auto bit = tx_op_bounds_.find(tx_key);
-      if (bit == tx_op_bounds_.end()) {
+      auto tx_it = semantic_window_left_idx.find(tx_key);
+      if (tx_it == semantic_window_left_idx.end()) {
         return int64_t{-1};
       }
-      for (const auto &b : bit->second) {
-        if (b.right_inclusive == semantic_log_index) {
-          return b.left_exclusive;
-        }
+      auto left_it = tx_it->second.find(semantic_log_index);
+      if (left_it == tx_it->second.end()) {
+        return int64_t{-1};
       }
-      return int64_t{-1};
+      return left_it->second;
     };
     auto observed_cond_leg_in_window = [&](const TxKey &tx_key,
                                            uint32_t cond_idx,
@@ -844,15 +889,25 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
       }
       return false;
     };
-    auto split_leg_observed = [&](const TxKey &tx_key, const std::string &cond_id,
-                                  const std::string &stakeholder, int64_t amount,
-                                  int64_t semantic_log_index) {
-      uint32_t cond_idx = cond_idx_for(cond_id);
-      if (cond_idx == UNKNOWN_COND_IDX || amount <= 0) {
+    auto observed_cond_leg_for_actor = [&](const TxKey &tx_key,
+                                           const std::string &leg_cond_id,
+                                           int64_t expected_amount,
+                                           int64_t expected_semantic_log_index,
+                                           auto &&match_leg) {
+      uint32_t cond_idx = cond_idx_for(leg_cond_id);
+      if (cond_idx == UNKNOWN_COND_IDX || expected_amount <= 0) {
         return false;
       }
       return observed_cond_leg_in_window(
-          tx_key, cond_idx, semantic_log_index,
+          tx_key, cond_idx, expected_semantic_log_index,
+          [&](const ObservedCondLeg &leg) { return match_leg(leg); });
+    };
+    auto split_leg_observed = [&](const TxKey &tx_key, const std::string &cond_id,
+                                  const std::string &stakeholder, int64_t amount,
+                                  int64_t semantic_log_index) {
+      return observed_cond_leg_for_actor(
+          tx_key,
+          cond_id, amount, semantic_log_index,
           [&](const ObservedCondLeg &leg) {
             // Split semantic certainty comes from child mint legs.
             return leg.amount == amount && leg.from == ZERO_ADDR && leg.to == stakeholder;
@@ -861,12 +916,9 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
     auto merge_leg_observed = [&](const TxKey &tx_key, const std::string &cond_id,
                                   const std::string &stakeholder, int64_t amount,
                                   int64_t semantic_log_index) {
-      uint32_t cond_idx = cond_idx_for(cond_id);
-      if (cond_idx == UNKNOWN_COND_IDX || amount <= 0) {
-        return false;
-      }
-      return observed_cond_leg_in_window(
-          tx_key, cond_idx, semantic_log_index,
+      return observed_cond_leg_for_actor(
+          tx_key,
+          cond_id, amount, semantic_log_index,
           [&](const ObservedCondLeg &leg) {
             // Merge semantic certainty comes from child burn legs.
             return leg.amount == amount && leg.from == stakeholder && leg.to == ZERO_ADDR;
@@ -885,31 +937,75 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
             return leg.from == redeemer && leg.to == ZERO_ADDR && leg.amount > 0;
           });
     };
+    auto apply_split_merge_semantic_coverage = [&](auto &tree,
+                                                   const auto &row,
+                                                   bool must_consume,
+                                                   const char *assert_rule) {
+      tree.total++;
+      if (row.amount == 0) {
+        tree.amount_zero++;
+      } else {
+        tree.amount_positive++;
+      }
+      if (row.parent_collection_id == ZERO_BYTES32) {
+        tree.parent_root++;
+      } else {
+        tree.parent_nested++;
+      }
+      if (row.partition.size() <= 1) {
+        tree.partition_single++;
+      } else {
+        tree.partition_multi++;
+      }
+      bool consumed = row.consumed_count > 0;
+      bool covered = row.covered_by_parent;
+      if (must_consume) {
+        tree.observed_leg++;
+      } else {
+        tree.unobserved_leg++;
+      }
+      if (consumed) {
+        tree.consumed++;
+      }
+      if (covered) {
+        tree.covered_by_parent++;
+      }
+      bool zero_amount_row = (row.amount == 0);
+      bool not_required = !must_consume;
+      stage2_assert(consumed || covered || zero_amount_row || not_required,
+                    AssertLevel::L4, "Consume", assert_rule);
+    };
+    auto bump_convert_question_bucket = [&](int64_t qcnt) {
+      if (qcnt <= 0) {
+        chunk_convert_sem_tree_.q_unknown++;
+        return;
+      }
+      switch (qcnt) {
+      case 1: chunk_convert_sem_tree_.q1++; return;
+      case 2: chunk_convert_sem_tree_.q2++; return;
+      case 3: chunk_convert_sem_tree_.q3++; return;
+      case 4: chunk_convert_sem_tree_.q4++; return;
+      case 5: chunk_convert_sem_tree_.q5++; return;
+      case 6: chunk_convert_sem_tree_.q6++; return;
+      case 7: chunk_convert_sem_tree_.q7++; return;
+      default: chunk_convert_sem_tree_.q8_plus++; return;
+      }
+    };
     for (const auto &[tx_key, rows] : tx_split_) {
       for (const auto &row : rows) {
-        // split amount==0 is a valid semantic marker with no effective ERC1155 leg.
-        bool zero_amount_split = (row.amount == 0);
         bool must_consume = split_leg_observed(tx_key, row.cond_id, row.stakeholder,
                                                row.amount, row.log_index);
-        bool consumed = row.consumed_count > 0;
-        bool covered = row.covered_by_parent;
-        bool not_required = !must_consume;
-        stage2_assert(consumed || covered || zero_amount_split || not_required,
-                      AssertLevel::L4, "Consume", "SplitConsumedOrCoveredByParent");
+        apply_split_merge_semantic_coverage(
+            chunk_split_sem_tree_, row, must_consume, "SplitConsumedOrCoveredByParent");
       }
     }
 
     for (const auto &[tx_key, rows] : tx_merge_) {
       for (const auto &row : rows) {
-        // merge amount==0 is a valid semantic marker with no effective ERC1155 leg.
-        bool zero_amount_merge = (row.amount == 0);
         bool must_consume = merge_leg_observed(tx_key, row.cond_id, row.stakeholder,
                                                row.amount, row.log_index);
-        bool consumed = row.consumed_count > 0;
-        bool covered = row.covered_by_parent;
-        bool not_required = !must_consume;
-        stage2_assert(consumed || covered || zero_amount_merge || not_required,
-                      AssertLevel::L4, "Consume", "MergeConsumedOrCoveredByParent");
+        apply_split_merge_semantic_coverage(
+            chunk_merge_sem_tree_, row, must_consume, "MergeConsumedOrCoveredByParent");
       }
     }
 
@@ -952,8 +1048,32 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
         return false;
       };
       for (const auto &row : rows) {
+        chunk_order_sem_tree_.total++;
+        if (row.maker_side == 1) {
+          chunk_order_sem_tree_.maker_buy++;
+        } else {
+          chunk_order_sem_tree_.maker_sell++;
+        }
+        if (row.tokens == 0) {
+          chunk_order_sem_tree_.token_zero++;
+        } else {
+          chunk_order_sem_tree_.token_positive++;
+        }
+        if (row.usdc == 0) {
+          chunk_order_sem_tree_.usdc_zero++;
+        } else {
+          chunk_order_sem_tree_.usdc_positive++;
+        }
         bool must_consume = order_leg_observed(row);
         bool consumed = row.consumed;
+        if (must_consume) {
+          chunk_order_sem_tree_.observed_leg++;
+        } else {
+          chunk_order_sem_tree_.unobserved_leg++;
+        }
+        if (consumed) {
+          chunk_order_sem_tree_.consumed++;
+        }
         bool unobserved = !must_consume;
         stage2_assert(consumed || unobserved, AssertLevel::L4, "Consume", "OrderConsumedIfLegObserved");
       }
@@ -979,6 +1099,18 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
 
     for (const auto &[_, rows] : tx_convert_) {
       for (const auto &row : rows) {
+        chunk_convert_sem_tree_.total++;
+        if (row.amount == 0) {
+          chunk_convert_sem_tree_.amount_zero++;
+        } else {
+          chunk_convert_sem_tree_.amount_positive++;
+        }
+        auto mit = market_question_count.find(row.market_id);
+        int64_t qcnt = (mit == market_question_count.end()) ? 0 : mit->second;
+        bump_convert_question_bucket(qcnt);
+        if (row.consumed_count > 0) {
+          chunk_convert_sem_tree_.consumed++;
+        }
         stage2_assert(row.consumed_count > 0, AssertLevel::L4, "Consume", "ConvertConsumed");
       }
     }
@@ -996,14 +1128,23 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
         }
         bool consumed = row.consumed_count > 0;
         stage2_assert(consumed || zero_leg_funding_remove,
-                        AssertLevel::L4, "Consume", "FPMMFundingConsumedOrZeroLegRemove");
+                      AssertLevel::L4, "Consume", "FPMMFundingConsumedOrZeroLegRemove");
       }
     }
   }
 }
 
-void EventBuilder::commit_chunk(int64_t new_cursor) {
+BuildProgress EventBuilder::commit_chunk(CommitPayload payload) {
   TraceN("s2/commit");
+  auto &new_conditions_ = payload.new_conditions;
+  auto &new_tokens_ = payload.new_tokens;
+  auto &new_fpmms_ = payload.new_fpmms;
+  auto &new_collaterals_ = payload.new_collaterals;
+  auto &new_cond_collaterals_ = payload.new_cond_collaterals;
+  auto &new_neg_risk_markets_ = payload.new_neg_risk_markets;
+  auto &new_events_ = payload.new_events;
+  auto &progress_ = payload.progress;
+  int64_t new_cursor = payload.new_cursor;
   auto conn = stage2_db_.create_connection();
   auto exec_sql = [&](const std::string &sql) {
     auto r = conn->Query(sql);
@@ -1248,12 +1389,65 @@ void EventBuilder::commit_chunk(int64_t new_cursor) {
     save_cnt("xfer_internal_transfer_fpmm", xs.internal_transfer_fpmm);
     save_cnt("xfer_internal_transfer_other", xs.internal_transfer_other);
     save_cnt("xfer_unclassified", xs.unclassified);
+
+    const auto &sst = progress_.split_sem_tree;
+    save_cnt("sem_split_total", sst.total);
+    save_cnt("sem_split_amount_zero", sst.amount_zero);
+    save_cnt("sem_split_amount_positive", sst.amount_positive);
+    save_cnt("sem_split_parent_root", sst.parent_root);
+    save_cnt("sem_split_parent_nested", sst.parent_nested);
+    save_cnt("sem_split_partition_single", sst.partition_single);
+    save_cnt("sem_split_partition_multi", sst.partition_multi);
+    save_cnt("sem_split_observed_leg", sst.observed_leg);
+    save_cnt("sem_split_consumed", sst.consumed);
+    save_cnt("sem_split_covered_by_parent", sst.covered_by_parent);
+    save_cnt("sem_split_unobserved_leg", sst.unobserved_leg);
+
+    const auto &mst = progress_.merge_sem_tree;
+    save_cnt("sem_merge_total", mst.total);
+    save_cnt("sem_merge_amount_zero", mst.amount_zero);
+    save_cnt("sem_merge_amount_positive", mst.amount_positive);
+    save_cnt("sem_merge_parent_root", mst.parent_root);
+    save_cnt("sem_merge_parent_nested", mst.parent_nested);
+    save_cnt("sem_merge_partition_single", mst.partition_single);
+    save_cnt("sem_merge_partition_multi", mst.partition_multi);
+    save_cnt("sem_merge_observed_leg", mst.observed_leg);
+    save_cnt("sem_merge_consumed", mst.consumed);
+    save_cnt("sem_merge_covered_by_parent", mst.covered_by_parent);
+    save_cnt("sem_merge_unobserved_leg", mst.unobserved_leg);
+
+    const auto &cst = progress_.convert_sem_tree;
+    save_cnt("sem_convert_total", cst.total);
+    save_cnt("sem_convert_amount_zero", cst.amount_zero);
+    save_cnt("sem_convert_amount_positive", cst.amount_positive);
+    save_cnt("sem_convert_q_unknown", cst.q_unknown);
+    save_cnt("sem_convert_q1", cst.q1);
+    save_cnt("sem_convert_q2", cst.q2);
+    save_cnt("sem_convert_q3", cst.q3);
+    save_cnt("sem_convert_q4", cst.q4);
+    save_cnt("sem_convert_q5", cst.q5);
+    save_cnt("sem_convert_q6", cst.q6);
+    save_cnt("sem_convert_q7", cst.q7);
+    save_cnt("sem_convert_q8_plus", cst.q8_plus);
+    save_cnt("sem_convert_consumed", cst.consumed);
+
+    const auto &ost = progress_.order_sem_tree;
+    save_cnt("sem_order_total", ost.total);
+    save_cnt("sem_order_maker_buy", ost.maker_buy);
+    save_cnt("sem_order_maker_sell", ost.maker_sell);
+    save_cnt("sem_order_token_zero", ost.token_zero);
+    save_cnt("sem_order_token_positive", ost.token_positive);
+    save_cnt("sem_order_usdc_zero", ost.usdc_zero);
+    save_cnt("sem_order_usdc_positive", ost.usdc_positive);
+    save_cnt("sem_order_observed_leg", ost.observed_leg);
+    save_cnt("sem_order_consumed", ost.consumed);
+    save_cnt("sem_order_unobserved_leg", ost.unobserved_leg);
     ap.Close();
   }
   exec_sql("INSERT OR REPLACE INTO stage2_cursor SELECT * FROM tmp_stage2_cursor");
 
   exec_sql("COMMIT");
-  progress_.total_users = seen_users_.size();
+  return progress_;
 }
 
 } // namespace stage2

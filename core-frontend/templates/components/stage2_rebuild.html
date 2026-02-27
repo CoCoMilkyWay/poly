@@ -255,6 +255,10 @@
   <div class="stage2-tree" id="s2-cond-tree"></div>
   <div class="stage2-tree" id="s2-token-tree"></div>
   <div class="stage2-tree" id="s2-xfer-tree"></div>
+  <div class="stage2-tree" id="s2-split-sem-tree"></div>
+  <div class="stage2-tree" id="s2-merge-sem-tree"></div>
+  <div class="stage2-tree" id="s2-convert-sem-tree"></div>
+  <div class="stage2-tree" id="s2-order-sem-tree"></div>
 </div>
 
 <script>
@@ -327,6 +331,24 @@
         "internal_mint",
         "internal_burn",
         "internal_transfer",
+        "split_sem",
+        "split_sem_amount",
+        "split_sem_parent",
+        "split_sem_partition",
+        "split_sem_consume",
+        "merge_sem",
+        "merge_sem_amount",
+        "merge_sem_parent",
+        "merge_sem_partition",
+        "merge_sem_consume",
+        "convert_sem",
+        "convert_sem_amount",
+        "convert_sem_questions",
+        "convert_sem_consume",
+        "order_sem",
+        "order_sem_side",
+        "order_sem_amount",
+        "order_sem_consume",
       ];
     }
 
@@ -1387,6 +1409,223 @@
       };
     }
 
+    function s2BuildSplitSemTree(s) {
+      const t = s.split_sem_tree || {};
+      return {
+        id: "split_sem",
+        label: "Split语义表",
+        value: t.total || 0,
+        color: "#22c55e",
+        desc: "split表行分类",
+        scene: "按amount/parent/partition/消费状态统计",
+        children: [
+          {
+            id: "split_sem_amount",
+            label: "Amount",
+            value: (t.amount_zero || 0) + (t.amount_positive || 0),
+            color: "#4ade80",
+            desc: "amount分布",
+            scene: "0值与正值",
+            children: [
+              { id: "split_sem_amount_zero", label: "Zero", value: t.amount_zero || 0, color: "#86efac" },
+              { id: "split_sem_amount_positive", label: "Positive", value: t.amount_positive || 0, color: "#86efac" },
+            ],
+          },
+          {
+            id: "split_sem_parent",
+            label: "Parent",
+            value: (t.parent_root || 0) + (t.parent_nested || 0),
+            color: "#4ade80",
+            desc: "parent_collection_id分布",
+            scene: "根仓与嵌套仓",
+            children: [
+              { id: "split_sem_parent_root", label: "Root(parent=0)", value: t.parent_root || 0, color: "#86efac" },
+              { id: "split_sem_parent_nested", label: "Nested(parent!=0)", value: t.parent_nested || 0, color: "#86efac" },
+            ],
+          },
+          {
+            id: "split_sem_partition",
+            label: "Partition",
+            value: (t.partition_single || 0) + (t.partition_multi || 0),
+            color: "#4ade80",
+            desc: "partition腿数",
+            scene: "单腿与多腿",
+            children: [
+              { id: "split_sem_partition_single", label: "Single(<=1)", value: t.partition_single || 0, color: "#86efac" },
+              { id: "split_sem_partition_multi", label: "Multi(>1)", value: t.partition_multi || 0, color: "#86efac" },
+            ],
+          },
+          {
+            id: "split_sem_consume",
+            label: "消费状态",
+            value: (t.observed_leg || 0) + (t.unobserved_leg || 0),
+            color: "#4ade80",
+            desc: "是否观测到可消费腿",
+            scene: "与coverage_asserts口径一致",
+            children: [
+              { id: "split_sem_observed_leg", label: "ObservedLeg", value: t.observed_leg || 0, color: "#86efac" },
+              { id: "split_sem_unobserved_leg", label: "UnobservedLeg", value: t.unobserved_leg || 0, color: "#86efac" },
+              { id: "split_sem_consumed", label: "Consumed", value: t.consumed || 0, color: "#86efac" },
+              { id: "split_sem_covered_by_parent", label: "CoveredByParent", value: t.covered_by_parent || 0, color: "#86efac" },
+            ],
+          },
+        ],
+      };
+    }
+
+    function s2BuildMergeSemTree(s) {
+      const t = s.merge_sem_tree || {};
+      return {
+        id: "merge_sem",
+        label: "Merge语义表",
+        value: t.total || 0,
+        color: "#a78bfa",
+        desc: "merge表行分类",
+        scene: "按amount/parent/partition/消费状态统计",
+        children: [
+          {
+            id: "merge_sem_amount",
+            label: "Amount",
+            value: (t.amount_zero || 0) + (t.amount_positive || 0),
+            color: "#c4b5fd",
+            children: [
+              { id: "merge_sem_amount_zero", label: "Zero", value: t.amount_zero || 0, color: "#ddd6fe" },
+              { id: "merge_sem_amount_positive", label: "Positive", value: t.amount_positive || 0, color: "#ddd6fe" },
+            ],
+          },
+          {
+            id: "merge_sem_parent",
+            label: "Parent",
+            value: (t.parent_root || 0) + (t.parent_nested || 0),
+            color: "#c4b5fd",
+            children: [
+              { id: "merge_sem_parent_root", label: "Root(parent=0)", value: t.parent_root || 0, color: "#ddd6fe" },
+              { id: "merge_sem_parent_nested", label: "Nested(parent!=0)", value: t.parent_nested || 0, color: "#ddd6fe" },
+            ],
+          },
+          {
+            id: "merge_sem_partition",
+            label: "Partition",
+            value: (t.partition_single || 0) + (t.partition_multi || 0),
+            color: "#c4b5fd",
+            children: [
+              { id: "merge_sem_partition_single", label: "Single(<=1)", value: t.partition_single || 0, color: "#ddd6fe" },
+              { id: "merge_sem_partition_multi", label: "Multi(>1)", value: t.partition_multi || 0, color: "#ddd6fe" },
+            ],
+          },
+          {
+            id: "merge_sem_consume",
+            label: "消费状态",
+            value: (t.observed_leg || 0) + (t.unobserved_leg || 0),
+            color: "#c4b5fd",
+            children: [
+              { id: "merge_sem_observed_leg", label: "ObservedLeg", value: t.observed_leg || 0, color: "#ddd6fe" },
+              { id: "merge_sem_unobserved_leg", label: "UnobservedLeg", value: t.unobserved_leg || 0, color: "#ddd6fe" },
+              { id: "merge_sem_consumed", label: "Consumed", value: t.consumed || 0, color: "#ddd6fe" },
+              { id: "merge_sem_covered_by_parent", label: "CoveredByParent", value: t.covered_by_parent || 0, color: "#ddd6fe" },
+            ],
+          },
+        ],
+      };
+    }
+
+    function s2BuildConvertSemTree(s) {
+      const t = s.convert_sem_tree || {};
+      return {
+        id: "convert_sem",
+        label: "Convert语义表",
+        value: t.total || 0,
+        color: "#06b6d4",
+        desc: "convert表行分类",
+        scene: "按amount/question数/消费状态统计",
+        children: [
+          {
+            id: "convert_sem_amount",
+            label: "Amount",
+            value: (t.amount_zero || 0) + (t.amount_positive || 0),
+            color: "#22d3ee",
+            children: [
+              { id: "convert_sem_amount_zero", label: "Zero", value: t.amount_zero || 0, color: "#67e8f9" },
+              { id: "convert_sem_amount_positive", label: "Positive", value: t.amount_positive || 0, color: "#67e8f9" },
+            ],
+          },
+          {
+            id: "convert_sem_questions",
+            label: "Question数",
+            value:
+              (t.q_unknown || 0) + (t.q1 || 0) + (t.q2 || 0) + (t.q3 || 0) + (t.q4 || 0) +
+              (t.q5 || 0) + (t.q6 || 0) + (t.q7 || 0) + (t.q8_plus || 0),
+            color: "#22d3ee",
+            children: [
+              { id: "convert_sem_q_unknown", label: "Unknown", value: t.q_unknown || 0, color: "#67e8f9" },
+              { id: "convert_sem_q1", label: "Q=1", value: t.q1 || 0, color: "#67e8f9" },
+              { id: "convert_sem_q2", label: "Q=2", value: t.q2 || 0, color: "#67e8f9" },
+              { id: "convert_sem_q3", label: "Q=3", value: t.q3 || 0, color: "#67e8f9" },
+              { id: "convert_sem_q4", label: "Q=4", value: t.q4 || 0, color: "#67e8f9" },
+              { id: "convert_sem_q5", label: "Q=5", value: t.q5 || 0, color: "#67e8f9" },
+              { id: "convert_sem_q6", label: "Q=6", value: t.q6 || 0, color: "#67e8f9" },
+              { id: "convert_sem_q7", label: "Q=7", value: t.q7 || 0, color: "#67e8f9" },
+              { id: "convert_sem_q8_plus", label: "Q>=8", value: t.q8_plus || 0, color: "#67e8f9" },
+            ],
+          },
+          {
+            id: "convert_sem_consume",
+            label: "消费状态",
+            value: t.consumed || 0,
+            color: "#22d3ee",
+            children: [{ id: "convert_sem_consumed", label: "Consumed", value: t.consumed || 0, color: "#67e8f9" }],
+          },
+        ],
+      };
+    }
+
+    function s2BuildOrderSemTree(s) {
+      const t = s.order_sem_tree || {};
+      return {
+        id: "order_sem",
+        label: "Order语义表",
+        value: t.total || 0,
+        color: "#f97316",
+        desc: "order_filled表行分类",
+        scene: "按maker_side/amount/消费状态统计",
+        children: [
+          {
+            id: "order_sem_side",
+            label: "MakerSide",
+            value: (t.maker_buy || 0) + (t.maker_sell || 0),
+            color: "#fb923c",
+            children: [
+              { id: "order_sem_maker_buy", label: "MakerBuy", value: t.maker_buy || 0, color: "#fdba74" },
+              { id: "order_sem_maker_sell", label: "MakerSell", value: t.maker_sell || 0, color: "#fdba74" },
+            ],
+          },
+          {
+            id: "order_sem_amount",
+            label: "Amount",
+            value: (t.token_zero || 0) + (t.token_positive || 0),
+            color: "#fb923c",
+            children: [
+              { id: "order_sem_token_zero", label: "TokenZero", value: t.token_zero || 0, color: "#fdba74" },
+              { id: "order_sem_token_positive", label: "TokenPositive", value: t.token_positive || 0, color: "#fdba74" },
+              { id: "order_sem_usdc_zero", label: "USDCZero", value: t.usdc_zero || 0, color: "#fdba74" },
+              { id: "order_sem_usdc_positive", label: "USDCPositive", value: t.usdc_positive || 0, color: "#fdba74" },
+            ],
+          },
+          {
+            id: "order_sem_consume",
+            label: "消费状态",
+            value: (t.observed_leg || 0) + (t.unobserved_leg || 0),
+            color: "#fb923c",
+            children: [
+              { id: "order_sem_observed_leg", label: "ObservedLeg", value: t.observed_leg || 0, color: "#fdba74" },
+              { id: "order_sem_unobserved_leg", label: "UnobservedLeg", value: t.unobserved_leg || 0, color: "#fdba74" },
+              { id: "order_sem_consumed", label: "Consumed", value: t.consumed || 0, color: "#fdba74" },
+            ],
+          },
+        ],
+      };
+    }
+
     function s2RenderNode(node) {
       const hasChildren = node.children && node.children.length > 0;
       const isExpanded = s2ExpandedNodes.has(node.id);
@@ -1439,6 +1678,10 @@
       s2RenderTreeToContainer(s2BuildCondTree(s), "s2-cond-tree");
       s2RenderTreeToContainer(s2BuildTokenTree(s), "s2-token-tree");
       s2RenderTreeToContainer(s2BuildXferTree(s), "s2-xfer-tree");
+      s2RenderTreeToContainer(s2BuildSplitSemTree(s), "s2-split-sem-tree");
+      s2RenderTreeToContainer(s2BuildMergeSemTree(s), "s2-merge-sem-tree");
+      s2RenderTreeToContainer(s2BuildConvertSemTree(s), "s2-convert-sem-tree");
+      s2RenderTreeToContainer(s2BuildOrderSemTree(s), "s2-order-sem-tree");
     }
 
     function s2CollapseAll() {
