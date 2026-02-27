@@ -606,14 +606,19 @@
                     children: (fo.by_collateral_fpmm || fo.by_collateral || [])
                       .slice()
                       .sort((a, b) => b.count - a.count)
-                      .map((c) => ({
-                        id: `token_fpmm_coll_${c.addr || c.name}`,
-                        label: c.name || "未知代币",
-                        value: c.count,
-                        color: "#fef3c7",
-                        desc: c.addr || "",
-                        scene: "",
-                      })),
+                      .map((c) => {
+                        const addr = c.addr || "";
+                        const name = c.name || "";
+                        const unknown = !name || (addr && name.toLowerCase() === addr.toLowerCase());
+                        return {
+                          id: `token_fpmm_coll_${addr || name}`,
+                          label: unknown ? (addr ? `未知Token: ${addr}` : "未知Token") : name,
+                          value: c.count,
+                          color: "#fef3c7",
+                          desc: unknown ? "" : addr,
+                          scene: "",
+                        };
+                      }),
                   },
                 ].filter((x) => x.value > 0),
               },
@@ -680,14 +685,19 @@
                     children: transferInferredByCollateral
                       .slice()
                       .sort((a, b) => b.count - a.count)
-                      .map((c) => ({
-                        id: `token_transfer_coll_${c.addr || c.name}`,
-                        label: c.name || "未知代币",
-                        value: c.count,
-                        color: "#f3f4f6",
-                        desc: c.addr || "",
-                        scene: "",
-                      })),
+                      .map((c) => {
+                        const addr = c.addr || "";
+                        const name = c.name || "";
+                        const unknown = !name || (addr && name.toLowerCase() === addr.toLowerCase());
+                        return {
+                          id: `token_transfer_coll_${addr || name}`,
+                          label: unknown ? (addr ? `未知Token: ${addr}` : "未知Token") : name,
+                          value: c.count,
+                          color: "#f3f4f6",
+                          desc: unknown ? "" : addr,
+                          scene: "",
+                        };
+                      }),
                   },
                 ].filter((x) => x.value > 0),
               },
@@ -700,11 +710,18 @@
     function s2NormalizeByCollateralEntries(entries) {
       if (!Array.isArray(entries)) return [];
       return entries
-        .map((x) => ({
-          addr: x.addr || "",
-          name: x.name || "",
-          count: Number(x.count || 0),
-        }))
+        .map((x) => {
+          const addr = x.addr || "";
+          const name = x.name || "";
+          const unknown = !name || (addr && name.toLowerCase() === addr.toLowerCase());
+          return {
+            addr,
+            name,
+            count: Number(x.count || 0),
+            label: unknown ? `未知Token: ${addr}` : name,
+            desc: unknown ? "" : addr,
+          };
+        })
         .filter((x) => x.count > 0)
         .sort((a, b) => b.count - a.count);
     }
@@ -730,10 +747,10 @@
         scene: scene || "",
         children: entries.map((c) => ({
           id: `${prefix}_coll_${c.addr || c.name}`,
-          label: c.name || "未知抵押品",
+          label: c.label || "未知Token",
           value: c.count,
           color: "#fde68a",
-          desc: c.addr || "",
+          desc: c.desc || "",
           scene: "",
         })),
       };

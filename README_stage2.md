@@ -158,6 +158,7 @@ abbr(all)
 ⑤ `split` / `merge` / `redemption` 增量更新 → `cond_idx_map` + `cond_info_map`(source/outcome_count按index_set最高位推断并扩展) + `token_info_map` + `coll_map`(同condition若出现多collateral，按“已知优先+确定性tie-break”规范化)
 ⑥ 回放暂存 `fpmm` 行并严格落盘              → 仅处理 `conditional_tokens == CONDITIONAL_TOKENS` 的域内行；域内要求 `condition_ids` 全已知，再写 `fpmm_info_map` + `token_info_map` + `coll_map` + `pm_cond_set`
 ⑦ `neg_risk_question`                       → `mid_map` + `nr_cond_set`
+⑧ `token_info_map` 升级规则                  → 允许 `TransferInferred -> 协议来源(token_map/split/merge/redemption/fpmm)` 单向升级；非推断来源要求 `cond_idx/token_idx` 一致
 → `update_cond_type_stats()`                → `ConditionTree` / `TokenTree`
 ```
 
@@ -229,7 +230,7 @@ phase3_process_transfers(chunk)
 │  │  │  ├─ merge: 支持多条 burn + parent mint（若存在）；含 FPMM->0 内部 burn 腿先消费 merge 再落 InternalBurnFPMM
 │  │  │  ├─ redemption: 支持 index_sets 对应的多条 burn
 │  │  │  ├─ convert: 保持 InternalBurnConvert + Convert + (YES侧 SplitNegRisk/TransferInNegRisk) 三段路径
-│  │  │  ├─ adapter其他路径: 未命中 split/merge/convert 时按 transfer 兜底（known->TransferIn/OutNegRisk，unknown->TransferIn/OutNonPoly；内部记 InternalTransferNegRisk）
+│  │  │  ├─ adapter其他路径: 未命中 split/merge/convert 时按 transfer 兜底（仅 known 且 cond∈nr_cond_set 才归 TransferIn/OutNegRisk；known 非nr归 TransferIn/OutOther；unknown 归 TransferIn/OutNonPoly）
 │  │  │  └─ FPMM内部腿 explain: 在同side的“trade_leg_required 且 未消费 且 未解释”候选中取最近未来语义log；若已无待解释候选则允许直接通过
 │  │  ├─ 未绑定 transfer: fallback 到 TransferIn*/TransferOut*/Internal*
 │  │  ├─ amount==0 -> InternalTransferZero（若命中FPMM trade语义则先消费语义，再按零值分类）

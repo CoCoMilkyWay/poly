@@ -65,11 +65,8 @@ enum class Collateral : uint8_t {
   Unknown = 0,
   USDC = 1,         // 0x3c499c542cef5e3811e1192ce70d8cc03d5c3359 (native)
   USDCe = 2,        // 0x2791bca1f2de4661ed88a30c99a7a9449aa84174 (PoS bridged)
-  WETH = 3,         // 0x7ceb23fd6bc0add59e62ac25578270cff1b9f619
-  DAI = 4,          // 0x8f3cf7ad23cd3cadbd9735aff958023239c6a063
-  WMATIC = 5,       // 0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270
-  USDT = 6,         // 0xc2132d05d31c914a87c6611c10748aeb04b58e8f
-  WrappedUSDCe = 7, // 0x3a3bd7bb9528e159577f7c2e685cc81a765002e2 (NegRisk wrapped collateral)
+  USDT = 3,         // 0xc2132d05d31c914a87c6611c10748aeb04b58e8f
+  WrappedUSDCe = 4, // 0x3a3bd7bb9528e159577f7c2e685cc81a765002e2 (NegRisk wrapped collateral)
   // 预留更多...
 };
 

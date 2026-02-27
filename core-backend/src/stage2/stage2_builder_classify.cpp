@@ -737,20 +737,28 @@ TransferClass EventBuilder::classify_and_emit(
       return TransferClass::Unclassified;
     }
     // Adapter may operate transfers on behalf of users/vaults in paths that are
-    // not split/merge/convert legs. Keep classification total while preserving
-    // NegRisk attribution for known tokens.
-    if (known_token) {
+    // not split/merge/convert legs. Only tag as NegRisk when token's condition
+    // is explicitly in NegRisk set; otherwise use generic transfer classes.
+    bool is_negrisk_known = known_token && (negrisk_cond_idxs_.count(cond_idx) > 0);
+    if (is_negrisk_known) {
       emit_if_user(to, RawEvent{sort_key, cond_idx, EventType::TransferInNegRisk, token_idx, coll, 0, amount, 0});
       emit_if_user(from, RawEvent{sort_key, cond_idx, EventType::TransferOutNegRisk, token_idx, coll, 0, -amount, 0});
       return classify_transfer_by_counterparty(TransferClass::TransferInNegRisk,
                                                TransferClass::TransferOutNegRisk,
                                                TransferClass::InternalTransferNegRisk);
     }
+    if (known_token) {
+      emit_if_user(to, RawEvent{sort_key, cond_idx, EventType::TransferInOther, token_idx, coll, 0, amount, 0});
+      emit_if_user(from, RawEvent{sort_key, cond_idx, EventType::TransferOutOther, token_idx, coll, 0, -amount, 0});
+      return classify_transfer_by_counterparty(TransferClass::TransferInOther,
+                                               TransferClass::TransferOutOther,
+                                               TransferClass::InternalTransferOther);
+    }
     emit_if_user(to, RawEvent{sort_key, cond_idx, EventType::TransferInNonPoly, token_idx, coll, 0, amount, 0});
     emit_if_user(from, RawEvent{sort_key, cond_idx, EventType::TransferOutNonPoly, token_idx, coll, 0, -amount, 0});
     return classify_transfer_by_counterparty(TransferClass::TransferInNonPoly,
                                              TransferClass::TransferOutNonPoly,
-                                             TransferClass::InternalTransferNegRisk);
+                                             TransferClass::InternalTransferOther);
   }
 
   // ========== FPMM operator ==========

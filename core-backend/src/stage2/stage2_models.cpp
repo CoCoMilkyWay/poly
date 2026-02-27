@@ -91,12 +91,6 @@ uint8_t addr_to_known_collateral_id(const std::string &addr) {
     return static_cast<uint8_t>(Collateral::USDC);
   if (addr == USDC_E)
     return static_cast<uint8_t>(Collateral::USDCe);
-  if (addr == WETH)
-    return static_cast<uint8_t>(Collateral::WETH);
-  if (addr == DAI)
-    return static_cast<uint8_t>(Collateral::DAI);
-  if (addr == WMATIC)
-    return static_cast<uint8_t>(Collateral::WMATIC);
   if (addr == USDT)
     return static_cast<uint8_t>(Collateral::USDT);
   if (addr == WRAPPED_USDC_E)
@@ -118,12 +112,6 @@ const char *collateral_name(Collateral c) {
     return "USDC";
   case Collateral::USDCe:
     return "USDC.e";
-  case Collateral::WETH:
-    return "WETH";
-  case Collateral::DAI:
-    return "DAI";
-  case Collateral::WMATIC:
-    return "WMATIC";
   case Collateral::USDT:
     return "USDT";
   case Collateral::WrappedUSDCe:
@@ -139,12 +127,6 @@ const char *collateral_addr(Collateral c) {
     return USDC_NATIVE;
   case Collateral::USDCe:
     return USDC_E;
-  case Collateral::WETH:
-    return WETH;
-  case Collateral::DAI:
-    return DAI;
-  case Collateral::WMATIC:
-    return WMATIC;
   case Collateral::USDT:
     return USDT;
   case Collateral::WrappedUSDCe:

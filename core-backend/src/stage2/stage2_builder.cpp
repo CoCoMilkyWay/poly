@@ -142,12 +142,6 @@ void EventBuilder::load_from_rb() {
   collateral_id_to_addr_[static_cast<uint8_t>(Collateral::USDC)] = USDC_NATIVE;
   collateral_addr_to_id_[USDC_E] = static_cast<uint8_t>(Collateral::USDCe);
   collateral_id_to_addr_[static_cast<uint8_t>(Collateral::USDCe)] = USDC_E;
-  collateral_addr_to_id_[WETH] = static_cast<uint8_t>(Collateral::WETH);
-  collateral_id_to_addr_[static_cast<uint8_t>(Collateral::WETH)] = WETH;
-  collateral_addr_to_id_[DAI] = static_cast<uint8_t>(Collateral::DAI);
-  collateral_id_to_addr_[static_cast<uint8_t>(Collateral::DAI)] = DAI;
-  collateral_addr_to_id_[WMATIC] = static_cast<uint8_t>(Collateral::WMATIC);
-  collateral_id_to_addr_[static_cast<uint8_t>(Collateral::WMATIC)] = WMATIC;
   collateral_addr_to_id_[USDT] = static_cast<uint8_t>(Collateral::USDT);
   collateral_id_to_addr_[static_cast<uint8_t>(Collateral::USDT)] = USDT;
   collateral_addr_to_id_[WRAPPED_USDC_E] = static_cast<uint8_t>(Collateral::WrappedUSDCe);

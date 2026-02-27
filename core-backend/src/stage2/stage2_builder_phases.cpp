@@ -823,7 +823,12 @@ void EventBuilder::commit_chunk(int64_t new_cursor) {
       }
       ap.Close();
     }
-    exec_sql("INSERT OR IGNORE INTO rb_token SELECT * FROM tmp_rb_token");
+    exec_sql(
+        "INSERT INTO rb_token SELECT * FROM tmp_rb_token "
+        "ON CONFLICT(token_id) DO UPDATE SET "
+        "cond_idx=excluded.cond_idx, "
+        "token_idx=excluded.token_idx, "
+        "source=excluded.source");
   }
 
   if (!new_fpmms_.empty()) {

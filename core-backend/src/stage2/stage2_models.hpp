@@ -45,15 +45,12 @@ static constexpr const char *ZERO_ADDR = "0x000000000000000000000000000000000000
 static constexpr const char *CTF_EXCHANGE = "0x4bfb41d5b3570defd03c39a9a4d8de6bd8b8982e";
 static constexpr const char *NEG_RISK_CTF_EXCHANGE = "0xc5d563a36ae78145c45a50134d48a1215220f80a";
 static constexpr const char *NEG_RISK_ADAPTER = "0xd91e80cf2e7be2e162c6513ced06f1dd0da35296";
+static constexpr const char *CONDITIONAL_TOKENS = "0x4d97dcd97ec945f40cf65f87097ace5ea0476045";
+static constexpr const char *NO_TOKEN_BURN_ADDRESS = "0xa5ef39c3d3e10d0b270233af41cac69796b12966";
 static constexpr const char *USDC_E = "0x2791bca1f2de4661ed88a30c99a7a9449aa84174";      // bridged USDC
 static constexpr const char *USDC_NATIVE = "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359"; // native USDC
-static constexpr const char *WETH = "0x7ceb23fd6bc0add59e62ac25578270cff1b9f619";
-static constexpr const char *DAI = "0x8f3cf7ad23cd3cadbd9735aff958023239c6a063";
-static constexpr const char *WMATIC = "0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270";
 static constexpr const char *USDT = "0xc2132d05d31c914a87c6611c10748aeb04b58e8f";
 static constexpr const char *WRAPPED_USDC_E = "0x3a3bd7bb9528e159577f7c2e685cc81a765002e2";
-static constexpr const char *CONDITIONAL_TOKENS = "0x4d97dcd97ec945f40cf65f87097ace5ea0476045";
-static constexpr const char *NO_TOKEN_BURN_ADDRESS = "0x36a0e974a7083ea0ad4dea6a27b90fab22e93a32";
 
 uint8_t addr_to_known_collateral_id(const std::string &addr);
 

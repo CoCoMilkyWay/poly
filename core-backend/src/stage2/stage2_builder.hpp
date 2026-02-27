@@ -182,10 +182,34 @@ private:
     std::string lower = to_lower(token_id);
     auto it = token_map_.find(lower);
     if (it != token_map_.end()) {
-      // 已存在：不应该出现 TransferInferred 后又从其他来源发现的情况
-      // 因为事件按时间顺序处理，FPMM/Split 等事件应该先于 Transfer
-      stage2_assert(!(it->second.source == TokenSource::TransferInferred && source != TokenSource::TransferInferred),
-                      AssertLevel::L1, "Mapping", "TransferInferredNotOverwritten");
+      TokenInfo &existing = it->second;
+      bool existing_is_inferred = (existing.source == TokenSource::TransferInferred);
+      bool new_is_inferred = (source == TokenSource::TransferInferred);
+
+      // Allow one-way refinement: Transfer-inferred token can be upgraded to
+      // a protocol-grounded mapping when later semantic evidence appears.
+      if (existing_is_inferred && !new_is_inferred) {
+        existing = {cond_idx, token_idx, source};
+        bool patched_pending = false;
+        for (auto &nt : new_tokens_) {
+          if (nt.token_id == lower) {
+            nt.cond_idx = cond_idx;
+            nt.token_idx = token_idx;
+            nt.source = source;
+            patched_pending = true;
+            break;
+          }
+        }
+        if (!patched_pending) {
+          new_tokens_.push_back({lower, cond_idx, token_idx, source});
+        }
+        return;
+      }
+
+      if (!existing_is_inferred && !new_is_inferred) {
+        stage2_assert(existing.cond_idx == cond_idx, AssertLevel::L1, "Mapping", "TokenCondIdxConsistent");
+        stage2_assert(existing.token_idx == token_idx, AssertLevel::L1, "Mapping", "TokenIdxConsistent");
+      }
       return;
     }
     token_map_[lower] = {cond_idx, token_idx, source};
