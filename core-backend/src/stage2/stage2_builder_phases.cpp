@@ -334,12 +334,31 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
   auto record_semantic = [&](const TxKey &key, int64_t log_index) {
     tx_op_logs[key].push_back(log_index);
   };
+  int64_t src_split_rows = 0;
+  int64_t src_merge_rows = 0;
+  int64_t src_redemption_rows = 0;
+  int64_t src_convert_rows = 0;
+  int64_t src_order_rows = 0;
+  int64_t src_fpmm_trade_rows = 0;
+  int64_t src_fpmm_funding_rows = 0;
+
+  int64_t idx_split_rows = 0;
+  int64_t idx_merge_rows = 0;
+  int64_t idx_redemption_rows = 0;
+  int64_t idx_convert_rows = 0;
+  int64_t idx_order_rows = 0;
+  int64_t idx_fpmm_trade_rows = 0;
+  int64_t idx_fpmm_funding_rows = 0;
+
+  int64_t skipped_fpmm_trade_unknown_fpmm_rows = 0;
+  int64_t skipped_fpmm_funding_unknown_fpmm_rows = 0;
 
   auto split = query_block_range(
       *conn, stage1_db_,
       "SELECT block_number, tx_hash, log_index, condition_id, amount, stakeholder, collateral_token, parent_collection_id, partition FROM ",
       "split", start, end);
   if (split) {
+    src_split_rows = static_cast<int64_t>(split->RowCount());
     for (idx_t i = 0; i < split->RowCount(); ++i) {
       TxKey key = build_tx_key(split, i);
       SplitInfo info;
@@ -351,6 +370,7 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
       info.parent_collection_id = get_hex_lower(split, 7, i);
       info.partition = parse_bytes32_list_hex_lower(split->GetValue(8, i));
       tx_split_[key].push_back(info);
+      idx_split_rows++;
       record_semantic(key, info.log_index);
     }
   }
@@ -360,6 +380,7 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
       "SELECT block_number, tx_hash, log_index, condition_id, amount, stakeholder, collateral_token, parent_collection_id, partition FROM ",
       "merge", start, end);
   if (merge) {
+    src_merge_rows = static_cast<int64_t>(merge->RowCount());
     for (idx_t i = 0; i < merge->RowCount(); ++i) {
       TxKey key = build_tx_key(merge, i);
       MergeInfo info;
@@ -371,6 +392,7 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
       info.parent_collection_id = get_hex_lower(merge, 7, i);
       info.partition = parse_bytes32_list_hex_lower(merge->GetValue(8, i));
       tx_merge_[key].push_back(info);
+      idx_merge_rows++;
       record_semantic(key, info.log_index);
     }
   }
@@ -380,6 +402,7 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
       "SELECT block_number, tx_hash, log_index, condition_id, payout, redeemer, collateral_token, parent_collection_id, index_sets FROM ",
       "redemption", start, end);
   if (redemption) {
+    src_redemption_rows = static_cast<int64_t>(redemption->RowCount());
     for (idx_t i = 0; i < redemption->RowCount(); ++i) {
       TxKey key = build_tx_key(redemption, i);
       RedemptionInfo info;
@@ -391,6 +414,7 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
       info.parent_collection_id = get_hex_lower(redemption, 7, i);
       info.index_sets = parse_bytes32_list_hex_lower(redemption->GetValue(8, i));
       tx_redemption_[key].push_back(info);
+      idx_redemption_rows++;
       record_semantic(key, info.log_index);
     }
   }
@@ -400,6 +424,7 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
       "SELECT block_number, tx_hash, log_index, market_id, index_set, amount, stakeholder FROM ",
       "convert", start, end);
   if (convert) {
+    src_convert_rows = static_cast<int64_t>(convert->RowCount());
     for (idx_t i = 0; i < convert->RowCount(); ++i) {
       std::string market_id = get_hex_lower(convert, 3, i);
       TxMarketKey key;
@@ -416,6 +441,7 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
       info.amount = get_u256_i64(convert, 5, i);
       info.stakeholder = get_hex_lower(convert, 6, i);
       tx_convert_[key].push_back(info);
+      idx_convert_rows++;
       record_semantic(tx_key, info.log_index);
     }
   }
@@ -428,6 +454,7 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
   static const std::string ZERO_TOKEN_ID =
       "0x0000000000000000000000000000000000000000000000000000000000000000";
   if (order) {
+    src_order_rows = static_cast<int64_t>(order->RowCount());
     for (idx_t i = 0; i < order->RowCount(); ++i) {
       int64_t block = get_i64(order, 0, i);
       auto tx_hash = hex_to_bytes32(get_hex(order, 1, i));
@@ -456,6 +483,7 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
       info.tokens = maker_is_usdc ? taker_amt : maker_amt;
       info.fee = fee;
       tx_order_[key].push_back(info);
+      idx_order_rows++;
       record_semantic(tx_key, info.log_index);
     }
   }
@@ -466,9 +494,11 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
       "usdc_amount, token_amount FROM ",
       "fpmm_trade", start, end);
   if (fpmm_trade) {
+    src_fpmm_trade_rows = static_cast<int64_t>(fpmm_trade->RowCount());
     for (idx_t i = 0; i < fpmm_trade->RowCount(); ++i) {
       std::string fpmm_addr = get_hex_lower(fpmm_trade, 3, i);
       if (fpmm_map_.find(fpmm_addr) == fpmm_map_.end()) {
+        skipped_fpmm_trade_unknown_fpmm_rows++;
         continue;
       }
       TxFPMMKey key;
@@ -491,6 +521,7 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
       info.tokens = get_u256_i64(fpmm_trade, 8, i);
       info.requires_erc1155_leg = (info.tokens > 0 && info.trader != info.fpmm_addr);
       tx_fpmm_trade_[key].push_back(info);
+      idx_fpmm_trade_rows++;
       record_semantic(tx_key, info.log_index);
     }
   }
@@ -500,9 +531,11 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
       "SELECT block_number, tx_hash, log_index, fpmm_addr, funder, side, amounts FROM ",
       "fpmm_funding", start, end);
   if (fpmm_funding) {
+    src_fpmm_funding_rows = static_cast<int64_t>(fpmm_funding->RowCount());
     for (idx_t i = 0; i < fpmm_funding->RowCount(); ++i) {
       std::string fpmm_addr = get_hex_lower(fpmm_funding, 3, i);
       if (fpmm_map_.find(fpmm_addr) == fpmm_map_.end()) {
+        skipped_fpmm_funding_unknown_fpmm_rows++;
         continue;
       }
       TxFPMMKey key;
@@ -517,6 +550,7 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
       info.side = fpmm_funding->GetValue(5, i).GetValue<int>();
       info.amounts = parse_u256_list_i64(fpmm_funding->GetValue(6, i));
       tx_fpmm_funding_[key].push_back(info);
+      idx_fpmm_funding_rows++;
       record_semantic(tx_key, info.log_index);
     }
   }
@@ -534,6 +568,15 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
     }
     tx_op_bounds_[tx_key] = std::move(bounds);
   }
+  stage2_assert(idx_split_rows == src_split_rows, AssertLevel::L1, "Index", "SplitIndexCoverage");
+  stage2_assert(idx_merge_rows == src_merge_rows, AssertLevel::L1, "Index", "MergeIndexCoverage");
+  stage2_assert(idx_redemption_rows == src_redemption_rows, AssertLevel::L1, "Index", "RedemptionIndexCoverage");
+  stage2_assert(idx_convert_rows == src_convert_rows, AssertLevel::L1, "Index", "ConvertIndexCoverage");
+  stage2_assert(idx_order_rows == src_order_rows, AssertLevel::L1, "Index", "OrderIndexCoverage");
+  stage2_assert(idx_fpmm_trade_rows + skipped_fpmm_trade_unknown_fpmm_rows == src_fpmm_trade_rows,
+                AssertLevel::L1, "Index", "FPMMTradeIndexCoverage");
+  stage2_assert(idx_fpmm_funding_rows + skipped_fpmm_funding_unknown_fpmm_rows == src_fpmm_funding_rows,
+                AssertLevel::L1, "Index", "FPMMFundingIndexCoverage");
 }
 
 void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
@@ -568,6 +611,10 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
     int64_t base_log_index = -1;
   };
   std::unordered_map<TxKey, std::vector<ObservedCondLeg>> observed_cond_legs;
+  int64_t observed_convert_user_burn_rows = 0;
+  int64_t observed_convert_adapter_burn_rows = 0;
+  int64_t classified_convert_rows = 0;
+  int64_t classified_internal_burn_convert_rows = 0;
 
   auto resolve_transfer_collateral = [&](uint32_t cid_idx, const std::string &operator_addr) {
     auto coll_it = cond_collateral_.find(cid_idx);
@@ -595,6 +642,13 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
     std::string from = to_lower(get_hex(transfers, 4, i));
     std::string to = to_lower(get_hex(transfers, 5, i));
     std::string token_id = to_lower(get_hex(transfers, 6, i));
+    if (op == NEG_RISK_ADAPTER && to == NO_TOKEN_BURN_ADDRESS && amount > 0) {
+      if (from == NEG_RISK_ADAPTER) {
+        observed_convert_adapter_burn_rows++;
+      } else {
+        observed_convert_user_burn_rows++;
+      }
+    }
 
     int64_t sort_key = block * SORT_KEY_SCALE + log_idx;
     auto tx_hash = hex_to_bytes32(get_hex(transfers, 1, i));
@@ -665,8 +719,17 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
     Stage2AssertContextScope assert_scope(&current_transfer_context_);
     TransferClass cls = classify_and_emit(sort_key, tx_hash, block, op, from, to, token_id,
                                           amount, cond_idx, token_idx, collateral);
+    if (cls == TransferClass::Convert) {
+      classified_convert_rows++;
+    } else if (cls == TransferClass::InternalBurnConvert) {
+      classified_internal_burn_convert_rows++;
+    }
     update_xfer_tree(cls);
   }
+  stage2_assert(classified_convert_rows == observed_convert_user_burn_rows,
+                AssertLevel::L4, "Partition", "ConvertUserBurnRowsCovered");
+  stage2_assert(classified_internal_burn_convert_rows == observed_convert_adapter_burn_rows,
+                AssertLevel::L4, "Partition", "ConvertInternalBurnRowsCovered");
 
   // Semantic coverage assertions: every semantic op in this chunk must be consumed by at least one transfer leg.
   auto cond_idx_for = [&](const std::string &cond_id) -> uint32_t {
@@ -765,36 +828,99 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
     }
     return false;
   };
+  int64_t split_rows_total = 0;
+  int64_t split_rows_consumed = 0;
+  int64_t split_rows_covered = 0;
+  int64_t split_rows_zero = 0;
+  int64_t split_rows_not_required = 0;
   for (const auto &[tx_key, rows] : tx_split_) {
     for (const auto &row : rows) {
       // split amount==0 is a valid semantic marker with no effective ERC1155 leg.
       bool zero_amount_split = (row.amount == 0);
       bool must_consume = split_leg_observed(tx_key, row.cond_id, row.stakeholder,
                                              row.amount, row.log_index);
-      stage2_assert(row.consumed_count > 0 || row.covered_by_parent || zero_amount_split || !must_consume,
+      bool consumed = row.consumed_count > 0;
+      bool covered = row.covered_by_parent;
+      bool not_required = !must_consume;
+      stage2_assert(consumed || covered || zero_amount_split || not_required,
                     AssertLevel::L4, "Consume", "SplitConsumedOrCoveredByParent");
+      split_rows_total++;
+      if (consumed) {
+        split_rows_consumed++;
+      } else if (covered) {
+        split_rows_covered++;
+      } else if (zero_amount_split) {
+        split_rows_zero++;
+      } else {
+        split_rows_not_required++;
+      }
     }
   }
+  stage2_assert(split_rows_total == split_rows_consumed + split_rows_covered + split_rows_zero + split_rows_not_required,
+                AssertLevel::L4, "Partition", "SplitRowPartitionTotal");
+
+  int64_t merge_rows_total = 0;
+  int64_t merge_rows_consumed = 0;
+  int64_t merge_rows_covered = 0;
+  int64_t merge_rows_zero = 0;
+  int64_t merge_rows_not_required = 0;
   for (const auto &[tx_key, rows] : tx_merge_) {
     for (const auto &row : rows) {
       // merge amount==0 is a valid semantic marker with no effective ERC1155 leg.
       bool zero_amount_merge = (row.amount == 0);
       bool must_consume = merge_leg_observed(tx_key, row.cond_id, row.stakeholder,
                                              row.amount, row.log_index);
-      stage2_assert(row.consumed_count > 0 || row.covered_by_parent || zero_amount_merge || !must_consume,
+      bool consumed = row.consumed_count > 0;
+      bool covered = row.covered_by_parent;
+      bool not_required = !must_consume;
+      stage2_assert(consumed || covered || zero_amount_merge || not_required,
                     AssertLevel::L4, "Consume", "MergeConsumedOrCoveredByParent");
+      merge_rows_total++;
+      if (consumed) {
+        merge_rows_consumed++;
+      } else if (covered) {
+        merge_rows_covered++;
+      } else if (zero_amount_merge) {
+        merge_rows_zero++;
+      } else {
+        merge_rows_not_required++;
+      }
     }
   }
+  stage2_assert(merge_rows_total == merge_rows_consumed + merge_rows_covered + merge_rows_zero + merge_rows_not_required,
+                AssertLevel::L4, "Partition", "MergeRowPartitionTotal");
+
+  int64_t redeem_rows_total = 0;
+  int64_t redeem_rows_consumed = 0;
+  int64_t redeem_rows_covered = 0;
+  int64_t redeem_rows_not_required = 0;
   for (const auto &[tx_key, rows] : tx_redemption_) {
     for (const auto &row : rows) {
       // redeem can emit multiple rows in one tx/cond/redeemer key, including zero-payout rows.
       // Only positive-payout rows require at-least-one matched burn leg when such leg is observable.
       bool must_consume = (row.payout > 0) &&
                           redeem_leg_observed(tx_key, row.cond_id, row.redeemer, row.log_index);
-      stage2_assert(row.consumed_count > 0 || row.covered_by_parent || !must_consume,
+      bool consumed = row.consumed_count > 0;
+      bool covered = row.covered_by_parent;
+      bool not_required = !must_consume;
+      stage2_assert(consumed || covered || not_required,
                     AssertLevel::L4, "Consume", "RedeemConsumedOrCoveredByParent");
+      redeem_rows_total++;
+      if (consumed) {
+        redeem_rows_consumed++;
+      } else if (covered) {
+        redeem_rows_covered++;
+      } else {
+        redeem_rows_not_required++;
+      }
     }
   }
+  stage2_assert(redeem_rows_total == redeem_rows_consumed + redeem_rows_covered + redeem_rows_not_required,
+                AssertLevel::L4, "Partition", "RedeemRowPartitionTotal");
+
+  int64_t order_rows_total = 0;
+  int64_t order_rows_consumed = 0;
+  int64_t order_rows_unobserved = 0;
   for (const auto &[key, rows] : tx_order_) {
     auto order_leg_observed = [&](const OrderInfo &row) {
       auto oit = observed_order_legs.find(key);
@@ -821,9 +947,24 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
     };
     for (const auto &row : rows) {
       bool must_consume = order_leg_observed(row);
-      stage2_assert(!must_consume || row.consumed, AssertLevel::L4, "Consume", "OrderConsumedIfLegObserved");
+      bool consumed = row.consumed;
+      bool unobserved = !must_consume;
+      stage2_assert(consumed || unobserved, AssertLevel::L4, "Consume", "OrderConsumedIfLegObserved");
+      order_rows_total++;
+      if (consumed) {
+        order_rows_consumed++;
+      } else {
+        order_rows_unobserved++;
+      }
     }
   }
+  stage2_assert(order_rows_total == order_rows_consumed + order_rows_unobserved,
+                AssertLevel::L4, "Partition", "OrderRowPartitionTotal");
+
+  int64_t trade_rows_total = 0;
+  int64_t trade_rows_consumed = 0;
+  int64_t trade_rows_explained = 0;
+  int64_t trade_rows_not_required = 0;
   for (const auto &[key, rows] : tx_fpmm_trade_) {
     for (const auto &row : rows) {
       uint8_t observed_mask = 0;
@@ -834,15 +975,41 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
       bool has_observed_leg = (row.side == 1) ? ((observed_mask & 0x1) != 0)
                                               : ((observed_mask & 0x2) != 0);
       bool must_consume_or_explain = row.requires_erc1155_leg && has_observed_leg;
-      stage2_assert(!must_consume_or_explain || row.consumed || row.explained_without_direct_leg,
+      bool consumed = row.consumed;
+      bool explained = row.explained_without_direct_leg;
+      bool not_required = !must_consume_or_explain;
+      stage2_assert(not_required || consumed || explained,
                     AssertLevel::L4, "Consume", "FPMMTradeConsumedOrExplained");
+      trade_rows_total++;
+      if (consumed) {
+        trade_rows_consumed++;
+      } else if (explained) {
+        trade_rows_explained++;
+      } else {
+        trade_rows_not_required++;
+      }
     }
   }
+  stage2_assert(trade_rows_total == trade_rows_consumed + trade_rows_explained + trade_rows_not_required,
+                AssertLevel::L4, "Partition", "FPMMTradeRowPartitionTotal");
+
+  int64_t convert_rows_total = 0;
+  int64_t convert_rows_consumed = 0;
   for (const auto &[_, rows] : tx_convert_) {
     for (const auto &row : rows) {
+      convert_rows_total++;
       stage2_assert(row.consumed_count > 0, AssertLevel::L4, "Consume", "ConvertConsumed");
+      if (row.consumed_count > 0) {
+        convert_rows_consumed++;
+      }
     }
   }
+  stage2_assert(convert_rows_total == convert_rows_consumed,
+                AssertLevel::L4, "Partition", "ConvertRowPartitionTotal");
+
+  int64_t funding_rows_total = 0;
+  int64_t funding_rows_consumed = 0;
+  int64_t funding_rows_zero_leg_remove = 0;
   for (const auto &[_, rows] : tx_fpmm_funding_) {
     for (const auto &row : rows) {
       // Some FPMMFundingRemoved rows have zero token legs (amounts=[0,0]):
@@ -854,10 +1021,19 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
           break;
         }
       }
-      stage2_assert(row.consumed_count > 0 || zero_leg_funding_remove,
+      bool consumed = row.consumed_count > 0;
+      stage2_assert(consumed || zero_leg_funding_remove,
                       AssertLevel::L4, "Consume", "FPMMFundingConsumedOrZeroLegRemove");
+      funding_rows_total++;
+      if (consumed) {
+        funding_rows_consumed++;
+      } else {
+        funding_rows_zero_leg_remove++;
+      }
     }
   }
+  stage2_assert(funding_rows_total == funding_rows_consumed + funding_rows_zero_leg_remove,
+                AssertLevel::L4, "Partition", "FPMMFundingRowPartitionTotal");
 }
 
 void EventBuilder::commit_chunk(int64_t new_cursor) {

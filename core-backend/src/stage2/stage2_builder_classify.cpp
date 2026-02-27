@@ -23,7 +23,6 @@ TransferClass EventBuilder::classify_and_emit(
   } else {
     stage2_assert(token_idx == UNKNOWN_TOKEN_IDX, AssertLevel::L0, "Input", "UnknownTokenIdx255");
   }
-  stage2_assert(from != to, AssertLevel::L0, "Input", "FromToDifferent");
 
   uint8_t coll = static_cast<uint8_t>(collateral);
   std::string cond_id = known_token ? cond_ids_[cond_idx] : "";
@@ -36,6 +35,10 @@ TransferClass EventBuilder::classify_and_emit(
   int64_t sub_idx = transfer_log_index % TRANSFER_FLAT_LOG_SCALE;
   stage2_assert(sub_idx >= 0 && sub_idx < TRANSFER_FLAT_LOG_SCALE, AssertLevel::L0, "Input", "TransferSubIdxRange");
   int64_t base_log_index = transfer_log_index / TRANSFER_FLAT_LOG_SCALE;
+  if (from == to) {
+    return (amount == 0) ? TransferClass::InternalTransferZero
+                         : TransferClass::InternalTransferOther;
+  }
 
   enum class RootOpType : uint8_t {
     None = 0,
@@ -107,6 +110,23 @@ TransferClass EventBuilder::classify_and_emit(
   };
   auto usdc_price = [&](int64_t usdc_amount, int64_t token_amount) -> int64_t {
     return is_usdc_collateral(collateral) ? (usdc_amount * 1000000 / token_amount) : 0;
+  };
+  auto patch_collateral_from_semantic = [&](const std::string &semantic_collateral_addr) {
+    if (coll != static_cast<uint8_t>(Collateral::Unknown)) {
+      return;
+    }
+    if (semantic_collateral_addr.empty() || semantic_collateral_addr == ZERO_ADDR) {
+      return;
+    }
+    uint8_t patched = intern_collateral(semantic_collateral_addr);
+    stage2_assert(patched != static_cast<uint8_t>(Collateral::Unknown),
+                  AssertLevel::L1, "Mapping", "SemanticCollateralPatchedNotUnknown");
+    coll = patched;
+    collateral = static_cast<Collateral>(coll);
+    if (known_token) {
+      set_cond_collateral(cond_idx, coll);
+      split_price = is_usdc_collateral(collateral) ? (1000000 / outcome_cnt) : 0;
+    }
   };
   auto classify_transfer_by_counterparty = [&](TransferClass in_cls, TransferClass out_cls,
                                                TransferClass internal_cls) {
@@ -279,8 +299,9 @@ TransferClass EventBuilder::classify_and_emit(
         continue;
       if (info.consumed)
         continue;
-      if (info.explained_without_direct_leg)
-        continue;
+      // A trade row may be pre-marked as explained by internal legs (0->FPMM /
+      // FPMM->0). If a concrete direct leg appears later in the same tx, it
+      // should still be allowed to consume the semantic row.
       // FPMM emits FPMMBuy/FPMMSell after transfer legs in the same tx.
       // Only allow forward matching within this tx; never match past semantic logs.
       if (info.log_index < base_log_index)
@@ -568,6 +589,25 @@ TransferClass EventBuilder::classify_and_emit(
     return select_window_only(window_matched, window_match_count,
                               "ConvertWindowUniqueCandidate");
   };
+  auto find_convert_info_any_market = [&](const std::string &stakeholder,
+                                          int64_t amt) -> ConvertInfo * {
+    ConvertInfo *window_matched = nullptr;
+    int window_match_count = 0;
+    for (auto &[tx_market_key, rows] : tx_convert_) {
+      if (tx_market_key.block != block || tx_market_key.tx_hash != tx_hash)
+        continue;
+      for (auto &info : rows) {
+        if (info.stakeholder != stakeholder || info.amount != amt)
+          continue;
+        if (!semantic_log_matches(info.log_index))
+          continue;
+        window_matched = &info;
+        window_match_count++;
+      }
+    }
+    return select_window_only(window_matched, window_match_count,
+                              "ConvertWindowUniqueCandidate");
+  };
   auto consume_split = [&](SplitInfo *info) {
     if (info != nullptr)
       info->consumed_count++;
@@ -662,6 +702,7 @@ TransferClass EventBuilder::classify_and_emit(
       MergeInfo *mit = merge_match;
       bind_root(RootOpType::Merge, "mint_parent");
       consume_merge(mit);
+      patch_collateral_from_semantic(mit->collateral_token);
       if (known_token) {
         emit_if_user(to, RawEvent{sort_key, cond_idx, EventType::MergeNormal, token_idx, coll, 0, amount, split_price});
         return TransferClass::MergeNormal;
@@ -673,6 +714,7 @@ TransferClass EventBuilder::classify_and_emit(
     if (chosen == CondLegKind::Split) {
       bind_root(RootOpType::Split, "mint_child");
       consume_split(split_match);
+      patch_collateral_from_semantic(split_match->collateral_token);
       if (known_token) {
         emit_if_user(to, RawEvent{sort_key, cond_idx, EventType::SplitNormal, token_idx, coll, 0, amount, split_price});
         return TransferClass::SplitNormal;
@@ -706,6 +748,7 @@ TransferClass EventBuilder::classify_and_emit(
       SplitInfo *sit = split_match;
       bind_root(RootOpType::Split, "burn_parent");
       consume_split(sit);
+      patch_collateral_from_semantic(sit->collateral_token);
       if (known_token) {
         emit_if_user(from, RawEvent{sort_key, cond_idx, EventType::SplitNormal, token_idx, coll, 0, -amount, split_price});
         return TransferClass::SplitNormal;
@@ -717,6 +760,7 @@ TransferClass EventBuilder::classify_and_emit(
     if (chosen == CondLegKind::Merge) {
       bind_root(RootOpType::Merge, "burn_child");
       consume_merge(merge_match);
+      patch_collateral_from_semantic(merge_match->collateral_token);
       if (known_token) {
         emit_if_user(from, RawEvent{sort_key, cond_idx, EventType::MergeNormal, token_idx, coll, 0, -amount, split_price});
         return TransferClass::MergeNormal;
@@ -730,6 +774,7 @@ TransferClass EventBuilder::classify_and_emit(
       RedemptionInfo *rit = redeem_match;
       bind_root(RootOpType::Redemption, "burn_child");
       consume_redeem(rit);
+      patch_collateral_from_semantic(rit->collateral_token);
       if (known_token) {
         if (is_user_addr(from)) {
           auto &payouts = conditions_[cond_idx].payout_numerators;
@@ -791,6 +836,37 @@ TransferClass EventBuilder::classify_and_emit(
 
   // ========== NegRisk Adapter operator ==========
   if (op == NEG_RISK_ADAPTER) {
+    if (to == NO_TOKEN_BURN_ADDRESS) {
+      if (from == NEG_RISK_ADAPTER)
+        return TransferClass::InternalBurnConvert;
+
+      ConvertInfo *convert_info = nullptr;
+      bool has_market_hint = false;
+      if (known_token && !conditions_[cond_idx].question_id.empty()) {
+        auto market_it = cond_to_market_.find(conditions_[cond_idx].question_id);
+        if (market_it != cond_to_market_.end()) {
+          has_market_hint = true;
+          convert_info = find_convert_info(market_it->second, from, amount);
+        }
+      }
+      if (convert_info == nullptr && !has_market_hint) {
+        convert_info = find_convert_info_any_market(from, amount);
+      }
+      if (convert_info != nullptr) {
+        bind_root(RootOpType::Convert, "convert_no_burn");
+        if (known_token) {
+          stage2_assert(token_idx == 1, AssertLevel::L3, "Convert", "BurnTokenIsNO");
+        }
+        convert_info->consumed_count++;
+        emit_if_user(from, RawEvent{sort_key, cond_idx, EventType::Convert, token_idx, coll, 0, -amount, 0});
+        return TransferClass::Convert;
+      }
+      std::cerr << "[ERROR] Convert burn without event: block=" << block
+                << ", from=" << from << ", amount=" << amount << std::endl;
+      stage2_assert(false, AssertLevel::L3, "Convert", "BurnWithoutSemanticEvent");
+      return TransferClass::Unclassified;
+    }
+
     if (from == NEG_RISK_ADAPTER) {
       SplitInfo *split_info = find_split_info(NEG_RISK_ADAPTER, amount);
       if (split_info == nullptr) {
@@ -841,28 +917,6 @@ TransferClass EventBuilder::classify_and_emit(
       }
       emit_if_user(from, RawEvent{sort_key, cond_idx, EventType::TransferOutNegRisk, token_idx, coll, 0, -amount, 0});
       return TransferClass::TransferOutNegRisk;
-    }
-
-    if (to == NO_TOKEN_BURN_ADDRESS) {
-      if (from == NEG_RISK_ADAPTER)
-        return TransferClass::InternalBurnConvert;
-
-      stage2_assert(known_token && token_idx == 1, AssertLevel::L3, "Convert", "BurnTokenIsNO");
-      if (!conditions_[cond_idx].question_id.empty()) {
-        auto market_it = cond_to_market_.find(conditions_[cond_idx].question_id);
-        if (market_it != cond_to_market_.end()) {
-          if (ConvertInfo *ci = find_convert_info(market_it->second, from, amount); ci != nullptr) {
-            bind_root(RootOpType::Convert, "convert_no_burn");
-            ci->consumed_count++;
-            emit_if_user(from, RawEvent{sort_key, cond_idx, EventType::Convert, token_idx, coll, 0, -amount, 0});
-            return TransferClass::Convert;
-          }
-        }
-      }
-      std::cerr << "[ERROR] Convert burn without event: block=" << block
-                << ", from=" << from << ", amount=" << amount << std::endl;
-      stage2_assert(false, AssertLevel::L3, "Convert", "BurnWithoutSemanticEvent");
-      return TransferClass::Unclassified;
     }
     // Adapter may operate transfers on behalf of users/vaults in paths that are
     // not split/merge/convert legs. Only tag as NegRisk when token's condition

@@ -158,7 +158,7 @@ abbr(all)
 ⑤ `split` / `merge` / `redemption` 增量更新 → `cond_idx_map` + `cond_info_map`(source/outcome_count按index_set最高位推断并扩展) + `token_info_map` + `coll_map`(同condition若出现多collateral，按“已知优先+确定性tie-break”规范化)
 ⑥ 回放暂存 `fpmm` 行并严格落盘              → 仅处理 `conditional_tokens == CONDITIONAL_TOKENS` 的域内行；域内要求 `condition_ids` 全已知，再写 `fpmm_info_map` + `token_info_map` + `coll_map` + `pm_cond_set`
 ⑦ `neg_risk_question`                       → `mid_map` + `nr_cond_set`
-⑧ `token_info_map` 升级规则                 → 按证据强度单向升级(`TransferInferred < FPMM < token_map < split/merge/redemption`)；同映射可仅升级source；`token_map` 同condition反向重复注册可忽略；非推断来源要求 `cond_idx` 一致
+⑧ `token_info_map` 升级规则                 → 按证据强度单向升级(`TransferInferred < FPMM < token_map < split/merge/redemption`)；同映射可仅升级source；`token_map` 同condition反向重复注册可忽略；chunk尾仅对“语义唯一命中”的unknown token做统一refine（仅允许 `UNKNOWN->KNOWN` 或 source升级）；非推断来源要求 `cond_idx` 一致
 → `update_cond_type_stats()`                → `ConditionTree` / `TokenTree`
 ```
 
@@ -184,6 +184,14 @@ abbr(all)
 3) 基于相邻 op_log_index 生成 tx_op_bounds_idx：
    left_exclusive = prev_op_log_index
    right_inclusive = curr_op_log_index
+4) 覆盖率断言（Phase2结束时）：
+   - `idx_split == src_split`
+   - `idx_merge == src_merge`
+   - `idx_redeem == src_redeem`
+   - `idx_convert == src_convert`
+   - `idx_order == src_order`
+   - `idx_fpmm_trade + skipped_unknown_fpmm_trade == src_fpmm_trade`
+   - `idx_fpmm_funding + skipped_unknown_fpmm_funding == src_fpmm_funding`
 ```
 
 ## Phase 3: Transfer 分类 (classify_and_emit)
@@ -278,6 +286,9 @@ phase3_process_transfers(chunk)
 │  ├─ assert(语义硬约束成立: actor/cond/collateral/parent/index_set/amount/side/log-window)
 │  ├─ assert(Poly类=>is_poly, NegRisk类=>is_nr, NonPoly类=>!is_poly或!known_cond)
 │  ├─ assert(convert 在 market 维度的路径与金额关系成立)
+│  ├─ assert(convert burn分区: `op=Adapter && to=BurnAddr && amt>0` 必须被 `Convert` 或 `InternalBurnConvert` 完整覆盖)
+│  ├─ assert(语义行分区总数: split/merge/redeem/order/trade/convert/funding 每行都落入且仅按优先级计入一个状态桶，桶和=总行数)
+│  ├─ assert(chunk尾refine单调升级: 仅允许 `UNKNOWN->KNOWN` 或 source 升级，不允许跨cond改写)
 │  └─ assert(token_idx==255 -> cond_idx==UNKNOWN_COND_IDX)
 └─ 输出
    ├─ user_events(RawEvent序列, 用户22类全写)
@@ -301,10 +312,10 @@ phase3_process_transfers(chunk)
 
 断言层级（Assertion Hierarchy）
 ├─ L0 输入/结构层：schema/type/range/u256解析合法
-├─ L1 映射不变量层：cond/token/collateral/fpmm 映射一致；outcome_count 合法且仅扩展不回退；coll_map 对多来源冲突做确定性规范化
+├─ L1 映射不变量层：cond/token/collateral/fpmm 映射一致；outcome_count 合法且仅扩展不回退；coll_map 对多来源冲突做确定性规范化；Phase2索引覆盖率守恒；chunk尾refine仅允许单向升级
 ├─ L2 匹配唯一性层：窗口候选命中数 <= 1；同层并列歧义直接 assert
 ├─ L3 语义约束层：命中后必须满足 actor/cond/collateral/amount/direction/window 等硬约束
-├─ L4 语义消费闭环层：chunk 收尾每类语义 op 必须“已消费或显式例外（含 split/merge amount==0、redeem payout==0、trade !must_consume_or_explain 零腿）”
+├─ L4 语义消费闭环层：chunk 收尾每类语义 op 必须“已消费或显式例外（含 split/merge amount==0、redeem payout==0、trade !must_consume_or_explain 零腿）”；并校验 convert-burn 与各语义行状态桶分区总数守恒
 └─ L5 结果守恒层：total 守恒、unclassified==0、树统计恒等式成立
 
 TransferClass输出事件(33类, 唯一落类)
@@ -336,6 +347,8 @@ Phase3中间结构 (chunk内存)
 │     └─ unknown token: token_idx=255, cond_idx=UNKNOWN_COND_IDX
 ├─ RootBind (classify_and_emit 局部状态)
 │  └─ {root_op_type, leg_type}，每条 transfer 最多绑定一个 root
+├─ TokenRefineHint (chunk尾统一处理)
+│  └─ {token_id, cond_idx, token_idx, source, reason}（仅在语义唯一命中时生成）
 ├─ Semantic索引行
 │  ├─ SplitInfo/MergeInfo/RedemptionInfo {consumed_count, covered_by_parent}
 │  ├─ ConvertInfo {consumed_count}
