@@ -34,18 +34,6 @@ Stage2Sync (timer驱动, boost::asio)
 ```
 **崩溃恢复**: 从 stage2_cursor 断点重做，语义索引不持久化
 
-市场树 (`s2-market-tree`)
-└─ 市场质量  // desc: Observed实体质量 + Raw输入覆盖; scene: 去冗余后的市场视图
-   ├─ ObservedQuality  // desc: 实体口径; scene: stage2已构建condition实体质量
-   │  ├─ Resolve  // desc: 解析状态; scene: Resolved/Unresolved
-   │  ├─ Collateral  // desc: collateral覆盖; scene: 动态聚合(observed_by_collateral)
-   │  ├─ Tokenized  // desc: token映射完整度; scene: NoToken/PartialTokenized/FullyTokenized
-   │  └─ MarketLink  // desc: 市场ID关联; scene: HasMarketId/NoMarketId
-   ├─ RawInput  // desc: 输入口径; scene: 按 condition_preparation 原始行统计
-   │  ├─ Outcome  // desc: outcome_slot_count分布; scene: 动态聚合(raw_by_outcome_count)
-   │  └─ QuestionID  // desc: question_id覆盖; scene: HasQuestionId/NoQuestionId
-   └─ Coverage  // desc: 双口径对账; scene: Observed/RawRows/Delta(Obs-Raw)/Observed÷Raw(%)
-
 问题树 (`s2-cond-tree`)
 └─ 问题  // desc: condition分类总览; scene: CTF问题来源分层; 对应: cond_tree.total
    ├─ Polymarket  // desc: Polymarket子树; scene: 已确认归属Polymarket; 对应: cond_tree.polymarket.total
@@ -61,6 +49,18 @@ Stage2Sync (timer驱动, boost::asio)
       ├─ Split  // desc: !poly & split_event; scene: 仅由Split事件推断condition; 对应: cond_tree.other.split
       ├─ Merge  // desc: !poly & merge_event; scene: 仅由Merge事件推断condition; 对应: cond_tree.other.merge
       └─ Redemption  // desc: !poly & redemption_event; scene: 仅由Redemption事件推断condition; 对应: cond_tree.other.redemption
+
+市场树 (`s2-market-tree`)
+└─ 市场质量  // desc: Observed实体质量 + Raw输入覆盖; scene: 去冗余后的市场视图
+   ├─ ObservedQuality  // desc: 实体口径; scene: stage2已构建condition实体质量
+   │  ├─ Resolve  // desc: 解析状态; scene: Resolved/Unresolved
+   │  ├─ Collateral  // desc: collateral覆盖; scene: 动态聚合(observed_by_collateral)
+   │  ├─ Tokenized  // desc: token映射完整度; scene: NoToken/PartialTokenized/FullyTokenized
+   │  └─ MarketLink  // desc: 市场ID关联; scene: HasMarketId/NoMarketId
+   ├─ RawInput  // desc: 输入口径; scene: 按 condition_preparation 原始行统计
+   │  ├─ Outcome  // desc: outcome_slot_count分布; scene: 动态聚合(raw_by_outcome_count)
+   │  └─ QuestionID  // desc: question_id覆盖; scene: HasQuestionId/NoQuestionId
+   └─ Coverage  // desc: 双口径对账; scene: Observed/RawRows/Delta(Obs-Raw)/Observed÷Raw(%)
 
 代币树 (`s2-token-tree`)
 └─ 代币  // desc: token分类总览; scene: ERC1155 token_id来源分层; 对应: token_tree.total

@@ -252,8 +252,8 @@
     </button>
   </div>
 
-  <div class="stage2-tree" id="s2-market-tree"></div>
   <div class="stage2-tree" id="s2-cond-tree"></div>
+  <div class="stage2-tree" id="s2-market-tree"></div>
   <div class="stage2-tree" id="s2-token-tree"></div>
   <div class="stage2-tree" id="s2-xfer-tree"></div>
   <div class="stage2-tree" id="s2-split-sem-tree"></div>
@@ -1829,8 +1829,8 @@
     }
 
     function s2RenderAllTrees(s) {
-      s2RenderTreeToContainer(s2BuildMarketTree(s), "s2-market-tree");
       s2RenderTreeToContainer(s2BuildCondTree(s), "s2-cond-tree");
+      s2RenderTreeToContainer(s2BuildMarketTree(s), "s2-market-tree");
       s2RenderTreeToContainer(s2BuildTokenTree(s), "s2-token-tree");
       s2RenderTreeToContainer(s2BuildXferTree(s), "s2-xfer-tree");
       s2RenderTreeToContainer(s2BuildSplitSemTree(s), "s2-split-sem-tree");
