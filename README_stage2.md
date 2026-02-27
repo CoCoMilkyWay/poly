@@ -154,9 +154,10 @@ abbr(all)
 ① `condition_preparation`                   → `cond_idx_map` + `cond_info_map`(outcome_count/question_id/source)
 ② `condition_resolution`                    → `cond_info_map`(payout)
 ③ `token_map`                               → `cond_idx_map` + `cond_info_map`(source) + `token_info_map`
-④ `fpmm`                                    → `cond_idx_map` + `cond_info_map`(source) + `fpmm_info_map` + `token_info_map` + `coll_map` + `pm_cond_set`
+④ 读取 `fpmm` 原始行(延迟落盘)              → 暂存 `{fpmm_addr, condition_ids[], collateral, conditional_tokens}`
 ⑤ `split` / `merge` / `redemption` 增量更新 → `cond_idx_map` + `cond_info_map`(source/outcome_count按index_set最高位推断并扩展) + `token_info_map` + `coll_map`(同condition若出现多collateral，按“已知优先+确定性tie-break”规范化)
-⑥ `neg_risk_question`                       → `mid_map` + `nr_cond_set`
+⑥ 回放暂存 `fpmm` 行并严格落盘              → 仅处理 `conditional_tokens == CONDITIONAL_TOKENS` 的域内行；域内要求 `condition_ids` 全已知，再写 `fpmm_info_map` + `token_info_map` + `coll_map` + `pm_cond_set`
+⑦ `neg_risk_question`                       → `mid_map` + `nr_cond_set`
 → `update_cond_type_stats()`                → `ConditionTree` / `TokenTree`
 ```
 
@@ -176,6 +177,8 @@ abbr(all)
 索引构建规则：
 ```
 1) 先按事件类型入各自索引 (split/merge/redeem/convert/order/trade/funding)
+   - `order_filled` 全量入索引；是否可绑定由 Phase3 的 order 地址腿硬约束决定（不在 Phase2 预过滤）
+   - FPMM trade/funding 仅对 `fpmm_info_map` 已知的域内 FPMM 建索引（与 Phase1 的 `conditional_tokens` 域过滤一致）
 2) 每个 tx 汇总全部语义 log_index，升序去重
 3) 基于相邻 op_log_index 生成 tx_op_bounds_idx：
    left_exclusive = prev_op_log_index
@@ -201,13 +204,13 @@ phase3_process_transfers(chunk)
 ├─ 主循环 for transfer in transfers(by sort_key)
 │  ├─ Pass A: transfer -> RootOp 绑定（每条 transfer 最多绑定一次）
 │  │  ├─ 双通道绑定:
-│  │  │  ├─ 窗口通道: split/merge/redeem/convert/order 先按 tx_key + op_bounds 取候选 op（窗口命中才绑定）
+│  │  │  ├─ 窗口通道: split/merge/redeem/convert 先按 tx_key + op_bounds 取候选 op（窗口命中才绑定）
 │  │  │  └─ FPMM通道: trade/funding 按 tx_key + fpmm_addr 在同tx内前向匹配（log_index >= 当前transfer）
 │  │  ├─ 再按硬约束过滤:
 │  │  │  ├─ split/merge: stakeholder + cond_id + collateral + parent + partition + direction + amount
 │  │  │  ├─ redemption: redeemer + cond_id + collateral + parent + index_sets + direction
 │  │  │  ├─ convert: market_id + stakeholder + index_set + operator路径(NEG_RISK_ADAPTER)
-│  │  │  ├─ order: token_id + maker/taker + maker_side + usdc/tokens
+│  │  │  ├─ order: token_id + maker/taker + maker_side + usdc/tokens（地址腿硬约束；BUY: taker->maker 或 exchange->maker；SELL: maker->taker 或 maker->exchange）
 │  │  │  ├─ trade/lp: fpmm_addr + side + actor(trader/funder) + token_amount/transfer_amount
 │  │  │  │  ├─ trade_leg_required = (tokens > 0 && trader != fpmm_addr)
 │  │  │  │  ├─ observed_trade_leg(side1)=存在 {from=fpmm 或 0->fpmm} 的 amount>0 transfer
@@ -217,6 +220,7 @@ phase3_process_transfers(chunk)
 │  │  │  │  └─ lp_remove: funder == counterparty 且 transfer_amount ∈ amounts
 │  │  │  └─ unknown token 仅在通过结构约束时可绑定，不以“地址像不像”放宽
 │  │  ├─ FPMM trade多候选决策: 在“trade_leg_required 且 未消费 且 未解释”候选中取最近未来语义log；同log并列 -> assert(false)
+│  │  ├─ order 匹配策略: 先按地址腿硬约束筛选，再取窗口内唯一命中；若窗口无命中，取同tx内“未消费且地址腿满足”的最近未来语义log；仅当窗口存在未消费同量候选且不存在可用前向候选时才 assert(false)
 │  │  ├─ 多候选同时命中 -> assert(false)
 │  │  └─ 唯一命中 -> 记录 root_op + leg_type，并更新 consumed/covered
 │  ├─ Pass B: 分类与事件产出

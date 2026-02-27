@@ -139,38 +139,54 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
     }
   }
 
+  struct FPMMRow {
+    std::string addr;
+    std::string collateral;
+    std::string conditional_tokens;
+    std::vector<std::string> cids;
+  };
+  std::vector<FPMMRow> pending_fpmm_rows;
+  auto process_fpmm_row = [&](const FPMMRow &row) {
+    // Stage2 tracks one canonical ConditionalTokens domain.
+    // FPMM rows from other CTF contracts are out-of-domain for mapping.
+    if (row.conditional_tokens != CONDITIONAL_TOKENS) {
+      return;
+    }
+    stage2_assert(!row.cids.empty(), AssertLevel::L1, "Mapping", "FPMMHasConditionIds");
+    uint32_t primary_cond_idx = 0;
+    bool has_primary = false;
+    for (const auto &cid : row.cids) {
+      std::string lower_cid = to_lower(cid);
+      auto it = cond_map_.find(lower_cid);
+      stage2_assert(it != cond_map_.end(), AssertLevel::L1, "Mapping", "FPMMConditionKnownInDomain");
+      uint8_t outcome_cnt = conditions_[it->second].outcome_count;
+      stage2_assert(outcome_cnt > 0 && outcome_cnt <= MAX_OUTCOMES,
+                    AssertLevel::L1, "Mapping", "OutcomeCountRange");
+      uint32_t idx = intern_condition(cid, outcome_cnt, ConditionSource::PolymarketFPMM);
+      if (!has_primary) {
+        primary_cond_idx = idx;
+        has_primary = true;
+      }
+    }
+    stage2_assert(has_primary, AssertLevel::L1, "Mapping", "FPMMHasPrimaryCondition");
+    uint8_t coll_id = intern_collateral(row.collateral);
+    intern_fpmm(row.addr, primary_cond_idx, coll_id);
+    // 为 FPMM 计算所有 atomic position token_id（覆盖多条件组合头寸）
+    intern_fpmm_tokens(row.cids, row.collateral, primary_cond_idx);
+  };
   auto fpmm = query_block_range(
       *conn, stage1_db_,
-      "SELECT fpmm_addr, condition_ids, collateral_token FROM ",
+      "SELECT fpmm_addr, condition_ids, collateral_token, conditional_tokens FROM ",
       "fpmm", start, end);
   if (fpmm) {
+    pending_fpmm_rows.reserve(fpmm->RowCount());
     for (idx_t i = 0; i < fpmm->RowCount(); ++i) {
-      std::string addr = get_hex(fpmm, 0, i);
-      std::string collateral = get_hex_lower(fpmm, 2, i);
-
-      std::vector<std::string> cids = parse_bytes32_list_hex_lower(fpmm->GetValue(1, i));
-      stage2_assert(!cids.empty(), AssertLevel::L1, "Mapping", "FPMMHasConditionIds");
-      uint32_t primary_cond_idx = 0;
-      bool has_primary = false;
-      for (const auto &cid : cids) {
-        std::string lower_cid = to_lower(cid);
-        auto it = cond_map_.find(lower_cid);
-        stage2_assert(it != cond_map_.end(), AssertLevel::L1, "Mapping", "FPMMConditionKnown");
-        uint8_t outcome_cnt = conditions_[it->second].outcome_count;
-        stage2_assert(outcome_cnt > 0 && outcome_cnt <= MAX_OUTCOMES,
-                        AssertLevel::L1, "Mapping", "OutcomeCountRange");
-        uint32_t idx = intern_condition(cid, outcome_cnt, ConditionSource::PolymarketFPMM);
-        if (!has_primary) {
-          primary_cond_idx = idx;
-          has_primary = true;
-        }
-      }
-      stage2_assert(has_primary, AssertLevel::L1, "Mapping", "FPMMHasPrimaryCondition");
-
-      uint8_t coll_id = intern_collateral(collateral);
-      intern_fpmm(addr, primary_cond_idx, coll_id);
-      // 为 FPMM 计算所有 atomic position token_id（覆盖多条件组合头寸）
-      intern_fpmm_tokens(cids, collateral, primary_cond_idx);
+      pending_fpmm_rows.push_back(FPMMRow{
+          .addr = get_hex(fpmm, 0, i),
+          .collateral = get_hex_lower(fpmm, 2, i),
+          .conditional_tokens = get_hex_lower(fpmm, 3, i),
+          .cids = parse_bytes32_list_hex_lower(fpmm->GetValue(1, i)),
+      });
     }
   }
 
@@ -254,6 +270,10 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
   update_from_condition_event("split", "partition", ConditionSource::SplitEvent, TokenSource::SplitEvent);
   update_from_condition_event("merge", "partition", ConditionSource::MergeEvent, TokenSource::MergeEvent);
   update_from_condition_event("redemption", "index_sets", ConditionSource::RedemptionEvent, TokenSource::RedemptionEvent);
+
+  for (const auto &row : pending_fpmm_rows) {
+    process_fpmm_row(row);
+  }
 
   auto nrq = query_block_range(
       *conn, stage1_db_,
@@ -448,6 +468,9 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
   if (fpmm_trade) {
     for (idx_t i = 0; i < fpmm_trade->RowCount(); ++i) {
       std::string fpmm_addr = get_hex_lower(fpmm_trade, 3, i);
+      if (fpmm_map_.find(fpmm_addr) == fpmm_map_.end()) {
+        continue;
+      }
       TxFPMMKey key;
       key.block = get_i64(fpmm_trade, 0, i);
       key.tx_hash = hex_to_bytes32(get_hex(fpmm_trade, 1, i));
@@ -479,6 +502,9 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
   if (fpmm_funding) {
     for (idx_t i = 0; i < fpmm_funding->RowCount(); ++i) {
       std::string fpmm_addr = get_hex_lower(fpmm_funding, 3, i);
+      if (fpmm_map_.find(fpmm_addr) == fpmm_map_.end()) {
+        continue;
+      }
       TxFPMMKey key;
       key.block = get_i64(fpmm_funding, 0, i);
       key.tx_hash = hex_to_bytes32(get_hex(fpmm_funding, 1, i));

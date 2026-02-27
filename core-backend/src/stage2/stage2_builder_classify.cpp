@@ -389,24 +389,70 @@ TransferClass EventBuilder::classify_and_emit(
     stage2_assert(match_count <= 1, AssertLevel::L2, "Match", "FPMMRemoveUniqueCandidate");
     return matched;
   };
+  auto order_leg_matches = [&](const OrderInfo &info) {
+    if (info.maker_side == 1) {
+      // BUY maker leg can be either:
+      // - direct taker -> maker (fillOrder/fillOrders)
+      // - exchange -> maker (matchOrders via _fillFacingExchange)
+      return to == info.maker && (from == info.taker || from == op);
+    }
+    // SELL maker leg can be either:
+    // - direct maker -> taker (fillOrder/fillOrders)
+    // - maker -> exchange (matchOrders via _fillFacingExchange)
+    return from == info.maker && (to == info.taker || to == op);
+  };
+  bool order_window_conflict = false;
   auto find_order_info = [&]() -> OrderInfo * {
+    order_window_conflict = false;
     auto it = tx_order_.find(tx_token_key);
     if (it == tx_order_.end())
       return nullptr;
     OrderInfo *window_matched = nullptr;
     int window_match_count = 0;
+    bool has_unconsumed_window_same_amount = false;
+    OrderInfo *forward_matched = nullptr;
+    int64_t forward_log = -1;
+    int forward_same_log_count = 0;
     for (auto &info : it->second) {
       if (info.consumed)
         continue;
-      if (info.tokens == amount) {
-        if (semantic_log_matches(info.log_index)) {
-          window_matched = &info;
-          window_match_count++;
+      if (info.tokens != amount)
+        continue;
+      bool in_window = semantic_log_matches(info.log_index);
+      if (in_window) {
+        has_unconsumed_window_same_amount = true;
+      }
+      bool addr_match = order_leg_matches(info);
+      if (!addr_match)
+        continue;
+      if (in_window) {
+        window_matched = &info;
+        window_match_count++;
+      }
+      // In matchOrders paths, transfer legs can happen before the maker order's
+      // own OrderFilled log. Allow nearest-future fallback when window misses.
+      if (info.log_index >= base_log_index) {
+        if (forward_matched == nullptr || info.log_index < forward_log) {
+          forward_matched = &info;
+          forward_log = info.log_index;
+          forward_same_log_count = 1;
+        } else if (info.log_index == forward_log) {
+          forward_same_log_count++;
         }
       }
     }
-    return select_window_only(window_matched, window_match_count,
-                              "OrderWindowUniqueCandidate");
+    OrderInfo *window_only = select_window_only(window_matched, window_match_count,
+                                                "OrderWindowUniqueCandidate");
+    if (window_only != nullptr) {
+      return window_only;
+    }
+    stage2_assert(forward_same_log_count <= 1, AssertLevel::L2, "Match",
+                  "OrderForwardUniqueCandidate");
+    // Only treat as hard conflict when the current semantic window has same-amount
+    // order legs but none can match address constraints and no future fallback exists.
+    order_window_conflict =
+        has_unconsumed_window_same_amount && (forward_matched == nullptr);
+    return forward_matched;
   };
   auto find_convert_info = [&](const std::string &market_id,
                                const std::string &stakeholder,
@@ -596,13 +642,7 @@ TransferClass EventBuilder::classify_and_emit(
       bind_root(RootOpType::Order, "exchange_transfer");
       stage2_assert(oit->tokens > 0, AssertLevel::L3, "Order", "TokensPositive");
       stage2_assert(amount == oit->tokens, AssertLevel::L3, "Order", "TransferAmountMatch");
-      if (oit->maker_side == 1) {
-        stage2_assert(to == oit->maker, AssertLevel::L3, "Order", "BuyerAddressMatch");
-        stage2_assert(from == oit->taker, AssertLevel::L3, "Order", "SellerAddressMatch");
-      } else {
-        stage2_assert(from == oit->maker, AssertLevel::L3, "Order", "SellerAddressMatch");
-        stage2_assert(to == oit->taker, AssertLevel::L3, "Order", "BuyerAddressMatch");
-      }
+      stage2_assert(order_leg_matches(*oit), AssertLevel::L3, "Order", "OrderLegAddressMatch");
       oit->consumed = true;
 
       int64_t price = usdc_price(oit->usdc, oit->tokens);
@@ -612,10 +652,10 @@ TransferClass EventBuilder::classify_and_emit(
                                                TransferClass::InternalTransferOrder);
     }
 
-    if (tx_order_.count(tx_token_key) > 0) {
-      std::cerr << "[ERROR] Exchange transfer without matching order: block=" << block
+    if (order_window_conflict) {
+      std::cerr << "[ERROR] Exchange transfer conflicts with window order leg: block=" << block
                 << ", op=" << op << ", from=" << from << ", to=" << to << std::endl;
-      stage2_assert(false, AssertLevel::L3, "Order", "ExchangeTransferWithoutOrder");
+      stage2_assert(false, AssertLevel::L3, "Order", "OrderWindowAddressConflict");
       return TransferClass::Unclassified;
     }
     // Without order semantics, fall through to generic transfer classification.
