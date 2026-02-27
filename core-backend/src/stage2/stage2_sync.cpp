@@ -44,7 +44,7 @@ void EventSync::do_sync() {
   TraceN("s2/sync");
   int64_t stage1_last = stage1_db_.get_last_block();
   int64_t stage2_cursor = builder_.cursor();
-  int64_t behind_blocks = stage1_last - stage2_cursor;
+  int64_t behind_blocks = std::max<int64_t>(0, stage1_last - stage2_cursor);
   int64_t behind_chunks = (behind_blocks + chunk_size_ - 1) / chunk_size_;
 
   progress_.stage1_last_block = stage1_last;
@@ -61,7 +61,7 @@ void EventSync::do_sync() {
   progress_.syncing = true;
   progress_.chunks_per_rebuild = 1;
 
-  int64_t target = std::min(builder_.cursor() + chunk_size_, stage1_last);
+  int64_t target = std::min(stage2_cursor + chunk_size_, stage1_last);
   builder_.build_chunk(target);
   progress_.phase = builder_.progress().phase;
   progress_.stage2_cursor = builder_.cursor();

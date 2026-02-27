@@ -286,23 +286,41 @@ void TransferStats::verify() const {
 }
 
 void TransferStats::print_summary() const {
-  std::cerr << "Transfer Stats Summary: total=" << total << std::endl;
-  std::cerr << "  UserEvents: " << user_events() << std::endl;
-  std::cerr << "    Split: " << split() << " (poly=" << split_poly() << ", non_poly=" << split_non_poly << ")" << std::endl;
-  std::cerr << "    Merge: " << merge() << " (poly=" << merge_poly() << ", non_poly=" << merge_non_poly << ")" << std::endl;
-  std::cerr << "    Redemption: " << redemption_all() << " (poly=" << redemption << ", non_poly=" << redemption_non_poly << ")" << std::endl;
-  std::cerr << "    Convert: " << convert << std::endl;
-  std::cerr << "    Order: " << order() << " (buy=" << order_buy << ", sell=" << order_sell << ")" << std::endl;
-  std::cerr << "    FPMMTrade: " << fpmm_trade() << " (buy=" << fpmm_buy << ", sell=" << fpmm_sell << ")" << std::endl;
-  std::cerr << "    FPMMLP: " << fpmm_lp() << " (add=" << fpmm_lp_add << ", remove=" << fpmm_lp_remove << ", return=" << fpmm_lp_return << ")" << std::endl;
-  std::cerr << "    TransferIn: " << transfer_in() << " (poly=" << transfer_in_poly() << ", non_poly=" << transfer_in_non_poly << ")" << std::endl;
-  std::cerr << "    TransferOut: " << transfer_out() << " (poly=" << transfer_out_poly() << ", non_poly=" << transfer_out_non_poly << ")" << std::endl;
-  std::cerr << "  Internal: " << internal() << std::endl;
-  std::cerr << "    Mint: " << internal_mint() << " (negrisk=" << internal_mint_negrisk << ", fpmm=" << internal_mint_fpmm << ")" << std::endl;
-  std::cerr << "    Burn: " << internal_burn() << " (negrisk=" << internal_burn_negrisk << ", fpmm=" << internal_burn_fpmm << ", convert=" << internal_burn_convert << ")" << std::endl;
-  std::cerr << "    Transfer: " << internal_transfer() << " (zero=" << internal_transfer_zero << ", order=" << internal_transfer_order << ", negrisk=" << internal_transfer_negrisk << ", fpmm=" << internal_transfer_fpmm << ", other=" << internal_transfer_other << ")" << std::endl;
-  if (unclassified > 0)
-    std::cerr << "  ERROR Unclassified: " << unclassified << std::endl;
+  std::ostringstream oss;
+  oss << "Transfer Stats Summary: total=" << total << "\n";
+  oss << "  UserEvents: " << user_events() << "\n";
+  oss << "    Split: " << split() << " (poly=" << split_poly()
+      << ", non_poly=" << split_non_poly << ")\n";
+  oss << "    Merge: " << merge() << " (poly=" << merge_poly()
+      << ", non_poly=" << merge_non_poly << ")\n";
+  oss << "    Redemption: " << redemption_all() << " (poly=" << redemption
+      << ", non_poly=" << redemption_non_poly << ")\n";
+  oss << "    Convert: " << convert << "\n";
+  oss << "    Order: " << order() << " (buy=" << order_buy
+      << ", sell=" << order_sell << ")\n";
+  oss << "    FPMMTrade: " << fpmm_trade() << " (buy=" << fpmm_buy
+      << ", sell=" << fpmm_sell << ")\n";
+  oss << "    FPMMLP: " << fpmm_lp() << " (add=" << fpmm_lp_add
+      << ", remove=" << fpmm_lp_remove << ", return=" << fpmm_lp_return << ")\n";
+  oss << "    TransferIn: " << transfer_in() << " (poly=" << transfer_in_poly()
+      << ", non_poly=" << transfer_in_non_poly << ")\n";
+  oss << "    TransferOut: " << transfer_out() << " (poly=" << transfer_out_poly()
+      << ", non_poly=" << transfer_out_non_poly << ")\n";
+  oss << "  Internal: " << internal() << "\n";
+  oss << "    Mint: " << internal_mint() << " (negrisk=" << internal_mint_negrisk
+      << ", fpmm=" << internal_mint_fpmm << ")\n";
+  oss << "    Burn: " << internal_burn() << " (negrisk=" << internal_burn_negrisk
+      << ", fpmm=" << internal_burn_fpmm
+      << ", convert=" << internal_burn_convert << ")\n";
+  oss << "    Transfer: " << internal_transfer() << " (zero=" << internal_transfer_zero
+      << ", order=" << internal_transfer_order
+      << ", negrisk=" << internal_transfer_negrisk
+      << ", fpmm=" << internal_transfer_fpmm
+      << ", other=" << internal_transfer_other << ")\n";
+  if (unclassified > 0) {
+    oss << "  ERROR Unclassified: " << unclassified << "\n";
+  }
+  std::cerr << oss.str();
 }
 
 std::string TransferStats::format_log(const TransferStats &chunk, const TransferStats &acc) {

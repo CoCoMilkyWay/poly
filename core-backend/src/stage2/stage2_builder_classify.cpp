@@ -30,7 +30,7 @@ TransferClass EventBuilder::classify_and_emit(
   TxKey tx_key{block, tx_hash};
   TxTokenKey tx_token_key{block, tx_hash, token_id};
   bool op_is_exchange = (op == CTF_EXCHANGE || op == NEG_RISK_CTF_EXCHANGE);
-  bool op_is_fpmm = (fpmm_map_.find(op) != fpmm_map_.end());
+  bool op_is_fpmm = is_known_fpmm(op);
   int64_t transfer_log_index = sort_key - block * SORT_KEY_SCALE;
   stage2_assert(transfer_log_index >= 0, AssertLevel::L0, "Input", "TransferLogIndexNonNegative");
   int64_t sub_idx = transfer_log_index % TRANSFER_FLAT_LOG_SCALE;
@@ -746,8 +746,7 @@ TransferClass EventBuilder::classify_and_emit(
   };
 
   if (amount == 0) {
-    auto fpmm_zero_it = fpmm_map_.find(op);
-    if (fpmm_zero_it != fpmm_map_.end()) {
+    if (is_known_fpmm(op)) {
       TxFPMMKey tx_fpmm_key{block, tx_hash, op};
       if (to == op) {
         if (FPMMTradeInfo *tit = find_fpmm_trade_info(tx_fpmm_key, 2, from, 0); tit != nullptr) {
@@ -954,8 +953,7 @@ TransferClass EventBuilder::classify_and_emit(
   }
 
   // ========== FPMM operator ==========
-  auto fpmm_it = fpmm_map_.find(op);
-  if (fpmm_it != fpmm_map_.end()) {
+  if (is_known_fpmm(op)) {
     TxFPMMKey tx_fpmm_key{block, tx_hash, op};
 
     // 0x0 -> FPMM: LP add / internal split mint leg

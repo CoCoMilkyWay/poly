@@ -517,37 +517,45 @@ private:
 
     update_xfer_tree(evt);
 
-    // 更新事件计数
-    switch (evt.type) {
+    bump_event_counter(static_cast<EventType>(evt.type), 1);
+  }
+
+  void phase1_update_mappings(int64_t start, int64_t end);
+  void phase2_build_semantic_index(int64_t start, int64_t end);
+  void phase3_process_transfers(int64_t start, int64_t end);
+  void commit_chunk(int64_t new_cursor);
+  void bump_event_counter(EventType type, int64_t delta) {
+    stage2_assert(delta >= 0, AssertLevel::L0, "Input", "CounterDeltaNonNegative");
+    switch (type) {
     case EventType::OrderBuy:
     case EventType::OrderSell:
-      progress_.cnt_order++;
+      progress_.cnt_order += delta;
       break;
     case EventType::SplitNormal:
     case EventType::SplitNegRisk:
     case EventType::SplitNonPoly:
-      progress_.cnt_split++;
+      progress_.cnt_split += delta;
       break;
     case EventType::MergeNormal:
     case EventType::MergeNegRisk:
     case EventType::MergeNonPoly:
-      progress_.cnt_merge++;
+      progress_.cnt_merge += delta;
       break;
     case EventType::Redemption:
     case EventType::RedemptionNonPoly:
-      progress_.cnt_redemption++;
+      progress_.cnt_redemption += delta;
       break;
     case EventType::FPMMBuy:
     case EventType::FPMMSell:
-      progress_.cnt_fpmm_trade++;
+      progress_.cnt_fpmm_trade += delta;
       break;
     case EventType::FPMMLPAdd:
     case EventType::FPMMLPRemove:
     case EventType::FPMMLPReturn:
-      progress_.cnt_fpmm_funding++;
+      progress_.cnt_fpmm_funding += delta;
       break;
     case EventType::Convert:
-      progress_.cnt_convert++;
+      progress_.cnt_convert += delta;
       break;
     case EventType::TransferInNegRisk:
     case EventType::TransferInOther:
@@ -555,7 +563,7 @@ private:
     case EventType::TransferOutNegRisk:
     case EventType::TransferOutOther:
     case EventType::TransferOutNonPoly:
-      progress_.cnt_transfer++;
+      progress_.cnt_transfer += delta;
       break;
     default:
       stage2_assert(false, AssertLevel::L0, "Input", "UnknownEventTypeInCounter");
@@ -563,15 +571,13 @@ private:
     }
   }
 
-  void phase1_update_mappings(int64_t start, int64_t end);
-  void phase2_build_semantic_index(int64_t start, int64_t end);
-  void phase3_process_transfers(int64_t start, int64_t end);
-  void commit_chunk(int64_t new_cursor);
-
   bool is_protocol_contract(const std::string &addr) const {
     return addr == ZERO_ADDR || addr == CTF_EXCHANGE || addr == NEG_RISK_CTF_EXCHANGE ||
            addr == NEG_RISK_ADAPTER || addr == CONDITIONAL_TOKENS ||
            addr == NO_TOKEN_BURN_ADDRESS || fpmm_map_.count(addr) > 0;
+  }
+  bool is_known_fpmm(const std::string &addr) const {
+    return fpmm_map_.find(addr) != fpmm_map_.end();
   }
 
   TransferClass classify_and_emit(int64_t sort_key, const std::array<uint8_t, 32> &tx_hash,

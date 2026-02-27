@@ -117,6 +117,12 @@ void EventBuilder::init_schema() {
 
 void EventBuilder::load_from_rb() {
   auto conn = stage2_db_.create_connection();
+  auto blob_hex = [](const duckdb::Value &v) {
+    return blob_to_hex(v.GetValueUnsafe<std::string>());
+  };
+  auto blob_hex_lower = [&](const duckdb::Value &v) {
+    return to_lower(blob_hex(v));
+  };
   progress_ = BuildProgress{};
   committed_progress_ = BuildProgress{};
 
@@ -150,7 +156,7 @@ void EventBuilder::load_from_rb() {
   auto coll_r = conn->Query("SELECT coll_id, collateral_addr FROM rb_collateral");
   for (idx_t i = 0; i < coll_r->RowCount(); ++i) {
     uint8_t coll_id = static_cast<uint8_t>(coll_r->GetValue(0, i).GetValue<int32_t>());
-    std::string addr = to_lower(blob_to_hex(coll_r->GetValue(1, i).GetValueUnsafe<std::string>()));
+    std::string addr = blob_hex_lower(coll_r->GetValue(1, i));
     collateral_addr_to_id_[addr] = coll_id;
     collateral_id_to_addr_[coll_id] = addr;
     if (coll_id >= next_collateral_id_) {
@@ -169,49 +175,7 @@ void EventBuilder::load_from_rb() {
   for (idx_t i = 0; i < cnt_r->RowCount(); ++i) {
     int type = cnt_r->GetValue(0, i).GetValue<int>();
     int64_t cnt = cnt_r->GetValue(1, i).GetValue<int64_t>();
-    switch (static_cast<EventType>(type)) {
-    case EventType::OrderBuy:
-    case EventType::OrderSell:
-      progress_.cnt_order += cnt;
-      break;
-    case EventType::SplitNormal:
-    case EventType::SplitNegRisk:
-    case EventType::SplitNonPoly:
-      progress_.cnt_split += cnt;
-      break;
-    case EventType::MergeNormal:
-    case EventType::MergeNegRisk:
-    case EventType::MergeNonPoly:
-      progress_.cnt_merge += cnt;
-      break;
-    case EventType::Redemption:
-    case EventType::RedemptionNonPoly:
-      progress_.cnt_redemption += cnt;
-      break;
-    case EventType::FPMMBuy:
-    case EventType::FPMMSell:
-      progress_.cnt_fpmm_trade += cnt;
-      break;
-    case EventType::FPMMLPAdd:
-    case EventType::FPMMLPRemove:
-    case EventType::FPMMLPReturn:
-      progress_.cnt_fpmm_funding += cnt;
-      break;
-    case EventType::Convert:
-      progress_.cnt_convert += cnt;
-      break;
-    case EventType::TransferInNegRisk:
-    case EventType::TransferInOther:
-    case EventType::TransferInNonPoly:
-    case EventType::TransferOutNegRisk:
-    case EventType::TransferOutOther:
-    case EventType::TransferOutNonPoly:
-      progress_.cnt_transfer += cnt;
-      break;
-    default:
-      stage2_assert(false, AssertLevel::L0, "Input", "UnknownEventTypeInRestoreCounter");
-      break;
-    }
+    bump_event_counter(static_cast<EventType>(type), cnt);
     progress_.total_events += cnt;
   }
 
@@ -220,7 +184,7 @@ void EventBuilder::load_from_rb() {
                             "payout_4, payout_5, payout_6, payout_7, question_id, source FROM rb_condition ORDER BY cond_idx");
   for (idx_t i = 0; i < cond_r->RowCount(); ++i) {
     uint32_t idx = cond_r->GetValue(0, i).GetValue<uint32_t>();
-    std::string cond_id = blob_to_hex(cond_r->GetValue(1, i).GetValueUnsafe<std::string>());
+    std::string cond_id = blob_hex(cond_r->GetValue(1, i));
     ConditionInfo info;
     info.outcome_count = cond_r->GetValue(2, i).GetValue<uint8_t>();
     for (int j = 0; j < info.outcome_count; ++j) {
@@ -229,7 +193,7 @@ void EventBuilder::load_from_rb() {
     }
     auto qid_v = cond_r->GetValue(11, i);
     if (!qid_v.IsNull()) {
-      info.question_id = to_lower(blob_to_hex(qid_v.GetValueUnsafe<std::string>()));
+      info.question_id = blob_hex_lower(qid_v);
     }
     info.source = static_cast<ConditionSource>(cond_r->GetValue(12, i).GetValue<int>());
     while (conditions_.size() <= idx) {
@@ -243,7 +207,7 @@ void EventBuilder::load_from_rb() {
 
   auto token_r = conn->Query("SELECT token_id, cond_idx, token_idx, source FROM rb_token");
   for (idx_t i = 0; i < token_r->RowCount(); ++i) {
-    std::string tid = blob_to_hex(token_r->GetValue(0, i).GetValueUnsafe<std::string>());
+    std::string tid = blob_hex(token_r->GetValue(0, i));
     TokenInfo info;
     int32_t db_cond_idx = token_r->GetValue(1, i).GetValue<int32_t>();
     info.cond_idx = (db_cond_idx == -1) ? UNKNOWN_COND_IDX : static_cast<uint32_t>(db_cond_idx);
@@ -261,7 +225,7 @@ void EventBuilder::load_from_rb() {
 
   auto fpmm_r = conn->Query("SELECT fpmm_addr, cond_idx, collateral FROM rb_fpmm");
   for (idx_t i = 0; i < fpmm_r->RowCount(); ++i) {
-    std::string addr = blob_to_hex(fpmm_r->GetValue(0, i).GetValueUnsafe<std::string>());
+    std::string addr = blob_hex(fpmm_r->GetValue(0, i));
     FPMMInfo info;
     info.cond_idx = fpmm_r->GetValue(1, i).GetValue<uint32_t>();
     info.collateral = static_cast<uint8_t>(fpmm_r->GetValue(2, i).GetValue<int32_t>());
@@ -275,8 +239,8 @@ void EventBuilder::load_from_rb() {
   // 从 rb_neg_risk_market 表加载 question_id -> market_id 映射，并标记 NegRisk 条件
   auto nrm_r = conn->Query("SELECT question_id, market_id FROM rb_neg_risk_market");
   for (idx_t i = 0; i < nrm_r->RowCount(); ++i) {
-    std::string question_id = to_lower(blob_to_hex(nrm_r->GetValue(0, i).GetValueUnsafe<std::string>()));
-    std::string market_id = to_lower(blob_to_hex(nrm_r->GetValue(1, i).GetValueUnsafe<std::string>()));
+    std::string question_id = blob_hex_lower(nrm_r->GetValue(0, i));
+    std::string market_id = blob_hex_lower(nrm_r->GetValue(1, i));
     cond_to_market_[question_id] = market_id;
     seen_markets_.insert(market_id);
 
@@ -304,8 +268,7 @@ void EventBuilder::load_from_rb() {
   // 加载已知用户（恢复时从数据库）
   auto user_r = conn->Query("SELECT DISTINCT user_addr FROM user_event");
   for (idx_t i = 0; i < user_r->RowCount(); ++i) {
-    std::string addr = blob_to_hex(user_r->GetValue(0, i).GetValueUnsafe<std::string>());
-    seen_users_.insert(to_lower(addr));
+    seen_users_.insert(blob_hex_lower(user_r->GetValue(0, i)));
   }
   progress_.total_users = seen_users_.size();
 
@@ -355,40 +318,45 @@ void EventBuilder::load_from_rb() {
       return it == xfer_saved.end() ? 0 : it->second;
     };
     auto &xs = progress_.xfer_stats;
-    xs.total = load("xfer_total");
-    xs.split_normal = load("xfer_split_normal");
-    xs.split_negrisk = load("xfer_split_negrisk");
-    xs.split_non_poly = load("xfer_split_non_poly");
-    xs.merge_normal = load("xfer_merge_normal");
-    xs.merge_negrisk = load("xfer_merge_negrisk");
-    xs.merge_non_poly = load("xfer_merge_non_poly");
-    xs.redemption = load("xfer_redemption");
-    xs.redemption_non_poly = load("xfer_redemption_non_poly");
-    xs.convert = load("xfer_convert");
-    xs.order_buy = load("xfer_order_buy");
-    xs.order_sell = load("xfer_order_sell");
-    xs.fpmm_buy = load("xfer_fpmm_buy");
-    xs.fpmm_sell = load("xfer_fpmm_sell");
-    xs.fpmm_lp_add = load("xfer_lp_add");
-    xs.fpmm_lp_remove = load("xfer_lp_remove");
-    xs.fpmm_lp_return = load("xfer_lp_return");
-    xs.transfer_in_negrisk = load("xfer_transfer_in_negrisk");
-    xs.transfer_in_other = load("xfer_transfer_in_other");
-    xs.transfer_in_non_poly = load("xfer_transfer_in_non_poly");
-    xs.transfer_out_negrisk = load("xfer_transfer_out_negrisk");
-    xs.transfer_out_other = load("xfer_transfer_out_other");
-    xs.transfer_out_non_poly = load("xfer_transfer_out_non_poly");
-    xs.internal_mint_negrisk = load("xfer_internal_mint_negrisk");
-    xs.internal_mint_fpmm = load("xfer_internal_mint_fpmm");
-    xs.internal_burn_negrisk = load("xfer_internal_burn_negrisk");
-    xs.internal_burn_fpmm = load("xfer_internal_burn_fpmm");
-    xs.internal_burn_convert = load("xfer_internal_burn_convert");
-    xs.internal_transfer_zero = load("xfer_internal_transfer_zero");
-    xs.internal_transfer_order = load("xfer_internal_transfer_order");
-    xs.internal_transfer_negrisk = load("xfer_internal_transfer_negrisk");
-    xs.internal_transfer_fpmm = load("xfer_internal_transfer_fpmm");
-    xs.internal_transfer_other = load("xfer_internal_transfer_other");
-    xs.unclassified = load("xfer_unclassified");
+    static const std::pair<const char *, int64_t TransferStats::*> kXferFields[] = {
+        {"xfer_total", &TransferStats::total},
+        {"xfer_split_normal", &TransferStats::split_normal},
+        {"xfer_split_negrisk", &TransferStats::split_negrisk},
+        {"xfer_split_non_poly", &TransferStats::split_non_poly},
+        {"xfer_merge_normal", &TransferStats::merge_normal},
+        {"xfer_merge_negrisk", &TransferStats::merge_negrisk},
+        {"xfer_merge_non_poly", &TransferStats::merge_non_poly},
+        {"xfer_redemption", &TransferStats::redemption},
+        {"xfer_redemption_non_poly", &TransferStats::redemption_non_poly},
+        {"xfer_convert", &TransferStats::convert},
+        {"xfer_order_buy", &TransferStats::order_buy},
+        {"xfer_order_sell", &TransferStats::order_sell},
+        {"xfer_fpmm_buy", &TransferStats::fpmm_buy},
+        {"xfer_fpmm_sell", &TransferStats::fpmm_sell},
+        {"xfer_lp_add", &TransferStats::fpmm_lp_add},
+        {"xfer_lp_remove", &TransferStats::fpmm_lp_remove},
+        {"xfer_lp_return", &TransferStats::fpmm_lp_return},
+        {"xfer_transfer_in_negrisk", &TransferStats::transfer_in_negrisk},
+        {"xfer_transfer_in_other", &TransferStats::transfer_in_other},
+        {"xfer_transfer_in_non_poly", &TransferStats::transfer_in_non_poly},
+        {"xfer_transfer_out_negrisk", &TransferStats::transfer_out_negrisk},
+        {"xfer_transfer_out_other", &TransferStats::transfer_out_other},
+        {"xfer_transfer_out_non_poly", &TransferStats::transfer_out_non_poly},
+        {"xfer_internal_mint_negrisk", &TransferStats::internal_mint_negrisk},
+        {"xfer_internal_mint_fpmm", &TransferStats::internal_mint_fpmm},
+        {"xfer_internal_burn_negrisk", &TransferStats::internal_burn_negrisk},
+        {"xfer_internal_burn_fpmm", &TransferStats::internal_burn_fpmm},
+        {"xfer_internal_burn_convert", &TransferStats::internal_burn_convert},
+        {"xfer_internal_transfer_zero", &TransferStats::internal_transfer_zero},
+        {"xfer_internal_transfer_order", &TransferStats::internal_transfer_order},
+        {"xfer_internal_transfer_negrisk", &TransferStats::internal_transfer_negrisk},
+        {"xfer_internal_transfer_fpmm", &TransferStats::internal_transfer_fpmm},
+        {"xfer_internal_transfer_other", &TransferStats::internal_transfer_other},
+        {"xfer_unclassified", &TransferStats::unclassified},
+    };
+    for (const auto &[key, field] : kXferFields) {
+      xs.*field = load(key);
+    }
     xs.verify();
   }
 
