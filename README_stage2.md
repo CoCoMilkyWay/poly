@@ -158,7 +158,7 @@ abbr(all)
 ⑤ `split` / `merge` / `redemption` 增量更新 → `cond_idx_map` + `cond_info_map`(source/outcome_count按index_set最高位推断并扩展) + `token_info_map` + `coll_map`(同condition若出现多collateral，按“已知优先+确定性tie-break”规范化)
 ⑥ 回放暂存 `fpmm` 行并严格落盘              → 仅处理 `conditional_tokens == CONDITIONAL_TOKENS` 的域内行；域内要求 `condition_ids` 全已知，再写 `fpmm_info_map` + `token_info_map` + `coll_map` + `pm_cond_set`
 ⑦ `neg_risk_question`                       → `mid_map` + `nr_cond_set`
-⑧ `token_info_map` 升级规则                  → 允许 `TransferInferred -> 协议来源(token_map/split/merge/redemption/fpmm)` 单向升级；非推断来源要求 `cond_idx/token_idx` 一致
+⑧ `token_info_map` 升级规则                 → 按证据强度单向升级(`TransferInferred < FPMM < token_map < split/merge/redemption`)；同映射可仅升级source；`token_map` 同condition反向重复注册可忽略；非推断来源要求 `cond_idx` 一致
 → `update_cond_type_stats()`                → `ConditionTree` / `TokenTree`
 ```
 

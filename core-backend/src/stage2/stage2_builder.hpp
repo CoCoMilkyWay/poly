@@ -183,32 +183,76 @@ private:
     auto it = token_map_.find(lower);
     if (it != token_map_.end()) {
       TokenInfo &existing = it->second;
-      bool existing_is_inferred = (existing.source == TokenSource::TransferInferred);
-      bool new_is_inferred = (source == TokenSource::TransferInferred);
-
-      // Allow one-way refinement: Transfer-inferred token can be upgraded to
-      // a protocol-grounded mapping when later semantic evidence appears.
-      if (existing_is_inferred && !new_is_inferred) {
-        existing = {cond_idx, token_idx, source};
-        bool patched_pending = false;
+      auto source_rank = [](TokenSource s) -> int {
+        switch (s) {
+        case TokenSource::TransferInferred:
+          return 0;
+        case TokenSource::PolymarketFPMM:
+        case TokenSource::OtherFPMM:
+          return 1;
+        case TokenSource::PolymarketTokenReg:
+          return 2;
+        case TokenSource::SplitEvent:
+        case TokenSource::MergeEvent:
+        case TokenSource::RedemptionEvent:
+          return 3;
+        }
+        return 0;
+      };
+      auto patch_pending = [&](uint32_t new_cond_idx, uint8_t new_token_idx, TokenSource new_source) {
+        bool patched = false;
         for (auto &nt : new_tokens_) {
           if (nt.token_id == lower) {
-            nt.cond_idx = cond_idx;
-            nt.token_idx = token_idx;
-            nt.source = source;
-            patched_pending = true;
+            nt.cond_idx = new_cond_idx;
+            nt.token_idx = new_token_idx;
+            nt.source = new_source;
+            patched = true;
             break;
           }
         }
-        if (!patched_pending) {
-          new_tokens_.push_back({lower, cond_idx, token_idx, source});
+        if (!patched) {
+          new_tokens_.push_back({lower, new_cond_idx, new_token_idx, new_source});
+        }
+      };
+
+      bool same_assignment = (existing.cond_idx == cond_idx && existing.token_idx == token_idx);
+      int existing_rank = source_rank(existing.source);
+      int new_rank = source_rank(source);
+      bool existing_is_inferred = (existing.source == TokenSource::TransferInferred);
+      bool new_is_inferred = (source == TokenSource::TransferInferred);
+
+      // TokenRegistered can be emitted in both token/complement orders for the
+      // same pair. Treat same-condition TokenReg remaps as harmless duplicates.
+      if (existing.source == TokenSource::PolymarketTokenReg &&
+          source == TokenSource::PolymarketTokenReg &&
+          existing.cond_idx == cond_idx) {
+        return;
+      }
+
+      // Non-inferred sources must agree on condition mapping.
+      if (!existing_is_inferred && !new_is_inferred) {
+        stage2_assert(existing.cond_idx == cond_idx, AssertLevel::L1, "Mapping", "TokenCondIdxConsistent");
+      }
+
+      // If mapping already agrees, keep the best available source label.
+      if (same_assignment) {
+        if (new_rank > existing_rank) {
+          existing.source = source;
+          patch_pending(existing.cond_idx, existing.token_idx, existing.source);
         }
         return;
       }
 
-      if (!existing_is_inferred && !new_is_inferred) {
-        stage2_assert(existing.cond_idx == cond_idx, AssertLevel::L1, "Mapping", "TokenCondIdxConsistent");
-        stage2_assert(existing.token_idx == token_idx, AssertLevel::L1, "Mapping", "TokenIdxConsistent");
+      // Refine mapping only when new evidence has higher confidence.
+      if (!same_assignment && new_rank > existing_rank) {
+        existing = {cond_idx, token_idx, source};
+        patch_pending(cond_idx, token_idx, source);
+        return;
+      }
+
+      // Strong semantic sources should never disagree on the same token.
+      if (!same_assignment && existing_rank >= 3 && new_rank >= 3) {
+        stage2_assert(false, AssertLevel::L1, "Mapping", "TokenStrongSourceConflict");
       }
       return;
     }
