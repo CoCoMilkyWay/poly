@@ -736,8 +736,21 @@ TransferClass EventBuilder::classify_and_emit(
       stage2_assert(false, AssertLevel::L3, "Convert", "BurnWithoutSemanticEvent");
       return TransferClass::Unclassified;
     }
-    stage2_assert(false, AssertLevel::L3, "NegRisk", "UnexpectedAdapterTransferPattern");
-    return TransferClass::Unclassified;
+    // Adapter may operate transfers on behalf of users/vaults in paths that are
+    // not split/merge/convert legs. Keep classification total while preserving
+    // NegRisk attribution for known tokens.
+    if (known_token) {
+      emit_if_user(to, RawEvent{sort_key, cond_idx, EventType::TransferInNegRisk, token_idx, coll, 0, amount, 0});
+      emit_if_user(from, RawEvent{sort_key, cond_idx, EventType::TransferOutNegRisk, token_idx, coll, 0, -amount, 0});
+      return classify_transfer_by_counterparty(TransferClass::TransferInNegRisk,
+                                               TransferClass::TransferOutNegRisk,
+                                               TransferClass::InternalTransferNegRisk);
+    }
+    emit_if_user(to, RawEvent{sort_key, cond_idx, EventType::TransferInNonPoly, token_idx, coll, 0, amount, 0});
+    emit_if_user(from, RawEvent{sort_key, cond_idx, EventType::TransferOutNonPoly, token_idx, coll, 0, -amount, 0});
+    return classify_transfer_by_counterparty(TransferClass::TransferInNonPoly,
+                                             TransferClass::TransferOutNonPoly,
+                                             TransferClass::InternalTransferNegRisk);
   }
 
   // ========== FPMM operator ==========

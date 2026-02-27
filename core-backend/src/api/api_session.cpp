@@ -12,9 +12,9 @@
 
 #include "misc/profiler.hpp"
 
-ApiSession::ApiSession(tcp::socket socket, Database &db, stage3::PnlEngine &pnl_engine,
+ApiSession::ApiSession(tcp::socket socket, Database &stage1_db, Database &stage2_db, stage3::PnlEngine &pnl_engine,
                        Stage1SyncGetter stage1_getter, Stage2SyncGetter stage2_getter)
-    : socket_(std::move(socket)), db_(db), pnl_engine_(pnl_engine),
+    : socket_(std::move(socket)), stage1_db_(stage1_db), stage2_db_(stage2_db), pnl_engine_(pnl_engine),
       sync_getter_(std::move(stage1_getter)), stage2_getter_(std::move(stage2_getter)) {}
 
 void ApiSession::run() {
@@ -135,7 +135,7 @@ void ApiSession::handle_tables() {
   static std::mutex save_mutex;
 
   std::call_once(cache_loaded_flag, [this]() {
-    json cached = db_.load_counts_cache();
+    json cached = stage1_db_.load_counts_cache();
     for (auto &[table, files] : cached.items()) {
       auto &tc = table_cache[table];
       for (auto &[fname, cnt] : files.items()) {
@@ -149,7 +149,7 @@ void ApiSession::handle_tables() {
   std::vector<std::future<std::pair<std::string, int64_t>>> futures;
   for (const char *name : feather_names) {
     std::string table_name = name;
-    std::string dir = db_.feather_dir(name);
+    std::string dir = stage1_db_.feather_dir(name);
     if (!std::filesystem::exists(dir) || std::filesystem::is_empty(dir)) {
       continue;
     }
@@ -196,7 +196,7 @@ void ApiSession::handle_tables() {
         cache_json[tname][fname] = cnt;
       }
     }
-    db_.save_counts_cache(cache_json);
+    stage1_db_.save_counts_cache(cache_json);
   }
 
   res_.result(http::status::ok);
@@ -207,7 +207,7 @@ void ApiSession::handle_sync_state() {
   TraceN("api/sync_state");
   res_.set(http::field::content_type, "application/json");
 
-  int64_t last_block = db_.get_last_block();
+  int64_t last_block = stage1_db_.get_last_block();
   json result = {{"last_block", last_block}};
 
   if (sync_getter_) {
@@ -244,7 +244,7 @@ void ApiSession::handle_query() {
     return;
   }
 
-  json result = db_.query_json(query);
+  json result = stage1_db_.query_json(query);
   res_.result(http::status::ok);
   res_.body() = result.dump();
 }
@@ -264,7 +264,7 @@ void ApiSession::handle_export_csv() {
     return;
   }
 
-  std::string dir = db_.feather_dir(table);
+  std::string dir = stage1_db_.feather_dir(table);
   if (!std::filesystem::exists(dir) || std::filesystem::is_empty(dir)) {
     res_.result(http::status::ok);
     res_.body() = R"({"rows":0})";
@@ -291,7 +291,7 @@ void ApiSession::handle_export_csv() {
     return;
   }
 
-  auto conn = db_.create_connection();
+  auto conn = stage1_db_.create_connection();
   std::string sql = "COPY (SELECT * FROM read_arrow('" + latest + "') LIMIT " +
                     std::to_string(limit) + ") TO '" + output + "' (HEADER)";
   auto result = conn->Query(sql);
@@ -312,7 +312,7 @@ void ApiSession::handle_table_sample() {
     return;
   }
 
-  std::string dir = db_.feather_dir(table);
+  std::string dir = stage1_db_.feather_dir(table);
   if (!std::filesystem::exists(dir) || std::filesystem::is_empty(dir)) {
     res_.result(http::status::ok);
     res_.body() = "[]";
@@ -339,7 +339,7 @@ void ApiSession::handle_table_sample() {
     return;
   }
 
-  json result = db_.query_json("SELECT * FROM read_arrow('" + latest + "') LIMIT 1");
+  json result = stage1_db_.query_json("SELECT * FROM read_arrow('" + latest + "') LIMIT 1");
   res_.result(http::status::ok);
   res_.body() = result.dump();
 }
@@ -353,7 +353,7 @@ void ApiSession::handle_rebuild_status() {
   const auto &tt = p.token_tree;
   std::unordered_map<uint8_t, std::string> coll_id_to_addr;
   {
-    auto conn = db_.create_connection();
+    auto conn = stage2_db_.create_connection();
     auto coll_rows = conn->Query("SELECT coll_id, lower(hex(collateral_addr)) AS addr FROM rb_collateral");
     for (idx_t i = 0; i < coll_rows->RowCount(); ++i) {
       uint8_t coll_id = static_cast<uint8_t>(coll_rows->GetValue(0, i).GetValue<int32_t>());

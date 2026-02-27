@@ -90,7 +90,7 @@ int main(int argc, char *argv[]) {
   };
 
   boost::asio::io_context api_ioc;
-  ApiServer api_server(api_ioc, stage1_db, pnl_engine, config.backend_port, stage1_getter, stage2_getter);
+  ApiServer api_server(api_ioc, stage1_db, stage2_db, pnl_engine, config.backend_port, stage1_getter, stage2_getter);
 
   boost::asio::signal_set signals(api_ioc, SIGINT, SIGTERM);
   signals.async_wait([&](const boost::system::error_code &, int sig) {

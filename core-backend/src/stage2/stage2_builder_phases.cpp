@@ -554,6 +554,12 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
       "transfer", start, end,
       " ORDER BY block_number, log_index");
   std::unordered_map<TxFPMMKey, uint8_t> observed_fpmm_trade_leg_mask;
+  struct ObservedOrderLeg {
+    std::string from;
+    std::string to;
+    int64_t amount = 0;
+  };
+  std::unordered_map<TxTokenKey, std::vector<ObservedOrderLeg>> observed_order_legs;
 
   auto resolve_transfer_collateral = [&](uint32_t cid_idx, const std::string &operator_addr) {
     auto coll_it = cond_collateral_.find(cid_idx);
@@ -584,6 +590,10 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
 
     int64_t sort_key = block * SORT_KEY_SCALE + log_idx;
     auto tx_hash = hex_to_bytes32(get_hex(transfers, 1, i));
+    if (op == CTF_EXCHANGE || op == NEG_RISK_CTF_EXCHANGE) {
+      TxTokenKey order_key{block, tx_hash, token_id};
+      observed_order_legs[order_key].push_back(ObservedOrderLeg{from, to, amount});
+    }
     if (fpmm_map_.find(op) != fpmm_map_.end()) {
       TxFPMMKey key{block, tx_hash, op};
       uint8_t mask = observed_fpmm_trade_leg_mask[key];
@@ -670,9 +680,33 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
                     AssertLevel::L4, "Consume", "RedeemConsumedOrCoveredByParent");
     }
   }
-  for (const auto &[_, rows] : tx_order_) {
+  for (const auto &[key, rows] : tx_order_) {
+    auto order_leg_observed = [&](const OrderInfo &row) {
+      auto oit = observed_order_legs.find(key);
+      if (oit == observed_order_legs.end()) {
+        return false;
+      }
+      for (const auto &leg : oit->second) {
+        if (leg.amount != row.tokens) {
+          continue;
+        }
+        if (row.maker_side == 1) {
+          if (leg.to == row.maker &&
+              (leg.from == row.taker || leg.from == CTF_EXCHANGE || leg.from == NEG_RISK_CTF_EXCHANGE)) {
+            return true;
+          }
+          continue;
+        }
+        if (leg.from == row.maker &&
+            (leg.to == row.taker || leg.to == CTF_EXCHANGE || leg.to == NEG_RISK_CTF_EXCHANGE)) {
+          return true;
+        }
+      }
+      return false;
+    };
     for (const auto &row : rows) {
-      stage2_assert(row.consumed, AssertLevel::L4, "Consume", "OrderConsumed");
+      bool must_consume = order_leg_observed(row);
+      stage2_assert(!must_consume || row.consumed, AssertLevel::L4, "Consume", "OrderConsumedIfLegObserved");
     }
   }
   for (const auto &[key, rows] : tx_fpmm_trade_) {

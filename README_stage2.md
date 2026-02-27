@@ -229,6 +229,7 @@ phase3_process_transfers(chunk)
 │  │  │  ├─ merge: 支持多条 burn + parent mint（若存在）；含 FPMM->0 内部 burn 腿先消费 merge 再落 InternalBurnFPMM
 │  │  │  ├─ redemption: 支持 index_sets 对应的多条 burn
 │  │  │  ├─ convert: 保持 InternalBurnConvert + Convert + (YES侧 SplitNegRisk/TransferInNegRisk) 三段路径
+│  │  │  ├─ adapter其他路径: 未命中 split/merge/convert 时按 transfer 兜底（known->TransferIn/OutNegRisk，unknown->TransferIn/OutNonPoly；内部记 InternalTransferNegRisk）
 │  │  │  └─ FPMM内部腿 explain: 在同side的“trade_leg_required 且 未消费 且 未解释”候选中取最近未来语义log；若已无待解释候选则允许直接通过
 │  │  ├─ 未绑定 transfer: fallback 到 TransferIn*/TransferOut*/Internal*
 │  │  ├─ amount==0 -> InternalTransferZero（若命中FPMM trade语义则先消费语义，再按零值分类）
@@ -261,7 +262,7 @@ phase3_process_transfers(chunk)
 │  ├─ assert(n_unclass == 0)
 │  ├─ assert(每条transfer消费次数 <= 1)
 │  ├─ assert(op消费闭环: 每个语义 op 都满足“已消费或可解释例外”)
-│  │  ├─ order: consumed=true
+│  │  ├─ order: 若观察到可消费的 order 腿则 consumed=true；无可观察腿允许零消费
 │  │  ├─ trade: !must_consume_or_explain 或 consumed=true 或 explained_without_direct_leg=true
 │  │  │        其中 must_consume_or_explain = trade_leg_required && observed_trade_leg(side)
 │  │  ├─ convert: consumed_count>0

@@ -36,7 +36,7 @@ public:
   using Stage1SyncGetter = std::function<Stage1SyncStatus()>;
   using Stage2SyncGetter = std::function<Stage2SyncStatus()>;
 
-  ApiSession(tcp::socket socket, Database &db, stage3::PnlEngine &pnl_engine,
+  ApiSession(tcp::socket socket, Database &stage1_db, Database &stage2_db, stage3::PnlEngine &pnl_engine,
              Stage1SyncGetter stage1_getter = nullptr, Stage2SyncGetter stage2_getter = nullptr);
 
   void run();
@@ -64,7 +64,8 @@ private:
   void do_write();
 
   tcp::socket socket_;
-  Database &db_;
+  Database &stage1_db_;
+  Database &stage2_db_;
   stage3::PnlEngine &pnl_engine_;
   Stage1SyncGetter sync_getter_;
   Stage2SyncGetter stage2_getter_;
