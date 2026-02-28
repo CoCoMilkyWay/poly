@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <vector>
 
+#include "misc/profiler.hpp"
 #include "../stage1/event_decode.hpp"
 
 namespace fs = std::filesystem;
@@ -22,33 +23,75 @@ public:
   explicit FeatherWriter(const std::string &data_dir) : stage1_dir_(data_dir) {}
 
   void write_partition(int64_t start_block, stage1::DecodedEvents &events) {
-    write_transfer(start_block, events.transfer);
+    {
+      TraceN("s1/transfer");
+      write_transfer(start_block, events.transfer);
+    }
     release_vector(events.transfer);
-    write_condition_preparation(start_block, events.condition_preparation);
+    {
+      TraceN("s1/condition_preparation");
+      write_condition_preparation(start_block, events.condition_preparation);
+    }
     release_vector(events.condition_preparation);
-    write_condition_resolution(start_block, events.condition_resolution);
+    {
+      TraceN("s1/condition_resolution");
+      write_condition_resolution(start_block, events.condition_resolution);
+    }
     release_vector(events.condition_resolution);
-    write_split(start_block, events.split);
+    {
+      TraceN("s1/split");
+      write_split(start_block, events.split);
+    }
     release_vector(events.split);
-    write_merge(start_block, events.merge);
+    {
+      TraceN("s1/merge");
+      write_merge(start_block, events.merge);
+    }
     release_vector(events.merge);
-    write_redemption(start_block, events.redemption);
+    {
+      TraceN("s1/redemption");
+      write_redemption(start_block, events.redemption);
+    }
     release_vector(events.redemption);
-    write_fpmm(start_block, events.fpmm);
+    {
+      TraceN("s1/fpmm");
+      write_fpmm(start_block, events.fpmm);
+    }
     release_vector(events.fpmm);
-    write_fpmm_trade(start_block, events.fpmm_trade);
+    {
+      TraceN("s1/fpmm_trade");
+      write_fpmm_trade(start_block, events.fpmm_trade);
+    }
     release_vector(events.fpmm_trade);
-    write_fpmm_funding(start_block, events.fpmm_funding);
+    {
+      TraceN("s1/fpmm_funding");
+      write_fpmm_funding(start_block, events.fpmm_funding);
+    }
     release_vector(events.fpmm_funding);
-    write_order_filled(start_block, events.order_filled);
+    {
+      TraceN("s1/order_filled");
+      write_order_filled(start_block, events.order_filled);
+    }
     release_vector(events.order_filled);
-    write_token_map(start_block, events.token_map);
+    {
+      TraceN("s1/token_map");
+      write_token_map(start_block, events.token_map);
+    }
     release_vector(events.token_map);
-    write_neg_risk_market(start_block, events.neg_risk_market);
+    {
+      TraceN("s1/neg_risk_market");
+      write_neg_risk_market(start_block, events.neg_risk_market);
+    }
     release_vector(events.neg_risk_market);
-    write_neg_risk_question(start_block, events.neg_risk_question);
+    {
+      TraceN("s1/neg_risk_question");
+      write_neg_risk_question(start_block, events.neg_risk_question);
+    }
     release_vector(events.neg_risk_question);
-    write_convert(start_block, events.convert);
+    {
+      TraceN("s1/convert");
+      write_convert(start_block, events.convert);
+    }
     release_vector(events.convert);
   }
 

@@ -435,8 +435,11 @@ void ChainSync::process_batch(DecodedEvents &&events, int64_t to_block) {
     db_write_in_progress_ = true;
     feather_writer_.write_partition(current_partition_start_, cached_events_);
     {
-      Database::WriteLock lock(db_);
+      TraceN("s1/write_state");
+      bool locked = db_.try_write_lock();
+      assert(locked && "stage1 state写锁被占用, 可能有另一个进程持有");
       db_.set_last_block(partition_end);
+      db_.release_write_lock();
     }
     record_commit_event(partition_end);
     db_write_in_progress_ = false;
