@@ -5,7 +5,7 @@
   "proxy": "socks5://172.17.112.1:19999",
   "rpc_transport": "beast",
   "stage1_enable": 1,
-  "stage2_enable": 0,
+  "stage2_enable": 1,
   "db_path_stage1": "data/stage1/polymarket.duckdb",
   "db_path_stage2": "data/stage2/users.duckdb",
   "stage1_rpc_query_threads": 20,

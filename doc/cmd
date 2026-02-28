@@ -1,0 +1,9 @@
+# cmd
+- net localgroup Administrators Chuyin.Wang /add
+- runas /user:amlogic\chuyin.wang "powershell.exe -NoExit -Command cd '%USERPROFILE%'"
+# powershell
+- wsl --mount \\.\PHYSICALDRIVE1 --bare
+# wsl-2
+- lsblk
+- sudo mount /dev/sde1 /mnt/dev/sde
+- rsync -a --info=progress2 xx/ yy/
