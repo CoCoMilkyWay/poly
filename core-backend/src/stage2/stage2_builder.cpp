@@ -154,7 +154,6 @@ void EventBuilder::load_from_rb() {
   fpmm_map_.clear();
   cond_to_market_.clear();
   seen_users_.clear();
-  seen_markets_.clear();
   fpmm_cond_idxs_.clear();
   negrisk_cond_idxs_.clear();
   cond_collateral_.clear();
@@ -277,12 +276,10 @@ void EventBuilder::load_from_rb() {
   auto nrm_r = conn->Query("SELECT question_id, market_id FROM rb_neg_risk_market");
   stage2_assert(nrm_r && !nrm_r->HasError(), AssertLevel::L0, "DB", "LoadNegRiskMarketSuccess");
   cond_to_market_.reserve(static_cast<size_t>(nrm_r->RowCount()));
-  seen_markets_.reserve(static_cast<size_t>(nrm_r->RowCount()));
   for (idx_t i = 0; i < nrm_r->RowCount(); ++i) {
     std::string question_id = blob_hex_lower(nrm_r->GetValue(0, i));
     std::string market_id = blob_hex_lower(nrm_r->GetValue(1, i));
     cond_to_market_[question_id] = market_id;
-    seen_markets_.insert(market_id);
 
     // 计算 conditionId 并标记对应条件为 NegRisk
     auto oracle_bytes = hex_to_blob(NEG_RISK_ADAPTER);
@@ -302,7 +299,6 @@ void EventBuilder::load_from_rb() {
 
   progress_.total_conditions = conditions_.size();
   progress_.total_tokens = token_map_.size();
-  progress_.total_markets = seen_markets_.size();
   update_cond_type_stats();
 
   // 加载已知用户（恢复时从数据库）
@@ -479,32 +475,21 @@ void EventBuilder::load_from_rb() {
     ost.consumed = load("sem_order_consumed");
     ost.unobserved_leg = load("sem_order_unobserved_leg");
 
-    auto &mt = progress_.market_tree;
-    mt.observed_total = load("sem_market_observed_total");
-    mt.observed_resolved = load("sem_market_observed_resolved");
-    mt.observed_unresolved = load("sem_market_observed_unresolved");
-    mt.observed_has_market_id = load("sem_market_observed_has_market_id");
-    mt.observed_no_market_id = load("sem_market_observed_no_market_id");
-    mt.observed_token_none = load("sem_market_observed_token_none");
-    mt.observed_token_partial = load("sem_market_observed_token_partial");
-    mt.observed_token_full = load("sem_market_observed_token_full");
-    mt.raw_total_rows = load("sem_market_raw_total_rows");
-    mt.raw_has_question_id = load("sem_market_raw_has_question_id");
-    mt.raw_no_question_id = load("sem_market_raw_no_question_id");
-    mt.observed_by_collateral.clear();
-    mt.raw_by_outcome_count.clear();
-    static const std::string kObsCollPrefix = "sem_market_observed_collateral_";
-    static const std::string kRawOutcomePrefix = "sem_market_raw_outcome_";
+    auto &cov = progress_.cond_tree.coverage;
+    cov.raw_rows = load("sem_cond_cov_raw_rows");
+    cov.raw_has_question_id = load("sem_cond_cov_raw_has_question_id");
+    cov.raw_no_question_id = load("sem_cond_cov_raw_no_question_id");
+    cov.raw_by_outcome_count.clear();
+    static const std::string kRawOutcomePrefix = "sem_cond_cov_raw_outcome_";
     for (const auto &[key, value] : sem_saved) {
-      if (key.rfind(kObsCollPrefix, 0) == 0) {
-        uint8_t k = static_cast<uint8_t>(std::stoll(key.substr(kObsCollPrefix.size())));
-        mt.observed_by_collateral[k] += value;
-      } else if (key.rfind(kRawOutcomePrefix, 0) == 0) {
-        int64_t k = std::stoll(key.substr(kRawOutcomePrefix.size()));
-        mt.raw_by_outcome_count[k] += value;
+      if (key.rfind(kRawOutcomePrefix, 0) != 0) {
+        continue;
       }
+      int64_t k = std::stoll(key.substr(kRawOutcomePrefix.size()));
+      cov.raw_by_outcome_count[k] += value;
     }
   }
+  update_cond_type_stats();
 
   if (progress_.cursor > 0)
     progress_.phase = 3;

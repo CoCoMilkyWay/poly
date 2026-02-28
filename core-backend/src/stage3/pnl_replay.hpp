@@ -66,7 +66,6 @@ public:
     int phase = 0;
     bool running = false;
     int64_t total_users = 0;
-    int64_t total_markets = 0;
     int64_t total_events = 0;
 
     // 树状partition统计
@@ -117,7 +116,6 @@ public:
     MergeSemanticTree merge_sem_tree;
     ConvertSemanticTree convert_sem_tree;
     OrderSemanticTree order_sem_tree;
-    MarketTree market_tree;
 
     // 按(EventType, CollateralId)分组统计
     std::unordered_map<uint16_t, int64_t> event_by_collateral;
@@ -130,7 +128,6 @@ public:
     p.phase = wp.phase;
     p.running = wp.running;
     p.total_users = bp.total_users;
-    p.total_markets = bp.total_markets;
     p.total_events = bp.total_events;
     p.cond_tree = bp.cond_tree;
     p.token_tree = bp.token_tree;
@@ -171,7 +168,6 @@ public:
     p.merge_sem_tree = bp.merge_sem_tree;
     p.convert_sem_tree = bp.convert_sem_tree;
     p.order_sem_tree = bp.order_sem_tree;
-    p.market_tree = bp.market_tree;
     p.event_by_collateral = bp.event_by_collateral;
     return p;
   }

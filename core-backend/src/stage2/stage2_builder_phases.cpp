@@ -118,13 +118,13 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
         std::string cid = q_get_hex(cp, 0, i);
         int cnt = get_u256_i32(cp, 1, i);
         std::string qid = q_get_hex_lower(cp, 2, i);
-        progress_.market_tree.raw_total_rows++;
-        progress_.market_tree.raw_by_outcome_count[cnt]++;
+        progress_.cond_tree.coverage.raw_rows++;
+        progress_.cond_tree.coverage.raw_by_outcome_count[cnt]++;
         if (!qid.empty() &&
             qid != "0x0000000000000000000000000000000000000000000000000000000000000000") {
-          progress_.market_tree.raw_has_question_id++;
+          progress_.cond_tree.coverage.raw_has_question_id++;
         } else {
-          progress_.market_tree.raw_no_question_id++;
+          progress_.cond_tree.coverage.raw_no_question_id++;
         }
         intern_condition(cid, cnt, ConditionSource::ConditionPrep, qid);
       }
@@ -341,9 +341,7 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
 
         auto [it_market, inserted] = cond_to_market_.emplace(question_id, market_id);
         if (inserted) {
-          seen_markets_.insert(market_id);
           new_neg_risk_markets_.push_back({question_id, market_id});
-          progress_.total_markets = seen_markets_.size();
         }
 
         auto oracle_bytes = hex_to_blob(NEG_RISK_ADAPTER);
@@ -1440,32 +1438,26 @@ BuildProgress EventBuilder::commit_chunk(CommitPayload payload) {
     save_cnt("sem_order_consumed", ost.consumed);
     save_cnt("sem_order_unobserved_leg", ost.unobserved_leg);
 
-    const auto &mt = progress_.market_tree;
-    save_cnt("sem_market_observed_total", mt.observed_total);
-    save_cnt("sem_market_observed_resolved", mt.observed_resolved);
-    save_cnt("sem_market_observed_unresolved", mt.observed_unresolved);
-    save_cnt("sem_market_observed_has_market_id", mt.observed_has_market_id);
-    save_cnt("sem_market_observed_no_market_id", mt.observed_no_market_id);
-    save_cnt("sem_market_observed_token_none", mt.observed_token_none);
-    save_cnt("sem_market_observed_token_partial", mt.observed_token_partial);
-    save_cnt("sem_market_observed_token_full", mt.observed_token_full);
-    save_cnt("sem_market_raw_total_rows", mt.raw_total_rows);
-    save_cnt("sem_market_raw_has_question_id", mt.raw_has_question_id);
-    save_cnt("sem_market_raw_no_question_id", mt.raw_no_question_id);
-    for (const auto &[k, v] : mt.observed_by_collateral) {
-      std::string key = "sem_market_observed_collateral_" + std::to_string(static_cast<int>(k));
-      save_cnt(key.c_str(), v);
-    }
-    for (const auto &[k, v] : mt.raw_by_outcome_count) {
-      std::string key = "sem_market_raw_outcome_" + std::to_string(k);
+    const auto &ct = progress_.cond_tree;
+    save_cnt("sem_cond_cov_raw_rows", ct.coverage.raw_rows);
+    save_cnt("sem_cond_cov_raw_has_question_id", ct.coverage.raw_has_question_id);
+    save_cnt("sem_cond_cov_raw_no_question_id", ct.coverage.raw_no_question_id);
+    for (const auto &[k, v] : ct.coverage.raw_by_outcome_count) {
+      std::string key = "sem_cond_cov_raw_outcome_" + std::to_string(k);
       save_cnt(key.c_str(), v);
     }
     ap.Close();
   }
   exec_sql("DELETE FROM stage2_cursor WHERE "
-           "key IN ('sem_market_observed_polymarket', 'sem_market_observed_other', 'sem_market_observed_negrisk') OR "
-           "key LIKE 'sem_market_observed_outcome_%' OR "
-           "key LIKE 'sem_market_observed_source_%'");
+           "key IN ('sem_cond_resolved', 'sem_cond_unresolved', 'sem_cond_token_none', "
+           "'sem_cond_token_partial', 'sem_cond_token_full', 'sem_cond_cov_observed', "
+           "'sem_negrisk_market_count', 'sem_negrisk_question_count') OR "
+           "key LIKE 'sem_market_%' OR "
+           "key LIKE 'sem_convert_qcnt_%' OR "
+           "key LIKE 'sem_cond_collateral_%' OR "
+           "key LIKE 'sem_cond_cov_raw_outcome_%' OR "
+           "key LIKE 'sem_negrisk_qpm_%' OR "
+           "key LIKE 'sem_negrisk_cpm_%'");
   exec_sql("INSERT OR REPLACE INTO stage2_cursor SELECT * FROM tmp_stage2_cursor");
 
   exec_sql("COMMIT");

@@ -238,6 +238,10 @@
       <span class="stage2-label">NegRisk市场ID</span>
       <span class="stage2-value highlight" id="s2-total-markets">0</span>
     </span>
+    <span class="stage2-item">
+      <span class="stage2-label">NegRisk问题ID</span>
+      <span class="stage2-value highlight" id="s2-total-negrisk-questions">0</span>
+    </span>
     <button id="s2-collapse-all" style="
         margin-left: auto;
         background: #333;
@@ -253,7 +257,6 @@
   </div>
 
   <div class="stage2-tree" id="s2-cond-tree"></div>
-  <div class="stage2-tree" id="s2-market-tree"></div>
   <div class="stage2-tree" id="s2-token-tree"></div>
   <div class="stage2-tree" id="s2-xfer-tree"></div>
   <div class="stage2-tree" id="s2-split-sem-tree"></div>
@@ -288,20 +291,20 @@
         "cond",
         "cond_poly",
         "cond_tr",
+        "cond_tr_nr",
+        "cond_tr_nr_stats",
+        "cond_tr_nr_qpm",
+        "cond_tr_nr_cpm",
         "cond_other",
         "cond_split",
         "cond_merge",
         "cond_redemption",
-        "market",
-        "market_observed",
-        "market_observed_resolve",
-        "market_observed_collateral",
-        "market_observed_tokenized",
-        "market_observed_link",
-        "market_raw",
-        "market_raw_outcome",
-        "market_raw_question",
-        "market_coverage",
+        "cond_resolve",
+        "cond_collateral",
+        "cond_tokenized",
+        "cond_coverage",
+        "cond_cov_outcome",
+        "cond_cov_question",
         "token",
         "token_poly",
         "token_tr",
@@ -445,126 +448,7 @@
         }));
     }
 
-    function s2BuildMarketTree(s) {
-      const mt = s.market_tree || {};
-      const observedTotal = Number(mt.observed_total || 0);
-      const rawTotal = Number(mt.raw_total_rows || 0);
-      const coverage = rawTotal > 0 ? (observedTotal / rawTotal) * 100 : 0;
-      const delta = observedTotal - rawTotal;
-      return {
-        id: "market",
-        label: "市场质量",
-        value: observedTotal,
-        color: "#22c55e",
-        desc: "Observed实体质量 + Raw输入覆盖",
-        scene: "避免与问题树重复口径",
-        children: [
-          {
-            id: "market_observed",
-            label: "ObservedQuality",
-            value: observedTotal,
-            color: "#4ade80",
-            desc: "condition实体质量视图",
-            scene: "只看已构建condition",
-            children: [
-              {
-                id: "market_observed_resolve",
-                label: "解析状态",
-                value: Number(mt.observed_resolved || 0) + Number(mt.observed_unresolved || 0),
-                color: "#86efac",
-                children: [
-                  { id: "market_observed_resolved", label: "Resolved", value: Number(mt.observed_resolved || 0), color: "#bbf7d0" },
-                  { id: "market_observed_unresolved", label: "Unresolved", value: Number(mt.observed_unresolved || 0), color: "#bbf7d0" },
-                ],
-              },
-              {
-                id: "market_observed_collateral",
-                label: "Collateral覆盖",
-                value: Object.values(mt.observed_by_collateral || {}).reduce((a, b) => a + Number(b || 0), 0),
-                color: "#86efac",
-                desc: "按condition主抵押品分组",
-                scene: "观测到的抵押品覆盖面",
-                children: s2SortedDictChildren(
-                  mt.observed_by_collateral,
-                  "market_observed_coll",
-                  (k) => `CollateralId=${k}`,
-                  "#bbf7d0",
-                ),
-              },
-              {
-                id: "market_observed_tokenized",
-                label: "Token映射完整度",
-                value: Number(mt.observed_token_none || 0) + Number(mt.observed_token_partial || 0) + Number(mt.observed_token_full || 0),
-                color: "#86efac",
-                children: [
-                  { id: "market_observed_token_none", label: "NoToken", value: Number(mt.observed_token_none || 0), color: "#bbf7d0" },
-                  { id: "market_observed_token_partial", label: "PartialTokenized", value: Number(mt.observed_token_partial || 0), color: "#bbf7d0" },
-                  { id: "market_observed_token_full", label: "FullyTokenized", value: Number(mt.observed_token_full || 0), color: "#bbf7d0" },
-                ],
-              },
-              {
-                id: "market_observed_link",
-                label: "市场ID关联",
-                value: Number(mt.observed_has_market_id || 0) + Number(mt.observed_no_market_id || 0),
-                color: "#86efac",
-                children: [
-                  { id: "market_observed_has_market_id", label: "HasMarketId", value: Number(mt.observed_has_market_id || 0), color: "#bbf7d0" },
-                  { id: "market_observed_no_market_id", label: "NoMarketId", value: Number(mt.observed_no_market_id || 0), color: "#bbf7d0" },
-                ],
-              },
-            ],
-          },
-          {
-            id: "market_raw",
-            label: "RawInput",
-            value: rawTotal,
-            color: "#16a34a",
-            desc: "condition_preparation原始输入",
-            scene: "行口径",
-            children: [
-              {
-                id: "market_raw_outcome",
-                label: "Outcome数",
-                value: Object.values(mt.raw_by_outcome_count || {}).reduce((a, b) => a + Number(b || 0), 0),
-                color: "#4ade80",
-                children: s2SortedDictChildren(
-                  mt.raw_by_outcome_count,
-                  "market_raw_outcome",
-                  (k) => `Outcome=${k}`,
-                  "#86efac",
-                ),
-              },
-              {
-                id: "market_raw_question",
-                label: "QuestionID",
-                value: Number(mt.raw_has_question_id || 0) + Number(mt.raw_no_question_id || 0),
-                color: "#4ade80",
-                children: [
-                  { id: "market_raw_has_question", label: "HasQuestionId", value: Number(mt.raw_has_question_id || 0), color: "#86efac" },
-                  { id: "market_raw_no_question", label: "NoQuestionId", value: Number(mt.raw_no_question_id || 0), color: "#86efac" },
-                ],
-              },
-            ],
-          },
-          {
-            id: "market_coverage",
-            label: "Coverage",
-            value: observedTotal,
-            color: "#22c55e",
-            desc: "Observed与Raw对账",
-            scene: "识别推断补全或缺失",
-            children: [
-              { id: "market_cov_observed", label: "Observed", value: observedTotal, color: "#4ade80" },
-              { id: "market_cov_raw", label: "RawRows", value: rawTotal, color: "#4ade80" },
-              { id: "market_cov_delta", label: "Delta(Obs-Raw)", value: delta, color: "#4ade80" },
-              { id: "market_cov_ratio", label: "Observed/Raw(%)", value: coverage, color: "#4ade80" },
-            ],
-          },
-        ],
-      };
-    }
-
-    // 构建问题(Condition)树 - 树状partition
+    // 构建条件(Condition)树 - 主树
     // total = polymarket + other
     // polymarket = token_reg + fpmm_poly
     // token_reg = amm + negrisk + orderbook + other
@@ -574,6 +458,10 @@
       const poly = ct.polymarket || {};
       const tr = poly.token_reg || {};
       const other = ct.other || {};
+      const nr = tr.negrisk_stats || {};
+      const resolve = ct.resolve || {};
+      const tokenized = ct.tokenized || {};
+      const coverage = ct.coverage || {};
       const trOrderbook = tr.orderbook ?? 0;
       const trOther = tr.other ?? 0;
       const fpmmPoly = poly.fpmm_poly ?? 0;
@@ -581,14 +469,45 @@
       const splitOther = other.split ?? 0;
       const mergeOther = other.merge ?? 0;
       const redemptionOther = other.redemption ?? 0;
+      const qpm = nr.by_questions_per_market || {};
+      const cpm = nr.by_conditions_per_market || {};
+      const rawOutcome = coverage.raw_by_outcome_count || {};
+      const observed = Number(coverage.observed ?? ct.total ?? 0);
+      const rawRows = Number(coverage.raw_rows || 0);
+      const delta = Number(coverage.delta ?? (observed - rawRows));
+      const ratio = Number(
+        coverage.ratio_percent ?? (rawRows > 0 ? (observed / rawRows) * 100 : 0),
+      );
+      const byCollateral = (ct.by_collateral || [])
+        .slice()
+        .sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
+      const collateralTotal = byCollateral.reduce(
+        (acc, row) => acc + Number(row.count || 0),
+        0,
+      );
+      const resolveTotal =
+        Number(resolve.resolved || 0) + Number(resolve.unresolved || 0);
+      const tokenizedTotal =
+        Number(tokenized.none || 0) +
+        Number(tokenized.partial || 0) +
+        Number(tokenized.full || 0);
+      const qpmTotal = Object.values(qpm).reduce((a, b) => a + Number(b || 0), 0);
+      const cpmTotal = Object.values(cpm).reduce((a, b) => a + Number(b || 0), 0);
+      const rawOutcomeTotal = Object.values(rawOutcome).reduce(
+        (a, b) => a + Number(b || 0),
+        0,
+      );
+      const rawQuestionTotal =
+        Number(coverage.raw_has_question_id || 0) +
+        Number(coverage.raw_no_question_id || 0);
 
       return {
         id: "cond",
-        label: "问题",
+        label: "条件",
         value: ct.total || 0,
         color: "#60a5fa",
-        desc: "condition分类总览",
-        scene: "CTF问题来源分层",
+        desc: "全品种condition主事实层",
+        scene: "资产/事件归属按condition唯一计数",
         children: [
           {
             id: "cond_poly",
@@ -620,7 +539,55 @@
                     value: tr.negrisk || 0,
                     color: "#bbf7d0",
                     desc: "poly & treg & nr",
-                    scene: "多选题市场(谁当选总统)",
+                    scene: "NegRisk条件子集",
+                    children: [
+                      {
+                        id: "cond_tr_nr_stats",
+                        label: "NegRiskStats",
+                        value: Number(nr.market_count || 0),
+                        color: "#86efac",
+                        desc: "仅投影视图,不参与主计数",
+                        scene: "market/question/condition关系统计",
+                        children: [
+                          {
+                            id: "cond_tr_nr_market_count",
+                            label: "MarketCount",
+                            value: Number(nr.market_count || 0),
+                            color: "#bbf7d0",
+                          },
+                          {
+                            id: "cond_tr_nr_question_count",
+                            label: "QuestionCount",
+                            value: Number(nr.question_count || 0),
+                            color: "#bbf7d0",
+                          },
+                          {
+                            id: "cond_tr_nr_qpm",
+                            label: "by_questions_per_market",
+                            value: qpmTotal,
+                            color: "#bbf7d0",
+                            children: s2SortedDictChildren(
+                              qpm,
+                              "cond_tr_nr_qpm",
+                              (k) => `Q=${k}`,
+                              "#dbeafe",
+                            ),
+                          },
+                          {
+                            id: "cond_tr_nr_cpm",
+                            label: "by_conditions_per_market",
+                            value: cpmTotal,
+                            color: "#bbf7d0",
+                            children: s2SortedDictChildren(
+                              cpm,
+                              "cond_tr_nr_cpm",
+                              (k) => `C=${k}`,
+                              "#dbeafe",
+                            ),
+                          },
+                        ],
+                      },
+                    ],
                   },
                   {
                     id: "cond_tr_norm",
@@ -697,6 +664,148 @@
                 color: "#555",
                 desc: "!poly & redemption_event",
                 scene: "仅由Redemption事件推断condition",
+              },
+            ],
+          },
+          {
+            id: "cond_resolve",
+            label: "Resolve",
+            value: resolveTotal,
+            color: "#93c5fd",
+            desc: "condition解析状态",
+            scene: "Resolved/Unresolved",
+            children: [
+              {
+                id: "cond_resolved",
+                label: "Resolved",
+                value: Number(resolve.resolved || 0),
+                color: "#bfdbfe",
+              },
+              {
+                id: "cond_unresolved",
+                label: "Unresolved",
+                value: Number(resolve.unresolved || 0),
+                color: "#bfdbfe",
+              },
+            ],
+          },
+          {
+            id: "cond_collateral",
+            label: "Collateral",
+            value: collateralTotal,
+            color: "#93c5fd",
+            desc: "condition collateral覆盖",
+            scene: "动态聚合(by_collateral)",
+            children: byCollateral.map((row) => {
+              const addr = row.addr || "";
+              const name = row.name || "";
+              const unknown =
+                !name ||
+                (addr && name.toLowerCase() === addr.toLowerCase());
+              return {
+                id: `cond_coll_${addr || row.collateral_id}`,
+                label: unknown
+                  ? addr
+                    ? `未知Token: ${addr}`
+                    : `CollateralId=${row.collateral_id}`
+                  : name,
+                value: Number(row.count || 0),
+                color: "#bfdbfe",
+                desc: unknown ? "" : addr,
+              };
+            }),
+          },
+          {
+            id: "cond_tokenized",
+            label: "Tokenized",
+            value: tokenizedTotal,
+            color: "#93c5fd",
+            desc: "token映射完整度",
+            scene: "NoToken/PartialTokenized/FullyTokenized",
+            children: [
+              {
+                id: "cond_tokenized_none",
+                label: "NoToken",
+                value: Number(tokenized.none || 0),
+                color: "#bfdbfe",
+              },
+              {
+                id: "cond_tokenized_partial",
+                label: "PartialTokenized",
+                value: Number(tokenized.partial || 0),
+                color: "#bfdbfe",
+              },
+              {
+                id: "cond_tokenized_full",
+                label: "FullyTokenized",
+                value: Number(tokenized.full || 0),
+                color: "#bfdbfe",
+              },
+            ],
+          },
+          {
+            id: "cond_coverage",
+            label: "Coverage",
+            value: observed,
+            color: "#60a5fa",
+            desc: "condition主树对账",
+            scene: "Observed/RawRows/Delta/Ratio",
+            children: [
+              {
+                id: "cond_cov_observed",
+                label: "Observed",
+                value: observed,
+                color: "#93c5fd",
+              },
+              {
+                id: "cond_cov_raw",
+                label: "RawRows",
+                value: rawRows,
+                color: "#93c5fd",
+              },
+              {
+                id: "cond_cov_delta",
+                label: "Delta(Obs-Raw)",
+                value: delta,
+                color: "#93c5fd",
+              },
+              {
+                id: "cond_cov_ratio",
+                label: "Observed/Raw(%)",
+                value: ratio,
+                color: "#93c5fd",
+              },
+              {
+                id: "cond_cov_outcome",
+                label: "RawOutcome",
+                value: rawOutcomeTotal,
+                color: "#93c5fd",
+                children: s2SortedDictChildren(
+                  rawOutcome,
+                  "cond_cov_outcome",
+                  (k) => `Outcome=${k}`,
+                  "#dbeafe",
+                ),
+              },
+              {
+                id: "cond_cov_question",
+                label: "RawQuestionID",
+                value: rawQuestionTotal,
+                color: "#93c5fd",
+                children: [
+                  {
+                    id: "cond_cov_has_question",
+                    label: "HasQuestionId",
+                    value: Number(coverage.raw_has_question_id || 0),
+                    color: "#dbeafe",
+                  },
+                  {
+                    id: "cond_cov_no_question",
+                    label: "NoQuestionId",
+                    value: Number(coverage.raw_no_question_id || 0),
+                    color: "#dbeafe",
+                  },
+                ],
               },
             ],
           },
@@ -1830,7 +1939,6 @@
 
     function s2RenderAllTrees(s) {
       s2RenderTreeToContainer(s2BuildCondTree(s), "s2-cond-tree");
-      s2RenderTreeToContainer(s2BuildMarketTree(s), "s2-market-tree");
       s2RenderTreeToContainer(s2BuildTokenTree(s), "s2-token-tree");
       s2RenderTreeToContainer(s2BuildXferTree(s), "s2-xfer-tree");
       s2RenderTreeToContainer(s2BuildSplitSemTree(s), "s2-split-sem-tree");
@@ -1866,8 +1974,12 @@
       const progress = headBlock > 0 ? (cursor / headBlock) * 100 : 0;
       bar.style.width = progress.toFixed(2) + "%";
 
+      const nrStats =
+        (((s.cond_tree || {}).polymarket || {}).token_reg || {}).negrisk_stats ||
+        {};
       s2Set("s2-total-users", s.total_users);
-      s2Set("s2-total-markets", s.total_markets);
+      s2Set("s2-total-markets", nrStats.market_count || 0);
+      s2Set("s2-total-negrisk-questions", nrStats.question_count || 0);
 
       s2RenderAllTrees(s);
 

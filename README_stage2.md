@@ -34,33 +34,30 @@ Stage2Sync (timer驱动, boost::asio)
 ```
 **崩溃恢复**: 从 stage2_cursor 断点重做，语义索引不持久化
 
-问题树 (`s2-cond-tree`)
-└─ 问题  // desc: condition分类总览; scene: CTF问题来源分层; 对应: cond_tree.total
-   ├─ Polymarket  // desc: Polymarket子树; scene: 已确认归属Polymarket; 对应: cond_tree.polymarket.total
-   │  ├─ TokenReg  // desc: TokenRegistered子类; scene: 在Exchange登记过; 对应: cond_tree.polymarket.token_reg.total
-   │  │  ├─ AMM  // desc: poly & treg & amm; scene: 注册后又创建了AMM池; 对应: cond_tree.polymarket.token_reg.amm
-   │  │  ├─ NegRisk  // desc: poly & treg & nr; scene: 多选题市场(谁当选总统); 对应: cond_tree.polymarket.token_reg.negrisk
-   │  │  ├─ OB  // desc: poly & treg & ob; scene: 无AMM池,只有挂单交易; 对应: cond_tree.polymarket.token_reg.orderbook
-   │  │  └─ Other(预期=0)  // desc: poly & treg & other0; scene: Polymarket-TokenReg未覆盖项; 对应: cond_tree.polymarket.token_reg.other
-   │  └─ FPMM  // desc: poly & fcreate & !treg; scene: 只创建AMM池,未注册Exchange; 对应: cond_tree.polymarket.fpmm_poly
-   └─ 其他  // desc: 非Polymarket子树; scene: 无法确认属于Polymarket; 对应: cond_tree.other.total
-      ├─ Prep  // desc: !poly & cprep; scene: 早期或其他协议(如Omen); 对应: cond_tree.other.prep
-      ├─ FPMM  // desc: !poly & fcreate; scene: 非Polymarket来源的FPMMCreation; 对应: cond_tree.other.fpmm_other
-      ├─ Split  // desc: !poly & split_event; scene: 仅由Split事件推断condition; 对应: cond_tree.other.split
-      ├─ Merge  // desc: !poly & merge_event; scene: 仅由Merge事件推断condition; 对应: cond_tree.other.merge
-      └─ Redemption  // desc: !poly & redemption_event; scene: 仅由Redemption事件推断condition; 对应: cond_tree.other.redemption
-
-市场树 (`s2-market-tree`)
-└─ 市场质量  // desc: Observed实体质量 + Raw输入覆盖; scene: 去冗余后的市场视图
-   ├─ ObservedQuality  // desc: 实体口径; scene: stage2已构建condition实体质量
-   │  ├─ Resolve  // desc: 解析状态; scene: Resolved/Unresolved
-   │  ├─ Collateral  // desc: collateral覆盖; scene: 动态聚合(observed_by_collateral)
-   │  ├─ Tokenized  // desc: token映射完整度; scene: NoToken/PartialTokenized/FullyTokenized
-   │  └─ MarketLink  // desc: 市场ID关联; scene: HasMarketId/NoMarketId
-   ├─ RawInput  // desc: 输入口径; scene: 按 condition_preparation 原始行统计
-   │  ├─ Outcome  // desc: outcome_slot_count分布; scene: 动态聚合(raw_by_outcome_count)
-   │  └─ QuestionID  // desc: question_id覆盖; scene: HasQuestionId/NoQuestionId
-   └─ Coverage  // desc: 双口径对账; scene: Observed/RawRows/Delta(Obs-Raw)/Observed÷Raw(%)
+条件树 (`s2-cond-tree`, 主树)
+├─ 条件  // desc: 全品种condition主事实层(唯一主键=cond_idx/cond_id); scene: 资产/事件归属只按condition计数
+│  ├─ Polymarket  // desc: Polymarket子树; scene: 已确认归属Polymarket; 对应: cond_tree.polymarket.total
+│  │  ├─ TokenReg  // desc: TokenRegistered子类; scene: 在Exchange登记过; 对应: cond_tree.polymarket.token_reg.total
+│  │  │  ├─ AMM  // desc: poly & treg & amm; scene: 注册后又创建AMM池; 对应: cond_tree.polymarket.token_reg.amm
+│  │  │  ├─ NegRisk  // desc: poly & treg & nr; scene: NegRisk条件子集; 对应: cond_tree.polymarket.token_reg.negrisk
+│  │  │  │  └─ NegRiskStats  // desc: 仅投影视图,不参与主计数
+│  │  │  │     ├─ MarketCount  // desc: 去重market_id数量
+│  │  │  │     ├─ QuestionCount  // desc: 去重question_id数量
+│  │  │  │     ├─ by_questions_per_market  // desc: 每个market的问题数分布
+│  │  │  │     └─ by_conditions_per_market  // desc: 每个market映射到的condition数分布
+│  │  │  ├─ OB  // desc: poly & treg & ob; scene: 无AMM池,只有挂单交易; 对应: cond_tree.polymarket.token_reg.orderbook
+│  │  │  └─ Other(预期=0)  // desc: poly & treg & other0; scene: Polymarket-TokenReg未覆盖项; 对应: cond_tree.polymarket.token_reg.other
+│  │  └─ FPMM  // desc: poly & fcreate & !treg; scene: 只创建AMM池,未注册Exchange; 对应: cond_tree.polymarket.fpmm_poly
+│  └─ 其他  // desc: 非Polymarket子树; scene: 无法确认属于Polymarket; 对应: cond_tree.other.total
+│     ├─ Prep  // desc: !poly & cprep; scene: 早期或其他协议(如Omen); 对应: cond_tree.other.prep
+│     ├─ FPMM  // desc: !poly & fcreate; scene: 非Polymarket来源FPMMCreation; 对应: cond_tree.other.fpmm_other
+│     ├─ Split  // desc: !poly & split_event; scene: 仅由Split事件推断condition; 对应: cond_tree.other.split
+│     ├─ Merge  // desc: !poly & merge_event; scene: 仅由Merge事件推断condition; 对应: cond_tree.other.merge
+│     └─ Redemption  // desc: !poly & redemption_event; scene: 仅由Redemption事件推断condition; 对应: cond_tree.other.redemption
+├─ Resolve  // desc: condition解析状态; scene: Resolved/Unresolved
+├─ Collateral  // desc: condition collateral覆盖; scene: 动态聚合(by_collateral)
+├─ Tokenized  // desc: condition token映射完整度; scene: NoToken/PartialTokenized/FullyTokenized
+└─ Coverage  // desc: condition主树对账; scene: Observed(去重condition)/RawRows(condition_preparation行)/Delta/Ratio
 
 代币树 (`s2-token-tree`)
 └─ 代币  // desc: token分类总览; scene: ERC1155 token_id来源分层; 对应: token_tree.total
@@ -203,7 +200,8 @@ abbr(all)
 ├─ cond/token: fpmm=该condition后续有关联FPMM, nr=命中NegRisk路径, ob=普通订单簿(!fpmm & !nr), xfer_inf=从Transfer推断
 ├─ cond/token: split_event/merge_event/redemption_event=仅由对应语义事件反推得到
 ├─ cond/token: other0=兜底未覆盖(!fpmm & !nr & !ob), group_by(x)=按字段x聚合
-├─ market: observed=condition实体口径, raw=condition_preparation行口径, delta=observed-raw
+├─ coverage: observed=去重condition实体口径, raw=condition_preparation行口径, delta=observed-raw
+├─ negrisk: market=neg_risk_market_id, qpm=questions_per_market, cpm=conditions_per_market
 ├─ transfer: amt=amount, known=known_cond, m(x)=match_x, holder=stakeholder, evt=event, tidx=token_idx, coll=collateral
 └─ transfer: is_proto=is_protocol, is_user=is_user
 

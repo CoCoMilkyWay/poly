@@ -47,9 +47,8 @@ private:
   std::unordered_map<std::string, uint32_t> cond_map_;
   std::unordered_map<std::string, TokenInfo> token_map_;
   std::unordered_map<std::string, FPMMInfo> fpmm_map_;
-  std::unordered_map<std::string, std::string> cond_to_market_; // condition_id -> market_id
+  std::unordered_map<std::string, std::string> cond_to_market_; // question_id -> market_id
   std::unordered_set<std::string> seen_users_;                  // 实时统计唯一用户
-  std::unordered_set<std::string> seen_markets_;                // 统计唯一 NegRisk 市场
   std::unordered_set<uint32_t> fpmm_cond_idxs_;                 // Polymarket AMM 对应的 cond_idx
   std::unordered_set<uint32_t> negrisk_cond_idxs_;              // NegRisk 对应的 cond_idx
   std::unordered_map<uint32_t, uint8_t> cond_collateral_;       // cond_idx -> collateral_id
@@ -391,13 +390,38 @@ private:
   }
 
   void update_cond_type_stats() {
-    // 问题树状partition: total = polymarket + other
-    // 优先检查 fpmm_cond_idxs_/negrisk_cond_idxs_ 来判断是否是 Polymarket
+    // 条件主树：condition 是唯一主事实层。
+    // coverage.raw_* 在 phase1 中按 condition_preparation 行累积，需要跨轮次保留。
     ConditionTree ct{};
+    ct.coverage = progress_.cond_tree.coverage;
+    ct.coverage.observed = 0;
+
+    std::unordered_map<uint32_t, uint16_t> cond_token_mask;
+    cond_token_mask.reserve(token_map_.size());
+    for (const auto &[_, tinfo] : token_map_) {
+      if (tinfo.cond_idx == UNKNOWN_COND_IDX || tinfo.token_idx == UNKNOWN_TOKEN_IDX) {
+        continue;
+      }
+      if (tinfo.token_idx >= MAX_OUTCOMES) {
+        continue;
+      }
+      cond_token_mask[tinfo.cond_idx] |= static_cast<uint16_t>(1u << tinfo.token_idx);
+    }
+
+    std::unordered_map<std::string, int64_t> market_question_count;
+    market_question_count.reserve(cond_to_market_.size());
+    for (const auto &[question_id, market_id] : cond_to_market_) {
+      (void)question_id;
+      market_question_count[market_id]++;
+    }
+    std::unordered_map<std::string, int64_t> market_condition_count;
+    market_condition_count.reserve(market_question_count.size());
+
     for (size_t i = 0; i < conditions_.size(); ++i) {
       ct.total++;
       uint32_t idx = static_cast<uint32_t>(i);
-      auto src = conditions_[i].source;
+      const auto &info = conditions_[i];
+      auto src = info.source;
       bool has_fpmm = fpmm_cond_idxs_.count(idx) > 0;
       bool has_negrisk = negrisk_cond_idxs_.count(idx) > 0;
       bool has_token_reg = (src == ConditionSource::PolymarketTokenReg);
@@ -440,7 +464,56 @@ private:
           break;
         }
       }
+
+      if (!info.payout_numerators.empty()) {
+        ct.resolve.resolved++;
+      } else {
+        ct.resolve.unresolved++;
+      }
+
+      uint8_t coll = static_cast<uint8_t>(Collateral::Unknown);
+      auto coll_it = cond_collateral_.find(idx);
+      if (coll_it != cond_collateral_.end()) {
+        coll = coll_it->second;
+      }
+      ct.by_collateral[coll]++;
+
+      int tokenized = 0;
+      auto tm_it = cond_token_mask.find(idx);
+      if (tm_it != cond_token_mask.end()) {
+        tokenized = __builtin_popcount(static_cast<unsigned int>(tm_it->second));
+      }
+      if (tokenized == 0) {
+        ct.tokenized.none++;
+      } else if (tokenized >= info.outcome_count) {
+        ct.tokenized.full++;
+      } else {
+        ct.tokenized.partial++;
+      }
+
+      if (!info.question_id.empty()) {
+        auto mit = cond_to_market_.find(info.question_id);
+        if (mit != cond_to_market_.end()) {
+          market_condition_count[mit->second]++;
+        }
+      }
     }
+    ct.coverage.observed = ct.total;
+
+    auto &nr = ct.polymarket.token_reg.negrisk_stats;
+    nr.market_count = static_cast<int64_t>(market_question_count.size());
+    nr.question_count = static_cast<int64_t>(cond_to_market_.size());
+    nr.by_questions_per_market.clear();
+    nr.by_conditions_per_market.clear();
+    int64_t question_count_sum = 0;
+    for (const auto &[market_id, qcnt] : market_question_count) {
+      nr.by_questions_per_market[qcnt]++;
+      question_count_sum += qcnt;
+      auto cit = market_condition_count.find(market_id);
+      int64_t ccnt = (cit == market_condition_count.end()) ? 0 : cit->second;
+      nr.by_conditions_per_market[ccnt]++;
+    }
+
     // 恒等式验证
     stage2_assert(ct.total == ct.polymarket.total + ct.other.total,
                   AssertLevel::L5, "Partition", "ConditionTreeTotal");
@@ -453,6 +526,36 @@ private:
     stage2_assert(ct.other.total == ct.other.prep + ct.other.fpmm_other + ct.other.split +
                                         ct.other.merge + ct.other.redemption,
                   AssertLevel::L5, "Partition", "ConditionTreeOtherTotal");
+    stage2_assert(ct.total == ct.resolve.resolved + ct.resolve.unresolved,
+                  AssertLevel::L5, "Partition", "ConditionTreeResolveTotal");
+    stage2_assert(ct.total == ct.tokenized.none + ct.tokenized.partial + ct.tokenized.full,
+                  AssertLevel::L5, "Partition", "ConditionTreeTokenizedTotal");
+    {
+      int64_t by_collateral_sum = 0;
+      for (const auto &[_, v] : ct.by_collateral) {
+        by_collateral_sum += v;
+      }
+      stage2_assert(ct.total == by_collateral_sum,
+                    AssertLevel::L5, "Partition", "ConditionTreeByCollateralTotal");
+    }
+    stage2_assert(ct.coverage.observed == ct.total,
+                  AssertLevel::L5, "Partition", "ConditionTreeCoverageObservedTotal");
+    {
+      int64_t qpm_market_sum = 0;
+      for (const auto &[_, cnt] : nr.by_questions_per_market) {
+        qpm_market_sum += cnt;
+      }
+      int64_t cpm_market_sum = 0;
+      for (const auto &[_, cnt] : nr.by_conditions_per_market) {
+        cpm_market_sum += cnt;
+      }
+      stage2_assert(nr.market_count == qpm_market_sum,
+                    AssertLevel::L5, "Partition", "NegRiskStatsQPMTotal");
+      stage2_assert(nr.market_count == cpm_market_sum,
+                    AssertLevel::L5, "Partition", "NegRiskStatsCPMTotal");
+      stage2_assert(nr.question_count == question_count_sum,
+                    AssertLevel::L5, "Partition", "NegRiskStatsQuestionTotal");
+    }
     progress_.cond_tree = ct;
 
     // 代币树状partition: total = polymarket + other
@@ -532,70 +635,6 @@ private:
                                         tt.other.redemption + tt.other.transfer_inferred,
                   AssertLevel::L5, "Partition", "TokenTreeOtherTotal");
     progress_.token_tree = tt;
-
-    MarketTree mt = progress_.market_tree;
-    mt.observed_total = 0;
-    mt.observed_resolved = 0;
-    mt.observed_unresolved = 0;
-    mt.observed_has_market_id = 0;
-    mt.observed_no_market_id = 0;
-    mt.observed_token_none = 0;
-    mt.observed_token_partial = 0;
-    mt.observed_token_full = 0;
-    mt.observed_by_collateral.clear();
-
-    std::unordered_map<uint32_t, uint16_t> cond_token_mask;
-    cond_token_mask.reserve(token_map_.size());
-    for (const auto &[_, tinfo] : token_map_) {
-      if (tinfo.cond_idx == UNKNOWN_COND_IDX || tinfo.token_idx == UNKNOWN_TOKEN_IDX) {
-        continue;
-      }
-      if (tinfo.token_idx >= MAX_OUTCOMES) {
-        continue;
-      }
-      cond_token_mask[tinfo.cond_idx] |= static_cast<uint16_t>(1u << tinfo.token_idx);
-    }
-
-    for (size_t i = 0; i < conditions_.size(); ++i) {
-      uint32_t idx = static_cast<uint32_t>(i);
-      const auto &info = conditions_[i];
-      mt.observed_total++;
-
-      bool resolved = !info.payout_numerators.empty();
-      if (resolved) {
-        mt.observed_resolved++;
-      } else {
-        mt.observed_unresolved++;
-      }
-
-      bool has_market_id = !info.question_id.empty() && cond_to_market_.count(info.question_id) > 0;
-      if (has_market_id) {
-        mt.observed_has_market_id++;
-      } else {
-        mt.observed_no_market_id++;
-      }
-
-      uint8_t coll = static_cast<uint8_t>(Collateral::Unknown);
-      auto coll_it = cond_collateral_.find(idx);
-      if (coll_it != cond_collateral_.end()) {
-        coll = coll_it->second;
-      }
-      mt.observed_by_collateral[coll]++;
-
-      int tokenized = 0;
-      auto tm_it = cond_token_mask.find(idx);
-      if (tm_it != cond_token_mask.end()) {
-        tokenized = __builtin_popcount(static_cast<unsigned int>(tm_it->second));
-      }
-      if (tokenized == 0) {
-        mt.observed_token_none++;
-      } else if (tokenized >= info.outcome_count) {
-        mt.observed_token_full++;
-      } else {
-        mt.observed_token_partial++;
-      }
-    }
-    progress_.market_tree = mt;
   }
 
   void push_event(const std::string &user_addr, const RawEvent &evt) {

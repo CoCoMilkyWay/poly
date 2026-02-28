@@ -211,7 +211,7 @@ struct TransferStats {
   static std::string format_log(const TransferStats &chunk, const TransferStats &acc);
 };
 
-// 问题树状partition: total = polymarket + other
+// 条件树状partition: total = polymarket + other
 struct ConditionTree {
   int64_t total = 0;
   struct Polymarket {
@@ -222,6 +222,14 @@ struct ConditionTree {
       int64_t negrisk = 0; // 负风险市场
       int64_t orderbook = 0; // 无FPMM，非NegRisk（订单簿）
       int64_t other = 0;     // TokenReg 兜底未覆盖项（预期=0）
+      struct NegRiskStats {
+        int64_t market_count = 0;
+        int64_t question_count = 0;
+        // key: questions_per_market
+        std::unordered_map<int64_t, int64_t> by_questions_per_market;
+        // key: conditions_per_market
+        std::unordered_map<int64_t, int64_t> by_conditions_per_market;
+      } negrisk_stats;
     } token_reg;
     int64_t fpmm_poly = 0; // 只从FPMM推断(source=PolyFPMM)
   } polymarket;
@@ -233,6 +241,24 @@ struct ConditionTree {
     int64_t merge = 0;      // source=MergeEvent (预期=0)
     int64_t redemption = 0; // source=RedemptionEvent (预期=0)
   } other;
+  struct Resolve {
+    int64_t resolved = 0;
+    int64_t unresolved = 0;
+  } resolve;
+  std::unordered_map<uint8_t, int64_t> by_collateral; // key: CollateralId
+  struct Tokenized {
+    int64_t none = 0;
+    int64_t partial = 0;
+    int64_t full = 0;
+  } tokenized;
+  struct Coverage {
+    int64_t observed = 0; // 去重 condition 实体口径
+    int64_t raw_rows = 0; // condition_preparation 行口径
+    int64_t raw_has_question_id = 0;
+    int64_t raw_no_question_id = 0;
+    // key: outcome_count
+    std::unordered_map<int64_t, int64_t> raw_by_outcome_count;
+  } coverage;
 };
 
 // 代币树状partition: total = polymarket + other
@@ -367,25 +393,6 @@ struct OrderSemanticTree {
   }
 };
 
-struct MarketTree {
-  // Observed markets (condition entities already built in stage2 mappings).
-  int64_t observed_total = 0;
-  int64_t observed_resolved = 0;
-  int64_t observed_unresolved = 0;
-  int64_t observed_has_market_id = 0;
-  int64_t observed_no_market_id = 0;
-  int64_t observed_token_none = 0;
-  int64_t observed_token_partial = 0;
-  int64_t observed_token_full = 0;
-  std::unordered_map<uint8_t, int64_t> observed_by_collateral; // key: CollateralId
-
-  // Raw markets (condition_preparation row-level view).
-  int64_t raw_total_rows = 0;
-  int64_t raw_has_question_id = 0;
-  int64_t raw_no_question_id = 0;
-  std::unordered_map<int64_t, int64_t> raw_by_outcome_count; // key: outcome_count
-};
-
 struct BuildProgress {
   int64_t cursor = 0;
   int64_t target = 0;
@@ -397,7 +404,6 @@ struct BuildProgress {
   int64_t total_tokens = 0;
   int64_t total_events = 0;
   int64_t total_users = 0;
-  int64_t total_markets = 0;
   // 树状partition统计
   ConditionTree cond_tree;
   TokenTree token_tree;
@@ -415,7 +421,6 @@ struct BuildProgress {
   MergeSemanticTree merge_sem_tree;
   ConvertSemanticTree convert_sem_tree;
   OrderSemanticTree order_sem_tree;
-  MarketTree market_tree;
   // 按(EventType, CollateralId)分组统计 user_event
   // key: EventType * 256 + CollateralId
   std::unordered_map<uint16_t, int64_t> event_by_collateral;

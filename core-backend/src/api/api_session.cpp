@@ -463,6 +463,33 @@ void ApiSession::handle_rebuild_status() {
     }
     return arr;
   };
+  const auto &nr = ct.polymarket.token_reg.negrisk_stats;
+  json nr_qpm = json::object();
+  for (const auto &[k, v] : nr.by_questions_per_market) {
+    nr_qpm[std::to_string(k)] = v;
+  }
+  json nr_cpm = json::object();
+  for (const auto &[k, v] : nr.by_conditions_per_market) {
+    nr_cpm[std::to_string(k)] = v;
+  }
+  json cond_by_coll = json::array();
+  for (const auto &[coll, cnt] : ct.by_collateral) {
+    auto [addr, name] = resolve_collateral(coll);
+    cond_by_coll.push_back({
+        {"collateral_id", coll},
+        {"addr", addr},
+        {"name", name},
+        {"count", cnt},
+    });
+  }
+  json cov_raw_outcome = json::object();
+  for (const auto &[k, v] : ct.coverage.raw_by_outcome_count) {
+    cov_raw_outcome[std::to_string(k)] = v;
+  }
+  int64_t cov_observed = ct.coverage.observed;
+  int64_t cov_raw_rows = ct.coverage.raw_rows;
+  int64_t cov_delta = cov_observed - cov_raw_rows;
+  double cov_ratio = (cov_raw_rows > 0) ? (100.0 * static_cast<double>(cov_observed) / static_cast<double>(cov_raw_rows)) : 0.0;
   json cond_tree = {
       {"total", ct.total},
       {"polymarket",
@@ -472,7 +499,12 @@ void ApiSession::handle_rebuild_status() {
           {"amm", ct.polymarket.token_reg.amm},
           {"negrisk", ct.polymarket.token_reg.negrisk},
           {"orderbook", ct.polymarket.token_reg.orderbook},
-          {"other", ct.polymarket.token_reg.other}}},
+          {"other", ct.polymarket.token_reg.other},
+          {"negrisk_stats",
+           {{"market_count", nr.market_count},
+            {"question_count", nr.question_count},
+            {"by_questions_per_market", nr_qpm},
+            {"by_conditions_per_market", nr_cpm}}}}},
         {"fpmm_poly", ct.polymarket.fpmm_poly}}},
       {"other",
        {{"total", ct.other.total},
@@ -481,6 +513,22 @@ void ApiSession::handle_rebuild_status() {
         {"split", ct.other.split},
         {"merge", ct.other.merge},
         {"redemption", ct.other.redemption}}},
+      {"resolve",
+       {{"resolved", ct.resolve.resolved},
+        {"unresolved", ct.resolve.unresolved}}},
+      {"tokenized",
+       {{"none", ct.tokenized.none},
+        {"partial", ct.tokenized.partial},
+        {"full", ct.tokenized.full}}},
+      {"by_collateral", cond_by_coll},
+      {"coverage",
+       {{"observed", cov_observed},
+        {"raw_rows", cov_raw_rows},
+        {"raw_has_question_id", ct.coverage.raw_has_question_id},
+        {"raw_no_question_id", ct.coverage.raw_no_question_id},
+        {"raw_by_outcome_count", cov_raw_outcome},
+        {"delta", cov_delta},
+        {"ratio_percent", cov_ratio}}},
   };
 
   json token_tree = {
@@ -566,7 +614,6 @@ void ApiSession::handle_rebuild_status() {
   const auto &mst = p.merge_sem_tree;
   const auto &cst = p.convert_sem_tree;
   const auto &ost = p.order_sem_tree;
-  const auto &mkt = p.market_tree;
   json split_sem_tree = {
       {"total", sst.total},
       {"amount_zero", sst.amount_zero},
@@ -617,35 +664,10 @@ void ApiSession::handle_rebuild_status() {
       {"consumed", ost.consumed},
       {"unobserved_leg", ost.unobserved_leg},
   };
-  json market_tree = {
-      {"observed_total", mkt.observed_total},
-      {"observed_resolved", mkt.observed_resolved},
-      {"observed_unresolved", mkt.observed_unresolved},
-      {"observed_has_market_id", mkt.observed_has_market_id},
-      {"observed_no_market_id", mkt.observed_no_market_id},
-      {"observed_token_none", mkt.observed_token_none},
-      {"observed_token_partial", mkt.observed_token_partial},
-      {"observed_token_full", mkt.observed_token_full},
-      {"raw_total_rows", mkt.raw_total_rows},
-      {"raw_has_question_id", mkt.raw_has_question_id},
-      {"raw_no_question_id", mkt.raw_no_question_id},
-  };
-  json observed_by_coll = json::object();
-  for (const auto &[k, v] : mkt.observed_by_collateral) {
-    observed_by_coll[std::to_string(k)] = v;
-  }
-  market_tree["observed_by_collateral"] = observed_by_coll;
-  json raw_by_outcome = json::object();
-  for (const auto &[k, v] : mkt.raw_by_outcome_count) {
-    raw_by_outcome[std::to_string(k)] = v;
-  }
-  market_tree["raw_by_outcome_count"] = raw_by_outcome;
-
   json result = {
       {"phase", p.phase},
       {"running", p.running},
       {"total_users", p.total_users},
-      {"total_markets", p.total_markets},
       {"total_events", p.total_events},
       {"cond_tree", cond_tree},
       {"token_tree", token_tree},
@@ -653,7 +675,6 @@ void ApiSession::handle_rebuild_status() {
       {"merge_sem_tree", merge_sem_tree},
       {"convert_sem_tree", convert_sem_tree},
       {"order_sem_tree", order_sem_tree},
-      {"market_tree", market_tree},
   };
   result.update(transfer_tree);
 
