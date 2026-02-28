@@ -100,6 +100,7 @@ inline std::string q_get_hex_lower(const duckdb::unique_ptr<duckdb::Materialized
 void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
   TraceN("s2/phase1_map");
   auto conn = stage1_db_.create_connection();
+  std::unordered_set<uint32_t> tokenreg_cond_idxs_seen;
   auto get_u256_i32 = [&](const duckdb::unique_ptr<duckdb::MaterializedQueryResult> &tbl, int col, idx_t row) {
     int64_t v = u256_blob_to_i64(tbl->GetValue(col, row));
     stage2_assert(v >= 0 && v <= std::numeric_limits<int>::max(),
@@ -155,11 +156,13 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
         *conn, stage1_db_, "SELECT token0, token1, condition_id FROM ",
         "token_map", start, end);
     if (tm) {
+      tokenreg_cond_idxs_seen.reserve(static_cast<size_t>(tm->RowCount()));
       for (idx_t i = 0; i < tm->RowCount(); ++i) {
         std::string token0 = q_get_hex(tm, 0, i);
         std::string token1 = q_get_hex(tm, 1, i);
         std::string cid = q_get_hex(tm, 2, i);
         uint32_t cond_idx = intern_condition(cid, 2, ConditionSource::PolymarketTokenReg);
+        tokenreg_cond_idxs_seen.insert(cond_idx);
         // TokenRegistered keeps a binary market ordering: token0 -> outcome 0, token1 -> outcome 1.
         intern_token(token0, cond_idx, 0, TokenSource::PolymarketTokenReg);
         intern_token(token1, cond_idx, 1, TokenSource::PolymarketTokenReg);
@@ -359,6 +362,15 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
         }
       }
     }
+  }
+
+  // TokenRegistered is authoritative Polymarket evidence at condition level:
+  // every touched condition must end this phase with source=PolymarketTokenReg.
+  for (uint32_t cond_idx : tokenreg_cond_idxs_seen) {
+    stage2_assert(cond_idx < conditions_.size(),
+                  AssertLevel::L1, "Mapping", "TokenRegCondIdxInRange");
+    stage2_assert(conditions_[cond_idx].source == ConditionSource::PolymarketTokenReg,
+                  AssertLevel::L1, "Mapping", "TokenRegConditionSourceSticky");
   }
   update_cond_type_stats();
 }

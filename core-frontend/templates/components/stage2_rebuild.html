@@ -439,6 +439,24 @@
         }));
     }
 
+    function s2FormatCollateralDisplay(addr, name, collateralId) {
+      const zeroAddr = "0x0000000000000000000000000000000000000000";
+      const safeAddr = addr || "";
+      const safeName = name || "";
+      const unknown =
+        !safeName || (safeAddr && safeName.toLowerCase() === safeAddr.toLowerCase());
+      if (!unknown) {
+        return { label: safeName, desc: safeAddr };
+      }
+      if (!safeAddr) {
+        return { label: `CollateralId=${collateralId}`, desc: "" };
+      }
+      if (safeAddr.toLowerCase() === zeroAddr) {
+        return { label: "未确定抵押品", desc: "" };
+      }
+      return { label: `未知抵押品: ${safeAddr}`, desc: "" };
+    }
+
     // 构建条件(Condition)树 - 主树
     // total = polymarket + other
     // polymarket = token_reg + fpmm_poly
@@ -677,19 +695,13 @@
             children: byCollateral.map((row) => {
               const addr = row.addr || "";
               const name = row.name || "";
-              const unknown =
-                !name ||
-                (addr && name.toLowerCase() === addr.toLowerCase());
+              const display = s2FormatCollateralDisplay(addr, name, row.collateral_id);
               return {
                 id: `cond_coll_${addr || row.collateral_id}`,
-                label: unknown
-                  ? addr
-                    ? `未知Token: ${addr}`
-                    : `CollateralId=${row.collateral_id}`
-                  : name,
+                label: display.label,
                 value: Number(row.count || 0),
                 color: "#bfdbfe",
-                desc: unknown ? "" : addr,
+                desc: display.desc,
               };
             }),
           },
@@ -876,13 +888,13 @@
                       .map((c) => {
                         const addr = c.addr || "";
                         const name = c.name || "";
-                        const unknown = !name || (addr && name.toLowerCase() === addr.toLowerCase());
+                        const display = s2FormatCollateralDisplay(addr, name, c.collateral_id);
                         return {
                           id: `token_fpmm_coll_${addr || name}`,
-                          label: unknown ? (addr ? `未知Token: ${addr}` : "未知Token") : name,
+                          label: display.label,
                           value: c.count,
                           color: "#fef3c7",
-                          desc: unknown ? "" : addr,
+                          desc: display.desc,
                           scene: "",
                         };
                       }),
@@ -955,13 +967,13 @@
                       .map((c) => {
                         const addr = c.addr || "";
                         const name = c.name || "";
-                        const unknown = !name || (addr && name.toLowerCase() === addr.toLowerCase());
+                        const display = s2FormatCollateralDisplay(addr, name, c.collateral_id);
                         return {
                           id: `token_transfer_coll_${addr || name}`,
-                          label: unknown ? (addr ? `未知Token: ${addr}` : "未知Token") : name,
+                          label: display.label,
                           value: c.count,
                           color: "#f3f4f6",
-                          desc: unknown ? "" : addr,
+                          desc: display.desc,
                           scene: "",
                         };
                       }),
@@ -980,13 +992,13 @@
         .map((x) => {
           const addr = x.addr || "";
           const name = x.name || "";
-          const unknown = !name || (addr && name.toLowerCase() === addr.toLowerCase());
+          const display = s2FormatCollateralDisplay(addr, name, x.collateral_id);
           return {
             addr,
             name,
             count: Number(x.count || 0),
-            label: unknown ? `未知Token: ${addr}` : name,
-            desc: unknown ? "" : addr,
+            label: display.label,
+            desc: display.desc,
           };
         })
         .filter((x) => x.count > 0)
@@ -1035,7 +1047,7 @@
         scene: scene || "",
         children: entries.map((c) => ({
           id: `${prefix}_coll_${c.addr || c.name}`,
-          label: c.label || "未知Token",
+          label: c.label || "未知抵押品",
           value: c.count,
           color: "#fde68a",
           desc: c.desc || "",

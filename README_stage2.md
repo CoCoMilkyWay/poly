@@ -40,7 +40,7 @@ Stage2Sync (timer驱动, boost::asio)
 │  │  ├─ TokenReg  // desc: TokenRegistered子类; scene: 在Exchange登记过; 对应: cond_tree.polymarket.token_reg.total
 │  │  │  ├─ AMM  // desc: poly & treg & amm; scene: 注册后又创建AMM池; 对应: cond_tree.polymarket.token_reg.amm
 │  │  │  ├─ NegRisk  // desc: poly & treg & nr; scene: NegRisk条件子集; 对应: cond_tree.polymarket.token_reg.negrisk
-│  │  │  │  └─ NegRiskStats  // desc: 仅投影视图,不参与主计数
+│  │  │  │  └─ NegRiskStats  // desc: 仅投影视图,不参与主计数; 基于 nr_cond_set(不要求TokenReg)
 │  │  │  │     ├─ MarketCount  // desc: 去重market_id数量
 │  │  │  │     ├─ QuestionCount  // desc: 去重question_id数量
 │  │  │  │     ├─ ConditionCount  // desc: 去重condition数量
@@ -62,7 +62,7 @@ Stage2Sync (timer驱动, boost::asio)
 代币树 (`s2-token-tree`)
 └─ 代币  // desc: token分类总览; scene: ERC1155 token_id来源分层; 对应: token_tree.total
    ├─ Polymarket  // desc: Polymarket子树; scene: 已确认归属Polymarket; 对应: token_tree.polymarket.total
-   │  ├─ TokenReg  // desc: TokenRegistered子类; scene: Exchange事件直接给token; 对应: token_tree.polymarket.token_reg.total
+  │  ├─ TokenReg  // desc: TokenRegistered子类; scene: token所属condition命中过TokenRegistered; 对应: token_tree.polymarket.token_reg.total
    │  │  ├─ AMM  // desc: poly & treg & amm; scene: 注册后又创建了AMM池; 对应: token_tree.polymarket.token_reg.amm
    │  │  ├─ NegRisk  // desc: poly & treg & nr; scene: 多选题市场代币; 对应: token_tree.polymarket.token_reg.negrisk
    │  │  ├─ OB  // desc: poly & treg & ob; scene: 无AMM池,只有挂单; 对应: token_tree.polymarket.token_reg.orderbook
@@ -200,7 +200,7 @@ abbr(all)
 ├─ cond/token: fpmm=该condition后续有关联FPMM, nr=命中NegRisk路径, ob=普通订单簿(!fpmm & !nr), xfer_inf=从Transfer推断
 ├─ cond/token: split_event/merge_event/redemption_event=仅由对应语义事件反推得到
 ├─ cond/token: other0=兜底未覆盖(!fpmm & !nr & !ob), group_by(x)=按字段x聚合
-├─ coverage: observed=去重condition实体口径, raw=condition_preparation行口径, delta=observed-raw
+├─ coverage: recorded=condition_preparation行口径, by_outcome=按outcome_count分布, has_qid=question_id覆盖
 ├─ negrisk: market=neg_risk_market_id, qpm=questions_per_market, cond=distinct_condition_count
 ├─ transfer: amt=amount, known=known_cond, m(x)=match_x, holder=stakeholder, evt=event, tidx=token_idx, coll=collateral
 └─ transfer: is_proto=is_protocol, is_user=is_user
@@ -223,12 +223,13 @@ abbr(all)
 ```
 ① `condition_preparation`                   → `cond_idx_map` + `cond_info_map`(outcome_count/question_id/source)
 ② `condition_resolution`                    → `cond_info_map`(payout)
-③ `token_map`                               → `cond_idx_map` + `cond_info_map`(source) + `token_info_map`
+③ `token_map`                               → `cond_idx_map` + `cond_info_map`(source单向升级到TokenReg,且TokenReg粘性不回退) + `token_info_map`
 ④ 读取 `fpmm` 原始行(延迟落盘)              → 暂存 `{fpmm_addr, condition_ids[], collateral, conditional_tokens}`
 ⑤ `split` / `merge` / `redemption` 增量更新 → `cond_idx_map` + `cond_info_map`(source/outcome_count按index_set最高位推断并扩展) + `token_info_map` + `coll_map`(同condition若出现多collateral，按“已知优先+确定性tie-break”规范化)
 ⑥ 回放暂存 `fpmm` 行并严格落盘              → 仅处理 `conditional_tokens == CONDITIONAL_TOKENS` 的域内行；域内要求 `condition_ids` 全已知，再写 `fpmm_info_map` + `token_info_map` + `coll_map` + `pm_cond_set`
 ⑦ `neg_risk_question`                       → `mid_map` + `nr_cond_set`
-⑧ `token_info_map` 升级规则                 → 按证据强度单向升级(`TransferInferred < FPMM < token_map < split/merge/redemption`)；同映射可仅升级source；`token_map` 同condition反向重复注册可忽略；chunk尾仅对“语义唯一命中”的unknown token做统一refine（仅允许 `UNKNOWN->KNOWN` 或 source升级）；非推断来源要求 `cond_idx` 一致
+⑧ `token_info_map` 升级规则                 → 按证据强度单向升级(`TransferInferred < FPMM < token_map < split/merge/redemption`)；同映射可仅升级source；`token_map` 同condition反向重复注册可忽略；chunk尾仅对“语义唯一命中”的unknown token做统一refine（仅允许 `UNKNOWN->KNOWN` 或 source升级）；非推断来源要求 `cond_idx` 一致；`TokenTree` 分区时 `TokenReg` 以 `cond_info_map.source` 为准（不直接用 token.source）
+⑨ `cond_info_map.source` 升级规则           → 按证据强度单向升级(`ConditionPrep < split/merge/redemption < OtherFPMM < PolymarketFPMM < PolymarketTokenReg`)；`TokenReg` 一旦命中即保持粘性；chunk内断言：被 `token_map` 命中的 condition 其 source 必须为 `PolymarketTokenReg`
 → `update_cond_type_stats()`                → `ConditionTree` / `TokenTree`
 ```
 
@@ -381,7 +382,7 @@ phase3_process_transfers(chunk)
 
 断言层级（Assertion Hierarchy）
 ├─ L0 输入/结构层：schema/type/range/u256解析合法
-├─ L1 映射不变量层：cond/token/collateral/fpmm 映射一致；outcome_count 合法且仅扩展不回退；coll_map 对多来源冲突做确定性规范化；Phase2索引覆盖率守恒；chunk尾refine仅允许单向升级
+├─ L1 映射不变量层：cond/token/collateral/fpmm 映射一致；outcome_count 合法且仅扩展不回退；cond_source 单向升级且 TokenReg 粘性成立；coll_map 对多来源冲突做确定性规范化；Phase2索引覆盖率守恒；chunk尾refine仅允许单向升级
 ├─ L2 匹配唯一性层：窗口候选命中数 <= 1；同层并列歧义直接 assert
 ├─ L3 语义约束层：命中后必须满足 actor/cond/collateral/amount/direction/window 等硬约束
 ├─ L4 语义消费闭环层：chunk 收尾每类语义 op 必须“已消费或显式例外（含 split/merge amount==0、redeem payout==0、trade !must_consume_or_explain 零腿）”；并校验 convert-burn 覆盖守恒

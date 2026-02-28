@@ -159,6 +159,25 @@ private:
     if (it != cond_map_.end()) {
       uint32_t idx = it->second;
       bool changed = false;
+      auto source_rank = [](ConditionSource s) -> int {
+        switch (s) {
+        case ConditionSource::ConditionPrep:
+          return 0;
+        case ConditionSource::SplitEvent:
+        case ConditionSource::MergeEvent:
+        case ConditionSource::RedemptionEvent:
+          return 1;
+        case ConditionSource::OtherFPMM:
+          return 2;
+        case ConditionSource::PolymarketFPMM:
+          return 3;
+        case ConditionSource::PolymarketTokenReg:
+          return 4;
+        case ConditionSource::TransferInferred:
+          return 0;
+        }
+        return 0;
+      };
       if (conditions_[idx].outcome_count < outcome_cnt) {
         conditions_[idx].outcome_count = outcome_cnt;
         changed = true;
@@ -166,6 +185,10 @@ private:
       // 更新question_id（如果之前没有）
       if (!question_id.empty() && conditions_[idx].question_id.empty()) {
         conditions_[idx].question_id = question_id;
+        changed = true;
+      }
+      if (source_rank(source) > source_rank(conditions_[idx].source)) {
+        conditions_[idx].source = source;
         changed = true;
       }
       if (changed) {
@@ -422,6 +445,7 @@ private:
       auto src = info.source;
       bool has_fpmm = fpmm_cond_idxs_.count(idx) > 0;
       bool has_negrisk = negrisk_cond_idxs_.count(idx) > 0;
+      // TokenReg evidence is persisted on condition source and must be sticky.
       bool has_token_reg = (src == ConditionSource::PolymarketTokenReg);
 
       if (has_token_reg) {
@@ -488,7 +512,6 @@ private:
       } else {
         ct.tokenized.partial++;
       }
-
     }
     ct.coverage.observed = ct.total;
 
@@ -557,8 +580,13 @@ private:
         continue;
       }
 
+      stage2_assert(info.cond_idx < conditions_.size(),
+                    AssertLevel::L1, "Mapping", "TokenCondIdxInRange");
       bool has_fpmm = fpmm_cond_idxs_.count(info.cond_idx) > 0;
-      bool has_token_reg = (src == TokenSource::PolymarketTokenReg);
+      // Use condition-level TokenReg evidence for tree partition, so condition/token trees
+      // share one consistent Polymarket classification system.
+      bool has_token_reg =
+          (conditions_[info.cond_idx].source == ConditionSource::PolymarketTokenReg);
 
       if (has_token_reg) {
         // 有 TokenReg 的都是 Polymarket
