@@ -1,6 +1,7 @@
 #include "chain_sync.hpp"
 #include "misc/profiler.hpp"
 #include <algorithm>
+#include <iterator>
 
 namespace stage1 {
 
@@ -108,11 +109,14 @@ const std::vector<std::string> &ChainSync::fpmm_topics() {
 }
 
 std::vector<RpcClient::LogsQuery> ChainSync::build_queries(int64_t from_block, int64_t to_block) {
-  return {{std::string(contracts::CONDITIONAL_TOKENS), from_block, to_block, ct_topics()},
-          {std::string(contracts::CTF_EXCHANGE), from_block, to_block, ex_topics()},
-          {std::string(contracts::NEG_RISK_CTF_EXCHANGE), from_block, to_block, ex_topics()},
-          {std::string(contracts::NEG_RISK_ADAPTER), from_block, to_block, nra_topics()},
-          {std::nullopt, from_block, to_block, fpmm_topics()}};
+  std::vector<RpcClient::LogsQuery> queries;
+  queries.reserve(5);
+  queries.emplace_back(std::string(contracts::CONDITIONAL_TOKENS), from_block, to_block, &ct_topics());
+  queries.emplace_back(std::string(contracts::CTF_EXCHANGE), from_block, to_block, &ex_topics());
+  queries.emplace_back(std::string(contracts::NEG_RISK_CTF_EXCHANGE), from_block, to_block, &ex_topics());
+  queries.emplace_back(std::string(contracts::NEG_RISK_ADAPTER), from_block, to_block, &nra_topics());
+  queries.emplace_back(std::nullopt, from_block, to_block, &fpmm_topics());
+  return queries;
 }
 
 void ChainSync::schedule_sync(int delay_seconds) {
@@ -217,6 +221,7 @@ std::optional<ChainSync::SyncChunkState> ChainSync::build_sync_chunk(int sync_id
   out.from_block = cursor;
   out.started_at = std::chrono::steady_clock::now();
   out.done_count = 0;
+  out.basics.reserve(sync_chunk_basic_count_);
   for (int i = 0; i < sync_chunk_basic_count_ && cursor <= head_block; ++i) {
     int64_t to_block = std::min(cursor + basic_chunk_size_ - 1, head_block);
     out.basics.push_back(BasicTask{
@@ -270,6 +275,7 @@ void ChainSync::sync_loop(int64_t from_block, int64_t head_block) {
   fill_window();
 
   auto last_progress_print = std::chrono::steady_clock::now();
+  int scheduler_sleep_ms = kSchedulerSleepMs;
   while (!window.empty()) {
     bool stopping = stop_requested_.load();
     bool progressed = false;
@@ -376,7 +382,10 @@ void ChainSync::sync_loop(int64_t from_block, int64_t head_block) {
     }
 
     if (!progressed) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(kSchedulerSleepMs));
+      std::this_thread::sleep_for(std::chrono::milliseconds(scheduler_sleep_ms));
+      scheduler_sleep_ms = std::min(scheduler_sleep_ms << 1, ChainSync::kSchedulerSleepMaxMs);
+    } else {
+      scheduler_sleep_ms = kSchedulerSleepMs;
     }
   }
 
@@ -392,14 +401,16 @@ void ChainSync::sync_loop(int64_t from_block, int64_t head_block) {
   schedule_sync(interval_seconds_);
 }
 
-void ChainSync::process_batch(const RpcClient::BatchResult &r, int64_t from_block, int64_t to_block) {
+void ChainSync::process_batch(RpcClient::BatchResult &r, int64_t from_block, int64_t to_block) {
   DecodedEvents events;
   {
     TraceN("s1/decode");
     events = EventDecoder::decode_logs(r.results);
   }
 
-  merge_events(cached_events_, events);
+  merge_events(cached_events_, std::move(events));
+  std::vector<json>().swap(r.results);
+  std::string().swap(r.raw_body);
 
   int64_t partition_end = current_partition_start_ + FeatherWriter::PARTITION_SIZE - 1;
   if (to_block >= partition_end) {
@@ -417,8 +428,10 @@ void ChainSync::process_batch(const RpcClient::BatchResult &r, int64_t from_bloc
   }
 }
 
-void ChainSync::merge_events(DecodedEvents &dst, const DecodedEvents &src) {
-  auto append = [](auto &d, const auto &s) { d.insert(d.end(), s.begin(), s.end()); };
+void ChainSync::merge_events(DecodedEvents &dst, DecodedEvents &&src) {
+  auto append = [](auto &d, auto &s) {
+    d.insert(d.end(), std::make_move_iterator(s.begin()), std::make_move_iterator(s.end()));
+  };
   append(dst.transfer, src.transfer);
   append(dst.condition_preparation, src.condition_preparation);
   append(dst.condition_resolution, src.condition_resolution);

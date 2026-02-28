@@ -41,6 +41,7 @@ private:
   static constexpr int kRetryDelayMs = 300;
   static constexpr int kRetryDelayMaxMs = 10000;
   static constexpr int kSchedulerSleepMs = 5;
+  static constexpr int kSchedulerSleepMaxMs = 40;
 
   struct BasicTask {
     int64_t from_block = 0;
@@ -81,8 +82,8 @@ private:
                                                  int64_t head_block, size_t &rr_worker);
   void submit_basic_task(BasicTask &task);
   void sync_loop(int64_t from_block, int64_t head_block);
-  void process_batch(const RpcClient::BatchResult &r, int64_t from_block, int64_t to_block);
-  static void merge_events(DecodedEvents &dst, const DecodedEvents &src);
+  void process_batch(RpcClient::BatchResult &r, int64_t from_block, int64_t to_block);
+  static void merge_events(DecodedEvents &dst, DecodedEvents &&src);
 
   const Config &config_;
   Database &db_;

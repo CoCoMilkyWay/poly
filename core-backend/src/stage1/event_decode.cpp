@@ -26,7 +26,6 @@ const bool EventDecoder::crash_handler_installed_ = []() {
 DecodedEvents EventDecoder::decode_logs(const std::vector<json> &results) {
   [[maybe_unused]] bool installed = crash_handler_installed_;
   DecodedEvents events;
-  std::set<std::string> fpmm_addrs;
   // 第一趟: FPMM创建（扫描所有Factory，不只是Polymarket的）
   for (const auto &result : results) {
     for (const auto &log : result) {
@@ -37,10 +36,7 @@ DecodedEvents EventDecoder::decode_logs(const std::vector<json> &results) {
       std::string topic0 = to_lower(topics_arr[0].get<std::string>());
       if (topic0 == topics::FPMM_CREATE) {
         std::string factory_addr = to_lower(log["address"].get<std::string>());
-        auto new_addr = parse_fpmm_create(log, factory_addr, events);
-        if (new_addr) {
-          fpmm_addrs.insert(*new_addr);
-        }
+        parse_fpmm_create(log, factory_addr, events);
       }
     }
   }
@@ -48,7 +44,7 @@ DecodedEvents EventDecoder::decode_logs(const std::vector<json> &results) {
   // 第二趟: 所有事件
   for (const auto &result : results) {
     for (const auto &log : result) {
-      parse_log(log, fpmm_addrs, events);
+      parse_log(log, events);
     }
   }
   return events;
@@ -107,6 +103,11 @@ std::string EventDecoder::extract_address_from_topic(const std::string &topic) {
   return "0x" + topic.substr(26);
 }
 
+std::string EventDecoder::extract_address_from_data_word(const std::string &data, size_t word_index) {
+  size_t start = 2 + word_index * 64 + 24;
+  return "0x" + data.substr(start, 40);
+}
+
 std::string EventDecoder::extract_bytes32_from_data(const std::string &data, size_t index) {
   size_t start = 2 + index * 64;
   return "0x" + data.substr(start, 64);
@@ -128,8 +129,7 @@ bool EventDecoder::is_fpmm_topic(const std::string &topic0) {
          topic0 == topics::FPMM_FUNDING_REMOVE;
 }
 
-void EventDecoder::parse_log(const json &log, const std::set<std::string> &fpmm_addrs, DecodedEvents &events) {
-  (void)fpmm_addrs;
+void EventDecoder::parse_log(const json &log, DecodedEvents &events) {
   current_log_json_ = log.dump();
   std::string address = to_lower(log["address"].get<std::string>());
   const auto &topics_arr = log["topics"];
@@ -249,7 +249,7 @@ void EventDecoder::parse_split_or_merge(const json &topics, const std::string &d
 
   out.push_back({block_number, tx_hash, log_index,
                  extract_address_from_topic(topics[1].get<std::string>()),
-                 extract_address_from_topic("0x" + data.substr(2, 64)),
+                 extract_address_from_data_word(data, 0),
                  topics[2].get<std::string>(),
                  topics[3].get<std::string>(),
                  std::move(partition),
@@ -413,16 +413,16 @@ std::optional<std::string> EventDecoder::parse_fpmm_create(const json &log, cons
   std::string creation_layout;
   if (creation_topics_count == 4) {
     creation_layout = "fixed_factory_v1";
-    fpmm_addr = extract_address_from_topic("0x" + data.substr(2, 64));
+    fpmm_addr = extract_address_from_data_word(data, 0);
     conditional_tokens = extract_address_from_topic(topics_arr[2].get<std::string>());
     collateral_token = extract_address_from_topic(topics_arr[3].get<std::string>());
     cond_ids_offset = extract_uint256_i64_from_data(data, 1);
     fee = extract_uint256_hex_from_data(data, 2);
   } else {
     creation_layout = "deterministic_factory_v1";
-    fpmm_addr = extract_address_from_topic("0x" + data.substr(2, 64));
-    conditional_tokens = extract_address_from_topic("0x" + data.substr(2 + 64, 64));
-    collateral_token = extract_address_from_topic("0x" + data.substr(2 + 128, 64));
+    fpmm_addr = extract_address_from_data_word(data, 0);
+    conditional_tokens = extract_address_from_data_word(data, 1);
+    collateral_token = extract_address_from_data_word(data, 2);
     cond_ids_offset = extract_uint256_i64_from_data(data, 3);
     fee = extract_uint256_hex_from_data(data, 4);
   }

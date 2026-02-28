@@ -3,7 +3,6 @@
 #include <cstdint>
 #include <nlohmann/json.hpp>
 #include <optional>
-#include <set>
 #include <string>
 #include <vector>
 
@@ -192,12 +191,13 @@ private:
   static int64_t hex_to_int64(const std::string &hex);
   static std::string normalize_uint256_hex(const std::string &hex);
   static std::string extract_address_from_topic(const std::string &topic);
+  static std::string extract_address_from_data_word(const std::string &data, size_t word_index);
   static std::string extract_bytes32_from_data(const std::string &data, size_t index);
   static std::string extract_uint256_hex_from_data(const std::string &data, size_t index);
   static int64_t extract_uint256_i64_from_data(const std::string &data, size_t index);
   static bool is_fpmm_topic(const std::string &topic0);
 
-  static void parse_log(const json &log, const std::set<std::string> &fpmm_addrs, DecodedEvents &events);
+  static void parse_log(const json &log, DecodedEvents &events);
   static void parse_conditional_tokens_event(const std::string &topic0, const json &topics,
                                              const std::string &data, const std::string &tx_hash,
                                              int64_t block_number, int64_t log_index,

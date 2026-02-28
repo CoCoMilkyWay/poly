@@ -14,7 +14,7 @@ class NonRetryableRpcError : public std::runtime_error {
 public:
   explicit NonRetryableRpcError(const std::string &msg) : std::runtime_error(msg) {}
 };
-}
+} // namespace
 
 RpcClient::RpcClient(const std::string &url, const std::string &api_key, const std::string &worker_name,
                      const std::string &proxy_url, const std::string &transport_type)
@@ -190,7 +190,11 @@ std::string RpcClient::execute_request(const std::string &body) {
 
 std::string RpcClient::build_batch_request(const std::vector<LogsQuery> &queries) {
   json batch = json::array();
-  for (const auto &[address, from_block, to_block, topic0_list] : queries) {
+  auto &batch_array = batch.get_ref<json::array_t &>();
+  batch_array.reserve(queries.size());
+  for (const auto &[address, from_block, to_block, topic0_list_ptr] : queries) {
+    assert(topic0_list_ptr != nullptr);
+    const std::vector<std::string> &topic0_list = *topic0_list_ptr;
     json filter = {
         {"fromBlock", to_hex(from_block)},
         {"toBlock", to_hex(to_block)}};
@@ -217,7 +221,7 @@ std::vector<json> RpcClient::parse_batch_response(const std::string &response_bo
     throw NonRetryableRpcError("batch response count mismatch");
   }
   std::vector<json> results(count);
-  for (const auto &resp : responses) {
+  for (auto &resp : responses) {
     if (!resp.is_object()) {
       throw NonRetryableRpcError("batch item is not object");
     }
@@ -266,7 +270,7 @@ std::vector<json> RpcClient::parse_batch_response(const std::string &response_bo
         }
       }
     }
-    results[id] = resp["result"];
+    results[id] = std::move(resp["result"]);
   }
   for (size_t i = 0; i < count; ++i) {
     if (results[i].is_null()) {

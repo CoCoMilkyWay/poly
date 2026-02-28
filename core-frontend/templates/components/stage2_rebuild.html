@@ -454,7 +454,7 @@
       if (safeAddr.toLowerCase() === zeroAddr) {
         return { label: "未确定抵押品", desc: "" };
       }
-      return { label: `未知抵押品: ${safeAddr}`, desc: "" };
+      return { label: "未知抵押品", desc: safeAddr };
     }
 
     // 构建条件(Condition)树 - 主树

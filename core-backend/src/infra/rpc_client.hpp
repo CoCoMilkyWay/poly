@@ -18,7 +18,7 @@ class RpcTransport;
 
 class RpcClient {
 public:
-  using LogsQuery = std::tuple<std::optional<std::string>, int64_t, int64_t, std::vector<std::string>>;
+  using LogsQuery = std::tuple<std::optional<std::string>, int64_t, int64_t, const std::vector<std::string> *>;
 
   struct BatchResult {
     std::vector<json> results;
