@@ -378,8 +378,6 @@
       return s2FmtSig(v, 5);
     }
 
-    let s2LastCursor = 0;
-    let s2LastTime = Date.now();
     let s2ExpandedNodes = new Set(s2DefaultExpandedNodeIds());
     let s2AllExpanded = true;
 
@@ -387,36 +385,39 @@
       const sync = s.stage2_sync || {};
       const cursor = sync.stage2_cursor || 0;
       const headBlock = sync.stage1_last_block || 0;
-      const behind = headBlock - cursor;
+      const behind = Math.max(0, sync.behind_blocks ?? headBlock - cursor);
 
       document.getElementById("s2-last-block").textContent = s2FmtNum(cursor);
       document.getElementById("s2-head-block").textContent =
         s2FmtNum(headBlock);
       document.getElementById("s2-behind").textContent = s2FmtNum(behind);
 
-      const now = Date.now();
-      const dt = (now - s2LastTime) / 1000;
-      if (dt > 0 && cursor > s2LastCursor) {
-        const speed = (cursor - s2LastCursor) / dt;
+      const backendSpeed = Number(sync.blocks_per_second || 0);
+      const backendEta = Number(sync.eta_seconds);
+      if (backendSpeed > 0) {
         document.getElementById("s2-speed").textContent =
-          s2Fmt(Math.round(speed)) + "/s";
-        if (speed > 0 && behind > 0) {
-          const eta = behind / speed;
-          if (eta < 60)
-            document.getElementById("s2-eta").textContent =
-              Math.round(eta) + "s";
-          else if (eta < 3600)
-            document.getElementById("s2-eta").textContent =
-              Math.round(eta / 60) + "m";
-          else
-            document.getElementById("s2-eta").textContent =
-              (eta / 3600).toFixed(1) + "h";
+          s2Fmt(Math.round(backendSpeed)) + "/s";
+        if (behind > 0) {
+          if (Number.isFinite(backendEta) && backendEta >= 0) {
+            if (backendEta < 60)
+              document.getElementById("s2-eta").textContent =
+                Math.round(backendEta) + "s";
+            else if (backendEta < 3600)
+              document.getElementById("s2-eta").textContent =
+                Math.round(backendEta / 60) + "m";
+            else
+              document.getElementById("s2-eta").textContent =
+                (backendEta / 3600).toFixed(1) + "h";
+          } else {
+            document.getElementById("s2-eta").textContent = "-";
+          }
         } else {
-          document.getElementById("s2-eta").textContent = "-";
+          document.getElementById("s2-eta").textContent = "已同步";
         }
+      } else {
+        document.getElementById("s2-speed").textContent = "-";
+        document.getElementById("s2-eta").textContent = "-";
       }
-      s2LastCursor = cursor;
-      s2LastTime = now;
     }
 
     function s2Set(id, value) {

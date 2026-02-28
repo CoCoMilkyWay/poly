@@ -920,18 +920,22 @@
       }
 
       const bps = sync.blocks_per_second || 0;
+      const etaSeconds = Number(sync.eta_seconds);
       const speedEl = document.getElementById("sync-speed");
       const etaEl = document.getElementById("sync-eta");
       if (bps > 0) {
         speedEl.textContent = formatNumber(Math.round(bps)) + "/s";
         if (behind > 0) {
-          const etaSec = behind / bps;
-          if (etaSec < 60) {
-            etaEl.textContent = Math.round(etaSec) + "s";
-          } else if (etaSec < 3600) {
-            etaEl.textContent = Math.round(etaSec / 60) + "min";
+          if (Number.isFinite(etaSeconds) && etaSeconds >= 0) {
+            if (etaSeconds < 60) {
+              etaEl.textContent = Math.round(etaSeconds) + "s";
+            } else if (etaSeconds < 3600) {
+              etaEl.textContent = Math.round(etaSeconds / 60) + "min";
+            } else {
+              etaEl.textContent = (etaSeconds / 3600).toFixed(1) + "h";
+            }
           } else {
-            etaEl.textContent = (etaSec / 3600).toFixed(1) + "h";
+            etaEl.textContent = "-";
           }
         } else {
           etaEl.textContent = "已同步";

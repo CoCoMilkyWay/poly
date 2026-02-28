@@ -1,6 +1,9 @@
 #pragma once
 
 #include <atomic>
+#include <chrono>
+#include <deque>
+#include <optional>
 
 #include <boost/asio.hpp>
 
@@ -18,6 +21,8 @@ struct SyncProgress {
   int64_t stage2_cursor = 0;
   int64_t behind_blocks = 0;
   int64_t behind_chunks = 0;
+  double blocks_per_second = 0.0;
+  double eta_seconds = -1.0;
   int64_t chunks_per_rebuild = 0;
   int phase = 0;
 };
@@ -37,6 +42,7 @@ public:
 
 private:
   static constexpr int kStage2ChunkBlocks = FeatherWriter::PARTITION_SIZE;
+  static constexpr size_t kEtaWindowSize = 20;
 
   void schedule_sync(int delay_seconds);
 
@@ -50,6 +56,9 @@ private:
   int base_interval_;
   SyncProgress progress_;
   std::atomic<bool> stop_requested_{false};
+  std::deque<double> chunk_interval_history_s_;
+  std::deque<int64_t> chunk_block_history_;
+  std::optional<std::chrono::steady_clock::time_point> last_chunk_done_at_;
 };
 
 } // namespace stage2

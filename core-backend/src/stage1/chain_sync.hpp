@@ -34,6 +34,7 @@ public:
   bool is_syncing() const;
   int64_t get_head_block() const;
   double get_blocks_per_second() const;
+  double get_eta_seconds() const;
   double get_bytes_per_block() const;
 
 private:
@@ -117,6 +118,9 @@ private:
     int64_t block_count;
   };
   std::deque<ChunkRecord> chunk_history_;
+  std::deque<double> basic_interval_history_s_;
+  std::deque<int64_t> basic_block_history_;
+  std::optional<std::chrono::steady_clock::time_point> last_basic_done_at_;
 };
 
 } // namespace stage1

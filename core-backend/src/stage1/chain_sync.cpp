@@ -51,21 +51,42 @@ int64_t ChainSync::get_head_block() const {
 }
 
 double ChainSync::get_blocks_per_second() const {
-  if (chunk_history_.empty()) {
+  if (basic_interval_history_s_.empty()) {
     return 0.0;
   }
-  size_t n = std::min<size_t>(20, chunk_history_.size());
+  assert(basic_interval_history_s_.size() == basic_block_history_.size());
   double total_blocks = 0.0;
-  double total_duration = 0.0;
-  for (size_t i = chunk_history_.size() - n; i < chunk_history_.size(); ++i) {
-    const auto &r = chunk_history_[i];
-    total_blocks += static_cast<double>(r.block_count);
-    total_duration += r.duration_s;
+  double total_interval_s = 0.0;
+  for (size_t i = 0; i < basic_interval_history_s_.size(); ++i) {
+    total_blocks += static_cast<double>(basic_block_history_[i]);
+    total_interval_s += basic_interval_history_s_[i];
   }
-  if (total_duration <= 0.0) {
+  if (total_interval_s <= 0.0) {
     return 0.0;
   }
-  return total_blocks / total_duration;
+  return total_blocks / total_interval_s;
+}
+
+double ChainSync::get_eta_seconds() const {
+  if (basic_interval_history_s_.empty()) {
+    return -1.0;
+  }
+  double total_interval_s = 0.0;
+  for (double interval_s : basic_interval_history_s_) {
+    total_interval_s += interval_s;
+  }
+  if (total_interval_s <= 0.0) {
+    return -1.0;
+  }
+  double avg_interval_s = total_interval_s / static_cast<double>(basic_interval_history_s_.size());
+  int64_t safe_head = head_block_.load() - kSyncChunkBlocks;
+  int64_t last_block = db_.get_last_block();
+  int64_t behind_blocks = std::max<int64_t>(0, safe_head - last_block);
+  if (behind_blocks == 0) {
+    return 0.0;
+  }
+  int64_t remaining_events = (behind_blocks + basic_chunk_size_ - 1) / basic_chunk_size_;
+  return avg_interval_s * static_cast<double>(remaining_events);
 }
 
 double ChainSync::get_bytes_per_block() const {
@@ -320,6 +341,21 @@ void ChainSync::sync_loop(int64_t from_block, int64_t head_block) {
             task.decoded_events = std::move(decoded);
             sync.done_count += 1;
             set_done_bit(sync.slot, i, 1);
+            auto done_at = std::chrono::steady_clock::now();
+            if (last_basic_done_at_.has_value()) {
+              double interval_s = std::chrono::duration<double>(done_at - *last_basic_done_at_).count();
+              if (interval_s <= 0.0) {
+                interval_s = 1e-6;
+              }
+              int64_t block_count = task.to_block - task.from_block + 1;
+              basic_interval_history_s_.push_back(interval_s);
+              basic_block_history_.push_back(block_count);
+              if (basic_interval_history_s_.size() > 20) {
+                basic_interval_history_s_.pop_front();
+                basic_block_history_.pop_front();
+              }
+            }
+            last_basic_done_at_ = done_at;
           } else {
             assert(result.retryable && "stage1 query返回了不可重试错误, 数据可靠性无法保证");
             if (stopping) {

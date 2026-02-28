@@ -280,6 +280,7 @@ void ApiSession::handle_sync_state() {
     result["head_block"] = status.head_block;
     result["is_syncing"] = status.is_syncing;
     result["blocks_per_second"] = status.blocks_per_second;
+    result["eta_seconds"] = status.eta_seconds;
     result["bytes_per_block"] = status.bytes_per_block;
   }
 
@@ -705,7 +706,10 @@ void ApiSession::handle_rebuild_status() {
         {"syncing", s2.syncing},
         {"stage1_last_block", s2.stage1_last_block},
         {"stage2_cursor", s2.stage2_cursor},
+        {"behind_blocks", s2.behind_blocks},
         {"behind_chunks", s2.behind_chunks},
+        {"blocks_per_second", s2.blocks_per_second},
+        {"eta_seconds", s2.eta_seconds},
     };
   }
 

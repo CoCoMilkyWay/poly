@@ -21,6 +21,7 @@ struct Stage1SyncStatus {
   bool is_syncing = false;
   int64_t head_block = 0;
   double blocks_per_second = 0.0;
+  double eta_seconds = -1.0;
   double bytes_per_block = 0.0;
 };
 
@@ -28,7 +29,10 @@ struct Stage2SyncStatus {
   bool syncing = false;
   int64_t stage1_last_block = 0;
   int64_t stage2_cursor = 0;
+  int64_t behind_blocks = 0;
   int64_t behind_chunks = 0;
+  double blocks_per_second = 0.0;
+  double eta_seconds = -1.0;
 };
 
 class ApiSession : public std::enable_shared_from_this<ApiSession> {

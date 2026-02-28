@@ -60,7 +60,8 @@ int main(int argc, char *argv[]) {
 
   auto stage1_getter = [&chain_sync]() -> Stage1SyncStatus {
     return {chain_sync.is_syncing(), chain_sync.get_head_block(),
-            chain_sync.get_blocks_per_second(), chain_sync.get_bytes_per_block()};
+            chain_sync.get_blocks_per_second(), chain_sync.get_eta_seconds(),
+            chain_sync.get_bytes_per_block()};
   };
 
   boost::asio::io_context sync_ioc;
@@ -94,7 +95,8 @@ int main(int argc, char *argv[]) {
 
   auto stage2_getter = [&event_sync]() -> Stage2SyncStatus {
     const auto &p = event_sync.progress();
-    return {p.syncing, p.stage1_last_block, p.stage2_cursor, p.behind_chunks};
+    return {p.syncing, p.stage1_last_block, p.stage2_cursor, p.behind_blocks,
+            p.behind_chunks, p.blocks_per_second, p.eta_seconds};
   };
 
   boost::asio::io_context api_ioc;
