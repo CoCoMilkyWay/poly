@@ -1129,7 +1129,6 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
 }
 
 BuildProgress EventBuilder::commit_chunk(CommitPayload payload) {
-  TraceN("s2/commit");
   auto &new_conditions_ = payload.new_conditions;
   auto &new_tokens_ = payload.new_tokens;
   auto &new_fpmms_ = payload.new_fpmms;

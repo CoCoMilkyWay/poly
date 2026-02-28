@@ -225,10 +225,9 @@ struct ConditionTree {
       struct NegRiskStats {
         int64_t market_count = 0;
         int64_t question_count = 0;
+        int64_t condition_count = 0;
         // key: questions_per_market
         std::unordered_map<int64_t, int64_t> by_questions_per_market;
-        // key: conditions_per_market
-        std::unordered_map<int64_t, int64_t> by_conditions_per_market;
       } negrisk_stats;
     } token_reg;
     int64_t fpmm_poly = 0; // 只从FPMM推断(source=PolyFPMM)

@@ -414,8 +414,6 @@ private:
       (void)question_id;
       market_question_count[market_id]++;
     }
-    std::unordered_map<std::string, int64_t> market_condition_count;
-    market_condition_count.reserve(market_question_count.size());
 
     for (size_t i = 0; i < conditions_.size(); ++i) {
       ct.total++;
@@ -491,27 +489,17 @@ private:
         ct.tokenized.partial++;
       }
 
-      if (!info.question_id.empty()) {
-        auto mit = cond_to_market_.find(info.question_id);
-        if (mit != cond_to_market_.end()) {
-          market_condition_count[mit->second]++;
-        }
-      }
     }
     ct.coverage.observed = ct.total;
 
     auto &nr = ct.polymarket.token_reg.negrisk_stats;
     nr.market_count = static_cast<int64_t>(market_question_count.size());
     nr.question_count = static_cast<int64_t>(cond_to_market_.size());
+    nr.condition_count = static_cast<int64_t>(negrisk_cond_idxs_.size());
     nr.by_questions_per_market.clear();
-    nr.by_conditions_per_market.clear();
-    int64_t question_count_sum = 0;
     for (const auto &[market_id, qcnt] : market_question_count) {
+      (void)market_id;
       nr.by_questions_per_market[qcnt]++;
-      question_count_sum += qcnt;
-      auto cit = market_condition_count.find(market_id);
-      int64_t ccnt = (cit == market_condition_count.end()) ? 0 : cit->second;
-      nr.by_conditions_per_market[ccnt]++;
     }
 
     // 恒等式验证
@@ -545,16 +533,12 @@ private:
       for (const auto &[_, cnt] : nr.by_questions_per_market) {
         qpm_market_sum += cnt;
       }
-      int64_t cpm_market_sum = 0;
-      for (const auto &[_, cnt] : nr.by_conditions_per_market) {
-        cpm_market_sum += cnt;
-      }
       stage2_assert(nr.market_count == qpm_market_sum,
                     AssertLevel::L5, "Partition", "NegRiskStatsQPMTotal");
-      stage2_assert(nr.market_count == cpm_market_sum,
-                    AssertLevel::L5, "Partition", "NegRiskStatsCPMTotal");
-      stage2_assert(nr.question_count == question_count_sum,
+      stage2_assert(nr.question_count == static_cast<int64_t>(cond_to_market_.size()),
                     AssertLevel::L5, "Partition", "NegRiskStatsQuestionTotal");
+      stage2_assert(nr.question_count >= nr.condition_count,
+                    AssertLevel::L5, "Partition", "NegRiskStatsConditionBound");
     }
     progress_.cond_tree = ct;
 

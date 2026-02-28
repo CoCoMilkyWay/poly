@@ -234,14 +234,6 @@
       <span class="stage2-label">用户</span>
       <span class="stage2-value highlight" id="s2-total-users">0</span>
     </span>
-    <span class="stage2-item">
-      <span class="stage2-label">NegRisk市场ID</span>
-      <span class="stage2-value highlight" id="s2-total-markets">0</span>
-    </span>
-    <span class="stage2-item">
-      <span class="stage2-label">NegRisk问题ID</span>
-      <span class="stage2-value highlight" id="s2-total-negrisk-questions">0</span>
-    </span>
     <button id="s2-collapse-all" style="
         margin-left: auto;
         background: #333;
@@ -294,7 +286,6 @@
         "cond_tr_nr",
         "cond_tr_nr_stats",
         "cond_tr_nr_qpm",
-        "cond_tr_nr_cpm",
         "cond_other",
         "cond_split",
         "cond_merge",
@@ -470,14 +461,8 @@
       const mergeOther = other.merge ?? 0;
       const redemptionOther = other.redemption ?? 0;
       const qpm = nr.by_questions_per_market || {};
-      const cpm = nr.by_conditions_per_market || {};
-      const rawOutcome = coverage.raw_by_outcome_count || {};
-      const observed = Number(coverage.observed ?? ct.total ?? 0);
-      const rawRows = Number(coverage.raw_rows || 0);
-      const delta = Number(coverage.delta ?? (observed - rawRows));
-      const ratio = Number(
-        coverage.ratio_percent ?? (rawRows > 0 ? (observed / rawRows) * 100 : 0),
-      );
+      const byOutcome = coverage.by_outcome_count || {};
+      const recordedConditions = Number(coverage.recorded_conditions ?? 0);
       const byCollateral = (ct.by_collateral || [])
         .slice()
         .sort((a, b) => Number(b.count || 0) - Number(a.count || 0));
@@ -492,14 +477,13 @@
         Number(tokenized.partial || 0) +
         Number(tokenized.full || 0);
       const qpmTotal = Object.values(qpm).reduce((a, b) => a + Number(b || 0), 0);
-      const cpmTotal = Object.values(cpm).reduce((a, b) => a + Number(b || 0), 0);
-      const rawOutcomeTotal = Object.values(rawOutcome).reduce(
+      const byOutcomeTotal = Object.values(byOutcome).reduce(
         (a, b) => a + Number(b || 0),
         0,
       );
-      const rawQuestionTotal =
-        Number(coverage.raw_has_question_id || 0) +
-        Number(coverage.raw_no_question_id || 0);
+      const questionIdTotal =
+        Number(coverage.has_question_id || 0) +
+        Number(coverage.no_question_id || 0);
 
       return {
         id: "cond",
@@ -562,6 +546,12 @@
                             color: "#bbf7d0",
                           },
                           {
+                            id: "cond_tr_nr_condition_count",
+                            label: "ConditionCount",
+                            value: Number(nr.condition_count || 0),
+                            color: "#bbf7d0",
+                          },
+                          {
                             id: "cond_tr_nr_qpm",
                             label: "by_questions_per_market",
                             value: qpmTotal,
@@ -570,18 +560,6 @@
                               qpm,
                               "cond_tr_nr_qpm",
                               (k) => `Q=${k}`,
-                              "#dbeafe",
-                            ),
-                          },
-                          {
-                            id: "cond_tr_nr_cpm",
-                            label: "by_conditions_per_market",
-                            value: cpmTotal,
-                            color: "#bbf7d0",
-                            children: s2SortedDictChildren(
-                              cpm,
-                              "cond_tr_nr_cpm",
-                              (k) => `C=${k}`,
                               "#dbeafe",
                             ),
                           },
@@ -746,42 +724,25 @@
           {
             id: "cond_coverage",
             label: "Coverage",
-            value: observed,
+            value: recordedConditions,
             color: "#60a5fa",
             desc: "condition主树对账",
-            scene: "Observed/RawRows/Delta/Ratio",
+            scene: "已记录条件/ByOutcome/HasQuestionID",
             children: [
               {
-                id: "cond_cov_observed",
-                label: "Observed",
-                value: observed,
-                color: "#93c5fd",
-              },
-              {
                 id: "cond_cov_raw",
-                label: "RawRows",
-                value: rawRows,
-                color: "#93c5fd",
-              },
-              {
-                id: "cond_cov_delta",
-                label: "Delta(Obs-Raw)",
-                value: delta,
-                color: "#93c5fd",
-              },
-              {
-                id: "cond_cov_ratio",
-                label: "Observed/Raw(%)",
-                value: ratio,
+                label: "已记录条件",
+                value: recordedConditions,
                 color: "#93c5fd",
               },
               {
                 id: "cond_cov_outcome",
-                label: "RawOutcome",
-                value: rawOutcomeTotal,
+                label: "ByOutcome",
+                value: byOutcomeTotal,
                 color: "#93c5fd",
+                desc: "主要用于观察FPMM多结果问题; NegRisk每个问题固定2结果",
                 children: s2SortedDictChildren(
-                  rawOutcome,
+                  byOutcome,
                   "cond_cov_outcome",
                   (k) => `Outcome=${k}`,
                   "#dbeafe",
@@ -789,20 +750,20 @@
               },
               {
                 id: "cond_cov_question",
-                label: "RawQuestionID",
-                value: rawQuestionTotal,
+                label: "HasQuestionID",
+                value: questionIdTotal,
                 color: "#93c5fd",
                 children: [
                   {
                     id: "cond_cov_has_question",
-                    label: "HasQuestionId",
-                    value: Number(coverage.raw_has_question_id || 0),
+                    label: "HasQuestionID",
+                    value: Number(coverage.has_question_id || 0),
                     color: "#dbeafe",
                   },
                   {
                     id: "cond_cov_no_question",
-                    label: "NoQuestionId",
-                    value: Number(coverage.raw_no_question_id || 0),
+                    label: "NoQuestionID",
+                    value: Number(coverage.no_question_id || 0),
                     color: "#dbeafe",
                   },
                 ],
@@ -1974,12 +1935,7 @@
       const progress = headBlock > 0 ? (cursor / headBlock) * 100 : 0;
       bar.style.width = progress.toFixed(2) + "%";
 
-      const nrStats =
-        (((s.cond_tree || {}).polymarket || {}).token_reg || {}).negrisk_stats ||
-        {};
       s2Set("s2-total-users", s.total_users);
-      s2Set("s2-total-markets", nrStats.market_count || 0);
-      s2Set("s2-total-negrisk-questions", nrStats.question_count || 0);
 
       s2RenderAllTrees(s);
 

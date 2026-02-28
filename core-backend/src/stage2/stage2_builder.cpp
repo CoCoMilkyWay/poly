@@ -525,7 +525,7 @@ void EventBuilder::commit_worker_loop() {
     }
     BuildProgress committed;
     {
-      TraceN("s2/commit_worker");
+      TraceN("s2/commit");
       committed = commit_chunk(std::move(payload));
     }
     {

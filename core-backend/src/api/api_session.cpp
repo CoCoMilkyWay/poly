@@ -468,10 +468,6 @@ void ApiSession::handle_rebuild_status() {
   for (const auto &[k, v] : nr.by_questions_per_market) {
     nr_qpm[std::to_string(k)] = v;
   }
-  json nr_cpm = json::object();
-  for (const auto &[k, v] : nr.by_conditions_per_market) {
-    nr_cpm[std::to_string(k)] = v;
-  }
   json cond_by_coll = json::array();
   for (const auto &[coll, cnt] : ct.by_collateral) {
     auto [addr, name] = resolve_collateral(coll);
@@ -486,10 +482,7 @@ void ApiSession::handle_rebuild_status() {
   for (const auto &[k, v] : ct.coverage.raw_by_outcome_count) {
     cov_raw_outcome[std::to_string(k)] = v;
   }
-  int64_t cov_observed = ct.coverage.observed;
-  int64_t cov_raw_rows = ct.coverage.raw_rows;
-  int64_t cov_delta = cov_observed - cov_raw_rows;
-  double cov_ratio = (cov_raw_rows > 0) ? (100.0 * static_cast<double>(cov_observed) / static_cast<double>(cov_raw_rows)) : 0.0;
+  int64_t cov_recorded_conditions = ct.coverage.raw_rows;
   json cond_tree = {
       {"total", ct.total},
       {"polymarket",
@@ -503,8 +496,8 @@ void ApiSession::handle_rebuild_status() {
           {"negrisk_stats",
            {{"market_count", nr.market_count},
             {"question_count", nr.question_count},
-            {"by_questions_per_market", nr_qpm},
-            {"by_conditions_per_market", nr_cpm}}}}},
+            {"condition_count", nr.condition_count},
+            {"by_questions_per_market", nr_qpm}}}}},
         {"fpmm_poly", ct.polymarket.fpmm_poly}}},
       {"other",
        {{"total", ct.other.total},
@@ -522,13 +515,10 @@ void ApiSession::handle_rebuild_status() {
         {"full", ct.tokenized.full}}},
       {"by_collateral", cond_by_coll},
       {"coverage",
-       {{"observed", cov_observed},
-        {"raw_rows", cov_raw_rows},
-        {"raw_has_question_id", ct.coverage.raw_has_question_id},
-        {"raw_no_question_id", ct.coverage.raw_no_question_id},
-        {"raw_by_outcome_count", cov_raw_outcome},
-        {"delta", cov_delta},
-        {"ratio_percent", cov_ratio}}},
+       {{"recorded_conditions", cov_recorded_conditions},
+        {"has_question_id", ct.coverage.raw_has_question_id},
+        {"no_question_id", ct.coverage.raw_no_question_id},
+        {"by_outcome_count", cov_raw_outcome}}},
   };
 
   json token_tree = {

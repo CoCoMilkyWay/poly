@@ -43,8 +43,8 @@ Stage2Sync (timer驱动, boost::asio)
 │  │  │  │  └─ NegRiskStats  // desc: 仅投影视图,不参与主计数
 │  │  │  │     ├─ MarketCount  // desc: 去重market_id数量
 │  │  │  │     ├─ QuestionCount  // desc: 去重question_id数量
-│  │  │  │     ├─ by_questions_per_market  // desc: 每个market的问题数分布
-│  │  │  │     └─ by_conditions_per_market  // desc: 每个market映射到的condition数分布
+│  │  │  │     ├─ ConditionCount  // desc: 去重condition数量
+│  │  │  │     └─ by_questions_per_market  // desc: 每个market的问题数分布
 │  │  │  ├─ OB  // desc: poly & treg & ob; scene: 无AMM池,只有挂单交易; 对应: cond_tree.polymarket.token_reg.orderbook
 │  │  │  └─ Other(预期=0)  // desc: poly & treg & other0; scene: Polymarket-TokenReg未覆盖项; 对应: cond_tree.polymarket.token_reg.other
 │  │  └─ FPMM  // desc: poly & fcreate & !treg; scene: 只创建AMM池,未注册Exchange; 对应: cond_tree.polymarket.fpmm_poly
@@ -57,7 +57,7 @@ Stage2Sync (timer驱动, boost::asio)
 ├─ Resolve  // desc: condition解析状态; scene: Resolved/Unresolved
 ├─ Collateral  // desc: condition collateral覆盖; scene: 动态聚合(by_collateral)
 ├─ Tokenized  // desc: condition token映射完整度; scene: NoToken/PartialTokenized/FullyTokenized
-└─ Coverage  // desc: condition主树对账; scene: Observed(去重condition)/RawRows(condition_preparation行)/Delta/Ratio
+└─ Coverage  // desc: condition主树对账; scene: 已记录条件(condition_preparation行)/ByOutcome(主要看FPMM多结果; NegRisk固定2结果)/HasQuestionID
 
 代币树 (`s2-token-tree`)
 └─ 代币  // desc: token分类总览; scene: ERC1155 token_id来源分层; 对应: token_tree.total
@@ -201,7 +201,7 @@ abbr(all)
 ├─ cond/token: split_event/merge_event/redemption_event=仅由对应语义事件反推得到
 ├─ cond/token: other0=兜底未覆盖(!fpmm & !nr & !ob), group_by(x)=按字段x聚合
 ├─ coverage: observed=去重condition实体口径, raw=condition_preparation行口径, delta=observed-raw
-├─ negrisk: market=neg_risk_market_id, qpm=questions_per_market, cpm=conditions_per_market
+├─ negrisk: market=neg_risk_market_id, qpm=questions_per_market, cond=distinct_condition_count
 ├─ transfer: amt=amount, known=known_cond, m(x)=match_x, holder=stakeholder, evt=event, tidx=token_idx, coll=collateral
 └─ transfer: is_proto=is_protocol, is_user=is_user
 
