@@ -35,6 +35,10 @@ size_t RpcTransportCurl::last_response_size() const {
   return last_response_size_;
 }
 
+void RpcTransportCurl::cancel() {
+  cancel_requested_.store(true);
+}
+
 size_t RpcTransportCurl::write_callback(char *ptr, size_t size, size_t nmemb, void *userdata) {
   size_t bytes = size * nmemb;
   auto *out = static_cast<std::string *>(userdata);
@@ -42,7 +46,15 @@ size_t RpcTransportCurl::write_callback(char *ptr, size_t size, size_t nmemb, vo
   return bytes;
 }
 
+int RpcTransportCurl::progress_callback(void *clientp, curl_off_t, curl_off_t, curl_off_t, curl_off_t) {
+  auto *self = static_cast<RpcTransportCurl *>(clientp);
+  return self->cancel_requested_.load() ? 1 : 0;
+}
+
 std::string RpcTransportCurl::post_json(const std::string &body) {
+  if (cancel_requested_.load()) {
+    throw std::runtime_error("RPC cancelled");
+  }
   std::string response;
   char errbuf[CURL_ERROR_SIZE] = {0};
 
@@ -60,6 +72,9 @@ std::string RpcTransportCurl::post_json(const std::string &body) {
   curl_easy_setopt(easy_, CURLOPT_ERRORBUFFER, errbuf);
   curl_easy_setopt(easy_, CURLOPT_FRESH_CONNECT, 1L);
   curl_easy_setopt(easy_, CURLOPT_FORBID_REUSE, 1L);
+  curl_easy_setopt(easy_, CURLOPT_NOPROGRESS, 0L);
+  curl_easy_setopt(easy_, CURLOPT_XFERINFOFUNCTION, &RpcTransportCurl::progress_callback);
+  curl_easy_setopt(easy_, CURLOPT_XFERINFODATA, this);
 
   if (!proxy_url_.empty()) {
     curl_easy_setopt(easy_, CURLOPT_PROXY, proxy_url_.c_str());
@@ -67,6 +82,9 @@ std::string RpcTransportCurl::post_json(const std::string &body) {
 
   CURLcode rc = curl_easy_perform(easy_);
   if (rc != CURLE_OK) {
+    if (cancel_requested_.load()) {
+      throw std::runtime_error("RPC cancelled");
+    }
     std::string msg = errbuf[0] ? errbuf : curl_easy_strerror(rc);
     throw std::runtime_error("curl_easy_perform failed: " + msg);
   }

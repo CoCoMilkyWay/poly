@@ -1,5 +1,7 @@
 #pragma once
 
+#include <atomic>
+#include <mutex>
 #include <memory>
 #include <string>
 
@@ -21,6 +23,7 @@ public:
 
   std::string post_json(const std::string &body) override;
   size_t last_response_size() const override;
+  void cancel() override;
 
 private:
   static void socks5_handshake(asio::ip::tcp::socket &sock, const std::string &dst_host, int dst_port);
@@ -40,4 +43,6 @@ private:
   std::unique_ptr<beast::ssl_stream<beast::tcp_stream>> ssl_stream_;
   std::unique_ptr<beast::tcp_stream> tcp_stream_;
   bool connected_ = false;
+  std::mutex conn_mutex_;
+  std::atomic<bool> cancel_requested_{false};
 };

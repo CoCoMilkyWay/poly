@@ -28,6 +28,23 @@ size_t RpcTransportBeast::last_response_size() const {
   return last_response_size_;
 }
 
+void RpcTransportBeast::cancel() {
+  cancel_requested_.store(true);
+  std::lock_guard<std::mutex> lock(conn_mutex_);
+  beast::error_code ec;
+  if (use_ssl_ && ssl_stream_) {
+    auto &sock = beast::get_lowest_layer(*ssl_stream_).socket();
+    [[maybe_unused]] auto _ = sock.cancel(ec);
+    [[maybe_unused]] auto __ = sock.shutdown(tcp::socket::shutdown_both, ec);
+    [[maybe_unused]] auto ___ = sock.close(ec);
+  } else if (tcp_stream_) {
+    auto &sock = tcp_stream_->socket();
+    [[maybe_unused]] auto _ = sock.cancel(ec);
+    [[maybe_unused]] auto __ = sock.shutdown(tcp::socket::shutdown_both, ec);
+    [[maybe_unused]] auto ___ = sock.close(ec);
+  }
+}
+
 void RpcTransportBeast::socks5_handshake(asio::ip::tcp::socket &sock, const std::string &dst_host, int dst_port) {
   uint8_t greeting[3] = {0x05, 0x01, 0x00};
   asio::write(sock, asio::buffer(greeting, 3));
@@ -66,8 +83,12 @@ void RpcTransportBeast::socks5_handshake(asio::ip::tcp::socket &sock, const std:
 }
 
 void RpcTransportBeast::ensure_connected() {
+  std::lock_guard<std::mutex> lock(conn_mutex_);
   if (connected_) {
     return;
+  }
+  if (cancel_requested_.load()) {
+    throw std::runtime_error("RPC cancelled");
   }
 
   constexpr auto kConnectTimeout = std::chrono::seconds(30);
@@ -99,6 +120,7 @@ void RpcTransportBeast::ensure_connected() {
 }
 
 void RpcTransportBeast::disconnect() {
+  std::lock_guard<std::mutex> lock(conn_mutex_);
   if (!connected_) {
     return;
   }
@@ -126,6 +148,9 @@ std::string RpcTransportBeast::post_json(const std::string &body) {
   constexpr auto kTimeout = std::chrono::seconds(60);
   for (int retry = 0; retry < 2; ++retry) {
     try {
+      if (cancel_requested_.load()) {
+        throw std::runtime_error("RPC cancelled");
+      }
       ensure_connected();
 
       beast::flat_buffer buffer;
@@ -153,6 +178,9 @@ std::string RpcTransportBeast::post_json(const std::string &body) {
       return result;
     } catch (...) {
       disconnect();
+      if (cancel_requested_.load()) {
+        throw;
+      }
       if (retry == 1) {
         throw;
       }

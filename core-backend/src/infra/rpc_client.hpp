@@ -35,6 +35,7 @@ public:
 
   int64_t eth_blockNumber();
   std::future<BatchResult> eth_getLogs_batch_async(const std::vector<LogsQuery> &queries);
+  void cancel();
 
 private:
   struct PendingRequest {

@@ -100,6 +100,7 @@ private:
   int interval_seconds_ = 30;
   std::atomic<bool> is_syncing_{false};
   std::atomic<bool> stop_requested_{false};
+  std::atomic<bool> db_write_in_progress_{false};
   std::atomic<int64_t> head_block_{0};
   bool progress_line_active_ = false;
   size_t progress_line_len_ = 0;

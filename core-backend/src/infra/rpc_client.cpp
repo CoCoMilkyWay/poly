@@ -5,6 +5,7 @@
 #include <stdexcept>
 
 #include "misc/profiler.hpp"
+#include "rpc_transport.hpp"
 #include "rpc_transport_beast.hpp"
 #include "rpc_transport_curl.hpp"
 
@@ -59,6 +60,21 @@ std::future<RpcClient::BatchResult> RpcClient::eth_getLogs_batch_async(const std
   }
 
   return future;
+}
+
+void RpcClient::cancel() {
+  transport_->cancel();
+  std::deque<PendingRequest> pending;
+  {
+    std::lock_guard<std::mutex> lock(worker_mutex_);
+    pending.swap(request_queue_);
+  }
+  for (auto &req : pending) {
+    BatchResult result;
+    result.success = false;
+    result.error_msg = "RPC cancelled";
+    req.promise->set_value(std::move(result));
+  }
 }
 
 void RpcClient::start_worker() {

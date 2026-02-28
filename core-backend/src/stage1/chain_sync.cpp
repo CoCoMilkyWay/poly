@@ -35,6 +35,10 @@ void ChainSync::start(asio::io_context &ioc) {
 
 void ChainSync::stop() {
   stop_requested_ = true;
+  rpc_head_.cancel();
+  for (auto &w : rpc_workers_) {
+    w->cancel();
+  }
 }
 
 bool ChainSync::is_syncing() const {
@@ -365,7 +369,7 @@ void ChainSync::sync_loop(int64_t from_block, int64_t head_block) {
 
     if (stopping) {
       clear_progress_inline();
-      if (!has_inflight()) {
+      if (!has_inflight() && !db_write_in_progress_.load()) {
         break;
       }
     }
@@ -399,11 +403,13 @@ void ChainSync::process_batch(const RpcClient::BatchResult &r, int64_t from_bloc
   int64_t partition_end = current_partition_start_ + FeatherWriter::PARTITION_SIZE - 1;
   if (to_block >= partition_end) {
     TraceN("s1/write");
+    db_write_in_progress_ = true;
     feather_writer_.write_partition(current_partition_start_, cached_events_);
     {
       Database::WriteLock lock(db_);
       db_.set_last_block(partition_end);
     }
+    db_write_in_progress_ = false;
     cached_events_ = DecodedEvents{};
     current_partition_start_ += FeatherWriter::PARTITION_SIZE;
     std::cout << "[Stage1] 分区 " << (current_partition_start_ - FeatherWriter::PARTITION_SIZE) << " 已落地" << std::endl;

@@ -16,6 +16,7 @@ public:
   virtual ~RpcTransport() = default;
   virtual std::string post_json(const std::string &body) = 0;
   virtual size_t last_response_size() const = 0;
+  virtual void cancel() = 0;
 };
 
 inline RpcEndpoint parse_rpc_endpoint(const std::string &url) {
