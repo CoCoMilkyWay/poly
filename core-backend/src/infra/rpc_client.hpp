@@ -25,6 +25,7 @@ public:
     std::string raw_body;
     size_t response_bytes = 0;
     bool success = false;
+    bool retryable = true;
     std::string error_msg;
   };
 

@@ -9,6 +9,13 @@
 #include "rpc_transport_beast.hpp"
 #include "rpc_transport_curl.hpp"
 
+namespace {
+class NonRetryableRpcError : public std::runtime_error {
+public:
+  explicit NonRetryableRpcError(const std::string &msg) : std::runtime_error(msg) {}
+};
+}
+
 RpcClient::RpcClient(const std::string &url, const std::string &api_key, const std::string &worker_name,
                      const std::string &proxy_url, const std::string &transport_type)
     : transport_type_(transport_type), worker_name_(worker_name) {
@@ -72,6 +79,7 @@ void RpcClient::cancel() {
   for (auto &req : pending) {
     BatchResult result;
     result.success = false;
+    result.retryable = true;
     result.error_msg = "RPC cancelled";
     req.promise->set_value(std::move(result));
   }
@@ -131,6 +139,8 @@ void RpcClient::worker_loop() {
         if (count > 0) {
           try {
             result.results = parse_batch_response(response_body, count);
+          } catch (const NonRetryableRpcError &e) {
+            throw NonRetryableRpcError(std::string(e.what()) + " | response=" + response_body);
           } catch (const std::exception &e) {
             throw std::runtime_error(std::string(e.what()) + " | response=" + response_body);
           }
@@ -138,9 +148,16 @@ void RpcClient::worker_loop() {
           result.raw_body = std::move(response_body);
         }
         result.success = true;
+        result.retryable = true;
         TraceN("rpc/success");
+      } catch (const NonRetryableRpcError &e) {
+        result.success = false;
+        result.retryable = false;
+        result.error_msg = e.what();
+        TraceN("rpc/fail");
       } catch (const std::exception &e) {
         result.success = false;
+        result.retryable = true;
         result.error_msg = e.what();
         TraceN("rpc/fail");
       }
@@ -194,22 +211,67 @@ std::string RpcClient::build_batch_request(const std::vector<LogsQuery> &queries
 std::vector<json> RpcClient::parse_batch_response(const std::string &response_body, size_t count) {
   json responses = json::parse(response_body);
   if (!responses.is_array()) {
-    throw std::runtime_error("batch response not array: " + response_body.substr(0, 300));
+    throw NonRetryableRpcError("batch response not array");
   }
-  assert(responses.size() == count && "batch response count mismatch");
+  if (responses.size() != count) {
+    throw NonRetryableRpcError("batch response count mismatch");
+  }
   std::vector<json> results(count);
   for (const auto &resp : responses) {
+    if (!resp.is_object()) {
+      throw NonRetryableRpcError("batch item is not object");
+    }
     if (resp.contains("error")) {
       size_t id = resp.value("id", 0);
       throw std::runtime_error("RPC error id=" + std::to_string(id) + ": " + resp["error"].dump());
     }
+    if (!resp.contains("id") || !resp["id"].is_number_unsigned()) {
+      throw NonRetryableRpcError("batch item missing/invalid id");
+    }
+    if (!resp.contains("result") || !resp["result"].is_array()) {
+      throw NonRetryableRpcError("batch item missing/invalid result");
+    }
     size_t id = resp["id"].get<size_t>();
-    assert(id < count && "batch response id out of range");
-    assert(results[id].is_null() && "batch response id duplicated");
+    if (id >= count) {
+      throw NonRetryableRpcError("batch response id out of range");
+    }
+    if (!results[id].is_null()) {
+      throw NonRetryableRpcError("batch response id duplicated");
+    }
+    for (const auto &log : resp["result"]) {
+      if (!log.is_object()) {
+        throw NonRetryableRpcError("log item is not object");
+      }
+      if (!log.contains("address") || !log["address"].is_string()) {
+        throw NonRetryableRpcError("log missing/invalid address");
+      }
+      if (!log.contains("topics") || !log["topics"].is_array()) {
+        throw NonRetryableRpcError("log missing/invalid topics");
+      }
+      if (!log.contains("data") || !log["data"].is_string()) {
+        throw NonRetryableRpcError("log missing/invalid data");
+      }
+      if (!log.contains("transactionHash") || !log["transactionHash"].is_string()) {
+        throw NonRetryableRpcError("log missing/invalid transactionHash");
+      }
+      if (!log.contains("blockNumber") || !log["blockNumber"].is_string()) {
+        throw NonRetryableRpcError("log missing/invalid blockNumber");
+      }
+      if (!log.contains("logIndex") || !log["logIndex"].is_string()) {
+        throw NonRetryableRpcError("log missing/invalid logIndex");
+      }
+      for (const auto &topic : log["topics"]) {
+        if (!topic.is_string()) {
+          throw NonRetryableRpcError("log topic is not string");
+        }
+      }
+    }
     results[id] = resp["result"];
   }
   for (size_t i = 0; i < count; ++i) {
-    assert(!results[i].is_null() && "batch response missing item");
+    if (results[i].is_null()) {
+      throw NonRetryableRpcError("batch response missing item");
+    }
   }
   return results;
 }

@@ -304,6 +304,7 @@ void ChainSync::sync_loop(int64_t from_block, int64_t head_block) {
             sync.done_count += 1;
             set_done_bit(sync.slot, i, 1);
           } else {
+            assert(result.retryable && "stage1 query返回了不可重试错误, 数据可靠性无法保证");
             if (stopping) {
               task.done = true;
               sync.done_count += 1;
