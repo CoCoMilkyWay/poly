@@ -44,27 +44,28 @@ void EventSync::schedule_sync(int delay_seconds) {
 void EventSync::do_sync() {
   TraceN("s2/sync");
   auto refresh_timing_metrics = [&](int64_t remaining_blocks) {
-    if (chunk_interval_history_s_.empty()) {
+    if (commit_history_.size() < 2) {
       progress_.blocks_per_second = 0.0;
       progress_.eta_seconds = (remaining_blocks == 0) ? 0.0 : -1.0;
       return;
     }
-    assert(chunk_interval_history_s_.size() == chunk_block_history_.size());
-    double total_interval_s = 0.0;
-    double total_blocks = 0.0;
-    for (size_t i = 0; i < chunk_interval_history_s_.size(); ++i) {
-      total_interval_s += chunk_interval_history_s_[i];
-      total_blocks += static_cast<double>(chunk_block_history_[i]);
-    }
-    if (total_interval_s <= 0.0) {
+    const auto &first = commit_history_.front();
+    const auto &last = commit_history_.back();
+    double elapsed_s = std::chrono::duration<double>(last.committed_at - first.committed_at).count();
+    if (elapsed_s <= 0.0) {
       progress_.blocks_per_second = 0.0;
       progress_.eta_seconds = -1.0;
       return;
     }
-    progress_.blocks_per_second = total_blocks / total_interval_s;
-    double avg_interval_s = total_interval_s / static_cast<double>(chunk_interval_history_s_.size());
-    int64_t remaining_chunks = (remaining_blocks + chunk_size_ - 1) / chunk_size_;
-    progress_.eta_seconds = (remaining_blocks == 0) ? 0.0 : avg_interval_s * static_cast<double>(remaining_chunks);
+    int64_t committed_blocks = std::max<int64_t>(0, last.cursor - first.cursor);
+    if (committed_blocks == 0) {
+      progress_.blocks_per_second = 0.0;
+      progress_.eta_seconds = (remaining_blocks == 0) ? 0.0 : -1.0;
+      return;
+    }
+    progress_.blocks_per_second = static_cast<double>(committed_blocks) / elapsed_s;
+    progress_.eta_seconds =
+        (remaining_blocks == 0) ? 0.0 : static_cast<double>(remaining_blocks) / progress_.blocks_per_second;
   };
   int64_t stage1_last = stage1_db_.get_last_block();
   int64_t stage2_cursor = builder_.cursor();
@@ -91,21 +92,10 @@ void EventSync::do_sync() {
   progress_.phase = builder_.progress().phase;
   int64_t new_cursor = builder_.cursor();
   if (new_cursor > stage2_cursor) {
-    auto chunk_done_at = std::chrono::steady_clock::now();
-    if (last_chunk_done_at_.has_value()) {
-      double interval_s = std::chrono::duration<double>(chunk_done_at - *last_chunk_done_at_).count();
-      if (interval_s <= 0.0) {
-        interval_s = 1e-6;
-      }
-      int64_t block_count = new_cursor - stage2_cursor;
-      chunk_interval_history_s_.push_back(interval_s);
-      chunk_block_history_.push_back(block_count);
-      if (chunk_interval_history_s_.size() > kEtaWindowSize) {
-        chunk_interval_history_s_.pop_front();
-        chunk_block_history_.pop_front();
-      }
+    commit_history_.push_back({std::chrono::steady_clock::now(), new_cursor});
+    if (commit_history_.size() > kEtaWindowSize) {
+      commit_history_.pop_front();
     }
-    last_chunk_done_at_ = chunk_done_at;
   }
   progress_.stage2_cursor = new_cursor;
   int64_t updated_behind_blocks = std::max<int64_t>(0, stage1_last - new_cursor);

@@ -3,7 +3,6 @@
 #include <atomic>
 #include <chrono>
 #include <deque>
-#include <optional>
 
 #include <boost/asio.hpp>
 
@@ -43,6 +42,10 @@ public:
 private:
   static constexpr int kStage2ChunkBlocks = FeatherWriter::PARTITION_SIZE;
   static constexpr size_t kEtaWindowSize = 20;
+  struct CommitRecord {
+    std::chrono::steady_clock::time_point committed_at;
+    int64_t cursor = 0;
+  };
 
   void schedule_sync(int delay_seconds);
 
@@ -56,9 +59,7 @@ private:
   int base_interval_;
   SyncProgress progress_;
   std::atomic<bool> stop_requested_{false};
-  std::deque<double> chunk_interval_history_s_;
-  std::deque<int64_t> chunk_block_history_;
-  std::optional<std::chrono::steady_clock::time_point> last_chunk_done_at_;
+  std::deque<CommitRecord> commit_history_;
 };
 
 } // namespace stage2

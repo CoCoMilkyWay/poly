@@ -117,10 +117,14 @@ private:
     size_t body_bytes;
     int64_t block_count;
   };
+  struct CommitRecord {
+    std::chrono::steady_clock::time_point committed_at;
+    int64_t committed_block = 0;
+  };
+  static constexpr size_t kEtaWindowSize = 20;
+  void record_commit_event(int64_t committed_block);
   std::deque<ChunkRecord> chunk_history_;
-  std::deque<double> basic_interval_history_s_;
-  std::deque<int64_t> basic_block_history_;
-  std::optional<std::chrono::steady_clock::time_point> last_basic_done_at_;
+  std::deque<CommitRecord> commit_history_;
 };
 
 } // namespace stage1
