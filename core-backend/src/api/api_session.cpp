@@ -667,6 +667,21 @@ void ApiSession::handle_rebuild_status() {
       {"convert_sem_tree", convert_sem_tree},
       {"order_sem_tree", order_sem_tree},
   };
+  {
+    auto s3 = pnl_engine_.sync_status();
+    result["stage3_sync"] = {
+        {"running", s3.running},
+        {"stage2_cursor", s3.stage2_cursor},
+        {"stage3_sort_key", s3.stage3_sort_key},
+        {"stage3_block", s3.stage3_block},
+        {"behind_blocks", s3.behind_blocks},
+        {"processed_events", s3.processed_events},
+        {"behind_events", s3.behind_events},
+        {"events_per_second", s3.events_per_second},
+        {"eta_seconds", s3.eta_seconds},
+        {"ready", s3.behind_blocks == 0},
+    };
+  }
   result.update(transfer_tree);
 
   json event_by_collateral = json::object();

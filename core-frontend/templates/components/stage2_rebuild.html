@@ -1969,8 +1969,9 @@
         const resp = await fetch("/api/rebuild-status");
         const status = await resp.json();
         s2UpdateProgress(status);
+        const stage3Ready = !!(status.stage3_sync && status.stage3_sync.ready);
         if (
-          status.phase === 7 &&
+          (stage3Ready || status.phase === 7) &&
           !status.running &&
           typeof rpOnRebuildDone === "function"
         ) {

@@ -384,7 +384,8 @@ async function rpCheckStatus() {
   try {
     const resp = await fetch('/api/rebuild-status');
     const s = await resp.json();
-    if (s.phase === 7 && s.total_users > 0) rpEnableQuery();
+    const ready = !!(s.stage3_sync && s.stage3_sync.ready);
+    if ((ready || s.phase === 7) && s.total_users > 0) rpEnableQuery();
   } catch(e) {}
 }
 

@@ -91,7 +91,8 @@ int main(int argc, char *argv[]) {
     });
   }
 
-  stage3::PnlEngine pnl_engine(event_sync.builder());
+  stage3::PnlEngine pnl_engine(event_sync.builder(), stage2_db);
+  pnl_engine.start(stage2_ioc);
 
   auto stage2_getter = [&event_sync]() -> Stage2SyncStatus {
     const auto &p = event_sync.progress();
