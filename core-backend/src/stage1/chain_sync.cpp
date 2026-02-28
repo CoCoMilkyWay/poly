@@ -290,7 +290,6 @@ void ChainSync::sync_loop(int64_t from_block, int64_t head_block) {
   };
   fill_window();
 
-  auto last_progress_print = std::chrono::steady_clock::now();
   int scheduler_sleep_ms = kSchedulerSleepMs;
   while (!window.empty()) {
     bool stopping = stop_requested_.load();
@@ -333,6 +332,10 @@ void ChainSync::sync_loop(int64_t from_block, int64_t head_block) {
             task.decoded_events = std::move(decoded);
             sync.done_count += 1;
             set_done_bit(sync.slot, i, 1);
+            if (!stopping && !window.empty()) {
+              TraceN("s1/progress");
+              render_progress_inline(window);
+            }
           } else {
             assert(result.retryable && "stage1 query返回了不可重试错误, 数据可靠性无法保证");
             if (stopping) {
@@ -358,15 +361,6 @@ void ChainSync::sync_loop(int64_t from_block, int64_t head_block) {
           submit_basic_task(task);
           progressed = true;
         }
-      }
-    }
-
-    if (!stopping && !window.empty()) {
-      auto print_now = std::chrono::steady_clock::now();
-      if (print_now - last_progress_print >= std::chrono::milliseconds(500)) {
-        TraceN("s1/progress");
-        render_progress_inline(window);
-        last_progress_print = print_now;
       }
     }
 
