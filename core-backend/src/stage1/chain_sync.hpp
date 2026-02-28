@@ -50,7 +50,8 @@ private:
     bool in_flight = false;
     bool done = false;
     std::future<RpcClient::BatchResult> future;
-    std::optional<RpcClient::BatchResult> result;
+    std::optional<DecodedEvents> decoded_events;
+    size_t response_bytes = 0;
     std::chrono::steady_clock::time_point retry_at = std::chrono::steady_clock::now();
     int retry_count = 0;
   };
@@ -82,7 +83,7 @@ private:
                                                  int64_t head_block, size_t &rr_worker);
   void submit_basic_task(BasicTask &task);
   void sync_loop(int64_t from_block, int64_t head_block);
-  void process_batch(RpcClient::BatchResult &r, int64_t from_block, int64_t to_block);
+  void process_batch(DecodedEvents &&events, int64_t to_block);
   static void merge_events(DecodedEvents &dst, DecodedEvents &&src);
 
   const Config &config_;

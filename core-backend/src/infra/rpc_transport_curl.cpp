@@ -67,7 +67,7 @@ std::string RpcTransportCurl::post_json(const std::string &body) {
   curl_easy_setopt(easy_, CURLOPT_WRITEFUNCTION, &RpcTransportCurl::write_callback);
   curl_easy_setopt(easy_, CURLOPT_WRITEDATA, &response);
   curl_easy_setopt(easy_, CURLOPT_CONNECTTIMEOUT, 30L);
-  curl_easy_setopt(easy_, CURLOPT_TIMEOUT, 60L);
+  curl_easy_setopt(easy_, CURLOPT_TIMEOUT, 120L);
   curl_easy_setopt(easy_, CURLOPT_ACCEPT_ENCODING, "");
   curl_easy_setopt(easy_, CURLOPT_ERRORBUFFER, errbuf);
   curl_easy_setopt(easy_, CURLOPT_FRESH_CONNECT, 1L);

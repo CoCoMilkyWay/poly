@@ -145,17 +145,20 @@ void ChainSync::do_sync() {
   }
   int64_t last_block = db_.get_last_block();
   int64_t from_block = (last_block < 0) ? config_.initial_block : last_block + 1;
+  int64_t safe_head = head_block_ - kSyncChunkBlocks;
 
-  std::cout << "[Stage1] head=" << head_block_ << ", last=" << last_block << std::endl;
+  std::cout << "[Stage1] head=" << head_block_
+            << ", safe_head=" << safe_head
+            << ", last=" << last_block << std::endl;
 
-  if (from_block > head_block_) {
-    std::cout << "[Stage1] 已同步到最新, " << interval_seconds_ << "s 后检查" << std::endl;
+  if (from_block > safe_head) {
+    std::cout << "[Stage1] 未达到100000确认深度可同步范围, " << interval_seconds_ << "s 后检查" << std::endl;
     is_syncing_ = false;
     schedule_sync(interval_seconds_);
     return;
   }
 
-  sync_loop(from_block, head_block_);
+  sync_loop(from_block, safe_head);
 }
 
 void ChainSync::init_done_slot(int slot, size_t nbits) {
@@ -303,10 +306,18 @@ void ChainSync::sync_loop(int64_t from_block, int64_t head_block) {
           }
           task.in_flight = false;
           if (result.success) {
+            DecodedEvents decoded;
+            {
+              TraceN("s1/decode");
+              decoded = EventDecoder::decode_logs(result.results);
+            }
+            std::vector<json>().swap(result.results);
+            std::string().swap(result.raw_body);
             TraceN("s1/basic_done");
             task.done = true;
             task.retry_count = 0;
-            task.result = std::move(result);
+            task.response_bytes = result.response_bytes;
+            task.decoded_events = std::move(decoded);
             sync.done_count += 1;
             set_done_bit(sync.slot, i, 1);
           } else {
@@ -355,10 +366,10 @@ void ChainSync::sync_loop(int64_t from_block, int64_t head_block) {
       int64_t finished_blocks = 0;
       size_t finished_bytes = 0;
       for (auto &task : finished.basics) {
-        assert(task.result.has_value());
+        assert(task.decoded_events.has_value());
         finished_blocks += (task.to_block - task.from_block + 1);
-        finished_bytes += task.result->response_bytes;
-        process_batch(*task.result, task.from_block, task.to_block);
+        finished_bytes += task.response_bytes;
+        process_batch(std::move(*task.decoded_events), task.to_block);
       }
       double duration_s = std::chrono::duration<double>(
                               std::chrono::steady_clock::now() - finished.started_at)
@@ -401,16 +412,8 @@ void ChainSync::sync_loop(int64_t from_block, int64_t head_block) {
   schedule_sync(interval_seconds_);
 }
 
-void ChainSync::process_batch(RpcClient::BatchResult &r, int64_t from_block, int64_t to_block) {
-  DecodedEvents events;
-  {
-    TraceN("s1/decode");
-    events = EventDecoder::decode_logs(r.results);
-  }
-
+void ChainSync::process_batch(DecodedEvents &&events, int64_t to_block) {
   merge_events(cached_events_, std::move(events));
-  std::vector<json>().swap(r.results);
-  std::string().swap(r.raw_body);
 
   int64_t partition_end = current_partition_start_ + FeatherWriter::PARTITION_SIZE - 1;
   if (to_block >= partition_end) {
