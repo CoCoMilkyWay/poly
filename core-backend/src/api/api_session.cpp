@@ -8,9 +8,74 @@
 #include <filesystem>
 #include <future>
 #include <mutex>
+#include <sstream>
 #include <unordered_map>
 
 #include "misc/profiler.hpp"
+
+namespace {
+
+std::string sql_quote_literal(const std::string &value) {
+  std::string escaped;
+  escaped.reserve(value.size() + 8);
+  for (char c : value) {
+    if (c == '\'') {
+      escaped += "''";
+    } else {
+      escaped += c;
+    }
+  }
+  return "'" + escaped + "'";
+}
+
+std::string sql_quote_ident(const std::string &value) {
+  std::string escaped;
+  escaped.reserve(value.size() + 8);
+  for (char c : value) {
+    if (c == '"') {
+      escaped += "\"\"";
+    } else {
+      escaped += c;
+    }
+  }
+  return "\"" + escaped + "\"";
+}
+
+std::string build_human_readable_select_list(duckdb::Connection &conn, const std::string &arrow_file) {
+  std::string describe_sql = "DESCRIBE SELECT * FROM read_arrow(" + sql_quote_literal(arrow_file) + ")";
+  auto schema = conn.Query(describe_sql);
+  assert(!schema->HasError());
+
+  std::vector<std::string> columns;
+  columns.reserve(schema->RowCount());
+  for (idx_t i = 0; i < schema->RowCount(); ++i) {
+    std::string col_name = schema->GetValue(0, i).GetValueUnsafe<std::string>();
+    std::string col_type = schema->GetValue(1, i).GetValueUnsafe<std::string>();
+    std::string quoted_col = sql_quote_ident(col_name);
+    if (col_type == "BLOB") {
+      columns.push_back("'0x' || lower(hex(" + quoted_col + ")) AS " + quoted_col);
+    } else if (col_type == "BLOB[]") {
+      columns.push_back("CAST(" + quoted_col + " AS VARCHAR) AS " + quoted_col);
+    } else {
+      columns.push_back(quoted_col);
+    }
+  }
+
+  if (columns.empty()) {
+    return "*";
+  }
+
+  std::ostringstream oss;
+  for (size_t i = 0; i < columns.size(); ++i) {
+    if (i > 0) {
+      oss << ", ";
+    }
+    oss << columns[i];
+  }
+  return oss.str();
+}
+
+} // namespace
 
 ApiSession::ApiSession(tcp::socket socket, Database &stage1_db, Database &stage2_db, stage3::PnlEngine &pnl_engine,
                        Stage1SyncGetter stage1_getter, Stage2SyncGetter stage2_getter)
@@ -292,8 +357,9 @@ void ApiSession::handle_export_csv() {
   }
 
   auto conn = stage1_db_.create_connection();
-  std::string sql = "COPY (SELECT * FROM read_arrow('" + latest + "') LIMIT " +
-                    std::to_string(limit) + ") TO '" + output + "' (HEADER)";
+  std::string select_list = build_human_readable_select_list(*conn, latest);
+  std::string sql = "COPY (SELECT " + select_list + " FROM read_arrow(" + sql_quote_literal(latest) + ") LIMIT " +
+                    std::to_string(limit) + ") TO " + sql_quote_literal(output) + " (HEADER)";
   auto result = conn->Query(sql);
   assert(!result->HasError());
 
