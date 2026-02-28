@@ -180,7 +180,7 @@ struct DecodedEvents {
 
 class EventDecoder {
 public:
-  static DecodedEvents decode_logs(const std::vector<json> &results);
+  static DecodedEvents decode_logs(std::vector<json> &&results);
   static const std::string &current_log_json();
 
 private:

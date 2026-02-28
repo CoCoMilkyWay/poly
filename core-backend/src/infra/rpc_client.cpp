@@ -45,7 +45,7 @@ int64_t RpcClient::eth_blockNumber() {
   std::string response_body = execute_request(request.dump());
   json response = json::parse(response_body);
   if (response.contains("error")) {
-    throw std::runtime_error("eth_blockNumber RPC error: " + response["error"].dump());
+    throw std::runtime_error("eth_blockNumber RPC error");
   }
   return from_hex(response["result"].get<std::string>());
 }
@@ -140,9 +140,11 @@ void RpcClient::worker_loop() {
           try {
             result.results = parse_batch_response(response_body, count);
           } catch (const NonRetryableRpcError &e) {
-            throw NonRetryableRpcError(std::string(e.what()) + " | response=" + response_body);
+            throw NonRetryableRpcError(std::string(e.what()) + " | response_bytes=" +
+                                       std::to_string(response_body.size()));
           } catch (const std::exception &e) {
-            throw std::runtime_error(std::string(e.what()) + " | response=" + response_body);
+            throw std::runtime_error(std::string(e.what()) + " | response_bytes=" +
+                                     std::to_string(response_body.size()));
           }
         } else {
           result.raw_body = std::move(response_body);
@@ -227,7 +229,7 @@ std::vector<json> RpcClient::parse_batch_response(const std::string &response_bo
     }
     if (resp.contains("error")) {
       size_t id = resp.value("id", 0);
-      throw std::runtime_error("RPC error id=" + std::to_string(id) + ": " + resp["error"].dump());
+      throw std::runtime_error("RPC error id=" + std::to_string(id));
     }
     if (!resp.contains("id") || !resp["id"].is_number_unsigned()) {
       throw NonRetryableRpcError("batch item missing/invalid id");

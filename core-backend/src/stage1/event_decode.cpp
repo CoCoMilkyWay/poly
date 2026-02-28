@@ -23,7 +23,7 @@ const bool EventDecoder::crash_handler_installed_ = []() {
   return true;
 }();
 
-DecodedEvents EventDecoder::decode_logs(const std::vector<json> &results) {
+DecodedEvents EventDecoder::decode_logs(std::vector<json> &&results) {
   [[maybe_unused]] bool installed = crash_handler_installed_;
   DecodedEvents events;
   // 第一趟: FPMM创建（扫描所有Factory，不只是Polymarket的）
@@ -42,11 +42,14 @@ DecodedEvents EventDecoder::decode_logs(const std::vector<json> &results) {
   }
 
   // 第二趟: 所有事件
-  for (const auto &result : results) {
+  for (auto &result : results) {
     for (const auto &log : result) {
       parse_log(log, events);
     }
+    // 逐批释放原始RPC日志，避免把整个basic的json长期留在内存里。
+    json().swap(result);
   }
+  std::vector<json>().swap(results);
   return events;
 }
 

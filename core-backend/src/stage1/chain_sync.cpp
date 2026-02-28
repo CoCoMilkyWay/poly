@@ -330,7 +330,7 @@ void ChainSync::sync_loop(int64_t from_block, int64_t head_block) {
             DecodedEvents decoded;
             {
               TraceN("s1/decode");
-              decoded = EventDecoder::decode_logs(result.results);
+              decoded = EventDecoder::decode_logs(std::move(result.results));
             }
             std::vector<json>().swap(result.results);
             std::string().swap(result.raw_body);
@@ -406,6 +406,7 @@ void ChainSync::sync_loop(int64_t from_block, int64_t head_block) {
         finished_blocks += (task.to_block - task.from_block + 1);
         finished_bytes += task.response_bytes;
         process_batch(std::move(*task.decoded_events), task.to_block);
+        task.decoded_events.reset();
       }
       double duration_s = std::chrono::duration<double>(
                               std::chrono::steady_clock::now() - finished.started_at)
@@ -469,7 +470,13 @@ void ChainSync::process_batch(DecodedEvents &&events, int64_t to_block) {
 
 void ChainSync::merge_events(DecodedEvents &dst, DecodedEvents &&src) {
   auto append = [](auto &d, auto &s) {
+    if (d.empty()) {
+      d = std::move(s);
+      return;
+    }
     d.insert(d.end(), std::make_move_iterator(s.begin()), std::make_move_iterator(s.end()));
+    using VecT = std::decay_t<decltype(s)>;
+    VecT().swap(s);
   };
   append(dst.transfer, src.transfer);
   append(dst.condition_preparation, src.condition_preparation);
