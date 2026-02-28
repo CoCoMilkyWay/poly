@@ -183,8 +183,8 @@ TransferClass EventBuilder::classify_and_emit(
     if (is_user_addr(addr))
       push_event(addr, evt);
   };
-  auto usdc_price = [&](int64_t usdc_amount, int64_t token_amount) -> int64_t {
-    return is_usdc_collateral(collateral) ? (usdc_amount * 1000000 / token_amount) : 0;
+  auto calc_price_if_usdc_collateral = [&](int64_t collateral_amount, int64_t token_amount) -> int64_t {
+    return is_usdc_collateral(collateral) ? (collateral_amount * 1000000 / token_amount) : 0;
   };
   auto patch_collateral_from_semantic = [&](const std::string &semantic_collateral_addr) {
     if (coll != static_cast<uint8_t>(Collateral::Unknown)) {
@@ -848,7 +848,7 @@ TransferClass EventBuilder::classify_and_emit(
       stage2_assert(order_leg_matches(*oit), AssertLevel::L3, "Order", "OrderLegAddressMatch");
       oit->consumed = true;
 
-      int64_t price = usdc_price(oit->usdc, oit->tokens);
+      int64_t price = calc_price_if_usdc_collateral(oit->quote_amount, oit->tokens);
       emit_if_user(to, RawEvent{sort_key, cond_idx, EventType::OrderBuy, token_idx, coll, 0, amount, price});
       emit_if_user(from, RawEvent{sort_key, cond_idx, EventType::OrderSell, token_idx, coll, 0, -amount, price});
       return classify_transfer_by_counterparty(TransferClass::OrderBuy, TransferClass::OrderSell,
@@ -1038,7 +1038,7 @@ TransferClass EventBuilder::classify_and_emit(
         bind_root(RootOpType::FPMMTrade, "buy_from_pool");
         buy_info->consumed = true;
         stage2_assert(amount == buy_info->tokens, AssertLevel::L3, "FPMMTrade", "BuyAmountMatch");
-        int64_t price = usdc_price(buy_info->usdc, buy_info->tokens);
+        int64_t price = calc_price_if_usdc_collateral(buy_info->collateral_amount, buy_info->tokens);
         emit_if_user(to, RawEvent{sort_key, cond_idx, EventType::FPMMBuy, token_idx, coll, 0, amount, price});
         return TransferClass::FPMMBuy;
       }
@@ -1062,7 +1062,7 @@ TransferClass EventBuilder::classify_and_emit(
         bind_root(RootOpType::FPMMTrade, "sell_to_pool");
         tit->consumed = true;
         stage2_assert(amount == tit->tokens, AssertLevel::L3, "FPMMTrade", "SellAmountMatch");
-        int64_t price = usdc_price(tit->usdc, tit->tokens);
+        int64_t price = calc_price_if_usdc_collateral(tit->collateral_amount, tit->tokens);
         emit_if_user(from, RawEvent{sort_key, cond_idx, EventType::FPMMSell, token_idx, coll, 0, -amount, price});
         return TransferClass::FPMMSell;
       }

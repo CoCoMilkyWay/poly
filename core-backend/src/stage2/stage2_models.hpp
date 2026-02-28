@@ -371,8 +371,8 @@ struct OrderSemanticTree {
   int64_t maker_sell = 0;
   int64_t token_zero = 0;
   int64_t token_positive = 0;
-  int64_t usdc_zero = 0;
-  int64_t usdc_positive = 0;
+  int64_t quote_zero = 0;
+  int64_t quote_positive = 0;
   int64_t observed_leg = 0;
   int64_t consumed = 0;
   int64_t unobserved_leg = 0;
@@ -383,8 +383,8 @@ struct OrderSemanticTree {
     maker_sell += o.maker_sell;
     token_zero += o.token_zero;
     token_positive += o.token_positive;
-    usdc_zero += o.usdc_zero;
-    usdc_positive += o.usdc_positive;
+    quote_zero += o.quote_zero;
+    quote_positive += o.quote_positive;
     observed_leg += o.observed_leg;
     consumed += o.consumed;
     unobserved_leg += o.unobserved_leg;

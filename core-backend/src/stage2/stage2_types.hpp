@@ -217,7 +217,7 @@ struct RedemptionInfo {
 struct ConvertInfo {
   int64_t log_index = -1;
   std::string market_id;
-  int64_t index_set;
+  std::string index_set;
   int64_t amount;
   std::string stakeholder;
   int consumed_count = 0;
@@ -229,7 +229,7 @@ struct OrderInfo {
   std::string maker;
   std::string taker;
   int maker_side; // 1=maker买, 2=maker卖
-  int64_t usdc;
+  int64_t quote_amount;
   int64_t tokens;
   int64_t fee;
   bool consumed = false;
@@ -241,7 +241,7 @@ struct FPMMTradeInfo {
   std::string trader;
   int side; // 1=Buy, 2=Sell
   int outcome_idx;
-  int64_t usdc;
+  int64_t collateral_amount;
   int64_t tokens;
   // Whether this semantic row is expected to have a consumable ERC1155 leg.
   bool requires_erc1155_leg = true;

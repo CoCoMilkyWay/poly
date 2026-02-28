@@ -469,8 +469,8 @@ void EventBuilder::load_from_rb() {
     ost.maker_sell = load("sem_order_maker_sell");
     ost.token_zero = load("sem_order_token_zero");
     ost.token_positive = load("sem_order_token_positive");
-    ost.usdc_zero = load("sem_order_usdc_zero");
-    ost.usdc_positive = load("sem_order_usdc_positive");
+    ost.quote_zero = load("sem_order_quote_zero");
+    ost.quote_positive = load("sem_order_quote_positive");
     ost.observed_leg = load("sem_order_observed_leg");
     ost.consumed = load("sem_order_consumed");
     ost.unobserved_leg = load("sem_order_unobserved_leg");

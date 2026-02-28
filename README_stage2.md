@@ -183,13 +183,13 @@ Convert语义表树 (`s2-convert-sem-tree`)
 Order语义表树 (`s2-order-sem-tree`)
 └─ Order语义表  // desc: order_filled表行分类; scene: 语义行本体(非transfer腿)
   ├─ MakerSide  // desc: maker方向分布; scene: maker买/卖
-  │  ├─ MakerBuy  // desc: maker_side=1; scene: maker买token(付USDC)
-  │  └─ MakerSell  // desc: maker_side=2; scene: maker卖token(收USDC)
-  ├─ Amount  // desc: tokens/usdc分布; scene: 识别零腿与非零腿
+  │  ├─ MakerBuy  // desc: maker_side=1; scene: maker买token(付quote)
+  │  └─ MakerSell  // desc: maker_side=2; scene: maker卖token(收quote)
+  ├─ Amount  // desc: tokens/quote分布; scene: 识别零腿与非零腿
   │  ├─ TokenZero  // desc: tokens==0; scene: 无ERC1155 token数量
   │  ├─ TokenPositive  // desc: tokens>0; scene: 有ERC1155 token数量
-  │  ├─ USDCZero  // desc: usdc==0; scene: 无USDC数量
-  │  └─ USDCPositive  // desc: usdc>0; scene: 有USDC数量
+  │  ├─ QuoteZero  // desc: quote==0; scene: 无quote数量
+  │  └─ QuotePositive  // desc: quote>0; scene: 有quote数量
   └─ 消费状态  // desc: 与L4覆盖断言同口径; scene: observed/must_consume vs consumed
      ├─ ObservedLeg  // desc: must_consume=true; scene: 观测到地址腿硬约束可消费leg
      ├─ UnobservedLeg  // desc: must_consume=false; scene: 未观测到可消费leg
@@ -240,9 +240,9 @@ abbr(all)
 | `tx_split_idx[tx_key:{block, tx_hash}] -> [{log_index, stakeholder, collateral_token, parent_collection_id, cond_id, partition[], amount}]`    | `split`                                                               |
 | `tx_merge_idx[tx_key:{block, tx_hash}] -> [{log_index, stakeholder, collateral_token, parent_collection_id, cond_id, partition[], amount}]`    | `merge`                                                               |
 | `tx_redemption_idx[tx_key:{block, tx_hash}] -> [{log_index, redeemer, collateral_token, parent_collection_id, cond_id, index_sets[], payout}]` | `redemption`                                                          |
-| `tx_convert_idx[tx_market_key:{block, tx_hash, market_id}] -> [{log_index, market_id, index_set, amount, stakeholder}]`                        | `convert`                                                             |
-| `tx_order_idx[tx_token_key:{block, tx_hash, token_id}] -> [{log_index, maker, taker, maker_side, usdc, tokens, fee}]`                          | `order_filled`                                                        |
-| `tx_fpmm_trade_idx[tx_fpmm_key:{block, tx_hash, fpmm_addr}] -> [{log_index, fpmm_addr, trader, side, outcome_idx, usdc, tokens}]`              | `fpmm_trade`                                                          |
+| `tx_convert_idx[tx_market_key:{block, tx_hash, market_id}] -> [{log_index, market_id, index_set(bytes32), amount, stakeholder}]`               | `convert`                                                             |
+| `tx_order_idx[tx_token_key:{block, tx_hash, token_id}] -> [{log_index, maker, taker, maker_side, quote_amount, tokens, fee}]`                  | `order_filled`                                                        |
+| `tx_fpmm_trade_idx[tx_fpmm_key:{block, tx_hash, fpmm_addr}] -> [{log_index, fpmm_addr, trader, side, outcome_idx, collateral_amount, tokens}]` | `fpmm_trade`                                                          |
 | `tx_fpmm_funding_idx[tx_fpmm_key:{block, tx_hash, fpmm_addr}] -> [{log_index, fpmm_addr, funder, side, amounts[]}]`                            | `fpmm_funding`                                                        |
 | `tx_op_bounds_idx[tx_key:{block, tx_hash}] -> [{left_exclusive, right_inclusive}]`                                                             | `split/merge/redemption/convert/order_filled/fpmm_trade/fpmm_funding` |
 
@@ -290,7 +290,7 @@ phase3_process_transfers(chunk)
 │  │  │  ├─ split/merge: stakeholder + cond_id + collateral + parent + partition + direction + amount
 │  │  │  ├─ redemption: redeemer + cond_id + collateral + parent + index_sets + direction
 │  │  │  ├─ convert: market_id + stakeholder + index_set + operator路径(NEG_RISK_ADAPTER)
-│  │  │  ├─ order: token_id + maker/taker + maker_side + usdc/tokens（地址腿硬约束；BUY: taker->maker 或 exchange->maker；SELL: maker->taker 或 maker->exchange）
+│  │  │  ├─ order: token_id + maker/taker + maker_side + quote_amount/tokens（地址腿硬约束；BUY: taker->maker 或 exchange->maker；SELL: maker->taker 或 maker->exchange）
 │  │  │  ├─ trade/lp: fpmm_addr + side + actor(trader/funder) + token_amount/transfer_amount
 │  │  │  │  ├─ trade_leg_required = (tokens > 0 && trader != fpmm_addr)
 │  │  │  │  ├─ observed_trade_leg(side1)=存在 {from=fpmm 或 0->fpmm} 的 amount>0 transfer
@@ -322,7 +322,8 @@ phase3_process_transfers(chunk)
 │  │  ├─ amount 按用户视角定符号(流入+,流出-)
 │  │  ├─ price规则:
 │  │  │  ├─ Split/Merge/FPMMLPAdd/FPMMLPRemove/FPMMLPReturn: USDC类coll -> 1e6/outcome_count，否则0
-│  │  │  ├─ OrderBuy/Sell/FPMMBuy/Sell: USDC类coll -> usdc*1e6/tokens，否则0
+│  │  │  ├─ OrderBuy/Sell: USDC类coll -> quote_amount*1e6/tokens，否则0
+│  │  │  ├─ FPMMBuy/Sell: USDC类coll -> collateral_amount*1e6/tokens，否则0
 │  │  │  ├─ Redemption: USDC类coll -> payout_numerator[token_idx]，否则0
 │  │  │  └─ Convert/TransferIn/TransferOut: 0
 │  │  └─ 落库编码: cond_idx=UNKNOWN_COND_IDX 时写 -1；token_idx 保留 255

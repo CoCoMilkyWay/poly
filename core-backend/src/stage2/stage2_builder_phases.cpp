@@ -519,7 +519,7 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
         ConvertInfo info;
         info.log_index = q_get_i64(convert, 2, i);
         info.market_id = market_id;
-        info.index_set = q_get_u256_i64(convert, 4, i);
+        info.index_set = q_get_hex_lower(convert, 4, i);
         info.amount = q_get_u256_i64(convert, 5, i);
         info.stakeholder = q_get_hex_lower(convert, 6, i);
         tx_convert_[key].push_back(info);
@@ -556,8 +556,8 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
         int64_t taker_amt = q_get_u256_i64(order, 8, i);
         int64_t fee = q_get_u256_i64(order, 9, i);
 
-        bool maker_is_usdc = maker_asset == ZERO_TOKEN_ID;
-        const std::string &token_id_lower = maker_is_usdc ? taker_asset : maker_asset;
+        bool maker_is_quote = maker_asset == ZERO_TOKEN_ID;
+        const std::string &token_id_lower = maker_is_quote ? taker_asset : maker_asset;
 
         TxTokenKey key{block, tx_hash, token_id_lower};
         TxKey tx_key{block, tx_hash};
@@ -566,9 +566,9 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
         info.token_id = token_id_lower;
         info.maker = maker;
         info.taker = taker;
-        info.maker_side = maker_is_usdc ? 1 : 2;
-        info.usdc = maker_is_usdc ? maker_amt : taker_amt;
-        info.tokens = maker_is_usdc ? taker_amt : maker_amt;
+        info.maker_side = maker_is_quote ? 1 : 2;
+        info.quote_amount = maker_is_quote ? maker_amt : taker_amt;
+        info.tokens = maker_is_quote ? taker_amt : maker_amt;
         info.fee = fee;
         tx_order_[key].push_back(std::move(info));
         idx_order_rows++;
@@ -605,7 +605,7 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
         stage2_assert(outcome_idx >= 0 && outcome_idx <= std::numeric_limits<int>::max(),
                       AssertLevel::L0, "Input", "OutcomeIdxFitsInt");
         info.outcome_idx = static_cast<int>(outcome_idx);
-        info.usdc = q_get_u256_i64(fpmm_trade, 7, i);
+        info.collateral_amount = q_get_u256_i64(fpmm_trade, 7, i);
         info.tokens = q_get_u256_i64(fpmm_trade, 8, i);
         info.requires_erc1155_leg = (info.tokens > 0 && info.trader != info.fpmm_addr);
         tx_fpmm_trade_[key].push_back(info);
@@ -1065,10 +1065,10 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
         } else {
           chunk_order_sem_tree_.token_positive++;
         }
-        if (row.usdc == 0) {
-          chunk_order_sem_tree_.usdc_zero++;
+        if (row.quote_amount == 0) {
+          chunk_order_sem_tree_.quote_zero++;
         } else {
-          chunk_order_sem_tree_.usdc_positive++;
+          chunk_order_sem_tree_.quote_positive++;
         }
         bool must_consume = order_leg_observed(row);
         bool consumed = row.consumed;
@@ -1443,8 +1443,8 @@ BuildProgress EventBuilder::commit_chunk(CommitPayload payload) {
     save_cnt("sem_order_maker_sell", ost.maker_sell);
     save_cnt("sem_order_token_zero", ost.token_zero);
     save_cnt("sem_order_token_positive", ost.token_positive);
-    save_cnt("sem_order_usdc_zero", ost.usdc_zero);
-    save_cnt("sem_order_usdc_positive", ost.usdc_positive);
+    save_cnt("sem_order_quote_zero", ost.quote_zero);
+    save_cnt("sem_order_quote_positive", ost.quote_positive);
     save_cnt("sem_order_observed_leg", ost.observed_leg);
     save_cnt("sem_order_consumed", ost.consumed);
     save_cnt("sem_order_unobserved_leg", ost.unobserved_leg);
