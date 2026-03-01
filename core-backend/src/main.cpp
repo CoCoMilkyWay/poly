@@ -116,20 +116,29 @@ int main(int argc, char *argv[]) {
 
   boost::asio::signal_set signals(api_ioc, SIGINT, SIGTERM);
   signals.async_wait([&](const boost::system::error_code &, int sig) {
-    (void)sig;
-    std::cout << "\n[Main] 正在关闭..." << std::endl;
-    auto stop_stage = [](int enable, auto &sync_stage) {
+    std::cout << "\n[Main] 收到退出信号: " << sig << std::endl;
+    std::cout << "[Main] 正在关闭..." << std::endl;
+    auto stop_stage = [](const char *name, int enable, auto &sync_stage) {
       if (enable == 1) {
+        std::cout << "[Main] 停止 " << name << "..." << std::endl;
         sync_stage.stop();
+        std::cout << "[Main] " << name << " 已停止" << std::endl;
+        return;
       }
+      std::cout << "[Main] 跳过 " << name << " (未启用)" << std::endl;
     };
-    stop_stage(config.stage1_enable, stage1);
-    stop_stage(config.stage2_enable, stage2);
-    stop_stage(config.stage3_enable, stage3);
+    stop_stage("Stage1", config.stage1_enable, stage1);
+    stop_stage("Stage2", config.stage2_enable, stage2);
+    stop_stage("Stage3", config.stage3_enable, stage3);
+    std::cout << "[Main] 停止 Stage1 io_context..." << std::endl;
     stage1_ioc.stop();
+    std::cout << "[Main] 停止 Stage2 io_context..." << std::endl;
     stage2_ioc.stop();
+    std::cout << "[Main] 停止 Stage3 io_context..." << std::endl;
     stage3_ioc.stop();
+    std::cout << "[Main] 停止 API io_context..." << std::endl;
     api_ioc.stop();
+    std::cout << "[Main] 关停指令已全部发出" << std::endl;
   });
 
   std::cout << "[Main] 服务已启动" << std::endl;
