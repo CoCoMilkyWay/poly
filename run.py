@@ -107,7 +107,8 @@ def assert_linux_dependencies():
         return
 
     missing_tools = any(shutil.which(t) is None for t in LINUX_REQUIRED_TOOLS)
-    missing_packages = any(not dpkg_package_installed(p) for p in LINUX_REQUIRED_PACKAGES)
+    missing_packages = any(not dpkg_package_installed(p)
+                           for p in LINUX_REQUIRED_PACKAGES)
     assert not (missing_tools or missing_packages), (
         "[run.py] Linux 依赖未安装完整\n"
         "sudo apt update && sudo apt install -y "

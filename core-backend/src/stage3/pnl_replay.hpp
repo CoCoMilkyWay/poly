@@ -658,6 +658,7 @@ private:
   }
 
   void do_sync_tick() {
+    TraceN("s3/sync");
     {
       std::lock_guard<std::mutex> lock(sync_mu_);
       replay_progress_.running = true;
@@ -707,6 +708,7 @@ private:
   }
 
   bool process_chunk_locked() const {
+    TraceN("s3/sync_chunk");
     int64_t current_block = (cursor_.sort_key < 0) ? 0 : cursor_.sort_key / SORT_KEY_SCALE;
     int64_t head_block = builder_.cursor();
     if (current_block >= head_block) {
@@ -848,10 +850,12 @@ private:
       it->second.last_sort_key = row.sort_key;
     }
 
-    auto tx = conn->Query("BEGIN");
-    assert(tx && !tx->HasError());
+    {
+      TraceN("s3/write");
+      auto tx = conn->Query("BEGIN");
+      assert(tx && !tx->HasError());
 
-    if (!states.empty()) {
+      if (!states.empty()) {
       conn->Query(
           "CREATE TEMP TABLE IF NOT EXISTS tmp_s3_state ("
           "user_addr BLOB, cond_idx INTEGER, "
@@ -890,54 +894,55 @@ private:
           "cost_0=excluded.cost_0, cost_1=excluded.cost_1, cost_2=excluded.cost_2, cost_3=excluded.cost_3, "
           "cost_4=excluded.cost_4, cost_5=excluded.cost_5, cost_6=excluded.cost_6, cost_7=excluded.cost_7, "
           "realized_pnl=excluded.realized_pnl, event_count=excluded.event_count, last_sort_key=excluded.last_sort_key");
-      assert(up && !up->HasError());
-    }
-
-    conn->Query("CREATE TEMP TABLE IF NOT EXISTS tmp_s3_users (user_addr BLOB, event_inc BIGINT, last_sort_key BIGINT)");
-    conn->Query("DELETE FROM tmp_s3_users");
-    {
-      duckdb::Appender ap(*conn, "tmp_s3_users");
-      for (const auto &[uhex, inc] : user_event_inc) {
-        std::string user_blob = hex_to_blob("0x" + uhex);
-        ap.BeginRow();
-        ap.Append(duckdb::Value::BLOB(
-            reinterpret_cast<duckdb::const_data_ptr_t>(user_blob.data()),
-            user_blob.size()));
-        ap.Append(inc);
-        ap.Append(user_last_sk[uhex]);
-        ap.EndRow();
+        assert(up && !up->HasError());
       }
-      ap.Close();
+
+      conn->Query("CREATE TEMP TABLE IF NOT EXISTS tmp_s3_users (user_addr BLOB, event_inc BIGINT, last_sort_key BIGINT)");
+      conn->Query("DELETE FROM tmp_s3_users");
+      {
+        duckdb::Appender ap(*conn, "tmp_s3_users");
+        for (const auto &[uhex, inc] : user_event_inc) {
+          std::string user_blob = hex_to_blob("0x" + uhex);
+          ap.BeginRow();
+          ap.Append(duckdb::Value::BLOB(
+              reinterpret_cast<duckdb::const_data_ptr_t>(user_blob.data()),
+              user_blob.size()));
+          ap.Append(inc);
+          ap.Append(user_last_sk[uhex]);
+          ap.EndRow();
+        }
+        ap.Close();
+      }
+      auto su = conn->Query(
+          "INSERT INTO s3_user_summary "
+          "SELECT user_addr, event_inc, 0, 0, last_sort_key FROM tmp_s3_users "
+          "ON CONFLICT(user_addr) DO UPDATE SET "
+          "total_events=s3_user_summary.total_events + excluded.total_events, "
+          "last_sort_key=GREATEST(s3_user_summary.last_sort_key, excluded.last_sort_key)");
+      assert(su && !su->HasError());
+
+      auto sr = conn->Query(
+          "UPDATE s3_user_summary AS s SET "
+          "total_realized_pnl = t.rpnl, "
+          "active_conditions = t.active_cnt "
+          "FROM ("
+          "  SELECT st.user_addr AS user_addr, "
+          "         COALESCE(SUM(st.realized_pnl), 0) AS rpnl, "
+          "         SUM(CASE WHEN "
+          "              st.pos_0 != 0 OR st.pos_1 != 0 OR st.pos_2 != 0 OR st.pos_3 != 0 OR "
+          "              st.pos_4 != 0 OR st.pos_5 != 0 OR st.pos_6 != 0 OR st.pos_7 != 0 "
+          "            THEN 1 ELSE 0 END) AS active_cnt "
+          "  FROM s3_user_cond_state st "
+          "  JOIN tmp_s3_users tu ON st.user_addr = tu.user_addr "
+          "  GROUP BY st.user_addr"
+          ") AS t "
+          "WHERE s.user_addr = t.user_addr");
+      assert(sr && !sr->HasError());
+
+      save_cursor_locked(*conn);
+      auto cm = conn->Query("COMMIT");
+      assert(cm && !cm->HasError());
     }
-    auto su = conn->Query(
-        "INSERT INTO s3_user_summary "
-        "SELECT user_addr, event_inc, 0, 0, last_sort_key FROM tmp_s3_users "
-        "ON CONFLICT(user_addr) DO UPDATE SET "
-        "total_events=s3_user_summary.total_events + excluded.total_events, "
-        "last_sort_key=GREATEST(s3_user_summary.last_sort_key, excluded.last_sort_key)");
-    assert(su && !su->HasError());
-
-    auto sr = conn->Query(
-        "UPDATE s3_user_summary AS s SET "
-        "total_realized_pnl = t.rpnl, "
-        "active_conditions = t.active_cnt "
-        "FROM ("
-        "  SELECT st.user_addr AS user_addr, "
-        "         COALESCE(SUM(st.realized_pnl), 0) AS rpnl, "
-        "         SUM(CASE WHEN "
-        "              st.pos_0 != 0 OR st.pos_1 != 0 OR st.pos_2 != 0 OR st.pos_3 != 0 OR "
-        "              st.pos_4 != 0 OR st.pos_5 != 0 OR st.pos_6 != 0 OR st.pos_7 != 0 "
-        "            THEN 1 ELSE 0 END) AS active_cnt "
-        "  FROM s3_user_cond_state st "
-        "  JOIN tmp_s3_users tu ON st.user_addr = tu.user_addr "
-        "  GROUP BY st.user_addr"
-        ") AS t "
-        "WHERE s.user_addr = t.user_addr");
-    assert(sr && !sr->HasError());
-
-    save_cursor_locked(*conn);
-    auto cm = conn->Query("COMMIT");
-    assert(cm && !cm->HasError());
 
     {
       std::lock_guard<std::mutex> lk(cache_mu_);
