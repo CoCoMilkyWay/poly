@@ -401,7 +401,6 @@
 let _s3Meta = null;
 let _s3Timeline = [];
 let _s3Users = [];
-let _s3CurrentUser = '';
 let _s3ViewStartSk = 0;
 let _s3ViewEndSk = 0;
 let _s3CursorIdx = -1;
@@ -410,24 +409,27 @@ let _s3DragStartX = 0;
 let _s3DragStartVS = 0;
 let _s3DragStartVE = 0;
 let _s3DragMoved = false;
-let _s3PosDebounceTimer = null;
-let _s3EventsDebounceTimer = null;
 let _s3Events = [];
 let _s3EventCenter = -1;
+let _s3PollingSync = false;
+let _s3UsersLoaded = false;
+let _s3LoadingUsers = false;
 
 const _s3Pad = { top: 30, right: 70, bottom: 32, left: 50 };
 const _s3EvtColors = ['#6366f1','#ef4444','#eab308','#f97316','#22d3ee','#a855f7','#a855f7','#14b8a6','#14b8a6','#f472b6','#64748b','#64748b'];
 const _s3EvtNamesCN = ['买入','卖出','铸造','合币','赎回','AMM买','AMM卖','LP添加','LP移除','转换','转入','转出'];
 
 document.addEventListener('DOMContentLoaded', () => {
-  s3LoadUserList();
   s3PollSync();
   setInterval(s3PollSync, 2000);
 
   const input = document.getElementById('s3-user-input');
   const dropdown = document.getElementById('s3-user-dropdown');
 
-  input.addEventListener('focus', () => { if (_s3Users.length) dropdown.classList.add('show'); });
+  input.addEventListener('focus', async () => {
+    await s3LoadUserList();
+    if (_s3Users.length) dropdown.classList.add('show');
+  });
   input.addEventListener('input', () => s3FilterUsers(input.value));
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') { dropdown.classList.remove('show'); s3LoadUser(); }
@@ -441,11 +443,15 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function s3PollSync() {
+  if (_s3PollingSync) return;
+  _s3PollingSync = true;
   try {
     const resp = await fetch('/api/stage3-status');
     const s = await resp.json();
     s3UpdateSyncStats(s || {});
   } catch(e) {
+  } finally {
+    _s3PollingSync = false;
   }
 }
 
@@ -479,11 +485,15 @@ function s3UpdateSyncStats(sync) {
 }
 
 async function s3LoadUserList() {
+  if (_s3UsersLoaded || _s3LoadingUsers) return;
+  _s3LoadingUsers = true;
   try {
     const resp = await fetch('/api/stage3-users?limit=1000');
     _s3Users = await resp.json();
     s3RenderDropdown(_s3Users);
+    _s3UsersLoaded = true;
   } catch(e) {}
+  _s3LoadingUsers = false;
 }
 
 function s3RenderDropdown(users) {
@@ -508,31 +518,53 @@ function s3SelectUser(addr) {
 }
 
 async function s3LoadUser() {
+  await s3LoadUserBySk(null, false);
+}
+
+async function s3LoadUserBySk(sk, silent) {
   const user = document.getElementById('s3-user-input').value.trim();
   if (!user) return;
 
   const btn = document.getElementById('s3-load-btn');
-  btn.disabled = true; btn.textContent = '...';
+  if (!silent) {
+    btn.disabled = true; btn.textContent = '...';
+  }
 
   try {
-    const resp = await fetch(`/api/stage3-data?user=${encodeURIComponent(user)}`);
+    let url = `/api/stage3-data?user=${encodeURIComponent(user)}`;
+    if (sk !== null && sk !== undefined) {
+      url += `&sk=${encodeURIComponent(sk)}`;
+    }
+    const resp = await fetch(url);
     const data = await resp.json();
     _s3Meta = {
       first_ts: Number(data.first_ts || 0),
       last_ts: Number(data.last_ts || 0),
     };
     _s3Timeline = data.timeline || [];
-    _s3CurrentUser = user;
+    _s3Events = data.events || [];
+    _s3EventCenter = data.center ?? -1;
 
     s3RenderMeta();
-    s3ResetZoom();
-    _s3CursorIdx = _s3Timeline.length - 1;
+    if (!silent) {
+      s3ResetZoom();
+    }
+    if (_s3Timeline.length) {
+      const targetSk = Number((sk !== null && sk !== undefined) ? sk : _s3Timeline[_s3Timeline.length - 1].sk);
+      _s3CursorIdx = s3NearestIdx(targetSk);
+    } else {
+      _s3CursorIdx = -1;
+    }
     s3Draw();
     s3UpdateCursor();
+    s3RenderPositions(data.positions || []);
+    s3RenderEvents();
   } catch(e) {
     console.error('s3LoadUser', e);
   } finally {
-    btn.disabled = false; btn.textContent = '查询';
+    if (!silent) {
+      btn.disabled = false; btn.textContent = '查询';
+    }
   }
 }
 
@@ -811,6 +843,7 @@ function s3SetCursorFromMouse(e) {
   _s3CursorIdx = idx;
   s3Draw();
   s3UpdateCursor();
+  s3LoadUserBySk(_s3Timeline[idx].sk, true);
 }
 
 function s3MouseToIdx(e) {
@@ -895,76 +928,30 @@ function s3UpdateCursor() {
 
   document.getElementById('s3-cur-detail').textContent = '';
   document.getElementById('s3-cur-tokens').textContent = `持仓 ${ev.tk||0} 种`;
-
-  s3FetchPositionsDebounced(ev.sk);
-  s3FetchEventsDebounced(ev.sk);
+  if (_s3EventCenter >= 0 && _s3EventCenter < _s3Events.length) {
+    document.getElementById('s3-cur-detail').textContent = s3EventDetail(_s3Events[_s3EventCenter]);
+  }
 }
 
-function s3FetchPositionsDebounced(sk) {
-  if (_s3PosDebounceTimer) clearTimeout(_s3PosDebounceTimer);
-  _s3PosDebounceTimer = setTimeout(() => s3FetchPositions(sk), 150);
-}
-
-async function s3FetchPositions(sk) {
-  if (!_s3CurrentUser) return;
+function s3RenderPositions(positions) {
   const el = document.getElementById('s3-positions');
   const countEl = document.getElementById('s3-pos-count');
-
-  try {
-    const resp = await fetch(`/api/stage3-positions?user=${encodeURIComponent(_s3CurrentUser)}&sk=${sk}`);
-    const data = await resp.json();
-    const positions = data.positions || [];
-    countEl.textContent = positions.length;
-
-    if (!positions.length) {
-      el.innerHTML = '<div style="color:#888;padding:10px">无持仓</div>';
-      return;
-    }
-
-    el.innerHTML = positions.map(p => {
-      const pnl = p.rpnl / 1e6;
-      const pnlCls = pnl >= 0 ? 'pos' : 'neg';
-      const yes = (p.pos[0] || 0) / 1e6;
-      const no = (p.pos[1] || 0) / 1e6;
-      return `<div class="s3-pos-item">
-        <span class="cond" title="${p.id}">${p.id.slice(0, 16)}...</span>
-        <div class="s3-pos-bars">${s3PosBar(yes, 'Y')}${s3PosBar(no, 'N')}</div>
-        <span class="s3-pnl ${pnlCls}">${s3FmtUSD(pnl)}</span>
-      </div>`;
-    }).join('');
-  } catch(e) {
-    console.error('s3FetchPositions', e);
+  countEl.textContent = positions.length;
+  if (!positions.length) {
+    el.innerHTML = '<div style="color:#888;padding:10px">无持仓</div>';
+    return;
   }
-}
-
-function s3FetchEventsDebounced(sk) {
-  if (_s3EventsDebounceTimer) clearTimeout(_s3EventsDebounceTimer);
-  _s3EventsDebounceTimer = setTimeout(() => s3FetchEvents(sk), 150);
-}
-
-async function s3FetchEvents(sk) {
-  if (!_s3CurrentUser) return;
-  try {
-    const resp = await fetch(`/api/stage3-events?user=${encodeURIComponent(_s3CurrentUser)}&sk=${sk}`);
-    const data = await resp.json();
-    _s3Events = data.events || [];
-    _s3EventCenter = data.center ?? -1;
-
-    if (_s3EventCenter >= 0 && _s3EventCenter < _s3Events.length) {
-      const t = _s3Events[_s3EventCenter];
-      let detail = '';
-      if (t.ty <= 1 || t.ty === 5 || t.ty === 6) detail = `${(t.d/1e6).toFixed(2)} @ $${(t.p/1e6).toFixed(4)}`;
-      else if (t.ty <= 3 || t.ty === 7 || t.ty === 8) detail = `${(t.d/1e6).toFixed(2)} tokens`;
-      else if (t.ty === 4) detail = `$${(t.d/1e6).toFixed(2)} payout`;
-      else if (t.ty === 9) detail = `${(t.d/1e6).toFixed(2)} convert`;
-      else detail = `${(t.d/1e6).toFixed(2)} tokens`;
-      document.getElementById('s3-cur-detail').textContent = detail;
-    }
-
-    s3RenderEvents();
-  } catch(e) {
-    console.error('s3FetchEvents', e);
-  }
+  el.innerHTML = positions.map(p => {
+    const pnl = p.rpnl / 1e6;
+    const pnlCls = pnl >= 0 ? 'pos' : 'neg';
+    const yes = (p.pos[0] || 0) / 1e6;
+    const no = (p.pos[1] || 0) / 1e6;
+    return `<div class="s3-pos-item">
+      <span class="cond" title="${p.id}">${p.id.slice(0, 16)}...</span>
+      <div class="s3-pos-bars">${s3PosBar(yes, 'Y')}${s3PosBar(no, 'N')}</div>
+      <span class="s3-pnl ${pnlCls}">${s3FmtUSD(pnl)}</span>
+    </div>`;
+  }).join('');
 }
 
 function s3RenderEvents() {
@@ -979,16 +966,7 @@ function s3RenderEvents() {
     const color = _s3EvtColors[ev.ty];
     const name = _s3EvtNamesCN[ev.ty];
 
-    let detail = '';
-    if (ev.ty <= 1 || ev.ty === 5 || ev.ty === 6) {
-      detail = `${(ev.d/1e6).toFixed(2)} @ $${(ev.p/1e6).toFixed(4)}`;
-    } else if (ev.ty <= 3 || ev.ty === 7 || ev.ty === 8) {
-      detail = `${(ev.d/1e6).toFixed(2)} tokens`;
-    } else if (ev.ty === 4) {
-      detail = `$${(ev.d/1e6).toFixed(2)}`;
-    } else {
-      detail = `${(ev.d/1e6).toFixed(2)}`;
-    }
+    const detail = s3EventDetail(ev);
 
     rows.push(`<div class="s3-trade-item${isFocus?' focus':''}">
       <span class="blk">${s3FmtSkShort(ev.sk)}</span>
@@ -1001,6 +979,22 @@ function s3RenderEvents() {
 
   const focusEl = el.querySelector('.focus');
   if (focusEl) focusEl.scrollIntoView({ block: 'nearest' });
+}
+
+function s3EventDetail(ev) {
+  if (ev.ty <= 1 || ev.ty === 5 || ev.ty === 6) {
+    return `${(ev.d/1e6).toFixed(2)} @ $${(ev.p/1e6).toFixed(4)}`;
+  }
+  if (ev.ty <= 3 || ev.ty === 7 || ev.ty === 8) {
+    return `${(ev.d/1e6).toFixed(2)} tokens`;
+  }
+  if (ev.ty === 4) {
+    return `$${(ev.d/1e6).toFixed(2)} payout`;
+  }
+  if (ev.ty === 9) {
+    return `${(ev.d/1e6).toFixed(2)} convert`;
+  }
+  return `${(ev.d/1e6).toFixed(2)} tokens`;
 }
 
 function s3PosBar(val, label) {

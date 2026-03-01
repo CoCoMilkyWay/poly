@@ -183,10 +183,6 @@ void ApiSession::handle_request() {
       handle_stage3_users();
     } else if (target.starts_with("/api/stage3-data")) {
       handle_stage3_data();
-    } else if (target.starts_with("/api/stage3-positions")) {
-      handle_stage3_positions();
-    } else if (target.starts_with("/api/stage3-events")) {
-      handle_stage3_events();
     } else {
       res_.result(http::status::not_found);
       res_.set(http::field::content_type, "application/json");
@@ -794,6 +790,8 @@ void ApiSession::handle_stage3_data() {
 
   int64_t first_ts = timeline.front().sort_key / stage2::SORT_KEY_SCALE;
   int64_t last_ts = timeline.back().sort_key / stage2::SORT_KEY_SCALE;
+  std::string sk_str = get_param("sk");
+  int64_t detail_sk = sk_str.empty() ? timeline.back().sort_key : std::stoll(sk_str);
 
   json timeline_arr = json::array();
   for (const auto &e : timeline) {
@@ -809,32 +807,7 @@ void ApiSession::handle_stage3_data() {
     });
   }
 
-  json result = {
-      {"total_events", timeline.size()},
-      {"first_ts", first_ts},
-      {"last_ts", last_ts},
-      {"timeline", timeline_arr},
-  };
-
-  res_.result(http::status::ok);
-  res_.body() = result.dump();
-}
-
-void ApiSession::handle_stage3_positions() {
-  TraceN("api/s3_positions");
-  res_.set(http::field::content_type, "application/json");
-
-  std::string user = get_param("user");
-  std::string sk_str = get_param("sk");
-  if (user.empty() || sk_str.empty()) {
-    res_.result(http::status::bad_request);
-    res_.body() = R"({"error":"Missing user or sk parameter"})";
-    return;
-  }
-
-  int64_t sort_key = std::stoll(sk_str);
-  auto positions = stage3_.get_positions_at(user, sort_key);
-
+  auto positions = stage3_.get_positions_at(user, detail_sk);
   json pos_arr = json::array();
   for (const auto &p : positions) {
     json pos_obj = {
@@ -849,28 +822,7 @@ void ApiSession::handle_stage3_positions() {
     pos_arr.push_back(pos_obj);
   }
 
-  res_.result(http::status::ok);
-  res_.body() = json{{"positions", pos_arr}}.dump();
-}
-
-void ApiSession::handle_stage3_events() {
-  TraceN("api/s3_events");
-  res_.set(http::field::content_type, "application/json");
-
-  std::string user = get_param("user");
-  std::string sk_str = get_param("sk");
-  std::string radius_str = get_param("radius");
-  if (user.empty() || sk_str.empty()) {
-    res_.result(http::status::bad_request);
-    res_.body() = R"({"error":"Missing user or sk parameter"})";
-    return;
-  }
-
-  int64_t sort_key = std::stoll(sk_str);
-  int radius = radius_str.empty() ? 20 : std::stoi(radius_str);
-
-  auto [events, center] = stage3_.get_events_near(user, sort_key, radius);
-
+  auto [events, center] = stage3_.get_events_near(user, detail_sk, 20);
   json events_arr = json::array();
   for (const auto &t : events) {
     events_arr.push_back({
@@ -883,8 +835,18 @@ void ApiSession::handle_stage3_events() {
     });
   }
 
+  json result = {
+      {"total_events", timeline.size()},
+      {"first_ts", first_ts},
+      {"last_ts", last_ts},
+      {"timeline", timeline_arr},
+      {"positions", pos_arr},
+      {"events", events_arr},
+      {"center", center},
+  };
+
   res_.result(http::status::ok);
-  res_.body() = json{{"events", events_arr}, {"center", center}}.dump();
+  res_.body() = result.dump();
 }
 
 std::string ApiSession::get_param(const char *name) {

@@ -74,8 +74,6 @@ private:
   void handle_stage3_status();
   void handle_stage3_users();
   void handle_stage3_data();
-  void handle_stage3_positions();
-  void handle_stage3_events();
   std::string get_param(const char *name);
   static std::string url_decode(const std::string &str);
   void do_write();

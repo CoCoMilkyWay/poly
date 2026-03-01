@@ -10,9 +10,11 @@ StageSync::StageSync(const Config &config, Database &db)
       feather_writer_(db.data_dir()),
       rpc_head_(config.rpc_url, config.rpc_api_key, "RPC-Head", config.proxy_url, config.rpc_transport),
       num_rpc_threads_(config.stage1_rpc_threads),
+      num_decode_threads_(config.stage1_rpc_threads),
       basic_chunk_size_(kStage1ChunkBlocks / config.stage1_rpc_chunk_basics),
       chunk_basic_count_(config.stage1_rpc_chunk_basics) {
   assert(num_rpc_threads_ > 0);
+  assert(num_decode_threads_ > 0);
   assert(chunk_basic_count_ > 0);
   assert(kStage1ChunkBlocks % chunk_basic_count_ == 0);
   assert(basic_chunk_size_ > 0);
@@ -25,6 +27,11 @@ StageSync::StageSync(const Config &config, Database &db)
   int64_t cursor = db_.get_last_block();
   current_partition_start_ = (cursor < 0) ? FeatherWriter::partition_start(config_.initial_block)
                                           : FeatherWriter::partition_start(cursor) + FeatherWriter::PARTITION_SIZE;
+  start_decode_pool();
+}
+
+StageSync::~StageSync() {
+  stop_decode_pool();
 }
 
 void StageSync::start(asio::io_context &ioc) {
@@ -40,6 +47,65 @@ void StageSync::stop() {
   for (auto &w : rpc_workers_) {
     w->cancel();
   }
+}
+
+void StageSync::start_decode_pool() {
+  assert(!decode_running_);
+  decode_running_ = true;
+  decode_workers_.reserve(static_cast<size_t>(num_decode_threads_));
+  for (int i = 0; i < num_decode_threads_; ++i) {
+    decode_workers_.emplace_back([this]() {
+      while (true) {
+        DecodeTask task;
+        {
+          std::unique_lock<std::mutex> lock(decode_mutex_);
+          decode_cv_.wait(lock, [this] { return !decode_running_ || !decode_queue_.empty(); });
+          if (!decode_running_ && decode_queue_.empty()) {
+            break;
+          }
+          task = std::move(decode_queue_.front());
+          decode_queue_.pop_front();
+        }
+        assert(task.shared_raw_logs != nullptr);
+        assert(task.promise != nullptr);
+        DecodedEvents decoded = EventDecoder::decode_logs(std::move(*task.shared_raw_logs));
+        std::vector<json>().swap(*task.shared_raw_logs);
+        task.shared_raw_logs.reset();
+        task.promise->set_value(std::move(decoded));
+      }
+    });
+  }
+}
+
+void StageSync::stop_decode_pool() {
+  {
+    std::lock_guard<std::mutex> lock(decode_mutex_);
+    decode_running_ = false;
+  }
+  decode_cv_.notify_all();
+  for (auto &t : decode_workers_) {
+    if (t.joinable()) {
+      t.join();
+    }
+  }
+  decode_workers_.clear();
+  assert(decode_queue_.empty());
+}
+
+std::future<DecodedEvents> StageSync::submit_decode_task(std::shared_ptr<std::vector<json>> shared_raw_logs) {
+  assert(shared_raw_logs != nullptr);
+  auto promise = std::make_shared<std::promise<DecodedEvents>>();
+  auto future = promise->get_future();
+  {
+    std::lock_guard<std::mutex> lock(decode_mutex_);
+    assert(decode_running_);
+    decode_queue_.push_back(DecodeTask{
+        .shared_raw_logs = std::move(shared_raw_logs),
+        .promise = promise,
+    });
+  }
+  decode_cv_.notify_one();
+  return future;
 }
 
 Status StageSync::status() const {
@@ -276,8 +342,9 @@ std::optional<StageSync::SyncChunkState> StageSync::build_sync_chunk(int sync_id
 
 void StageSync::submit_basic_task(BasicTask &task) {
   TraceN("s1/basic_submit");
-  task.future = rpc_workers_[task.worker_idx]->eth_getLogs_batch_async(build_queries(task.from_block, task.to_block));
-  task.in_flight = true;
+  task.query_future = rpc_workers_[task.worker_idx]->eth_getLogs_batch_async(build_queries(task.from_block, task.to_block));
+  task.query_in_flight = true;
+  task.decode_in_flight = false;
 }
 
 void StageSync::sync_loop(int64_t from_block, int64_t head_block) {
@@ -302,7 +369,7 @@ void StageSync::sync_loop(int64_t from_block, int64_t head_block) {
   auto has_inflight = [&]() {
     for (const auto &sync : window) {
       for (const auto &task : sync.basics) {
-        if (task.in_flight) {
+        if (task.query_in_flight || task.decode_in_flight) {
           return true;
         }
       }
@@ -323,13 +390,13 @@ void StageSync::sync_loop(int64_t from_block, int64_t head_block) {
         if (task.done) {
           continue;
         }
-        if (task.in_flight) {
-          if (task.future.wait_for(std::chrono::milliseconds(0)) != std::future_status::ready) {
+        if (task.query_in_flight) {
+          if (task.query_future.wait_for(std::chrono::milliseconds(0)) != std::future_status::ready) {
             continue;
           }
           RpcClient::BatchResult result;
           try {
-            result = task.future.get();
+            result = task.query_future.get();
           } catch (const std::exception &e) {
             result.success = false;
             result.error_msg = std::string("future.get exception: ") + e.what();
@@ -337,26 +404,13 @@ void StageSync::sync_loop(int64_t from_block, int64_t head_block) {
             result.success = false;
             result.error_msg = "future.get unknown exception";
           }
-          task.in_flight = false;
+          task.query_in_flight = false;
           if (result.success) {
-            DecodedEvents decoded;
-            {
-              TraceN("s1/decode");
-              decoded = EventDecoder::decode_logs(std::move(result.results));
-            }
-            std::vector<json>().swap(result.results);
-            std::string().swap(result.raw_body);
-            TraceN("s1/basic_done");
-            task.done = true;
-            task.retry_count = 0;
             task.response_bytes = result.response_bytes;
-            task.decoded_events = std::move(decoded);
-            sync.done_count += 1;
-            set_done_bit(sync.slot, i, 1);
-            if (!stopping && !window.empty()) {
-              TraceN("s1/progress");
-              render_progress_inline(window);
-            }
+            auto shared_raw_logs = std::make_shared<std::vector<json>>(std::move(result.results));
+            std::string().swap(result.raw_body);
+            task.decode_future = submit_decode_task(std::move(shared_raw_logs));
+            task.decode_in_flight = true;
           } else {
             assert(result.retryable && "stage1 query返回了不可重试错误, 数据可靠性无法保证");
             if (stopping) {
@@ -375,6 +429,22 @@ void StageSync::sync_loop(int64_t from_block, int64_t head_block) {
                         << " to=" << task.to_block << " err=" << result.error_msg
                         << " -> retry_in=" << delay_ms << "ms" << std::endl;
             }
+          }
+          progressed = true;
+        } else if (task.decode_in_flight) {
+          if (task.decode_future.wait_for(std::chrono::milliseconds(0)) != std::future_status::ready) {
+            continue;
+          }
+          task.decode_in_flight = false;
+          task.decoded_events = task.decode_future.get();
+          TraceN("s1/basic_done");
+          task.done = true;
+          task.retry_count = 0;
+          sync.done_count += 1;
+          set_done_bit(sync.slot, i, 1);
+          {
+            TraceN("s1/progress");
+            render_progress_inline(window);
           }
           progressed = true;
         } else if (!stopping && now >= task.retry_at) {

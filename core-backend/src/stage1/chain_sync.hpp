@@ -2,12 +2,14 @@
 
 #include <atomic>
 #include <chrono>
+#include <condition_variable>
 #include <deque>
 #include <future>
 #include <memory>
 #include <mutex>
 #include <optional>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include <boost/asio.hpp>
@@ -38,6 +40,7 @@ struct Status {
 class StageSync {
 public:
   StageSync(const Config &config, Database &db);
+  ~StageSync();
 
   void start(asio::io_context &ioc);
   void stop();
@@ -55,9 +58,11 @@ private:
     int64_t from_block = 0;
     int64_t to_block = 0;
     int worker_idx = 0;
-    bool in_flight = false;
+    bool query_in_flight = false;
+    bool decode_in_flight = false;
     bool done = false;
-    std::future<RpcClient::BatchResult> future;
+    std::future<RpcClient::BatchResult> query_future;
+    std::future<DecodedEvents> decode_future;
     std::optional<DecodedEvents> decoded_events;
     size_t response_bytes = 0;
     std::chrono::steady_clock::time_point retry_at = std::chrono::steady_clock::now();
@@ -90,6 +95,9 @@ private:
   std::optional<SyncChunkState> build_sync_chunk(int sync_id, int slot, int64_t &cursor,
                                                  int64_t head_block, size_t &rr_worker);
   void submit_basic_task(BasicTask &task);
+  std::future<DecodedEvents> submit_decode_task(std::shared_ptr<std::vector<json>> shared_raw_logs);
+  void start_decode_pool();
+  void stop_decode_pool();
   void sync_loop(int64_t from_block, int64_t head_block);
   void process_batch(DecodedEvents &&events, int64_t to_block);
   static void merge_events(DecodedEvents &dst, DecodedEvents &&src);
@@ -103,6 +111,16 @@ private:
   int chunk_basic_count_;
   int super_sync_chunk_count_ = 2;
   std::vector<std::unique_ptr<RpcClient>> rpc_workers_;
+  int num_decode_threads_ = 0;
+  struct DecodeTask {
+    std::shared_ptr<std::vector<json>> shared_raw_logs;
+    std::shared_ptr<std::promise<DecodedEvents>> promise;
+  };
+  std::vector<std::thread> decode_workers_;
+  std::deque<DecodeTask> decode_queue_;
+  std::mutex decode_mutex_;
+  std::condition_variable decode_cv_;
+  bool decode_running_ = false;
   std::vector<std::vector<uint8_t>> done_list_;
   std::mutex done_list_mutex_;
   asio::io_context *ioc_ = nullptr;

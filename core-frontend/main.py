@@ -99,15 +99,8 @@ async def api_stage3_users(limit: int = Query(200)):
 
 
 @app.get("/api/stage3-data")
-async def api_stage3_data(user: str = Query(...)):
-    return await backend_get("/api/stage3-data", {"user": user})
-
-
-@app.get("/api/stage3-positions")
-async def api_stage3_positions(user: str = Query(...), sk: int = Query(...)):
-    return await backend_get("/api/stage3-positions", {"user": user, "sk": sk})
-
-
-@app.get("/api/stage3-events")
-async def api_stage3_events(user: str = Query(...), sk: int = Query(...), radius: int = Query(20)):
-    return await backend_get("/api/stage3-events", {"user": user, "sk": sk, "radius": radius})
+async def api_stage3_data(user: str = Query(...), sk: int | None = Query(None)):
+    params = {"user": user}
+    if sk is not None:
+        params["sk"] = sk
+    return await backend_get("/api/stage3-data", params)

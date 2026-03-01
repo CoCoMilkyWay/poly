@@ -145,7 +145,7 @@ std::string RpcTransportBeast::post_json(const std::string &body) {
   req.body() = body;
   req.prepare_payload();
 
-  constexpr auto kTimeout = std::chrono::seconds(120);
+  constexpr auto kTimeout = std::chrono::seconds(60);
   for (int retry = 0; retry < 2; ++retry) {
     try {
       if (cancel_requested_.load()) {
