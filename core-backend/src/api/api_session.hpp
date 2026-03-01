@@ -57,8 +57,7 @@ public:
   using Stage3SyncGetter = std::function<Stage3SyncStatus()>;
 
   ApiSession(tcp::socket socket, Database &stage1_db, Database &stage2_db, stage3::StageSync &stage3_sync,
-             Stage1SyncGetter stage1_getter = nullptr, Stage2SyncGetter stage2_getter = nullptr,
-             Stage3SyncGetter stage3_getter = nullptr);
+             Stage1SyncGetter stage1_getter, Stage2SyncGetter stage2_getter, Stage3SyncGetter stage3_getter);
 
   void run();
 
@@ -68,11 +67,13 @@ private:
   void handle_health();
   static int64_t feather_row_count(const std::string &path);
   void handle_tables();
-  void handle_sync_state();
+  void handle_stage1_sync_status();
+  void handle_stage2_sync_status();
+  void handle_stage3_sync_status();
   void handle_query();
   void handle_export_csv();
   void handle_table_sample();
-  void handle_rebuild_status();
+  void handle_stage2_rebuild_status();
   void handle_user_pnl(const std::string &target);
   void handle_user_positions(const std::string &target);
   void handle_replay_users();
@@ -88,7 +89,7 @@ private:
   Database &stage1_db_;
   Database &stage2_db_;
   stage3::StageSync &stage3_sync_;
-  Stage1SyncGetter sync_getter_;
+  Stage1SyncGetter stage1_getter_;
   Stage2SyncGetter stage2_getter_;
   Stage3SyncGetter stage3_getter_;
   beast::flat_buffer buffer_;

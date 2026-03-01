@@ -1966,10 +1966,16 @@
 
     async function s2Poll() {
       try {
-        const resp = await fetch("/api/rebuild-status");
-        const status = await resp.json();
+        const [rebuildResp, stage2SyncResp, stage3SyncResp] = await Promise.all([
+          fetch("/api/stage2-rebuild-status"),
+          fetch("/api/stage2-sync-status"),
+          fetch("/api/stage3-sync-status"),
+        ]);
+        const status = await rebuildResp.json();
+        status.stage2_sync = await stage2SyncResp.json();
+        const stage3Sync = await stage3SyncResp.json();
         s2UpdateProgress(status);
-        const stage3Ready = !!(status.stage3_sync && status.stage3_sync.ready);
+        const stage3Ready = !!stage3Sync.ready;
         if (
           (stage3Ready || status.phase === 7) &&
           !status.running &&

@@ -18,11 +18,10 @@ using tcp = asio::ip::tcp;
 class ApiServer {
 public:
   ApiServer(asio::io_context &ioc, Database &stage1_db, Database &stage2_db, stage3::StageSync &stage3_sync,
-            unsigned short port, ApiSession::Stage1SyncGetter stage1_getter = nullptr,
-            ApiSession::Stage2SyncGetter stage2_getter = nullptr,
-            ApiSession::Stage3SyncGetter stage3_getter = nullptr)
+            unsigned short port, ApiSession::Stage1SyncGetter stage1_getter,
+            ApiSession::Stage2SyncGetter stage2_getter, ApiSession::Stage3SyncGetter stage3_getter)
       : ioc_(ioc), acceptor_(ioc, tcp::endpoint(tcp::v4(), port)), stage1_db_(stage1_db), stage2_db_(stage2_db),
-        stage3_sync_(stage3_sync), sync_getter_(std::move(stage1_getter)),
+        stage3_sync_(stage3_sync), stage1_getter_(std::move(stage1_getter)),
         stage2_getter_(std::move(stage2_getter)), stage3_getter_(std::move(stage3_getter)) {
     std::cout << "[API] 监听端口 " << port << std::endl;
     do_accept();
@@ -34,7 +33,7 @@ private:
     acceptor_.async_accept([this](beast::error_code ec, tcp::socket socket) {
       if (!ec) {
         std::make_shared<ApiSession>(std::move(socket), stage1_db_, stage2_db_, stage3_sync_,
-                                     sync_getter_, stage2_getter_, stage3_getter_)->run();
+                                     stage1_getter_, stage2_getter_, stage3_getter_)->run();
       }
       do_accept();
     });
@@ -45,7 +44,7 @@ private:
   Database &stage1_db_;
   Database &stage2_db_;
   stage3::StageSync &stage3_sync_;
-  ApiSession::Stage1SyncGetter sync_getter_;
+  ApiSession::Stage1SyncGetter stage1_getter_;
   ApiSession::Stage2SyncGetter stage2_getter_;
   ApiSession::Stage3SyncGetter stage3_getter_;
 };

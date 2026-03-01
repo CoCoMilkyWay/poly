@@ -29,13 +29,6 @@ namespace stage3 {
 using namespace stage2;
 namespace asio = boost::asio;
 
-struct ReplayProgress {
-  int64_t total_users = 0;
-  int64_t processed_users = 0;
-  bool running = false;
-  double replay_ms = 0;
-};
-
 class StageSync {
 public:
   struct SyncStatus {
@@ -141,7 +134,7 @@ public:
     init_schema();
     load_conditions();
     load_cursor();
-    refresh_sync_status(true);
+    refresh_sync_status_locked();
   }
 
   void start(asio::io_context &ioc) {
@@ -152,22 +145,10 @@ public:
 
   void stop() { stop_requested_ = true; }
 
-  void rebuild_all() {
-    std::lock_guard<std::mutex> lock(sync_mu_);
-    while (process_chunk_locked()) {
-    }
-    refresh_sync_status_locked(true);
-  }
-
-  const BuildProgress &build_progress() const { return builder_.progress(); }
-  const ReplayProgress &replay_progress() const { return replay_progress_; }
-
   SyncStatus status() const {
     std::lock_guard<std::mutex> lock(sync_mu_);
     return sync_;
   }
-
-  SyncStatus sync_status() const { return status(); }
 
   RebuildProgress progress() const {
     const auto &wp = builder_.progress();
@@ -426,7 +407,6 @@ private:
 
   mutable std::mutex sync_mu_;
   mutable std::mutex cache_mu_;
-  mutable ReplayProgress replay_progress_;
   mutable SyncStatus sync_;
   mutable CursorKey cursor_;
   struct CommitRecord {
@@ -626,23 +606,13 @@ private:
     assert(q && !q->HasError());
   }
 
-  void refresh_sync_status_locked(bool with_event_count) const {
-    sync_.syncing = replay_progress_.running;
+  void refresh_sync_status_locked() const {
     sync_.head_block = builder_.cursor();
     sync_.stage3_sort_key = cursor_.sort_key;
     sync_.last_block = (cursor_.sort_key < 0) ? 0 : cursor_.sort_key / SORT_KEY_SCALE;
     sync_.behind_blocks = std::max<int64_t>(0, sync_.head_block - sync_.last_block);
     sync_.behind_chunks = (sync_.behind_blocks + kSyncChunkBlocks - 1) / kSyncChunkBlocks;
     sync_.processed_events = cursor_.processed_events;
-
-    if (!with_event_count) {
-      return;
-    }
-  }
-
-  void refresh_sync_status(bool with_event_count) const {
-    std::lock_guard<std::mutex> lock(sync_mu_);
-    refresh_sync_status_locked(with_event_count);
   }
 
   void schedule_sync(int delay_seconds) {
@@ -662,50 +632,47 @@ private:
     TraceN("s3/sync");
     {
       std::lock_guard<std::mutex> lock(sync_mu_);
-      replay_progress_.running = true;
+      auto refresh_timing_metrics = [&](int64_t remaining_blocks) {
+        if (commit_history_.size() < 2) {
+          sync_.blocks_per_second = 0.0;
+          sync_.eta_seconds = (remaining_blocks == 0) ? 0.0 : -1.0;
+          return;
+        }
+        const auto &first = commit_history_.front();
+        const auto &last = commit_history_.back();
+        double elapsed_s = std::chrono::duration<double>(last.committed_at - first.committed_at).count();
+        if (elapsed_s <= 0.0) {
+          sync_.blocks_per_second = 0.0;
+          sync_.eta_seconds = -1.0;
+          return;
+        }
+        int64_t committed_blocks = std::max<int64_t>(0, last.block - first.block);
+        if (committed_blocks == 0) {
+          sync_.blocks_per_second = 0.0;
+          sync_.eta_seconds = (remaining_blocks == 0) ? 0.0 : -1.0;
+          return;
+        }
+        sync_.blocks_per_second = static_cast<double>(committed_blocks) / elapsed_s;
+        sync_.eta_seconds =
+            (remaining_blocks == 0) ? 0.0 : static_cast<double>(remaining_blocks) / sync_.blocks_per_second;
+      };
+
+      sync_.syncing = true;
       int64_t before_block = (cursor_.sort_key < 0) ? 0 : cursor_.sort_key / SORT_KEY_SCALE;
       bool advanced = process_chunk_locked();
-      refresh_sync_status_locked(false);
+      refresh_sync_status_locked();
       int64_t after_block = (cursor_.sort_key < 0) ? 0 : cursor_.sort_key / SORT_KEY_SCALE;
       if (advanced && after_block > before_block) {
         commit_history_.push_back({std::chrono::steady_clock::now(), after_block});
         if (commit_history_.size() > kEtaWindowSize) {
           commit_history_.pop_front();
         }
-      } else {
-        sync_.blocks_per_second = 0.0;
-        sync_.eta_seconds = (sync_.behind_blocks == 0) ? 0.0 : -1.0;
       }
-      refresh_speed_locked();
-      replay_progress_.running = false;
+      refresh_timing_metrics(sync_.behind_blocks);
+      sync_.syncing = false;
       int next_delay = (sync_.behind_chunks > 1) ? 0 : kBaseIntervalSeconds;
       schedule_sync(next_delay);
     }
-  }
-
-  void refresh_speed_locked() const {
-    if (commit_history_.size() < 2) {
-      sync_.blocks_per_second = 0.0;
-      sync_.eta_seconds = (sync_.behind_blocks == 0) ? 0.0 : -1.0;
-      return;
-    }
-    const auto &first = commit_history_.front();
-    const auto &last = commit_history_.back();
-    double elapsed_s = std::chrono::duration<double>(last.committed_at - first.committed_at).count();
-    if (elapsed_s <= 0.0) {
-      sync_.blocks_per_second = 0.0;
-      sync_.eta_seconds = -1.0;
-      return;
-    }
-    int64_t committed_blocks = std::max<int64_t>(0, last.block - first.block);
-    if (committed_blocks == 0) {
-      sync_.blocks_per_second = 0.0;
-      sync_.eta_seconds = (sync_.behind_blocks == 0) ? 0.0 : -1.0;
-      return;
-    }
-    sync_.blocks_per_second = static_cast<double>(committed_blocks) / elapsed_s;
-    sync_.eta_seconds =
-        (sync_.behind_blocks == 0) ? 0.0 : static_cast<double>(sync_.behind_blocks) / sync_.blocks_per_second;
   }
 
   bool process_chunk_locked() const {

@@ -82,7 +82,7 @@
       async function refresh() {
         try {
           const [syncRes, tablesRes] = await Promise.all([
-            fetch("/api/sync-state"),
+            fetch("/api/stage1-sync-status"),
             fetch("/api/tables"),
           ]);
           const sync = await syncRes.json();

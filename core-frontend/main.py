@@ -24,7 +24,7 @@ templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     tables = await backend_get("/api/tables")
-    sync_state = await backend_get("/api/sync-state")
+    sync_state = await backend_get("/api/stage1-sync-status")
     return templates.TemplateResponse("index.html", {
         "request": request,
         "tables": tables,
@@ -43,9 +43,19 @@ async def api_tables():
     return await backend_get("/api/tables")
 
 
-@app.get("/api/sync-state")
-async def api_sync_state():
-    return await backend_get("/api/sync-state")
+@app.get("/api/stage1-sync-status")
+async def api_stage1_sync_status():
+    return await backend_get("/api/stage1-sync-status")
+
+
+@app.get("/api/stage2-sync-status")
+async def api_stage2_sync_status():
+    return await backend_get("/api/stage2-sync-status")
+
+
+@app.get("/api/stage3-sync-status")
+async def api_stage3_sync_status():
+    return await backend_get("/api/stage3-sync-status")
 
 
 @app.get("/api/query")
@@ -78,9 +88,9 @@ async def api_export_all():
     return {"exported": [r for r in results if r], "path": str(export_dir)}
 
 
-@app.get("/api/rebuild-status")
-async def api_rebuild_status():
-    return await backend_get("/api/rebuild-status")
+@app.get("/api/stage2-rebuild-status")
+async def api_stage2_rebuild_status():
+    return await backend_get("/api/stage2-rebuild-status")
 
 
 @app.get("/api/replay-users")

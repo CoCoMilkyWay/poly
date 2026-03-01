@@ -14,29 +14,25 @@ namespace asio = boost::asio;
 
 namespace stage2 {
 
-struct SyncProgress {
-  bool syncing = false;
-  int64_t last_block = 0;
-  int64_t head_block = 0;
-  int64_t behind_blocks = 0;
-  int64_t behind_chunks = 0;
-  double blocks_per_second = 0.0;
-  double eta_seconds = -1.0;
-  int64_t chunks_per_rebuild = 0;
-  int phase = 0;
-};
-
 class StageSync {
 public:
+  struct SyncStatus {
+    bool syncing = false;
+    int64_t last_block = 0;
+    int64_t head_block = 0;
+    int64_t behind_blocks = 0;
+    int64_t behind_chunks = 0;
+    double blocks_per_second = 0.0;
+    double eta_seconds = -1.0;
+  };
+
   StageSync(Database &stage1_db, Database &stage2_db, int base_interval = 30);
 
   void start(asio::io_context &ioc);
 
   void stop();
 
-  const SyncProgress &status() const;
-  const SyncProgress &progress() const;
-  const BuildProgress &build_progress() const;
+  const SyncStatus &status() const;
 
   EventBuilder &builder();
 
@@ -58,7 +54,7 @@ private:
   asio::io_context *ioc_ = nullptr;
   int chunk_size_;
   int base_interval_;
-  SyncProgress progress_;
+  SyncStatus sync_;
   std::atomic<bool> stop_requested_{false};
   std::deque<CommitRecord> commit_history_;
 };

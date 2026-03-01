@@ -75,12 +75,53 @@ std::string build_human_readable_select_list(duckdb::Connection &conn, const std
   return oss.str();
 }
 
+json to_stage1_sync_json(const Stage1SyncStatus &status) {
+  return {
+      {"syncing", status.syncing},
+      {"last_block", status.last_block},
+      {"head_block", status.head_block},
+      {"behind_blocks", status.behind_blocks},
+      {"behind_chunks", status.behind_chunks},
+      {"blocks_per_second", status.blocks_per_second},
+      {"eta_seconds", status.eta_seconds},
+      {"bytes_per_block", status.bytes_per_block},
+  };
+}
+
+json to_stage2_sync_json(const Stage2SyncStatus &status) {
+  return {
+      {"syncing", status.syncing},
+      {"last_block", status.last_block},
+      {"head_block", status.head_block},
+      {"behind_blocks", status.behind_blocks},
+      {"behind_chunks", status.behind_chunks},
+      {"blocks_per_second", status.blocks_per_second},
+      {"eta_seconds", status.eta_seconds},
+      {"ready", status.behind_blocks == 0},
+  };
+}
+
+json to_stage3_sync_json(const Stage3SyncStatus &status) {
+  return {
+      {"syncing", status.syncing},
+      {"last_block", status.last_block},
+      {"head_block", status.head_block},
+      {"behind_blocks", status.behind_blocks},
+      {"behind_chunks", status.behind_chunks},
+      {"blocks_per_second", status.blocks_per_second},
+      {"eta_seconds", status.eta_seconds},
+      {"stage3_sort_key", status.stage3_sort_key},
+      {"processed_events", status.processed_events},
+      {"ready", status.behind_blocks == 0},
+  };
+}
+
 } // namespace
 
 ApiSession::ApiSession(tcp::socket socket, Database &stage1_db, Database &stage2_db, stage3::StageSync &stage3_sync,
                        Stage1SyncGetter stage1_getter, Stage2SyncGetter stage2_getter, Stage3SyncGetter stage3_getter)
     : socket_(std::move(socket)), stage1_db_(stage1_db), stage2_db_(stage2_db), stage3_sync_(stage3_sync),
-      sync_getter_(std::move(stage1_getter)), stage2_getter_(std::move(stage2_getter)),
+      stage1_getter_(std::move(stage1_getter)), stage2_getter_(std::move(stage2_getter)),
       stage3_getter_(std::move(stage3_getter)) {}
 
 void ApiSession::run() {
@@ -121,12 +162,16 @@ void ApiSession::handle_request() {
       handle_health();
     } else if (target.starts_with("/api/tables")) {
       handle_tables();
-    } else if (target.starts_with("/api/sync-state")) {
-      handle_sync_state();
+    } else if (target.starts_with("/api/stage1-sync-status")) {
+      handle_stage1_sync_status();
+    } else if (target.starts_with("/api/stage2-sync-status")) {
+      handle_stage2_sync_status();
+    } else if (target.starts_with("/api/stage3-sync-status")) {
+      handle_stage3_sync_status();
     } else if (target.starts_with("/api/query")) {
       handle_query();
-    } else if (target.starts_with("/api/rebuild-status")) {
-      handle_rebuild_status();
+    } else if (target.starts_with("/api/stage2-rebuild-status")) {
+      handle_stage2_rebuild_status();
     } else if (target.starts_with("/api/user/") && target.find("/pnl") != std::string::npos) {
       handle_user_pnl(target);
     } else if (target.starts_with("/api/user/") && target.find("/positions") != std::string::npos) {
@@ -269,23 +314,34 @@ void ApiSession::handle_tables() {
   res_.body() = result.dump();
 }
 
-void ApiSession::handle_sync_state() {
-  TraceN("api/sync_state");
+void ApiSession::handle_stage1_sync_status() {
+  TraceN("api/s1_sync_state");
   res_.set(http::field::content_type, "application/json");
 
-  json result = json::object();
+  Stage1SyncStatus status = stage1_getter_();
+  json result = to_stage1_sync_json(status);
 
-  if (sync_getter_) {
-    Stage1SyncStatus status = sync_getter_();
-    result["last_block"] = status.last_block;
-    result["head_block"] = status.head_block;
-    result["syncing"] = status.syncing;
-    result["behind_blocks"] = status.behind_blocks;
-    result["behind_chunks"] = status.behind_chunks;
-    result["blocks_per_second"] = status.blocks_per_second;
-    result["eta_seconds"] = status.eta_seconds;
-    result["bytes_per_block"] = status.bytes_per_block;
-  }
+  res_.result(http::status::ok);
+  res_.body() = result.dump();
+}
+
+void ApiSession::handle_stage2_sync_status() {
+  TraceN("api/s2_sync_state");
+  res_.set(http::field::content_type, "application/json");
+
+  Stage2SyncStatus status = stage2_getter_();
+  json result = to_stage2_sync_json(status);
+
+  res_.result(http::status::ok);
+  res_.body() = result.dump();
+}
+
+void ApiSession::handle_stage3_sync_status() {
+  TraceN("api/s3_sync_state");
+  res_.set(http::field::content_type, "application/json");
+
+  Stage3SyncStatus status = stage3_getter_();
+  json result = to_stage3_sync_json(status);
 
   res_.result(http::status::ok);
   res_.body() = result.dump();
@@ -414,8 +470,8 @@ void ApiSession::handle_table_sample() {
   res_.body() = result.dump();
 }
 
-void ApiSession::handle_rebuild_status() {
-  TraceN("api/rebuild");
+void ApiSession::handle_stage2_rebuild_status() {
+  TraceN("api/s2_rebuild");
   res_.set(http::field::content_type, "application/json");
 
   const auto &p = stage3_sync_.progress();
@@ -670,21 +726,6 @@ void ApiSession::handle_rebuild_status() {
       {"convert_sem_tree", convert_sem_tree},
       {"order_sem_tree", order_sem_tree},
   };
-  if (stage3_getter_) {
-    auto s3 = stage3_getter_();
-    result["stage3_sync"] = {
-        {"syncing", s3.syncing},
-        {"last_block", s3.last_block},
-        {"head_block", s3.head_block},
-        {"behind_blocks", s3.behind_blocks},
-        {"behind_chunks", s3.behind_chunks},
-        {"blocks_per_second", s3.blocks_per_second},
-        {"eta_seconds", s3.eta_seconds},
-        {"stage3_sort_key", s3.stage3_sort_key},
-        {"processed_events", s3.processed_events},
-        {"ready", s3.behind_blocks == 0},
-    };
-  }
   result.update(transfer_tree);
 
   json event_by_collateral = json::object();
@@ -717,19 +758,6 @@ void ApiSession::handle_rebuild_status() {
       {static_cast<uint8_t>(stage2::EventType::FPMMLPAdd),
        static_cast<uint8_t>(stage2::EventType::FPMMLPRemove),
        static_cast<uint8_t>(stage2::EventType::FPMMLPReturn)});
-
-  if (stage2_getter_) {
-    auto s2 = stage2_getter_();
-    result["stage2_sync"] = {
-        {"syncing", s2.syncing},
-        {"last_block", s2.last_block},
-        {"head_block", s2.head_block},
-        {"behind_blocks", s2.behind_blocks},
-        {"behind_chunks", s2.behind_chunks},
-        {"blocks_per_second", s2.blocks_per_second},
-        {"eta_seconds", s2.eta_seconds},
-    };
-  }
 
   res_.result(http::status::ok);
   res_.body() = result.dump();
