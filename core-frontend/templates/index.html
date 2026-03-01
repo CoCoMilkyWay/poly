@@ -69,9 +69,9 @@
         <p>Polymarket 链上数据同步与查询</p>
       </header>
 
-      {% include 'components/stage1_sync.html' %}
-      {% include 'components/stage2_rebuild.html' %}
-      {% include 'components/stage3_replay.html' %}
+      {% include 'components/stage1.html' %}
+      {% include 'components/stage2.html' %}
+      {% include 'components/stage3.html' %}
     </div>
 
     <script>
@@ -82,7 +82,7 @@
       async function refresh() {
         try {
           const [syncRes, tablesRes] = await Promise.all([
-            fetch("/api/stage1-sync-status"),
+            fetch("/api/stage1-status"),
             fetch("/api/tables"),
           ]);
           const sync = await syncRes.json();

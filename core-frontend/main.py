@@ -24,7 +24,7 @@ templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     tables = await backend_get("/api/tables")
-    sync_state = await backend_get("/api/stage1-sync-status")
+    sync_state = await backend_get("/api/stage1-status")
     return templates.TemplateResponse("index.html", {
         "request": request,
         "tables": tables,
@@ -43,19 +43,19 @@ async def api_tables():
     return await backend_get("/api/tables")
 
 
-@app.get("/api/stage1-sync-status")
+@app.get("/api/stage1-status")
 async def api_stage1_sync_status():
-    return await backend_get("/api/stage1-sync-status")
+    return await backend_get("/api/stage1-status")
 
 
-@app.get("/api/stage2-sync-status")
+@app.get("/api/stage2-status")
 async def api_stage2_sync_status():
-    return await backend_get("/api/stage2-sync-status")
+    return await backend_get("/api/stage2-status")
 
 
-@app.get("/api/stage3-sync-status")
+@app.get("/api/stage3-status")
 async def api_stage3_sync_status():
-    return await backend_get("/api/stage3-sync-status")
+    return await backend_get("/api/stage3-status")
 
 
 @app.get("/api/query")
@@ -88,26 +88,26 @@ async def api_export_all():
     return {"exported": [r for r in results if r], "path": str(export_dir)}
 
 
-@app.get("/api/stage2-rebuild-status")
+@app.get("/api/stage2-detail")
 async def api_stage2_rebuild_status():
-    return await backend_get("/api/stage2-rebuild-status")
+    return await backend_get("/api/stage2-detail")
 
 
-@app.get("/api/replay-users")
+@app.get("/api/stage3-users")
 async def api_replay_users(limit: int = Query(200)):
-    return await backend_get("/api/replay-users", {"limit": limit})
+    return await backend_get("/api/stage3-users", {"limit": limit})
 
 
-@app.get("/api/replay")
+@app.get("/api/stage3-data")
 async def api_replay(user: str = Query(...)):
-    return await backend_get("/api/replay", {"user": user})
+    return await backend_get("/api/stage3-data", {"user": user})
 
 
-@app.get("/api/replay-positions")
+@app.get("/api/stage3-positions")
 async def api_replay_positions(user: str = Query(...), sk: int = Query(...)):
-    return await backend_get("/api/replay-positions", {"user": user, "sk": sk})
+    return await backend_get("/api/stage3-positions", {"user": user, "sk": sk})
 
 
-@app.get("/api/replay-trades")
+@app.get("/api/stage3-events")
 async def api_replay_trades(user: str = Query(...), sk: int = Query(...), radius: int = Query(20)):
-    return await backend_get("/api/replay-trades", {"user": user, "sk": sk, "radius": radius})
+    return await backend_get("/api/stage3-events", {"user": user, "sk": sk, "radius": radius})

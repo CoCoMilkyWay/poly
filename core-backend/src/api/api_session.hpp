@@ -17,7 +17,7 @@ namespace http = beast::http;
 using tcp = asio::ip::tcp;
 using json = nlohmann::json;
 
-struct Stage1SyncStatus {
+struct Stage1Status {
   bool syncing = false;
   int64_t last_block = 0;
   int64_t head_block = 0;
@@ -28,7 +28,7 @@ struct Stage1SyncStatus {
   double bytes_per_block = 0.0;
 };
 
-struct Stage2SyncStatus {
+struct Stage2Status {
   bool syncing = false;
   int64_t last_block = 0;
   int64_t head_block = 0;
@@ -38,7 +38,7 @@ struct Stage2SyncStatus {
   double eta_seconds = -1.0;
 };
 
-struct Stage3SyncStatus {
+struct Stage3Status {
   bool syncing = false;
   int64_t last_block = 0;
   int64_t head_block = 0;
@@ -52,12 +52,12 @@ struct Stage3SyncStatus {
 
 class ApiSession : public std::enable_shared_from_this<ApiSession> {
 public:
-  using Stage1SyncGetter = std::function<Stage1SyncStatus()>;
-  using Stage2SyncGetter = std::function<Stage2SyncStatus()>;
-  using Stage3SyncGetter = std::function<Stage3SyncStatus()>;
+  using Stage1Getter = std::function<Stage1Status()>;
+  using Stage2Getter = std::function<Stage2Status()>;
+  using Stage3Getter = std::function<Stage3Status()>;
 
   ApiSession(tcp::socket socket, Database &stage1_db, Database &stage2_db, stage3::StageSync &stage3_sync,
-             Stage1SyncGetter stage1_getter, Stage2SyncGetter stage2_getter, Stage3SyncGetter stage3_getter);
+             Stage1Getter stage1_getter, Stage2Getter stage2_getter, Stage3Getter stage3_getter);
 
   void run();
 
@@ -67,19 +67,19 @@ private:
   void handle_health();
   static int64_t feather_row_count(const std::string &path);
   void handle_tables();
-  void handle_stage1_sync_status();
-  void handle_stage2_sync_status();
-  void handle_stage3_sync_status();
+  void handle_stage1_status();
+  void handle_stage2_status();
+  void handle_stage3_status();
+  void handle_stage2_detail();
   void handle_query();
   void handle_export_csv();
   void handle_table_sample();
-  void handle_stage2_rebuild_status();
   void handle_user_pnl(const std::string &target);
   void handle_user_positions(const std::string &target);
-  void handle_replay_users();
-  void handle_replay();
-  void handle_replay_positions();
-  void handle_replay_trades();
+  void handle_stage3_users();
+  void handle_stage3_data();
+  void handle_stage3_positions();
+  void handle_stage3_events();
   static std::string extract_user_addr(const std::string &target);
   std::string get_param(const char *name);
   static std::string url_decode(const std::string &str);
@@ -89,9 +89,9 @@ private:
   Database &stage1_db_;
   Database &stage2_db_;
   stage3::StageSync &stage3_sync_;
-  Stage1SyncGetter stage1_getter_;
-  Stage2SyncGetter stage2_getter_;
-  Stage3SyncGetter stage3_getter_;
+  Stage1Getter stage1_getter_;
+  Stage2Getter stage2_getter_;
+  Stage3Getter stage3_getter_;
   beast::flat_buffer buffer_;
   http::request<http::string_body> req_;
   http::response<http::string_body> res_;

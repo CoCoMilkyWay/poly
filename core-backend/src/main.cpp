@@ -63,17 +63,17 @@ int main(int argc, char *argv[]) {
   stage2::StageSync stage2_sync(stage1_db, stage2_db);
   stage3::StageSync stage3_sync(stage2_sync.builder(), stage2_db, stage3_db);
 
-  auto stage1_getter = [&stage1_sync]() -> Stage1SyncStatus {
+  auto stage1_getter = [&stage1_sync]() -> Stage1Status {
     const auto s = stage1_sync.status();
     return {s.syncing, s.last_block, s.head_block, s.behind_blocks, s.behind_chunks,
             s.blocks_per_second, s.eta_seconds, s.bytes_per_block};
   };
-  auto stage2_getter = [&stage2_sync]() -> Stage2SyncStatus {
+  auto stage2_getter = [&stage2_sync]() -> Stage2Status {
     const auto &s = stage2_sync.status();
     return {s.syncing, s.last_block, s.head_block, s.behind_blocks,
             s.behind_chunks, s.blocks_per_second, s.eta_seconds};
   };
-  auto stage3_getter = [&stage3_sync]() -> Stage3SyncStatus {
+  auto stage3_getter = [&stage3_sync]() -> Stage3Status {
     const auto s = stage3_sync.status();
     return {s.syncing, s.last_block, s.head_block, s.behind_blocks, s.behind_chunks,
             s.blocks_per_second, s.eta_seconds, s.stage3_sort_key, s.processed_events};

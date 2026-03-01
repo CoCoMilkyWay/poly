@@ -443,7 +443,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function rpPollSync() {
   try {
-    const resp = await fetch('/api/stage3-sync-status');
+    const resp = await fetch('/api/stage3-status');
     const s = await resp.json();
     rpUpdateSyncStats(s || {});
   } catch(e) {
@@ -481,7 +481,7 @@ function rpUpdateSyncStats(sync) {
 
 async function rpLoadUserList() {
   try {
-    const resp = await fetch('/api/replay-users?limit=1000');
+    const resp = await fetch('/api/stage3-users?limit=1000');
     _rUsers = await resp.json();
     rpRenderDropdown(_rUsers);
   } catch(e) {}
@@ -516,7 +516,7 @@ async function rpLoadUser() {
   btn.disabled = true; btn.textContent = '...';
 
   try {
-    const resp = await fetch(`/api/replay?user=${encodeURIComponent(user)}`);
+    const resp = await fetch(`/api/stage3-data?user=${encodeURIComponent(user)}`);
     _rData = await resp.json();
     _rTimeline = _rData.timeline || [];
     _rCurrentUser = user;
@@ -909,7 +909,7 @@ async function rpFetchPositions(sk) {
   const countEl = document.getElementById('rp-pos-count');
 
   try {
-    const resp = await fetch(`/api/replay-positions?user=${encodeURIComponent(_rCurrentUser)}&sk=${sk}`);
+    const resp = await fetch(`/api/stage3-positions?user=${encodeURIComponent(_rCurrentUser)}&sk=${sk}`);
     const data = await resp.json();
     const positions = data.positions || [];
     countEl.textContent = positions.length;
@@ -943,7 +943,7 @@ function rpFetchTradesDebounced(sk) {
 async function rpFetchTrades(sk) {
   if (!_rCurrentUser) return;
   try {
-    const resp = await fetch(`/api/replay-trades?user=${encodeURIComponent(_rCurrentUser)}&sk=${sk}`);
+    const resp = await fetch(`/api/stage3-events?user=${encodeURIComponent(_rCurrentUser)}&sk=${sk}`);
     const data = await resp.json();
     _rTrades = data.events || [];
     _rTradeCenter = data.center ?? -1;

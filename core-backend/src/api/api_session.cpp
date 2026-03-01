@@ -75,7 +75,7 @@ std::string build_human_readable_select_list(duckdb::Connection &conn, const std
   return oss.str();
 }
 
-json to_stage1_sync_json(const Stage1SyncStatus &status) {
+json to_stage1_status_json(const Stage1Status &status) {
   return {
       {"syncing", status.syncing},
       {"last_block", status.last_block},
@@ -88,7 +88,7 @@ json to_stage1_sync_json(const Stage1SyncStatus &status) {
   };
 }
 
-json to_stage2_sync_json(const Stage2SyncStatus &status) {
+json to_stage2_status_json(const Stage2Status &status) {
   return {
       {"syncing", status.syncing},
       {"last_block", status.last_block},
@@ -101,7 +101,7 @@ json to_stage2_sync_json(const Stage2SyncStatus &status) {
   };
 }
 
-json to_stage3_sync_json(const Stage3SyncStatus &status) {
+json to_stage3_status_json(const Stage3Status &status) {
   return {
       {"syncing", status.syncing},
       {"last_block", status.last_block},
@@ -119,7 +119,7 @@ json to_stage3_sync_json(const Stage3SyncStatus &status) {
 } // namespace
 
 ApiSession::ApiSession(tcp::socket socket, Database &stage1_db, Database &stage2_db, stage3::StageSync &stage3_sync,
-                       Stage1SyncGetter stage1_getter, Stage2SyncGetter stage2_getter, Stage3SyncGetter stage3_getter)
+                       Stage1Getter stage1_getter, Stage2Getter stage2_getter, Stage3Getter stage3_getter)
     : socket_(std::move(socket)), stage1_db_(stage1_db), stage2_db_(stage2_db), stage3_sync_(stage3_sync),
       stage1_getter_(std::move(stage1_getter)), stage2_getter_(std::move(stage2_getter)),
       stage3_getter_(std::move(stage3_getter)) {}
@@ -162,28 +162,28 @@ void ApiSession::handle_request() {
       handle_health();
     } else if (target.starts_with("/api/tables")) {
       handle_tables();
-    } else if (target.starts_with("/api/stage1-sync-status")) {
-      handle_stage1_sync_status();
-    } else if (target.starts_with("/api/stage2-sync-status")) {
-      handle_stage2_sync_status();
-    } else if (target.starts_with("/api/stage3-sync-status")) {
-      handle_stage3_sync_status();
+    } else if (target.starts_with("/api/stage1-status")) {
+      handle_stage1_status();
+    } else if (target.starts_with("/api/stage2-status")) {
+      handle_stage2_status();
+    } else if (target.starts_with("/api/stage3-status")) {
+      handle_stage3_status();
     } else if (target.starts_with("/api/query")) {
       handle_query();
-    } else if (target.starts_with("/api/stage2-rebuild-status")) {
-      handle_stage2_rebuild_status();
+    } else if (target.starts_with("/api/stage2-detail")) {
+      handle_stage2_detail();
     } else if (target.starts_with("/api/user/") && target.find("/pnl") != std::string::npos) {
       handle_user_pnl(target);
     } else if (target.starts_with("/api/user/") && target.find("/positions") != std::string::npos) {
       handle_user_positions(target);
-    } else if (target.starts_with("/api/replay-users")) {
-      handle_replay_users();
-    } else if (target.starts_with("/api/replay-positions")) {
-      handle_replay_positions();
-    } else if (target.starts_with("/api/replay-trades")) {
-      handle_replay_trades();
-    } else if (target.starts_with("/api/replay")) {
-      handle_replay();
+    } else if (target.starts_with("/api/stage3-users")) {
+      handle_stage3_users();
+    } else if (target.starts_with("/api/stage3-positions")) {
+      handle_stage3_positions();
+    } else if (target.starts_with("/api/stage3-events")) {
+      handle_stage3_events();
+    } else if (target.starts_with("/api/stage3-data")) {
+      handle_stage3_data();
     } else if (target.starts_with("/api/export-csv")) {
       handle_export_csv();
     } else if (target.starts_with("/api/table-sample")) {
@@ -314,34 +314,34 @@ void ApiSession::handle_tables() {
   res_.body() = result.dump();
 }
 
-void ApiSession::handle_stage1_sync_status() {
+void ApiSession::handle_stage1_status() {
   TraceN("api/s1_sync_state");
   res_.set(http::field::content_type, "application/json");
 
-  Stage1SyncStatus status = stage1_getter_();
-  json result = to_stage1_sync_json(status);
+  Stage1Status status = stage1_getter_();
+  json result = to_stage1_status_json(status);
 
   res_.result(http::status::ok);
   res_.body() = result.dump();
 }
 
-void ApiSession::handle_stage2_sync_status() {
+void ApiSession::handle_stage2_status() {
   TraceN("api/s2_sync_state");
   res_.set(http::field::content_type, "application/json");
 
-  Stage2SyncStatus status = stage2_getter_();
-  json result = to_stage2_sync_json(status);
+  Stage2Status status = stage2_getter_();
+  json result = to_stage2_status_json(status);
 
   res_.result(http::status::ok);
   res_.body() = result.dump();
 }
 
-void ApiSession::handle_stage3_sync_status() {
+void ApiSession::handle_stage3_status() {
   TraceN("api/s3_sync_state");
   res_.set(http::field::content_type, "application/json");
 
-  Stage3SyncStatus status = stage3_getter_();
-  json result = to_stage3_sync_json(status);
+  Stage3Status status = stage3_getter_();
+  json result = to_stage3_status_json(status);
 
   res_.result(http::status::ok);
   res_.body() = result.dump();
@@ -470,7 +470,7 @@ void ApiSession::handle_table_sample() {
   res_.body() = result.dump();
 }
 
-void ApiSession::handle_stage2_rebuild_status() {
+void ApiSession::handle_stage2_detail() {
   TraceN("api/s2_rebuild");
   res_.set(http::field::content_type, "application/json");
 
@@ -873,7 +873,7 @@ void ApiSession::handle_user_positions(const std::string &target) {
   res_.body() = result.dump();
 }
 
-void ApiSession::handle_replay_users() {
+void ApiSession::handle_stage3_users() {
   TraceN("api/replay_users");
   res_.set(http::field::content_type, "application/json");
 
@@ -894,7 +894,7 @@ void ApiSession::handle_replay_users() {
   res_.body() = result.dump();
 }
 
-void ApiSession::handle_replay() {
+void ApiSession::handle_stage3_data() {
   TraceN("api/replay");
   res_.set(http::field::content_type, "application/json");
 
@@ -940,7 +940,7 @@ void ApiSession::handle_replay() {
   res_.body() = result.dump();
 }
 
-void ApiSession::handle_replay_positions() {
+void ApiSession::handle_stage3_positions() {
   TraceN("api/replay_pos");
   res_.set(http::field::content_type, "application/json");
 
@@ -973,7 +973,7 @@ void ApiSession::handle_replay_positions() {
   res_.body() = json{{"positions", pos_arr}}.dump();
 }
 
-void ApiSession::handle_replay_trades() {
+void ApiSession::handle_stage3_events() {
   TraceN("api/replay_trades");
   res_.set(http::field::content_type, "application/json");
 
