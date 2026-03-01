@@ -24,11 +24,11 @@ templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     tables = await backend_get("/api/tables")
-    sync_state = await backend_get("/api/stage1-status")
+    stage1_state = await backend_get("/api/stage1-status")
     return templates.TemplateResponse("index.html", {
         "request": request,
         "tables": tables,
-        "sync_state": sync_state,
+        "stage1_state": stage1_state,
         "rpc_node": ACTIVE_RPC_NODE,
     })
 
@@ -44,17 +44,17 @@ async def api_tables():
 
 
 @app.get("/api/stage1-status")
-async def api_stage1_sync_status():
+async def api_stage1_status():
     return await backend_get("/api/stage1-status")
 
 
 @app.get("/api/stage2-status")
-async def api_stage2_sync_status():
+async def api_stage2_status():
     return await backend_get("/api/stage2-status")
 
 
 @app.get("/api/stage3-status")
-async def api_stage3_sync_status():
+async def api_stage3_status():
     return await backend_get("/api/stage3-status")
 
 
@@ -89,25 +89,25 @@ async def api_export_all():
 
 
 @app.get("/api/stage2-detail")
-async def api_stage2_rebuild_status():
+async def api_stage2_detail():
     return await backend_get("/api/stage2-detail")
 
 
 @app.get("/api/stage3-users")
-async def api_replay_users(limit: int = Query(200)):
+async def api_stage3_users(limit: int = Query(200)):
     return await backend_get("/api/stage3-users", {"limit": limit})
 
 
 @app.get("/api/stage3-data")
-async def api_replay(user: str = Query(...)):
+async def api_stage3_data(user: str = Query(...)):
     return await backend_get("/api/stage3-data", {"user": user})
 
 
 @app.get("/api/stage3-positions")
-async def api_replay_positions(user: str = Query(...), sk: int = Query(...)):
+async def api_stage3_positions(user: str = Query(...), sk: int = Query(...)):
     return await backend_get("/api/stage3-positions", {"user": user, "sk": sk})
 
 
 @app.get("/api/stage3-events")
-async def api_replay_trades(user: str = Query(...), sk: int = Query(...), radius: int = Query(20)):
+async def api_stage3_events(user: str = Query(...), sk: int = Query(...), radius: int = Query(20)):
     return await backend_get("/api/stage3-events", {"user": user, "sk": sk, "radius": radius})

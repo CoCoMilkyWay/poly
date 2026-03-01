@@ -110,17 +110,17 @@ json to_stage3_status_json(const Stage3Status &status) {
       {"behind_chunks", status.behind_chunks},
       {"blocks_per_second", status.blocks_per_second},
       {"eta_seconds", status.eta_seconds},
-      {"stage3_sort_key", status.stage3_sort_key},
       {"processed_events", status.processed_events},
+      {"stage3_sort_key", status.stage3_sort_key},
       {"ready", status.behind_blocks == 0},
   };
 }
 
 } // namespace
 
-ApiSession::ApiSession(tcp::socket socket, Database &stage1_db, Database &stage2_db, stage3::StageSync &stage3_sync,
+ApiSession::ApiSession(tcp::socket socket, Database &stage1_db, Database &stage2_db, stage3::StageSync &stage3,
                        Stage1Getter stage1_getter, Stage2Getter stage2_getter, Stage3Getter stage3_getter)
-    : socket_(std::move(socket)), stage1_db_(stage1_db), stage2_db_(stage2_db), stage3_sync_(stage3_sync),
+    : socket_(std::move(socket)), stage1_db_(stage1_db), stage2_db_(stage2_db), stage3_(stage3),
       stage1_getter_(std::move(stage1_getter)), stage2_getter_(std::move(stage2_getter)),
       stage3_getter_(std::move(stage3_getter)) {}
 
@@ -162,32 +162,28 @@ void ApiSession::handle_request() {
       handle_health();
     } else if (target.starts_with("/api/tables")) {
       handle_tables();
-    } else if (target.starts_with("/api/stage1-status")) {
-      handle_stage1_status();
-    } else if (target.starts_with("/api/stage2-status")) {
-      handle_stage2_status();
-    } else if (target.starts_with("/api/stage3-status")) {
-      handle_stage3_status();
     } else if (target.starts_with("/api/query")) {
       handle_query();
-    } else if (target.starts_with("/api/stage2-detail")) {
-      handle_stage2_detail();
-    } else if (target.starts_with("/api/user/") && target.find("/pnl") != std::string::npos) {
-      handle_user_pnl(target);
-    } else if (target.starts_with("/api/user/") && target.find("/positions") != std::string::npos) {
-      handle_user_positions(target);
-    } else if (target.starts_with("/api/stage3-users")) {
-      handle_stage3_users();
-    } else if (target.starts_with("/api/stage3-positions")) {
-      handle_stage3_positions();
-    } else if (target.starts_with("/api/stage3-events")) {
-      handle_stage3_events();
-    } else if (target.starts_with("/api/stage3-data")) {
-      handle_stage3_data();
     } else if (target.starts_with("/api/export-csv")) {
       handle_export_csv();
     } else if (target.starts_with("/api/table-sample")) {
       handle_table_sample();
+    } else if (target.starts_with("/api/stage1-status")) {
+      handle_stage1_status();
+    } else if (target.starts_with("/api/stage2-status")) {
+      handle_stage2_status();
+    } else if (target.starts_with("/api/stage2-detail")) {
+      handle_stage2_detail();
+    } else if (target.starts_with("/api/stage3-status")) {
+      handle_stage3_status();
+    } else if (target.starts_with("/api/stage3-users")) {
+      handle_stage3_users();
+    } else if (target.starts_with("/api/stage3-data")) {
+      handle_stage3_data();
+    } else if (target.starts_with("/api/stage3-positions")) {
+      handle_stage3_positions();
+    } else if (target.starts_with("/api/stage3-events")) {
+      handle_stage3_events();
     } else {
       res_.result(http::status::not_found);
       res_.set(http::field::content_type, "application/json");
@@ -315,7 +311,7 @@ void ApiSession::handle_tables() {
 }
 
 void ApiSession::handle_stage1_status() {
-  TraceN("api/s1_sync_state");
+  TraceN("api/s1_status");
   res_.set(http::field::content_type, "application/json");
 
   Stage1Status status = stage1_getter_();
@@ -326,7 +322,7 @@ void ApiSession::handle_stage1_status() {
 }
 
 void ApiSession::handle_stage2_status() {
-  TraceN("api/s2_sync_state");
+  TraceN("api/s2_status");
   res_.set(http::field::content_type, "application/json");
 
   Stage2Status status = stage2_getter_();
@@ -337,7 +333,7 @@ void ApiSession::handle_stage2_status() {
 }
 
 void ApiSession::handle_stage3_status() {
-  TraceN("api/s3_sync_state");
+  TraceN("api/s3_status");
   res_.set(http::field::content_type, "application/json");
 
   Stage3Status status = stage3_getter_();
@@ -471,10 +467,10 @@ void ApiSession::handle_table_sample() {
 }
 
 void ApiSession::handle_stage2_detail() {
-  TraceN("api/s2_rebuild");
+  TraceN("api/s2_detail");
   res_.set(http::field::content_type, "application/json");
 
-  const auto &p = stage3_sync_.progress();
+  const auto &p = stage3_.stage2_detail();
   const auto &ct = p.cond_tree;
   const auto &tt = p.token_tree;
   std::unordered_map<uint8_t, std::string> coll_id_to_addr;
@@ -763,124 +759,14 @@ void ApiSession::handle_stage2_detail() {
   res_.body() = result.dump();
 }
 
-void ApiSession::handle_user_pnl(const std::string &target) {
-  TraceN("api/user_pnl");
-  res_.set(http::field::content_type, "application/json");
-
-  std::string addr = extract_user_addr(target);
-  if (addr.empty()) {
-    res_.result(http::status::bad_request);
-    res_.body() = R"({"error":"Invalid address"})";
-    return;
-  }
-
-  const auto *state = stage3_sync_.get_user_state(addr);
-  if (!state) {
-    res_.result(http::status::not_found);
-    res_.body() = R"({"error":"User not found"})";
-    return;
-  }
-
-  int64_t total_realized_pnl = 0;
-  int64_t total_cost_basis = 0;
-  json conditions = json::array();
-
-  for (const auto &ch : state->conditions) {
-    if (ch.snapshots.empty()) {
-      continue;
-    }
-    const auto &last = ch.snapshots.back();
-    total_realized_pnl += last.realized_pnl;
-    total_cost_basis += last.cost_basis;
-
-    json cond_obj = {
-        {"condition_id", stage3_sync_.get_condition_id(ch.cond_idx)},
-        {"realized_pnl", last.realized_pnl},
-        {"cost_basis", last.cost_basis},
-        {"positions", json::array()},
-    };
-    for (int i = 0; i < last.outcome_count; ++i) {
-      cond_obj["positions"].push_back(last.positions[i]);
-    }
-    conditions.push_back(cond_obj);
-  }
-
-  json result = {
-      {"address", addr},
-      {"total_realized_pnl", total_realized_pnl},
-      {"total_cost_basis", total_cost_basis},
-      {"conditions_count", state->conditions.size()},
-      {"conditions", conditions},
-  };
-
-  res_.result(http::status::ok);
-  res_.body() = result.dump();
-}
-
-void ApiSession::handle_user_positions(const std::string &target) {
-  TraceN("api/user_pos");
-  res_.set(http::field::content_type, "application/json");
-
-  std::string addr = extract_user_addr(target);
-  if (addr.empty()) {
-    res_.result(http::status::bad_request);
-    res_.body() = R"({"error":"Invalid address"})";
-    return;
-  }
-
-  const auto *state = stage3_sync_.get_user_state(addr);
-  if (!state) {
-    res_.result(http::status::not_found);
-    res_.body() = R"({"error":"User not found"})";
-    return;
-  }
-
-  json positions = json::array();
-  for (const auto &ch : state->conditions) {
-    if (ch.snapshots.empty()) {
-      continue;
-    }
-    const auto &last = ch.snapshots.back();
-    bool has_position = false;
-    for (int i = 0; i < last.outcome_count; ++i) {
-      if (last.positions[i] != 0) {
-        has_position = true;
-        break;
-      }
-    }
-    if (!has_position) {
-      continue;
-    }
-
-    json pos_obj = {
-        {"condition_id", stage3_sync_.get_condition_id(ch.cond_idx)},
-        {"positions", json::array()},
-        {"cost_basis", last.cost_basis},
-    };
-    for (int i = 0; i < last.outcome_count; ++i) {
-      pos_obj["positions"].push_back(last.positions[i]);
-    }
-    positions.push_back(pos_obj);
-  }
-
-  json result = {
-      {"address", addr},
-      {"active_positions", positions.size()},
-      {"positions", positions},
-  };
-
-  res_.result(http::status::ok);
-  res_.body() = result.dump();
-}
-
 void ApiSession::handle_stage3_users() {
-  TraceN("api/replay_users");
+  TraceN("api/s3_users");
   res_.set(http::field::content_type, "application/json");
 
   std::string limit_str = get_param("limit");
   int64_t limit = limit_str.empty() ? 200 : std::stoll(limit_str);
 
-  auto users = stage3_sync_.get_users_sorted(limit);
+  auto users = stage3_.get_users_sorted(limit);
   json result = json::array();
   for (const auto &u : users) {
     result.push_back({
@@ -895,7 +781,7 @@ void ApiSession::handle_stage3_users() {
 }
 
 void ApiSession::handle_stage3_data() {
-  TraceN("api/replay");
+  TraceN("api/s3_data");
   res_.set(http::field::content_type, "application/json");
 
   std::string user = get_param("user");
@@ -905,7 +791,7 @@ void ApiSession::handle_stage3_data() {
     return;
   }
 
-  auto timeline = stage3_sync_.get_user_timeline(user);
+  auto timeline = stage3_.get_user_timeline(user);
   if (timeline.empty()) {
     res_.result(http::status::not_found);
     res_.body() = R"({"error":"User not found or no events"})";
@@ -941,7 +827,7 @@ void ApiSession::handle_stage3_data() {
 }
 
 void ApiSession::handle_stage3_positions() {
-  TraceN("api/replay_pos");
+  TraceN("api/s3_positions");
   res_.set(http::field::content_type, "application/json");
 
   std::string user = get_param("user");
@@ -953,7 +839,7 @@ void ApiSession::handle_stage3_positions() {
   }
 
   int64_t sort_key = std::stoll(sk_str);
-  auto positions = stage3_sync_.get_positions_at(user, sort_key);
+  auto positions = stage3_.get_positions_at(user, sort_key);
 
   json pos_arr = json::array();
   for (const auto &p : positions) {
@@ -974,7 +860,7 @@ void ApiSession::handle_stage3_positions() {
 }
 
 void ApiSession::handle_stage3_events() {
-  TraceN("api/replay_trades");
+  TraceN("api/s3_events");
   res_.set(http::field::content_type, "application/json");
 
   std::string user = get_param("user");
@@ -989,11 +875,10 @@ void ApiSession::handle_stage3_events() {
   int64_t sort_key = std::stoll(sk_str);
   int radius = radius_str.empty() ? 20 : std::stoi(radius_str);
 
-  auto trades = stage3_sync_.get_trades_near(user, sort_key, radius);
-  size_t center = stage3_sync_.get_trades_center_index(user, sort_key, radius);
+  auto [events, center] = stage3_.get_events_near(user, sort_key, radius);
 
   json events_arr = json::array();
-  for (const auto &t : trades) {
+  for (const auto &t : events) {
     events_arr.push_back({
         {"sk", t.sort_key},
         {"ty", t.event_type},
@@ -1006,22 +891,6 @@ void ApiSession::handle_stage3_events() {
 
   res_.result(http::status::ok);
   res_.body() = json{{"events", events_arr}, {"center", center}}.dump();
-}
-
-std::string ApiSession::extract_user_addr(const std::string &target) {
-  size_t start = target.find("/api/user/");
-  if (start == std::string::npos) {
-    return "";
-  }
-  start += 10;
-  size_t end = target.find('/', start);
-  if (end == std::string::npos) {
-    end = target.find('?', start);
-  }
-  if (end == std::string::npos) {
-    end = target.size();
-  }
-  return target.substr(start, end - start);
 }
 
 std::string ApiSession::get_param(const char *name) {

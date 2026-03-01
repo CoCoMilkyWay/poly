@@ -24,7 +24,7 @@ using json = nlohmann::json;
 
 namespace stage1 {
 
-struct SyncStatus {
+struct Status {
   bool syncing = false;
   int64_t last_block = 0;
   int64_t head_block = 0;
@@ -42,7 +42,7 @@ public:
   void start(asio::io_context &ioc);
   void stop();
 
-  SyncStatus status() const;
+  Status status() const;
 
 private:
   static constexpr int64_t kSyncChunkBlocks = 100000;

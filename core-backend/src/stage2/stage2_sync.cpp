@@ -24,7 +24,7 @@ void StageSync::start(asio::io_context &ioc) {
 
 void StageSync::stop() { stop_requested_ = true; }
 
-auto StageSync::status() const -> const StageSync::SyncStatus & { return sync_; }
+auto StageSync::status() const -> const StageSync::Status & { return sync_; }
 
 EventBuilder &StageSync::builder() { return builder_; }
 

@@ -42,7 +42,7 @@ void StageSync::stop() {
   }
 }
 
-SyncStatus StageSync::status() const {
+Status StageSync::status() const {
   int64_t last_block = db_.get_last_block();
   int64_t safe_head = head_block_.load() - kSyncChunkBlocks;
   int64_t behind_blocks = std::max<int64_t>(0, safe_head - last_block);

@@ -327,13 +327,13 @@
     <div class="sync-stat">
       <div class="sync-stat-label">Last Block</div>
       <div class="sync-stat-value" id="last-block">
-        {{ "{:,}".format(sync_state.last_block or 0) }}
+        {{ "{:,}".format(stage1_state.last_block or 0) }}
       </div>
     </div>
     <div class="sync-stat">
       <div class="sync-stat-label">Head Block</div>
       <div class="sync-stat-value" id="head-block">
-        {{ "{:,}".format(sync_state.head_block or 0) }}
+        {{ "{:,}".format(stage1_state.head_block or 0) }}
       </div>
     </div>
     <div class="sync-stat">

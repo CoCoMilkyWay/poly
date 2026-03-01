@@ -35,10 +35,10 @@ int main(int argc, char *argv[]) {
   std::cout << "========================================" << std::endl;
 
   Config config = Config::load(config_path);
-  constexpr int64_t kStage1SyncChunkBlocks = 100000;
+  constexpr int64_t kStage1ChunkBlocks = 100000;
   assert(config.stage1_rpc_sync_chunk_basics > 0);
-  assert(kStage1SyncChunkBlocks % config.stage1_rpc_sync_chunk_basics == 0);
-  int64_t stage1_basic_chunk_blocks = kStage1SyncChunkBlocks / config.stage1_rpc_sync_chunk_basics;
+  assert(kStage1ChunkBlocks % config.stage1_rpc_sync_chunk_basics == 0);
+  int64_t stage1_basic_chunk_blocks = kStage1ChunkBlocks / config.stage1_rpc_sync_chunk_basics;
 
   std::cout << "[Main] Stage1 DB: " << config.db_path_stage1 << std::endl;
   std::cout << "[Main] Stage2 DB: " << config.db_path_stage2 << std::endl;
@@ -59,24 +59,24 @@ int main(int argc, char *argv[]) {
     stage1_db.init_schema();
   }
 
-  stage1::StageSync stage1_sync(config, stage1_db);
-  stage2::StageSync stage2_sync(stage1_db, stage2_db);
-  stage3::StageSync stage3_sync(stage2_sync.builder(), stage2_db, stage3_db);
+  stage1::StageSync stage1(config, stage1_db);
+  stage2::StageSync stage2(stage1_db, stage2_db);
+  stage3::StageSync stage3(stage2.builder(), stage2_db, stage3_db);
 
-  auto stage1_getter = [&stage1_sync]() -> Stage1Status {
-    const auto s = stage1_sync.status();
+  auto stage1_getter = [&stage1]() -> Stage1Status {
+    const auto s = stage1.status();
     return {s.syncing, s.last_block, s.head_block, s.behind_blocks, s.behind_chunks,
             s.blocks_per_second, s.eta_seconds, s.bytes_per_block};
   };
-  auto stage2_getter = [&stage2_sync]() -> Stage2Status {
-    const auto &s = stage2_sync.status();
+  auto stage2_getter = [&stage2]() -> Stage2Status {
+    const auto &s = stage2.status();
     return {s.syncing, s.last_block, s.head_block, s.behind_blocks,
             s.behind_chunks, s.blocks_per_second, s.eta_seconds};
   };
-  auto stage3_getter = [&stage3_sync]() -> Stage3Status {
-    const auto s = stage3_sync.status();
+  auto stage3_getter = [&stage3]() -> Stage3Status {
+    const auto s = stage3.status();
     return {s.syncing, s.last_block, s.head_block, s.behind_blocks, s.behind_chunks,
-            s.blocks_per_second, s.eta_seconds, s.stage3_sort_key, s.processed_events};
+            s.blocks_per_second, s.eta_seconds, s.processed_events, s.stage3_sort_key};
   };
 
   boost::asio::io_context stage1_ioc;
@@ -88,50 +88,50 @@ int main(int argc, char *argv[]) {
 
   if (config.stage1_enable == 1) {
     {
-      TraceN("start/stage1_sync");
-      stage1_sync.start(stage1_ioc);
+      TraceN("start/stage1");
+      stage1.start(stage1_ioc);
     }
     stage1_thread.emplace([&stage1_ioc]() {
-      TraceThread("Stage1-Sync");
+      TraceThread("Stage1");
       stage1_ioc.run();
     });
   }
   if (config.stage2_enable == 1) {
     {
-      TraceN("start/stage2_sync");
-      stage2_sync.start(stage2_ioc);
+      TraceN("start/stage2");
+      stage2.start(stage2_ioc);
     }
     stage2_thread.emplace([&stage2_ioc]() {
-      TraceThread("Stage2-Sync");
+      TraceThread("Stage2");
       stage2_ioc.run();
     });
   }
   if (config.stage3_enable == 1) {
     {
-      TraceN("start/stage3_sync");
-      stage3_sync.start(stage3_ioc);
+      TraceN("start/stage3");
+      stage3.start(stage3_ioc);
     }
     stage3_thread.emplace([&stage3_ioc]() {
-      TraceThread("Stage3-Sync");
+      TraceThread("Stage3");
       stage3_ioc.run();
     });
   }
 
   boost::asio::io_context api_ioc;
-  ApiServer api_server(api_ioc, stage1_db, stage2_db, stage3_sync, config.backend_port,
+  ApiServer api_server(api_ioc, stage1_db, stage2_db, stage3, config.backend_port,
                        stage1_getter, stage2_getter, stage3_getter);
 
   boost::asio::signal_set signals(api_ioc, SIGINT, SIGTERM);
   signals.async_wait([&](const boost::system::error_code &, int sig) {
     std::cout << "\n[Main] 正在关闭..." << std::endl;
     if (config.stage1_enable == 1) {
-      stage1_sync.stop();
+      stage1.stop();
     }
     if (config.stage2_enable == 1) {
-      stage2_sync.stop();
+      stage2.stop();
     }
     if (config.stage3_enable == 1) {
-      stage3_sync.stop();
+      stage3.stop();
     }
     stage1_ioc.stop();
     stage2_ioc.stop();

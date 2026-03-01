@@ -59,9 +59,9 @@
     </style>
   </head>
   <body
-    data-last-block="{{ sync_state.last_block or 0 }}"
-    data-head-block="{{ sync_state.head_block or 0 }}"
-    data-syncing="{{ 'true' if sync_state.syncing else 'false' }}"
+    data-last-block="{{ stage1_state.last_block or 0 }}"
+    data-head-block="{{ stage1_state.head_block or 0 }}"
+    data-syncing="{{ 'true' if stage1_state.syncing else 'false' }}"
   >
     <div class="container">
       <header>

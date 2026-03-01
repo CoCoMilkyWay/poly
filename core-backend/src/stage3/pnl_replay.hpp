@@ -17,7 +17,6 @@
 #include <limits>
 #include <memory>
 #include <mutex>
-#include <optional>
 #include <deque>
 #include <atomic>
 #include <unordered_map>
@@ -31,7 +30,7 @@ namespace asio = boost::asio;
 
 class StageSync {
 public:
-  struct SyncStatus {
+  struct Status {
     bool syncing = false;
     int64_t last_block = 0;
     int64_t head_block = 0;
@@ -43,7 +42,7 @@ public:
     int64_t stage3_sort_key = -1;
   };
 
-  struct RebuildProgress {
+  struct Stage2Detail {
     int phase = 0;
     bool running = false;
     int64_t total_users = 0;
@@ -92,7 +91,6 @@ public:
     OrderSemanticTree order_sem_tree;
 
     std::unordered_map<uint16_t, int64_t> event_by_collateral;
-    SyncStatus stage3_sync;
   };
 
   struct UserSummary {
@@ -134,7 +132,7 @@ public:
     init_schema();
     load_conditions();
     load_cursor();
-    refresh_sync_status_locked();
+    refresh_status_locked();
   }
 
   void start(asio::io_context &ioc) {
@@ -145,15 +143,15 @@ public:
 
   void stop() { stop_requested_ = true; }
 
-  SyncStatus status() const {
+  Status status() const {
     std::lock_guard<std::mutex> lock(sync_mu_);
     return sync_;
   }
 
-  RebuildProgress progress() const {
+  Stage2Detail stage2_detail() const {
     const auto &wp = builder_.progress();
     const auto &bp = builder_.committed_progress();
-    RebuildProgress p;
+    Stage2Detail p;
     p.phase = wp.phase;
     p.running = wp.running;
     p.total_users = bp.total_users;
@@ -198,49 +196,12 @@ public:
     p.convert_sem_tree = bp.convert_sem_tree;
     p.order_sem_tree = bp.order_sem_tree;
     p.event_by_collateral = bp.event_by_collateral;
-    p.stage3_sync = status();
-    if (p.stage3_sync.behind_blocks == 0 && p.total_users > 0) {
+    const auto s = status();
+    if (s.behind_blocks == 0 && p.total_users > 0) {
       p.phase = 7;
     }
     return p;
   }
-
-  const UserState *get_user_state(const std::string &addr) const {
-    std::string lower = normalize_addr(addr);
-    if (lower.empty()) {
-      return nullptr;
-    }
-    std::lock_guard<std::mutex> lock(cache_mu_);
-    auto it = user_state_cache_.find(lower);
-    if (it != user_state_cache_.end()) {
-      return &it->second;
-    }
-    auto loaded = load_user_state_locked(lower);
-    if (!loaded.has_value()) {
-      return nullptr;
-    }
-    auto [ins_it, ok] = user_state_cache_.emplace(lower, std::move(*loaded));
-    assert(ok);
-    return &ins_it->second;
-  }
-
-  const UserState *find_user(const std::string &addr) const { return get_user_state(addr); }
-
-  const ConditionInfo &get_condition(uint32_t idx) const {
-    assert(idx < conditions_.size());
-    return conditions_[idx];
-  }
-
-  const std::string &get_condition_id(uint32_t idx) const {
-    assert(idx < cond_ids_.size());
-    return cond_ids_[idx];
-  }
-
-  const std::vector<ConditionInfo> &conditions() const { return conditions_; }
-  const std::vector<std::string> &condition_ids() const { return cond_ids_; }
-
-  const std::vector<std::string> &users() const { return empty_users_; }
-  const std::vector<UserState> &user_states() const { return empty_user_states_; }
 
   std::vector<UserSummary> get_users_sorted(int64_t limit = 200) const {
     TraceN("s3/users");
@@ -279,12 +240,14 @@ public:
 
   std::vector<PositionAtTime> get_positions_at(const std::string &addr, int64_t sort_key) const {
     TraceN("s3/positions");
-    auto timeline = get_user_timeline(addr);
-    if (timeline.empty()) {
+    std::string lower = normalize_addr(addr);
+    if (lower.empty()) {
       return {};
     }
-    std::string lower = normalize_addr(addr);
     auto events = load_user_events(lower);
+    if (events.empty()) {
+      return {};
+    }
     auto state = replay_until(events, sort_key);
     std::vector<PositionAtTime> out;
     out.reserve(state.size());
@@ -319,11 +282,12 @@ public:
     return out;
   }
 
-  std::vector<TradeEntry> get_trades_near(const std::string &addr, int64_t sort_key, int radius = 20) const {
+  std::pair<std::vector<TradeEntry>, size_t> get_events_near(const std::string &addr, int64_t sort_key,
+                                                              int radius = 20) const {
     TraceN("s3/trades");
     auto timeline = get_user_timeline(addr);
     if (timeline.empty()) {
-      return {};
+      return {{}, 0};
     }
     auto it = std::lower_bound(
         timeline.begin(), timeline.end(), sort_key,
@@ -339,22 +303,7 @@ public:
       const auto &e = timeline[i];
       out.push_back({e.sort_key, e.event_type, e.delta, e.price, e.cond_idx, e.token_idx});
     }
-    return out;
-  }
-
-  size_t get_trades_center_index(const std::string &addr, int64_t sort_key, int radius = 20) const {
-    auto timeline = get_user_timeline(addr);
-    if (timeline.empty()) {
-      return 0;
-    }
-    auto it = std::lower_bound(
-        timeline.begin(), timeline.end(), sort_key,
-        [](const TimelineEntry &e, int64_t sk) { return e.sort_key < sk; });
-    size_t center = (it == timeline.end())
-                        ? timeline.size() - 1
-                        : static_cast<size_t>(it - timeline.begin());
-    size_t start = (center > static_cast<size_t>(radius)) ? center - radius : 0;
-    return center - start;
+    return {std::move(out), center - start};
   }
 
 private:
@@ -406,8 +355,7 @@ private:
   Database &stage3_db_;
 
   mutable std::mutex sync_mu_;
-  mutable std::mutex cache_mu_;
-  mutable SyncStatus sync_;
+  mutable Status sync_;
   mutable CursorKey cursor_;
   struct CommitRecord {
     std::chrono::steady_clock::time_point committed_at;
@@ -422,10 +370,6 @@ private:
   std::vector<ConditionInfo> conditions_;
   std::vector<std::string> cond_ids_;
   std::unordered_map<int32_t, int32_t> cond_question_count_;
-
-  mutable std::unordered_map<std::string, UserState> user_state_cache_;
-  std::vector<std::string> empty_users_;
-  std::vector<UserState> empty_user_states_;
 
   static constexpr int64_t kSyncChunkBlocks = 100000;
   static constexpr size_t kEtaWindowSize = 20;
@@ -606,7 +550,7 @@ private:
     assert(q && !q->HasError());
   }
 
-  void refresh_sync_status_locked() const {
+  void refresh_status_locked() const {
     sync_.head_block = builder_.cursor();
     sync_.stage3_sort_key = cursor_.sort_key;
     sync_.last_block = (cursor_.sort_key < 0) ? 0 : cursor_.sort_key / SORT_KEY_SCALE;
@@ -660,7 +604,7 @@ private:
       sync_.syncing = true;
       int64_t before_block = (cursor_.sort_key < 0) ? 0 : cursor_.sort_key / SORT_KEY_SCALE;
       bool advanced = process_chunk_locked();
-      refresh_sync_status_locked();
+      refresh_status_locked();
       int64_t after_block = (cursor_.sort_key < 0) ? 0 : cursor_.sort_key / SORT_KEY_SCALE;
       if (advanced && after_block > before_block) {
         commit_history_.push_back({std::chrono::steady_clock::now(), after_block});
@@ -913,10 +857,6 @@ private:
       assert(cm && !cm->HasError());
     }
 
-    {
-      std::lock_guard<std::mutex> lk(cache_mu_);
-      user_state_cache_.clear();
-    }
     return true;
   }
 
@@ -1181,42 +1121,6 @@ private:
     return states;
   }
 
-  std::optional<UserState> load_user_state_locked(const std::string &addr_lower) const {
-    auto events = load_user_events(addr_lower);
-    if (events.empty()) {
-      return std::nullopt;
-    }
-    std::unordered_map<int32_t, CondState> states;
-    std::unordered_map<int32_t, std::vector<Snapshot>> snaps;
-    for (const auto &row : events) {
-      if (row.cond_idx < 0) {
-        continue;
-      }
-      auto &st = states[row.cond_idx];
-      apply_event_to_state(row, st);
-      const auto &cond = conditions_[static_cast<size_t>(row.cond_idx)];
-      Snapshot s{};
-      s.sort_key = row.sort_key;
-      s.delta = row.amount;
-      s.price = row.price;
-      s.event_type = static_cast<uint8_t>(row.event_type);
-      s.token_idx = static_cast<uint8_t>(row.token_idx);
-      s.outcome_count = cond.outcome_count;
-      std::memcpy(s.positions, st.positions.data(), sizeof(s.positions));
-      s.cost_basis = 0;
-      for (int i = 0; i < cond.outcome_count; ++i) {
-        s.cost_basis += st.cost[i];
-      }
-      s.realized_pnl = st.realized_pnl;
-      snaps[row.cond_idx].push_back(s);
-    }
-    UserState out;
-    out.conditions.reserve(snaps.size());
-    for (auto &[cond_idx, vec] : snaps) {
-      out.conditions.push_back({static_cast<uint32_t>(cond_idx), std::move(vec)});
-    }
-    return out;
-  }
 };
 
 } // namespace stage3

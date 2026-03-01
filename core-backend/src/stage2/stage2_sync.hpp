@@ -16,7 +16,7 @@ namespace stage2 {
 
 class StageSync {
 public:
-  struct SyncStatus {
+  struct Status {
     bool syncing = false;
     int64_t last_block = 0;
     int64_t head_block = 0;
@@ -32,7 +32,7 @@ public:
 
   void stop();
 
-  const SyncStatus &status() const;
+  const Status &status() const;
 
   EventBuilder &builder();
 
@@ -54,7 +54,7 @@ private:
   asio::io_context *ioc_ = nullptr;
   int chunk_size_;
   int base_interval_;
-  SyncStatus sync_;
+  Status sync_;
   std::atomic<bool> stop_requested_{false};
   std::deque<CommitRecord> commit_history_;
 };
