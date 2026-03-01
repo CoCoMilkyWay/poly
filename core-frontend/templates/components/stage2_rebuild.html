@@ -383,8 +383,8 @@
 
     function s2UpdateStats(s) {
       const sync = s.stage2_sync || {};
-      const cursor = sync.stage2_cursor || 0;
-      const headBlock = sync.stage1_last_block || 0;
+      const cursor = sync.last_block || 0;
+      const headBlock = sync.head_block || 0;
       const behind = Math.max(0, sync.behind_blocks ?? headBlock - cursor);
 
       document.getElementById("s2-last-block").textContent = s2FmtNum(cursor);
@@ -1943,8 +1943,8 @@
       s2UpdateStats(s);
 
       const sync = s.stage2_sync || {};
-      const cursor = sync.stage2_cursor || 0;
-      const headBlock = sync.stage1_last_block || 0;
+      const cursor = sync.last_block || 0;
+      const headBlock = sync.head_block || 0;
       const progress = headBlock > 0 ? (cursor / headBlock) * 100 : 0;
       bar.style.width = progress.toFixed(2) + "%";
 

@@ -437,8 +437,8 @@ async function rpPollSync() {
 function rpOnRebuildDone() {}
 
 function rpUpdateSyncStats(sync) {
-  const last = Number(sync.stage3_cursor || 0);
-  const head = Number(sync.stage2_last_block || 0);
+  const last = Number(sync.last_block || 0);
+  const head = Number(sync.head_block || 0);
   const behind = Math.max(0, Number(sync.behind_blocks || 0));
   const syncing = !!sync.syncing;
   const bps = Number(sync.blocks_per_second || 0);

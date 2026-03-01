@@ -136,8 +136,8 @@ public:
     uint8_t token_idx = 0;
   };
 
-  StageSync(EventBuilder &builder, Database &stage2_db)
-      : builder_(builder), stage2_db_(stage2_db) {
+  StageSync(EventBuilder &builder, Database &stage2_db, Database &stage3_db)
+      : builder_(builder), stage2_db_(stage2_db), stage3_db_(stage3_db) {
     init_schema();
     load_conditions();
     load_cursor();
@@ -263,7 +263,7 @@ public:
 
   std::vector<UserSummary> get_users_sorted(int64_t limit = 200) const {
     TraceN("s3/users");
-    auto conn = stage2_db_.create_connection();
+    auto conn = stage3_db_.create_connection();
     int64_t safe_limit = std::max<int64_t>(1, limit);
     auto r = conn->Query(
         "SELECT lower(hex(user_addr)) AS user_hex, total_events, total_realized_pnl "
@@ -422,6 +422,7 @@ private:
 
   EventBuilder &builder_;
   Database &stage2_db_;
+  Database &stage3_db_;
 
   mutable std::mutex sync_mu_;
   mutable std::mutex cache_mu_;
@@ -476,7 +477,7 @@ private:
   }
 
   void init_schema() const {
-    stage2_db_.execute(R"(
+    stage3_db_.execute(R"(
       CREATE TABLE IF NOT EXISTS s3_sync_cursor (
         id INTEGER PRIMARY KEY,
         sort_key BIGINT NOT NULL,
@@ -487,7 +488,7 @@ private:
         processed_events BIGINT NOT NULL
       )
     )");
-    stage2_db_.execute(R"(
+    stage3_db_.execute(R"(
       CREATE TABLE IF NOT EXISTS s3_user_cond_state (
         user_addr BLOB NOT NULL,
         cond_idx INTEGER NOT NULL,
@@ -513,7 +514,7 @@ private:
         PRIMARY KEY (user_addr, cond_idx)
       )
     )");
-    stage2_db_.execute(R"(
+    stage3_db_.execute(R"(
       CREATE TABLE IF NOT EXISTS s3_user_summary (
         user_addr BLOB PRIMARY KEY,
         total_events BIGINT NOT NULL,
@@ -522,7 +523,7 @@ private:
         last_sort_key BIGINT NOT NULL
       )
     )");
-    auto conn = stage2_db_.create_connection();
+    auto conn = stage3_db_.create_connection();
     auto r = conn->Query("SELECT COUNT(*) FROM s3_sync_cursor WHERE id=1");
     assert(r && !r->HasError());
     if (r->GetValue(0, 0).GetValue<int64_t>() == 0) {
@@ -595,7 +596,7 @@ private:
   }
 
   void load_cursor() {
-    auto conn = stage2_db_.create_connection();
+    auto conn = stage3_db_.create_connection();
     auto r = conn->Query(
         "SELECT sort_key, lower(hex(user_addr)), cond_idx, event_type, token_idx, processed_events "
         "FROM s3_sync_cursor WHERE id=1");
@@ -717,9 +718,10 @@ private:
     int64_t target_block = std::min(current_block + kSyncChunkBlocks, head_block);
     int64_t upper_sort_key = target_block * SORT_KEY_SCALE + (SORT_KEY_SCALE - 1);
 
-    auto conn = stage2_db_.create_connection();
+    auto source_conn = stage2_db_.create_connection();
+    auto sink_conn = stage3_db_.create_connection();
     std::string user_hex = cursor_.user_hex;
-    auto qr = conn->Query(
+    auto qr = source_conn->Query(
         "SELECT lower(hex(user_addr)) AS user_hex, sort_key, cond_idx, event_type, token_idx, amount, price "
         "FROM user_event WHERE ("
         "(sort_key > " + std::to_string(cursor_.sort_key) + ") OR "
@@ -740,10 +742,10 @@ private:
       cursor_.cond_idx = kCursorSentinel;
       cursor_.event_type = kCursorSentinel;
       cursor_.token_idx = kCursorSentinel;
-      auto tx = conn->Query("BEGIN");
+      auto tx = sink_conn->Query("BEGIN");
       assert(tx && !tx->HasError());
-      save_cursor_locked(*conn);
-      auto cm = conn->Query("COMMIT");
+      save_cursor_locked(*sink_conn);
+      auto cm = sink_conn->Query("COMMIT");
       assert(cm && !cm->HasError());
       return true;
     }
@@ -798,10 +800,10 @@ private:
     }
 
     if (!states.empty()) {
-      conn->Query("CREATE TEMP TABLE IF NOT EXISTS tmp_s3_keys (user_addr BLOB, cond_idx INTEGER)");
-      conn->Query("DELETE FROM tmp_s3_keys");
+      sink_conn->Query("CREATE TEMP TABLE IF NOT EXISTS tmp_s3_keys (user_addr BLOB, cond_idx INTEGER)");
+      sink_conn->Query("DELETE FROM tmp_s3_keys");
       {
-        duckdb::Appender ap(*conn, "tmp_s3_keys");
+        duckdb::Appender ap(*sink_conn, "tmp_s3_keys");
         for (const auto &[key, _] : states) {
           std::string user_blob = hex_to_blob("0x" + key.user_hex);
           ap.BeginRow();
@@ -813,7 +815,7 @@ private:
         }
         ap.Close();
       }
-      auto old = conn->Query(
+      auto old = sink_conn->Query(
           "SELECT lower(hex(s.user_addr)) AS uh, s.cond_idx, "
           "s.pos_0,s.pos_1,s.pos_2,s.pos_3,s.pos_4,s.pos_5,s.pos_6,s.pos_7, "
           "s.cost_0,s.cost_1,s.cost_2,s.cost_3,s.cost_4,s.cost_5,s.cost_6,s.cost_7, "
@@ -852,19 +854,19 @@ private:
 
     {
       TraceN("s3/write");
-      auto tx = conn->Query("BEGIN");
+      auto tx = sink_conn->Query("BEGIN");
       assert(tx && !tx->HasError());
 
       if (!states.empty()) {
-      conn->Query(
+        sink_conn->Query(
           "CREATE TEMP TABLE IF NOT EXISTS tmp_s3_state ("
           "user_addr BLOB, cond_idx INTEGER, "
           "pos_0 BIGINT, pos_1 BIGINT, pos_2 BIGINT, pos_3 BIGINT, pos_4 BIGINT, pos_5 BIGINT, pos_6 BIGINT, pos_7 BIGINT, "
           "cost_0 BIGINT, cost_1 BIGINT, cost_2 BIGINT, cost_3 BIGINT, cost_4 BIGINT, cost_5 BIGINT, cost_6 BIGINT, cost_7 BIGINT, "
           "realized_pnl BIGINT, event_count BIGINT, last_sort_key BIGINT)");
-      conn->Query("DELETE FROM tmp_s3_state");
+        sink_conn->Query("DELETE FROM tmp_s3_state");
       {
-        duckdb::Appender ap(*conn, "tmp_s3_state");
+          duckdb::Appender ap(*sink_conn, "tmp_s3_state");
         for (const auto &[key, st] : states) {
           std::string user_blob = hex_to_blob("0x" + key.user_hex);
           ap.BeginRow();
@@ -885,7 +887,7 @@ private:
         }
         ap.Close();
       }
-      auto up = conn->Query(
+        auto up = sink_conn->Query(
           "INSERT INTO s3_user_cond_state "
           "SELECT * FROM tmp_s3_state "
           "ON CONFLICT(user_addr, cond_idx) DO UPDATE SET "
@@ -897,10 +899,10 @@ private:
         assert(up && !up->HasError());
       }
 
-      conn->Query("CREATE TEMP TABLE IF NOT EXISTS tmp_s3_users (user_addr BLOB, event_inc BIGINT, last_sort_key BIGINT)");
-      conn->Query("DELETE FROM tmp_s3_users");
+      sink_conn->Query("CREATE TEMP TABLE IF NOT EXISTS tmp_s3_users (user_addr BLOB, event_inc BIGINT, last_sort_key BIGINT)");
+      sink_conn->Query("DELETE FROM tmp_s3_users");
       {
-        duckdb::Appender ap(*conn, "tmp_s3_users");
+        duckdb::Appender ap(*sink_conn, "tmp_s3_users");
         for (const auto &[uhex, inc] : user_event_inc) {
           std::string user_blob = hex_to_blob("0x" + uhex);
           ap.BeginRow();
@@ -913,7 +915,7 @@ private:
         }
         ap.Close();
       }
-      auto su = conn->Query(
+      auto su = sink_conn->Query(
           "INSERT INTO s3_user_summary "
           "SELECT user_addr, event_inc, 0, 0, last_sort_key FROM tmp_s3_users "
           "ON CONFLICT(user_addr) DO UPDATE SET "
@@ -921,7 +923,7 @@ private:
           "last_sort_key=GREATEST(s3_user_summary.last_sort_key, excluded.last_sort_key)");
       assert(su && !su->HasError());
 
-      auto sr = conn->Query(
+      auto sr = sink_conn->Query(
           "UPDATE s3_user_summary AS s SET "
           "total_realized_pnl = t.rpnl, "
           "active_conditions = t.active_cnt "
@@ -939,8 +941,8 @@ private:
           "WHERE s.user_addr = t.user_addr");
       assert(sr && !sr->HasError());
 
-      save_cursor_locked(*conn);
-      auto cm = conn->Query("COMMIT");
+      save_cursor_locked(*sink_conn);
+      auto cm = sink_conn->Query("COMMIT");
       assert(cm && !cm->HasError());
     }
 

@@ -10,6 +10,7 @@ using json = nlohmann::json;
 struct Config {
   std::string db_path_stage1;
   std::string db_path_stage2;
+  std::string db_path_stage3;
   std::string rpc_name;
   std::string rpc_url;
   std::string rpc_api_key;
@@ -39,6 +40,7 @@ struct Config {
     Config config;
     config.db_path_stage1 = require("db_path_stage1").get<std::string>();
     config.db_path_stage2 = require("db_path_stage2").get<std::string>();
+    config.db_path_stage3 = require("db_path_stage3").get<std::string>();
     config.backend_port = require("backend_port").get<int>();
     config.frontend_port = require("frontend_port").get<int>();
     config.initial_block = require("initial_block").get<int64_t>();

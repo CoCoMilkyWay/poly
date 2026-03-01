@@ -30,8 +30,8 @@ struct Stage1SyncStatus {
 
 struct Stage2SyncStatus {
   bool syncing = false;
-  int64_t stage1_last_block = 0;
-  int64_t stage2_cursor = 0;
+  int64_t last_block = 0;
+  int64_t head_block = 0;
   int64_t behind_blocks = 0;
   int64_t behind_chunks = 0;
   double blocks_per_second = 0.0;
@@ -40,8 +40,8 @@ struct Stage2SyncStatus {
 
 struct Stage3SyncStatus {
   bool syncing = false;
-  int64_t stage2_last_block = 0;
-  int64_t stage3_cursor = 0;
+  int64_t last_block = 0;
+  int64_t head_block = 0;
   int64_t behind_blocks = 0;
   int64_t behind_chunks = 0;
   double blocks_per_second = 0.0;

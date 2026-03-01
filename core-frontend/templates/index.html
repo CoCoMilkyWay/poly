@@ -61,7 +61,7 @@
   <body
     data-last-block="{{ sync_state.last_block or 0 }}"
     data-head-block="{{ sync_state.head_block or 0 }}"
-    data-is-syncing="{{ 'true' if sync_state.is_syncing else 'false' }}"
+    data-syncing="{{ 'true' if sync_state.syncing else 'false' }}"
   >
     <div class="container">
       <header>

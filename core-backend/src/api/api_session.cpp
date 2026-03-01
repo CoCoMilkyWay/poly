@@ -273,14 +273,12 @@ void ApiSession::handle_sync_state() {
   TraceN("api/sync_state");
   res_.set(http::field::content_type, "application/json");
 
-  int64_t last_block = stage1_db_.get_last_block();
-  json result = {{"last_block", last_block}};
+  json result = json::object();
 
   if (sync_getter_) {
     Stage1SyncStatus status = sync_getter_();
     result["last_block"] = status.last_block;
     result["head_block"] = status.head_block;
-    result["is_syncing"] = status.syncing;
     result["syncing"] = status.syncing;
     result["behind_blocks"] = status.behind_blocks;
     result["behind_chunks"] = status.behind_chunks;
@@ -676,8 +674,8 @@ void ApiSession::handle_rebuild_status() {
     auto s3 = stage3_getter_();
     result["stage3_sync"] = {
         {"syncing", s3.syncing},
-        {"stage2_last_block", s3.stage2_last_block},
-        {"stage3_cursor", s3.stage3_cursor},
+        {"last_block", s3.last_block},
+        {"head_block", s3.head_block},
         {"behind_blocks", s3.behind_blocks},
         {"behind_chunks", s3.behind_chunks},
         {"blocks_per_second", s3.blocks_per_second},
@@ -724,8 +722,8 @@ void ApiSession::handle_rebuild_status() {
     auto s2 = stage2_getter_();
     result["stage2_sync"] = {
         {"syncing", s2.syncing},
-        {"stage1_last_block", s2.stage1_last_block},
-        {"stage2_cursor", s2.stage2_cursor},
+        {"last_block", s2.last_block},
+        {"head_block", s2.head_block},
         {"behind_blocks", s2.behind_blocks},
         {"behind_chunks", s2.behind_chunks},
         {"blocks_per_second", s2.blocks_per_second},

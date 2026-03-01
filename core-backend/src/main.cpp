@@ -42,6 +42,7 @@ int main(int argc, char *argv[]) {
 
   std::cout << "[Main] Stage1 DB: " << config.db_path_stage1 << std::endl;
   std::cout << "[Main] Stage2 DB: " << config.db_path_stage2 << std::endl;
+  std::cout << "[Main] Stage3 DB: " << config.db_path_stage3 << std::endl;
   std::cout << "[Main] RPC Node: " << config.rpc_name << " (" << config.rpc_url << ")" << std::endl;
   std::cout << "[Main] RPC Transport: " << config.rpc_transport << std::endl;
   std::cout << "[Main] Stage1 Enable: " << config.stage1_enable << std::endl;
@@ -52,6 +53,7 @@ int main(int argc, char *argv[]) {
 
   Database stage1_db(config.db_path_stage1);
   Database stage2_db(config.db_path_stage2);
+  Database stage3_db(config.db_path_stage3);
   {
     TraceN("init/stage1_db");
     stage1_db.init_schema();
@@ -59,7 +61,7 @@ int main(int argc, char *argv[]) {
 
   stage1::StageSync stage1_sync(config, stage1_db);
   stage2::StageSync stage2_sync(stage1_db, stage2_db);
-  stage3::StageSync stage3_sync(stage2_sync.builder(), stage2_db);
+  stage3::StageSync stage3_sync(stage2_sync.builder(), stage2_db, stage3_db);
 
   auto stage1_getter = [&stage1_sync]() -> Stage1SyncStatus {
     const auto s = stage1_sync.status();
@@ -68,12 +70,12 @@ int main(int argc, char *argv[]) {
   };
   auto stage2_getter = [&stage2_sync]() -> Stage2SyncStatus {
     const auto &s = stage2_sync.status();
-    return {s.syncing, s.stage1_last_block, s.stage2_cursor, s.behind_blocks,
+    return {s.syncing, s.last_block, s.head_block, s.behind_blocks,
             s.behind_chunks, s.blocks_per_second, s.eta_seconds};
   };
   auto stage3_getter = [&stage3_sync]() -> Stage3SyncStatus {
     const auto s = stage3_sync.status();
-    return {s.syncing, s.head_block, s.last_block, s.behind_blocks, s.behind_chunks,
+    return {s.syncing, s.last_block, s.head_block, s.behind_blocks, s.behind_chunks,
             s.blocks_per_second, s.eta_seconds, s.stage3_sort_key, s.processed_events};
   };
 

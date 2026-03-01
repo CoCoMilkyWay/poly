@@ -14,7 +14,7 @@ StageSync::StageSync(Database &stage1_db, Database &stage2_db, int base_interval
       chunk_size_(kStage2ChunkBlocks), base_interval_(base_interval) {
   builder_.init_schema();
   builder_.load_from_rb();
-  progress_.stage2_cursor = builder_.cursor();
+  progress_.last_block = builder_.cursor();
 }
 
 void StageSync::start(asio::io_context &ioc) {
@@ -69,13 +69,13 @@ void StageSync::do_sync() {
     progress_.eta_seconds =
         (remaining_blocks == 0) ? 0.0 : static_cast<double>(remaining_blocks) / progress_.blocks_per_second;
   };
-  int64_t stage1_last = stage1_db_.get_last_block();
-  int64_t stage2_cursor = builder_.cursor();
-  int64_t behind_blocks = std::max<int64_t>(0, stage1_last - stage2_cursor);
+  int64_t head_block = stage1_db_.get_last_block();
+  int64_t last_block = builder_.cursor();
+  int64_t behind_blocks = std::max<int64_t>(0, head_block - last_block);
   int64_t behind_chunks = (behind_blocks + chunk_size_ - 1) / chunk_size_;
 
-  progress_.stage1_last_block = stage1_last;
-  progress_.stage2_cursor = stage2_cursor;
+  progress_.head_block = head_block;
+  progress_.last_block = last_block;
   progress_.behind_blocks = behind_blocks;
   progress_.behind_chunks = behind_chunks;
   refresh_timing_metrics(behind_blocks);
@@ -89,18 +89,18 @@ void StageSync::do_sync() {
   progress_.syncing = true;
   progress_.chunks_per_rebuild = 1;
 
-  int64_t target = stage1_last;
+  int64_t target = head_block;
   builder_.build_chunk(target);
   progress_.phase = builder_.progress().phase;
   int64_t new_cursor = builder_.cursor();
-  if (new_cursor > stage2_cursor) {
+  if (new_cursor > last_block) {
     commit_history_.push_back({std::chrono::steady_clock::now(), new_cursor});
     if (commit_history_.size() > kEtaWindowSize) {
       commit_history_.pop_front();
     }
   }
-  progress_.stage2_cursor = new_cursor;
-  int64_t updated_behind_blocks = std::max<int64_t>(0, stage1_last - new_cursor);
+  progress_.last_block = new_cursor;
+  int64_t updated_behind_blocks = std::max<int64_t>(0, head_block - new_cursor);
   progress_.behind_blocks = updated_behind_blocks;
   progress_.behind_chunks = (updated_behind_blocks + chunk_size_ - 1) / chunk_size_;
   refresh_timing_metrics(updated_behind_blocks);

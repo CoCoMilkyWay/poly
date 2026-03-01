@@ -879,7 +879,7 @@
     function updateSyncStatus(sync) {
       const currentBlock = sync.last_block || 0;
       const headBlock = sync.head_block || 0;
-      const isSyncing = sync.is_syncing;
+      const isSyncing = !!sync.syncing;
       const behind = Math.max(0, headBlock - currentBlock);
 
       document.getElementById("last-block").textContent =
@@ -1004,7 +1004,7 @@
           ? "behind"
           : "error");
 
-    if (document.body.dataset.isSyncing === "true") {
+    if (document.body.dataset.syncing === "true") {
       document.getElementById("status-dot").className =
         "status-indicator status-syncing";
       document.getElementById("sync-status-text").textContent = "同步中";
