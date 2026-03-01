@@ -45,7 +45,7 @@ public:
   Status status() const;
 
 private:
-  static constexpr int64_t kSyncChunkBlocks = 100000;
+  static constexpr int64_t kStage1ChunkBlocks = 100000;
   static constexpr int kRetryDelayMs = 300;
   static constexpr int kRetryDelayMaxMs = 10000;
   static constexpr int kSchedulerSleepMs = 5;
@@ -100,7 +100,7 @@ private:
   RpcClient rpc_head_;
   int num_rpc_threads_;
   int64_t basic_chunk_size_;
-  int sync_chunk_basic_count_;
+  int chunk_basic_count_;
   int super_sync_chunk_count_ = 2;
   std::vector<std::unique_ptr<RpcClient>> rpc_workers_;
   std::vector<std::vector<uint8_t>> done_list_;

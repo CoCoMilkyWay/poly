@@ -39,7 +39,7 @@ public:
     double eta_seconds = -1.0;
   };
 
-  struct Stage2Detail {
+  struct Stage2Data {
     int phase = 0;
     bool running = false;
     int64_t total_users = 0;
@@ -145,10 +145,10 @@ public:
     return sync_;
   }
 
-  Stage2Detail stage2_detail() const {
+  Stage2Data stage2_data() const {
     const auto &wp = builder_.progress();
     const auto &bp = builder_.committed_progress();
-    Stage2Detail p;
+    Stage2Data p;
     p.phase = wp.phase;
     p.running = wp.running;
     p.total_users = bp.total_users;
@@ -368,7 +368,7 @@ private:
   std::vector<std::string> cond_ids_;
   std::unordered_map<int32_t, int32_t> cond_question_count_;
 
-  static constexpr int64_t kSyncChunkBlocks = 100000;
+  static constexpr int64_t kStage3ChunkBlocks = 100000;
   static constexpr size_t kEtaWindowSize = 20;
   static constexpr int kBaseIntervalSeconds = 30;
   static constexpr int64_t kCursorSentinel = std::numeric_limits<int32_t>::min();
@@ -551,7 +551,7 @@ private:
     sync_.head_block = builder_.cursor();
     sync_.last_block = (cursor_.sort_key < 0) ? 0 : cursor_.sort_key / SORT_KEY_SCALE;
     sync_.behind_blocks = std::max<int64_t>(0, sync_.head_block - sync_.last_block);
-    sync_.behind_chunks = (sync_.behind_blocks + kSyncChunkBlocks - 1) / kSyncChunkBlocks;
+    sync_.behind_chunks = (sync_.behind_blocks + kStage3ChunkBlocks - 1) / kStage3ChunkBlocks;
   }
 
   void schedule_sync(int delay_seconds) {
@@ -621,7 +621,7 @@ private:
     if (current_block >= head_block) {
       return false;
     }
-    int64_t target_block = std::min(current_block + kSyncChunkBlocks, head_block);
+    int64_t target_block = std::min(current_block + kStage3ChunkBlocks, head_block);
     int64_t upper_sort_key = target_block * SORT_KEY_SCALE + (SORT_KEY_SCALE - 1);
 
     auto source_conn = stage2_db_.create_connection();

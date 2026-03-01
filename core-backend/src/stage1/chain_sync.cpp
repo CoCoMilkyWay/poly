@@ -9,12 +9,12 @@ StageSync::StageSync(const Config &config, Database &db)
     : config_(config), db_(db),
       feather_writer_(db.data_dir()),
       rpc_head_(config.rpc_url, config.rpc_api_key, "RPC-Head", config.proxy_url, config.rpc_transport),
-      num_rpc_threads_(config.stage1_rpc_query_threads),
-      basic_chunk_size_(kSyncChunkBlocks / config.stage1_rpc_sync_chunk_basics),
-      sync_chunk_basic_count_(config.stage1_rpc_sync_chunk_basics) {
+      num_rpc_threads_(config.stage1_rpc_threads),
+      basic_chunk_size_(kStage1ChunkBlocks / config.stage1_rpc_chunk_basics),
+      chunk_basic_count_(config.stage1_rpc_chunk_basics) {
   assert(num_rpc_threads_ > 0);
-  assert(sync_chunk_basic_count_ > 0);
-  assert(kSyncChunkBlocks % sync_chunk_basic_count_ == 0);
+  assert(chunk_basic_count_ > 0);
+  assert(kStage1ChunkBlocks % chunk_basic_count_ == 0);
   assert(basic_chunk_size_ > 0);
   done_list_.resize(super_sync_chunk_count_);
   rpc_workers_.reserve(num_rpc_threads_);
@@ -44,9 +44,9 @@ void StageSync::stop() {
 
 Status StageSync::status() const {
   int64_t last_block = db_.get_last_block();
-  int64_t safe_head = head_block_.load() - kSyncChunkBlocks;
+  int64_t safe_head = head_block_.load() - kStage1ChunkBlocks;
   int64_t behind_blocks = std::max<int64_t>(0, safe_head - last_block);
-  int64_t behind_chunks = (behind_blocks + kSyncChunkBlocks - 1) / kSyncChunkBlocks;
+  int64_t behind_chunks = (behind_blocks + kStage1ChunkBlocks - 1) / kStage1ChunkBlocks;
 
   double blocks_per_second = 0.0;
   if (commit_history_.size() < 2) {
@@ -179,7 +179,7 @@ void StageSync::do_sync() {
   }
   int64_t last_block = db_.get_last_block();
   int64_t from_block = (last_block < 0) ? config_.initial_block : last_block + 1;
-  int64_t safe_head = head_block_ - kSyncChunkBlocks;
+  int64_t safe_head = head_block_ - kStage1ChunkBlocks;
 
   std::cout << "[Stage1] head=" << head_block_
             << ", safe_head=" << safe_head
@@ -258,8 +258,8 @@ std::optional<StageSync::SyncChunkState> StageSync::build_sync_chunk(int sync_id
   out.from_block = cursor;
   out.started_at = std::chrono::steady_clock::now();
   out.done_count = 0;
-  out.basics.reserve(sync_chunk_basic_count_);
-  for (int i = 0; i < sync_chunk_basic_count_ && cursor <= head_block; ++i) {
+  out.basics.reserve(chunk_basic_count_);
+  for (int i = 0; i < chunk_basic_count_ && cursor <= head_block; ++i) {
     int64_t to_block = std::min(cursor + basic_chunk_size_ - 1, head_block);
     out.basics.push_back(BasicTask{
         .from_block = cursor,

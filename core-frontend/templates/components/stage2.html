@@ -381,8 +381,8 @@
     let s2ExpandedNodes = new Set(s2DefaultExpandedNodeIds());
     let s2AllExpanded = true;
 
-    function s2UpdateStats(stage2Detail) {
-      const sync = stage2Detail.stage2_status || {};
+    function s2UpdateStats(stage2Data) {
+      const sync = stage2Data.stage2_status || {};
       const cursor = sync.last_block || 0;
       const headBlock = sync.head_block || 0;
       const behind = Math.max(0, sync.behind_blocks ?? headBlock - cursor);
@@ -1905,52 +1905,52 @@
             const id = el.dataset.id;
             if (s2ExpandedNodes.has(id)) s2ExpandedNodes.delete(id);
             else s2ExpandedNodes.add(id);
-            s2RenderAllTrees(window._stage2Detail || {});
+            s2RenderAllTrees(window._stage2Data || {});
           });
         });
       }
     }
 
-    function s2RenderAllTrees(stage2Detail) {
-      s2RenderTreeToContainer(s2BuildCondTree(stage2Detail), "s2-cond-tree");
-      s2RenderTreeToContainer(s2BuildTokenTree(stage2Detail), "s2-token-tree");
-      s2RenderTreeToContainer(s2BuildXferTree(stage2Detail), "s2-xfer-tree");
-      s2RenderTreeToContainer(s2BuildSplitSemTree(stage2Detail), "s2-split-sem-tree");
-      s2RenderTreeToContainer(s2BuildMergeSemTree(stage2Detail), "s2-merge-sem-tree");
-      s2RenderTreeToContainer(s2BuildConvertSemTree(stage2Detail), "s2-convert-sem-tree");
-      s2RenderTreeToContainer(s2BuildOrderSemTree(stage2Detail), "s2-order-sem-tree");
+    function s2RenderAllTrees(stage2Data) {
+      s2RenderTreeToContainer(s2BuildCondTree(stage2Data), "s2-cond-tree");
+      s2RenderTreeToContainer(s2BuildTokenTree(stage2Data), "s2-token-tree");
+      s2RenderTreeToContainer(s2BuildXferTree(stage2Data), "s2-xfer-tree");
+      s2RenderTreeToContainer(s2BuildSplitSemTree(stage2Data), "s2-split-sem-tree");
+      s2RenderTreeToContainer(s2BuildMergeSemTree(stage2Data), "s2-merge-sem-tree");
+      s2RenderTreeToContainer(s2BuildConvertSemTree(stage2Data), "s2-convert-sem-tree");
+      s2RenderTreeToContainer(s2BuildOrderSemTree(stage2Data), "s2-order-sem-tree");
     }
 
     function s2CollapseAll() {
       s2ExpandedNodes.clear();
       s2AllExpanded = false;
-      s2RenderAllTrees(window._stage2Detail || {});
+      s2RenderAllTrees(window._stage2Data || {});
       document.getElementById("s2-collapse-all").textContent = "全部展开";
     }
 
     function s2ExpandAll() {
       s2ExpandedNodes = new Set(s2DefaultExpandedNodeIds());
       s2AllExpanded = true;
-      s2RenderAllTrees(window._stage2Detail || {});
+      s2RenderAllTrees(window._stage2Data || {});
       document.getElementById("s2-collapse-all").textContent = "全部折叠";
     }
 
-    function s2UpdateProgress(stage2Detail) {
-      window._stage2Detail = stage2Detail;
+    function s2UpdateProgress(stage2Data) {
+      window._stage2Data = stage2Data;
       const bar = document.getElementById("stage2-progress-bar");
       const badge = document.getElementById("stage2-badge");
 
-      s2UpdateStats(stage2Detail);
+      s2UpdateStats(stage2Data);
 
-      const sync = stage2Detail.stage2_status || {};
+      const sync = stage2Data.stage2_status || {};
       const cursor = sync.last_block || 0;
       const headBlock = sync.head_block || 0;
       const progress = headBlock > 0 ? (cursor / headBlock) * 100 : 0;
       bar.style.width = progress.toFixed(2) + "%";
 
-      s2Set("s2-total-users", stage2Detail.total_users);
+      s2Set("s2-total-users", stage2Data.total_users);
 
-      s2RenderAllTrees(stage2Detail);
+      s2RenderAllTrees(stage2Data);
 
       if (sync.syncing) {
         badge.className = "badge badge-warning";
@@ -1966,13 +1966,13 @@
 
     async function s2Poll() {
       try {
-        const [stage2DetailResp, stage2StatusResp] = await Promise.all([
-          fetch("/api/stage2-detail"),
+        const [stage2DataResp, stage2StatusResp] = await Promise.all([
+          fetch("/api/stage2-data"),
           fetch("/api/stage2-status"),
         ]);
-        const stage2Detail = await stage2DetailResp.json();
-        stage2Detail.stage2_status = await stage2StatusResp.json();
-        s2UpdateProgress(stage2Detail);
+        const stage2Data = await stage2DataResp.json();
+        stage2Data.stage2_status = await stage2StatusResp.json();
+        s2UpdateProgress(stage2Data);
       } catch (e) { }
     }
 

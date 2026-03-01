@@ -1,17 +1,19 @@
 {
-  "initial_block": 0,
-  "frontend_port": 8000,
-  "backend_port": 8001,
-  "proxy": "socks5://127.0.0.1:10808",
-  "rpc_transport": "curl",
   "stage1_enable": 1,
   "stage2_enable": 1,
   "stage3_enable": 1,
   "db_path_stage1": "data/stage1/polymarket.duckdb",
   "db_path_stage2": "data/stage2/users.duckdb",
   "db_path_stage3": "data/stage3/replay.duckdb",
-  "stage1_rpc_query_threads": 10,
-  "stage1_rpc_sync_chunk_basics": 100,
+  "stage1_rpc_threads": 10,
+  "stage1_rpc_chunk_basics": 100,
+
+  "initial_block": 0,
+  "frontend_port": 8000,
+  "backend_port": 8001,
+
+  "proxy": "socks5://127.0.0.1:10808",
+  "rpc_transport": "curl",
   "active_rpc": "Alchemy",
   "rpc_nodes": [
     {

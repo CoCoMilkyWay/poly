@@ -36,9 +36,9 @@ int main(int argc, char *argv[]) {
 
   Config config = Config::load(config_path);
   constexpr int64_t kStage1ChunkBlocks = 100000;
-  assert(config.stage1_rpc_sync_chunk_basics > 0);
-  assert(kStage1ChunkBlocks % config.stage1_rpc_sync_chunk_basics == 0);
-  int64_t stage1_basic_chunk_blocks = kStage1ChunkBlocks / config.stage1_rpc_sync_chunk_basics;
+  assert(config.stage1_rpc_chunk_basics > 0);
+  assert(kStage1ChunkBlocks % config.stage1_rpc_chunk_basics == 0);
+  int64_t stage1_basic_chunk_blocks = kStage1ChunkBlocks / config.stage1_rpc_chunk_basics;
 
   std::cout << "[Main] Stage1 DB: " << config.db_path_stage1 << std::endl;
   std::cout << "[Main] Stage2 DB: " << config.db_path_stage2 << std::endl;
@@ -86,36 +86,29 @@ int main(int argc, char *argv[]) {
   std::optional<std::thread> stage2_thread;
   std::optional<std::thread> stage3_thread;
 
+  auto start_stage = [](int enable, const char *thread_name, auto &sync_stage,
+                        boost::asio::io_context &ioc, std::optional<std::thread> &thread) {
+    if (enable != 1) {
+      return;
+    }
+    sync_stage.start(ioc);
+    thread.emplace([&ioc, thread_name]() {
+      TraceThread(thread_name);
+      ioc.run();
+    });
+  };
   if (config.stage1_enable == 1) {
-    {
-      TraceN("start/stage1");
-      stage1.start(stage1_ioc);
-    }
-    stage1_thread.emplace([&stage1_ioc]() {
-      TraceThread("Stage1");
-      stage1_ioc.run();
-    });
+    TraceN("start/stage1");
   }
+  start_stage(config.stage1_enable, "Stage1", stage1, stage1_ioc, stage1_thread);
   if (config.stage2_enable == 1) {
-    {
-      TraceN("start/stage2");
-      stage2.start(stage2_ioc);
-    }
-    stage2_thread.emplace([&stage2_ioc]() {
-      TraceThread("Stage2");
-      stage2_ioc.run();
-    });
+    TraceN("start/stage2");
   }
+  start_stage(config.stage2_enable, "Stage2", stage2, stage2_ioc, stage2_thread);
   if (config.stage3_enable == 1) {
-    {
-      TraceN("start/stage3");
-      stage3.start(stage3_ioc);
-    }
-    stage3_thread.emplace([&stage3_ioc]() {
-      TraceThread("Stage3");
-      stage3_ioc.run();
-    });
+    TraceN("start/stage3");
   }
+  start_stage(config.stage3_enable, "Stage3", stage3, stage3_ioc, stage3_thread);
 
   boost::asio::io_context api_ioc;
   ApiServer api_server(api_ioc, stage1_db, stage2_db, stage3, config.backend_port,
@@ -123,16 +116,16 @@ int main(int argc, char *argv[]) {
 
   boost::asio::signal_set signals(api_ioc, SIGINT, SIGTERM);
   signals.async_wait([&](const boost::system::error_code &, int sig) {
+    (void)sig;
     std::cout << "\n[Main] 正在关闭..." << std::endl;
-    if (config.stage1_enable == 1) {
-      stage1.stop();
-    }
-    if (config.stage2_enable == 1) {
-      stage2.stop();
-    }
-    if (config.stage3_enable == 1) {
-      stage3.stop();
-    }
+    auto stop_stage = [](int enable, auto &sync_stage) {
+      if (enable == 1) {
+        sync_stage.stop();
+      }
+    };
+    stop_stage(config.stage1_enable, stage1);
+    stop_stage(config.stage2_enable, stage2);
+    stop_stage(config.stage3_enable, stage3);
     stage1_ioc.stop();
     stage2_ioc.stop();
     stage3_ioc.stop();
@@ -142,15 +135,14 @@ int main(int argc, char *argv[]) {
   std::cout << "[Main] 服务已启动" << std::endl;
   api_ioc.run();
 
-  if (stage1_thread.has_value()) {
-    stage1_thread->join();
-  }
-  if (stage2_thread.has_value()) {
-    stage2_thread->join();
-  }
-  if (stage3_thread.has_value()) {
-    stage3_thread->join();
-  }
+  auto join_stage = [](std::optional<std::thread> &thread) {
+    if (thread.has_value()) {
+      thread->join();
+    }
+  };
+  join_stage(stage1_thread);
+  join_stage(stage2_thread);
+  join_stage(stage3_thread);
 
   std::cout << "[Main] 已退出" << std::endl;
   return 0;

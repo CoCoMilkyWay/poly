@@ -70,7 +70,7 @@ private:
   void handle_table_sample();
   void handle_stage1_status();
   void handle_stage2_status();
-  void handle_stage2_detail();
+  void handle_stage2_data();
   void handle_stage3_status();
   void handle_stage3_users();
   void handle_stage3_data();

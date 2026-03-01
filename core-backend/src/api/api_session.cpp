@@ -175,8 +175,8 @@ void ApiSession::handle_request() {
       handle_stage1_status();
     } else if (target.starts_with("/api/stage2-status")) {
       handle_stage2_status();
-    } else if (target.starts_with("/api/stage2-detail")) {
-      handle_stage2_detail();
+    } else if (target.starts_with("/api/stage2-data")) {
+      handle_stage2_data();
     } else if (target.starts_with("/api/stage3-status")) {
       handle_stage3_status();
     } else if (target.starts_with("/api/stage3-users")) {
@@ -460,11 +460,11 @@ void ApiSession::handle_table_sample() {
   res_.body() = result.dump();
 }
 
-void ApiSession::handle_stage2_detail() {
+void ApiSession::handle_stage2_data() {
   TraceN("api/s2_detail");
   res_.set(http::field::content_type, "application/json");
 
-  const auto &p = stage3_.stage2_detail();
+  const auto &p = stage3_.stage2_data();
   const auto &ct = p.cond_tree;
   const auto &tt = p.token_tree;
   std::unordered_map<uint8_t, std::string> coll_id_to_addr;
