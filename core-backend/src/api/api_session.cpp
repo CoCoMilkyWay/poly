@@ -110,10 +110,13 @@ json to_stage3_status_json(const Stage3Status &status) {
       {"behind_chunks", status.behind_chunks},
       {"blocks_per_second", status.blocks_per_second},
       {"eta_seconds", status.eta_seconds},
-      {"processed_events", status.processed_events},
-      {"stage3_sort_key", status.stage3_sort_key},
       {"ready", status.behind_blocks == 0},
   };
+}
+
+void write_ok_json_response(http::response<http::string_body> &res, const json &payload) {
+  res.result(http::status::ok);
+  res.body() = payload.dump();
 }
 
 } // namespace
@@ -314,33 +317,24 @@ void ApiSession::handle_stage1_status() {
   TraceN("api/s1_status");
   res_.set(http::field::content_type, "application/json");
 
-  Stage1Status status = stage1_getter_();
-  json result = to_stage1_status_json(status);
-
-  res_.result(http::status::ok);
-  res_.body() = result.dump();
+  const Stage1Status status = stage1_getter_();
+  write_ok_json_response(res_, to_stage1_status_json(status));
 }
 
 void ApiSession::handle_stage2_status() {
   TraceN("api/s2_status");
   res_.set(http::field::content_type, "application/json");
 
-  Stage2Status status = stage2_getter_();
-  json result = to_stage2_status_json(status);
-
-  res_.result(http::status::ok);
-  res_.body() = result.dump();
+  const Stage2Status status = stage2_getter_();
+  write_ok_json_response(res_, to_stage2_status_json(status));
 }
 
 void ApiSession::handle_stage3_status() {
   TraceN("api/s3_status");
   res_.set(http::field::content_type, "application/json");
 
-  Stage3Status status = stage3_getter_();
-  json result = to_stage3_status_json(status);
-
-  res_.result(http::status::ok);
-  res_.body() = result.dump();
+  const Stage3Status status = stage3_getter_();
+  write_ok_json_response(res_, to_stage3_status_json(status));
 }
 
 void ApiSession::handle_query() {

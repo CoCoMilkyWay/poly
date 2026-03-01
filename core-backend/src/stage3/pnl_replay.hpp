@@ -12,7 +12,6 @@
 #include <boost/asio.hpp>
 #include <chrono>
 #include <cstdlib>
-#include <cmath>
 #include <cstring>
 #include <limits>
 #include <memory>
@@ -38,8 +37,6 @@ public:
     int64_t behind_chunks = 0;
     double blocks_per_second = 0.0;
     double eta_seconds = -1.0;
-    int64_t processed_events = 0;
-    int64_t stage3_sort_key = -1;
   };
 
   struct Stage2Detail {
@@ -235,7 +232,7 @@ public:
     if (events.empty()) {
       return {};
     }
-    return replay_timeline(events);
+    return build_timeline(events);
   }
 
   std::vector<PositionAtTime> get_positions_at(const std::string &addr, int64_t sort_key) const {
@@ -248,7 +245,7 @@ public:
     if (events.empty()) {
       return {};
     }
-    auto state = replay_until(events, sort_key);
+    auto state = build_state_until(events, sort_key);
     std::vector<PositionAtTime> out;
     out.reserve(state.size());
     for (const auto &[cond_idx, st] : state) {
@@ -284,7 +281,7 @@ public:
 
   std::pair<std::vector<TradeEntry>, size_t> get_events_near(const std::string &addr, int64_t sort_key,
                                                               int radius = 20) const {
-    TraceN("s3/trades");
+    TraceN("s3/events");
     auto timeline = get_user_timeline(addr);
     if (timeline.empty()) {
       return {{}, 0};
@@ -316,7 +313,7 @@ private:
     int64_t processed_events = 0;
   };
 
-  struct ReplayRow {
+  struct EventRow {
     std::string user_hex;
     int64_t sort_key = 0;
     int32_t cond_idx = 0;
@@ -552,11 +549,9 @@ private:
 
   void refresh_status_locked() const {
     sync_.head_block = builder_.cursor();
-    sync_.stage3_sort_key = cursor_.sort_key;
     sync_.last_block = (cursor_.sort_key < 0) ? 0 : cursor_.sort_key / SORT_KEY_SCALE;
     sync_.behind_blocks = std::max<int64_t>(0, sync_.head_block - sync_.last_block);
     sync_.behind_chunks = (sync_.behind_blocks + kSyncChunkBlocks - 1) / kSyncChunkBlocks;
-    sync_.processed_events = cursor_.processed_events;
   }
 
   void schedule_sync(int delay_seconds) {
@@ -661,7 +656,7 @@ private:
       return true;
     }
 
-    std::vector<ReplayRow> rows;
+    std::vector<EventRow> rows;
     rows.reserve(static_cast<size_t>(qr->RowCount()));
     std::unordered_set<std::string> touched_users;
     touched_users.reserve(static_cast<size_t>(qr->RowCount() / 10 + 1));
@@ -674,7 +669,7 @@ private:
     user_last_sk.reserve(static_cast<size_t>(qr->RowCount() / 10 + 1));
 
     for (idx_t i = 0; i < qr->RowCount(); ++i) {
-      ReplayRow row;
+      EventRow row;
       row.user_hex = qr->GetValue(0, i).GetValueUnsafe<std::string>();
       row.sort_key = qr->GetValue(1, i).GetValue<int64_t>();
       row.cond_idx = qr->GetValue(2, i).GetValue<int32_t>();
@@ -860,7 +855,7 @@ private:
     return true;
   }
 
-  int64_t normalize_redemption_price(const ReplayRow &row) const {
+  int64_t normalize_redemption_price(const EventRow &row) const {
     if (row.cond_idx < 0) {
       return normalize_price_fallback(row.price);
     }
@@ -900,7 +895,7 @@ private:
     return p;
   }
 
-  int64_t convert_payout_amount(const ReplayRow &row, int64_t qty) const {
+  int64_t convert_payout_amount(const EventRow &row, int64_t qty) const {
     auto it = cond_question_count_.find(row.cond_idx);
     if (it == cond_question_count_.end() || it->second <= 1) {
       return 0;
@@ -909,7 +904,7 @@ private:
     return (qty * (qcnt - 1)) / qcnt;
   }
 
-  void apply_event_to_state(const ReplayRow &row, CondState &st) const {
+  void apply_event_to_state(const EventRow &row, CondState &st) const {
     assert(row.cond_idx >= 0);
     assert(static_cast<size_t>(row.cond_idx) < conditions_.size());
     const auto &cond = conditions_[static_cast<size_t>(row.cond_idx)];
@@ -1035,7 +1030,7 @@ private:
     }
   }
 
-  std::vector<ReplayRow> load_user_events(const std::string &addr_lower) const {
+  std::vector<EventRow> load_user_events(const std::string &addr_lower) const {
     auto conn = stage2_db_.create_connection();
     std::string hex40 = addr_lower.substr(2);
     auto q = conn->Query(
@@ -1044,7 +1039,7 @@ private:
         "WHERE user_addr = from_hex('" + hex40 + "') "
         "ORDER BY sort_key, cond_idx, event_type, token_idx");
     assert(q && !q->HasError());
-    std::vector<ReplayRow> out;
+    std::vector<EventRow> out;
     out.reserve(static_cast<size_t>(q->RowCount()));
     for (idx_t i = 0; i < q->RowCount(); ++i) {
       out.push_back({"", q->GetValue(0, i).GetValue<int64_t>(),
@@ -1057,7 +1052,7 @@ private:
     return out;
   }
 
-  std::vector<TimelineEntry> replay_timeline(const std::vector<ReplayRow> &events) const {
+  std::vector<TimelineEntry> build_timeline(const std::vector<EventRow> &events) const {
     std::unordered_map<int32_t, CondState> states;
     std::unordered_map<int32_t, int> cond_token_nonzero;
     std::vector<TimelineEntry> timeline;
@@ -1105,7 +1100,7 @@ private:
     return timeline;
   }
 
-  std::unordered_map<int32_t, CondState> replay_until(const std::vector<ReplayRow> &events,
+  std::unordered_map<int32_t, CondState> build_state_until(const std::vector<EventRow> &events,
                                                       int64_t sort_key) const {
     std::unordered_map<int32_t, CondState> states;
     for (const auto &row : events) {

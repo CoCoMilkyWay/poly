@@ -381,8 +381,8 @@
     let s2ExpandedNodes = new Set(s2DefaultExpandedNodeIds());
     let s2AllExpanded = true;
 
-    function s2UpdateStats(s) {
-      const sync = s.stage2_status || {};
+    function s2UpdateStats(stage2Detail) {
+      const sync = stage2Detail.stage2_status || {};
       const cursor = sync.last_block || 0;
       const headBlock = sync.head_block || 0;
       const behind = Math.max(0, sync.behind_blocks ?? headBlock - cursor);
@@ -1905,52 +1905,52 @@
             const id = el.dataset.id;
             if (s2ExpandedNodes.has(id)) s2ExpandedNodes.delete(id);
             else s2ExpandedNodes.add(id);
-            s2RenderAllTrees(window._s2LastData || {});
+            s2RenderAllTrees(window._stage2Detail || {});
           });
         });
       }
     }
 
-    function s2RenderAllTrees(s) {
-      s2RenderTreeToContainer(s2BuildCondTree(s), "s2-cond-tree");
-      s2RenderTreeToContainer(s2BuildTokenTree(s), "s2-token-tree");
-      s2RenderTreeToContainer(s2BuildXferTree(s), "s2-xfer-tree");
-      s2RenderTreeToContainer(s2BuildSplitSemTree(s), "s2-split-sem-tree");
-      s2RenderTreeToContainer(s2BuildMergeSemTree(s), "s2-merge-sem-tree");
-      s2RenderTreeToContainer(s2BuildConvertSemTree(s), "s2-convert-sem-tree");
-      s2RenderTreeToContainer(s2BuildOrderSemTree(s), "s2-order-sem-tree");
+    function s2RenderAllTrees(stage2Detail) {
+      s2RenderTreeToContainer(s2BuildCondTree(stage2Detail), "s2-cond-tree");
+      s2RenderTreeToContainer(s2BuildTokenTree(stage2Detail), "s2-token-tree");
+      s2RenderTreeToContainer(s2BuildXferTree(stage2Detail), "s2-xfer-tree");
+      s2RenderTreeToContainer(s2BuildSplitSemTree(stage2Detail), "s2-split-sem-tree");
+      s2RenderTreeToContainer(s2BuildMergeSemTree(stage2Detail), "s2-merge-sem-tree");
+      s2RenderTreeToContainer(s2BuildConvertSemTree(stage2Detail), "s2-convert-sem-tree");
+      s2RenderTreeToContainer(s2BuildOrderSemTree(stage2Detail), "s2-order-sem-tree");
     }
 
     function s2CollapseAll() {
       s2ExpandedNodes.clear();
       s2AllExpanded = false;
-      s2RenderAllTrees(window._s2LastData || {});
+      s2RenderAllTrees(window._stage2Detail || {});
       document.getElementById("s2-collapse-all").textContent = "全部展开";
     }
 
     function s2ExpandAll() {
       s2ExpandedNodes = new Set(s2DefaultExpandedNodeIds());
       s2AllExpanded = true;
-      s2RenderAllTrees(window._s2LastData || {});
+      s2RenderAllTrees(window._stage2Detail || {});
       document.getElementById("s2-collapse-all").textContent = "全部折叠";
     }
 
-    function s2UpdateProgress(s) {
-      window._s2LastData = s;
+    function s2UpdateProgress(stage2Detail) {
+      window._stage2Detail = stage2Detail;
       const bar = document.getElementById("stage2-progress-bar");
       const badge = document.getElementById("stage2-badge");
 
-      s2UpdateStats(s);
+      s2UpdateStats(stage2Detail);
 
-      const sync = s.stage2_status || {};
+      const sync = stage2Detail.stage2_status || {};
       const cursor = sync.last_block || 0;
       const headBlock = sync.head_block || 0;
       const progress = headBlock > 0 ? (cursor / headBlock) * 100 : 0;
       bar.style.width = progress.toFixed(2) + "%";
 
-      s2Set("s2-total-users", s.total_users);
+      s2Set("s2-total-users", stage2Detail.total_users);
 
-      s2RenderAllTrees(s);
+      s2RenderAllTrees(stage2Detail);
 
       if (sync.syncing) {
         badge.className = "badge badge-warning";

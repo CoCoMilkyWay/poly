@@ -46,8 +46,6 @@ struct Stage3Status {
   int64_t behind_chunks = 0;
   double blocks_per_second = 0.0;
   double eta_seconds = -1.0;
-  int64_t processed_events = 0;
-  int64_t stage3_sort_key = -1;
 };
 
 class ApiSession : public std::enable_shared_from_this<ApiSession> {
