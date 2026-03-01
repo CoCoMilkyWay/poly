@@ -5,7 +5,7 @@
 
 namespace stage1 {
 
-ChainSync::ChainSync(const Config &config, Database &db)
+StageSync::StageSync(const Config &config, Database &db)
     : config_(config), db_(db),
       feather_writer_(db.data_dir()),
       rpc_head_(config.rpc_url, config.rpc_api_key, "RPC-Head", config.proxy_url, config.rpc_transport),
@@ -27,14 +27,14 @@ ChainSync::ChainSync(const Config &config, Database &db)
                                           : FeatherWriter::partition_start(cursor) + FeatherWriter::PARTITION_SIZE;
 }
 
-void ChainSync::start(asio::io_context &ioc) {
+void StageSync::start(asio::io_context &ioc) {
   ioc_ = &ioc;
   is_syncing_ = false;
   stop_requested_ = false;
   schedule_sync(0);
 }
 
-void ChainSync::stop() {
+void StageSync::stop() {
   stop_requested_ = true;
   rpc_head_.cancel();
   for (auto &w : rpc_workers_) {
@@ -42,86 +42,107 @@ void ChainSync::stop() {
   }
 }
 
-bool ChainSync::is_syncing() const {
-  return is_syncing_;
-}
+SyncStatus StageSync::status() const {
+  int64_t last_block = db_.get_last_block();
+  int64_t safe_head = head_block_.load() - kSyncChunkBlocks;
+  int64_t behind_blocks = std::max<int64_t>(0, safe_head - last_block);
+  int64_t behind_chunks = (behind_blocks + kSyncChunkBlocks - 1) / kSyncChunkBlocks;
 
-int64_t ChainSync::get_head_block() const {
-  return head_block_;
-}
-
-double ChainSync::get_blocks_per_second() const {
+  double blocks_per_second = 0.0;
   if (commit_history_.size() < 2) {
-    return 0.0;
+    return {
+        .syncing = is_syncing_,
+        .last_block = last_block,
+        .head_block = head_block_,
+        .behind_blocks = behind_blocks,
+        .behind_chunks = behind_chunks,
+        .blocks_per_second = 0.0,
+        .eta_seconds = (behind_blocks == 0) ? 0.0 : -1.0,
+        .bytes_per_block = 0.0,
+    };
   }
   const auto &first = commit_history_.front();
   const auto &last = commit_history_.back();
   double elapsed_s = std::chrono::duration<double>(last.committed_at - first.committed_at).count();
   if (elapsed_s <= 0.0) {
-    return 0.0;
+    return {
+        .syncing = is_syncing_,
+        .last_block = last_block,
+        .head_block = head_block_,
+        .behind_blocks = behind_blocks,
+        .behind_chunks = behind_chunks,
+        .blocks_per_second = 0.0,
+        .eta_seconds = -1.0,
+        .bytes_per_block = 0.0,
+    };
   }
   int64_t committed_blocks = std::max<int64_t>(0, last.committed_block - first.committed_block);
   if (committed_blocks == 0) {
-    return 0.0;
+    return {
+        .syncing = is_syncing_,
+        .last_block = last_block,
+        .head_block = head_block_,
+        .behind_blocks = behind_blocks,
+        .behind_chunks = behind_chunks,
+        .blocks_per_second = 0.0,
+        .eta_seconds = (behind_blocks == 0) ? 0.0 : -1.0,
+        .bytes_per_block = 0.0,
+    };
   }
-  return static_cast<double>(committed_blocks) / elapsed_s;
-}
+  blocks_per_second = static_cast<double>(committed_blocks) / elapsed_s;
 
-double ChainSync::get_eta_seconds() const {
-  int64_t safe_head = head_block_.load() - kSyncChunkBlocks;
-  int64_t last_block = db_.get_last_block();
-  int64_t behind_blocks = std::max<int64_t>(0, safe_head - last_block);
-  if (behind_blocks == 0) {
-    return 0.0;
-  }
-  double bps = get_blocks_per_second();
-  if (bps <= 0.0) {
-    return -1.0;
-  }
-  return static_cast<double>(behind_blocks) / bps;
-}
-
-double ChainSync::get_bytes_per_block() const {
+  double bytes_per_block = 0.0;
   if (chunk_history_.empty()) {
-    return 0.0;
+    bytes_per_block = 0.0;
+  } else {
+    size_t total_bytes = 0;
+    int64_t total_blocks = 0;
+    for (const auto &r : chunk_history_) {
+      total_bytes += r.body_bytes;
+      total_blocks += r.block_count;
+    }
+    if (total_blocks > 0) {
+      bytes_per_block = static_cast<double>(total_bytes) / total_blocks;
+    }
   }
-  size_t total_bytes = 0;
-  int64_t total_blocks = 0;
-  for (const auto &r : chunk_history_) {
-    total_bytes += r.body_bytes;
-    total_blocks += r.block_count;
-  }
-  if (total_blocks == 0) {
-    return 0.0;
-  }
-  return static_cast<double>(total_bytes) / total_blocks;
+
+  return {
+      .syncing = is_syncing_,
+      .last_block = last_block,
+      .head_block = head_block_,
+      .behind_blocks = behind_blocks,
+      .behind_chunks = behind_chunks,
+      .blocks_per_second = blocks_per_second,
+      .eta_seconds = (behind_blocks == 0) ? 0.0 : static_cast<double>(behind_blocks) / blocks_per_second,
+      .bytes_per_block = bytes_per_block,
+  };
 }
 
-const std::vector<std::string> &ChainSync::ct_topics() {
+const std::vector<std::string> &StageSync::ct_topics() {
   static const std::vector<std::string> v = {
       topics::TRANSFER_SINGLE, topics::TRANSFER_BATCH, topics::CONDITION_PREPARE,
       topics::CONDITION_RESOLVE, topics::POSITION_SPLIT, topics::POSITION_MERGE, topics::POSITION_REDEEM};
   return v;
 }
 
-const std::vector<std::string> &ChainSync::ex_topics() {
+const std::vector<std::string> &StageSync::ex_topics() {
   static const std::vector<std::string> v = {topics::ORDER_FILL, topics::TOKEN_REGISTER};
   return v;
 }
 
-const std::vector<std::string> &ChainSync::nra_topics() {
+const std::vector<std::string> &StageSync::nra_topics() {
   static const std::vector<std::string> v = {topics::MARKET_PREPARE, topics::QUESTION_PREPARE, topics::POSITION_CONVERT};
   return v;
 }
 
-const std::vector<std::string> &ChainSync::fpmm_topics() {
+const std::vector<std::string> &StageSync::fpmm_topics() {
   static const std::vector<std::string> v = {
       topics::FPMM_CREATE, topics::FPMM_BUY, topics::FPMM_SELL,
       topics::FPMM_FUNDING_ADD, topics::FPMM_FUNDING_REMOVE};
   return v;
 }
 
-std::vector<RpcClient::LogsQuery> ChainSync::build_queries(int64_t from_block, int64_t to_block) {
+std::vector<RpcClient::LogsQuery> StageSync::build_queries(int64_t from_block, int64_t to_block) {
   std::vector<RpcClient::LogsQuery> queries;
   queries.reserve(5);
   queries.emplace_back(std::string(contracts::CONDITIONAL_TOKENS), from_block, to_block, &ct_topics());
@@ -132,7 +153,7 @@ std::vector<RpcClient::LogsQuery> ChainSync::build_queries(int64_t from_block, i
   return queries;
 }
 
-void ChainSync::schedule_sync(int delay_seconds) {
+void StageSync::schedule_sync(int delay_seconds) {
   if (stop_requested_) {
     return;
   }
@@ -145,7 +166,7 @@ void ChainSync::schedule_sync(int delay_seconds) {
   });
 }
 
-void ChainSync::do_sync() {
+void StageSync::do_sync() {
   is_syncing_ = true;
 
   try {
@@ -174,18 +195,18 @@ void ChainSync::do_sync() {
   sync_loop(from_block, safe_head);
 }
 
-void ChainSync::init_done_slot(int slot, size_t nbits) {
+void StageSync::init_done_slot(int slot, size_t nbits) {
   std::lock_guard<std::mutex> lock(done_list_mutex_);
   done_list_[slot].assign(nbits, 0);
 }
 
-void ChainSync::set_done_bit(int slot, size_t idx, uint8_t v) {
+void StageSync::set_done_bit(int slot, size_t idx, uint8_t v) {
   std::lock_guard<std::mutex> lock(done_list_mutex_);
   assert(idx < done_list_[slot].size());
   done_list_[slot][idx] = v;
 }
 
-int ChainSync::ordered_done_in_slot(int slot) {
+int StageSync::ordered_done_in_slot(int slot) {
   std::lock_guard<std::mutex> lock(done_list_mutex_);
   int count = 0;
   for (uint8_t b : done_list_[slot]) {
@@ -197,7 +218,7 @@ int ChainSync::ordered_done_in_slot(int slot) {
   return count;
 }
 
-void ChainSync::render_progress_inline(const std::deque<SyncChunkState> &window) {
+void StageSync::render_progress_inline(const std::deque<SyncChunkState> &window) {
   assert(!window.empty());
   const auto &front = window.front();
   int ordered = ordered_done_in_slot(front.slot);
@@ -218,7 +239,7 @@ void ChainSync::render_progress_inline(const std::deque<SyncChunkState> &window)
   progress_line_active_ = true;
 }
 
-void ChainSync::clear_progress_inline() {
+void StageSync::clear_progress_inline() {
   if (!progress_line_active_) {
     return;
   }
@@ -227,7 +248,7 @@ void ChainSync::clear_progress_inline() {
   progress_line_active_ = false;
 }
 
-std::optional<ChainSync::SyncChunkState> ChainSync::build_sync_chunk(int sync_id, int slot, int64_t &cursor, int64_t head_block, size_t &rr_worker) {
+std::optional<StageSync::SyncChunkState> StageSync::build_sync_chunk(int sync_id, int slot, int64_t &cursor, int64_t head_block, size_t &rr_worker) {
   if (cursor > head_block) {
     return std::nullopt;
   }
@@ -253,13 +274,13 @@ std::optional<ChainSync::SyncChunkState> ChainSync::build_sync_chunk(int sync_id
   return out;
 }
 
-void ChainSync::submit_basic_task(BasicTask &task) {
+void StageSync::submit_basic_task(BasicTask &task) {
   TraceN("s1/basic_submit");
   task.future = rpc_workers_[task.worker_idx]->eth_getLogs_batch_async(build_queries(task.from_block, task.to_block));
   task.in_flight = true;
 }
 
-void ChainSync::sync_loop(int64_t from_block, int64_t head_block) {
+void StageSync::sync_loop(int64_t from_block, int64_t head_block) {
   std::deque<SyncChunkState> window;
   int sync_id = 0;
   int64_t cursor = from_block;
@@ -402,7 +423,7 @@ void ChainSync::sync_loop(int64_t from_block, int64_t head_block) {
 
     if (!progressed) {
       std::this_thread::sleep_for(std::chrono::milliseconds(scheduler_sleep_ms));
-      scheduler_sleep_ms = std::min(scheduler_sleep_ms << 1, ChainSync::kSchedulerSleepMaxMs);
+      scheduler_sleep_ms = std::min(scheduler_sleep_ms << 1, StageSync::kSchedulerSleepMaxMs);
     } else {
       scheduler_sleep_ms = kSchedulerSleepMs;
     }
@@ -420,7 +441,7 @@ void ChainSync::sync_loop(int64_t from_block, int64_t head_block) {
   schedule_sync(interval_seconds_);
 }
 
-void ChainSync::process_batch(DecodedEvents &&events, int64_t to_block) {
+void StageSync::process_batch(DecodedEvents &&events, int64_t to_block) {
   merge_events(cached_events_, std::move(events));
 
   int64_t partition_end = current_partition_start_ + FeatherWriter::PARTITION_SIZE - 1;
@@ -443,14 +464,14 @@ void ChainSync::process_batch(DecodedEvents &&events, int64_t to_block) {
   }
 }
 
-void ChainSync::record_commit_event(int64_t committed_block) {
+void StageSync::record_commit_event(int64_t committed_block) {
   commit_history_.push_back({std::chrono::steady_clock::now(), committed_block});
   if (commit_history_.size() > kEtaWindowSize) {
     commit_history_.pop_front();
   }
 }
 
-void ChainSync::merge_events(DecodedEvents &dst, DecodedEvents &&src) {
+void StageSync::merge_events(DecodedEvents &dst, DecodedEvents &&src) {
   auto append = [](auto &d, auto &s) {
     if (d.empty()) {
       d = std::move(s);

@@ -46,6 +46,7 @@ int main(int argc, char *argv[]) {
   std::cout << "[Main] RPC Transport: " << config.rpc_transport << std::endl;
   std::cout << "[Main] Stage1 Enable: " << config.stage1_enable << std::endl;
   std::cout << "[Main] Stage2 Enable: " << config.stage2_enable << std::endl;
+  std::cout << "[Main] Stage3 Enable: " << config.stage3_enable << std::endl;
   std::cout << "[Main] RPC Chunk: " << stage1_basic_chunk_blocks << " blocks (computed)" << std::endl;
   std::cout << "[Main] API Port: " << config.backend_port << std::endl;
 
@@ -56,64 +57,83 @@ int main(int argc, char *argv[]) {
     stage1_db.init_schema();
   }
 
-  stage1::ChainSync chain_sync(config, stage1_db);
+  stage1::StageSync stage1_sync(config, stage1_db);
+  stage2::StageSync stage2_sync(stage1_db, stage2_db);
+  stage3::StageSync stage3_sync(stage2_sync.builder(), stage2_db);
 
-  auto stage1_getter = [&chain_sync]() -> Stage1SyncStatus {
-    return {chain_sync.is_syncing(), chain_sync.get_head_block(),
-            chain_sync.get_blocks_per_second(), chain_sync.get_eta_seconds(),
-            chain_sync.get_bytes_per_block()};
+  auto stage1_getter = [&stage1_sync]() -> Stage1SyncStatus {
+    const auto s = stage1_sync.status();
+    return {s.syncing, s.last_block, s.head_block, s.behind_blocks, s.behind_chunks,
+            s.blocks_per_second, s.eta_seconds, s.bytes_per_block};
+  };
+  auto stage2_getter = [&stage2_sync]() -> Stage2SyncStatus {
+    const auto &s = stage2_sync.status();
+    return {s.syncing, s.stage1_last_block, s.stage2_cursor, s.behind_blocks,
+            s.behind_chunks, s.blocks_per_second, s.eta_seconds};
+  };
+  auto stage3_getter = [&stage3_sync]() -> Stage3SyncStatus {
+    const auto s = stage3_sync.status();
+    return {s.syncing, s.head_block, s.last_block, s.behind_blocks, s.behind_chunks,
+            s.blocks_per_second, s.eta_seconds, s.stage3_sort_key, s.processed_events};
   };
 
-  boost::asio::io_context sync_ioc;
+  boost::asio::io_context stage1_ioc;
+  boost::asio::io_context stage2_ioc;
+  boost::asio::io_context stage3_ioc;
   std::optional<std::thread> stage1_thread;
+  std::optional<std::thread> stage2_thread;
+  std::optional<std::thread> stage3_thread;
+
   if (config.stage1_enable == 1) {
     {
       TraceN("start/stage1_sync");
-      chain_sync.start(sync_ioc);
+      stage1_sync.start(stage1_ioc);
     }
-    stage1_thread.emplace([&sync_ioc]() {
+    stage1_thread.emplace([&stage1_ioc]() {
       TraceThread("Stage1-Sync");
-      sync_ioc.run();
+      stage1_ioc.run();
     });
   }
-
-  stage2::EventSync event_sync(stage1_db, stage2_db);
-  boost::asio::io_context stage2_ioc;
-  std::optional<std::thread> stage2_thread;
   if (config.stage2_enable == 1) {
     {
       TraceN("start/stage2_sync");
-      event_sync.start(stage2_ioc);
+      stage2_sync.start(stage2_ioc);
     }
     stage2_thread.emplace([&stage2_ioc]() {
       TraceThread("Stage2-Sync");
       stage2_ioc.run();
     });
   }
-
-  stage3::PnlEngine pnl_engine(event_sync.builder(), stage2_db);
-  pnl_engine.start(stage2_ioc);
-
-  auto stage2_getter = [&event_sync]() -> Stage2SyncStatus {
-    const auto &p = event_sync.progress();
-    return {p.syncing, p.stage1_last_block, p.stage2_cursor, p.behind_blocks,
-            p.behind_chunks, p.blocks_per_second, p.eta_seconds};
-  };
+  if (config.stage3_enable == 1) {
+    {
+      TraceN("start/stage3_sync");
+      stage3_sync.start(stage3_ioc);
+    }
+    stage3_thread.emplace([&stage3_ioc]() {
+      TraceThread("Stage3-Sync");
+      stage3_ioc.run();
+    });
+  }
 
   boost::asio::io_context api_ioc;
-  ApiServer api_server(api_ioc, stage1_db, stage2_db, pnl_engine, config.backend_port, stage1_getter, stage2_getter);
+  ApiServer api_server(api_ioc, stage1_db, stage2_db, stage3_sync, config.backend_port,
+                       stage1_getter, stage2_getter, stage3_getter);
 
   boost::asio::signal_set signals(api_ioc, SIGINT, SIGTERM);
   signals.async_wait([&](const boost::system::error_code &, int sig) {
     std::cout << "\n[Main] 正在关闭..." << std::endl;
     if (config.stage1_enable == 1) {
-      chain_sync.stop();
+      stage1_sync.stop();
     }
     if (config.stage2_enable == 1) {
-      event_sync.stop();
+      stage2_sync.stop();
     }
-    sync_ioc.stop();
+    if (config.stage3_enable == 1) {
+      stage3_sync.stop();
+    }
+    stage1_ioc.stop();
     stage2_ioc.stop();
+    stage3_ioc.stop();
     api_ioc.stop();
   });
 
@@ -125,6 +145,9 @@ int main(int argc, char *argv[]) {
   }
   if (stage2_thread.has_value()) {
     stage2_thread->join();
+  }
+  if (stage3_thread.has_value()) {
+    stage3_thread->join();
   }
 
   std::cout << "[Main] 已退出" << std::endl;

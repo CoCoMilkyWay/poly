@@ -24,18 +24,25 @@ using json = nlohmann::json;
 
 namespace stage1 {
 
-class ChainSync {
+struct SyncStatus {
+  bool syncing = false;
+  int64_t last_block = 0;
+  int64_t head_block = 0;
+  int64_t behind_blocks = 0;
+  int64_t behind_chunks = 0;
+  double blocks_per_second = 0.0;
+  double eta_seconds = -1.0;
+  double bytes_per_block = 0.0;
+};
+
+class StageSync {
 public:
-  ChainSync(const Config &config, Database &db);
+  StageSync(const Config &config, Database &db);
 
   void start(asio::io_context &ioc);
   void stop();
 
-  bool is_syncing() const;
-  int64_t get_head_block() const;
-  double get_blocks_per_second() const;
-  double get_eta_seconds() const;
-  double get_bytes_per_block() const;
+  SyncStatus status() const;
 
 private:
   static constexpr int64_t kSyncChunkBlocks = 100000;

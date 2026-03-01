@@ -77,10 +77,11 @@ std::string build_human_readable_select_list(duckdb::Connection &conn, const std
 
 } // namespace
 
-ApiSession::ApiSession(tcp::socket socket, Database &stage1_db, Database &stage2_db, stage3::PnlEngine &pnl_engine,
-                       Stage1SyncGetter stage1_getter, Stage2SyncGetter stage2_getter)
-    : socket_(std::move(socket)), stage1_db_(stage1_db), stage2_db_(stage2_db), pnl_engine_(pnl_engine),
-      sync_getter_(std::move(stage1_getter)), stage2_getter_(std::move(stage2_getter)) {}
+ApiSession::ApiSession(tcp::socket socket, Database &stage1_db, Database &stage2_db, stage3::StageSync &stage3_sync,
+                       Stage1SyncGetter stage1_getter, Stage2SyncGetter stage2_getter, Stage3SyncGetter stage3_getter)
+    : socket_(std::move(socket)), stage1_db_(stage1_db), stage2_db_(stage2_db), stage3_sync_(stage3_sync),
+      sync_getter_(std::move(stage1_getter)), stage2_getter_(std::move(stage2_getter)),
+      stage3_getter_(std::move(stage3_getter)) {}
 
 void ApiSession::run() {
   do_read();
@@ -277,8 +278,12 @@ void ApiSession::handle_sync_state() {
 
   if (sync_getter_) {
     Stage1SyncStatus status = sync_getter_();
+    result["last_block"] = status.last_block;
     result["head_block"] = status.head_block;
-    result["is_syncing"] = status.is_syncing;
+    result["is_syncing"] = status.syncing;
+    result["syncing"] = status.syncing;
+    result["behind_blocks"] = status.behind_blocks;
+    result["behind_chunks"] = status.behind_chunks;
     result["blocks_per_second"] = status.blocks_per_second;
     result["eta_seconds"] = status.eta_seconds;
     result["bytes_per_block"] = status.bytes_per_block;
@@ -415,7 +420,7 @@ void ApiSession::handle_rebuild_status() {
   TraceN("api/rebuild");
   res_.set(http::field::content_type, "application/json");
 
-  const auto &p = pnl_engine_.progress();
+  const auto &p = stage3_sync_.progress();
   const auto &ct = p.cond_tree;
   const auto &tt = p.token_tree;
   std::unordered_map<uint8_t, std::string> coll_id_to_addr;
@@ -667,12 +672,12 @@ void ApiSession::handle_rebuild_status() {
       {"convert_sem_tree", convert_sem_tree},
       {"order_sem_tree", order_sem_tree},
   };
-  {
-    auto s3 = pnl_engine_.sync_status();
+  if (stage3_getter_) {
+    auto s3 = stage3_getter_();
     result["stage3_sync"] = {
         {"syncing", s3.syncing},
-        {"last_block", s3.last_block},
-        {"head_block", s3.head_block},
+        {"stage2_last_block", s3.stage2_last_block},
+        {"stage3_cursor", s3.stage3_cursor},
         {"behind_blocks", s3.behind_blocks},
         {"behind_chunks", s3.behind_chunks},
         {"blocks_per_second", s3.blocks_per_second},
@@ -743,7 +748,7 @@ void ApiSession::handle_user_pnl(const std::string &target) {
     return;
   }
 
-  const auto *state = pnl_engine_.get_user_state(addr);
+  const auto *state = stage3_sync_.get_user_state(addr);
   if (!state) {
     res_.result(http::status::not_found);
     res_.body() = R"({"error":"User not found"})";
@@ -763,7 +768,7 @@ void ApiSession::handle_user_pnl(const std::string &target) {
     total_cost_basis += last.cost_basis;
 
     json cond_obj = {
-        {"condition_id", pnl_engine_.get_condition_id(ch.cond_idx)},
+        {"condition_id", stage3_sync_.get_condition_id(ch.cond_idx)},
         {"realized_pnl", last.realized_pnl},
         {"cost_basis", last.cost_basis},
         {"positions", json::array()},
@@ -797,7 +802,7 @@ void ApiSession::handle_user_positions(const std::string &target) {
     return;
   }
 
-  const auto *state = pnl_engine_.get_user_state(addr);
+  const auto *state = stage3_sync_.get_user_state(addr);
   if (!state) {
     res_.result(http::status::not_found);
     res_.body() = R"({"error":"User not found"})";
@@ -822,7 +827,7 @@ void ApiSession::handle_user_positions(const std::string &target) {
     }
 
     json pos_obj = {
-        {"condition_id", pnl_engine_.get_condition_id(ch.cond_idx)},
+        {"condition_id", stage3_sync_.get_condition_id(ch.cond_idx)},
         {"positions", json::array()},
         {"cost_basis", last.cost_basis},
     };
@@ -849,7 +854,7 @@ void ApiSession::handle_replay_users() {
   std::string limit_str = get_param("limit");
   int64_t limit = limit_str.empty() ? 200 : std::stoll(limit_str);
 
-  auto users = pnl_engine_.get_users_sorted(limit);
+  auto users = stage3_sync_.get_users_sorted(limit);
   json result = json::array();
   for (const auto &u : users) {
     result.push_back({
@@ -874,7 +879,7 @@ void ApiSession::handle_replay() {
     return;
   }
 
-  auto timeline = pnl_engine_.get_user_timeline(user);
+  auto timeline = stage3_sync_.get_user_timeline(user);
   if (timeline.empty()) {
     res_.result(http::status::not_found);
     res_.body() = R"({"error":"User not found or no events"})";
@@ -922,7 +927,7 @@ void ApiSession::handle_replay_positions() {
   }
 
   int64_t sort_key = std::stoll(sk_str);
-  auto positions = pnl_engine_.get_positions_at(user, sort_key);
+  auto positions = stage3_sync_.get_positions_at(user, sort_key);
 
   json pos_arr = json::array();
   for (const auto &p : positions) {
@@ -958,8 +963,8 @@ void ApiSession::handle_replay_trades() {
   int64_t sort_key = std::stoll(sk_str);
   int radius = radius_str.empty() ? 20 : std::stoi(radius_str);
 
-  auto trades = pnl_engine_.get_trades_near(user, sort_key, radius);
-  size_t center = pnl_engine_.get_trades_center_index(user, sort_key, radius);
+  auto trades = stage3_sync_.get_trades_near(user, sort_key, radius);
+  size_t center = stage3_sync_.get_trades_center_index(user, sort_key, radius);
 
   json events_arr = json::array();
   for (const auto &t : trades) {

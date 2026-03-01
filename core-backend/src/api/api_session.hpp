@@ -18,8 +18,11 @@ using tcp = asio::ip::tcp;
 using json = nlohmann::json;
 
 struct Stage1SyncStatus {
-  bool is_syncing = false;
+  bool syncing = false;
+  int64_t last_block = 0;
   int64_t head_block = 0;
+  int64_t behind_blocks = 0;
+  int64_t behind_chunks = 0;
   double blocks_per_second = 0.0;
   double eta_seconds = -1.0;
   double bytes_per_block = 0.0;
@@ -35,13 +38,27 @@ struct Stage2SyncStatus {
   double eta_seconds = -1.0;
 };
 
+struct Stage3SyncStatus {
+  bool syncing = false;
+  int64_t stage2_last_block = 0;
+  int64_t stage3_cursor = 0;
+  int64_t behind_blocks = 0;
+  int64_t behind_chunks = 0;
+  double blocks_per_second = 0.0;
+  double eta_seconds = -1.0;
+  int64_t stage3_sort_key = -1;
+  int64_t processed_events = 0;
+};
+
 class ApiSession : public std::enable_shared_from_this<ApiSession> {
 public:
   using Stage1SyncGetter = std::function<Stage1SyncStatus()>;
   using Stage2SyncGetter = std::function<Stage2SyncStatus()>;
+  using Stage3SyncGetter = std::function<Stage3SyncStatus()>;
 
-  ApiSession(tcp::socket socket, Database &stage1_db, Database &stage2_db, stage3::PnlEngine &pnl_engine,
-             Stage1SyncGetter stage1_getter = nullptr, Stage2SyncGetter stage2_getter = nullptr);
+  ApiSession(tcp::socket socket, Database &stage1_db, Database &stage2_db, stage3::StageSync &stage3_sync,
+             Stage1SyncGetter stage1_getter = nullptr, Stage2SyncGetter stage2_getter = nullptr,
+             Stage3SyncGetter stage3_getter = nullptr);
 
   void run();
 
@@ -70,9 +87,10 @@ private:
   tcp::socket socket_;
   Database &stage1_db_;
   Database &stage2_db_;
-  stage3::PnlEngine &pnl_engine_;
+  stage3::StageSync &stage3_sync_;
   Stage1SyncGetter sync_getter_;
   Stage2SyncGetter stage2_getter_;
+  Stage3SyncGetter stage3_getter_;
   beast::flat_buffer buffer_;
   http::request<http::string_body> req_;
   http::response<http::string_body> res_;

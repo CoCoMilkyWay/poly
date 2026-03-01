@@ -8,7 +8,7 @@
 
 namespace stage2 {
 
-EventSync::EventSync(Database &stage1_db, Database &stage2_db, int base_interval)
+StageSync::StageSync(Database &stage1_db, Database &stage2_db, int base_interval)
     : stage1_db_(stage1_db), stage2_db_(stage2_db),
       builder_(stage1_db, stage2_db, kStage2ChunkBlocks),
       chunk_size_(kStage2ChunkBlocks), base_interval_(base_interval) {
@@ -17,20 +17,22 @@ EventSync::EventSync(Database &stage1_db, Database &stage2_db, int base_interval
   progress_.stage2_cursor = builder_.cursor();
 }
 
-void EventSync::start(asio::io_context &ioc) {
+void StageSync::start(asio::io_context &ioc) {
   ioc_ = &ioc;
   schedule_sync(1);
 }
 
-void EventSync::stop() { stop_requested_ = true; }
+void StageSync::stop() { stop_requested_ = true; }
 
-const SyncProgress &EventSync::progress() const { return progress_; }
+const SyncProgress &StageSync::status() const { return progress_; }
 
-const BuildProgress &EventSync::build_progress() const { return builder_.progress(); }
+const SyncProgress &StageSync::progress() const { return progress_; }
 
-EventBuilder &EventSync::builder() { return builder_; }
+const BuildProgress &StageSync::build_progress() const { return builder_.progress(); }
 
-void EventSync::schedule_sync(int delay_seconds) {
+EventBuilder &StageSync::builder() { return builder_; }
+
+void StageSync::schedule_sync(int delay_seconds) {
   if (stop_requested_)
     return;
   auto timer = std::make_shared<asio::steady_timer>(*ioc_, std::chrono::seconds(delay_seconds));
@@ -41,7 +43,7 @@ void EventSync::schedule_sync(int delay_seconds) {
   });
 }
 
-void EventSync::do_sync() {
+void StageSync::do_sync() {
   TraceN("s2/sync");
   auto refresh_timing_metrics = [&](int64_t remaining_blocks) {
     if (commit_history_.size() < 2) {

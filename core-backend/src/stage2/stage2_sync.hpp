@@ -26,14 +26,15 @@ struct SyncProgress {
   int phase = 0;
 };
 
-class EventSync {
+class StageSync {
 public:
-  EventSync(Database &stage1_db, Database &stage2_db, int base_interval = 30);
+  StageSync(Database &stage1_db, Database &stage2_db, int base_interval = 30);
 
   void start(asio::io_context &ioc);
 
   void stop();
 
+  const SyncProgress &status() const;
   const SyncProgress &progress() const;
   const BuildProgress &build_progress() const;
 

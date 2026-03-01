@@ -19,6 +19,7 @@
 #include <mutex>
 #include <optional>
 #include <deque>
+#include <atomic>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -35,7 +36,7 @@ struct ReplayProgress {
   double replay_ms = 0;
 };
 
-class PnlEngine {
+class StageSync {
 public:
   struct SyncStatus {
     bool syncing = false;
@@ -135,7 +136,7 @@ public:
     uint8_t token_idx = 0;
   };
 
-  PnlEngine(EventBuilder &builder, Database &stage2_db)
+  StageSync(EventBuilder &builder, Database &stage2_db)
       : builder_(builder), stage2_db_(stage2_db) {
     init_schema();
     load_conditions();
@@ -145,8 +146,11 @@ public:
 
   void start(asio::io_context &ioc) {
     ioc_ = &ioc;
+    stop_requested_ = false;
     schedule_sync(1);
   }
+
+  void stop() { stop_requested_ = true; }
 
   void rebuild_all() {
     std::lock_guard<std::mutex> lock(sync_mu_);
@@ -158,10 +162,12 @@ public:
   const BuildProgress &build_progress() const { return builder_.progress(); }
   const ReplayProgress &replay_progress() const { return replay_progress_; }
 
-  SyncStatus sync_status() const {
+  SyncStatus status() const {
     std::lock_guard<std::mutex> lock(sync_mu_);
     return sync_;
   }
+
+  SyncStatus sync_status() const { return status(); }
 
   RebuildProgress progress() const {
     const auto &wp = builder_.progress();
@@ -211,7 +217,7 @@ public:
     p.convert_sem_tree = bp.convert_sem_tree;
     p.order_sem_tree = bp.order_sem_tree;
     p.event_by_collateral = bp.event_by_collateral;
-    p.stage3_sync = sync_status();
+    p.stage3_sync = status();
     if (p.stage3_sync.behind_blocks == 0 && p.total_users > 0) {
       p.phase = 7;
     }
@@ -430,6 +436,7 @@ private:
 
   asio::io_context *ioc_ = nullptr;
   std::shared_ptr<asio::steady_timer> timer_;
+  std::atomic<bool> stop_requested_{false};
 
   std::vector<ConditionInfo> conditions_;
   std::vector<std::string> cond_ids_;
@@ -638,12 +645,12 @@ private:
   }
 
   void schedule_sync(int delay_seconds) {
-    if (ioc_ == nullptr) {
+    if (ioc_ == nullptr || stop_requested_) {
       return;
     }
     timer_ = std::make_shared<asio::steady_timer>(*ioc_, std::chrono::seconds(delay_seconds));
     timer_->async_wait([this](const boost::system::error_code &ec) {
-      if (ec) {
+      if (ec || stop_requested_) {
         return;
       }
       do_sync_tick();
@@ -785,7 +792,7 @@ private:
       }
     }
     if (max_cond_idx >= 0 && static_cast<size_t>(max_cond_idx) >= conditions_.size()) {
-      const_cast<PnlEngine *>(this)->load_conditions();
+      const_cast<StageSync *>(this)->load_conditions();
     }
 
     if (!states.empty()) {

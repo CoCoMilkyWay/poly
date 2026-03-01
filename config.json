@@ -6,6 +6,7 @@
   "rpc_transport": "curl",
   "stage1_enable": 1,
   "stage2_enable": 1,
+  "stage3_enable": 0,
   "db_path_stage1": "data/stage1/polymarket.duckdb",
   "db_path_stage2": "data/stage2/users.duckdb",
   "stage1_rpc_query_threads": 10,
