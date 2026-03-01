@@ -30,6 +30,27 @@
     border-radius: 2px;
   }
   .rp-query-row { margin-bottom: 12px; }
+  .rp-sync-stats {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+  .rp-sync-stat {
+    background: #252525;
+    border-radius: 4px;
+    padding: 4px 10px;
+  }
+  .rp-sync-stat-label {
+    font-size: 0.65em;
+    color: #666;
+  }
+  .rp-sync-stat-value {
+    font-size: 0.9em;
+    font-weight: 500;
+    font-family: monospace;
+    color: #fff;
+  }
   .rp-user-select { display: flex; gap: 8px; align-items: center; }
   .rp-input-wrapper { position: relative; }
   .rp-user-input {
@@ -281,16 +302,38 @@
 <div class="rp-card" id="rp-card">
   <div class="rp-header">
     <h2>PnL 回放器</h2>
+    <span id="rp-sync-badge" class="badge badge-warning">等待中</span>
+  </div>
+  <div class="rp-sync-stats">
+    <div class="rp-sync-stat">
+      <div class="rp-sync-stat-label">Last Block</div>
+      <div class="rp-sync-stat-value" id="rp-last-block">0</div>
+    </div>
+    <div class="rp-sync-stat">
+      <div class="rp-sync-stat-label">Head Block</div>
+      <div class="rp-sync-stat-value" id="rp-head-block">0</div>
+    </div>
+    <div class="rp-sync-stat">
+      <div class="rp-sync-stat-label">Behind</div>
+      <div class="rp-sync-stat-value" id="rp-behind">-</div>
+    </div>
+    <div class="rp-sync-stat">
+      <div class="rp-sync-stat-label">Speed</div>
+      <div class="rp-sync-stat-value" id="rp-speed">-</div>
+    </div>
+    <div class="rp-sync-stat">
+      <div class="rp-sync-stat-label">ETA</div>
+      <div class="rp-sync-stat-value" id="rp-eta">-</div>
+    </div>
   </div>
   <div class="rp-query-row">
     <div class="rp-user-select">
       <div class="rp-input-wrapper">
         <input type="text" class="rp-user-input" id="rp-user-input"
-               placeholder="输入用户地址 (0x...) 或点击选择" disabled />
+               placeholder="输入用户地址 (0x...) 或点击选择" />
         <div class="rp-user-dropdown" id="rp-user-dropdown"></div>
       </div>
-      <button class="rp-btn rp-btn-primary" onclick="rpLoadUser()" id="rp-load-btn" disabled>查询</button>
-      <span class="rp-query-hint" id="rp-query-hint">请先执行全量重建</span>
+      <button class="rp-btn rp-btn-primary" onclick="rpLoadUser()" id="rp-load-btn">查询</button>
     </div>
   </div>
 
@@ -362,7 +405,9 @@ const _rEvtNames = ['Buy','Sell','Split','Merge','Redeem','FPMMBuy','FPMMSell','
 const _rEvtNamesCN = ['买入','卖出','铸造','合币','赎回','AMM买','AMM卖','LP添加','LP移除','转换','转入','转出'];
 
 document.addEventListener('DOMContentLoaded', () => {
-  rpCheckStatus();
+  rpLoadUserList();
+  rpPollSync();
+  setInterval(rpPollSync, 2000);
 
   const input = document.getElementById('rp-user-input');
   const dropdown = document.getElementById('rp-user-dropdown');
@@ -380,23 +425,43 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('resize', () => { if (_rTimeline.length) rpDraw(); });
 });
 
-async function rpCheckStatus() {
+async function rpPollSync() {
   try {
     const resp = await fetch('/api/rebuild-status');
     const s = await resp.json();
-    const ready = !!(s.stage3_sync && s.stage3_sync.ready);
-    if ((ready || s.phase === 7) && s.total_users > 0) rpEnableQuery();
-  } catch(e) {}
+    rpUpdateSyncStats(s.stage3_sync || {});
+  } catch(e) {
+  }
 }
 
-function rpEnableQuery() {
-  document.getElementById('rp-user-input').disabled = false;
-  document.getElementById('rp-load-btn').disabled = false;
-  document.getElementById('rp-query-hint').style.display = 'none';
-  rpLoadUserList();
-}
+function rpOnRebuildDone() {}
 
-function rpOnRebuildDone() { rpEnableQuery(); }
+function rpUpdateSyncStats(sync) {
+  const last = Number(sync.last_block || 0);
+  const head = Number(sync.head_block || 0);
+  const behind = Math.max(0, Number(sync.behind_blocks || 0));
+  const syncing = !!sync.syncing;
+  const bps = Number(sync.blocks_per_second || 0);
+  const eta = Number(sync.eta_seconds ?? -1);
+
+  document.getElementById('rp-last-block').textContent = last.toLocaleString();
+  document.getElementById('rp-head-block').textContent = head.toLocaleString();
+  document.getElementById('rp-behind').textContent = behind.toLocaleString();
+  document.getElementById('rp-speed').textContent = bps > 0 ? `${Math.round(bps).toLocaleString()}/s` : '-';
+  document.getElementById('rp-eta').textContent = rpFmtEta(eta);
+
+  const badge = document.getElementById('rp-sync-badge');
+  if (syncing) {
+    badge.className = 'badge badge-warning';
+    badge.textContent = '同步中';
+  } else if (behind === 0 && head > 0) {
+    badge.className = 'badge badge-success';
+    badge.textContent = '已同步';
+  } else {
+    badge.className = 'badge badge-warning';
+    badge.textContent = '等待中';
+  }
+}
 
 async function rpLoadUserList() {
   try {
@@ -957,6 +1022,14 @@ function rpFmtSk(sk) {
 function rpFmtSkShort(sk) {
   const block = Math.floor(sk / 1e9);
   return block.toLocaleString();
+}
+
+function rpFmtEta(seconds) {
+  if (!Number.isFinite(seconds) || seconds < 0) return '-';
+  if (seconds < 60) return `${Math.max(1, Math.round(seconds))}s`;
+  if (seconds < 3600) return `${(seconds / 60).toFixed(1)}m`;
+  if (seconds < 86400) return `${(seconds / 3600).toFixed(1)}h`;
+  return `${(seconds / 86400).toFixed(1)}d`;
 }
 
 function rpNiceStep(range, ticks) {

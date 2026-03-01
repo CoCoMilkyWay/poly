@@ -11,12 +11,14 @@
 #include <array>
 #include <boost/asio.hpp>
 #include <chrono>
+#include <cstdlib>
 #include <cmath>
 #include <cstring>
 #include <limits>
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <deque>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -36,15 +38,15 @@ struct ReplayProgress {
 class PnlEngine {
 public:
   struct SyncStatus {
-    bool running = false;
-    int64_t stage2_cursor = 0;
-    int64_t stage3_sort_key = -1;
-    int64_t stage3_block = 0;
+    bool syncing = false;
+    int64_t last_block = 0;
+    int64_t head_block = 0;
     int64_t behind_blocks = 0;
-    int64_t processed_events = 0;
-    int64_t behind_events = 0;
-    double events_per_second = 0.0;
+    int64_t behind_chunks = 0;
+    double blocks_per_second = 0.0;
     double eta_seconds = -1.0;
+    int64_t processed_events = 0;
+    int64_t stage3_sort_key = -1;
   };
 
   struct RebuildProgress {
@@ -162,7 +164,6 @@ public:
   }
 
   RebuildProgress progress() const {
-    maybe_catch_up_for_query();
     const auto &wp = builder_.progress();
     const auto &bp = builder_.committed_progress();
     RebuildProgress p;
@@ -218,7 +219,6 @@ public:
   }
 
   const UserState *get_user_state(const std::string &addr) const {
-    maybe_catch_up_for_query();
     std::string lower = normalize_addr(addr);
     if (lower.empty()) {
       return nullptr;
@@ -257,7 +257,6 @@ public:
 
   std::vector<UserSummary> get_users_sorted(int64_t limit = 200) const {
     TraceN("s3/users");
-    maybe_catch_up_for_query();
     auto conn = stage2_db_.create_connection();
     int64_t safe_limit = std::max<int64_t>(1, limit);
     auto r = conn->Query(
@@ -280,7 +279,6 @@ public:
 
   std::vector<TimelineEntry> get_user_timeline(const std::string &addr) const {
     TraceN("s3/timeline");
-    maybe_catch_up_for_query();
     std::string lower = normalize_addr(addr);
     if (lower.empty()) {
       return {};
@@ -424,8 +422,11 @@ private:
   mutable ReplayProgress replay_progress_;
   mutable SyncStatus sync_;
   mutable CursorKey cursor_;
-  mutable std::chrono::steady_clock::time_point last_tick_tp_{};
-  mutable int64_t last_tick_events_ = 0;
+  struct CommitRecord {
+    std::chrono::steady_clock::time_point committed_at;
+    int64_t block = 0;
+  };
+  mutable std::deque<CommitRecord> commit_history_;
 
   asio::io_context *ioc_ = nullptr;
   std::shared_ptr<asio::steady_timer> timer_;
@@ -438,8 +439,9 @@ private:
   std::vector<std::string> empty_users_;
   std::vector<UserState> empty_user_states_;
 
-  static constexpr int64_t kSyncChunkRows = 200000;
-  static constexpr int64_t kQueryCatchUpChunks = 2;
+  static constexpr int64_t kSyncChunkBlocks = 100000;
+  static constexpr size_t kEtaWindowSize = 20;
+  static constexpr int kBaseIntervalSeconds = 30;
   static constexpr int64_t kCursorSentinel = std::numeric_limits<int32_t>::min();
 
   static std::string normalize_addr(const std::string &addr) {
@@ -617,35 +619,17 @@ private:
   }
 
   void refresh_sync_status_locked(bool with_event_count) const {
-    sync_.running = replay_progress_.running;
-    sync_.stage2_cursor = builder_.cursor();
+    sync_.syncing = replay_progress_.running;
+    sync_.head_block = builder_.cursor();
     sync_.stage3_sort_key = cursor_.sort_key;
-    sync_.stage3_block = (cursor_.sort_key < 0) ? 0 : cursor_.sort_key / SORT_KEY_SCALE;
-    sync_.behind_blocks = std::max<int64_t>(0, sync_.stage2_cursor - sync_.stage3_block);
+    sync_.last_block = (cursor_.sort_key < 0) ? 0 : cursor_.sort_key / SORT_KEY_SCALE;
+    sync_.behind_blocks = std::max<int64_t>(0, sync_.head_block - sync_.last_block);
+    sync_.behind_chunks = (sync_.behind_blocks + kSyncChunkBlocks - 1) / kSyncChunkBlocks;
     sync_.processed_events = cursor_.processed_events;
 
-    if (sync_.behind_blocks == 0) {
-      sync_.behind_events = 0;
-      return;
-    }
     if (!with_event_count) {
       return;
     }
-    auto conn = stage2_db_.create_connection();
-    std::string user_hex = cursor_.user_hex;
-    auto r = conn->Query(
-        "SELECT COUNT(*) FROM user_event WHERE "
-        "(sort_key > " + std::to_string(cursor_.sort_key) + ") OR "
-        "(sort_key = " + std::to_string(cursor_.sort_key) + " AND user_addr > from_hex('" + user_hex + "')) OR "
-        "(sort_key = " + std::to_string(cursor_.sort_key) + " AND user_addr = from_hex('" + user_hex + "') "
-        "AND cond_idx > " + std::to_string(cursor_.cond_idx) + ") OR "
-        "(sort_key = " + std::to_string(cursor_.sort_key) + " AND user_addr = from_hex('" + user_hex + "') "
-        "AND cond_idx = " + std::to_string(cursor_.cond_idx) + " AND event_type > " + std::to_string(cursor_.event_type) + ") OR "
-        "(sort_key = " + std::to_string(cursor_.sort_key) + " AND user_addr = from_hex('" + user_hex + "') "
-        "AND cond_idx = " + std::to_string(cursor_.cond_idx) + " AND event_type = " + std::to_string(cursor_.event_type) +
-        " AND token_idx > " + std::to_string(cursor_.token_idx) + ")");
-    assert(r && !r->HasError());
-    sync_.behind_events = r->GetValue(0, 0).GetValue<int64_t>();
   }
 
   void refresh_sync_status(bool with_event_count) const {
@@ -670,55 +654,65 @@ private:
     {
       std::lock_guard<std::mutex> lock(sync_mu_);
       replay_progress_.running = true;
+      int64_t before_block = (cursor_.sort_key < 0) ? 0 : cursor_.sort_key / SORT_KEY_SCALE;
       bool advanced = process_chunk_locked();
-      if (advanced) {
-        refresh_speed_locked();
+      refresh_sync_status_locked(false);
+      int64_t after_block = (cursor_.sort_key < 0) ? 0 : cursor_.sort_key / SORT_KEY_SCALE;
+      if (advanced && after_block > before_block) {
+        commit_history_.push_back({std::chrono::steady_clock::now(), after_block});
+        if (commit_history_.size() > kEtaWindowSize) {
+          commit_history_.pop_front();
+        }
       } else {
-        refresh_sync_status_locked(false);
+        sync_.blocks_per_second = 0.0;
+        sync_.eta_seconds = (sync_.behind_blocks == 0) ? 0.0 : -1.0;
       }
+      refresh_speed_locked();
       replay_progress_.running = false;
-      int next_delay = sync_.behind_events > 0 ? 0 : 2;
+      int next_delay = (sync_.behind_chunks > 1) ? 0 : kBaseIntervalSeconds;
       schedule_sync(next_delay);
     }
   }
 
   void refresh_speed_locked() const {
-    auto now = std::chrono::steady_clock::now();
-    if (last_tick_tp_.time_since_epoch().count() == 0) {
-      last_tick_tp_ = now;
-      last_tick_events_ = cursor_.processed_events;
-      refresh_sync_status_locked(true);
+    if (commit_history_.size() < 2) {
+      sync_.blocks_per_second = 0.0;
+      sync_.eta_seconds = (sync_.behind_blocks == 0) ? 0.0 : -1.0;
       return;
     }
-    double dt = std::chrono::duration<double>(now - last_tick_tp_).count();
-    int64_t de = cursor_.processed_events - last_tick_events_;
-    if (dt > 0.0 && de >= 0) {
-      sync_.events_per_second = static_cast<double>(de) / dt;
-      sync_.eta_seconds = (sync_.events_per_second > 0.0)
-                              ? static_cast<double>(sync_.behind_events) / sync_.events_per_second
-                              : -1.0;
+    const auto &first = commit_history_.front();
+    const auto &last = commit_history_.back();
+    double elapsed_s = std::chrono::duration<double>(last.committed_at - first.committed_at).count();
+    if (elapsed_s <= 0.0) {
+      sync_.blocks_per_second = 0.0;
+      sync_.eta_seconds = -1.0;
+      return;
     }
-    last_tick_tp_ = now;
-    last_tick_events_ = cursor_.processed_events;
-    refresh_sync_status_locked(false);
-  }
-
-  void maybe_catch_up_for_query() const {
-    std::lock_guard<std::mutex> lock(sync_mu_);
-    for (int64_t i = 0; i < kQueryCatchUpChunks; ++i) {
-      if (!process_chunk_locked()) {
-        break;
-      }
+    int64_t committed_blocks = std::max<int64_t>(0, last.block - first.block);
+    if (committed_blocks == 0) {
+      sync_.blocks_per_second = 0.0;
+      sync_.eta_seconds = (sync_.behind_blocks == 0) ? 0.0 : -1.0;
+      return;
     }
-    refresh_speed_locked();
+    sync_.blocks_per_second = static_cast<double>(committed_blocks) / elapsed_s;
+    sync_.eta_seconds =
+        (sync_.behind_blocks == 0) ? 0.0 : static_cast<double>(sync_.behind_blocks) / sync_.blocks_per_second;
   }
 
   bool process_chunk_locked() const {
+    int64_t current_block = (cursor_.sort_key < 0) ? 0 : cursor_.sort_key / SORT_KEY_SCALE;
+    int64_t head_block = builder_.cursor();
+    if (current_block >= head_block) {
+      return false;
+    }
+    int64_t target_block = std::min(current_block + kSyncChunkBlocks, head_block);
+    int64_t upper_sort_key = target_block * SORT_KEY_SCALE + (SORT_KEY_SCALE - 1);
+
     auto conn = stage2_db_.create_connection();
     std::string user_hex = cursor_.user_hex;
     auto qr = conn->Query(
         "SELECT lower(hex(user_addr)) AS user_hex, sort_key, cond_idx, event_type, token_idx, amount, price "
-        "FROM user_event WHERE "
+        "FROM user_event WHERE ("
         "(sort_key > " + std::to_string(cursor_.sort_key) + ") OR "
         "(sort_key = " + std::to_string(cursor_.sort_key) + " AND user_addr > from_hex('" + user_hex + "')) OR "
         "(sort_key = " + std::to_string(cursor_.sort_key) + " AND user_addr = from_hex('" + user_hex + "') "
@@ -727,12 +721,22 @@ private:
         "AND cond_idx = " + std::to_string(cursor_.cond_idx) + " AND event_type > " + std::to_string(cursor_.event_type) + ") OR "
         "(sort_key = " + std::to_string(cursor_.sort_key) + " AND user_addr = from_hex('" + user_hex + "') "
         "AND cond_idx = " + std::to_string(cursor_.cond_idx) + " AND event_type = " + std::to_string(cursor_.event_type) +
-        " AND token_idx > " + std::to_string(cursor_.token_idx) + ") "
-        "ORDER BY sort_key, user_addr, cond_idx, event_type, token_idx "
-        "LIMIT " + std::to_string(kSyncChunkRows));
+        " AND token_idx > " + std::to_string(cursor_.token_idx) + ")) "
+        "AND sort_key <= " + std::to_string(upper_sort_key) + " "
+        "ORDER BY sort_key, user_addr, cond_idx, event_type, token_idx");
     assert(qr && !qr->HasError());
     if (qr->RowCount() == 0) {
-      return false;
+      cursor_.sort_key = upper_sort_key;
+      cursor_.user_hex.clear();
+      cursor_.cond_idx = kCursorSentinel;
+      cursor_.event_type = kCursorSentinel;
+      cursor_.token_idx = kCursorSentinel;
+      auto tx = conn->Query("BEGIN");
+      assert(tx && !tx->HasError());
+      save_cursor_locked(*conn);
+      auto cm = conn->Query("COMMIT");
+      assert(cm && !cm->HasError());
+      return true;
     }
 
     std::vector<ReplayRow> rows;
@@ -993,10 +997,21 @@ private:
     int i = row.token_idx;
 
     auto remove_cost = [&](int64_t qty) {
-      assert(qty > 0);
+      assert(qty >= 0);
+      if (qty == 0) {
+        return int64_t{0};
+      }
       int64_t pos = st.positions[i];
-      assert(pos > 0);
-      assert(pos >= qty);
+      if (pos <= 0) {
+        st.positions[i] -= qty;
+        return int64_t{0};
+      }
+      if (qty >= pos) {
+        int64_t all_cost = st.cost[i];
+        st.cost[i] = 0;
+        st.positions[i] -= qty;
+        return all_cost;
+      }
       int64_t cost_removed = st.cost[i] * qty / pos;
       st.cost[i] -= cost_removed;
       st.positions[i] -= qty;
@@ -1008,62 +1023,89 @@ private:
     case EventType::FPMMBuy:
     case EventType::SplitNormal:
     case EventType::SplitNegRisk:
-    case EventType::SplitNonPoly:
+    case EventType::SplitNonPoly: {
+      int64_t qty = std::llabs(row.amount);
+      if (row.amount >= 0) {
+        st.positions[i] += qty;
+        st.cost[i] += mul_div_1e6(qty, row.price);
+      } else {
+        (void)remove_cost(qty);
+      }
+      return;
+    }
     case EventType::FPMMLPAdd:
-      assert(row.amount >= 0);
-      st.positions[i] += row.amount;
-      st.cost[i] += mul_div_1e6(row.amount, row.price);
+      // LPAdd 表示资金进池，不直接增加可用 token 仓位（后续再细化 LP 成本池）。
       return;
     case EventType::FPMMLPReturn:
     case EventType::TransferInNegRisk:
     case EventType::TransferInOther:
-    case EventType::TransferInNonPoly:
-      assert(row.amount >= 0);
-      st.positions[i] += row.amount;
+    case EventType::TransferInNonPoly: {
+      int64_t qty = std::llabs(row.amount);
+      if (row.amount >= 0) {
+        st.positions[i] += qty;
+      } else {
+        (void)remove_cost(qty);
+      }
       return;
+    }
     case EventType::OrderSell:
     case EventType::FPMMSell:
     case EventType::MergeNormal:
     case EventType::MergeNegRisk:
     case EventType::MergeNonPoly: {
-      assert(row.amount <= 0);
-      int64_t qty = -row.amount;
-      int64_t cost_removed = remove_cost(qty);
-      int64_t proceeds = mul_div_1e6(qty, row.price);
-      st.realized_pnl += proceeds - cost_removed;
+      int64_t qty = std::llabs(row.amount);
+      if (row.amount <= 0) {
+        int64_t cost_removed = remove_cost(qty);
+        int64_t proceeds = mul_div_1e6(qty, row.price);
+        st.realized_pnl += proceeds - cost_removed;
+      } else {
+        st.positions[i] += qty;
+        st.cost[i] += mul_div_1e6(qty, row.price);
+      }
       return;
     }
     case EventType::FPMMLPRemove: {
-      assert(row.amount >= 0);
-      int64_t qty = row.amount;
-      (void)remove_cost(qty);
+      int64_t qty = std::llabs(row.amount);
+      if (row.amount >= 0) {
+        st.positions[i] += qty;
+      } else {
+        (void)remove_cost(qty);
+      }
       return;
     }
     case EventType::Redemption:
     case EventType::RedemptionNonPoly: {
-      assert(row.amount <= 0);
-      int64_t qty = -row.amount;
-      int64_t cost_removed = remove_cost(qty);
-      int64_t payout_price = normalize_redemption_price(row);
-      int64_t proceeds = mul_div_1e6(qty, payout_price);
-      st.realized_pnl += proceeds - cost_removed;
+      int64_t qty = std::llabs(row.amount);
+      if (row.amount <= 0) {
+        int64_t cost_removed = remove_cost(qty);
+        int64_t payout_price = normalize_redemption_price(row);
+        int64_t proceeds = mul_div_1e6(qty, payout_price);
+        st.realized_pnl += proceeds - cost_removed;
+      } else {
+        st.positions[i] += qty;
+      }
       return;
     }
     case EventType::Convert: {
-      assert(row.amount <= 0);
-      assert(i == 1);
-      int64_t qty = -row.amount;
-      int64_t cost_removed = remove_cost(qty);
-      int64_t proceeds = convert_payout_amount(row, qty);
-      st.realized_pnl += proceeds - cost_removed;
+      int64_t qty = std::llabs(row.amount);
+      if (row.amount <= 0) {
+        int64_t cost_removed = remove_cost(qty);
+        int64_t proceeds = convert_payout_amount(row, qty);
+        st.realized_pnl += proceeds - cost_removed;
+      } else {
+        st.positions[i] += qty;
+      }
       return;
     }
     case EventType::TransferOutNegRisk:
     case EventType::TransferOutOther:
     case EventType::TransferOutNonPoly: {
-      assert(row.amount <= 0);
-      int64_t qty = -row.amount;
-      (void)remove_cost(qty);
+      int64_t qty = std::llabs(row.amount);
+      if (row.amount <= 0) {
+        (void)remove_cost(qty);
+      } else {
+        st.positions[i] += qty;
+      }
       return;
     }
     default:

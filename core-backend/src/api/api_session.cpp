@@ -670,15 +670,15 @@ void ApiSession::handle_rebuild_status() {
   {
     auto s3 = pnl_engine_.sync_status();
     result["stage3_sync"] = {
-        {"running", s3.running},
-        {"stage2_cursor", s3.stage2_cursor},
-        {"stage3_sort_key", s3.stage3_sort_key},
-        {"stage3_block", s3.stage3_block},
+        {"syncing", s3.syncing},
+        {"last_block", s3.last_block},
+        {"head_block", s3.head_block},
         {"behind_blocks", s3.behind_blocks},
-        {"processed_events", s3.processed_events},
-        {"behind_events", s3.behind_events},
-        {"events_per_second", s3.events_per_second},
+        {"behind_chunks", s3.behind_chunks},
+        {"blocks_per_second", s3.blocks_per_second},
         {"eta_seconds", s3.eta_seconds},
+        {"stage3_sort_key", s3.stage3_sort_key},
+        {"processed_events", s3.processed_events},
         {"ready", s3.behind_blocks == 0},
     };
   }
