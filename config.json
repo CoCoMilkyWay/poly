@@ -5,8 +5,8 @@
   "db_path_stage1": "data/stage1/polymarket.duckdb",
   "db_path_stage2": "data/stage2/users.duckdb",
   "db_path_stage3": "data/stage3/replay.duckdb",
-  "stage1_rpc_threads": 10,
-  "stage1_rpc_chunk_basics": 100,
+  "stage1_rpc_threads": 20,
+  "stage1_rpc_chunk_basics": 500,
 
   "initial_block": 0,
   "frontend_port": 8000,

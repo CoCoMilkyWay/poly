@@ -1,317 +1,239 @@
-# Stage 3: PnL 回放计算
+## 交易口径事件
+> `qty = abs(amount)`
+> `px = price_1e6 / 1e6`
+> `cost_before = cost[token_idx]`（本事件处理前的持仓成本）
+> `pos_before = pos[token_idx]`（本事件处理前的持仓数量）
 
-从 user_event 表回放计算每个用户的 PnL。可全量预计算，也可按需查询。
+| EventType                                                  | 是否计算     | 状态更新（pos/cost）                                 | realized_delta 公式                                                |
+| ---------------------------------------------------------- | ------------ | ---------------------------------------------------- | ------------------------------------------------------------------ |
+| OrderBuy                                                   | 是           | `pos += qty; cost += qty * px`                       | `0`                                                                |
+| OrderSell                                                  | 是           | `cost -= cost_before * qty / pos_before; pos -= qty` | `qty * px - cost_before * qty / pos_before`                        |
+| SplitNormal / SplitNegRisk / SplitNonPoly                  | 是（重分类） | `pos += qty; cost += qty * px`                       | `0`                                                                |
+| MergeNormal / MergeNegRisk / MergeNonPoly                  | 是（重分类） | `cost -= cost_before * qty / pos_before; pos -= qty` | `qty * px - cost_before * qty / pos_before`                        |
+| Redemption / RedemptionNonPoly                             | 是           | `cost -= cost_before * qty / pos_before; pos -= qty` | `qty * px - cost_before * qty / pos_before`                        |
+| Convert                                                    | 是           | `cost -= cost_before * qty / pos_before; pos -= qty` | `qty * (popcount - 1) / popcount - cost_before * qty / pos_before` |
+| FPMMBuy                                                    | 是           | `pos += qty; cost += qty * px`                       | `0`                                                                |
+| FPMMSell                                                   | 是           | `cost -= cost_before * qty / pos_before; pos -= qty` | `qty * px - cost_before * qty / pos_before`                        |
+| FPMMLPAdd                                                  | 否（资金流） | 不记入交易PnL                                        | `0`                                                                |
+| FPMMLPRemove                                               | 否（资金流） | 不记入交易PnL                                        | `0`                                                                |
+| FPMMLPReturn                                               | 否（资金流） | 不记入交易PnL                                        | `0`                                                                |
+| TransferInNegRisk / TransferInOther / TransferInNonPoly    | 是（转入）   | `pos += qty; cost` 不变                              | `0`                                                                |
+| TransferOutNegRisk / TransferOutOther / TransferOutNonPoly | 是（转出）   | `cost -= cost_before * qty / pos_before; pos -= qty` | `0`                                                                |
 
-## 用户状态
+## Flow 图
 
-```
-ReplayState (回放中间态):
-    positions[8]: i64   每个 outcome 的持仓
-    cost[8]:      i64   每个 outcome 的成本
-    realized_pnl: i64   已实现盈亏
-
-Snapshot (快照):
-    sort_key, delta, price, positions[8], cost_basis, realized_pnl, event_type, token_idx, outcome_count
-```
-
-## 查询流程
-
-```
-def query_user(user_addr: bytes20) -> map<cond_idx, vec<Snapshot>>:
-    // 1. 从 user_event 表拉取该用户的所有事件
-    events = SELECT sort_key, cond_idx, event_type, token_idx, amount, price
-             FROM user_event
-             WHERE user_addr = :user_addr
-             ORDER BY sort_key
-
-    if events.empty(): return {}
-
-    // 2. 回放事件
-    states: map<cond_idx, ReplayState>
-    snaps:  map<cond_idx, vec<Snapshot>>
-
-    for evt in events:
-        st = &states[evt.cond_idx]
-        cond = &conditions_[evt.cond_idx]
-
-        apply_event(evt, st, cond)
-
-        snap = Snapshot {
-            sort_key:     evt.sort_key,
-            delta:        evt.amount,
-            price:        evt.price,
-            event_type:   evt.event_type,
-            token_idx:    evt.token_idx,
-            outcome_count: cond.outcome_count,
-            positions:    copy(st.positions),
-            cost_basis:   sum(st.cost),
-            realized_pnl: st.realized_pnl,
-        }
-        snaps[evt.cond_idx].push(snap)
-
-    return snaps
-```
-
-## 查询前需要加载的数据
-
-```
-// conditions_ 需要预加载（从 rb_condition 表）
-// 或者按需加载：
-def ensure_condition_loaded(cond_idx):
-    if cond_idx not in conditions_:
-        row = SELECT outcome_count, payout_numerators FROM rb_condition WHERE cond_idx = :cond_idx
-        conditions_[cond_idx] = ConditionInfo { row.outcome_count, parse_or_none(row.payout_numerators) }
-```
-
-## apply_event
-
-**核心原则**：所有操作只做简单的 +/- 仓位，不做任何持仓检查。负持仓说明有 bug。
-
----
-
-### Buy / FPMMBuy
-
-**步骤**:
-
-1. 计算成本 = amount \* price / 1e6
-2. cost[i] += 成本
-3. positions[i] += amount
-
-**注意**:
-
-- price 单位是 1e6 = $1，amount 也是 6 decimals
-- 除以 1e6 是为了让 cost 的单位也是 6 decimals
-
-```
-i = token_idx
-cost[i] += amount * price / 1e6
-positions[i] += amount
-```
-
----
-
-### Sell / FPMMSell
-
-**步骤**:
-
-1. 计算按比例移除的成本 = cost[i] \* amount / positions[i]
-2. 计算卖出收入 = amount \* price / 1e6
-3. realized_pnl += 收入 - 成本
-4. cost[i] -= cost_removed
-5. positions[i] -= amount
-
-**注意**:
-
-- **不检查 positions[i] 是否足够**：如果 positions[i] < amount，会产生负持仓
-- 负持仓 = bug 信号，需要排查事件流
-
-```
-i = token_idx
-cost_removed = cost[i] * amount / positions[i]
-realized_pnl += amount * price / 1e6 - cost_removed
-cost[i] -= cost_removed
-positions[i] -= amount
+```text
+stage3_sync_tick
+├─ 0) 读取游标与元数据
+│  ├─ 读 s3_sync_cursor(id=1) -> SyncCursor
+│  ├─ 刷新 condition_meta（只读缓存）
+│  └─ 计算批次游标起点 (last_sort_key + last_pk_tiebreak)
+├─ 1) 拉取输入事件（Stage2 输出）
+│  ├─ SELECT * FROM stage2.user_event
+│  │    WHERE (sort_key, user_addr, cond_idx, event_type, token_idx) > cursor
+│  │    ORDER BY sort_key, user_addr, cond_idx, event_type, token_idx
+│  └─ 若无事件 -> 结束本 tick
+├─ 2) 预加载状态
+│  ├─ 扫描 batch_events，提取 touched keys
+│  │  ├─ touched_cond_keys = {(user_addr, cond_idx) | cond_idx >= 0}
+│  │  └─ touched_users     = {user_addr}
+│  ├─ 读 s3_user_cond_state -> token_state_map
+│  ├─ 读 s3_user_summary    -> user_state_map
+│  └─ 初始化临时结构
+│     ├─ fact_rows
+│     └─ dirty_cond_keys / dirty_users
+├─ 3) 回放循环（for evt in batch_events, 按 sort_key + PK 升序）
+│  ├─ 3.1 输入断言
+│  │  ├─ (sort_key, user_addr, cond_idx, event_type, token_idx) 严格递增
+│  │  ├─ cond_idx < 0: 不进入状态机（仅事实行）
+│  │  ├─ cond_idx >= 0: condition_meta 必须存在
+│  │  ├─ token_idx ∈ [0, outcome_count)
+│  │  ├─ event_type 与 amount 方向匹配
+│  │  └─ 乘除使用 i128 中间值，回写前断言不溢出
+│  ├─ 3.2 路由
+│  │  ├─ Buy类: OrderBuy/FPMMBuy/Split*
+│  │  ├─ Sell类: OrderSell/FPMMSell/Merge*/Redemption*/Convert
+│  │  ├─ TransferIn类: TransferIn*
+│  │  ├─ TransferOut类: TransferOut*
+│  │  └─ LP资金流: FPMMLPAdd/FPMMLPRemove/FPMMLPReturn（仅记录，不计入 realized）
+│  ├─ 3.3 应用规则（trade-only）
+│  │  ├─ 公共计算
+│  │  │  ├─ qty = abs(amount), px = price_1e6/1e6
+│  │  │  └─ 卖出/转出前快照: cost_before=cost[token_idx], pos_before=pos[token_idx]
+│  │  ├─ Buy类: pos += qty; cost += qty*px; realized_delta = 0
+│  │  ├─ Sell类:
+│  │  │  ├─ assert pos_before > 0 && pos_before >= qty
+│  │  │  ├─ cost_removed = cost_before * qty / pos_before
+│  │  │  ├─ cost -= cost_removed; pos -= qty
+│  │  │  ├─ 非 Convert: realized_delta = qty*px - cost_removed
+│  │  │  └─ Convert: realized_delta = qty*(popcount-1)/popcount - cost_removed
+│  │  ├─ TransferIn类: pos += qty; cost 不变; realized_delta = 0
+│  │  ├─ TransferOut类:
+│  │  │  ├─ assert pos_before > 0 && pos_before >= qty
+│  │  │  ├─ cost_removed = cost_before * qty / pos_before
+│  │  │  └─ cost -= cost_removed; pos -= qty; realized_delta = 0
+│  │  └─ LP资金流: 不改 token pos/cost; realized_delta = 0（但写入事实行）
+│  ├─ 3.4 更新 user_state_map[user_addr]
+│  │  ├─ total_events += 1
+│  │  ├─ total_realized_pnl += realized_delta
+│  │  └─ last_sort_key = evt.sort_key
+│  └─ 3.5 产出事实行
+│     └─ append EventFactRow(user_addr,sort_key,cond_idx,token_idx,event_type,collateral,amount,price_1e6,realized_delta,realized_cum)
+├─ 4) 批次收尾校验
+│  ├─ token 状态非负: pos>=0 且 cost>=0
+│  ├─ fact_rows.size == batch_events.size
+│  └─ 任一失败 -> rollback，cursor 不推进
+├─ 5) 单事务提交
+│  ├─ upsert s3_user_cond_state（dirty_cond_keys）
+│  ├─ upsert s3_user_summary（dirty_users）
+│  │  └─ active_conditions = count(cond where any(pos)!=0 or realized!=0)
+│  ├─ insert s3_user_event_fact（fact_rows）
+│  ├─ 命中 checkpoint 规则 -> upsert s3_user_cond_checkpoint
+│  └─ update s3_sync_cursor(last_sort_key,last_user_addr,last_cond_idx,last_event_type,last_token_idx,processed_events)
+└─ 6) 查询路径（只读）
+   ├─ users() / users_sorted()         -> s3_user_summary（用户列表）
+   ├─ user_timeline(user)              -> 由 user_event 构建 timeline（含 rpnl/tk）
+   ├─ positions_at(user, sort_key)     -> 回放到目标时刻得到持仓明细
+   └─ events_near(user, sort_key, N)   -> 目标时刻附近事件窗口
 ```
 
----
+## Flow 使用的数据结构详细定义
 
-### Split
+```text
+type Address20 = bytes20
 
-**步骤**:
+// Stage3 直接读取 Stage2 事件行（多用户全局排序）
+struct UserEvent {
+  Address20 user_addr;
+  int64   sort_key;
+  int32   cond_idx;      // unknown=-1
+  int32   event_type;    // EventType
+  int32   token_idx;     // unknown=-1
+  int32   collateral;    // collateral 枚举值
+  int64   amount;        // 带符号，6 decimals
+  int64   price_1e6;     // 1e6 = $1
+}
 
-1. 计算成本 = amount \* price / 1e6 (price = 500000 = $0.50)
-2. cost[i] += 成本
-3. positions[i] += amount
+// 说明：
+// - Stage3 trade-only 仅依赖以上字段，直接沿用 Stage2 输出。
+// - 与口径无关的小差异（unknown/sentinel）在计算时顺手处理，不单独建中间结构。
 
-**注意**:
+struct ConditionMeta {
+  uint8 outcome_count;
+  int64 payout_numerators[8];
+}
 
-- 新设计：每个 mint Transfer 单独处理，YES 和 NO 各一次
-- price = 500000 ($0.50)，因为 1 USDC → 1 YES + 1 NO
-- amount 是单个 token 的数量
+struct TokenCondState {
+  int64 pos[8];
+  int64 cost[8];
+  int64 realized;
+  int64 event_count;
+  int64 last_sort_key;
+}
 
-```
-i = token_idx
-cost[i] += amount * price / 1e6  // = amount * 0.5
-positions[i] += amount
-```
+struct UserSummaryState {
+  int64  total_events;
+  int128 total_realized_pnl;
+  int32  active_conditions;
+  int64  last_sort_key;
+}
 
----
+struct EventFactRow {
+  Address20 user_addr;
+  int64   sort_key;
+  int32   cond_idx;
+  int32   token_idx;
+  int32   event_type;
+  int32   collateral;
+  int64   amount;
+  int64   price_1e6;
+  int64   realized_delta;
+  int128  realized_cum;
+}
 
-### Merge
+struct SyncCursor {
+  int64 last_sort_key;
+  Address20 last_user_addr;
+  int32 last_cond_idx;
+  int32 last_event_type;
+  int32 last_token_idx;
+  int64 processed_events;
+}
 
-**步骤**:
+struct ReplayContext {
+  map<(Address20,int32), TokenCondState> token_state_map;
+  map<Address20, UserSummaryState>       user_state_map;
 
-1. 计算按比例移除的成本
-2. 计算收入 = amount \* price / 1e6 (price = 500000 = $0.50)
-3. realized_pnl += 收入 - 成本
-4. 减少 cost 和 positions
+  set<(Address20,int32)> dirty_cond_keys;
+  set<Address20>         dirty_users;
 
-**注意**:
-
-- 新设计：每个 burn Transfer 单独处理，YES 和 NO 各一次
-- price = 500000 ($0.50)，因为 1 YES + 1 NO → 1 USDC
-- 是 Split 的逆操作
-
-```
-i = token_idx
-cost_removed = cost[i] * amount / positions[i]
-realized_pnl += amount * price / 1e6 - cost_removed  // = amount * 0.5 - cost_removed
-cost[i] -= cost_removed
-positions[i] -= amount
-```
-
----
-
-### Redemption
-
-**步骤**:
-
-1. 解析 index_sets bitmap
-2. 对每个涉及的 outcome：
-   - realized_pnl += 持仓 \* payout_price - 成本
-   - 清零 cost 和 positions
-
-**注意**:
-
-- **假设全量赎回**：清零所有涉及的 positions
-- payout_price = payout_numerators[i]（0 或 1）
-- 输家 token (payout=0)：realized_pnl -= cost（亏损全部成本）
-- 赢家 token (payout=1)：realized_pnl += positions - cost
-
-```
-index_sets = token_idx
-
-for i in 0..outcome_count:
-    if not ((index_sets >> i) & 1): continue
-
-    payout_price = payout_numerators[i]
-    realized_pnl += positions[i] * payout_price - cost[i]
-    cost[i] = 0
-    positions[i] = 0
+  vector<EventFactRow> fact_rows;
+}
 ```
 
----
+## API 返回数据结构
 
-### FPMMLPAdd
+```text
+GET /api/stage3-status
+{
+  syncing: bool,
+  last_block: int64,
+  head_block: int64,
+  behind_blocks: int64,
+  behind_chunks: int64,
+  blocks_per_second: float64,
+  eta_seconds: float64,
+  ready: bool
+}
 
-**步骤**:
+GET /api/stage3-users?limit=1000
+[
+  {
+    user_addr: string,      // "0x..."
+    event_count: int64,
+    realized_pnl: int64     // 1e6
+  },
+  ...
+]
 
-1. 计算实际 USDC 投入 = max(amount0, amount1)
-2. 按 token 比例分配成本（只针对进池子的部分）
-3. 增加 positions（只记录进池子的部分）
-
-**注意**:
-
-- LP 投入 USDC → Split 成 YES+NO → 按池子比例添加 → 多余 token 返还
-- **usdc_spent = max(amount0, amount1)**：这是 Split 的 USDC 数量
-- amount0/amount1 是进入池子的 token 数量
-- **返还 token 单独处理**：返还给用户的 (max-amount0) YES + (max-amount1) NO 通过 Transfer(from=FPMM) 被 process_fpmm_trade 处理为 TransferIn（成本=0）
-- **成本近似**：返还 token 成本为 0，不完美但简化了逻辑。用户的总 USDC 支出 = usdc_spent，其中大部分成本分配给进池子的 token
-
-```
-amount0 = amount   // 添加到池子的 YES 数量
-amount1 = price    // 添加到池子的 NO 数量
-usdc_spent = max(amount0, amount1)
-total = amount0 + amount1
-
-cost[0] += usdc_spent * amount0 / total
-cost[1] += usdc_spent * amount1 / total
-positions[0] += amount0
-positions[1] += amount1
-```
-
----
-
-### FPMMLPRemove
-
-**步骤**:
-
-1. 按比例移除成本
-2. 减少 cost 和 positions
-3. **不计算 realized_pnl**
-
-**注意**:
-
-- LP 取回的是 YES+NO token，**不是 USDC**
-- **不计算 realized_pnl 的原因**：Remove 只是把"池子份额"换成"手持 token"，没有发生 USDC 交换
-- 用户后续可能：(1) 保留 token (2) 手动 Merge (3) 在交易所卖出
-- 这些操作会通过 Transfer 事件被捕获，届时再计入 realized_pnl
-
-```
-amount0 = amount   // YES 数量
-amount1 = price    // NO 数量
-
-cost_removed0 = cost[0] * amount0 / positions[0]
-cost_removed1 = cost[1] * amount1 / positions[1]
-cost[0] -= cost_removed0
-cost[1] -= cost_removed1
-positions[0] -= amount0
-positions[1] -= amount1
-// realized_pnl 不变
-```
-
----
-
-### Convert
-
-**步骤**:
-
-1. 解析 index_set，计算 popcount
-2. 按比例移除 NO 成本
-3. 减少 NO 持仓
-4. 计算分摊收益 = (popcount-1)/popcount \* amount
-
-**注意**:
-
-- **仅限 NegRisk**：M 个 NO → (M-1) USDC
-- 每个涉及的 condition 都会收到一个 Convert 事件
-- **收益分摊**：总收益 (M-1)\*amount 平均分到 M 个 condition
-- 每个 condition 销毁 amount 个 NO token
-
-```
-index_set = price
-popcount = bitcount(index_set)
-
-cost_removed = cost[1] * amount / positions[1]
-cost[1] -= cost_removed
-positions[1] -= amount
-
-realized_pnl += (popcount - 1) * amount / popcount - cost_removed
-```
-
----
-
-### TransferIn
-
-**步骤**:
-
-1. 增加 positions
-
-**注意**:
-
-- **0 成本获得 token**：可能是赠与、空投、从其他账户转入
-- 不增加 cost（成本为 0）
-
-```
-positions[token_idx] += amount
-```
-
----
-
-### TransferOut
-
-**步骤**:
-
-1. 按比例移除成本
-2. 减少 cost 和 positions
-
-**注意**:
-
-- **不产生 realized_pnl**：转出不是卖出，只是把 token 和对应成本转移走
-- 如果转给自己的另一个账户，那边会收到 TransferIn（成本为 0）
-
-```
-cost_removed = cost[token_idx] * amount / positions[token_idx]
-cost[token_idx] -= cost_removed
-positions[token_idx] -= amount
+GET /api/stage3-data?user=0x...&sk=<optional>
+{
+  total_events: int64,
+  first_ts: int64,          // sort_key / 1e9
+  last_ts: int64,           // sort_key / 1e9
+  timeline: [
+    {
+      sk: int64,            // sort_key
+      ty: uint8,            // 事件类型
+      rpnl: int64,          // 累计 realized pnl, 1e6
+      d: int64,             // delta(amount), 1e6
+      p: int64,             // price_1e6
+      ci: uint32,           // cond_idx (unknown 映射为 UNKNOWN_COND_IDX)
+      ti: uint8,            // token_idx (unknown 映射为 UNKNOWN_TOKEN_IDX)
+      tk: int32             // 当前持仓 token 种数
+    },
+    ...
+  ],
+  positions: [
+    {
+      id: string,           // condition_id
+      pos: [int64...],      // 各 outcome 持仓
+      cost: int64,          // 当前总成本
+      rpnl: int64           // 当前 condition realized pnl
+    },
+    ...
+  ],
+  events: [
+    {
+      sk: int64,
+      ty: uint8,
+      d: int64,
+      p: int64,
+      ci: uint32,
+      ti: uint8
+    },
+    ...
+  ],
+  center: int32             // events 数组中的中心索引
+}
 ```
