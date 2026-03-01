@@ -416,8 +416,34 @@ let _s3UsersLoaded = false;
 let _s3LoadingUsers = false;
 
 const _s3Pad = { top: 30, right: 70, bottom: 32, left: 50 };
-const _s3EvtColors = ['#6366f1','#ef4444','#eab308','#f97316','#22d3ee','#a855f7','#a855f7','#14b8a6','#14b8a6','#f472b6','#64748b','#64748b'];
-const _s3EvtNamesCN = ['买入','卖出','铸造','合币','赎回','AMM买','AMM卖','LP添加','LP移除','转换','转入','转出'];
+const _s3EventMeta = {
+  0:  { name: '买入', color: '#6366f1', cat: 'buy', marker: 'up' },
+  1:  { name: '卖出', color: '#ef4444', cat: 'sell', marker: 'down' },
+  2:  { name: 'Split', color: '#eab308', cat: 'split', marker: 'up' },
+  3:  { name: 'Split', color: '#eab308', cat: 'split', marker: 'up' },
+  4:  { name: 'Split', color: '#eab308', cat: 'split', marker: 'up' },
+  5:  { name: 'Merge', color: '#f97316', cat: 'merge', marker: 'down' },
+  6:  { name: 'Merge', color: '#f97316', cat: 'merge', marker: 'down' },
+  7:  { name: 'Merge', color: '#f97316', cat: 'merge', marker: 'down' },
+  8:  { name: '赎回', color: '#22d3ee', cat: 'redeem', marker: 'dot' },
+  9:  { name: '赎回', color: '#22d3ee', cat: 'redeem', marker: 'dot' },
+  10: { name: '转换', color: '#f472b6', cat: 'convert', marker: 'dot' },
+  11: { name: 'AMM买', color: '#a855f7', cat: 'buy', marker: 'up' },
+  12: { name: 'AMM卖', color: '#a855f7', cat: 'sell', marker: 'down' },
+  13: { name: 'LP添加', color: '#14b8a6', cat: 'lp', marker: 'up' },
+  14: { name: 'LP移除', color: '#14b8a6', cat: 'lp', marker: 'down' },
+  15: { name: 'LP返还', color: '#14b8a6', cat: 'lp', marker: 'up' },
+  16: { name: '转入', color: '#64748b', cat: 'transfer', marker: 'up' },
+  17: { name: '转入', color: '#64748b', cat: 'transfer', marker: 'up' },
+  18: { name: '转入', color: '#64748b', cat: 'transfer', marker: 'up' },
+  19: { name: '转出', color: '#64748b', cat: 'transfer', marker: 'down' },
+  20: { name: '转出', color: '#64748b', cat: 'transfer', marker: 'down' },
+  21: { name: '转出', color: '#64748b', cat: 'transfer', marker: 'down' },
+};
+
+function s3EvtMeta(ty) {
+  return _s3EventMeta[ty] || { name: `E${ty}`, color: '#888', cat: 'other', marker: 'dot' };
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   s3PollSync();
@@ -574,19 +600,19 @@ function s3RenderMeta() {
   const nCond = new Set(_s3Timeline.map(e => e.ci)).size;
   const finalPnl = _s3Timeline.length ? _s3Timeline[_s3Timeline.length-1].rpnl / 1e6 : 0;
 
-  const typeCounts = new Array(12).fill(0);
-  for (const e of _s3Timeline) typeCounts[e.ty]++;
+  const c = { buy: 0, sell: 0, split: 0, merge: 0, redeem: 0, lp: 0, convert: 0, transfer: 0, other: 0 };
+  for (const e of _s3Timeline) c[s3EvtMeta(e.ty).cat] = (c[s3EvtMeta(e.ty).cat] || 0) + 1;
 
   document.getElementById('s3-meta').innerHTML = `
     <div class="s3-meta-item"><div class="label">事件</div><div class="value">${_s3Timeline.length}</div></div>
-    <div class="s3-meta-item"><div class="label" style="color:${_s3EvtColors[0]}">Buy</div><div class="value">${typeCounts[0]+typeCounts[5]}</div></div>
-    <div class="s3-meta-item"><div class="label" style="color:${_s3EvtColors[1]}">Sell</div><div class="value">${typeCounts[1]+typeCounts[6]}</div></div>
-    <div class="s3-meta-item"><div class="label" style="color:${_s3EvtColors[2]}">Split</div><div class="value">${typeCounts[2]}</div></div>
-    <div class="s3-meta-item"><div class="label" style="color:${_s3EvtColors[3]}">Merge</div><div class="value">${typeCounts[3]}</div></div>
-    <div class="s3-meta-item"><div class="label" style="color:${_s3EvtColors[4]}">Redeem</div><div class="value">${typeCounts[4]}</div></div>
-    <div class="s3-meta-item"><div class="label" style="color:${_s3EvtColors[7]}">LP</div><div class="value">${typeCounts[7]+typeCounts[8]}</div></div>
-    <div class="s3-meta-item"><div class="label" style="color:${_s3EvtColors[9]}">Convert</div><div class="value">${typeCounts[9]}</div></div>
-    <div class="s3-meta-item"><div class="label" style="color:${_s3EvtColors[10]}">Transfer</div><div class="value">${typeCounts[10]+typeCounts[11]}</div></div>
+    <div class="s3-meta-item"><div class="label" style="color:#6366f1">Buy</div><div class="value">${c.buy}</div></div>
+    <div class="s3-meta-item"><div class="label" style="color:#ef4444">Sell</div><div class="value">${c.sell}</div></div>
+    <div class="s3-meta-item"><div class="label" style="color:#eab308">Split</div><div class="value">${c.split}</div></div>
+    <div class="s3-meta-item"><div class="label" style="color:#f97316">Merge</div><div class="value">${c.merge}</div></div>
+    <div class="s3-meta-item"><div class="label" style="color:#22d3ee">Redeem</div><div class="value">${c.redeem}</div></div>
+    <div class="s3-meta-item"><div class="label" style="color:#14b8a6">LP</div><div class="value">${c.lp}</div></div>
+    <div class="s3-meta-item"><div class="label" style="color:#f472b6">Convert</div><div class="value">${c.convert}</div></div>
+    <div class="s3-meta-item"><div class="label" style="color:#64748b">Transfer</div><div class="value">${c.transfer}</div></div>
     <div class="s3-meta-item"><div class="label">问题</div><div class="value">${nCond}</div></div>
     <div class="s3-meta-item"><div class="label">最终 PnL</div><div class="value" style="color:${finalPnl>=0?'#10b981':'#ef4444'}">${s3FmtUSD(finalPnl)}</div></div>
     <div class="s3-meta-item"><div class="label">首次</div><div class="value">${d.first_ts ? 'block ' + (d.first_ts / 1e9).toFixed(0) : '-'}</div></div>
@@ -738,17 +764,18 @@ function s3Draw() {
     if (Math.abs(x - lastMx) < minPxGap) continue;
     lastMx = x;
     const y = val2y(e.rpnl / 1e6);
-    const color = _s3EvtColors[e.ty] || '#888';
+    const meta = s3EvtMeta(e.ty);
+    const color = meta.color;
     const r = 3;
 
     ctx.fillStyle = color;
-    if (e.ty === 0 || e.ty === 2 || e.ty === 5 || e.ty === 7 || e.ty === 10) {
+    if (meta.marker === 'up') {
       ctx.beginPath();
       ctx.moveTo(x, y - r - 1);
       ctx.lineTo(x - r, y + r - 1);
       ctx.lineTo(x + r, y + r - 1);
       ctx.closePath(); ctx.fill();
-    } else if (e.ty === 1 || e.ty === 3 || e.ty === 6 || e.ty === 8 || e.ty === 11) {
+    } else if (meta.marker === 'down') {
       ctx.beginPath();
       ctx.moveTo(x, y + r + 1);
       ctx.lineTo(x - r, y - r + 1);
@@ -772,7 +799,7 @@ function s3Draw() {
 
       ctx.fillStyle = '#fff'; ctx.beginPath();
       ctx.arc(cx, cy, 5, 0, Math.PI*2); ctx.fill();
-      ctx.strokeStyle = _s3EvtColors[ce.ty] || '#888'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.strokeStyle = s3EvtMeta(ce.ty).color; ctx.lineWidth = 2; ctx.stroke();
     }
   }
 
@@ -886,8 +913,9 @@ function s3UpdateTooltip(e) {
   const idx = s3NearestIdx(sk);
   const ev = _s3Timeline[idx];
   const pnl = ev.rpnl / 1e6;
-  const color = _s3EvtColors[ev.ty];
-  const name = _s3EvtNamesCN[ev.ty];
+  const meta = s3EvtMeta(ev.ty);
+  const color = meta.color;
+  const name = meta.name;
   const tkCount = ev.tk || 0;
 
   tooltip.innerHTML = `
@@ -914,7 +942,8 @@ function s3UpdateCursor() {
 
   const ev = _s3Timeline[_s3CursorIdx];
   const pnl = ev.rpnl / 1e6;
-  const color = _s3EvtColors[ev.ty];
+  const meta = s3EvtMeta(ev.ty);
+  const color = meta.color;
 
   document.getElementById('s3-cur-sk').textContent = s3FmtSk(ev.sk);
   const pnlEl = document.getElementById('s3-cur-pnl');
@@ -922,7 +951,7 @@ function s3UpdateCursor() {
   pnlEl.className = 'pnl ' + (pnl >= 0 ? 'pos' : 'neg');
 
   const badge = document.getElementById('s3-cur-badge');
-  badge.textContent = _s3EvtNamesCN[ev.ty];
+  badge.textContent = meta.name;
   badge.style.background = color;
   badge.style.color = '#fff';
 
@@ -963,8 +992,9 @@ function s3RenderEvents() {
   for (let i = _s3Events.length - 1; i >= 0; i--) {
     const ev = _s3Events[i];
     const isFocus = (i === _s3EventCenter);
-    const color = _s3EvtColors[ev.ty];
-    const name = _s3EvtNamesCN[ev.ty];
+    const meta = s3EvtMeta(ev.ty);
+    const color = meta.color;
+    const name = meta.name;
 
     const detail = s3EventDetail(ev);
 
@@ -982,16 +1012,18 @@ function s3RenderEvents() {
 }
 
 function s3EventDetail(ev) {
-  if (ev.ty <= 1 || ev.ty === 5 || ev.ty === 6) {
+  if (ev.ty === 0 || ev.ty === 1 || ev.ty === 11 || ev.ty === 12) {
     return `${(ev.d/1e6).toFixed(2)} @ $${(ev.p/1e6).toFixed(4)}`;
   }
-  if (ev.ty <= 3 || ev.ty === 7 || ev.ty === 8) {
+  if (ev.ty === 2 || ev.ty === 3 || ev.ty === 4 || ev.ty === 5 || ev.ty === 6 || ev.ty === 7 ||
+      ev.ty === 13 || ev.ty === 14 || ev.ty === 15 || ev.ty === 16 || ev.ty === 17 || ev.ty === 18 ||
+      ev.ty === 19 || ev.ty === 20 || ev.ty === 21) {
     return `${(ev.d/1e6).toFixed(2)} tokens`;
   }
-  if (ev.ty === 4) {
+  if (ev.ty === 8 || ev.ty === 9) {
     return `$${(ev.d/1e6).toFixed(2)} payout`;
   }
-  if (ev.ty === 9) {
+  if (ev.ty === 10) {
     return `${(ev.d/1e6).toFixed(2)} convert`;
   }
   return `${(ev.d/1e6).toFixed(2)} tokens`;

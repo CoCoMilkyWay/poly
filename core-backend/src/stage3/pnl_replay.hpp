@@ -115,15 +115,6 @@ public:
     int outcome_count = 0;
   };
 
-  struct TradeEntry {
-    int64_t sort_key = 0;
-    uint8_t event_type = 0;
-    int64_t delta = 0;
-    int64_t price = 0;
-    uint32_t cond_idx = 0;
-    uint8_t token_idx = 0;
-  };
-
   StageSync(EventBuilder &builder, Database &stage2_db, Database &stage3_db)
       : builder_(builder), stage2_db_(stage2_db), stage3_db_(stage3_db) {
     init_schema();
@@ -241,11 +232,7 @@ public:
     if (lower.empty()) {
       return {};
     }
-    auto events = load_user_events(lower);
-    if (events.empty()) {
-      return {};
-    }
-    auto state = build_state_until(events, sort_key);
+    auto state = build_state_until(lower, sort_key);
     std::vector<PositionAtTime> out;
     out.reserve(state.size());
     for (const auto &[cond_idx, st] : state) {
@@ -279,30 +266,6 @@ public:
     return out;
   }
 
-  std::pair<std::vector<TradeEntry>, size_t> get_events_near(const std::string &addr, int64_t sort_key,
-                                                              int radius) const {
-    TraceN("s3/events");
-    auto timeline = get_user_timeline(addr);
-    if (timeline.empty()) {
-      return {{}, 0};
-    }
-    auto it = std::lower_bound(
-        timeline.begin(), timeline.end(), sort_key,
-        [](const TimelineEntry &e, int64_t sk) { return e.sort_key < sk; });
-    size_t center = (it == timeline.end())
-                        ? timeline.size() - 1
-                        : static_cast<size_t>(it - timeline.begin());
-    size_t start = (center > static_cast<size_t>(radius)) ? center - radius : 0;
-    size_t end = std::min(center + static_cast<size_t>(radius) + 1, timeline.size());
-    std::vector<TradeEntry> out;
-    out.reserve(end - start);
-    for (size_t i = start; i < end; ++i) {
-      const auto &e = timeline[i];
-      out.push_back({e.sort_key, e.event_type, e.delta, e.price, e.cond_idx, e.token_idx});
-    }
-    return {std::move(out), center - start};
-  }
-
 private:
   struct CursorKey {
     int64_t sort_key = -1;
@@ -322,8 +285,8 @@ private:
     int32_t collateral = 0;
     int64_t amount = 0;
     int64_t price = 0;
-    int64_t realized_delta = 0;
     int64_t realized_cum = 0;
+    int32_t token_count_cum = 0;
   };
 
   struct FactRow {
@@ -337,6 +300,7 @@ private:
     int64_t price = 0;
     int64_t realized_delta = 0;
     int64_t realized_cum = 0;
+    int32_t token_count_cum = 0;
   };
 
   struct CondState {
@@ -463,30 +427,57 @@ private:
         price BIGINT NOT NULL,
         realized_delta BIGINT NOT NULL,
         realized_cum BIGINT NOT NULL,
+        token_count_cum INTEGER NOT NULL,
         PRIMARY KEY (user_addr, sort_key, cond_idx, event_type, token_idx)
       )
     )");
-    // Purge all stage3 materialized state on startup and rebuild from stage2.
-    // This intentionally favors a single clean model over backward compatibility.
+    stage3_db_.execute(R"(
+      CREATE TABLE IF NOT EXISTS s3_user_cond_checkpoint (
+        user_addr BLOB NOT NULL,
+        checkpoint_sort_key BIGINT NOT NULL,
+        cond_idx INTEGER NOT NULL,
+        pos_0 BIGINT NOT NULL,
+        pos_1 BIGINT NOT NULL,
+        pos_2 BIGINT NOT NULL,
+        pos_3 BIGINT NOT NULL,
+        pos_4 BIGINT NOT NULL,
+        pos_5 BIGINT NOT NULL,
+        pos_6 BIGINT NOT NULL,
+        pos_7 BIGINT NOT NULL,
+        cost_0 BIGINT NOT NULL,
+        cost_1 BIGINT NOT NULL,
+        cost_2 BIGINT NOT NULL,
+        cost_3 BIGINT NOT NULL,
+        cost_4 BIGINT NOT NULL,
+        cost_5 BIGINT NOT NULL,
+        cost_6 BIGINT NOT NULL,
+        cost_7 BIGINT NOT NULL,
+        realized_pnl BIGINT NOT NULL,
+        event_count BIGINT NOT NULL,
+        last_sort_key BIGINT NOT NULL,
+        PRIMARY KEY (user_addr, checkpoint_sort_key, cond_idx)
+      )
+    )");
+    stage3_db_.execute(
+        "CREATE INDEX IF NOT EXISTS idx_s3_fact_user_sk "
+        "ON s3_user_event_fact(user_addr, sort_key)");
+    stage3_db_.execute(
+        "CREATE INDEX IF NOT EXISTS idx_s3_ckpt_user_sk "
+        "ON s3_user_cond_checkpoint(user_addr, checkpoint_sort_key)");
+    stage3_db_.execute(
+        "CREATE INDEX IF NOT EXISTS idx_s3_summary_events "
+        "ON s3_user_summary(total_events)");
     auto conn = stage3_db_.create_connection();
-    auto tx = conn->Query("BEGIN");
-    assert(tx && !tx->HasError());
-    auto d1 = conn->Query("DELETE FROM s3_user_event_fact");
-    auto d2 = conn->Query("DELETE FROM s3_user_cond_state");
-    auto d3 = conn->Query("DELETE FROM s3_user_summary");
-    auto d4 = conn->Query("DELETE FROM s3_sync_cursor");
-    assert(d1 && !d1->HasError());
-    assert(d2 && !d2->HasError());
-    assert(d3 && !d3->HasError());
-    assert(d4 && !d4->HasError());
-    auto ins = conn->Query(
-        "INSERT INTO s3_sync_cursor VALUES (1, -1, from_hex(''), " +
-        std::to_string(kCursorSentinel) + ", " +
-        std::to_string(kCursorSentinel) + ", " +
-        std::to_string(kCursorSentinel) + ", 0)");
-    assert(ins && !ins->HasError());
-    auto cm = conn->Query("COMMIT");
-    assert(cm && !cm->HasError());
+    auto r = conn->Query("SELECT COUNT(*) FROM s3_sync_cursor WHERE id=1");
+    assert(r && !r->HasError());
+    if (r->GetValue(0, 0).GetValue<int64_t>() == 0) {
+      auto ins = conn->Query(
+          "INSERT INTO s3_sync_cursor VALUES (1, -1, from_hex(''), " +
+          std::to_string(kCursorSentinel) + ", " +
+          std::to_string(kCursorSentinel) + ", " +
+          std::to_string(kCursorSentinel) + ", 0)");
+      assert(ins && !ins->HasError());
+    }
   }
 
   void load_conditions() {
@@ -747,7 +738,9 @@ private:
     }
 
     std::unordered_map<std::string, int64_t> user_realized_cum;
+    std::unordered_map<std::string, int32_t> user_token_count_cum;
     user_realized_cum.reserve(touched_users.size() + 1);
+    user_token_count_cum.reserve(touched_users.size() + 1);
     if (!touched_users.empty()) {
       sink_conn->Query("CREATE TEMP TABLE IF NOT EXISTS tmp_s3_touched_users (user_addr BLOB)");
       sink_conn->Query("DELETE FROM tmp_s3_touched_users");
@@ -775,6 +768,30 @@ private:
       for (const auto &uhex : touched_users) {
         if (!user_realized_cum.count(uhex)) {
           user_realized_cum.emplace(uhex, 0);
+        }
+      }
+
+      auto tk_r = sink_conn->Query(
+          "SELECT lower(hex(st.user_addr)) AS uh, "
+          "SUM(CASE WHEN st.pos_0 != 0 THEN 1 ELSE 0 END + "
+          "    CASE WHEN st.pos_1 != 0 THEN 1 ELSE 0 END + "
+          "    CASE WHEN st.pos_2 != 0 THEN 1 ELSE 0 END + "
+          "    CASE WHEN st.pos_3 != 0 THEN 1 ELSE 0 END + "
+          "    CASE WHEN st.pos_4 != 0 THEN 1 ELSE 0 END + "
+          "    CASE WHEN st.pos_5 != 0 THEN 1 ELSE 0 END + "
+          "    CASE WHEN st.pos_6 != 0 THEN 1 ELSE 0 END + "
+          "    CASE WHEN st.pos_7 != 0 THEN 1 ELSE 0 END) AS tk "
+          "FROM s3_user_cond_state st "
+          "JOIN tmp_s3_touched_users t ON st.user_addr = t.user_addr "
+          "GROUP BY st.user_addr");
+      assert(tk_r && !tk_r->HasError());
+      for (idx_t i = 0; i < tk_r->RowCount(); ++i) {
+        user_token_count_cum.emplace(tk_r->GetValue(0, i).GetValueUnsafe<std::string>(),
+                                     tk_r->GetValue(1, i).GetValue<int32_t>());
+      }
+      for (const auto &uhex : touched_users) {
+        if (!user_token_count_cum.count(uhex)) {
+          user_token_count_cum.emplace(uhex, 0);
         }
       }
     }
@@ -828,12 +845,27 @@ private:
         PairKey key{row.user_hex, row.cond_idx};
         auto it = states.find(key);
         assert(it != states.end());
+        int before_nonzero = 0;
+        int after_nonzero = 0;
+        const auto &cond = conditions_[static_cast<size_t>(row.cond_idx)];
+        for (int j = 0; j < cond.outcome_count; ++j) {
+          if (it->second.positions[j] != 0) {
+            before_nonzero++;
+          }
+        }
         realized_delta = apply_event_to_state(row, it->second);
+        for (int j = 0; j < cond.outcome_count; ++j) {
+          if (it->second.positions[j] != 0) {
+            after_nonzero++;
+          }
+        }
+        user_token_count_cum[row.user_hex] += (after_nonzero - before_nonzero);
         it->second.event_count++;
         it->second.last_sort_key = row.sort_key;
       }
       int64_t &realized_cum = user_realized_cum[row.user_hex];
       realized_cum += realized_delta;
+      int32_t token_count_cum = user_token_count_cum[row.user_hex];
       fact_rows.push_back({
           row.user_hex,
           row.sort_key,
@@ -845,7 +877,18 @@ private:
           row.price,
           realized_delta,
           realized_cum,
+          token_count_cum,
       });
+    }
+    assert(fact_rows.size() == rows.size());
+    for (const auto &[key, st] : states) {
+      assert(key.cond_idx >= 0);
+      assert(static_cast<size_t>(key.cond_idx) < conditions_.size());
+      const auto &cond = conditions_[static_cast<size_t>(key.cond_idx)];
+      for (int j = 0; j < cond.outcome_count; ++j) {
+        assert(st.positions[j] >= 0);
+        assert(st.cost[j] >= 0);
+      }
     }
 
     {
@@ -899,7 +942,7 @@ private:
         sink_conn->Query(
             "CREATE TEMP TABLE IF NOT EXISTS tmp_s3_fact ("
             "user_addr BLOB, sort_key BIGINT, cond_idx INTEGER, token_idx INTEGER, event_type INTEGER, "
-            "collateral INTEGER, amount BIGINT, price BIGINT, realized_delta BIGINT, realized_cum BIGINT)");
+            "collateral INTEGER, amount BIGINT, price BIGINT, realized_delta BIGINT, realized_cum BIGINT, token_count_cum INTEGER)");
         sink_conn->Query("DELETE FROM tmp_s3_fact");
         {
           duckdb::Appender ap(*sink_conn, "tmp_s3_fact");
@@ -918,6 +961,7 @@ private:
             ap.Append(fr.price);
             ap.Append(fr.realized_delta);
             ap.Append(fr.realized_cum);
+            ap.Append(fr.token_count_cum);
             ap.EndRow();
           }
           ap.Close();
@@ -927,7 +971,8 @@ private:
             "SELECT * FROM tmp_s3_fact "
             "ON CONFLICT(user_addr, sort_key, cond_idx, event_type, token_idx) DO UPDATE SET "
             "token_idx=excluded.token_idx, collateral=excluded.collateral, amount=excluded.amount, "
-            "price=excluded.price, realized_delta=excluded.realized_delta, realized_cum=excluded.realized_cum");
+            "price=excluded.price, realized_delta=excluded.realized_delta, realized_cum=excluded.realized_cum, "
+            "token_count_cum=excluded.token_count_cum");
         assert(insf && !insf->HasError());
       }
 
@@ -972,6 +1017,29 @@ private:
           ") AS t "
           "WHERE s.user_addr = t.user_addr");
       assert(sr && !sr->HasError());
+
+      if (!touched_users.empty()) {
+        auto ckpt = sink_conn->Query(
+            "INSERT INTO s3_user_cond_checkpoint "
+            "SELECT st.user_addr, " + std::to_string(cursor_.sort_key) + " AS checkpoint_sort_key, st.cond_idx, "
+            "st.pos_0,st.pos_1,st.pos_2,st.pos_3,st.pos_4,st.pos_5,st.pos_6,st.pos_7, "
+            "st.cost_0,st.cost_1,st.cost_2,st.cost_3,st.cost_4,st.cost_5,st.cost_6,st.cost_7, "
+            "st.realized_pnl,st.event_count,st.last_sort_key "
+            "FROM s3_user_cond_state st "
+            "JOIN tmp_s3_users tu ON st.user_addr = tu.user_addr "
+            "WHERE ("
+            "st.pos_0 != 0 OR st.pos_1 != 0 OR st.pos_2 != 0 OR st.pos_3 != 0 OR "
+            "st.pos_4 != 0 OR st.pos_5 != 0 OR st.pos_6 != 0 OR st.pos_7 != 0 OR "
+            "st.realized_pnl != 0"
+            ") "
+            "ON CONFLICT(user_addr, checkpoint_sort_key, cond_idx) DO UPDATE SET "
+            "pos_0=excluded.pos_0, pos_1=excluded.pos_1, pos_2=excluded.pos_2, pos_3=excluded.pos_3, "
+            "pos_4=excluded.pos_4, pos_5=excluded.pos_5, pos_6=excluded.pos_6, pos_7=excluded.pos_7, "
+            "cost_0=excluded.cost_0, cost_1=excluded.cost_1, cost_2=excluded.cost_2, cost_3=excluded.cost_3, "
+            "cost_4=excluded.cost_4, cost_5=excluded.cost_5, cost_6=excluded.cost_6, cost_7=excluded.cost_7, "
+            "realized_pnl=excluded.realized_pnl, event_count=excluded.event_count, last_sort_key=excluded.last_sort_key");
+        assert(ckpt && !ckpt->HasError());
+      }
 
       save_cursor_locked(*sink_conn);
       auto cm = sink_conn->Query("COMMIT");
@@ -1039,21 +1107,9 @@ private:
     int i = row.token_idx;
 
     auto remove_cost = [&](int64_t qty) {
-      assert(qty >= 0);
-      if (qty == 0) {
-        return int64_t{0};
-      }
+      assert(qty > 0);
       int64_t pos = st.positions[i];
-      if (pos <= 0) {
-        st.positions[i] -= qty;
-        return int64_t{0};
-      }
-      if (qty >= pos) {
-        int64_t all_cost = st.cost[i];
-        st.cost[i] = 0;
-        st.positions[i] -= qty;
-        return all_cost;
-      }
+      assert(pos > 0 && pos >= qty);
       int64_t cost_removed = st.cost[i] * qty / pos;
       st.cost[i] -= cost_removed;
       st.positions[i] -= qty;
@@ -1066,28 +1122,28 @@ private:
     case EventType::SplitNormal:
     case EventType::SplitNegRisk:
     case EventType::SplitNonPoly: {
-      int64_t qty = std::llabs(row.amount);
-      if (row.amount >= 0) {
-        st.positions[i] += qty;
-        st.cost[i] += mul_div_1e6(qty, row.price);
-      } else {
-        (void)remove_cost(qty);
-      }
+      assert(row.amount >= 0);
+      int64_t qty = row.amount;
+      st.positions[i] += qty;
+      st.cost[i] += mul_div_1e6(qty, row.price);
       return 0;
     }
     case EventType::FPMMLPAdd:
-      // LPAdd 表示资金进池，不直接增加可用 token 仓位（后续再细化 LP 成本池）。
+      assert(row.amount >= 0);
+      // LP资金流事件：只保留事实行，不修改 token 状态。
+      return 0;
+    case EventType::FPMMLPRemove:
+      assert(row.amount >= 0);
       return 0;
     case EventType::FPMMLPReturn:
+      assert(row.amount >= 0);
+      return 0;
     case EventType::TransferInNegRisk:
     case EventType::TransferInOther:
     case EventType::TransferInNonPoly: {
-      int64_t qty = std::llabs(row.amount);
-      if (row.amount >= 0) {
-        st.positions[i] += qty;
-      } else {
-        (void)remove_cost(qty);
-      }
+      assert(row.amount >= 0);
+      int64_t qty = row.amount;
+      st.positions[i] += qty;
       return 0;
     }
     case EventType::OrderSell:
@@ -1095,65 +1151,40 @@ private:
     case EventType::MergeNormal:
     case EventType::MergeNegRisk:
     case EventType::MergeNonPoly: {
-      int64_t qty = std::llabs(row.amount);
-      if (row.amount <= 0) {
-        int64_t cost_removed = remove_cost(qty);
-        int64_t proceeds = mul_div_1e6(qty, row.price);
-        int64_t realized_delta = proceeds - cost_removed;
-        st.realized_pnl += realized_delta;
-        return realized_delta;
-      } else {
-        st.positions[i] += qty;
-        st.cost[i] += mul_div_1e6(qty, row.price);
-        return 0;
-      }
-    }
-    case EventType::FPMMLPRemove: {
-      int64_t qty = std::llabs(row.amount);
-      if (row.amount >= 0) {
-        st.positions[i] += qty;
-      } else {
-        (void)remove_cost(qty);
-      }
-      return 0;
+      assert(row.amount <= 0);
+      int64_t qty = -row.amount;
+      int64_t cost_removed = remove_cost(qty);
+      int64_t proceeds = mul_div_1e6(qty, row.price);
+      int64_t realized_delta = proceeds - cost_removed;
+      st.realized_pnl += realized_delta;
+      return realized_delta;
     }
     case EventType::Redemption:
     case EventType::RedemptionNonPoly: {
-      int64_t qty = std::llabs(row.amount);
-      if (row.amount <= 0) {
-        int64_t cost_removed = remove_cost(qty);
-        int64_t payout_price = normalize_redemption_price(row);
-        int64_t proceeds = mul_div_1e6(qty, payout_price);
-        int64_t realized_delta = proceeds - cost_removed;
-        st.realized_pnl += realized_delta;
-        return realized_delta;
-      } else {
-        st.positions[i] += qty;
-        return 0;
-      }
+      assert(row.amount <= 0);
+      int64_t qty = -row.amount;
+      int64_t cost_removed = remove_cost(qty);
+      int64_t payout_price = normalize_redemption_price(row);
+      int64_t proceeds = mul_div_1e6(qty, payout_price);
+      int64_t realized_delta = proceeds - cost_removed;
+      st.realized_pnl += realized_delta;
+      return realized_delta;
     }
     case EventType::Convert: {
-      int64_t qty = std::llabs(row.amount);
-      if (row.amount <= 0) {
-        int64_t cost_removed = remove_cost(qty);
-        int64_t proceeds = convert_payout_amount(row, qty);
-        int64_t realized_delta = proceeds - cost_removed;
-        st.realized_pnl += realized_delta;
-        return realized_delta;
-      } else {
-        st.positions[i] += qty;
-        return 0;
-      }
+      assert(row.amount <= 0);
+      int64_t qty = -row.amount;
+      int64_t cost_removed = remove_cost(qty);
+      int64_t proceeds = convert_payout_amount(row, qty);
+      int64_t realized_delta = proceeds - cost_removed;
+      st.realized_pnl += realized_delta;
+      return realized_delta;
     }
     case EventType::TransferOutNegRisk:
     case EventType::TransferOutOther:
     case EventType::TransferOutNonPoly: {
-      int64_t qty = std::llabs(row.amount);
-      if (row.amount <= 0) {
-        (void)remove_cost(qty);
-      } else {
-        st.positions[i] += qty;
-      }
+      assert(row.amount <= 0);
+      int64_t qty = -row.amount;
+      (void)remove_cost(qty);
       return 0;
     }
     default:
@@ -1166,7 +1197,8 @@ private:
     auto conn = stage3_db_.create_connection();
     std::string hex40 = addr_lower.substr(2);
     auto q = conn->Query(
-        "SELECT sort_key, cond_idx, event_type, token_idx, collateral, amount, price, realized_delta, realized_cum "
+        "SELECT sort_key, cond_idx, event_type, token_idx, collateral, amount, price, realized_cum "
+        ", token_count_cum "
         "FROM s3_user_event_fact "
         "WHERE user_addr = from_hex('" + hex40 + "') "
         "ORDER BY sort_key, cond_idx, event_type, token_idx");
@@ -1183,71 +1215,96 @@ private:
                      q->GetValue(5, i).GetValue<int64_t>(),
                      q->GetValue(6, i).GetValue<int64_t>(),
                      q->GetValue(7, i).GetValue<int64_t>(),
-                     q->GetValue(8, i).GetValue<int64_t>()});
+                     q->GetValue(8, i).GetValue<int32_t>()});
     }
     return out;
   }
 
   std::vector<TimelineEntry> build_timeline(const std::vector<EventRow> &events) const {
-    std::unordered_map<int32_t, CondState> states;
-    std::unordered_map<int32_t, int> cond_token_nonzero;
     std::vector<TimelineEntry> timeline;
     timeline.reserve(events.size());
-    int64_t total_realized = 0;
-    int total_token_count = 0;
     for (const auto &row : events) {
       if (row.cond_idx < 0) {
-        total_realized = row.realized_cum;
-        timeline.push_back({row.sort_key, static_cast<uint8_t>(row.event_type), total_realized,
+        timeline.push_back({row.sort_key, static_cast<uint8_t>(row.event_type), row.realized_cum,
                             row.amount, row.price, static_cast<uint32_t>(UNKNOWN_COND_IDX),
-                            static_cast<uint8_t>(UNKNOWN_TOKEN_IDX), total_token_count});
+                            static_cast<uint8_t>(UNKNOWN_TOKEN_IDX), row.token_count_cum});
         continue;
       }
-      auto it = states.find(row.cond_idx);
-      if (it == states.end()) {
-        it = states.emplace(row.cond_idx, CondState{}).first;
-      }
-      CondState &st = it->second;
-      int before_nonzero = 0;
-      {
-        const auto &cond = conditions_[static_cast<size_t>(row.cond_idx)];
-        for (int i = 0; i < cond.outcome_count; ++i) {
-          if (st.positions[i] != 0) {
-            before_nonzero++;
-          }
-        }
-      }
-      (void)apply_event_to_state(row, st);
-      int after_nonzero = 0;
-      {
-        const auto &cond = conditions_[static_cast<size_t>(row.cond_idx)];
-        for (int i = 0; i < cond.outcome_count; ++i) {
-          if (st.positions[i] != 0) {
-            after_nonzero++;
-          }
-        }
-      }
-      total_realized = row.realized_cum;
-      total_token_count += (after_nonzero - before_nonzero);
-      timeline.push_back({row.sort_key, static_cast<uint8_t>(row.event_type), total_realized,
+      timeline.push_back({row.sort_key, static_cast<uint8_t>(row.event_type), row.realized_cum,
                           row.amount, row.price, static_cast<uint32_t>(row.cond_idx),
-                          static_cast<uint8_t>(row.token_idx), total_token_count});
+                          static_cast<uint8_t>(row.token_idx), row.token_count_cum});
     }
     return timeline;
   }
 
-  std::unordered_map<int32_t, CondState> build_state_until(const std::vector<EventRow> &events,
-                                                      int64_t sort_key) const {
+  std::unordered_map<int32_t, CondState> build_state_until(const std::string &addr_lower,
+                                                           int64_t target_sort_key) const {
+    auto conn = stage3_db_.create_connection();
+    std::string hex40 = addr_lower.substr(2);
     std::unordered_map<int32_t, CondState> states;
-    for (const auto &row : events) {
-      if (row.sort_key > sort_key) {
-        break;
+    int64_t checkpoint_sort_key = -1;
+
+    auto ck = conn->Query(
+        "SELECT MAX(checkpoint_sort_key) "
+        "FROM s3_user_cond_checkpoint "
+        "WHERE user_addr = from_hex('" + hex40 + "') "
+        "AND checkpoint_sort_key <= " + std::to_string(target_sort_key));
+    assert(ck && !ck->HasError() && ck->RowCount() == 1);
+    if (!ck->GetValue(0, 0).IsNull()) {
+      checkpoint_sort_key = ck->GetValue(0, 0).GetValue<int64_t>();
+    }
+
+    if (checkpoint_sort_key >= 0) {
+      auto base = conn->Query(
+          "SELECT cond_idx, "
+          "pos_0,pos_1,pos_2,pos_3,pos_4,pos_5,pos_6,pos_7, "
+          "cost_0,cost_1,cost_2,cost_3,cost_4,cost_5,cost_6,cost_7, "
+          "realized_pnl,event_count,last_sort_key "
+          "FROM s3_user_cond_checkpoint "
+          "WHERE user_addr = from_hex('" + hex40 + "') "
+          "AND checkpoint_sort_key = " + std::to_string(checkpoint_sort_key));
+      assert(base && !base->HasError());
+      states.reserve(static_cast<size_t>(base->RowCount()));
+      for (idx_t i = 0; i < base->RowCount(); ++i) {
+        int32_t cond_idx = base->GetValue(0, i).GetValue<int32_t>();
+        CondState st;
+        for (int j = 0; j < MAX_OUTCOMES; ++j) {
+          st.positions[j] = base->GetValue(1 + j, i).GetValue<int64_t>();
+          st.cost[j] = base->GetValue(9 + j, i).GetValue<int64_t>();
+        }
+        st.realized_pnl = base->GetValue(17, i).GetValue<int64_t>();
+        st.event_count = base->GetValue(18, i).GetValue<int64_t>();
+        st.last_sort_key = base->GetValue(19, i).GetValue<int64_t>();
+        states.emplace(cond_idx, st);
       }
+    }
+
+    auto delta = conn->Query(
+        "SELECT sort_key, cond_idx, event_type, token_idx, collateral, amount, price, realized_cum, token_count_cum "
+        "FROM s3_user_event_fact "
+        "WHERE user_addr = from_hex('" + hex40 + "') "
+        "AND sort_key > " + std::to_string(checkpoint_sort_key) + " "
+        "AND sort_key <= " + std::to_string(target_sort_key) + " "
+        "ORDER BY sort_key, cond_idx, event_type, token_idx");
+    assert(delta && !delta->HasError());
+    for (idx_t i = 0; i < delta->RowCount(); ++i) {
+      EventRow row{
+          "",
+          delta->GetValue(0, i).GetValue<int64_t>(),
+          delta->GetValue(1, i).GetValue<int32_t>(),
+          delta->GetValue(2, i).GetValue<int32_t>(),
+          delta->GetValue(3, i).GetValue<int32_t>(),
+          delta->GetValue(4, i).GetValue<int32_t>(),
+          delta->GetValue(5, i).GetValue<int64_t>(),
+          delta->GetValue(6, i).GetValue<int64_t>(),
+          delta->GetValue(7, i).GetValue<int64_t>(),
+          delta->GetValue(8, i).GetValue<int32_t>(),
+      };
       if (row.cond_idx < 0) {
         continue;
       }
       auto &st = states[row.cond_idx];
-      apply_event_to_state(row, st);
+      (void)apply_event_to_state(row, st);
     }
     return states;
   }

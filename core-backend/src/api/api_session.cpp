@@ -822,9 +822,22 @@ void ApiSession::handle_stage3_data() {
     pos_arr.push_back(pos_obj);
   }
 
-  auto [events, center] = stage3_.get_events_near(user, detail_sk, 20);
+  size_t center = 0;
+  if (!timeline.empty()) {
+    auto it = std::lower_bound(
+        timeline.begin(), timeline.end(), detail_sk,
+        [](const stage3::StageSync::TimelineEntry &e, int64_t sk) { return e.sort_key < sk; });
+    center = (it == timeline.end())
+                 ? timeline.size() - 1
+                 : static_cast<size_t>(it - timeline.begin());
+  }
+  size_t radius = 20;
+  size_t start = (center > radius) ? center - radius : 0;
+  size_t end = std::min(center + radius + 1, timeline.size());
+
   json events_arr = json::array();
-  for (const auto &t : events) {
+  for (size_t i = start; i < end; ++i) {
+    const auto &t = timeline[i];
     events_arr.push_back({
         {"sk", t.sort_key},
         {"ty", t.event_type},
@@ -842,7 +855,7 @@ void ApiSession::handle_stage3_data() {
       {"timeline", timeline_arr},
       {"positions", pos_arr},
       {"events", events_arr},
-      {"center", center},
+      {"center", static_cast<int64_t>(center - start)},
   };
 
   res_.result(http::status::ok);

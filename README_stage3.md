@@ -14,15 +14,18 @@
 | Convert                                                    | 是           | `cost -= cost_before * qty / pos_before; pos -= qty` | `qty * (popcount - 1) / popcount - cost_before * qty / pos_before` |
 | FPMMBuy                                                    | 是           | `pos += qty; cost += qty * px`                       | `0`                                                                |
 | FPMMSell                                                   | 是           | `cost -= cost_before * qty / pos_before; pos -= qty` | `qty * px - cost_before * qty / pos_before`                        |
-| FPMMLPAdd                                                  | 否（资金流） | 不记入交易PnL                                        | `0`                                                                |
-| FPMMLPRemove                                               | 否（资金流） | 不记入交易PnL                                        | `0`                                                                |
-| FPMMLPReturn                                               | 否（资金流） | 不记入交易PnL                                        | `0`                                                                |
+| FPMMLPAdd                                                  | 否（资金流） | 不改 token `pos/cost`（仅记录事件）                  | `0`                                                                |
+| FPMMLPRemove                                               | 否（资金流） | 不改 token `pos/cost`（仅记录事件）                  | `0`                                                                |
+| FPMMLPReturn                                               | 否（资金流） | 不改 token `pos/cost`（仅记录事件）                  | `0`                                                                |
 | TransferInNegRisk / TransferInOther / TransferInNonPoly    | 是（转入）   | `pos += qty; cost` 不变                              | `0`                                                                |
 | TransferOutNegRisk / TransferOutOther / TransferOutNonPoly | 是（转出）   | `cost -= cost_before * qty / pos_before; pos -= qty` | `0`                                                                |
 
 ## Flow 图
 
 ```text
+stage3_bootstrap
+└─ 初始化 schema 与索引；若游标不存在则写入初始 cursor
+
 stage3_sync_tick
 ├─ 0) 读取游标与元数据
 │  ├─ 读 s3_sync_cursor(id=1) -> SyncCursor
@@ -88,12 +91,13 @@ stage3_sync_tick
 │  ├─ upsert s3_user_summary（dirty_users）
 │  │  └─ active_conditions = count(cond where any(pos)!=0 or realized!=0)
 │  ├─ insert s3_user_event_fact（fact_rows）
-│  ├─ 命中 checkpoint 规则 -> upsert s3_user_cond_checkpoint
+│  ├─ checkpoint 规则（每个 chunk 触发）
+│  │  └─ 对 touched_users，将其当前 s3_user_cond_state 全量快照写入 s3_user_cond_checkpoint(checkpoint_sort_key=cursor.sort_key)
 │  └─ update s3_sync_cursor(last_sort_key,last_user_addr,last_cond_idx,last_event_type,last_token_idx,processed_events)
 └─ 6) 查询路径（只读）
    ├─ users() / users_sorted()         -> s3_user_summary（用户列表）
-   ├─ user_timeline(user)              -> 由 user_event 构建 timeline（含 rpnl/tk）
-   ├─ positions_at(user, sort_key)     -> 回放到目标时刻得到持仓明细
+   ├─ user_timeline(user)              -> 由 s3_user_event_fact 构建 timeline（含 rpnl/tk）
+   ├─ positions_at(user, sort_key)     -> 先读最近 checkpoint，再回放 checkpoint 之后的事实事件
    └─ events_near(user, sort_key, N)   -> 目标时刻附近事件窗口
 ```
 
@@ -133,7 +137,7 @@ struct TokenCondState {
 
 struct UserSummaryState {
   int64  total_events;
-  int128 total_realized_pnl;
+  int64  total_realized_pnl;
   int32  active_conditions;
   int64  last_sort_key;
 }
@@ -148,7 +152,8 @@ struct EventFactRow {
   int64   amount;
   int64   price_1e6;
   int64   realized_delta;
-  int128  realized_cum;
+  int64   realized_cum;
+  int32   token_count_cum; // 当前用户“非零 token 持仓种数”累计值（用于前端 timeline.tk 直读）
 }
 
 struct SyncCursor {
