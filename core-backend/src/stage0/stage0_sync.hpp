@@ -89,8 +89,9 @@ private:
   SeedScanBatch load_seed_scan_batch(int64_t start_block, int64_t head_block, size_t max_conditions) const;
   json fetch_market_by_condition(const std::string &condition_hex_lower);
   BlockTaskResult process_block_with_retry(int64_t block, const std::vector<ConditionSeed> &seeds);
-  void persist_results(const std::vector<FetchResult> &rows);
-  void advance_cursor(int64_t block);
+  void persist_results(const std::vector<FetchResult> &rows, int64_t commit_block);
+  int64_t get_cursor();
+  void set_cursor_in_txn(duckdb::Connection &conn, int64_t block);
 
   const Config &config_;
   Database &stage1_db_;

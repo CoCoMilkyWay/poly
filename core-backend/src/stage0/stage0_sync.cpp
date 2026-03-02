@@ -352,7 +352,7 @@ StageSync::StageSync(const Config &config, Database &stage1_db, Database &stage0
   init_schema();
   ensure_cursor_floor();
   load_known_conditions();
-  sync_.last_block = stage0_db_.get_last_block();
+  sync_.last_block = get_cursor();
   sync_.head_block = sync_.last_block;
   sync_.behind_blocks = 0;
   sync_.condition_count = static_cast<int64_t>(known_condition_ids_.size());
@@ -431,7 +431,7 @@ void StageSync::do_sync() {
   ensure_cursor_floor();
 
   int64_t stage1_head = stage1_db_.get_last_block();
-  int64_t cursor = stage0_db_.get_last_block();
+  int64_t cursor = get_cursor();
   {
     std::lock_guard<std::mutex> lock(status_mutex_);
     refresh_status_locked(stage1_head, cursor, true);
@@ -513,13 +513,10 @@ void StageSync::do_sync() {
         }
         rows_to_persist.push_back(std::move(row));
       }
-      if (!rows_to_persist.empty()) {
-        persist_results(rows_to_persist);
-        for (const auto &row : rows_to_persist) {
-          known_condition_ids_.insert(row.seed.condition_hex_lower);
-        }
+      persist_results(rows_to_persist, next_commit_block);
+      for (const auto &row : rows_to_persist) {
+        known_condition_ids_.insert(row.seed.condition_hex_lower);
       }
-      advance_cursor(next_commit_block);
       {
         std::lock_guard<std::mutex> lock(status_mutex_);
         record_commit_locked(next_commit_block);
@@ -549,7 +546,7 @@ void StageSync::do_sync() {
     return;
   }
 
-  int64_t new_cursor = stage0_db_.get_last_block();
+  int64_t new_cursor = get_cursor();
   {
     std::lock_guard<std::mutex> lock(status_mutex_);
     refresh_status_locked(stage1_head, new_cursor, false);
@@ -558,6 +555,13 @@ void StageSync::do_sync() {
 }
 
 void StageSync::init_schema() {
+  stage0_db_.execute(
+      "CREATE TABLE IF NOT EXISTS pm_sync_cursor ("
+      "id INTEGER PRIMARY KEY CHECK (id = 0), "
+      "last_block BIGINT NOT NULL"
+      ")");
+  stage0_db_.execute(
+      "INSERT OR IGNORE INTO pm_sync_cursor (id, last_block) VALUES (0, -1)");
   stage0_db_.execute(
       "CREATE TABLE IF NOT EXISTS pm_condition_static ("
       "id BIGINT NOT NULL, "
@@ -647,14 +651,16 @@ void StageSync::load_known_conditions() {
 
 void StageSync::ensure_cursor_floor() {
   int64_t floor_block = config_.initial_block - 1;
-  int64_t cursor = stage0_db_.get_last_block();
+  int64_t cursor = get_cursor();
   if (cursor >= floor_block) {
     return;
   }
-  bool locked = stage0_db_.try_write_lock();
-  assert(locked && "stage0 db state写锁被占用");
-  stage0_db_.set_last_block(floor_block);
-  stage0_db_.release_write_lock();
+  auto conn = stage0_db_.create_connection();
+  auto begin = conn->Query("BEGIN TRANSACTION");
+  assert(begin && !begin->HasError());
+  set_cursor_in_txn(*conn, floor_block);
+  auto commit = conn->Query("COMMIT");
+  assert(commit && !commit->HasError());
 }
 
 StageSync::SeedScanBatch StageSync::load_seed_scan_batch(int64_t start_block, int64_t head_block,
@@ -785,10 +791,7 @@ StageSync::BlockTaskResult StageSync::process_block_with_retry(int64_t block, co
   };
 }
 
-void StageSync::persist_results(const std::vector<FetchResult> &rows) {
-  if (rows.empty()) {
-    return;
-  }
+void StageSync::persist_results(const std::vector<FetchResult> &rows, int64_t commit_block) {
   int64_t now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
                        std::chrono::system_clock::now().time_since_epoch())
                        .count();
@@ -800,7 +803,7 @@ void StageSync::persist_results(const std::vector<FetchResult> &rows) {
   };
 
   exec_sql("BEGIN TRANSACTION");
-  {
+  if (!rows.empty()) {
     duckdb::Appender ap(*conn, "pm_condition_static");
     for (const auto &row : rows) {
       const json &m = row.market;
@@ -1044,14 +1047,23 @@ void StageSync::persist_results(const std::vector<FetchResult> &rows) {
     }
     ap.Close();
   }
+  set_cursor_in_txn(*conn, commit_block);
   exec_sql("COMMIT");
 }
 
-void StageSync::advance_cursor(int64_t block) {
-  bool locked = stage0_db_.try_write_lock();
-  assert(locked && "stage0 db state写锁被占用");
-  stage0_db_.set_last_block(block);
-  stage0_db_.release_write_lock();
+int64_t StageSync::get_cursor() {
+  auto conn = stage0_db_.create_connection();
+  auto result = conn->Query("SELECT last_block FROM pm_sync_cursor WHERE id = 0");
+  assert(result && !result->HasError());
+  if (result->RowCount() == 0) {
+    return -1;
+  }
+  return result->GetValue(0, 0).GetValue<int64_t>();
+}
+
+void StageSync::set_cursor_in_txn(duckdb::Connection &conn, int64_t block) {
+  auto result = conn.Query("UPDATE pm_sync_cursor SET last_block = " + std::to_string(block) + " WHERE id = 0");
+  assert(result && !result->HasError());
 }
 
 } // namespace stage0
