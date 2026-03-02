@@ -345,25 +345,30 @@ void StageSync::promote_ready_batches() {
   }
 }
 
+bool StageSync::find_committable_prefix(size_t &consume_batches, int64_t &commit_end_block) const {
+  consume_batches = 0;
+  commit_end_block = -1;
+  if (buffered_transfer_rows_ < kChunkTransferTarget) {
+    return false;
+  }
+  int64_t cumulative_transfers = 0;
+  for (size_t i = 0; i < buffered_batches_.size(); ++i) {
+    cumulative_transfers += buffered_batches_[i].transfer_rows;
+    if (cumulative_transfers >= kChunkTransferTarget &&
+        ((buffered_batches_[i].to_block + 1) % kCommitBlockGranularity == 0)) {
+      consume_batches = i + 1;
+      commit_end_block = buffered_batches_[i].to_block;
+      return true;
+    }
+  }
+  return false;
+}
+
 bool StageSync::try_commit_ready_chunks() {
   bool committed_any = false;
-  while (buffered_transfer_rows_ >= kChunkTransferTarget) {
-    int64_t cumulative_transfers = 0;
-    size_t consume_batches = 0;
-    int64_t commit_end_block = -1;
-    for (size_t i = 0; i < buffered_batches_.size(); ++i) {
-      cumulative_transfers += buffered_batches_[i].transfer_rows;
-      if (cumulative_transfers >= kChunkTransferTarget &&
-          ((buffered_batches_[i].to_block + 1) % kCommitBlockGranularity == 0)) {
-        consume_batches = i + 1;
-        commit_end_block = buffered_batches_[i].to_block;
-        break;
-      }
-    }
-
-    if (consume_batches == 0) {
-      break;
-    }
+  size_t consume_batches = 0;
+  int64_t commit_end_block = -1;
+  while (find_committable_prefix(consume_batches, commit_end_block)) {
 
     assert(!buffered_batches_.empty());
     assert(buffered_batches_.front().from_block == current_chunk_start_block_);
@@ -441,18 +446,9 @@ void StageSync::sync_loop(int64_t safe_head) {
   }
 
   auto has_committable_chunk = [this]() {
-    if (buffered_transfer_rows_ < kChunkTransferTarget) {
-      return false;
-    }
-    int64_t cumulative = 0;
-    for (const auto &batch : buffered_batches_) {
-      cumulative += batch.transfer_rows;
-      if (cumulative >= kChunkTransferTarget &&
-          ((batch.to_block + 1) % kCommitBlockGranularity == 0)) {
-        return true;
-      }
-    }
-    return false;
+    size_t consume_batches = 0;
+    int64_t commit_end_block = -1;
+    return find_committable_prefix(consume_batches, commit_end_block);
   };
 
   int scheduler_sleep_ms = kSchedulerSleepMs;

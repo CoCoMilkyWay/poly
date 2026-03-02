@@ -91,6 +91,7 @@ private:
   void clear_progress_inline();
   void submit_rpc_task(InFlightTask &task);
   void promote_ready_batches();
+  bool find_committable_prefix(size_t &consume_batches, int64_t &commit_end_block) const;
   bool try_commit_ready_chunks();
   std::future<DecodedEvents> submit_decode_task(std::shared_ptr<std::vector<json>> shared_raw_logs);
   void start_decode_pool();

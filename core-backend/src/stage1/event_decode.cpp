@@ -9,12 +9,55 @@
 
 namespace stage1 {
 
-thread_local std::string EventDecoder::current_log_json_;
+namespace {
+
+inline void assert_exact_topics(const json &topics, size_t expected) {
+  assert(topics.size() == expected);
+}
+
+inline void assert_has_0x_prefix(const std::string &hex) {
+  assert(hex.size() >= 2);
+  assert(hex[0] == '0');
+  assert(hex[1] == 'x' || hex[1] == 'X');
+}
+
+inline void assert_min_data_words(const std::string &data, size_t min_words) {
+  assert_has_0x_prefix(data);
+  assert(data.size() >= (2 + min_words * 64));
+  assert(((data.size() - 2) % 64) == 0);
+}
+
+inline void assert_exact_data_words(const std::string &data, size_t exact_words) {
+  assert_min_data_words(data, exact_words);
+  assert(data.size() == (2 + exact_words * 64));
+}
+
+inline std::string build_crash_context(const json &log) {
+  const std::string address = log["address"].get<std::string>();
+  const std::string tx_hash = log["transactionHash"].get<std::string>();
+  const std::string block_number = log["blockNumber"].get<std::string>();
+  const std::string log_index = log["logIndex"].get<std::string>();
+  const auto &topics = log["topics"];
+  const std::string topic0 = topics.empty() ? "0x" : topics[0].get<std::string>();
+  return "address=" + address +
+         " tx=" + tx_hash +
+         " block=" + block_number +
+         " log_index=" + log_index +
+         " topic0=" + topic0;
+}
+
+inline stage1::Bytes32 zero_u256_bytes32() {
+  return stage1::Bytes32{};
+}
+
+} // namespace
+
+thread_local std::string EventDecoder::current_log_context_;
 
 const bool EventDecoder::crash_handler_installed_ = []() {
   std::set_terminate([]() {
     std::cerr << "\n[CRASH] terminate called\n";
-    const auto &log = EventDecoder::current_log_json_;
+    const auto &log = EventDecoder::current_log_context();
     if (!log.empty()) {
       std::cerr << "[CRASH] stage1 current log: " << log << "\n";
     }
@@ -26,22 +69,7 @@ const bool EventDecoder::crash_handler_installed_ = []() {
 DecodedEvents EventDecoder::decode_logs(std::vector<json> &&results) {
   [[maybe_unused]] bool installed = crash_handler_installed_;
   DecodedEvents events;
-  // 第一趟: FPMM创建（扫描所有Factory，不只是Polymarket的）
-  for (const auto &result : results) {
-    for (const auto &log : result) {
-      const auto &topics_arr = log["topics"];
-      if (topics_arr.empty()) {
-        continue;
-      }
-      std::string topic0 = to_lower(topics_arr[0].get<std::string>());
-      if (topic0 == topics::FPMM_CREATE) {
-        std::string factory_addr = to_lower(log["address"].get<std::string>());
-        parse_fpmm_create(log, factory_addr, events);
-      }
-    }
-  }
-
-  // 第二趟: 所有事件
+  // 单趟解析所有事件，边解析边释放RPC原始日志，降低峰值内存。
   for (auto &result : results) {
     for (const auto &log : result) {
       parse_log(log, events);
@@ -53,12 +81,14 @@ DecodedEvents EventDecoder::decode_logs(std::vector<json> &&results) {
   return events;
 }
 
-const std::string &EventDecoder::current_log_json() {
-  return current_log_json_;
+const std::string &EventDecoder::current_log_context() {
+  return current_log_context_;
 }
 
 std::string EventDecoder::to_lower(std::string s) {
-  std::transform(s.begin(), s.end(), s.begin(), ::tolower);
+  std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) {
+    return static_cast<char>(std::tolower(c));
+  });
   return s;
 }
 
@@ -188,6 +218,34 @@ int64_t EventDecoder::extract_uint256_i64_from_data(const std::string &data, siz
   return static_cast<int64_t>(out);
 }
 
+std::vector<Bytes32> EventDecoder::extract_uint256_array_from_data_offset(const std::string &data, int64_t byte_offset) {
+  assert(byte_offset >= 0);
+  assert((byte_offset % 32) == 0);
+  assert_min_data_words(data, static_cast<size_t>(byte_offset / 32 + 1));
+  const int64_t len = extract_uint256_i64_from_data(data, static_cast<size_t>(byte_offset / 32));
+  std::vector<Bytes32> out;
+  out.reserve(static_cast<size_t>(len));
+  for (int64_t i = 0; i < len; ++i) {
+    out.push_back(extract_uint256_from_data(
+        data, static_cast<size_t>(byte_offset / 32 + 1 + i)));
+  }
+  return out;
+}
+
+std::optional<std::string> EventDecoder::extract_dynamic_bytes_from_data_offset(const std::string &data, int64_t byte_offset) {
+  assert(byte_offset >= 0);
+  assert((byte_offset % 32) == 0);
+  assert_min_data_words(data, static_cast<size_t>(byte_offset / 32 + 1));
+  const int64_t data_len = extract_uint256_i64_from_data(data, static_cast<size_t>(byte_offset / 32));
+  if (data_len == 0) {
+    return std::nullopt;
+  }
+  const size_t start = 2 + (static_cast<size_t>(byte_offset / 32) + 1) * 64;
+  const size_t hex_len = static_cast<size_t>(data_len) * 2;
+  assert(start + hex_len <= data.size());
+  return hex_to_bytes(data.substr(start, hex_len));
+}
+
 bool EventDecoder::is_fpmm_topic(const std::string &topic0) {
   return topic0 == topics::FPMM_BUY ||
          topic0 == topics::FPMM_SELL ||
@@ -196,12 +254,16 @@ bool EventDecoder::is_fpmm_topic(const std::string &topic0) {
 }
 
 void EventDecoder::parse_log(const json &log, DecodedEvents &events) {
-  current_log_json_ = log.dump();
+  current_log_context_ = build_crash_context(log);
   std::string address = to_lower(log["address"].get<std::string>());
   const auto &topics_arr = log["topics"];
   assert(!topics_arr.empty());
 
   std::string topic0 = to_lower(topics_arr[0].get<std::string>());
+  if (topic0 == topics::FPMM_CREATE) {
+    parse_fpmm_create(log, address, events);
+    return;
+  }
   std::string data = log["data"].get<std::string>();
   Bytes32 tx_hash = hex_to_bytes32(log["transactionHash"].get<std::string>());
   int64_t block_number = hex_to_int64(log["blockNumber"].get<std::string>());
@@ -210,13 +272,11 @@ void EventDecoder::parse_log(const json &log, DecodedEvents &events) {
   if (address == contracts::CONDITIONAL_TOKENS) {
     parse_conditional_tokens_event(topic0, topics_arr, data, tx_hash, block_number, log_index, events);
   } else if (address == contracts::CTF_EXCHANGE) {
-    parse_exchange_event(topic0, topics_arr, data, tx_hash, block_number, log_index, "ctf", events);
+    parse_exchange_event(topic0, topics_arr, data, tx_hash, block_number, log_index, "CTF", events);
   } else if (address == contracts::NEG_RISK_CTF_EXCHANGE) {
-    parse_exchange_event(topic0, topics_arr, data, tx_hash, block_number, log_index, "nrx", events);
+    parse_exchange_event(topic0, topics_arr, data, tx_hash, block_number, log_index, "NegRisk", events);
   } else if (address == contracts::NEG_RISK_ADAPTER) {
     parse_neg_risk_adapter_event(topic0, topics_arr, data, tx_hash, block_number, log_index, events);
-  } else if (address == contracts::FPMM_FACTORY) {
-    // 第一趟已处理，跳过
   } else if (is_fpmm_topic(topic0)) {
     // stage1 只按 topic 记录 FPMM 事件，不依赖当前批次是否出现 FPMM_CREATE。
     parse_fpmm_event(topic0, address_hex_to_bytes20(address), topics_arr, data, tx_hash, block_number, log_index, events);
@@ -271,6 +331,8 @@ void EventDecoder::parse_neg_risk_adapter_event(const std::string &topic0, const
 void EventDecoder::parse_transfer_single(const json &topics, const std::string &data,
                                          const Bytes32 &tx_hash, int64_t block_number,
                                          int64_t log_index, DecodedEvents &events) {
+  assert_exact_topics(topics, 4);
+  assert_exact_data_words(data, 2);
   events.transfer.push_back({block_number, tx_hash, log_index * TRANSFER_FLAT_LOG_SCALE,
                              extract_address_from_topic(topics[1].get<std::string>()),
                              extract_address_from_topic(topics[2].get<std::string>()),
@@ -282,12 +344,16 @@ void EventDecoder::parse_transfer_single(const json &topics, const std::string &
 void EventDecoder::parse_transfer_batch(const json &topics, const std::string &data,
                                         const Bytes32 &tx_hash, int64_t block_number,
                                         int64_t log_index, DecodedEvents &events) {
+  assert_exact_topics(topics, 4);
+  assert_min_data_words(data, 2);
   Bytes20 op = extract_address_from_topic(topics[1].get<std::string>());
   Bytes20 from = extract_address_from_topic(topics[2].get<std::string>());
   Bytes20 to = extract_address_from_topic(topics[3].get<std::string>());
 
   int64_t ids_offset = extract_uint256_i64_from_data(data, 0);
   int64_t values_offset = extract_uint256_i64_from_data(data, 1);
+  assert((ids_offset % 32) == 0);
+  assert((values_offset % 32) == 0);
 
   int64_t ids_len = extract_uint256_i64_from_data(data, ids_offset / 32);
   int64_t values_len = extract_uint256_i64_from_data(data, values_offset / 32);
@@ -305,13 +371,11 @@ void EventDecoder::parse_transfer_batch(const json &topics, const std::string &d
 void EventDecoder::parse_split_or_merge(const json &topics, const std::string &data,
                                         const Bytes32 &tx_hash, int64_t block_number,
                                         int64_t log_index, std::vector<SplitMergeEvent> &out) {
+  assert_exact_topics(topics, 4);
+  assert_min_data_words(data, 3);
   int64_t partition_offset = extract_uint256_i64_from_data(data, 1);
-  int64_t partition_len = extract_uint256_i64_from_data(data, partition_offset / 32);
-  std::vector<Bytes32> partition;
-  partition.reserve(static_cast<size_t>(partition_len));
-  for (int64_t i = 0; i < partition_len; ++i) {
-    partition.push_back(extract_uint256_from_data(data, partition_offset / 32 + 1 + i));
-  }
+  assert((partition_offset % 32) == 0);
+  std::vector<Bytes32> partition = extract_uint256_array_from_data_offset(data, partition_offset);
 
   out.push_back({block_number, tx_hash, log_index,
                  extract_address_from_topic(topics[1].get<std::string>()),
@@ -325,13 +389,11 @@ void EventDecoder::parse_split_or_merge(const json &topics, const std::string &d
 void EventDecoder::parse_redemption(const json &topics, const std::string &data,
                                     const Bytes32 &tx_hash, int64_t block_number,
                                     int64_t log_index, DecodedEvents &events) {
+  assert_exact_topics(topics, 4);
+  assert_min_data_words(data, 3);
   int64_t index_sets_offset = extract_uint256_i64_from_data(data, 1);
-  int64_t index_sets_len = extract_uint256_i64_from_data(data, index_sets_offset / 32);
-  std::vector<Bytes32> index_sets;
-  index_sets.reserve(static_cast<size_t>(index_sets_len));
-  for (int64_t i = 0; i < index_sets_len; ++i) {
-    index_sets.push_back(extract_uint256_from_data(data, index_sets_offset / 32 + 1 + i));
-  }
+  assert((index_sets_offset % 32) == 0);
+  std::vector<Bytes32> index_sets = extract_uint256_array_from_data_offset(data, index_sets_offset);
 
   events.redemption.push_back({block_number, tx_hash, log_index,
                                extract_address_from_topic(topics[1].get<std::string>()),
@@ -345,6 +407,8 @@ void EventDecoder::parse_redemption(const json &topics, const std::string &data,
 void EventDecoder::parse_condition_preparation(const json &topics, const std::string &data,
                                                const Bytes32 &tx_hash, int64_t block_number,
                                                int64_t log_index, DecodedEvents &events) {
+  assert_exact_topics(topics, 4);
+  assert_exact_data_words(data, 1);
   events.condition_preparation.push_back({block_number, tx_hash, log_index,
                                           hex_to_bytes32(topics[1].get<std::string>()),
                                           hex_to_bytes32(topics[3].get<std::string>()),
@@ -355,13 +419,11 @@ void EventDecoder::parse_condition_preparation(const json &topics, const std::st
 void EventDecoder::parse_condition_resolution(const json &topics, const std::string &data,
                                               const Bytes32 &tx_hash, int64_t block_number,
                                               int64_t log_index, DecodedEvents &events) {
+  assert_exact_topics(topics, 4);
+  assert_min_data_words(data, 2);
   int64_t payout_offset = extract_uint256_i64_from_data(data, 1);
-  int64_t payout_len = extract_uint256_i64_from_data(data, payout_offset / 32);
-  std::vector<Bytes32> payouts;
-  payouts.reserve(static_cast<size_t>(payout_len));
-  for (int64_t i = 0; i < payout_len; ++i) {
-    payouts.push_back(extract_uint256_from_data(data, payout_offset / 32 + 1 + i));
-  }
+  assert((payout_offset % 32) == 0);
+  std::vector<Bytes32> payouts = extract_uint256_array_from_data_offset(data, payout_offset);
 
   events.condition_resolution.push_back({block_number, tx_hash, log_index,
                                          hex_to_bytes32(topics[1].get<std::string>()),
@@ -375,6 +437,8 @@ void EventDecoder::parse_order_filled(const json &topics, const std::string &dat
                                       const Bytes32 &tx_hash, int64_t block_number,
                                       int64_t log_index, const std::string &exchange,
                                       DecodedEvents &events) {
+  assert_exact_topics(topics, 4);
+  assert_exact_data_words(data, 5);
   events.order_filled.push_back({block_number, tx_hash, log_index,
                                  exchange,
                                  hex_to_bytes32(topics[1].get<std::string>()),
@@ -390,16 +454,19 @@ void EventDecoder::parse_order_filled(const json &topics, const std::string &dat
 void EventDecoder::parse_token_map(const json &topics, const Bytes32 &tx_hash,
                                    int64_t block_number, int64_t log_index,
                                    const std::string &exchange, DecodedEvents &events) {
+  assert_exact_topics(topics, 4);
   events.token_map.push_back({block_number, tx_hash, log_index,
                               exchange,
-                              extract_address_from_topic(topics[1].get<std::string>()),
-                              extract_address_from_topic(topics[2].get<std::string>()),
+                              hex_to_bytes32(topics[1].get<std::string>()),
+                              hex_to_bytes32(topics[2].get<std::string>()),
                               hex_to_bytes32(topics[3].get<std::string>())});
 }
 
 void EventDecoder::parse_convert(const json &topics, const std::string &data,
                                  const Bytes32 &tx_hash, int64_t block_number,
                                  int64_t log_index, DecodedEvents &events) {
+  assert_exact_topics(topics, 4);
+  assert_exact_data_words(data, 1);
   events.convert.push_back({block_number, tx_hash, log_index,
                             extract_address_from_topic(topics[1].get<std::string>()),
                             hex_to_bytes32(topics[2].get<std::string>()),
@@ -410,16 +477,11 @@ void EventDecoder::parse_convert(const json &topics, const std::string &data,
 void EventDecoder::parse_neg_risk_market(const json &topics, const std::string &data,
                                          const Bytes32 &tx_hash, int64_t block_number,
                                          int64_t log_index, DecodedEvents &events) {
+  assert_exact_topics(topics, 3);
+  assert_min_data_words(data, 2);
   int64_t data_offset = extract_uint256_i64_from_data(data, 1);
-  int64_t data_len = extract_uint256_i64_from_data(data, data_offset / 32);
-  std::optional<std::string> market_data;
-  if (data_len > 0) {
-    size_t start = 2 + (data_offset / 32 + 1) * 64;
-    size_t hex_len = static_cast<size_t>(data_len) * 2;
-    if (start + hex_len <= data.size()) {
-      market_data = hex_to_bytes(data.substr(start, hex_len));
-    }
-  }
+  assert((data_offset % 32) == 0);
+  std::optional<std::string> market_data = extract_dynamic_bytes_from_data_offset(data, data_offset);
 
   events.neg_risk_market.push_back({block_number, tx_hash, log_index,
                                     hex_to_bytes32(topics[1].get<std::string>()),
@@ -431,16 +493,11 @@ void EventDecoder::parse_neg_risk_market(const json &topics, const std::string &
 void EventDecoder::parse_neg_risk_question(const json &topics, const std::string &data,
                                            const Bytes32 &tx_hash, int64_t block_number,
                                            int64_t log_index, DecodedEvents &events) {
+  assert_exact_topics(topics, 3);
+  assert_min_data_words(data, 2);
   int64_t data_offset = extract_uint256_i64_from_data(data, 1);
-  int64_t data_len = extract_uint256_i64_from_data(data, data_offset / 32);
-  std::optional<std::string> question_data;
-  if (data_len > 0) {
-    size_t start = 2 + (data_offset / 32 + 1) * 64;
-    size_t hex_len = static_cast<size_t>(data_len) * 2;
-    if (start + hex_len <= data.size()) {
-      question_data = hex_to_bytes(data.substr(start, hex_len));
-    }
-  }
+  assert((data_offset % 32) == 0);
+  std::optional<std::string> question_data = extract_dynamic_bytes_from_data_offset(data, data_offset);
 
   events.neg_risk_question.push_back({block_number, tx_hash, log_index,
                                       hex_to_bytes32(topics[1].get<std::string>()),
@@ -449,11 +506,11 @@ void EventDecoder::parse_neg_risk_question(const json &topics, const std::string
                                       question_data});
 }
 
-std::optional<std::string> EventDecoder::parse_fpmm_create(const json &log, const std::string &factory_addr, DecodedEvents &events) {
+void EventDecoder::parse_fpmm_create(const json &log, const std::string &factory_addr, DecodedEvents &events) {
   const auto &topics_arr = log["topics"];
   std::string topic0 = to_lower(topics_arr[0].get<std::string>());
   if (topic0 != topics::FPMM_CREATE) {
-    return std::nullopt;
+    return;
   }
 
   std::string data = log["data"].get<std::string>();
@@ -478,14 +535,16 @@ std::optional<std::string> EventDecoder::parse_fpmm_create(const json &log, cons
   assert(creation_topics_count == 2 || creation_topics_count == 4);
   std::string creation_layout;
   if (creation_topics_count == 4) {
-    creation_layout = "fix_v1";
+    assert_min_data_words(data, 3);
+    creation_layout = "fixed_factory_v1";
     fpmm_addr = extract_address_from_data_word(data, 0);
     conditional_tokens = extract_address_from_topic(topics_arr[2].get<std::string>());
     collateral_token = extract_address_from_topic(topics_arr[3].get<std::string>());
     cond_ids_offset = extract_uint256_i64_from_data(data, 1);
     fee = extract_uint256_from_data(data, 2);
   } else {
-    creation_layout = "det_v1";
+    assert_min_data_words(data, 5);
+    creation_layout = "deterministic_factory_v1";
     fpmm_addr = extract_address_from_data_word(data, 0);
     conditional_tokens = extract_address_from_data_word(data, 1);
     collateral_token = extract_address_from_data_word(data, 2);
@@ -493,13 +552,8 @@ std::optional<std::string> EventDecoder::parse_fpmm_create(const json &log, cons
     fee = extract_uint256_from_data(data, 4);
   }
 
-  int64_t cond_ids_len = extract_uint256_i64_from_data(data, cond_ids_offset / 32);
-
-  std::vector<Bytes32> condition_ids;
-  condition_ids.reserve(static_cast<size_t>(cond_ids_len));
-  for (int64_t i = 0; i < cond_ids_len; ++i) {
-    condition_ids.push_back(extract_bytes32_from_data(data, cond_ids_offset / 32 + 1 + i));
-  }
+  assert((cond_ids_offset % 32) == 0);
+  std::vector<Bytes32> condition_ids = extract_uint256_array_from_data_offset(data, cond_ids_offset);
 
   events.fpmm.push_back({block_number, tx_hash, log_index,
                          address_hex_to_bytes20(factory_addr),
@@ -512,7 +566,6 @@ std::optional<std::string> EventDecoder::parse_fpmm_create(const json &log, cons
                          std::move(condition_ids),
                          fee});
 
-  return std::nullopt;
 }
 
 void EventDecoder::parse_fpmm_event(const std::string &topic0, const Bytes20 &fpmm_addr,
@@ -520,6 +573,8 @@ void EventDecoder::parse_fpmm_event(const std::string &topic0, const Bytes20 &fp
                                     const Bytes32 &tx_hash, int64_t block_number,
                                     int64_t log_index, DecodedEvents &events) {
   if (topic0 == topics::FPMM_BUY) {
+    assert_exact_topics(topics, 3);
+    assert_exact_data_words(data, 3);
     events.fpmm_trade.push_back({block_number, tx_hash, log_index,
                                  fpmm_addr,
                                  extract_address_from_topic(topics[1].get<std::string>()),
@@ -529,6 +584,8 @@ void EventDecoder::parse_fpmm_event(const std::string &topic0, const Bytes20 &fp
                                  extract_uint256_from_data(data, 2),
                                  extract_uint256_from_data(data, 1)});
   } else if (topic0 == topics::FPMM_SELL) {
+    assert_exact_topics(topics, 3);
+    assert_exact_data_words(data, 3);
     events.fpmm_trade.push_back({block_number, tx_hash, log_index,
                                  fpmm_addr,
                                  extract_address_from_topic(topics[1].get<std::string>()),
@@ -538,29 +595,25 @@ void EventDecoder::parse_fpmm_event(const std::string &topic0, const Bytes20 &fp
                                  extract_uint256_from_data(data, 2),
                                  extract_uint256_from_data(data, 1)});
   } else if (topic0 == topics::FPMM_FUNDING_ADD) {
+    assert_exact_topics(topics, 2);
+    assert_min_data_words(data, 2);
     int64_t amounts_offset = extract_uint256_i64_from_data(data, 0);
-    int64_t amounts_len = extract_uint256_i64_from_data(data, amounts_offset / 32);
-    std::vector<Bytes32> amounts;
-    amounts.reserve(static_cast<size_t>(amounts_len));
-    for (int64_t i = 0; i < amounts_len; ++i) {
-      amounts.push_back(extract_uint256_from_data(data, amounts_offset / 32 + 1 + i));
-    }
+    assert((amounts_offset % 32) == 0);
+    std::vector<Bytes32> amounts = extract_uint256_array_from_data_offset(data, amounts_offset);
 
     events.fpmm_funding.push_back({block_number, tx_hash, log_index,
                                    fpmm_addr,
                                    extract_address_from_topic(topics[1].get<std::string>()),
                                    1,
                                    std::move(amounts),
-                                   uint256_hex_to_bytes32("0x0"),
+                                   zero_u256_bytes32(),
                                    extract_uint256_from_data(data, 1)});
   } else if (topic0 == topics::FPMM_FUNDING_REMOVE) {
+    assert_exact_topics(topics, 2);
+    assert_min_data_words(data, 3);
     int64_t amounts_offset = extract_uint256_i64_from_data(data, 0);
-    int64_t amounts_len = extract_uint256_i64_from_data(data, amounts_offset / 32);
-    std::vector<Bytes32> amounts;
-    amounts.reserve(static_cast<size_t>(amounts_len));
-    for (int64_t i = 0; i < amounts_len; ++i) {
-      amounts.push_back(extract_uint256_from_data(data, amounts_offset / 32 + 1 + i));
-    }
+    assert((amounts_offset % 32) == 0);
+    std::vector<Bytes32> amounts = extract_uint256_array_from_data_offset(data, amounts_offset);
 
     events.fpmm_funding.push_back({block_number, tx_hash, log_index,
                                    fpmm_addr,

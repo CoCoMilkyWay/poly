@@ -14,7 +14,7 @@ constexpr const char *CONDITIONAL_TOKENS = "0x4d97dcd97ec945f40cf65f87097ace5ea0
 constexpr const char *CTF_EXCHANGE = "0x4bfb41d5b3570defd03c39a9a4d8de6bd8b8982e";
 constexpr const char *NEG_RISK_CTF_EXCHANGE = "0xc5d563a36ae78145c45a50134d48a1215220f80a";
 constexpr const char *NEG_RISK_ADAPTER = "0xd91e80cf2e7be2e162c6513ced06f1dd0da35296";
-constexpr const char *FPMM_FACTORY = "0x8b9805a2f595b6705e74f7310829f2d299d21522";
+constexpr const char *FPMM_FACTORY = "0x8b9805a2f595b6705e74f7310829f2d299d21522"; // Not used
 } // namespace contracts
 
 namespace topics {
@@ -103,7 +103,7 @@ struct FpmmEvent {
   int64_t log_index;
   Bytes20 factory;
   int64_t creation_topics_count; // FixedProductMarketMakerCreation topics长度（2/4）
-  std::string creation_layout;   // 按 topics 布局标记: fix_v1 / det_v1
+  std::string creation_layout;   // 按 topics 布局标记: fixed_factory_v1 / deterministic_factory_v1
   Bytes20 creator, fpmm_addr, conditional_tokens, collateral_token;
   std::vector<Bytes32> condition_ids;
   Bytes32 fee;
@@ -143,7 +143,7 @@ struct TokenMapEvent {
   Bytes32 tx_hash;
   int64_t log_index;
   std::string exchange;
-  Bytes20 token0, token1;
+  Bytes32 token0, token1;
   Bytes32 condition_id;
 };
 
@@ -195,10 +195,10 @@ struct DecodedEvents {
 class EventDecoder {
 public:
   static DecodedEvents decode_logs(std::vector<json> &&results);
-  static const std::string &current_log_json();
+  static const std::string &current_log_context();
 
 private:
-  static thread_local std::string current_log_json_;
+  static thread_local std::string current_log_context_;
   static const bool crash_handler_installed_;
 
   static std::string to_lower(std::string s);
@@ -213,6 +213,8 @@ private:
   static Bytes32 extract_bytes32_from_data(const std::string &data, size_t index);
   static Bytes32 extract_uint256_from_data(const std::string &data, size_t index);
   static int64_t extract_uint256_i64_from_data(const std::string &data, size_t index);
+  static std::vector<Bytes32> extract_uint256_array_from_data_offset(const std::string &data, int64_t byte_offset);
+  static std::optional<std::string> extract_dynamic_bytes_from_data_offset(const std::string &data, int64_t byte_offset);
   static bool is_fpmm_topic(const std::string &topic0);
 
   static void parse_log(const json &log, DecodedEvents &events);
@@ -263,8 +265,8 @@ private:
   static void parse_neg_risk_question(const json &topics, const std::string &data,
                                       const Bytes32 &tx_hash, int64_t block_number,
                                       int64_t log_index, DecodedEvents &events);
-  static std::optional<std::string> parse_fpmm_create(const json &log, const std::string &factory_addr,
-                                                      DecodedEvents &events);
+  static void parse_fpmm_create(const json &log, const std::string &factory_addr,
+                                DecodedEvents &events);
   static void parse_fpmm_event(const std::string &topic0, const Bytes20 &fpmm_addr,
                                const json &topics, const std::string &data,
                                const Bytes32 &tx_hash, int64_t block_number,
