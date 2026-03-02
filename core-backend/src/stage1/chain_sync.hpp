@@ -49,10 +49,10 @@ public:
 
 private:
   static constexpr int64_t kFinalityDepthBlocks = 100000;  // 远离区块链顶端(数据完整性)
-  static constexpr int64_t kChunkTransferTarget = 1000000; // 控制单个落盘文件大小
+  static constexpr int64_t kChunkTransferTarget = 5000000; // 控制单个落盘文件大小
   static constexpr int64_t kCommitBlockGranularity = 100;
   static constexpr int kRetryDelayMs = 300;
-  static constexpr int kRetryDelayMaxMs = 10000;
+  static constexpr int kRetryDelayMaxMs = 1000;
   static constexpr int kSchedulerSleepMs = 5;
   static constexpr int kSchedulerSleepMaxMs = 40;
 
