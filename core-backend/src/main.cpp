@@ -170,15 +170,19 @@ int main(int argc, char *argv[]) {
   std::cout << "[Main] 服务已启动" << std::endl;
   api_ioc.run();
 
-  auto join_stage = [](std::optional<std::thread> &thread) {
-    if (thread.has_value()) {
-      thread->join();
+  auto join_stage = [](const char *name, std::optional<std::thread> &thread) {
+    if (!thread.has_value()) {
+      std::cout << "[Main] " << name << " 线程未启动，跳过 join" << std::endl;
+      return;
     }
+    std::cout << "[Main] 等待 " << name << " 线程 join..." << std::endl;
+    thread->join();
+    std::cout << "[Main] " << name << " 线程已 join" << std::endl;
   };
-  join_stage(stage0_thread);
-  join_stage(stage1_thread);
-  join_stage(stage2_thread);
-  join_stage(stage3_thread);
+  join_stage("Stage0", stage0_thread);
+  join_stage("Stage1", stage1_thread);
+  join_stage("Stage2", stage2_thread);
+  join_stage("Stage3", stage3_thread);
 
   std::cout << "[Main] 已退出" << std::endl;
   return 0;

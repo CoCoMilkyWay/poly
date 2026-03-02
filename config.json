@@ -11,7 +11,7 @@
   "stage1_rpc_block_span": 500,
   "stage1_rpc_buffer_multiplier": 2,
 
-  "initial_block": 66938000,
+  "initial_block": 0,
   "frontend_port": 8000,
   "backend_port": 8001,
 

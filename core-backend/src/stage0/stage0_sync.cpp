@@ -425,6 +425,9 @@ void StageSync::refresh_status_locked(int64_t head_block, int64_t cursor, bool s
 
 void StageSync::do_sync() {
   TraceN("s0/sync");
+  if (stop_requested_) {
+    return;
+  }
   ensure_cursor_floor();
 
   int64_t stage1_head = stage1_db_.get_last_block();
@@ -448,14 +451,37 @@ void StageSync::do_sync() {
   std::vector<InFlightTask> inflight;
   inflight.reserve(static_cast<size_t>(kWorkerCount));
   std::map<int64_t, BlockTaskResult> ready;
+  std::map<int64_t, std::vector<ConditionSeed>> scanned_seeds;
+  int64_t scanned_to_block = cursor;
   int scheduler_sleep_ms = kSchedulerSleepMs;
 
-  while (next_commit_block <= stage1_head) {
-    while (static_cast<int>(inflight.size()) < kWorkerCount && next_dispatch_block <= stage1_head) {
+  while (!stop_requested_ && next_commit_block <= stage1_head) {
+    while (!stop_requested_ && static_cast<int>(inflight.size()) < kWorkerCount &&
+           next_dispatch_block <= stage1_head) {
+      if (next_dispatch_block > scanned_to_block) {
+        SeedScanBatch batch = load_seed_scan_batch(next_dispatch_block, stage1_head, static_cast<size_t>(kWorkerCount));
+        scanned_to_block = batch.scanned_to_block;
+        for (auto &it : batch.seeds_by_block) {
+          auto [ins_it, inserted] = scanned_seeds.emplace(it.first, std::move(it.second));
+          assert(inserted);
+        }
+      }
+
       const int64_t block = next_dispatch_block;
       next_dispatch_block += 1;
+      auto seeds_it = scanned_seeds.find(block);
+      if (seeds_it == scanned_seeds.end()) {
+        auto [it, inserted] = ready.emplace(block, BlockTaskResult{.block = block, .rows = {}});
+        assert(inserted);
+        continue;
+      }
+
+      std::vector<ConditionSeed> seeds = std::move(seeds_it->second);
+      scanned_seeds.erase(seeds_it);
       inflight.push_back(InFlightTask{
-          .future = std::async(std::launch::async, [this, block]() { return process_block_with_retry(block); }),
+          .future = std::async(std::launch::async, [this, block, seeds = std::move(seeds)]() {
+            return process_block_with_retry(block, seeds);
+          }),
       });
     }
 
@@ -474,7 +500,7 @@ void StageSync::do_sync() {
       progressed = true;
     }
 
-    while (true) {
+    while (!stop_requested_) {
       auto it = ready.find(next_commit_block);
       if (it == ready.end()) {
         break;
@@ -504,12 +530,23 @@ void StageSync::do_sync() {
       progressed = true;
     }
 
+    if (stop_requested_) {
+      break;
+    }
     if (!progressed) {
       std::this_thread::sleep_for(std::chrono::milliseconds(scheduler_sleep_ms));
       scheduler_sleep_ms = std::min(scheduler_sleep_ms << 1, kSchedulerSleepMaxMs);
     } else {
       scheduler_sleep_ms = kSchedulerSleepMs;
     }
+  }
+
+  if (stop_requested_) {
+    {
+      std::lock_guard<std::mutex> lock(status_mutex_);
+      sync_.syncing = false;
+    }
+    return;
   }
 
   int64_t new_cursor = stage0_db_.get_last_block();
@@ -620,9 +657,14 @@ void StageSync::ensure_cursor_floor() {
   stage0_db_.release_write_lock();
 }
 
-std::vector<StageSync::ConditionSeed> StageSync::load_block_seeds(int64_t block) const {
-  std::vector<ConditionSeed> out;
-  std::string range_sql = stage1_db_.feather_table_range("condition_preparation", block, block);
+StageSync::SeedScanBatch StageSync::load_seed_scan_batch(int64_t start_block, int64_t head_block,
+                                                         size_t max_conditions) const {
+  SeedScanBatch out;
+  assert(start_block <= head_block);
+  int64_t end_block = std::min<int64_t>(head_block, start_block + kSeedScanBlockSpan - 1);
+  out.scanned_to_block = end_block;
+
+  std::string range_sql = stage1_db_.feather_table_range("condition_preparation", start_block, end_block);
   if (range_sql == kEmptyRangeSql) {
     return out;
   }
@@ -631,16 +673,17 @@ std::vector<StageSync::ConditionSeed> StageSync::load_block_seeds(int64_t block)
       "SELECT block_number, condition_id, question_id "
       "FROM " +
       range_sql +
-      " WHERE block_number = " + std::to_string(block) +
-      " ORDER BY log_index ASC";
+      " WHERE block_number >= " + std::to_string(start_block) +
+      " AND block_number <= " + std::to_string(end_block) +
+      " ORDER BY block_number ASC, log_index ASC";
 
   auto conn = stage1_db_.create_connection();
   auto result = conn->Query(sql);
   assert(result && !result->HasError());
 
-  std::unordered_set<std::string> seen_this_round;
-  seen_this_round.reserve(static_cast<size_t>(result->RowCount()) + 1);
-  out.reserve(static_cast<size_t>(result->RowCount()));
+  std::unordered_set<std::string> seen_in_block;
+  int64_t current_block = -1;
+  size_t scanned_conditions = 0;
 
   for (idx_t row = 0; row < result->RowCount(); ++row) {
     int64_t block_number = result->GetValue(0, row).GetValue<int64_t>();
@@ -649,17 +692,28 @@ std::vector<StageSync::ConditionSeed> StageSync::load_block_seeds(int64_t block)
     assert(cond_blob.size() == 32);
     assert(question_blob.size() == 32);
 
+    if (block_number != current_block) {
+      current_block = block_number;
+      seen_in_block.clear();
+    }
+
     std::string cond_hex = blob_to_hex_lower(cond_blob);
-    if (seen_this_round.contains(cond_hex)) {
+    if (seen_in_block.contains(cond_hex)) {
       continue;
     }
-    seen_this_round.insert(cond_hex);
-    out.push_back(ConditionSeed{
+    seen_in_block.insert(cond_hex);
+    out.seeds_by_block[block_number].push_back(ConditionSeed{
         .condition_blob = std::move(cond_blob),
         .question_blob = std::move(question_blob),
         .condition_hex_lower = std::move(cond_hex),
         .first_seen_block = block_number,
     });
+
+    scanned_conditions += 1;
+    if (scanned_conditions >= max_conditions) {
+      out.scanned_to_block = block_number;
+      break;
+    }
   }
   return out;
 }
@@ -671,6 +725,9 @@ json StageSync::fetch_market_by_condition(const std::string &condition_hex_lower
   constexpr int kBackoffMaxMs = 10000;
   int delay_ms = kBaseBackoffMs;
   while (true) {
+    if (stop_requested_) {
+      return json::object();
+    }
     HttpResponse resp = http_get_once(url, config_.proxy_url);
     bool retryable = false;
     if (resp.curl_code == CURLE_OK && resp.status_code == 200) {
@@ -710,11 +767,13 @@ json StageSync::fetch_market_by_condition(const std::string &condition_hex_lower
   }
 }
 
-StageSync::BlockTaskResult StageSync::process_block_with_retry(int64_t block) {
-  auto seeds = load_block_seeds(block);
+StageSync::BlockTaskResult StageSync::process_block_with_retry(int64_t block, const std::vector<ConditionSeed> &seeds) {
   std::vector<FetchResult> rows;
   rows.reserve(seeds.size());
-  for (auto &seed : seeds) {
+  for (const auto &seed : seeds) {
+    if (stop_requested_) {
+      break;
+    }
     rows.push_back(FetchResult{
         .seed = seed,
         .market = fetch_market_by_condition(seed.condition_hex_lower),

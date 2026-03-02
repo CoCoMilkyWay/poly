@@ -4,6 +4,7 @@
 #include <chrono>
 #include <deque>
 #include <future>
+#include <map>
 #include <mutex>
 #include <string>
 #include <unordered_set>
@@ -43,6 +44,7 @@ private:
   static constexpr int kSchedulerSleepMs = 5;
   static constexpr int kSchedulerSleepMaxMs = 40;
   static constexpr size_t kEtaWindowSize = 20;
+  static constexpr int64_t kSeedScanBlockSpan = 20000;
 
   struct ConditionSeed {
     std::string condition_blob;
@@ -59,6 +61,11 @@ private:
   struct BlockTaskResult {
     int64_t block = 0;
     std::vector<FetchResult> rows;
+  };
+
+  struct SeedScanBatch {
+    int64_t scanned_to_block = 0;
+    std::map<int64_t, std::vector<ConditionSeed>> seeds_by_block;
   };
 
   struct CommitRecord {
@@ -79,9 +86,9 @@ private:
   void load_known_conditions();
   void ensure_cursor_floor();
 
-  std::vector<ConditionSeed> load_block_seeds(int64_t block) const;
+  SeedScanBatch load_seed_scan_batch(int64_t start_block, int64_t head_block, size_t max_conditions) const;
   json fetch_market_by_condition(const std::string &condition_hex_lower);
-  BlockTaskResult process_block_with_retry(int64_t block);
+  BlockTaskResult process_block_with_retry(int64_t block, const std::vector<ConditionSeed> &seeds);
   void persist_results(const std::vector<FetchResult> &rows);
   void advance_cursor(int64_t block);
 
