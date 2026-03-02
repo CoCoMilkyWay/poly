@@ -90,7 +90,7 @@
           const sync = await syncRes.json();
           const tables = await tablesRes.json();
 
-          if (window.updateStage0Status) updateStage0Status(stage0);
+          if (window.updateStage0Status) updateStage0Status(stage0, sync.head_block || 0);
           updateSyncStatus(sync);
           updateTables(tables);
           if (window.updateContractSync) updateContractSync(sync);

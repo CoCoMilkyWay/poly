@@ -133,6 +133,7 @@ json to_stage0_status_json(const Stage0Status &status) {
       {"last_block", status.last_block},
       {"head_block", status.head_block},
       {"behind_blocks", status.behind_blocks},
+      {"condition_count", status.condition_count},
       {"blocks_per_second", status.blocks_per_second},
       {"eta_seconds", status.eta_seconds},
   };

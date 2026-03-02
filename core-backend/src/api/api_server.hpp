@@ -7,7 +7,7 @@
 #include <boost/beast.hpp>
 
 #include "../core/database.hpp"
-#include "../stage3/pnl_replay.hpp"
+#include "../stage3/stage3_sync.hpp"
 #include "api_session.hpp"
 #include "misc/profiler.hpp"
 

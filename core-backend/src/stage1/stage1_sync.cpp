@@ -1,4 +1,4 @@
-#include "chain_sync.hpp"
+#include "stage1_sync.hpp"
 #include "misc/profiler.hpp"
 
 #include <algorithm>

@@ -10,9 +10,9 @@
 #include "core/database.hpp"
 #include "misc/profiler.hpp"
 #include "stage0/stage0_sync.hpp"
-#include "stage1/chain_sync.hpp"
+#include "stage1/stage1_sync.hpp"
 #include "stage2/stage2_sync.hpp"
-#include "stage3/pnl_replay.hpp"
+#include "stage3/stage3_sync.hpp"
 
 void print_usage(const char *prog) {
   std::cout << "用法: " << prog << " --config <config.json>" << std::endl;
@@ -39,12 +39,13 @@ int main(int argc, char *argv[]) {
   assert(config.stage1_rpc_block_span > 0);
   assert(config.stage1_rpc_buffer_multiplier >= 1.0);
 
-  std::cout << "[Main] Stage1 DB: " << config.db_path_stage1 << std::endl;
   std::cout << "[Main] Stage0 DB: " << config.db_path_stage0 << std::endl;
+  std::cout << "[Main] Stage1 DB: " << config.db_path_stage1 << std::endl;
   std::cout << "[Main] Stage2 DB: " << config.db_path_stage2 << std::endl;
   std::cout << "[Main] Stage3 DB: " << config.db_path_stage3 << std::endl;
   std::cout << "[Main] RPC Node: " << config.rpc_name << " (" << config.rpc_url << ")" << std::endl;
   std::cout << "[Main] RPC Transport: " << config.rpc_transport << std::endl;
+  std::cout << "[Main] Stage0 Enable: " << config.stage0_enable << std::endl;
   std::cout << "[Main] Stage1 Enable: " << config.stage1_enable << std::endl;
   std::cout << "[Main] Stage2 Enable: " << config.stage2_enable << std::endl;
   std::cout << "[Main] Stage3 Enable: " << config.stage3_enable << std::endl;
@@ -52,8 +53,8 @@ int main(int argc, char *argv[]) {
   std::cout << "[Main] Stage1 RPC Buffer Multiplier: " << config.stage1_rpc_buffer_multiplier << std::endl;
   std::cout << "[Main] API Port: " << config.backend_port << std::endl;
 
-  Database stage1_db(config.db_path_stage1);
   Database stage0_db(config.db_path_stage0);
+  Database stage1_db(config.db_path_stage1);
   Database stage2_db(config.db_path_stage2);
   Database stage3_db(config.db_path_stage3);
   {
@@ -70,15 +71,15 @@ int main(int argc, char *argv[]) {
   stage2::StageSync stage2(stage1_db, stage2_db);
   stage3::StageSync stage3(stage2.builder(), stage2_db, stage3_db);
 
+  auto stage0_getter = [&stage0]() -> Stage0Status {
+    const auto s = stage0.status();
+    return {s.syncing, s.last_block, s.head_block, s.behind_blocks, s.condition_count,
+            s.blocks_per_second, s.eta_seconds};
+  };
   auto stage1_getter = [&stage1]() -> Stage1Status {
     const auto s = stage1.status();
     return {s.syncing, s.last_block, s.head_block, s.behind_blocks, s.behind_chunks,
             s.blocks_per_second, s.eta_seconds, s.bytes_per_block};
-  };
-  auto stage0_getter = [&stage0]() -> Stage0Status {
-    const auto s = stage0.status();
-    return {s.syncing, s.last_block, s.head_block, s.behind_blocks,
-            s.blocks_per_second, s.eta_seconds};
   };
   auto stage2_getter = [&stage2]() -> Stage2Status {
     const auto &s = stage2.status();
@@ -111,11 +112,13 @@ int main(int argc, char *argv[]) {
       ioc.run();
     });
   };
-  if (config.stage1_enable == 1) {
+  if (config.stage0_enable == 1) {
     {
       TraceN("start/stage0");
-      start_stage(config.stage1_enable, "Stage0", stage0, stage0_ioc, stage0_thread);
+      start_stage(config.stage0_enable, "Stage0", stage0, stage0_ioc, stage0_thread);
     }
+  }
+  if (config.stage1_enable == 1) {
     {
       TraceN("start/stage1");
       start_stage(config.stage1_enable, "Stage1", stage1, stage1_ioc, stage1_thread);
@@ -147,7 +150,7 @@ int main(int argc, char *argv[]) {
       }
       std::cout << "[Main] 跳过 " << name << " (未启用)" << std::endl;
     };
-    stop_stage("Stage0", config.stage1_enable, stage0);
+    stop_stage("Stage0", config.stage0_enable, stage0);
     stop_stage("Stage1", config.stage1_enable, stage1);
     stop_stage("Stage2", config.stage2_enable, stage2);
     stop_stage("Stage3", config.stage3_enable, stage3);

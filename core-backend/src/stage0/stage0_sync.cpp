@@ -43,6 +43,16 @@ std::string strip_hex_prefix(std::string s) {
   return s;
 }
 
+std::string normalize_hex_id_no_prefix(std::string s) {
+  s = to_lower_ascii(strip_hex_prefix(std::move(s)));
+  assert(!s.empty());
+  size_t first_non_zero = s.find_first_not_of('0');
+  if (first_non_zero == std::string::npos) {
+    return "0";
+  }
+  return s.substr(first_non_zero);
+}
+
 uint8_t hex_nibble(char c) {
   if (c >= '0' && c <= '9') {
     return static_cast<uint8_t>(c - '0');
@@ -345,6 +355,7 @@ StageSync::StageSync(const Config &config, Database &stage1_db, Database &stage0
   sync_.last_block = stage0_db_.get_last_block();
   sync_.head_block = sync_.last_block;
   sync_.behind_blocks = 0;
+  sync_.condition_count = static_cast<int64_t>(known_condition_ids_.size());
   sync_.syncing = false;
 }
 
@@ -387,6 +398,7 @@ void StageSync::refresh_status_locked(int64_t head_block, int64_t cursor, bool s
   sync_.head_block = head_block;
   sync_.last_block = cursor;
   sync_.behind_blocks = std::max<int64_t>(0, head_block - cursor);
+  sync_.condition_count = static_cast<int64_t>(known_condition_ids_.size());
   if (commit_history_.size() < 2) {
     sync_.blocks_per_second = 0.0;
     sync_.eta_seconds = (sync_.behind_blocks == 0) ? 0.0 : -1.0;
@@ -654,36 +666,41 @@ std::vector<StageSync::ConditionSeed> StageSync::load_block_seeds(int64_t block)
 
 json StageSync::fetch_market_by_condition(const std::string &condition_hex_lower) {
   std::string url = std::string(kGammaApiBase) + "/markets?condition_ids=" + condition_hex_lower + "&include_tag=true";
-  constexpr int kBaseBackoffMs = 300;
-  constexpr int kBackoffMaxMs = 5000;
+  const std::string condition_norm = normalize_hex_id_no_prefix(condition_hex_lower);
+  constexpr int kBaseBackoffMs = 1000;
+  constexpr int kBackoffMaxMs = 10000;
   int delay_ms = kBaseBackoffMs;
   while (true) {
     HttpResponse resp = http_get_once(url, config_.proxy_url);
+    bool retryable = false;
     if (resp.curl_code == CURLE_OK && resp.status_code == 200) {
       json arr = json::parse(resp.body);
       assert(arr.is_array());
       for (const auto &item : arr) {
         assert(item.is_object());
-        if (!item.contains("conditionId") || !item.at("conditionId").is_string()) {
+        std::optional<std::string> cid_raw;
+        if (item.contains("conditionId") && item.at("conditionId").is_string()) {
+          cid_raw = item.at("conditionId").get<std::string>();
+        } else if (item.contains("condition_id") && item.at("condition_id").is_string()) {
+          cid_raw = item.at("condition_id").get<std::string>();
+        }
+        if (!cid_raw.has_value()) {
           continue;
         }
-        std::string cid = to_lower_ascii(item.at("conditionId").get<std::string>());
-        if (cid == condition_hex_lower) {
+        std::string cid = normalize_hex_id_no_prefix(*cid_raw);
+        if (cid == condition_norm) {
           return item;
         }
       }
-      assert(false && "Gamma markets返回中缺少匹配conditionId");
-    }
-
-    bool retryable = false;
-    if (resp.curl_code != CURLE_OK) {
+      retryable = true;
+    } else if (resp.curl_code != CURLE_OK) {
       retryable = (resp.curl_code == CURLE_OPERATION_TIMEDOUT ||
                    resp.curl_code == CURLE_COULDNT_CONNECT ||
                    resp.curl_code == CURLE_COULDNT_RESOLVE_HOST ||
                    resp.curl_code == CURLE_RECV_ERROR ||
                    resp.curl_code == CURLE_SEND_ERROR);
     } else {
-      retryable = (resp.status_code == 429 || resp.status_code >= 500);
+      retryable = (resp.status_code == 403 || resp.status_code == 429 || resp.status_code >= 500);
     }
     if (!retryable) {
       assert(false && "Gamma markets请求失败");

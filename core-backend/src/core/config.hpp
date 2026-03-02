@@ -8,6 +8,7 @@
 using json = nlohmann::json;
 
 struct Config {
+  int stage0_enable;
   int stage1_enable;
   int stage2_enable;
   int stage3_enable;
@@ -44,9 +45,11 @@ struct Config {
     };
 
     Config config;
+    config.stage0_enable = j.value("stage0_enable", 1);
     config.stage1_enable = j.value("stage1_enable", 1);
     config.stage2_enable = j.value("stage2_enable", 0);
     config.stage3_enable = j.value("stage3_enable", 1);
+    assert((config.stage0_enable == 0 || config.stage0_enable == 1) && "stage0_enable 必须是 0/1");
     assert((config.stage1_enable == 0 || config.stage1_enable == 1) && "stage1_enable 必须是 0/1");
     assert((config.stage2_enable == 0 || config.stage2_enable == 1) && "stage2_enable 必须是 0/1");
     assert((config.stage3_enable == 0 || config.stage3_enable == 1) && "stage3_enable 必须是 0/1");

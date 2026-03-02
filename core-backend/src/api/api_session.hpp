@@ -9,7 +9,7 @@
 #include <nlohmann/json.hpp>
 
 #include "../core/database.hpp"
-#include "../stage3/pnl_replay.hpp"
+#include "../stage3/stage3_sync.hpp"
 
 namespace asio = boost::asio;
 namespace beast = boost::beast;
@@ -22,6 +22,7 @@ struct Stage0Status {
   int64_t last_block = 0;
   int64_t head_block = 0;
   int64_t behind_blocks = 0;
+  int64_t condition_count = 0;
   double blocks_per_second = 0.0;
   double eta_seconds = -1.0;
 };
