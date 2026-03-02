@@ -445,10 +445,8 @@ void StageSync::sync_loop(int64_t safe_head) {
     query_head = std::min<int64_t>(aligned, chain_head);
   }
 
-  auto has_committable_chunk = [this]() {
-    size_t consume_batches = 0;
-    int64_t commit_end_block = -1;
-    return find_committable_prefix(consume_batches, commit_end_block);
+  auto pending_transfer_rows = [this]() {
+    return buffered_transfer_rows_ + ready_transfer_rows_;
   };
 
   int scheduler_sleep_ms = kSchedulerSleepMs;
@@ -456,22 +454,19 @@ void StageSync::sync_loop(int64_t safe_head) {
     bool stopping = stop_requested_.load();
     bool progressed = false;
     auto now = std::chrono::steady_clock::now();
-    bool force_single_forward_rpc = false;
 
     if (rpc_paused_) {
-      if (buffered_transfer_rows_ <= buffer_low_water_transfers_) {
+      if (pending_transfer_rows() <= buffer_low_water_transfers_) {
         rpc_paused_ = false;
-      } else if (inflight.empty() && !has_committable_chunk() && next_query_block_ <= query_head) {
-        // If one huge RPC range makes buffer exceed high-water but still cannot commit,
-        // allow one-step forward to reach the next 100-block commit boundary.
-        rpc_paused_ = false;
-        force_single_forward_rpc = true;
       }
     }
 
-    int new_rpc_submitted = 0;
     while (!stopping && next_query_block_ <= query_head && inflight.size() < max_inflight) {
       if (rpc_paused_) {
+        break;
+      }
+      if (pending_transfer_rows() >= buffer_high_water_transfers_) {
+        rpc_paused_ = true;
         break;
       }
       InFlightTask task;
@@ -483,11 +478,6 @@ void StageSync::sync_loop(int64_t safe_head) {
       inflight.push_back(std::move(task));
       next_query_block_ = inflight.back().to_block + 1;
       progressed = true;
-      new_rpc_submitted += 1;
-      if (force_single_forward_rpc && new_rpc_submitted >= 1) {
-        rpc_paused_ = true;
-        break;
-      }
     }
 
     for (auto &task : inflight) {
@@ -575,7 +565,7 @@ void StageSync::sync_loop(int64_t safe_head) {
       progressed = true;
     }
 
-    if (!rpc_paused_ && buffered_transfer_rows_ >= buffer_high_water_transfers_) {
+    if (!rpc_paused_ && pending_transfer_rows() >= buffer_high_water_transfers_) {
       rpc_paused_ = true;
       progressed = true;
     }
