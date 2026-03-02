@@ -17,7 +17,8 @@ struct Config {
   std::string db_path_stage3;
 
   int stage1_rpc_threads;
-  int stage1_rpc_chunk_basics;
+  int stage1_rpc_block_span;
+  double stage1_rpc_buffer_multiplier;
 
   std::string rpc_name;
   std::string rpc_url;
@@ -53,7 +54,8 @@ struct Config {
     config.db_path_stage2 = require("db_path_stage2").get<std::string>();
     config.db_path_stage3 = require("db_path_stage3").get<std::string>();
     config.stage1_rpc_threads = require("stage1_rpc_threads").get<int>();
-    config.stage1_rpc_chunk_basics = require("stage1_rpc_chunk_basics").get<int>();
+    config.stage1_rpc_block_span = require("stage1_rpc_block_span").get<int>();
+    config.stage1_rpc_buffer_multiplier = require("stage1_rpc_buffer_multiplier").get<double>();
 
     config.backend_port = require("backend_port").get<int>();
     config.frontend_port = require("frontend_port").get<int>();

@@ -1,5 +1,7 @@
 #include "database.hpp"
 
+#include <algorithm>
+#include <cctype>
 #include <cstdio>
 #include <fcntl.h>
 #include <filesystem>
@@ -9,6 +11,25 @@
 #include <unistd.h>
 
 namespace fs = std::filesystem;
+
+namespace {
+Database::FeatherChunk parse_chunk_filename(const std::string &filename) {
+  assert(filename.ends_with(".feather"));
+  std::string stem = filename.substr(0, filename.size() - 8);
+  size_t dash = stem.find('-');
+  assert(dash != std::string::npos);
+  std::string lhs = stem.substr(0, dash);
+  std::string rhs = stem.substr(dash + 1);
+  assert(!lhs.empty());
+  assert(!rhs.empty());
+  assert(std::all_of(lhs.begin(), lhs.end(), [](unsigned char ch) { return std::isdigit(ch) != 0; }));
+  assert(std::all_of(rhs.begin(), rhs.end(), [](unsigned char ch) { return std::isdigit(ch) != 0; }));
+  int64_t start_block = std::stoll(lhs);
+  int64_t end_block = std::stoll(rhs);
+  assert(start_block <= end_block);
+  return {start_block, end_block};
+}
+} // namespace
 
 Database::Database(const std::string &path) : db_path_(path) {
   auto parent = fs::path(path).parent_path();
@@ -185,14 +206,12 @@ void Database::init_schema() {
 }
 
 void Database::cleanup_incomplete_partitions() {
-  static constexpr int64_t kPartitionSize = 100000;
   static const char *tables[] = {
       "transfer", "condition_preparation", "condition_resolution",
       "split", "merge", "redemption", "fpmm", "fpmm_trade", "fpmm_funding",
       "order_filled", "token_map", "neg_risk_market", "neg_risk_question", "convert"};
 
   int64_t cursor = get_last_block();
-  int64_t valid_end = (cursor < 0) ? -1 : (cursor / kPartitionSize) * kPartitionSize + kPartitionSize - 1;
 
   int removed = 0;
   for (const char *table : tables) {
@@ -211,10 +230,8 @@ void Database::cleanup_incomplete_partitions() {
       if (!filename.ends_with(".feather")) {
         continue;
       }
-
-      std::string stem = filename.substr(0, filename.size() - 8);
-      int64_t start_block = std::stoll(stem);
-      if (start_block > valid_end) {
+      auto chunk = parse_chunk_filename(filename);
+      if (chunk.end_block > cursor) {
         fs::remove(entry.path());
         ++removed;
       }
@@ -229,15 +246,55 @@ std::string Database::feather_dir(const std::string &table) const {
   return data_dir_ + "/" + table;
 }
 
+std::vector<Database::FeatherChunk> Database::list_chunks(const std::string &table) const {
+  std::vector<FeatherChunk> chunks;
+  std::string dir = feather_dir(table);
+  if (!fs::exists(dir)) {
+    return chunks;
+  }
+  for (const auto &entry : fs::directory_iterator(dir)) {
+    if (!entry.is_regular_file()) {
+      continue;
+    }
+    std::string filename = entry.path().filename().string();
+    if (!filename.ends_with(".feather")) {
+      continue;
+    }
+    chunks.push_back(parse_chunk_filename(filename));
+  }
+  std::sort(chunks.begin(), chunks.end(), [](const FeatherChunk &a, const FeatherChunk &b) {
+    if (a.start_block != b.start_block) {
+      return a.start_block < b.start_block;
+    }
+    return a.end_block < b.end_block;
+  });
+  chunks.erase(std::unique(chunks.begin(), chunks.end(), [](const FeatherChunk &a, const FeatherChunk &b) {
+                 return a.start_block == b.start_block && a.end_block == b.end_block;
+               }),
+               chunks.end());
+  return chunks;
+}
+
 std::string Database::feather_table_range(const std::string &table, int64_t start_block, int64_t end_block) {
-  int64_t first_partition = (start_block / PARTITION_SIZE) * PARTITION_SIZE;
-  int64_t last_partition = (end_block / PARTITION_SIZE) * PARTITION_SIZE;
+  if (start_block > end_block) {
+    return "(SELECT 1 WHERE 1=0)";
+  }
+  std::vector<FeatherChunk> chunks = list_chunks(table);
+  if (chunks.empty()) {
+    return "(SELECT 1 WHERE 1=0)";
+  }
 
   std::vector<std::string> paths;
-  for (int64_t p = first_partition; p <= last_partition; p += PARTITION_SIZE) {
-    if (partition_exists(table, p)) {
-      paths.push_back(feather_dir(table) + "/" + std::to_string(p) + ".feather");
+  for (const auto &chunk : chunks) {
+    if (chunk.end_block < start_block) {
+      continue;
     }
+    if (chunk.start_block > end_block) {
+      break;
+    }
+    std::string path = feather_dir(table) + "/" + std::to_string(chunk.start_block) + "-" +
+                       std::to_string(chunk.end_block) + ".feather";
+    paths.push_back(path);
   }
 
   if (paths.empty()) {
@@ -254,6 +311,10 @@ std::string Database::feather_table_range(const std::string &table, int64_t star
     result += "SELECT * FROM read_arrow('" + paths[i] + "')";
   }
   return result + ")";
+}
+
+std::vector<Database::FeatherChunk> Database::feather_chunks(const std::string &table) const {
+  return list_chunks(table);
 }
 
 const std::string &Database::data_dir() const {
@@ -299,34 +360,12 @@ int64_t Database::recover_last_block_from_feather() {
       "order_filled", "token_map", "neg_risk_market", "neg_risk_question", "convert"};
   int64_t max_block = -1;
   for (const char *table : tables) {
-    std::string dir = feather_dir(table);
-    if (!fs::exists(dir)) {
-      continue;
-    }
-    for (const auto &entry : fs::directory_iterator(dir)) {
-      std::string filename = entry.path().filename().string();
-      if (!filename.ends_with(".feather")) {
-        continue;
-      }
-      int64_t start = std::stoll(filename.substr(0, filename.size() - 8));
-      max_block = std::max(max_block, start + PARTITION_SIZE - 1);
+    std::vector<FeatherChunk> chunks = list_chunks(table);
+    for (const auto &chunk : chunks) {
+      max_block = std::max(max_block, chunk.end_block);
     }
   }
   return max_block;
-}
-
-bool Database::partition_exists(const std::string &table, int64_t partition_start) {
-  std::string key = table + "/" + std::to_string(partition_start);
-  if (key == cached_partition_key_) {
-    return cached_partition_exists_;
-  }
-
-  std::string path = feather_dir(table) + "/" + std::to_string(partition_start) + ".feather";
-  bool exists = fs::exists(path);
-
-  cached_partition_key_ = key;
-  cached_partition_exists_ = exists;
-  return exists;
 }
 
 std::string Database::state_path() const {

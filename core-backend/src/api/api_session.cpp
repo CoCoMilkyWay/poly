@@ -75,6 +75,41 @@ std::string build_human_readable_select_list(duckdb::Connection &conn, const std
   return oss.str();
 }
 
+std::pair<int64_t, int64_t> parse_feather_chunk_filename(const std::string &filename) {
+  assert(filename.ends_with(".feather"));
+  std::string stem = filename.substr(0, filename.size() - 8);
+  size_t dash = stem.find('-');
+  assert(dash != std::string::npos);
+  std::string lhs = stem.substr(0, dash);
+  std::string rhs = stem.substr(dash + 1);
+  assert(!lhs.empty());
+  assert(!rhs.empty());
+  assert(std::all_of(lhs.begin(), lhs.end(), [](unsigned char ch) { return std::isdigit(ch) != 0; }));
+  assert(std::all_of(rhs.begin(), rhs.end(), [](unsigned char ch) { return std::isdigit(ch) != 0; }));
+  int64_t start_block = std::stoll(lhs);
+  int64_t end_block = std::stoll(rhs);
+  assert(start_block <= end_block);
+  return {start_block, end_block};
+}
+
+std::string latest_feather_file_path(const std::string &dir) {
+  std::string latest;
+  int64_t max_end_block = -1;
+  for (const auto &entry : std::filesystem::directory_iterator(dir)) {
+    std::string filename = entry.path().filename().string();
+    if (!filename.ends_with(".feather")) {
+      continue;
+    }
+    auto parsed = parse_feather_chunk_filename(filename);
+    int64_t end_block = parsed.second;
+    if (end_block > max_end_block) {
+      max_end_block = end_block;
+      latest = entry.path().string();
+    }
+  }
+  return latest;
+}
+
 json to_stage1_status_json(const Stage1Status &status) {
   return {
       {"syncing", status.syncing},
@@ -382,19 +417,7 @@ void ApiSession::handle_export_csv() {
     return;
   }
 
-  std::string latest;
-  int64_t max_block = -1;
-  for (const auto &entry : std::filesystem::directory_iterator(dir)) {
-    std::string filename = entry.path().filename().string();
-    if (!filename.ends_with(".feather")) {
-      continue;
-    }
-    int64_t block = std::stoll(filename.substr(0, filename.size() - 8));
-    if (block > max_block) {
-      max_block = block;
-      latest = entry.path().string();
-    }
-  }
+  std::string latest = latest_feather_file_path(dir);
 
   if (latest.empty()) {
     res_.result(http::status::ok);
@@ -431,19 +454,7 @@ void ApiSession::handle_table_sample() {
     return;
   }
 
-  std::string latest;
-  int64_t max_block = -1;
-  for (const auto &entry : std::filesystem::directory_iterator(dir)) {
-    std::string filename = entry.path().filename().string();
-    if (!filename.ends_with(".feather")) {
-      continue;
-    }
-    int64_t block = std::stoll(filename.substr(0, filename.size() - 8));
-    if (block > max_block) {
-      max_block = block;
-      latest = entry.path().string();
-    }
-  }
+  std::string latest = latest_feather_file_path(dir);
 
   if (latest.empty()) {
     res_.result(http::status::ok);

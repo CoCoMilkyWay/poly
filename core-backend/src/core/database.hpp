@@ -5,11 +5,17 @@
 #include <mutex>
 #include <nlohmann/json.hpp>
 #include <string>
+#include <vector>
 
 using json = nlohmann::json;
 
 class Database {
 public:
+  struct FeatherChunk {
+    int64_t start_block = 0;
+    int64_t end_block = 0;
+  };
+
   explicit Database(const std::string &path);
   ~Database();
 
@@ -44,6 +50,7 @@ public:
   void cleanup_incomplete_partitions();
   std::string feather_dir(const std::string &table) const;
   std::string feather_table_range(const std::string &table, int64_t start_block, int64_t end_block);
+  std::vector<FeatherChunk> feather_chunks(const std::string &table) const;
   const std::string &data_dir() const;
   int64_t get_last_block();
   void set_last_block(int64_t block);
@@ -51,10 +58,8 @@ public:
   void save_counts_cache(const json &cache);
 
 private:
-  static constexpr int64_t PARTITION_SIZE = 100000;
-
   int64_t recover_last_block_from_feather();
-  bool partition_exists(const std::string &table, int64_t partition_start);
+  std::vector<FeatherChunk> list_chunks(const std::string &table) const;
   std::string state_path() const;
   json read_state_unlocked() const;
   void write_state_unlocked(const json &state) const;
@@ -70,6 +75,4 @@ private:
   std::mutex read_mutex_;
   std::mutex write_mutex_;
   mutable std::mutex state_mutex_;
-  std::string cached_partition_key_;
-  bool cached_partition_exists_ = false;
 };

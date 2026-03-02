@@ -35,10 +35,8 @@ int main(int argc, char *argv[]) {
   std::cout << "========================================" << std::endl;
 
   Config config = Config::load(config_path);
-  constexpr int64_t kStage1ChunkBlocks = 100000;
-  assert(config.stage1_rpc_chunk_basics > 0);
-  assert(kStage1ChunkBlocks % config.stage1_rpc_chunk_basics == 0);
-  int64_t stage1_basic_chunk_blocks = kStage1ChunkBlocks / config.stage1_rpc_chunk_basics;
+  assert(config.stage1_rpc_block_span > 0);
+  assert(config.stage1_rpc_buffer_multiplier >= 1.0);
 
   std::cout << "[Main] Stage1 DB: " << config.db_path_stage1 << std::endl;
   std::cout << "[Main] Stage2 DB: " << config.db_path_stage2 << std::endl;
@@ -48,7 +46,8 @@ int main(int argc, char *argv[]) {
   std::cout << "[Main] Stage1 Enable: " << config.stage1_enable << std::endl;
   std::cout << "[Main] Stage2 Enable: " << config.stage2_enable << std::endl;
   std::cout << "[Main] Stage3 Enable: " << config.stage3_enable << std::endl;
-  std::cout << "[Main] RPC Chunk: " << stage1_basic_chunk_blocks << " blocks (computed)" << std::endl;
+  std::cout << "[Main] Stage1 RPC Block Span: " << config.stage1_rpc_block_span << std::endl;
+  std::cout << "[Main] Stage1 RPC Buffer Multiplier: " << config.stage1_rpc_buffer_multiplier << std::endl;
   std::cout << "[Main] API Port: " << config.backend_port << std::endl;
 
   Database stage1_db(config.db_path_stage1);

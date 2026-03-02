@@ -6,14 +6,15 @@
   "db_path_stage2": "data/stage2/users.duckdb",
   "db_path_stage3": "data/stage3/replay.duckdb",
   "stage1_rpc_threads": 10,
-  "stage1_rpc_chunk_basics": 50,
+  "stage1_rpc_block_span": 1000,
+  "stage1_rpc_buffer_multiplier": 1.5,
 
   "initial_block": 75000000,
   "frontend_port": 8000,
   "backend_port": 8001,
 
   "proxy": "socks5://172.17.112.1:19999",
-  "rpc_transport": "curl",
+  "rpc_transport": "beast",
   "active_rpc": "dRPC",
   "rpc_nodes": [
     {

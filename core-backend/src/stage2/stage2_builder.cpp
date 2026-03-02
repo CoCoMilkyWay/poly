@@ -6,8 +6,8 @@
 
 namespace stage2 {
 
-EventBuilder::EventBuilder(Database &stage1_db, Database &stage2_db, int chunk_size)
-    : stage1_db_(stage1_db), stage2_db_(stage2_db), chunk_size_(chunk_size) {
+EventBuilder::EventBuilder(Database &stage1_db, Database &stage2_db)
+    : stage1_db_(stage1_db), stage2_db_(stage2_db) {
   commit_thread_ = std::thread([this] { commit_worker_loop(); });
 }
 
@@ -552,7 +552,7 @@ bool EventBuilder::build_chunk(int64_t target_block) {
   }
 
   int64_t chunk_start = build_cursor_;
-  int64_t chunk_end = std::min(build_cursor_ + chunk_size_, target_block);
+  int64_t chunk_end = target_block;
   progress_.target = target_block;
   progress_.chunk_start = chunk_start;
   progress_.chunk_end = chunk_end;

@@ -5,9 +5,9 @@
 #include <condition_variable>
 #include <deque>
 #include <future>
+#include <map>
 #include <memory>
 #include <mutex>
-#include <optional>
 #include <string>
 #include <thread>
 #include <vector>
@@ -48,13 +48,15 @@ public:
   Status status() const;
 
 private:
-  static constexpr int64_t kStage1ChunkBlocks = 100000;
+  static constexpr int64_t kFinalityDepthBlocks = 100000;  // 远离区块链顶端(数据完整性)
+  static constexpr int64_t kChunkTransferTarget = 1000000; // 控制单个落盘文件大小
+  static constexpr int64_t kCommitBlockGranularity = 100;
   static constexpr int kRetryDelayMs = 300;
   static constexpr int kRetryDelayMaxMs = 10000;
   static constexpr int kSchedulerSleepMs = 5;
   static constexpr int kSchedulerSleepMaxMs = 40;
 
-  struct BasicTask {
+  struct InFlightTask {
     int64_t from_block = 0;
     int64_t to_block = 0;
     int worker_idx = 0;
@@ -63,20 +65,17 @@ private:
     bool done = false;
     std::future<RpcClient::BatchResult> query_future;
     std::future<DecodedEvents> decode_future;
-    std::optional<DecodedEvents> decoded_events;
     size_t response_bytes = 0;
     std::chrono::steady_clock::time_point retry_at = std::chrono::steady_clock::now();
     int retry_count = 0;
   };
 
-  struct SyncChunkState {
-    int sync_id = 0;
-    int slot = 0;
+  struct BufferedBatch {
     int64_t from_block = 0;
     int64_t to_block = 0;
-    std::chrono::steady_clock::time_point started_at = std::chrono::steady_clock::now();
-    std::vector<BasicTask> basics;
-    int done_count = 0;
+    size_t response_bytes = 0;
+    int64_t transfer_rows = 0;
+    DecodedEvents events;
   };
 
   static const std::vector<std::string> &ct_topics();
@@ -87,29 +86,27 @@ private:
   std::vector<RpcClient::LogsQuery> build_queries(int64_t from_block, int64_t to_block);
   void schedule_sync(int delay_seconds);
   void do_sync();
-  void init_done_slot(int slot, size_t nbits);
-  void set_done_bit(int slot, size_t idx, uint8_t v);
-  int ordered_done_in_slot(int slot);
-  void render_progress_inline(const std::deque<SyncChunkState> &window);
+  void sync_loop(int64_t safe_head);
+  void render_progress_inline(int64_t safe_head, size_t inflight_count) const;
   void clear_progress_inline();
-  std::optional<SyncChunkState> build_sync_chunk(int sync_id, int slot, int64_t &cursor,
-                                                 int64_t head_block, size_t &rr_worker);
-  void submit_basic_task(BasicTask &task);
+  void submit_rpc_task(InFlightTask &task);
+  void promote_ready_batches();
+  bool try_commit_ready_chunks();
   std::future<DecodedEvents> submit_decode_task(std::shared_ptr<std::vector<json>> shared_raw_logs);
   void start_decode_pool();
   void stop_decode_pool();
-  void sync_loop(int64_t from_block, int64_t head_block);
-  void process_batch(DecodedEvents &&events, int64_t to_block);
   static void merge_events(DecodedEvents &dst, DecodedEvents &&src);
+  static int64_t transfer_row_count(const DecodedEvents &events);
 
   const Config &config_;
   Database &db_;
   FeatherWriter feather_writer_;
   RpcClient rpc_head_;
   int num_rpc_threads_;
-  int64_t basic_chunk_size_;
-  int chunk_basic_count_;
-  int super_sync_chunk_count_ = 2;
+  int64_t rpc_block_span_ = 0;
+  int64_t buffer_low_water_transfers_ = kChunkTransferTarget;
+  int64_t buffer_high_water_transfers_ = kChunkTransferTarget;
+  bool rpc_paused_ = false;
   std::vector<std::unique_ptr<RpcClient>> rpc_workers_;
   int num_decode_threads_ = 0;
   struct DecodeTask {
@@ -121,8 +118,6 @@ private:
   std::mutex decode_mutex_;
   std::condition_variable decode_cv_;
   bool decode_running_ = false;
-  std::vector<std::vector<uint8_t>> done_list_;
-  std::mutex done_list_mutex_;
   asio::io_context *ioc_ = nullptr;
 
   int interval_seconds_ = 30;
@@ -130,15 +125,20 @@ private:
   std::atomic<bool> stop_requested_{false};
   std::atomic<bool> db_write_in_progress_{false};
   std::atomic<int64_t> head_block_{0};
-  bool progress_line_active_ = false;
-  size_t progress_line_len_ = 0;
+  mutable bool progress_line_active_ = false;
+  mutable size_t progress_line_len_ = 0;
 
-  DecodedEvents cached_events_;
-  int64_t current_partition_start_ = 0;
+  int64_t current_chunk_start_block_ = 0;
+  int64_t next_query_block_ = 0;
+  int64_t next_buffer_block_ = 0;
+  size_t rr_worker_ = 0;
+  int64_t buffered_transfer_rows_ = 0;
+  int64_t ready_transfer_rows_ = 0;
+  std::deque<BufferedBatch> buffered_batches_;
+  std::map<int64_t, BufferedBatch> ready_batches_;
 
   struct ChunkRecord {
     int64_t to_block;
-    double duration_s;
     size_t body_bytes;
     int64_t block_count;
   };

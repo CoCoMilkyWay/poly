@@ -3,11 +3,11 @@
 #include <atomic>
 #include <chrono>
 #include <deque>
+#include <optional>
 
 #include <boost/asio.hpp>
 
 #include "../core/database.hpp"
-#include "../core/feather_writer.hpp"
 #include "stage2_builder.hpp"
 
 namespace asio = boost::asio;
@@ -37,22 +37,27 @@ public:
   EventBuilder &builder();
 
 private:
-  static constexpr int kStage2ChunkBlocks = FeatherWriter::PARTITION_SIZE;
   static constexpr size_t kEtaWindowSize = 20;
   struct CommitRecord {
     std::chrono::steady_clock::time_point committed_at;
     int64_t cursor = 0;
   };
+  struct ChunkBoundary {
+    int64_t start = 0;
+    int64_t end = 0;
+  };
 
   void schedule_sync(int delay_seconds);
 
   void do_sync();
+  static std::optional<ChunkBoundary> next_transfer_chunk(const std::vector<Database::FeatherChunk> &chunks,
+                                                          int64_t cursor, int64_t head_block);
+  static int64_t pending_transfer_chunks(const std::vector<Database::FeatherChunk> &chunks,
+                                         int64_t cursor, int64_t head_block);
 
   Database &stage1_db_;
-  Database &stage2_db_;
   EventBuilder builder_;
   asio::io_context *ioc_ = nullptr;
-  int chunk_size_;
   int base_interval_;
   Status sync_;
   std::atomic<bool> stop_requested_{false};

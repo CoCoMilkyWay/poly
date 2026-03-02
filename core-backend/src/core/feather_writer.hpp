@@ -18,11 +18,11 @@ namespace fs = std::filesystem;
 
 class FeatherWriter {
 public:
-  static constexpr int64_t PARTITION_SIZE = 100000;
-
   explicit FeatherWriter(const std::string &data_dir) : stage1_dir_(data_dir) {}
 
-  void write_partition(int64_t start_block, stage1::DecodedEvents &events) {
+  void write_partition(int64_t start_block, int64_t end_block, stage1::DecodedEvents &events) {
+    assert(start_block <= end_block);
+    active_end_block_ = end_block;
     {
       TraceN("s1/transfer");
       write_transfer(start_block, events.transfer);
@@ -93,17 +93,16 @@ public:
       write_convert(start_block, events.convert);
     }
     release_vector(events.convert);
+    active_end_block_ = -1;
   }
 
-  static int64_t partition_start(int64_t block) { return (block / PARTITION_SIZE) * PARTITION_SIZE; }
-  static int64_t partition_end(int64_t block) { return partition_start(block) + PARTITION_SIZE - 1; }
-
-  uintmax_t partition_total_size_bytes(int64_t start_block) const {
+  uintmax_t partition_total_size_bytes(int64_t start_block, int64_t end_block) const {
+    assert(start_block <= end_block);
     const fs::path root(stage1_dir_);
     assert(fs::exists(root));
     assert(fs::is_directory(root));
     uintmax_t total = 0;
-    const std::string filename = std::to_string(start_block) + ".feather";
+    const std::string filename = std::to_string(start_block) + "-" + std::to_string(end_block) + ".feather";
     for (const auto &entry : fs::directory_iterator(root)) {
       if (!entry.is_directory()) {
         continue;
@@ -118,6 +117,7 @@ public:
 
 private:
   std::string stage1_dir_;
+  int64_t active_end_block_ = -1;
 
   template <typename T>
   static void release_vector(std::vector<T> &v) {
@@ -149,7 +149,8 @@ private:
   }
 
   std::string partition_path(const std::string &table, int64_t start_block) {
-    return table_dir(table) + "/" + std::to_string(start_block) + ".feather";
+    assert(active_end_block_ >= start_block);
+    return table_dir(table) + "/" + std::to_string(start_block) + "-" + std::to_string(active_end_block_) + ".feather";
   }
 
   static std::string hex_to_bytes(const std::string &hex) {

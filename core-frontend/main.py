@@ -7,13 +7,11 @@ from pathlib import Path
 
 _cfg = json.loads((Path(__file__).parent.parent / "config.json").read_text())
 _nodes = {n["name"]: n for n in _cfg["rpc_nodes"]}
-_stage1_chunk_blocks = 100_000
-_stage1_chunk_basics = int(_cfg["stage1_rpc_chunk_basics"])
-assert _stage1_chunk_basics > 0
-assert _stage1_chunk_blocks % _stage1_chunk_basics == 0
+_stage1_rpc_block_span = int(_cfg["stage1_rpc_block_span"])
+assert _stage1_rpc_block_span > 0
 ACTIVE_RPC_NODE = {
     **_nodes[_cfg["active_rpc"]],
-    "chunk": _stage1_chunk_blocks // _stage1_chunk_basics,
+    "chunk": _stage1_rpc_block_span,
     "threads": int(_cfg["stage1_rpc_threads"]),
 }
 

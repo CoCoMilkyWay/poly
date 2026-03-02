@@ -21,7 +21,7 @@ namespace stage2 {
 
 class EventBuilder {
 public:
-  EventBuilder(Database &stage1_db, Database &stage2_db, int chunk_size);
+  EventBuilder(Database &stage1_db, Database &stage2_db);
   ~EventBuilder();
 
   void init_schema();
@@ -38,7 +38,6 @@ public:
 private:
   Database &stage1_db_;
   Database &stage2_db_;
-  int chunk_size_;
   BuildProgress progress_;
   BuildProgress committed_progress_;
 

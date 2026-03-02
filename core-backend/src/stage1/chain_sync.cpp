@@ -1,8 +1,10 @@
 #include "chain_sync.hpp"
 #include "misc/profiler.hpp"
+
 #include <algorithm>
 #include <iomanip>
 #include <iterator>
+#include <type_traits>
 
 namespace stage1 {
 
@@ -12,22 +14,37 @@ StageSync::StageSync(const Config &config, Database &db)
       rpc_head_(config.rpc_url, config.rpc_api_key, "RPC-Head", config.proxy_url, config.rpc_transport),
       num_rpc_threads_(config.stage1_rpc_threads),
       num_decode_threads_(config.stage1_rpc_threads),
-      basic_chunk_size_(kStage1ChunkBlocks / config.stage1_rpc_chunk_basics),
-      chunk_basic_count_(config.stage1_rpc_chunk_basics) {
+      rpc_block_span_(config.stage1_rpc_block_span),
+      buffer_high_water_transfers_(
+          static_cast<int64_t>(static_cast<double>(kChunkTransferTarget) * config.stage1_rpc_buffer_multiplier)) {
   assert(num_rpc_threads_ > 0);
   assert(num_decode_threads_ > 0);
-  assert(chunk_basic_count_ > 0);
-  assert(kStage1ChunkBlocks % chunk_basic_count_ == 0);
-  assert(basic_chunk_size_ > 0);
-  done_list_.resize(super_sync_chunk_count_);
-  rpc_workers_.reserve(num_rpc_threads_);
+  assert(rpc_block_span_ > 0);
+  assert(config.stage1_rpc_buffer_multiplier >= 1.0);
+  assert(config_.initial_block % kCommitBlockGranularity == 0);
+  assert(rpc_block_span_ % kCommitBlockGranularity == 0);
+  if (buffer_high_water_transfers_ < kChunkTransferTarget) {
+    buffer_high_water_transfers_ = kChunkTransferTarget;
+  }
+  buffer_low_water_transfers_ = std::max<int64_t>(kChunkTransferTarget, buffer_high_water_transfers_ - kChunkTransferTarget);
+  assert(buffer_low_water_transfers_ <= buffer_high_water_transfers_);
+
+  rpc_workers_.reserve(static_cast<size_t>(num_rpc_threads_));
   for (int i = 0; i < num_rpc_threads_; ++i) {
     rpc_workers_.push_back(std::make_unique<RpcClient>(
-        config.rpc_url, config.rpc_api_key, "RPC-Worker-" + std::to_string(i), config.proxy_url, config.rpc_transport));
+        config.rpc_url, config.rpc_api_key,
+        "RPC-Worker-" + std::to_string(i),
+        config.proxy_url, config.rpc_transport));
   }
-  int64_t cursor = db_.get_last_block();
-  current_partition_start_ = (cursor < 0) ? FeatherWriter::partition_start(config_.initial_block)
-                                          : FeatherWriter::partition_start(cursor) + FeatherWriter::PARTITION_SIZE;
+
+  int64_t committed = db_.get_last_block();
+  current_chunk_start_block_ = (committed < 0) ? config_.initial_block : committed + 1;
+  assert(current_chunk_start_block_ % kCommitBlockGranularity == 0);
+  next_query_block_ = current_chunk_start_block_;
+  next_buffer_block_ = current_chunk_start_block_;
+  rpc_paused_ = false;
+  ready_transfer_rows_ = 0;
+
   start_decode_pool();
 }
 
@@ -111,9 +128,9 @@ std::future<DecodedEvents> StageSync::submit_decode_task(std::shared_ptr<std::ve
 
 Status StageSync::status() const {
   int64_t last_block = db_.get_last_block();
-  int64_t safe_head = head_block_.load() - kStage1ChunkBlocks;
+  int64_t safe_head = head_block_.load() - kFinalityDepthBlocks;
   int64_t behind_blocks = std::max<int64_t>(0, safe_head - last_block);
-  int64_t behind_chunks = (behind_blocks + kStage1ChunkBlocks - 1) / kStage1ChunkBlocks;
+  int64_t behind_chunks = (behind_blocks + rpc_block_span_ - 1) / rpc_block_span_;
 
   double blocks_per_second = 0.0;
   if (commit_history_.size() < 2) {
@@ -159,9 +176,7 @@ Status StageSync::status() const {
   blocks_per_second = static_cast<double>(committed_blocks) / elapsed_s;
 
   double bytes_per_block = 0.0;
-  if (chunk_history_.empty()) {
-    bytes_per_block = 0.0;
-  } else {
+  if (!chunk_history_.empty()) {
     size_t total_bytes = 0;
     int64_t total_blocks = 0;
     for (const auto &r : chunk_history_) {
@@ -236,68 +251,59 @@ void StageSync::schedule_sync(int delay_seconds) {
 void StageSync::do_sync() {
   is_syncing_ = true;
 
-  try {
-    head_block_ = rpc_head_.eth_blockNumber();
-  } catch (...) {
-    std::cerr << "[Stage1] 获取区块高度失败, " << interval_seconds_ << "s 后重试" << std::endl;
-    is_syncing_ = false;
-    schedule_sync(interval_seconds_);
-    return;
-  }
+  head_block_ = rpc_head_.eth_blockNumber();
+  int64_t safe_head = head_block_ - kFinalityDepthBlocks;
   int64_t last_block = db_.get_last_block();
-  int64_t from_block = (last_block < 0) ? config_.initial_block : last_block + 1;
-  int64_t safe_head = head_block_ - kStage1ChunkBlocks;
+
+  int64_t expected_chunk_start = (last_block < 0) ? config_.initial_block : last_block + 1;
+  assert(expected_chunk_start % kCommitBlockGranularity == 0);
+  if (buffered_batches_.empty() && ready_batches_.empty()) {
+    current_chunk_start_block_ = expected_chunk_start;
+    next_query_block_ = expected_chunk_start;
+    next_buffer_block_ = expected_chunk_start;
+  } else {
+    assert(current_chunk_start_block_ == expected_chunk_start);
+  }
+  if (buffered_batches_.empty()) {
+    assert(buffered_transfer_rows_ == 0);
+  }
+  if (ready_batches_.empty()) {
+    assert(ready_transfer_rows_ == 0);
+  }
 
   std::cout << "[Stage1] head=" << head_block_
             << ", safe_head=" << safe_head
-            << ", last=" << last_block << std::endl;
+            << ", committed_last=" << last_block
+            << ", next_query=" << next_query_block_
+            << ", buffered_transfer=" << buffered_transfer_rows_ << std::endl;
 
-  if (from_block > safe_head) {
-    std::cout << "[Stage1] 未达到100000确认深度可同步范围, " << interval_seconds_ << "s 后检查" << std::endl;
+  sync_loop(safe_head);
+
+  if (stop_requested_) {
+    clear_progress_inline();
     is_syncing_ = false;
-    schedule_sync(interval_seconds_);
     return;
   }
 
-  sync_loop(from_block, safe_head);
+  clear_progress_inline();
+  std::cout << "[Stage1] 本轮同步完成, " << interval_seconds_ << "s 后检查更新" << std::endl;
+  is_syncing_ = false;
+  schedule_sync(interval_seconds_);
 }
 
-void StageSync::init_done_slot(int slot, size_t nbits) {
-  std::lock_guard<std::mutex> lock(done_list_mutex_);
-  done_list_[slot].assign(nbits, 0);
-}
-
-void StageSync::set_done_bit(int slot, size_t idx, uint8_t v) {
-  std::lock_guard<std::mutex> lock(done_list_mutex_);
-  assert(idx < done_list_[slot].size());
-  done_list_[slot][idx] = v;
-}
-
-int StageSync::ordered_done_in_slot(int slot) {
-  std::lock_guard<std::mutex> lock(done_list_mutex_);
-  int count = 0;
-  for (uint8_t b : done_list_[slot]) {
-    if (b == 0) {
-      break;
-    }
-    ++count;
-  }
-  return count;
-}
-
-void StageSync::render_progress_inline(const std::deque<SyncChunkState> &window) {
-  assert(!window.empty());
-  const auto &front = window.front();
-  int ordered = ordered_done_in_slot(front.slot);
-  int all_done = 0;
-  int total = 0;
-  for (const auto &sync : window) {
-    all_done += sync.done_count;
-    total += static_cast<int>(sync.basics.size());
-  }
-  std::string line = "[Stage1] progress (" + std::to_string(ordered) + "/" + std::to_string(all_done) +
-                     "/" + std::to_string(total) + ") sync=" + std::to_string(front.sync_id) +
-                     " range=" + std::to_string(front.from_block) + "-" + std::to_string(front.to_block);
+void StageSync::render_progress_inline(int64_t safe_head, size_t inflight_count) const {
+  (void)safe_head;
+  (void)inflight_count;
+  auto to_w = [](int64_t v) -> int64_t { return (v + 5000) / 10000; };
+  int64_t ordered_to = next_buffer_block_ - 1;
+  int64_t ordered_transfer_rows = buffered_transfer_rows_;
+  int64_t pending_transfer_rows = buffered_transfer_rows_ + ready_transfer_rows_;
+  std::string line =
+      "[Stage1] " + std::to_string(current_chunk_start_block_) + "-" + std::to_string(ordered_to) +
+      " (" + std::to_string(to_w(ordered_transfer_rows)) + "W/" +
+      std::to_string(to_w(pending_transfer_rows)) + "W/" +
+      std::to_string(to_w(kChunkTransferTarget)) + "W/" +
+      std::to_string(to_w(buffer_high_water_transfers_)) + "W)";
   if (line.size() < progress_line_len_) {
     line += std::string(progress_line_len_ - line.size(), ' ');
   }
@@ -315,181 +321,286 @@ void StageSync::clear_progress_inline() {
   progress_line_active_ = false;
 }
 
-std::optional<StageSync::SyncChunkState> StageSync::build_sync_chunk(int sync_id, int slot, int64_t &cursor, int64_t head_block, size_t &rr_worker) {
-  if (cursor > head_block) {
-    return std::nullopt;
-  }
-  SyncChunkState out;
-  out.sync_id = sync_id;
-  out.slot = slot;
-  out.from_block = cursor;
-  out.started_at = std::chrono::steady_clock::now();
-  out.done_count = 0;
-  out.basics.reserve(chunk_basic_count_);
-  for (int i = 0; i < chunk_basic_count_ && cursor <= head_block; ++i) {
-    int64_t to_block = std::min(cursor + basic_chunk_size_ - 1, head_block);
-    out.basics.push_back(BasicTask{
-        .from_block = cursor,
-        .to_block = to_block,
-        .worker_idx = static_cast<int>(rr_worker % rpc_workers_.size()),
-    });
-    rr_worker += 1;
-    cursor = to_block + 1;
-    out.to_block = to_block;
-  }
-  init_done_slot(slot, out.basics.size());
-  return out;
-}
-
-void StageSync::submit_basic_task(BasicTask &task) {
-  TraceN("s1/basic_submit");
+void StageSync::submit_rpc_task(InFlightTask &task) {
+  TraceN("s1/rpc_submit");
   task.query_future = rpc_workers_[task.worker_idx]->eth_getLogs_batch_async(build_queries(task.from_block, task.to_block));
   task.query_in_flight = true;
   task.decode_in_flight = false;
+  task.done = false;
 }
 
-void StageSync::sync_loop(int64_t from_block, int64_t head_block) {
-  std::deque<SyncChunkState> window;
-  int sync_id = 0;
-  int64_t cursor = from_block;
-  size_t rr_worker = 0;
-
-  auto fill_window = [&]() {
-    while (window.size() < static_cast<size_t>(super_sync_chunk_count_) && cursor <= head_block) {
-      int slot = sync_id % super_sync_chunk_count_;
-      auto chunk = build_sync_chunk(sync_id + 1, slot, cursor, head_block, rr_worker);
-      assert(chunk.has_value());
-      for (auto &task : chunk->basics) {
-        TraceN("s1/prefetch");
-        submit_basic_task(task);
-      }
-      window.push_back(std::move(*chunk));
-      sync_id += 1;
+void StageSync::promote_ready_batches() {
+  while (true) {
+    auto it = ready_batches_.find(next_buffer_block_);
+    if (it == ready_batches_.end()) {
+      break;
     }
-  };
-  auto has_inflight = [&]() {
-    for (const auto &sync : window) {
-      for (const auto &task : sync.basics) {
-        if (task.query_in_flight || task.decode_in_flight) {
-          return true;
-        }
+    if (!buffered_batches_.empty()) {
+      assert(buffered_batches_.back().to_block + 1 == it->second.from_block);
+    }
+    assert(ready_transfer_rows_ >= it->second.transfer_rows);
+    ready_transfer_rows_ -= it->second.transfer_rows;
+    buffered_transfer_rows_ += it->second.transfer_rows;
+    next_buffer_block_ = it->second.to_block + 1;
+    buffered_batches_.push_back(std::move(it->second));
+    ready_batches_.erase(it);
+  }
+}
+
+bool StageSync::try_commit_ready_chunks() {
+  bool committed_any = false;
+  while (buffered_transfer_rows_ >= kChunkTransferTarget) {
+    int64_t cumulative_transfers = 0;
+    size_t consume_batches = 0;
+    int64_t commit_end_block = -1;
+    for (size_t i = 0; i < buffered_batches_.size(); ++i) {
+      cumulative_transfers += buffered_batches_[i].transfer_rows;
+      if (cumulative_transfers >= kChunkTransferTarget &&
+          ((buffered_batches_[i].to_block + 1) % kCommitBlockGranularity == 0)) {
+        consume_batches = i + 1;
+        commit_end_block = buffered_batches_[i].to_block;
+        break;
+      }
+    }
+
+    if (consume_batches == 0) {
+      break;
+    }
+
+    assert(!buffered_batches_.empty());
+    assert(buffered_batches_.front().from_block == current_chunk_start_block_);
+
+    const int64_t landed_chunk_start = current_chunk_start_block_;
+    int64_t landed_transfer_rows = 0;
+    size_t landed_response_bytes = 0;
+
+    DecodedEvents chunk_events;
+    for (size_t i = 0; i < consume_batches; ++i) {
+      auto &batch = buffered_batches_[i];
+      landed_transfer_rows += batch.transfer_rows;
+      landed_response_bytes += batch.response_bytes;
+      merge_events(chunk_events, std::move(batch.events));
+    }
+
+    TraceN("s1/write_chunk");
+    db_write_in_progress_ = true;
+    feather_writer_.write_partition(landed_chunk_start, commit_end_block, chunk_events);
+    {
+      TraceN("s1/write_state");
+      bool locked = db_.try_write_lock();
+      assert(locked && "stage1 state写锁被占用, 可能有另一个进程持有");
+      db_.set_last_block(commit_end_block);
+      db_.release_write_lock();
+    }
+    db_write_in_progress_ = false;
+
+    record_commit_event(commit_end_block);
+    chunk_history_.push_back({
+        .to_block = commit_end_block,
+        .body_bytes = landed_response_bytes,
+        .block_count = commit_end_block - landed_chunk_start + 1,
+    });
+    if (chunk_history_.size() > 20) {
+      chunk_history_.pop_front();
+    }
+
+    for (size_t i = 0; i < consume_batches; ++i) {
+      assert(buffered_transfer_rows_ >= buffered_batches_.front().transfer_rows);
+      buffered_transfer_rows_ -= buffered_batches_.front().transfer_rows;
+      buffered_batches_.pop_front();
+    }
+
+    current_chunk_start_block_ = commit_end_block + 1;
+    assert(current_chunk_start_block_ % kCommitBlockGranularity == 0);
+    if (!buffered_batches_.empty()) {
+      assert(buffered_batches_.front().from_block == current_chunk_start_block_);
+    }
+
+    const auto landed_bytes = feather_writer_.partition_total_size_bytes(landed_chunk_start, commit_end_block);
+    const double landed_mb = static_cast<double>(landed_bytes) / (1024.0 * 1024.0);
+    std::cout << "\n[Stage1] chunk " << landed_chunk_start << "-" << commit_end_block
+              << " 已落地, transfer_rows=" << landed_transfer_rows
+              << ", rpc_bytes=" << landed_response_bytes
+              << ", files=" << std::fixed << std::setprecision(2) << landed_mb << "MB"
+              << std::defaultfloat << std::endl;
+
+    committed_any = true;
+  }
+  return committed_any;
+}
+
+void StageSync::sync_loop(int64_t safe_head) {
+  std::vector<InFlightTask> inflight;
+  inflight.reserve(static_cast<size_t>(num_rpc_threads_));
+  const size_t max_inflight = static_cast<size_t>(num_rpc_threads_);
+  assert(max_inflight > 0);
+  const int64_t chain_head = head_block_.load();
+  int64_t query_head = safe_head;
+  if (query_head >= 0) {
+    int64_t aligned = ((query_head + 1 + kCommitBlockGranularity - 1) / kCommitBlockGranularity) *
+                          kCommitBlockGranularity -
+                      1;
+    query_head = std::min<int64_t>(aligned, chain_head);
+  }
+
+  auto has_committable_chunk = [this]() {
+    if (buffered_transfer_rows_ < kChunkTransferTarget) {
+      return false;
+    }
+    int64_t cumulative = 0;
+    for (const auto &batch : buffered_batches_) {
+      cumulative += batch.transfer_rows;
+      if (cumulative >= kChunkTransferTarget &&
+          ((batch.to_block + 1) % kCommitBlockGranularity == 0)) {
+        return true;
       }
     }
     return false;
   };
-  fill_window();
 
   int scheduler_sleep_ms = kSchedulerSleepMs;
-  while (!window.empty()) {
+  while (true) {
     bool stopping = stop_requested_.load();
     bool progressed = false;
     auto now = std::chrono::steady_clock::now();
+    bool force_single_forward_rpc = false;
 
-    for (auto &sync : window) {
-      for (size_t i = 0; i < sync.basics.size(); ++i) {
-        auto &task = sync.basics[i];
-        if (task.done) {
-          continue;
-        }
-        if (task.query_in_flight) {
-          if (task.query_future.wait_for(std::chrono::milliseconds(0)) != std::future_status::ready) {
-            continue;
-          }
-          RpcClient::BatchResult result;
-          try {
-            result = task.query_future.get();
-          } catch (const std::exception &e) {
-            result.success = false;
-            result.error_msg = std::string("future.get exception: ") + e.what();
-          } catch (...) {
-            result.success = false;
-            result.error_msg = "future.get unknown exception";
-          }
-          task.query_in_flight = false;
-          if (result.success) {
-            task.response_bytes = result.response_bytes;
-            auto shared_raw_logs = std::make_shared<std::vector<json>>(std::move(result.results));
-            std::string().swap(result.raw_body);
-            task.decode_future = submit_decode_task(std::move(shared_raw_logs));
-            task.decode_in_flight = true;
-          } else {
-            assert(result.retryable && "stage1 query返回了不可重试错误, 数据可靠性无法保证");
-            if (stopping) {
-              task.done = true;
-              sync.done_count += 1;
-            } else {
-              TraceN("s1/basic_retry");
-              clear_progress_inline();
-              task.retry_count += 1;
-              int shift = std::max(0, task.retry_count - 1);
-              shift = std::min(shift, 20);
-              int64_t delay_ms = static_cast<int64_t>(kRetryDelayMs) << shift;
-              delay_ms = std::min<int64_t>(delay_ms, kRetryDelayMaxMs);
-              task.retry_at = now + std::chrono::milliseconds(delay_ms);
-              std::cerr << "[Stage1] rpc失败 from=" << task.from_block
-                        << " to=" << task.to_block << " err=" << result.error_msg
-                        << " -> retry_in=" << delay_ms << "ms" << std::endl;
-            }
-          }
-          progressed = true;
-        } else if (task.decode_in_flight) {
-          if (task.decode_future.wait_for(std::chrono::milliseconds(0)) != std::future_status::ready) {
-            continue;
-          }
-          task.decode_in_flight = false;
-          task.decoded_events = task.decode_future.get();
-          TraceN("s1/basic_done");
-          task.done = true;
-          task.retry_count = 0;
-          sync.done_count += 1;
-          set_done_bit(sync.slot, i, 1);
-          {
-            TraceN("s1/progress");
-            render_progress_inline(window);
-          }
-          progressed = true;
-        } else if (!stopping && now >= task.retry_at) {
-          TraceN("s1/prefetch");
-          submit_basic_task(task);
-          progressed = true;
-        }
+    if (rpc_paused_) {
+      if (buffered_transfer_rows_ <= buffer_low_water_transfers_) {
+        rpc_paused_ = false;
+      } else if (inflight.empty() && !has_committable_chunk() && next_query_block_ <= query_head) {
+        // If one huge RPC range makes buffer exceed high-water but still cannot commit,
+        // allow one-step forward to reach the next 100-block commit boundary.
+        rpc_paused_ = false;
+        force_single_forward_rpc = true;
       }
     }
 
-    while (!stopping && !window.empty() &&
-           window.front().done_count == static_cast<int>(window.front().basics.size())) {
-      clear_progress_inline();
-      TraceN("s1/sync_chunk_done");
-      auto finished = std::move(window.front());
-      window.pop_front();
-      int64_t finished_blocks = 0;
-      size_t finished_bytes = 0;
-      for (auto &task : finished.basics) {
-        assert(task.decoded_events.has_value());
-        finished_blocks += (task.to_block - task.from_block + 1);
-        finished_bytes += task.response_bytes;
-        process_batch(std::move(*task.decoded_events), task.to_block);
-        task.decoded_events.reset();
+    int new_rpc_submitted = 0;
+    while (!stopping && next_query_block_ <= query_head && inflight.size() < max_inflight) {
+      if (rpc_paused_) {
+        break;
       }
-      double duration_s = std::chrono::duration<double>(
-                              std::chrono::steady_clock::now() - finished.started_at)
-                              .count();
-      if (duration_s <= 0.0) {
-        duration_s = 1e-6;
+      InFlightTask task;
+      task.from_block = next_query_block_;
+      task.to_block = std::min(task.from_block + rpc_block_span_ - 1, query_head);
+      task.worker_idx = static_cast<int>(rr_worker_ % rpc_workers_.size());
+      rr_worker_ += 1;
+      submit_rpc_task(task);
+      inflight.push_back(std::move(task));
+      next_query_block_ = inflight.back().to_block + 1;
+      progressed = true;
+      new_rpc_submitted += 1;
+      if (force_single_forward_rpc && new_rpc_submitted >= 1) {
+        rpc_paused_ = true;
+        break;
       }
-      chunk_history_.push_back({finished.to_block, duration_s, finished_bytes, finished_blocks});
-      if (chunk_history_.size() > 20) {
-        chunk_history_.pop_front();
+    }
+
+    for (auto &task : inflight) {
+      if (task.done) {
+        continue;
       }
-      fill_window();
+      if (task.query_in_flight) {
+        if (task.query_future.wait_for(std::chrono::milliseconds(0)) != std::future_status::ready) {
+          continue;
+        }
+
+        RpcClient::BatchResult result = task.query_future.get();
+        task.query_in_flight = false;
+
+        if (result.success) {
+          task.response_bytes = result.response_bytes;
+          auto shared_raw_logs = std::make_shared<std::vector<json>>(std::move(result.results));
+          std::string().swap(result.raw_body);
+          task.decode_future = submit_decode_task(std::move(shared_raw_logs));
+          task.decode_in_flight = true;
+        } else {
+          assert(result.retryable && "stage1 query返回了不可重试错误, 数据可靠性无法保证");
+          if (stopping) {
+            task.done = true;
+          } else {
+            clear_progress_inline();
+            task.retry_count += 1;
+            int shift = std::max(0, task.retry_count - 1);
+            shift = std::min(shift, 20);
+            int64_t delay_ms = static_cast<int64_t>(kRetryDelayMs) << shift;
+            delay_ms = std::min<int64_t>(delay_ms, kRetryDelayMaxMs);
+            task.retry_at = now + std::chrono::milliseconds(delay_ms);
+            std::cerr << "[Stage1] rpc失败 from=" << task.from_block
+                      << " to=" << task.to_block << " err=" << result.error_msg
+                      << " -> retry_in=" << delay_ms << "ms" << std::endl;
+          }
+        }
+        progressed = true;
+        continue;
+      }
+
+      if (task.decode_in_flight) {
+        if (task.decode_future.wait_for(std::chrono::milliseconds(0)) != std::future_status::ready) {
+          continue;
+        }
+
+        task.decode_in_flight = false;
+        DecodedEvents decoded = task.decode_future.get();
+
+        BufferedBatch batch;
+        batch.from_block = task.from_block;
+        batch.to_block = task.to_block;
+        batch.response_bytes = task.response_bytes;
+        batch.transfer_rows = transfer_row_count(decoded);
+        batch.events = std::move(decoded);
+
+        auto [it, inserted] = ready_batches_.emplace(batch.from_block, std::move(batch));
+        assert(inserted && "stage1 ready batch重复, block range异常");
+        ready_transfer_rows_ += it->second.transfer_rows;
+
+        task.done = true;
+        task.retry_count = 0;
+        progressed = true;
+        continue;
+      }
+
+      if (!stopping && now >= task.retry_at) {
+        submit_rpc_task(task);
+        progressed = true;
+      }
+    }
+
+    size_t before_inflight = inflight.size();
+    inflight.erase(
+        std::remove_if(inflight.begin(), inflight.end(),
+                       [](const InFlightTask &task) { return task.done; }),
+        inflight.end());
+    if (inflight.size() != before_inflight) {
       progressed = true;
     }
 
+    size_t before_buffered = buffered_batches_.size();
+    promote_ready_batches();
+    if (buffered_batches_.size() != before_buffered) {
+      progressed = true;
+    }
+
+    if (!rpc_paused_ && buffered_transfer_rows_ >= buffer_high_water_transfers_) {
+      rpc_paused_ = true;
+      progressed = true;
+    }
+
+    if (try_commit_ready_chunks()) {
+      progressed = true;
+    }
+
+    render_progress_inline(safe_head, inflight.size());
+
     if (stopping) {
-      clear_progress_inline();
-      if (!has_inflight() && !db_write_in_progress_.load()) {
+      if (inflight.empty() && !db_write_in_progress_.load()) {
         break;
       }
+    }
+
+    if (next_query_block_ > query_head && inflight.empty()) {
+      break;
     }
 
     if (!progressed) {
@@ -498,43 +609,6 @@ void StageSync::sync_loop(int64_t from_block, int64_t head_block) {
     } else {
       scheduler_sleep_ms = kSchedulerSleepMs;
     }
-  }
-
-  if (stop_requested_) {
-    clear_progress_inline();
-    is_syncing_ = false;
-    return;
-  }
-
-  clear_progress_inline();
-  std::cout << "[Stage1] 本轮同步完成, " << interval_seconds_ << "s 后检查更新" << std::endl;
-  is_syncing_ = false;
-  schedule_sync(interval_seconds_);
-}
-
-void StageSync::process_batch(DecodedEvents &&events, int64_t to_block) {
-  merge_events(cached_events_, std::move(events));
-
-  int64_t partition_end = current_partition_start_ + FeatherWriter::PARTITION_SIZE - 1;
-  if (to_block >= partition_end) {
-    const int64_t landed_partition_start = current_partition_start_;
-    TraceN("s1/write");
-    db_write_in_progress_ = true;
-    feather_writer_.write_partition(landed_partition_start, cached_events_);
-    {
-      TraceN("s1/write_state");
-      bool locked = db_.try_write_lock();
-      assert(locked && "stage1 state写锁被占用, 可能有另一个进程持有");
-      db_.set_last_block(partition_end);
-      db_.release_write_lock();
-    }
-    record_commit_event(partition_end);
-    db_write_in_progress_ = false;
-    cached_events_ = DecodedEvents{};
-    current_partition_start_ += FeatherWriter::PARTITION_SIZE;
-    const auto landed_bytes = feather_writer_.partition_total_size_bytes(landed_partition_start);
-    const double landed_mb = static_cast<double>(landed_bytes) / (1024.0 * 1024.0);
-    std::cout << "[Stage1] 分区 " << landed_partition_start << " 已落地, size=" << std::fixed << std::setprecision(2) << landed_mb << "MB" << std::defaultfloat << std::endl;
   }
 }
 
@@ -569,6 +643,10 @@ void StageSync::merge_events(DecodedEvents &dst, DecodedEvents &&src) {
   append(dst.neg_risk_market, src.neg_risk_market);
   append(dst.neg_risk_question, src.neg_risk_question);
   append(dst.convert, src.convert);
+}
+
+int64_t StageSync::transfer_row_count(const DecodedEvents &events) {
+  return static_cast<int64_t>(events.transfer.size());
 }
 
 } // namespace stage1
