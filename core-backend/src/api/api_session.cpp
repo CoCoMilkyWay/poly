@@ -53,9 +53,13 @@ std::string build_human_readable_select_list(duckdb::Connection &conn, const std
     std::string col_type = schema->GetValue(1, i).GetValueUnsafe<std::string>();
     std::string quoted_col = sql_quote_ident(col_name);
     if (col_type == "BLOB") {
-      columns.push_back("'0x' || lower(hex(" + quoted_col + ")) AS " + quoted_col);
+      columns.push_back(
+          "'0x' || coalesce(nullif(regexp_replace(lower(hex(" + quoted_col + ")), '^0+', ''), ''), '0') AS " + quoted_col);
     } else if (col_type == "BLOB[]") {
-      columns.push_back("CAST(" + quoted_col + " AS VARCHAR) AS " + quoted_col);
+      columns.push_back(
+          "list_transform(" + quoted_col +
+          ", x -> '0x' || coalesce(nullif(regexp_replace(lower(hex(x)), '^0+', ''), ''), '0')) AS " +
+          quoted_col);
     } else {
       columns.push_back(quoted_col);
     }
@@ -462,7 +466,9 @@ void ApiSession::handle_table_sample() {
     return;
   }
 
-  json result = stage1_db_.query_json("SELECT * FROM read_arrow('" + latest + "') LIMIT 1");
+  auto conn = stage1_db_.create_connection();
+  std::string select_list = build_human_readable_select_list(*conn, latest);
+  json result = stage1_db_.query_json("SELECT " + select_list + " FROM read_arrow(" + sql_quote_literal(latest) + ") LIMIT 1");
   res_.result(http::status::ok);
   res_.body() = result.dump();
 }
