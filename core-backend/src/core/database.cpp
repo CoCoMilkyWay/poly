@@ -29,6 +29,29 @@ Database::FeatherChunk parse_chunk_filename(const std::string &filename) {
   assert(start_block <= end_block);
   return {start_block, end_block};
 }
+
+bool has_any_feather_partition(const std::string &data_dir) {
+  static const char *tables[] = {
+      "transfer", "condition_preparation", "condition_resolution",
+      "split", "merge", "redemption", "fpmm", "fpmm_trade", "fpmm_funding",
+      "order_filled", "token_map", "neg_risk_market", "neg_risk_question", "convert"};
+  for (const char *table : tables) {
+    fs::path dir = fs::path(data_dir) / table;
+    if (!fs::exists(dir) || !fs::is_directory(dir)) {
+      continue;
+    }
+    for (const auto &entry : fs::directory_iterator(dir)) {
+      if (!entry.is_regular_file()) {
+        continue;
+      }
+      const std::string filename = entry.path().filename().string();
+      if (filename.ends_with(".feather")) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
 } // namespace
 
 Database::Database(const std::string &path) : db_path_(path) {
@@ -202,6 +225,16 @@ void Database::checkpoint() {
 void Database::init_schema() {
   execute("INSTALL nanoarrow FROM community");
   execute("LOAD nanoarrow");
+  {
+    std::lock_guard<std::mutex> lock(state_mutex_);
+    json state = read_state_unlocked();
+    if (!state.contains("last_block")) {
+      assert(!has_any_feather_partition(data_dir_) &&
+             "state.json 缺少 last_block，但已存在 feather 数据；禁止自动恢复");
+      state["last_block"] = -1;
+      write_state_unlocked(state);
+    }
+  }
   cleanup_incomplete_partitions();
 }
 
@@ -324,10 +357,8 @@ const std::string &Database::data_dir() const {
 int64_t Database::get_last_block() {
   std::lock_guard<std::mutex> lock(state_mutex_);
   json state = read_state_unlocked();
-  if (state.contains("last_block")) {
-    return state.value("last_block", static_cast<int64_t>(-1));
-  }
-  return recover_last_block_from_feather();
+  assert(state.contains("last_block") && "state.json 缺少 last_block，禁止自动恢复");
+  return state.value("last_block", static_cast<int64_t>(-1));
 }
 
 void Database::set_last_block(int64_t block) {
@@ -351,21 +382,6 @@ void Database::save_counts_cache(const json &cache) {
   json state = read_state_unlocked();
   state["counts_cache"] = cache;
   write_state_unlocked(state);
-}
-
-int64_t Database::recover_last_block_from_feather() {
-  static const char *tables[] = {
-      "transfer", "condition_preparation", "condition_resolution",
-      "split", "merge", "redemption", "fpmm", "fpmm_trade", "fpmm_funding",
-      "order_filled", "token_map", "neg_risk_market", "neg_risk_question", "convert"};
-  int64_t max_block = -1;
-  for (const char *table : tables) {
-    std::vector<FeatherChunk> chunks = list_chunks(table);
-    for (const auto &chunk : chunks) {
-      max_block = std::max(max_block, chunk.end_block);
-    }
-  }
-  return max_block;
 }
 
 std::string Database::state_path() const {

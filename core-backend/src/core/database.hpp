@@ -58,7 +58,6 @@ public:
   void save_counts_cache(const json &cache);
 
 private:
-  int64_t recover_last_block_from_feather();
   std::vector<FeatherChunk> list_chunks(const std::string &table) const;
   std::string state_path() const;
   json read_state_unlocked() const;

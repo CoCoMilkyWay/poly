@@ -3,16 +3,18 @@
 #include <arrow/api.h>
 #include <arrow/io/api.h>
 #include <arrow/ipc/api.h>
+#include <arrow/util/compression.h>
 #include <cassert>
+#include <cstdint>
 #include <cstdio>
-#include <filesystem>
 #include <fcntl.h>
+#include <filesystem>
 #include <string>
 #include <unistd.h>
 #include <vector>
 
-#include "misc/profiler.hpp"
 #include "../stage1/event_decode.hpp"
+#include "misc/profiler.hpp"
 
 namespace fs = std::filesystem;
 
@@ -177,13 +179,28 @@ private:
   }
 
   static std::string uint256_hex_to_bytes32(const std::string &hex) {
-    std::string b = hex_to_bytes(hex);
+    std::string h = hex;
+    if (h.size() >= 2 && h[0] == '0' && (h[1] == 'x' || h[1] == 'X')) {
+      h = h.substr(2);
+    }
+    assert(std::all_of(h.begin(), h.end(), [](unsigned char ch) { return std::isxdigit(ch) != 0; }));
+    assert(h.size() <= 64);
+    if (h.size() < 64) {
+      h = std::string(64 - h.size(), '0') + h;
+    }
+    std::string b = hex_to_bytes(h);
     assert(b.size() == 32);
     return b;
   }
 
+  static std::string address_hex_to_bytes20(const std::string &hex) {
+    std::string b = hex_to_bytes(hex);
+    assert(b.size() == 20);
+    return b;
+  }
+
   static void append_hex32_list(arrow::ListBuilder &list_builder,
-                                arrow::BinaryBuilder *value_builder,
+                                arrow::FixedSizeBinaryBuilder *value_builder,
                                 const std::vector<std::string> &hex_values) {
     assert(list_builder.Append().ok());
     for (const auto &hex : hex_values) {
@@ -192,12 +209,42 @@ private:
     }
   }
 
+  static uint8_t venue_code(const std::string &venue) {
+    if (venue == "ctf") {
+      return 1;
+    }
+    if (venue == "nrx") {
+      return 2;
+    }
+    assert(false && "unknown venue");
+    return 0;
+  }
+
+  static uint8_t layout_code(const std::string &layout) {
+    if (layout == "fix_v1") {
+      return 1;
+    }
+    if (layout == "det_v1") {
+      return 2;
+    }
+    assert(false && "unknown creation_layout");
+    return 0;
+  }
+
+  static arrow::ipc::IpcWriteOptions ipc_write_options() {
+    auto options = arrow::ipc::IpcWriteOptions::Defaults();
+    auto codec = arrow::util::Codec::Create(arrow::Compression::ZSTD);
+    assert(codec.ok());
+    options.codec = std::shared_ptr<arrow::util::Codec>(std::move(*codec));
+    return options;
+  }
+
   void atomic_write_feather(const std::string &path, std::shared_ptr<arrow::Table> table) {
     std::string tmp_path = path + ".tmp";
     {
       auto outfile = arrow::io::FileOutputStream::Open(tmp_path);
       assert(outfile.ok());
-      auto writer = arrow::ipc::MakeFileWriter(outfile->get(), table->schema());
+      auto writer = arrow::ipc::MakeFileWriter(outfile->get(), table->schema(), ipc_write_options());
       assert(writer.ok());
       auto reader = arrow::TableBatchReader(*table);
       std::shared_ptr<arrow::RecordBatch> batch;
@@ -227,15 +274,18 @@ private:
     if (events.empty())
       return;
     arrow::Int64Builder block_number, log_index;
-    arrow::BinaryBuilder tx_hash, op, from, to, token_id, amount;
+    auto addr20 = arrow::fixed_size_binary(20);
+    auto u256 = arrow::fixed_size_binary(32);
+    arrow::BinaryBuilder tx_hash, token_id;
+    arrow::FixedSizeBinaryBuilder op(addr20), from(addr20), to(addr20), amount(u256);
 
     for (const auto &e : events) {
       assert(block_number.Append(e.block_number).ok());
       assert(tx_hash.Append(hex_to_bytes(e.tx_hash)).ok());
       assert(log_index.Append(e.log_index).ok());
-      assert(op.Append(hex_to_bytes(e.op)).ok());
-      assert(from.Append(hex_to_bytes(e.from)).ok());
-      assert(to.Append(hex_to_bytes(e.to)).ok());
+      assert(op.Append(address_hex_to_bytes20(e.op)).ok());
+      assert(from.Append(address_hex_to_bytes20(e.from)).ok());
+      assert(to.Append(address_hex_to_bytes20(e.to)).ok());
       assert(token_id.Append(hex_to_bytes(e.token_id)).ok());
       assert(amount.Append(uint256_hex_to_bytes32(e.amount)).ok());
     }
@@ -244,11 +294,11 @@ private:
         arrow::field("block_number", arrow::int64()),
         arrow::field("tx_hash", arrow::binary()),
         arrow::field("log_index", arrow::int64()),
-        arrow::field("operator", arrow::binary()),
-        arrow::field("from_addr", arrow::binary()),
-        arrow::field("to_addr", arrow::binary()),
+        arrow::field("operator", arrow::fixed_size_binary(20)),
+        arrow::field("from_addr", arrow::fixed_size_binary(20)),
+        arrow::field("to_addr", arrow::fixed_size_binary(20)),
         arrow::field("token_id", arrow::binary()),
-        arrow::field("amount", arrow::binary()),
+        arrow::field("amount", arrow::fixed_size_binary(32)),
     });
 
     std::shared_ptr<arrow::Array> a1, a2, a3, a4, a5, a6, a7, a8;
@@ -269,14 +319,17 @@ private:
     if (events.empty())
       return;
     arrow::Int64Builder block_number, log_index;
-    arrow::BinaryBuilder tx_hash, condition_id, oracle, question_id, outcome_slot_count;
+    auto addr20 = arrow::fixed_size_binary(20);
+    auto u256 = arrow::fixed_size_binary(32);
+    arrow::BinaryBuilder tx_hash, condition_id, question_id;
+    arrow::FixedSizeBinaryBuilder oracle(addr20), outcome_slot_count(u256);
 
     for (const auto &e : events) {
       assert(block_number.Append(e.block_number).ok());
       assert(tx_hash.Append(hex_to_bytes(e.tx_hash)).ok());
       assert(log_index.Append(e.log_index).ok());
       assert(condition_id.Append(hex_to_bytes(e.condition_id)).ok());
-      assert(oracle.Append(hex_to_bytes(e.oracle)).ok());
+      assert(oracle.Append(address_hex_to_bytes20(e.oracle)).ok());
       assert(question_id.Append(hex_to_bytes(e.question_id)).ok());
       assert(outcome_slot_count.Append(uint256_hex_to_bytes32(e.outcome_slot_count)).ok());
     }
@@ -286,9 +339,9 @@ private:
         arrow::field("tx_hash", arrow::binary()),
         arrow::field("log_index", arrow::int64()),
         arrow::field("condition_id", arrow::binary()),
-        arrow::field("oracle", arrow::binary()),
+        arrow::field("oracle", arrow::fixed_size_binary(20)),
         arrow::field("question_id", arrow::binary()),
-        arrow::field("outcome_slot_count", arrow::binary()),
+        arrow::field("outcome_slot_count", arrow::fixed_size_binary(32)),
     });
 
     std::shared_ptr<arrow::Array> a1, a2, a3, a4, a5, a6, a7;
@@ -308,17 +361,20 @@ private:
     if (events.empty())
       return;
     arrow::Int64Builder block_number, log_index;
-    arrow::BinaryBuilder tx_hash, condition_id, oracle, question_id, outcome_slot_count;
-    auto payout_values_ptr = std::make_shared<arrow::BinaryBuilder>();
+    auto addr20 = arrow::fixed_size_binary(20);
+    auto u256 = arrow::fixed_size_binary(32);
+    arrow::BinaryBuilder tx_hash, condition_id, question_id;
+    arrow::FixedSizeBinaryBuilder oracle(addr20), outcome_slot_count(u256);
+    auto payout_values_ptr = std::make_shared<arrow::FixedSizeBinaryBuilder>(u256);
     arrow::ListBuilder payout_numerators(arrow::default_memory_pool(), payout_values_ptr);
-    auto *payout_values = static_cast<arrow::BinaryBuilder *>(payout_numerators.value_builder());
+    auto *payout_values = static_cast<arrow::FixedSizeBinaryBuilder *>(payout_numerators.value_builder());
 
     for (const auto &e : events) {
       assert(block_number.Append(e.block_number).ok());
       assert(tx_hash.Append(hex_to_bytes(e.tx_hash)).ok());
       assert(log_index.Append(e.log_index).ok());
       assert(condition_id.Append(hex_to_bytes(e.condition_id)).ok());
-      assert(oracle.Append(hex_to_bytes(e.oracle)).ok());
+      assert(oracle.Append(address_hex_to_bytes20(e.oracle)).ok());
       assert(question_id.Append(hex_to_bytes(e.question_id)).ok());
       assert(outcome_slot_count.Append(uint256_hex_to_bytes32(e.outcome_slot_count)).ok());
       append_hex32_list(payout_numerators, payout_values, e.payout_numerators);
@@ -329,10 +385,10 @@ private:
         arrow::field("tx_hash", arrow::binary()),
         arrow::field("log_index", arrow::int64()),
         arrow::field("condition_id", arrow::binary()),
-        arrow::field("oracle", arrow::binary()),
+        arrow::field("oracle", arrow::fixed_size_binary(20)),
         arrow::field("question_id", arrow::binary()),
-        arrow::field("outcome_slot_count", arrow::binary()),
-        arrow::field("payout_numerators", arrow::list(arrow::binary())),
+        arrow::field("outcome_slot_count", arrow::fixed_size_binary(32)),
+        arrow::field("payout_numerators", arrow::list(arrow::fixed_size_binary(32))),
     });
 
     std::shared_ptr<arrow::Array> a1, a2, a3, a4, a5, a6, a7, a8;
@@ -353,17 +409,20 @@ private:
     if (events.empty())
       return;
     arrow::Int64Builder block_number, log_index;
-    arrow::BinaryBuilder tx_hash, stakeholder, collateral_token, parent_collection_id, condition_id, amount;
-    auto partition_values_ptr = std::make_shared<arrow::BinaryBuilder>();
+    auto addr20 = arrow::fixed_size_binary(20);
+    auto u256 = arrow::fixed_size_binary(32);
+    arrow::BinaryBuilder tx_hash, parent_collection_id, condition_id;
+    arrow::FixedSizeBinaryBuilder stakeholder(addr20), collateral_token(addr20), amount(u256);
+    auto partition_values_ptr = std::make_shared<arrow::FixedSizeBinaryBuilder>(u256);
     arrow::ListBuilder partition(arrow::default_memory_pool(), partition_values_ptr);
-    auto *partition_values = static_cast<arrow::BinaryBuilder *>(partition.value_builder());
+    auto *partition_values = static_cast<arrow::FixedSizeBinaryBuilder *>(partition.value_builder());
 
     for (const auto &e : events) {
       assert(block_number.Append(e.block_number).ok());
       assert(tx_hash.Append(hex_to_bytes(e.tx_hash)).ok());
       assert(log_index.Append(e.log_index).ok());
-      assert(stakeholder.Append(hex_to_bytes(e.stakeholder)).ok());
-      assert(collateral_token.Append(hex_to_bytes(e.collateral_token)).ok());
+      assert(stakeholder.Append(address_hex_to_bytes20(e.stakeholder)).ok());
+      assert(collateral_token.Append(address_hex_to_bytes20(e.collateral_token)).ok());
       assert(parent_collection_id.Append(hex_to_bytes(e.parent_collection_id)).ok());
       assert(condition_id.Append(hex_to_bytes(e.condition_id)).ok());
       append_hex32_list(partition, partition_values, e.partition);
@@ -374,12 +433,12 @@ private:
         arrow::field("block_number", arrow::int64()),
         arrow::field("tx_hash", arrow::binary()),
         arrow::field("log_index", arrow::int64()),
-        arrow::field("stakeholder", arrow::binary()),
-        arrow::field("collateral_token", arrow::binary()),
+        arrow::field("stakeholder", arrow::fixed_size_binary(20)),
+        arrow::field("collateral_token", arrow::fixed_size_binary(20)),
         arrow::field("parent_collection_id", arrow::binary()),
         arrow::field("condition_id", arrow::binary()),
-        arrow::field("partition", arrow::list(arrow::binary())),
-        arrow::field("amount", arrow::binary()),
+        arrow::field("partition", arrow::list(arrow::fixed_size_binary(32))),
+        arrow::field("amount", arrow::fixed_size_binary(32)),
     });
 
     std::shared_ptr<arrow::Array> a1, a2, a3, a4, a5, a6, a7, a8, a9;
@@ -409,17 +468,20 @@ private:
     if (events.empty())
       return;
     arrow::Int64Builder block_number, log_index;
-    arrow::BinaryBuilder tx_hash, redeemer, collateral_token, parent_collection_id, condition_id, payout;
-    auto index_set_values_ptr = std::make_shared<arrow::BinaryBuilder>();
+    auto addr20 = arrow::fixed_size_binary(20);
+    auto u256 = arrow::fixed_size_binary(32);
+    arrow::BinaryBuilder tx_hash, parent_collection_id, condition_id;
+    arrow::FixedSizeBinaryBuilder redeemer(addr20), collateral_token(addr20), payout(u256);
+    auto index_set_values_ptr = std::make_shared<arrow::FixedSizeBinaryBuilder>(u256);
     arrow::ListBuilder index_sets(arrow::default_memory_pool(), index_set_values_ptr);
-    auto *index_set_values = static_cast<arrow::BinaryBuilder *>(index_sets.value_builder());
+    auto *index_set_values = static_cast<arrow::FixedSizeBinaryBuilder *>(index_sets.value_builder());
 
     for (const auto &e : events) {
       assert(block_number.Append(e.block_number).ok());
       assert(tx_hash.Append(hex_to_bytes(e.tx_hash)).ok());
       assert(log_index.Append(e.log_index).ok());
-      assert(redeemer.Append(hex_to_bytes(e.redeemer)).ok());
-      assert(collateral_token.Append(hex_to_bytes(e.collateral_token)).ok());
+      assert(redeemer.Append(address_hex_to_bytes20(e.redeemer)).ok());
+      assert(collateral_token.Append(address_hex_to_bytes20(e.collateral_token)).ok());
       assert(parent_collection_id.Append(hex_to_bytes(e.parent_collection_id)).ok());
       assert(condition_id.Append(hex_to_bytes(e.condition_id)).ok());
       append_hex32_list(index_sets, index_set_values, e.index_sets);
@@ -430,12 +492,12 @@ private:
         arrow::field("block_number", arrow::int64()),
         arrow::field("tx_hash", arrow::binary()),
         arrow::field("log_index", arrow::int64()),
-        arrow::field("redeemer", arrow::binary()),
-        arrow::field("collateral_token", arrow::binary()),
+        arrow::field("redeemer", arrow::fixed_size_binary(20)),
+        arrow::field("collateral_token", arrow::fixed_size_binary(20)),
         arrow::field("parent_collection_id", arrow::binary()),
         arrow::field("condition_id", arrow::binary()),
-        arrow::field("index_sets", arrow::list(arrow::binary())),
-        arrow::field("payout", arrow::binary()),
+        arrow::field("index_sets", arrow::list(arrow::fixed_size_binary(32))),
+        arrow::field("payout", arrow::fixed_size_binary(32)),
     });
 
     std::shared_ptr<arrow::Array> a1, a2, a3, a4, a5, a6, a7, a8, a9;
@@ -457,23 +519,27 @@ private:
     if (events.empty())
       return;
     arrow::Int64Builder block_number, log_index, creation_topics_count;
-    arrow::BinaryBuilder tx_hash, factory, creator, fpmm_addr, conditional_tokens, collateral_token, fee;
-    auto condition_id_values_ptr = std::make_shared<arrow::BinaryBuilder>();
+    auto addr20 = arrow::fixed_size_binary(20);
+    auto u256 = arrow::fixed_size_binary(32);
+    arrow::BinaryBuilder tx_hash;
+    arrow::FixedSizeBinaryBuilder factory(addr20), creator(addr20), fpmm_addr(addr20), conditional_tokens(addr20),
+        collateral_token(addr20), fee(u256);
+    auto condition_id_values_ptr = std::make_shared<arrow::FixedSizeBinaryBuilder>(u256);
     arrow::ListBuilder condition_ids(arrow::default_memory_pool(), condition_id_values_ptr);
-    auto *condition_id_values = static_cast<arrow::BinaryBuilder *>(condition_ids.value_builder());
-    arrow::StringBuilder creation_layout;
+    auto *condition_id_values = static_cast<arrow::FixedSizeBinaryBuilder *>(condition_ids.value_builder());
+    arrow::UInt8Builder creation_layout;
 
     for (const auto &e : events) {
       assert(block_number.Append(e.block_number).ok());
       assert(tx_hash.Append(hex_to_bytes(e.tx_hash)).ok());
       assert(log_index.Append(e.log_index).ok());
-      assert(factory.Append(hex_to_bytes(e.factory)).ok());
+      assert(factory.Append(address_hex_to_bytes20(e.factory)).ok());
       assert(creation_topics_count.Append(e.creation_topics_count).ok());
-      assert(creation_layout.Append(e.creation_layout).ok());
-      assert(creator.Append(hex_to_bytes(e.creator)).ok());
-      assert(fpmm_addr.Append(hex_to_bytes(e.fpmm_addr)).ok());
-      assert(conditional_tokens.Append(hex_to_bytes(e.conditional_tokens)).ok());
-      assert(collateral_token.Append(hex_to_bytes(e.collateral_token)).ok());
+      assert(creation_layout.Append(layout_code(e.creation_layout)).ok());
+      assert(creator.Append(address_hex_to_bytes20(e.creator)).ok());
+      assert(fpmm_addr.Append(address_hex_to_bytes20(e.fpmm_addr)).ok());
+      assert(conditional_tokens.Append(address_hex_to_bytes20(e.conditional_tokens)).ok());
+      assert(collateral_token.Append(address_hex_to_bytes20(e.collateral_token)).ok());
       append_hex32_list(condition_ids, condition_id_values, e.condition_ids);
       assert(fee.Append(uint256_hex_to_bytes32(e.fee)).ok());
     }
@@ -482,15 +548,15 @@ private:
         arrow::field("block_number", arrow::int64()),
         arrow::field("tx_hash", arrow::binary()),
         arrow::field("log_index", arrow::int64()),
-        arrow::field("factory", arrow::binary()),
+        arrow::field("factory", arrow::fixed_size_binary(20)),
         arrow::field("creation_topics_count", arrow::int64()),
-        arrow::field("creation_layout", arrow::utf8()),
-        arrow::field("creator", arrow::binary()),
-        arrow::field("fpmm_addr", arrow::binary()),
-        arrow::field("conditional_tokens", arrow::binary()),
-        arrow::field("collateral_token", arrow::binary()),
-        arrow::field("condition_ids", arrow::list(arrow::binary())),
-        arrow::field("fee", arrow::binary()),
+        arrow::field("creation_layout", arrow::uint8()),
+        arrow::field("creator", arrow::fixed_size_binary(20)),
+        arrow::field("fpmm_addr", arrow::fixed_size_binary(20)),
+        arrow::field("conditional_tokens", arrow::fixed_size_binary(20)),
+        arrow::field("collateral_token", arrow::fixed_size_binary(20)),
+        arrow::field("condition_ids", arrow::list(arrow::fixed_size_binary(32))),
+        arrow::field("fee", arrow::fixed_size_binary(32)),
     });
 
     std::shared_ptr<arrow::Array> a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12;
@@ -515,14 +581,18 @@ private:
     if (events.empty())
       return;
     arrow::Int64Builder block_number, log_index, side;
-    arrow::BinaryBuilder tx_hash, fpmm_addr, trader, outcome_index, collateral_amount, token_amount, fee;
+    auto addr20 = arrow::fixed_size_binary(20);
+    auto u256 = arrow::fixed_size_binary(32);
+    arrow::BinaryBuilder tx_hash;
+    arrow::FixedSizeBinaryBuilder fpmm_addr(addr20), trader(addr20), outcome_index(u256), collateral_amount(u256),
+        token_amount(u256), fee(u256);
 
     for (const auto &e : events) {
       assert(block_number.Append(e.block_number).ok());
       assert(tx_hash.Append(hex_to_bytes(e.tx_hash)).ok());
       assert(log_index.Append(e.log_index).ok());
-      assert(fpmm_addr.Append(hex_to_bytes(e.fpmm_addr)).ok());
-      assert(trader.Append(hex_to_bytes(e.trader)).ok());
+      assert(fpmm_addr.Append(address_hex_to_bytes20(e.fpmm_addr)).ok());
+      assert(trader.Append(address_hex_to_bytes20(e.trader)).ok());
       assert(side.Append(e.side).ok());
       assert(outcome_index.Append(uint256_hex_to_bytes32(e.outcome_index)).ok());
       assert(collateral_amount.Append(uint256_hex_to_bytes32(e.collateral_amount)).ok());
@@ -534,13 +604,13 @@ private:
         arrow::field("block_number", arrow::int64()),
         arrow::field("tx_hash", arrow::binary()),
         arrow::field("log_index", arrow::int64()),
-        arrow::field("fpmm_addr", arrow::binary()),
-        arrow::field("trader", arrow::binary()),
+        arrow::field("fpmm_addr", arrow::fixed_size_binary(20)),
+        arrow::field("trader", arrow::fixed_size_binary(20)),
         arrow::field("side", arrow::int64()),
-        arrow::field("outcome_index", arrow::binary()),
-        arrow::field("collateral_amount", arrow::binary()),
-        arrow::field("token_amount", arrow::binary()),
-        arrow::field("fee", arrow::binary()),
+        arrow::field("outcome_index", arrow::fixed_size_binary(32)),
+        arrow::field("collateral_amount", arrow::fixed_size_binary(32)),
+        arrow::field("token_amount", arrow::fixed_size_binary(32)),
+        arrow::field("fee", arrow::fixed_size_binary(32)),
     });
 
     std::shared_ptr<arrow::Array> a1, a2, a3, a4, a5, a6, a7, a8, a9, a10;
@@ -563,17 +633,20 @@ private:
     if (events.empty())
       return;
     arrow::Int64Builder block_number, log_index, side;
-    arrow::BinaryBuilder tx_hash, fpmm_addr, funder, collateral_from_fee_pool, shares;
-    auto amount_values_ptr = std::make_shared<arrow::BinaryBuilder>();
+    auto addr20 = arrow::fixed_size_binary(20);
+    auto u256 = arrow::fixed_size_binary(32);
+    arrow::BinaryBuilder tx_hash;
+    arrow::FixedSizeBinaryBuilder fpmm_addr(addr20), funder(addr20), collateral_from_fee_pool(u256), shares(u256);
+    auto amount_values_ptr = std::make_shared<arrow::FixedSizeBinaryBuilder>(u256);
     arrow::ListBuilder amounts(arrow::default_memory_pool(), amount_values_ptr);
-    auto *amount_values = static_cast<arrow::BinaryBuilder *>(amounts.value_builder());
+    auto *amount_values = static_cast<arrow::FixedSizeBinaryBuilder *>(amounts.value_builder());
 
     for (const auto &e : events) {
       assert(block_number.Append(e.block_number).ok());
       assert(tx_hash.Append(hex_to_bytes(e.tx_hash)).ok());
       assert(log_index.Append(e.log_index).ok());
-      assert(fpmm_addr.Append(hex_to_bytes(e.fpmm_addr)).ok());
-      assert(funder.Append(hex_to_bytes(e.funder)).ok());
+      assert(fpmm_addr.Append(address_hex_to_bytes20(e.fpmm_addr)).ok());
+      assert(funder.Append(address_hex_to_bytes20(e.funder)).ok());
       assert(side.Append(e.side).ok());
       append_hex32_list(amounts, amount_values, e.amounts);
       assert(collateral_from_fee_pool.Append(uint256_hex_to_bytes32(e.collateral_from_fee_pool)).ok());
@@ -584,12 +657,12 @@ private:
         arrow::field("block_number", arrow::int64()),
         arrow::field("tx_hash", arrow::binary()),
         arrow::field("log_index", arrow::int64()),
-        arrow::field("fpmm_addr", arrow::binary()),
-        arrow::field("funder", arrow::binary()),
+        arrow::field("fpmm_addr", arrow::fixed_size_binary(20)),
+        arrow::field("funder", arrow::fixed_size_binary(20)),
         arrow::field("side", arrow::int64()),
-        arrow::field("amounts", arrow::list(arrow::binary())),
-        arrow::field("collateral_from_fee_pool", arrow::binary()),
-        arrow::field("shares", arrow::binary()),
+        arrow::field("amounts", arrow::list(arrow::fixed_size_binary(32))),
+        arrow::field("collateral_from_fee_pool", arrow::fixed_size_binary(32)),
+        arrow::field("shares", arrow::fixed_size_binary(32)),
     });
 
     std::shared_ptr<arrow::Array> a1, a2, a3, a4, a5, a6, a7, a8, a9;
@@ -611,17 +684,20 @@ private:
     if (events.empty())
       return;
     arrow::Int64Builder block_number, log_index;
-    arrow::BinaryBuilder tx_hash, order_hash, maker, taker, maker_asset_id, taker_asset_id, maker_amount, taker_amount, fee;
-    arrow::StringBuilder exchange;
+    auto addr20 = arrow::fixed_size_binary(20);
+    auto u256 = arrow::fixed_size_binary(32);
+    arrow::BinaryBuilder tx_hash, order_hash, maker_asset_id, taker_asset_id;
+    arrow::FixedSizeBinaryBuilder maker(addr20), taker(addr20), maker_amount(u256), taker_amount(u256), fee(u256);
+    arrow::UInt8Builder exchange;
 
     for (const auto &e : events) {
       assert(block_number.Append(e.block_number).ok());
       assert(tx_hash.Append(hex_to_bytes(e.tx_hash)).ok());
       assert(log_index.Append(e.log_index).ok());
-      assert(exchange.Append(e.exchange).ok());
+      assert(exchange.Append(venue_code(e.exchange)).ok());
       assert(order_hash.Append(hex_to_bytes(e.order_hash)).ok());
-      assert(maker.Append(hex_to_bytes(e.maker)).ok());
-      assert(taker.Append(hex_to_bytes(e.taker)).ok());
+      assert(maker.Append(address_hex_to_bytes20(e.maker)).ok());
+      assert(taker.Append(address_hex_to_bytes20(e.taker)).ok());
       assert(maker_asset_id.Append(hex_to_bytes(e.maker_asset_id)).ok());
       assert(taker_asset_id.Append(hex_to_bytes(e.taker_asset_id)).ok());
       assert(maker_amount.Append(uint256_hex_to_bytes32(e.maker_amount)).ok());
@@ -633,15 +709,15 @@ private:
         arrow::field("block_number", arrow::int64()),
         arrow::field("tx_hash", arrow::binary()),
         arrow::field("log_index", arrow::int64()),
-        arrow::field("exchange", arrow::utf8()),
+        arrow::field("exchange", arrow::uint8()),
         arrow::field("order_hash", arrow::binary()),
-        arrow::field("maker", arrow::binary()),
-        arrow::field("taker", arrow::binary()),
+        arrow::field("maker", arrow::fixed_size_binary(20)),
+        arrow::field("taker", arrow::fixed_size_binary(20)),
         arrow::field("maker_asset_id", arrow::binary()),
         arrow::field("taker_asset_id", arrow::binary()),
-        arrow::field("maker_amount", arrow::binary()),
-        arrow::field("taker_amount", arrow::binary()),
-        arrow::field("fee", arrow::binary()),
+        arrow::field("maker_amount", arrow::fixed_size_binary(32)),
+        arrow::field("taker_amount", arrow::fixed_size_binary(32)),
+        arrow::field("fee", arrow::fixed_size_binary(32)),
     });
 
     std::shared_ptr<arrow::Array> a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12;
@@ -666,16 +742,18 @@ private:
     if (events.empty())
       return;
     arrow::Int64Builder block_number, log_index;
-    arrow::BinaryBuilder tx_hash, token0, token1, condition_id;
-    arrow::StringBuilder exchange;
+    auto addr20 = arrow::fixed_size_binary(20);
+    arrow::BinaryBuilder tx_hash, condition_id;
+    arrow::FixedSizeBinaryBuilder token0(addr20), token1(addr20);
+    arrow::UInt8Builder exchange;
 
     for (const auto &e : events) {
       assert(block_number.Append(e.block_number).ok());
       assert(tx_hash.Append(hex_to_bytes(e.tx_hash)).ok());
       assert(log_index.Append(e.log_index).ok());
-      assert(exchange.Append(e.exchange).ok());
-      assert(token0.Append(hex_to_bytes(e.token0)).ok());
-      assert(token1.Append(hex_to_bytes(e.token1)).ok());
+      assert(exchange.Append(venue_code(e.exchange)).ok());
+      assert(token0.Append(address_hex_to_bytes20(e.token0)).ok());
+      assert(token1.Append(address_hex_to_bytes20(e.token1)).ok());
       assert(condition_id.Append(hex_to_bytes(e.condition_id)).ok());
     }
 
@@ -683,9 +761,9 @@ private:
         arrow::field("block_number", arrow::int64()),
         arrow::field("tx_hash", arrow::binary()),
         arrow::field("log_index", arrow::int64()),
-        arrow::field("exchange", arrow::utf8()),
-        arrow::field("token0", arrow::binary()),
-        arrow::field("token1", arrow::binary()),
+        arrow::field("exchange", arrow::uint8()),
+        arrow::field("token0", arrow::fixed_size_binary(20)),
+        arrow::field("token1", arrow::fixed_size_binary(20)),
         arrow::field("condition_id", arrow::binary()),
     });
 
@@ -706,14 +784,17 @@ private:
     if (events.empty())
       return;
     arrow::Int64Builder block_number, log_index;
-    arrow::BinaryBuilder tx_hash, market_id, oracle, fee_bips, data;
+    auto addr20 = arrow::fixed_size_binary(20);
+    auto u256 = arrow::fixed_size_binary(32);
+    arrow::BinaryBuilder tx_hash, market_id, data;
+    arrow::FixedSizeBinaryBuilder oracle(addr20), fee_bips(u256);
 
     for (const auto &e : events) {
       assert(block_number.Append(e.block_number).ok());
       assert(tx_hash.Append(hex_to_bytes(e.tx_hash)).ok());
       assert(log_index.Append(e.log_index).ok());
       assert(market_id.Append(hex_to_bytes(e.market_id)).ok());
-      assert(oracle.Append(hex_to_bytes(e.oracle)).ok());
+      assert(oracle.Append(address_hex_to_bytes20(e.oracle)).ok());
       assert(fee_bips.Append(uint256_hex_to_bytes32(e.fee_bips)).ok());
       if (e.data) {
         assert(data.Append(hex_to_bytes(*e.data)).ok());
@@ -727,8 +808,8 @@ private:
         arrow::field("tx_hash", arrow::binary()),
         arrow::field("log_index", arrow::int64()),
         arrow::field("market_id", arrow::binary()),
-        arrow::field("oracle", arrow::binary()),
-        arrow::field("fee_bips", arrow::binary()),
+        arrow::field("oracle", arrow::fixed_size_binary(20)),
+        arrow::field("fee_bips", arrow::fixed_size_binary(32)),
         arrow::field("data", arrow::binary()),
     });
 
@@ -749,7 +830,9 @@ private:
     if (events.empty())
       return;
     arrow::Int64Builder block_number, log_index;
-    arrow::BinaryBuilder tx_hash, market_id, question_id, question_index, data;
+    auto u256 = arrow::fixed_size_binary(32);
+    arrow::BinaryBuilder tx_hash, market_id, question_id, data;
+    arrow::FixedSizeBinaryBuilder question_index(u256);
 
     for (const auto &e : events) {
       assert(block_number.Append(e.block_number).ok());
@@ -771,7 +854,7 @@ private:
         arrow::field("log_index", arrow::int64()),
         arrow::field("market_id", arrow::binary()),
         arrow::field("question_id", arrow::binary()),
-        arrow::field("question_index", arrow::binary()),
+        arrow::field("question_index", arrow::fixed_size_binary(32)),
         arrow::field("data", arrow::binary()),
     });
 
@@ -792,13 +875,16 @@ private:
     if (events.empty())
       return;
     arrow::Int64Builder block_number, log_index;
-    arrow::BinaryBuilder tx_hash, stakeholder, market_id, index_set, amount;
+    auto addr20 = arrow::fixed_size_binary(20);
+    auto u256 = arrow::fixed_size_binary(32);
+    arrow::BinaryBuilder tx_hash, market_id;
+    arrow::FixedSizeBinaryBuilder stakeholder(addr20), index_set(u256), amount(u256);
 
     for (const auto &e : events) {
       assert(block_number.Append(e.block_number).ok());
       assert(tx_hash.Append(hex_to_bytes(e.tx_hash)).ok());
       assert(log_index.Append(e.log_index).ok());
-      assert(stakeholder.Append(hex_to_bytes(e.stakeholder)).ok());
+      assert(stakeholder.Append(address_hex_to_bytes20(e.stakeholder)).ok());
       assert(market_id.Append(hex_to_bytes(e.market_id)).ok());
       assert(index_set.Append(uint256_hex_to_bytes32(e.index_set)).ok());
       assert(amount.Append(uint256_hex_to_bytes32(e.amount)).ok());
@@ -808,10 +894,10 @@ private:
         arrow::field("block_number", arrow::int64()),
         arrow::field("tx_hash", arrow::binary()),
         arrow::field("log_index", arrow::int64()),
-        arrow::field("stakeholder", arrow::binary()),
+        arrow::field("stakeholder", arrow::fixed_size_binary(20)),
         arrow::field("market_id", arrow::binary()),
-        arrow::field("index_set", arrow::binary()),
-        arrow::field("amount", arrow::binary()),
+        arrow::field("index_set", arrow::fixed_size_binary(32)),
+        arrow::field("amount", arrow::fixed_size_binary(32)),
     });
 
     std::shared_ptr<arrow::Array> a1, a2, a3, a4, a5, a6, a7;

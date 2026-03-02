@@ -15,7 +15,7 @@
 
   "proxy": "socks5://172.17.112.1:19999",
   "rpc_transport": "beast",
-  "active_rpc": "dRPC",
+  "active_rpc": "Alchemy",
   "rpc_nodes": [
     {
       "name": "Erigon",

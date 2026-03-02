@@ -147,9 +147,9 @@ void EventDecoder::parse_log(const json &log, DecodedEvents &events) {
   if (address == contracts::CONDITIONAL_TOKENS) {
     parse_conditional_tokens_event(topic0, topics_arr, data, tx_hash, block_number, log_index, events);
   } else if (address == contracts::CTF_EXCHANGE) {
-    parse_exchange_event(topic0, topics_arr, data, tx_hash, block_number, log_index, "CTF", events);
+    parse_exchange_event(topic0, topics_arr, data, tx_hash, block_number, log_index, "ctf", events);
   } else if (address == contracts::NEG_RISK_CTF_EXCHANGE) {
-    parse_exchange_event(topic0, topics_arr, data, tx_hash, block_number, log_index, "NegRisk", events);
+    parse_exchange_event(topic0, topics_arr, data, tx_hash, block_number, log_index, "nrx", events);
   } else if (address == contracts::NEG_RISK_ADAPTER) {
     parse_neg_risk_adapter_event(topic0, topics_arr, data, tx_hash, block_number, log_index, events);
   } else if (address == contracts::FPMM_FACTORY) {
@@ -415,14 +415,14 @@ std::optional<std::string> EventDecoder::parse_fpmm_create(const json &log, cons
   assert(creation_topics_count == 2 || creation_topics_count == 4);
   std::string creation_layout;
   if (creation_topics_count == 4) {
-    creation_layout = "fixed_factory_v1";
+    creation_layout = "fix_v1";
     fpmm_addr = extract_address_from_data_word(data, 0);
     conditional_tokens = extract_address_from_topic(topics_arr[2].get<std::string>());
     collateral_token = extract_address_from_topic(topics_arr[3].get<std::string>());
     cond_ids_offset = extract_uint256_i64_from_data(data, 1);
     fee = extract_uint256_hex_from_data(data, 2);
   } else {
-    creation_layout = "deterministic_factory_v1";
+    creation_layout = "det_v1";
     fpmm_addr = extract_address_from_data_word(data, 0);
     conditional_tokens = extract_address_from_data_word(data, 1);
     collateral_token = extract_address_from_data_word(data, 2);
