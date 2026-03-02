@@ -23,7 +23,7 @@ ctf-exchange/
         │   │       # 撮合一个 taker 对多个 maker, 三种 MatchType:
         │   │       #   COMPLEMENTARY: buy vs sell, 直接交换
         │   │       #   MINT: 两个 buy, 调 CTF.splitPosition 铸造 YES+NO
-        │   │       #   MERGE: 两个 sell, 调 CTF.mergePositions 合并成 USDC
+        │   │       #   MERGE: 两个 sell, 调 CTF.mergePositions 合并成 collateral
         │   │
         │   │  --- 管理 (onlyAdmin) ---
         │   ├── registerToken(tokenId, complement, conditionId)
@@ -74,7 +74,7 @@ ctf-exchange/
             │   ├── validateTokenId(tokenId)   # 检查是否已注册
             │   └── validateComplement(t1, t2) # 检查是否互为 complement
             │
-            ├── Assets.sol                 # collateral(USDC) + ctf(ConditionalTokens) 地址
+            ├── Assets.sol                 # collateral + ctf(ConditionalTokens) 地址
             │   ├── getCollateral()
             │   └── getCtf()
             │

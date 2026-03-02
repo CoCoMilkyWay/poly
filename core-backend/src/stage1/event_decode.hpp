@@ -107,7 +107,7 @@ struct FpmmTradeEvent {
   int64_t log_index;
   std::string fpmm_addr, trader;
   int64_t side;
-  std::string outcome_index, usdc_amount, token_amount, fee;
+  std::string outcome_index, collateral_amount, token_amount, fee;
 };
 
 struct FpmmFundingEvent {

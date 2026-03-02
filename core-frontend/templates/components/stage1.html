@@ -519,14 +519,14 @@
       ],
       FPMMBuy: [
         ["buyer", "address", "indexed", "trader"],
-        ["investmentAmount", "uint256", "", "usdc_amount"],
+        ["investmentAmount", "uint256", "", "collateral_amount"],
         ["feeAmount", "uint256", "", "fee"],
         ["outcomeIndex", "uint256", "indexed", "0=YES, 1=NO"],
         ["outcomeTokensBought", "uint256", "", "token_amount"],
       ],
       FPMMSell: [
         ["seller", "address", "indexed", "trader"],
-        ["returnAmount", "uint256", "", "usdc_amount"],
+        ["returnAmount", "uint256", "", "collateral_amount"],
         ["feeAmount", "uint256", "", "fee"],
         ["outcomeIndex", "uint256", "indexed", "0=YES, 1=NO"],
         ["outcomeTokensSold", "uint256", "", "token_amount"],

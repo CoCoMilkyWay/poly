@@ -7,7 +7,7 @@ exchange-fee-module/
     │   │
     │   │  --- 不可变量 ---
     │   ├── exchange                  # CTFExchange 地址
-    │   ├── collateral                # 抵押品 (USDC)
+    │   ├── collateral                # 抵押品
     │   ├── ctf                       # ConditionalTokens 地址
     │   │
     │   │  --- 核心操作 (onlyAdmin) ---
@@ -25,7 +25,7 @@ exchange-fee-module/
     │   │
     │   └── withdrawFees(to, tokenId, amount)
     │           # 提取收集的手续费
-    │           # tokenId=0 → USDC, 否则 → CTF outcome token
+    │           # tokenId=0 → collateral, 否则 → CTF outcome token
     │
     ├── Collector.sol                 # 批量提取手续费
     │   └── withdrawFees(WithdrawOpts[])

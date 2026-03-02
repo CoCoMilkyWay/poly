@@ -514,7 +514,7 @@ private:
     if (events.empty())
       return;
     arrow::Int64Builder block_number, log_index, side;
-    arrow::BinaryBuilder tx_hash, fpmm_addr, trader, outcome_index, usdc_amount, token_amount, fee;
+    arrow::BinaryBuilder tx_hash, fpmm_addr, trader, outcome_index, collateral_amount, token_amount, fee;
 
     for (const auto &e : events) {
       assert(block_number.Append(e.block_number).ok());
@@ -524,7 +524,7 @@ private:
       assert(trader.Append(hex_to_bytes(e.trader)).ok());
       assert(side.Append(e.side).ok());
       assert(outcome_index.Append(uint256_hex_to_bytes32(e.outcome_index)).ok());
-      assert(usdc_amount.Append(uint256_hex_to_bytes32(e.usdc_amount)).ok());
+      assert(collateral_amount.Append(uint256_hex_to_bytes32(e.collateral_amount)).ok());
       assert(token_amount.Append(uint256_hex_to_bytes32(e.token_amount)).ok());
       assert(fee.Append(uint256_hex_to_bytes32(e.fee)).ok());
     }
@@ -537,7 +537,7 @@ private:
         arrow::field("trader", arrow::binary()),
         arrow::field("side", arrow::int64()),
         arrow::field("outcome_index", arrow::binary()),
-        arrow::field("usdc_amount", arrow::binary()),
+        arrow::field("collateral_amount", arrow::binary()),
         arrow::field("token_amount", arrow::binary()),
         arrow::field("fee", arrow::binary()),
     });
@@ -550,7 +550,7 @@ private:
     assert(trader.Finish(&a5).ok());
     assert(side.Finish(&a6).ok());
     assert(outcome_index.Finish(&a7).ok());
-    assert(usdc_amount.Finish(&a8).ok());
+    assert(collateral_amount.Finish(&a8).ok());
     assert(token_amount.Finish(&a9).ok());
     assert(fee.Finish(&a10).ok());
 

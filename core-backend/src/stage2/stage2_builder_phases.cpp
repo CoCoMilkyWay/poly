@@ -582,7 +582,7 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
     auto fpmm_trade = query_block_range(
         *conn, stage1_db_,
         "SELECT block_number, tx_hash, log_index, fpmm_addr, trader, side, outcome_index, "
-        "usdc_amount, token_amount FROM ",
+        "collateral_amount, token_amount FROM ",
         "fpmm_trade", start, end);
     if (fpmm_trade) {
       src_fpmm_trade_rows = static_cast<int64_t>(fpmm_trade->RowCount());

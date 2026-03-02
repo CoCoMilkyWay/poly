@@ -111,18 +111,18 @@ TransferBatch 拆分为多行，每个 token 一行，通过 sub_index 区分。
 
 AMM Taker 交易，单边操作。
 
-| column        | 类型       | 来源         | 说明                |
-| ------------- | ---------- | ------------ | ------------------- |
-| block_number  | BIGINT PK  | log          |                     |
-| tx_hash       | BLOB(32)   | log          |                     |
-| log_index     | INTEGER PK | log          |                     |
-| fpmm_addr     | BLOB(20)   | log.address  |                     |
-| trader        | BLOB(20)   | FPMMBuy/Sell | $.buyer 或 $.seller |
-| side          | INTEGER    | 事件类型     | 1=Buy, 2=Sell       |
-| outcome_index | BLOB(32)   | FPMMBuy/Sell | uint256（无损）     |
-| usdc_amount   | BLOB(32)   | FPMMBuy/Sell | uint256（无损）     |
-| token_amount  | BLOB(32)   | FPMMBuy/Sell | uint256（无损）     |
-| fee           | BLOB(32)   | FPMMBuy/Sell | uint256（无损）     |
+| column            | 类型       | 来源         | 说明                |
+| ----------------- | ---------- | ------------ | ------------------- |
+| block_number      | BIGINT PK  | log          |                     |
+| tx_hash           | BLOB(32)   | log          |                     |
+| log_index         | INTEGER PK | log          |                     |
+| fpmm_addr         | BLOB(20)   | log.address  |                     |
+| trader            | BLOB(20)   | FPMMBuy/Sell | $.buyer 或 $.seller |
+| side              | INTEGER    | 事件类型     | 1=Buy, 2=Sell       |
+| outcome_index     | BLOB(32)   | FPMMBuy/Sell | uint256（无损）     |
+| collateral_amount | BLOB(32)   | FPMMBuy/Sell | uint256（无损）     |
+| token_amount      | BLOB(32)   | FPMMBuy/Sell | uint256（无损）     |
+| fee               | BLOB(32)   | FPMMBuy/Sell | uint256（无损）     |
 
 ### fpmm_funding (FPMMFundingAdded / FPMMFundingRemoved)
 
