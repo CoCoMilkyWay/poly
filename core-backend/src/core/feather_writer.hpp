@@ -98,6 +98,24 @@ public:
   static int64_t partition_start(int64_t block) { return (block / PARTITION_SIZE) * PARTITION_SIZE; }
   static int64_t partition_end(int64_t block) { return partition_start(block) + PARTITION_SIZE - 1; }
 
+  uintmax_t partition_total_size_bytes(int64_t start_block) const {
+    const fs::path root(stage1_dir_);
+    assert(fs::exists(root));
+    assert(fs::is_directory(root));
+    uintmax_t total = 0;
+    const std::string filename = std::to_string(start_block) + ".feather";
+    for (const auto &entry : fs::directory_iterator(root)) {
+      if (!entry.is_directory()) {
+        continue;
+      }
+      const fs::path file = entry.path() / filename;
+      if (fs::exists(file) && fs::is_regular_file(file)) {
+        total += fs::file_size(file);
+      }
+    }
+    return total;
+  }
+
 private:
   std::string stage1_dir_;
 

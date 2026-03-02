@@ -1,6 +1,7 @@
 #include "chain_sync.hpp"
 #include "misc/profiler.hpp"
 #include <algorithm>
+#include <iomanip>
 #include <iterator>
 
 namespace stage1 {
@@ -516,9 +517,10 @@ void StageSync::process_batch(DecodedEvents &&events, int64_t to_block) {
 
   int64_t partition_end = current_partition_start_ + FeatherWriter::PARTITION_SIZE - 1;
   if (to_block >= partition_end) {
+    const int64_t landed_partition_start = current_partition_start_;
     TraceN("s1/write");
     db_write_in_progress_ = true;
-    feather_writer_.write_partition(current_partition_start_, cached_events_);
+    feather_writer_.write_partition(landed_partition_start, cached_events_);
     {
       TraceN("s1/write_state");
       bool locked = db_.try_write_lock();
@@ -530,7 +532,9 @@ void StageSync::process_batch(DecodedEvents &&events, int64_t to_block) {
     db_write_in_progress_ = false;
     cached_events_ = DecodedEvents{};
     current_partition_start_ += FeatherWriter::PARTITION_SIZE;
-    std::cout << "[Stage1] 分区 " << (current_partition_start_ - FeatherWriter::PARTITION_SIZE) << " 已落地" << std::endl;
+    const auto landed_bytes = feather_writer_.partition_total_size_bytes(landed_partition_start);
+    const double landed_mb = static_cast<double>(landed_bytes) / (1024.0 * 1024.0);
+    std::cout << "[Stage1] 分区 " << landed_partition_start << " 已落地, size=" << std::fixed << std::setprecision(2) << landed_mb << "MB" << std::defaultfloat << std::endl;
   }
 }
 

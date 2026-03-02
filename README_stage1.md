@@ -210,23 +210,3 @@ AMM LP 操作。LP 按池子比例添加/取回 YES+NO。
 | key        | 含义           |
 | ---------- | -------------- |
 | last_block | 已同步到的区块 |
-
-## PnL 计算
-
-```
-PnL = Σ(Sell) + Σ(Merge) + Σ(Redemption) + Σ(Convert收益)
-    - Σ(Buy) - Σ(Split) - Σ(Fee)
-```
-
-| 来源              | 加减 | 说明                            |
-| ----------------- | ---- | ------------------------------- |
-| split.amount      | -    | 铸造消耗 USDC                   |
-| merge.amount      | +    | 销毁获得 USDC                   |
-| redemption.payout | +    | 结算赎回                        |
-| fpmm_trade Buy    | -    | FPMM买入花费 USDC               |
-| fpmm_trade Sell   | +    | FPMM卖出获得 USDC               |
-| fpmm_trade.fee    | -    | FPMM手续费                      |
-| order_filled Buy  | -    | 买入花费 USDC                   |
-| order_filled Sell | +    | 卖出获得 USDC                   |
-| order_filled.fee  | -    | 手续费                          |
-| convert           | +    | (popcount(index_set)-1)\*amount |
