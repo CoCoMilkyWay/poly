@@ -6,6 +6,7 @@
     border: 1px solid #333;
     margin-bottom: 15px;
   }
+
   .sync-header {
     display: flex;
     justify-content: space-between;
@@ -14,6 +15,7 @@
     padding-bottom: 8px;
     border-bottom: 1px solid #333;
   }
+
   .sync-header h2 {
     font-size: 1.1em;
     color: #fff;
@@ -22,6 +24,7 @@
     gap: 8px;
     margin: 0;
   }
+
   .sync-header h2::before {
     content: "";
     width: 3px;
@@ -29,84 +32,103 @@
     background: #6366f1;
     border-radius: 2px;
   }
+
   .sync-header-right {
     display: flex;
     align-items: center;
     gap: 12px;
   }
+
   .sync-status-row {
     display: flex;
     align-items: center;
     gap: 8px;
   }
+
   .status-indicator {
     display: inline-block;
     width: 8px;
     height: 8px;
     border-radius: 50%;
   }
+
   .status-syncing {
     background: #4ade80;
     animation: pulse 1s infinite;
   }
+
   .status-idle {
     background: #6b7280;
   }
+
   @keyframes pulse {
+
     0%,
     100% {
       opacity: 1;
     }
+
     50% {
       opacity: 0.4;
     }
   }
+
   .sync-stats {
     display: flex;
     gap: 12px;
     margin-bottom: 12px;
     flex-wrap: wrap;
   }
+
   .sync-stat {
     background: #252525;
     border-radius: 6px;
     padding: 8px 12px;
     min-width: 100px;
   }
+
   .sync-stat-label {
     font-size: 0.7em;
     color: #666;
   }
+
   .sync-stat-value {
     font-size: 1em;
     font-weight: 500;
     font-family: monospace;
     color: #fff;
   }
+
   .sync-stat-value.synced {
     color: #4ade80;
   }
+
   .sync-stat-value.behind {
     color: #fde047;
   }
+
   .sync-stat-value.error {
     color: #f87171;
   }
+
   .progress-container {
     margin-bottom: 15px;
   }
+
   .progress-bar {
     height: 6px;
     background: #252525;
     border-radius: 3px;
     overflow: hidden;
   }
+
   .progress-fill {
     height: 100%;
     background: linear-gradient(90deg, #6366f1, #8b5cf6);
     border-radius: 3px;
     transition: width 0.5s ease;
   }
+
   .progress-info {
     display: flex;
     justify-content: space-between;
@@ -115,6 +137,7 @@
     color: #666;
     font-family: monospace;
   }
+
   .btn {
     padding: 5px 10px;
     font-size: 0.8em;
@@ -124,9 +147,11 @@
     border-radius: 4px;
     cursor: pointer;
   }
+
   .btn:hover {
     background: #444;
   }
+
   .btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
@@ -136,15 +161,18 @@
     border-top: 1px solid #333;
     padding-top: 12px;
   }
+
   .contract-item {
     background: #252525;
     border-radius: 6px;
     margin-bottom: 6px;
     overflow: hidden;
   }
+
   .contract-item:last-child {
     margin-bottom: 0;
   }
+
   .contract-header {
     display: flex;
     justify-content: space-between;
@@ -153,41 +181,50 @@
     cursor: pointer;
     transition: background 0.2s;
   }
+
   .contract-header:hover {
     background: #2a2a2a;
   }
+
   .contract-left {
     display: flex;
     align-items: center;
     gap: 12px;
   }
+
   .contract-name {
     font-weight: 600;
     color: #fff;
     font-size: 0.9em;
   }
+
   .contract-addr {
     font-family: monospace;
     font-size: 0.65em;
     color: #555;
   }
+
   .contract-right {
     display: flex;
     align-items: center;
     gap: 12px;
     font-size: 0.75em;
   }
+
   .contract-stat {
     text-align: right;
   }
+
   .contract-stat .label {
     font-size: 0.8em;
     color: #555;
   }
+
   .contract-stat .value {
     font-family: monospace;
     color: #888;
   }
+
   .contract-progress {
     font-weight: 500;
     padding: 2px 6px;
@@ -195,31 +232,38 @@
     font-family: monospace;
     font-size: 0.85em;
   }
+
   .contract-progress.synced {
     background: #166534;
     color: #4ade80;
   }
+
   .contract-progress.behind {
     background: #854d0e;
     color: #fde047;
   }
+
   .contract-progress.error {
     background: #991b1b;
     color: #fca5a5;
   }
+
   .expand-icon {
     color: #555;
     font-size: 0.7em;
     transition: transform 0.2s;
   }
+
   .contract-item.expanded .expand-icon {
     transform: rotate(180deg);
   }
+
   .contract-body {
     display: none;
     padding: 8px 12px;
     border-top: 1px solid #333;
   }
+
   .contract-item.expanded .contract-body {
     display: block;
   }
@@ -232,14 +276,17 @@
     border-bottom: 1px solid #2a2a2a;
     cursor: default;
   }
+
   .event-item:last-child {
     border-bottom: none;
   }
+
   .event-item:hover {
     background: #1f1f1f;
     margin: 0 -12px;
     padding: 6px 12px;
   }
+
   .event-name {
     color: #f59e0b;
     font-weight: 500;
@@ -247,6 +294,7 @@
     min-width: 140px;
     flex-shrink: 0;
   }
+
   .event-topic {
     font-family: monospace;
     font-size: 0.6em;
@@ -254,11 +302,13 @@
     flex: 1;
     word-break: break-all;
   }
+
   .event-tables {
     display: flex;
     gap: 6px;
     flex-shrink: 0;
   }
+
   .table-tag {
     font-family: monospace;
     font-size: 0.7em;
@@ -269,10 +319,12 @@
     cursor: pointer;
     transition: all 0.15s;
   }
+
   .table-tag:hover {
     background: #333;
     color: #fff;
   }
+
   .table-tag .count {
     color: #6366f1;
     margin-left: 4px;
@@ -296,12 +348,15 @@
     display: none;
     color: #ccc;
   }
+
   .tooltip .field {
     color: #f59e0b;
   }
+
   .tooltip .type {
     color: #6366f1;
   }
+
   .tooltip .desc {
     color: #888;
   }
@@ -354,20 +409,13 @@
     </div>
     <div class="sync-stat" style="flex: 1; min-width: 160px">
       <div class="sync-stat-label">
-        RPC Node &nbsp;<span style="color: #555"
-          >chunk={{ "{:,}".format(rpc_node.chunk) }}, threads={{ rpc_node.threads }}</span
-        >
+        RPC Node &nbsp;<span style="color: #555">chunk={{ "{:,}".format(rpc_node.chunk) }}, threads={{ rpc_node.threads
+          }}</span>
       </div>
-      <div
-        class="sync-stat-value"
-        style="font-size: 0.85em"
-        title="{{ rpc_node.url }}"
-      >
+      <div class="sync-stat-value" style="font-size: 0.85em" title="{{ rpc_node.url }}">
         {{ rpc_node.name }}
-        <span style="color: #555; font-size: 0.8em"
-          >{{ rpc_node.url[:40] }}{% if rpc_node.url|length > 40 %}…{% endif
-          %}</span
-        >
+        <span style="color: #555; font-size: 0.8em">{{ rpc_node.url[:40] }}{% if rpc_node.url|length > 40 %}…{% endif
+          %}</span>
       </div>
     </div>
   </div>
@@ -379,6 +427,22 @@
     <div class="progress-info">
       <span id="progress-blocks">- / -</span>
       <span id="progress-pct">0%</span>
+    </div>
+  </div>
+
+  <div class="progress-container" style="border-top: 1px solid #333; padding-top: 10px">
+    <div class="sync-stat-label" style="margin-bottom: 6px">
+      Stage0 条件补充进度
+      <span id="stage0-meta" style="margin-left: 8px; color: #555">{{ "{:,}".format(stage0_state.last_block or 0) }} /
+        {{
+        "{:,}".format(stage0_state.head_block or 0) }}</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="stage0-progress-fill" style="width: 0%"></div>
+    </div>
+    <div class="progress-info">
+      <span id="stage0-progress-blocks">- / -</span>
+      <span id="stage0-progress-pct">0%</span>
     </div>
   </div>
 
@@ -774,8 +838,8 @@
           </div>
           <div class="contract-body">
             ${c.events
-              .map(
-                (ev) => `
+            .map(
+              (ev) => `
               <div class="event-item" 
                    onmouseenter="window._showEventTooltip(event, '${ev.name}')"
                    onmouseleave="window._hideTooltip()">
@@ -783,18 +847,18 @@
                 <span class="event-topic">${ev.topic}</span>
                 <div class="event-tables">
                   ${ev.tables
-                    .map((t) => {
-                      const count = tableCountsCache[t] || 0;
-                      return `<span class="table-tag" 
+                  .map((t) => {
+                    const count = tableCountsCache[t] || 0;
+                    return `<span class="table-tag" 
                                  onmouseenter="window._showTableTooltip(event, '${t}')"
                                  onmouseleave="window._hideTooltip()">${t}<span class="count">${formatNumber(count)}</span></span>`;
-                    })
-                    .join("")}
+                  })
+                  .join("")}
                 </div>
               </div>
             `,
-              )
-              .join("")}
+            )
+            .join("")}
           </div>
         </div>
       `;
@@ -970,6 +1034,21 @@
         formatNumber(last) + " / " + formatNumber(head);
     }
 
+    function updateStage0Status(sync0) {
+      const last = sync0.last_block || 0;
+      const head = sync0.head_block || 0;
+      const pct =
+        head > 0 ? Math.min(100, Math.max(0, (last / head) * 100)) : 0;
+      document.getElementById("stage0-progress-fill").style.width =
+        pct.toFixed(1) + "%";
+      document.getElementById("stage0-progress-pct").textContent =
+        pct.toFixed(2) + "%";
+      document.getElementById("stage0-progress-blocks").textContent =
+        formatNumber(last) + " / " + formatNumber(head);
+      document.getElementById("stage0-meta").textContent =
+        formatNumber(last) + " / " + formatNumber(head);
+    }
+
     function updateTables(tables) {
       if (Array.isArray(tables)) {
         for (const t of tables) tableCountsCache[t.name] = t.count;
@@ -992,7 +1071,7 @@
     const initialBehind = Math.max(
       0,
       parseInt(document.body.dataset.headBlock || "0") -
-        parseInt(document.body.dataset.lastBlock || "0"),
+      parseInt(document.body.dataset.lastBlock || "0"),
     );
     const behindEl = document.getElementById("behind-blocks");
     behindEl.textContent = formatNumber(initialBehind);
@@ -1014,6 +1093,12 @@
 
     renderContracts();
 
+    updateStage0Status({
+      last_block: Number("{{ stage0_state.last_block or 0 }}"),
+      head_block: Number("{{ stage0_state.head_block or 0 }}"),
+    });
+
+    window.updateStage0Status = updateStage0Status;
     window.updateSyncStatus = updateSyncStatus;
     window.updateTables = updateTables;
     window.updateContractSync = updateSyncStatus;

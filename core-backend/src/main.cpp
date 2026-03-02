@@ -9,6 +9,7 @@
 #include "core/config.hpp"
 #include "core/database.hpp"
 #include "misc/profiler.hpp"
+#include "stage0/stage0_sync.hpp"
 #include "stage1/chain_sync.hpp"
 #include "stage2/stage2_sync.hpp"
 #include "stage3/pnl_replay.hpp"
@@ -39,6 +40,7 @@ int main(int argc, char *argv[]) {
   assert(config.stage1_rpc_buffer_multiplier >= 1.0);
 
   std::cout << "[Main] Stage1 DB: " << config.db_path_stage1 << std::endl;
+  std::cout << "[Main] Stage0 DB: " << config.db_path_stage0 << std::endl;
   std::cout << "[Main] Stage2 DB: " << config.db_path_stage2 << std::endl;
   std::cout << "[Main] Stage3 DB: " << config.db_path_stage3 << std::endl;
   std::cout << "[Main] RPC Node: " << config.rpc_name << " (" << config.rpc_url << ")" << std::endl;
@@ -51,13 +53,19 @@ int main(int argc, char *argv[]) {
   std::cout << "[Main] API Port: " << config.backend_port << std::endl;
 
   Database stage1_db(config.db_path_stage1);
+  Database stage0_db(config.db_path_stage0);
   Database stage2_db(config.db_path_stage2);
   Database stage3_db(config.db_path_stage3);
   {
     TraceN("init/stage1_db");
     stage1_db.init_schema();
   }
+  {
+    TraceN("init/stage0_db");
+    stage0_db.init_schema();
+  }
 
+  stage0::StageSync stage0(config, stage1_db, stage0_db);
   stage1::StageSync stage1(config, stage1_db);
   stage2::StageSync stage2(stage1_db, stage2_db);
   stage3::StageSync stage3(stage2.builder(), stage2_db, stage3_db);
@@ -66,6 +74,11 @@ int main(int argc, char *argv[]) {
     const auto s = stage1.status();
     return {s.syncing, s.last_block, s.head_block, s.behind_blocks, s.behind_chunks,
             s.blocks_per_second, s.eta_seconds, s.bytes_per_block};
+  };
+  auto stage0_getter = [&stage0]() -> Stage0Status {
+    const auto s = stage0.status();
+    return {s.syncing, s.last_block, s.head_block, s.behind_blocks,
+            s.blocks_per_second, s.eta_seconds};
   };
   auto stage2_getter = [&stage2]() -> Stage2Status {
     const auto &s = stage2.status();
@@ -78,9 +91,11 @@ int main(int argc, char *argv[]) {
             s.blocks_per_second, s.eta_seconds};
   };
 
+  boost::asio::io_context stage0_ioc;
   boost::asio::io_context stage1_ioc;
   boost::asio::io_context stage2_ioc;
   boost::asio::io_context stage3_ioc;
+  std::optional<std::thread> stage0_thread;
   std::optional<std::thread> stage1_thread;
   std::optional<std::thread> stage2_thread;
   std::optional<std::thread> stage3_thread;
@@ -97,9 +112,15 @@ int main(int argc, char *argv[]) {
     });
   };
   if (config.stage1_enable == 1) {
-    TraceN("start/stage1");
+    {
+      TraceN("start/stage0");
+      start_stage(config.stage1_enable, "Stage0", stage0, stage0_ioc, stage0_thread);
+    }
+    {
+      TraceN("start/stage1");
+      start_stage(config.stage1_enable, "Stage1", stage1, stage1_ioc, stage1_thread);
+    }
   }
-  start_stage(config.stage1_enable, "Stage1", stage1, stage1_ioc, stage1_thread);
   if (config.stage2_enable == 1) {
     TraceN("start/stage2");
   }
@@ -111,7 +132,7 @@ int main(int argc, char *argv[]) {
 
   boost::asio::io_context api_ioc;
   ApiServer api_server(api_ioc, stage1_db, stage2_db, stage3, config.backend_port,
-                       stage1_getter, stage2_getter, stage3_getter);
+                       stage0_getter, stage1_getter, stage2_getter, stage3_getter);
 
   boost::asio::signal_set signals(api_ioc, SIGINT, SIGTERM);
   signals.async_wait([&](const boost::system::error_code &, int sig) {
@@ -126,9 +147,12 @@ int main(int argc, char *argv[]) {
       }
       std::cout << "[Main] 跳过 " << name << " (未启用)" << std::endl;
     };
+    stop_stage("Stage0", config.stage1_enable, stage0);
     stop_stage("Stage1", config.stage1_enable, stage1);
     stop_stage("Stage2", config.stage2_enable, stage2);
     stop_stage("Stage3", config.stage3_enable, stage3);
+    std::cout << "[Main] 停止 Stage0 io_context..." << std::endl;
+    stage0_ioc.stop();
     std::cout << "[Main] 停止 Stage1 io_context..." << std::endl;
     stage1_ioc.stop();
     std::cout << "[Main] 停止 Stage2 io_context..." << std::endl;
@@ -148,6 +172,7 @@ int main(int argc, char *argv[]) {
       thread->join();
     }
   };
+  join_stage(stage0_thread);
   join_stage(stage1_thread);
   join_stage(stage2_thread);
   join_stage(stage3_thread);

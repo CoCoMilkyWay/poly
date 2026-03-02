@@ -81,13 +81,16 @@
 
       async function refresh() {
         try {
-          const [syncRes, tablesRes] = await Promise.all([
+          const [stage0Res, syncRes, tablesRes] = await Promise.all([
+            fetch("/api/stage0-status"),
             fetch("/api/stage1-status"),
             fetch("/api/tables"),
           ]);
+          const stage0 = await stage0Res.json();
           const sync = await syncRes.json();
           const tables = await tablesRes.json();
 
+          if (window.updateStage0Status) updateStage0Status(stage0);
           updateSyncStatus(sync);
           updateTables(tables);
           if (window.updateContractSync) updateContractSync(sync);

@@ -22,10 +22,12 @@ templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     tables = await backend_get("/api/tables")
+    stage0_state = await backend_get("/api/stage0-status")
     stage1_state = await backend_get("/api/stage1-status")
     return templates.TemplateResponse("index.html", {
         "request": request,
         "tables": tables,
+        "stage0_state": stage0_state,
         "stage1_state": stage1_state,
         "rpc_node": ACTIVE_RPC_NODE,
     })
@@ -39,6 +41,11 @@ async def api_health():
 @app.get("/api/tables")
 async def api_tables():
     return await backend_get("/api/tables")
+
+
+@app.get("/api/stage0-status")
+async def api_stage0_status():
+    return await backend_get("/api/stage0-status")
 
 
 @app.get("/api/stage1-status")

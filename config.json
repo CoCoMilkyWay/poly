@@ -2,20 +2,21 @@
   "stage1_enable": 1,
   "stage2_enable": 1,
   "stage3_enable": 0,
+  "db_path_stage0": "data/stage0/condition.duckdb",
   "db_path_stage1": "data/stage1/polymarket.duckdb",
   "db_path_stage2": "data/stage2/users.duckdb",
   "db_path_stage3": "data/stage3/replay.duckdb",
-  "stage1_rpc_threads": 30,
-  "stage1_rpc_block_span": 1000,
-  "stage1_rpc_buffer_multiplier": 1.5,
+  "stage1_rpc_threads": 20,
+  "stage1_rpc_block_span": 500,
+  "stage1_rpc_buffer_multiplier": 2,
 
-  "initial_block": 0,
+  "initial_block": 66938000,
   "frontend_port": 8000,
   "backend_port": 8001,
 
   "proxy": "",
   "rpc_transport": "curl",
-  "active_rpc": "dRPC",
+  "active_rpc": "Alchemy",
   "rpc_nodes": [
     {
       "name": "Erigon",

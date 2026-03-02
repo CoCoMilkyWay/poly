@@ -127,6 +127,17 @@ json to_stage1_status_json(const Stage1Status &status) {
   };
 }
 
+json to_stage0_status_json(const Stage0Status &status) {
+  return {
+      {"syncing", status.syncing},
+      {"last_block", status.last_block},
+      {"head_block", status.head_block},
+      {"behind_blocks", status.behind_blocks},
+      {"blocks_per_second", status.blocks_per_second},
+      {"eta_seconds", status.eta_seconds},
+  };
+}
+
 json to_stage2_status_json(const Stage2Status &status) {
   return {
       {"syncing", status.syncing},
@@ -161,9 +172,11 @@ void write_ok_json_response(http::response<http::string_body> &res, const json &
 } // namespace
 
 ApiSession::ApiSession(tcp::socket socket, Database &stage1_db, Database &stage2_db, stage3::StageSync &stage3,
-                       Stage1Getter stage1_getter, Stage2Getter stage2_getter, Stage3Getter stage3_getter)
+                       Stage0Getter stage0_getter, Stage1Getter stage1_getter,
+                       Stage2Getter stage2_getter, Stage3Getter stage3_getter)
     : socket_(std::move(socket)), stage1_db_(stage1_db), stage2_db_(stage2_db), stage3_(stage3),
-      stage1_getter_(std::move(stage1_getter)), stage2_getter_(std::move(stage2_getter)),
+      stage0_getter_(std::move(stage0_getter)), stage1_getter_(std::move(stage1_getter)),
+      stage2_getter_(std::move(stage2_getter)),
       stage3_getter_(std::move(stage3_getter)) {}
 
 void ApiSession::run() {
@@ -210,6 +223,8 @@ void ApiSession::handle_request() {
       handle_export_csv();
     } else if (target.starts_with("/api/table-sample")) {
       handle_table_sample();
+    } else if (target.starts_with("/api/stage0-status")) {
+      handle_stage0_status();
     } else if (target.starts_with("/api/stage1-status")) {
       handle_stage1_status();
     } else if (target.starts_with("/api/stage2-status")) {
@@ -346,6 +361,14 @@ void ApiSession::handle_tables() {
 
   res_.result(http::status::ok);
   res_.body() = result.dump();
+}
+
+void ApiSession::handle_stage0_status() {
+  TraceN("api/s0_status");
+  res_.set(http::field::content_type, "application/json");
+
+  const Stage0Status status = stage0_getter_();
+  write_ok_json_response(res_, to_stage0_status_json(status));
 }
 
 void ApiSession::handle_stage1_status() {

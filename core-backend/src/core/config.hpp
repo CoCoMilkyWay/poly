@@ -12,6 +12,7 @@ struct Config {
   int stage2_enable;
   int stage3_enable;
 
+  std::string db_path_stage0;
   std::string db_path_stage1;
   std::string db_path_stage2;
   std::string db_path_stage3;
@@ -50,6 +51,7 @@ struct Config {
     assert((config.stage2_enable == 0 || config.stage2_enable == 1) && "stage2_enable 必须是 0/1");
     assert((config.stage3_enable == 0 || config.stage3_enable == 1) && "stage3_enable 必须是 0/1");
 
+    config.db_path_stage0 = require("db_path_stage0").get<std::string>();
     config.db_path_stage1 = require("db_path_stage1").get<std::string>();
     config.db_path_stage2 = require("db_path_stage2").get<std::string>();
     config.db_path_stage3 = require("db_path_stage3").get<std::string>();
