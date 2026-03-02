@@ -1,7 +1,7 @@
 {
-  "stage0_enable": 0,
+  "stage0_enable": 1,
   "stage1_enable": 1,
-  "stage2_enable": 0,
+  "stage2_enable": 1,
   "stage3_enable": 0,
   "db_path_stage0": "data/stage0/condition.duckdb",
   "db_path_stage1": "data/stage1/polymarket.duckdb",

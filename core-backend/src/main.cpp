@@ -61,10 +61,6 @@ int main(int argc, char *argv[]) {
     TraceN("init/stage1_db");
     stage1_db.init_schema();
   }
-  {
-    TraceN("init/stage0_db");
-    stage0_db.init_schema();
-  }
 
   stage0::StageSync stage0(config, stage1_db, stage0_db);
   stage1::StageSync stage1(config, stage1_db);

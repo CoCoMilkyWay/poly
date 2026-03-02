@@ -3,7 +3,6 @@
 #include <atomic>
 #include <chrono>
 #include <deque>
-#include <future>
 #include <map>
 #include <mutex>
 #include <string>
@@ -40,7 +39,7 @@ public:
   Status status() const;
 
 private:
-  static constexpr int kWorkerCount = 10;
+  static constexpr int kWorkerCount = 20;
   static constexpr int kSchedulerSleepMs = 5;
   static constexpr int kSchedulerSleepMaxMs = 40;
   static constexpr size_t kEtaWindowSize = 20;
@@ -74,7 +73,15 @@ private:
   };
 
   struct InFlightTask {
-    std::future<BlockTaskResult> future;
+    int worker_slot = -1;
+    int64_t block = -1;
+    std::chrono::steady_clock::time_point started_at;
+    std::vector<ConditionSeed> seeds;
+    size_t next_seed_index = 0;
+    size_t failed_seeds = 0;
+    size_t empty_seeds = 0;
+    std::vector<FetchResult> rows;
+    bool done = false;
   };
 
   void schedule_sync(int delay_seconds);
@@ -87,9 +94,7 @@ private:
   void ensure_cursor_floor();
 
   SeedScanBatch load_seed_scan_batch(int64_t start_block, int64_t head_block, size_t max_conditions) const;
-  json fetch_market_by_condition(const std::string &condition_hex_lower);
-  BlockTaskResult process_block_with_retry(int64_t block, const std::vector<ConditionSeed> &seeds);
-  void persist_results(const std::vector<FetchResult> &rows, int64_t commit_block);
+  void persist_results_in_txn(duckdb::Appender &ap, const std::vector<FetchResult> &rows, int64_t now_ms);
   int64_t get_cursor();
   void set_cursor_in_txn(duckdb::Connection &conn, int64_t block);
 
