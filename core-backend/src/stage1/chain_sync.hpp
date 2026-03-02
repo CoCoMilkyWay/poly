@@ -95,7 +95,6 @@ private:
   std::future<DecodedEvents> submit_decode_task(std::shared_ptr<std::vector<json>> shared_raw_logs);
   void start_decode_pool();
   void stop_decode_pool();
-  static void merge_events(DecodedEvents &dst, DecodedEvents &&src);
   static int64_t transfer_row_count(const DecodedEvents &events);
 
   const Config &config_;

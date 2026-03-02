@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
 #include <nlohmann/json.hpp>
 #include <optional>
@@ -44,121 +45,134 @@ constexpr const char *POSITION_CONVERT = "0xb03d19dddbc72a87e735ff0ea3b57bef133e
 
 namespace stage1 {
 
-static constexpr int64_t TRANSFER_FLAT_LOG_SCALE = 10000;
+static constexpr int64_t TRANSFER_FLAT_LOG_SCALE = 10000; // 显示单位 W
+using Bytes20 = std::array<uint8_t, 20>;
+using Bytes32 = std::array<uint8_t, 32>;
 
 struct TransferEvent {
   int64_t block_number;
-  std::string tx_hash;
+  Bytes32 tx_hash;
   int64_t log_index;
-  std::string op, from, to, token_id;
-  std::string amount;
+  Bytes20 op, from, to;
+  Bytes32 token_id;
+  Bytes32 amount;
 };
 
 struct ConditionPrepEvent {
   int64_t block_number;
-  std::string tx_hash;
+  Bytes32 tx_hash;
   int64_t log_index;
-  std::string condition_id, oracle, question_id;
-  std::string outcome_slot_count;
+  Bytes32 condition_id, question_id;
+  Bytes20 oracle;
+  Bytes32 outcome_slot_count;
 };
 
 struct ConditionResolveEvent {
   int64_t block_number;
-  std::string tx_hash;
+  Bytes32 tx_hash;
   int64_t log_index;
-  std::string condition_id, oracle, question_id;
-  std::string outcome_slot_count;
-  std::vector<std::string> payout_numerators;
+  Bytes32 condition_id, question_id;
+  Bytes20 oracle;
+  Bytes32 outcome_slot_count;
+  std::vector<Bytes32> payout_numerators;
 };
 
 struct SplitMergeEvent {
   int64_t block_number;
-  std::string tx_hash;
+  Bytes32 tx_hash;
   int64_t log_index;
-  std::string stakeholder, collateral_token, parent_collection_id, condition_id;
-  std::vector<std::string> partition;
-  std::string amount;
+  Bytes20 stakeholder, collateral_token;
+  Bytes32 parent_collection_id, condition_id;
+  std::vector<Bytes32> partition;
+  Bytes32 amount;
 };
 
 struct RedemptionEvent {
   int64_t block_number;
-  std::string tx_hash;
+  Bytes32 tx_hash;
   int64_t log_index;
-  std::string redeemer, collateral_token, parent_collection_id, condition_id;
-  std::vector<std::string> index_sets;
-  std::string payout;
+  Bytes20 redeemer, collateral_token;
+  Bytes32 parent_collection_id, condition_id;
+  std::vector<Bytes32> index_sets;
+  Bytes32 payout;
 };
 
 struct FpmmEvent {
   int64_t block_number;
-  std::string tx_hash;
+  Bytes32 tx_hash;
   int64_t log_index;
-  std::string factory; // FPMM Factory地址
+  Bytes20 factory;
   int64_t creation_topics_count; // FixedProductMarketMakerCreation topics长度（2/4）
   std::string creation_layout;   // 按 topics 布局标记: fix_v1 / det_v1
-  std::string creator, fpmm_addr, conditional_tokens, collateral_token;
-  std::vector<std::string> condition_ids;
-  std::string fee;
+  Bytes20 creator, fpmm_addr, conditional_tokens, collateral_token;
+  std::vector<Bytes32> condition_ids;
+  Bytes32 fee;
 };
 
 struct FpmmTradeEvent {
   int64_t block_number;
-  std::string tx_hash;
+  Bytes32 tx_hash;
   int64_t log_index;
-  std::string fpmm_addr, trader;
+  Bytes20 fpmm_addr, trader;
   int64_t side;
-  std::string outcome_index, collateral_amount, token_amount, fee;
+  Bytes32 outcome_index, collateral_amount, token_amount, fee;
 };
 
 struct FpmmFundingEvent {
   int64_t block_number;
-  std::string tx_hash;
+  Bytes32 tx_hash;
   int64_t log_index;
-  std::string fpmm_addr, funder;
+  Bytes20 fpmm_addr, funder;
   int64_t side;
-  std::vector<std::string> amounts;
-  std::string collateral_from_fee_pool, shares;
+  std::vector<Bytes32> amounts;
+  Bytes32 collateral_from_fee_pool, shares;
 };
 
 struct OrderFilledEvent {
   int64_t block_number;
-  std::string tx_hash;
+  Bytes32 tx_hash;
   int64_t log_index;
-  std::string exchange, order_hash, maker, taker, maker_asset_id, taker_asset_id;
-  std::string maker_amount, taker_amount, fee;
+  std::string exchange;
+  Bytes32 order_hash, maker_asset_id, taker_asset_id;
+  Bytes20 maker, taker;
+  Bytes32 maker_amount, taker_amount, fee;
 };
 
 struct TokenMapEvent {
   int64_t block_number;
-  std::string tx_hash;
+  Bytes32 tx_hash;
   int64_t log_index;
-  std::string exchange, token0, token1, condition_id;
+  std::string exchange;
+  Bytes20 token0, token1;
+  Bytes32 condition_id;
 };
 
 struct NegRiskMarketEvent {
   int64_t block_number;
-  std::string tx_hash;
+  Bytes32 tx_hash;
   int64_t log_index;
-  std::string market_id, oracle;
-  std::string fee_bips;
+  Bytes32 market_id;
+  Bytes20 oracle;
+  Bytes32 fee_bips;
   std::optional<std::string> data;
 };
 
 struct NegRiskQuestionEvent {
   int64_t block_number;
-  std::string tx_hash;
+  Bytes32 tx_hash;
   int64_t log_index;
-  std::string market_id, question_id;
-  std::string question_index;
+  Bytes32 market_id, question_id;
+  Bytes32 question_index;
   std::optional<std::string> data;
 };
 
 struct ConvertEvent {
   int64_t block_number;
-  std::string tx_hash;
+  Bytes32 tx_hash;
   int64_t log_index;
-  std::string stakeholder, market_id;
-  std::string index_set, amount;
+  Bytes20 stakeholder;
+  Bytes32 market_id;
+  Bytes32 index_set, amount;
 };
 
 struct DecodedEvents {
@@ -188,68 +202,72 @@ private:
   static const bool crash_handler_installed_;
 
   static std::string to_lower(std::string s);
+  static uint8_t hex_nibble(unsigned char ch);
+  static std::string hex_to_bytes(const std::string &hex);
+  static Bytes20 address_hex_to_bytes20(const std::string &hex);
+  static Bytes32 hex_to_bytes32(const std::string &hex);
+  static Bytes32 uint256_hex_to_bytes32(const std::string &hex);
   static int64_t hex_to_int64(const std::string &hex);
-  static std::string normalize_uint256_hex(const std::string &hex);
-  static std::string extract_address_from_topic(const std::string &topic);
-  static std::string extract_address_from_data_word(const std::string &data, size_t word_index);
-  static std::string extract_bytes32_from_data(const std::string &data, size_t index);
-  static std::string extract_uint256_hex_from_data(const std::string &data, size_t index);
+  static Bytes20 extract_address_from_topic(const std::string &topic);
+  static Bytes20 extract_address_from_data_word(const std::string &data, size_t word_index);
+  static Bytes32 extract_bytes32_from_data(const std::string &data, size_t index);
+  static Bytes32 extract_uint256_from_data(const std::string &data, size_t index);
   static int64_t extract_uint256_i64_from_data(const std::string &data, size_t index);
   static bool is_fpmm_topic(const std::string &topic0);
 
   static void parse_log(const json &log, DecodedEvents &events);
   static void parse_conditional_tokens_event(const std::string &topic0, const json &topics,
-                                             const std::string &data, const std::string &tx_hash,
+                                             const std::string &data, const Bytes32 &tx_hash,
                                              int64_t block_number, int64_t log_index,
                                              DecodedEvents &events);
   static void parse_exchange_event(const std::string &topic0, const json &topics,
-                                   const std::string &data, const std::string &tx_hash,
+                                   const std::string &data, const Bytes32 &tx_hash,
                                    int64_t block_number, int64_t log_index,
                                    const std::string &exchange, DecodedEvents &events);
   static void parse_neg_risk_adapter_event(const std::string &topic0, const json &topics,
-                                           const std::string &data, const std::string &tx_hash,
+                                           const std::string &data, const Bytes32 &tx_hash,
                                            int64_t block_number, int64_t log_index,
                                            DecodedEvents &events);
 
   static void parse_transfer_single(const json &topics, const std::string &data,
-                                    const std::string &tx_hash, int64_t block_number,
+                                    const Bytes32 &tx_hash, int64_t block_number,
                                     int64_t log_index, DecodedEvents &events);
   static void parse_transfer_batch(const json &topics, const std::string &data,
-                                   const std::string &tx_hash, int64_t block_number,
+                                   const Bytes32 &tx_hash, int64_t block_number,
                                    int64_t log_index, DecodedEvents &events);
   static void parse_split_or_merge(const json &topics, const std::string &data,
-                                   const std::string &tx_hash, int64_t block_number,
+                                   const Bytes32 &tx_hash, int64_t block_number,
                                    int64_t log_index, std::vector<SplitMergeEvent> &out);
   static void parse_redemption(const json &topics, const std::string &data,
-                               const std::string &tx_hash, int64_t block_number,
+                               const Bytes32 &tx_hash, int64_t block_number,
                                int64_t log_index, DecodedEvents &events);
   static void parse_condition_preparation(const json &topics, const std::string &data,
-                                          const std::string &tx_hash, int64_t block_number,
+                                          const Bytes32 &tx_hash, int64_t block_number,
                                           int64_t log_index, DecodedEvents &events);
   static void parse_condition_resolution(const json &topics, const std::string &data,
-                                         const std::string &tx_hash, int64_t block_number,
+                                         const Bytes32 &tx_hash, int64_t block_number,
                                          int64_t log_index, DecodedEvents &events);
   static void parse_order_filled(const json &topics, const std::string &data,
-                                 const std::string &tx_hash, int64_t block_number,
+                                 const Bytes32 &tx_hash, int64_t block_number,
                                  int64_t log_index, const std::string &exchange,
                                  DecodedEvents &events);
-  static void parse_token_map(const json &topics, const std::string &tx_hash,
+  static void parse_token_map(const json &topics, const Bytes32 &tx_hash,
                               int64_t block_number, int64_t log_index,
                               const std::string &exchange, DecodedEvents &events);
   static void parse_convert(const json &topics, const std::string &data,
-                            const std::string &tx_hash, int64_t block_number,
+                            const Bytes32 &tx_hash, int64_t block_number,
                             int64_t log_index, DecodedEvents &events);
   static void parse_neg_risk_market(const json &topics, const std::string &data,
-                                    const std::string &tx_hash, int64_t block_number,
+                                    const Bytes32 &tx_hash, int64_t block_number,
                                     int64_t log_index, DecodedEvents &events);
   static void parse_neg_risk_question(const json &topics, const std::string &data,
-                                      const std::string &tx_hash, int64_t block_number,
+                                      const Bytes32 &tx_hash, int64_t block_number,
                                       int64_t log_index, DecodedEvents &events);
   static std::optional<std::string> parse_fpmm_create(const json &log, const std::string &factory_addr,
                                                       DecodedEvents &events);
-  static void parse_fpmm_event(const std::string &topic0, const std::string &fpmm_addr,
+  static void parse_fpmm_event(const std::string &topic0, const Bytes20 &fpmm_addr,
                                const json &topics, const std::string &data,
-                               const std::string &tx_hash, int64_t block_number,
+                               const Bytes32 &tx_hash, int64_t block_number,
                                int64_t log_index, DecodedEvents &events);
 };
 

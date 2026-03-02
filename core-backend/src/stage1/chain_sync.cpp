@@ -3,8 +3,6 @@
 
 #include <algorithm>
 #include <iomanip>
-#include <iterator>
-#include <type_traits>
 
 namespace stage1 {
 
@@ -374,17 +372,16 @@ bool StageSync::try_commit_ready_chunks() {
     int64_t landed_transfer_rows = 0;
     size_t landed_response_bytes = 0;
 
-    DecodedEvents chunk_events;
+    TraceN("s1/write_chunk");
+    db_write_in_progress_ = true;
+    feather_writer_.begin_partition(landed_chunk_start, commit_end_block);
     for (size_t i = 0; i < consume_batches; ++i) {
       auto &batch = buffered_batches_[i];
       landed_transfer_rows += batch.transfer_rows;
       landed_response_bytes += batch.response_bytes;
-      merge_events(chunk_events, std::move(batch.events));
+      feather_writer_.append_partition_batch(batch.events);
     }
-
-    TraceN("s1/write_chunk");
-    db_write_in_progress_ = true;
-    feather_writer_.write_partition(landed_chunk_start, commit_end_block, chunk_events);
+    feather_writer_.finalize_partition();
     {
       TraceN("s1/write_state");
       bool locked = db_.try_write_lock();
@@ -617,32 +614,6 @@ void StageSync::record_commit_event(int64_t committed_block) {
   if (commit_history_.size() > kEtaWindowSize) {
     commit_history_.pop_front();
   }
-}
-
-void StageSync::merge_events(DecodedEvents &dst, DecodedEvents &&src) {
-  auto append = [](auto &d, auto &s) {
-    if (d.empty()) {
-      d = std::move(s);
-      return;
-    }
-    d.insert(d.end(), std::make_move_iterator(s.begin()), std::make_move_iterator(s.end()));
-    using VecT = std::decay_t<decltype(s)>;
-    VecT().swap(s);
-  };
-  append(dst.transfer, src.transfer);
-  append(dst.condition_preparation, src.condition_preparation);
-  append(dst.condition_resolution, src.condition_resolution);
-  append(dst.split, src.split);
-  append(dst.merge, src.merge);
-  append(dst.redemption, src.redemption);
-  append(dst.fpmm, src.fpmm);
-  append(dst.fpmm_trade, src.fpmm_trade);
-  append(dst.fpmm_funding, src.fpmm_funding);
-  append(dst.order_filled, src.order_filled);
-  append(dst.token_map, src.token_map);
-  append(dst.neg_risk_market, src.neg_risk_market);
-  append(dst.neg_risk_question, src.neg_risk_question);
-  append(dst.convert, src.convert);
 }
 
 int64_t StageSync::transfer_row_count(const DecodedEvents &events) {

@@ -9,7 +9,10 @@
 #include <cstdio>
 #include <fcntl.h>
 #include <filesystem>
+#include <map>
+#include <optional>
 #include <string>
+#include <string_view>
 #include <unistd.h>
 #include <vector>
 
@@ -23,78 +26,116 @@ public:
   explicit FeatherWriter(const std::string &data_dir) : stage1_dir_(data_dir) {}
 
   void write_partition(int64_t start_block, int64_t end_block, stage1::DecodedEvents &events) {
+    begin_partition(start_block, end_block);
+    append_partition_batch(events);
+    finalize_partition();
+    release_vector(events.transfer);
+    release_vector(events.condition_preparation);
+    release_vector(events.condition_resolution);
+    release_vector(events.split);
+    release_vector(events.merge);
+    release_vector(events.redemption);
+    release_vector(events.fpmm);
+    release_vector(events.fpmm_trade);
+    release_vector(events.fpmm_funding);
+    release_vector(events.order_filled);
+    release_vector(events.token_map);
+    release_vector(events.neg_risk_market);
+    release_vector(events.neg_risk_question);
+    release_vector(events.convert);
+  }
+
+  void begin_partition(int64_t start_block, int64_t end_block) {
     assert(start_block <= end_block);
+    assert(!streaming_session_.has_value());
     active_end_block_ = end_block;
+    streaming_session_.emplace();
+    streaming_session_->start_block = start_block;
+    streaming_session_->end_block = end_block;
+  }
+
+  void append_partition_batch(const stage1::DecodedEvents &events) {
+    assert(streaming_session_.has_value());
+    const int64_t start_block = streaming_session_->start_block;
     {
       TraceN("s1/transfer");
       write_transfer(start_block, events.transfer);
     }
-    release_vector(events.transfer);
     {
       TraceN("s1/condition_preparation");
       write_condition_preparation(start_block, events.condition_preparation);
     }
-    release_vector(events.condition_preparation);
     {
       TraceN("s1/condition_resolution");
       write_condition_resolution(start_block, events.condition_resolution);
     }
-    release_vector(events.condition_resolution);
     {
       TraceN("s1/split");
       write_split(start_block, events.split);
     }
-    release_vector(events.split);
     {
       TraceN("s1/merge");
       write_merge(start_block, events.merge);
     }
-    release_vector(events.merge);
     {
       TraceN("s1/redemption");
       write_redemption(start_block, events.redemption);
     }
-    release_vector(events.redemption);
     {
       TraceN("s1/fpmm");
       write_fpmm(start_block, events.fpmm);
     }
-    release_vector(events.fpmm);
     {
       TraceN("s1/fpmm_trade");
       write_fpmm_trade(start_block, events.fpmm_trade);
     }
-    release_vector(events.fpmm_trade);
     {
       TraceN("s1/fpmm_funding");
       write_fpmm_funding(start_block, events.fpmm_funding);
     }
-    release_vector(events.fpmm_funding);
     {
       TraceN("s1/order_filled");
       write_order_filled(start_block, events.order_filled);
     }
-    release_vector(events.order_filled);
     {
       TraceN("s1/token_map");
       write_token_map(start_block, events.token_map);
     }
-    release_vector(events.token_map);
     {
       TraceN("s1/neg_risk_market");
       write_neg_risk_market(start_block, events.neg_risk_market);
     }
-    release_vector(events.neg_risk_market);
     {
       TraceN("s1/neg_risk_question");
       write_neg_risk_question(start_block, events.neg_risk_question);
     }
-    release_vector(events.neg_risk_question);
     {
       TraceN("s1/convert");
       write_convert(start_block, events.convert);
     }
-    release_vector(events.convert);
+  }
+
+  void finalize_partition() {
+    assert(streaming_session_.has_value());
+    for (auto &[table, stream_writer] : streaming_session_->writers) {
+      (void)table;
+      auto close_status = stream_writer.writer->Close();
+      assert(close_status.ok());
+      auto file_close_status = stream_writer.outfile->Close();
+      assert(file_close_status.ok());
+      fsync_file(stream_writer.tmp_path);
+    }
+    for (auto &[table, stream_writer] : streaming_session_->writers) {
+      (void)table;
+      int ret = std::rename(stream_writer.tmp_path.c_str(), stream_writer.final_path.c_str());
+      assert(ret == 0);
+      std::string dir = fs::path(stream_writer.final_path).parent_path().string();
+      if (dir.empty()) {
+        dir = ".";
+      }
+      fsync_dir(dir);
+    }
+    streaming_session_.reset();
     active_end_block_ = -1;
   }
 
@@ -118,8 +159,23 @@ public:
   }
 
 private:
+  struct StreamingTableWriter {
+    std::string tmp_path;
+    std::string final_path;
+    std::shared_ptr<arrow::Schema> schema;
+    std::shared_ptr<arrow::io::FileOutputStream> outfile;
+    std::shared_ptr<arrow::ipc::RecordBatchWriter> writer;
+  };
+
+  struct StreamingSession {
+    int64_t start_block = 0;
+    int64_t end_block = 0;
+    std::map<std::string, StreamingTableWriter> writers;
+  };
+
   std::string stage1_dir_;
   int64_t active_end_block_ = -1;
+  std::optional<StreamingSession> streaming_session_;
 
   template <typename T>
   static void release_vector(std::vector<T> &v) {
@@ -155,57 +211,17 @@ private:
     return table_dir(table) + "/" + std::to_string(start_block) + "-" + std::to_string(active_end_block_) + ".feather";
   }
 
-  static std::string hex_to_bytes(const std::string &hex) {
-    std::string h = hex;
-    if (h.size() >= 2 && h[0] == '0' && (h[1] == 'x' || h[1] == 'X'))
-      h = h.substr(2);
-    std::string bytes;
-    bytes.reserve(h.size() / 2);
-    for (size_t i = 0; i + 1 < h.size(); i += 2) {
-      unsigned char c = 0;
-      for (int j = 0; j < 2; ++j) {
-        char ch = h[i + j];
-        c <<= 4;
-        if (ch >= '0' && ch <= '9')
-          c |= ch - '0';
-        else if (ch >= 'a' && ch <= 'f')
-          c |= ch - 'a' + 10;
-        else if (ch >= 'A' && ch <= 'F')
-          c |= ch - 'A' + 10;
-      }
-      bytes.push_back(static_cast<char>(c));
-    }
-    return bytes;
+  template <size_t N>
+  static std::string_view bytes_view(const std::array<uint8_t, N> &value) {
+    return std::string_view(reinterpret_cast<const char *>(value.data()), value.size());
   }
 
-  static std::string uint256_hex_to_bytes32(const std::string &hex) {
-    std::string h = hex;
-    if (h.size() >= 2 && h[0] == '0' && (h[1] == 'x' || h[1] == 'X')) {
-      h = h.substr(2);
-    }
-    assert(std::all_of(h.begin(), h.end(), [](unsigned char ch) { return std::isxdigit(ch) != 0; }));
-    assert(h.size() <= 64);
-    if (h.size() < 64) {
-      h = std::string(64 - h.size(), '0') + h;
-    }
-    std::string b = hex_to_bytes(h);
-    assert(b.size() == 32);
-    return b;
-  }
-
-  static std::string address_hex_to_bytes20(const std::string &hex) {
-    std::string b = hex_to_bytes(hex);
-    assert(b.size() == 20);
-    return b;
-  }
-
-  static void append_hex32_list(arrow::ListBuilder &list_builder,
-                                arrow::FixedSizeBinaryBuilder *value_builder,
-                                const std::vector<std::string> &hex_values) {
+  static void append_bytes32_list(arrow::ListBuilder &list_builder,
+                                  arrow::FixedSizeBinaryBuilder *value_builder,
+                                  const std::vector<stage1::Bytes32> &values) {
     assert(list_builder.Append().ok());
-    for (const auto &hex : hex_values) {
-      std::string b = uint256_hex_to_bytes32(hex);
-      assert(value_builder->Append(b).ok());
+    for (const auto &value : values) {
+      assert(value_builder->Append(value).ok());
     }
   }
 
@@ -270,6 +286,56 @@ private:
     fsync_dir(dir);
   }
 
+  void stream_write_feather(const std::string &table, int64_t start_block, std::shared_ptr<arrow::Table> table_data) {
+    assert(streaming_session_.has_value());
+    assert(streaming_session_->start_block == start_block);
+    assert(streaming_session_->end_block == active_end_block_);
+    assert(table_data->num_rows() > 0);
+
+    auto it = streaming_session_->writers.find(table);
+    if (it == streaming_session_->writers.end()) {
+      StreamingTableWriter writer_slot;
+      writer_slot.final_path = partition_path(table, start_block);
+      writer_slot.tmp_path = writer_slot.final_path + ".tmp";
+      if (fs::exists(writer_slot.tmp_path)) {
+        fs::remove(writer_slot.tmp_path);
+      }
+      assert(!fs::exists(writer_slot.final_path));
+      auto outfile = arrow::io::FileOutputStream::Open(writer_slot.tmp_path);
+      assert(outfile.ok());
+      auto writer = arrow::ipc::MakeFileWriter(outfile->get(), table_data->schema(), ipc_write_options());
+      assert(writer.ok());
+      writer_slot.schema = table_data->schema();
+      writer_slot.outfile = *outfile;
+      writer_slot.writer = *writer;
+      it = streaming_session_->writers.emplace(table, std::move(writer_slot)).first;
+    }
+
+    assert(it->second.schema->Equals(*table_data->schema(), false));
+    auto reader = arrow::TableBatchReader(*table_data);
+    std::shared_ptr<arrow::RecordBatch> batch;
+    while (true) {
+      auto status = reader.ReadNext(&batch);
+      assert(status.ok());
+      if (!batch) {
+        break;
+      }
+      auto write_status = it->second.writer->WriteRecordBatch(*batch);
+      assert(write_status.ok());
+    }
+  }
+
+  void write_partition_table(const std::string &table, int64_t start_block, std::shared_ptr<arrow::Table> table_data) {
+    if (table_data->num_rows() == 0) {
+      return;
+    }
+    if (streaming_session_.has_value()) {
+      stream_write_feather(table, start_block, std::move(table_data));
+      return;
+    }
+    atomic_write_feather(partition_path(table, start_block), std::move(table_data));
+  }
+
   void write_transfer(int64_t start_block, const std::vector<stage1::TransferEvent> &events) {
     if (events.empty())
       return;
@@ -281,13 +347,13 @@ private:
 
     for (const auto &e : events) {
       assert(block_number.Append(e.block_number).ok());
-      assert(tx_hash.Append(hex_to_bytes(e.tx_hash)).ok());
+      assert(tx_hash.Append(bytes_view(e.tx_hash)).ok());
       assert(log_index.Append(e.log_index).ok());
-      assert(op.Append(address_hex_to_bytes20(e.op)).ok());
-      assert(from.Append(address_hex_to_bytes20(e.from)).ok());
-      assert(to.Append(address_hex_to_bytes20(e.to)).ok());
-      assert(token_id.Append(hex_to_bytes(e.token_id)).ok());
-      assert(amount.Append(uint256_hex_to_bytes32(e.amount)).ok());
+      assert(op.Append(e.op).ok());
+      assert(from.Append(e.from).ok());
+      assert(to.Append(e.to).ok());
+      assert(token_id.Append(bytes_view(e.token_id)).ok());
+      assert(amount.Append(e.amount).ok());
     }
 
     auto schema = arrow::schema({
@@ -312,7 +378,7 @@ private:
     assert(amount.Finish(&a8).ok());
 
     auto table = arrow::Table::Make(schema, {a1, a2, a3, a4, a5, a6, a7, a8});
-    atomic_write_feather(partition_path("transfer", start_block), table);
+    write_partition_table("transfer", start_block, table);
   }
 
   void write_condition_preparation(int64_t start_block, const std::vector<stage1::ConditionPrepEvent> &events) {
@@ -326,12 +392,12 @@ private:
 
     for (const auto &e : events) {
       assert(block_number.Append(e.block_number).ok());
-      assert(tx_hash.Append(hex_to_bytes(e.tx_hash)).ok());
+      assert(tx_hash.Append(bytes_view(e.tx_hash)).ok());
       assert(log_index.Append(e.log_index).ok());
-      assert(condition_id.Append(hex_to_bytes(e.condition_id)).ok());
-      assert(oracle.Append(address_hex_to_bytes20(e.oracle)).ok());
-      assert(question_id.Append(hex_to_bytes(e.question_id)).ok());
-      assert(outcome_slot_count.Append(uint256_hex_to_bytes32(e.outcome_slot_count)).ok());
+      assert(condition_id.Append(bytes_view(e.condition_id)).ok());
+      assert(oracle.Append(e.oracle).ok());
+      assert(question_id.Append(bytes_view(e.question_id)).ok());
+      assert(outcome_slot_count.Append(e.outcome_slot_count).ok());
     }
 
     auto schema = arrow::schema({
@@ -354,7 +420,7 @@ private:
     assert(outcome_slot_count.Finish(&a7).ok());
 
     auto table = arrow::Table::Make(schema, {a1, a2, a3, a4, a5, a6, a7});
-    atomic_write_feather(partition_path("condition_preparation", start_block), table);
+    write_partition_table("condition_preparation", start_block, table);
   }
 
   void write_condition_resolution(int64_t start_block, const std::vector<stage1::ConditionResolveEvent> &events) {
@@ -371,13 +437,13 @@ private:
 
     for (const auto &e : events) {
       assert(block_number.Append(e.block_number).ok());
-      assert(tx_hash.Append(hex_to_bytes(e.tx_hash)).ok());
+      assert(tx_hash.Append(bytes_view(e.tx_hash)).ok());
       assert(log_index.Append(e.log_index).ok());
-      assert(condition_id.Append(hex_to_bytes(e.condition_id)).ok());
-      assert(oracle.Append(address_hex_to_bytes20(e.oracle)).ok());
-      assert(question_id.Append(hex_to_bytes(e.question_id)).ok());
-      assert(outcome_slot_count.Append(uint256_hex_to_bytes32(e.outcome_slot_count)).ok());
-      append_hex32_list(payout_numerators, payout_values, e.payout_numerators);
+      assert(condition_id.Append(bytes_view(e.condition_id)).ok());
+      assert(oracle.Append(e.oracle).ok());
+      assert(question_id.Append(bytes_view(e.question_id)).ok());
+      assert(outcome_slot_count.Append(e.outcome_slot_count).ok());
+      append_bytes32_list(payout_numerators, payout_values, e.payout_numerators);
     }
 
     auto schema = arrow::schema({
@@ -402,7 +468,7 @@ private:
     assert(payout_numerators.Finish(&a8).ok());
 
     auto table = arrow::Table::Make(schema, {a1, a2, a3, a4, a5, a6, a7, a8});
-    atomic_write_feather(partition_path("condition_resolution", start_block), table);
+    write_partition_table("condition_resolution", start_block, table);
   }
 
   void write_split_merge_impl(int64_t start_block, const std::vector<stage1::SplitMergeEvent> &events, const std::string &table_name) {
@@ -419,14 +485,14 @@ private:
 
     for (const auto &e : events) {
       assert(block_number.Append(e.block_number).ok());
-      assert(tx_hash.Append(hex_to_bytes(e.tx_hash)).ok());
+      assert(tx_hash.Append(bytes_view(e.tx_hash)).ok());
       assert(log_index.Append(e.log_index).ok());
-      assert(stakeholder.Append(address_hex_to_bytes20(e.stakeholder)).ok());
-      assert(collateral_token.Append(address_hex_to_bytes20(e.collateral_token)).ok());
-      assert(parent_collection_id.Append(hex_to_bytes(e.parent_collection_id)).ok());
-      assert(condition_id.Append(hex_to_bytes(e.condition_id)).ok());
-      append_hex32_list(partition, partition_values, e.partition);
-      assert(amount.Append(uint256_hex_to_bytes32(e.amount)).ok());
+      assert(stakeholder.Append(e.stakeholder).ok());
+      assert(collateral_token.Append(e.collateral_token).ok());
+      assert(parent_collection_id.Append(bytes_view(e.parent_collection_id)).ok());
+      assert(condition_id.Append(bytes_view(e.condition_id)).ok());
+      append_bytes32_list(partition, partition_values, e.partition);
+      assert(amount.Append(e.amount).ok());
     }
 
     auto schema = arrow::schema({
@@ -453,7 +519,7 @@ private:
     assert(amount.Finish(&a9).ok());
 
     auto table = arrow::Table::Make(schema, {a1, a2, a3, a4, a5, a6, a7, a8, a9});
-    atomic_write_feather(partition_path(table_name, start_block), table);
+    write_partition_table(table_name, start_block, table);
   }
 
   void write_split(int64_t start_block, const std::vector<stage1::SplitMergeEvent> &events) {
@@ -478,14 +544,14 @@ private:
 
     for (const auto &e : events) {
       assert(block_number.Append(e.block_number).ok());
-      assert(tx_hash.Append(hex_to_bytes(e.tx_hash)).ok());
+      assert(tx_hash.Append(bytes_view(e.tx_hash)).ok());
       assert(log_index.Append(e.log_index).ok());
-      assert(redeemer.Append(address_hex_to_bytes20(e.redeemer)).ok());
-      assert(collateral_token.Append(address_hex_to_bytes20(e.collateral_token)).ok());
-      assert(parent_collection_id.Append(hex_to_bytes(e.parent_collection_id)).ok());
-      assert(condition_id.Append(hex_to_bytes(e.condition_id)).ok());
-      append_hex32_list(index_sets, index_set_values, e.index_sets);
-      assert(payout.Append(uint256_hex_to_bytes32(e.payout)).ok());
+      assert(redeemer.Append(e.redeemer).ok());
+      assert(collateral_token.Append(e.collateral_token).ok());
+      assert(parent_collection_id.Append(bytes_view(e.parent_collection_id)).ok());
+      assert(condition_id.Append(bytes_view(e.condition_id)).ok());
+      append_bytes32_list(index_sets, index_set_values, e.index_sets);
+      assert(payout.Append(e.payout).ok());
     }
 
     auto schema = arrow::schema({
@@ -512,7 +578,7 @@ private:
     assert(payout.Finish(&a9).ok());
 
     auto table = arrow::Table::Make(schema, {a1, a2, a3, a4, a5, a6, a7, a8, a9});
-    atomic_write_feather(partition_path("redemption", start_block), table);
+    write_partition_table("redemption", start_block, table);
   }
 
   void write_fpmm(int64_t start_block, const std::vector<stage1::FpmmEvent> &events) {
@@ -531,17 +597,17 @@ private:
 
     for (const auto &e : events) {
       assert(block_number.Append(e.block_number).ok());
-      assert(tx_hash.Append(hex_to_bytes(e.tx_hash)).ok());
+      assert(tx_hash.Append(bytes_view(e.tx_hash)).ok());
       assert(log_index.Append(e.log_index).ok());
-      assert(factory.Append(address_hex_to_bytes20(e.factory)).ok());
+      assert(factory.Append(e.factory).ok());
       assert(creation_topics_count.Append(e.creation_topics_count).ok());
       assert(creation_layout.Append(layout_code(e.creation_layout)).ok());
-      assert(creator.Append(address_hex_to_bytes20(e.creator)).ok());
-      assert(fpmm_addr.Append(address_hex_to_bytes20(e.fpmm_addr)).ok());
-      assert(conditional_tokens.Append(address_hex_to_bytes20(e.conditional_tokens)).ok());
-      assert(collateral_token.Append(address_hex_to_bytes20(e.collateral_token)).ok());
-      append_hex32_list(condition_ids, condition_id_values, e.condition_ids);
-      assert(fee.Append(uint256_hex_to_bytes32(e.fee)).ok());
+      assert(creator.Append(e.creator).ok());
+      assert(fpmm_addr.Append(e.fpmm_addr).ok());
+      assert(conditional_tokens.Append(e.conditional_tokens).ok());
+      assert(collateral_token.Append(e.collateral_token).ok());
+      append_bytes32_list(condition_ids, condition_id_values, e.condition_ids);
+      assert(fee.Append(e.fee).ok());
     }
 
     auto schema = arrow::schema({
@@ -574,7 +640,7 @@ private:
     assert(fee.Finish(&a12).ok());
 
     auto table = arrow::Table::Make(schema, {a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12});
-    atomic_write_feather(partition_path("fpmm", start_block), table);
+    write_partition_table("fpmm", start_block, table);
   }
 
   void write_fpmm_trade(int64_t start_block, const std::vector<stage1::FpmmTradeEvent> &events) {
@@ -589,15 +655,15 @@ private:
 
     for (const auto &e : events) {
       assert(block_number.Append(e.block_number).ok());
-      assert(tx_hash.Append(hex_to_bytes(e.tx_hash)).ok());
+      assert(tx_hash.Append(bytes_view(e.tx_hash)).ok());
       assert(log_index.Append(e.log_index).ok());
-      assert(fpmm_addr.Append(address_hex_to_bytes20(e.fpmm_addr)).ok());
-      assert(trader.Append(address_hex_to_bytes20(e.trader)).ok());
+      assert(fpmm_addr.Append(e.fpmm_addr).ok());
+      assert(trader.Append(e.trader).ok());
       assert(side.Append(e.side).ok());
-      assert(outcome_index.Append(uint256_hex_to_bytes32(e.outcome_index)).ok());
-      assert(collateral_amount.Append(uint256_hex_to_bytes32(e.collateral_amount)).ok());
-      assert(token_amount.Append(uint256_hex_to_bytes32(e.token_amount)).ok());
-      assert(fee.Append(uint256_hex_to_bytes32(e.fee)).ok());
+      assert(outcome_index.Append(e.outcome_index).ok());
+      assert(collateral_amount.Append(e.collateral_amount).ok());
+      assert(token_amount.Append(e.token_amount).ok());
+      assert(fee.Append(e.fee).ok());
     }
 
     auto schema = arrow::schema({
@@ -626,7 +692,7 @@ private:
     assert(fee.Finish(&a10).ok());
 
     auto table = arrow::Table::Make(schema, {a1, a2, a3, a4, a5, a6, a7, a8, a9, a10});
-    atomic_write_feather(partition_path("fpmm_trade", start_block), table);
+    write_partition_table("fpmm_trade", start_block, table);
   }
 
   void write_fpmm_funding(int64_t start_block, const std::vector<stage1::FpmmFundingEvent> &events) {
@@ -643,14 +709,14 @@ private:
 
     for (const auto &e : events) {
       assert(block_number.Append(e.block_number).ok());
-      assert(tx_hash.Append(hex_to_bytes(e.tx_hash)).ok());
+      assert(tx_hash.Append(bytes_view(e.tx_hash)).ok());
       assert(log_index.Append(e.log_index).ok());
-      assert(fpmm_addr.Append(address_hex_to_bytes20(e.fpmm_addr)).ok());
-      assert(funder.Append(address_hex_to_bytes20(e.funder)).ok());
+      assert(fpmm_addr.Append(e.fpmm_addr).ok());
+      assert(funder.Append(e.funder).ok());
       assert(side.Append(e.side).ok());
-      append_hex32_list(amounts, amount_values, e.amounts);
-      assert(collateral_from_fee_pool.Append(uint256_hex_to_bytes32(e.collateral_from_fee_pool)).ok());
-      assert(shares.Append(uint256_hex_to_bytes32(e.shares)).ok());
+      append_bytes32_list(amounts, amount_values, e.amounts);
+      assert(collateral_from_fee_pool.Append(e.collateral_from_fee_pool).ok());
+      assert(shares.Append(e.shares).ok());
     }
 
     auto schema = arrow::schema({
@@ -677,7 +743,7 @@ private:
     assert(shares.Finish(&a9).ok());
 
     auto table = arrow::Table::Make(schema, {a1, a2, a3, a4, a5, a6, a7, a8, a9});
-    atomic_write_feather(partition_path("fpmm_funding", start_block), table);
+    write_partition_table("fpmm_funding", start_block, table);
   }
 
   void write_order_filled(int64_t start_block, const std::vector<stage1::OrderFilledEvent> &events) {
@@ -692,17 +758,17 @@ private:
 
     for (const auto &e : events) {
       assert(block_number.Append(e.block_number).ok());
-      assert(tx_hash.Append(hex_to_bytes(e.tx_hash)).ok());
+      assert(tx_hash.Append(bytes_view(e.tx_hash)).ok());
       assert(log_index.Append(e.log_index).ok());
       assert(exchange.Append(venue_code(e.exchange)).ok());
-      assert(order_hash.Append(hex_to_bytes(e.order_hash)).ok());
-      assert(maker.Append(address_hex_to_bytes20(e.maker)).ok());
-      assert(taker.Append(address_hex_to_bytes20(e.taker)).ok());
-      assert(maker_asset_id.Append(hex_to_bytes(e.maker_asset_id)).ok());
-      assert(taker_asset_id.Append(hex_to_bytes(e.taker_asset_id)).ok());
-      assert(maker_amount.Append(uint256_hex_to_bytes32(e.maker_amount)).ok());
-      assert(taker_amount.Append(uint256_hex_to_bytes32(e.taker_amount)).ok());
-      assert(fee.Append(uint256_hex_to_bytes32(e.fee)).ok());
+      assert(order_hash.Append(bytes_view(e.order_hash)).ok());
+      assert(maker.Append(e.maker).ok());
+      assert(taker.Append(e.taker).ok());
+      assert(maker_asset_id.Append(bytes_view(e.maker_asset_id)).ok());
+      assert(taker_asset_id.Append(bytes_view(e.taker_asset_id)).ok());
+      assert(maker_amount.Append(e.maker_amount).ok());
+      assert(taker_amount.Append(e.taker_amount).ok());
+      assert(fee.Append(e.fee).ok());
     }
 
     auto schema = arrow::schema({
@@ -735,7 +801,7 @@ private:
     assert(fee.Finish(&a12).ok());
 
     auto table = arrow::Table::Make(schema, {a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12});
-    atomic_write_feather(partition_path("order_filled", start_block), table);
+    write_partition_table("order_filled", start_block, table);
   }
 
   void write_token_map(int64_t start_block, const std::vector<stage1::TokenMapEvent> &events) {
@@ -749,12 +815,12 @@ private:
 
     for (const auto &e : events) {
       assert(block_number.Append(e.block_number).ok());
-      assert(tx_hash.Append(hex_to_bytes(e.tx_hash)).ok());
+      assert(tx_hash.Append(bytes_view(e.tx_hash)).ok());
       assert(log_index.Append(e.log_index).ok());
       assert(exchange.Append(venue_code(e.exchange)).ok());
-      assert(token0.Append(address_hex_to_bytes20(e.token0)).ok());
-      assert(token1.Append(address_hex_to_bytes20(e.token1)).ok());
-      assert(condition_id.Append(hex_to_bytes(e.condition_id)).ok());
+      assert(token0.Append(e.token0).ok());
+      assert(token1.Append(e.token1).ok());
+      assert(condition_id.Append(bytes_view(e.condition_id)).ok());
     }
 
     auto schema = arrow::schema({
@@ -777,7 +843,7 @@ private:
     assert(condition_id.Finish(&a7).ok());
 
     auto table = arrow::Table::Make(schema, {a1, a2, a3, a4, a5, a6, a7});
-    atomic_write_feather(partition_path("token_map", start_block), table);
+    write_partition_table("token_map", start_block, table);
   }
 
   void write_neg_risk_market(int64_t start_block, const std::vector<stage1::NegRiskMarketEvent> &events) {
@@ -791,13 +857,13 @@ private:
 
     for (const auto &e : events) {
       assert(block_number.Append(e.block_number).ok());
-      assert(tx_hash.Append(hex_to_bytes(e.tx_hash)).ok());
+      assert(tx_hash.Append(bytes_view(e.tx_hash)).ok());
       assert(log_index.Append(e.log_index).ok());
-      assert(market_id.Append(hex_to_bytes(e.market_id)).ok());
-      assert(oracle.Append(address_hex_to_bytes20(e.oracle)).ok());
-      assert(fee_bips.Append(uint256_hex_to_bytes32(e.fee_bips)).ok());
+      assert(market_id.Append(bytes_view(e.market_id)).ok());
+      assert(oracle.Append(e.oracle).ok());
+      assert(fee_bips.Append(e.fee_bips).ok());
       if (e.data) {
-        assert(data.Append(hex_to_bytes(*e.data)).ok());
+        assert(data.Append(*e.data).ok());
       } else {
         assert(data.AppendNull().ok());
       }
@@ -823,7 +889,7 @@ private:
     assert(data.Finish(&a7).ok());
 
     auto table = arrow::Table::Make(schema, {a1, a2, a3, a4, a5, a6, a7});
-    atomic_write_feather(partition_path("neg_risk_market", start_block), table);
+    write_partition_table("neg_risk_market", start_block, table);
   }
 
   void write_neg_risk_question(int64_t start_block, const std::vector<stage1::NegRiskQuestionEvent> &events) {
@@ -836,13 +902,13 @@ private:
 
     for (const auto &e : events) {
       assert(block_number.Append(e.block_number).ok());
-      assert(tx_hash.Append(hex_to_bytes(e.tx_hash)).ok());
+      assert(tx_hash.Append(bytes_view(e.tx_hash)).ok());
       assert(log_index.Append(e.log_index).ok());
-      assert(market_id.Append(hex_to_bytes(e.market_id)).ok());
-      assert(question_id.Append(hex_to_bytes(e.question_id)).ok());
-      assert(question_index.Append(uint256_hex_to_bytes32(e.question_index)).ok());
+      assert(market_id.Append(bytes_view(e.market_id)).ok());
+      assert(question_id.Append(bytes_view(e.question_id)).ok());
+      assert(question_index.Append(e.question_index).ok());
       if (e.data) {
-        assert(data.Append(hex_to_bytes(*e.data)).ok());
+        assert(data.Append(*e.data).ok());
       } else {
         assert(data.AppendNull().ok());
       }
@@ -868,7 +934,7 @@ private:
     assert(data.Finish(&a7).ok());
 
     auto table = arrow::Table::Make(schema, {a1, a2, a3, a4, a5, a6, a7});
-    atomic_write_feather(partition_path("neg_risk_question", start_block), table);
+    write_partition_table("neg_risk_question", start_block, table);
   }
 
   void write_convert(int64_t start_block, const std::vector<stage1::ConvertEvent> &events) {
@@ -882,12 +948,12 @@ private:
 
     for (const auto &e : events) {
       assert(block_number.Append(e.block_number).ok());
-      assert(tx_hash.Append(hex_to_bytes(e.tx_hash)).ok());
+      assert(tx_hash.Append(bytes_view(e.tx_hash)).ok());
       assert(log_index.Append(e.log_index).ok());
-      assert(stakeholder.Append(address_hex_to_bytes20(e.stakeholder)).ok());
-      assert(market_id.Append(hex_to_bytes(e.market_id)).ok());
-      assert(index_set.Append(uint256_hex_to_bytes32(e.index_set)).ok());
-      assert(amount.Append(uint256_hex_to_bytes32(e.amount)).ok());
+      assert(stakeholder.Append(e.stakeholder).ok());
+      assert(market_id.Append(bytes_view(e.market_id)).ok());
+      assert(index_set.Append(e.index_set).ok());
+      assert(amount.Append(e.amount).ok());
     }
 
     auto schema = arrow::schema({
@@ -910,6 +976,6 @@ private:
     assert(amount.Finish(&a7).ok());
 
     auto table = arrow::Table::Make(schema, {a1, a2, a3, a4, a5, a6, a7});
-    atomic_write_feather(partition_path("convert", start_block), table);
+    write_partition_table("convert", start_block, table);
   }
 };
