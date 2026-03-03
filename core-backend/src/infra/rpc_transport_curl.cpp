@@ -3,6 +3,8 @@
 #include <mutex>
 #include <stdexcept>
 
+#include "config.hpp"
+
 RpcTransportCurl::RpcTransportCurl(const std::string &url, const std::string &proxy_url)
     : url_(url), proxy_url_(proxy_url) {
   static std::once_flag curl_init_once;
@@ -66,8 +68,8 @@ std::string RpcTransportCurl::post_json(const std::string &body) {
   curl_easy_setopt(easy_, CURLOPT_HTTPHEADER, headers_);
   curl_easy_setopt(easy_, CURLOPT_WRITEFUNCTION, &RpcTransportCurl::write_callback);
   curl_easy_setopt(easy_, CURLOPT_WRITEDATA, &response);
-  curl_easy_setopt(easy_, CURLOPT_CONNECTTIMEOUT, 30L);
-  curl_easy_setopt(easy_, CURLOPT_TIMEOUT, 120L);
+  curl_easy_setopt(easy_, CURLOPT_CONNECTTIMEOUT, infra::network::kRpcConnectTimeoutSeconds);
+  curl_easy_setopt(easy_, CURLOPT_TIMEOUT, infra::network::kRpcRequestTimeoutSeconds);
   curl_easy_setopt(easy_, CURLOPT_ACCEPT_ENCODING, "");
   curl_easy_setopt(easy_, CURLOPT_ERRORBUFFER, errbuf);
   curl_easy_setopt(easy_, CURLOPT_FRESH_CONNECT, 1L);

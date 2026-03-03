@@ -3,6 +3,8 @@
 #include <stdexcept>
 #include <vector>
 
+#include "config.hpp"
+
 namespace http = beast::http;
 
 RpcTransportBeast::RpcTransportBeast(const std::string &url, const std::string &proxy_url)
@@ -91,7 +93,6 @@ void RpcTransportBeast::ensure_connected() {
     throw std::runtime_error("RPC cancelled");
   }
 
-  constexpr auto kConnectTimeout = std::chrono::seconds(30);
   tcp::resolver resolver(ioc_);
 
   if (use_ssl_) {
@@ -100,12 +101,12 @@ void RpcTransportBeast::ensure_connected() {
 
     if (!proxy_host_.empty()) {
       auto proxy_endpoints = resolver.resolve(proxy_host_, proxy_port_);
-      beast::get_lowest_layer(*ssl_stream_).expires_after(kConnectTimeout);
+      beast::get_lowest_layer(*ssl_stream_).expires_after(infra::network::kRpcConnectTimeout);
       beast::get_lowest_layer(*ssl_stream_).connect(proxy_endpoints);
       socks5_handshake(beast::get_lowest_layer(*ssl_stream_).socket(), host_, std::stoi(port_));
     } else {
       auto const endpoints = resolver.resolve(host_, port_);
-      beast::get_lowest_layer(*ssl_stream_).expires_after(kConnectTimeout);
+      beast::get_lowest_layer(*ssl_stream_).expires_after(infra::network::kRpcConnectTimeout);
       beast::get_lowest_layer(*ssl_stream_).connect(endpoints);
     }
 
@@ -113,7 +114,7 @@ void RpcTransportBeast::ensure_connected() {
   } else {
     tcp_stream_ = std::make_unique<beast::tcp_stream>(ioc_);
     auto const endpoints = resolver.resolve(host_, port_);
-    tcp_stream_->expires_after(kConnectTimeout);
+    tcp_stream_->expires_after(infra::network::kRpcConnectTimeout);
     tcp_stream_->connect(endpoints);
   }
   connected_ = true;
@@ -145,7 +146,6 @@ std::string RpcTransportBeast::post_json(const std::string &body) {
   req.body() = body;
   req.prepare_payload();
 
-  constexpr auto kTimeout = std::chrono::seconds(60);
   for (int retry = 0; retry < 2; ++retry) {
     try {
       if (cancel_requested_.load()) {
@@ -158,18 +158,18 @@ std::string RpcTransportBeast::post_json(const std::string &body) {
       parser.body_limit(1024 * 1024 * 1024);
 
       if (use_ssl_) {
-        beast::get_lowest_layer(*ssl_stream_).expires_after(kTimeout);
+        beast::get_lowest_layer(*ssl_stream_).expires_after(infra::network::kRpcRequestTimeout);
         http::write(*ssl_stream_, req);
       } else {
-        tcp_stream_->expires_after(kTimeout);
+        tcp_stream_->expires_after(infra::network::kRpcRequestTimeout);
         http::write(*tcp_stream_, req);
       }
 
       if (use_ssl_) {
-        beast::get_lowest_layer(*ssl_stream_).expires_after(kTimeout);
+        beast::get_lowest_layer(*ssl_stream_).expires_after(infra::network::kRpcRequestTimeout);
         http::read(*ssl_stream_, buffer, parser);
       } else {
-        tcp_stream_->expires_after(kTimeout);
+        tcp_stream_->expires_after(infra::network::kRpcRequestTimeout);
         http::read(*tcp_stream_, buffer, parser);
       }
 
