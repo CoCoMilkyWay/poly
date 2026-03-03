@@ -28,6 +28,9 @@ public:
     int64_t head_block = 0;
     int64_t behind_blocks = 0;
     int64_t condition_count = 0;
+    int64_t ctf_condition_count = 0;
+    int64_t negrisk_condition_count = 0;
+    int64_t nonpoly_condition_count = 0;
     double blocks_per_second = 0.0;
     double eta_seconds = -1.0;
   };
@@ -43,7 +46,6 @@ private:
   static constexpr int kSchedulerSleepMs = 5;
   static constexpr int kSchedulerSleepMaxMs = 40;
   static constexpr size_t kEtaWindowSize = 20;
-  static constexpr int64_t kSeedScanBlockSpan = 20000;
 
   struct ConditionSeed {
     std::string condition_blob;
@@ -59,7 +61,9 @@ private:
 
   struct BlockTaskResult {
     int64_t block = 0;
+    bool has_seeds = false;
     std::vector<FetchResult> rows;
+    std::vector<ConditionSeed> empty_seeds;
   };
 
   struct SeedScanBatch {
@@ -81,6 +85,7 @@ private:
     size_t failed_seeds = 0;
     size_t empty_seeds = 0;
     std::vector<FetchResult> rows;
+    std::vector<ConditionSeed> empty_rows;
     std::vector<std::string> debug_logs;
     bool done = false;
   };
@@ -96,8 +101,8 @@ private:
 
   SeedScanBatch load_seed_scan_batch(int64_t start_block, int64_t head_block, size_t max_conditions) const;
   void persist_results_in_txn(duckdb::Appender &ap, const std::vector<FetchResult> &rows, int64_t now_ms);
-  int64_t get_cursor();
-  void set_cursor_in_txn(duckdb::Connection &conn, int64_t block);
+  int64_t get_scan_cursor();
+  void set_scan_cursor_in_txn(duckdb::Connection &conn, int64_t block);
 
   const Config &config_;
   Database &stage1_db_;
@@ -106,6 +111,11 @@ private:
   int base_interval_seconds_ = 30;
   std::atomic<bool> stop_requested_{false};
   std::unordered_set<std::string> known_condition_ids_;
+  int64_t known_ctf_condition_count_ = 0;
+  int64_t known_negrisk_condition_count_ = 0;
+  int64_t known_nonpoly_condition_count_ = 0;
+  bool runtime_scan_cursor_inited_ = false;
+  int64_t runtime_scan_cursor_ = -1;
   mutable std::mutex status_mutex_;
   Status sync_;
   std::deque<CommitRecord> commit_history_;

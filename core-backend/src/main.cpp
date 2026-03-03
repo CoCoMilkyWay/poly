@@ -70,6 +70,7 @@ int main(int argc, char *argv[]) {
   auto stage0_getter = [&stage0]() -> Stage0Status {
     const auto s = stage0.status();
     return {s.syncing, s.last_block, s.head_block, s.behind_blocks, s.condition_count,
+            s.ctf_condition_count, s.negrisk_condition_count, s.nonpoly_condition_count,
             s.blocks_per_second, s.eta_seconds};
   };
   auto stage1_getter = [&stage1]() -> Stage1Status {

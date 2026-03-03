@@ -1,14 +1,15 @@
 #include "stage0_sync.hpp"
 #include "stage0_sync_http.hpp"
 
-#include "misc/profiler.hpp"
 #include "../infra/rpc_transport.hpp"
+#include "misc/profiler.hpp"
 
 #include <algorithm>
 #include <atomic>
 #include <boost/asio/ssl.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <chrono>
+#include <filesystem>
 #include <fstream>
 #include <functional>
 #include <map>
@@ -24,8 +25,20 @@ namespace {
 
 constexpr std::string_view kEmptyRangeSql = "(SELECT 1 WHERE 1=0)";
 constexpr const char *kGammaApiBase = "https://gamma-api.polymarket.com";
-constexpr int64_t kMaxDispatchAheadBlocks = 20000;
 constexpr const char *kProxyProbeCondition = "0x0000000000000000000000000000000000000000000000000000000000000001";
+constexpr const char *kClassPolyCtf = "poly_ctf";
+constexpr const char *kClassPolyNegRisk = "poly_negrisk";
+constexpr const char *kClassNonPoly = "non_poly";
+
+duckdb::Value make_blob_value(const std::string &blob) {
+  return duckdb::Value::BLOB(reinterpret_cast<duckdb::const_data_ptr_t>(blob.data()), blob.size());
+}
+
+int64_t unix_ms_now() {
+  return std::chrono::duration_cast<std::chrono::milliseconds>(
+             std::chrono::system_clock::now().time_since_epoch())
+      .count();
+}
 
 std::string blob_to_hex_lower(const std::string &blob) {
   static const char hex_chars[] = "0123456789abcdef";
@@ -36,6 +49,24 @@ std::string blob_to_hex_lower(const std::string &blob) {
     out.push_back(hex_chars[c & 0x0f]);
   }
   return out;
+}
+
+bool is_poly_neg_risk(const json &market) {
+  if (market.contains("negRisk") && market.at("negRisk").is_boolean()) {
+    return market.at("negRisk").get<bool>();
+  }
+  return false;
+}
+
+std::string ensure_stage0_log_dir(const std::string &data_dir) {
+  const std::string log_dir = data_dir + "/log";
+  if (std::filesystem::exists(log_dir) && std::filesystem::is_regular_file(log_dir)) {
+    std::filesystem::rename(log_dir, log_dir + ".legacy_file");
+  }
+  std::filesystem::create_directories(log_dir);
+  assert(std::filesystem::exists(log_dir));
+  assert(std::filesystem::is_directory(log_dir));
+  return log_dir;
 }
 
 template <typename SeedVec>
@@ -59,18 +90,23 @@ std::string summarize_seed_ids(const SeedVec &seeds, size_t limit = 3) {
 
 void append_stage0_flow_log(const std::string &data_dir, const std::string &msg) {
   static std::mutex log_mutex;
-  static std::string last_msg;
   std::lock_guard<std::mutex> lock(log_mutex);
-  if (msg == last_msg) {
-    return;
-  }
-  last_msg = msg;
-  const int64_t now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-                             std::chrono::system_clock::now().time_since_epoch())
-                             .count();
-  std::ofstream f(data_dir + "/log", std::ios::app);
+  const std::string log_dir = ensure_stage0_log_dir(data_dir);
+  const int64_t now_ms = unix_ms_now();
+  std::ofstream f(log_dir + "/log", std::ios::app);
   assert(f.is_open());
   f << now_ms << " " << msg << "\n";
+  f.flush();
+  assert(f.good());
+}
+
+void persist_stage0_parsed_market(const std::string &data_dir, const std::string &condition_hex_lower,
+                                  const json &market) {
+  assert(condition_hex_lower.starts_with("0x"));
+  const std::string log_dir = ensure_stage0_log_dir(data_dir);
+  std::ofstream f(log_dir + "/" + condition_hex_lower, std::ios::trunc);
+  assert(f.is_open());
+  f << market.dump(2) << "\n";
   f.flush();
   assert(f.good());
 }
@@ -84,10 +120,13 @@ StageSync::StageSync(const Config &config, Database &stage1_db, Database &stage0
   init_schema();
   ensure_cursor_floor();
   load_known_conditions();
-  sync_.last_block = get_cursor();
+  sync_.last_block = get_scan_cursor();
   sync_.head_block = sync_.last_block;
   sync_.behind_blocks = 0;
   sync_.condition_count = static_cast<int64_t>(known_condition_ids_.size());
+  sync_.ctf_condition_count = known_ctf_condition_count_;
+  sync_.negrisk_condition_count = known_negrisk_condition_count_;
+  sync_.nonpoly_condition_count = known_nonpoly_condition_count_;
   sync_.syncing = false;
 }
 
@@ -118,41 +157,47 @@ void StageSync::schedule_sync(int delay_seconds) {
   });
 }
 
-void StageSync::record_commit_locked(int64_t cursor) {
-  commit_history_.push_back({std::chrono::steady_clock::now(), cursor});
-  if (commit_history_.size() > kEtaWindowSize) {
-    commit_history_.pop_front();
-  }
-}
-
 void StageSync::refresh_status_locked(int64_t head_block, int64_t cursor, bool syncing) {
+  auto reset_speed_and_eta = [&]() {
+    sync_.blocks_per_second = 0.0;
+    sync_.eta_seconds = (sync_.behind_blocks == 0) ? 0.0 : -1.0;
+  };
   sync_.syncing = syncing;
   sync_.head_block = head_block;
   sync_.last_block = cursor;
   sync_.behind_blocks = std::max<int64_t>(0, head_block - cursor);
   sync_.condition_count = static_cast<int64_t>(known_condition_ids_.size());
+  sync_.ctf_condition_count = known_ctf_condition_count_;
+  sync_.negrisk_condition_count = known_negrisk_condition_count_;
+  sync_.nonpoly_condition_count = known_nonpoly_condition_count_;
+  assert(sync_.condition_count ==
+         sync_.ctf_condition_count + sync_.negrisk_condition_count + sync_.nonpoly_condition_count);
   if (commit_history_.size() < 2) {
-    sync_.blocks_per_second = 0.0;
-    sync_.eta_seconds = (sync_.behind_blocks == 0) ? 0.0 : -1.0;
+    reset_speed_and_eta();
     return;
   }
   const auto &first = commit_history_.front();
   const auto &last = commit_history_.back();
   double elapsed_s = std::chrono::duration<double>(last.committed_at - first.committed_at).count();
   if (elapsed_s <= 0.0) {
-    sync_.blocks_per_second = 0.0;
-    sync_.eta_seconds = (sync_.behind_blocks == 0) ? 0.0 : -1.0;
+    reset_speed_and_eta();
     return;
   }
   int64_t committed_blocks = std::max<int64_t>(0, last.cursor - first.cursor);
   if (committed_blocks == 0) {
-    sync_.blocks_per_second = 0.0;
-    sync_.eta_seconds = (sync_.behind_blocks == 0) ? 0.0 : -1.0;
+    reset_speed_and_eta();
     return;
   }
   sync_.blocks_per_second = static_cast<double>(committed_blocks) / elapsed_s;
   sync_.eta_seconds = (sync_.behind_blocks == 0) ? 0.0
                                                  : static_cast<double>(sync_.behind_blocks) / sync_.blocks_per_second;
+}
+
+void StageSync::record_commit_locked(int64_t cursor) {
+  commit_history_.push_back({std::chrono::steady_clock::now(), cursor});
+  if (commit_history_.size() > kEtaWindowSize) {
+    commit_history_.pop_front();
+  }
 }
 
 void StageSync::do_sync() {
@@ -163,7 +208,9 @@ void StageSync::do_sync() {
   ensure_cursor_floor();
 
   int64_t stage1_head = stage1_db_.get_last_block();
-  int64_t cursor = get_cursor();
+  int64_t cursor = runtime_scan_cursor_inited_ ? runtime_scan_cursor_ : get_scan_cursor();
+  runtime_scan_cursor_inited_ = true;
+  runtime_scan_cursor_ = cursor;
   {
     std::lock_guard<std::mutex> lock(status_mutex_);
     refresh_status_locked(stage1_head, cursor, true);
@@ -233,8 +280,40 @@ void StageSync::do_sync() {
     auto r = conn->Query(sql);
     assert(r && !r->HasError());
   };
-  exec_sql("BEGIN TRANSACTION");
-  duckdb::Appender appender(*conn, "pm_condition_static");
+  auto commit_condition_block_atomic = [&](int64_t block, const std::vector<FetchResult> &rows,
+                                           const std::vector<ConditionSeed> &empty_rows) {
+    exec_sql("BEGIN TRANSACTION");
+    if (!rows.empty()) {
+      duckdb::Appender appender(*conn, "pm_condition_static");
+      int64_t now_ms = unix_ms_now();
+      persist_results_in_txn(appender, rows, now_ms);
+      appender.Close();
+    }
+    if (!rows.empty() || !empty_rows.empty()) {
+      duckdb::Appender class_appender(*conn, "pm_condition_scan_class");
+      int64_t now_ms = unix_ms_now();
+      for (const auto &row : rows) {
+        bool is_neg_risk = is_poly_neg_risk(row.market);
+        class_appender.BeginRow();
+        class_appender.Append(make_blob_value(row.seed.condition_blob));
+        class_appender.Append(is_neg_risk ? duckdb::Value(kClassPolyNegRisk) : duckdb::Value(kClassPolyCtf));
+        class_appender.Append(row.seed.first_seen_block);
+        class_appender.Append(now_ms);
+        class_appender.EndRow();
+      }
+      for (const auto &seed : empty_rows) {
+        class_appender.BeginRow();
+        class_appender.Append(make_blob_value(seed.condition_blob));
+        class_appender.Append(duckdb::Value(kClassNonPoly));
+        class_appender.Append(seed.first_seen_block);
+        class_appender.Append(now_ms);
+        class_appender.EndRow();
+      }
+      class_appender.Close();
+    }
+    set_scan_cursor_in_txn(*conn, block);
+    exec_sql("COMMIT");
+  };
 
   int64_t next_dispatch_block = cursor + 1;
   int64_t next_commit_block = cursor + 1;
@@ -270,6 +349,7 @@ void StageSync::do_sync() {
         });
       } else if (out.state == FetchSeedState::kEmpty) {
         task->empty_seeds += 1;
+        task->empty_rows.push_back(seed);
         task->debug_logs.push_back(
             "seed_empty worker=" + std::to_string(task->worker_slot) +
             " block=" + std::to_string(task->block) +
@@ -299,10 +379,21 @@ void StageSync::do_sync() {
 
   while (!stop_requested_ && next_commit_block <= stage1_head) {
     bool progressed = false;
+    auto fast_forward_cursor = [&](int64_t committed_block, int64_t next_block) {
+      applied_block = committed_block;
+      runtime_scan_cursor_ = committed_block;
+      {
+        std::lock_guard<std::mutex> lock(status_mutex_);
+        record_commit_locked(committed_block);
+        refresh_status_locked(stage1_head, committed_block, true);
+      }
+      next_commit_block = next_block;
+      next_dispatch_block = next_block;
+      progressed = true;
+    };
     fetch_ioc.restart();
     while (!stop_requested_ && static_cast<int>(inflight.size()) < kWorkerCount &&
-           next_dispatch_block <= stage1_head &&
-           next_dispatch_block <= next_commit_block + kMaxDispatchAheadBlocks) {
+           next_dispatch_block <= stage1_head) {
       if (next_dispatch_block > scanned_to_block) {
         SeedScanBatch batch = load_seed_scan_batch(next_dispatch_block, stage1_head, static_cast<size_t>(kWorkerCount));
         scanned_to_block = batch.scanned_to_block;
@@ -310,27 +401,12 @@ void StageSync::do_sync() {
             inflight.empty() && ready.empty() && (next_commit_block == next_dispatch_block);
         if (no_pending_before_dispatch) {
           if (batch.seeds_by_block.empty()) {
-            applied_block = scanned_to_block;
-            {
-              std::lock_guard<std::mutex> lock(status_mutex_);
-              record_commit_locked(scanned_to_block);
-              refresh_status_locked(stage1_head, scanned_to_block, true);
-            }
-            next_commit_block = scanned_to_block + 1;
-            next_dispatch_block = next_commit_block;
-            progressed = true;
+            fast_forward_cursor(scanned_to_block, scanned_to_block + 1);
             continue;
           }
           int64_t first_seed_block = batch.seeds_by_block.begin()->first;
           if (first_seed_block > next_commit_block) {
-            applied_block = first_seed_block - 1;
-            {
-              std::lock_guard<std::mutex> lock(status_mutex_);
-              record_commit_locked(first_seed_block - 1);
-              refresh_status_locked(stage1_head, first_seed_block - 1, true);
-            }
-            next_commit_block = first_seed_block;
-            next_dispatch_block = first_seed_block;
+            fast_forward_cursor(first_seed_block - 1, first_seed_block);
           }
         }
         for (auto &it : batch.seeds_by_block) {
@@ -343,7 +419,8 @@ void StageSync::do_sync() {
       next_dispatch_block += 1;
       auto seeds_it = scanned_seeds.find(block);
       if (seeds_it == scanned_seeds.end()) {
-        auto [it, inserted] = ready.emplace(block, BlockTaskResult{.block = block, .rows = {}});
+        auto [it, inserted] =
+            ready.emplace(block, BlockTaskResult{.block = block, .has_seeds = false, .rows = {}});
         assert(inserted);
         continue;
       }
@@ -409,7 +486,9 @@ void StageSync::do_sync() {
       }
       auto [it, inserted] = ready.emplace(task->block, BlockTaskResult{
                                                            .block = task->block,
+                                                           .has_seeds = true,
                                                            .rows = std::move(task->rows),
+                                                           .empty_seeds = std::move(task->empty_rows),
                                                        });
       assert(inserted);
       inflight[i] = std::move(inflight.back());
@@ -423,21 +502,38 @@ void StageSync::do_sync() {
         break;
       }
       std::vector<FetchResult> rows_to_persist;
+      std::vector<ConditionSeed> empty_rows_to_persist;
       rows_to_persist.reserve(it->second.rows.size());
+      empty_rows_to_persist.reserve(it->second.empty_seeds.size());
       for (auto &row : it->second.rows) {
         if (known_condition_ids_.contains(row.seed.condition_hex_lower)) {
           continue;
         }
         rows_to_persist.push_back(std::move(row));
       }
-      if (!rows_to_persist.empty()) {
-        int64_t now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-                             std::chrono::system_clock::now().time_since_epoch())
-                             .count();
-        persist_results_in_txn(appender, rows_to_persist, now_ms);
-        for (const auto &row : rows_to_persist) {
-          known_condition_ids_.insert(row.seed.condition_hex_lower);
+      for (auto &seed : it->second.empty_seeds) {
+        if (known_condition_ids_.contains(seed.condition_hex_lower)) {
+          continue;
         }
+        empty_rows_to_persist.push_back(std::move(seed));
+      }
+      if (it->second.has_seeds) {
+        commit_condition_block_atomic(next_commit_block, rows_to_persist, empty_rows_to_persist);
+      }
+      runtime_scan_cursor_ = next_commit_block;
+      for (const auto &row : rows_to_persist) {
+        known_condition_ids_.insert(row.seed.condition_hex_lower);
+        bool is_neg_risk = is_poly_neg_risk(row.market);
+        if (is_neg_risk) {
+          known_negrisk_condition_count_ += 1;
+        } else {
+          known_ctf_condition_count_ += 1;
+        }
+        persist_stage0_parsed_market(stage0_db_.data_dir(), row.seed.condition_hex_lower, row.market);
+      }
+      for (const auto &seed : empty_rows_to_persist) {
+        known_condition_ids_.insert(seed.condition_hex_lower);
+        known_nonpoly_condition_count_ += 1;
       }
       applied_block = next_commit_block;
       {
@@ -461,22 +557,12 @@ void StageSync::do_sync() {
     }
   }
 
-  appender.Close();
-
-  if (stop_requested_) {
-    exec_sql("ROLLBACK");
-    {
-      std::lock_guard<std::mutex> lock(status_mutex_);
-      sync_.syncing = false;
-    }
-    return;
-  }
-
-  set_cursor_in_txn(*conn, applied_block);
-  exec_sql("COMMIT");
   {
     std::lock_guard<std::mutex> lock(status_mutex_);
     refresh_status_locked(stage1_head, applied_block, false);
+  }
+  if (stop_requested_) {
+    return;
   }
   schedule_sync((applied_block < stage1_head) ? 0 : base_interval_seconds_);
 }
@@ -562,30 +648,57 @@ void StageSync::init_schema() {
       "first_seen_block BIGINT NOT NULL, "
       "first_seen_ms BIGINT NOT NULL"
       ")");
+  stage0_db_.execute(
+      "CREATE TABLE IF NOT EXISTS pm_condition_scan_class ("
+      "condition_id BLOB PRIMARY KEY, "
+      "class TEXT NOT NULL, "
+      "first_seen_block BIGINT NOT NULL, "
+      "first_seen_ms BIGINT NOT NULL"
+      ")");
+  stage0_db_.execute(
+      "INSERT OR IGNORE INTO pm_condition_scan_class "
+      "SELECT condition_id, "
+      "CASE WHEN market_neg_risk THEN 'poly_negrisk' ELSE 'poly_ctf' END, "
+      "first_seen_block, first_seen_ms "
+      "FROM pm_condition_static");
 }
 
 void StageSync::load_known_conditions() {
   known_condition_ids_.clear();
+  known_ctf_condition_count_ = 0;
+  known_negrisk_condition_count_ = 0;
+  known_nonpoly_condition_count_ = 0;
   auto conn = stage0_db_.create_connection();
-  auto result = conn->Query("SELECT lower(hex(condition_id)) AS cid FROM pm_condition_static");
+  auto result = conn->Query("SELECT lower(hex(condition_id)) AS cid, class FROM pm_condition_scan_class");
   assert(result && !result->HasError());
   known_condition_ids_.reserve(static_cast<size_t>(result->RowCount()) * 2 + 1);
   for (idx_t row = 0; row < result->RowCount(); ++row) {
     std::string cid = result->GetValue(0, row).GetValue<std::string>();
     known_condition_ids_.insert("0x" + cid);
+    std::string cls = result->GetValue(1, row).GetValue<std::string>();
+    if (cls == kClassPolyNegRisk) {
+      known_negrisk_condition_count_ += 1;
+    } else if (cls == kClassPolyCtf) {
+      known_ctf_condition_count_ += 1;
+    } else {
+      assert(cls == kClassNonPoly);
+      known_nonpoly_condition_count_ += 1;
+    }
   }
+  assert(static_cast<int64_t>(known_condition_ids_.size()) ==
+         known_ctf_condition_count_ + known_negrisk_condition_count_ + known_nonpoly_condition_count_);
 }
 
 void StageSync::ensure_cursor_floor() {
   int64_t floor_block = config_.initial_block - 1;
-  int64_t cursor = get_cursor();
+  int64_t cursor = get_scan_cursor();
   if (cursor >= floor_block) {
     return;
   }
   auto conn = stage0_db_.create_connection();
   auto begin = conn->Query("BEGIN TRANSACTION");
   assert(begin && !begin->HasError());
-  set_cursor_in_txn(*conn, floor_block);
+  set_scan_cursor_in_txn(*conn, floor_block);
   auto commit = conn->Query("COMMIT");
   assert(commit && !commit->HasError());
 }
@@ -594,7 +707,7 @@ StageSync::SeedScanBatch StageSync::load_seed_scan_batch(int64_t start_block, in
                                                          size_t max_conditions) const {
   SeedScanBatch out;
   assert(start_block <= head_block);
-  int64_t end_block = std::min<int64_t>(head_block, start_block + kSeedScanBlockSpan - 1);
+  int64_t end_block = head_block;
   out.scanned_to_block = end_block;
 
   std::string range_sql = stage1_db_.feather_table_range("condition_preparation", start_block, end_block);
@@ -651,7 +764,7 @@ StageSync::SeedScanBatch StageSync::load_seed_scan_batch(int64_t start_block, in
   return out;
 }
 
-int64_t StageSync::get_cursor() {
+int64_t StageSync::get_scan_cursor() {
   auto conn = stage0_db_.create_connection();
   auto result = conn->Query("SELECT last_block FROM pm_sync_cursor WHERE id = 0");
   assert(result && !result->HasError());
@@ -661,7 +774,7 @@ int64_t StageSync::get_cursor() {
   return result->GetValue(0, 0).GetValue<int64_t>();
 }
 
-void StageSync::set_cursor_in_txn(duckdb::Connection &conn, int64_t block) {
+void StageSync::set_scan_cursor_in_txn(duckdb::Connection &conn, int64_t block) {
   auto result = conn.Query("UPDATE pm_sync_cursor SET last_block = " + std::to_string(block) + " WHERE id = 0");
   assert(result && !result->HasError());
 }

@@ -436,7 +436,12 @@
       <span id="stage0-meta" style="margin-left: 8px; color: #555">{{ "{:,}".format(stage0_state.last_block or 0) }} /
         {{
         "{:,}".format(stage1_state.head_block or 0) }}</span>
-      <span id="stage0-condition-count" style="margin-left: 8px; color: #555">conditions: {{ "{:,}".format(stage0_state.condition_count or 0) }}</span>
+      <span id="stage0-condition-count" style="margin-left: 8px; color: #555">
+        Total: {{ "{:,}".format((stage0_state.ctf_condition_count or 0) + (stage0_state.negrisk_condition_count or 0) + (stage0_state.nonpoly_condition_count or 0)) }}
+        CTF: {{ "{:,}".format(stage0_state.ctf_condition_count or 0) }}
+        NegRisk: {{ "{:,}".format(stage0_state.negrisk_condition_count or 0) }}
+        Non-Poly: {{ "{:,}".format(stage0_state.nonpoly_condition_count or 0) }}
+      </span>
     </div>
     <div class="progress-bar">
       <div class="progress-fill" id="stage0-progress-fill" style="width: 0%"></div>
@@ -1038,7 +1043,10 @@
     function updateStage0Status(sync0, alignedHead) {
       const last = sync0.last_block || 0;
       const head = alignedHead || sync0.head_block || 0;
-      const conditionCount = sync0.condition_count || 0;
+      const ctfCount = sync0.ctf_condition_count || 0;
+      const negRiskCount = sync0.negrisk_condition_count || 0;
+      const nonPolyCount = sync0.nonpoly_condition_count || 0;
+      const conditionCount = ctfCount + negRiskCount + nonPolyCount;
       const pct =
         head > 0 ? Math.min(100, Math.max(0, (last / head) * 100)) : 0;
       document.getElementById("stage0-progress-fill").style.width =
@@ -1050,7 +1058,10 @@
       document.getElementById("stage0-meta").textContent =
         formatNumber(last) + " / " + formatNumber(head);
       document.getElementById("stage0-condition-count").textContent =
-        "conditions: " + formatNumber(conditionCount);
+        "Total: " + formatNumber(conditionCount) +
+        " (CTF: " + formatNumber(ctfCount) +
+        ", NegRisk: " + formatNumber(negRiskCount) +
+        ", Non-Poly: " + formatNumber(nonPolyCount) + ")";
     }
 
     function updateTables(tables) {
@@ -1100,6 +1111,9 @@
     updateStage0Status({
       last_block: Number("{{ stage0_state.last_block or 0 }}"),
       condition_count: Number("{{ stage0_state.condition_count or 0 }}"),
+      ctf_condition_count: Number("{{ stage0_state.ctf_condition_count or 0 }}"),
+      negrisk_condition_count: Number("{{ stage0_state.negrisk_condition_count or 0 }}"),
+      nonpoly_condition_count: Number("{{ stage0_state.nonpoly_condition_count or 0 }}"),
       head_block: Number("{{ stage0_state.head_block or 0 }}"),
     }, Number(document.body.dataset.headBlock || "0"));
 

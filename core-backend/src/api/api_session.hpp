@@ -23,6 +23,9 @@ struct Stage0Status {
   int64_t head_block = 0;
   int64_t behind_blocks = 0;
   int64_t condition_count = 0;
+  int64_t ctf_condition_count = 0;
+  int64_t negrisk_condition_count = 0;
+  int64_t nonpoly_condition_count = 0;
   double blocks_per_second = 0.0;
   double eta_seconds = -1.0;
 };

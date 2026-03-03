@@ -1,130 +1,138 @@
 <!doctype html>
 <html lang="zh-CN">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Polymarket Explorer</title>
-    <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-      body {
-        font-family:
-          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        background: #0f0f0f;
-        color: #e0e0e0;
-        min-height: 100vh;
-      }
-      .container {
-        max-width: 1400px;
-        margin: 0 auto;
-        padding: 20px;
-      }
-      header {
-        text-align: center;
-        padding: 20px 0;
-        border-bottom: 1px solid #333;
-        margin-bottom: 20px;
-      }
-      header h1 {
-        font-size: 2em;
-        color: #fff;
-        margin-bottom: 5px;
-      }
-      header p {
-        color: #888;
-        font-size: 0.9em;
-      }
-      .badge {
-        display: inline-block;
-        padding: 2px 6px;
-        border-radius: 3px;
-        font-size: 0.7em;
-        font-weight: 500;
-      }
-      .badge-success {
-        background: #166534;
-        color: #4ade80;
-      }
-      .badge-warning {
-        background: #854d0e;
-        color: #fde047;
-      }
-      .badge-error {
-        background: #991b1b;
-        color: #fca5a5;
-      }
-    </style>
-  </head>
-  <body
-    data-last-block="{{ stage1_state.last_block or 0 }}"
-    data-head-block="{{ stage1_state.head_block or 0 }}"
-    data-syncing="{{ 'true' if stage1_state.syncing else 'false' }}"
-  >
-    <div class="container">
-      <header>
-        <h1>Polymarket Explorer</h1>
-        <p>Polymarket 链上数据同步与查询</p>
-      </header>
 
-      {% include 'components/stage1.html' %}
-      {% include 'components/stage2.html' %}
-      {% include 'components/stage3.html' %}
-    </div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Polymarket Explorer</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-    <script>
-      function formatNumber(n) {
-        return n.toLocaleString();
+    body {
+      font-family:
+        -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0f0f0f;
+      color: #e0e0e0;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    header {
+      text-align: center;
+      padding: 20px 0;
+      border-bottom: 1px solid #333;
+      margin-bottom: 20px;
+    }
+
+    header h1 {
+      font-size: 2em;
+      color: #fff;
+      margin-bottom: 5px;
+    }
+
+    header p {
+      color: #888;
+      font-size: 0.9em;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 0.7em;
+      font-weight: 500;
+    }
+
+    .badge-success {
+      background: #166534;
+      color: #4ade80;
+    }
+
+    .badge-warning {
+      background: #854d0e;
+      color: #fde047;
+    }
+
+    .badge-error {
+      background: #991b1b;
+      color: #fca5a5;
+    }
+  </style>
+</head>
+
+<body data-last-block="{{ stage1_state.last_block or 0 }}" data-head-block="{{ stage1_state.head_block or 0 }}"
+  data-syncing="{{ 'true' if stage1_state.syncing else 'false' }}">
+  <div class="container">
+    <header>
+      <h1>Polymarket Explorer</h1>
+      <p>Polymarket 链上数据同步与查询</p>
+    </header>
+
+    {% include 'components/stage1.html' %}
+    {% include 'components/stage2.html' %}
+    {% include 'components/stage3.html' %}
+  </div>
+
+  <script>
+    function formatNumber(n) {
+      return n.toLocaleString();
+    }
+
+    async function refresh() {
+      try {
+        const [stage0Res, syncRes, tablesRes] = await Promise.all([
+          fetch("/api/stage0-status"),
+          fetch("/api/stage1-status"),
+          fetch("/api/tables"),
+        ]);
+        const stage0 = await stage0Res.json();
+        const sync = await syncRes.json();
+        const tables = await tablesRes.json();
+        if (window.updateStage0Status) updateStage0Status(stage0, sync.head_block || 0);
+        updateSyncStatus(sync);
+        updateTables(tables);
+        if (window.updateContractSync) updateContractSync(sync);
+        if (window.updateContractTables) updateContractTables(tables);
+      } catch (e) {
+        console.error("Refresh failed:", e);
       }
+    }
 
-      async function refresh() {
-        try {
-          const [stage0Res, syncRes, tablesRes] = await Promise.all([
-            fetch("/api/stage0-status"),
-            fetch("/api/stage1-status"),
-            fetch("/api/tables"),
-          ]);
-          const stage0 = await stage0Res.json();
-          const sync = await syncRes.json();
-          const tables = await tablesRes.json();
+    async function exportAllCSV() {
+      const btn = document.getElementById("export-all-btn");
+      btn.disabled = true;
+      btn.textContent = "导出中...";
 
-          if (window.updateStage0Status) updateStage0Status(stage0, sync.head_block || 0);
-          updateSyncStatus(sync);
-          updateTables(tables);
-          if (window.updateContractSync) updateContractSync(sync);
-          if (window.updateContractTables) updateContractTables(tables);
-        } catch (e) {
-          console.error("Refresh failed:", e);
+      try {
+        const resp = await fetch("/api/export-all", { method: "POST" });
+        const result = await resp.json();
+
+        if (result.exported.length === 0) {
+          alert("所有表均无数据");
+        } else {
+          alert(`已导出 ${result.exported.length} 个表到 ${result.path}`);
         }
+      } catch (e) {
+        console.error("Export failed:", e);
+        alert("导出失败: " + e.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "全部导出";
       }
+    }
 
-      async function exportAllCSV() {
-        const btn = document.getElementById("export-all-btn");
-        btn.disabled = true;
-        btn.textContent = "导出中...";
+    refresh();
+    setInterval(refresh, 3000);
+  </script>
+</body>
 
-        try {
-          const resp = await fetch("/api/export-all", { method: "POST" });
-          const result = await resp.json();
-
-          if (result.exported.length === 0) {
-            alert("所有表均无数据");
-          } else {
-            alert(`已导出 ${result.exported.length} 个表到 ${result.path}`);
-          }
-        } catch (e) {
-          console.error("Export failed:", e);
-          alert("导出失败: " + e.message);
-        } finally {
-          btn.disabled = false;
-          btn.textContent = "全部导出";
-        }
-      }
-
-      refresh();
-      setInterval(refresh, 3000);
-    </script>
-  </body>
 </html>

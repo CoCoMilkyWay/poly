@@ -1,6 +1,8 @@
 #include "stage0_sync.hpp"
 
+#include <iostream>
 #include <optional>
+#include <string_view>
 #include <vector>
 
 // CREATE TABLE IF NOT EXISTS pm_condition_static (
@@ -8,49 +10,49 @@
 //   id                            BIGINT NOT NULL,       -- 顶层 id
 //   condition_id                  BLOB PRIMARY KEY,      -- conditionId
 //   question_id                   BLOB NOT NULL,         -- questionID
-// 
+//
 //   market_slug                   TEXT NOT NULL,         -- slug
 //   market_question               TEXT NOT NULL,         -- question
 //   market_description            TEXT,                  -- description
-// 
+//
 //   market_start_date             TIMESTAMP,             -- startDate
 //   market_end_date               TIMESTAMP,             -- endDate
 //   market_created_at             TIMESTAMP,             -- createdAt
 //   market_image                  TEXT,                  -- image
 //   market_icon                   TEXT,                  -- icon
-// 
+//
 //   market_submitted_by           BLOB,                  -- submitted_by
 //   market_resolved_by            BLOB,                  -- resolvedBy
-// 
+//
 //   market_restricted             BOOLEAN,               -- restricted
 //   market_neg_risk               BOOLEAN NOT NULL,      -- negRisk
 //   market_neg_risk_request_id    TEXT,                  -- negRiskRequestID
 //   market_cyom                   BOOLEAN,               -- cyom
-// 
+//
 //   market_group_item_title       TEXT,                  -- groupItemTitle
 //   market_group_item_threshold   TEXT,                  -- groupItemThreshold
-// 
+//
 //   market_enable_order_book      BOOLEAN,               -- enableOrderBook
 //   market_order_min_size         DOUBLE,                -- orderMinSize
 //   market_order_min_tick         DOUBLE,                -- orderPriceMinTickSize
 //   market_clear_book_on_start    BOOLEAN,               -- clearBookOnStart
 //   market_manual_activation      BOOLEAN,               -- manualActivation
 //   market_automatically_active   BOOLEAN,               -- automaticallyActive
-// 
+//
 //   market_uma_bond               TEXT,                  -- umaBond
 //   market_uma_reward             TEXT,                  -- umaReward
-// 
+//
 //   market_rewards_min_size       DOUBLE,                -- rewardsMinSize
 //   market_rewards_max_spread     DOUBLE,                -- rewardsMaxSpread
 //   market_holding_rewards_enable BOOLEAN,               -- holdingRewardsEnabled
 //   market_rfq_enabled            BOOLEAN,               -- rfqEnabled
 //   market_fees_enabled           BOOLEAN,               -- feesEnabled
 //   market_fee_type               TEXT,                  -- feeType
-// 
+//
 //   market_series_color           TEXT,                  -- seriesColor
 //   market_show_gmp_series        BOOLEAN,               -- showGmpSeries
 //   market_show_gmp_outcome       BOOLEAN,               -- showGmpOutcome
-// 
+//
 //   -- ========= B. events[*](独立 entry，按索引对齐) =========
 //   event_ids                     BIGINT[],              -- events[*].id
 //   event_tickers                 TEXT[],                -- events[*].ticker
@@ -75,20 +77,20 @@
 //   event_auto_actives            BOOLEAN[],             -- events[*].automaticallyActive
 //   event_cyoms                   BOOLEAN[],             -- events[*].cyom
 //   event_requires_translations   BOOLEAN[],             -- events[*].requiresTranslation
-// 
+//
 //   -- ========= C. tags[*](独立 entry，按索引对齐) =========
 //   tag_ids                       BIGINT[],              -- tags[*].id
 //   tag_labels                    TEXT[],                -- tags[*].label
 //   tag_slugs                     TEXT[],                -- tags[*].slug
 //   tag_created_ats               TIMESTAMP[],           -- tags[*].createdAt
-// 
+//
 //   -- ========= D. clobRewards[*](独立 entry，按索引对齐) =========
 //   reward_ids                    BIGINT[],              -- clobRewards[*].id
 //   reward_condition_ids          BLOB[],                -- clobRewards[*].conditionId
 //   reward_asset_addresses        BLOB[],                -- clobRewards[*].assetAddress
 //   reward_start_dates            DATE[],                -- clobRewards[*].startDate
 //   reward_end_dates              DATE[],                -- clobRewards[*].endDate
-// 
+//
 //   -- ========= E. 同步元信息 =========
 //   first_seen_block              BIGINT NOT NULL,
 //   first_seen_ms                 BIGINT NOT NULL
@@ -104,14 +106,69 @@ uint8_t hex_nibble(char c) {
   if (c >= 'a' && c <= 'f') {
     return static_cast<uint8_t>(c - 'a' + 10);
   }
+  if (c >= 'A' && c <= 'F') {
+    return static_cast<uint8_t>(c - 'A' + 10);
+  }
   assert(false && "invalid hex nibble");
   return 0;
 }
 
-std::string hex_to_blob_exact(const std::string &hex, size_t expect_bytes) {
-  assert(hex.starts_with("0x"));
-  std::string h = hex.substr(2);
-  assert(h.size() == expect_bytes * 2);
+[[noreturn]] void blob_parse_fail(const std::string &condition_hex_lower, const char *key,
+                                  const std::string &raw, const std::string &reason,
+                                  const json &market_for_log) {
+  std::cerr << "[Stage0][blob_parse_fail]"
+            << " condition=" << condition_hex_lower
+            << " field=" << key
+            << " reason=" << reason
+            << " raw=" << raw
+            << " body=" << market_for_log.dump() << std::endl;
+  assert(false && "blob_parse_fail");
+}
+
+bool is_hex_literal(std::string_view text) {
+  if (text.starts_with("0x") || text.starts_with("0X")) {
+    text.remove_prefix(2);
+  }
+  if (text.empty()) {
+    return false;
+  }
+  for (const char c : text) {
+    const bool ok = (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
+    if (!ok) {
+      return false;
+    }
+  }
+  return true;
+}
+
+std::string hex_to_blob_exact(const std::string &hex, size_t expect_bytes,
+                              const std::string &condition_hex_lower, const char *key,
+                              const json &market_for_log) {
+  std::string h = hex;
+  if (h.starts_with("0x") || h.starts_with("0X")) {
+    h = h.substr(2);
+  }
+  if (h.empty()) {
+    blob_parse_fail(condition_hex_lower, key, hex, "empty_hex", market_for_log);
+  }
+  if ((h.size() % 2) != 0) {
+    h.insert(h.begin(), '0');
+  }
+  if (h.size() > expect_bytes * 2) {
+    blob_parse_fail(condition_hex_lower, key, hex, "hex_too_long", market_for_log);
+  }
+  if (h.size() < expect_bytes * 2) {
+    h.insert(0, expect_bytes * 2 - h.size(), '0');
+  }
+  if (h.size() != expect_bytes * 2) {
+    blob_parse_fail(condition_hex_lower, key, hex, "hex_size_mismatch", market_for_log);
+  }
+  for (char c : h) {
+    const bool ok = (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
+    if (!ok) {
+      blob_parse_fail(condition_hex_lower, key, hex, "invalid_hex_char", market_for_log);
+    }
+  }
   std::string out;
   out.reserve(expect_bytes);
   for (size_t i = 0; i < h.size(); i += 2) {
@@ -215,12 +272,23 @@ std::optional<duckdb::date_t> get_opt_date_field(const json &obj, const char *ke
   return duckdb::Date::FromString(*s);
 }
 
-std::optional<std::string> get_opt_blob_field(const json &obj, const char *key, size_t expect_bytes) {
+std::optional<std::string> get_opt_blob_field(const json &obj, const char *key, size_t expect_bytes,
+                                              const std::string &condition_hex_lower,
+                                              const json &market_for_log, bool strict_hex = true) {
   auto s = get_opt_string_field(obj, key);
   if (!s.has_value()) {
     return std::nullopt;
   }
-  return hex_to_blob_exact(*s, expect_bytes);
+  if (s->empty()) {
+    return std::nullopt;
+  }
+  if (!is_hex_literal(*s)) {
+    if (!strict_hex) {
+      return std::nullopt;
+    }
+    blob_parse_fail(condition_hex_lower, key, *s, "invalid_hex_char", market_for_log);
+  }
+  return hex_to_blob_exact(*s, expect_bytes, condition_hex_lower, key, market_for_log);
 }
 
 json get_array_field(const json &obj, const char *key) {
@@ -324,11 +392,11 @@ void StageSync::persist_results_in_txn(duckdb::Appender &ap, const std::vector<F
     const json &m = row.market;
     assert(m.is_object());
 
-    auto market_question_id = get_opt_blob_field(m, "questionID", 32);
+    auto market_question_id = get_opt_blob_field(m, "questionID", 32, row.seed.condition_hex_lower, m);
     if (market_question_id.has_value()) {
       assert(*market_question_id == row.seed.question_blob);
     }
-    auto market_condition_id = get_opt_blob_field(m, "conditionId", 32);
+    auto market_condition_id = get_opt_blob_field(m, "conditionId", 32, row.seed.condition_hex_lower, m);
     if (market_condition_id.has_value()) {
       assert(*market_condition_id == row.seed.condition_blob);
     }
@@ -342,8 +410,10 @@ void StageSync::persist_results_in_txn(duckdb::Appender &ap, const std::vector<F
     auto market_created_at = get_opt_timestamp_field(m, "createdAt");
     auto market_image = get_opt_string_field(m, "image");
     auto market_icon = get_opt_string_field(m, "icon");
-    auto market_submitted_by = get_opt_blob_field(m, "submitted_by", 20);
-    auto market_resolved_by = get_opt_blob_field(m, "resolvedBy", 20);
+    auto market_submitted_by =
+        get_opt_blob_field(m, "submitted_by", 20, row.seed.condition_hex_lower, m, false);
+    auto market_resolved_by =
+        get_opt_blob_field(m, "resolvedBy", 20, row.seed.condition_hex_lower, m, false);
     auto market_restricted = get_opt_bool_field(m, "restricted");
     bool market_neg_risk = get_bool_field_or(m, "negRisk", false);
     auto market_neg_risk_request_id = get_opt_string_field(m, "negRiskRequestID");
@@ -476,8 +546,10 @@ void StageSync::persist_results_in_txn(duckdb::Appender &ap, const std::vector<F
     for (const auto &r : rewards) {
       assert(r.is_object());
       push_opt_i64(reward_ids, get_opt_i64_field(r, "id"));
-      push_opt_blob(reward_condition_ids, get_opt_blob_field(r, "conditionId", 32));
-      push_opt_blob(reward_asset_addresses, get_opt_blob_field(r, "assetAddress", 20));
+      push_opt_blob(reward_condition_ids,
+                    get_opt_blob_field(r, "conditionId", 32, row.seed.condition_hex_lower, m));
+      push_opt_blob(reward_asset_addresses,
+                    get_opt_blob_field(r, "assetAddress", 20, row.seed.condition_hex_lower, m));
       push_opt_date(reward_start_dates, get_opt_date_field(r, "startDate"));
       push_opt_date(reward_end_dates, get_opt_date_field(r, "endDate"));
     }

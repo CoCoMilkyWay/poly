@@ -516,7 +516,8 @@ FetchSeedOutcome parse_seed_outcome(const std::string &condition_hex_lower, Http
     return FetchSeedOutcome{
         .state = FetchSeedState::kFailed,
         .market = json::object(),
-        .detail = "http_error err=" + compact_for_log(out.error) +
+        .detail = "condition=" + condition_hex_lower +
+                  " http_error err=" + out.error +
                   " target=" + out.target +
                   " status=" + std::to_string(out.status_code) +
                   " body=" + normalize_for_log(out.body),
@@ -526,7 +527,8 @@ FetchSeedOutcome parse_seed_outcome(const std::string &condition_hex_lower, Http
     return FetchSeedOutcome{
         .state = FetchSeedState::kFailed,
         .market = json::object(),
-        .detail = "http_non_200 target=" + out.target +
+        .detail = "condition=" + condition_hex_lower +
+                  " http_non_200 target=" + out.target +
                   " status=" + std::to_string(out.status_code) +
                   " body=" + normalize_for_log(out.body),
     };
@@ -536,7 +538,8 @@ FetchSeedOutcome parse_seed_outcome(const std::string &condition_hex_lower, Http
     return FetchSeedOutcome{
         .state = FetchSeedState::kFailed,
         .market = json::object(),
-        .detail = "json_parse_failed target=" + out.target +
+        .detail = "condition=" + condition_hex_lower +
+                  " json_parse_failed target=" + out.target +
                   " body=" + normalize_for_log(out.body),
     };
   }
@@ -544,7 +547,8 @@ FetchSeedOutcome parse_seed_outcome(const std::string &condition_hex_lower, Http
     return FetchSeedOutcome{
         .state = FetchSeedState::kFailed,
         .market = json::object(),
-        .detail = "json_not_array target=" + out.target +
+        .detail = "condition=" + condition_hex_lower +
+                  " json_not_array target=" + out.target +
                   " body=" + normalize_for_log(out.body),
     };
   }
@@ -569,7 +573,8 @@ FetchSeedOutcome parse_seed_outcome(const std::string &condition_hex_lower, Http
   return FetchSeedOutcome{
       .state = FetchSeedState::kEmpty,
       .market = json::object(),
-      .detail = "no_matching_condition target=" + out.target +
+      .detail = "condition=" + condition_hex_lower +
+                " no_matching_condition target=" + out.target +
                 " markets=" + std::to_string(arr.size()) +
                 " body=" + compact_for_log(out.body),
   };

@@ -128,12 +128,17 @@ json to_stage1_status_json(const Stage1Status &status) {
 }
 
 json to_stage0_status_json(const Stage0Status &status) {
+  const int64_t total_condition_count =
+      status.ctf_condition_count + status.negrisk_condition_count + status.nonpoly_condition_count;
   return {
       {"syncing", status.syncing},
       {"last_block", status.last_block},
       {"head_block", status.head_block},
       {"behind_blocks", status.behind_blocks},
-      {"condition_count", status.condition_count},
+      {"condition_count", total_condition_count},
+      {"ctf_condition_count", status.ctf_condition_count},
+      {"negrisk_condition_count", status.negrisk_condition_count},
+      {"nonpoly_condition_count", status.nonpoly_condition_count},
       {"blocks_per_second", status.blocks_per_second},
       {"eta_seconds", status.eta_seconds},
   };
