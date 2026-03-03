@@ -247,6 +247,7 @@ void StageSync::schedule_sync(int delay_seconds) {
 }
 
 void StageSync::do_sync() {
+  Trace;
   is_syncing_ = true;
 
   head_block_ = rpc_head_.eth_blockNumber();
@@ -254,6 +255,10 @@ void StageSync::do_sync() {
   int64_t last_block = db_.get_last_block();
 
   int64_t expected_chunk_start = (last_block < 0) ? config_.initial_block : last_block + 1;
+  int64_t trace_chunk_end = std::max<int64_t>(expected_chunk_start - 1, safe_head);
+  std::string sync_trace_name =
+      "s1/sync " + std::to_string(expected_chunk_start) + "-" + std::to_string(trace_chunk_end);
+  TraceName(sync_trace_name.c_str(), sync_trace_name.size());
   assert(expected_chunk_start % kCommitBlockGranularity == 0);
   if (buffered_batches_.empty() && ready_batches_.empty()) {
     current_chunk_start_block_ = expected_chunk_start;

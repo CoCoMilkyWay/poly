@@ -20,7 +20,7 @@
 #include <unordered_set>
 #include <vector>
 
-#define STAGE0_DEBUG_DUMP_JSON 1
+#define STAGE0_DEBUG_DUMP_JSON 0
 
 namespace stage0 {
 namespace {
@@ -203,7 +203,7 @@ void StageSync::record_commit_locked(int64_t cursor) {
 }
 
 void StageSync::do_sync() {
-  TraceN("s0/sync");
+  Trace;
   if (stop_requested_) {
     return;
   }
@@ -211,6 +211,8 @@ void StageSync::do_sync() {
 
   int64_t stage1_head = stage1_db_.get_last_block();
   int64_t cursor = runtime_scan_cursor_inited_ ? runtime_scan_cursor_ : get_scan_cursor();
+  std::string sync_trace_name = "s0/sync " + std::to_string(cursor + 1) + "-" + std::to_string(stage1_head);
+  TraceName(sync_trace_name.c_str(), sync_trace_name.size());
   runtime_scan_cursor_inited_ = true;
   runtime_scan_cursor_ = cursor;
   {

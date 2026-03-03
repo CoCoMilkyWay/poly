@@ -591,7 +591,7 @@ private:
   }
 
   void do_sync_tick() {
-    TraceN("s3/sync");
+    Trace;
     auto refresh_timing_metrics = [&](int64_t remaining_blocks) {
       if (commit_history_.size() < 2) {
         sync_.blocks_per_second = 0.0;
@@ -624,6 +624,10 @@ private:
       sync_.syncing = true;
       before_block = (cursor_.sort_key < 0) ? 0 : cursor_.sort_key / SORT_KEY_SCALE;
     }
+    int64_t tick_head_block = builder_.cursor();
+    std::string sync_trace_name =
+        "s3/sync " + std::to_string(before_block + 1) + "-" + std::to_string(tick_head_block);
+    TraceName(sync_trace_name.c_str(), sync_trace_name.size());
 
     bool advanced = process_chunk_locked();
 

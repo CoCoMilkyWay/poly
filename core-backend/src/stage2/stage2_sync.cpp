@@ -87,7 +87,7 @@ void StageSync::schedule_sync(int delay_seconds) {
 }
 
 void StageSync::do_sync() {
-  TraceN("s2/sync");
+  Trace;
   auto refresh_timing_metrics = [&](int64_t remaining_blocks) {
     if (commit_history_.size() < 2) {
       sync_.blocks_per_second = 0.0;
@@ -114,6 +114,8 @@ void StageSync::do_sync() {
   };
   int64_t head_block = stage1_db_.get_last_block();
   int64_t last_block = builder_.cursor();
+  std::string sync_trace_name = "s2/sync " + std::to_string(last_block + 1) + "-" + std::to_string(head_block);
+  TraceName(sync_trace_name.c_str(), sync_trace_name.size());
   std::vector<Database::FeatherChunk> transfer_chunks = stage1_db_.feather_chunks("transfer");
   int64_t behind_blocks = std::max<int64_t>(0, head_block - last_block);
   int64_t behind_chunks = pending_transfer_chunks(transfer_chunks, last_block, head_block);
@@ -134,6 +136,8 @@ void StageSync::do_sync() {
 
   auto next_chunk = next_transfer_chunk(transfer_chunks, last_block, head_block);
   assert(next_chunk.has_value());
+  sync_trace_name = "s2/sync " + std::to_string(next_chunk->start) + "-" + std::to_string(next_chunk->end);
+  TraceName(sync_trace_name.c_str(), sync_trace_name.size());
   int64_t target = next_chunk->end;
   assert(target > last_block);
   assert(target <= head_block);
