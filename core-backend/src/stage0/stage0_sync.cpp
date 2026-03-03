@@ -20,6 +20,8 @@
 #include <unordered_set>
 #include <vector>
 
+#define STAGE0_DEBUG_DUMP_JSON 1
+
 namespace stage0 {
 namespace {
 
@@ -528,7 +530,9 @@ void StageSync::do_sync() {
         } else {
           known_ctf_condition_count_ += 1;
         }
+#if STAGE0_DEBUG_DUMP_JSON
         persist_stage0_parsed_market(stage0_db_.data_dir(), row.seed.condition_hex_lower, row.market);
+#endif
       }
       for (const auto &seed : empty_rows_to_persist) {
         known_condition_ids_.insert(seed.condition_hex_lower);
