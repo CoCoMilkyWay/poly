@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""扫描 Polymarket 合约历史事件统计（动态终端刷新）"""
+"""扫描 Polymarket 合约历史事件统计(动态终端刷新)"""
 
 """
   Polymarket 事件扫描  (head=83,000,000)
@@ -68,7 +68,7 @@ CONTRACTS = {
     "NegRiskAdapter":      "0xd91E80cF2E7be2e162c6513ceD06f1dD0dA35296",
 }
 
-# ── 事件 topic（keccak256 of signature）────────────────────────
+# ── 事件 topic(keccak256 of signature)────────────────────────
 EVENTS = {
     # ConditionalTokens
     "0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62": ("ConditionalTokens", "TransferSingle"),

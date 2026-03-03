@@ -25,6 +25,7 @@ namespace {
 constexpr std::string_view kEmptyRangeSql = "(SELECT 1 WHERE 1=0)";
 constexpr const char *kGammaApiBase = "https://gamma-api.polymarket.com";
 constexpr int64_t kMaxDispatchAheadBlocks = 20000;
+constexpr const char *kProxyProbeCondition = "0x0000000000000000000000000000000000000000000000000000000000000001";
 
 std::string blob_to_hex_lower(const std::string &blob) {
   static const char hex_chars[] = "0123456789abcdef";
@@ -189,6 +190,43 @@ void StageSync::do_sync() {
   asio::io_context fetch_ioc;
   asio::ssl::context fetch_ssl_ctx(asio::ssl::context::tls_client);
   fetch_ssl_ctx.set_verify_mode(asio::ssl::verify_none);
+
+  if (!stage0_proxy_url.empty()) {
+    append_stage0_flow_log(stage0_db_.data_dir(), "stage0_proxy_wait_start");
+    bool proxy_probe_done = false;
+    FetchSeedOutcome proxy_probe_out;
+    async_seed_fetch(
+        fetch_ioc, fetch_ssl_ctx, gamma_ep, stage0_proxy_url, kProxyProbeCondition,
+        [&](FetchSeedOutcome out) {
+          proxy_probe_out = std::move(out);
+          proxy_probe_done = true;
+        },
+        [&](int attempt, const std::string &detail) {
+          append_stage0_flow_log(stage0_db_.data_dir(),
+                                 "stage0_proxy_wait_retry attempt=" + std::to_string(attempt) +
+                                     " detail=" + detail);
+        });
+    while (!stop_requested_ && !proxy_probe_done) {
+      fetch_ioc.restart();
+      if (fetch_ioc.poll() == 0) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(2));
+      }
+    }
+    if (stop_requested_) {
+      std::lock_guard<std::mutex> lock(status_mutex_);
+      sync_.syncing = false;
+      return;
+    }
+    const char *probe_state = "failed";
+    if (proxy_probe_out.state == FetchSeedState::kFound) {
+      probe_state = "found";
+    } else if (proxy_probe_out.state == FetchSeedState::kEmpty) {
+      probe_state = "empty";
+    }
+    append_stage0_flow_log(stage0_db_.data_dir(),
+                           "stage0_proxy_ready state=" + std::string(probe_state) +
+                               " detail=" + proxy_probe_out.detail);
+  }
 
   auto conn = stage0_db_.create_connection();
   auto exec_sql = [&](const std::string &sql) {

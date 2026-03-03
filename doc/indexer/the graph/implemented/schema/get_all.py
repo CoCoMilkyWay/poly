@@ -200,7 +200,7 @@ def convert_schema(data, output_file=None):
             fdesc = field.get("description", "")
             ftype = resolve_type(field["type"])
 
-            # 获取基础类型名（去掉 !, [] 等）
+            # 获取基础类型名(去掉 !, [] 等)
             base_type = ftype.replace("!", "").replace(
                 "[", "").replace("]", "")
 

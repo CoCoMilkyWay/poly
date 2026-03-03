@@ -163,7 +163,7 @@ void EventBuilder::load_from_rb() {
   collateral_addr_to_id_.clear();
   collateral_id_to_addr_.clear();
   next_collateral_id_ = static_cast<uint8_t>(Collateral::WrappedUSDCe) + 1;
-  // 预置已知抵押品，保持固定 ID 和稳定编码
+  // 预置已知抵押品,保持固定 ID 和稳定编码
   collateral_addr_to_id_[ZERO_ADDR] = static_cast<uint8_t>(Collateral::Unknown);
   collateral_id_to_addr_[static_cast<uint8_t>(Collateral::Unknown)] = ZERO_ADDR;
   collateral_addr_to_id_[USDC_NATIVE] = static_cast<uint8_t>(Collateral::USDC);
@@ -193,7 +193,7 @@ void EventBuilder::load_from_rb() {
   stage2_assert(cur && !cur->HasError(), AssertLevel::L0, "DB", "CursorLoadSuccess");
   progress_.cursor = cur->RowCount() > 0 ? cur->GetValue(0, 0).GetValue<int64_t>() : 0;
 
-  // 从 user_event 表重新计算事件计数（保证数据一致性）
+  // 从 user_event 表重新计算事件计数(保证数据一致性)
   auto cnt_r = conn->Query(R"(
     SELECT event_type, COUNT(*) as cnt FROM user_event GROUP BY event_type
   )");
@@ -272,7 +272,7 @@ void EventBuilder::load_from_rb() {
     }
   }
 
-  // 从 rb_neg_risk_market 表加载 question_id -> market_id 映射，并标记 NegRisk 条件
+  // 从 rb_neg_risk_market 表加载 question_id -> market_id 映射,并标记 NegRisk 条件
   auto nrm_r = conn->Query("SELECT question_id, market_id FROM rb_neg_risk_market");
   stage2_assert(nrm_r && !nrm_r->HasError(), AssertLevel::L0, "DB", "LoadNegRiskMarketSuccess");
   cond_to_market_.reserve(static_cast<size_t>(nrm_r->RowCount()));
@@ -301,7 +301,7 @@ void EventBuilder::load_from_rb() {
   progress_.total_tokens = token_map_.size();
   update_cond_type_stats();
 
-  // 加载已知用户（恢复时从数据库）
+  // 加载已知用户(恢复时从数据库)
   auto user_r = conn->Query("SELECT DISTINCT user_addr FROM user_event");
   stage2_assert(user_r && !user_r->HasError(), AssertLevel::L0, "DB", "LoadDistinctUsersSuccess");
   seen_users_.reserve(static_cast<size_t>(user_r->RowCount()));
@@ -341,7 +341,7 @@ void EventBuilder::load_from_rb() {
   stage2_assert(evt_total && !evt_total->HasError(), AssertLevel::L0, "DB", "LoadEventTotalSuccess");
   progress_.total_events = evt_total->RowCount() > 0 ? evt_total->GetValue(0, 0).GetValue<int64_t>() : 0;
 
-  // 恢复 TransferStats（包含 internal 类，无法从 user_event 反推）
+  // 恢复 TransferStats(包含 internal 类,无法从 user_event 反推)
   auto xfer_kv = conn->Query("SELECT key, value FROM stage2_cursor WHERE key LIKE 'xfer_%'");
   stage2_assert(xfer_kv && !xfer_kv->HasError(), AssertLevel::L0, "DB", "LoadTransferSnapshotSuccess");
   std::unordered_map<std::string, int64_t> xfer_saved;
@@ -602,7 +602,7 @@ bool EventBuilder::build_chunk(int64_t target_block) {
     return false;
   }
 
-  // 写入 log header（phase1 之后，此时 token_map 已更新）
+  // 写入 log header(phase1 之后,此时 token_map 已更新)
   chunk_log_.write_header(token_map_.size(), fpmm_map_.size(), cond_map_.size());
   if (!token_map_.empty()) {
     auto it = token_map_.begin();

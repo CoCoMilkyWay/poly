@@ -214,7 +214,7 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
     stage2_assert(has_primary, AssertLevel::L1, "Mapping", "FPMMHasPrimaryCondition");
     uint8_t coll_id = intern_collateral(row.collateral);
     intern_fpmm(row.addr, primary_cond_idx, coll_id);
-    // 为 FPMM 计算所有 atomic position token_id（覆盖多条件组合头寸）
+    // 为 FPMM 计算所有 atomic position token_id(覆盖多条件组合头寸)
     intern_fpmm_tokens(row.cids, row.collateral, primary_cond_idx);
   };
   {
@@ -264,7 +264,7 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
     return inferred;
   };
 
-  // 从 split/merge/redemption 事件中提取 token_id（覆盖没有经过 FPMM 的 condition）
+  // 从 split/merge/redemption 事件中提取 token_id(覆盖没有经过 FPMM 的 condition)
   auto update_from_condition_event = [&](const char *table_name,
                                          const char *index_sets_col,
                                          ConditionSource cond_source,
@@ -770,7 +770,7 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
     auto coll_it = cond_collateral_.find(cid_idx);
     if (coll_it != cond_collateral_.end())
       return static_cast<Collateral>(coll_it->second);
-    // 对 TransferInferred token，优先用 FPMM operator 的 collateral 回填
+    // 对 TransferInferred token,优先用 FPMM operator 的 collateral 回填
     // 避免在 FPMM Buy/Sell/LP 事件中出现无意义的 0x000...000
     auto fit = fpmm_map_.find(operator_addr);
     if (fit != fpmm_map_.end())
@@ -845,7 +845,7 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
       auto tit = token_map_.find(token_id);
 
       if (tit == token_map_.end()) {
-        // 未知token：加入 token_map_，使用特殊值表示未知 condition
+        // 未知token：加入 token_map_,使用特殊值表示未知 condition
         intern_token(token_id, UNKNOWN_COND_IDX, UNKNOWN_TOKEN_IDX, TokenSource::TransferInferred);
         tit = token_map_.find(token_id); // 重新获取迭代器
       }

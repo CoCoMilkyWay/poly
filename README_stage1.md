@@ -1,16 +1,16 @@
 ## Stage 1: eth_getLogs → 结构化表
 
-Stage 1 保留原始事件的全部字段，不做过滤、不做计算字段。
+Stage 1 保留原始事件的全部字段,不做过滤、不做计算字段。
 
 **不入库的事件**: OrdersMatched (与OrderFilled冗余), OutcomeReported (与ConditionResolution冗余)
 
 数值字段约定:
-- 所有链上 `uint256` 字段一律用 `BLOB(32)` 存储（大端，无损）。
-- 所有链上 `uint256[]` / `bytes32[]` 字段一律用 `LIST<BLOB(32)>` 存储（无损），不再用 JSON 文本。
+- 所有链上 `uint256` 字段一律用 `BLOB(32)` 存储(大端,无损)。
+- 所有链上 `uint256[]` / `bytes32[]` 字段一律用 `LIST<BLOB(32)>` 存储(无损),不再用 JSON 文本。
 
 ### transfer (TransferSingle / TransferBatch)
 
-TransferBatch 拆分为多行，每个 token 一行，通过 sub_index 区分。
+TransferBatch 拆分为多行,每个 token 一行,通过 sub_index 区分。
 
 | column       | 类型      | 来源     | 说明                                        |
 | ------------ | --------- | -------- | ------------------------------------------- |
@@ -21,32 +21,32 @@ TransferBatch 拆分为多行，每个 token 一行，通过 sub_index 区分。
 | from_addr    | BLOB(20)  | Transfer | 0x0 = mint                                  |
 | to_addr      | BLOB(20)  | Transfer | 0x0 = burn                                  |
 | token_id     | BLOB(32)  | Transfer | positionId                                  |
-| amount       | BLOB(32)  | Transfer | uint256, 6 decimals（无损）                 |
+| amount       | BLOB(32)  | Transfer | uint256, 6 decimals(无损)                   |
 
 ### condition_preparation (ConditionPreparation)
 
-| column             | 类型        | 来源                 | 说明            |
-| ------------------ | ----------- | -------------------- | --------------- |
-| block_number       | BIGINT      | log                  |                 |
-| tx_hash            | BLOB(32)    | log                  |                 |
-| log_index          | INTEGER     | log                  |                 |
-| condition_id       | BLOB(32) PK | ConditionPreparation |                 |
-| oracle             | BLOB(20)    | ConditionPreparation |                 |
-| question_id        | BLOB(32)    | ConditionPreparation |                 |
-| outcome_slot_count | BLOB(32)    | ConditionPreparation | uint256（无损） |
+| column             | 类型        | 来源                 | 说明          |
+| ------------------ | ----------- | -------------------- | ------------- |
+| block_number       | BIGINT      | log                  |               |
+| tx_hash            | BLOB(32)    | log                  |               |
+| log_index          | INTEGER     | log                  |               |
+| condition_id       | BLOB(32) PK | ConditionPreparation |               |
+| oracle             | BLOB(20)    | ConditionPreparation |               |
+| question_id        | BLOB(32)    | ConditionPreparation |               |
+| outcome_slot_count | BLOB(32)    | ConditionPreparation | uint256(无损) |
 
 ### condition_resolution (ConditionResolution)
 
-| column             | 类型           | 来源                | 说明              |
-| ------------------ | -------------- | ------------------- | ----------------- |
-| block_number       | BIGINT PK      | log                 |                   |
-| tx_hash            | BLOB(32)       | log                 |                   |
-| log_index          | INTEGER PK     | log                 |                   |
-| condition_id       | BLOB(32)       | ConditionResolution |                   |
-| oracle             | BLOB(20)       | ConditionResolution |                   |
-| question_id        | BLOB(32)       | ConditionResolution |                   |
-| outcome_slot_count | BLOB(32)       | ConditionResolution | uint256（无损）   |
-| payout_numerators  | LIST<BLOB(32)> | ConditionResolution | uint256[]（无损） |
+| column             | 类型           | 来源                | 说明            |
+| ------------------ | -------------- | ------------------- | --------------- |
+| block_number       | BIGINT PK      | log                 |                 |
+| tx_hash            | BLOB(32)       | log                 |                 |
+| log_index          | INTEGER PK     | log                 |                 |
+| condition_id       | BLOB(32)       | ConditionResolution |                 |
+| oracle             | BLOB(20)       | ConditionResolution |                 |
+| question_id        | BLOB(32)       | ConditionResolution |                 |
+| outcome_slot_count | BLOB(32)       | ConditionResolution | uint256(无损)   |
+| payout_numerators  | LIST<BLOB(32)> | ConditionResolution | uint256[](无损) |
 
 ### split (PositionSplit)
 
@@ -59,8 +59,8 @@ TransferBatch 拆分为多行，每个 token 一行，通过 sub_index 区分。
 | collateral_token     | BLOB(20)       | PositionSplit | USDC.e 或 Wrapped |
 | parent_collection_id | BLOB(32)       | PositionSplit | 几乎总是 0x0      |
 | condition_id         | BLOB(32)       | PositionSplit |                   |
-| partition            | LIST<BLOB(32)> | PositionSplit | uint256[]（无损） |
-| amount               | BLOB(32)       | PositionSplit | uint256（无损）   |
+| partition            | LIST<BLOB(32)> | PositionSplit | uint256[](无损)   |
+| amount               | BLOB(32)       | PositionSplit | uint256(无损)     |
 
 ### merge (PositionsMerge)
 
@@ -73,8 +73,8 @@ TransferBatch 拆分为多行，每个 token 一行，通过 sub_index 区分。
 | collateral_token     | BLOB(20)       | PositionsMerge | USDC.e 或 Wrapped |
 | parent_collection_id | BLOB(32)       | PositionsMerge | 几乎总是 0x0      |
 | condition_id         | BLOB(32)       | PositionsMerge |                   |
-| partition            | LIST<BLOB(32)> | PositionsMerge | uint256[]（无损） |
-| amount               | BLOB(32)       | PositionsMerge | uint256（无损）   |
+| partition            | LIST<BLOB(32)> | PositionsMerge | uint256[](无损)   |
+| amount               | BLOB(32)       | PositionsMerge | uint256(无损)     |
 
 ### redemption (PayoutRedemption)
 
@@ -87,29 +87,29 @@ TransferBatch 拆分为多行，每个 token 一行，通过 sub_index 区分。
 | collateral_token     | BLOB(20)       | PayoutRedemption | USDC.e 或 Wrapped |
 | parent_collection_id | BLOB(32)       | PayoutRedemption | 几乎总是 0x0      |
 | condition_id         | BLOB(32)       | PayoutRedemption |                   |
-| index_sets           | LIST<BLOB(32)> | PayoutRedemption | uint256[]（无损） |
-| payout               | BLOB(32)       | PayoutRedemption | uint256（无损）   |
+| index_sets           | LIST<BLOB(32)> | PayoutRedemption | uint256[](无损)   |
+| payout               | BLOB(32)       | PayoutRedemption | uint256(无损)     |
 
 ### fpmm (FPMMCreation)
 
-| column                | 类型           | 来源         | 说明                                                                      |
-| --------------------- | -------------- | ------------ | ------------------------------------------------------------------------- |
-| block_number          | BIGINT         | log          |                                                                           |
-| tx_hash               | BLOB(32)       | log          |                                                                           |
-| log_index             | INTEGER        | log          |                                                                           |
-| factory               | BLOB(20)       | log.address  | 发出 `FixedProductMarketMakerCreation` 的工厂地址                         |
-| creation_topics_count | BIGINT         | log.topics   | 创建事件 topics 长度（4=FixedProductMarketMakerFactory, 2=Deterministic） |
-| creation_layout       | VARCHAR        | 解析标记     | `fixed_factory_v1` / `deterministic_factory_v1`                           |
-| creator               | BLOB(20)       | FPMMCreation |                                                                           |
-| fpmm_addr             | BLOB(20) PK    | FPMMCreation | fixedProductMarketMaker                                                   |
-| conditional_tokens    | BLOB(20)       | FPMMCreation | ConditionalTokens 合约地址                                                |
-| collateral_token      | BLOB(20)       | FPMMCreation | USDC.e                                                                    |
-| condition_ids         | LIST<BLOB(32)> | FPMMCreation | bytes32[]（无损）                                                         |
-| fee                   | BLOB(32)       | FPMMCreation | uint256（无损）                                                           |
+| column                | 类型           | 来源         | 说明                                                                    |
+| --------------------- | -------------- | ------------ | ----------------------------------------------------------------------- |
+| block_number          | BIGINT         | log          |                                                                         |
+| tx_hash               | BLOB(32)       | log          |                                                                         |
+| log_index             | INTEGER        | log          |                                                                         |
+| factory               | BLOB(20)       | log.address  | 发出 `FixedProductMarketMakerCreation` 的工厂地址                       |
+| creation_topics_count | BIGINT         | log.topics   | 创建事件 topics 长度(4=FixedProductMarketMakerFactory, 2=Deterministic) |
+| creation_layout       | VARCHAR        | 解析标记     | `fixed_factory_v1` / `deterministic_factory_v1`                         |
+| creator               | BLOB(20)       | FPMMCreation |                                                                         |
+| fpmm_addr             | BLOB(20) PK    | FPMMCreation | fixedProductMarketMaker                                                 |
+| conditional_tokens    | BLOB(20)       | FPMMCreation | ConditionalTokens 合约地址                                              |
+| collateral_token      | BLOB(20)       | FPMMCreation | USDC.e                                                                  |
+| condition_ids         | LIST<BLOB(32)> | FPMMCreation | bytes32[](无损)                                                         |
+| fee                   | BLOB(32)       | FPMMCreation | uint256(无损)                                                           |
 
 ### fpmm_trade (FPMMBuy / FPMMSell)
 
-AMM Taker 交易，单边操作。
+AMM Taker 交易,单边操作。
 
 | column            | 类型       | 来源         | 说明                |
 | ----------------- | ---------- | ------------ | ------------------- |
@@ -119,10 +119,10 @@ AMM Taker 交易，单边操作。
 | fpmm_addr         | BLOB(20)   | log.address  |                     |
 | trader            | BLOB(20)   | FPMMBuy/Sell | $.buyer 或 $.seller |
 | side              | INTEGER    | 事件类型     | 1=Buy, 2=Sell       |
-| outcome_index     | BLOB(32)   | FPMMBuy/Sell | uint256（无损）     |
-| collateral_amount | BLOB(32)   | FPMMBuy/Sell | uint256（无损）     |
-| token_amount      | BLOB(32)   | FPMMBuy/Sell | uint256（无损）     |
-| fee               | BLOB(32)   | FPMMBuy/Sell | uint256（无损）     |
+| outcome_index     | BLOB(32)   | FPMMBuy/Sell | uint256(无损)       |
+| collateral_amount | BLOB(32)   | FPMMBuy/Sell | uint256(无损)       |
+| token_amount      | BLOB(32)   | FPMMBuy/Sell | uint256(无损)       |
+| fee               | BLOB(32)   | FPMMBuy/Sell | uint256(无损)       |
 
 ### fpmm_funding (FPMMFundingAdded / FPMMFundingRemoved)
 
@@ -136,9 +136,9 @@ AMM LP 操作。LP 按池子比例添加/取回 YES+NO。
 | fpmm_addr                | BLOB(20)       | log.address          |                    |
 | funder                   | BLOB(20)       | FundingAdded/Removed |                    |
 | side                     | INTEGER        | 事件类型             | 1=Added, 2=Removed |
-| amounts                  | LIST<BLOB(32)> | amountsAdded/Removed | uint256[]（无损）  |
-| collateral_from_fee_pool | BLOB(32)       | FundingRemoved       | uint256（无损）    |
-| shares                   | BLOB(32)       | sharesMinted/Burnt   | uint256（无损）    |
+| amounts                  | LIST<BLOB(32)> | amountsAdded/Removed | uint256[](无损)    |
+| collateral_from_fee_pool | BLOB(32)       | FundingRemoved       | uint256(无损)      |
+| shares                   | BLOB(32)       | sharesMinted/Burnt   | uint256(无损)      |
 
 ### order_filled (OrderFilled)
 
@@ -153,9 +153,9 @@ AMM LP 操作。LP 按池子比例添加/取回 YES+NO。
 | taker          | BLOB(20)   | OrderFilled |                   |
 | maker_asset_id | BLOB(32)   | OrderFilled | 0 = collateral    |
 | taker_asset_id | BLOB(32)   | OrderFilled | 0 = collateral    |
-| maker_amount   | BLOB(32)   | OrderFilled | uint256（无损）   |
-| taker_amount   | BLOB(32)   | OrderFilled | uint256（无损）   |
-| fee            | BLOB(32)   | OrderFilled | uint256（无损）   |
+| maker_amount   | BLOB(32)   | OrderFilled | uint256(无损)     |
+| taker_amount   | BLOB(32)   | OrderFilled | uint256(无损)     |
+| fee            | BLOB(32)   | OrderFilled | uint256(无损)     |
 
 ### token_map (TokenRegistered)
 
@@ -178,7 +178,7 @@ AMM LP 操作。LP 按池子比例添加/取回 YES+NO。
 | log_index    | INTEGER     | log            |                                 |
 | market_id    | BLOB(32) PK | MarketPrepared |                                 |
 | oracle       | BLOB(20)    | MarketPrepared |                                 |
-| fee_bips     | BLOB(32)    | MarketPrepared | uint256（无损）                 |
+| fee_bips     | BLOB(32)    | MarketPrepared | uint256(无损)                   |
 | data         | BLOB        | MarketPrepared | ABI编码: title, description, id |
 
 ### neg_risk_question (QuestionPrepared)
@@ -190,20 +190,20 @@ AMM LP 操作。LP 按池子比例添加/取回 YES+NO。
 | log_index      | INTEGER     | log              |                                  |
 | market_id      | BLOB(32)    | QuestionPrepared |                                  |
 | question_id    | BLOB(32) PK | QuestionPrepared | keccak256(marketId, questionIdx) |
-| question_index | BLOB(32)    | QuestionPrepared | uint256（无损）                  |
+| question_index | BLOB(32)    | QuestionPrepared | uint256(无损)                    |
 | data           | BLOB        | QuestionPrepared | ABI编码: question, description   |
 
 ### convert (PositionsConverted)
 
-| column       | 类型       | 来源               | 说明                   |
-| ------------ | ---------- | ------------------ | ---------------------- |
-| block_number | BIGINT PK  | log                |                        |
-| tx_hash      | BLOB(32)   | log                |                        |
-| log_index    | INTEGER PK | log                |                        |
-| stakeholder  | BLOB(20)   | PositionsConverted |                        |
-| market_id    | BLOB(32)   | PositionsConverted |                        |
-| index_set    | BLOB(32)   | PositionsConverted | uint256 bitmap（无损） |
-| amount       | BLOB(32)   | PositionsConverted | uint256（无损）        |
+| column       | 类型       | 来源               | 说明                 |
+| ------------ | ---------- | ------------------ | -------------------- |
+| block_number | BIGINT PK  | log                |                      |
+| tx_hash      | BLOB(32)   | log                |                      |
+| log_index    | INTEGER PK | log                |                      |
+| stakeholder  | BLOB(20)   | PositionsConverted |                      |
+| market_id    | BLOB(32)   | PositionsConverted |                      |
+| index_set    | BLOB(32)   | PositionsConverted | uint256 bitmap(无损) |
+| amount       | BLOB(32)   | PositionsConverted | uint256(无损)        |
 
 ### sync_state
 

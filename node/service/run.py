@@ -13,23 +13,23 @@ Dashboard: http://localhost:8800
 
 # ═══════════════════════ Erigon Snapshot 存储结构 ═══════════════════════
 #
-# snapshots/ 目录总计 ~11000 个文件，~4.5TB，分布在 5 个位置：
+# snapshots/ 目录总计 ~11000 个文件,~4.5TB,分布在 5 个位置：
 #
 # 1. snapshots/ (根目录) — 区块链段数据 (~1.7TB)
 #    文件命名: v1.1-{start}-{end}-{type}.seg  +  对应 .idx 索引
 #    type: bodies, headers, transactions, borevents, borspans, borcheckpoints
 #    每个 .seg 都有配套的 .seg.torrent 和 .idx.torrent
 #
-#    分段粒度随区块高度递减（合并策略）:
+#    分段粒度随区块高度递减(合并策略):
 #      - 旧区块: 500k blocks/seg (如 000000-000500)
 #      - 中期:   100k blocks/seg (如 050000-050100)
 #      - 近期:    10k blocks/seg (如 076400-076410)
 #      - 链尖:     1k blocks/seg (如 076476-076477)
-#    borcheckpoints 始终是 100k 粒度，嵌套在 500k 大段内。
+#    borcheckpoints 始终是 100k 粒度,嵌套在 500k 大段内。
 #
 # 2. snapshots/domain/ — 状态数据 (~1.1TB)
 #    accounts, code, storage, commitment 的 KV 存储 (.kv, .bt, .kvei)
-#    数字范围是 "step" 而非 block number，如 0-2048, 2048-3072
+#    数字范围是 "step" 而非 block number,如 0-2048, 2048-3072
 #    还有 rcache (读缓存) 和 commitment (MPT 承诺)
 #
 # 3. snapshots/history/ — 历史状态数据 (~1.4TB)
@@ -48,16 +48,16 @@ Dashboard: http://localhost:8800
 # ── 下载机制 ──
 # Erigon 通过 BitTorrent (OtterSync) 下载 snapshot 文件。
 # 每个预期文件都有对应的 .torrent 元数据文件。
-# 下载中的文件以 .part 后缀保存，完成后去掉后缀。
+# 下载中的文件以 .part 后缀保存,完成后去掉后缀。
 #
 # .part 文件是**稀疏文件** (sparse file):
-#   - os.stat().st_size (apparent size) = 文件的期望总大小（预分配）
+#   - os.stat().st_size (apparent size) = 文件的期望总大小(预分配)
 #   - os.stat().st_blocks * 512        = 实际已写入磁盘的字节数
 #   因此 on_disk / apparent_size 即为该文件的真实下载进度。
 #
-# 重启后 OtterSync 会重新 hash 所有已下载文件做完整性校验，
+# 重启后 OtterSync 会重新 hash 所有已下载文件做完整性校验,
 # 日志中的 data="X% - A/B" 显示的是 **hashing 进度**而非下载进度。
-# hashing 速度约 2.5GB/s，1.7TB 数据大约需要 11 分钟才能跑完。
+# hashing 速度约 2.5GB/s,1.7TB 数据大约需要 11 分钟才能跑完。
 #
 # ═════════════════════════════════════════════════════════════════════════
 
@@ -135,7 +135,7 @@ def parse_frac(s):
 
 
 def parse_log(line):
-    """解析 Erigon 日志行，提取同步状态信息。"""
+    """解析 Erigon 日志行,提取同步状态信息。"""
     global sync_state
     # [1/1 OtterSync] Syncing  file-metadata=X/Y files=A/B data=... time-left=... ...
     if "OtterSync" in line:
@@ -188,7 +188,7 @@ def parse_log(line):
 
 # ═══════════════════════ 快照扫描 ═══════════════════════
 def scan_snapshot_dir(subdir):
-    """扫描单个 snapshot 子目录，统计文件大小和完成度。"""
+    """扫描单个 snapshot 子目录,统计文件大小和完成度。"""
     path = str(SNAP_DIR / subdir) if subdir else str(SNAP_DIR)
     if not os.path.isdir(path):
         return None
@@ -218,7 +218,7 @@ def scan_snapshot_dir(subdir):
 
 
 def scan_snapshot_progress():
-    """扫描 snapshots 目录，利用稀疏文件的 apparent size vs on-disk blocks 计算真实下载进度。"""
+    """扫描 snapshots 目录,利用稀疏文件的 apparent size vs on-disk blocks 计算真实下载进度。"""
     global snap_cache, snap_cache_time
     now = time.time()
     if now - snap_cache_time < 60 and snap_cache:
@@ -347,7 +347,7 @@ def get_status():
 
 # ═══════════════════════ 进程管理 ═══════════════════════
 def read_stream(stream):
-    """读取进程输出流，记录日志并解析状态。"""
+    """读取进程输出流,记录日志并解析状态。"""
     for raw in iter(stream.readline, b""):
         line = raw.decode("utf-8", errors="replace").rstrip()
         if line:
@@ -399,24 +399,24 @@ def build_erigon_command():
         "--private.api.addr=127.0.0.1:9090",
         "--port=30303",
         "--torrent.port=42069",
-        "--torrent.conns.perfile=50",        # 增加 torrent 并发，快抓快下 segments
+        "--torrent.conns.perfile=50",        # 增加 torrent 并发,快抓快下 segments
         "--torrent.upload.rate=0",           # 不限制上传
-        "--torrent.download.rate=0",         # 不限制下载，快速获取 segments
-        "--batchSize=6g",                    # 执行阶段批量提高（依赖 RAM）
-        "--sync.loop.block.limit=5000",      # 每轮最多处理 2048 个块，快追高度
+        "--torrent.download.rate=0",         # 不限制下载,快速获取 segments
+        "--batchSize=6g",                    # 执行阶段批量提高(依赖 RAM)
+        "--sync.loop.block.limit=5000",      # 每轮最多处理 2048 个块,快追高度
         "--snap.keepblocks=true",            # 保留 snapshot 避免丢数据
         "--snap.state.stop=false",           # 允许 snapshot state 自动生成
-        "--sync.parallel-state-flushing",    # 并行写 state，加速 rebuild
+        "--sync.parallel-state-flushing",    # 并行写 state,加速 rebuild
         "--db.writemap",                     # MDBX 写入映射加速磁盘提交
-        "--db.read.concurrency=512",         # 提高并行读取，加快 replay
-        "--state.cache=16G",                 # RAM 足够的话，加大 state cache
+        "--db.read.concurrency=512",         # 提高并行读取,加快 replay
+        "--state.cache=16G",                 # RAM 足够的话,加大 state cache
         "--sync.loop.throttle=0s",           # 不限制循环延迟
         "--downloader.verify=true",             # 验证并重新下载损坏的快照
     ]
 
 
 def build_clean_env():
-    """构建干净的环境变量（禁用代理，避免 torrent 流量走代理）。"""
+    """构建干净的环境变量(禁用代理,避免 torrent 流量走代理)。"""
     env = os.environ.copy()
     for key in ['http_proxy', 'https_proxy', 'HTTP_PROXY', 'HTTPS_PROXY', 'all_proxy', 'ALL_PROXY']:
         env.pop(key, None)
@@ -441,14 +441,14 @@ def start_erigon_process():
 
 def stop_erigon_process(sig=None, frame=None):
     """停止 Erigon 进程。"""
-    logging.info("收到停止信号，正在关闭 Erigon...")
+    logging.info("收到停止信号,正在关闭 Erigon...")
     if proc and proc.poll() is None:
         proc.terminate()
         try:
             proc.wait(timeout=60)
             logging.info("Erigon 已正常退出")
         except subprocess.TimeoutExpired:
-            logging.warning("Erigon 未在 60 秒内退出，强制终止")
+            logging.warning("Erigon 未在 60 秒内退出,强制终止")
             proc.kill()
             proc.wait()
     sys.exit(0)

@@ -102,7 +102,7 @@ struct FpmmEvent {
   Bytes32 tx_hash;
   int64_t log_index;
   Bytes20 factory;
-  int64_t creation_topics_count; // FixedProductMarketMakerCreation topics长度（2/4）
+  int64_t creation_topics_count; // FixedProductMarketMakerCreation topics长度(2/4)
   std::string creation_layout;   // 按 topics 布局标记: fixed_factory_v1 / deterministic_factory_v1
   Bytes20 creator, fpmm_addr, conditional_tokens, collateral_token;
   std::vector<Bytes32> condition_ids;

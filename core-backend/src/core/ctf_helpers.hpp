@@ -132,7 +132,7 @@ inline void ec_add(const BIGNUM *x1, const BIGNUM *y1, const BIGNUM *x2, const B
   BNPtr s, num, den, inv, tmp;
 
   if (BN_cmp(x1, x2) == 0) {
-    // 这里只会遇到有效点，且 parent != -base，不考虑无穷远点
+    // 这里只会遇到有效点,且 parent != -base,不考虑无穷远点
     BN_mod_add(tmp, y1, y2, P, ctx);
     assert(!BN_is_zero(tmp));
     BN_mod_sqr(num, x1, P, ctx);

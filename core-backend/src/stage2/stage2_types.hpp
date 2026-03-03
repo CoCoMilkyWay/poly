@@ -41,24 +41,24 @@ enum EventType : uint8_t {
 };
 
 enum class ConditionSource : uint8_t {
-  ConditionPrep = 0,      // 直接从ConditionPreparation事件（通用，无法确定协议）
+  ConditionPrep = 0,      // 直接从ConditionPreparation事件(通用,无法确定协议)
   PolymarketTokenReg = 1, // Polymarket Exchange的TokenRegistered
   PolymarketFPMM = 2,     // Polymarket FPMM Factory创建
-  OtherFPMM = 3,          // 其他协议FPMM创建（预留，需要扫描其他Factory才有数据）
-  SplitEvent = 4,         // 从Split事件推断（无法确定协议）
-  TransferInferred = 5,   // 从Transfer事件推断（未知协议，无condition信息）
-  MergeEvent = 6,         // 从Merge事件推断（无法确定协议）
-  RedemptionEvent = 7,    // 从Redemption事件推断（无法确定协议）
+  OtherFPMM = 3,          // 其他协议FPMM创建(预留,需要扫描其他Factory才有数据)
+  SplitEvent = 4,         // 从Split事件推断(无法确定协议)
+  TransferInferred = 5,   // 从Transfer事件推断(未知协议,无condition信息)
+  MergeEvent = 6,         // 从Merge事件推断(无法确定协议)
+  RedemptionEvent = 7,    // 从Redemption事件推断(无法确定协议)
 };
 
 enum class TokenSource : uint8_t {
   PolymarketTokenReg = 0, // Polymarket Exchange的TokenRegistered
   PolymarketFPMM = 1,     // Polymarket FPMM Factory计算
-  OtherFPMM = 2,          // 其他协议FPMM计算（预留，需要扫描其他Factory才有数据）
-  SplitEvent = 3,         // 从Split事件计算（无法确定协议）
-  TransferInferred = 4,   // 从Transfer事件推断（未知协议）
-  MergeEvent = 5,         // 从Merge事件计算（无法确定协议）
-  RedemptionEvent = 6,    // 从Redemption事件计算（无法确定协议）
+  OtherFPMM = 2,          // 其他协议FPMM计算(预留,需要扫描其他Factory才有数据)
+  SplitEvent = 3,         // 从Split事件计算(无法确定协议)
+  TransferInferred = 4,   // 从Transfer事件推断(未知协议)
+  MergeEvent = 5,         // 从Merge事件计算(无法确定协议)
+  RedemptionEvent = 6,    // 从Redemption事件计算(无法确定协议)
 };
 
 enum class Collateral : uint8_t {

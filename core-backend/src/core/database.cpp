@@ -230,7 +230,7 @@ void Database::init_schema() {
     json state = read_state_unlocked();
     if (!state.contains("last_block")) {
       assert(!has_any_feather_partition(data_dir_) &&
-             "state.json 缺少 last_block，但已存在 feather 数据；禁止自动恢复");
+             "state.json 缺少 last_block,但已存在 feather 数据；禁止自动恢复");
       state["last_block"] = -1;
       write_state_unlocked(state);
     }
@@ -357,7 +357,7 @@ const std::string &Database::data_dir() const {
 int64_t Database::get_last_block() {
   std::lock_guard<std::mutex> lock(state_mutex_);
   json state = read_state_unlocked();
-  assert(state.contains("last_block") && "state.json 缺少 last_block，禁止自动恢复");
+  assert(state.contains("last_block") && "state.json 缺少 last_block,禁止自动恢复");
   return state.value("last_block", static_cast<int64_t>(-1));
 }
 

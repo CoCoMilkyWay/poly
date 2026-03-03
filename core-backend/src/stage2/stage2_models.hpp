@@ -220,8 +220,8 @@ struct ConditionTree {
       int64_t total = 0;
       int64_t amm = 0;     // 后来创建了FPMM
       int64_t negrisk = 0; // 负风险市场
-      int64_t orderbook = 0; // 无FPMM，非NegRisk（订单簿）
-      int64_t other = 0;     // TokenReg 兜底未覆盖项（预期=0）
+      int64_t orderbook = 0; // 无FPMM,非NegRisk(订单簿)
+      int64_t other = 0;     // TokenReg 兜底未覆盖项(预期=0)
       struct NegRiskStats {
         int64_t market_count = 0;
         int64_t question_count = 0;
@@ -269,8 +269,8 @@ struct TokenTree {
       int64_t total = 0;
       int64_t amm = 0;     // 后来创建了FPMM
       int64_t negrisk = 0; // 负风险市场
-      int64_t orderbook = 0; // 无FPMM，非NegRisk（订单簿）
-      int64_t other = 0;     // TokenReg 兜底未覆盖项（预期=0）
+      int64_t orderbook = 0; // 无FPMM,非NegRisk(订单簿)
+      int64_t other = 0;     // TokenReg 兜底未覆盖项(预期=0)
     } token_reg;
     struct FpmmOnly {
       int64_t total = 0;
@@ -283,7 +283,7 @@ struct TokenTree {
     int64_t split = 0;             // source=SplitEvent (预期=0)
     int64_t merge = 0;             // source=MergeEvent (预期=0)
     int64_t redemption = 0;        // source=RedemptionEvent (预期=0)
-    int64_t transfer_inferred = 0; // 从Transfer中发现的未知token（无condition信息）
+    int64_t transfer_inferred = 0; // 从Transfer中发现的未知token(无condition信息)
   } other;
 };
 

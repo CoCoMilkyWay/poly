@@ -58,7 +58,7 @@ private:
   std::unordered_map<uint8_t, std::string> collateral_id_to_addr_;
   uint8_t next_collateral_id_ = static_cast<uint8_t>(Collateral::WrappedUSDCe) + 1;
 
-  // 按 TxKey (tx_hash) 索引，统一处理已知和未知 token
+  // 按 TxKey (tx_hash) 索引,统一处理已知和未知 token
   std::unordered_map<TxKey, std::vector<SplitInfo>> tx_split_;
   std::unordered_map<TxKey, std::vector<MergeInfo>> tx_merge_;
   std::unordered_map<TxKey, std::vector<RedemptionInfo>> tx_redemption_;
@@ -185,7 +185,7 @@ private:
         conditions_[idx].outcome_count = outcome_cnt;
         changed = true;
       }
-      // 更新question_id（如果之前没有）
+      // 更新question_id(如果之前没有)
       if (!question_id.empty() && conditions_[idx].question_id.empty()) {
         conditions_[idx].question_id = question_id;
         changed = true;
@@ -387,7 +387,7 @@ private:
     }
 
     // 必须与 FPMMFactory._recordCollectionIDsForAllConditions 一致：
-    // 递归时按 conditionIds 的倒序处理（conditionsLeft-- 后取 conditionIds[conditionsLeft]）。
+    // 递归时按 conditionIds 的倒序处理(conditionsLeft-- 后取 conditionIds[conditionsLeft])。
     std::function<void(int, const std::string &, int)> dfs =
         [&](int cond_pos, const std::string &parent_collection_id, int first_condition_outcome) {
           if (cond_pos < 0) {
@@ -417,7 +417,7 @@ private:
 
   void update_cond_type_stats() {
     // 条件主树：condition 是唯一主事实层。
-    // coverage.raw_* 在 phase1 中按 condition_preparation 行累积，需要跨轮次保留。
+    // coverage.raw_* 在 phase1 中按 condition_preparation 行累积,需要跨轮次保留。
     ConditionTree ct{};
     ct.coverage = progress_.cond_tree.coverage;
     ct.coverage.observed = 0;
@@ -463,7 +463,7 @@ private:
           ct.polymarket.token_reg.orderbook++;
         }
       } else if (has_fpmm) {
-        // 没有 TokenReg 但有 FPMM（早期 Polymarket 或只创建了池子）
+        // 没有 TokenReg 但有 FPMM(早期 Polymarket 或只创建了池子)
         ct.polymarket.total++;
         ct.polymarket.fpmm_poly++;
       } else {
@@ -603,7 +603,7 @@ private:
           tt.polymarket.token_reg.orderbook++;
         }
       } else if (has_fpmm) {
-        // 没有 TokenReg 但有 FPMM（早期 Polymarket 或只创建了池子）
+        // 没有 TokenReg 但有 FPMM(早期 Polymarket 或只创建了池子)
         tt.polymarket.total++;
         tt.polymarket.fpmm_poly.total++;
         auto cit = cond_collateral_.find(info.cond_idx);

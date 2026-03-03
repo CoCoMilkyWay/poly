@@ -43,18 +43,18 @@ polygon链上polymarket协议合约节点本身的实现: /home/chuyin/work/poly
 | OutcomeReported      |                                            |                                                  |                                                       |  neg_risk  |
 
 - **Token 持仓** = Token 协议流水(可追踪) + Token 账户流水(可追踪)
-- **USDC 持仓** = USDC 协议流水(可追踪) + USDC 钱包流水（USDC ERC20 Transfer）(此项目未追踪)
+- **USDC 持仓** = USDC 协议流水(可追踪) + USDC 钱包流水(USDC ERC20 Transfer)(此项目未追踪)
 - **Token 协议流水** = 特殊操作 + 与市场交互
   - 特殊操作 (两个时代通用): Split/Merge/Redemption/Convert (YES+NO双边变动)
   - 订单簿时代: OrderFilled (Taker+Maker, 单边)
   - AMM时代: FPMMBuy/FPMMSell (Taker, 单边) + FPMMFundingAdded/Removed (LP池 Maker, 双边按池子比例)
-- **Token 账户流水**: ERC1155 Transfer（含用户间直接转账）(TransferSingle/TransferBatch)
+- **Token 账户流水**: ERC1155 Transfer(含用户间直接转账)(TransferSingle/TransferBatch)
 - **USDC 协议流水**:
   - 特殊操作 (两个时代通用): Split/Merge/Redemption/Convert (USDC双边变动)
   - 订单簿时代: OrderFilled 中的 USDC 变动
   - AMM时代: FPMMBuy/FPMMSell/FPMMFundingAdded/FPMMFundingRemoved 中的 USDC 变动
-- **USDC 钱包流水**: USDC ERC20 Transfer（充值/提现，未追踪）
-- **成交价 ≠ 市价**: 只有历史成交价，没有实时 bid/ask 报价
+- **USDC 钱包流水**: USDC ERC20 Transfer(充值/提现,未追踪)
+- **成交价 ≠ 市价**: 只有历史成交价,没有实时 bid/ask 报价
 
 **Split/Merge/Convert/Redemption 使用场景**:
 
@@ -71,7 +71,7 @@ polygon链上polymarket协议合约节点本身的实现: /home/chuyin/work/poly
    - 方向性平仓: 当看多方流动性差时, 买看空方后销毁双边, 平仓看多方
 
 3. **Convert(转换)— NegRisk市场进行中**
-   - 操作: M 个选项的 NO tokens → (M-1) USDC（仅限 NegRisk 多选项互斥市场）
+   - 操作: M 个选项的 NO tokens → (M-1) USDC(仅限 NegRisk 多选项互斥市场)
    - 原理: N 个互斥选项的 NO 组合 = "所有选项都不赢" = 不可能, 所以 M 个 NO 的价值是 M-1
    - 套利: 若 M 个 NO tokens 总成本 < (M-1) USDC, 买入后 convert 获利
 
@@ -99,8 +99,8 @@ Stage 3: user_event → PnL (回放计算)
 
 **权限与中心化**:
 
-- 链上协议完全开放，任何人都可以创建prepareCondition和FPMMCreation(协议仍可使用，只是已经被官方自己废弃)
-- 但Polymarket网站只显示官方创建的市场，第三方创建的市场无流动性, 而且不被平台显示
+- 链上协议完全开放,任何人都可以创建prepareCondition和FPMMCreation(协议仍可使用,只是已经被官方自己废弃)
+- 但Polymarket网站只显示官方创建的市场,第三方创建的市场无流动性, 而且不被平台显示
 - 结算权在oracle手中 (conditionId = keccak256(oracle, questionId, outcomeSlotCount))
 - 本质是"协议开放 + 运营中心化"模式
 
@@ -209,16 +209,16 @@ TransferSingle + TransferBatch 覆盖**所有**持仓变化, 不会重合:
 
 **ConditionResolution**
 
-| 字段             | 类型      | indexed | 说明                                                   |
-| ---------------- | --------- | ------- | ------------------------------------------------------ |
-| conditionId      | bytes32   | yes     | 条件 ID                                                |
-| oracle           | address   | yes     | UmaCtfAdapter 地址                                     |
-| questionId       | bytes32   | yes     | 问题 ID                                                |
-| outcomeSlotCount | uint256   | no      | 实际值为 payoutNumerators.length，协议约束 >1 且 <=256 |
-| payoutNumerators | uint256[] | no      | [1,0]=YES赢, [0,1]=NO赢, [1,1]=平局                    |
-| tx_hash          | bytes32   | meta    | log.transactionHash                                    |
-| block_number     | uint64    | meta    | log.blockNumber                                        |
-| log_index        | uint32    | meta    | log.logIndex                                           |
+| 字段             | 类型      | indexed | 说明                                                  |
+| ---------------- | --------- | ------- | ----------------------------------------------------- |
+| conditionId      | bytes32   | yes     | 条件 ID                                               |
+| oracle           | address   | yes     | UmaCtfAdapter 地址                                    |
+| questionId       | bytes32   | yes     | 问题 ID                                               |
+| outcomeSlotCount | uint256   | no      | 实际值为 payoutNumerators.length,协议约束 >1 且 <=256 |
+| payoutNumerators | uint256[] | no      | [1,0]=YES赢, [0,1]=NO赢, [1,1]=平局                   |
+| tx_hash          | bytes32   | meta    | log.transactionHash                                   |
+| block_number     | uint64    | meta    | log.blockNumber                                       |
+| log_index        | uint32    | meta    | log.logIndex                                          |
 
 **PositionSplit**
 
@@ -386,7 +386,7 @@ NegRisk转换: M 个 NO tokens burn → (M-1) Wrapped Collateral (利用互斥�
 
 **FixedProductMarketMakerCreation** (FPMMFactory发出)
 
-数据结构（正式定义）：
+数据结构(正式定义)：
 - `topic0` 一致：`FixedProductMarketMakerCreation`
 - 不同 factory 存在两套 ABI
 
@@ -414,36 +414,36 @@ NegRisk转换: M 个 NO tokens burn → (M-1) Wrapped Collateral (利用互斥�
 
 ### FPMM合约 (动态部署, 每市场一个)
 
-| 事件               | 角色  | 说明                              | 用户Token变动         |
-| ------------------ | ----- | --------------------------------- | --------------------- |
-| FPMMBuy            | Taker | 用户投入USDC，获得token           | 单边 (获得YES或NO)    |
-| FPMMSell           | Taker | 用户卖出token，获得USDC           | 单边 (卖出YES或NO)    |
-| FPMMFundingAdded   | LP    | LP投入USDC，按池子比例添加YES+NO  | 双边 (按池子比例)     |
-| FPMMFundingRemoved | LP    | LP销毁shares，取回YES+NO + 手续费 | 双边 (按池子比例取回) |
+| 事件               | 角色  | 说明                             | 用户Token变动         |
+| ------------------ | ----- | -------------------------------- | --------------------- |
+| FPMMBuy            | Taker | 用户投入USDC,获得token           | 单边 (获得YES或NO)    |
+| FPMMSell           | Taker | 用户卖出token,获得USDC           | 单边 (卖出YES或NO)    |
+| FPMMFundingAdded   | LP    | LP投入USDC,按池子比例添加YES+NO  | 双边 (按池子比例)     |
+| FPMMFundingRemoved | LP    | LP销毁shares,取回YES+NO + 手续费 | 双边 (按池子比例取回) |
 
 fpmm_trade (Taker) + fpmm_funding (LP Maker结算) = 订单簿时代的 order_filled。
 
 **FPMMBuy** (FPMM合约发出)
 
-| 字段                | 类型    | indexed | 说明                                      |
-| ------------------- | ------- | ------- | ----------------------------------------- |
-| fpmm                | address | meta    | log.address (动态部署, 需记录合约地址)    |
-| buyer               | address | yes     | 买家地址                                  |
-| investmentAmount    | uint256 | no      | 投入的USDC数量 (含手续费, 6 decimals)     |
-| feeAmount           | uint256 | no      | 手续费 (6 decimals)                       |
-| outcomeIndex        | uint256 | yes     | 结果槽位索引（由市场的 outcome 排序决定） |
-| outcomeTokensBought | uint256 | no      | 获得的token数量 (6 decimals)              |
+| 字段                | 类型    | indexed | 说明                                    |
+| ------------------- | ------- | ------- | --------------------------------------- |
+| fpmm                | address | meta    | log.address (动态部署, 需记录合约地址)  |
+| buyer               | address | yes     | 买家地址                                |
+| investmentAmount    | uint256 | no      | 投入的USDC数量 (含手续费, 6 decimals)   |
+| feeAmount           | uint256 | no      | 手续费 (6 decimals)                     |
+| outcomeIndex        | uint256 | yes     | 结果槽位索引(由市场的 outcome 排序决定) |
+| outcomeTokensBought | uint256 | no      | 获得的token数量 (6 decimals)            |
 
 **FPMMSell** (FPMM合约发出)
 
-| 字段              | 类型    | indexed | 说明                                      |
-| ----------------- | ------- | ------- | ----------------------------------------- |
-| fpmm              | address | meta    | log.address (动态部署, 需记录合约地址)    |
-| seller            | address | yes     | 卖家地址                                  |
-| returnAmount      | uint256 | no      | 获得的USDC数量 (不含手续费, 6 decimals)   |
-| feeAmount         | uint256 | no      | 手续费 (6 decimals)                       |
-| outcomeIndex      | uint256 | yes     | 结果槽位索引（由市场的 outcome 排序决定） |
-| outcomeTokensSold | uint256 | no      | 卖出的token数量 (6 decimals)              |
+| 字段              | 类型    | indexed | 说明                                    |
+| ----------------- | ------- | ------- | --------------------------------------- |
+| fpmm              | address | meta    | log.address (动态部署, 需记录合约地址)  |
+| seller            | address | yes     | 卖家地址                                |
+| returnAmount      | uint256 | no      | 获得的USDC数量 (不含手续费, 6 decimals) |
+| feeAmount         | uint256 | no      | 手续费 (6 decimals)                     |
+| outcomeIndex      | uint256 | yes     | 结果槽位索引(由市场的 outcome 排序决定) |
+| outcomeTokensSold | uint256 | no      | 卖出的token数量 (6 decimals)            |
 
 **FPMMFundingAdded** (FPMM合约发出)
 

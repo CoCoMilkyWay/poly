@@ -619,7 +619,7 @@ private:
 
     int64_t before_block = 0;
     {
-      // 只在更新状态时持锁，避免 API 读取 status 被整段同步阻塞。
+      // 只在更新状态时持锁,避免 API 读取 status 被整段同步阻塞。
       std::lock_guard<std::mutex> lock(sync_mu_);
       sync_.syncing = true;
       before_block = (cursor_.sort_key < 0) ? 0 : cursor_.sort_key / SORT_KEY_SCALE;
@@ -1130,7 +1130,7 @@ private:
     }
     case EventType::FPMMLPAdd:
       assert(row.amount >= 0);
-      // LP资金流事件：只保留事实行，不修改 token 状态。
+      // LP资金流事件：只保留事实行,不修改 token 状态。
       return 0;
     case EventType::FPMMLPRemove:
       assert(row.amount >= 0);

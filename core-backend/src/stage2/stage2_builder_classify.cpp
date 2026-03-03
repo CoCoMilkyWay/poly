@@ -80,7 +80,7 @@ TransferClass EventBuilder::classify_and_emit(
   }
   int64_t split_price = (known_token && is_usdc_collateral(collateral)) ? (1000000 / outcome_cnt) : 0;
 
-  // Lambda: 匹配 Split/Merge/Redemption 时，已知 token 需要检查 cond_id
+  // Lambda: 匹配 Split/Merge/Redemption 时,已知 token 需要检查 cond_id
   auto cond_matches = [&](const std::string &info_cond_id) {
     return !known_token || *cond_id == info_cond_id;
   };

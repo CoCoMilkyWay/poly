@@ -168,7 +168,7 @@ int main(int argc, char *argv[]) {
 
   auto join_stage = [](const char *name, std::optional<std::thread> &thread) {
     if (!thread.has_value()) {
-      std::cout << "[Main] " << name << " 线程未启动，跳过 join" << std::endl;
+      std::cout << "[Main] " << name << " 线程未启动,跳过 join" << std::endl;
       return;
     }
     std::cout << "[Main] 等待 " << name << " 线程 join..." << std::endl;

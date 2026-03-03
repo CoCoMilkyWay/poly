@@ -105,6 +105,6 @@ if __name__ == "__main__":
     # ---- 改这里 ----
     # lookup_by_slug("will-the-iranian-regime-fall-by-june-30")
     # lookup_by_token("46463242715089624889628251669699043467690195456787426146949493058059414797372")
-    lookup_by_condition("0x9352c559e9648ab4cab236087b64ca85c5b7123a4c7d9d7d4efde4a39c18056f")
+    lookup_by_condition("0xb2eecb8d14e871c5b82a3b037fc5f8b703c218e41aa578c8e870244585b9db78")
     # lookup_by_question("0x94a72cbcb99d9bd213077561715cd2c240fd274d366397dedb9bbb0f50b68a04")
     # lookup_user("0x1514989043233940203f7457cae4542b1bf42624")

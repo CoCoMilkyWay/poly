@@ -2,18 +2,18 @@
 
 #include <cassert>
 #include <cctype>
-#include <cstdint>
 #include <chrono>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include <algorithm>
 #include <boost/beast.hpp>
 #include <boost/beast/http.hpp>
 #include <boost/beast/ssl.hpp>
 #include <openssl/ssl.h>
-#include <algorithm>
 
 namespace stage0 {
 namespace {
@@ -60,6 +60,15 @@ std::string compact_for_log(std::string s, size_t max_len = 480) {
     return s;
   }
   return s.substr(0, max_len) + "...";
+}
+
+std::string normalize_for_log(std::string s) {
+  for (char &c : s) {
+    if (c == '\n' || c == '\r' || c == '\t') {
+      c = ' ';
+    }
+  }
+  return s;
 }
 
 std::string build_gamma_target(std::string base_target, const std::string &condition_hex_lower) {
@@ -510,7 +519,7 @@ FetchSeedOutcome parse_seed_outcome(const std::string &condition_hex_lower, Http
         .detail = "http_error err=" + compact_for_log(out.error) +
                   " target=" + out.target +
                   " status=" + std::to_string(out.status_code) +
-                  " body=" + compact_for_log(out.body),
+                  " body=" + normalize_for_log(out.body),
     };
   }
   if (out.status_code != 200) {
@@ -519,7 +528,7 @@ FetchSeedOutcome parse_seed_outcome(const std::string &condition_hex_lower, Http
         .market = json::object(),
         .detail = "http_non_200 target=" + out.target +
                   " status=" + std::to_string(out.status_code) +
-                  " body=" + compact_for_log(out.body),
+                  " body=" + normalize_for_log(out.body),
     };
   }
   json arr = json::parse(out.body, nullptr, false);
@@ -528,7 +537,7 @@ FetchSeedOutcome parse_seed_outcome(const std::string &condition_hex_lower, Http
         .state = FetchSeedState::kFailed,
         .market = json::object(),
         .detail = "json_parse_failed target=" + out.target +
-                  " body=" + compact_for_log(out.body),
+                  " body=" + normalize_for_log(out.body),
     };
   }
   if (!arr.is_array()) {
@@ -536,7 +545,7 @@ FetchSeedOutcome parse_seed_outcome(const std::string &condition_hex_lower, Http
         .state = FetchSeedState::kFailed,
         .market = json::object(),
         .detail = "json_not_array target=" + out.target +
-                  " body=" + compact_for_log(out.body),
+                  " body=" + normalize_for_log(out.body),
     };
   }
   for (const auto &item : arr) {
