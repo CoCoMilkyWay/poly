@@ -42,7 +42,7 @@ public:
   Status status() const;
 
 private:
-  static constexpr int kWorkerCount = 20;
+  static constexpr int kWorkerCount = 50;
   static constexpr int kSchedulerSleepMs = 5;
   static constexpr int kSchedulerSleepMaxMs = 40;
   static constexpr size_t kEtaWindowSize = 20;

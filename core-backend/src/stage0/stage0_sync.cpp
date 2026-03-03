@@ -104,7 +104,7 @@ void persist_stage0_parsed_market(const std::string &data_dir, const std::string
                                   const json &market) {
   assert(condition_hex_lower.starts_with("0x"));
   const std::string log_dir = ensure_stage0_log_dir(data_dir);
-  std::ofstream f(log_dir + "/" + condition_hex_lower, std::ios::trunc);
+  std::ofstream f(log_dir + "/" + condition_hex_lower + ".json", std::ios::trunc);
   assert(f.is_open());
   f << market.dump(2) << "\n";
   f.flush();

@@ -272,9 +272,9 @@ std::optional<duckdb::date_t> get_opt_date_field(const json &obj, const char *ke
   return duckdb::Date::FromString(*s);
 }
 
-std::optional<std::string> get_opt_blob_field(const json &obj, const char *key, size_t expect_bytes,
-                                              const std::string &condition_hex_lower,
-                                              const json &market_for_log, bool strict_hex = true) {
+std::optional<std::string> get_opt_blob_field_strict(const json &obj, const char *key, size_t expect_bytes,
+                                                     const std::string &condition_hex_lower,
+                                                     const json &market_for_log) {
   auto s = get_opt_string_field(obj, key);
   if (!s.has_value()) {
     return std::nullopt;
@@ -283,10 +283,23 @@ std::optional<std::string> get_opt_blob_field(const json &obj, const char *key, 
     return std::nullopt;
   }
   if (!is_hex_literal(*s)) {
-    if (!strict_hex) {
-      return std::nullopt;
-    }
     blob_parse_fail(condition_hex_lower, key, *s, "invalid_hex_char", market_for_log);
+  }
+  return hex_to_blob_exact(*s, expect_bytes, condition_hex_lower, key, market_for_log);
+}
+
+std::optional<std::string> get_opt_blob_field_relaxed(const json &obj, const char *key, size_t expect_bytes,
+                                                      const std::string &condition_hex_lower,
+                                                      const json &market_for_log) {
+  auto s = get_opt_string_field(obj, key);
+  if (!s.has_value()) {
+    return std::nullopt;
+  }
+  if (s->empty()) {
+    return std::nullopt;
+  }
+  if (!is_hex_literal(*s)) {
+    return std::nullopt;
   }
   return hex_to_blob_exact(*s, expect_bytes, condition_hex_lower, key, market_for_log);
 }
@@ -392,11 +405,11 @@ void StageSync::persist_results_in_txn(duckdb::Appender &ap, const std::vector<F
     const json &m = row.market;
     assert(m.is_object());
 
-    auto market_question_id = get_opt_blob_field(m, "questionID", 32, row.seed.condition_hex_lower, m);
+    auto market_question_id = get_opt_blob_field_strict(m, "questionID", 32, row.seed.condition_hex_lower, m);
     if (market_question_id.has_value()) {
       assert(*market_question_id == row.seed.question_blob);
     }
-    auto market_condition_id = get_opt_blob_field(m, "conditionId", 32, row.seed.condition_hex_lower, m);
+    auto market_condition_id = get_opt_blob_field_strict(m, "conditionId", 32, row.seed.condition_hex_lower, m);
     if (market_condition_id.has_value()) {
       assert(*market_condition_id == row.seed.condition_blob);
     }
@@ -411,9 +424,9 @@ void StageSync::persist_results_in_txn(duckdb::Appender &ap, const std::vector<F
     auto market_image = get_opt_string_field(m, "image");
     auto market_icon = get_opt_string_field(m, "icon");
     auto market_submitted_by =
-        get_opt_blob_field(m, "submitted_by", 20, row.seed.condition_hex_lower, m, false);
+        get_opt_blob_field_relaxed(m, "submitted_by", 20, row.seed.condition_hex_lower, m);
     auto market_resolved_by =
-        get_opt_blob_field(m, "resolvedBy", 20, row.seed.condition_hex_lower, m, false);
+        get_opt_blob_field_relaxed(m, "resolvedBy", 20, row.seed.condition_hex_lower, m);
     auto market_restricted = get_opt_bool_field(m, "restricted");
     bool market_neg_risk = get_bool_field_or(m, "negRisk", false);
     auto market_neg_risk_request_id = get_opt_string_field(m, "negRiskRequestID");
@@ -547,9 +560,9 @@ void StageSync::persist_results_in_txn(duckdb::Appender &ap, const std::vector<F
       assert(r.is_object());
       push_opt_i64(reward_ids, get_opt_i64_field(r, "id"));
       push_opt_blob(reward_condition_ids,
-                    get_opt_blob_field(r, "conditionId", 32, row.seed.condition_hex_lower, m));
+                    get_opt_blob_field_strict(r, "conditionId", 32, row.seed.condition_hex_lower, m));
       push_opt_blob(reward_asset_addresses,
-                    get_opt_blob_field(r, "assetAddress", 20, row.seed.condition_hex_lower, m));
+                    get_opt_blob_field_strict(r, "assetAddress", 20, row.seed.condition_hex_lower, m));
       push_opt_date(reward_start_dates, get_opt_date_field(r, "startDate"));
       push_opt_date(reward_end_dates, get_opt_date_field(r, "endDate"));
     }
