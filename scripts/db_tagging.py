@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Demo: Use BAAI/bge-large-en-v1.5 to tag questions.
+Demo: Use BERTopic to model question topics.
 condition_id | question
 0x000d2622bf2bc49ffe1b9b609440017d09a75fa97be607e713b4c0045cfd1916 | Ansem FriendTech keys >10 ETH by Friday?
 0x0010e9aa3b2a466703a2744a50a5101d11f1eaf1b6a4ebd80a68418ef57f5cf6 | Will Elon Musk visit Gaza in 2023?
@@ -18,22 +18,11 @@ from pathlib import Path
 import duckdb
 import numpy as np
 from sentence_transformers import SentenceTransformer
-from tqdm import tqdm
 
 
-# predefined category labels
-CATEGORY_LABELS = [
-    "Sports and Athletics",
-    "Politics and Elections",
-    "Cryptocurrency and Blockchain",
-    "Finance and Stock Market",
-    "Entertainment and Movies",
-    "Science and Technology",
-    "Weather and Climate",
-    "Gaming and Esports",
-    "World Events and News",
-    "Legal and Court Cases",
-]
+# macro: whether to include description text in embedding input
+INCLUDE_DESCRIPTION = True
+TAG_MD_REL_PATH = "core-backend/src/stage0/TAG.md"
 
 
 def load_stage0_db_path(repo_root: Path) -> Path:
@@ -46,75 +35,97 @@ def load_stage0_db_path(repo_root: Path) -> Path:
     return db_path
 
 
-def _extract_question(market: dict) -> str:
-    question = market.get("question")
-    if question:
-        return str(question)
-    events = market.get("events", [])
-    if events:
-        title = events[0].get("title")
-        if title:
-            return str(title)
-    return "__MISSING__"
+def load_two_level_labels(repo_root: Path) -> list[str]:
+    tag_md = (repo_root / TAG_MD_REL_PATH).resolve()
+    assert tag_md.exists(), f"tag file not found: {tag_md}"
 
+    labels: list[str] = []
+    level1 = ""
+    for raw_line in tag_md.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        if line.startswith("## "):
+            level1 = line[3:].strip()
+            continue
+        if line.startswith("- "):
+            level2 = line[2:].strip()
+            assert level1, f"secondary tag without primary section: {level2}"
+            assert level2, "empty secondary tag in TAG.md"
+            labels.append(f"{level1} - {level2}")
+
+    assert labels, f"no labels parsed from: {tag_md}"
+    return labels
+
+
+def _extract_question_and_desc(market: dict) -> tuple[str, str]:
+    """Extract question and description from market JSON."""
+    question = market.get("question", "")
+    if not question:
+        events = market.get("events", [])
+        if events:
+            question = events[0].get("title", "")
+    question = str(question) if question else "__MISSING__"
+    description = str(market.get("description", ""))
+    return question, description
 
 def cosine_similarity(a: np.ndarray, b: np.ndarray) -> np.ndarray:
     """Compute cosine similarity between vectors a and matrix b."""
     return np.dot(a, b.T) / (np.linalg.norm(a) * np.linalg.norm(b, axis=1))
 
 
-def demo_tagging(db_path: str = "", limit: int = 20) -> None:
+# MODEL_NAME = "BAAI/bge-large-en-v1.5"
+MODEL_NAME = "sentence-transformers/all-mpnet-base-v2"
+QUERY_INSTRUCTION = "Represent this sentence for searching relevant passages: "
+
+
+def demo_tagging(db_path: str = "", include_description: bool = INCLUDE_DESCRIPTION) -> None:
     repo_root = Path(__file__).resolve().parents[1]
     db = Path(db_path).resolve() if db_path else load_stage0_db_path(repo_root)
+    category_labels = load_two_level_labels(repo_root)
 
-    print("Loading model: sentence-transformers/all-mpnet-base-v2 ...")
-    model = SentenceTransformer("sentence-transformers/all-mpnet-base-v2")
+    print(f"Loading model: {MODEL_NAME} ...")
+    model = SentenceTransformer(MODEL_NAME)
 
-    # encode category labels
-    print("Encoding category labels ...")
-    label_embeddings = model.encode(CATEGORY_LABELS, convert_to_numpy=True)
+    # encode category labels (no instruction needed for passages/labels)
+    print(f"Encoding category labels from TAG.md ... total={len(category_labels)}")
+    label_embeddings = model.encode(category_labels, normalize_embeddings=True, convert_to_numpy=True)
 
-    conn = duckdb.connect(str(db), read_only=True)
-    rows = conn.execute(
-        f"""
+    # load questions from database
+    con = duckdb.connect(str(db), read_only=True)
+    total = con.execute("SELECT COUNT(*) FROM pm_condition_static").fetchone()[0]
+    rows = con.execute(
+        """
         SELECT
           lower(hex(condition_id)) AS cid,
           market_json::VARCHAR AS market_json
         FROM pm_condition_static
         ORDER BY cid ASC
-        LIMIT {limit}
         """
     ).fetchall()
+    assert len(rows) == total, "row count mismatch"
 
-    print(f"\ndb: {db}")
-    print(f"tagging {len(rows)} questions\n")
+    print(f"db: {db}")
+    print(f"total_conditions: {total}")
     print("-" * 100)
 
-    questions = []
-    cids = []
-    for cid_hex, market_json in rows:
+    # process each question one by one
+    for i, (cid_hex, market_json) in enumerate(rows):
         market = json.loads(market_json)
-        question = _extract_question(market).replace("\n", " ").strip()
-        questions.append(question)
-        cids.append(cid_hex)
-
-    # batch encode questions
-    print("Encoding questions ...")
-    question_embeddings = model.encode(questions, show_progress_bar=True, convert_to_numpy=True)
-
-    # compute similarities and assign tags
-    print("\nResults:\n")
-    for i, (cid, question, q_emb) in enumerate(zip(cids, questions, question_embeddings)):
+        question, description = _extract_question_and_desc(market)
+        question = question.replace("\n", " ").strip()
+        description = description.replace("\n", " ").strip()
+        text_for_embedding = question
+        if include_description and description:
+            text_for_embedding = f"{question} {description}"
+        query = QUERY_INSTRUCTION + text_for_embedding
+        q_emb = model.encode(query, normalize_embeddings=True, convert_to_numpy=True)
         similarities = cosine_similarity(q_emb, label_embeddings)
         best_idx = np.argmax(similarities)
-        best_label = CATEGORY_LABELS[best_idx]
+        best_label = category_labels[best_idx]
         best_score = similarities[best_idx]
-
-        print(f"[{i+1}] 0x{cid[:16]}...")
-        print(f"    Q: {question[:80]}{'...' if len(question) > 80 else ''}")
-        print(f"    Tag: {best_label} (score: {best_score:.4f})")
-        print()
+        print(f"[{i+1}/{total}] 0x{cid_hex[:16]}... | {best_label} ({best_score:.4f}) | {question[:60]}")
 
 
 if __name__ == "__main__":
-    demo_tagging(limit=20)
+    demo_tagging()
