@@ -1,0 +1,726 @@
+# Entertainment - Entertainment_Music
+# count=723, avg_conf=0.5580
+====================================================================================================
+  71519303  0.4572  Justin & Hailey Bieber divorce in 2025?
+  65087811  0.4577  Lily Phillips has sex with between 1-249 men in a day?
+  65087844  0.4613  Lily Phillips has sex with between 500-749 men in a day?
+  61622473  0.4626  Will Playboi Carti release new album in 2024?
+  52968882  0.4651  Is John McAfee alive?
+  67099879  0.4651  Is John McAfee alive?
+  62792405  0.4696  Will Anne Carson win the Nobel prize in literature?
+  77054771  0.4718  Will Douglas Aibel & Nina Gold (Jay Kelly) be nominated for Achievement in Casti
+  47979288  0.4721  Will Travis Kelce and Taylor Swift break up by Nov 1?
+  65087861  0.4748  Lily Phillips has sex with between 750-999 men in a day?
+  65087873  0.4758  Lily Phillips has sex with 1000+ men in a day?
+  58285601  0.4764  Will Taylor Swift and Travis Kelce break up before July?
+  51014641  0.4809  Will Taylor Swift and Travis Kelce break up by March 1?
+  73918044  0.4823  Is Jeffrey Epstein alive?
+  70671172  0.4824  Will 'Fatal' win Crunchyroll's Best Anime Song Award for 2025?
+  70059410  0.4838  Will Frank Ocean release an album in 2025?
+   5662457  0.4840  Will Drake release a new studio album before the end of 2020?
+  68402846  0.4841  Will Quinten Tarantino be named in Epstein files?
+  77467219  0.4842  Will Frank Ocean release a new song before 2026?
+  77423675  0.4844  Will Harry Styles release an album in 2025?
+   5239738  0.4897  Will Kim Kardashian and Kanye West divorce before Jan 1, 2021?
+  47977875  0.4919  Travis Kelce and Taylor Swift seen together again?
+  78941048  0.4919  Will Frank Ocean release a new song in 2026?
+  64727956  0.4923  Will Kendrick Lamar release another album in 2024?
+  70583881  0.4935  Is Kanye queer?
+  72047771  0.4935  Will Jasmine Rice win Britain's Got Talent 2025?
+  47974933  0.4939  Will Travis Kelce and Taylor Swift be seen kissing?
+  62275969  0.4956  Taylor Swift and Travis Kelce break up in 2024?
+  73492885  0.4958  Diddy released by July 4?
+  53326107  0.4959  Will Kanye release 'Vultures' Vol. 1 by Feb 16?
+  74602880  0.4967  Will Drake release an album by August 31?
+  54113443  0.4971  Did P. Diddy have sex with Meek Mill?
+  72515747  0.5006  Will Royal Rhyme win the 2025 Prince of Wales Stakes?
+  51169259  0.5006  Will Kanye release ‘Vultures’ in 2023?
+  51594651  0.5008  Will Kanye release ‘Vultures’ by Jan 31?
+  51062633  0.5011  Taylor Swift engaged by April 1?
+  57728294  0.5013  Darren Waller rap album in June?
+  77141565  0.5017  Will Taylor Swift say "Baby" during Tonight Show on October 6?
+  77517833  0.5018  Will The Life of a Showgirl’s second-week album sales be between 300k and 350k?
+  17705096  0.5018  Will Kanye West’s album DONDA be released by midnight ET, August 9, 2021?
+  67811944  0.5019  Will Danielle Deadwyler win Best Supporting Actress at the 2025 SAG Award for "T
+  75766041  0.5024  Taylor Swift pregnant before marriage?
+  70059505  0.5026  Will Kendrick Lamar release an album in 2025?
+  66746153  0.5027  Will 'Whirlwind' win Best Country Album?
+  75092976  0.5029  Will Taylor Swift release a new original album by August 31?
+  17800543  0.5033  Will Kanye West’s album DONDA be released by midnight ET, August 13, 2021?
+  18316426  0.5034  Which will sell more album units in its first week of release: Kanye’s Donda or 
+  71035728  0.5050  Will Kanye crash the Met Gala?
+  68322551  0.5050  Will Alec Baldwin be named in Epstein files?
+  75123420  0.5053  Will Taylor Swift release “The Life of a Showgirl” after September
+  77387688  0.5056  Will Drake release an album by October 24?
+  77141568  0.5057  Will Taylor Swift say "Wedding" during Tonight Show on October 6?
+  65278016  0.5063  Jay-Z & Beyoncé divorce in 2024?
+   6749445  0.5064  Will Kanye West release a new studio album before 2021?
+  53441310  0.5065  Taylor Swift engaged in 2024?
+  79031468  0.5066  Will La Plena by W Sound be the 2nd most streamed song globally on Spotify for 2
+  77468819  0.5067  Will Rae Huang win the 2026 Los Angeles mayoral election?
+  71352444  0.5067  Rihanna Baby: Boy or Girl?
+  24272224  0.5073  Will Kanye West release 'Donda 2' (or another new album) by 2/22/22?
+  74086288  0.5073  Will Kevin Spacey be named in newly released Epstein files?
+  17911576  0.5076  Will Kanye West’s album DONDA be released by August 20, 2021, 12:15 AM ET?
+  68322512  0.5076  Will Leonardo DiCaprio be named in Epstein files?
+  61121234  0.5077  Will Kamala Harris say "Beyonce" during CNN interview?
+  75123405  0.5079  Will Taylor Swift release “The Life of a Showgirl” before September
+  66150888  0.5083  Jay-Z & Beyoncé divorce in 2025?
+  68322495  0.5085  Will Oprah Winfrey be named in Epstein files?
+  70059420  0.5087  Will Lana Del Rey release an album in 2025?
+  70059393  0.5095  Will Rihanna release an album in 2025?
+  74561513  0.5106  Katy Perry and Justin Trudeau confirmed relationship by August 31?
+  78941048  0.5109  Will Lana Del Rey release a new song in 2026?
+  68324327  0.5111  Will Kevin Spacey be named in Epstein files?
+  17224700  0.5112  Will Kanye West’s album DONDA be released by August 7, 2021?
+  74636889  0.5115  Katy Perry and Justin Trudeau confirmed relationship by October 31?
+  67664434  0.5116  Will Kanye West release an album before July?
+  66146795  0.5117  Selena Gomez married in 2025?
+  54030408  0.5119  Will I'm Just Ken win the Oscar for Best Original Song?
+  74602889  0.5128  Will Drake release an album by August 15?
+  77141568  0.5129  Will Taylor Swift say "Tour" 2+ times during Tonight Show on October 6?
+  78941049  0.5131  Will Kendrick Lamar release a new song in 2026?
+  66146826  0.5132  Hailey Bieber pregnant in 2025?
+  78941049  0.5135  Will Charli XCX release a new song in 2026?
+  66746117  0.5138  Will 'Alligator Bites Never Heal' win Best Rap Album?
+  75946478  0.5139  Will a Sabrina Carpenter song reach #1 again this year?
+  72322114  0.5139  Will BLɅϽKPIИK release an album before 2026?
+  78941048  0.5140  Will SZA release a new song in 2026?
+  79031615  0.5140  Will La Plena by W Sound be the 3rd most streamed song globally on Spotify for 2
+  51593111  0.5141  Will Kanye release ‘Vultures’ by Jan 12?
+  78941048  0.5142  Will Olivia Rodrigo release a new song in 2026?
+  70059372  0.5145  Will Kanye West release an album in 2025?
+  70059599  0.5147  Will Drake release an album in 2025?
+  59796406  0.5149  Will Taylor Swift endorse Kamala Harris?
+  77468519  0.5150  Will Elaine Hendrix & Alan Bersten win Dancing with the Stars Season 34?
+  74086285  0.5153  Will Bill Gates be named in newly released Epstein files?
+  67306950  0.5154  Will Kendrick Lamar perform "United In Grief" first?
+  24238327  0.5157  Will Candace Jackson-Akiwumi be the next nominee for Supreme Court Justice?
+  66746131  0.5159  Will 'The Death Of Slim Shady (Coup De Grǎce)' win Best Rap Album?
+  76014201  0.5160  Will Taylor Swift release a new original song by September 30?
+  67887601  0.5161  Will Playboi Carti release “I AM MUSIC” by June 1?
+  77467218  0.5162  Will Kendrick Lamar release a new song in 2025?
+  77467218  0.5163  Will Lana Del Rey release a new song in 2025?
+  78941050  0.5164  Will Nicki Minaj release a new song in 2026?
+  67306928  0.5165  Will Kendrick Lamar perform "Like That" first?
+  72047798  0.5168  Will Binta Chetry win Britain's Got Talent 2025?
+  17944001  0.5170  Will Kanye West’s album DONDA be released by September 17, 2021, 12:15 AM ET?
+  78892268  0.5174  Will La Plena by W Sound be the most streamed song globally on Spotify for 2025?
+  77467217  0.5174  Will SZA release a new song in 2025?
+  74603145  0.5175  Will Taylor Swift release an album by December 31?
+  54886755  0.5177  Taylor Swift engaged by May 1?
+  74397283  0.5182  Will Drake's "Which One" debut at #1 in its first week?
+  63436945  0.5182  Will Beyoncé perform at Kamala rally in Houston?
+  77213388  0.5184  Will 'The Fate of Ophelia' be the lowest ranked song from Taylor Swift’s new alb
+  67813278  0.5187  Will Stephen Hawking be named in Epstein files?
+  67306913  0.5189  Will Kendrick Lamar perform "Not Like Us" first?
+  73220153  0.5189  Will Billie Eilish perform during the Super Bowl LX halftime show?
+  77212373  0.5191  Will I'm The Problem by Morgan Wallen be the top Spotify album for 2025?
+  77467218  0.5191  Will Nicki Minaj release a new song in 2025?
+  67339094  0.5200  Will Kendrick Lamar perform "Not Like Us"?
+  77467218  0.5201  Will Olivia Rodrigo release a new song in 2025?
+  67339102  0.5202  Will Kendrick Lamar perform "Like That"?
+  77467218  0.5203  Will Charli XCX release a new song in 2025?
+  66975303  0.5203  Will "Like That" by Future and Metro Boomin featuring Kendrick Lamar win Best Ra
+  78941050  0.5204  Will Drake release a new song in 2026?
+  64530901  0.5204  Will 'The Tortured Poets Department' win Album of the Year?
+  67339115  0.5207  Will Kendrick Lamar perform "United In Grief"?
+  78072821  0.5208  Will 'Wicked: For Good – The Soundtrack' debut at No. 1 on the Billboard 200?
+  77423675  0.5209  Will Olivia Rodrigo release an album in 2025?
+  79031500  0.5213  Will The Fate of Ophelia by Taylor Swift be the 2nd most streamed song globally 
+  76335291  0.5220  Will Taylor Swift release a new original song by October 2?
+  77467216  0.5228  Will Drake release a new song in 2025?
+  75249904  0.5232  Will The Life of a Showgirl’s first-week album sales be between 2500000 and 2750
+  77463322  0.5232  Will Let God Sort Em Out (Clipse Pusha T Malice) be nominated for Best Rap Album
+  74086288  0.5236  Will Stephen Hawking be named in newly released Epstein files?
+  77463322  0.5241  Will Lethal (Rico Nasty) be nominated for Best Rap Album at the 68th Annual GRAM
+  75084336  0.5241  Taylor Swift announces new original album by September 7?
+  78715147  0.5242  Will BLɅϽKPIИK release an album by February 28?
+  66746126  0.5244  Will 'Higher' win Best Country Album?
+  75203795  0.5245  Will Taylor Swift release a new original song by August 31?
+  78069312  0.5245  Will Demond Williams Jr. win the 2025–2026 Davey O'Brien Award?
+  78941050  0.5250  Will Taylor Swift release a new song in 2026?
+  67306780  0.5257  Will Kendrick Lamar perform "Euphoria" first?
+  17113647  0.5262  Will Kanye West’s album DONDA be released by July 23?
+  78068975  0.5264  Will Emmett Johnson win the 2025–2026 Doak Walker Award?
+  66746090  0.5267  Will 'Might Delete Later' win Best Rap Album?
+  66746092  0.5271  Will 'Cowboy Carter' win Best Country Album?
+  77213407  0.5272  Will 'Ruin The Friendship' be the lowest ranked song from Taylor Swift’s new alb
+  77216978  0.5272  Will 'CANCELLED!' be the highest ranked song from Taylor Swift’s new album on th
+  67306837  0.5273  Will Kendrick Lamar perform "Squabble Up" first?
+  53439559  0.5275  Taylor Swift pregnant in 2024?
+  77141564  0.5275  Will Taylor Swift say "Adele" during Tonight Show on October 6?
+  78941049  0.5279  Will JAY-Z release a new song in 2026?
+  77212398  0.5281  Will Man's Best Friend by Sabrina Carpenter be the top Spotify album for 2025?
+  23041485  0.5281  Will the top song on Spotify Charts hit 40M global streams for the week ending o
+  74598234  0.5286  Taylor Swift pregnant in 2025?
+  75249908  0.5286  Will The Life of a Showgirl’s first-week album sales be between 2750000 and 3000
+  75249918  0.5288  Will The Life of a Showgirl’s first-week album sales be between 3250000 and 3500
+  78068762  0.5291  Will Jeremiah Smith win the 2025–2026 Biletnikoff Award?
+  75249913  0.5293  Will The Life of a Showgirl’s first-week album sales be between 3000000 and 3250
+  77462440  0.5295  Will Let God Sort Em Out (Clipse Pusha T Malice) win Best Rap Album at the 68th 
+  77463328  0.5299  Will Let God Sort Em Out (Clipse & Pusha T & Malice) be nominated for Album of t
+  79031645  0.5299  Will The Fate of Ophelia by Taylor Swift be the 3rd most streamed song globally 
+  77216945  0.5299  Will 'The Fate of Ophelia' be the highest ranked song from Taylor Swift’s new al
+  73220151  0.5300  Will Taylor Swift perform during the Super Bowl LX halftime show?
+  79031735  0.5302  Will The Fate of Ophelia by Taylor Swift be the #1 song on Spotify this week?
+  77141567  0.5305  Will Taylor Swift say "Travis" or "Kelce" 3+ times during Tonight Show on Octobe
+  78892298  0.5306  Will The Fate of Ophelia by Taylor Swift be the most streamed song globally on S
+  64530816  0.5309  Will 'Not Like Us' win Song of the Year?
+  77463323  0.5312  Will Only Dust Remains (Backxwash) be nominated for Best Rap Album at the 68th A
+  77467217  0.5312  Will JAY-Z release a new song in 2025?
+  77213397  0.5313  Will 'Honey' be the lowest ranked song from Taylor Swift’s new album on the Bill
+  19105427  0.5313  Will the Coldplay and BTS single 'My Universe' debut at  #1 on the Billboard Glo
+  76059602  0.5313  Will Prince Andrew be named in the Epstein survivors' list?
+  77141569  0.5314  Will Taylor Swift say "Chiefs" 2+ times during Tonight Show on October 6?
+  79031515  0.5315  Will Soda Pop by Saja Boys be the 2nd most streamed song globally on Spotify for
+  77213434  0.5316  Will 'Wi$h Li$t' be the lowest ranked song from Taylor Swift’s new album on the 
+  57730369  0.5318  Eminem's "Houdini" debuts #1 on Billboard hot 100?
+  68412759  0.5320  Will "Mi Camino" win Best Original Song at the 2025 Oscars?
+  76335289  0.5322  Will Taylor Swift mention Travis Kelce on her new album?
+  77462465  0.5324  Will Only Dust Remains (Backxwash) win Best Rap Album at the 68th Annual GRAMMY 
+  78941049  0.5326  Will Kanye West release a new song in 2026?
+  53564729  0.5327  Kanye's 'Vultures 1' back on Apple Music before April?
+  66746103  0.5327  Will 'F-1 Trillion' win Best Country Album?
+  75249922  0.5328  Will The Life of a Showgirl’s first-week album sales be between 3500000 and 3750
+  67339040  0.5331  Will Kendrick Lamar perform "Euphoria"?
+  56437522  0.5332  21 Savage drops music in May?
+  77213424  0.5333  Will 'Father Figure' be the lowest ranked song from Taylor Swift’s new album on 
+  75123410  0.5334  Will Taylor Swift release “The Life of a Showgirl” between September 1-15
+  67307120  0.5335  Will Kendrick Lamar perform "Hey Now" first?
+  67339062  0.5341  Will Kendrick Lamar perform "Squabble Up"?
+  77467216  0.5342  Will Kanye West release a new song in 2025?
+  77463331  0.5348  Will Man's Best Friend (Sabrina Carpenter) be nominated for Album of the Year at
+  67307110  0.5349  Will Kendrick Lamar perform "Hillpower" first?
+  70671162  0.5350  Will 'Bling-Bang-Bang-Born' win Crunchyroll's Best Anime Song Award for 2025?
+  67339026  0.5352  Will Kendrick Lamar perform "Hey Now"?
+  79031660  0.5352  Will Soda Pop by Saja Boys be the 3rd most streamed song globally on Spotify for
+  77213416  0.5358  Will 'Eldest Daughter' be the lowest ranked song from Taylor Swift’s new album o
+  67307072  0.5359  Will Kendrick Lamar perform "Family Ties" first?
+  75249926  0.5361  Will The Life of a Showgirl’s first-week album sales be between 3750000 and 4000
+  76059603  0.5363  Will Kevin Spacey be named in the Epstein survivors' list?
+  73220148  0.5365  Will Ed Sheeran perform during the Super Bowl LX halftime show?
+  66746118  0.5366  Will 'Deeper Well' win Best Country Album?
+  78892313  0.5366  Will Soda Pop by Saja Boys be the most streamed song globally on Spotify for 202
+  77462460  0.5366  Will Lethal (Rico Nasty) win Best Rap Album at the 68th Annual GRAMMY Awards?
+  64804504  0.5366  Will Bad Bunny be the top Spotify artist for 2024?
+  55977631  0.5368  Taylor Swift #1 album for 10 or more weeks?
+  78031370  0.5368  Will Lose Control by Teddy Swims be the #1 searched song on Google this year?
+  64530892  0.5368  Will 'The Rise and Fall of a Midwest Princess' win Album of the Year?
+  75125078  0.5374  Will Taylor Swift say "Album" 5+ times during Travis Kelce's podcast on Wednesda
+  77141571  0.5377  Will Taylor Swift say "Spotify" during Tonight Show on October 6?
+  55977585  0.5377  Taylor Swift #1 album for 6 weeks?
+  66975287  0.5379  Will "Not Like Us" by Kendrick Lamar win Best Rap Song?
+  77213429  0.5380  Will 'Actually Romantic' be the lowest ranked song from Taylor Swift’s new album
+  78068793  0.5381  Will Eric McAlister win the 2025–2026 Biletnikoff Award?
+  76059600  0.5383  Will Oprah Winfrey be named in the Epstein survivors' list?
+  74808860  0.5383  Will Bad Bunny be the top Spotify artist for 2025?
+  65087658  0.5383  Lily Phillips breaks record for sex in one day?
+  77722379  0.5383  Will Val Kilmer be ranked #1 globally in Google’s Year in Search 2025 Passings?
+  77212416  0.5384  Will Hurry Up Tomorrow by The Weeknd be the top Spotify album for 2025?
+  66985578  0.5384  Will Jay-Z perform during Super Bowl LIX halftime show?
+  67306791  0.5386  Will Kendrick Lamar perform "Humble" first?
+  77213402  0.5387  Will 'Opalite' be the lowest ranked song from Taylor Swift’s new album on the Bi
+  72515489  0.5388  Will Lead Artist win the 2025 Queen Anne Stakes?
+  75249931  0.5391  Will The Life of a Showgirl’s first-week album sales be 4000000 or more?
+  77216964  0.5393  Will 'Ruin The Friendship' be the highest ranked song from Taylor Swift’s new al
+  73220157  0.5397  Will Green Day perform during the Super Bowl LX halftime show?
+  67307085  0.5397  Will Kendrick Lamar perform "Alright" first?
+  76859731  0.5399  Nothing Ever Happens: Taylor Swift Edition
+  66975304  0.5402  Will "A Bar Song (Tipsy)" by Shaboozey win Best Country Song?
+  77213392  0.5402  Will 'The Life of a Showgirl (feat. Sabrina Carpenter)' be the lowest ranked son
+  77216983  0.5406  Will 'Father Figure' be the highest ranked song from Taylor Swift’s new album on
+  79031458  0.5406  Will Golden by HUNTR/X be the 2nd most streamed song globally on Spotify for 202
+  77462490  0.5407  Will God Does Like Ugly (JID) win Best Rap Album at the 68th Annual GRAMMY Award
+  73220150  0.5408  Will Drake perform during the Super Bowl LX halftime show?
+  67339018  0.5409  Will Kendrick Lamar perform "Hillpower"?
+  73266502  0.5409  Will Jay-Z perform during the Super Bowl LX halftime show?
+  66975313  0.5410  Will "I Am Not Okay" by Jelly Roll win Best Country Song?
+  77216955  0.5410  Will 'Honey' be the highest ranked song from Taylor Swift’s new album on the Bil
+  77463323  0.5413  Will hopefully ! (Loyle Carner) be nominated for Best Rap Album at the 68th Annu
+  77213439  0.5413  Will 'Wood' be the lowest ranked song from Taylor Swift’s new album on the Billb
+  55977428  0.5414  Taylor Swift #1 album for 0 weeks?
+  77212393  0.5415  Will Music by Playboi Carti be the top Spotify album for 2025?
+  77416475  0.5415  Will Drake's next album debut No.1 on Billboard 200?
+  77216992  0.5415  Will 'Wi$h Li$t' be the highest ranked song from Taylor Swift’s new album on the
+  66985585  0.5416  Will Lil Wayne perform during Super Bowl LIX halftime show?
+  76059601  0.5417  Will Bill Gates be named in the Epstein survivors' list?
+  67338983  0.5419  Will Kendrick Lamar perform "Family Ties"?
+  59166317  0.5422  Kanye West retires in July?
+  67306999  0.5424  Will Kendrick Lamar perform "Bitch Don't Kill My Vibe" first?
+  77462858  0.5424  Will Sorry I’m Here for Someone Else (Benson Boone) be nominated for Record of t
+  67338992  0.5425  Will Kendrick Lamar perform "Alright"?
+  66271198  0.5434  Will 'Forbidden Road' win the Golden Globe for Best Original Song?
+  75363442  0.5434  Will Taylor Swift announce a new song today?
+  78895813  0.5435  Will Eminem be the second most streamed Spotify artist for 2025?
+   7883049  0.5436  What rating will theneedledrop give Drake’s "Certified Lover Boy"?
+  77463321  0.5436  Will More Chaos (Ken Carson) be nominated for Best Rap Album at the 68th Annual 
+  77951404  0.5440  Will Taylor Swift rank in Google’s Top 5 Most Searched People of 2025?
+  79031510  0.5440  Will BIRDS OF A FEATHER by Billie Eilish be the 2nd most streamed song globally 
+  77463121  0.5443  Will Man's Best Friend (Sabrina Carpenter) win Album of the Year at the 68th Ann
+  67339046  0.5446  Will Kendrick Lamar perform "Humble"?
+  23603689  0.5448  Who will have a higher net worth on February 20: Mark Zuckerberg or Larry Page?
+  77463329  0.5448  Will Debí Tirar Más Fotos (Bad Bunny) be nominated for Album of the Year at the 
+  77463151  0.5448  Will Let God Sort Em Out (Clipse Pusha T Malice) win Album of the Year at the 68
+  77463325  0.5451  Will Ordinary (Alex Warren) be nominated for Song of the Year at the 68th Annual
+  76059605  0.5451  Will Stephen Hawking be named in the Epstein survivors' list?
+  77428660  0.5452  Will Taylor Swift say "Grammy" during Late Night with Seth Meyers?
+  55977595  0.5454  Taylor Swift #1 album for 7 weeks?
+  78980933  0.5458  Will Elaine Hendrix win Dancing with the Stars season 34?
+  77463186  0.5458  Will MUTT (Leon Thomas) win Album of the Year at the 68th Annual GRAMMY Awards?
+  76278281  0.5461  Mercury vs. Wings
+  67306940  0.5461  Will Kendrick Lamar perform "Swimming Pools" first?
+  72727663  0.5467  Paperboy Prince gets the most first-choice votes in the 2025 New York City Mayor
+  78892258  0.5469  Will Golden by HUNTR/X be the most streamed song globally on Spotify for 2025?
+  77463334  0.5469  Will beabadoobee be nominated for Best New Artist at the 68th Annual GRAMMY Awar
+  75119532  0.5472  Taylor Swift's "The Life of a Showgirl" debuts at #1?
+  77216973  0.5474  Will 'Eldest Daughter' be the highest ranked song from Taylor Swift’s new album 
+  67306895  0.5475  Will Kendrick Lamar perform "A.D.H.D" first?
+  77216950  0.5477  Will 'The Life of a Showgirl (feat. Sabrina Carpenter)' be the highest ranked so
+  66975302  0.5478  Will "Burning" by Tems win Best R&B Song?
+  77463329  0.5479  Will I'm The Problem (Morgan Wallen) be nominated for Album of the Year at the 6
+  66975292  0.5479  Will "The Architect" by Kacey Musgraves win Best Country Song?
+  79031603  0.5479  Will Golden by HUNTR/X be the 3rd most streamed song globally on Spotify for 202
+  77216988  0.5480  Will 'Actually Romantic' be the highest ranked song from Taylor Swift’s new albu
+  77463326  0.5480  Will That's So True (Gracie Abrams) be nominated for Song of the Year at the 68t
+  79031755  0.5480  Will Opalite by Taylor Swift be the #1 song on Spotify this week?
+  66975364  0.5481  Will "Ruined Me" by Muni Long win Best R&B Song?
+  64177548  0.5483  Benny Blanco named sexiest man alive?
+  55977464  0.5485  Taylor Swift #1 album for 2 weeks?
+  73220153  0.5488  Will Adele perform during the Super Bowl LX halftime show?
+  77462480  0.5488  Will hopefully ! (Loyle Carner) win Best Rap Album at the 68th Annual GRAMMY Awa
+  67339132  0.5488  Will Kendrick Lamar perform "Bitch Don't Kill My Vibe"?
+  77216959  0.5490  Will 'Opalite' be the highest ranked song from Taylor Swift’s new album on the B
+  78031345  0.5490  Will The Fate of Ophelia by Taylor Swift be the #1 searched song on Google this 
+  78068960  0.5494  Will Jeremiyah Love win the 2025–2026 Doak Walker Award?
+  77463091  0.5495  Will Debí Tirar Más Fotos (Bad Bunny) win Album of the Year at the 68th Annual G
+  55977564  0.5496  Taylor Swift #1 album for 4 weeks?
+  79030852  0.5498  Will I'm The Problem by Morgan Wallen be the Album of the Year at the 59th annua
+  55977607  0.5499  Taylor Swift #1 album for 8 weeks?
+  77216997  0.5501  Will 'Wood' be the highest ranked song from Taylor Swift’s new album on the Bill
+  79031655  0.5505  Will BIRDS OF A FEATHER by Billie Eilish be the 3rd most streamed song globally 
+  48920524  0.5506  Will Elon Musk be the 2023 TIME Person of the Year?
+  67307032  0.5508  Will Kendrick Lamar perform "m.A.A.d. City" first?
+  51629961  0.5511  “All I want for Christmas is You” #1 on Billboard Hot 100 first week of 2024?
+  78892308  0.5511  Will BIRDS OF A FEATHER by Billie Eilish be the most streamed song globally on S
+  17432642  0.5515  How many album unit sales will Billie Eilish’s “Happier Than Ever” generate in i
+  77462652  0.5515  Will Ordinary (Alex Warren) win Song of the Year at the 68th Annual GRAMMY Award
+  77988740  0.5517  Will Taylor Swift hold 6 or more spots in the Billboard Hot 100 Top 10 for the w
+  54030430  0.5520  Will Wahzhazhe win the Oscar for Best Original Song?
+  55977446  0.5522  Taylor Swift #1 album for 1 week?
+  77462470  0.5522  Will More Chaos (Ken Carson) win Best Rap Album at the 68th Annual GRAMMY Awards
+  55977618  0.5523  Taylor Swift #1 album for 9 weeks?
+  67306848  0.5524  Will Kendrick Lamar perform "King Kunta" first?
+  55977576  0.5524  Taylor Swift #1 album for 5 weeks?
+  66975363  0.5526  Will "Carnival" by Kanye West and Ty Dolla $ign featuring Rich the Kid and Playb
+  76056879  0.5528  Will a Justin Bieber song reach #1 this year?
+  67306821  0.5530  Will Kendrick Lamar perform "N95" first?
+  67339148  0.5530  Will Kendrick Lamar perform "m.A.A.d. City"?
+  56586591  0.5531  Kendrick drops another track by midnight?
+  77213411  0.5532  Will 'Elizabeth Taylor' be the lowest ranked song from Taylor Swift’s new album 
+  67339107  0.5533  Will Kendrick Lamar perform "Swimming Pools"?
+  77463329  0.5534  Will So Close to What (Tate McRae) be nominated for Album of the Year at the 68t
+  64530685  0.5537  Will 'BIRDS OF A FEATHER' win Record of the Year?
+  77463322  0.5539  Will Lotus (Little Simz) be nominated for Best Rap Album at the 68th Annual GRAM
+  76016843  0.5539  Meek Mill gets a16z funding in 2025?
+  77462455  0.5540  Will Lotus (Little Simz) win Best Rap Album at the 68th Annual GRAMMY Awards?
+  79030927  0.5544  Will Kelsea Ballerini win Female Vocalist of the Year at the 59th annual CMA Awa
+  77462857  0.5549  Will DTMF (Bad Bunny) be nominated for Record of the Year at the 68th Annual GRA
+  77462858  0.5550  Will That's So True (Gracie Abrams) be nominated for Record of the Year at the 6
+  77463330  0.5550  Will Wicked: The Soundtrack (Wicked Movie Cast & Cynthia Erivo & Ariana Grande) 
+  78896006  0.5550  Will Eminem be the third most streamed Spotify artist for 2025?
+  77988730  0.5551  Will Taylor Swift hold exactly 4 spots in the Billboard Hot 100 Top 10 for the w
+  48920570  0.5553  Will Sam Altman be the 2023 TIME Person of the Year?
+  48830323  0.5556  Killers of the Flower Moon vs. Taylor Swift
+  67339068  0.5559  Will Kendrick Lamar perform "King Kunta"?
+  69251720  0.5561  GELO’s ‘Can You Please' on Billboard Hot 100 this week?
+  77462276  0.5564  Will Sorry I’m Here for Someone Else (Benson Boone) win Record of the Year at th
+  77463326  0.5566  Will APT (Rosé and Bruno Mars) be nominated for Song of the Year at the 68th Ann
+  66975382  0.5567  Will "Yeah Glo!" by GloRilla win Best Rap Song?
+  67339079  0.5569  Will Kendrick Lamar perform "A.D.H.D"?
+  56689760  0.5569  Kendrick drops new track by Friday?
+  56810540  0.5569  Kendrick drops new track by Friday?
+  77988735  0.5570  Will Taylor Swift hold exactly 5 spots in the Billboard Hot 100 Top 10 for the w
+  66746112  0.5572  Will Doechii win Best New Artist?
+  77463326  0.5573  Will DTMF (Bad Bunny) be nominated for Song of the Year at the 68th Annual GRAMM
+  77462949  0.5574  Will beabadoobee win Best New Artist at the 68th Annual GRAMMY Awards?
+  78031355  0.5576  Will Not Like Us by Kendrick Lamar be the #1 searched song on Google this year?
+  64530866  0.5578  Will 'Djesse Vol. 4' win Album of the Year?
+  77988725  0.5580  Will Taylor Swift hold less than 4 spots in the Billboard Hot 100 Top 10 for the
+  79030842  0.5584  Will Cold Beer & Country Music by Zach Top be the Album of the Year at the 59th 
+  67339051  0.5585  Will Kendrick Lamar perform "N95"?
+  66378816  0.5586  Will Christopher Macchio perform the star spangled banner at Trump's inauguratio
+  77378671  0.5586  Will Pa Salieu (‘Afrikan Alien’) win the 2025 Mercury Prize?
+  62635838  0.5587  KSI's "Thick Of It" debuts on Billboard hot 100?
+  77462858  0.5588  Will APT. (Rosé and Bruno Mars) be nominated for Record of the Year at the 68th 
+  78941049  0.5590  Will Beyoncé release a new song in 2026?
+  74086283  0.5591  Will Jay-Z be named in newly released Epstein files?
+  68324353  0.5594  Will Jay-Z be named in Epstein files?
+  77212406  0.5596  Will The Life of a Showgirl by Taylor Swift be the top Spotify album for 2025?
+  66746101  0.5598  Will Sabrina Carpenter win Best New Artist?
+  67307014  0.5599  Will Kendrick Lamar perform "Money Trees" first?
+  78031385  0.5599  Will Luther by Kendrick Lamar and SZA be the #1 searched song on Google this yea
+  66975387  0.5601  Will "Saturn" by SZA win Best R&B Song?
+  77463322  0.5601  Will Balloonerism (Mac Miller) be nominated for Best Rap Album at the 68th Annua
+  66746185  0.5606  Will Chappell Roan win Best New Artist?
+  77467217  0.5607  Will Beyoncé release a new song in 2025?
+  66271172  0.5609  Will 'Compress / Repress' win the Golden Globe for Best Original Song?
+  79031740  0.5612  Will Golden by HUNTR/X be the #1 song on Spotify this week?
+  78068990  0.5612  Will Bo Jackson win the 2025–2026 Doak Walker Award?
+  77463332  0.5612  Will PinkPantheress be nominated for Best New Artist at the 68th Annual GRAMMY A
+  75735310  0.5616  Sabrina Carpenter holds 3 top 10 spots on Billboard Hot 100 for week of Septembe
+  77212388  0.5616  Will Mayhem by Lady Gaga be the top Spotify album for 2025?
+  77462647  0.5616  Will APT (Rosé and Bruno Mars) win Song of the Year at the 68th Annual GRAMMY Aw
+  77463326  0.5617  Will The Subway (Chappell Roan) be nominated for Song of the Year at the 68th An
+  77462687  0.5617  Will That's So True (Gracie Abrams) win Song of the Year at the 68th Annual GRAM
+  78069170  0.5618  Will DJ Lagway win the 2025–2026 Davey O'Brien Award?
+  64530879  0.5619  Will 'Hit Me Hard and Soft' win Album of the Year?
+  77462627  0.5619  Will DTMF (Bad Bunny) win Song of the Year at the 68th Annual GRAMMY Awards?
+  77463329  0.5620  Will Portrait (Samara Joy) be nominated for Album of the Year at the 68th Annual
+  77212383  0.5622  Will GNX by Kendrick Lamar be the top Spotify album for 2025?
+  60788247  0.5622  Will Beyoncé perform at the DNC?
+  66271321  0.5624  Will 'Mi Camino' win the Golden Globe for Best Original Song?
+  77462856  0.5626  Will Anxiety (Doechii) be nominated for Record of the Year at the 68th Annual GR
+  77216969  0.5628  Will 'Elizabeth Taylor' be the highest ranked song from Taylor Swift’s new album
+  77462225  0.5628  Will DTMF (Bad Bunny) win Record of the Year at the 68th Annual GRAMMY Awards?
+  52784542  0.5629  GRAMMYs 2024: Will ‘Not Strong Enough’ by boygenius win Record of the Year?
+  56437545  0.5631  Young Thug drops music in May?
+  77463321  0.5634  Will Chromakopia (Tyler the Creator) be nominated for Best Rap Album at the 68th
+  64530626  0.5635  Will 'Now and Then' win Record of the Year?
+  77463329  0.5636  Will I Quit (Haim) be nominated for Album of the Year at the 68th Annual GRAMMY 
+  52784761  0.5636  GRAMMYs 2024: Will ‘Did You Know That There’s A Tunnel Under Ocean Blvd’ by Lana
+  77462435  0.5638  Will Chromakopia (Tyler the Creator) win Best Rap Album at the 68th Annual GRAMM
+  78895793  0.5639  Will Drake be the second most streamed Spotify artist for 2025?
+  66975287  0.5640  Will "After Hours" by Kehlani win Best R&B Song?
+  77462450  0.5645  Will Balloonerism (Mac Miller) win Best Rap Album at the 68th Annual GRAMMY Awar
+  77722399  0.5645  Will Ozzy Osbourne be ranked #1 globally in Google’s Year in Search 2025 Passing
+  78895818  0.5646  Will Justin Bieber be the second most streamed Spotify artist for 2025?
+  79031505  0.5646  Will Die With a Smile by Lady Gaga and Bruno Mars be the 2nd most streamed song 
+  66746133  0.5647  Will Khruangbin win Best New Artist?
+  76088562  0.5647  Justin Bieber holds 2 top 10 spots on Billboard Hot 100 for week of September 20
+  55977546  0.5650  Taylor Swift #1 album for 3 weeks?
+  77463131  0.5651  Will So Close to What (Tate McRae) win Album of the Year at the 68th Annual GRAM
+  77462250  0.5653  Will That's So True (Gracie Abrams) win Record of the Year at the 68th Annual GR
+  78895823  0.5654  Will Bruno Mars be the second most streamed Spotify artist for 2025?
+  67307094  0.5654  Will Kendrick Lamar perform "Heart 5" first?
+  66975377  0.5654  Will "Texas Hold 'Em" by Beyoncé win Best Country Song?
+  77463322  0.5656  Will GOLLIWOG (Billy Woods) be nominated for Best Rap Album at the 68th Annual G
+  56579864  0.5657  Drake or Kendrick higher on Billboard Hot 100 this week?
+  64530673  0.5657  Will '360' win Record of the Year?
+  77463166  0.5661  Will I'm The Problem (Morgan Wallen) win Album of the Year at the 68th Annual GR
+  78895803  0.5664  Will Taylor Swift be the second most streamed Spotify artist for 2025?
+  79031038  0.5667  Will Zach Top win Male Vocalist of the Year at the 59th annual CMA Awards?
+  78073900  0.5667  Will Billie Eilish be the #2 searched person on Google this year?
+  78073808  0.5668  Will Taylor Swift be the #2 searched person on Google this year?
+  67339139  0.5668  Will Kendrick Lamar perform "Money Trees"?
+  77463333  0.5671  Will Lola Young be nominated for Best New Artist at the 68th Annual GRAMMY Award
+  78895788  0.5671  Will Billie Eilish be the second most streamed Spotify artist for 2025?
+  78892303  0.5672  Will Die With a Smile by Lady Gaga and Bruno Mars be the most streamed song glob
+  77463321  0.5673  Will GNX (Kendrick Lamar) be nominated for Best Rap Album at the 68th Annual GRA
+  77951402  0.5673  Will Beyoncé rank in Google’s Top 5 Most Searched People of 2025?
+  79030857  0.5673  Will Whirlwind by Lainey Wilson be the Album of the Year at the 59th annual CMA 
+  71025624  0.5675  New Rihanna Album before GTA VI?
+  77463325  0.5679  Will Anxiety (Doechii) be nominated for Song of the Year at the 68th Annual GRAM
+  56437532  0.5679  YoungBoy drops music in May?
+  47744720  0.5681  New Carti music this year?
+  67927970  0.5682  Cejudo vs. Song
+  79031020  0.5683  Will Luke Combs win Male Vocalist of the Year at the 59th annual CMA Awards?
+  79031043  0.5684  Will Morgan Wallen win Male Vocalist of the Year at the 59th annual CMA Awards?
+  77462657  0.5686  Will Anxiety (Doechii) win Song of the Year at the 68th Annual GRAMMY Awards?
+  77462430  0.5686  Will GNX (Kendrick Lamar) win Best Rap Album at the 68th Annual GRAMMY Awards?
+  64530721  0.5689  Will 'A Bar Song (Tipsy)' win Song of the Year?
+  74808887  0.5692  Will Eminem be the top Spotify artist for 2025?
+  77463324  0.5693  Will Luther (Kendrick Lamar and SZA) be nominated for Song of the Year at the 68
+  77462858  0.5698  Will Timeless (The Weeknd feat. Playboi Carti) be nominated for Record of the Ye
+  78895778  0.5699  Will Ariana Grande be the second most streamed Spotify artist for 2025?
+  69702030  0.5699  Spread: Jazz (-6.5)
+  56437556  0.5701  Lil Wayne drops music in May?
+  79031027  0.5701  Will Cody Johnson win Male Vocalist of the Year at the 59th annual CMA Awards?
+  77463330  0.5702  Will Hurry Up Tomorrow (The Weeknd) be nominated for Album of the Year at the 68
+  79030847  0.5702  Will F-1 Trillion by Post Malone be the Album of the Year at the 59th annual CMA
+  64530762  0.5708  Will 'Fortnight' win Song of the Year?
+  78895798  0.5708  Will Ed Sheeran be the second most streamed Spotify artist for 2025?
+  79031650  0.5710  Will Die With a Smile by Lady Gaga and Bruno Mars be the 3rd most streamed song 
+  39143532  0.5710  Will Rihanna's last song of the Super Bowl LVII Halftime Show be "Diamonds"?
+  77462230  0.5710  Will APT (Rosé and Bruno Mars) win Record of the Year at the 68th Annual GRAMMY 
+  77462475  0.5711  Will GOLLIWOG (Billy Woods) win Best Rap Album at the 68th Annual GRAMMY Awards?
+  67339008  0.5714  Will Kendrick Lamar perform "Heart 5"?
+  48404387  0.5716  Will Fantano rate Drake's new album a 7 or higher?
+  79031495  0.5717  Will Abracadabra by Lady Gaga be the 2nd most streamed song globally on Spotify 
+  77462667  0.5717  Will The Subway (Chappell Roan) win Song of the Year at the 68th Annual GRAMMY A
+  77463333  0.5720  Will Sombr be nominated for Best New Artist at the 68th Annual GRAMMY Awards?
+  69702024  0.5720  Spread: Jazz (-2.5)
+  79030937  0.5721  Will Ella Langley win Female Vocalist of the Year at the 59th annual CMA Awards?
+  77463156  0.5722  Will Portrait (Samara Joy) win Album of the Year at the 68th Annual GRAMMY Award
+  77462245  0.5724  Will Anxiety (Doechii) win Record of the Year at the 68th Annual GRAMMY Awards?
+  67307041  0.5727  Will Kendrick Lamar perform "Mona Lisa" first?
+  77462858  0.5727  Will Luther (Kendrick Lamar and SZA) be nominated for Record of the Year at the 
+  64804475  0.5728  Will The Weeknd be the top Spotify artist for 2024?
+  78896011  0.5728  Will Justin Bieber be the third most streamed Spotify artist for 2025?
+  69702040  0.5732  Spread: Jazz (-5.5)
+  67813354  0.5732  Will Michael Jackson be named in Epstein files?
+  39143520  0.5733  Will Rihanna's first song of the Super Bowl LVII Halftime Show be "Don't Stop Th
+  77462622  0.5733  Will Luther (Kendrick Lamar and SZA) win Song of the Year at the 68th Annual GRA
+  56437551  0.5742  Nicki Minaj drops music in May?
+  78895986  0.5743  Will Drake be the third most streamed Spotify artist for 2025?
+  77463331  0.5743  Will American Heart (Benson Boone) be nominated for Album of the Year at the 68t
+  77462869  0.5744  Will Lola Young win Best New Artist at the 68th Annual GRAMMY Awards?
+  56437519  0.5745  The Weekend drops music in May?
+  77378667  0.5748  Will Martin Carthy (‘Transform Me Then Into A Fish’) win the 2025 Mercury Prize?
+  76058215  0.5748  Justin Bieber holds 2 top 10 spots on Billboard Hot 100 for week of September 13
+  61430089  0.5750  Taylor Swift shown 5 or more times?
+  77463324  0.5750  Will Manchild (Sabrina Carpenter) be nominated for Song of the Year at the 68th 
+  77463334  0.5756  Will Role Model be nominated for Best New Artist at the 68th Annual GRAMMY Award
+  79031032  0.5757  Will Chris Stapleton win Male Vocalist of the Year at the 59th annual CMA Awards
+  78896016  0.5759  Will Bruno Mars be the third most streamed Spotify artist for 2025?
+  77463332  0.5761  Will The Marías be nominated for Best New Artist at the 68th Annual GRAMMY Award
+  66746087  0.5763  Will Benson Boone win Best New Artist?
+  77462864  0.5767  Will Sombr win Best New Artist at the 68th Annual GRAMMY Awards?
+  78892293  0.5767  Will Abracadabra by Lady Gaga be the most streamed song globally on Spotify for 
+  77463161  0.5768  Will I Quit (Haim) win Album of the Year at the 68th Annual GRAMMY Awards?
+  77463331  0.5768  Will The Right Person Will Stay (Lana Del Rey) be nominated for Album of the Yea
+  77463321  0.5769  Will Music (Playboi Carti) be nominated for Best Rap Album at the 68th Annual GR
+  77463333  0.5769  Will Leon Thomas be nominated for Best New Artist at the 68th Annual GRAMMY Awar
+  77463335  0.5771  Will Olivia Dean be nominated for Best New Artist at the 68th Annual GRAMMY Awar
+  64530852  0.5772  Will 'BRAT' win Album of the Year?
+  78031400  0.5773  Will Golden by HUNTR/X be the #1 searched song on Google this year?
+  69702010  0.5774  Spread: Jazz (-3.5)
+  79031640  0.5777  Will Abracadabra by Lady Gaga be the 3rd most streamed song globally on Spotify 
+  78895991  0.5777  Will Ed Sheeran be the third most streamed Spotify artist for 2025?
+  66746197  0.5777  Will Shaboozey win Best New Artist?
+  78895981  0.5778  Will Billie Eilish be the third most streamed Spotify artist for 2025?
+  77462214  0.5778  Will Luther (Kendrick Lamar and SZA) win Record of the Year at the 68th Annual G
+  67307130  0.5779  Will Kendrick Lamar perform a song not listed first?
+  79030753  0.5779  Will Cody Johnson win Entertainer of the Year at the 59th annual CMA Awards?
+  77462642  0.5780  Will Manchild (Sabrina Carpenter) win Song of the Year at the 68th Annual GRAMMY
+  78895996  0.5782  Will Taylor Swift be the third most streamed Spotify artist for 2025?
+  77462445  0.5786  Will Music (Playboi Carti) win Best Rap Album at the 68th Annual GRAMMY Awards?
+  74808882  0.5788  Will The Weeknd be the top Spotify artist for 2025?
+  78031380  0.5789  Will Birds of a Feather by Billie Eilish be the #1 searched song on Google this 
+  64530764  0.5790  Will 'New Blue Sun' win Album of the Year?
+  74988275  0.5791  Dream vs Mercury
+  74265568  0.5791  Dream vs Mercury
+  69702028  0.5793  Spread: Jazz (-1.5)
+  77462286  0.5795  Will Manchild (Sabrina Carpenter) win Record of the Year at the 68th Annual GRAM
+  64804492  0.5795  Will Billie Eilish be the top Spotify artist for 2024?
+  64530705  0.5795  Will 'Good Luck, Babe!' win Record of the Year?
+  69702046  0.5797  Spread: Jazz (-7.5)
+  77463334  0.5798  Will Addison Rae be nominated for Best New Artist at the 68th Annual GRAMMY Awar
+  77462255  0.5799  Will Timeless (The Weeknd feat. Playboi Carti) win Record of the Year at the 68t
+  77463325  0.5799  Will Daisies (Justin Bieber) be nominated for Song of the Year at the 68th Annua
+  77462959  0.5800  Will Alex Warren win Best New Artist at the 68th Annual GRAMMY Awards?
+  75219822  0.5800  Taylor Swift holds top ten spots on the Billboard Hot 100 for the week of Octobe
+  77463331  0.5801  Will Who Believes in Angels? (Elton John and Brandi Carlile) be nominated for Al
+  67339153  0.5802  Will Kendrick Lamar perform "Mona Lisa"?
+  77462909  0.5802  Will PinkPantheress win Best New Artist at the 68th Annual GRAMMY Awards?
+  76199555  0.5806  Sparks vs. Mercury
+  64530738  0.5806  Will 'BIRDS OF A FEATHER' win Song of the Year?
+  52784571  0.5806  GRAMMYs 2024: Will ‘Kill Bill’ by SZA win Record of the Year?
+  74808924  0.5808  Will Dua Lipa be the top Spotify artist for 2025?
+  69702012  0.5811  Spread: Jazz (-4.5)
+  74086286  0.5813  Will Michael Jackson be named in newly released Epstein files?
+  56474926  0.5813  Kendrick's "Euphoria" in Billboard top 10 week of May 11?
+  56437509  0.5817  Drake drop music in May?
+  75631397  0.5818  Mercury vs. Sparks
+  79030748  0.5818  Will Luke Combs win Entertainer of the Year at the 59th annual CMA Awards?
+  77462291  0.5818  Will The Subway (Chappell Roan) win Record of the Year at the 68th Annual GRAMMY
+  78895970  0.5821  Will Ariana Grande be the third most streamed Spotify artist for 2025?
+  64046785  0.5821  Will Coldplay be the Billboard #1 pop star of the century?
+  77463171  0.5822  Will American Heart (Benson Boone) win Album of the Year at the 68th Annual GRAM
+  67307054  0.5822  Will Kendrick Lamar perform "All The Stars" first?
+  74808891  0.5824  Will Justin Bieber be the top Spotify artist for 2025?
+  56437497  0.5827  Kendrick drops music in May?
+  67307063  0.5829  Will Kendrick Lamar perform "Collard Greens" first?
+  66975318  0.5831  Will "Asteroids" by Rapsody featuring Hit-Boy win Best Rap Song?
+  77463176  0.5831  Will The Right Person Will Stay (Lana Del Rey) win Album of the Year at the 68th
+  78945193  0.5832  Will Edgar Barrera win Songwriter of the Year, Non-Classical at the 68th annual 
+  64046796  0.5832  Will Rihanna be the Billboard #1 pop star of the century?
+  77378676  0.5833  Will PinkPantheress (‘Fancy That’) win the 2025 Mercury Prize?
+  64530777  0.5836  Will 'Good Luck, Babe!' win Song of the Year?
+  77463106  0.5837  Will Who Believes in Angels? (Elton John and Brandi Carlile) win Album of the Ye
+  77378659  0.5837  Will Jacob Alon (‘In Limerence’) win the 2025 Mercury Prize?
+  39072231  0.5838  Will Rihanna's first song of the Super Bowl LVII Halftime Show be "Diamonds"?
+  74808906  0.5840  Will Coldplay be the top Spotify artist for 2025?
+  65690154  0.5842  Will Dua Lipa be named the Billboard Greatest artist of 2024?
+  79030932  0.5843  Will Miranda Lambert win Female Vocalist of the Year at the 59th annual CMA Awar
+  77462697  0.5845  Will Daisies (Justin Bieber) win Song of the Year at the 68th Annual GRAMMY Awar
+  64530814  0.5846  Will 'Short n' Sweet' win Album of the Year?
+  74808864  0.5847  Will Billie Eilish be the top Spotify artist for 2025?
+  77462929  0.5847  Will Role Model win Best New Artist at the 68th Annual GRAMMY Awards?
+  77462894  0.5849  Will Leon Thomas win Best New Artist at the 68th Annual GRAMMY Awards?
+  74808901  0.5849  Will Kendrick Lamar be the top Spotify artist for 2025?
+  79030758  0.5851  Will Chris Stapleton win Entertainer of the Year at the 59th annual CMA Awards?
+  77463325  0.5851  Will Wildflower (Billie Eilish) be nominated for Song of the Year at the 68th An
+  77462884  0.5854  Will Addison Rae win Best New Artist at the 68th Annual GRAMMY Awards?
+  64530781  0.5854  Will 'Cowboy Carter' win Album of the Year?
+  67306860  0.5854  Will Kendrick Lamar perform "DNA" first?
+  64530751  0.5856  Will 'Die With A Smile' win Song of the Year?
+  72187225  0.5857  Mercury vs Sparks
+  77462857  0.5857  Will DAISIES (Justin Bieber) be nominated for Record of the Year at the 68th Ann
+  71743739  0.5860  Sparks vs Mercury
+  64530825  0.5863  Will 'Please Please Please' win Song of the Year?
+  66746206  0.5867  Will Teddy Swims win Best New Artist?
+  64530662  0.5868  Will 'Espresso' win Record of the Year?
+  77462904  0.5869  Will Olivia Dean win Best New Artist at the 68th Annual GRAMMY Awards?
+  77463111  0.5870  Will Hurry Up Tomorrow (The Weeknd) win Album of the Year at the 68th Annual GRA
+  64804442  0.5872  Will Taylor Swift be the top Spotify artist for 2024?
+  77463329  0.5872  Will Chromakopia (Tyler the Creator) be nominated for Album of the Year at the 6
+  64804517  0.5873  Will Bruno Mars be the top Spotify artist for 2024?
+  22007615  0.5873  Who will be Time's 2021 Person of the Year?
+  74808919  0.5876  Will Rihanna be the top Spotify artist for 2025?
+  67338970  0.5877  Will Kendrick Lamar perform "All The Stars"?
+  77463116  0.5879  Will Chromakopia (Tyler the Creator) win Album of the Year at the 68th Annual GR
+  78031360  0.5882  Will Die With A Smile by Lady Gaga and Bruno Mars be the #1 searched song on Goo
+  78073905  0.5885  Will Beyoncé be the #2 searched person on Google this year?
+  79030763  0.5886  Will Morgan Wallen win Entertainer of the Year at the 59th annual CMA Awards?
+  77463334  0.5887  Will Zach Top be nominated for Best New Artist at the 68th Annual GRAMMY Awards?
+  52780231  0.5890  GRAMMYs 2024: Will "Kill Bill" by SZA win Song of the Year?
+  64046773  0.5891  Will Drake be the Billboard #1 pop star of the century?
+  74808914  0.5891  Will Chris Brown be the top Spotify artist for 2025?
+  77378663  0.5893  Will Joe Webb (‘Hamstrings & Hurricanes’) win the 2025 Mercury Prize?
+  51058725  0.5894  Will Kanye West's song "Everybody" reach #1 on Billboard Hot 100?
+  67306982  0.5894  Will Kendrick Lamar perform "Element" first?
+  79030943  0.5896  Will Megan Moroney win Female Vocalist of the Year at the 59th annual CMA Awards
+  74808896  0.5899  Will Bruno Mars be the top Spotify artist for 2025?
+  77462858  0.5900  Will Wildflower (Billie Eilish) be nominated for Record of the Year at the 68th 
+  74808877  0.5900  Will Taylor Swift be the top Spotify artist for 2025?
+  77462637  0.5901  Will Wildflower (Billie Eilish) win Song of the Year at the 68th Annual GRAMMY A
+  79030837  0.5901  Will Am I Okay? by Megan Moroney be the Album of the Year at the 59th annual CMA
+  77463331  0.5902  Will SWAG (Justin Bieber) be nominated for Album of the Year at the 68th Annual 
+  67339073  0.5905  Will Kendrick Lamar perform "DNA"?
+  77463335  0.5907  Will Rachel Chinouriri be nominated for Best New Artist at the 68th Annual GRAMM
+  77462856  0.5907  Will All My Love (Coldplay) be nominated for Record of the Year at the 68th Annu
+  77378646  0.5908  Will Emma-Jean Thackray (‘Weirdo’) win the 2025 Mercury Prize?
+  52784777  0.5911  GRAMMYs 2024: Will ‘GUTS’ by Olivia Rodrigo win Album of the Year?
+  78862911  0.5912  Will Cirkut win Producer of the Year, Non-Classical at the 68th annual GRAMMY Aw
+  77463324  0.5913  Will All My Love (Coldplay) be nominated for Song of the Year at the 68th Annual
+  67806868  0.5914  Kanye's music pulled from Spotify before April?
+  64046750  0.5917  Will Taylor Swift be the Billboard #1 pop star of the century?
+  77463330  0.5918  Will GNX (Kendrick Lamar) be nominated for Album of the Year at the 68th Annual 
+  74625113  0.5920  Mercury vs Dream
+  77463332  0.5922  Will Sleep Token be nominated for Best New Artist at the 68th Annual GRAMMY Awar
+  73248122  0.5923  Will Taylor Swift be TIME's Person of the Year for 2025?
+  52784750  0.5928  GRAMMYs 2024: Will ’the record’ by boygenius win Album of the Year?
+  74808873  0.5928  Will Ed Sheeran be the top Spotify artist for 2025?
+  67338975  0.5929  Will Kendrick Lamar perform "Collard Greens"?
+  76059600  0.5932  Will Jay-Z be named in the Epstein survivors' list?
+  64804458  0.5934  Will Drake be the top Spotify artist for 2024?
+  77463141  0.5937  Will Wicked: The Soundtrack (Wicked Movie Cast Cynthia Erivo Ariana Grande) win 
+  78862926  0.5937  Will Sounwave win Producer of the Year, Non-Classical at the 68th annual GRAMMY 
+  77463136  0.5937  Will SWAG (Justin Bieber) win Album of the Year at the 68th Annual GRAMMY Awards
+  77463330  0.5939  Will Mayhem (Lady Gaga) be nominated for Album of the Year at the 68th Annual GR
+  52780212  0.5939  GRAMMYs 2024: Will "Anti-Hero" by Taylor Swift win Song of the Year?
+  77463333  0.5940  Will KATSEYE be nominated for Best New Artist at the 68th Annual GRAMMY Awards?
+  66746149  0.5940  Will Raye win Best New Artist?
+  69170449  0.5940  Playboi Carti's "MUSIC" debuts at #1 on Billboard 200?
+  77463096  0.5942  Will GNX (Kendrick Lamar) win Album of the Year at the 68th Annual GRAMMY Awards
+  74808855  0.5943  Will Ariana Grande be the top Spotify artist for 2025?
+  65690071  0.5948  Will Sabrina Carpenter be named the Billboard Greatest artist of 2024?
+  74808868  0.5949  Will Drake be the top Spotify artist for 2025?
+  77670121  0.5951  Will Beyoncé be the #1 searched person on Google this year?
+  52784553  0.5954  GRAMMYs 2024: Will ‘On My Mama’ by Victoria Monet win Record of the Year?
+  77463326  0.5956  Will Am I Okay? (Megan Moroney) be nominated for Song of the Year at the 68th An
+  52784725  0.5957  GRAMMYs 2024: Will ’SOS’ by SZA win Album of the Year?
+  77462240  0.5959  Will DAISIES (Justin Bieber) win Record of the Year at the 68th Annual GRAMMY Aw
+  77463333  0.5961  Will MK.gee be nominated for Best New Artist at the 68th Annual GRAMMY Awards?
+  77462235  0.5961  Will Wildflower (Billie Eilish) win Record of the Year at the 68th Annual GRAMMY
+  64046830  0.5964  Will Mariah Carey be the Billboard #1 pop star of the century?
+  77462934  0.5966  Will Zach Top win Best New Artist at the 68th Annual GRAMMY Awards?
+  56437525  0.5966  Kanye drops music in May?
+  77462919  0.5967  Will KATSEYE win Best New Artist at the 68th Annual GRAMMY Awards?
+  52780240  0.5973  GRAMMYs 2024: Will "A&W" by Lana Del Rey win Song of the Year?
+  77463330  0.5973  Will Virgin (Lorde) be nominated for Album of the Year at the 68th Annual GRAMMY
+  77633077  0.5975  Taylor Swift on top two spots of Billboard Hot 100 for Oct 25th?
+  77463334  0.5975  Will Ravyn Lenae be nominated for Best New Artist at the 68th Annual GRAMMY Awar
+  26516796  0.5980  GRAMMYs 2022: Will Billie Eilish win a Grammy?
+  47741953  0.5982  New Ye music this year?
+  52784561  0.5984  GRAMMYs 2024: Will ‘Vampire’ by Olivia Rodrigo win Record of the Year?
+  74808910  0.5988  Will Ye be the top Spotify artist for 2025?
+  78862921  0.5990  Will Blake Mills win Producer of the Year, Non-Classical at the 68th annual GRAM
+  79030948  0.5992  Will Lainey Wilson win Female Vocalist of the Year at the 59th annual CMA Awards
+  77463333  0.5993  Will Ella Langley be nominated for Best New Artist at the 68th Annual GRAMMY Awa
+  67339124  0.5996  Will Kendrick Lamar perform "Element"?
+  77462857  0.5999  Will BMF (SZA) be nominated for Record of the Year at the 68th Annual GRAMMY Awa
+  52784517  0.6001  GRAMMYs 2024: Will ‘Anti-Hero’ by Taylor Swift win Record of the Year?
+  52780270  0.6002  GRAMMYs 2024: Will "Vampire" by Olivia Rodrigo win Song of the Year?
+  50542433  0.6004  Will Taylor Swift be the 2023 TIME Person of the Year?
+  52785222  0.6005  GRAMMYs 2024: Will Ice Spice win Best New Artist?
+  78036599  0.6006  Taylor Swift on top two spots of Billboard Hot 100 for Nov 1?
+  52780260  0.6008  GRAMMYs 2024: Will "Dance The Night" by Dua Lipa win Song of the Year?
+  77462692  0.6008  Will All My Love (Coldplay) win Song of the Year at the 68th Annual GRAMMY Award
+  77463101  0.6010  Will Mayhem (Lady Gaga) win Album of the Year at the 68th Annual GRAMMY Awards?
+  54273362  0.6014  Kanye "Carnival" #1 Billboard Hot 100 next week?
+  77462939  0.6017  Will Rachel Chinouriri win Best New Artist at the 68th Annual GRAMMY Awards?
+  52785240  0.6025  GRAMMYs 2024: Will Noah Kahan win Best New Artist?
+  77462899  0.6029  Will Ella Langley win Best New Artist at the 68th Annual GRAMMY Awards?
+  77462260  0.6030  Will All My Love (Coldplay) win Record of the Year at the 68th Annual GRAMMY Awa
+  77462662  0.6034  Will BMF (SZA) win Song of the Year at the 68th Annual GRAMMY Awards?
+  78862905  0.6035  Will Dan Auerbach win Producer of the Year, Non-Classical at the 68th annual GRA
+  76059603  0.6040  Will Michael Jackson be named in the Epstein survivors' list?
+  78031365  0.6040  Will Beautiful Things by Benson Boone be the #1 searched song on Google this yea
+  77378681  0.6041  Will Pulp (‘More’) win the 2025 Mercury Prize?
+  77463126  0.6044  Will Virgin (Lorde) win Album of the Year at the 68th Annual GRAMMY Awards?
+  52785250  0.6044  GRAMMYs 2024: Will Gracie Abrams win Best New Artist?
+  52784733  0.6046  GRAMMYs 2024: Will ‘Endless Summer Vacation’ by Miley Cyrus win Album of the Yea
+  77462889  0.6047  Will The Marías win Best New Artist at the 68th Annual GRAMMY Awards?
+  77462914  0.6047  Will MK.gee win Best New Artist at the 68th Annual GRAMMY Awards?
+  54119552  0.6052  Kanye "Carnival" #1 Billboard Hot 100 this week?
+  77463330  0.6053  Will Beethoven Blues (Jon Batiste) be nominated for Album of the Year at the 68t
+  77462944  0.6057  Will Sleep Token win Best New Artist at the 68th Annual GRAMMY Awards?
+  77463334  0.6057  Will MJ Lenderman be nominated for Best New Artist at the 68th Annual GRAMMY Awa
+  52784716  0.6060  GRAMMYs 2024: Will ‘Midnights’ by Taylor Swift win Album of the Year?
+  77463146  0.6071  Will Beethoven Blues (Jon Batiste) win Album of the Year at the 68th Annual GRAM
+  77462677  0.6072  Will Golden (Ejae and Mark Sonnenblick) win Song of the Year at the 68th Annual 
+  77462857  0.6074  Will Never Too Late (Elton John and Brandi Carlile) be nominated for Record of t
+  77462682  0.6074  Will Am I Okay? (Megan Moroney) win Song of the Year at the 68th Annual GRAMMY A
+  77462271  0.6083  Will BMF (SZA) win Record of the Year at the 68th Annual GRAMMY Awards?
+  77463327  0.6084  Will Golden (Ejae and Mark Sonnenblick) be nominated for Song of the Year at the
+  77378686  0.6085  Will Sam Fender (‘People Watching’) win the 2025 Mercury Prize?
+  77462879  0.6086  Will Ravyn Lenae win Best New Artist at the 68th Annual GRAMMY Awards?
+  77462702  0.6092  Will Azizam (Ed Sheeran) win Song of the Year at the 68th Annual GRAMMY Awards?
+  56437539  0.6108  Beyonce drops music in May?
+  64046761  0.6110  Will Beyonce be the Billboard #1 pop star of the century?
+  65690112  0.6122  Will Kendrick Lamar be named the Billboard Greatest artist of 2024?
+  55975025  0.6122  Top 10 songs on Billboard all from Taylor Swift?
+  64804526  0.6123  Will someone else be the top Spotify artist for 2024?
+  52784768  0.6125  GRAMMYs 2024: Will ‘The Age Of Pleasure’ Janelle Monae win Album of the Year?
+  65690130  0.6125  Will Olivia Rodrigo be named the Billboard Greatest artist of 2024?
+  79030768  0.6125  Will Lainey Wilson win Entertainer of the Year at the 59th annual CMA Awards?
+  65690172  0.6126  Will The Weekend be named the Billboard Greatest artist of 2024?
+  52785261  0.6126  GRAMMYs 2024: Will Fred Again win Best New Artist?
+  26516716  0.6131  GRAMMYs 2022: Will "Sour" by Olivia Rodrigo win Album of the Year?
+  77462924  0.6132  Will MJ Lenderman win Best New Artist at the 68th Annual GRAMMY Awards?
+  78945203  0.6133  Will Tobias Jesso Jr. win Songwriter of the Year, Non-Classical at the 68th annu
+  77463335  0.6146  Will Megan Moroney be nominated for Best New Artist at the 68th Annual GRAMMY Aw
+  77463325  0.6148  Will Never Too Late (Elton John and Brandi Carlile) be nominated for Song of the
+  77462857  0.6154  Will Chance (Unknown) be nominated for Record of the Year at the 68th Annual GRA
+  52785232  0.6161  GRAMMYs 2024: Will Victoria Monet win Best New Artist?
+  77462266  0.6167  Will Never Too Late (Elton John and Brandi Carlile) win Record of the Year at th
+  26591062  0.6171  GRAMMYs 2022: Will Lady Gaga's and Tony Bennet's "I Get a Kick Out of You" win R
+  78945208  0.6178  Will Laura Veltz win Songwriter of the Year, Non-Classical at the 68th annual GR
+  52780203  0.6184  GRAMMYs 2024: Will "What Was I Made For?" by Billie Eilish win Song of the Year?
+  77463326  0.6189  Will Abracadabra (Lady Gaga) be nominated for Song of the Year at the 68th Annua
+  77378655  0.6191  Will Fontaines D.C. (‘Romance’) win the 2025 Mercury Prize?
+  52784527  0.6199  GRAMMYs 2024: Will 'What Was I Made For?' by Billie Eilish win Record of the Yea
+  52785268  0.6213  GRAMMYs 2024: Will Jelly Roll win Best New Artist?
+  78945188  0.6217  Will Amy Allen win Songwriter of the Year, Non-Classical at the 68th annual GRAM
+  55975044  0.6219  Top 5 songs on Billboard all from Taylor Swift?
+  77462874  0.6224  Will Megan Moroney win Best New Artist at the 68th Annual GRAMMY Awards?
+  77462672  0.6225  Will Never Too Late (Elton John and Brandi Carlile) win Song of the Year at the 
+  26516585  0.6232  GRAMMYs 2022: Will "drivers license" by Olivia Rodrigo win Song of the Year?
+  54537316  0.6233  Kanye "Carnival" #1 Billboard week of Mar 23?
+  52780220  0.6246  GRAMMYs 2024: Will "Flowers" by Miley Cyrus win Song of the Year?
+  77462632  0.6250  Will Abracadabra (Lady Gaga) win Song of the Year at the 68th Annual GRAMMY Awar
+  26516662  0.6253  GRAMMYs 2022: Will Olivia Rodrigo win Best New Artist?
+  77378650  0.6255  Will FKA twigs (‘EUSEXUA’) win the 2025 Mercury Prize?
+  78862916  0.6257  Will Dijon win Producer of the Year, Non-Classical at the 68th annual GRAMMY Awa
+  77462856  0.6265  Will Abracadabra (Lady Gaga) be nominated for Record of the Year at the 68th Ann
+  52785288  0.6295  GRAMMYs 2024: Will The War And Treaty win Best New Artist?
+  64046848  0.6296  Will another artist be the Billboard #1 pop star of the century?
+  52784511  0.6305  GRAMMYs 2024: Will ‘Flowers’ by Miley Cyrus win Record of the Year?
+  52784741  0.6329  GRAMMYs 2024: Will ‘World Music Radio’ by Jon Batiste win Album of the Year?
+  77462219  0.6337  Will Abracadabra (Lady Gaga) win Record of the Year at the 68th Annual GRAMMY Aw
+  78945198  0.6380  Will Jessie Jo Dillon win Songwriter of the Year, Non-Classical at the 68th annu
+  52784535  0.6393  GRAMMYs 2024: Will ‘Worship’ by Jon Batiste win Record of the Year?
+  65690247  0.6402  Will someone else be named the Billboard Greatest artist of 2024?
+  52780249  0.6420  GRAMMYs 2024: Will "Butterfly" by Jon Batiste win Song of the Year?

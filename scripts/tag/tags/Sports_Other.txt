@@ -1,0 +1,500 @@
+# Sports_Individual - Sports_Other
+# count=497, avg_conf=0.6007
+====================================================================================================
+  62792468  0.4750  Will Michel Houellebecq win the Nobel prize in literature?
+  73183539  0.4791  Madani never leads in any round
+  78295301  0.4814  Will Jia Yueting enter mainland China by June 30?
+  63807713  0.4916  Will Abdi Nageeye win the 2024 Men’s New York City Marathon?
+  72516060  0.5112  Will Sajir win the 2025 Queen Elizabeth II Jubilee Stakes?
+  67903781  0.5168  Southern Indiana vs. Lindenwood
+  72516124  0.5193  Will Wiltshire win the 2025 Queen Elizabeth II Jubilee Stakes?
+  66744955  0.5202  Will Chaz Lanier win the Wooden Award?
+  56539125  0.5203  Will another horse win the 2024 Kentucky Derby?
+  77726635  0.5232  Will Tempted win the 2025 TAB Everest?
+  78714824  0.5234  Will India take second place in Miss Universe 2025?
+  71845032  0.5269  India strike on Pakistan before August?
+  77726675  0.5271  Will Overpass win the 2025 TAB Everest?
+  72515679  0.5290  Will Anmaat win the 2025 Prince of Wales Stakes?
+  78674433  0.5332  Will India win Miss Universe 2025?
+  65327071  0.5333  Will Young Boys beat Stuttgart?
+  66744887  0.5334  Will Cooper Flagg win the Wooden Award?
+  13602810  0.5335  Will there be more than 475K COVID-19 cases in India on any day on or before Apr
+  17673990  0.5336  Who will get more Gold Medals at the 2020 Tokyo Olympics: USA or China?
+  74802231  0.5366  Pakistan strike on India by August 31?
+  74802210  0.5371  India strike on Pakistan by August 31?
+  59285521  0.5378  Japan wins the most medals in 2024 Paris Olympics?
+  77425018  0.5403  Will Mikumu Horikawa finish second at the Baycurrent Classic 2025?
+  59239786  0.5405  Japan wins the most gold medals in 2024 Paris Olympics?
+  77726655  0.5427  Will Joliestar win the 2025 TAB Everest?
+  77424620  0.5434  Will Mikumu Horikawa win the Baycurrent Classic 2025?
+  76472430  0.5461  Will Ja'Kobe Tharp win 110m Hurdles Men at 2025 World Athletics Championships?
+  70708385  0.5462  Will Burnham Square win the 2025 Kentucky Derby?
+  76472470  0.5465  Will Shunsuke Izumiya win 110m Hurdles Men at 2025 World Athletics Championships
+  73127169  0.5469  Will Akshay Bhatia be the first round leader at the 2025 Rocket Classic?
+  60269993  0.5472  Will Emmanuel Wanyonyi (KEN) win gold in 800m M?
+  72977212  0.5473  Khamenei seen in public before July?
+  76472426  0.5474  Will Cordell Tinch win 110m Hurdles Men at 2025 World Athletics Championships?
+  79098338  0.5476  Will Benin win on 2025-11-18?
+  77726690  0.5478  Will Magic Time win the 2025 TAB Everest?
+  60787569  0.5495  Will Ding Liren win the 2024 Sinquefield Cup?
+  59846223  0.5503  Will Paweł Fajdek win Gold in Hammer Throw?
+  57543601  0.5513  Will Santhosh be the biggest winner on Day 4?
+  26536171  0.5518  Cricket: Who will win Pakistan vs. Australia, 2nd ODI, starting March 31?
+  72683839  0.5518  Will Urawa Red Diamonds beat River Plate?
+  76472492  0.5526  Will Jakub Szymanski win 110m Hurdles Men at 2025 World Athletics Championships?
+  78068985  0.5529  Will Bryson Washington win the 2025–2026 Doak Walker Award?
+  68448109  0.5532  USA wins the most gold medals in 2025 Special Olympics?
+  59840556  0.5541  Will Joshua Cheptegei win the most gold medals?
+  77424356  0.5546  Will Min Woo Lee win the Baycurrent Classic 2025?
+  76472439  0.5549  Will Rachid Murutake win 110m Hurdles Men at 2025 World Athletics Championships?
+  76472700  0.5550  Will Tshepo Tshite win 1500m Men at 2025 World Athletics Championships?
+  59840564  0.5553  Will Carlos Alcaraz win the most gold medals?
+  76472452  0.5564  Will Enrique Llopis win 110m Hurdles Men at 2025 World Athletics Championships?
+  71513589  0.5565  Will Nodirbek Abdusattorov win the 2025 Chess.com Classic tournament?
+  77726650  0.5571  Will War Machine win the 2025 TAB Everest?
+  60071600  0.5584  Will Australia win Gold in the Women’s 4x200m Freestyle Relay at the 2024 Summer
+  61235358  0.5584  Will Italy win the most medals in the 2024 Paralympics?
+  73127118  0.5585  Will Keith Mitchell be the first round leader at the 2025 Rocket Classic?
+  59840667  0.5594  Will Ippei Watanabe (JPN) win Gold in Men's 200m Breaststroke?
+  75453373  0.5596  Will Shakhriyar Mamedyarov win the 2025 FIDE Grand Swiss chess tournament?
+  72683834  0.5597  Will River Plate beat Urawa Red Diamonds?
+  73127148  0.5598  Will Min Woo Lee be the first round leader at the 2025 Rocket Classic?
+  68448177  0.5602  Israel wins the most gold medals in 2025 Special Olympics?
+  59809442  0.5604  Will Brendon Smith (AUS) win Gold in Men's 400m Individual Medley?
+  76472896  0.5604  Will Berke Akcam win 400m Men Hurdles at 2025 World Athletics Championships?
+  63046193  0.5605  Will Nodirbek Abdusattorov win the 2024 WR Chess Masters Cup?
+  59809994  0.5606  Will Australia win the 3rd most gold medals?
+  74879154  0.5606  Will Nodirbek Abdusattorov win the Sinquefield Cup 2025 chess tournament?
+  60074152  0.5607  Will Busenaz Surmeneli (TUR) win Gold in Women’s 66kg Boxing at the 2024 Summer 
+  76809533  0.5611  Will Wolverhampton win on 2025-09-23?
+  75982188  0.5614  Will Lebanon win on 2025-09-08?
+  30114495  0.5617  Cricket: Who will win Sri Lanka vs. Australia, 1st Test WTC?
+  39261254  0.5621  Will Nodirbek Abdusattorov win the WR Chess Masters?
+  58360757  0.5624  Will Afghanistan win the ICC T20 Cricket World Cup?
+  74800295  0.5624  Will Southern Brave win The Hundred Men's Competition 2025?
+  78554706  0.5625  Will 'Wuthering Waves' win Game of the Year in the 2025 Steam Awards?
+  76473029  0.5630  Will Thobias Montler win Long Jump Men at 2025 World Athletics Championships?
+  78022257  0.5630  Will the Washington Wizards win more than 20.5 regular season games in 2025–26?
+  34223208  0.5634  Cricket: Who will win Australia vs. England, 2nd T20I, starting on October 12?
+  75986943  0.5635  Will Algeria win on 2025-09-08?
+  77941791  0.5636  Will Shōnan Bellmāre win on 2025-10-26?
+  75986593  0.5638  Will Algeria win on 2025-09-04?
+  65415922  0.5641  Mystery drones shot down by Sunday?
+  76472991  0.5655  Will Carey McLeod win Long Jump Men at 2025 World Athletics Championships?
+  65842402  0.5655  Will Bu Xiangzhi win the 2024 World Blitz Championship?
+  61235782  0.5658  Will the Netherlands win the most gold medals at the 2024 Paralympics?
+  28013327  0.5658  Will Maryna Viazovska win the 2022 Fields Medal?
+  71513577  0.5660  Will Ian Nepomniachtchi win the 2025 Chess.com Classic tournament?
+  76472443  0.5660  Will Dylad Beard win 110m Hurdles Men at 2025 World Athletics Championships?
+  60113681  0.5660  Will Lin Yu-Ting (TPE) win Gold in Women’s 57kg Boxing at the 2024 Summer Olympi
+  56538879  0.5663  Will Just a Touch win the 2024 Kentucky Derby?
+  76472879  0.5667  Will Matic Ian Gucek win 400m Men Hurdles at 2025 World Athletics Championships?
+  15640967  0.5669  Will Surojit Chatterjee or Tekin Salimi win in their CryptoChamps Semifinals che
+  68728663  0.5672  Will Alexander Isak win the 2025 Ballon d'Or?
+  76473000  0.5672  Will Anvar Anvarov win Long Jump Men at 2025 World Athletics Championships?
+  70708469  0.5673  Will Coal Battle win the 2025 Kentucky Derby?
+  76473005  0.5678  Will Bozhidar Saraboyukov win Long Jump Men at 2025 World Athletics Championship
+  59846251  0.5679  Will Eivind Henriksen win Gold in Hammer Throw?
+  77774060  0.5683  Will Anirban Lahiri win the 2025 DP World India Championship?
+  77355202  0.5686  Will Algeria win on 2025-10-09?
+  76473043  0.5691  Will Simon Batz win Long Jump Men at 2025 World Athletics Championships?
+  78329466  0.5692  Will Donkey Kong Bananza win Game of the Year at the 2025 Game Awards?
+  26609604  0.5694  Cricket: Who will win Pakistan vs. Australia, 3rd ODI?
+  78336138  0.5695  Washington and Lee Generals vs. James Madison Dukes
+  63488351  0.5697  Will there be 52 or more combined points scored?
+  61790902  0.5697  Will there be 52 or more combined points scored?
+  63208184  0.5697  Will there be 52 or more combined points scored?
+  62067075  0.5697  Will there be 52 or more combined points scored?
+  63488353  0.5697  Will there be 52 or more combined points scored?
+  63488616  0.5697  Will there be 52 or more combined points scored?
+  59846230  0.5697  Will Bence Halász win Gold in Hammer Throw?
+  59845449  0.5705  Will another athlete win Gold in 110m Hurdles?
+  76472862  0.5710  Will Emil Agyekum win 400m Men Hurdles at 2025 World Athletics Championships?
+  59285556  0.5711  France wins the most medals in 2024 Paris Olympics?
+  77354781  0.5713  Will Wales win on 2025-10-13?
+  78372887  0.5713  Will Praggnanandhaa R. win the 2025–2026 Speed Chess Championship?
+  77935520  0.5715  Will Denmark win on 2025-11-15?
+  61380795  0.5716  Will Australia win the third most medals in the 2024 Paralympics?
+  63331059  0.5716  Will Ipswich win on 2024-10-26?
+  77773895  0.5716  Will Viktor Hovland win the 2025 DP World India Championship?
+  68159886  0.5721  Will Twente win on 2025-02-20?
+  79038962  0.5722  Will India win?
+  78693387  0.5722  Will India win?
+  77939614  0.5729  Will Barrow AFC win on 2025-11-01?
+  59843391  0.5730  Will Jakub Majerski (POL) win Gold in Men's 100m Butterfly?
+  76472846  0.5732  Will Chris Robinson win 400m Men Hurdles at 2025 World Athletics Championships?
+  76472636  0.5733  Will Jonah Koech win 1500m Men at 2025 World Athletics Championships?
+  59840400  0.5734  Will Qin Haiyang win the most gold medals?
+  76472875  0.5735  Will Assinie WIlson win 400m Men Hurdles at 2025 World Athletics Championships?
+  78761927  0.5736  Will Barrow AFC win on 2025-12-06?
+  77935485  0.5736  Will Wales win on 2025-11-15?
+  59239866  0.5737  Another country wins the most gold medals in 2024 Paris Olympics?
+  76473010  0.5740  Will Heng Shu win Long Jump Men at 2025 World Athletics Championships?
+  61235377  0.5741  Will Australia win the most medals in the 2024 Paralympics?
+  78232922  0.5742  Will Australia win on 2025-11-18?
+  60074164  0.5742  Will Imane Khelif (ALG) win Gold in Women’s 66kg Boxing at the 2024 Summer Olymp
+  76472496  0.5742  Will another person win 110m Hurdles Men at 2025 World Athletics Championships?
+  59844052  0.5743  Will Pieter Coetze (RSA) win Gold in Men's 100m Backstroke?
+  78232702  0.5744  Will Uzbekistan win on 2025-11-14?
+  59809936  0.5746  Will China win the 3rd most gold medals?
+  74920223  0.5748  Will Los Angeles Mad Drops win the 2025 Major League Pickleball Finals?
+  78232727  0.5757  Will Australia win on 2025-11-14?
+  62877940  0.5759  Will Ipswich win on 2024-10-19?
+  76473047  0.5761  Will Jeremiah Davis win Long Jump Men at 2025 World Athletics Championships?
+  76472820  0.5772  Will Rai Benjamin win 400m Men Hurdles at 2025 World Athletics Championships?
+  78237756  0.5774  Will Denmark win on 2025-11-18?
+  59846209  0.5776  Will Wojciech Nowicki win Gold in Hammer Throw?
+  76472884  0.5777  Will Seamus Derbyshire win 400m Men Hurdles at 2025 World Athletics Championship
+  69736145  0.5778  Will Ian Nepomniachtchi win the 2025 Freestyle Chess Grand Slam Paris?
+  17152883  0.5779  Will China win 38 or more Gold Medals at the 2020 Olympics?
+  76472976  0.5784  Will Simon Ehammer win Long Jump Men at 2025 World Athletics Championships?
+  30636295  0.5785  Cricket: Who will win England vs. India, 2nd ODI?
+  68468377  0.5786  Will AZ Alkmaar win on 2025-03-06?
+  74920235  0.5787  Will Utah Black Diamonds win the 2025 Major League Pickleball Finals?
+  67710247  0.5791  Will Ipswich win on 2025-02-22?
+  59808344  0.5794  Will Australia win Gold in Men's 4x100m Freestyle Relay?
+  77427433  0.5795  Will CME self certify a sports contract in 2025?
+  61510491  0.5795  Will Poland win the 2024 Women's Chess Olympiad?
+  77726670  0.5805  Will Jedibeel win the 2025 TAB Everest?
+  77331289  0.5805  Will Uzbekistan win on 2025-10-09?
+  75986460  0.5806  Will Mauritius win on 2025-09-04?
+  71410945  0.5806  Will Ipswich win on 2025-05-25?
+  59285567  0.5808  Another country wins the most medals in 2024 Paris Olympics?
+  78237653  0.5809  Will Wales win on 2025-11-18?
+  74800370  0.5810  Will Bangladesh win the 2025 Asia Cup?
+  77860043  0.5811  Aspinall vs. Gane
+  71513637  0.5812  Will Rameshbabu Praggnanandhaa win the 2025 Chess.com Classic tournament?
+  61380342  0.5812  Will the People’s Republic of China win the third most medals in the 2024 Paraly
+  75982116  0.5813  Will Nepal win on 2025-09-06?
+  70236267  0.5813  Will Ipswich win on 2025-04-26?
+  59840999  0.5814  Will Pieter Coetze (RSA) win Gold in Men's 200m Backstroke?
+  59239804  0.5814  Great Britain wins the most gold medals in 2024 Paris Olympics?
+  56131069  0.5815  Ding Liren plays in 2024 World Chess Championship?
+  66154251  0.5817  Jones-Aspinall date announced before February?
+  75988685  0.5820  Will Denmark win on 2025-09-08?
+  61235348  0.5822  Will the People’s Republic of China win the most medals in the 2024 Paralympics?
+  42464425  0.5822  Will Ian Nepomniachtchi win the 2023 Superbet Chess Classic?
+  74960826  0.5828  Will Los Angeles Mad Drops make the 2025 Major League Pickleball Finals?
+  77773940  0.5830  Will Jacques Kruyswijk win the 2025 DP World India Championship?
+  74920215  0.5831  Will Brooklyn Pickleball Team win the 2025 Major League Pickleball Finals?
+  74920211  0.5832  Will New Jersey 5s win the 2025 Major League Pickleball Finals?
+  25290628  0.5835  Cricket: Who will win New Zealand vs. South Africa, starting on February 24/25?
+  76473020  0.5837  Will Erwan Konate win Long Jump Men at 2025 World Athletics Championships?
+  61235658  0.5838  Will People’s Republic of China win the most gold medals at the 2024 Paralympics
+  76473039  0.5838  Will William Williams win Long Jump Men at 2025 World Athletics Championships?
+  78538629  0.5839  Emory & Henry Wasps vs. Radford Highlanders (W)
+  67773650  0.5839  Shahbazyan vs. Budka
+  59239767  0.5842  China wins the most gold medals in 2024 Paris Olympics?
+  62355002  0.5843  ARI vs. WAS: Will there be 50 or more combined points scored?
+  72576654  0.5843  Will Vietnam win the 2025 International Math Olympiad?
+  75988392  0.5844  Will Denmark win on 2025-09-05?
+  77354391  0.5845  Will Denmark win on 2025-10-09?
+  61510646  0.5846  Will Armenia win the 2024 Women's Chess Olympiad?
+  59285510  0.5847  China wins the most medals in 2024 Paris Olympics?
+  59840372  0.5848  Will Caeleb Dressel win the most gold medals?
+  59843319  0.5850  Will Noe Ponti (SUI) win Gold in Men's 100m Butterfly?
+  70564832  0.5852  Lucknow Super Giants vs. Delhi Capitals
+  60927380  0.5852  Shahbazyan vs. Meerschaert
+  65132237  0.5852  Will Ding Liren win Game 11 of the World Chess Championship?
+  59285537  0.5854  Great Britain wins the most medals in 2024 Paris Olympics?
+  74960824  0.5855  Will Utah Black Diamonds make the 2025 Major League Pickleball Finals?
+  74800273  0.5857  Will Birmingham Phoenix win The Hundred Men's Competition 2025?
+  63046239  0.5858  Will Praggnanandhaa Rameshbabu win the 2024 WR Chess Masters Cup?
+  60269986  0.5861  Will Djamel Sedjati (ALG) win gold in 800m M?
+  26356586  0.5861  Cricket: Who will win Nepal vs. Papua New Guinea, 2nd ODI?
+  68448163  0.5864  Great Britain wins the most gold medals in 2025 Special Olympics?
+  76472981  0.5864  Will Liam Adcock win Long Jump Men at 2025 World Athletics Championships?
+  59840396  0.5865  Will Noe Ponti (SUI) win Gold in Men's 200m Butterfly?
+  75988161  0.5866  Will Wales win on 2025-09-04?
+  78545818  0.5866  Will Beaumont SA win on 2025-11-16?
+  59833855  0.5868  Will Australia win the 3rd most medals?
+  76727956  0.5868  Hangzhou Open: Alexander Bublik vs Yibing Wu
+  75982267  0.5869  Will Nepal win on 2025-09-09?
+  77331218  0.5870  Will Wales win on 2025-10-09?
+  65007393  0.5870  Will Ding Liren win Game 9 of the World Chess Championship?
+  78245232  0.5870  Will Vejle BK win on 2025-11-23?
+  65007309  0.5874  Will Ding Liren win Game 8 of the World Chess Championship?
+  59840536  0.5875  Will Noah Lyles win the most gold medals?
+  65842332  0.5880  Will another person win the 2024 World Blitz Championship?
+  75982297  0.5880  Will Wales win on 2025-09-09?
+  75784936  0.5883  Will Temwa Chawinga win the 2025 Women’s Ballon d’Or?
+  75258274  0.5884  LA Mad Drops vs. Brooklyn Pickleball Team
+  60391729  0.5887  Will another athelete win gold in the Men’s Marathon?
+  74879160  0.5887  Will Rameshbabu Praggnanandhaa win the Sinquefield Cup 2025 chess tournament?
+  76472995  0.5891  Will Tajay Gayle win Long Jump Men at 2025 World Athletics Championships?
+  77773955  0.5893  Will Dan Bradbury win the 2025 DP World India Championship?
+  59840376  0.5893  Will Krzysztof Chmielewski (POL) win Gold in Men's 200m Butterfly?
+  74800291  0.5895  Will Oval Invincibles win The Hundred Men's Competition 2025?
+  77378196  0.5895  Will Vejle BK win on 2025-10-19?
+  61509731  0.5897  Will Norway win the 2024 Chess Olympiad?
+  78232712  0.5901  Will Egypt win on 2025-11-14?
+  78549461  0.5901  Will Vejle BK win on 2025-11-30?
+  74960825  0.5906  Will New Jersey 5s make the 2025 Major League Pickleball Finals?
+  72576639  0.5907  Will China win the 2025 International Math Olympiad?
+  77378272  0.5908  Will Vejle BK win on 2025-10-26?
+  61511023  0.5908  Will Georgia win the 2024 Women's Chess Olympiad?
+  75808485  0.5909  Will Rameshbabu Praggnanandhaa win the 2025 Grand Chess Tour Finals?
+  61509873  0.5910  Will Poland win the 2024 Chess Olympiad?
+  76472832  0.5910  Will Abderrahman Samba win 400m Men Hurdles at 2025 World Athletics Championship
+  77378380  0.5910  Will Vejle BK win on 2025-11-02?
+  68448154  0.5911  Germany wins the most gold medals in 2025 Special Olympics?
+  74960823  0.5913  Will Brooklyn Pickleball Team make the 2025 Major League Pickleball Finals?
+  63770027  0.5916  Blanchfield vs. Namajunas
+  65089037  0.5917  Will Ding Liren win Game 10 of the World Chess Championship?
+  77640535  0.5918  Will Vejle BK win on 2025-11-09?
+  74879180  0.5919  Will Samuel Sevian win the Sinquefield Cup 2025 chess tournament?
+  78244438  0.5921  Will NEOM SC win on 2025-11-23?
+  65841828  0.5930  Will Alexander Grischuk win the 2024 World Rapid Chess Chamionship?
+  78866218  0.5930  Will Pisa SC win on 2025-11-24?
+  30401685  0.5931  Cricket: Who will win England vs. India, 1st T20I?
+  13033369  0.5939  Will the 2021 Tokyo Olympics take place?
+  74879019  0.5942  Will Rameshbabu Praggnanandhaa qualify for the 2025 Grand Chess Tour Finals?
+  61510534  0.5943  Will Azerbaijan win the 2024 Women's Chess Olympiad?
+  65007152  0.5945  Will Ding Liren win Game 7 of the World Chess Championship?
+  77525364  0.5953  Will Pisa SC win on 2025-10-24?
+  60223638  0.5954  Will Keely Hodgkinson (GBR) win gold in 800m W?
+  60074244  0.5956  Will Any Other Boxer win Gold in Women’s 66kg Boxing at the 2024 Summer Olympics
+  74000882  0.5959  Will Shai Gilgeous-Alexander win the 2025 ESPYS award for Best Athlete - Men's S
+  59837444  0.5962  Will another athlete win Gold in Men's 200m Freestyle?
+  64804991  0.5962  Will Ding Liren win game 4 of the World Chess Championship?
+  78851775  0.5963  Will Vejle BK win on 2025-12-08?
+  59845283  0.5967  Will another athlete win Gold in 400m Hurdles?
+  77639790  0.5970  Will NEOM SC win on 2025-11-08?
+  61235869  0.5974  Will another country win the most gold medals at the 2024 Paralympics?
+  77378119  0.5977  Will NEOM SC win on 2025-10-24?
+  42464433  0.5978  Will Ding Liren win the 2023 Superbet Chess Classic?
+  68448120  0.5980  China wins the most gold medals in 2025 Special Olympics?
+  26774941  0.5984  Cricket: Who will win South Africa vs. Bangladesh, 2nd Test WTC, starting on Apr
+  59833818  0.5996  Will China win the 3rd most medals?
+  61700685  0.5997  Zellhuber vs. Ribovics
+  77635867  0.5997  Will Hertha BSC win on 2025-10-28?
+  69379452  0.5998  Delhi Capitals vs Lucknow Super Giants
+  10107436  0.6000  Will the Tokyo Summer Olympics be cancelled or postponed by May 1, 2021?
+  75725955  0.6001  Will FlyQuest win the BLAST Open London 2025 tournament?
+  68265479  0.6002  George Washington vs. Loyola Chicago
+  59840729  0.6004  Will another athlete win Gold in Men's 200m Breaststroke?
+  78934591  0.6005  Will Qarabağ Ağdam FK win on 2025-11-25?
+  64805042  0.6006  Will Ding Liren win game 5 of the World Chess Championship?
+  78717239  0.6009  Will Hertha BSC win on 2025-12-02?
+  77378021  0.6011  Will NEOM SC win on 2025-10-19?
+  61380882  0.6015  Will another country win the third most medals at the 2024 Paralympics?
+  78232752  0.6018  Will Bangladesh vs. Afghanistan end in a draw?
+  28996440  0.6019  2022 Norway Chess: Will Magnus Carlsen lose any game?
+  70011873  0.6020  Punjab Kings vs. Chennai Super Kings
+  59804748  0.6023  Will another athlete win Gold in Men's 800m Freestyle?
+  61235457  0.6026  Will another country win the most medals in the 2024 Paralympics?
+  59836324  0.6027  Will another athlete win Gold in Men's 400m Freestyle?
+  77940072  0.6031  Will Qarabağ Ağdam FK win on 2025-10-22?
+  59845143  0.6033  Will another athlete win Gold in 200m?
+  72305214  0.6037  Twins vs. Athletics
+  72265000  0.6037  Twins vs. Athletics
+  72345668  0.6037  Twins vs. Athletics
+  72224607  0.6037  Twins vs. Athletics
+  72313455  0.6048  IPL Finals: Will the Punjab Kings score 200+ runs?
+  72313468  0.6052  IPL Finals: Will the Royal Challengers Bengaluru score 200+ runs?
+  79143308  0.6053  Robert Morris Colonials vs. Monmouth Hawks
+  59833719  0.6053  Will another country win the 3rd most gold medals?
+  24852975  0.6054  Beijing 2022 Winter Olympics: Will Russia have any medals stripped for doping?
+  76472854  0.6061  Will Roshawn Clarke win 400m Men Hurdles at 2025 World Athletics Championships?
+  76345432  0.6061  Will Pisa SC win on 2025-09-22?
+  60113832  0.6063  Will Any Other Boxer win Gold in Women’s 57kg Boxing at the 2024 Summer Olympics
+  60270041  0.6064  Will another athlete win gold in 800m M?
+  78232747  0.6080  Will Bangladesh win on 2025-11-13?
+  70686539  0.6083  Chennai Super Kings vs. Punjab Kings
+  59841833  0.6090  Will another athlete win Gold in Men's 50m Freestyle?
+  78545848  0.6092  Will SS Allinges win on 2025-11-16?
+  76473051  0.6095  Will another person win Long Jump Men at 2025 World Athletics Championships?
+  60223702  0.6097  Will another athlete win gold in 800m W?
+  60223584  0.6099  Will any other athlete win gold in 5000m W?
+  75389979  0.6103  Athletics vs. Twins
+  75430601  0.6103  Athletics vs. Twins
+  75349343  0.6103  Athletics vs. Twins
+  66705823  0.6106  Will Viswanathan Anand win the 2025 Freestyle Chess Grand Slam Weissenhaus?
+  23577197  0.6108  Chess: Will Magnus Carlsen lose any regular game in the 2022 Tata Steel Masters?
+  76425316  0.6111  Will Athletic Club win on 2025-09-27?
+  59844135  0.6111  Will another athlete win Gold in Men's 100m Backstroke?
+  61510615  0.6116  Will Germany win the 2024 Women's Chess Olympiad?
+  78940204  0.6128  AI wins IMO gold medal in 2026?
+  78783424  0.6130  Will Athletic Club win on 2025-11-22?
+  69379579  0.6133  Gujarat Titans vs Punjab Kings
+  59841021  0.6133  Will another athlete win Gold in Men's 200m Backstroke?
+  59485755  0.6134  Will another country win Gold in Men's Basketball?
+  70848549  0.6138  Punjab Kings vs. Lucknow Super Giants
+  61510006  0.6140  Will Iran win the 2024 Chess Olympiad?
+  40872176  0.6140  Will the 2023 FIDE WCC last 12 or more games?
+  69727790  0.6145  Lucknow Super Giants vs. Punjab Kings
+  42068386  0.6156  IPL: Chennai Super Kings vs. Punjab Kings 2023-04-30
+  69731111  0.6157  CHC Cubs vs. OAK Athletics April 1
+  71132038  0.6159  Punjab Kings vs. Mumbai Indians
+  60346244  0.6160  France or UK wins more gold medals?
+  60393581  0.6161  Will Botswana win gold in the Men’s 4x400m Relay?
+  74359289  0.6161  Boxing: Will Terence Crawford win by Points or Decision?
+  77075201  0.6162  ICC WWC: New Zealand vs. Bangladesh
+  59844910  0.6163  Will another athlete win Gold in 5000m?
+  77940062  0.6164  Will Athletic Club win on 2025-10-22?
+  70241196  0.6164  Lucknow Super Giants vs. Chennai Super Kings
+  59840574  0.6166  Will another athlete win the most gold medals?
+  78409310  0.6166  Speed Chess QF: Firouzja vs Nepomniachtchi
+  65278842  0.6166  Will Game 13 of the World Chess Championship end in a draw?
+  41219985  0.6168  IPL: Mumbai Indians vs. Chennai Super Kings 2023-04-08
+  58561296  0.6169  Afghanistan vs. Bangladesh - Cricket T20 World Cup
+  66234137  0.6169  Suchir Balaji foul play determined before April?
+  59843399  0.6172  Will another athlete win Gold in Men's 100m Butterfly?
+  75982276  0.6174  Will Bangladesh win on 2025-09-09?
+  61510515  0.6175  Will China win the 2024 Women's Chess Olympiad?
+  69727779  0.6188  Kolkata Knight Riders vs. Sunrisers Hyderabad
+  71698935  0.6188  Kolkata Knight Riders vs. Sunrisers Hyderabad
+  66224625  0.6188  India vs. Australia – 5th Cricket Test Match
+  77075201  0.6191  ICC WWC: Australia vs. Sri Lanka
+  69727777  0.6191  Lucknow Super Giants vs. Mumbai Indians
+  42305516  0.6194  IPL: Chennai Super Kings vs. Mumbai Indians 2023-05-06
+  28004992  0.6196  Will June Huh win the 2022 Fields Medal?
+  77075208  0.6197  ICC WWC: Sri Lanka vs. Bangladesh
+  61509623  0.6197  Will the United States win the 2024 Chess Olympiad?
+  68448129  0.6198  India wins the most gold medals in 2025 Special Olympics?
+  61509717  0.6203  Will Netherlands win the 2024 Chess Olympiad?
+  75982272  0.6206  Will Nepal vs. Bangladesh end in a draw?
+  75982121  0.6206  Will Nepal vs. Bangladesh end in a draw?
+  70848547  0.6214  Kolkata Knight Riders vs. Rajasthan Royals
+  72182332  0.6220  Mumbai Indians vs. Punjab Kings
+  71739459  0.6220  Mumbai Indians vs. Punjab Kings
+  70645932  0.6221  Delhi Capitals vs. Kolkata Knight Riders
+  66230937  0.6224  AI wins IMO gold medal in 2025?
+  61509704  0.6224  Will Uzbekistan win the 2024 Chess Olympiad?
+  63046328  0.6228  Will another player win the 2024 WR Chess Masters Cup?
+  59840444  0.6229  Will another athlete win Gold in Men's 200m Butterfly?
+  76673742  0.6244  Athletics vs. Pirates
+  76633208  0.6244  Athletics vs. Pirates
+  76592568  0.6244  Athletics vs. Pirates
+  78119196  0.6250  CSA T20 Series: Rocks vs Easterns (Oct 31)
+  65007423  0.6253  Will Game 9 of the World Chess Championship end in a draw?
+  59846279  0.6254  Will another athlete win Gold in Hammer Throw?
+  77075191  0.6257  ICC WWC: India vs. Sri Lanka
+  72588391  0.6263  Athletics vs. Angels
+  72507349  0.6263  Athletics vs. Angels
+  72547878  0.6263  Athletics vs. Angels
+  76075911  0.6263  Athletics vs. Angels
+  76046400  0.6263  Athletics vs. Angels
+  76116560  0.6263  Athletics vs. Angels
+  61510016  0.6263  Will Germany win the 2024 Chess Olympiad?
+  70402984  0.6266  Royal Challengers Bangalore vs. Punjab Kings
+  59245985  0.6268  Country gets medal for first time in Paris Olympics?
+  27570706  0.6272  Chess: Will Alireza Firouzja win the Superbet Chess Classic Romania?
+  70645924  0.6272  Mumbai Indians vs. Lucknow Super Giants
+  68728351  0.6273  ICC Champions Trophy Final: India vs. New Zealand
+  60303322  0.6275  Will someone else win gold in the Men’s 400m?
+  65007347  0.6281  Will Game 8 of the World Chess Championship end in a draw?
+  43031041  0.6284  IPL: Lucknow Super Giants vs. Mumbai Indians 2023-05-24
+  65132284  0.6293  Will Game 12 of the World Chess Championship end in a draw?
+  65089063  0.6294  Will Game 10 of the World Chess Championship end in a draw?
+  59833914  0.6298  Will another country win the 3rd most medals?
+  77075208  0.6306  ICC WWC: South Africa vs. Sri Lanka
+  71091632  0.6309  Sunrisers Hyderabad vs. Kolkata Knight Riders
+  61509695  0.6314  Will China win the 2024 Chess Olympiad?
+  65132262  0.6314  Will Game 11 of the World Chess Championship end in a draw?
+  77075202  0.6315  ICC WWC: Australia vs. Pakistan
+  60073400  0.6315  India vs. Sri Lanka - 1st Cricket ODI Match
+  77075202  0.6318  ICC WWC: Bangladesh vs. Pakistan
+  60108425  0.6323  India vs. Sri Lanka - 2nd Cricket ODI Match
+  42857055  0.6332  IPL: Kolkata Knight Riders vs. Lucknow Super Giants 2023-05-20
+  59951668  0.6343  India vs. Sri Lanka - 3rd Cricket T20I Match
+  73697060  0.6343  Hall of Fame Open: Sock/Ackman vs. Jasika/Tomic
+  70016836  0.6344  Chennai Super Kings vs. Kolkata Knight Riders
+  70119395  0.6344  Chennai Super Kings vs. Kolkata Knight Riders
+  42715728  0.6347  IPL: Lucknow Super Giants vs. Mumbai Indians 2023-05-16
+  60112537  0.6352  India vs. Sri Lanka - 3rd Cricket ODI Match
+  42517379  0.6353  IPL: Kolkata Knight Riders vs. Rajasthan Royals 2023-05-11
+  65007222  0.6356  Will Game 7 of the World Chess Championship end in a draw?
+  65330860  0.6357  Will Game 14 of the World Chess Championship end in a draw?
+  41805159  0.6362  IPL: Kolkata Knight Riders vs. Chennai Super Kings 2023-04-23
+  61510720  0.6364  Will another team win the 2024 Women's Chess Olympiad?
+  64805114  0.6384  Will game 6 of the World Chess Championship be a draw?
+  42219330  0.6389  IPL: Punjab Kings vs. Mumbai Indians 2023-05-03
+  41805005  0.6393  IPL: Mumbai Indians vs. Punjab Kings 2023-04-22
+  77075210  0.6397  ICC WWC: India vs. New Zealand
+  77075211  0.6398  ICC WWC: South Africa vs. Pakistan
+  22207525  0.6398  World Chess Championship 2021: Will Ian Nepomniachtchi win a game?
+  70645922  0.6400  Kolkata Knight Riders vs. Punjab Kings
+  60236636  0.6402  Olympic Basketball: Australia vs. Serbia
+  77075206  0.6406  ICC WWC: England vs. Pakistan
+  64611747  0.6410  Will another game win Game of the Year?
+  77075204  0.6417  ICC WWC: India vs. Pakistan
+  60349028  0.6430  Will another team win gold in the Men’s 4x100m Relay?
+  70970217  0.6432  Kolkata Knight Riders vs. Chennai Super Kings
+  64805014  0.6437  Will game 4 of the World Chess Championship be a draw?
+  77075211  0.6446  ICC WWC: Pakistan vs. Sri Lanka (Oct 24)
+  78985247  0.6446  Pakistan Tri-Series: Sri Lanka vs Zimbabwe (Game 2)
+  42620231  0.6448  IPL: Chennai Super Kings vs. Kolkata Knight Riders 2023-05-14
+  60393617  0.6451  Will another team win gold in the Men’s 4x400m Relay?
+  22263071  0.6472  World Chess Championship 2021: Will Game 12 be played?
+  69727760  0.6477  Kolkata Knight Riders vs. Lucknow Super Giants
+  70281758  0.6481  Punjab Kings vs. Kolkata Knight Riders
+  42380305  0.6485  IPL: Kolkata Knight Riders vs. Punjab Kings 2023-05-08
+  69379569  0.6488  Rajasthan Royals vs Kolkata Knight Riders
+  78129996  0.6501  New Zealand ODI Series: New Zealand vs England (Oct 31)
+  78909371  0.6501  New Zealand ODI Series: New Zealand vs West Indies (Game 2)
+  61510482  0.6501  Will India win the 2024 Women's Chess Olympiad?
+  78671778  0.6504  Pakistan ODI Series: Pakistan vs Sri Lanka (Game 2)
+  78074361  0.6504  New Zealand ODI Series: New Zealand vs England (Oct 28)
+  71375460  0.6504  Royal Challengers Bangalore vs. Kolkata Knight Riders
+  78736564  0.6505  Pakistan ODI Series: Pakistan vs Sri Lanka (Game 3)
+  77075207  0.6508  ICC WWC: Australia vs. Bangladesh
+  72461722  0.6509  ICC World Test Championship: Australia vs. South Africa
+  78074361  0.6512  New Zealand ODI Series: New Zealand vs England (Oct 25)
+  79038897  0.6518  New Zealand ODI Series: New Zealand vs West Indies (Game 3)
+  77075207  0.6521  ICC WWC: South Africa vs. Bangladesh
+  60303235  0.6533  Olympic Basketball: Germany vs. France
+  40912345  0.6539  IPL: Punjab Kings vs. Kolkata Knight Riders 2023-04-01
+  73965337  0.6545  HR Derby: Wood vs. Rooker
+  60356364  0.6559  Olympic Men’s Basketball: Germany vs. Serbia
+  78985248  0.6566  Pakistan Tri-Series: Afghanistan vs Sri Lanka (Game 2)
+  77075209  0.6566  ICC WWC: India vs. England
+  21871766  0.6567  World Chess Championship 2021: Will there be tiebreaks?
+  77075206  0.6570  ICC WWC: India vs. Australia
+  77075203  0.6571  ICC WWC: India vs. South Africa
+  77075205  0.6572  ICC WWC: England vs. Bangladesh
+  61509751  0.6576  Will England win the 2024 Chess Olympiad?
+  78345999  0.6590  New Zealand T20 Series: New Zealand vs West Indies (Game 2)
+  64805065  0.6593  Will game 5 of the World Chess Championship be a draw?
+  74821763  0.6596  Athletics vs. Nationals
+  74781417  0.6596  Athletics vs. Nationals
+  74862301  0.6596  Athletics vs. Nationals
+  41558957  0.6601  IPL: Mumbai Indians vs. Kolkata Knight Riders 2023-04-16
+  79082105  0.6605  Pakistan Tri-Series: Pakistan vs Zimbabwe (Game 4)
+  75600589  0.6612  Cricket: England vs. South Africa (Match 3)
+  78671776  0.6613  Pakistan ODI Series: Pakistan vs Sri Lanka (Game 1)
+  78345998  0.6616  Pakistan ODI Series: Pakistan vs South Africa (Game 2)
+  79038897  0.6618  Pakistan Tri-Series: Pakistan vs Sri Lanka (Game 3)
+  78509786  0.6620  New Zealand T20 Series: New Zealand vs West Indies (Game 3)
+  21794291  0.6621  World Chess Championship 2021: Will there be more or less than 12 draws?
+  78432394  0.6623  Pakistan ODI Series: Pakistan vs South Africa (Game 3)
+  75600589  0.6627  Cricket: England vs. South Africa (Match 1)
+  78520587  0.6633  New Zealand T20 Series: New Zealand vs West Indies (Game 4)
+  61509644  0.6643  Will India win the 2024 Chess Olympiad?
+  78173200  0.6656  Zimbabwe T20 Series: Zimbabwe vs Afghanistan (Nov 2)
+  77075212  0.6663  ICC WWC: England vs. New Zealand (Oct 26)
+  79082105  0.6665  Pakistan Tri-Series: Pakistan vs Afghanistan (Game 3)
+  78302792  0.6673  New Zealand T20 Series: New Zealand vs West Indies (Game 1)
+  61510026  0.6685  Will another team win the 2024 Chess Olympiad?
+  78985247  0.6690  Pakistan Tri-Series: Pakistan vs Zimbabwe (Game 1)
+  78119196  0.6695  Zimbabwe T20 Series: Zimbabwe vs Afghanistan (Oct 31)
+  78074209  0.6716  Zimbabwe T20 Series: Zimbabwe vs Afghanistan (Oct 29)
+  78259598  0.6757  Pakistan ODI Series: Pakistan vs South Africa (Nov 4)
+  78985247  0.6772  Pakistan Tri-Series: Pakistan vs Afghanistan (Game 1)
+  78671775  0.6798  New Zealand T20 Series: New Zealand vs West Indies (Game 5)
+  77075213  0.6846  ICC WWC: India vs. Bangladesh (Oct 26)
+  78119197  0.6849  Pakistan T20 Series: Pakistan vs South Africa (Oct 31)
+  78074209  0.6863  Pakistan T20 Series: Pakistan vs South Africa (Oct 28)
+  78074361  0.6876  Australia ODI Series: Australia vs India (Oct 24)
+  78129996  0.6887  Pakistan T20 Series: Pakistan vs South Africa (Nov 1)
+  78378394  0.6898  Women's Cricket World Cup Final Stage: India vs South Africa (Game Final)
+  78345999  0.6964  Australia T20 Series: Australia vs India (Game 4)
+  78173200  0.6991  Australia T20 Series: Australia vs India (Nov 2)
+  78119195  0.7012  Australia T20 Series: Australia vs India (Oct 31)
+  78119196  0.7022  Women's Cricket World Cup Group Stage: India vs Bangladesh (Oct 26)
+  78074210  0.7030  Australia T20 Series: Australia vs India (Oct 29)
+  78281750  0.7041  Women's Cricket World Cup Final Stage: India vs Australia (Game Semi Finals)
+  78432394  0.7098  Australia T20 Series: Australia vs India (Game 5)
+  78074210  0.7235  Bangladesh T20 Series: Bangladesh vs West Indies (Oct 27)
+  78119196  0.7235  Bangladesh T20 Series: Bangladesh vs West Indies (Oct 31)
+  78074210  0.7252  Bangladesh T20 Series: Bangladesh vs West Indies (Oct 29)

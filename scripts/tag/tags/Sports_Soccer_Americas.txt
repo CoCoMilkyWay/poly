@@ -1,0 +1,1977 @@
+# Sports_Soccer - Sports_Soccer_Americas
+# count=1974, avg_conf=0.6196
+====================================================================================================
+  74598757  0.5000  Will Ty Isherwood win Love Island season 12?
+  65645600  0.5086  Sabato De Sarno out as creative Director of Gucci before February?
+  73011273  0.5111  Will Ace win Season 7 of Love Island USA?
+  73130930  0.5111  Will Ace win Season 7 of Love Island USA?
+  68866592  0.5113  UT Arlington vs. Grand Canyon
+  68305192  0.5113  UT Arlington vs. Grand Canyon
+  67864297  0.5129  Grand Canyon vs. UT Arlington
+  78714906  0.5152  Will Peru take second place in Miss Universe 2025?
+  78674552  0.5167  Will Côte d'Ivoire win Miss Universe 2025?
+  65082088  0.5171  Will Juan Soto sign with the Chicago Cubs?
+  72925297  0.5229  Will Ulsan Hyundai beat Fluminense?
+  78714794  0.5244  Will South Africa take second place in Miss Universe 2025?
+  77387426  0.5248  Will Edmundo González return to Venezuela by October 31?
+  69258305  0.5304  El Mencho out as leader of Jalisco New Generation Cartel?
+  72053811  0.5326  Will Juan Ayuso win the Giro d’Italia 2025?
+  78674516  0.5356  Will Peru win Miss Universe 2025?
+  76472908  0.5358  Will Tyri Donovan win 400m Men Hurdles at 2025 World Athletics Championships?
+  72925292  0.5363  Will Fluminense beat Ulsan Hyundai?
+  78674562  0.5384  Will Democratic Republic of the Congo win Miss Universe 2025?
+  78714901  0.5388  Will Chile take second place in Miss Universe 2025?
+  68787547  0.5392  Incarnate Word vs. SE Louisiana
+  78674400  0.5401  Will South Africa win Miss Universe 2025?
+  78509798  0.5402  Will New South Wales Blues win?
+  78074414  0.5402  Will New South Wales Blues win?
+  78995792  0.5402  Will New South Wales Blues win?
+  67675949  0.5420  SE Louisiana vs. Incarnate Word
+  78888123  0.5429  Will Andrés Ariel Robles Barrantes win the 2026 Costa Rican presidential electio
+  78714769  0.5432  Will Puerto Rico take second place in Miss Universe 2025?
+  68185007  0.5445  Valparaiso vs. Southern Illinois
+  78927375  0.5465  New Orleans Privateers vs. Pepperdine Waves
+  72883571  0.5467  Will Saudi Arabia beat USA?
+  69496774  0.5478  Will Pablo Lopez win the 2025 AL Cy Young?
+  78674385  0.5485  Will Venezuela win Miss Universe 2025?
+  74567270  0.5485  Will Madagascar win Intervision 2025?
+  51026366  0.5486  Arévalo inaugurated in Guatemala in January?
+  77425005  0.5497  Will Naoto Nakanishi finish second at the Baycurrent Classic 2025?
+  76472645  0.5500  Will Narve Gilje Nordas win 1500m Men at 2025 World Athletics Championships?
+  77424605  0.5505  Will Naoto Nakanishi win the Baycurrent Classic 2025?
+  69458553  0.5505  Will Peru beat Venezuela?
+  78714804  0.5525  Will Brazil take second place in Miss Universe 2025?
+  78714774  0.5528  Will Mexico take second place in Miss Universe 2025?
+  77424305  0.5529  Will Hideki Matsuyama win the Baycurrent Classic 2025?
+  73502692  0.5529  Will New Zealand win the 2026 FIFA World Cup?
+  78674511  0.5530  Will Chile win Miss Universe 2025?
+  77424709  0.5533  Will Hideki Matsuyama finish second at the Baycurrent Classic 2025?
+  79013787  0.5535  Robert Morris Colonials vs. St. Bonaventure Bonnies
+  77773845  0.5548  Will Angel Ayora win the 2025 DP World India Championship?
+  69496798  0.5550  Will Framber Valdez win the 2025 AL Cy Young?
+  73186545  0.5550  Will Wydad AC beat Al Ain?
+  74278177  0.5560  Will Lionel Messi announce his retirement in 2025?
+  43372999  0.5569  Will Fabiano Caruana win 2023 Norway Chess?
+  70457689  0.5579  Will Atalanta beat AC Milan?
+  76777396  0.5584  Will CD Alberite win on 2025-09-27?
+  77645246  0.5586  Southern Miss vs. Louisiana
+  78623238  0.5586  Will Zambia win on 2025-11-18?
+  71148427  0.5587  Will Tomáš Macháč win the 2025 Internazionali BNL d'Italia?
+  77632838  0.5587  Will Andorra win on 2025-10-14?
+  78674374  0.5588  Will Puerto Rico win Miss Universe 2025?
+  60787558  0.5597  Will Gukesh Dommaraju win the 2024 Sinquefield Cup?
+  78666404  0.5598  Will Zambia win on 2025-11-15?
+  78546722  0.5608  Will Changingoftheguard win the 2025 Lexus Melbourne Cup?
+  75986691  0.5611  Will Namibia win on 2025-09-05?
+  74278005  0.5616  Will Niklas Norgaard make the 2025 Europe Ryder Cup team?
+  78839199  0.5616  Will Namibia win on 2025-11-14?
+  78714764  0.5618  Will Colombia take second place in Miss Universe 2025?
+  75987120  0.5620  Will Namibia win on 2025-09-09?
+  69458542  0.5620  Will Venezuela beat Peru?
+  78546717  0.5623  Will Smokin' Romans win the 2025 Lexus Melbourne Cup?
+  73792508  0.5623  Will Carlos Alcaraz win 3:2 against Taylor Fritz?
+  77338788  0.5630  Will CD Riestra win on 2025-10-06?
+  70463655  0.5635  Will Carlos Alcaraz win the 2025 Barcelona Open?
+  70751233  0.5641  Will Atalanta beat Lecce?
+  68466720  0.5642  SE Louisiana vs. Texas A&M-CC
+  77054664  0.5646  Will Gimnasia y Esgrima de La Plata win on 2025-10-04?
+  73092334  0.5648  Will Felix Auger-Aliassime win the 2025 Mallorca Championships?
+  77425096  0.5654  Will Hideki Matsuyama finish third at the Baycurrent Classic 2025?
+  77935230  0.5656  Will Andorra win on 2025-11-13?
+  78241357  0.5659  Will CA San Lorenzo de Almagro win on 2025-10-31?
+  78847285  0.5662  Will AO L'Eveil des Trois-Îlets win on 2025-11-15?
+  74567251  0.5663  Will United States win Intervision 2025?
+  78548228  0.5665  Will Shimizu S-Pulse win on 2025-11-30?
+  75988752  0.5665  Will Slovenia win on 2025-09-08?
+  78232817  0.5665  Will Andorra win on 2025-11-17?
+  77338830  0.5665  Will Gimnasia y Esgrima de La Plata win on 2025-10-11?
+  72433062  0.5666  Will Bolivia beat Venezuela?
+  72974420  0.5672  Will Trinidad beat Saudi Arabia?
+  78839231  0.5672  Will Namibia win on 2025-11-17?
+  78546665  0.5672  Will Buckaroo win the 2025 Lexus Melbourne Cup?
+  77795248  0.5674  Curitiba: Adolfo Vallejo vs Tomas Barrios
+  69244220  0.5676  Will Peru beat Bolivia?
+  70057810  0.5681  Will Ja Morant get fined again this season?
+  78674410  0.5683  Will Brazil win Miss Universe 2025?
+  76698532  0.5684  Will CA San Lorenzo de Almagro win on 2025-09-27?
+  76698459  0.5685  Will CA San Lorenzo de Almagro win on 2025-09-21?
+  75988978  0.5685  Will El Salvador win on 2025-09-04?
+  75989065  0.5686  Will El Salvador win on 2025-09-08?
+  76932917  0.5686  Will Nodirbek Abdusattorov win the 2025 FIDE World Cup?
+  78548113  0.5688  Will Shimizu S-Pulse win on 2025-11-09?
+  72433068  0.5688  Will Venezuela beat Bolivia?
+  78839247  0.5688  Will Côte d'Ivoire win on 2025-11-18?
+  77424418  0.5689  Will Christiaan Bezuidenhout win the Baycurrent Classic 2025?
+  78674380  0.5690  Will Mexico win Miss Universe 2025?
+  78847495  0.5691  Will FA win the most seats in the 2026 Costa Rican Legislative Assembly election
+  75988336  0.5691  Will Slovenia win on 2025-09-05?
+  75986766  0.5697  Will Côte d'Ivoire win on 2025-09-05?
+  77425946  0.5699  Will Isaiah Salinda lead after Round 2 of the Baycurrent Classic 2025?
+  77355226  0.5701  Will Côte d'Ivoire win on 2025-10-10?
+  75987221  0.5704  Will Côte d'Ivoire win on 2025-09-09?
+  78237787  0.5709  Will Slovenia win on 2025-11-18?
+  77355465  0.5710  Will Namibia win on 2025-10-13?
+  73502749  0.5711  Will Algeria win the 2026 FIFA World Cup?
+  78238095  0.5714  Will El Salvador win on 2025-11-18?
+  78241367  0.5714  Will CD Riestra win on 2025-10-31?
+  73502764  0.5715  Will Saudi Arabia win the 2026 FIFA World Cup?
+  35776966  0.5715  Will Senegal win the 2022 World Cup?
+  78976357  0.5715  Will CD Extremadura win on 2025-12-04?
+  69244231  0.5719  Will Bolivia beat Peru?
+  59833791  0.5720  Will the United States win the 3rd most medals?
+  74567236  0.5721  Will South Africa win Intervision 2025?
+  77092933  0.5722  Will New York Red Bulls win on 2025-10-04?
+  78536901  0.5722  Will Côte d'Ivoire win on 2025-11-14?
+  79082185  0.5724  Will AJ Auxerre win on 2025-11-29?
+  78545303  0.5724  Will Gimnasia y Esgrima de La Plata win on 2025-11-10?
+  77935287  0.5724  Will Montenegro win on 2025-11-14?
+  78544908  0.5726  Will CA San Lorenzo de Almagro win on 2025-11-07?
+  78714809  0.5728  Will Argentina take second place in Miss Universe 2025?
+  78933846  0.5729  Will CA San Lorenzo de Almagro win on 2025-11-15?
+  75986736  0.5731  Will Congo win on 2025-09-05?
+  78176808  0.5731  Will Girona win on 2025-11-08?
+  77935565  0.5732  Will Slovenia win on 2025-11-15?
+  68728551  0.5734  Will Jose Vinicius Junior win the 2025 Ballon d'Or?
+  77636187  0.5734  Will Gimnasia y Esgrima de La Plata win on 2025-10-19?
+  77426379  0.5740  Will Mikumu Horikawa lead after Round 3 of the Baycurrent Classic 2025?
+  77636222  0.5742  Will CD Riestra win on 2025-10-20?
+  72333736  0.5742  Will Al Hilal win Group H at the FIFA Club World Cup?
+  76698572  0.5743  Will Gimnasia y Esgrima de La Plata win on 2025-09-27?
+  74316932  0.5744  MLS: Will Chicago Fire beat New York Red Bulls?
+  77638788  0.5747  Will CR Vasco da Gama win on 2025-11-05?
+  73379848  0.5748  Will Nodirbek Abdusattorov win the 2025 SuperUnited Rapid & Blitz Croatia tourna
+  58360703  0.5748  Will Australia win the ICC T20 Cricket World Cup?
+  78548051  0.5749  Will Tōkyō Verdy win on 2025-11-08?
+  74316942  0.5751  MLS: Will New York Red Bulls beat Chicago Fire?
+  77632083  0.5752  Will Congo win on 2025-10-14?
+  73502714  0.5755  Will Jordan win the 2026 FIFA World Cup?
+  77373250  0.5756  Will CD Tondela win on 2025-11-02?
+  77426000  0.5756  Will Naoto Nakanishi lead after Round 2 of the Baycurrent Classic 2025?
+  78546504  0.5757  Will Casa Pia AC win on 2025-11-29?
+  77628004  0.5758  Will Belize win on 2025-10-14?
+  78634029  0.5760  Will CR Vasco da Gama win on 2025-11-19?
+  68627278  0.5760  UNLV vs. New Mexico
+  78536825  0.5761  Will Canada win on 2025-11-18?
+  58557205  0.5762  Will Peru win?
+  58405722  0.5762  Will Peru win?
+  72148182  0.5763  Will Metizport qualify for Stage 2 of the BLAST.tv Austin Major?
+  78270408  0.5765  CA San Lorenzo de Almagro vs. CD Riestra: O/U 1.5
+  67944281  0.5765  Incarnate Word vs. UT Rio Grande Valley
+  77336399  0.5767  Will El Salvador win on 2025-10-10?
+  78666419  0.5769  Will Peru win on 2025-11-18?
+  76821175  0.5771  Will New York Red Bulls win on 2025-09-27?
+  75221763  0.5771  Will Girona win on 2025-08-24?
+  77635119  0.5773  Will CE Constancia win on 2025-10-28?
+  76777639  0.5773  Will Casa Pia AC win on 2025-09-27?
+  78241535  0.5773  Will Gimnasia y Esgrima de La Plata win on 2025-11-02?
+  75342895  0.5776  Will Rayo Vallecano win on 2025-08-31?
+  79038974  0.5777  Will South Africa win?
+  78693398  0.5777  Will South Africa win?
+  75363338  0.5778  Will Rodrigo Paz Pereira win by 0–5%?
+  78933886  0.5779  Will Gimnasia y Esgrima de La Plata win on 2025-11-17?
+  77424600  0.5779  Will Keita Nakajima win the Baycurrent Classic 2025?
+  78237637  0.5779  Will Montenegro win on 2025-11-17?
+  77635529  0.5781  Will CD Yuncos win on 2025-10-29?
+  73792498  0.5782  Will Carlos Alcaraz win 3:1 against Taylor Fritz?
+  68185089  0.5782  Louisiana vs. Southern Mississippi
+  67984361  0.5783  St. Thomas - Minnesota vs. South Dakota
+  78536917  0.5784  Will US Virgin Islands win on 2025-11-14?
+  78422064  0.5784  Bonfim vs. Padilla
+  73968454  0.5785  MLS: Will Real Salt Lake beat Portland?
+  77636091  0.5785  Will CA Platense vs. CD Riestra end in a draw?
+  78538619  0.5785  Fairfield Stags vs. NJIT Highlanders
+  73792489  0.5785  Will Carlos Alcaraz win 3:0 against Taylor Fritz?
+  78540861  0.5787  Will DR Congo win on 2025-11-13?
+  77633746  0.5788  Will El Salvador win on 2025-10-14?
+  77636232  0.5790  Will Instituto AC Córdoba win on 2025-10-20?
+  77354738  0.5791  Will Slovenia win on 2025-10-13?
+  78546685  0.5791  Will Presage Nocturne win the 2025 Lexus Melbourne Cup?
+  78232687  0.5792  Will Angola win on 2025-11-14?
+  73092323  0.5792  Will Pedro Martinez win the 2025 Mallorca Championships?
+  76772972  0.5793  Will CD Riestra win on 2025-09-28?
+  74277998  0.5794  Will Jorge Campillo make the 2025 Europe Ryder Cup team?
+  78546772  0.5795  Will Torranzino win the 2025 Lexus Melbourne Cup?
+  77338847  0.5796  Will CA San Lorenzo de Almagro vs. CA San Martín de San Juan end in a draw?
+  75987231  0.5800  Will Mauritania vs. South Sudan end in a draw?
+  77698092  0.5800  Will Atalanta win on 2025-10-28?
+  61235774  0.5801  Will Brazil win the most gold medals at the 2024 Paralympics?
+  78823122  0.5802  Will AJ Auxerre win on 2025-11-23?
+  77935454  0.5802  Will Spain win on 2025-11-15?
+  77935855  0.5803  Will El Salvador win on 2025-11-13?
+  73792493  0.5803  Will Taylor Fritz win 3:1 against Carlos Alcaraz?
+  76162838  0.5803  Will Carlos Alcaraz win 3:1 against Jannik Sinner?
+  73852975  0.5803  Will Carlos Alcaraz win 3:1 against Jannik Sinner?
+  77316333  0.5803  Will Getafe win on 2025-10-19?
+  77425627  0.5804  Will Naoto Nakanishi lead after Round 1 of the Baycurrent Classic 2025?
+  78241448  0.5804  Will Instituto AC Córdoba win on 2025-10-31?
+  73292043  0.5805  Will Julio Cesar Chavez Jr. win by points or technical decision?
+  76465172  0.5806  Will Rayo Vallecano win on 2025-09-28?
+  68728758  0.5806  Will Lautaro Martínez win the 2025 Ballon d'Or?
+  77636676  0.5808  Will Casa Pia AC win on 2025-11-09?
+  75866096  0.5809  Will Getafe win on 2025-09-13?
+  77426365  0.5812  Will Naoto Nakanishi lead after Round 3 of the Baycurrent Classic 2025?
+  69244279  0.5812  Will Ecuador beat Venezuela?
+  78232637  0.5812  Will Peru win on 2025-11-12?
+  72651846  0.5813  Will Orlando City SC beat Colorado Rapids?
+  77373255  0.5817  Will Casa Pia AC win on 2025-11-01?
+  73968520  0.5818  MLS: Will Orlando City beat New York City FC?
+  78674369  0.5820  Will Colombia win Miss Universe 2025?
+  78238110  0.5821  Will Curaçao win on 2025-11-18?
+  76933507  0.5823  Will Nodirbek Abdusattorov finish third in the 2025 FIDE World Cup?
+  73852984  0.5825  Will Carlos Alcaraz win 3:0 against Jannik Sinner?
+  76162847  0.5825  Will Carlos Alcaraz win 3:0 against Jannik Sinner?
+  76698436  0.5826  Will CD Godoy Cruz Antonio Tomba win on 2025-09-21?
+  78544946  0.5826  Will AS Atlas Paillade win on 2025-11-15?
+  77424992  0.5826  Will Camilo Villegas finish second at the Baycurrent Classic 2025?
+  77874475  0.5826  Will Rayo Vallecano win on 2025-11-01?
+  73502697  0.5828  Will Australia win the 2026 FIFA World Cup?
+  77636529  0.5828  Will CD Tondela win on 2025-11-08?
+  78674415  0.5829  Will Argentina win Miss Universe 2025?
+  61235415  0.5829  Will Brazil win the most medals in the 2024 Paralympics?
+  71311003  0.5831  Will Atalanta beat Roma?
+  74000920  0.5831  Will Canada win the 2025 SailGP Championship Season 5?
+  78248807  0.5831  New Mexico vs. UNLV
+  69244312  0.5832  Will Venezuela beat Ecuador?
+  76698446  0.5833  Will Instituto AC Córdoba win on 2025-09-21?
+  77193431  0.5834  Will CD Yuncos win on 2025-10-04?
+  78545272  0.5835  Will CD Riestra win on 2025-11-10?
+  45589928  0.5836  Will Australia win the 2023 Women's World Cup?
+  64488144  0.5836  Will Chile beat Venezuela?
+  76825581  0.5836  Will CD Yuncos win on 2025-09-27?
+  77941080  0.5836  Spread: Atalanta BC (-1.5)
+  79021418  0.5836  Spread: Atalanta BC (-1.5)
+  78335746  0.5836  New Mexico Highlands Cowboys vs. North Texas Mean Green
+  79085726  0.5840  Will Osasuna win on 2025-11-29?
+  78666394  0.5842  Will South Africa win on 2025-11-15?
+  78238115  0.5842  Will Trinidad and Tobago win on 2025-11-18?
+  67984047  0.5845  Texas Southern vs. Southern
+  78545652  0.5846  Will AF Biars Bretenoux win on 2025-11-15?
+  77639835  0.5846  Will Al Ittihad Saudi Club win on 2025-11-08?
+  77930263  0.5846  Will Canada win on 2025-11-13?
+  76772935  0.5847  Will Instituto AC Córdoba win on 2025-09-28?
+  21609844  0.5847  Will Lionel Messi win Ballon d'Or 2021?
+  78933781  0.5850  Will CD Riestra win on 2025-11-15?
+  78244383  0.5850  Will Al Nassr Saudi Club win on 2025-11-23?
+  78826622  0.5851  Will Rayo Vallecano win on 2025-11-23?
+  72844753  0.5851  Will El Salvador beat Curacao?
+  78546670  0.5852  Will Arapaho win the 2025 Lexus Melbourne Cup?
+  77336526  0.5852  Will Curaçao win on 2025-10-10?
+  76369497  0.5852  Will New York Red Bulls win on 2025-09-13?
+  78546732  0.5855  Will More Felons win the 2025 Lexus Melbourne Cup?
+  78540851  0.5856  Will Cameroon win on 2025-11-13?
+  75221876  0.5856  Will Rayo Vallecano win on 2025-08-25?
+  63597828  0.5857  Will NaVi win Blast Premier World Final 2024?
+  78216480  0.5859  Will Atalanta win on 2025-11-09?
+  77645248  0.5860  UTSA Roadrunners vs. North Texas
+  78216568  0.5862  Will AJ Auxerre win on 2025-11-09?
+  78450406  0.5863  Kansas City Roos vs. Southern Illinois Salukis
+  75723290  0.5863  Will Mansfield Town win the 2025–26 Carabao Cup?
+  76698540  0.5864  Will CD Godoy Cruz Antonio Tomba win on 2025-09-27?
+  77054573  0.5864  Will Instituto AC Córdoba win on 2025-10-04?
+  75342854  0.5865  Will Osasuna win on 2025-08-31?
+  58360773  0.5865  Will the United States win the ICC T20 Cricket World Cup?
+  75221525  0.5866  Will AJ Auxerre win on 2025-08-23?
+  76345624  0.5866  Will Rayo Vallecano win on 2025-09-24?
+  65841632  0.5867  Will Fabiano Caruana win the 2024 World Rapid Championship?
+  73502718  0.5869  Will Morocco win the 2026 FIFA World Cup?
+  64488176  0.5869  Will Venezuela beat Chile?
+  77374144  0.5869  Will Club Santos Laguna win on 2025-10-21?
+  77374446  0.5870  Will Club Santos Laguna win on 2025-10-31?
+  78631341  0.5871  Will RC Pays de Grasse win on 2025-11-15?
+  75791963  0.5871  Padres vs. Twins
+  75751428  0.5871  Padres vs. Twins
+  75832498  0.5871  Padres vs. Twins
+  78545911  0.5871  Will US Camon win on 2025-11-16?
+  74067733  0.5872  MLS: Will Chicago Fire beat CF Montréal?
+  72678508  0.5873  Will New York Red Bulls beat Austin FC?
+  75453192  0.5873  MLS: Will Nashville SC beat Orlando City SC?
+  75453200  0.5875  MLS: Will Orlando City SC beat Nashville SC?
+  72844748  0.5878  Will Curacao beat El Salvador?
+  75212036  0.5878  Will Rayo Vallecano win on 2025-08-15?
+  77374023  0.5878  Will San Jose Earthquakes win on 2025-10-18?
+  76498451  0.5878  Will Club Santos Laguna win on 2025-09-21?
+  76465516  0.5878  Will Osasuna win on 2025-09-28?
+  77636096  0.5880  Will CD Riestra win on 2025-10-13?
+  77355214  0.5882  Will Gabon win on 2025-10-10?
+  77374076  0.5882  Will Club Santos Laguna win on 2025-10-18?
+  58403649  0.5882  Will Canada win?
+  58557222  0.5882  Will Canada win?
+  58763995  0.5882  Will Canada win?
+  61464949  0.5882  Will Canada win?
+  74246980  0.5884  MLS: Will Columbus beat Orlando City?
+  76344953  0.5886  Will Osasuna win on 2025-09-20?
+  78241494  0.5886  Will CD Godoy Cruz Antonio Tomba win on 2025-11-02?
+  78220041  0.5887  Will Rayo Vallecano win on 2025-11-09?
+  76626137  0.5887  Will San Jose Earthquakes win on 2025-09-20?
+  78546606  0.5888  Will CF Estrela da Amadora win on 2025-11-30?
+  75221082  0.5888  Will AJ Auxerre win on 2025-08-17?
+  77338967  0.5889  Will Instituto AC Córdoba win on 2025-10-12?
+  77054698  0.5889  Will CD Godoy Cruz Antonio Tomba win on 2025-10-05?
+  77635423  0.5891  Will CDA Navalcarnero win on 2025-10-29?
+  78241525  0.5891  Will CA River Plate win on 2025-11-02?
+  69147206  0.5892  New Mexico vs. Marquette
+  77615334  0.5893  Will Osasuna win on 2025-10-26?
+  77639710  0.5894  Will Al Ittihad Saudi Club win on 2025-11-01?
+  75723340  0.5895  Will Bromley win the 2025–26 Carabao Cup?
+  78545131  0.5895  Will Instituto AC Córdoba win on 2025-11-09?
+  76698519  0.5895  Will CA Aldosivi win on 2025-09-27?
+  78539516  0.5895  Will NAC Breda win on 2025-11-29?
+  75988061  0.5896  Will Bolivia win on 2025-09-04?
+  75163262  0.5897  MLS: Will Charlotte FC beat Real Salt Lake?
+  78546660  0.5898  Will Al Riffa win the 2025 Lexus Melbourne Cup?
+  77316329  0.5898  Will Atalanta win on 2025-10-19?
+  77053286  0.5899  Will Club Santos Laguna win on 2025-10-04?
+  79057369  0.5900  Spread: California-San Diego Tritons (-5.5)
+  72974490  0.5900  Will USA beat Haiti?
+  77425710  0.5900  Will Hideki Matsuyama lead after Round 2 of the Baycurrent Classic 2025?
+  75986957  0.5901  Will Djibouti win on 2025-09-08?
+  78544961  0.5901  Will US Avranches Mont-Saint-Michel win on 2025-11-15?
+  78933771  0.5901  Will CD Godoy Cruz Antonio Tomba win on 2025-11-15?
+  76698412  0.5901  Will CA Tucumán vs. CA River Plate end in a draw?
+  78783399  0.5902  Will Osasuna win on 2025-11-22?
+  75723294  0.5902  Will Wigan win the 2025–26 Carabao Cup?
+  77631968  0.5903  Will Gabon win on 2025-10-14?
+  76772986  0.5904  Will CA Belgrano win on 2025-09-29?
+  79085763  0.5905  Will Real Oviedo win on 2025-11-29?
+  77338947  0.5905  Will CD Godoy Cruz Antonio Tomba win on 2025-10-12?
+  67664398  0.5905  Will Atalanta win on 2025-02-12?
+  77316297  0.5905  Will Rayo Vallecano win on 2025-10-19?
+  75988003  0.5906  Will Ecuador win on 2025-09-04?
+  73502682  0.5906  Will Ecuador win the 2026 FIFA World Cup?
+  35777710  0.5908  Will Saudi Arabia win the 2022 World Cup?
+  69147043  0.5909  Dayton vs. Florida Atlantic
+  76769979  0.5909  Will Club Santos Laguna win on 2025-09-27?
+  67984347  0.5909  South Florida vs. UTSA
+  76369379  0.5910  Will Orlando City SC win on 2025-09-13?
+  76327853  0.5910  Will AJ Auxerre win on 2025-09-13?
+  76308189  0.5913  Will Atalanta win on 2025-09-17?
+  75987212  0.5914  Will Gabon win on 2025-09-09?
+  75986440  0.5915  Will Gabon win on 2025-09-03?
+  75163272  0.5915  MLS: Will Real Salt Lake beat Charlotte FC?
+  78933726  0.5916  Will Instituto AC Córdoba win on 2025-11-16?
+  72925341  0.5916  Will El Salvador beat Honduras?
+  77425995  0.5916  Will Keita Nakajima lead after Round 2 of the Baycurrent Classic 2025?
+  58842047  0.5917  Will Bolivia win?
+  58645371  0.5917  Will Bolivia win?
+  76472672  0.5917  Will Jose Carlos Pinto win 1500m Men at 2025 World Athletics Championships?
+  72555202  0.5917  Will Saudi Arabia qualify for the 2026 FIFA World Cup?
+  76936493  0.5918  Will SD Negreira win on 2025-09-27?
+  76777586  0.5919  Will CF Estrela da Amadora win on 2025-09-27?
+  76345636  0.5919  Will Osasuna win on 2025-09-25?
+  78241372  0.5920  Will CA Aldosivi win on 2025-11-01?
+  76821325  0.5920  Will San Jose Earthquakes win on 2025-09-27?
+  77424591  0.5921  Will Camilo Villegas win the Baycurrent Classic 2025?
+  77795249  0.5922  Olbia: Alejandro Tabilo vs Pablo Carreno Busta
+  78176863  0.5922  Will Osasuna win on 2025-11-08?
+  72393084  0.5923  Will Kingsley Coman be the top goalscorer at the 2025 FIFA Club World Cup?
+  77635288  0.5924  Will SD Negreira win on 2025-10-28?
+  77275895  0.5925  Will Osasuna win on 2025-10-18?
+  67256298  0.5925  Will Barcelona beat Atalanta?
+  61380685  0.5926  Will Brazil win the third most medals in the 2024 Paralympics?
+  58598600  0.5926  Will Jamaica win?
+  58764180  0.5926  Will Jamaica win?
+  76932930  0.5927  Will Anish Giri win the 2025 FIDE World Cup?
+  68466725  0.5927  New Orleans vs. UT Rio Grande Valley
+  78546191  0.5928  Will AS Savigneux Montbrison win on 2025-11-16?
+  76932880  0.5928  Will Magnus Carlsen win the 2025 FIDE World Cup?
+  77193112  0.5928  Will CF Estrela da Amadora win on 2025-10-04?
+  77635514  0.5929  Will CD Azuaga win on 2025-10-29?
+  77636081  0.5929  Will CD Godoy Cruz Antonio Tomba win on 2025-10-17?
+  74247031  0.5930  MLS: Will New York City FC beat FC Dallas?
+  79038997  0.5931  Will Como 1907 win on 2025-11-28?
+  75986706  0.5932  Will Djibouti win on 2025-09-05?
+  73502663  0.5932  Will Norway win the 2026 FIFA World Cup?
+  77193388  0.5933  Will SD Negreira win on 2025-10-04?
+  72974496  0.5933  Will Haiti beat USA?
+  76667017  0.5933  Will Osasuna win on 2025-10-03?
+  68547557  0.5935  Memphis vs. UTSA
+  78545510  0.5935  Will En Avant Guingamp win on 2025-11-15?
+  75907007  0.5935  Will Osasuna win on 2025-09-14?
+  77636182  0.5937  Will Estudiantes de La Plata vs. Gimnasia y Esgrima de La Plata end in a draw?
+  78545221  0.5937  Will CD Godoy Cruz Antonio Tomba win on 2025-11-09?
+  77935870  0.5937  Will Curaçao win on 2025-11-13?
+  76505506  0.5937  Will Real Oviedo win on 2025-09-29?
+  78866201  0.5938  Will Como 1907 win on 2025-11-24?
+  77944976  0.5938  Will Galaxy win the Synthetix trading competition?
+  76698567  0.5939  Will CA San Martín de San Juan win on 2025-09-26?
+  78546252  0.5939  Will UES Montmorillon win on 2025-11-16?
+  77960848  0.5940  Will Osasuna win on 2025-11-03?
+  60926591  0.5940  Will Venezuela win the 2024 Little League World Series?
+  78546100  0.5941  Will AS Montréal-la-Cluse win on 2025-11-16?
+  72392822  0.5942  Will Jamal Musiala win the Golden Ball at the 2025 FIFA Club World Cup?
+  77635273  0.5943  Will CD Roda win on 2025-10-28?
+  77425321  0.5943  Will Hideki Matsuyama lead after Round 1 of the Baycurrent Classic 2025?
+  77338898  0.5944  Will CA Belgrano win on 2025-10-11?
+  77628019  0.5944  Will Ecuador win on 2025-10-14?
+  76933196  0.5944  Will Magnus Carlsen finish second in the 2025 FIDE World Cup?
+  76770639  0.5945  Will Once Caldas win on 2025-09-24?
+  79085713  0.5945  Will Mallorca win on 2025-11-29?
+  77054544  0.5945  Will CA Aldosivi win on 2025-10-03?
+  65842147  0.5945  Will Fabiano Caruana win the 2024 World Blitz Championship?
+  76498215  0.5946  Will NAC Breda win on 2025-09-20?
+  73968570  0.5947  MLS: Will D.C. United beat Charlotte FC?
+  35777329  0.5948  Will Morocco win the 2022 World Cup?
+  76698394  0.5950  Will CA Belgrano win on 2025-09-22?
+  67256319  0.5950  Will Atalanta beat Barcelona?
+  77373168  0.5950  Will CF Estrela da Amadora win on 2025-10-25?
+  77636237  0.5950  Will CA Tucumán win on 2025-10-20?
+  77636157  0.5951  Will CA Belgrano win on 2025-10-18?
+  77635403  0.5951  Will RCD Mallorca win on 2025-10-29?
+  77093040  0.5951  Will San Jose Earthquakes win on 2025-10-05?
+  75221611  0.5951  Will Osasuna win on 2025-08-24?
+  77635098  0.5951  Will Real Oviedo win on 2025-10-28?
+  78232897  0.5951  Will Ecuador win on 2025-11-18?
+  68627024  0.5952  San Diego vs. Pacific
+  76933017  0.5952  Will Gabriel Sargissian win the 2025 FIDE World Cup?
+  77635258  0.5952  Will RSD Alcalá win on 2025-10-28?
+  72602082  0.5952  Will Chile beat Bolivia?
+  75988094  0.5953  Will Bolivia win on 2025-09-09?
+  77093006  0.5953  Will Real Salt Lake vs. Colorado Rapids SC end in a draw?
+  72925335  0.5953  Will Honduras beat El Salvador?
+  78545287  0.5954  Will Olympique de Villefontaine win on 2025-11-15?
+  76769882  0.5955  Will Club Santos Laguna win on 2025-09-24?
+  78232787  0.5956  Will Bolivia win on 2025-11-18?
+  78235326  0.5956  Will NAC Breda win on 2025-11-22?
+  75163389  0.5956  MLS: Will Minnesota beat Seattle?
+  66664688  0.5959  Will 100 Thieves win the VCT 2025 Americas Kickoff?
+  35777457  0.5959  Will Australia win the 2022 World Cup?
+  72602075  0.5960  Will Bolivia beat Chile?
+  75989039  0.5960  Will Nicaragua win on 2025-09-05?
+  77628049  0.5960  Will Bolivia win on 2025-10-14?
+  72393006  0.5961  Will Jamal Musiala be the top goalscorer at the 2025 FIFA Club World Cup?
+  78976191  0.5962  Will CA Antoniano win on 2025-12-03?
+  75221352  0.5963  Will Osasuna win on 2025-08-19?
+  78335647  0.5963  Trinity (TX) Tigers vs. Texas A&M-Corpus Christi Islanders
+  77054693  0.5964  Will CA Belgrano win on 2025-10-05?
+  78666429  0.5964  Will Chad vs. Mozambique end in a draw?
+  77570282  0.5964  US Cremonese vs. Atalanta: O/U 2.5
+  63166392  0.5964  Who will win Latino men?
+  40043861  0.5965  Will Hikaru win the 2023 American Cup?
+  77426085  0.5965  Will Hideki Matsuyama lead after Round 3 of the Baycurrent Classic 2025?
+  78545267  0.5967  Will CA Aldosivi win on 2025-11-09?
+  75988080  0.5967  Will Ecuador win on 2025-09-09?
+  68507235  0.5967  SE Louisiana vs. UT Rio Grande Valley
+  78761392  0.5968  Will CD Santa Clara win on 2025-12-06?
+  76933324  0.5969  Will Gabriel Sargissian finish second in the 2025 FIDE World Cup?
+  77631490  0.5969  Will LDU de Quito win on 2025-10-23?
+  77377624  0.5969  Will SC Recife win on 2025-10-25?
+  77336355  0.5969  Will Nicaragua win on 2025-10-09?
+  77572111  0.5970  Will Real Oviedo win on 2025-10-25?
+  77331327  0.5970  Will Bolivia win on 2025-10-10?
+  77634765  0.5970  Will Club Santos Laguna win on 2025-11-09?
+  77372613  0.5971  Will NAC Breda win on 2025-10-18?
+  43572495  0.5971  Will Messi sign for Barcelona?
+  78540846  0.5972  Will Gabon win on 2025-11-13?
+  76307744  0.5972  Will Once Caldas win on 2025-09-17?
+  77338911  0.5972  Will CA Aldosivi win on 2025-10-12?
+  73092388  0.5973  Will Alejandro Tabilo win the 2025 Mallorca Championships?
+  77941806  0.5977  Will Nagoya Grampus win on 2025-11-08?
+  78536886  0.5977  Will Bolivia win on 2025-11-14?
+  76765975  0.5978  Will NAC Breda win on 2025-09-27?
+  77615303  0.5979  Will Mallorca win on 2025-10-26?
+  75669734  0.5979  MLS: Will New England beat Charlotte FC?
+  77377429  0.5979  Will SC Recife win on 2025-10-18?
+  58360742  0.5980  Will South Africa win the ICC T20 Cricket World Cup?
+  64288471  0.5980  Will the USA beat Jamaica?
+  77054559  0.5980  Will CA Tucumán win on 2025-09-29?
+  77331423  0.5981  Will Ecuador win on 2025-10-10?
+  75986547  0.5981  Will Madagascar vs. Central African Republic end in a draw?
+  78726930  0.5981  Will Avalanche win 2025 Uniswap Cup?
+  74067709  0.5982  MLS: Will Atlanta United beat Charlotte FC?
+  77054563  0.5982  Will CA San Martín de San Juan win on 2025-10-04?
+  77072185  0.5983  Will Real Oviedo win on 2025-09-30?
+  77426361  0.5983  Will Keita Nakajima lead after Round 3 of the Baycurrent Classic 2025?
+  77372768  0.5983  Will NAC Breda win on 2025-10-24?
+  78545987  0.5983  Will Vendée Fontenay Foot win on 2025-11-16?
+  74067724  0.5983  MLS: Will CF Montréal beat Chicago Fire?
+  75989118  0.5984  Will Nicaragua win on 2025-09-09?
+  75986667  0.5984  Will South Sudan vs. DR Congo end in a draw?
+  76698408  0.5985  Will CA Tucumán win on 2025-09-20?
+  67984424  0.5985  San José State vs. Utah State
+  77645225  0.5985  San Jose State vs. Utah State
+  77935890  0.5986  Will Trinidad and Tobago win on 2025-11-13?
+  73773432  0.5986  Will D.C. United beat LA Galaxy?
+  78545236  0.5987  Will CA Belgrano win on 2025-11-10?
+  78804527  0.5987  Will CF Estrela da Amadora win on 2025-12-07?
+  77373263  0.5988  Will CF Estrela da Amadora win on 2025-11-01?
+  78238266  0.5988  Will Nicaragua win on 2025-11-18?
+  78963376  0.5989  Spread: CD Godoy Cruz Antonio Tomba (-1.5)
+  72925319  0.5991  Will Monterrey beat River Plate?
+  78536881  0.5991  Will Korea Republic vs. Bolivia end in a draw?
+  78634377  0.5991  Will SC Recife win on 2025-11-28?
+  76307983  0.5992  Will Club Santos Laguna win on 2025-09-13?
+  72432871  0.5992  Tour de France 2025: Will Tadej Pogacar wear the yellow jersey?
+  75986981  0.5992  Will Madagascar vs. Chad end in a draw?
+  78783439  0.5993  Will Mallorca win on 2025-11-22?
+  73502654  0.5993  Will Peru win the 2026 FIFA World Cup?
+  75453306  0.5994  MLS: Will New York Red Bulls beat Charlotte FC?
+  78241463  0.5995  Will CA Belgrano win on 2025-11-03?
+  75453230  0.5997  MLS: Will Minnesota United FC beat Real Salt Lake?
+  75302057  0.5997  Will Real Oviedo win on 2025-08-30?
+  73128028  0.5997  Will Honduras beat Curacao?
+  77372972  0.5997  Will NAC Breda win on 2025-11-01?
+  76345370  0.5997  Will Real Oviedo win on 2025-09-21?
+  78634074  0.5998  Will SC Recife win on 2025-11-18?
+  60393569  0.5999  Will the USA win gold in the Men’s 4x400m Relay?
+  75669744  0.5999  MLS: Will Charlotte FC beat New England?
+  77636544  0.5999  Will CF Estrela da Amadora win on 2025-11-09?
+  77377802  0.5999  Will SC Recife win on 2025-11-01?
+  76369328  0.6001  Will Charlotte FC win on 2025-09-13?
+  76707660  0.6001  Will Real Oviedo win on 2025-10-04?
+  77636192  0.6001  Will CA San Martín de San Juan win on 2025-10-19?
+  73379854  0.6002  Will R Praggnanandhaa win the 2025 SuperUnited Rapid & Blitz Croatia tournament?
+  73379843  0.6003  Will Magnus Carlsen win the 2025 SuperUnited Rapid & Blitz Croatia tournament?
+  77635816  0.6003  Will Independiente del Valle win on 2025-10-28?
+  75988076  0.6004  Will Chile win on 2025-09-04?
+  75302316  0.6004  Will Mallorca win on 2025-08-30?
+  77638808  0.6005  Will SC Recife win on 2025-11-05?
+  73502590  0.6005  Will Spain win the 2026 FIFA World Cup?
+  77275460  0.6005  Will Mallorca win on 2025-10-18?
+  77636252  0.6005  Will CA Tigre win on 2025-10-20?
+  77636066  0.6005  Will CA Aldosivi win on 2025-10-17?
+  78666409  0.6006  Will Chile win on 2025-11-18?
+  77630688  0.6006  Will NAC Breda win on 2025-11-08?
+  77354956  0.6006  Will Nicaragua win on 2025-10-13?
+  78241489  0.6007  Will CA Tucumán win on 2025-11-01?
+  73502787  0.6007  Will Haiti win the 2026 FIFA World Cup?
+  77377263  0.6008  Will SC Recife win on 2025-10-15?
+  45589892  0.6009  Will USA win the 2023 Women's World Cup?
+  77331386  0.6009  Will Chile win on 2025-10-10?
+  76936484  0.6011  Will SD Textil Escudo win on 2025-09-27?
+  60787345  0.6011  Will Fabiano Caruana win the 2024 Sinquefield Cup?
+  77049453  0.6011  Will NAC Breda win on 2025-10-03?
+  74067866  0.6011  MLS: Will New York City FC beat Sporting Kansas City?
+  75163399  0.6013  MLS: Will Seattle beat Minnesota?
+  59486281  0.6014  Will Australia win Gold in Women's Football (Soccer)?
+  72333705  0.6014  Will Auckland City win Group C at the FIFA Club World Cup?
+  73502754  0.6014  Will Cape Verde win the 2026 FIFA World Cup?
+  78826612  0.6015  Will Real Oviedo win on 2025-11-23?
+  78335737  0.6015  La Verne Leopards vs. California-San Diego Tritons
+  76345668  0.6016  Will Real Oviedo win on 2025-09-25?
+  78963377  0.6018  CA Lanús vs. CA Tucumán: O/U 2.5
+  77054578  0.6018  Will CA Tucumán win on 2025-10-04?
+  75342642  0.6018  Will Villarreal win on 2025-08-31?
+  77377241  0.6020  Will SC Recife win on 2025-10-08?
+  78841884  0.6023  Will NAC Breda win on 2025-12-07?
+  78232742  0.6023  Will Chile win on 2025-11-15?
+  78238080  0.6024  Will Honduras win on 2025-11-18?
+  75982150  0.6024  Will Mexico win on 2025-09-06?
+  76936443  0.6026  Will CSA Ceuta win on 2025-09-27?
+  76777415  0.6026  Will CSA Ceuta win on 2025-09-27?
+  76425142  0.6026  Will Mallorca win on 2025-09-27?
+  76369415  0.6027  Will San Jose Earthquakes win on 2025-09-13?
+  77741410  0.6027  Will US Cremonese win on 2025-10-29?
+  75989020  0.6027  Will Honduras win on 2025-09-05?
+  79033958  0.6028  Spread: UT Arlington Mavericks (-2.5)
+  79128925  0.6028  Will Villarreal win on 2025-11-30?
+  69573995  0.6029  DET Tigers vs. LAD Dodgers March 27
+  78933851  0.6030  Will CA San Lorenzo de Almagro vs. CA Sarmiento end in a draw?
+  77193482  0.6030  Will CSA Ceuta win on 2025-10-04?
+  77930273  0.6031  Will Ecuador win on 2025-11-13?
+  76345242  0.6031  Will Mallorca win on 2025-09-21?
+  77930333  0.6031  Will Uruguay win on 2025-11-15?
+  77234764  0.6032  Will Real Oviedo win on 2025-10-17?
+  35773695  0.6032  Will Saudi Arabia qualify from Group C?
+  78545068  0.6033  Will CA San Martín de San Juan win on 2025-11-08?
+  77941063  0.6034  Will SC Recife win on 2025-11-15?
+  72134543  0.6034  Will Real Madrid win the FIFA Club World Cup?
+  78933861  0.6035  Will CA Belgrano win on 2025-11-17?
+  77935920  0.6035  Will Nicaragua win on 2025-11-13?
+  59808304  0.6035  Will USA win Gold in Men's 4x100m Freestyle Relay?
+  77356554  0.6035  Will US Cremonese win on 2025-10-20?
+  75986468  0.6035  Will Cabo Verde win on 2025-09-04?
+  75669759  0.6035  MLS: Will D.C. United beat New York City FC?
+  78976056  0.6035  Will CDA Navalcarnero win on 2025-12-02?
+  78634407  0.6036  Will Cruzeiro EC win on 2025-11-29?
+  77960838  0.6036  Will Real Oviedo win on 2025-11-03?
+  75986927  0.6036  Will Mozambique vs. Botswana end in a draw?
+  78963376  0.6036  CA San Lorenzo de Almagro vs. CA Sarmiento: O/U 1.5
+  77355008  0.6037  Will Cabo Verde win on 2025-10-08?
+  75982364  0.6037  Will Los Angeles Galaxy win on 2025-09-06?
+  77635283  0.6039  Will Granada CF win on 2025-10-28?
+  76772967  0.6039  Will CA River Plate vs. CD Riestra end in a draw?
+  77638823  0.6039  Will SC Recife win on 2025-11-08?
+  68466846  0.6040  Santa Clara vs. Pacific
+  77054642  0.6040  Will CA Tigre win on 2025-10-03?
+  76344904  0.6040  Will Villarreal win on 2025-09-20?
+  60348984  0.6040  Will Jamaica win gold in the Men’s 4x100m Relay?
+  58773206  0.6041  Will Ecuador win?
+  58598591  0.6041  Will Ecuador win?
+  58958447  0.6041  Will Ecuador win?
+  74316937  0.6041  MLS: Will Chicago Fire vs. New York Red Bulls end in a draw?
+  72641267  0.6043  Will Trinidad and Tobago beat USA?
+  77635227  0.6043  Will UD San Fernando win on 2025-10-28?
+  75453220  0.6043  MLS: Will Real Salt Lake beat Minnesota United FC?
+  76933467  0.6045  Will Magnus Carlsen finish third in the 2025 FIDE World Cup?
+  77917658  0.6045  Will Mallorca win on 2025-11-02?
+  73502632  0.6046  Will USA win the 2026 FIFA World Cup?
+  72392708  0.6046  Will Lionel Messi win the Golden Ball at the 2025 FIFA Club World Cup?
+  64288458  0.6046  Will Jamaica beat the USA?
+  76626089  0.6047  Will Colorado Rapids SC win on 2025-09-20?
+  78545211  0.6047  Will CA Tucumán win on 2025-11-09?
+  78634231  0.6047  Will SC Recife win on 2025-11-23?
+  77336461  0.6048  Will Honduras win on 2025-10-09?
+  77338851  0.6048  Will CA San Martín de San Juan win on 2025-10-10?
+  77331428  0.6048  Will Mexico win on 2025-10-11?
+  78933691  0.6048  Will CA Tucumán win on 2025-11-14?
+  74067807  0.6050  MLS: Will St. Louis City beat FC Dallas?
+  78545787  0.6050  Will AC Cambrai win on 2025-11-16?
+  78220021  0.6051  Will Real Oviedo win on 2025-11-09?
+  77635191  0.6051  Will Cultural y Deportiva Leonesa win on 2025-10-28?
+  78933766  0.6051  Will CA San Martín de San Juan win on 2025-11-15?
+  75989109  0.6052  Will Honduras win on 2025-09-09?
+  75669845  0.6052  MLS: Will Nashville SC beat Atlanta United?
+  75988167  0.6052  Will Chile win on 2025-09-09?
+  78241504  0.6052  Will CA San Martín de San Juan win on 2025-11-02?
+  78241474  0.6052  Will CA Tigre win on 2025-11-03?
+  77635561  0.6052  Will Real Jaén CF win on 2025-10-29?
+  76933492  0.6052  Will Gukesh Dommaraju finish third in the 2025 FIDE World Cup?
+  72586115  0.6052  Will Switzerland beat USA?
+  77572096  0.6053  Will Villarreal win on 2025-10-25?
+  75453296  0.6054  MLS: Will Charlotte FC beat New York Red Bulls?
+  78783429  0.6055  Will Villarreal win on 2025-11-22?
+  76708147  0.6056  Will Villarreal win on 2025-10-04?
+  78976111  0.6056  Will RCD Mallorca win on 2025-12-02?
+  58405733  0.6056  Will Chile win?
+  58557060  0.6056  Will Chile win?
+  58764005  0.6056  Will Chile win?
+  63400557  0.6056  Will Orlando City win the MLS Cup?
+  16897024  0.6057  Will Magnus Carlsen win the 2021 Fide World Cup?
+  79030355  0.6057  Spread: UT Arlington Mavericks (-3.5)
+  78220026  0.6057  Will Mallorca win on 2025-11-09?
+  78545318  0.6057  Will CA Tigre win on 2025-11-09?
+  77635343  0.6058  Will Elche CF win on 2025-10-29?
+  77338976  0.6059  Will CA Tucumán win on 2025-10-12?
+  73128049  0.6060  Will El Salvador beat Canada?
+  76345595  0.6061  Will Mallorca win on 2025-09-24?
+  77193127  0.6061  Will CD Santa Clara win on 2025-10-04?
+  75453269  0.6062  MLS: Will Seattle Sounders beat Sporting Kansas City?
+  63400593  0.6063  Will Charlotte FC win the 2024 MLS Cup?
+  73968534  0.6064  MLS: Will Red Bulls beat New England?
+  78538624  0.6064  UT Arlington Mavericks vs. New Mexico Lobos
+  75947384  0.6065  Will Mallorca win on 2025-09-15?
+  77355318  0.6065  Will Cabo Verde win on 2025-10-12?
+  78434198  0.6066  Pisa SC vs. US Cremonese: O/U 2.5
+  78797792  0.6066  Southern Utah Thunderbirds vs. Omaha Mavericks
+  78545206  0.6067  Will Amiens SC win on 2025-11-15?
+  77377762  0.6067  Will Cruzeiro EC win on 2025-10-26?
+  74849424  0.6067  MLS: Will New England beat D.C. United?
+  77568742  0.6067  Will US Cremonese win on 2025-10-25?
+  75988963  0.6068  Will Panama win on 2025-09-04?
+  76933305  0.6068  Will Levon Aronian finish second in the 2025 FIDE World Cup?
+  73379817  0.6068  Will Anish Giri win the 2025 SuperUnited Rapid & Blitz Croatia tournament?
+  72586109  0.6069  Will USA beat Switzerland?
+  76871609  0.6070  Will Villarreal win on 2025-10-01?
+  74881878  0.6070  MLS: Will St. Louis beat Nashville?
+  77635701  0.6070  Will Real Murcia CF win on 2025-10-30?
+  77275682  0.6071  Will Villarreal win on 2025-10-18?
+  74849433  0.6071  MLS: Will D.C. United beat New England?
+  77093011  0.6071  Will Colorado Rapids SC win on 2025-10-04?
+  75212062  0.6072  Will Real Oviedo win on 2025-08-15?
+  77635358  0.6072  Will CA Osasuna win on 2025-10-29?
+  72641261  0.6072  Will USA beat Trinidad and Tobago?
+  78713188  0.6073  Will SE Palmeiras win on 2025-11-29?
+  76425264  0.6073  Will Villarreal win on 2025-09-27?
+  73502668  0.6074  Will Canada win the 2026 FIFA World Cup?
+  77636323  0.6077  Will CA Central Córdoba win on 2025-10-22?
+  60348968  0.6078  Will the USA win gold in the Men’s 4x100m Relay?
+  72392989  0.6078  Will Gonçalo Ramos be the top goalscorer at the 2025 FIFA Club World Cup?
+  78976400  0.6078  Will Granada CF win on 2025-12-04?
+  35777074  0.6078  Will Ecuador win the 2022 World Cup?
+  76307881  0.6079  Will NAC Breda win on 2025-09-13?
+  77425986  0.6080  Will Camilo Villegas lead after Round 2 of the Baycurrent Classic 2025?
+  77338934  0.6081  Will CA Tigre win on 2025-10-10?
+  75221788  0.6082  Will Real Oviedo win on 2025-08-24?
+  74316991  0.6082  MLS: Will San Jose Earthquakes beat Real Salt Lake?
+  35776771  0.6083  Will Uruguay win the 2022 World Cup?
+  77635665  0.6083  Will Deportivo Alavés win on 2025-10-30?
+  77635333  0.6083  Will UD Los Garres win on 2025-10-29?
+  73128038  0.6084  Will Curacao beat Honduras?
+  78176833  0.6085  Will Villarreal win on 2025-11-08?
+  73502677  0.6086  Will Tunisia win the 2026 FIFA World Cup?
+  73852528  0.6087  Will Gabriel Moscardo score a goal in the 2025 FIFA Club World Cup Final?
+  75989024  0.6087  Will Panama win on 2025-09-08?
+  63400617  0.6087  Will the New York Red Bulls win the 2024 MLS Cup?
+  76369458  0.6087  Will FC Dallas win on 2025-09-13?
+  76626151  0.6087  Will Los Angeles Galaxy win on 2025-09-20?
+  77874465  0.6087  Will Villarreal win on 2025-11-01?
+  74316981  0.6088  MLS: Will Real Salt Lake beat San Jose Earthquakes?
+  73128044  0.6089  Will Canada beat El Salvador?
+  74067856  0.6089  MLS: Will Sporting Kansas City beat New York City FC?
+  74316916  0.6090  MLS: Will Charlotte FC beat Toronto FC?
+  78631422  0.6090  Will US Prémontré Saint-Gobain win on 2025-11-15?
+  73773392  0.6091  Will St. Louis City SC beat Portland Timbers?
+  75988968  0.6091  Will Guatemala win on 2025-09-04?
+  75669855  0.6091  MLS: Will Atlanta United beat Nashville SC?
+  77338798  0.6092  Will CA Vélez Sarsfield win on 2025-10-06?
+  76770649  0.6092  Will Independiente del Valle win on 2025-09-24?
+  74881887  0.6092  MLS: Will Nashville beat St. Louis?
+  74247022  0.6092  MLS: Will FC Dallas beat New York City FC?
+  79128984  0.6093  Will Espanyol win on 2025-11-30?
+  73127837  0.6093  Will Guatemala beat Guadeloupe?
+  74084677  0.6093  MLS: Will Minnesota beat Portland?
+  72651748  0.6093  Will San Jose Earthquakes beat Portland Timbers?
+  75989034  0.6093  Will Guatemala win on 2025-09-08?
+  75987200  0.6096  Will Cabo Verde win on 2025-09-09?
+  77573873  0.6096  Espanyol vs. Elche CF: O/U 2.5
+  68265324  0.6096  New Mexico vs. San Diego State
+  72134660  0.6097  Will Al-Ain win the FIFA Club World Cup?
+  73502724  0.6097  Will South Africa win the 2026 FIFA World Cup?
+  78546590  0.6098  Will CD Santa Clara win on 2025-11-30?
+  77374009  0.6098  Will Los Angeles Galaxy win on 2025-10-18?
+  75212048  0.6099  Will Villarreal win on 2025-08-15?
+  75342800  0.6100  Will Espanyol win on 2025-08-31?
+  78978752  0.6100  Will RC Celta de Vigo win on 2025-11-27?
+  72651759  0.6101  Will St. Louis City SC beat LA Galaxy?
+  78633999  0.6102  Will Cruzeiro EC win on 2025-11-20?
+  77628009  0.6102  Will Mexico win on 2025-10-14?
+  75220747  0.6102  Will Mallorca win on 2025-08-16?
+  76591053  0.6103  Will Crvena Zvezda win on 2025-09-24?
+  78890938  0.6103  Will Gil Vicente FC win on 2025-12-08?
+  78539502  0.6103  Will SBV Excelsior win on 2025-11-29?
+  78546054  0.6103  Will ES Cappelloise win on 2025-11-16?
+  75163267  0.6104  MLS: Will Charlotte FC vs. Real Salt Lake end in a draw?
+  78545375  0.6104  Will US Concarneau win on 2025-11-15?
+  76934622  0.6104  Will CD Santa Clara win on 2025-09-27?
+  76777558  0.6104  Will CD Santa Clara win on 2025-09-27?
+  77373865  0.6104  Will CF Montréal win on 2025-10-18?
+  72392857  0.6105  Will Pedro Neto win the Golden Ball at the 2025 FIFA Club World Cup?
+  78238085  0.6105  Will Panama win on 2025-11-18?
+  73968543  0.6106  MLS: Will New England beat Red Bulls?
+  62842155  0.6107  Will Venezuela beat Argentina?
+  76698389  0.6107  Will CA Central Córdoba win on 2025-09-21?
+  77930323  0.6107  Will Mexico win on 2025-11-15?
+  75423908  0.6107  Will US Cremonese win on 2025-08-29?
+  78238240  0.6108  Will Guatemala win on 2025-11-18?
+  36177929  0.6108  World Cup: Tuesday - Will United States beat Iran?
+  77054549  0.6109  Will CA Vélez Sarsfield win on 2025-09-29?
+  78546019  0.6109  Will US Saint-Malo win on 2025-11-16?
+  79042519  0.6110  Will Elche CF win on 2025-11-28?
+  14889505  0.6110  Will Magnus Carlsen or Fabiano Caruana win in their FTX Crypto Cup preliminary g
+  76498195  0.6111  Will SBV Excelsior win on 2025-09-20?
+  78634186  0.6112  Will CR Flamengo win on 2025-11-22?
+  77377610  0.6112  Will EC Bahia win on 2025-10-22?
+  75221438  0.6112  Will Mallorca win on 2025-08-23?
+  78232867  0.6114  Will Mexico win on 2025-11-18?
+  77049561  0.6114  Will SBV Excelsior win on 2025-10-04?
+  76191096  0.6114  South Florida vs. Miami
+  75453277  0.6115  MLS: Will Sporting Kansas City beat Seattle Sounders?
+  77377434  0.6115  Will Cruzeiro EC win on 2025-10-18?
+  72555201  0.6115  Will Australia qualify for the 2026 FIFA World Cup?
+  76698544  0.6116  Will CA Central Córdoba win on 2025-09-26?
+  76498341  0.6117  Will Club Necaxa win on 2025-09-19?
+  77425613  0.6117  Will Camilo Villegas lead after Round 1 of the Baycurrent Classic 2025?
+  77355489  0.6117  Will South Sudan vs. Togo end in a draw?
+  77633675  0.6117  Will Panama win on 2025-10-14?
+  77377504  0.6118  Will SE Palmeiras win on 2025-10-19?
+  78963376  0.6118  CD Godoy Cruz Antonio Tomba vs. CD Riestra: O/U 1.5
+  73968465  0.6118  MLS: Will Minnesota United beat LAFC?
+  75866159  0.6118  Will Real Oviedo win on 2025-09-13?
+  72392951  0.6119  Will Lautaro Martínez be the top goalscorer at the 2025 FIFA Club World Cup?
+  78634171  0.6119  Will SE Palmeiras win on 2025-11-22?
+  78721381  0.6120  Will Lionel Messi play in the 2026 FIFA World Cup?
+  75261383  0.6120  Will Elche CF win on 2025-08-29?
+  77336408  0.6120  Will Panama win on 2025-10-10?
+  73127832  0.6120  Will Guadeloupe beat Guatemala?
+  77374135  0.6120  Will Mazatlán FC win on 2025-10-21?
+  76482706  0.6120  Will Villarreal win on 2025-09-16?
+  17191963  0.6121  Will the U.S. Women’s Soccer team win the Gold Medal at the 2020 Olympics?
+  77572126  0.6121  Will Elche CF win on 2025-10-25?
+  75221729  0.6121  Will Villarreal win on 2025-08-24?
+  74328724  0.6122  MLS: Will Vancouver Whitecaps beat Sporting Kansas City?
+  76345322  0.6122  Will Elche CF win on 2025-09-21?
+  78232652  0.6122  Will Cabo Verde win on 2025-11-13?
+  78933796  0.6122  Will CA Tigre win on 2025-11-16?
+  76345167  0.6123  Will US Cremonese win on 2025-09-21?
+  78544903  0.6123  Will CA Rosario Central vs. CA San Lorenzo de Almagro end in a draw?
+  63400641  0.6124  Will Minnesota United win the 2024 MLS Cup?
+  77633756  0.6124  Will Guatemala win on 2025-10-14?
+  77054679  0.6125  Will CA Central Córdoba win on 2025-10-03?
+  76766009  0.6125  Will SBV Excelsior win on 2025-09-27?
+  76465313  0.6125  Will Elche CF win on 2025-09-28?
+  77638793  0.6125  Will SE Palmeiras win on 2025-11-06?
+  77331270  0.6125  Will Brazil win on 2025-10-10?
+  78634438  0.6126  Will CA Mineiro win on 2025-11-30?
+  77635806  0.6128  Will CA Mineiro win on 2025-10-28?
+  77373317  0.6128  Will CD Santa Clara win on 2025-11-03?
+  78634034  0.6128  Will EC Bahia win on 2025-11-20?
+  78270407  0.6128  Instituto AC Córdoba vs. CA Rosario Central: O/U 1.5
+  77635519  0.6129  Will CD Azuaga vs. CD Leganés end in a draw?
+  77336379  0.6129  Will Guatemala win on 2025-10-10?
+  77635418  0.6129  Will Córdoba CF win on 2025-10-29?
+  77871019  0.6130  Will US Cremonese win on 2025-11-01?
+  77634690  0.6130  Will Mazatlán FC vs. Club Necaxa end in a draw?
+  75163354  0.6130  MLS: Will St. Louis City beat Chicago?
+  76498317  0.6131  Will CR Flamengo vs. Estudiantes de La Plata end in a draw?
+  77377667  0.6131  Will Cruzeiro EC win on 2025-11-01?
+  73502604  0.6131  Will Brazil win the 2026 FIFA World Cup?
+  78634316  0.6132  Will CR Flamengo win on 2025-11-25?
+  78546065  0.6132  Will SC Abbeville Côte Picarde win on 2025-11-16?
+  77372906  0.6133  Will SBV Excelsior win on 2025-10-26?
+  78545390  0.6133  Will CA Central Córdoba win on 2025-11-10?
+  77338906  0.6133  Will Estudiantes de La Plata win on 2025-10-11?
+  77374191  0.6134  Will Club Necaxa win on 2025-10-21?
+  77347972  0.6134  Will Truro City FC win on 2025-10-11?
+  77951641  0.6135  Will Orlando City SC win the 2025 MLS Cup?
+  69458617  0.6135  Will Bolivia beat Uruguay?
+  77377246  0.6135  Will SE Palmeiras win on 2025-10-15?
+  78634271  0.6135  Will SE Palmeiras win on 2025-11-25?
+  76821202  0.6135  Will Colorado Rapids SC win on 2025-09-27?
+  72433089  0.6135  Will Colombia beat Peru?
+  45589937  0.6135  Will Brazil win the 2023 Women's World Cup?
+  77377539  0.6135  Will CA Mineiro win on 2025-10-25?
+  73783067  0.6136  Will Slovakia win UEFA Group A for 2026 FIFA World Cup?
+  76766848  0.6136  Will CR Flamengo win on 2025-09-25?
+  66664734  0.6136  Will Leviatán win the VCT 2025 Americas Kickoff?
+  76424957  0.6136  Will US Cremonese win on 2025-09-27?
+  76307735  0.6137  Will Independiente del Valle win on 2025-09-17?
+  77741279  0.6137  Will Como win on 2025-10-29?
+  77572116  0.6138  Will Espanyol win on 2025-10-25?
+  78634362  0.6138  Will EC Bahia win on 2025-11-28?
+  73574201  0.6138  Will Mexico win 4–0?
+  78241540  0.6138  Will CA Central Córdoba win on 2025-11-03?
+  74849501  0.6138  MLS: Will Dallas beat Portland?
+  75988067  0.6138  Will Brazil win on 2025-09-04?
+  77377203  0.6138  Will SE Palmeiras win on 2025-10-11?
+  72716232  0.6138  Will Guadeloupe beat Panama?
+  78336737  0.6139  St. Mary's (TX) Rattlers vs. Texas-Rio Grande Valley Vaqueros (W)
+  78241545  0.6139  Will CA Central Córdoba vs. Racing Club end in a draw?
+  76345533  0.6140  Will Villarreal win on 2025-09-23?
+  76345654  0.6141  Will Elche CF win on 2025-09-25?
+  77374158  0.6141  Will Mazatlán FC win on 2025-10-18?
+  76708039  0.6141  Will US Cremonese win on 2025-10-04?
+  75453113  0.6141  MLS: Will New England beat Columbus?
+  78634216  0.6141  Will Cruzeiro EC win on 2025-11-23?
+  77935930  0.6142  Will Honduras win on 2025-11-13?
+  69458564  0.6142  Will Venezuela vs. Peru end in a draw?
+  77374436  0.6142  Will Club Necaxa win on 2025-10-31?
+  66664767  0.6142  Will MIBR win the VCT 2025 Americas Kickoff?
+  74881874  0.6142  MLS: Will San Diego beat Kansas City?
+  77331465  0.6143  Will Uruguay win on 2025-10-13?
+  73773506  0.6143  Will San Jose Earthquakes beat Minnesota United FC?
+  73705482  0.6143  Will Colorado Rapids beat LAFC?
+  77634750  0.6143  Will Deportivo Toluca FC win on 2025-11-08?
+  77636888  0.6143  Will Truro City FC win on 2025-10-14?
+  78976025  0.6143  Will CD Quintanar del Rey win on 2025-12-02?
+  78235426  0.6143  Will SBV Excelsior win on 2025-11-22?
+  77373844  0.6143  Will Los Angeles Galaxy win on 2025-10-11?
+  78630846  0.6144  Will CA Mineiro win on 2025-11-22?
+  78823001  0.6144  Will US Cremonese win on 2025-11-23?
+  77372954  0.6144  Will SBV Excelsior win on 2025-11-01?
+  71317183  0.6145  Will Darwin Nunez sign with a new club during the transfer window?
+  77636559  0.6145  Will CD Santa Clara win on 2025-11-08?
+  77338869  0.6145  Will CA Central Córdoba win on 2025-10-10?
+  77374476  0.6145  Will Deportivo Toluca FC win on 2025-11-01?
+  69731101  0.6145  CLE Guardians vs. SD Padres April 1
+  78976036  0.6146  Will Elche CF win on 2025-12-02?
+  77354906  0.6147  Will Honduras win on 2025-10-13?
+  76821197  0.6148  Will CF Montréal win on 2025-09-27?
+  77054623  0.6148  Will Estudiantes de La Plata win on 2025-09-30?
+  78634049  0.6148  Will SE Palmeiras win on 2025-11-19?
+  76766844  0.6148  Will Estudiantes de La Plata vs. CR Flamengo end in a draw?
+  77092687  0.6148  Will Los Angeles Galaxy win on 2025-10-04?
+  78634105  0.6149  Will CR Flamengo win on 2025-11-19?
+  76698421  0.6149  Will Estudiantes de La Plata win on 2025-09-22?
+  73773497  0.6149  Will Minnesota United FC beat San Jose Earthquakes?
+  77917688  0.6150  Will Elche CF win on 2025-11-02?
+  78270399  0.6150  CA Belgrano vs. CA Tigre: O/U 1.5
+  62842166  0.6150  Will Argentina beat Venezuela?
+  77374291  0.6151  Will Pumas de la UNAM win on 2025-10-22?
+  76384665  0.6152  Will Espanyol win on 2025-09-26?
+  78976086  0.6152  Will Real Murcia CF win on 2025-12-03?
+  77638773  0.6152  Will Cruzeiro EC win on 2025-11-05?
+  76344867  0.6152  Will Espanyol win on 2025-09-20?
+  73705472  0.6152  Will LAFC beat Colorado Rapids?
+  58842092  0.6153  Will Panama win?
+  58644541  0.6153  Will Panama win?
+  77193455  0.6154  Will Manises CF win on 2025-10-04?
+  35776263  0.6154  Will Spain win the 2022 World Cup?
+  77374432  0.6154  Will CF Cruz Azul win on 2025-10-31?
+  77374405  0.6155  Will Club Necaxa win on 2025-10-26?
+  78976146  0.6155  Will Cultural y Deportiva Leonesa win on 2025-12-03?
+  78889142  0.6156  Will Club Tijuana win on 2025-11-20?
+  73574157  0.6156  Will USA win 3–0?
+  76748406  0.6156  Will Elche CF win on 2025-10-05?
+  79013782  0.6157  Texas Southern Tigers vs. Vanderbilt Commodores
+  77941073  0.6157  Will CR Flamengo win on 2025-11-15?
+  78755481  0.6157  Will SBV Excelsior win on 2025-12-05?
+  76307956  0.6157  Will SE Palmeiras win on 2025-09-17?
+  77941058  0.6158  Will SE Palmeiras win on 2025-11-15?
+  76777382  0.6158  Will UD Los Garres win on 2025-09-27?
+  76936438  0.6158  Will UD Los Garres win on 2025-09-27?
+  77377822  0.6159  Will EC Bahia win on 2025-11-02?
+  76936429  0.6159  Will Manises CF win on 2025-09-27?
+  76777373  0.6159  Will Manises CF win on 2025-09-27?
+  76498461  0.6159  Will Atlético San Luis win on 2025-09-21?
+  77374249  0.6159  Will Club Tijuana win on 2025-10-22?
+  77374216  0.6159  Will Club Puebla win on 2025-10-21?
+  64279271  0.6160  Will Venezuela beat Brazil?
+  75163291  0.6160  MLS: Will New England beat LAFC?
+  77374423  0.6161  Will Club Puebla win on 2025-10-31?
+  74567192  0.6161  Will Colombia win Intervision 2025?
+  72392957  0.6162  Will Lionel Messi be the top goalscorer at the 2025 FIFA Club World Cup?
+  78027490  0.6162  Will Macarthur FC win on 2025-11-08?
+  78585425  0.6162  Will Columbus Crew win on 2025-11-08?
+  77935905  0.6162  Will Guatemala win on 2025-11-13?
+  76498322  0.6162  Will Estudiantes de La Plata win on 2025-09-18?
+  69244292  0.6163  Will Mexico beat Canada?
+  77638929  0.6163  Will Cruzeiro EC win on 2025-11-09?
+  77092867  0.6163  Will CF Montréal win on 2025-10-04?
+  77636177  0.6164  Will Estudiantes de La Plata win on 2025-10-19?
+  77377689  0.6164  Will EC Bahia win on 2025-10-25?
+  78933776  0.6164  Will CD Godoy Cruz Antonio Tomba vs. CD Riestra end in a draw?
+  77377316  0.6164  Will Cruzeiro EC win on 2025-10-15?
+  78133604  0.6165  Will Elche CF win on 2025-11-07?
+  77193445  0.6166  Will UD Los Garres win on 2025-10-04?
+  64488086  0.6166  Will Peru beat Argentina?
+  77636172  0.6166  Will CA Vélez Sarsfield win on 2025-10-19?
+  75866471  0.6166  Will Villarreal win on 2025-09-13?
+  76769936  0.6167  Will Club Necaxa win on 2025-09-27?
+  73773422  0.6167  Will LA Galaxy beat D.C. United?
+  74316894  0.6167  MLS: Will Seattle Sounders beat Atlanta United?
+  72433073  0.6168  Will Bolivia vs. Venezuela end in a draw?
+  77374325  0.6168  Will Pumas de la UNAM win on 2025-10-25?
+  68454004  0.6168  Will Sepp Straka win the 2025 FedEx Cup?
+  77638863  0.6168  Will EC Bahia win on 2025-11-05?
+  75988953  0.6169  Will Suriname win on 2025-09-04?
+  77951636  0.6169  Will Chicago Fire FC win the 2025 MLS Cup?
+  75163359  0.6169  MLS: Will Austin FC beat FC Dallas?
+  78634306  0.6169  Will CA Mineiro win on 2025-11-25?
+  76498355  0.6169  Will Mazatlán FC win on 2025-09-19?
+  77638878  0.6169  Will EC Bahia win on 2025-11-08?
+  78704183  0.6170  Spread: Estudiantes de La Plata (-0.5)
+  76307829  0.6170  Will SBV Excelsior win on 2025-09-14?
+  75163374  0.6170  MLS: Will Colorado beat Atlanta?
+  63400695  0.6171  Will the Vancouver Whitecaps win the 2024 MLS Cup?
+  74316886  0.6171  MLS: Will Atlanta United beat Seattle Sounders?
+  77568570  0.6171  Will Como win on 2025-10-25?
+  78232852  0.6171  Will Brazil win on 2025-11-18?
+  77372690  0.6171  Will SBV Excelsior win on 2025-10-19?
+  78546070  0.6172  Will ASF Pierrelatte win on 2025-11-16?
+  78634156  0.6172  Will EC Bahia win on 2025-11-23?
+  74849493  0.6173  MLS: Will Houston Dynamo beat Austin FC?
+  78976231  0.6173  Will Deportivo Alavés win on 2025-12-03?
+  73128016  0.6173  Will Jamaica beat Panama?
+  73574172  0.6173  Will Mexico win 4–2?
+  58773196  0.6173  Will Mexico win?
+  58598548  0.6173  Will Mexico win?
+  74316974  0.6174  MLS: Will Minnesota United FC beat St. Louis City SC?
+  77377568  0.6176  Will EC Bahia win on 2025-10-19?
+  72134575  0.6176  Will Atletico Madrid win the FIFA Club World Cup?
+  63400569  0.6177  Will New York City FC win the MLS Cup?
+  77630618  0.6177  Will SBV Excelsior win on 2025-11-08?
+  64487991  0.6177  Will Ecuador beat Colombia?
+  78538611  0.6177  San Francisco Dons vs. Memphis Tigers
+  78869775  0.6177  Will Espanyol win on 2025-11-24?
+  69458577  0.6177  Will Ecuador beat Chile?
+  75947380  0.6177  Will US Cremonese win on 2025-09-15?
+  78889137  0.6178  Will Pumas de la UNAM win on 2025-11-20?
+  76698548  0.6178  Will CA Central Córdoba vs. CA Tigre end in a draw?
+  77374339  0.6178  Will Club Tijuana win on 2025-10-25?
+  72716222  0.6178  Will Panama beat Guadeloupe?
+  78933831  0.6178  Will CA Central Córdoba win on 2025-11-16?
+  75453172  0.6178  MLS: Will FC Dallas beat LAFC?
+  74849484  0.6179  MLS: Will Austin FC beat Houston Dynamo?
+  76708155  0.6179  Will Como win on 2025-10-04?
+  76735455  0.6179  Laver Cup: Carlos Alcaraz vs Francisco Cerundolo
+  77374172  0.6179  Will Pumas de la UNAM win on 2025-10-18?
+  78963368  0.6180  Spread: CA Platense (-1.5)
+  75453104  0.6180  MLS: Will Columbus beat New England?
+  72333542  0.6180  Will Al-Ain win Group G at the FIFA Club World Cup?
+  76821276  0.6180  Will Los Angeles Galaxy win on 2025-09-27?
+  62842157  0.6180  Will Bolivia beat Colombia?
+  77638984  0.6181  Will SE Palmeiras win on 2025-11-09?
+  76769994  0.6181  Will Pumas de la UNAM win on 2025-09-27?
+  75989074  0.6181  Will Suriname win on 2025-09-08?
+  77053358  0.6181  Will Club Puebla win on 2025-10-04?
+  59486214  0.6181  Will the U.S. win Gold in Women's Football (Soccer)?
+  76766809  0.6182  Will SE Palmeiras win on 2025-09-24?
+  78963369  0.6182  Spread: Estudiantes de La Plata (-1.5)
+  77338902  0.6182  Will CA Belgrano vs. Estudiantes de La Plata end in a draw?
+  77338855  0.6183  Will CA Vélez Sarsfield win on 2025-10-11?
+  73965338  0.6183  HR Derby: Caminero vs. Cruz
+  78130054  0.6183  Will US Cremonese win on 2025-11-07?
+  77053264  0.6184  Will Club Necaxa win on 2025-10-03?
+  77636076  0.6184  Will CA Lanús vs. CD Godoy Cruz Antonio Tomba end in a draw?
+  76498409  0.6184  Will Pumas de la UNAM win on 2025-09-20?
+  76307961  0.6185  Will CA Vélez Sarsfield win on 2025-09-16?
+  76424873  0.6186  Will Como win on 2025-09-27?
+  77374201  0.6186  Will CF Cruz Azul win on 2025-10-21?
+  76698468  0.6186  Will CA Rosario Central vs. CA Talleres end in a draw?
+  69244282  0.6187  Will Canada beat Mexico?
+  78826627  0.6187  Will Elche CF win on 2025-11-23?
+  78249551  0.6187  New Mexico vs. UNLV: 1H O/U 30.5
+  75453196  0.6187  MLS: Will Nashville SC vs. Orlando City SC end in a draw?
+  64288835  0.6188  Barrios vs. Ramos
+  55595592  0.6189  X banned in Brazil before May?
+  75453181  0.6189  MLS: Will LAFC beat FC Dallas?
+  76769776  0.6189  Will Club Necaxa win on 2025-09-23?
+  74067798  0.6189  MLS: Will FC Dallas beat St. Louis City?
+  60797665  0.6190  X banned in Brazil before October?
+  77374100  0.6190  Will Club Necaxa win on 2025-10-17?
+  73502710  0.6190  Will South Korea win the 2026 FIFA World Cup?
+  75825796  0.6191  Will Elche CF win on 2025-09-12?
+  73574122  0.6191  Will Mexico win 2–0?
+  75423993  0.6191  Will Como win on 2025-08-30?
+  77374451  0.6192  Will Atlético San Luis win on 2025-10-31?
+  76766839  0.6192  Will Estudiantes de La Plata win on 2025-09-25?
+  57972737  0.6192  Australia vs. Namibia - Cricket T20 World Cup
+  77377306  0.6192  Will CA Mineiro win on 2025-10-15?
+  78976216  0.6192  Will CA Osasuna win on 2025-12-03?
+  74316986  0.6192  MLS: Will Real Salt Lake vs. San Jose Earthquakes end in a draw?
+  77377458  0.6192  Will CA Mineiro win on 2025-10-18?
+  77426351  0.6192  Will Camilo Villegas lead after Round 3 of the Baycurrent Classic 2025?
+  77377816  0.6193  Will SE Palmeiras win on 2025-11-02?
+  78933746  0.6193  Will CA Vélez Sarsfield vs. CA River Plate end in a draw?
+  78280150  0.6194  New Mexico vs. UNLV: 1H O/U 29.5
+  77979262  0.6194  Will Columbus Crew win on 2025-11-02?
+  77336370  0.6194  Will Suriname win on 2025-10-10?
+  77374299  0.6194  Will Atlético San Luis win on 2025-10-22?
+  72651742  0.6195  Will Portland Timbers beat San Jose Earthquakes?
+  58714803  0.6195  Will Brazil win?
+  58557297  0.6195  Will Brazil win?
+  58880195  0.6195  Will Brazil win?
+  77638959  0.6196  Will CR Flamengo win on 2025-11-09?
+  76498300  0.6196  Will Club Tijuana win on 2025-09-19?
+  76769965  0.6196  Will Mazatlán FC win on 2025-09-27?
+  77870984  0.6197  Will Como win on 2025-11-01?
+  78027323  0.6197  Will Central Coast Mariners FC win on 2025-11-02?
+  77935915  0.6198  Will Panama win on 2025-11-13?
+  75988104  0.6199  Will Brazil win on 2025-09-09?
+  76766834  0.6199  Will CA Vélez Sarsfield win on 2025-09-23?
+  77315968  0.6199  Will Elche CF win on 2025-10-19?
+  64279293  0.6199  Will Brazil beat Venezuela?
+  77054660  0.6199  Will CA Sarmiento vs. Gimnasia y Esgrima de La Plata end in a draw?
+  77377792  0.6199  Will CR Flamengo win on 2025-11-01?
+  69458633  0.6200  Will Uruguay beat Bolivia?
+  76769912  0.6200  Will Club Puebla win on 2025-09-26?
+  64446623  0.6200  Will Jamaica beat USA?
+  76498350  0.6200  Will Club Puebla win on 2025-09-19?
+  73574191  0.6200  Will Mexico win 4–3?
+  77331322  0.6200  Will Jordan vs. Bolivia end in a draw?
+  77951621  0.6200  Will New York City FC win the 2025 MLS Cup?
+  77634685  0.6201  Will Mazatlán FC win on 2025-11-07?
+  78804087  0.6201  Will ES Dominicaine win on 2025-11-16?
+  69244279  0.6201  Will Uruguay beat Argentina?
+  78545677  0.6202  Will GFC Ajaccio win on 2025-11-16?
+  75383278  0.6202  Will US Cremonese win on 2025-08-23?
+  76369365  0.6202  Will Columbus Crew win on 2025-09-13?
+  58958437  0.6202  Will Argentina win?
+  58557078  0.6202  Will Argentina win?
+  58403621  0.6202  Will Argentina win?
+  78933806  0.6203  Will CA Barracas Central vs. CA Huracán end in a draw?
+  76369428  0.6203  Will Colorado Rapids SC win on 2025-09-13?
+  76345441  0.6204  Will Espanyol win on 2025-09-23?
+  76369351  0.6204  Will Toronto FC win on 2025-09-13?
+  78309994  0.6204  Mazatlán FC vs. Club Necaxa: Both Teams to Score
+  78241530  0.6204  Will CA River Plate vs. Gimnasia y Esgrima de La Plata end in a draw?
+  77634665  0.6205  Will Pumas de la UNAM win on 2025-11-08?
+  67676046  0.6205  San Diego vs. Santa Clara
+  77636146  0.6205  Will CA Boca Juniors win on 2025-10-18?
+  77638728  0.6205  Will CR Flamengo win on 2025-11-05?
+  75669764  0.6206  MLS: Will NY Red Bulls beat Columbus Crew?
+  77374581  0.6206  Will Pumas de la UNAM win on 2025-11-02?
+  77633685  0.6206  Will Suriname win on 2025-10-14?
+  77053320  0.6206  Will Pumas de la UNAM win on 2025-10-05?
+  78545308  0.6206  Will Gimnasia y Esgrima de La Plata vs. CA Vélez Sarsfield end in a draw?
+  72134649  0.6207  Will Salzburg win the FIFA Club World Cup?
+  76769790  0.6207  Will Pumas de la UNAM win on 2025-09-23?
+  61234914  0.6207  Will Brazil unban X before October?
+  76769950  0.6208  Will Atlético San Luis win on 2025-09-27?
+  35777041  0.6208  Will USA win the 2022 World Cup?
+  77374303  0.6208  Will Mazatlán FC win on 2025-10-24?
+  77951615  0.6209  Will Charlotte FC win the 2025 MLS Cup?
+  76308046  0.6210  Will Club Necaxa win on 2025-09-12?
+  75163345  0.6210  MLS: Will Chicago beat St. Louis City?
+  78933816  0.6210  Will Estudiantes de La Plata win on 2025-11-16?
+  76345292  0.6210  Will Como win on 2025-09-21?
+  75221706  0.6210  Will Espanyol win on 2025-08-24?
+  77930368  0.6211  Will Brazil win on 2025-11-15?
+  76770014  0.6211  Will Club Tijuana win on 2025-09-28?
+  77374397  0.6211  Will Atlético San Luis win on 2025-10-26?
+  77374120  0.6211  Will CF Cruz Azul win on 2025-10-18?
+  76698441  0.6212  Will CD Godoy Cruz Antonio Tomba vs. Instituto AC Córdoba end in a draw?
+  77638853  0.6212  Will CA Mineiro win on 2025-11-05?
+  77054703  0.6212  Will CD Godoy Cruz Antonio Tomba vs. CA Independiente end in a draw?
+  64446608  0.6213  Will USA beat Jamaica?
+  77377374  0.6213  Will EC Bahia win on 2025-10-16?
+  76308075  0.6214  Will Deportivo Toluca FC win on 2025-09-13?
+  35777494  0.6215  Will Tunisia win the 2022 World Cup?
+  75947353  0.6215  Will Espanyol win on 2025-09-15?
+  76748603  0.6215  Will Espanyol win on 2025-10-05?
+  74067847  0.6216  MLS: Will Seattle vs. San Jose end in a draw?
+  68265608  0.6216  North Texas vs. Florida Atlantic
+  72925314  0.6216  Will River Plate beat Monterrey?
+  64488064  0.6217  Will Argentina beat Peru?
+  74067748  0.6217  MLS: Will D.C. United beat Columbus Crew?
+  77377231  0.6218  Will CA Mineiro win on 2025-10-08?
+  78330545  0.6218  New Mexico vs. UNLV: 1H O/U 31.5
+  78176823  0.6218  Will Espanyol win on 2025-11-08?
+  72638288  0.6218  Will Guadeloupe win the 2025 CONCACAF Gold Cup?
+  72887655  0.6218  Will Lionel Messi score the most total goals in the 2025 FIFA Club World Cup?
+  78761387  0.6219  Will Rio Ave FC win on 2025-12-06?
+  77374357  0.6219  Will CF Cruz Azul win on 2025-10-25?
+  75221258  0.6219  Will Elche CF win on 2025-08-18?
+  74067827  0.6220  MLS: Will Nashville SC beat Toronto FC?
+  77054713  0.6220  Will Estudiantes de La Plata win on 2025-10-05?
+  69727776  0.6220  LAA Angels vs. STL Cardinals March 31
+  77234809  0.6221  Will Espanyol win on 2025-10-17?
+  35773933  0.6222  Will Australia qualify from Group D?
+  77054745  0.6222  Will CA Rosario Central vs. CA River Plate end in a draw?
+  72638305  0.6223  Will Trinidad & Tobago win the 2025 CONCACAF Gold Cup?
+  76932885  0.6223  Will Fabiano Caruana win the 2025 FIDE World Cup?
+  76770610  0.6223  Will CA Mineiro win on 2025-09-24?
+  73968478  0.6223  MLS: Will Nashville SC beat Columbus Crew?
+  76308104  0.6223  Will Atlético San Luis win on 2025-09-14?
+  78241432  0.6223  Will Estudiantes de La Plata win on 2025-11-02?
+  78241402  0.6223  Will CA Vélez Sarsfield win on 2025-11-01?
+  72333747  0.6224  Will Pachuca win Group H at the FIFA Club World Cup?
+  75988052  0.6224  Will Colombia win on 2025-09-04?
+  77053335  0.6224  Will Club Tijuana win on 2025-10-05?
+  78704182  0.6225  CD Riestra vs. CA Independiente: O/U 1.5
+  78934621  0.6225  Will Villarreal CF win on 2025-11-25?
+  77917673  0.6225  Will Espanyol win on 2025-11-02?
+  76769868  0.6225  Will Atlético San Luis win on 2025-09-24?
+  76308113  0.6226  Will Club Tijuana win on 2025-09-14?
+  73852526  0.6226  Will Goncalo Ramos score a goal in the 2025 FIFA Club World Cup Final?
+  75669826  0.6226  MLS: Will Colorado beat Sporting KC?
+  78309993  0.6226  Spread: Club Tijuana (-1.5)
+  77951661  0.6227  Will Minnesota United FC win the 2025 MLS Cup?
+  77075204  0.6227  ICC WWC: New Zealand vs. South Africa
+  72555197  0.6227  Will United Arab Emirates qualify for the 2026 FIFA World Cup?
+  76769795  0.6227  Will Club Puebla win on 2025-09-23?
+  73773401  0.6227  Will Portland Timbers beat St. Louis City SC?
+  69244239  0.6227  Will Peru vs. Bolivia end in a draw?
+  76308061  0.6227  Will Mazatlán FC win on 2025-09-12?
+  78216485  0.6227  Will Atalanta vs. US Sassuolo Calcio end in a draw?
+  72925359  0.6227  Will Canada beat Curacao?
+  76648256  0.6228  Will World win the Laver Cup?
+  78545313  0.6229  Will CA Vélez Sarsfield win on 2025-11-10?
+  77374058  0.6229  Will Club Tijuana win on 2025-10-17?
+  77053305  0.6229  Will Mazatlán FC win on 2025-10-03?
+  75446352  0.6230  Will any 2026 FIFA World Cup game scheduled in the U.S. be relocated abroad?
+  35777363  0.6230  Will Canada win the 2022 World Cup?
+  78545328  0.6230  Will Estudiantes de La Plata win on 2025-11-09?
+  78238251  0.6231  Will Suriname win on 2025-11-18?
+  73574094  0.6231  Will USA win 1–0?
+  77374287  0.6231  Will Club Puebla win on 2025-10-24?
+  77635686  0.6231  Will CE Atlètic Lleida win on 2025-10-30?
+  75163300  0.6231  MLS: Will LAFC beat New England?
+  78241458  0.6232  Will CA Rosario Central win on 2025-10-31?
+  76698380  0.6232  Will CA Boca Juniors win on 2025-09-21?
+  77315959  0.6232  Will Como win on 2025-10-19?
+  75163369  0.6232  MLS: Will FC Dallas beat Austin FC?
+  61190067  0.6232  X banned in Brazil by Friday?
+  77075191  0.6233  ICC WWC: Australia vs. New Zealand
+  77331372  0.6235  Will Argentina win on 2025-10-10?
+  74246995  0.6235  MLS: Will New England beat CF Montreal?
+  76769832  0.6235  Will Mazatlán FC win on 2025-09-23?
+  62842165  0.6235  Will Colombia beat Bolivia?
+  77638833  0.6235  Will CA Mineiro win on 2025-11-08?
+  63400705  0.6235  Will Atlanta United win the 2024 MLS Cup?
+  76821316  0.6235  Will San Diego FC win on 2025-09-27?
+  75947397  0.6235  Will Como win on 2025-09-15?
+  72134604  0.6236  Will Flamengo win the FIFA Club World Cup?
+  76308070  0.6236  Will Pumas de la UNAM win on 2025-09-12?
+  74067842  0.6236  MLS: Will Seattle beat San Jose?
+  77374503  0.6237  Will Mazatlán FC win on 2025-11-02?
+  77634696  0.6238  Will Club Necaxa win on 2025-11-07?
+  76770024  0.6238  Will CF Cruz Azul win on 2025-09-28?
+  76772976  0.6238  Will CA Barracas Central win on 2025-09-29?
+  78963369  0.6238  CA Barracas Central vs. CA Huracán: O/U 1.5
+  75221529  0.6239  Will Elche CF win on 2025-08-23?
+  68119909  0.6240  Canada vs. USA
+  78933821  0.6240  Will Estudiantes de La Plata vs. AA Argentinos Juniors end in a draw?
+  78173271  0.6242  Will Como win on 2025-11-08?
+  78545323  0.6242  Will CA Tigre vs. Estudiantes de La Plata end in a draw?
+  75453143  0.6242  MLS: Will Houston beat San Jose?
+  78270402  0.6242  CA River Plate vs. Gimnasia y Esgrima de La Plata: O/U 2.5
+  76698514  0.6243  Will CA Boca Juniors win on 2025-09-27?
+  78677189  0.6243  Will CA Mineiro win on 2025-11-12?
+  75383342  0.6244  Will Como win on 2025-08-24?
+  77374586  0.6244  Will Pumas de la UNAM vs. Club Tijuana end in a draw?
+  77627963  0.6244  Will Argentina win on 2025-10-14?
+  78538625  0.6245  Texas-Rio Grande Valley Vaqueros vs. Southern Utah Thunderbirds
+  77374392  0.6245  Will CF Pachuca win on 2025-10-26?
+  76769892  0.6246  Will Club Tijuana win on 2025-09-24?
+  73968473  0.6246  MLS: Will LAFC beat Minnesota United?
+  74881883  0.6246  MLS: Will St. Louis vs. Nashville end in a draw?
+  77634680  0.6247  Will Club Puebla win on 2025-11-08?
+  78889127  0.6247  Will CF Pachuca win on 2025-11-20?
+  74067803  0.6247  MLS: Will FC Dallas vs. St. Louis City end in a draw?
+  77377847  0.6247  Will CA Mineiro win on 2025-11-02?
+  78634014  0.6247  Will CA Mineiro win on 2025-11-16?
+  77338962  0.6248  Will CA Boca Juniors win on 2025-10-11?
+  69731068  0.6248  LAA Angels vs. STL Cardinals April 1
+  75221176  0.6249  Will Espanyol win on 2025-08-17?
+  77634734  0.6249  Will Club Tijuana win on 2025-11-07?
+  77374115  0.6250  Will CF Pachuca win on 2025-10-18?
+  75453291  0.6250  MLS: Will Toronto FC beat Atlanta United FC?
+  72134633  0.6251  Will Botafogo RJ win the FIFA Club World Cup?
+  78031992  0.6251  Spread: CD Guadalajara (-1.5)
+  75163248  0.6251  MLS: Will CF Montreal beat D.C. United?
+  75163257  0.6252  MLS: Will D.C. United beat CF Montreal?
+  72844609  0.6252  Will Canada beat Honduras?
+  78241453  0.6253  Will Instituto AC Córdoba vs. CA Rosario Central end in a draw?
+  76369512  0.6253  Will Los Angeles Galaxy win on 2025-09-13?
+  73574181  0.6253  Will Mexico win 4–1?
+  77331354  0.6254  Will Dominican Republic win on 2025-10-10?
+  75163384  0.6254  MLS: Will Atlanta beat Colorado?
+  74067852  0.6255  MLS: Will San Jose beat Seattle?
+  77568747  0.6255  Will US Cremonese vs. Atalanta end in a draw?
+  77053315  0.6255  Will Atlético San Luis win on 2025-10-03?
+  77053300  0.6255  Will CF Cruz Azul win on 2025-10-04?
+  78933741  0.6255  Will CA Vélez Sarsfield win on 2025-11-16?
+  73128011  0.6256  Will Panama beat Jamaica?
+  73574147  0.6256  Will Mexico win 3–2?
+  77634712  0.6257  Will Atlético San Luis win on 2025-11-08?
+  75453282  0.6258  MLS: Will Atlanta United FC beat Toronto FC?
+  73502649  0.6259  Will Colombia win the 2026 FIFA World Cup?
+  59486329  0.6260  Will Canada win Gold in Women's Football (Soccer)?
+  77951626  0.6260  Will Nashville SC win the 2025 MLS Cup?
+  78671790  0.6260  Will San Diego FC win on 2025-11-09?
+  76626142  0.6260  Will San Jose Earthquakes vs. St. Louis City SC end in a draw?
+  76307759  0.6260  Will CA Mineiro win on 2025-09-17?
+  73968487  0.6261  MLS: Will Columbus Crew beat Nashville SC?
+  72555200  0.6262  Will Uruguay qualify for the 2026 FIFA World Cup?
+  79056913  0.6262  Valparaiso Beacons vs. South Dakota Coyotes (W)
+  64487975  0.6262  Will Colombia beat Ecuador?
+  75669807  0.6263  MLS: Will CF Montreal beat Toronto FC?
+  76698576  0.6263  Will Gimnasia y Esgrima de La Plata vs. CA Rosario Central end in a draw?
+  75669797  0.6263  MLS: Will Toronto FC beat CF Montreal?
+  74000939  0.6263  Will Brazil win the 2025 SailGP Championship Season 5?
+  74519780  0.6263  Will Espanyol win the 2025–26 La Liga?
+  72134628  0.6264  Will Fluminense win the FIFA Club World Cup?
+  78276549  0.6264  New Mexico vs. UNLV: O/U 61.5
+  75342829  0.6264  Will Espanyol vs. Osasuna end in a draw?
+  76769808  0.6265  Will CF Cruz Azul win on 2025-09-24?
+  73502640  0.6266  Will Mexico win the 2026 FIFA World Cup?
+  77636262  0.6266  Will CA Barracas Central win on 2025-10-20?
+  73574107  0.6267  Will Mexico win 2–1?
+  75453152  0.6267  MLS: Will San Jose beat Houston?
+  74849454  0.6268  MLS: Will Chicago beat LAFC?
+  76369399  0.6268  Will CF Montréal win on 2025-09-13?
+  76698463  0.6268  Will CA Rosario Central win on 2025-09-21?
+  77338864  0.6268  Will CA Rosario Central win on 2025-10-11?
+  76698558  0.6268  Will CA Platense win on 2025-09-26?
+  77374590  0.6268  Will Club Tijuana win on 2025-11-02?
+  78538621  0.6269  Rio Grande  Red Storm vs. Southern Utah Thunderbirds
+  67787969  0.6269  San Diego State vs. San José State
+  74316890  0.6269  MLS: Will Atlanta United vs. Seattle Sounders end in a draw?
+  75988037  0.6270  Will Argentina win on 2025-09-04?
+  77374053  0.6270  Will Club Puebla vs. Club Tijuana end in a draw?
+  76498327  0.6270  Will CF Cruz Azul win on 2025-09-19?
+  76777562  0.6270  Will CD Santa Clara vs. CD Tondela end in a draw?
+  76934626  0.6270  Will CD Santa Clara vs. CD Tondela end in a draw?
+  76698580  0.6270  Will CA Rosario Central win on 2025-09-27?
+  77373178  0.6271  Will Rio Ave FC win on 2025-10-25?
+  78897589  0.6271  Luis Santana vs Pedro Manuel Gomes Nov 13, 2025
+  77635670  0.6274  Will Atlético Palma del Río CF win on 2025-10-30?
+  75982291  0.6274  Will Dominican Republic win on 2025-09-09?
+  77374048  0.6275  Will Club Puebla win on 2025-10-17?
+  77374063  0.6275  Will Atlético San Luis win on 2025-10-17?
+  72887776  0.6275  Will Guatemala beat Panama?
+  78839189  0.6275  Will Comoros win on 2025-11-14?
+  76498346  0.6275  Will Club Necaxa vs. Club Puebla end in a draw?
+  78336797  0.6276  UT Arlington Mavericks vs. Houston Cougars (W)
+  76777683  0.6276  Will Rio Ave FC win on 2025-09-28?
+  77374221  0.6276  Will CF Pachuca win on 2025-10-22?
+  76498368  0.6277  Will CF Pachuca win on 2025-09-20?
+  72716244  0.6277  Will Jamaica beat Guatemala?
+  78546267  0.6277  Will Sarreguemines FC win on 2025-11-16?
+  75669816  0.6277  MLS: Will Sporting KC beat Colorado?
+  77331438  0.6278  Will Colombia win on 2025-10-11?
+  74849419  0.6278  MLS: Will Atlanta United beat CF Montreal?
+  78232697  0.6278  Will Argentina win on 2025-11-14?
+  72392868  0.6279  Will Fabián Ruiz win the Golden Ball at the 2025 FIFA Club World Cup?
+  74316901  0.6279  MLS: Will D.C. United beat Austin FC?
+  75453148  0.6279  MLS: Will Houston vs. San Jose end in a draw?
+  78963368  0.6280  Spread: CA Barracas Central (-1.5)
+  78281350  0.6280  Will San Diego FC win on 2025-11-01?
+  77374401  0.6280  Will Atlético San Luis vs. Club Necaxa end in a draw?
+  63400654  0.6281  Will the Portland Timbers win the 2024 MLS Cup?
+  72134611  0.6281  Will Palmeiras win the FIFA Club World Cup?
+  78241857  0.6282  Will Villarreal CF win on 2025-11-05?
+  75163336  0.6282  MLS: Will Columbus Crew beat Toronto FC?
+  77627948  0.6282  Will Colombia win on 2025-10-14?
+  74247003  0.6282  MLS: Will CF Montreal beat New England?
+  75453215  0.6282  MLS: Will St. Louis City SC beat Vancouver?
+  77634655  0.6282  Will CF Cruz Azul win on 2025-11-08?
+  76932964  0.6283  Will José Martínez Alcántara win the 2025 FIDE World Cup?
+  75163379  0.6283  MLS: Will Colorado vs. Atlanta end in a draw?
+  75243280  0.6284  Will Espanyol be relegated from La Liga after the 2025–26 season?
+  78668188  0.6284  Texas A&M-International Dustdevils vs. Texas Southern Tigers (W)
+  75669774  0.6284  MLS: Will Columbus Crew beat NY Red Bulls?
+  74067837  0.6285  MLS: Will Toronto FC beat Nashville SC?
+  78241499  0.6287  Will CD Godoy Cruz Antonio Tomba vs. CA San Martín de San Juan end in a draw?
+  77951686  0.6287  Will Real Salt Lake win the 2025 MLS Cup?
+  76369468  0.6288  Will Austin FC win on 2025-09-13?
+  77054726  0.6289  Will CA Boca Juniors win on 2025-10-05?
+  63400581  0.6289  Will the Colorado Rapids win the 2024 MLS Cup?
+  73502609  0.6290  Will Argentina win the 2026 FIFA World Cup?
+  72134685  0.6290  Will Wydad AC win the FIFA Club World Cup?
+  77635696  0.6291  Will RCD Espanyol de Barcelona win on 2025-10-30?
+  78976046  0.6291  Will CF Talavera vs. Málaga CF end in a draw?
+  77635186  0.6291  Will CD Tropezón vs. Cultural y Deportiva Leonesa end in a draw?
+  58714792  0.6291  Will Paraguay win?
+  58880269  0.6291  Will Paraguay win?
+  58557622  0.6291  Will Paraguay win?
+  76769941  0.6292  Will CF Pachuca win on 2025-09-27?
+  78546580  0.6292  Will Rio Ave FC win on 2025-11-30?
+  72393095  0.6292  Will Pedro Neto be the top goalscorer at the 2025 FIFA Club World Cup?
+  78976201  0.6292  Will Villarreal CF win on 2025-12-03?
+  75163327  0.6293  MLS: Will Toronto FC beat Columbus Crew?
+  72134617  0.6293  Will Boca Juniors win the FIFA Club World Cup?
+  78933786  0.6294  Will CA Boca Juniors win on 2025-11-16?
+  74316910  0.6295  MLS: Will Austin FC beat D.C. United?
+  66664774  0.6296  Will NRG win the VCT 2025 Americas Kickoff?
+  76770619  0.6296  Will Club Bolívar win on 2025-09-24?
+  77093069  0.6297  Will Portland Timbers win on 2025-10-04?
+  77054741  0.6297  Will CA Rosario Central win on 2025-10-05?
+  72844614  0.6297  Will Honduras beat Canada?
+  76936508  0.6297  Will Atlético Palma del Río CF win on 2025-09-27?
+  75988147  0.6297  Will Colombia win on 2025-09-09?
+  78976061  0.6298  Will CDA Navalcarnero vs. Getafe CF end in a draw?
+  77636207  0.6300  Will CA Rosario Central win on 2025-10-19?
+  76772957  0.6301  Will CA Independiente win on 2025-09-28?
+  77054583  0.6301  Will CA Tucumán vs. CA Platense end in a draw?
+  78839220  0.6301  Will Comoros win on 2025-11-17?
+  74849464  0.6301  MLS: Will LAFC beat Chicago?
+  78545136  0.6301  Will CA Boca Juniors win on 2025-11-09?
+  77193360  0.6301  Will Atlético Palma del Río CF win on 2025-10-04?
+  77374163  0.6302  Will CF Monterrey win on 2025-10-18?
+  77338952  0.6304  Will CA Barracas Central win on 2025-10-11?
+  78232912  0.6305  Will Colombia win on 2025-11-18?
+  78232882  0.6305  Will Colombia win on 2025-11-18?
+  77374236  0.6305  Will CF Monterrey win on 2025-10-21?
+  78545216  0.6306  Will CA Tucumán vs. CD Godoy Cruz Antonio Tomba end in a draw?
+  35776037  0.6307  Will Brazil win the 2022 World Cup?
+  77636292  0.6307  Will CA Rosario Central win on 2025-10-24?
+  78933706  0.6307  Will CA Rosario Central win on 2025-11-15?
+  76821303  0.6307  Will Portland Timbers win on 2025-09-27?
+  77935845  0.6307  Will Suriname win on 2025-11-13?
+  76308085  0.6307  Will Club Puebla win on 2025-09-13?
+  77635144  0.6307  Will CF Talavera win on 2025-10-28?
+  77635832  0.6308  Will CF Universidad de Chile win on 2025-10-30?
+  77636493  0.6308  Will Rio Ave FC win on 2025-11-08?
+  77374149  0.6308  Will CD Guadalajara win on 2025-10-18?
+  35774727  0.6309  Will South Korea qualify from Group H?
+  77054587  0.6309  Will CA Platense win on 2025-10-04?
+  76821280  0.6309  Will Los Angeles Galaxy vs. Sporting Kansas City end in a draw?
+  77930278  0.6310  Will Colombia win on 2025-11-15?
+  76933200  0.6311  Will Fabiano Caruana finish second in the 2025 FIDE World Cup?
+  63400535  0.6311  Will Real Salt Lake win the MLS Cup?
+  75987994  0.6312  Will Paraguay win on 2025-09-04?
+  77374272  0.6312  Will CD Guadalajara win on 2025-10-22?
+  77636307  0.6313  Will CA Platense win on 2025-10-24?
+  72887781  0.6314  Will Panama beat Guatemala?
+  74849408  0.6315  MLS: Will CF Montreal beat Atlanta United?
+  78729832  0.6315  UT Arlington Mavericks vs. New Mexico Lobos: O/U 149.5
+  74084709  0.6318  MLS: Will Vancouver beat San Diego?
+  76772981  0.6318  Will CA Barracas Central vs. CA Belgrano end in a draw?
+  77193132  0.6318  Will Rio Ave FC win on 2025-10-05?
+  76772916  0.6320  Will CA Sarmiento win on 2025-09-27?
+  78545001  0.6321  Will CA Platense win on 2025-11-08?
+  78963369  0.6321  CA Barracas Central vs. CA Huracán: Both Teams to Score
+  73092640  0.6322  Will Urawa beat Monterrey?
+  73379823  0.6322  Will Fabiano Caruana win the 2025 SuperUnited Rapid & Blitz Croatia tournament?
+  73540400  0.6323  Will Mexico beat USA?
+  63076202  0.6323  Will Mexico beat USA?
+  76698431  0.6324  Will CSyD Defensa y Justicia win on 2025-09-22?
+  78671800  0.6324  Will Portland Timbers win on 2025-11-09?
+  18211354  0.6325  Will Fabiano Caruana win the 2021 Sinquefield Cup?
+  77636202  0.6326  Will CA Independiente win on 2025-10-19?
+  77374524  0.6326  Will CF Pachuca win on 2025-11-02?
+  76369423  0.6326  Will Los Angeles FC win on 2025-09-13?
+  77635711  0.6327  Will Antequera CF win on 2025-10-30?
+  78726935  0.6327  Will Aztec win 2025 Uniswap Cup?
+  78544897  0.6328  Will CA Rosario Central win on 2025-11-07?
+  72716249  0.6328  Will Guatemala beat Jamaica?
+  78979641  0.6328  Will SK Sigma Olomouc win on 2025-11-27?
+  77636217  0.6329  Will CA Platense win on 2025-10-19?
+  76307749  0.6330  Will Club Bolívar win on 2025-09-17?
+  76626223  0.6330  Will Portland Timbers win on 2025-09-24?
+  77374365  0.6330  Will CF Monterrey win on 2025-10-25?
+  77054674  0.6331  Will AA Argentinos Juniors vs. CA Central Córdoba end in a draw?
+  78727018  0.6331  Will SEED Latam win 2025 Uniswap Cup?
+  74247067  0.6331  MLS: Will Nashville SC beat San Diego FC?
+  75988089  0.6332  Will Argentina win on 2025-09-09?
+  76498423  0.6332  Will CD Guadalajara win on 2025-09-20?
+  77054722  0.6332  Will CA Barracas Central win on 2025-10-05?
+  78241442  0.6332  Will CA Boca Juniors win on 2025-11-02?
+  77331231  0.6333  Will Paraguay win on 2025-10-10?
+  58880204  0.6333  Will Colombia win?
+  58557613  0.6333  Will Colombia win?
+  58714737  0.6333  Will Colombia win?
+  78724433  0.6333  UT Arlington Mavericks vs. New Mexico Lobos: O/U 147.5
+  77374428  0.6333  Will Club Puebla vs. CF Cruz Azul end in a draw?
+  72974501  0.6334  Will USA vs. Haiti end in a draw?
+  72134655  0.6334  Will CF Pachuca win the FIFA Club World Cup?
+  76777582  0.6334  Will Rio Ave FC win on 2025-09-23?
+  76498395  0.6334  Will CF Monterrey win on 2025-09-20?
+  77627983  0.6335  Will Korea Republic vs. Paraguay end in a draw?
+  72638253  0.6335  Will Saudi Arabia win the 2025 CONCACAF Gold Cup?
+  78407202  0.6335  Texas A&M-Corpus Christi Islanders vs. Texas A&M Aggies (W)
+  78761397  0.6336  Will CD Santa Clara vs. Casa Pia AC end in a draw?
+  77635609  0.6336  Will Orihuela CF win on 2025-10-30?
+  76769922  0.6337  Will CD Guadalajara win on 2025-09-26?
+  73540390  0.6339  Will USA beat Mexico?
+  63076216  0.6339  Will USA beat Mexico?
+  77374410  0.6339  Will CD Guadalajara win on 2025-10-25?
+  78840989  0.6340  California-San Diego Tritons vs. San Francisco Dons (W)
+  78241571  0.6340  Will CA Platense win on 2025-11-03?
+  77636282  0.6340  Will CA Sarmiento win on 2025-10-24?
+  72651765  0.6340  Will LA Galaxy beat St. Louis SC?
+  78544986  0.6340  Will ES Troyes AC win on 2025-11-15?
+  75982287  0.6341  Will Jordan vs. Dominican Republic end in a draw?
+  77951676  0.6342  Will FC Dallas win the 2025 MLS Cup?
+  76936498  0.6342  Will Atlético Melilla CF win on 2025-09-27?
+  77636257  0.6343  Will CA Tigre vs. CA Barracas Central end in a draw?
+  69244230  0.6343  Will Chile beat Paraguay?
+  76769804  0.6343  Will CF Pachuca win on 2025-09-23?
+  76698478  0.6343  Will AA Argentinos Juniors win on 2025-09-21?
+  77634775  0.6343  Will CF Pachuca win on 2025-11-09?
+  66664790  0.6343  Will Sentinels win the VCT 2025 Americas Kickoff?
+  78232877  0.6344  Will Paraguay win on 2025-11-18?
+  77635263  0.6346  Will RSD Alcalá vs. CD Tenerife end in a draw?
+  74084699  0.6346  MLS: Will San Diego beat Vancouver?
+  35771351  0.6346  Will Qatar qualify from Group A?
+  77951666  0.6346  Will Seattle Sounders FC win the 2025 MLS Cup?
+  77053325  0.6346  Will Pumas de la UNAM vs. CD Guadalajara end in a draw?
+  76698505  0.6347  Will CSyD Defensa y Justicia win on 2025-09-27?
+  76769772  0.6347  Will CD Guadalajara vs. Club Necaxa end in a draw?
+  77636277  0.6348  Will CSyD Defensa y Justicia win on 2025-10-21?
+  78241417  0.6348  Will CA Barracas Central win on 2025-11-01?
+  63400513  0.6348  Will the Seattle Sounders win the MLS Cup?
+  77373268  0.6349  Will Rio Ave FC win on 2025-11-01?
+  69573932  0.6350  LAA Angels vs. CWS White Sox March 27
+  78545110  0.6351  Will CA Barracas Central win on 2025-11-08?
+  78545957  0.6352  Will SA Mérignac win on 2025-11-16?
+  76345577  0.6353  Will Real Sociedad win on 2025-09-24?
+  76369547  0.6353  Will San Diego FC win on 2025-09-13?
+  78545126  0.6353  Will CA Sarmiento vs. Instituto AC Córdoba end in a draw?
+  76769970  0.6353  Will CF Monterrey win on 2025-09-27?
+  77636297  0.6353  Will CA Independiente win on 2025-10-24?
+  77627989  0.6354  Will Paraguay win on 2025-10-14?
+  73968432  0.6354  MLS: Will San Jose beat FC Dallas?
+  78021886  0.6354  Will SK Sigma Olomouc win on 2025-10-23?
+  77354910  0.6354  Will Honduras vs. Haiti end in a draw?
+  78281340  0.6354  Will Portland Timbers win on 2025-11-01?
+  72134691  0.6355  Will Esperance de Tunis win the FIFA Club World Cup?
+  78545282  0.6355  Will CA Independiente win on 2025-11-10?
+  77636167  0.6355  Will CA Sarmiento vs. CA Vélez Sarsfield end in a draw?
+  76307998  0.6355  Will CF Cruz Azul win on 2025-09-13?
+  78976051  0.6356  Will Málaga CF win on 2025-12-03?
+  76498150  0.6356  Will CF Universidad de Chile win on 2025-09-18?
+  72651770  0.6357  Will St. Louis SC vs. LA Galaxy end in a draw?
+  78704189  0.6357  CA Rosario Central vs. CA San Lorenzo de Almagro: Both Teams to Score
+  76369404  0.6357  Will CF Montréal vs. St. Louis City SC end in a draw?
+  78270404  0.6357  Estudiantes de La Plata vs. CA Boca Juniors: Both Teams to Score
+  62842055  0.6359  Will Brazil beat Chile?
+  74849459  0.6360  MLS: Will Chicago vs. LAFC end in a draw?
+  77331419  0.6360  Will United States vs. Ecuador end in a draw?
+  77930318  0.6360  Will Paraguay win on 2025-11-15?
+  76708120  0.6362  Will Atalanta vs. Como end in a draw?
+  77053273  0.6363  Will CF Pachuca win on 2025-10-03?
+  77054708  0.6364  Will CA Independiente win on 2025-10-05?
+  77054656  0.6364  Will CA Sarmiento win on 2025-10-04?
+  75988120  0.6364  Will Paraguay win on 2025-09-09?
+  77784475  0.6364  Will US Sassuolo Calcio win on 2025-10-30?
+  73092646  0.6365  Will Monterrey beat Urawa?
+  78933696  0.6365  Will CA Independiente win on 2025-11-15?
+  77635428  0.6365  Will CDA Navalcarnero vs. AD Mérida end in a draw?
+  77627999  0.6366  Will Venezuela vs. Belize end in a draw?
+  77336471  0.6367  Will Costa Rica win on 2025-10-09?
+  74247017  0.6368  MLS: Will LA Galaxy beat Houston?
+  78933801  0.6369  Will CA Barracas Central win on 2025-11-17?
+  35777156  0.6369  Will South Korea win the 2022 World Cup?
+  75989015  0.6370  Will Haiti vs. Honduras end in a draw?
+  72602088  0.6370  Will Bolivia vs. Chile end in a draw?
+  77054718  0.6370  Will Estudiantes de La Plata vs. CA Barracas Central end in a draw?
+  78963370  0.6371  Estudiantes de La Plata vs. AA Argentinos Juniors: Both Teams to Score
+  77053344  0.6371  Will CF Monterrey win on 2025-10-05?
+  77338995  0.6371  Will CA Independiente win on 2025-10-12?
+  75906732  0.6371  San José State vs. Texas
+  75453205  0.6371  MLS: Will Vancouver beat St. Louis City SC?
+  77275637  0.6372  Will US Sassuolo Calcio win on 2025-10-18?
+  74247008  0.6373  MLS: Will Houston beat LA Galaxy?
+  77053330  0.6373  Will CD Guadalajara win on 2025-10-05?
+  78241479  0.6373  Will CA Independiente win on 2025-11-01?
+  78238070  0.6374  Will Costa Rica win on 2025-11-18?
+  78704189  0.6374  CA Rosario Central vs. CA San Lorenzo de Almagro: O/U 1.5
+  77338825  0.6374  Will AA Argentinos Juniors win on 2025-10-10?
+  75989047  0.6375  Will Costa Rica win on 2025-09-05?
+  78933876  0.6375  Will CA Platense win on 2025-11-17?
+  65818542  0.6375  South Florida vs. San José State
+  78545226  0.6376  Will AA Argentinos Juniors win on 2025-11-10?
+  72638300  0.6376  Will Haiti win the 2025 CONCACAF Gold Cup?
+  73968483  0.6377  MLS: Will Nashville SC vs. Columbus Crew end in a draw?
+  77611729  0.6377  Will US Sassuolo Calcio win on 2025-10-26?
+  77054652  0.6377  Will CSyD Defensa y Justicia win on 2025-10-03?
+  77373848  0.6377  Will Los Angeles Galaxy vs. FC Dallas end in a draw?
+  72925353  0.6378  Will Curacao beat Canada?
+  73502687  0.6380  Will Paraguay win the 2026 FIFA World Cup?
+  78241581  0.6381  Will CA Sarmiento win on 2025-11-03?
+  59486092  0.6382  Will the U.S. win Gold in Men's Football (Soccer)?
+  75423922  0.6382  Will US Sassuolo Calcio win on 2025-08-29?
+  76369488  0.6383  Will Portland Timbers win on 2025-09-13?
+  76698527  0.6383  Will AA Argentinos Juniors win on 2025-09-27?
+  78364750  0.6383  1H Spread: San Jose State (-0.5)
+  77338957  0.6383  Will CA Barracas Central vs. CA Boca Juniors end in a draw?
+  75989093  0.6384  Will Costa Rica win on 2025-09-09?
+  75689401  0.6385  MLS: Will San Diego FC beat LAFC?
+  72333564  0.6385  Will LAFC win Group D at the FIFA Club World Cup?
+  78963376  0.6386  CA San Lorenzo de Almagro vs. CA Sarmiento: Both Teams to Score
+  74247058  0.6387  MLS: Will San Diego FC beat Nashville SC?
+  73574137  0.6388  Will Mexico win 3–1?
+  73968440  0.6388  MLS: Will FC Dallas beat San Jose?
+  78232692  0.6388  Will Angola vs. Argentina end in a draw?
+  77374567  0.6388  Will CF Monterrey win on 2025-11-01?
+  70750862  0.6390  Will Espanyol beat Villarreal?
+  76698426  0.6390  Will Estudiantes de La Plata vs. CSyD Defensa y Justicia end in a draw?
+  77634717  0.6390  Will CD Guadalajara win on 2025-11-08?
+  77635363  0.6391  Will CF Lorca Deportiva win on 2025-10-29?
+  78933856  0.6392  Will CA Sarmiento win on 2025-11-15?
+  78545231  0.6394  Will AA Argentinos Juniors vs. CA Belgrano end in a draw?
+  77951681  0.6394  Will Portland Timbers win the 2025 MLS Cup?
+  77634728  0.6395  Will CF Monterrey win on 2025-11-08?
+  76769848  0.6395  Will CF Monterrey win on 2025-09-24?
+  72925347  0.6395  Will Honduras vs. El Salvador end in a draw?
+  78545121  0.6396  Will CA Sarmiento win on 2025-11-09?
+  76769767  0.6396  Will CD Guadalajara win on 2025-09-23?
+  73574099  0.6397  Will Mexico win 1–0?
+  76308090  0.6397  Will CD Guadalajara win on 2025-09-17?
+  74084704  0.6397  MLS: Will San Diego vs. Vancouver end in a draw?
+  72638264  0.6399  Will Curaçao win the 2025 CONCACAF Gold Cup?
+  45593463  0.6399  2023 FIDE World Cup: Will Magnus Carlsen win top 3?
+  68507087  0.6400  Florida Atlantic vs. South Florida
+  77645249  0.6400  Florida Atlantic vs. South Florida
+  78976246  0.6400  Will RCD Espanyol de Barcelona win on 2025-12-04?
+  77951651  0.6401  Will Vancouver Whitecaps FC win the 2025 MLS Cup?
+  76770654  0.6401  Will CF Universidad de Chile win on 2025-09-25?
+  77193440  0.6402  Will CF Campanario win on 2025-10-04?
+  77636162  0.6402  Will CA Sarmiento win on 2025-10-19?
+  75453210  0.6404  MLS: Will Vancouver vs. St. Louis City SC end in a draw?
+  75986912  0.6404  Will Central African Republic vs. Comoros end in a draw?
+  68749171  0.6405  Will Real Sociedad win on 2025-03-13?
+  72333574  0.6405  Will Esperance Sportive de Tunis win Group D at the FIFA Club World Cup?
+  70750853  0.6405  Will Villarreal beat Espanyol?
+  79039007  0.6406  Will US Sassuolo Calcio win on 2025-11-28?
+  73127843  0.6407  Will Guadeloupe vs. Guatemala end in a draw?
+  75453086  0.6407  MLS: Will Austin FC beat CF Montreal?
+  76825571  0.6409  Will CF Campanario win on 2025-09-27?
+  78241387  0.6410  Will CSyD Defensa y Justicia win on 2025-11-03?
+  77636086  0.6410  Will CA Platense win on 2025-10-13?
+  76498404  0.6410  Will CF América win on 2025-09-20?
+  72333699  0.6411  Will Boca Juniors win Group C at the FIFA Club World Cup?
+  76308026  0.6412  Will CF Monterrey win on 2025-09-14?
+  78232722  0.6412  Will Venezuela vs. Australia end in a draw?
+  78976041  0.6413  Will CF Talavera win on 2025-12-03?
+  76777392  0.6413  Will Puerto de Vega CF vs. CD Alberite end in a draw?
+  74881418  0.6414  MLS: Will San Jose vs. Vancouver end in a draw?
+  76933472  0.6414  Will Fabiano Caruana finish third in the 2025 FIDE World Cup?
+  77338990  0.6414  Will CA Sarmiento win on 2025-10-12?
+  73968436  0.6414  MLS: Will San Jose vs. FC Dallas end in a draw?
+  77636101  0.6415  Will AA Argentinos Juniors win on 2025-10-17?
+  69005676  0.6415  San José State vs. New Mexico
+  77635545  0.6415  Will Puerto de Vega CF win on 2025-10-30?
+  77635745  0.6416  Will CF Universidad de Chile win on 2025-10-23?
+  69244219  0.6416  Will Brazil beat Colombia?
+  78241427  0.6419  Will AA Argentinos Juniors win on 2025-11-01?
+  77338985  0.6419  Will CA River Plate vs. CA Sarmiento end in a draw?
+  74881414  0.6420  MLS: Will San Jose beat Vancouver?
+  78933826  0.6420  Will AA Argentinos Juniors win on 2025-11-16?
+  59486065  0.6420  Will Argentina win Gold in Men's Football (Soccer)?
+  76307988  0.6422  Will CF Pachuca win on 2025-09-13?
+  76345375  0.6422  Will US Sassuolo Calcio win on 2025-09-21?
+  72638277  0.6424  Will Jamaica win the 2025 CONCACAF Gold Cup?
+  77054669  0.6424  Will AA Argentinos Juniors win on 2025-10-03?
+  75866203  0.6425  Will Real Sociedad win on 2025-09-13?
+  77212861  0.6425  New Mexico vs. San Jose State
+  72974305  0.6425  Will Mexico beat Costa Rica?
+  78976071  0.6426  Will CD Guadalajara win on 2025-12-02?
+  78544926  0.6426  Will CSyD Defensa y Justicia win on 2025-11-08?
+  78704184  0.6427  CA Tucumán vs. CD Godoy Cruz Antonio Tomba: O/U 1.5
+  76465163  0.6427  Will US Sassuolo Calcio win on 2025-09-28?
+  72393105  0.6428  Will Fabián Ruiz be the top goalscorer at the 2025 FIFA Club World Cup?
+  78249551  0.6428  1H Spread: San Jose State (-1.5)
+  67575335  0.6428  Copa del Rey: Leganés vs. Real Madrid (To Advance)
+  78963377  0.6428  CA Aldosivi vs. CA San Martín de San Juan: O/U 1.5
+  78238261  0.6429  Will Haiti vs. Nicaragua end in a draw?
+  77951631  0.6429  Will Columbus Crew win the 2025 MLS Cup?
+  73540633  0.6429  Will Mexico beat USA in Extra Time?
+  77374533  0.6431  Will CD Guadalajara win on 2025-11-02?
+  75453076  0.6432  MLS: Will CF Montreal beat Austin FC?
+  73773427  0.6432  Will LA Galaxy vs. D.C. United end in a draw?
+  74247012  0.6432  MLS: Will Houston vs. LA Galaxy end in a draw?
+  77636549  0.6434  Will CF Estrela da Amadora vs. CD Nacional end in a draw?
+  77355060  0.6435  Will Comoros vs. Madagascar end in a draw?
+  75688757  0.6435  MLS: Will San Jose Earthquakes beat Austin FC?
+  78241576  0.6436  Will CA Platense vs. CA Sarmiento end in a draw?
+  17687406  0.6437  Will Brazil or Spain win gold in Men’s Soccer at the 2020 Olympics?
+  77193136  0.6438  Will Rio Ave FC vs. CD Tondela end in a draw?
+  72638247  0.6439  Will Canada win the 2025 CONCACAF Gold Cup?
+  72555202  0.6439  Will Colombia qualify for the 2026 FIFA World Cup?
+  78536820  0.6442  Will Venezuela vs. Canada end in a draw?
+  78839194  0.6442  Will Comoros vs. Namibia end in a draw?
+  78839226  0.6442  Will Comoros vs. Namibia end in a draw?
+  78933891  0.6443  Will CSyD Defensa y Justicia win on 2025-11-17?
+  72433096  0.6444  Will Peru beat Colombia
+  77193352  0.6444  Will CD Alberite vs. Puerto de Vega CF end in a draw?
+  76667098  0.6445  Will US Sassuolo Calcio win on 2025-10-03?
+  78704183  0.6446  CA Tigre vs. Estudiantes de La Plata: Both Teams to Score
+  69244304  0.6448  Will Panama beat USA?
+  77053278  0.6448  Will CF América win on 2025-10-04?
+  77951671  0.6449  Will Austin FC win the 2025 MLS Cup?
+  73969099  0.6450  MLS: Will Toronto beat San Diego?
+  73540629  0.6451  Will USA beat Mexico in Extra Time?
+  69458571  0.6451  Will Argentina beat Brazil?
+  72641279  0.6452  Will Mexico beat Dominican Republic?
+  76769984  0.6453  Will CF América win on 2025-09-27?
+  72333407  0.6454  Will Palmeiras win Group A at the FIFA Club World Cup?
+  77979226  0.6454  Will Inter Miami CF win on 2025-11-01?
+  77336360  0.6455  Will Nicaragua vs. Haiti end in a draw?
+  76308011  0.6457  Will CD Guadalajara win on 2025-09-13?
+  78704186  0.6458  CA San Martín de San Juan vs. CA Lanús: Both Teams to Score
+  77338816  0.6458  Will CSyD Defensa y Justicia win on 2025-10-10?
+  35774691  0.6460  Will Uruguay qualify from Group H?
+  75688749  0.6461  MLS: Will Austin FC beat San Jose Earthquakes?
+  69244280  0.6462  Will USA beat Panama?
+  77354947  0.6462  Will Costa Rica win on 2025-10-13?
+  75383204  0.6463  Will US Sassuolo Calcio win on 2025-08-23?
+  75988042  0.6463  Will Argentina vs. Venezuela end in a draw?
+  77331376  0.6463  Will Argentina vs. Venezuela end in a draw?
+  77336404  0.6463  Will El Salvador vs. Panama end in a draw?
+  77951656  0.6463  Will Los Angeles FC win the 2025 MLS Cup?
+  75988142  0.6465  Will Venezuela vs. Colombia end in a draw?
+  76769877  0.6466  Will CF América win on 2025-09-24?
+  72638240  0.6467  Will United States win the 2025 CONCACAF Gold Cup?
+  72844789  0.6467  Will Mexico beat Suriname?
+  74067770  0.6471  MLS: Will New York Red Bulls beat Inter Miami?
+  78546519  0.6472  Will CD Nacional win on 2025-11-29?
+  77636212  0.6475  Will CA Rosario Central vs. CA Platense end in a draw?
+  35777002  0.6476  Will Mexico win the 2022 World Cup?
+  75501709  0.6477  LA Galaxy vs. Seattle Sounders (To Advance)
+  75163442  0.6477  MLS: Will San Diego beat San Jose?
+  78070740  0.6477  Will any U.S. soccer team win the treble in the 2025 season?
+  75689392  0.6477  MLS: Will LAFC beat San Diego FC?
+  72974310  0.6477  Will Costa Rica beat Mexico?
+  77373136  0.6479  Will CD Nacional win on 2025-10-26?
+  72638311  0.6479  Will Honduras win the 2025 CONCACAF Gold Cup?
+  75163437  0.6480  MLS: Will San Jose vs. San Diego end in a draw?
+  73574206  0.6481  Will USA vs. Mexico end 4–4?
+  75907064  0.6482  Will US Sassuolo Calcio win on 2025-09-14?
+  63400489  0.6484  Will Columbus Crew win the MLS Cup?
+  78216490  0.6484  Will US Sassuolo Calcio win on 2025-11-09?
+  78353199  0.6486  Club León FC vs. Club Puebla: Both Teams to Score
+  78866208  0.6486  Will US Sassuolo Calcio win on 2025-11-24?
+  78963376  0.6487  CD Godoy Cruz Antonio Tomba vs. CD Riestra: Both Teams to Score
+  73574127  0.6488  Will USA vs. Mexico end 2–2?
+  75988099  0.6490  Will Bolivia vs. Brazil end in a draw?
+  73540644  0.6490  Will Mexico beat USA in Penalties?
+  77374013  0.6490  Will Los Angeles Galaxy vs. Minnesota United FC end in a draw?
+  64446590  0.6490  USA vs. Jamaica - Who will advance?
+  77957266  0.6491  Will US Sassuolo Calcio win on 2025-11-03?
+  77633751  0.6491  Will El Salvador vs. Guatemala end in a draw?
+  72638259  0.6494  Will El Salvador win the 2025 CONCACAF Gold Cup?
+  75988973  0.6495  Will Guatemala vs. El Salvador end in a draw?
+  77935885  0.6496  Will Costa Rica win on 2025-11-13?
+  72602058  0.6496  Will Brazil beat Paraguay?
+  73574111  0.6496  Will USA vs. Mexico end 0–0?
+  35776108  0.6497  Will Argentina win the 2022 World Cup?
+  77374538  0.6498  Will CF América win on 2025-11-01?
+  76777387  0.6499  Will Puerto de Vega CF win on 2025-09-27?
+  77193356  0.6499  Will Puerto de Vega CF win on 2025-10-04?
+  77514501  0.6501  BNP Paribas Nordic Open, Qualification: Rei Sakamoto vs Mark Lajal
+  72602094  0.6502  Will Argentina beat Colombia?
+  75163432  0.6502  MLS: Will San Jose beat San Diego?
+  73217387  0.6504  Will a club from Brazil win the 2025 FIFA Club World Cup?
+  75689397  0.6505  MLS: Will LAFC vs. San Diego FC end in a draw?
+  74067780  0.6505  MLS: Will Inter Miami beat New York Red Bulls?
+  77634760  0.6506  Will CF América win on 2025-11-08?
+  76369336  0.6507  Will Inter Miami CF win on 2025-09-13?
+  77338821  0.6508  Will CSyD Defensa y Justicia vs. AA Argentinos Juniors end in a draw?
+  75688753  0.6509  MLS: Will Austin FC vs. San Jose Earthquakes end in a draw?
+  78963373  0.6509  CA Vélez Sarsfield vs. CA River Plate: Both Teams to Score
+  63400503  0.6509  Will Los Angeles FC win the MLS Cup?
+  73128055  0.6511  Will Canada vs. El Salvador end in a draw?
+  75988115  0.6513  Will Peru vs. Paraguay end in a draw?
+  69458582  0.6515  Will Brazil beat Argentina?
+  77193088  0.6516  Will CD Nacional win on 2025-10-04?
+  77338859  0.6517  Will CA Vélez Sarsfield vs. CA Rosario Central end in a draw?
+  77373986  0.6518  Will Colorado Rapids SC vs. Los Angeles FC end in a draw?
+  74247063  0.6519  MLS: Will San Diego FC vs. Nashville SC end in a draw?
+  78546196  0.6520  Will AS Savigneux Montbrison vs. US Feurs end in a draw?
+  69244320  0.6520  Will Canada vs. Mexico end in a draw?
+  72641284  0.6520  Will Dominican Republic beat Mexico?
+  73969091  0.6522  MLS: Will San Diego beat Toronto?
+  78238090  0.6524  Will Panama vs. El Salvador end in a draw?
+  75453260  0.6527  MLS: Will Portland Timbers beat San Diego FC?
+  75453255  0.6527  MLS: Will San Diego FC vs. Portland Timbers end in a draw?
+  76777652  0.6528  Will CD Nacional win on 2025-09-28?
+  76934672  0.6528  Will CD Nacional win on 2025-09-28?
+  77636287  0.6529  Will CA Sarmiento vs. CA Rosario Central end in a draw?
+  78270402  0.6530  CA Platense vs. CA Sarmiento: O/U 1.5
+  58557317  0.6531  Will Costa Rica win?
+  58714758  0.6531  Will Costa Rica win?
+  58880251  0.6531  Will Costa Rica win?
+  73969095  0.6532  MLS: Will San Diego vs. Toronto end in a draw?
+  49180127  0.6534  Rugby World Cup: New Zealand vs. South Africa
+  72333665  0.6535  Will Monterrey win Group E at the FIFA Club World Cup?
+  75221687  0.6537  Will Real Sociedad vs. Espanyol end in a draw?
+  77951646  0.6538  Will San Diego FC win the 2025 MLS Cup?
+  72844783  0.6539  Will Suriname beat Mexico?
+  73540638  0.6539  Will USA beat Mexico in Penalties?
+  21359860  0.6539  Who will win the Argentina v. Brazil soccer game on November 16?
+  77768259  0.6541  Florida Atlantic vs. South Florida: O/U 72.5
+  73540624  0.6542  Will Mexico beat USA in Regulation Time?
+  35895847  0.6546  World Cup: Saturday - Will Australia beat Tunisia?
+  74084683  0.6549  MLS: Will LAFC beat LA Galaxy?
+  69458555  0.6550  Will Colombia beat Paraguay?
+  75453250  0.6553  MLS: Will San Diego FC beat Portland Timbers?
+  72602100  0.6554  Will Colombia beat Argentina?
+  78241422  0.6555  Will CA Barracas Central vs. AA Argentinos Juniors end in a draw?
+  74084692  0.6556  MLS: Will LA Galaxy beat LAFC?
+  74881422  0.6556  MLS: Will Vancouver beat San Jose
+  73217425  0.6556  Will a club from the United States win the 2025 FIFA Club World Cup?
+  76308003  0.6559  Will CF América win on 2025-09-13?
+  78833764  0.6564  AA Argentinos Juniors vs. CA Belgrano: Both Teams to Score
+  78270407  0.6565  Instituto AC Córdoba vs. CA Rosario Central: Both Teams to Score
+  78804583  0.6565  Will CD Nacional win on 2025-12-07?
+  63400465  0.6565  Will the Inter Miami win the 2024 MLS Cup?
+  72925311  0.6568  River Plate vs. Monterrey: 3+ Goals Scored?
+  77374543  0.6569  Will CF América vs. Club León FC end in a draw?
+  72602063  0.6572  Will Paraguay beat Brazil?
+  78434196  0.6572  Atalanta vs. US Sassuolo Calcio: O/U 2.5
+  73540620  0.6573  Will USA beat Mexico in Regulation Time?
+  78867967  0.6574  US Sassuolo Calcio vs. Pisa SC: Both Teams to Score
+  78230804  0.6574  CA Mineiro vs. EC Bahia: O/U 2.5
+  73852529  0.6575  Will Fabian Ruiz score a goal in the 2025 FIFA Club World Cup Final?
+  35773460  0.6575  Will USA qualify from Group B?
+  73574152  0.6575  Will USA vs. Mexico end 3–3?
+  73540395  0.6577  Will USA vs. Mexico end in a draw?
+  75989113  0.6579  Will Honduras vs. Nicaragua end in a draw?
+  21360118  0.6581  Who will win the Canada v. Mexico soccer game on November 16?
+  72134672  0.6584  Will CF Monterrey win the FIFA Club World Cup?
+  77674682  0.6585  Florida Atlantic vs. South Florida: O/U 74.5
+  59486118  0.6588  Will Paraguay win Gold in Men's Football (Soccer)?
+  77373213  0.6589  Will CD Nacional win on 2025-11-01?
+  73574211  0.6594  Will USA vs. Mexico end with any other exact score?
+  78545962  0.6597  Will SA Mérignac vs. US Colomiers end in a draw?
+  35777675  0.6598  Will Costa Rica win the 2022 World Cup?
+  75989098  0.6599  Will Costa Rica vs. Haiti end in a draw?
+  35773114  0.6599  Will Ecuador qualify from Group A?
+  75989043  0.6600  Will Nicaragua vs. Costa Rica end in a draw?
+  35774481  0.6602  Will Brazil qualify from Group G?
+  72844766  0.6605  Will Costa Rica beat Dominican Republic?
+  78265002  0.6606  Espanyol vs. Villarreal: O/U 2.5
+  77336466  0.6607  Will Honduras vs. Costa Rica end in a draw?
+  63076241  0.6608  Will the match between Mexico and USA end in a draw?
+  77935925  0.6609  Will Nicaragua vs. Honduras end in a draw?
+  78880572  0.6609  EC Bahia vs. Fortaleza EC: Both Teams to Score
+  74571644  0.6611  Will Club América win the 2025 Leagues Cup?
+  75988056  0.6612  Will Colombia vs. Bolivia end in a draw?
+  77636554  0.6614  Will CD Nacional win on 2025-11-09?
+  77930313  0.6614  Will United States vs. Paraguay end in a draw?
+  61236388  0.6617  Another South American country bans X?
+  74642425  0.6622  Leagues Cup: Will Cruz Azul beat Seattle Sounders?
+  78353199  0.6623  CF Cruz Azul vs. Pumas de la UNAM: Both Teams to Score
+  69244319  0.6623  Will USA vs. Panama end in a draw?
+  72844619  0.6624  Will Canada vs. Honduras end in a draw?
+  74084687  0.6624  MLS: Will LAFC vs. LA Galaxy end in a draw?
+  77377619  0.6626  Will SC Internacional win on 2025-10-22?
+  78309993  0.6626  Club Tijuana vs. Atlas FC: Both Teams to Score
+  72638224  0.6629  Will Mexico win the 2025 CONCACAF Gold Cup?
+  75987999  0.6631  Will Paraguay vs. Ecuador end in a draw?
+  72638271  0.6632  Will Panama win the 2025 CONCACAF Gold Cup?
+  78110778  0.6632  US Sassuolo Calcio vs. AS Roma: Both Teams to Score
+  69458567  0.6634  Will Paraguay beat Colombia?
+  78704182  0.6635  CS Independiente Rivadavia vs. CA Central Córdoba: Both Teams to Score
+  77951608  0.6636  Will Inter Miami CF win the 2025 MLS Cup?
+  46867676  0.6636  Will Inter Miami win MLS Cup?
+  72844772  0.6637  Will Dominican Republic beat Costa Rica?
+  78963373  0.6638  CA Independiente vs. CA Rosario Central: Both Teams to Score
+  79013786  0.6638  Houston Cougars vs. Texas-Rio Grande Valley Vaqueros (W)
+  72974320  0.6639  Will Dominican Republic beat Suriname?
+  62842043  0.6640  Willl Chile beat Brazil?
+  35892509  0.6640  World Cup: Tuesday - Will Argentina beat Saudi Arabia?
+  73266492  0.6642  FIFA Club World Cup: Will Vinicius Junior score a goal?
+  78353201  0.6643  CD Guadalajara vs. CF Monterrey: Both Teams to Score
+  74642420  0.6644  Leagues Cup: Will Santos Laguna beat Colorado Rapids?
+  78270405  0.6645  Spread: AA Argentinos Juniors (-0.5)
+  77053282  0.6649  Will CF América vs. Club Santos Laguna end in a draw?
+  78704181  0.6650  CS Independiente Rivadavia vs. CA Central Córdoba: O/U 2.5
+  78265002  0.6651  Espanyol vs. Villarreal: Both Teams to Score
+  72716254  0.6658  Will Jamaica vs. Guatemala end in a draw?
+  78034483  0.6659  CA Sarmiento vs. CA Rosario Central: O/U 1.5
+  69244303  0.6662  Will Argentina beat Uruguay
+  77377647  0.6663  Will SC Internacional win on 2025-10-25?
+  78546585  0.6665  Will Rio Ave FC vs. CD Santa Clara end in a draw?
+  77354951  0.6668  Will Costa Rica vs. Nicaragua end in a draw?
+  78634120  0.6668  Will SC Internacional win on 2025-11-20?
+  77377421  0.6669  Will SC Internacional win on 2025-10-18?
+  78538602  0.6672  San Diego Toreros vs. CSUN Matadors (W)
+  72887787  0.6674  Will Guatemala vs. Panama end in a draw?
+  77935910  0.6674  Will Guatemala vs. Panama end in a draw?
+  75989029  0.6675  Will Panama vs. Guatemala end in a draw?
+  78963370  0.6675  Estudiantes de La Plata vs. AA Argentinos Juniors: O/U 1.5
+  78434196  0.6675  Atalanta vs. US Sassuolo Calcio: Both Teams to Score
+  74642411  0.6677  Leagues Cup: Will Colorado Rapids beat Santos Laguna?
+  79039002  0.6679  Will Como 1907 vs. US Sassuolo Calcio end in a draw?
+  78034483  0.6681  CA Independiente vs. CA Platense: O/U 1.5
+  72974326  0.6682  Will Suriname beat Dominican Republic?
+  50022656  0.6685  Cricket World Cup: India vs. Australia
+  78704183  0.6686  CA Tigre vs. Estudiantes de La Plata: O/U 1.5
+  77627968  0.6686  Will Argentina vs. Puerto Rico end in a draw?
+  78704186  0.6687  CA Sarmiento vs. Instituto AC Córdoba: Both Teams to Score
+  78110758  0.6687  Espanyol vs. Elche CF: Both Teams to Score
+  78270406  0.6687  CA Barracas Central vs. AA Argentinos Juniors: Both Teams to Score
+  78634347  0.6688  Will SC Internacional win on 2025-11-28?
+  78270402  0.6688  CA Platense vs. CA Sarmiento: Both Teams to Score
+  77331349  0.6688  Will Uruguay vs. Dominican Republic end in a draw?
+  78238075  0.6690  Will Costa Rica vs. Honduras end in a draw?
+  69244244  0.6690  Will Paraguay vs. Chile end in a draw?
+  78110777  0.6691  Cagliari vs. US Sassuolo Calcio: Both Teams to Score
+  75453245  0.6691  MLS: Will Colorado Rapids beat LA Galaxy?
+  66537530  0.6692  Supercopa Final: Real Madrid vs. Barcelona
+  77374308  0.6694  Will Mazatlán FC vs. CF América end in a draw?
+  73968500  0.6695  MLS: Will Austin FC beat LA Galaxy?
+  78270404  0.6695  Estudiantes de La Plata vs. CA Boca Juniors: O/U 2.5
+  72974315  0.6698  Will Mexico vs. Costa Rica end in a draw?
+  72602106  0.6700  Will Argentina vs. Colombia end in a draw?
+  73968492  0.6700  MLS: Will LA Galaxy beat Austin FC?
+  73217414  0.6701  Will a club from Mexico win the 2025 FIFA Club World Cup?
+  73968496  0.6701  MLS: Will LA Galaxy vs. Austin FC end in a draw?
+  63400478  0.6701  Will LA Galaxy win the MLS Cup?
+  77331433  0.6703  Will Mexico vs. Colombia end in a draw?
+  75989070  0.6706  Will El Salvador vs. Suriname end in a draw?
+  77634755  0.6707  Will Deportivo Toluca FC vs. CF América end in a draw?
+  75453235  0.6707  MLS: Will LA Galaxy beat Colorado Rapids?
+  78232872  0.6709  Will Mexico vs. Paraguay end in a draw?
+  78704186  0.6710  Spread: CA Boca Juniors (-0.5)
+  78270403  0.6710  Spread: CA Boca Juniors (-0.5)
+  72641289  0.6711  Will Mexico vs. Dominican Republic end in a draw?
+  78704184  0.6711  CA Tucumán vs. CD Godoy Cruz Antonio Tomba: Both Teams to Score
+  77377301  0.6717  Will SC Internacional win on 2025-10-15?
+  77638758  0.6717  Will SC Internacional win on 2025-11-05?
+  72641294  0.6720  Will Costa Rica beat Suriname?
+  78353200  0.6723  CF Cruz Azul vs. Pumas de la UNAM: O/U 2.5
+  77935850  0.6723  Will Suriname vs. El Salvador end in a draw?
+  73574089  0.6724  Will USA vs. Mexico end 1–1?
+  77377837  0.6728  Will SC Internacional win on 2025-11-02?
+  78634276  0.6729  Will SC Internacional win on 2025-11-24?
+  75453240  0.6730  MLS: Will LA Galaxy vs. Colorado Rapids end in a draw?
+  78094003  0.6731  CF Pachuca vs. CD Guadalajara: O/U 2.5
+  77638868  0.6734  Will SC Internacional win on 2025-11-08?
+  78270403  0.6734  CD Godoy Cruz Antonio Tomba vs. CA San Martín de San Juan: Both Teams to Score
+  78232917  0.6737  Will Colombia vs. Australia end in a draw?
+  75988958  0.6738  Will Suriname vs. Panama end in a draw?
+  78833764  0.6739  Spread: AA Argentinos Juniors (-1.5)
+  45593481  0.6739  2023 FIDE World Cup: Will Fabiano Caruana win top 3?
+  73217398  0.6744  Will a club from Argentina win the 2025 FIFA Club World Cup?
+  36178426  0.6745  World Cup: Wednesday - Will Mexico beat Saudi Arabia?
+  76769872  0.6749  Will Atlético San Luis vs. CF América end in a draw?
+  78094004  0.6750  Pumas de la UNAM vs. Club Tijuana: O/U 2.5
+  76424920  0.6752  Will Como vs. US Cremonese end in a draw?
+  36302209  0.6756  World Cup: Saturday - Will Argentina beat Australia?
+  78534992  0.6758  SC Recife vs. CA Mineiro: O/U 2.5
+  78625012  0.6767  Santa Clara Broncos vs. Texas A&M-Corpus Christi Islanders (W)
+  72641300  0.6773  Will Suriname beat Costa Rica?
+  77633680  0.6775  Will Panama vs. Suriname end in a draw?
+  68417095  0.6777  Copa Del Rey: Real Madrid vs. Real Sociedad (To Advance)
+  58080769  0.6777  Peru wins Copa America 2024?
+  78033902  0.6780  EC Bahia vs. SC Internacional: O/U 2.5
+  78031991  0.6782  CF Cruz Azul vs. CF Monterrey: O/U 2.5
+  58080787  0.6784  Uruguay wins Copa America 2024?
+  75163310  0.6794  MLS: Will Inter Miami vs. LA Galaxy end in a draw?
+  69458577  0.6794  Will Colombia vs. Paraguay end in a draw?
+  58080711  0.6795  Ecuador wins Copa America 2024?
+  77336374  0.6796  Will Suriname vs. Guatemala end in a draw?
+  78963367  0.6798  CA Platense vs. Gimnasia y Esgrima de La Plata: O/U 1.5
+  35774203  0.6800  Will Costa Rica qualify from Group E?
+  77374124  0.6801  Will CF Cruz Azul vs. CF América end in a draw?
+  72844777  0.6803  Will Costa Rica vs. Dominican Republic end in a draw?
+  77075212  0.6805  ICC WWC: Australia vs. South Africa (Oct 25)
+  69244230  0.6805  Will Colombia beat Brazil
+  73379801  0.6807  FIFA Club World Cup: 175+ Goals Scored?
+  76769989  0.6813  Will CF América vs. Pumas de la UNAM end in a draw?
+  78238246  0.6816  Will Guatemala vs. Suriname end in a draw?
+  78668208  0.6817  CSUN Matadors vs. San Diego State Aztecs (W)
+  72638282  0.6822  Will Guatemala win the 2025 CONCACAF Gold Cup?
+  58080543  0.6824  Brazil wins Copa America 2024?
+  72844795  0.6825  Will Suriname vs. Mexico end in a draw?
+  78704183  0.6825  Gimnasia y Esgrima de La Plata vs. CA Vélez Sarsfield: Both Teams to Score
+  78963371  0.6828  Spread: CA Boca Juniors (-1.5)
+  78963373  0.6828  CA Independiente vs. CA Rosario Central: O/U 2.5
+  75163305  0.6830  MLS: Will Inter Miami beat LA Galaxy?
+  78704186  0.6830  CA Boca Juniors vs. CA River Plate: O/U 2.5
+  76498399  0.6834  Will CF Monterrey vs. CF América end in a draw?
+  76308007  0.6835  Will CF América vs. CD Guadalajara end in a draw?
+  77374211  0.6837  Will CF América vs. Club Puebla end in a draw?
+  35896175  0.6849  World Cup: Saturday - Will Argentina beat Mexico?
+  58080823  0.6850  Venezuela wins Copa America 2024?
+  78270403  0.6853  CD Godoy Cruz Antonio Tomba vs. CA San Martín de San Juan: O/U 1.5
+  72638294  0.6857  Will Suriname win the 2025 CONCACAF Gold Cup?
+  78534991  0.6864  SC Internacional vs. EC Bahia: O/U 2.5
+  72638234  0.6865  Will Dominican Republic win the 2025 CONCACAF Gold Cup?
+  72638229  0.6870  Will Costa Rica win the 2025 CONCACAF Gold Cup?
+  16068117  0.6883  Will Brazil win the 2021 Copa America?
+  58080657  0.6887  Chile wins Copa America 2024?
+  58277572  0.6887  United States vs. South Africa - Cricket T20 World Cup
+  78833764  0.6899  AA Argentinos Juniors vs. CA Belgrano: O/U 2.5
+  35773625  0.6900  Will Mexico qualify from Group C?
+  58080743  0.6901  Mexico wins Copa America 2024?
+  78704183  0.6907  Gimnasia y Esgrima de La Plata vs. CA Vélez Sarsfield: O/U 1.5
+  72641306  0.6909  Will Costa Rica vs. Suriname end in a draw?
+  75163315  0.6912  MLS: Will LA Galaxy beat Inter Miami?
+  62262945  0.6923  Campeones Final: Columbus Crew vs. Club America
+  78270405  0.6933  CA Barracas Central vs. AA Argentinos Juniors: O/U 1.5
+  73290461  0.6934  Will a club from North America win the 2025 FIFA Club World Cup?
+  58080725  0.6936  United States wins Copa America 2024?
+  73540489  0.6938  Gold Cup Final: USA vs. Mexico: Both Teams To Score?
+  58080751  0.6947  Panama wins Copa America 2024?
+  58997227  0.6951  Copa America: Uruguay vs. Brazil - Who will advance?
+  35773587  0.6968  Will Argentina qualify from Group C?
+  58080513  0.6972  Argentina wins Copa America 2024?
+  26538286  0.6978  FIFA World Cup Qualifier: Who will win USA vs. Costa Rica on March 30?
+  16068136  0.6985  Will Argentina win the 2021 Copa America?
+  58080528  0.6997  Bolivia wins Copa America 2024?
+  78309994  0.7005  Club Tijuana vs. Atlas FC: O/U 3.5
+  78119195  0.7014  Women's Cricket World Cup Group Stage: Australia vs South Africa (Oct 25)
+  58080678  0.7016  Canada wins Copa America 2024?
+  60355230  0.7034  Olympic Women's Soccer Final: USA vs. Brazil
+  74642449  0.7035  Leagues Cup: Will Tijuana beat LA Galaxy?
+  79040706  0.7040  Como 1907 vs. US Sassuolo Calcio: O/U 3.5
+  58080758  0.7045  Paraguay wins Copa America 2024?
+  58080735  0.7050  Jamaica wins Copa America 2024?
+  73210358  0.7063  FIFA Club World Cup: Palmeiras vs. Botafogo (To Advance)
+  58080695  0.7077  Colombia wins Copa America 2024?
+  74642440  0.7080  Leagues Cup: Will LA Galaxy beat Tijuana?
+  35778243  0.7119  Will the 2022 World Cup winner be from South America?
+  78050799  0.7119  CF América vs. Club León FC: O/U 3.5
+  73540520  0.7127  Gold Cup Final: USA vs. Mexico: 3+ Goals Scored?
+  59284169  0.7135  Messi scores in Copa America Finals?
+  58080704  0.7159  Costa Rica wins Copa America 2024?
+  78353200  0.7163  Deportivo Toluca FC vs. CF América: Both Teams to Score
+  73266407  0.7173  FIFA Club World Cup: Dortmund vs. Monterrey (To Advance)
+  79040706  0.7176  Como 1907 vs. US Sassuolo Calcio: Both Teams to Score
+  78353200  0.7179  Deportivo Toluca FC vs. CF América: O/U 2.5
+  78031993  0.7189  Mazatlán FC vs. CF América: O/U 2.5
+  58997383  0.7190  Copa America: Colombia vs. Panama - Who will advance?
+  58997233  0.7215  Copa America: Venezuela vs. Canada - Who will advance?
+  73290449  0.7231  Will a club from South America win the 2025 FIFA Club World Cup?
+  73540368  0.7233  Gold Cup Final Winner: USA vs. Mexico
+  74607354  0.7241  Leagues Cup – Club America vs. Real Salt Lake
+  74067686  0.7264  MLS Soccer: All-Star Game winner
+  36460546  0.7269  World Cup: Friday - Argentina vs. Netherlands
+  36351357  0.7299  World Cup: Monday - Brazil vs. South Korea
+  73210340  0.7375  Concacaf Gold Cup: Mexico vs. Saudi Arabia (To Advance)
+  73210311  0.7472  Concacaf Gold Cup: Panama vs. Honduras (To Advance)
+  73422361  0.7513  Concacaf Gold Cup: Mexico vs. Honduras (To Advance)
+  73210350  0.7532  Concacaf Gold Cup: Canada vs. Guatemala (To Advance)
+  73422351  0.7633  Concacaf Gold Cup: USA vs. Guatemala (To Advance)
+  73210349  0.7714  Concacaf Gold Cup: USA vs. Costa Rica (To Advance)
+  59092899  0.7767  Copa America: Uruguay vs. Colombia
+  59091884  0.7855  Copa America: Argentina vs. Canada
+  74571526  0.7900  Leagues Cup Winner – MLS or Liga MX?
+  59279077  0.7965  Copa America Finals: Argentina vs. Colombia

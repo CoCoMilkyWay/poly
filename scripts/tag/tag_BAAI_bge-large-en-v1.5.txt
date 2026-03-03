@@ -1,0 +1,203 @@
+0xf9cc437514d852d33ee434c7dee2296e36c78cf5b8a6ce8f98e9620a97f304db	Crypto_Price     	Crypto_Price_XRP                 	0.7274	Will the price of XRP be between $3.12 and $3.15 on September 18 at 8PM ET?
+0x2b5e5a3d8c979c2287e5c6d03f80325832ecd3bacf34e61687e49cc5c7c0c65d	Sports_Football  	Sports_Football_College          	0.6299	Jacksonville State vs. Georgia Southern
+0x09e4fee6598b8b175ed61d3e46078e5f7e0c1ff4f0d354b787dcbee33d49e9c2	Sports_Soccer    	Sports_Soccer_Other              	0.6259	Carabao Cup: Who will win the Arsenal v. Liverpool game on January 13?
+0x6ab8a5994f953129031cf4921c6ac359a848d065740ea1e997f07636d1f4dce8	Crypto_Price     	Crypto_Price_Bitcoin             	0.6746	Will the price of Bitcoin be greater than $112K on July 11 at 5PM ET?
+0x5f05c5be984740364247e9866ca2fac8b2f44862782e08738f06bb8500df33a5	Sports_Soccer    	Sports_Soccer_Other              	0.6268	Will Borussia Dortmund vs. 1. FC Köln end in a draw?
+0x5695d99b5aece769d991f94cf943c5b6747f305698cdc18af2cd6b03b9541e5f	Sports_Individual	Sports_Esports                   	0.5585	Dodgers vs. Angels
+0x363749c3abe633aac04ae06e214e61be717a1c2aefbfd0dc5ce6f4788edb105d	Crypto_Price     	Crypto_Price_Bitcoin             	0.6848	Bitcoin Up or Down - October 24, 7AM ET
+0x27e1191656c779ae654caf601d31f0c4f13b1a53c6609f959a28ef74d0c5a23e	Crypto_Price     	Crypto_Price_Bitcoin             	0.6822	Bitcoin Up or Down - October 31, 3:45AM-4:00AM ET
+0xd4defd4541d5a360ec6e821fd1836bdf01e3a106bbbdcb7de4a9c76fd2437eeb	Crypto_Price     	Crypto_Price_Bitcoin             	0.6901	Bitcoin Up or Down - September 4, 12PM ET
+0x21f06704270c4e4e54cacc31e62ca2236a9b7e8cdd2ecd0fa404bc9f9c778e8b	Sports_Individual	Sports_Esports                   	0.5339	Will Ugo Humbert win the 2025 Swiss Indoors Basel Men’s Singles Tournament?
+0xe688bbf9bfc55635180a88d6b22bea48fd9356da370a0b6de0d9aae83c69f20b	Crypto_Price     	Crypto_Price_Ethereum            	0.7177	Will the price of Ethereum be between $4,000 and $4,100 on October 5?
+0xa47d5522a14e98422b06053bc153cbb731321e286c12a5a8f75036f6c302e167	Economy_Finance  	Economy_Fed_Central_Bank         	0.5905	Will the August 2025 unemployment rate be 4.1%?
+0x0c84aaac5df975ab07124eebe07ee1d7eadf2c903efe1c22c115be7697493164	Crypto_Price     	Crypto_Price_Solana              	0.5755	Will Trump's approval rating be between 46.0% and 46.4% on June 13?
+0x0bb9b3707fa2efb7d1866ff36b9932de2567632e7735ffd170a6a2965bc1f8e4	Economy_Finance  	Economy_Fed_Central_Bank         	0.5272	Kash Patel out by August 31?
+0x247f91f885dc551f0c9c46247db5875c72133f284b7978434226a867c4f6ba0a	Crypto_Price     	Crypto_Price_Bitcoin             	0.6895	Bitcoin Up or Down - September 19, 10:15PM-10:30PM ET
+0x54d2d63d7b12da13180410e7a648b563f38663f9191e36cfe513d3819f14faad	Crypto_Price     	Crypto_Price_Bitcoin             	0.6892	Bitcoin Up or Down - September 29, 4:15PM-4:30PM ET
+0x5a3c36743450493018c54cb7939d7a9f9588864f0eec26ceea33cbdd6ab75351	Sports_Soccer    	Sports_Soccer_Premier_League     	0.6147	Will Hull City AFC vs. Charlton Athletic FC end in a draw?
+0xc50f64cd831a585628b4b3a8fc02013e4201cc706135748348564c9d8549284b	Sports_Basketball	Sports_Basketball_College        	0.6224	Colgate vs. Holy Cross
+0xeb005a466ab396190a47e815c0855820d554716e0873cff67a30a690f4174ba1	Politics_World   	Politics_World_War_Conflict      	0.5603	Will Israel strike Yemen on October 1 ET?
+0x0a7afeeeba537d8558566f1b42f962d1f10b6416f438c99a1385b7de37350c55	Sports_Football  	Sports_Football_College          	0.5984	Georgia Tech vs. Duke: O/U 60.5
+0xdafcaa79ff54314d7e83ae748f9033b8e1aec1d3ed2da48a613ab99b75082b61	Sports_Individual	Sports_Tennis                    	0.5605	ATP World Tour Finals, Bjorn Borg Group: Alexander Zverev vs Felix Auger-Aliassime
+0x4d06d6ea0eccb6cb6ee456f1b08d9e3dfde22668f6d7def09ad292c76ef5bc7f	Crypto_Price     	Crypto_Price_XRP                 	0.7152	XRP Up or Down - November 3, 4:15AM-4:30AM ET
+0xfdeee7d1960619fd06cad16065cb7ed05694bbe94bcf63fb7cbfb9bcb3145832	Crypto_Price     	Crypto_Price_Ethereum            	0.7273	Ethereum Up or Down - November 11, 12:30AM-12:45AM ET
+0xd4b28fd72fc748a3712a462db4263d8f4bb093acbd7576487c3a7c947426d4f7	Crypto_Price     	Crypto_Price_Solana              	0.5265	Elon Musk's security clearance revoked before July?
+0xa392c7199fe1af217c29071c589898904c16dbd17cb0de6cd367f0a94094ffd9	Crypto_Price     	Crypto_Price_Solana              	0.7164	Solana Up or Down - November 14, 4:00AM-8:00AM ET
+0x5580b8e21713f76195e2a015b4129cc5b93ad9259b9bc2eddfc90e12115b2ca1	Sports_Individual	Sports_Esports                   	0.5554	NBA: Who will win the Nuggets vs. Nets, scheduled for February 6 (3.30 PM ET)?
+0xaf2ff3e0a7e3ae0783477f7d0a4538e23138608c5b15f51d4381cbca864c9688	Sports_Individual	Sports_Esports                   	0.5960	Dota 2: Osos vs Monstters
+0xe60b3cd4cf8ceac30fa096a4f41f3994bd5551a4b6385f71343212bd2282af29	Entertainment    	Entertainment_Awards_Stage       	0.4842	Will Stellan Skarsgard (Sentimental Value) win Best Supporting Actor – Motion Picture at the 83rd Golden Globes?
+0x6bfc0bc891c69a2bdb32cbd9712df1a3401b63e30f3d689013606248b88308bf	Sports_Football  	Sports_Football_NFL              	0.6475	Packers vs. Ravens
+0x028450fcfc01f6f3059a4aa294d1d54e681af44b7b9ce9e5070408ffb2aeba99	Crypto_Price     	Crypto_Price_XRP                 	0.7083	Will the price of XRP be above $2.76 on September 22 at 8AM ET?
+0x3ddca2a1bae38bdcf1a02bec0db532f8725a45a08a4fbeb1329b4080d64ee98e	Sports_Soccer    	Sports_Soccer_Other              	0.6194	Will FC Loon-Plage vs. Stade Béthunois FC end in a draw?
+0xa4c8d731c361d357cba5637d04779bc94ce02d7e7ac02ec60753d3074726a6a8	Crypto_Price     	Crypto_Price_Solana              	0.7162	Solana Up or Down - October 21, 4PM ET
+0x845583aeb9ba992aa97e5430bd05d314a8b96592a0cc48c59b5adcf6bb4bd1bb	Economy_Finance  	Economy_Fed_Central_Bank         	0.5555	Will Powell say "Payroll" during Jackson Hole speech on August 22?
+0x6bda868c9729fcc7fb60944e14d0031ca32d9236b2f845352d3e23fec727cc13	Sports_Basketball	Sports_Basketball_College        	0.5988	Drexel Dragons vs. Saint Joseph's Hawks: O/U 139.5
+0x3c39238512bf3cb6c8c23eb65418d12ebce77b1a23007661ae2b8ae1428f13e7	Sports_Individual	Sports_Golf                      	0.5361	Will Kevin Velo be the first round leader at the 2025 Wyndham Championship?
+0x5395d8c3aa790216a23748cd5ad6e9cc4573879061bbb06deb96e3662b3ee323	Sports_Individual	Sports_Esports                   	0.5523	Will Heracles Almelo win on 2025-11-02?
+0x82eaa81747475bcb94577563638f0ddd47c78a7ee09e2034e70c35b3321a7b1e	Crypto_Price     	Crypto_Price_Ethereum            	0.7131	Ethereum Up or Down - August 26, 1PM ET
+0x27c5a06d6ae3a6a0f51e2f1118fbfac8a7d2afcd804c123fd6266315482a0487	Sports_Individual	Sports_Esports                   	0.5291	Will Nodirbek Abdusattorov win the World Rapid Championship?
+0x2422243476a1778071bf95d10c4da36b9af814b2f26d258fb67886bfcb80c649	Crypto_Price     	Crypto_Price_Bitcoin             	0.6849	Bitcoin Up or Down - October 23, 3PM ET
+0x940ddec516828962ad429036350eef6c3b3526dc88bdc8c258f85163fc10dbab	Crypto_Price     	Crypto_Price_XRP                 	0.7220	XRP Up or Down - November 5, 7:00PM-7:15PM ET
+0x25bfc0849103225f131a26f5ceeb3926d49c2e120399d26f8bec8255508dab12	Sports_Soccer    	Sports_Soccer_Other              	0.6303	Will AJ Auxerre vs. FC Lorient end in a draw?
+0x8bb789fda142020026173cd7f4ee43d2054484052f7127660e1650df839396c2	Sports_Soccer    	Sports_Soccer_Americas           	0.6382	World Cup: Tuesday - Morocco vs. Spain
+0x85c141453668e6e09755d04d10bc83cf598c706e3999a614511f82d0a356a738	Politics_US      	Politics_US_Trump                	0.6360	Will Donald or Melania Trump say "Shutdown" or "Shut Down" during executive order signing events on November 13?
+0xeba5fb5b6788ca01028865ecff341e0b2920e6a31ffabc8230007eb058652543	Sports_Individual	Sports_Racing_Motorsport         	0.6066	Will Red Bull have the highest Constructor score at the 2025 Canadian Grand Prix?
+0x66babc0bb6c0f9bbf0b97097aed58700a99c22f94597dcbba131647d6a530f90	Sports_Football  	Sports_Football_NFL              	0.6469	Will Peyton Hendershot score a TD in Super Bowl LIX?
+0x1100bb732f8193bce9b781a71aa63a89e2d81d7118e26392a09c1822bf233071	Crypto_Price     	Crypto_Price_XRP                 	0.7069	XRP Up or Down - October 2, 8AM ET
+0xb33106ceb262ce994bd61bb746d37b6b41cb3ddc7891c8ea563f9c2ddad0cb07	Crypto_Price     	Crypto_Price_Bitcoin             	0.6873	Bitcoin Up or Down - September 24, 6:30PM-6:45PM ET
+0xd156086ff3452d9139a3243a3e3712a5ce807026c993d61c23f39e393629661e	Sports_Soccer    	Sports_Soccer_Premier_League     	0.5559	Will Hampton & Richmond Borough FC win on 2025-10-11?
+0x30a32603d3c2405bd29b9e8ff464ef8e55f9b16ed56a7a97730887f308772f3b	Crypto_Price     	Crypto_Price_Ethereum            	0.7267	Ethereum Up or Down - November 10, 3:30AM-3:45AM ET
+0x937f83a60268bb7b8ab5b80eae642c028d4d3e47b23b75d70eb6a2377ad40d10	Crypto_Price     	Crypto_Price_Bitcoin             	0.6619	Bitcoin above $60,000 on August 30?
+0x1ed29e231ea86639061189c37bc0925f656a51f1897b7f4e2f324c4794d4c760	Crypto_Price     	Crypto_Price_Solana              	0.6992	Will the price of Solana be above $208 on September 24 at 8AM ET?
+0xd7704e55a029c76ce8fa8a62b873733fa7099058f5a45b511aa522c85f9f729a	Sports_Soccer    	Sports_Soccer_Premier_League     	0.5932	Will Peterborough United FC win on 2025-11-01?
+0x71e85762277d568b22614650bcf16addd3a13afe4a17ebc687e08e13b780c778	Economy_Finance  	Economy_Fed_Central_Bank         	0.6282	Will anyone say "Macroeconomic" during the FED board meeting on October 24?
+0xf599867c2694e5c0a7f079442735318f3529686065da4154785d657c93525652	Sports_Soccer    	Sports_Soccer_Other              	0.5862	Will Bayern München win on 2025-11-01?
+0xf1af0aa504c0e371ecdcb0d28df8ed3dd40b24e0e0e3bae8371b9e4635950ab9	Sports_Football  	Sports_Football_College          	0.5829	North Florida vs. Stetson
+0x8cccd25b326b99d2fc13ec0b38b15c83c81d7fa2e38fc98f3be9ad56b906b7f6	Sports_Football  	Sports_Football_NFL              	0.6143	Spread: PHI (-4.5)
+0xe15f3eb5a3fe7be81db947fee868b64b0f14c7f9b9551c33085edca4153aae15	Crypto_Market    	Crypto_Market_ETF_Institutional  	0.5232	Will Trump say "Jew" this week?
+0x4a7278fce6df49f37512c52d27d09bb8e7bf171e03e7c5d3d21975f6c820a6af	Society          	Society_Business                 	0.5757	Will WeWork announce bankruptcy by November 12?
+0x1b1b9e20c4f1a24a4b5f9d927e23964a8575cb5078a4b92744d9f0496d6d79d8	Politics_US      	Politics_US_Congress             	0.5246	Liberal Democrats win the second most seats in next UK election?
+0x11e9d25a1b19fc96f60695c2c30394afca7bdae97a3c2beaa503db1b831d1124	Crypto_Price     	Crypto_Price_Ethereum            	0.7211	Will the price of Ethereum be between $4300 and $4400 on September 2 at 4PM ET?
+0x58773417b088dfa9010ba46b85b6fe94266cfd32cceca2a7cfcd906c2103e609	Sports_Soccer    	Sports_Soccer_Other              	0.6267	Will Club Necaxa vs. CF Pachuca end in a draw?
+0x7062c0f31c5a44eec56dff4fead0ef4008a467575c68699c94ac918841589289	Sports_Soccer    	Sports_Soccer_Other              	0.6388	Will Shamrock Rovers FC vs. NK Celje end in a draw?
+0x1f3a760a69047345591fb56328cf7328aa5ed2b2e367956851bbdcdc41b4b92a	Politics_World   	Politics_World_Elections         	0.5640	Will Volodymyr Zelenskyy and Vladimir Putin meet in person before June 2022?
+0x5a466cb1fd61df0ff4a6c3f8c1fd2903acfa323ccdc4206b454124b68825204e	Tech             	Tech_BigTech                     	0.5567	Will Trump and Elon say "Billion" 10 or more times during their Feb 18 interview?
+0x2756d21454db7f4df495a7ceb371f747fa78923c7ff22bbfb9ca4afb3477d769	Sports_Football  	Sports_Football_College          	0.6194	Louisiana Tech vs. LSU
+0x941ce0cb4eb5a5b1be9b3e64af0be98ee9c0349e901b4b2bfd052aedf3b96308	Sports_Basketball	Sports_Basketball_NBA            	0.5710	Spread: Raptors (-1.5)
+0x6be561b297eee46b94b045ff8b74d468b3f244dc430735a637561fed82ec9aa2	Crypto_Price     	Crypto_Price_Solana              	0.7193	Solana Up or Down - September 14, 6AM ET
+0xb0cab15ac3fccdc6ab7729d2664c5c8284a56db51e330e88f6e6db6830c0158f	Crypto_Price     	Crypto_Price_Bitcoin             	0.6867	Will the price of Bitcoin be above $116,500 on September 12 at 4AM ET?
+0xf854a15db6e2ec0b18659932f15a4ce68f6ef0881f6d815ac470b1befa08b2b9	Sports_Individual	Sports_Baseball_MLB              	0.5589	Chicago White Sox vs. Boston Red Sox
+0x8e1171e0559dc1221595f270a39c5615e6ce8949f833012285587b04e1730af9	Weather          	Weather_Temperature              	0.6929	Will the highest temperature in London be 73°F or below on July 14?
+0x3eff9e16d335cf5ba23a7337e6cce8692e3c95cd6906f119858bf91236cde07f	Sports_Football  	Sports_Football_NFL              	0.5862	NFL: Will the Chiefs beat the Bills by more than 1.5 points in their January 22 matchup?
+0x903b682eae700e571eedb461eac099323b17e3e63d6487afae2bedacb5838652	Sports_Basketball	Sports_Basketball_NBA            	0.5892	Timberwolves vs. Nets: O/U 229.5
+0x8a36b64ffe5f9753167526fb9d62f3a37dbcf04f5a323f3f0233d2d7cd90c896	Crypto_Price     	Crypto_Price_Ethereum            	0.7343	Ethereum Up or Down - October 24, 3:15PM-3:30PM ET
+0x514e5b322e60289a6ca3b3391a61974d7e71139eb97beecf31151839adc954af	Sports_Individual	Sports_Baseball_MLB              	0.5579	MLB: Atlanta Braves vs. Los Angeles Dodgers 2023-05-22
+0x67aae72e6bbbea8bfda9204f7ddc040e196a8ec75a7b2062db30cd2573dc14df	Sports_Basketball	Sports_Basketball_WNBA           	0.5878	Will Texas A&M (Women’s) win the 2025–2026 SEC Regular Season?
+0xfd3f14a8e1deb916d7bb900bf9112b2af4328b5e8385f8fdbe855526e00f9f70	Crypto_Market    	Crypto_Market_ETF_Institutional  	0.6222	MicroStrategy purchases >5000 BTC August 5-11?
+0x1bde48bc1c46698c6082445d16f5574bb66cc4dc93dd4ea66e2eab848235bd83	Crypto_Price     	Crypto_Price_Ethereum            	0.7028	Will the price of Ethereum be above $4,275 on September 11 at 12AM ET?
+0xedcbeaa885384aad47ba3e156e1a0231cce04cd19a6d3d5d5888e96e0e11e6b5	Sports_Soccer    	Sports_Soccer_Other              	0.5551	Will CA Huracán win on 2025-11-03?
+0xf810446b9f2c8d410464a5eee5fe7f1ff653864de363e8014fd300a0d1e357ba	Crypto_Price     	Crypto_Price_Solana              	0.7129	Solana Up or Down - October 25, 10AM ET
+0x424666898ba18d10f05723b17730d192d65bf6d05dfbd476a18561de52d47412	Sports_Individual	Sports_Racing_Motorsport         	0.5575	Will Cole Custer win the 2025 NASCAR Grant Park 165?
+0xd07423fc23eaa67cc2e66d06784e197df77326a53b52a0265207520ca7b1d1ef	Crypto_Price     	Crypto_Price_Solana              	0.7089	Solana Up or Down - July 31, 1AM ET
+0x5eff775f56b5e3159ac217489054c2bd12f185ac32db3b482b627bd8da004f6b	Entertainment    	Entertainment_TV_Streaming       	0.5139	Will 'The Life of a Showgirl (feat. Sabrina Carpenter)' be the least streamed song on The Life of a Showgirl on Oct 10th?
+0x3f4d342cd7ffe4048deaa8251bab8b9429453b0ba4a79e4b3068bbd5e7f326e8	Sports_Basketball	Sports_Basketball_NBA            	0.5985	NBA: Who will win the Warriors vs. Clippers, scheduled for February 14 (10.30 PM ET)?
+0xb447a0ceaf7cbb4ebf1a0d44e89e5660e3889e5ec6f9c45ee26a0d6dcf07e330	Crypto_Price     	Crypto_Price_Solana              	0.7000	Will the price of Solana be above $256 on September 18 at 8PM ET?
+0x93dc2f54940e8462106ec7e6ab17266be0107c07a29b766c8802161a8ff9f867	Crypto_Price     	Crypto_Price_Bitcoin             	0.7023	Will the price of Bitcoin be between $116,500 and $117,000 on September 21 at 4AM ET?
+0x68d6b5f0be2bca002963db252fa87ec1c3bb4b430f32533829d196c810b3d06e	Politics_US      	Politics_US_Trump                	0.6717	Will Donald Trump sign an executive order on July 27?
+0xfa0ccf874f6c00490d260e6de47900d9d54c74e2b981164d50889dbb05271f87	Sports_Soccer    	Sports_Soccer_Other              	0.5355	Open de Moselle: Matteo Berrettini vs Quentin Halys
+0xd946b6dbcd4368eb11b37762e8edcc4cbd58c66cb74130b2ab78248b5ebf0945	Sports_Basketball	Sports_Basketball_NBA            	0.6055	Will the Atlanta Hawks finish with the best record in the NBA?
+0x552f066b699f94253e10e541ef85f16837721a03fe94045a55b6484e6761ba51	Sports_Individual	Sports_Baseball_MLB              	0.5790	Houston Astros vs. St. Louis Cardinals
+0x7e1563bc5253dbf9aa5d8a9a6527d578294155d8ef3add92854c565be741f31a	Crypto_Price     	Crypto_Price_Solana              	0.7091	Will Solana dip to $140 before 2026?
+0x15c7ced74ac24a84a5d79ab088cd6d9cd8df20ac7b302363e1f5613df4e2d370	Sports_Individual	Sports_Esports                   	0.5931	Counter-Strike: Zomblers vs Green Tea Party (BO3)
+0x58ec774737119e2c1069cd4f19ea842555235a28ca7da3b51a76560d5aa6d976	Crypto_Price     	Crypto_Price_Ethereum            	0.7265	Ethereum Up or Down - September 16, 3:15AM-3:30AM ET
+0x0ca33af5dd1f978947bdd9eebcd775cbb89c966dc543437e61d4909be8a89b6e	Sports_Individual	Sports_Esports                   	0.6350	Counter-Strike: FUT Esports vs Heroic (BO3)
+0x7a994496332352cf1dbb1e3bff52e4b7ba2aa0bccd7788844dd93257d62606f2	Crypto_Price     	Crypto_Price_XRP                 	0.7033	Will the price of XRP be above $3.06 on September 21 at 4PM ET?
+0x9c51668a08a86c347318d2c0d3119ad28649a64b7f434c0b18024459d36d999d	Sports_Soccer    	Sports_Soccer_Other              	0.5422	Will Tromsø IL win on 2025-11-09?
+0x67f19466193fddcc564339edbc0451c7d0eef470188b76157a1dfd562b50486d	Sports_Soccer    	Sports_Soccer_Other              	0.5821	Will Venezuela win on 2025-11-18?
+0x19c683282aafcbe3721a06ff4c9ea850964bbb20bb33632eff4d54527639befd	Crypto_Price     	Crypto_Price_Ethereum            	0.7334	Ethereum Up or Down - October 30, 3:30PM-3:45PM ET
+0x51eb626bd77a0e9deb212247848cf0f0a0792670dce43093f909667408d89489	Tech             	Tech_BigTech                     	0.5444	Will Apple acquire Mistral by September 30?
+0xdd5494d6d8932839536caed7aeb21e5bb2fb500910b1d0ce43d2a5fec9f546aa	Crypto_Market    	Crypto_Market_ETF_Institutional  	0.5601	Will Harris publicly support tax on unrealized gains?
+0x7a4ef24b81959fcc2f4c058d4f2c73181b0f36ccefcbfd3dc6f1f6ba5027a4a1	Crypto_Price     	Crypto_Price_Ethereum            	0.7305	Ethereum Up or Down - November 4, 4:00AM-8:00AM ET
+0x528f85cffa263a4a522bd8fb323542436b53589bdad01ab2f71a439dbda29734	Crypto_Price     	Crypto_Price_Bitcoin             	0.6825	Bitcoin Up or Down - October 7, 12:45AM-1:00AM ET
+0xc29942213c352970dcdb412efc9f24504aca00b15b7c9e1f23b2c7256858e063	Sports_Soccer    	Sports_Soccer_Other              	0.6375	Will Argentina vs. Uruguay end in a draw?
+0x9a24e38930539c1d6f50c95aa46a6154711e4118729151866175e4868f58d2d2	Crypto_Price     	Crypto_Price_Bitcoin             	0.6814	Bitcoin Up or Down - November 5, 12:30AM-12:45AM ET
+0xfb2729530bc7aca680b7a6d97f5f144f6b78a47b17815700972ac115f82db7af	Sports_Soccer    	Sports_Soccer_Other              	0.5652	Will Columbus Crew win on 2025-09-27?
+0xb2f26f646f755358612232c32b1764f9f8f5feaae11643625227ec4502a39220	Crypto_Price     	Crypto_Price_Bitcoin             	0.6822	Bitcoin Up or Down - October 11, 2AM ET
+0x377a656fd5097b3f9b5af89bb1b16a078172b4a6d46ad7dc14955c433019319a	Crypto_Price     	Crypto_Price_Bitcoin             	0.6866	Bitcoin Up or Down - November 6, 12PM ET
+0x66d7881b09bd1d0aaed830151845e36cba3ea25adf57fcb4ba48c29ac4dc04c1	Sports_Individual	Sports_Esports                   	0.5852	Counter-Strike: Zomblers vs Green Tea Party - Map 2 Winner
+0x363f56b166af36056838be5faf6e65fadb7b0da380b64bc4b91be0e984dcdfa1	Crypto_Price     	Crypto_Price_Ethereum            	0.7157	Ethereum Up or Down on April 25?
+0x5fbfefa05c2b5f21924fb0caaa1fbfff8f9bb0bf77b27acff88f577ebff7ec62	Sports_Soccer    	Sports_Soccer_Other              	0.6106	Spread: SS Lazio (-1.5)
+0xdb0912cfe94f4e8480b1d97beef82cc206fbd1adf8505fff52fa12ee104ef091	Crypto_Price     	Crypto_Price_Bitcoin             	0.6600	Will the price of Bitcoin be above $120,000 on October 2?
+0xd26d9fddf8b056e425fb81c7fe97b568bb3523b8ed82e8a0b83eae7415fc0a8d	Sports_Individual	Sports_Tennis                    	0.5636	China Open: Gabriela Ruse vs Emma Navarro
+0x66016fa41f74a14b6e5e5e6154632a3763b5b0e8d8495beabe6525e68911433e	Sports_Basketball	Sports_Basketball_NBA            	0.5682	Grizzlies vs. Pelicans
+0xe438dbdcdac59a8d6d0fbe7d750b88c36bceb05376acfb5254d0ebfbb4e5adb9	Sports_Individual	Sports_Esports                   	0.5029	Will BTS announce a new world tour in 2025?
+0xa71381f964dee9dd7388d08d8bec3f7a557ebf682f9d525b3774509df8bdb53f	Sports_Individual	Sports_Hockey_NHL                	0.6193	Capitals vs. Lightning: O/U 6.5
+0xe3ce32c7242810f09868c02f46683918ef3182dc5b75ddadecfa6f3c5f556207	Sports_Soccer    	Sports_Soccer_Premier_League     	0.5948	Will Arsenal win on 2025-11-08?
+0x9ba618bdf9fc97ca6e5cb7bf1c90edb0d94a057f73ceaab2b815e8c299a7c261	Entertainment    	Entertainment_Movies             	0.5538	Will 'Shadow Force' gross more than $2m opening weekend?
+0x8cee05afa217a89cf4d5ca76d90bd287d0c73cf83640d0212c05bc5fe2b40d56	Crypto_Market    	Crypto_Market_DeFi_NFT           	0.6062	Will DeFi Dominance on CoinGecko be 5.15% or higher on April 25?
+0x55129e65204b7a5c3812500f84719e9886ebc20d8ba1e1498c361272bfad88db	Crypto_Price     	Crypto_Price_Ethereum            	0.7355	Ethereum Up or Down - October 21, 2:15PM-2:30PM ET
+0x35c013afb7cab7c11c0a67c876cdea4344d47f6f056c66d71dbbef7a47556469	Crypto_Price     	Crypto_Price_Ethereum            	0.7232	Ethereum Up or Down - September 8, 8PM ET
+0xc6c3ddfc3ca159fd3196305f8b90a0d5ba461e345a7194db56dda5ad18fef37f	Crypto_Price     	Crypto_Price_Ethereum            	0.6997	Will the price of Ethereum be above $4,350 on September 11 at 12AM ET?
+0xc063591caad7e7fe0deba59e8b72503ec78ca40c3a70a79b9c578409a30459f1	Crypto_Price     	Crypto_Price_Altcoin_Memecoin    	0.5444	Will Trump say "DOGE" during his Cabinet Meeting on April 30?
+0x2373f4eae75e84650cc0f52d0f236a11f35d6ee781526b0327c895598ae15a7a	Politics_World   	Politics_World_Elections         	0.5318	Will PS receives over 14% of votes?
+0x126a776e89ad0d8cfcb22eaa5f269a5582808da1315d81e90beae9d349332536	Sports_Individual	Sports_Esports                   	0.6310	Counter-Strike: ALGO Esports vs Dark Tigers (BO3)
+0x2ab952394a0c58fdf2ec06611c68a8eb9fbd4e4d1a51ba8a25ae75cdb7848265	Crypto_Price     	Crypto_Price_XRP                 	0.6943	Will XRP reach $2.4 in July?
+0x3b34bd9fd44f93ebfd6a1255f7646779a920a0c8b6db44bbaf0ae1f01bc0f05e	Crypto_Price     	Crypto_Price_Ethereum            	0.7371	Ethereum Up or Down - September 18, 5:30PM-5:45PM ET
+0xf52b19543cf01f5b13f7b99dd08cf61a1b0111548a42355b4a3d4697143327cb	Sports_Individual	Sports_Racing_Motorsport         	0.6040	Will Lance Stroll finish third in the 2025 F1 Drivers Championship?
+0x3df87fb6a7a50ea56f558a94fc790571cb65a33e94eab51bdc963c16f39ed6c3	Crypto_Price     	Crypto_Price_Solana              	0.7108	Will the price of Solana be between $220 and $222 on September 24 at 4AM ET?
+0xa49995e1eeee7465809940f222f6b417011e4219fdd61751832957f212ad6870	Politics_World   	Politics_World_War_Conflict      	0.5267	Will Israel raid Gaza aid ship Handala by Saturday?
+0xe8d0a6dd68c41428f7e3ab217261aac971662953659f6f95a8aac8190e7e4a65	Crypto_Price     	Crypto_Price_Bitcoin             	0.6846	Bitcoin Up or Down - September 23, 2:30PM-2:45PM ET
+0x18c3971599a9e730f5cd6fe97ed933ac4bbe776f6eaba3baac08d7f768a302dc	Crypto_Price     	Crypto_Price_Bitcoin             	0.6854	Bitcoin Up or Down - June 21, 5PM ET
+0x95e7a4cdc7bfeac6cd50e90b94196808d5115ceeee11c164f526ca7cb4c2bd0e	Crypto_Price     	Crypto_Price_Ethereum            	0.5685	Over 210.5
+0x94bb28c6d7cf5eb9827d463fc256138293c4ae7fbd8ca5aa88599ebb291afb2e	Sports_Football  	Sports_Football_NFL              	0.5574	Will Ashton Jeanty get drafted top 5?
+0xe89d4d87e6b49ce73b490e00000aa7c62768194e2087b97750cb11b7453eaa83	Sports_Individual	Sports_Golf                      	0.5960	Will Jeremy Paul win the 2025 PGA TOUR 3M Open?
+0xb698dda7b6f396161ebafa9078f70b474535ef05db24d6e98fb60f01ab678558	Sports_Basketball	Sports_Basketball_College        	0.5848	San Francisco Dons vs. Memphis Tigers
+0xce7a2b539832bc6fd4b896c1673424e07e40d11f67ad19b6c276aa281f752640	Politics_World   	Politics_World_War_Conflict      	0.5794	Will Ukraine formally cede Crimea, Luhansk, or Donetsk by May 31, 2022?
+0x61a8fc16ce1aca1582d4fa87ad0a1205d6c0489346061716b0b06b4fac988a1e	Crypto_Price     	Crypto_Price_Ethereum            	0.7089	Will the price of Ethereum be above $4,450 on September 8 at 4PM ET?
+0xd7e0f28d32b0181efc7ff6fe9bf1207494c210a0aab3f4148ec7654930b0874f	Crypto_Price     	Crypto_Price_Ethereum            	0.7224	Will the price of Ethereum be between $2500 and $2600 on May 28 at 5 PM ET?
+0x047fbbea82a5b70b6cfd9ef25efb969675ae0d81b20f2bc37574867ad193e7a2	Sports_Soccer    	Sports_Soccer_Premier_League     	0.5321	(In-Game Trading) Will the Buccaneers beat the Rams by more than 1.5 points in their week three matchup?
+0x2ca23997de11db8b47c058c30bdc63be1f31f01f36fde5433dd315afaf32b2e0	Sports_Soccer    	Sports_Soccer_Other              	0.6274	Will Silkeborg IF vs. Aarhus GF end in a draw?
+0xd1970f0ab82b7ba7e000709ef934fbe9dbf332f832da17973163866f9bd3d999	Sports_Basketball	Sports_Basketball_College        	0.6277	USC vs. Maryland
+0x679c625d28216f18fd401636d1cdbf7dcbec47c9a957f718f3d8571bbcaf1404	Politics_US      	Politics_US_Congress             	0.5126	Will Abigail Spanberger win by 12-15%?
+0xfa69962f097d1de8cb8d3c7ef803015332157c49e2f8988cf33e56983802b177	Sports_Football  	Sports_Football_NFL              	0.5927	Astros vs. Orioles: O/U 9.5
+0x844d7088a6b7a918709f5761b980095b61e0c3987c0b58786e5d8ba98eb01eac	Sports_Individual	Sports_Racing_Motorsport         	0.5563	Will Brad Keselowski win the NASCAR Quaker State 400?
+0x2b713c6719057eea6bcd535c6093d3f67c357d392ddf8a6cece7ef10e1a71142	Crypto_Price     	Crypto_Price_Ethereum            	0.5694	Will Elon tweet 325-349 times Dec 13-20?
+0x72074e3d16a787b756309f02ea6c3352e9880653f4acc07ee045c3faeba67821	Politics_US      	Politics_US_Congress             	0.5908	Senate: Will a Democrat (Warnock) or Republican (Walker) win in Georgia?
+0xa988c5bfa79e9b5c14cba8f9ad3dbb7e0a8989059ff4eedeb0aa7019070e2107	Sports_Basketball	Sports_Basketball_NBA            	0.5785	NBA: Who will win the Pelicans vs. Rockets, scheduled for February 6 (7 PM ET)?
+0x3d4c8447d50307f2ec84cad7ac753106269ca1528cc602fb883431f8161e1707	Sports_Football  	Sports_Football_College          	0.6308	Will Georgia win the 2026 College Football National Championship?
+0xb0e76d0bcc133aef9e343fbe2d02aa9a0a253812ce04cb67e02592537251ce22	Sports_Individual	Sports_Esports                   	0.5669	Over 212.5
+0x0141904110af2c258299e2608a9f9af98dffd049385395cc3bdc9e7692e04788	Crypto_Price     	Crypto_Price_Solana              	0.6846	Will the price of Solana be above $206 on August 30 at 12PM ET?
+0x6646e8002fc3d448d86a31b8e3dc17adf35cf245637124449136f1debadf0f7b	Sports_Soccer    	Sports_Soccer_Premier_League     	0.6884	Will Manchester City beat Wanderers?
+0xc323bee5099d25cda33ef2e0b13518f5e0f4c47957fa9b6cd78c1fded00bdd56	Sports_Football  	Sports_Football_College          	0.6485	Will Nebraska be the #1 overall seed in the 2025-26 College Football Playoff?
+0x4531780cc51a5efbf0754f316f8e563d7cacec35942acc511863c7b35bd42eed	Sports_Soccer    	Sports_Soccer_Americas           	0.5861	Will Argentina win on 2025-09-09?
+0xc60076b8a299000e668c354b5ef7f180253be03d6584bcd3657ed685cdd440be	Politics_World   	Politics_World_Elections         	0.5442	Will FrP win the most seats in the next Norwegian parliamentary election?
+0x29758be5859e3edee2469b1a1ae641533c5b648e83d0a2a035565d40d42c7fd1	Sports_Individual	Sports_Golf                      	0.5196	Will Powell say "Thank you" 3+ times during Princeton Commencement on May 25?
+0xf4556989fa3e3d371045fa70683294b1dffd031bd0465ddf5f82dfc19627d42e	Crypto_Price     	Crypto_Price_Bitcoin             	0.6769	Bitcoin Up or Down - October 16, 5:30PM-5:45PM ET
+0x73fcd801b3b581fe97a0ee8893bac41bf86cff67c547bf500fd78330840af51e	Crypto_Price     	Crypto_Price_XRP                 	0.7070	Will the price of XRP be above $3.12 on September 14 at 12PM ET?
+0xf99acf85c5bfaf276e1fbfaf0127159e4891b63cb2f4a085c223ccb761728538	Sports_Soccer    	Sports_Soccer_Other              	0.6293	Will Olympique de Marseille vs. Toulouse FC end in a draw?
+0xc5fe4ca5efe7220a0611b6f90707662a55bca2dfe243e070035331dd277958eb	Sports_Soccer    	Sports_Soccer_Americas           	0.6230	MLS: Will D.C. United beat Charlotte FC?
+0xedc05d132a676f9d2ce924fe485c529a9f06e21d0eea96763c81d3b1ee9ceb3e	Crypto_Price     	Crypto_Price_Bitcoin             	0.6774	Bitcoin Up or Down - August 6, 7AM ET
+0x4d0fc526ec2012d77590399da3c79304288d3f08e7dcbbc2cf5bb4f735998ccd	Sports_Individual	Sports_Hockey_NHL                	0.5900	NHL: Will the Lightning beat the Islanders by more than 1.5 goals in their March 27, 2:00 PM ET matchup?
+0x3b346e262013bbc9e804869f9bc6516541ec5fc7d2235451b88676c4f0614618	Politics_World   	Politics_World_War_Conflict      	0.5330	Will Trump say "World War" during Fort Bragg remarks on June 10?
+0x91c49d3250de3d205e19001b633842c02bda43a3c7fb1396dd75c8af8eea01f2	Crypto_Price     	Crypto_Price_Solana              	0.6980	Will the price of Solana be above $208 on September 8 at 8AM ET?
+0x3e9780097017a773d10941080f9d3264bfd71634e0c4da35e6717f07af1ba04d	Politics_World   	Politics_World_Diplomacy_Trade   	0.5436	Will Trump say "Deport" during Pittsburgh rally on May 30?
+0xd2939f049d4329d23d3ecb00b90a63bde1307f1b7a363fb7775bc04793437808	Sports_Individual	Sports_Golf                      	0.5974	Will Tommy Fleetwood win Gold in Men's Golf?
+0xceeb136e0a129c2ebf157fb3159797351c0c78455d8582afcf4b6d2d8a29c4f7	Sports_Football  	Sports_Football_NFL              	0.5751	Wyoming Cowboys vs. UT Arlington Mavericks (W)
+0x003e6ffdf25f45a8d5679831551658e1b54094187f552fc6ef4b26bca404c971	Politics_World   	Politics_World_Elections         	0.6022	Will Michelle Bolsonaro qualify for Brazil's presidential runoff?
+0xe9d2b702bf9c168200af0723327e8ef74afacf3131161c3d001ad72e778acb7f	Crypto_Price     	Crypto_Price_XRP                 	0.6886	Will the price of XRP be above $3.00 on September 25?
+0x7e0b063616776694e774738b8fb8e8fd9c5cf4cc697a03476625c0cca28e3397	Sports_Football  	Sports_Football_NFL              	0.5731	Hawks vs. Knicks
+0xbe831a2ae1b3c0d2b4f3bc1c85e9b98a8afb4d821099f99a498de3dfe1510f4f	Crypto_Price     	Crypto_Price_Bitcoin             	0.6982	Will the price of Bitcoin be between $112,000 and $112,500 on September 24 at 12PM ET?
+0x07c8dc41b6a764a5478b87820f3d54a8bb6f05e54455a377caad987afff83f44	Politics_US      	Politics_US_Trump                	0.5429	Epstein phonebook only document released today?
+0x2b91d097e074236c64a0c66c86487d76ff608c80cffe93268600cf0245976075	Crypto_Price     	Crypto_Price_Ethereum            	0.7003	Will the price of Ethereum be above $4,525 on September 16 at 4PM ET?
+0x8d5ca2cf3adaddf8a3c59e9b5eeef1d008edf9613182cafa137bf9a823e0e0fc	Sports_Individual	Sports_Esports                   	0.6603	League of Legends: Top Esports vs. JD Gaming
+0x777b4637013acfb1302fc20bd304c35fef92958046e3a0880ab64f6b69c1286d	Entertainment    	Entertainment_Movies             	0.4654	Will Chloé Zhao be nominated for Best Director at the 98th Academy Awards?
+0x5cd8e90335dd795381d97af8ab320d34687d43833893a33381ac08b18494c2f0	Crypto_Price     	Crypto_Price_Ethereum            	0.5638	Will Elon tweet 150-174 times October 18-25?
+0x16811dc0ec78a455448eb060aaceb40d1533420b3a9db660eb339cac925ff9a5	Crypto_Price     	Crypto_Price_Bitcoin             	0.6847	Bitcoin Up or Down on October 18?
+0x5d5ef318479346d79fb4348a05a5eb07838080c8720c55ee0369f0914a2863a9	Sports_Individual	Sports_Esports                   	0.6689	LoL: Conviction vs Estral Esports — Game 3 Winner
+0xdd630c18fbe31d60b46a7dbe57bda234bd8c39ff6f2b02a85a7c46e82eaa82cd	Tech             	Tech_BigTech                     	0.5308	Will Brian Armstrong appear on the UpOnly podcast by December 31?
+0x1ecdca73dded2965a28a3d60fc646fa463695acb0a1c76dbc1b0d942d6814e07	Sports_Basketball	Sports_Basketball_WNBA           	0.6161	Will Satou Sabally win the 2025 WNBA MVP?
+0x2181b6c4d303c15c35028fbeb8b3d1dce6cc30c5ad7d9f6324439c89c2968bb1	Sports_Soccer    	Sports_Soccer_Premier_League     	0.6872	Will Everton vs. West Ham end in a draw?
+0xbd8b722b8e768d7eb2b3014d6530d9886c4df14d5ccf69f7479f77c5d0e7e494	Sports_Basketball	Sports_Basketball_NBA            	0.6260	Heat vs. Warriors
+0x1af8d79861c1d8ce19fba102a419460dec9412ee4028b33c54fc4e209192f723	Crypto_Price     	Crypto_Price_Bitcoin             	0.6833	Bitcoin Up or Down - November 18, 11AM ET
+0xcfd47799b697d06e26e5710316897151105064ffaaca170b8df8cc2689318a80	Crypto_Price     	Crypto_Price_XRP                 	0.5954	Netflix (NFLX) Up or Down on November 3?
+0x3102e0092dc2afc606e542cf0b77df0fae23a17aa671a740c0d8384d7965283b	Sports_Soccer    	Sports_Soccer_Premier_League     	0.5767	Bangladesh T20 Series: Bangladesh vs West Indies (Oct 27)
+0x31f61a102a2888e3c0c8d15b79d05a1e5469fb3cb6cc627cb248b637a8dc99c6	Sports_Soccer    	Sports_Soccer_Americas           	0.5656	MLB: New York Mets vs. San Diego Padres 2023-04-10
+0xb96ef5b0b0175ed86de4df291a3ddb6a739f47d191eb3125f7e52352a6b35fd0	Crypto_Price     	Crypto_Price_XRP                 	0.5792	Will Trump tweet 100-109 times Nov 1-8?
+0xd68d70a2d6313a827086dddf60cd7540a5b9c71118cac5127d541c438509baf5	Sports_Individual	Sports_Hockey_NHL                	0.5970	Spread: Utah (-1.5)
+0x3ff7d3cb813324dbfe4e722413a1c5270a97cfc529cb25611e37dec1132520f0	Crypto_Price     	Crypto_Price_Bitcoin             	0.6960	Will the price of $BTC be above $53,000 on February 1st, 2022?
+0x66e9d854b2d5f24a4860640ae8e6c1abdce95333af2e5e786a7e45b2058df683	Sports_Soccer    	Sports_Soccer_Other              	0.6460	Will Gil Vicente FC vs. CD Santa Clara end in a draw?
+0xcdf5449a11c5a7aa069db3a57853e4f6728fab0d5a08826ad36672486c52503d	Crypto_Price     	Crypto_Price_Ethereum            	0.7315	Ethereum Up or Down - October 10, 11:45AM-12:00PM ET
+0xecc6ee32ff50cb814c1212a2f7bba06b3c4264a40739185bd03dd0c1974b4ac9	Sports_Soccer    	Sports_Soccer_Other              	0.6328	Torino FC vs. Como 1907: O/U 2.5
+0xa4f01a9befa1a17ba209cb956f442c860aff18737cc9c446f78fb02de383c731	Sports_Football  	Sports_Football_College          	0.5883	San Jose State vs. Nevada Wolf Pack: O/U 49.5
+0x523588cd1f7abe3b7dfd4d6de8c9096b725b0d00e120c1fc32878b7c9d6663ad	Sports_Soccer    	Sports_Soccer_Americas           	0.6086	Will Club Santos Laguna win on 2025-11-09?
+0xd28e5f45ecf22a4b32a36c69fb881bbb7af2a902d63a258916cf4b0ef84cf97e	Crypto_Price     	Crypto_Price_Solana              	0.7059	Will the price of Solana be greater than $258 on September 14 at 8AM ET?
+0x4df11c6566a3cb5b4bbdd6c2b31651f81bd03ef0cc599a3ae1474e40331a6ec6	Sports_Individual	Sports_Hockey_NHL                	0.6271	Devils vs. Avalanche: O/U 6.5
+0x791a443699163c2bdfd7bfec401261f5d3e631b51cd9e0646ad0a029ecfbeb6b	Crypto_Price     	Crypto_Price_Solana              	0.7180	Solana Up or Down - July 4, 8PM ET
+0x9b79cbd68cd15946f7f891191de9c1cfeeca7fc905079422529bbda84e17f6e5	Crypto_Price     	Crypto_Price_Bitcoin             	0.6832	Bitcoin Up or Down - July 23, 5PM ET
+0xfded8af2c2dde99ddd79ddad9a6225e065fb8f684a18bb4072ff32edd4f1703b	Sports_Individual	Sports_Racing_Motorsport         	0.5797	Will Lando Norris win the 2025 Australian Grand Prix?
+0x918aa60447412caf05d843dcf0205c1ad67d7a71bc8b9493d7c3e8281736f9de	Sports_Soccer    	Sports_Soccer_Americas           	0.5946	Will São Paulo FC win on 2025-11-05?
+0xaad7f458b40e3c399d4bbd9d10ae9f2ed6fcd991631b2901c1f211e3b14092e5	Crypto_Price     	Crypto_Price_Ethereum            	0.7306	Ethereum Up or Down - November 15, 12:15PM-12:30PM ET
+0xc9ff8466e5d10951815f2556232f970dd5b19caeaab2966fa9ab33e9e7c31cfd	Sports_Basketball	Sports_Basketball_NBA            	0.5793	Over 217.5
+
+# model: BAAI/bge-large-en-v1.5
+# speed: 41.37 items/sec (200 items in 4.83s)

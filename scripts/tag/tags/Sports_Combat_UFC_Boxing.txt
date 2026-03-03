@@ -1,0 +1,1279 @@
+# Sports_Individual - Sports_Combat_UFC_Boxing
+# count=1276, avg_conf=0.6336
+====================================================================================================
+  64732386  0.4904  Will Atalanta beat Young Boys?
+  67261136  0.4904  Will Logan and Jake Paul fight before April?
+  67295928  0.4925  Will Logan and Jake Paul fight before June?
+  22366423  0.4928  UFC 269: Who will win - Geoff Neal or Santiago Ponzinibbio?
+  25587862  0.4985  UFC 272: Who will win - Edson Barboza or Bryce Mitchell?
+  38993088  0.5032  UFC 284: Who will win - Makhachev or Volkanovski?
+  67675709  0.5112  Radford vs. Longwood
+  25587697  0.5156  UFC 272: Who will win - Rafael dos Anjos or Renato Moicano?
+  78972214  0.5184  Will Jake Paul fight Anthony Joshua in 2025?
+  70746224  0.5188  Anthony Yarde vs. Lyndon Arthur
+  19068599  0.5211  Will Alexander Volkanovski or Brian Ortega win their UFC fight on September 25th
+  27892855  0.5222  UFC 274: Who will win - Rose Namajunas or Carla Esparza?
+  72125566  0.5241  Saragih vs. Sang Yoo
+  64531484  0.5244  Will Jake Paul fight Tommy Fury next?
+  39815305  0.5253  UFC 285: Who will win - Neal or Rakhmonov?
+  68265269  0.5260  Lindenwood vs. Western Illinois
+  44526076  0.5268  Will Elon and Zuck announce a fight by July 15?
+  29365209  0.5269  UFC 275: Who will win - Valentina Shevchenko or Talia Santos?
+  70376743  0.5299  Blackshear vs. Alatengheili
+  77055629  0.5304  Will One Battle After Another win Best Cinematography at the 98th Academy Awards
+  75244580  0.5310  Will Elon Musk attend a UFC event by December 31?
+  76472488  0.5316  Will Enzo Diessl win 110m Hurdles Men at 2025 World Athletics Championships?
+  24830577  0.5317  UFC 271: Who will win - Israel Adesanya or Robert Whittaker?
+  71739529  0.5342  Holobaugh vs. Leavitt
+  68265501  0.5342  Bradley vs. Valparaiso
+  44189070  0.5347  Will Elon and Zuck announce a fight?
+  40422882  0.5353  UFC 286: Who will win - Nelson or Barberena?
+  54388606  0.5355  Will Anthony Joshua vs. Francis Ngannou have no official winner?
+  59841198  0.5356  Will Wu Qingfeng (CHN) win Gold in Women's 50m Freestyle?
+  62071550  0.5367  Will Anthony Joshua beat Daniel Dubois?
+  67788019  0.5367  Canisius vs. Niagara
+  12908843  0.5368  Will Jake Paul win his boxing match against Ben Askren?
+  58400292  0.5372  Alan Keating biggest loser?
+  71153285  0.5372  Bukauskas vs. Cutelaba
+  24830616  0.5373  UFC 271: Who will win - Derrick Lewis or Tai Tuivasa?
+  64531433  0.5374  Will Jake Paul fight Speed next?
+  22366249  0.5388  UFC 269: Who will win - Charles Oliveira or Dustin Poirier?
+  55066554  0.5393  Shohei Ohtani suspension by April 30?
+  68866393  0.5395  Wofford vs. Furman
+  65320852  0.5398  Swanson vs. Quarantillo
+  65449880  0.5410  Maverick vs. Horth
+  77795249  0.5411  Lincoln: Martin Damm vs Andre Ilagan
+  26744137  0.5414  UFC 273: Who will win — Aljamain Sterling or Petr Yan?
+  62199222  0.5414  Mungo vs. MINH
+  64600196  0.5418  Pantoja vs. Asakura
+  67944234  0.5422  McNeese State vs. SE Louisiana
+  67675571  0.5431  Louisiana vs. Northern Illinois
+  77056077  0.5433  Will One Battle After Another win Best Film Editing at the 98th Academy Awards?
+  40422875  0.5437  UFC 286: Who will win - Gaethje or Fiziev?
+  63365950  0.5441  Murphy vs. Ige
+  25587535  0.5450  UFC 272: Who will win - Colby Covington or Jorge Masvidal?
+  68882655  0.5453  Su Young You vs. AJ Cunningham
+  38993096  0.5455  UFC 284: Who will win - Rodriguez or Emmett?
+  76526354  0.5456  Kimchi Papi vs. Biss The Butcher
+  70751591  0.5459  Will Jake Paul vs. Julio Cesar Chavez Jr. have no official winner?
+  65320883  0.5460  Petrino vs. Jacoby
+  29362883  0.5461  UFC 275: Who will win - Glover Teixeira or Jiri Prochazka?
+  67864325  0.5469  Mercyhurst vs. Stonehill
+  39815312  0.5470  UFC 285: Who will win - Gamrot or Turner?
+  67984098  0.5471  Northern Illinois vs. Akron
+  72754380  0.5472  Mercury vs Aces
+  75433302  0.5472  Mercury vs Aces
+  54896038  0.5474  Shohei Ohtani suspension in March?
+  41139335  0.5475  UFC 287: Who will win - Pereira or Adesanya?
+  70582592  0.5477  Sandhagen vs. Figueiredo
+  69497280  0.5478  Medina vs. Gautier
+  19279235  0.5478  Will Anthony Joshua or Oleksandr Usyk win their boxing match?
+  68385943  0.5484  Furman vs. Wofford
+  68144742  0.5490  Long Island University vs. Le-Moyne
+  52448417  0.5492  UFC 297: Who will win - Curtis or Barriault?
+  64531553  0.5496  Will Jake Paul fight Andrew Tate next?
+  77795247  0.5497  Lincoln: Patrick Kypson vs Dhakshineswar Suresh
+  67676050  0.5499  Bradley vs. Evansville
+  52448410  0.5500  UFC 297: Who will win - Magny or Malott?
+  71437153  0.5501  Bellato vs. Craig
+  54388589  0.5502  Will Anthony Joshua win his boxing match against Francis Ngannou?
+  52448391  0.5506  UFC 297: Who will win - Strickland or Du Plessis?
+  17987836  0.5510  Will Jake Paul or Tyron Woodley win their boxing match?
+  52448425  0.5510  UFC 297: Who will win - Allen or Evloev?
+  43416692  0.5511  UFC Fight Night: Who will win - Kara-France or Albazi?
+  63116031  0.5518  Elkins vs. Pineda
+  64531471  0.5522  Will Jake Paul fight Artur Beterbiev next?
+  68729960  0.5522  Christapher Thomas vs. Christopher Debow
+  40422890  0.5529  UFC 286: Who will win - Maia or O'Neill?
+  67984517  0.5529  Marshall vs. Old Dominion
+  77557670  0.5529  Allen vs. de Ridder
+  69177656  0.5532  Leon Edwards vs. Sean Brady
+  67984335  0.5535  Furman vs. Samford
+  68707143  0.5535  Furman vs. Samford
+  54821170  0.5535  Will Jake Paul vs. Mike Tyson have no official winner?
+  67903917  0.5536  Belmont vs. Southern Illinois
+  68265176  0.5541  Old Dominion vs. Marshall
+  77346459  0.5541  Old Dominion vs. Marshall
+  67788299  0.5546  NJIT vs. Bryant
+  68064807  0.5546  Tulsa vs. Rice
+  64531567  0.5552  Will Jake Paul fight Ryan Garcia next?
+  75622957  0.5552  Marshall vs. Georgia
+  68747236  0.5553  Southern Illinois vs. Drake
+  58400352  0.5553  Dan Bilzerian biggest loser?
+  71153284  0.5554  Malott vs. Radtke
+  77750241  0.5561  Mercury vs. Aces
+  77161923  0.5561  Mercury vs. Aces
+  77243200  0.5561  Mercury vs. Aces
+  77534284  0.5561  Mercury vs. Aces
+  71356402  0.5562  PGL Astana: Astralis vs. paiN
+  78119198  0.5571  Wells vs. Gorimbo
+  73463217  0.5572  Will Fluminense vs. Al Hilal end in a draw after regulation time?
+  64531446  0.5579  Will Jake Paul fight Logan Paul next?
+  64320040  0.5579  Mike Tyson bites Jake Paul's ear?
+  67503189  0.5583  Crute vs. Bellato
+  66424574  0.5584  Holland vs. de Ridder
+  54388598  0.5586  Will Francis Ngannou win his boxing match against Anthony Joshua?
+  77557671  0.5586  Fiorot vs. Jasudavicius
+  72264969  0.5587  Guardians vs. Yankees
+  72345687  0.5587  Guardians vs. Yankees
+  72305185  0.5587  Guardians vs. Yankees
+  64531495  0.5591  Will Jake Paul fight KSI next?
+  77265200  0.5595  Filho vs. Carpenter
+  66235295  0.5598  Martial law in South Korea before Monday?
+  78330465  0.5598  Will Jake Paul land more punches than Gervonta Davis?
+  19068537  0.5605  Will Nick Diaz or Robbie Lawler win their UFC fight on September 25th?
+  67944129  0.5614  Rider vs. Saint Peter's
+  62301988  0.5614  Moicano vs. Saint Denis
+  38993105  0.5619  UFC 284: Who will win - Maddalena or Brown?
+  68119424  0.5621  Daniel Dubois vs. Joseph Parker
+  64531542  0.5622  Will Jake Paul fight Jorge Masvidal next?
+  59837421  0.5624  Will Danas Rapsys (LTU) win Gold in Men's 200m Freestyle?
+  68265197  0.5624  Army vs. Lafayette
+  79143297  0.5624  McNeese State Cowboys vs. George Washington Revolutionaries
+  78897910  0.5625  Luna vs Jardon
+  76191089  0.5628  Louisiana vs. Missouri
+  64531575  0.5629  Will Jake Paul fight Julio Cesar Chavez Jr. next?
+  67927997  0.5630  Menifield vs. Walker
+  60624984  0.5644  Gamrot vs. Hooker
+  41139344  0.5648  UFC 287: Who will win - Burns or Masvidal?
+  79100108  0.5650  NJIT Highlanders vs. Navy Midshipmen
+  67788745  0.5651  Rider vs. Iona
+  69772182  0.5651  Finney vs. Valentin
+  66424545  0.5655  Prochazka vs. Hill
+  61700641  0.5655  O’Malley vs. Dvalishvili
+  68024382  0.5656  Western Illinois vs. SE Missouri State
+  78422065  0.5657  Yanez vs. Quiñonez
+  75906758  0.5658  Sam Houston vs. Hawai'i
+  74404447  0.5659  Will Disney acquire streaming rights to UFC next?
+  72125564  0.5660  Williams vs. Medic
+  77103722  0.5661  Rahmani vs. Trabelsi
+  68492925  0.5663  Gaethje vs. Hooker
+  78800031  0.5664  Spread: Campbell Fighting Camels (-9.5)
+  77265199  0.5666  Figueiredo vs. Jackson
+  68666896  0.5667  Niagara vs. Rider
+  68866486  0.5667  Albany vs. Bryant
+  78764027  0.5669  Spread: Campbell Fighting Camels (-6.5)
+  67984513  0.5671  Stonehill vs. Wagner
+  70582625  0.5683  Jackson vs. Marcos
+  72125562  0.5685  Luque vs. Holland
+  77557670  0.5689  Malott vs. Holland
+  39815297  0.5689  UFC 285: Who will win - Shevchenko or Grasso?
+  64761867  0.5692  Will Fury beat Usyk?
+  54821180  0.5693  Will Jake Paul win his boxing match against Mike Tyson?
+  73321544  0.5693  Aces vs Mercury
+  75189806  0.5693  Aces vs Mercury
+  32858005  0.5695  Who will win Jake Paul vs. Anderson Silva on October 29?
+  65842183  0.5697  Will Hikaru Nakamura win the 2024 World Blitz Championship?
+  77265202  0.5698  Rocha vs. Nicoll
+  76191130  0.5700  Navy vs. Tulsa
+  42307018  0.5701  UFC 288: Who will win - Sterling or Cejudo?
+  78336188  0.5702  District of Columbia Firebirds vs. Howard Bison
+  27892348  0.5703  UFC 274: Who will win - Charles Oliveira or Justin Gaethje?
+  64488338  0.5705  Yan vs. Ricci
+  72125562  0.5708  Dvalishvili vs. O'Malley
+  78624999  0.5709  Western New Mexico Mustangs vs. UTEP Miners (W)
+  78773028  0.5709  Spread: Campbell Fighting Camels (-8.5)
+  77860044  0.5711  Rakic vs. Murzakanov
+  71739530  0.5712  Wells vs. Gustafsson
+  70746231  0.5716  Liam Smith vs. Aaron McKenna
+  58400391  0.5721  Velasco biggest loser?
+  65320891  0.5726  Yanez vs. Marcos
+  61545825  0.5728  Schnell vs. Durden
+  54320683  0.5728  Will Garcia vs. Haney be canceled?
+  58444812  0.5729  UFC Fight Night: Who will win - Robert Whittaker vs. Ikram Aliskerov?
+  77663865  0.5731  Aces vs. Mercury
+  77365001  0.5731  Aces vs. Mercury
+  77447930  0.5731  Aces vs. Mercury
+  69497265  0.5737  Yan Xiaonan vs. Virna Jandiroba
+  68729979  0.5738  Wes Mena vs. Aaron Turner
+  67773635  0.5739  Cannonier vs. Rodrigues
+  78407208  0.5741  Northern Kentucky Norse vs. Marshall Thundering Herd (W)
+  68265473  0.5743  Drake vs. Evansville
+  64488326  0.5745  Yan vs. Figueiredo
+  70751562  0.5748  Will Jake Paul win his boxing match against Julio Cesar Chavez Jr.?
+  64761850  0.5748  Will Usyk beat Fury?
+  62832562  0.5749  Njokuani vs. Gooden
+  77103719  0.5751  Sardinha vs. Akhtamov
+  62515172  0.5754  Holland vs. Dolidze
+  68305302  0.5754  Rider vs. Mercer
+  67944164  0.5757  Missouri State vs. UIC
+  52448399  0.5761  UFC 297: Who will win - Pennington or Bueno Silva?
+  42307031  0.5762  UFC 288: Who will win - Muhammad or Burns?
+  76071527  0.5762  Delaware Fightin Blue Hens vs. Colorado
+  68265373  0.5762  Radford vs. Gardner Webb
+  46105655  0.5764  Jingtao vs. Zata
+  78797796  0.5766  Wofford Terriers vs. Bellarmine Knights
+  67927903  0.5766  My Mate Nate vs. Dawood Savage
+  35522478  0.5770  UFC 281: Who will win -  Dustin Poirier vs Michael Chandler
+  76116547  0.5770  Guardians vs. Rays
+  76075901  0.5770  Guardians vs. Rays
+  75994752  0.5770  Guardians vs. Rays
+  76046393  0.5770  Guardians vs. Rays
+  68265149  0.5771  Stephen F. Austin vs. Houston Christian
+  68787500  0.5774  Belmont vs. Drake
+  78625005  0.5775  Howard Bison vs. George Washington Revolutionaries (W)
+  69497327  0.5778  García vs. Pichel
+  72134505  0.5778  Goff vs. Brahimaj
+  69772160  0.5779  Nzechukwu vs. Buday
+  77557671  0.5783  Frevola vs. Nelson
+  61700669  0.5785  Ortega vs. Lopes
+  66052715  0.5790  Commanders vs. Cowboys
+  77570290  0.5790  Commanders vs. Cowboys
+  64531508  0.5792  Will Jake Paul fight Floyd Mayweather next?
+  54821149  0.5798  Will Mike Tyson win his boxing match against Jake Paul?
+  67675532  0.5798  Navy vs. Lafayette
+  19840082  0.5799  Will Tyson Fury or Deontay Wilder win their bout on October 9th?
+  68493035  0.5799  Johnson vs. Temirov
+  69147137  0.5800  Drake vs. Missouri
+  60506898  0.5804  Dolphins vs. Commanders
+  69772216  0.5806  McKee vs. Frunza
+  63887476  0.5806  Pinheiro vs. Robertson
+  76709309  0.5810  Commanders vs. Falcons
+  67885734  0.5810  Wagner vs. Le-Moyne
+  40422897  0.5812  UFC 286: Who will win - Vettori or Dolidze?
+  58400340  0.5815  Ryan Garcia biggest loser?
+  66424598  0.5815  Dvalishvili vs. Nurmagomedov
+  58400325  0.5816  Ninja biggest loser?
+  50201326  0.5817  Cowboys vs. Commanders
+  64421673  0.5817  Cowboys vs. Commanders
+  68492902  0.5817  Pereira vs. Ankalaev
+  52706809  0.5817  Will Oleksandr Usyk beat Tyson Fury in Ring of Fire?
+  55704703  0.5818  KO in the Ansem/Barney fight?-arch
+  72371825  0.5820  Williams vs. Gustafsson
+  67773910  0.5821  Hill vs. Souza
+  59846242  0.5822  Will Mykhaylo Kokhan win Gold in Hammer Throw?
+  71739528  0.5824  Brahimaj vs. Elliott
+  69497249  0.5827  Dan Ige vs. Sean Woodson
+  77103720  0.5828  Anderson vs. Yagshimuradov
+  62515031  0.5831  Pereira vs. Rountree Jr.
+  76667189  0.5832  Kondratavicius vs. Barbir
+  38993123  0.5834  UFC 284: Will Makhachev win by finish?
+  27995837  0.5835  Who will win Canelo Álvarez vs. Dmitry Bivol?
+  71153288  0.5835  Katona vs. Almakhan
+  62515060  0.5836  Harrison vs. Vieira
+  47711490  0.5837  Fury Vs. KSI
+  78781564  0.5837  Commanders vs. Dolphins
+  41139356  0.5842  UFC 287: Who will win - Font or Yanez?
+  68507220  0.5845  McNeese State vs. Stephen F. Austin
+  63885334  0.5845  Kowalkiewicz vs. Gomes
+  72021918  0.5846  Dodgers vs. Guardians
+  71941076  0.5846  Dodgers vs. Guardians
+  71981544  0.5846  Dodgers vs. Guardians
+  26744265  0.5849  UFC 273: Who will win — Gilbert Burns or Khamzat Chimaev?
+  39815286  0.5852  UFC 285: Who will win - Jones or Gane?
+  69177713  0.5852  Lone'er Kavanagh vs. Felipe Dos Stanos
+  77062138  0.5855  Ankalaev vs. Pereira
+  65691256  0.5855  Almeida vs. Alhassan
+  56240676  0.5856  Will Canelo vs. Munguia have no official winner?
+  63365921  0.5857  Topuria vs. Holloway
+  67927980  0.5859  Allen vs. Hernandez
+  78248807  0.5859  Hawaii vs. San Jose State
+  68866442  0.5861  Siena vs. Rider
+  58444875  0.5862  UFC 303: Who will win - Mayra Bueno Silva vs. Macy Chiasson?
+  69497328  0.5862  Sumudaerji vs. Mitch Raposo
+  65449872  0.5863  Johns vs. Lima
+  72688042  0.5864  Boss Open: Fucsovics vs. Fritz
+  77062138  0.5865  Dvalishvili vs. Sandhagen
+  78335316  0.5866  Delaware Fightin' Blue Hens vs. Bucknell Bison
+  67676323  0.5867  Buffalo vs. Northern Illinois
+  77387023  0.5867  Schultz vs. Mingaj
+  78668183  0.5868  New Orleans Privateers vs. New Mexico Lobos (W)
+  42307201  0.5869  UFC 288: Who will win - Evloev or Lopes?
+  59837436  0.5870  Will Katshuiro Matsumoto (JPN) win Gold in Men's 200m Freestyle?
+  71844854  0.5870  Boxing: Sonny Bill Williams vs. Paul Gallen
+  15521728  0.5873  Will Tanner Fox KO, TKO, or retire Ryland Storms?
+  77062142  0.5875  Gutierrez vs. Basharat
+  73398318  0.5875  Guardians vs. Cubs
+  73478726  0.5875  Guardians vs. Cubs
+  73438919  0.5875  Guardians vs. Cubs
+  67984272  0.5877  Gardner Webb vs. Longwood
+  64600243  0.5877  Landwehr vs. Choi
+  77860045  0.5878  Barnett vs. Abdelwahab
+  61784708  0.5880  Will Canelo win by KO/TKO Berlanga?
+  76889774  0.5881  China Open: Iga Swiatek vs Yue Yuan
+  68627061  0.5881  Canisius vs. Rider
+  78119199  0.5882  Vieira vs. Dumont
+  60927368  0.5883  Magny vs. Morales
+  65449922  0.5884  Knutsson vs. Rodriguez
+  63116012  0.5885  Johnson vs. Sumudaerji
+  62515042  0.5886  Pennington vs. Peña
+  15295452  0.5889  Will the Paul v. Mayweather fight be stopped early?
+  60927310  0.5889  Cannonier vs. Borralho
+  68024513  0.5891  Fairfield vs. Rider
+  78335706  0.5892  Western Illinois Leathernecks vs. Radford Highlanders
+  46425190  0.5892  Will Dillon Danis back out of Logan Paul fight?
+  41139366  0.5893  UFC 287: Will Israel Adesanya win by finish?
+  58444868  0.5893  UFC 303: Who will win - Anthony Smith vs. Carlos Ulberg?
+  78546307  0.5895  Andrew Tate vs. Chase Demoor
+  77103723  0.5895  Zaynukov vs. Mitchell
+  78147998  0.5898  Saski Baskonia vs. Anadolu Efes
+  72719418  0.5898  Will Hikaru Nakamura win the 2025 Freestyle Chess Lands in Las Vegas tournament?
+  73640869  0.5899  Guardians vs. Astros
+  73722160  0.5899  Guardians vs. Astros
+  73681506  0.5899  Guardians vs. Astros
+  68882647  0.5900  Da'Mon Blackshear vs. Cody Gibson
+  69497278  0.5900  Jim Miller vs. Chase Hooper
+  56240626  0.5900  Will Jamie Munguia beat Canelo Alvarez?
+  76226699  0.5902  Teague vs. Douglas
+  15521743  0.5906  Will Ryland Storms KO, TKO, or retire Tanner Fox?
+  58444833  0.5906  UFC Fight Night: Who will win - Shara Magomedov vs. Antonio Trocoli?
+  78897930  0.5910  Kraus vs Ibrahim
+  77062144  0.5913  Walker vs. Hardy
+  78797795  0.5917  Manhattan Jaspers vs. Air Force Falcons (W)
+  50904986  0.5918  Devin Haney vs. Regis Prograis
+  72836609  0.5918  BLAST.tv Austin Major: FURIA vs. paiN
+  65818571  0.5919  Oklahoma vs. Navy
+  77795250  0.5919  Curitiba: Daniel Dutra da Silva vs Joao Eduardo Schiessl
+  15521650  0.5920  Will Bryce Hall KO, TKO, or retire Austin McBroom?
+  58444862  0.5922  UFC 303: Who will win - Brian Ortega vs. Diego Lopes?
+  61706492  0.5922  Deshaun Watson suspended for personal misconduct?
+  41184720  0.5923  Will Conor McGregor return to the UFC by November 13?
+  78970599  0.5923  Jamestown Jimmies vs. North Dakota State Bison
+  78551661  0.5924  Will Roasso Kumamoto vs. Ventforet Kōfu end in a draw?
+  29149951  0.5926  Boxing: Who will win George Kambosos Jr. vs. Devin Haney?
+  52706798  0.5926  Will Tyson Fury beat Oleksandr Usyk in Ring of Fire?
+  78247522  0.5929  Will Ventforet Kōfu vs. Kataller Toyama end in a draw?
+  15521635  0.5931  Will Austin McBroom KO, TKO, or retire Bryce Hall?
+  63115984  0.5931  Hernandez vs. Pereira
+  78897850  0.5931  Ruben Aguilar vs Louie Lopez Nov 21, 2025
+  76028324  0.5931  NRFI: Guardians vs. Rays
+  76070376  0.5931  NRFI: Guardians vs. Rays
+  76109562  0.5931  NRFI: Guardians vs. Rays
+  77024699  0.5932  China Open: Maya Joint vs Sonay Kartal
+  78538598  0.5934  Southern-New Orleans Knights vs. New Orleans Privateers
+  69177696  0.5936  Nathaniel Wood vs. Morgan Charriere
+  71437158  0.5937  Burns vs. Morales
+  69497219  0.5937  Rosas Jr. vs. Morales
+   7289692  0.5939  Will Deiveson Figueiredo win his UFC 255 match?
+  67774036  0.5942  Avila vs. Cavalcanti
+  52448434  0.5943  UFC 297: Will Strickland win by finish?
+  79056919  0.5947  Army Black Knights vs. Marist Red Foxes
+  78897880  0.5948  Abdullah Mason vs Sam Noakes Nov 22, 2025
+  78840976  0.5949  Lafayette Leopards vs. St. Francis (PA) Red Flash (W)
+  43416700  0.5950  UFC Fight Night: Who will win - Caceres or Pineda?
+  15521722  0.5950  Will Michael Le KO, TKO, or retire Faze Jarvis?
+  77568472  0.5950  Ningbo Open: Emma Raducanu vs Lin Zhu
+  76393808  0.5951  Navy vs. Tulsa: O/U 51.5
+  77860044  0.5954  Wood vs. Delgado
+  78422065  0.5954  Schnell vs. Morales
+  78335687  0.5957  Life Pacific Warriors vs. Pepperdine Waves
+  60040903  0.5958  Musk x Maduro fight scheduled by Aug 9?
+  58444855  0.5960  UFC 303: Who will win - Alex Pereira vs. Jiri Prochazka?
+  78335958  0.5962  Robert Morris Colonials vs. UIC Flames (W)
+  56240619  0.5963  Will Canelo Alvarez beat Jamie Munguia?
+  64531457  0.5967  Will Jake Paul fight Canelo Alvarez next?
+  55983883  0.5968  Will Ansem mention $WIF in post fight interview?
+  77557672  0.5969  Bekoev vs. Belgaroui
+  15521682  0.5972  Will Deji KO, TKO, or retire Vinnie Hacker?
+  67774021  0.5972  Morales vs. Smith
+  78970570  0.5972  Mid-America Christian Evangels vs. Campbell Fighting Camels
+  69772235  0.5973  Henry vs. Falcao
+  72651707  0.5974  Boss Open: Tien vs. Nakashima
+  78897899  0.5974  Molly McCann vs Ebonie Cotton Nov 29, 2025
+  74039868  0.5977  Will Kayla Harrison win the 2025 ESPYS award for Best UFC Fighter?
+  57812554  0.5977  McGregor vs. Chandler canceled?
+  71153284  0.5980  Aldo vs. Zahabi
+  63243180  0.5983  Ngannou vs. Ferreira
+  78897589  0.5983  Moreno Fendero vs William Langston Nov 13, 2025
+   6122522  0.5984  Will Khabib win his UFC 254 Fight?
+  78897749  0.5986  Adam Azim vs Kurt Scoby Nov 15, 2025
+   7500777  0.5986  Will Mike Tyson win his boxing match against Roy Jones Jr?
+  58444839  0.5986  UFC Fight Night: Who will win - Johnny Walker vs. Volkan Oezdemir?
+  15521692  0.5988  Will Vinnie Hacker KO, TKO, or retire Deji?
+  78407193  0.5988  New Orleans Privateers vs. Tulsa Golden Hurricane (W)
+  78897880  0.5991  Brian Norman Jr. vs Devin Haney Nov 22, 2025
+  68613697  0.5992  Alex Morono vs. Carlos Leal
+  47231756  0.5992  Kape vs. Dos Santos
+  15521715  0.5994  Will Faze Jarvis KO, TKO, or retire Michael Le?
+  67773898  0.5994  Matthews vs. Delgado
+  78031634  0.5995  Will: Canelo Alvarez be the #1 searched athlete on Google this year?
+  72487223  0.5995  BLAST.tv Austin Major stage 2: FaZe vs. TYLOO
+  65320761  0.5996  Covington vs. Buckley
+  78845507  0.5997  Fight to Go the Distance?
+  78845465  0.5997  Fight to Go the Distance?
+  78845455  0.5997  Fight to Go the Distance?
+  78845457  0.5997  Fight to Go the Distance?
+  78845485  0.5997  Fight to Go the Distance?
+  78845495  0.5997  Fight to Go the Distance?
+  78845516  0.5997  Fight to Go the Distance?
+  78845445  0.5997  Fight to Go the Distance?
+  78845487  0.5997  Fight to Go the Distance?
+  78845517  0.5997  Fight to Go the Distance?
+  78845475  0.5997  Fight to Go the Distance?
+  15521673  0.5998  Will Tayler Holder KO, TKO, or retire AnEsonGib?
+  31710372  0.5998  Will Hikaru Nakamura win the 2022 Saint Louis Rapid & Blitz?
+  74039872  0.5999  Will Islam Makhachev win the 2025 ESPYS award for Best UFC Fighter?
+  69177706  0.6002  Jai Herbert vs. Chris Padilla
+  69497204  0.6004  Bryce Mitchell vs. Jean Silva
+  74886723  0.6004  BLAST Bounty: Ninjas in Pyjamas vs. paiN
+  69177675  0.6006  Molly McCann vs. Alexia Thainara
+  78884188  0.6009  Southern Illinois Salukis vs. North Dakota State Bison
+  42307044  0.6013  UFC 288: Who will win - Andrade or Yan?
+  68762448  0.6013  Will Rafael Fiziev win by KO?
+  40736384  0.6015  Fight Night: Who will win - Vera or Sandhagen? (2023-03-25)
+  58676607  0.6017  UFC 303: Who will win - Anthony Smith vs. Roman Dolidze?
+  64531521  0.6017  Will Jake Paul fight Conor McGregor next?
+  64291122  0.6019  Will Jake Paul knockout Mike Tyson?
+  15521664  0.6020  Will AnEsonGib KO, TKO, or retire Tayler Holder?
+  74359284  0.6020  Boxing: Will Canelo vs. Crawford end in a Draw?
+  77062139  0.6020  Procházka vs. Rountree Jr.
+  78797784  0.6020  Eastern Eagles vs. Rider Broncs
+  65449844  0.6024  Johnson vs. Azaitar
+   8002949  0.6030  Will Floyd Mayweather beat Logan Paul in their boxing exhibition match?
+  68613626  0.6030  Joshua Van vs. Rei Tsuruya
+  77103721  0.6033  Colgan vs. Wilson
+  73950217  0.6033  UFC 318: Will Poirier win by submission?
+  62519473  0.6036  Browns vs. Commanders
+  71986649  0.6037  Will paiN win the BLAST.tv Austin Major tournament?
+  13850734  0.6037  Will Floyd Mayweather beat Logan Paul in their rescheduled exhibition boxing mat
+  69177725  0.6038  Marcin Tybura vs. Mick Parkin
+  40736408  0.6039  Fight Night: Who will win - Lee or Barber? (2023-03-25)
+  32901775  0.6040  Who will win Canelo Alvarez vs. Gennady Golovkin 3 on September 17?
+  58444894  0.6044  UFC 303: Who will win - Ian Machado Garry vs. Michael Page?
+  77092506  0.6044  Shanghai Rolex Masters: Yibing Wu vs Dalibor Svrcina
+  73950203  0.6045  UFC 318: Will Holloway win by submission?
+  70582658  0.6045  Rodriguez vs. Robertson
+  75007388  0.6054  BLAST Bounty: paiN vs. The MongolZ
+  71153287  0.6055  Andrade vs. Jasudavicius
+  69497234  0.6057  Yair Rodriguez vs. Patricio Pitbull
+  73950212  0.6059  UFC 318: Will Poirier win by decision?
+  78970591  0.6060  Howard Bison vs. Stetson Hatters
+  78668205  0.6060  Longwood Lancers vs. Navy Midshipmen (W)
+  67503201  0.6062  Jenkins vs. Santos
+  20780093  0.6062  Who will win UFC 268: Gaethje vs Chandler?
+  73852967  0.6063  Will Taylor vs. Serrano end any other way?
+  77062133  0.6065  Diaz vs. Gautier
+  76616720  0.6066  Chengdu Open: Juncheng Shang vs Brandon Nakashima
+  70376636  0.6067  Smith vs. Mingyang
+  67503194  0.6068  Matthews vs. Prado
+  20779523  0.6069  Who will win UFC 267: Yan vs Sandhagen?
+  64644415  0.6070  Notre Dame vs. Army
+  73950226  0.6071  UFC 318: Will Holloway vs. Poirier end in a draw?
+  70751574  0.6074  Will Julio Cesar Chavez Jr. win his boxing match against?
+  70746241  0.6074  Chris Billam-Smith vs. Brandon Glanton
+  61545791  0.6082  Garcia vs. Nelson
+  77579273  0.6083  Ningbo Open: Yue Yuan vs Xinyu Wang
+  78625000  0.6084  Buffalo Bulls vs. DePaul Blue Demons
+  64291130  0.6085  Will Mike Tyson knockout Jake Paul?
+  73950199  0.6085  UFC 318: Will Holloway win by decision?
+  77062144  0.6087  Vanderford vs. Brahimaj
+  39815323  0.6088  UFC 285: Will Bo Nickal finish Jamie Pickett in the first round?
+  23922074  0.6094  UFC 270: Who will win Pereira vs. Fialho?
+  56507768  0.6095  Haney vs Garcia ruled no-contest?
+  67788815  0.6096  DePaul vs. Xavier
+  78335977  0.6097  Northern Arizona Lumberjacks vs. New Mexico Lobos (W)
+  15594652  0.6100  Who will win UFC 263: Maia vs. Muhammad?
+  77173808  0.6101  Shanghai Rolex Masters: Luciano Darderi vs Yunchaokete Bu
+  72716265  0.6102  UFC Fight Night: Will Rountree win by points?
+  68119441  0.6103  Carlos Adames vs. Hamzah Sheeraz
+  58444819  0.6104  UFC Fight Night: Who will win - Sergei Pavlovich vs. Alexander Volkov?
+  55983528  0.6105  Ansem vs. Barney: Will either fighter be hospitalized?
+  20779594  0.6106  Who will win UFC 267: Makhachev vs Hooker?
+   9593541  0.6109  Will Conor McGregor win his UFC 257 match on January 23?
+  76586056  0.6110  HOU vs. JAX: O/U 54.5
+  42307220  0.6110  UFC 288: Will Aljamain Sterling win by finish?
+  31698376  0.6117  UFC Fight San Diego: Who will win - Vera vs. Cruz?
+  78407208  0.6118  Lafayette Leopards vs. Rider Broncs (W)
+  79100116  0.6121  American Eagles vs. La Salle Explorers (W)
+  68882624  0.6122  Choi vs. Kevin Vallejos
+  44804930  0.6123  UFC 290: Who will win - Volkanovski or Rodriguez? (2023-07-08)
+  23922007  0.6125  UFC 270: Who will win Ngannou vs. Gane?
+  60927357  0.6126  Ofli vs. Santos
+  77092541  0.6127  Commanders vs. Chargers: O/U 50.5
+  62302017  0.6128  Jousset vs. Battle
+  78336778  0.6128  Lewis Flyers vs. Southern Illinois Salukis (W)
+  78119197  0.6131  Garcia vs. Onama
+  72609454  0.6135  Boss Open: Shelton vs. Herbert
+  64488392  0.6140  Zhang vs. Diaz
+  76070385  0.6141  NRFI: Athletics vs. Angels
+  79100120  0.6142  Niagara Purple Eagles vs. Radford Highlanders (W)
+  79143309  0.6143  Navy Midshipmen vs. Richmond Spiders (W)
+  72688644  0.6144  BLAST.tv Austin Major: G2 vs. paiN
+  68882601  0.6146  Marvin Vettori vs. Roman Dolidze
+  78565191  0.6146  Navy vs. Notre Dame
+  74039858  0.6149  Will Dricus Du Plessis win the 2025 ESPYS award for Best UFC Fighter?
+  60074217  0.6150  Will Yang Liu (CHN) win Gold in Women’s 66kg Boxing at the 2024 Summer Olympics?
+  74781419  0.6153  Guardians vs. Mets
+  74821756  0.6153  Guardians vs. Mets
+  74740875  0.6153  Guardians vs. Mets
+  55707096  0.6153  KO in the Ansem/Barney fight?
+  74039863  0.6155  Will Merab Dvalishvili win the 2025 ESPYS award for Best UFC Fighter?
+  30181934  0.6156  UFC 276: Who will win - Volkanovski vs Holloway
+  46631169  0.6157  Logan Paul vs. Dillon Danis
+  78119199  0.6158  Ardelean vs. Conejo Ruiz
+  73519232  0.6159  Tigers vs. Guardians
+  73559598  0.6159  Tigers vs. Guardians
+  73600207  0.6159  Tigers vs. Guardians
+  76755051  0.6159  Tigers vs. Guardians
+  77050227  0.6159  Tigers vs. Guardians
+  77050232  0.6159  Tigers vs. Guardians
+  76836179  0.6159  Tigers vs. Guardians
+  76795580  0.6159  Tigers vs. Guardians
+  78711390  0.6160  Barber-Scotia Sabers vs. Campbell Fighting Camels
+  72125565  0.6160  Murzakanov vs. Ribeiro
+  78711391  0.6160  Rider Broncs vs. Stonehill Skyhawks (W)
+  78797790  0.6161  Southern Illinois Salukis vs. Purdue Fort Wayne Mastodons (W)
+  79013786  0.6162  Louisiana-Monroe Warhawks vs. Sam Houston Bearkats (W)
+  78330465  0.6163  Will there be an on-stage brawl during the official weigh-in?
+  78119199  0.6167  Dumas vs. Johnson
+  20780017  0.6171  Who will win UFC 268: Namajunas vs Zhang?
+  71781512  0.6171  Guardians vs. Tigers
+  76512210  0.6171  Guardians vs. Tigers
+  76552449  0.6171  Guardians vs. Tigers
+  71820906  0.6171  Guardians vs. Tigers
+  71900757  0.6171  Guardians vs. Tigers
+  71860477  0.6171  Guardians vs. Tigers
+  76471826  0.6171  Guardians vs. Tigers
+  68729969  0.6172  Wesley Drain vs. Ke’ali’i Kanekoa
+  76468922  0.6172  Korea Open: Beatriz Haddad Maia vs Dayeon Back
+  41544102  0.6175  Fight Night: Who will win - Barboza or Quarantillo? (2023-04-15)
+  73092087  0.6177  UFC 317: Will Topuria Win By Submission?
+  69497252  0.6177  Rodríguez vs. Borjas
+  78897909  0.6178  Jessie Magdaleno vs Muhammadkhuja Yaqubov Nov 29, 2025
+  78336738  0.6178  Converse College Valkyries vs. Wofford Terriers (W)
+  69772203  0.6179  Grant vs. Santos
+  69177748  0.6181  Nathan Fletcher vs. Caolán Loughran
+  15295731  0.6182  Will Logan Paul knock down Floyd Mayweather?
+  74238465  0.6182  UFC Fight Night: Whittaker and Blackshear
+  78888501  0.6183  Sinner vs. Shelton: Match O/U 22.5
+  15990484  0.6187  Who will win UFC 264: McGregor vs. Poirier?
+  78970591  0.6191  Buffalo Bulls vs. St. Bonaventure Bonnies (W)
+  78897869  0.6194  Davila vs Mendez
+  44804969  0.6194  UFC 290: Who will win - Whittaker or Du Plessis? (2023-07-08)
+  73852593  0.6195  Boxing: Cameron vs. Camara
+  11192943  0.6196  Who will win UFC 259: Blachowicz vs. Adesanya?
+  42307211  0.6196  UFC 288: Who will win - Gracie or Jourdain?
+  78897899  0.6200  Mikito Nakano vs Raesse Aleem Nov 24, 2025
+  71277473  0.6201  Jets vs. Stars
+  71575868  0.6201  Jets vs. Stars
+  71363610  0.6201  Jets vs. Stars
+  69956203  0.6201  Jets vs. Stars
+  78897900  0.6204  Tenshin Nasukawa vs Takuma Inoue Nov 24, 2025
+  27995737  0.6206  Will Canelo Álvarez KO/TKO/RTD Dmitry Bivol?
+  20779481  0.6209  Who will win UFC 267: Błachowicz vs Teixeira?
+  74238466  0.6209  UFC Fight Night: Salikhov and Buday
+  62071570  0.6209  Will Joshua win by KO/TKO vs. Dubois?
+  13605298  0.6214  Who will win UFC 261: Zhang vs. Namajunas?
+  69497354  0.6214  Tresean Gore vs. Marco Tulio
+  68613633  0.6217  Brunno Ferreira vs. Armen Petrosyan
+  79143301  0.6217  Incarnate Word Cardinals vs. Rice Owls (W)
+  78668191  0.6217  Delaware Fightin' Blue Hens vs. Old Dominion Monarchs (W)
+  31018209  0.6220  UFC Fight Night London: Who will win - Blaydes vs. Aspinall?
+  23922161  0.6221  UFC 270: Who will win Stamann vs. Nurmagomedov?
+  13605151  0.6221  Who will win UFC 261: Usman vs. Masvidal?
+  78538646  0.6223  Western Michigan Broncos vs. Campbell Fighting Camels
+  77891541  0.6224  Jets vs. Flames
+  77387326  0.6224  Jets vs. Flames
+  77174637  0.6224  Jets vs. Flames
+  78108402  0.6225  Jiangxi Open, Qualification: Xinyu Gao vs Yidi Yang
+  70751469  0.6228  Devin Haney vs. Jose Ramirez
+  75809101  0.6228  UFC Fight Night: Imavov and Saint Denis
+  68492992  0.6229  Silva De Andrade vs. Castaneda
+  77572082  0.6230  Commanders vs. Cowboys: O/U 53.5
+  73092082  0.6231  UFC 317: Will Topuria Win By Decision?
+  34305181  0.6233  UFC 280: Who will win - Sterling vs Dillashaw
+  77712455  0.6233  Commanders vs. Cowboys: O/U 55.5
+  74879033  0.6233  UFC: Will Santana win by submission?
+  22373712  0.6235  UFC 269: Will Amanda Nunes KO/TKO/RTD Julianna Pena?
+  70582642  0.6235  Stephens vs. Jones
+  69177670  0.6236  Gunnar Nelson vs. Kevin Holland
+  73950221  0.6237  UFC 318: Will Poirier win by KO/TKO/DQ?
+  41544093  0.6238  Fight Night: Who will win - Jacoby or Murzakanov? (2023-04-15)
+  69497338  0.6239  Alberto Montes vs. Roberto Romero
+  65684901  0.6242  Will the fight end in Round 2?
+  78884181  0.6243  Delaware Fightin' Blue Hens vs. American Eagles (W)
+  74879024  0.6244  UFC: Will Santana win by decision?
+  15295552  0.6245  Will Floyd Mayweather KO, TKO, or retire Logan Paul?
+  62832601  0.6245  Dawson vs. Garcia
+  74000802  0.6246  Boxing: Alana vs Ari Geli
+  73852932  0.6247  Boxing: Will Usyk vs. Dubois end in a Draw?
+  35522429  0.6249  UFC 281: Who will win - Carla Esparza vs Weili Zhang
+  73852962  0.6250  Will Taylor vs. Serrano end in a Draw?
+  60080909  0.6250  Olympic Boxing: Imane Khelif (ALG) vs Luca Hamori (HUN)
+  23922222  0.6251  UFC 270: Who will win Vieira vs. Turman?
+  64288616  0.6254  Will the fight end in the Round 2?
+  15594632  0.6255  Who will win UFC 263: Figueiredo vs. Moreno?
+  77604474  0.6259  Commanders vs. Cowboys: O/U 54.5
+  15594612  0.6264  Who will win UFC 263: Edwards vs. Diaz?
+  64600225  0.6264  Mitchell vs. Gracie
+  70751475  0.6265  Teofimo Lopez vs. Arnold Barboza Jr
+  77103723  0.6265  Nurmagomedov vs. Hughes
+  63770054  0.6265  Machado vs. Ribeiro
+  23921948  0.6266  UFC 270: Who will win Moreno vs. Figueiredo?
+  67675556  0.6271  Bryant vs. Binghamton
+  78846855  0.6272  Commanders vs. Dolphins: 1H O/U 24.5
+  38611567  0.6277  Boxing: Jake Paul vs. Tommy Fury
+  40113229  0.6277  Fight Night: Who will win - Volkov or Romanov? (2023-03-11)
+  77053929  0.6279  Will the announcers say "Concussion" during Jets vs Dolphins game? (September 29
+  68450083  0.6279  FBI partners with UFC before April?
+  76775675  0.6283  Flames vs. Jets
+  67100057  0.6283  Flames vs. Jets
+  77387352  0.6283  Flames vs. Jets
+  66599849  0.6283  Flames vs. Jets
+  65690106  0.6284  Will the fight end in Round 10?
+  78797792  0.6286  Howard Bison vs. Elon Phoenix (W)
+  73170145  0.6288  Mallorca Championships: Shelton vs. Tien
+  65690116  0.6288  Will the fight end in Round 11?
+  65692407  0.6289  Will Oleksandr Usyk KO Tyson Fury?
+  64170207  0.6289  Jones vs. Miocic
+  79056909  0.6291  Grambling State Tigers vs. DePaul Blue Demons (W)
+  35522352  0.6292  UFC 281: Who will win - Adesanya vs Pereira
+  71437154  0.6297  Yusuff vs. Santos
+  76677136  0.6297  Chengdu Open: Luke Johnson / Austin Krajicek vs Vasil Kirkov / Bart Stevens
+  74879047  0.6299  UFC: Will Bouafia vs. Santana end in a draw?
+  13605187  0.6300  Who will win UFC 261: Hall vs. Weidman?
+  68119449  0.6302  Vergil Ortiz Jr. vs. Israil Madrimov
+  77557671  0.6302  Silva vs. Park
+  71153283  0.6304  Saint Denis vs. Álvarez
+  73950230  0.6304  UFC 318: Will Holloway vs. Poirier be decided any other way?
+  39815334  0.6306  UFC 285: Will there be at least 4 finishes on the main card?
+  65690128  0.6307  Will the fight end in Round 12?
+  64288640  0.6308  Will the fight end in Round 3?
+  65684913  0.6308  Will the fight end in Round 3?
+  40422910  0.6309  UFC 286: Will Kamaru Usman win by finish?
+  64288652  0.6309  Will the fight end in Round 4?
+  65687105  0.6309  Will the fight end in Round 4?
+  78450412  0.6314  Purdue Fort Wayne Mastodons vs. Xavier Musketeers (W)
+  75809099  0.6315  UFC Fight Night: Imavov and Ruffy
+  43684038  0.6317  UFC 289: Who will win - Nunes or Aldana? (2023-06-10)
+  36543087  0.6318  UFC 282: Who will win - Pimblett vs. Gordon
+  74000804  0.6318  Boxing: Andoni vs. Carlos Belcast
+  78391002  0.6318  Angers SCO vs. AJ Auxerre: O/U 2.5
+  74000804  0.6319  Boxing: Viruzz vs Tomás Mazza
+  78845487  0.6321  Will Erin Blanchfield win by KO or TKO?
+  73852592  0.6322  Boxing: Ali vs. Furtado
+  78845445  0.6326  Will Jack Della Maddalena win by KO or TKO?
+  64288711  0.6331  Will the fight end in Round 7?
+  65690052  0.6331  Will the fight end in Round 7?
+  30219635  0.6331  UFC 276: Who will win - Strickland vs Pereira
+  69497187  0.6332  Torres vs. Dober
+  73092109  0.6333  UFC 317: Will Topuria vs. Oliveira end in a draw?
+  78336128  0.6335  Life Pacific Warriors vs. Pacific Tigers
+  74359299  0.6337  Boxing: Will Canelo vs. Crawford be decided any other way?
+  72716260  0.6337  UFC Fight Night: Will Hill win by points?
+  67018304  0.6337  Nurmagomedov vs. Oliveira
+  74238468  0.6339  UFC Fight Night: Whittaker and Pico
+  76656864  0.6342  Hangzhou Open: Yibing Wu vs Sebastian Korda
+  65687200  0.6342  Will the fight end in Round 5?
+  64288661  0.6342  Will the fight end in Round 5?
+  78897649  0.6342  Cabrera vs Mosinos
+  38034542  0.6343  UFC Fight Night: Who will win - Strickland vs. Imavov
+  68613718  0.6344  Mairon Santos vs. Francis Marshall
+  58444827  0.6345  UFC Fight Night: Who will win - Kelvin Gastelum vs. Daniel Rodriguez?
+  73950208  0.6345  UFC 318: Will Holloway win by KO/TKO/DQ?
+  68119435  0.6348  Shakur Stevenson vs. Floyd Schofield
+  65690184  0.6348  Will Tyson Fury KO Oleksandr Usyk?
+  71739527  0.6350  Dos Santos vs. Ardelean
+  79100106  0.6351  Army Black Knights vs. St. Francis (PA) Red Flash (W)
+  78450408  0.6351  Air Force Falcons vs. South Dakota Coyotes (W)
+  78845465  0.6352  Will Leon Edwards win by KO or TKO?
+  15594668  0.6353  Who will win UFC 263: Paul Craig vs. Jamahal Hill
+  78845488  0.6354  Will Tracy Cortez win by KO or TKO?
+  79018934  0.6354  Makhachev Parlay - Islam Wins Submission & Fight Lasts Over 2.5 Rounds
+  68729931  0.6355  Robert Trujillo vs. Dakota McGregor
+  65690080  0.6356  Will the fight end in Round 9?
+  78407192  0.6356  California-San Diego Tritons vs. Pacific Tigers (W)
+  41755103  0.6357  Fight Night: Who will win - Green or Gordon? (2023-04-22)
+  61700654  0.6357  Grasso vs. Shevchenko
+  75809098  0.6360  UFC Fight Night: Imavov and Oki
+  78897749  0.6361  Jack Catterall vs Ekow Essuman Nov 15, 2025
+  36338418  0.6363  UFC Fight Night: Who will win - Tuivasa vs. Pavlovich
+  75077943  0.6363  UFC 319: Will Chimaev win by submission?
+  78624988  0.6364  LIU Sharks vs. Air Force Falcons
+  74238466  0.6364  UFC Fight Night: Whittaker and Evloev
+  75809100  0.6367  UFC Fight Night: Imavov and Bukauskas
+  78845518  0.6367  Will Baisangur Susurkaev win by KO or TKO?
+  20911663  0.6367  Will Canelo Álvarez KO/TKO/RTD Caleb Plant?
+  64288819  0.6368  Taylor vs. Serrano
+  77557672  0.6370  Luciano vs. Oliveira
+  75077934  0.6373  UFC 319: Will Chimaev win by decision?
+  73092077  0.6373  UFC 317: Will Topuria To Win By KO/TKO/DQ?
+  37875984  0.6375  UFC Fight Night: Who will win - Imavov vs. Gastelum
+  74359294  0.6376  Boxing: Will Terence Crawford win by KO/TKO?
+  64170191  0.6377  Oliveira vs. Chandler
+  78845456  0.6379  Will Sean Brady win by KO or TKO?
+  75629716  0.6382  Tigers vs. Athletics
+  75590759  0.6382  Tigers vs. Athletics
+  74523689  0.6385  UFC Fight Night: Taira and Duncan
+  72512410  0.6388  BLAST.tv Austin Major stage 2: paiN vs. Virtus.pro
+  68882630  0.6389  Alexander Hernandez vs. Kurt Holobaugh
+  36543577  0.6391  UFC 282: Who will win - Mitchell vs. Topuria
+  72724157  0.6393  Boss Open: Zverev vs. Shelton
+  78538644  0.6396  DePaul Blue Demons vs. UNLV Runnin' Rebels (W)
+  71153282  0.6397  Shevchenko vs. Fiorot
+  75651469  0.6398  UFC Fight Night: Will Imavov win by submission?
+  65684850  0.6398  Will the fight end in Round 1?
+  64288607  0.6398  Will the fight end in Round 1?
+  74238467  0.6400  UFC Fight Night: Ricci and Elekana
+  15521708  0.6400  Will Nate Wyatt KO, TKO, or retire DDG?
+  15295599  0.6401  Will Logan Paul KO, TKO, or retire Floyd Mayweather?
+  15594593  0.6404  Who will win UFC 263: Adesanya vs. Vettori?
+  73114624  0.6406  Athletics vs. Tigers
+  73195668  0.6406  Athletics vs. Tigers
+  73155136  0.6406  Athletics vs. Tigers
+  73711603  0.6406  Boxing: Canelo Álvarez vs. Terence Crawford
+  20779870  0.6407  Who will win UFC 268: Covington vs Usman?
+  78845496  0.6407  Will Malcolm Wellmaker win by KO or TKO?
+  78845468  0.6408  Will Beneil Dariush win by KO or TKO?
+  73292033  0.6409  Will the fight end in any other result?
+  73292049  0.6413  Will the fight end in a draw?
+  65690152  0.6414  Will the fight get cancelled?
+  72688051  0.6414  Boss Open: Shelton vs. Lehecka
+  67903776  0.6415  Chicago State vs. Le-Moyne
+  72604372  0.6421  UFC Fight Night: Will Usman win by points?
+  75651459  0.6423  UFC Fight Night: Will Imavov win by decision?
+  75077956  0.6423  UFC 319: Will Du Plessis vs. Chimaev end in a draw?
+  74523691  0.6426  UFC Fight Night: Taira and Ribovics
+  30182233  0.6427  UFC 276: Who will win - Adesanya vs Cannonier
+  60039937  0.6432  UFC Fight Night: Tony Ferguson vs. Michael Chiesa
+  70582632  0.6434  Santos vs. Tate
+  75453022  0.6436  UFC Fight Night: Walker and Pavlovich
+  75369304  0.6436  UFC Fight Night: Will Walker vs. Zhang end in a draw?
+  73852927  0.6436  Boxing: Will Dubois win by Decision?
+  71437156  0.6437  Santos vs. Lisboa
+  78845507  0.6437  Will Pat Sabatini win by KO or TKO?
+  41544084  0.6437  Fight Night: Who will win - Holloway or Allen? (2023-04-15)
+  59565895  0.6439  UFC Fight Night: Who will win - Lemos vs. Jandiroba
+  70751458  0.6440  Ryan Garcia vs. Rolly Romero
+  75453021  0.6441  UFC Fight Night: Walker and Ortega
+  78119199  0.6441  Rowe vs. Ko
+  77265198  0.6442  Oliveira vs. Gamrot
+  75651487  0.6443  UFC Fight Night: Will Imavov vs. Borralho end in a draw?
+  78845516  0.6443  Will Angela Hill win by KO or TKO?
+  74241354  0.6445  UFC Fight Night: Will Whittaker vs. de Ridder end in a draw?
+  74523690  0.6445  UFC Fight Night: Park and Duncan
+  68614806  0.6447  Matty's UFC 313 Money Line Parlay
+  72681871  0.6448  UFC Fight Night: Zhelezniakova vs. Mullins
+  74523937  0.6449  UFC Fight Night: Will Park vs. Taira end in a draw?
+  61784487  0.6451  Will the fight reach the 9th round?
+  65449857  0.6457  Woodson vs. Padilla
+  74367811  0.6458  Boxing – Salt Papi vs. Tony Ferguson
+  64288759  0.6462  Will the fight end in Round 8?
+  65690067  0.6462  Will the fight end in Round 8?
+  70061888  0.6462  Erigaisi vs. Nakamura
+  78845455  0.6463  Will Zhang Weili win by KO or TKO?
+  15521700  0.6464  Will DDG KO, TKO, or retire Nate Wyatt?
+  31738787  0.6464  UFC 278: Who will win - Usman vs Edwards 2
+  45874782  0.6468  Jake Paul vs. Nate Diaz
+  64288672  0.6468  Will the fight end in Round 6?
+  65687216  0.6468  Will the fight end in Round 6?
+  27449203  0.6469  Will Tyson Fury KO/TKO/RTD Dillian Whyte?
+  77062133  0.6470  Santos vs. Yoo
+  78845468  0.6473  Will Benoît Saint Denis win by KO or TKO?
+  68613729  0.6473  Djorden Santos vs. Ozzy Diaz
+  31286446  0.6480  UFC 277: Will Nunes KO/TKO Pena?
+  78845456  0.6481  Will Valentina Shevchenko win by KO or TKO?
+  76616713  0.6481  Chengdu Open: Luciano Darderi / Alejandro Tabilo vs Luke Johnson / Austin Krajic
+  74238467  0.6481  UFC Fight Night: de Ridder and Evloev
+  68646343  0.6482  Fight ends in Draw/Not Scored?
+  78845465  0.6482  Will Carlos Prates win by KO or TKO?
+  78970598  0.6484  Rider Broncs vs. Navy Midshipmen (W)
+  13268254  0.6487  Will Jake Paul’s boxing match against Ben Askren end in a KO, Decision, or DQ?
+  65690139  0.6487  Will the fight go the distance?
+  74238465  0.6488  UFC Fight Night: Ribas and Aslan
+  34305295  0.6489  UFC 280: Will Makhachev KO/TKO Oliveira?
+  64288783  0.6491  Will the fight get canceled?
+  75809098  0.6493  UFC Fight Night: Imavov and Jones
+  78884170  0.6499  Houston Cougars vs. Stephen F. Austin Lumberjacks (W)
+  72562293  0.6499  UFC Fight Night Parlay: Usman and Maverick
+  73092093  0.6500  UFC 317: Will Oliveira Win By Submission?
+  73950157  0.6501  UFC 318 Parlay – Poirier + Rodriguez
+  78422066  0.6501  Bueno Silva vs. Cavalcanti
+  78450404  0.6503  Navy Midshipmen vs. Delaware Fightin' Blue Hens (W)
+  68493011  0.6504  Silva vs. Almeida
+  16728206  0.6504  (Live Trading) Who will win UFC 264: McGregor vs. Poirier?
+  72401818  0.6507  UFC 316: O'Malley and Harrison Parlay
+  78845458  0.6507  Will Michael Morales win by KO or TKO?
+  73852591  0.6510  Boxing: Baumgardner vs. Miranda
+  76656873  0.6510  Chengdu Open: Aoran Wang / Yi Zhou vs Luke Johnson / Austin Krajicek
+  75453556  0.6511  Will Gervonta Davis win by KO/TKO?
+  75809097  0.6512  UFC Fight Night: Borralho and Craig
+  72716288  0.6514  UFC Fight Night: Will Rountree win by submission?
+  78845476  0.6517  Will Bo Nickal win by KO or TKO?
+  73950153  0.6518  UFC 318: Gautier vs. Valentin
+  78859427  0.6522  LIU Sharks vs. Air Force Falcons: O/U 138.5
+  55632368  0.6524  UFC 300: Calvin Kattar vs Aljamain Sterling
+  70908702  0.6525  Dillon Danis x Gorilla fight scheduled by next Friday?
+  74238468  0.6531  UFC Fight Night: Whittaker and Grant
+  74241328  0.6531  UFC Fight Night: Will Whittaker win by decision?
+  74799221  0.6531  UFC Fight Night: Will Dolidze vs. Hernandez end in a draw?
+  75809097  0.6532  UFC Fight Night: Borralho and Saint Denis
+  71153286  0.6536  Santos vs. Lee
+  78845516  0.6537  Will Fatima Kline win by KO or TKO?
+  75453552  0.6538  Will Jake Paul win by KO/TKO?
+  75453017  0.6538  UFC Fight Night: Mingyang and Ortega
+  75077939  0.6540  UFC 319: Will Du Plessis win by submission?
+  70746219  0.6540  Chris Eubank Jr. vs. Conor Benn
+  78840994  0.6541  North Dakota Fighting Hawks vs. Eastern Kentucky Colonels (W)
+  31024850  0.6541  UFC Fight Night London: Will 6 or more British fighters win?
+  61949197  0.6541  Karate Combat: Rindh vs Roberto de Assis
+  74879042  0.6541  UFC: Will Santana win by KO/TKO/DQ?
+  75077929  0.6544  UFC 319: Will Du Plessis win by decision?
+  40113236  0.6548  Fight Night: Who will win - Krylov or Spann? (2023-03-11)
+  78845507  0.6549  Will Chepe Mariscal win by KO or TKO?
+  27690503  0.6551  Boxing: Katie Taylor vs. Amanda Serrano
+  74523909  0.6551  UFC Fight Night: Will Park win by decision?
+  31286589  0.6552  UFC 277: Who will win - Lewis vs Pavlovich
+  32813299  0.6555  UFC 279: Who will win - Jingliang vs Ferguson
+  31738955  0.6555  UFC 278: Who will win - Aldo vs Dvalishvili
+  75784825  0.6557  Boxing - Darren Till vs. Luke Rockhold
+  75369290  0.6559  UFC Fight Night: Will Zhang win by submission?
+  36543292  0.6559  UFC 282: Who will win - Till vs. Du Plessis
+  74241358  0.6561  UFC Fight Night: Will Whittaker vs. de Ridder be decided any other way?
+  69497232  0.6561  Martínez vs. Oliveira
+  32813495  0.6561  UFC 279: Who will win - Holland vs Rodriguez
+  59688721  0.6561  UFC 304: Leon Edwards vs. Belal Muhammad
+  73950158  0.6563  UFC 318 Parlay – Holloway + Holland
+  78422065  0.6565  Croden vs. Santos
+  72974086  0.6569  UFC Fight Night Parlay: Rountree Jr. + Bahamondes
+  74523919  0.6572  UFC Fight Night: Will Park win by submission?
+  74241332  0.6572  UFC Fight Night: Will de Ridder win by decision?
+  73292022  0.6573  Will Jake Paul win by KO/TKO/DQ?
+  40113217  0.6574  Fight Night: Who will win - Yan or Dvalishvili? (2023-03-11)
+  49065055  0.6575  Tyson Fury vs. Francis Ngannou
+  78845486  0.6575  Will Gregory Rodrigues win by KO or TKO?
+  78840987  0.6576  Campbell Fighting Camels vs. Furman Paladins (W)
+  72716294  0.6577  UFC Fight Night: Will Hill vs. Rountree be decided by any other method?
+  74238469  0.6579  UFC Fight Night: de Ridder and Pico
+  72716276  0.6582  UFC Fight Night: Will Rountree win by KO/TKO?
+  74241336  0.6583  UFC Fight Night: Will Whittaker win by submission?
+  78845445  0.6583  Will Islam Makhachev win by KO or TKO?
+  67927985  0.6586  Silva vs. Baghdasaryan
+  77387024  0.6589  Kwon vs. Diaz
+  62071564  0.6592  Will the fight reach the 8th round?
+  75809102  0.6597  UFC Fight Night: Borralho and Ruffy
+  77062143  0.6598  Santos vs. Chiasson
+  78882819  0.6601  LIU Sharks vs. Air Force Falcons: O/U 136.5
+  75453018  0.6601  UFC Fight Night: Walker and Sterling
+  78845517  0.6601  Will Eric McConico win by KO or TKO?
+  78335727  0.6601  SUNY-Cobleskill Fighting Tigers vs. Le Moyne Dolphins
+  65320859  0.6603  Kape vs. Silva
+  72125563  0.6605  Silva vs. Van
+  78538641  0.6606  CSUN Matadors vs. North Dakota Fighting Hawks
+  74879052  0.6606  UFC: Will Bouafia vs. Santana be decided any other way?
+  74241340  0.6610  UFC Fight Night: Will de Ridder win by submission?
+  75369309  0.6610  UFC Fight Night: Will Walker vs. Zhang be decided any other way?
+  37876003  0.6611  UFC Fight Night: Who will win - Punahele Soriano vs. Roman Kopylov
+  75705384  0.6612  Tigers vs. Athletics: O/U 10.5
+  75669964  0.6612  Tigers vs. Athletics: O/U 10.5
+  74523691  0.6613  UFC Fight Night: Park and Brener
+  74523690  0.6615  UFC Fight Night: Taira and Rębecki
+  78625016  0.6618  Kean Cougars vs. LIU Sharks (W)
+  78897750  0.6620  Chris Eubank Jr. vs Conor Benn Nov 15, 2025
+  43684046  0.6621  UFC 289: Who will win - Oliveira or Dariush? (2023-06-10)
+  32497003  0.6621  UFC Fight Night Paris: Chirico vs. Kopylov?
+  75369280  0.6621  UFC Fight Night: Will Zhang win by decision?
+  73852593  0.6621  Boxing: Marshall vs. Green
+  59688782  0.6622  UFC 304: Tom Aspinall vs. Curtis Blaydes
+  43684066  0.6622  UFC 289: Will Amanda Nunes win by finish? (2023-06-10)
+  74523942  0.6623  UFC Fight Night: Will Park vs. Taira be decided any other way?
+  75651492  0.6623  UFC Fight Night: Will Imavov vs. Borralho be decided any other way?
+  73852919  0.6623  Boxing: Will Usyk win by Decision?
+  75809100  0.6626  UFC Fight Night: Borralho and Oki
+  75625878  0.6627  Tigers vs. Athletics: O/U 7.5
+  73424326  0.6628  UFC Fight Night Parlay: Lewis + Thompson
+  73092104  0.6628  UFC 317: Will Oliveira Win By Decision?
+  71739527  0.6634  Goff vs. Ko
+  31745831  0.6635  UFC 278: Will Usman KO/TKO Edwards?
+  72125565  0.6637  da Silva vs. Cong
+  40736392  0.6638  Fight Night: Who will win - Holm or Santos? (2023-03-25)
+  75077951  0.6639  UFC 319: Will Chimaev win by KO/TKO/DQ?
+  60039913  0.6641  UFC Fight Night: Marlon Vera vs. Deiveson Figueiredo
+  31286374  0.6643  UFC 277: Who will win - Pena vs Nunes
+  44804983  0.6644  UFC 289: Will Alexander Volkanovski win by finish? (2023-06-10)
+  75651478  0.6645  UFC Fight Night: Will Imavov win by KO/TKO/DQ?
+  73852592  0.6646  Boxing: Scotney vs. Mercado
+  74359275  0.6646  Boxing: Will Canelo Álvarez win by Points or Decision?
+  73852595  0.6647  Boxing: Usyk vs Dubois 2
+  71153288  0.6647  Barriault vs. Silva
+  72795626  0.6647  BLAST.tv Austin Major: Virtus.pro vs. paiN
+  73292038  0.6651  Will Julio Cesar Chavez Jr. win by KO/TKO/DQ?
+  78538637  0.6653  VU of Lynchburg Dragons vs. Campbell Fighting Camels (W)
+  75243262  0.6654  Boxing - Itauma vs. Whyte
+  77423735  0.6654  Matchroom Boxing: Padley vs Bellotti
+  41690315  0.6657  Boxing: Gervonta Davis vs. Ryan Garcia
+  32858398  0.6657  UFC 279: Will Chimaev KO/TKO Diaz?
+  77062124  0.6658  Vagabov vs. da Silva
+  34304860  0.6658  UFC 280: Who will win - Oliveira vs Makhachev
+  75369196  0.6661  UFC Fight Night: Satybaldiev vs. Nurgozhay
+  31738878  0.6665  UFC 278: Who will win - Costa vs Rockhold
+  55632335  0.6669  UFC 300: Alex Pereira vs Jamahal Hill
+  75077961  0.6669  UFC 319: Will Du Plessis vs. Chimaev be decided any other way?
+  74799207  0.6675  UFC Fight Night: Will Hernandez win by submission?
+  75453021  0.6675  UFC Fight Night: Mingyang and Sterling
+  32816685  0.6676  UFC 279: Who will win - Chimaev vs Diaz
+  73092115  0.6677  UFC 317: Will Topuria vs. Oliveira be decided by any other method?
+  78845475  0.6678  Will Rodolfo Vieira win by KO or TKO?
+  78845506  0.6679  Will Gerald Meerschaert win by KO or TKO?
+  74799194  0.6679  UFC Fight Night: Will Dolidze win by decision?
+  40736400  0.6680  Fight Night: Who will win - Landwehr or Lingo? (2023-03-25)
+  73217441  0.6681  UFC 317: Diniz vs. Hines
+  72716282  0.6681  UFC Fight Night: Will Hill win by submission?
+  40113242  0.6682  Fight Night: Who will win - Ramos or Lingo? (2023-03-11)
+  73424461  0.6685  UFC Fight Night: Will Lewis vs. Teixeira end in a draw?
+  77265199  0.6687  Luque vs. Álvarez
+  74523689  0.6688  UFC Fight Night: Park and Rębecki
+  59688862  0.6688  UFC 304: Arnold Allen vs. Giga Chikadze
+  74799203  0.6690  UFC Fight Night: Will Dolidze win by submission?
+  73950147  0.6690  UFC 318: Ige vs. Pitbull
+  73852923  0.6690  Boxing: Will Dubois win by KO/TKO/DQ?
+  78845486  0.6691  Will Roman Kopylov win by KO or TKO?
+  44804955  0.6691  UFC 290: Who will win - Moreno or Pantoja? (2023-07-08)
+  74799198  0.6691  UFC Fight Night: Will Hernandez win by decision?
+  57537261  0.6696  UFC 302: Islam Makhachev vs. Dustin Poirier
+  74799225  0.6699  UFC Fight Night: Will Dolidze vs. Hernandez be decided any other way?
+  73424446  0.6699  UFC Fight Night: Will Teixeira Win By Submission?
+  59046459  0.6699  Jorge Masvidal vs. Nate Diaz
+  37875993  0.6701  UFC Fight Night: Who will win - Ige vs. Jackson
+  41755093  0.6704  Fight Night: Who will win - Tavares or Silva? (2023-04-22)
+  41755110  0.6704  Fight Night: Will Blaydes win by finish? (2023-04-22)
+  75453019  0.6706  UFC Fight Night: Walker and Sumudaerji
+  24830190  0.6706  UFC 271: Will Adesanya KO/TKO/RTD Whittaker?
+  74523692  0.6709  UFC Fight Night: Park and Magny
+  73092059  0.6713  UFC 317: Amil vs. Delgado
+  75369285  0.6714  UFC Fight Night: Will Walker win by submission?
+  60311092  0.6717  51kg M Boxing Final: Bennama (FRA) vs. Dusmatov (UZB)
+  74879020  0.6717  UFC: Will Bouafia win by decision?
+  77423735  0.6717  Matchroom Boxing: Allen vs Makhmudov
+  78845487  0.6720  UFC 322: Cortez vs. Blanchfield (Women's Flyweight, Prelims)
+  34305113  0.6722  UFC 280: Who will win - Yan vs O'Malley
+  73424456  0.6723  UFC Fight Night: Will Teixeira Win By Decision?
+  57537266  0.6723  UFC 302: Sean Strickland vs. Paulo Costa
+  74879028  0.6724  UFC: Will Bouafia win by submission?
+  75460669  0.6724  Boxing - Jake Paul vs. Gervonta Davis
+  73852953  0.6727  Will Taylor win by KO/TKO/DQ?
+  78845496  0.6727  Will Cody Haddon win by KO or TKO?
+  74000801  0.6727  Boxing: Perxitaa vs. Gaspi
+  64170173  0.6729  Araujo vs. Silva
+  74523924  0.6730  UFC Fight Night: Will Taira win by submission?
+  64322199  0.6731  Tyson vs. Paul - knockout in first 10 seconds?
+  71153285  0.6733  Grasso vs. Silva
+  75650926  0.6733  UFC Fight Night: Bukauskas vs. Craig
+  73092099  0.6739  UFC 317: Will Oliveira Win By KO/TKO/DQ?
+  73092060  0.6742  UFC 317: Diniz vs. Tafa
+  75369276  0.6744  UFC Fight Night: Will Walker win by decision?
+  69497241  0.6745  Nikita Krylov vs. Dominick Reyes
+  61545681  0.6746  Andrade vs. Silva
+  74241344  0.6747  UFC Fight Night: Will Whittaker win by KO/TKO/DQ?
+  73950149  0.6754  UFC 318: Holland vs. Rodriguez
+  73424441  0.6756  UFC Fight Night: Will Lewis Win By Submission?
+  43684055  0.6756  UFC 289: Who will win - Malott or Fugitt? (2023-06-10)
+  76667190  0.6759  Reyes vs. Torres
+  25272192  0.6760  UFC Fight Night - Feb 26: Misha Cirkunov vs Wellington Turman
+  74523914  0.6760  UFC Fight Night: Will Taira win by decision?
+  59567479  0.6762  UFC Fight Night: Who will win - Holobaugh vs. Kruschewsky
+  59567514  0.6763  UFC Fight Night: Who will win - Choi vs. Algeo
+  74523929  0.6763  UFC Fight Night: Will Park win by KO/TKO/DQ?
+  75077855  0.6763  UFC 319: Neal vs. Prates
+  45077061  0.6768  Boxing: Spence vs. Crawford
+  60040312  0.6768  UFC Fight Night: Joel Alvarez vs. Elves Brener
+  72681872  0.6771  UFC Fight Night: Alekseeva vs. Syguła
+  42750966  0.6774  Boxing: Devin Haney vs. Vasiliy Lomachenko
+  72604397  0.6776  UFC Fight Night: Will Usman win by submission?
+  75077947  0.6777  UFC 319: Will Du Plessis win by KO/TKO/DQ?
+  74241349  0.6777  UFC Fight Night: Will de Ridder win by KO/TKO/DQ?
+  75453019  0.6778  UFC Fight Night: Walker and Borjas
+  30184523  0.6778  UFC 276: Will Adesanya KO/TKO Cannonier?
+  74523694  0.6778  UFC Fight Night: Rębecki vs. Duncan
+  72681871  0.6778  UFC Fight Night: Ulanbekov vs. Maksum
+  74523692  0.6779  UFC Fight Night: Taira and dos Santos
+  75651464  0.6786  UFC Fight Night: Will Borralho win by decision?
+  74239488  0.6790  UFC Fight Night: Almabayev vs. Ochoa
+  59162462  0.6790  UFC Fight Night: Ponzinibbio vs. Salikhov
+  55632360  0.6791  UFC 300: Bo Nickal vs Cody Brundage
+  73092062  0.6792  UFC 317: Price vs. Smith
+  73092061  0.6797  UFC 317: Topuria vs. Oliveira
+  75651474  0.6799  UFC Fight Night: Will Borralho win by submission?
+  75453020  0.6804  UFC Fight Night: Mingyang and Acosta
+  74799136  0.6805  UFC Fight Night: Lucindo vs. Hill
+  41544112  0.6806  Fight Night: Will Holloway win by finish? (2023-04-15)
+  74000802  0.6807  Boxing: Abby vs. RoRo
+  72604384  0.6808  UFC Fight Night: Will Buckley win by points?
+  72974095  0.6810  UFC Fight Night Parlay: Hill + Fiziev
+  73950146  0.6811  UFC 318: Holloway vs. Poirier
+  74000801  0.6811  Boxing: Peereira7 vs. Rivaldios
+  55632345  0.6813  UFC 300: Zhang Weili vs Yan Xiaonan
+  36542563  0.6814  UFC 282: Who will win - Blachowicz vs. Ankalaev
+  75809099  0.6817  UFC Fight Night: Borralho and Jones
+  59162094  0.6823  UFC Fight Night: Namajunas vs. Cortez
+  73424436  0.6823  UFC Fight Night: Will Lewis Win By Decision?
+  75369300  0.6824  UFC Fight Night: Will Zhang win by KO/TKO/DQ?
+  72765783  0.6825  UFC Fight Night: Simon vs. Smotherman
+  31286523  0.6825  UFC 277: Who will win - Moreno vs Kara-France
+  72716271  0.6827  UFC Fight Night: Will Hill win by KO/TKO?
+  72681870  0.6831  UFC Fight Night: Naurdiev vs. Park
+  72576910  0.6834  UFC Fight Night: Wellmaker vs. Moutinho
+  76490185  0.6836  UFC Fight Night: Micallef vs. Elliott
+  79056919  0.6839  Wyoming Cowboys vs. North Dakota Fighting Hawks (W)
+  75650927  0.6841  UFC Fight Night: Ziam vs. Fernandes
+  40736415  0.6846  Fight Night: Will Sandhagen win by finish? (2023-03-25)
+  75650925  0.6848  UFC Fight Night: Saint Denis vs. Ruffy
+  78845517  0.6849  UFC 322: McConico vs. Susurkaev (Middleweight, Early Prelims)
+  78765831  0.6851  CSUN Matadors vs. North Dakota Fighting Hawks: O/U 156.5
+  32490347  0.6853  UFC Fight Night Paris: Whittaker vs. Vettori
+  36338370  0.6854  UFC Fight Night: Who will win - Thompson vs. Holland
+  73852938  0.6856  Boxing: Will the Usyk vs. Dubois end any other way?
+  40113248  0.6856  Fight Night: Will Yan win by finish? (2023-03-11)
+  73852915  0.6858  Boxing: Will Usyk win by KO/TKO/DQ?
+  60040258  0.6858  UFC Fight Night: Mackenzie Dern vs. Loopy Godinez
+  73950150  0.6859  UFC 318: Crute vs. Prachnio
+  78845475  0.6860  UFC 322: Vieira vs. Nickal (Middleweight, Prelims)
+  59162697  0.6861  UFC Fight Night: Erosa vs. Rodriguez
+  78798231  0.6862  CSUN Matadors vs. North Dakota Fighting Hawks: O/U 157.5
+  72401817  0.6863  UFC 316: Dvalishvili and Peña Parlay
+  72562260  0.6866  UFC Fight Night: Shahbazyan vs. Petroski
+  73092057  0.6867  UFC 317: Dariush vs. Moicano
+  73092061  0.6871  UFC 317: Araujo vs. Cortez
+  74239490  0.6872  UFC Fight Night: Evloev vs. Pico
+  73424321  0.6874  UFC Fight Night: Griffin vs. Curtis
+  73950151  0.6874  UFC 318: Spann vs. Brzeski
+  55632351  0.6876  UFC 300: Justin Gaethje vs Max Holloway
+  74523695  0.6876  UFC Fight Night: Brener vs. Ribovics
+  32492205  0.6877  UFC Fight Night Paris: Gane vs. Tuivasa
+  59567462  0.6883  UFC Fight Night: Who will win - Garcia vs. Choi
+  73092059  0.6885  UFC 317: Royval vs. Van
+  75369295  0.6886  UFC Fight Night: Will Walker win by KO/TKO/DQ?
+  74799217  0.6886  UFC Fight Night: Will Hernandez win by KO/TKO/DQ?
+  75369193  0.6888  UFC Fight Night: Nueraji vs. Crosbie
+  72562258  0.6889  UFC Fight Night: Chiesa vs. McGee
+  57537279  0.6889  UFC 302: Randy Brown vs. Elizeu Zaleski dos Santos
+  74799136  0.6890  UFC Fight Night: Fili vs. Rodriguez
+  72562259  0.6892  UFC Fight Night: Simon vs. Jourdain
+  72604391  0.6893  UFC Fight Night: Will Usman win by KO/TKO?
+  75369195  0.6894  UFC Fight Night: Ortega vs. Sterling
+  74239491  0.6895  UFC Fight Night: Whittaker vs. de Ridder
+  74879038  0.6896  UFC: Will Bouafia win by KO/TKO/DQ?
+  74523693  0.6898  UFC Fight Night: Park and dos Santos
+  60039874  0.6898  UFC Fight Night: Cory Sandhagen vs. Umar Nurmagomedov
+  74523933  0.6898  UFC Fight Night: Will Taira win by KO/TKO/DQ?
+  75369181  0.6899  UFC: Cuozzi vs. Jimenez
+  73950148  0.6906  UFC 318: Ferreira vs. McVey
+  74799213  0.6913  UFC Fight Night: Will Dolidze win by KO/TKO/DQ?
+  75077850  0.6915  UFC 319: Idiris vs. Morales
+  55632364  0.6918  UFC 300: Jiri Prochazka vs Aleksandar Rakic
+  72604409  0.6921  UFC Fight Night: Will Usman vs. Buckley be decided by any other method?
+  74239488  0.6922  UFC Fight Night: Salikhov vs. Leal
+  76490183  0.6922  UFC Fight Night: Mullarkey vs. Bedoya
+  76490181  0.6925  UFC Fight Night: Rowston vs. Petroski
+  73424467  0.6925  UFC Fight Night: Will Lewis vs. Teixeira be decided by any other method?
+  59688837  0.6925  UFC 304: Muhammad Mokaev vs. Manel Kape
+  75289625  0.6926  UFC 319: Susurkaev vs. Nolan
+  73092076  0.6929  UFC 317 Parlay: Oliveira + Kara-France
+  73950152  0.6935  UFC 318: Vettori vs. Allen
+  60311378  0.6936  92kg M Boxing Final: Dominguez (AZE) vs. Mullojonov (UZB)
+  75369182  0.6937  UFC: Hokit vs. Uriel
+  78845467  0.6937  UFC 322: Dariush vs. Saint Denis (Lightweight, Main Card)
+  75077854  0.6937  UFC 319: Hooper vs. Hernandez
+  25271812  0.6939  UFC Fight Night - Feb 26: Islam Makhachev vs Bobby Green
+  74239492  0.6943  UFC Fight Night: Krylov vs. Guskov
+  72562259  0.6943  UFC Fight Night: Namajunas vs. Maverick
+  73950148  0.6943  UFC 318: Costa vs. Kopylov
+  75651483  0.6947  UFC Fight Night: Will Borralho win by KO/TKO/DQ?
+  75077853  0.6948  UFC 319: Elliott vs. Asakura
+  74239487  0.6949  UFC Fight Night: Mitchell vs. Nurmagomedov
+  74239491  0.6950  UFC Fight Night: Aslan vs. Elekana
+  73424320  0.6952  UFC Fight Night: Nzechukwu vs. Walker
+  73424451  0.6953  UFC Fight Night: Will Teixeira Win By KO/TKO/DQ?
+  73092058  0.6956  UFC 317: Talbott vs. Lima
+  74239488  0.6956  UFC Fight Night: Ribas vs. Ricci
+  76490184  0.6957  UFC Fight Night: Ulberg vs. Reyes
+  74523696  0.6958  UFC Fight Night: Klein vs. Pulyaev
+  76490179  0.6959  UFC Fight Night: Matthews vs. Magny
+  74799134  0.6960  UFC Fight Night: Erceg vs. Osbourne
+  76490180  0.6960  UFC Fight Night: Nolan vs. Elder
+  76490182  0.6963  UFC Fight Night: Stirling vs. Bellato
+  75650923  0.6963  UFC Fight Night: Imavov vs. Borralho
+  78845515  0.6967  UFC 322: Hill vs. Kline (Women's Strawweight, Early Prelims)
+  59688807  0.6972  UFC 304: King Green vs. Paddy Pimblett
+  78845506  0.6973  Will Kyle Daukaus win by KO or TKO?
+  73424430  0.6975  UFC Fight Night: Will Lewis Win By KO/TKO/DQ?
+  73092067  0.6975  UFC 317 Parlay: Topuria + Pantoja
+  75453018  0.6977  UFC Fight Night: Mingyang and Sumudaerji
+  73950152  0.6977  UFC 318: Prado vs. Veretennikov
+  73092058  0.6978  UFC 317: Hermansson vs. Rodrigues
+  75369191  0.6981  UFC Fight Night: Pavlovich vs. Cortes-Acosta
+  74642356  0.6984  UFC Fight Night: Bashi vs. Yannis
+  72562293  0.6984  UFC Fight Night Parlay: Buckley and Namajunas
+  74359280  0.6988  Boxing: Will Canelo Álvarez win by KO/TKO?
+  75650919  0.6989  UFC Fight Night: Tavares vs. Bryczek
+  73424318  0.6989  UFC Fight Night: Petrino vs. Lane
+  32490450  0.6992  UFC Fight Night Paris: Jourdain vs. Wood
+  74879005  0.6993  UFC: Bouafia vs. Santana
+  72681869  0.6995  UFC Fight Night: Naimov vs. Grad
+  73950149  0.6997  UFC 318: Judice vs. Caliari
+  60039896  0.6999  UFC Fight Night: Shara Magomedov vs. Michal Oleksiejczuk
+  72562256  0.6999  UFC Fight Night: Abdul-Malik vs. Brundage
+  73217440  0.7000  UFC 317: Ewert vs. McVey
+  74000802  0.7001  Boxing: TheGrefg vs Westcol
+  74523698  0.7001  UFC Fight Night: Rodriguez vs. Souza
+  73852943  0.7004  Will Serrano win by KO/TKO/DQ?
+  75077851  0.7005  UFC 319: Cannonier vs. Page
+  74238464  0.7007  UFC Fight Night: Leal and Buchecha
+  76490181  0.7010  UFC Fight Night: Sutherland vs. Tafa
+  76490178  0.7012  UFC Fight Night: Pericic vs. Ellison
+  76490179  0.7016  UFC Fight Night: Carolina vs. Montague
+  72562258  0.7017  UFC Fight Night: Bellato vs. Craig
+  73424326  0.7017  UFC Fight Night Parlay: Teixeira + Bonfim
+  78845507  0.7022  UFC 322: Mariscal vs. Sabatini (Featherweight, Early Prelims)
+  78335386  0.7022  LIU Sharks vs. Notre Dame Fighting Irish
+  76490180  0.7025  UFC Fight Night: Crute vs. Erslan
+  75977408  0.7032  UFC: Henrique vs. Ho
+  57537275  0.7032  UFC 302: Jailton Almeida vs. Alexandr Romanov
+  74126231  0.7032  Boxing – Pacquiao vs. Barrios
+  76490178  0.7033  UFC Fight Night: Jenkins vs. Taveras
+  78330466  0.7033  Will either fighter be knocked down in Round 1?
+  65449848  0.7035  Alvarez vs. Klose
+  75369181  0.7044  UFC: Saikumar vs. Scott
+  59162499  0.7045  UFC Fight Night: Bonfim vs. Loosa
+  74799136  0.7046  UFC Fight Night: Anders vs. Duncan
+  74239490  0.7049  UFC Fight Night: Magomedov vs. Barriault
+  74920163  0.7055  UFC Fight Night: Brundage vs. McConico
+  74799136  0.7059  UFC Fight Night: Fernandes vs. Stoliarenko
+  25272357  0.7060  UFC Fight Night - Feb 26: Ji Yeon Kim vs Priscila Cachoeira
+  74523696  0.7063  UFC Fight Night: Vieira vs. Gore
+  78845455  0.7066  UFC 322: Shevchenko vs. Weili (Women's Flyweight, Main Card)
+  74799135  0.7067  UFC Fight Night: Medic vs. Urbina
+  73424319  0.7068  UFC Fight Night: Kattar vs. Garcia
+  73950151  0.7068  UFC 318: Phillips vs. Oliveira
+  75650918  0.7073  UFC: Perez vs. Sousa
+  72681872  0.7074  UFC Fight Night: Abdelwahab vs. Usman
+  76490184  0.7076  UFC Fight Night: Tafa vs. Aslan
+  73092062  0.7082  UFC 317: Dumas vs. McVey
+  75077849  0.7084  UFC 319: Du Plessis vs. Chimaev
+  75650924  0.7086  UFC Fight Night: Gomis vs. Ruchała
+  74239489  0.7088  UFC Fight Night: Grant vs. Blackshear
+  75077854  0.7089  UFC 319: Andrade vs. Godinez
+  75369193  0.7090  UFC Fight Night: Walker vs. Zhang
+  75077853  0.7091  UFC 319: Silva vs. Aldrich
+  60311159  0.7093  54kg W Boxing Final: Yuan (CHN) vs. Akbas (TUR)
+  72681873  0.7095  UFC Fight Night: Musayev vs. Orolbai
+  59162742  0.7099  UFC Fight Night: Alhassan vs. Brundage
+  73950150  0.7100  UFC 318: Johnson vs. Zellhuber
+  75650922  0.7100  UFC: Wilson vs. Barbosa
+  72562257  0.7100  UFC Fight Night: Garbrandt vs. Barcelos
+  74239489  0.7102  UFC Fight Night: Buday vs. Buchecha
+  77423736  0.7106  Matchroom Boxing: Bostan vs Fawaz
+  75163341  0.7107  UFC 319: Silva vs. Barbosa
+  73950147  0.7108  UFC 318: Fugitt vs. Dulatov
+  76231317  0.7108  Noche UFC: Aguilar vs. Gurule
+  57537271  0.7109  UFC 302: Kevin Holland vs. Michael Oleksiejczuk
+  75369194  0.7111  UFC Fight Night: Yizha vs. Wilson
+  78845485  0.7114  UFC 322: Kopylov vs. Rodrigues (Middleweight, Prelims)
+  60311237  0.7115  71kg M Boxing Final: Muydinkhujaev (UZB) vs. Verde Alvarez (MEX)
+  78845445  0.7115  UFC 322: Makhachev vs. Della Maddalena (Welterweight, Main Card)
+  72576909  0.7116  UFC Fight Night: Rowe vs. Loosa
+  74799137  0.7116  UFC Fight Night: Edwards vs. Cachoeira
+  75453020  0.7118  UFC Fight Night: Mingyang and Borjas
+  59567499  0.7123  UFC Fight Night: Who will win - Durden vs. Silva
+  76490182  0.7124  UFC Fight Night: Thicknesse vs. Musasa
+  75650927  0.7124  UFC Fight Night: Pitbull vs. Keita
+  78845496  0.7124  Will the fight be won by submission?
+  78845516  0.7124  Will the fight be won by submission?
+  78845486  0.7124  Will the fight be won by submission?
+  78845456  0.7124  Will the fight be won by submission?
+  78845506  0.7124  Will the fight be won by submission?
+  78845445  0.7124  Will the fight be won by submission?
+  78845507  0.7124  Will the fight be won by submission?
+  78845487  0.7124  Will the fight be won by submission?
+  78845518  0.7124  Will the fight be won by submission?
+  78845458  0.7124  Will the fight be won by submission?
+  78845475  0.7124  Will the fight be won by submission?
+  78845466  0.7124  Will the fight be won by submission?
+  75650918  0.7124  UFC Fight Night: Sy vs. Ribeiro
+  75650922  0.7125  UFC: Yakhyaev vs. Lorenz
+  74523698  0.7125  UFC Fight Night: Bekoev vs. Belgaroui
+  72604403  0.7126  UFC Fight Night: Will Buckley win by submission?
+  74523697  0.7129  UFC Fight Night: Estevam vs. Bunes
+  75077852  0.7131  UFC 319: Green vs. Ferreira
+  75203174  0.7133  UFC 319: Sezinando vs. Donchenko
+  74799133  0.7135  UFC Fight Night: Dolidze vs. Hernandez
+  74523695  0.7136  UFC Fight Night: Magny vs. dos Santos
+  72681869  0.7137  UFC Fight Night: Sadykhov vs. Motta
+  75650920  0.7138  UFC Fight Night: Gustafsson vs. Fakhretdinov
+  55632356  0.7139  UFC 300: Arman Tsarukyan vs Charles Oliveira
+  73852592  0.7145  Boxing: Johnson vs. Metcalf
+  78845465  0.7150  UFC 322: Edwards vs. Prates (Welterweight, Main Card)
+  75077856  0.7150  UFC 319: Battle vs. Ruziboev
+  72681869  0.7151  UFC Fight Night: Blaydes vs. Kuniev
+  73424319  0.7152  UFC Fight Night: Ramirez vs. Davis
+  72681868  0.7158  UFC Fight Night: Hill vs. Rountree Jr.
+  72562260  0.7158  UFC Fight Night: Menifield vs. Sy
+  75369192  0.7161  UFC Fight Night: Rongzhu vs. Hubbard
+  73092058  0.7161  UFC 317: Pantoja vs. Kara-France
+  74523694  0.7171  UFC Fight Night: Park vs. Taira
+  75077850  0.7183  UFC 319: Murphy vs. Pico
+  76231312  0.7183  Noche UFC: Suarez vs. Lemos
+  75650924  0.7186  UFC Fight Night: Patterson vs. Waters
+  76231316  0.7191  Noche UFC: Luna vs. Le
+  75650919  0.7191  UFC Fight Night: Bannon vs. Hughes
+  75650925  0.7191  UFC Fight Night: Tybura vs. Delija
+  74799135  0.7193  UFC Fight Night: Smith vs. Kazama
+  74879006  0.7194  UFC: Pinas vs. Talha
+  76231316  0.7199  Noche UFC: Rendon vs. Pereira
+  75369195  0.7199  UFC Fight Night: Long vs. You
+  75369192  0.7202  UFC Fight Night: Pereira vs. Daukaus
+  60311409  0.7206  66kg W Boxing Final: Khelif (ALG) vs. Yang (CHN)
+  73424322  0.7209  UFC Fight Night: Tafa vs. Tokkos
+  74523696  0.7209  UFC Fight Night: Silva vs. Vallejos
+  72761511  0.7213  UFC Fight Night: Horth vs. Demopoulos
+  72681868  0.7216  UFC Fight Night: Fiziev vs. Bahamondes
+  76231312  0.7217  Noche UFC: Puelles vs. Silva
+  76231314  0.7219  Noche UFC: Gastelum vs. Stoltzfus
+  73424318  0.7222  UFC Fight Night: Thompson vs. Bonfim
+  78845457  0.7223  UFC 322: Brady vs. Morales (Welterweight, Main Card)
+  76231313  0.7226  Noche UFC: Hernandez vs. Ferreira
+  73852592  0.7233  Boxing: Serrano vs. Taylor
+  75077851  0.7234  UFC 319: Barboza vs. Klose
+  72604378  0.7236  UFC Fight Night: Will Buckley win by KO/TKO?
+  73424321  0.7244  UFC Fight Night: Lewis vs. Teixeira
+  78538635  0.7244  Chicago State Cougars vs. Notre Dame Fighting Irish (W)
+  74799134  0.7247  UFC Fight Night: Walker vs. Cerqueira
+  78845495  0.7254  UFC 322: Haddon vs. Wellmaker (Bantamweight, Prelims)
+  76231313  0.7256  Noche UFC: Costa vs. Coria
+  75369190  0.7258  UFC Fight Night: Sumudaerji vs. Borjas
+  75369183  0.7263  UFC: Exposito vs. Delano
+  75650926  0.7265  UFC Fight Night: Oki vs. Jones
+  75077852  0.7266  UFC 319: Meerschaert vs. Oleksiejczuk
+  74799133  0.7268  UFC Fight Night: Johns vs. Matsumoto
+  75650917  0.7275  UFC: McMillen vs. Mgoyan
+  76231314  0.7282  Noche UFC: Garcia vs. Gordon
+  76231315  0.7295  Noche UFC: Lopes vs. Silva
+  75369182  0.7299  UFC: Holmes vs. Rowston
+  74879007  0.7300  UFC: Ewert vs. Panferov
+  73424317  0.7301  UFC Fight Night: Murphy vs. Moura
+  73424320  0.7302  UFC Fight Night: Landwehr vs. Charrière
+  60311300  0.7317  50kg W Boxing Final: Wu (CHN) vs. Cakiroglu (TUR)
+  76231315  0.7326  Noche UFC: Sezinando vs. Donchenko
+  73424320  0.7329  UFC Fight Night: Kline vs. Martinez
+  75650916  0.7331  UFC: Johnson vs. Abbey
+  74523696  0.7341  UFC Fight Night: Nakamura vs. Fletcher
+  75650921  0.7341  UFC: Miller vs. Gandra
+  75650923  0.7354  UFC: Congdon vs. Lebosnoyani
+  73092060  0.7356  UFC 317: McKinney vs. Borshchev
+  59162340  0.7357  UFC Fight Night: Dober vs. Silva
+  74879006  0.7359  UFC: Mangos vs. da Silva
+  74239488  0.7368  UFC Fight Night: Yahya vs. Nguyen
+  72562257  0.7378  UFC Fight Night: Usman vs. Buckley
+  72562257  0.7384  UFC Fight Night: Durden vs. Ochoa
+  75650917  0.7401  UFC: Haig vs. Oleksiejczuk
+  76231317  0.7409  Noche UFC: Reese vs. Dumas
+  74879005  0.7411  UFC: Miller vs. Drago
+  74239487  0.7416  UFC Fight Night: Yan vs. McGhee
+  72681873  0.7420  UFC Fight Night: Ko vs. Elliott
+  75369194  0.7429  UFC Fight Night: Kavanagh vs. Johnson
+  76231312  0.7430  Noche UFC: Medina vs. Todorović
+  78845515  0.7438  Will the fight be won by KO or TKO?
+  78845496  0.7438  Will the fight be won by KO or TKO?
+  78845467  0.7438  Will the fight be won by KO or TKO?
+  78845445  0.7438  Will the fight be won by KO or TKO?
+  78845455  0.7438  Will the fight be won by KO or TKO?
+  78845517  0.7438  Will the fight be won by KO or TKO?
+  78845487  0.7438  Will the fight be won by KO or TKO?
+  78845476  0.7438  Will the fight be won by KO or TKO?
+  78845507  0.7438  Will the fight be won by KO or TKO?
+  78845485  0.7438  Will the fight be won by KO or TKO?
+  78845466  0.7438  Will the fight be won by KO or TKO?
+  76231312  0.7473  Noche UFC: Font vs. Martinez
+  75650921  0.7475  UFC: Nallo vs. Silva
+  75650920  0.7527  UFC: Ho vs. Silva
+  78330466  0.7621  Will a fighter win by knockout?

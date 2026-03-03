@@ -1,0 +1,2229 @@
+# Politics_World - Politics_World_Elections
+# count=2226, avg_conf=0.5657
+====================================================================================================
+  71768202  0.4417  Will Cătălin Cîrstoiu be the next Mayor of Bucharest?
+  71768090  0.4479  Will Dan Trifu be the next Mayor of Bucharest?
+  71768122  0.4496  Will Robert Negoiță be the next Mayor of Bucharest?
+  71768140  0.4594  Will Sebastian Burduja be the next Mayor of Bucharest?
+  71768128  0.4598  Will Marian Vanghelie be the next Mayor of Bucharest?
+  62792347  0.4621  Will Gerald Murnane win the Nobel prize in literature?
+  71768095  0.4623  Will Virgil Alexandru Zidaru be the next Mayor of Bucharest?
+  71768061  0.4646  Will Cristian Popescu Piedone be the next Mayor of Bucharest?
+  70622825  0.4656  Will Javier Milei attend Pope Francis' funeral?
+  71768073  0.4693  Will Ciprian Ciucu be the next Mayor of Bucharest?
+  71768163  0.4710  Will Anca Alexandrescu be the next Mayor of Bucharest?
+  71768151  0.4717  Will Ana-Maria Ciceală be the next Mayor of Bucharest?
+  68323493  0.4727  Will Raymond Burke be the next pope?
+  68323599  0.4728  Will Jean-Marc Aveline be the next pope?
+  70569140  0.4749  Will the next Pope be Black?
+  77346786  0.4751  Will László Krasznahorkai win the 2025 Nobel Prize in Literature?
+  71311953  0.4779  Will Pope Leo visit Turkey first?
+  71768101  0.4798  Will Vlad Gheorghe be the next Mayor of Bucharest?
+  70622981  0.4802  Will Barack Obama attend Pope Francis' funeral?
+  68323643  0.4807  Will Mark Ouellet be the next pope?
+  70584085  0.4810  Will the next Pope be named Stephen?
+  70584038  0.4815  Will the next Pope be named Innocent?
+  71768111  0.4816  Will Călin Georgescu be the next Mayor of Bucharest?
+  68323540  0.4829  Will Robert Sarah be the next pope?
+  68323441  0.4874  Will Angelo Scola be the next pope?
+  77346782  0.4874  Will Gerald Murnane win the 2025 Nobel Prize in Literature?
+  64728574  0.4881  Will Bernadus Swartbooi be the next President of Namibia?
+  77346770  0.4882  Will Haruki Murakami win the 2025 Nobel Prize in Literature?
+  70584094  0.4886  Will the next Pope be named Adrian?
+  68323612  0.4888  Will Malcolm Ranjith be the next pope?
+  77346810  0.4889  Will Ngũgĩ wa Thiong’o win the 2025 Nobel Prize in Literature?
+  67802407  0.4900  Leonardo DiCaprio engaged in 2025?
+  70569295  0.4900  Will the next Pope be a manlet?
+  78944028  0.4904  Will Chun Jae-soo win the 2026 Busan Mayoral Election?
+  73996748  0.4913  Will no new person be named the next editor-in-chief of Vogue?
+  70622851  0.4919  Will Giorgia Meloni attend Pope Francis' funeral?
+  51866977  0.4922  Who will get more votes in Taiwan Election: Hou Yu-ih (侯友宜) or Ko Wen-je (柯文哲)?
+  78944008  0.4922  Will Suh Byung-soo win the 2026 Busan Mayoral Election?
+  71311947  0.4922  Will Pope Leo visit Peru first?
+  71311958  0.4928  Will Pope Leo visit Spain first?
+  70622802  0.4929  Will Keir Starmer attend Pope Francis' funeral?
+  77346791  0.4932  Will Adonis win the 2025 Nobel Prize in Literature?
+  70584023  0.4934  Will the next Pope be named Clement?
+  64570115  0.4937  Michel Barnier out as prime minister of France in 2024?
+  53764129  0.4937  Will Norway win Eurovision 2024?
+  70583933  0.4937  Will the next Pope be named Benedict?
+  71311985  0.4939  Will Pope Leo visit Mexico first?
+  72050471  0.4952  Will Lee Jae-myung win Chungnam State (충청남도) in the 2025 Korean Presidential ele
+  78943703  0.4952  Will Won Hee-ryong win the 2026 Gyeonggi Province Gubernatorial Election?
+  70309924  0.4955  Will Kim Kyung-soo be the Democratic Party of Korea's candidate for president?
+  78241148  0.4956  Will Amelia rank #1 among girl names on the SSA’s official list for 2025?
+  63119515  0.4958  Will Bruno Engler win the 2024 Belo Horizonte mayoral election?
+  65566357  0.4959  Will Heidi Reichinnek be the next Chancellor of Germany?
+  71124521  0.4962  Will the next Pope be in favor of Ordaining Female Deacons?
+  70584053  0.4962  Will the next Pope be named Urban?
+  71768116  0.4967  Will George Tuță be the next Mayor of Bucharest?
+  68323709  0.4971  Will  Anders Arborelius be the next pope?
+  40113914  0.4972  Will Norway win Eurovision 2023?
+  68323625  0.4972  Will Jose Tolentino de Mendonca be the next pope?
+  31999065  0.4973  Will Fratelli D'italia or Partito Democratico win more seats in the Italian Cham
+  78944003  0.4974  Will Cho Kyoung-tae win the 2026 Busan Mayoral Election?
+  68323586  0.4976  Will Baldassare Reina be the next pope?
+  70914866  0.4979  Will the next Government of Australia be a Labor minority?
+  78843205  0.4982  Will Canada participate in Eurovision 2026?
+  53764143  0.4993  Will Lithuania win Eurovision 2024?
+  70569425  0.4994  Will the next Pope be trans?
+  68323751  0.4997  Will Jean-Claude Hollerich be the next pope?
+  78943667  0.5001  Will Yeom Tae-yeong win the 2026 Gyeonggi Province Gubernatorial Election?
+  45825564  0.5001  Will Traoré remain President of Burkina Faso through August 31?
+  62792358  0.5005  Will Can Xue win the Nobel prize in literature?
+  70622960  0.5015  Will Joe Biden attend Pope Francis' funeral?
+  62792427  0.5016  Will Ko Un win the Nobel prize in literature?
+  70584121  0.5017  Will the next Pope be given another name?
+  70583967  0.5017  Will the next Pope be named Gregory?
+  66378790  0.5021  Will Jaime Battiste be the next leader of the Canadian Liberal Party?
+  51591316  0.5023  Will Pope Francis remain Pope through June 30?
+  66546157  0.5024  Will Katerina Sakellaropoulou be next Greek President?
+  77947291  0.5027  Will no one be appointed Vice Chair of China’s Central Military Commission by Ju
+  76515559  0.5028  Will North Macedonia participate in Eurovision 2026?
+  71311979  0.5028  Will Pope Leo visit the Philippines first?
+  53764237  0.5030  Will Armenia win Eurovision 2024?
+  61393560  0.5030  Scholz out as chancellor of Germany in 2024?
+  70583958  0.5030  Will the next Pope be named Leo?
+  68323633  0.5034  Will Francis Arinze be the next pope?
+  77947225  0.5036  Will Li Qiaoming be the next Vice Chair of China’s Central Military Commission?
+  68323719  0.5039  Will Kurt Koch be the next pope?
+  69903400  0.5043  Will Won Hee-ryong be elected the next president of South Korea?
+  78714759  0.5050  Will Thailand take second place in Miss Universe 2025?
+  68323664  0.5051  Will Charles Maung Bo be the next pope?
+  70584108  0.5055  Will the next Pope be named Boniface?
+  72050476  0.5060  Will Lee Jae-myung win Daejeon (대전) in the 2025 Korean Presidential election?
+  70622760  0.5061  Will Vladimir Putin attend Pope Francis' funeral?
+  70583894  0.5064  Will the next Pope be named Francis?
+  68323393  0.5064  Will Luis Antonio Tagle be the next pope?
+  78944048  0.5065  Will Cho Kuk win the 2026 Busan Mayoral Election?
+  57205441  0.5068  Will Mehrdad Bazrpash be the next President of Iran?
+  72516096  0.5068  Will Art Power win the 2025 Queen Elizabeth II Jubilee Stakes?
+  78641310  0.5069  Will Ana-Maria Ciceală finish second in the 2025 Bucharest mayoral by-election?
+  61791585  0.5070  Will TS-LKD win the most seats in the 2024 Lithuania legislative election?
+  30653632  0.5072  Will Liz Truss be the next UK Conservative Party Leader?
+  72050471  0.5074  Will Lee Jae-myung win Jeju Province (제주도) in the 2025 Korean Presidential elect
+  71124517  0.5074  Will the next Pope be in favor of Reassessing Humanae Vitae?
+  63119505  0.5077  Will Fuad Noman win the 2024 Belo Horizonte mayoral election?
+  66376711  0.5078  Will Chrystia Freeland be the next leader of the Canadian Liberal Party?
+  30653568  0.5078  Will Penny Mordaunt be the next UK Conservative Party Leader?
+  72609402  0.5080  Will Vienna host Eurovision 2026?
+  73735101  0.5080  Will Greta Thunberg win the Nobel Peace Prize in 2025?
+  78641228  0.5080  Will Cristian Popescu Piedone finish second in the 2025 Bucharest mayoral by-ele
+  70569139  0.5081  Will the next Pope be gay?
+  77774215  0.5082  Will António Guterres win the Nobel Peace Prize in 2026?
+  78943698  0.5082  Will Kim Moon-soo win the 2026 Gyeonggi Province Gubernatorial Election?
+  71802573  0.5083  Will Pope Leo XIV meet with Lula da Silva in 2025?
+  61195990  0.5085  Will Ricardo Nunes win the 2024 São Paulo mayoral election?
+  66379553  0.5086  Will Ruby Dhalla be the next leader of the Canadian Liberal Party?
+  75730563  0.5088  Will Bruno Retailleau be the next Prime Minister of France?
+  77338027  0.5088  Will Bruno Retailleau be the next Prime Minister of France?
+  67813271  0.5090  Will Bill Gates be named in Epstein files?
+  30653143  0.5093  Will Tom Tugendhat be the next UK Conservative Party Leader?
+  78943713  0.5095  Will Lee Jun-seok win the 2026 Gyeonggi Province Gubernatorial Election?
+  71311969  0.5095  Will Pope Leo visit Argentina first?
+  63807622  0.5096  Will Tamirat Tola win the 2024 Men’s New York City Marathon?
+  53764083  0.5096  Will Sweden win Eurovision 2024?
+  64728594  0.5097  Will Job Amupanda be the next President of Namibia?
+  70710355  0.5099  Will new pope be 70+ years old?
+  77468783  0.5099  Will Asaad Alnajjar win the 2026 Los Angeles mayoral election?
+  78944018  0.5100  Will Park Jae-ho win the 2026 Busan Mayoral Election?
+  73735044  0.5100  Will Ursula von der Leyen win the Nobel Peace Prize in 2025?
+  77338074  0.5101  Will Catherine Vautrin be the next Prime Minister of France?
+  75730621  0.5101  Will Catherine Vautrin be the next Prime Minister of France?
+  59916588  0.5102  Nasrallah remains leader of Hezbollah through August?
+  65125829  0.5102  Will Catherine Vautrin be the next French Prime Minister?
+  77338119  0.5103  Will Boris Vallaud be the next Prime Minister of France?
+  64201443  0.5104  Will Holly Cairns be the next Prime Minister of Ireland?
+  68323417  0.5104  Will Peter Turkson be the next pope?
+  66376728  0.5104  Will Dominic LeBlanc be the next leader of the Canadian Liberal Party?
+  30681731  0.5105  Will Kemi Badenoch be the next UK Conservative Party Leader?
+  57205412  0.5105  Will Saeed Jalili be the next President of Iran?
+  76048467  0.5106  Will João Ferreira be elected Mayor of Lisbon?
+  78943708  0.5107  Will Ahn Cheol-soo win the 2026 Gyeonggi Province Gubernatorial Election?
+  77774200  0.5108  Will Elon Musk win the Nobel Peace Prize in 2026?
+  78944023  0.5110  Will Choi In-ho win the 2026 Busan Mayoral Election?
+  53764198  0.5111  Will Georgia win Eurovision 2024?
+  76515562  0.5111  Will Spain participate in Eurovision 2026?
+  65566147  0.5112  Will Robert Habeck be the next Chancellor of Germany?
+  76098663  0.5116  Will "La Grazia" win the 2025 Golden Lion?
+  70583915  0.5117  Will the next Pope be named John?
+  71311941  0.5117  Will Pope Leo visit Germany first?
+  78943688  0.5118  Will Kim Eun-hye win the 2026 Gyeonggi Province Gubernatorial Election?
+  68323452  0.5120  Will Wim Eijk be the next pope?
+  76098591  0.5122  Will "Ri gua zhong tian (The Sun Rises on Us All)" win the 2025 Golden Lion?
+  78984751  0.5123  Will Clémence Guetté win the 2027 French presidential election?
+  63119377  0.5125  Will Evandro Leitão win the 2024 Fortaleza mayoral election?
+  72050470  0.5126  Will Lee Jae-myung win Gyeongbuk State (경상북도) in the 2025 Korean Presidential el
+  68323687  0.5126  Will Robert Francis Prevost be the next pope?
+  72050473  0.5129  Will Lee Jae-myung win Gyeongnam State (경상남도) in the 2025 Korean Presidential el
+  65566164  0.5130  Will Olaf Scholz be the next Chancellor of Germany?
+  65125755  0.5131  Will Bruno Retailleau be the next French Prime Minister?
+  40113881  0.5139  Will Sweden win Eurovision 2023?
+  61196080  0.5146  Will Marina Helena win the 2024 São Paulo mayoral election?
+  66378746  0.5146  Will Anita Anand be the next leader of the Canadian Liberal Party?
+  70622904  0.5149  Will Xi Jinping attend Pope Francis' funeral?
+  67501966  0.5151  Will Armenia win Eurovision 2025?
+  78982241  0.5151  Aleksandar Vučić out as Serbian President by June 30, 2026?
+  78944033  0.5154  Will Lee Jae-sung win the 2026 Busan Mayoral Election?
+  68323473  0.5154  Will Mario Grech be the next pope?
+  70914895  0.5154  Will the next Government of Australia be a Liberal–National minority?
+  71124520  0.5157  Will the next Pope be in favor of Blessing Same-Sex Couples?
+  78944013  0.5158  Will Park Seong-hoon win the 2026 Busan Mayoral Election?
+  76048458  0.5158  Will Carlos Moedas be elected Mayor of Lisbon?
+  70951437  0.5159  Will Poilievre regain a seat in Canadian Parliament in 2025?
+  76048471  0.5159  Will Bruno Mascarenhas be elected Mayor of Lisbon?
+  78036363  0.5161  Will Pierre-Yves Bournazel win the Paris mayor election?
+  67502004  0.5162  Will Azerbaijan win Eurovision 2025?
+  64201433  0.5163  Will Pearse Doherty be the next Prime Minister of Ireland?
+  53764056  0.5165  Will Italy win Eurovision 2024?
+  70584061  0.5165  Will the next Pope be named Alexander?
+  72050468  0.5169  Will Lee Jae-myung win Ulsan (울산) in the 2025 Korean Presidential election?
+  79030151  0.5170  Will Christian Estrosi win the 2026 Nice mayoral election?
+  78036373  0.5170  Will Sophia Chikirou win the Paris mayor election?
+  57205506  0.5171  Will Hassan Rouhani be the next President of Iran?
+  64997822  0.5175  Irakli Kobakhidze out as Georgia PM in 2024?
+  53764256  0.5177  Will Spain win Eurovision 2024?
+  65037957  0.5179  South Korean Dem Party leader arrested by Friday?
+  66105917  0.5179  Will Mark Carney be the next Canadian Prime Minister?
+  62559051  0.5179  Will Maria do Rosário win the 2024 Porto Alegre mayoral election?
+  78241158  0.5180  Will Mia rank #1 among girl names on the SSA’s official list for 2025?
+  65125818  0.5181  Will Michel Barnier be the next French Prime Minister?
+  73735069  0.5181  Will António Guterres win the Nobel Peace Prize in 2025?
+  63119233  0.5182  Will Cristina Graeml win the 2024 Curitiba mayoral election?
+  76515563  0.5183  Will Netherlands participate in Eurovision 2026?
+  78943993  0.5184  Will Park Heong-joon win the 2026 Busan Mayoral Election?
+  61196017  0.5185  Will José Luiz Datena win the 2024 São Paulo mayoral election?
+  77174086  0.5185  Will Hadi Choopan win Mr. Olympia 2025?
+  71802573  0.5185  Will Pope Leo XIV meet with MrBeast in 2025?
+  73735059  0.5185  Will Elon Musk win the Nobel Peace Prize in 2025?
+  72050474  0.5185  Will Lee Jae-myung win Busan (부산) in the 2025 Korean Presidential election?
+  63119298  0.5187  Will André Fernandes win the 2024 Fortaleza mayoral election?
+  73735049  0.5189  Will Marco Rubio win the Nobel Peace Prize in 2025?
+  73248088  0.5191  Will Charlie Kirk be TIME's Person of the Year for 2025?
+  69732811  0.5192  Zimbabwe President Mnangagwa out before June?
+  53764065  0.5193  Will Croatia win Eurovision 2024?
+  78638535  0.5193  Will Jeannette Jara and Johannes Kaiser advance to the runoff?
+  64728550  0.5193  Will McHenry Venaani be the next President of Namibia?
+  76515561  0.5194  Will Germany participate in Eurovision 2026?
+  78241143  0.5194  Will Emma rank #1 among girl names on the SSA’s official list for 2025?
+  57205489  0.5195  Will Ali Shamkhani be the next President of Iran?
+  77947210  0.5196  Will Liu Zhenli be the next Vice Chair of China’s Central Military Commission?
+  70025524  0.5196  Will Won Hee-ryong be the People's Power Party candidate for president?
+  72050474  0.5196  Will Lee Jae-myung win Seoul (서울) in the 2025 Korean Presidential election?
+  70583997  0.5197  Will the next Pope be named Pius?
+  64728564  0.5197  Will Henk Mudge be the next President of Namibia?
+  68323798  0.5198  Will another person be the next Pope?
+  51705745  0.5198  Will 2024 be better than 2023?
+  18161985  0.5198  Will Armin Laschet be the next chancellor of Germany?
+  76098611  0.5199  Will "Silent Friend" win the 2025 Golden Lion?
+  70025454  0.5202  Will Kim Moon-soo be the People's Power Party candidate for president?
+  78943673  0.5202  Will Han Jun-ho win the 2026 Gyeonggi Province Gubernatorial Election?
+  70348154  0.5203  Will the Liberals win the Seat of Bennelong in the 2025 Australian Election?
+  68323509  0.5204  Will Fridolin Ambongo Besungu be the next pope?
+  65566186  0.5205  Will Christian Lindner be the next Chancellor of Germany?
+  77774190  0.5206  Will Julian Assange win the Nobel Peace Prize in 2026?
+  78641263  0.5207  Will Vlad Gheorghe finish second in the 2025 Bucharest mayoral by-election?
+  78673165  0.5213  Will Nasry Juan Asfura Zablah win the 2025 Honduras presidential election?
+  71353937  0.5213  Will Alassane Ouattara win the 2025 Ivory Coast presidential election?
+  61941269  0.5214  Nasrallah remains Hezbollah leader through Oct 31?
+  78633204  0.5216  Friedrich Merz out as Chancellor of Germany by March 31?
+  64201333  0.5216  Will Jack Chambers be the next Prime Minister of Ireland?
+  72054053  0.5216  Will the next Prime Minister of Romania be Vasile Dîncu?
+  77722958  0.5217  Will the next Dutch government be VVD + CDA?
+  70137371  0.5217  Will Georgia finish in the 2025 Eurovision top 10?
+  66378773  0.5217  Will Sean Fraser be the next leader of the Canadian Liberal Party?
+  43065324  0.5218  Will Shiv Roy be CEO at the end of Succession S4?
+  44484787  0.5218  Will Pope Francis remain Pope through 2023?
+  69903414  0.5218  Will Ahn Cheol-soo be elected the next president of South Korea?
+  67502129  0.5218  Will Georgia win Eurovision 2025?
+  68323733  0.5219  Will Fernando Filoni be the next pope?
+  79027088  0.5220  Will Mark J.N. Doyle be the next Prime Minister of Saint Vincent and the Grenadi
+  69903434  0.5221  Will Kim Moon-soo be elected the next president of South Korea?
+  68323460  0.5221  Will Péter Erdő be the next pope?
+  62559041  0.5222  Will Sebastião Melo win the 2024 Porto Alegre mayoral election?
+  73735083  0.5222  Will María Corina Machado win the Nobel Peace Prize in 2025?
+  64771015  0.5226  Will Romuald Starosielec be the next President of Poland?
+  63119537  0.5227  Will another candidate win the 2024 Belo Horizonte mayoral election?
+  57205472  0.5227  Will Ali Akbar Salehi be the next President of Iran?
+  79030146  0.5227  Will Eric Ciotti win the 2026 Nice mayoral election?
+  58476864  0.5228  Nasrallah remains leader of Hezbollah through July?
+  78944038  0.5228  Will Kim Young-choon win the 2026 Busan Mayoral Election?
+  42747581  0.5228  Will Alexander Lukashenko remain President of Belarus through June 30?
+  76048463  0.5228  Will Alexandra Leitão be elected Mayor of Lisbon?
+  78943657  0.5233  Will Kim Byeong-ju win the 2026 Gyeonggi Province Gubernatorial Election?
+  77722913  0.5234  Will the next Dutch government be PVV + VVD?
+  72361580  0.5236  Will Trygve Slagsvold Vedum become the next Prime Minister of Norway?
+  78036378  0.5239  Will Thierry Mariani win the Paris mayor election?
+  75644396  0.5239  Will Karel Havlíček be the next Prime Minister of the Czech Republic after the e
+  78944043  0.5240  Will Hong Soon-heon win the 2026 Busan Mayoral Election?
+  48292976  0.5240  Will Patrick McHenry be the next Speaker?
+  70914881  0.5244  Will the next Government of Australia be a Liberal–National majority?
+  78036383  0.5247  Will Sarah Knafo win the Paris mayor election?
+  64574737  0.5251  Pam Bondi confirmed as Attorney General?
+  78888098  0.5251  Will Claudia Vanessa Dobles Camargo win the 2026 Costa Rican presidential electi
+  78943723  0.5251  Will Na Kyung-won win the 2026 Gyeonggi Province Gubernatorial Election?
+  77722923  0.5252  Will the next Dutch government be PVV + CDA?
+  64447260  0.5252  Will Mahamudu Bawumia be the next President of Ghana?
+  57205480  0.5253  Will Abdolnaser Hemmati be the next President of Iran?
+  72050472  0.5254  Will Lee Jae-myung win Gyeonggi Province (경기도) in the 2025 Korean Presidential e
+  77104944  0.5254  Will Soraya Martinez Ferrada win the 2025 Montreal mayor election?
+  61791768  0.5256  Will LVŽS win the most seats in the 2024 Lithuania legislative election?
+  68323565  0.5257  Will Matteo Zuppi be the next pope?
+  68323403  0.5258  Will Pietro Parolin be the next pope?
+  78714829  0.5259  Will Pakistan take second place in Miss Universe 2025?
+  78943652  0.5260  Will Kim Dong-yeon win the 2026 Gyeonggi Province Gubernatorial Election?
+  78674364  0.5261  Will Thailand win Miss Universe 2025?
+  62922858  0.5261  Will Ion Chicu win the 2024 Moldova presidential election?
+  77722918  0.5262  Will the next Dutch government be PVV + VVD + CDA?
+  69902690  0.5262  Will Lee Jun-seok be elected the next president of South Korea?
+  72050470  0.5263  Will Lee Jae-myung win Sejong (세종) in the 2025 Korean Presidential election?
+  68323525  0.5264  Will Pierbattista Pizzaballa be the next pope?
+  73735073  0.5265  Will Zuriel Oduwole win the Nobel Peace Prize in 2025?
+  72034550  0.5266  Will the next government of Suriname be something else?
+  65566201  0.5267  Will Jan van Aken be the next Chancellor of Germany?
+  57205452  0.5267  Will Ali Larijani be the next President of Iran?
+  64728522  0.5268  Will Netumbo Nandi-Ndaitwah be the next President of Namibia?
+  53764225  0.5269  Will Australia win Eurovision 2024?
+  64201319  0.5269  Will Mary Lou McDonald be the next Prime Minister of Ireland?
+  78943693  0.5269  Will Han Dong-hoon win the 2026 Gyeonggi Province Gubernatorial Election?
+  57205380  0.5269  Will Mohammad Mokhber be the next President of Iran?
+  78984676  0.5269  Will Nicolas Dupont-Aignan win the 2027 French presidential election?
+  66379566  0.5271  Will Frank Baylis be the next leader of the Canadian Liberal Party?
+  67502529  0.5271  Will Sweden win Eurovision 2025?
+  78943683  0.5272  Will Yoo Seong-min win the 2026 Gyeonggi Province Gubernatorial Election?
+  58476891  0.5272  Ruto out as President of Kenya in June?
+  78241163  0.5274  Will Sophia rank #1 among girl names on the SSA’s official list for 2025?
+  70583428  0.5274  Will the next Pope after Francis be from Italy?
+  68446093  0.5275  Republika Srpska declares independence?
+  67304966  0.5276  Will Elon Musk win Nobel Peace Prize in 2025?
+  79030157  0.5276  Will Jean-Marc Governatori win the 2026 Nice mayoral election?
+  78240960  0.5277  Will Oliver rank #1 among boy names on the SSA’s official list for 2025?
+  78714911  0.5277  Will Japan take second place in Miss Universe 2025?
+  70583441  0.5277  Will the next Pope after Francis be from Ghana?
+  73735039  0.5279  Will Julian Assange win the Nobel Peace Prize in 2025?
+  70185110  0.5280  Will Brice Oligui Nguema win the 2025 Gabonese Presidential election?
+  70583453  0.5280  Will the next Pope after Francis be from the Democratic Republic of the Congo?
+  70627215  0.5284  Will Lakas win the most seats in the House of Representatives in the 2025 Philip
+  78638479  0.5285  Zohran Mamdani out as mayor of NYC before 2027?
+  65125730  0.5286  Will François Baroin be the next French Prime Minister?
+  78984610  0.5286  Will François Ruffin win the 2027 French presidential election?
+  53764244  0.5286  Will Poland win Eurovision 2024?
+  73735088  0.5289  Will Chow Hang‑tung win the Nobel Peace Prize in 2025?
+  78036368  0.5289  Will David Belliard win the Paris mayor election?
+  77722963  0.5290  Will the next Dutch government be VVD + D66?
+  76098583  0.5290  Will "The Voice of Hind Rajab" win the 2025 Golden Lion?
+  62224946  0.5292  Will Ossufo Momade win the Mozambican presidential election?
+  57205396  0.5293  Will Gholam-Hossein Esmaeili be the next President of Iran?
+  70583980  0.5293  Will the next Pope be named Paul?
+  64728534  0.5296  Will Panduleni Itula be the next President of Namibia?
+  69902756  0.5296  Will Kim Kyoung-soo be elected the next president of South Korea?
+  77774255  0.5296  Will Ahmed al-Sharaa win the Nobel Peace Prize in 2026?
+  70584006  0.5297  Will the next Pope be named John Paul?
+  78943678  0.5298  Will Lee Un-ju win the 2026 Gyeonggi Province Gubernatorial Election?
+  71193831  0.5299  Friedrich Merz out as Chancellor of Germany in 2025?
+  78984655  0.5299  Will Dominique de Villepin win the 2027 French presidential election?
+  61791865  0.5300  Will another party win the most seats in the 2024 Lithuania legislative election
+  77346778  0.5300  Will Can Xue win the 2025 Nobel Prize in Literature?
+  66553263  0.5301  Will Louka T. Katseli be next Greek President?
+  78714865  0.5301  Will Israel take second place in Miss Universe 2025?
+  64770995  0.5302  Will Marek Jakubiak be the next President of Poland?
+  55744155  0.5304  Will Velenkosini Hlabisa be the next President of South Africa?
+  64201528  0.5306  Will Conor McGregor be the next Prime Minister of Ireland?
+  71124518  0.5306  Will the next Pope be in favor of Promoting a “Synodal Church”?
+  68325055  0.5307  Will the next Pope be from Africa?
+  75644409  0.5307  Will Kateřina Konečná be the next Prime Minister of the Czech Republic after the
+  75201714  0.5309  Will TPRRP win the most seats in the 2025 Samoa Legislative Assembly election?
+  64447370  0.5310  Will Alan John Kyerematen be the next President of Ghana?
+  78714779  0.5313  Will Venezuela take second place in Miss Universe 2025?
+  74080467  0.5314  Will Mintsuku hold the second most seats in the House of Councillors following t
+  61195974  0.5316  Will Guilherme Boulos win the 2024 São Paulo mayoral election?
+  64771028  0.5317  Will Agnieszka Dziemianowicz-Bąk be the next President of Poland?
+  67502388  0.5318  Will Portugal win Eurovision 2025?
+  67502454  0.5319  Will Serbia win Eurovision 2025?
+  77774265  0.5320  Will Mohammed bin Salman win the Nobel Peace Prize in 2026?
+  70432033  0.5320  Will Israel be the Televote Winner in the Eurovision 2025 Grand Final?
+  70583419  0.5321  Will the next Pope after Francis be from Hungary?
+  78944757  0.5322  Another MP leaves Conservative Party of Canada by December 31?
+  79030168  0.5324  Will Mireille Damiano win the 2026 Nice mayoral election?
+  77338083  0.5324  Will Roland Lescure be the next Prime Minister of France?
+  75730640  0.5324  Will Roland Lescure be the next Prime Minister of France?
+  78714891  0.5325  Will Poland take second place in Miss Universe 2025?
+  76026747  0.5328  Will CDA be part of the next Government of the Netherlands?
+  77722933  0.5328  Will the next Dutch government be PVV + VVD + D66?
+  65410220  0.5328  Will Sergei Bobrikov win the 2025 Belarus Presidential Election?
+  79027098  0.5329  Will Ivan O’Neal be the next Prime Minister of Saint Vincent and the Grenadines?
+  76026750  0.5330  Will Denk be part of the next Government of the Netherlands?
+  76026746  0.5330  Will NSC be part of the next Government of the Netherlands?
+  65730738  0.5330  Will Putin remain President of Russia through June?
+  77722938  0.5332  Will the next Dutch government be PVV + VVD + CDA + D66?
+  59001492  0.5334  Suella Braverman next Conservative party leader?
+  74001538  0.5335  Will Andrónico Rodríguez win the most votes in the first round of the 2025 Boliv
+  68325109  0.5336  Will there not be a new Pope in 2025?
+  67502505  0.5337  Will Spain win Eurovision 2025?
+  78674583  0.5337  Will Cuba win Miss Universe 2025?
+  70627167  0.5337  Will Nacionalista win the most seats in the House of Representatives in the 2025
+  76047931  0.5337  Will Pasquale Tridico win Calabria Regional Election?
+  66553230  0.5338  Will Nikos Konstantopoulos be next Greek President?
+  66657622  0.5339  Will Maria Damanaki be next Greek President?
+  64201514  0.5339  Will Jim O'Callaghan be the next Prime Minister of Ireland?
+  66184223  0.5339  Will Benjamin Netanyahu attend presidential inauguration?
+  64770977  0.5339  Will Szymon Hołownia be the next President of Poland?
+  57205462  0.5340  Will Javad Zarif be the next President of Iran?
+  77722973  0.5340  Will the next Dutch government be VVD + CDA + D66?
+  67502301  0.5341  Will Montenegro win Eurovision 2025?
+  69902722  0.5341  Will Lee Jae-myung be elected the next president of South Korea?
+  69903510  0.5341  Will Hwang Kyo-ahn be elected the next president of South Korea?
+  64013979  0.5342  Will Nicolae Ciucă win the 2024 Romanian Presidential election?
+  61791610  0.5342  Will LSDP win the most seats in the 2024 Lithuania legislative election?
+  63119473  0.5342  Will another candidate win the 2024 Fortaleza mayoral election?
+  70185178  0.5343  Will Joseph Lapensée Essigone win the 2025 Gabonese Presidential election?
+  65125856  0.5344  Will Roland Lescure be the next French Prime Minister?
+  78240991  0.5347  Will Lucas rank #1 among boy names on the SSA’s official list for 2025?
+  74080439  0.5349  Will Komeito hold the second most seats in the House of Councillors following th
+  77722928  0.5350  Will the next Dutch government be PVV + CDA + D66?
+  77174094  0.5351  Will Rafael Brandão win Mr. Olympia 2025?
+  72054063  0.5351  Will the next Prime Minister of Romania be Claudiu Târziu?
+  76026748  0.5351  Will VVD be part of the next Government of the Netherlands?
+  66376744  0.5352  Will Mélanie Joly be the next leader of the Canadian Liberal Party?
+  77726640  0.5353  Will Mazu win the 2025 TAB Everest?
+  67502272  0.5355  Will Malta win Eurovision 2025?
+  77338069  0.5355  Will Éric Lombard be the next Prime Minister of France?
+  75730601  0.5355  Will Éric Lombard be the next Prime Minister of France?
+  72054136  0.5356  Will the next Prime Minister of Romania be Emil Boc?
+  58444446  0.5356  Will London Breed win the San Francisco Mayoral Election?
+  74080461  0.5357  Will Reiwa Shinsengumi hold the second most seats in the House of Councillors fo
+  65406225  0.5357  Will Vladimir Putin attend presidential inauguration?
+  76026747  0.5357  Will BBB be part of the next Government of the Netherlands?
+  79030559  0.5358  Will Benny Gantz be the next Prime Minister of Israel?
+  57621806  0.5358  Will Javier Bertucci Win the 2024 Venezuela presidential election?
+  51587293  0.5358  Ayatollah Khamenei still in power in Iran by June 30?
+  78240955  0.5358  Will Noah rank #1 among boy names on the SSA’s official list for 2025?
+  57998002  0.5359  Malawi Vice President's plane found today?
+  53764073  0.5360  Will Israel win Eurovision 2024?
+  70883900  0.5360  Poilievre resigns as leader of Conservatives by Friday?
+  75730580  0.5362  Will Valérie Pécresse be the next Prime Minister of France?
+  77338036  0.5362  Will Valérie Pécresse be the next Prime Minister of France?
+  37714842  0.5363  Will Bola Tinubu be elected as President of Nigeria in the upcoming 2023 Preside
+  79030255  0.5364  Will Alexandre Dupalais win the 2026 Lyon mayoral election?
+  61791758  0.5366  Will NA win the most seats in the 2024 Lithuania legislative election?
+  57268149  0.5366  Will Suella Braverman be next UK prime minister?
+  71721593  0.5368  Will Rafał Trzaskowski win by over 12%?
+  78068772  0.5369  Will Elijah Sarratt win the 2025–2026 Biletnikoff Award?
+  75090048  0.5372  Will the 2025 Taiwanese referendum pass?
+  78979807  0.5373  Will Jagiellonia Białystok win on 2025-11-27?
+  74329187  0.5373  Will Mussab Ali win the 2025 Jersey City mayoral election?
+  77338059  0.5373  Will Pierre Moscovici be the next Prime Minister of France?
+  75730626  0.5373  Will Pierre Moscovici be the next Prime Minister of France?
+  72054119  0.5374  Will the next Prime Minister of Romania be Ionuț Dumitru?
+  57205497  0.5376  Will Mojtaba Khamenei be the next President of Iran?
+  77338101  0.5376  Will François Bayrou be the next Prime Minister of France?
+  76472447  0.5377  Will Just Kwaou-Mathey win 110m Hurdles Men at 2025 World Athletics Championship
+  70348152  0.5378  Will One Nation win the Seat of Brisbane in the 2025 Australian Election?
+  69903067  0.5379  Will Yoo Seong-min be elected the next president of South Korea?
+  75730588  0.5380  Will Jordan Bardella be the next Prime Minister of France?
+  77338041  0.5380  Will Jordan Bardella be the next Prime Minister of France?
+  71352695  0.5380  Will Luis Fernando Camacho win the 2025 Bolivia presidential election?
+  70583409  0.5381  Will the next Pope after Francis be from the Philippines?
+  69902993  0.5382  Will Oh Se-hoon be elected the next president of South Korea?
+  78240981  0.5382  Will Mateo rank #1 among boy names on the SSA’s official list for 2025?
+  71124519  0.5382  Will the next Pope be in favor of the Vatican-China Secret Accords?
+  56690078  0.5383  Will Gitanas Nauseda win the 2024 Lithuanian presidential election?
+  77722968  0.5383  Will the next Dutch government be CDA + D66?
+  78633223  0.5383  Friedrich Merz out as Chancellor of Germany before 2027?
+  65636913  0.5384  Will the Greens be part of the next German government?
+  78674438  0.5384  Will Pakistan win Miss Universe 2025?
+  78674405  0.5384  Will the Philippines win Miss Universe 2025?
+  78721912  0.5385  Will Keir Starmer say "Austerity" or "Spending Cut" during the next Prime Minist
+  39256361  0.5385  Will Vladimir Putin remain President of Russia through June 30, 2023?
+  30653345  0.5385  Will Rishi Sunak be the next UK Conservative Party Leader?
+  78984635  0.5386  Will Jean-Luc Mélenchon win the 2027 French presidential election?
+  77722908  0.5387  Will the next Dutch government be PVV + VVD + CDA + JA21 + D66?
+  68324335  0.5387  Will Justin Trudeau be named in Epstein files?
+  77774230  0.5389  Will Vladimir Putin win the Nobel Peace Prize in 2026?
+  66105854  0.5389  Will Pierre Poilievre be the next Canadian Prime Minister?
+  78673154  0.5389  Will Jorge Nelson Ávila Gutiérrez win the 2025 Honduras presidential election?
+  78240970  0.5389  Will James rank #1 among boy names on the SSA’s official list for 2025?
+  66150939  0.5391  Trudeau out in 2025?
+  75730558  0.5391  Will Lucie Castets be the next Prime Minister of France?
+  77338004  0.5391  Will Lucie Castets be the next Prime Minister of France?
+  78984721  0.5392  Will Bernard Cazeneuve win the 2027 French presidential election?
+  64495862  0.5392  Will Ivana Kekin be the next President of Croatia?
+  64201308  0.5393  Will Micheal Martin be the next Prime Minister of Ireland?
+  71802575  0.5393  Will Pope Leo XIV meet with iShowSpeed in 2025?
+  58598869  0.5394  Francois Ruffin next Prime Minister of France?
+  64201498  0.5394  Will Helen McEntee be the next Prime Minister of Ireland?
+  64771152  0.5395  Will Marek Woch be the next President of Poland?
+  75644414  0.5395  Will Andrej Babiš be the next Prime Minister of the Czech Republic after the ele
+  64242446  0.5395  Mike Huckabee confirmed as ambassador to Israel?
+  62224913  0.5396  Will Daniel Chapo win the Mozambican presidential election?
+  78073716  0.5396  John Rustad out as Leader of the Opposition in BC by Dec 31?
+  66378810  0.5397  Will Karina Gould be the next leader of the Canadian Liberal Party?
+  77774180  0.5397  Will Pope Leo XIV win the Nobel Peace Prize in 2026?
+  78714649  0.5398  Will FLING win the most seats in the 2025 Guinea-Bissau National People’s Assemb
+  72034545  0.5398  Will the next government of Suriname be NDP/ABOP?
+  72054047  0.5398  Will the next Prime Minister of Romania be Sorin Grindeanu?
+  65636903  0.5398  Will the SPD be part of the next German government?
+  71802574  0.5399  Will Pope Leo XIV meet with Recep Tayyip Erdoğan in 2025?
+  73248060  0.5400  Will Volodymyr Zelenskyy be TIME's Person of the Year for 2025?
+  76026744  0.5402  Will PvdD be part of the next Government of the Netherlands?
+  78642236  0.5403  Will Cambio por Chile hold the most seats in the Chamber of Deputies?
+  76472456  0.5404  Will Sasha Zhoya win 110m Hurdles Men at 2025 World Athletics Championships?
+  60309078  0.5404  Maduro out in 2024?
+  74080477  0.5404  Will DIY hold the second most seats in the House of Councillors following the 20
+  76098658  0.5405  Will "Nühai (Girl)" win the 2025 Golden Lion?
+  71353943  0.5406  Will Charles Blé Goudé win the 2025 Ivory Coast presidential election?
+  77338049  0.5407  Will Jean-Luc Mélenchon be the next Prime Minister of France?
+  75730606  0.5407  Will Jean-Luc Mélenchon be the next Prime Minister of France?
+  70185209  0.5407  Will Axel Stophen Ibinga Ibinga win the 2025 Gabonese Presidential election?
+  71154764  0.5407  Will Australia finish in the 2025 Eurovision top 5?
+  77774245  0.5407  Will Recep Tayyip Erdoğan win the Nobel Peace Prize in 2026?
+  67501955  0.5408  Will Albania win Eurovision 2025?
+  75730572  0.5409  Will Xavier Bertrand be the next Prime Minister of France?
+  77338031  0.5409  Will Xavier Bertrand be the next Prime Minister of France?
+  72328822  0.5410  Will the Conservative Liberals win the most seats in the 2025 Netherlands parlia
+  65125792  0.5410  Will François Bayrou be the next French Prime Minister?
+  65125767  0.5410  Will Lucie Castets be the next French Prime Minister?
+  77338115  0.5411  Will Olivier Faure be the next Prime Minister of France?
+  75730631  0.5413  Will Jean Castex be the next Prime Minister of France?
+  77338079  0.5413  Will Jean Castex be the next Prime Minister of France?
+  67501973  0.5415  Will Australia win Eurovision 2025?
+  74562327  0.5415  Will Miguel Uribe Turbay win the 2026 Colombian presidential election?
+  71311991  0.5415  Will Pope Leo visit another country first?
+  76612941  0.5417  Will Luiz Inácio Lula da Silva win the 2026 Brazilian presidential election?
+  72050476  0.5419  Will Lee Jae-myung win Gwangju (광주) in the 2025 Korean Presidential election?
+  71802575  0.5419  Will Pope Leo XIV meet with Cristiano Ronaldo in 2025?
+  78638545  0.5420  Will José Antonio Kast and Johannes Kaiser advance to the runoff?
+  70432037  0.5421  Will Israel be the Jury Winner in the Eurovision 2025 Grand Final?
+  75730616  0.5422  Will Bernard Cazeneuve be the next Prime Minister of France?
+  77338055  0.5422  Will Bernard Cazeneuve be the next Prime Minister of France?
+  72034518  0.5422  Will the next government of Suriname be NDP/NPS/ABOP?
+  66105865  0.5422  Will Chrystia Freeland be the next Canadian Prime Minister?
+  71160227  0.5423  Will Francesca Muñoz win the Chilean presidential election?
+  71154756  0.5424  Will Israel finish in the 2025 Eurovision top 5?
+  64770970  0.5425  Will Rafał Trzaskowski be the next President of Poland?
+  71193746  0.5425  Will the next Pope be a dark horse candidate?
+  71802572  0.5425  Will Pope Leo XIV meet with Vladimir Putin in 2025?
+  78984691  0.5427  Will François Bayrou win the 2027 French presidential election?
+  57205402  0.5427  Will Moshen Rezaee be the next President of Iran?
+  77722898  0.5427  Will the next Dutch government be PVV + VVD + CDA + JA21?
+  73735054  0.5428  Will Keir Starmer win the Nobel Peace Prize in 2025?
+  61195961  0.5428  Will Pablo Marçal win the 2024 São Paulo mayoral election?
+  66546128  0.5429  WIll Christos Rammos be next Greek President?
+  62922802  0.5429  Will Alexandr Stoianoglo win the 2024 Moldova presidential election?
+  75730597  0.5430  Will Gérald Darmanin be the next Prime Minister of France?
+  77338045  0.5430  Will Gérald Darmanin be the next Prime Minister of France?
+  69903456  0.5430  Will Cho Kuk be elected the next president of South Korea?
+  72405204  0.5430  Will the People's Party for Freedom and Democracy win the second most seats in t
+  66553217  0.5431  Will Kostas Kyriakou be next Greek President?
+  77723043  0.5431  Will the next Dutch government be another combination?
+  79030543  0.5431  Will Naftali Bennett be the next Prime Minister of Israel?
+  78982242  0.5431  Aleksandar Vučić out as Serbian President by December 31, 2025?
+  62559083  0.5431  Will another candidate win the 2024 Porto Alegre mayoral election?
+  77774175  0.5431  Will Donald Trump win the Nobel Peace Prize in 2026?
+  78984585  0.5432  Will Éric Zemmour win the 2027 French presidential election?
+  78888128  0.5432  Will Luis Esteban Amador Jiménez win the 2026 Costa Rican presidential election?
+  71352668  0.5434  Will Antonio Saravia win the 2025 Bolivia presidential election?
+  55744140  0.5435  Will Julius Malema be the next President of South Africa?
+  49867409  0.5435  Will Putin be reelected?
+  69903581  0.5436  Will Kwon Yeong-guk be elected the next president of South Korea?
+  71352721  0.5437  Will Eduardo del Castillo win the 2025 Bolivia presidential election?
+  61793161  0.5437  Will Anura Dissanayake win the Sri Lankan presidential election?
+  70622950  0.5437  Will Narendra Modi attend Pope Francis' funeral?
+  77104675  0.5438  Will Trump and Putin meet next in Australia?
+  78984686  0.5439  Will Valérie Pécresse win the 2027 French presidential election?
+  27017292  0.5439  Will Alexander Lukashenko remain President of Belarus through 2022?
+  78888173  0.5440  Will Boris Molina Acevedo win the 2026 Costa Rican presidential election?
+  76026749  0.5440  Will FvD be part of the next Government of the Netherlands?
+  78984640  0.5440  Will Marine Tondelier win the 2027 French presidential election?
+  65125779  0.5440  Will Bernard Cazeneuve be the next French Prime Minister?
+  65125804  0.5441  Will Xavier Bertrand be the next French Prime Minister?
+  70137315  0.5441  Will Australia finish in the 2025 Eurovision top 10?
+  58598924  0.5442  Valérie Rabault next Prime Minister of France?
+  67266001  0.5444  Will CDU/CSU and AfD form the next German Government?
+  73248111  0.5446  Will Sam Altman be TIME's Person of the Year for 2025?
+   9296842  0.5446  Who will the world's richest person be on February 27, 2021?
+  66503833  0.5446  Venezuela opposition leader Machado released by Monday?
+  71352519  0.5447  Will Ronnie Brunswijk be the next president of Suriname after the election?
+  67502364  0.5448  Will Poland win Eurovision 2025?
+  68325045  0.5449  Will the next Pope be from Europe?
+  73735035  0.5449  Will the European Union win the Nobel Peace Prize in 2025?
+  57268004  0.5449  Will Penny Mordaunt be next UK prime minister?
+  77722948  0.5450  Will the next Dutch government be VVD + CDA + JA21?
+  65566105  0.5451  Will Friedrich Merz be the next Chancellor of Germany?
+  76098620  0.5452  Will "Father Mother Sister Brother" win the 2025 Golden Lion?
+  57268012  0.5452  Will Grant Shapps be next UK prime minister?
+  62224971  0.5454  Will Lutero Simango win the Mozambican presidential election?
+  68325071  0.5455  Will the next Pope be from South America?
+  77338096  0.5456  Will Élisabeth Borne be the next Prime Minister of France?
+  69903470  0.5457  Will Yoon Suk Yeol be elected the next president of South Korea?
+  74326796  0.5457  Will ANO form a government after Czech election ?
+  73735026  0.5457  Will Donald Trump win the Nobel Peace Prize in 2025?
+  64013796  0.5458  Will Marcel Ciolacu win the 2024 Romanian Presidential election?
+  72034529  0.5459  Will the next government of Suriname be NDP/VHP/ABOP?
+  72614331  0.5460  Will Mintsuku win the most seats in the House of Councillors following the 2025 
+  72054084  0.5460  Will the next Prime Minister of Romania be Attila Cseke?
+  72054041  0.5460  Will the next Prime Minister of Romania be Gabriela Firea?
+  71124148  0.5460  Will the next Pope be in favor of the German “Synodal Way”?
+  55104437  0.5460  Will Putin remain President of Russia through 2024?
+  74404581  0.5461  Paetongtarn Shinawatra out as PM of Thailand by August 31?
+  79027076  0.5461  Will Ralph Gonsalves be the next Prime Minister of Saint Vincent and the Grenadi
+  77774210  0.5462  Will the International Court of Justice win the Nobel Peace Prize in 2026?
+  72034512  0.5462  Will the next government of Suriname be NDP/VHP?
+  71802944  0.5463  Will Etuate Lavulavu be the next Prime Minister of Tonga after the election?
+  73735030  0.5463  Will Pope Leo XIV win the Nobel Peace Prize in 2025?
+  75167898  0.5464  Will JLP (Jamaica Labour Party) win the most seats in the 2025 Jamaica House of 
+  72614226  0.5464  Will Mintsuku hold the most seats in the House of Councillors following the 2025
+  74080431  0.5464  Will CDP hold the second most seats in the House of Councillors following the 20
+  66553300  0.5465  Will Evangelos Venizelos be next Greek President?
+  75810720  0.5466  Will João Cotrim Figueiredo win the 2026 Portugal presidential election?
+  39286546  0.5466  Will Ali Khamenei remain Supreme Leader of Iran through June 30, 2023?
+  71353920  0.5466  Will Jean-Louis Billon win the 2025 Ivory Coast presidential election?
+  77338110  0.5466  Will Thierry Beaudet be the next Prime Minister of France?
+  77722888  0.5466  Will the next Dutch government be PVV + CDA + JA21?
+  71439092  0.5467  Will Han Duck-soo win 3rd place in the South Korean presidential election?
+  78559017  0.5467  Will Zohran Mamdani say "Grocery" during his victory/concession speech?
+  71428862  0.5468  Will Ferdinand Ngoh Ngoh win the Cameroon Presidential Election?
+  64447393  0.5468  Will Nana Kwame Bediako be the next President of Ghana?
+  76027208  0.5469  Will the Denk win the third most seats in the 2025 Netherlands parliamentary ele
+  74562332  0.5469  Will Gustavo Bolívar win the 2026 Colombian presidential election?
+  77722893  0.5469  Will the next Dutch government be PVV + VVD + JA21?
+  65130740  0.5469  Will Elon Musk be TIME's Person of the Year for 2024?
+  78674474  0.5470  Will Israel win Miss Universe 2025?
+  66553238  0.5470  Will Kostas Karamanlis be next Greek President?
+  78943998  0.5470  Will Kim Do-eup win the 2026 Busan Mayoral Election?
+  78984670  0.5471  Will Clémentine Autain win the 2027 French presidential election?
+  78984716  0.5471  Will Carole Delga win the 2027 French presidential election?
+  71802572  0.5471  Will Pope Leo XIV meet with Donald Trump in 2025?
+  78984600  0.5471  Will Xavier Bertrand win the 2027 French presidential election?
+  70583470  0.5472  Will the next Pope after Francis be from the United States?
+  65011130  0.5472  Khamenei out as Supreme Leader of Iran by June 30?
+  78546303  0.5472  Khamenei out as Supreme Leader of Iran by June 30?
+  77338023  0.5473  Will Éric Zemmour be the next Prime Minister of France?
+  75730592  0.5473  Will Éric Zemmour be the next Prime Minister of France?
+  78674521  0.5473  Will Japan win Miss Universe 2025?
+  57151861  0.5473  Will Iran President Raisi be found today?
+  68325081  0.5474  Will the next Pope be from North America?
+  76027160  0.5475  Will the People's Party for Freedom and Democracy win the third most seats in th
+  77774235  0.5475  Will Khaled Mashal win the Nobel Peace Prize in 2026?
+  78984645  0.5476  Will Fabien Roussel win the 2027 French presidential election?
+  70910384  0.5476  NDP member appointed to the Canadian cabinet?
+  77722943  0.5477  Will the next Dutch government be VVD + JA21?
+  66824257  0.5477  Will Marcel Ciolacu win the Romanian presidential election?
+  70137189  0.5478  Will Israel finish in the 2025 Eurovision top 10?
+  44264226  0.5479  Putin to remain President of Russia through Monday?
+  74282655  0.5480  Will Donald Trump visit India in 2025?
+  76098628  0.5480  Will "Duse" win the 2025 Golden Lion?
+  66657633  0.5481  Will Lina Mendoni be next Greek President?
+  48530365  0.5482  Will Ayatollah Khamenei still be in power in Iran by the end of 2023?
+  78984741  0.5482  Will Sarah Knafo win the 2027 French presidential election?
+  78559017  0.5482  Will Zohran Mamdani say "Subway" during his victory/concession speech?
+  55744118  0.5482  Will John Steenhuisen be the next President of South Africa?
+  72034535  0.5483  Will the next government of Suriname be NDP/VHP/NPS?
+  56690092  0.5483  Will Ignas Vegele win the 2024 Lithuanian presidential election?
+  64771081  0.5484  Will Artur Bartoszewicz be the next President of Poland?
+  76098575  0.5484  Will "Le mage du Kremlin (The Wizard of the Kremlin)" win the 2025 Golden Lion?
+  72054068  0.5485  Will the next Prime Minister of Romania be Elena Lasconi?
+  78888153  0.5486  Will Gerardo Fabricio Alvarado Muñoz win the 2026 Costa Rican presidential elect
+  77215894  0.5486  Zohran Mamdani Parlay
+  77722903  0.5486  Will the next Dutch government be PVV + VVD + JA21 + D66?
+  75730576  0.5486  Will David Lisnard be the next Prime Minister of France?
+  77338014  0.5486  Will David Lisnard be the next Prime Minister of France?
+  64495853  0.5486  Will Marija Selak Raspudić be the next President of Croatia?
+  72054142  0.5487  Will the next Prime Minister of Romania be Candidate Lucian Croitoru?
+  78984605  0.5487  Will Laurent Wauquiez win the 2027 French presidential election?
+  74562355  0.5488  Will Mauricio Cardenas win the 2026 Colombian presidential election?
+  79030565  0.5488  Will Avigdor Lieberman be the next Prime Minister of Israel?
+  72054090  0.5489  Will the next Prime Minister of Romania be Victor Ponta?
+  69902746  0.5491  Will Kim Dong-yeon be elected the next president of South Korea?
+  78247592  0.5492  Will Blaublitz Akita win on 2025-11-23?
+  78674495  0.5493  Will Palestine win Miss Universe 2025?
+  43838980  0.5493  Will Putin remain President of Russia through 2023?
+  69903046  0.5493  Will Kim Boo-kyum be elected the next president of South Korea?
+  71802932  0.5493  Will Dr ‘Aisake Valu Eke be the next Prime Minister of Tonga after the election?
+  65130765  0.5493  Will Kamala Harris be TIME's Person of the Year for 2024?
+  64495830  0.5493  Will Zoran Milanović be the next President of Croatia?
+  78674501  0.5495  Will Poland win Miss Universe 2025?
+  75988489  0.5495  Will Andorra win on 2025-09-06?
+  77338123  0.5495  Will Gérard Larcher be the next Prime Minister of France?
+  77722953  0.5495  Will the next Dutch government be VVD + CDA + JA21 + D66?
+  48530203  0.5495  Will Mahmoud Abbas still be President of the State of Palestine by the end of 20
+  64011559  0.5495  Will the SJB win the most seats in the 2024 Sri Lankan Parliamentary elections?
+  70627174  0.5495  Will NUP win the most seats in the House of Representatives in the 2025 Philippi
+  25439850  0.5495  Will Vladimir Putin remain President of Russia through 2022?
+  56935649  0.5496  Will the ECR win the most seats in European Parliament?
+  64011571  0.5497  Will the SLPP win the most seats in the 2024 Sri Lankan Parliamentary elections?
+  76027308  0.5497  Will the Denk win the fourth most seats in the 2025 Netherlands parliamentary el
+  78984711  0.5498  Will Gérald Darmanin win the 2027 French presidential election?
+  78984660  0.5499  Will Ségolène Royal win the 2027 French presidential election?
+  78984726  0.5500  Will Manuel Bompard win the 2027 French presidential election?
+  78984595  0.5500  Will David Lisnard win the 2027 French presidential election?
+  72614305  0.5501  Will Komeito win the most seats in the House of Councillors following the 2025 J
+  70883880  0.5502  Poilievre resigns as leader of Conservatives before June?
+  76026748  0.5502  Will D66 be part of the next Government of the Netherlands?
+  69577965  0.5503  Will the next Government of Canada be led by another party or coalition?
+  62922824  0.5503  Will Vasile Tarlev win the 2024 Moldova presidential election?
+  73540348  0.5504  Xi Jinping out before October?
+  71160105  0.5504  Will Jeannette Jara win the Chilean presidential election?
+  64770632  0.5505  Will Henry Cucalón win the 2025 Ecuadorian Presidential Election?
+  50021231  0.5507  George Santos expelled in 2023?
+  65125715  0.5507  Will Sébastien Lecornu be the next French Prime Minister?
+  78295378  0.5507  Will the Party for Freedom win the fifth most seats in the 2025 Netherlands parl
+  69174262  0.5508  Will CHEGA win the most seats in the 2025 Portuguese legislative election?
+  65125842  0.5510  Will David Lisnard be the next French Prime Minister?
+  69903500  0.5511  Will Han Duck-soo be elected the next president of South Korea?
+  27018183  0.5512  Will Nancy Pelosi visit Taiwan before June 2022?
+  72614218  0.5513  Will Reiwa Shinsengumi hold the most seats in the House of Councillors following
+  67266012  0.5513  Will CDU/CSU and Greens form the next German Government?
+  72402858  0.5513  Will Elon Musk create a new political party in 2025?
+  64201275  0.5513  Will Simon Harris be the next Prime Minister of Ireland?
+  78943662  0.5514  Will Choo Mi-ae win the 2026 Gyeonggi Province Gubernatorial Election?
+  71721527  0.5514  Will Victory win the most seats in the 2025 Moldova parliamentary election?
+  72328806  0.5514  Will the Christian Union win the most seats in the 2025 Netherlands parliamentar
+  70185126  0.5515  Will Alain Claude Bilie By Nze win the 2025 Gabonese Presidential election?
+  76472474  0.5515  Will Demario Prince win 110m Hurdles Men at 2025 World Athletics Championships?
+  59001553  0.5516  Robert Jenrick next Conservative party leader?
+  75171306  0.5517  Will Andrew Holness be the next Prime Minister of Jamaica after the election?
+  78509808  0.5517  Will Victoria win?
+  79114523  0.5517  Will Victoria win?
+  78074389  0.5517  Will Victoria win?
+  78021728  0.5518  Will Jagiellonia Białystok win on 2025-10-23?
+  65042745  0.5518  South Korean People’s Power leader arrested by Friday?
+  77722883  0.5518  Will the next Dutch government be PVV + JA21?
+  72614325  0.5519  Will Reiwa Shinsengumi win the most seats in the House of Councillors following 
+  76472971  0.5520  Will Mattia Furlani win Long Jump Men at 2025 World Athletics Championships?
+  70569143  0.5521  New Pope announced by April 30?
+  72614198  0.5521  Will Komeito hold the most seats in the House of Councillors following the 2025 
+  78984756  0.5522  Will Sébastien Lecornu win the 2027 French presidential election?
+  64011579  0.5522  Will the NPP win the most seats in the 2024 Sri Lankan Parliamentary elections?
+  62922962  0.5524  Will Guido Manini Ríos win the 2024 Uruguay presidential election?
+  77193240  0.5525  Aziz Akhannouch out as Morocco Prime Minister by December 31, 2026?
+  75644391  0.5525  Will Tomio Okamura be the next Prime Minister of the Czech Republic after the el
+  74295546  0.5525  Will Bolsonaro leave Brazil in 2025?
+  78888143  0.5525  Will Eliécer Feinzaig Mintz win the 2026 Costa Rican presidential election?
+  66105877  0.5526  Will Jagmeet Singh be the next Canadian Prime Minister?
+  71124519  0.5526  Will the next Pope be in favor of Focusing on Climate Change?
+  71428903  0.5527  Will Issa Tchiroma Bakary win the Cameroon Presidential Election?
+  62922789  0.5527  Will Maia Sandu win the 2024 Moldova presidential election?
+  61793204  0.5528  Will Ranil Wickremesinghe win the Sri Lankan presidential election?
+  72689011  0.5530  Xi Jinping out in 2025?
+  66105898  0.5530  Will Justin Trudeau be the next Canadian Prime Minister?
+  77338092  0.5530  Will Gabriel Attal be the next Prime Minister of France?
+  67502193  0.5530  Will Israel win Eurovision 2025?
+  57205514  0.5530  Will another person be the next President of Iran?
+  66784421  0.5530  Will  Giorgia Meloni attend presidential inauguration?
+  70025556  0.5531  Will Han Duck-soo be the People's Power Party candidate for president?
+  73540349  0.5531  Xi Jinping out before 2027?
+  62800915  0.5532  Will the UNRWA win the nobel peace prize?
+  71240386  0.5534  Will Han Duck-soo endorse PPP?
+  75810642  0.5534  Will Vitorino Silva win the 2026 Portugal presidential election?
+  70025546  0.5534  Will Yoon Suk Yeol be the People's Power Party candidate for president?
+  66241379  0.5535  Yoon out as president of South Korea in 2025?
+  78984650  0.5535  Will Olivier Faure win the 2027 French presidential election?
+  77723008  0.5535  Will the next Dutch government be PVV + GL/PvdA + VVD + CDA?
+  62922813  0.5536  Will Renato Usatîi win the 2024 Moldova presidential election?
+  71160308  0.5536  Will Harold Mayne-Nicholls win the Chilean presidential election?
+  57268069  0.5536  Will Tom Tugendhat be next UK prime minister?
+  75730611  0.5536  Will Sébastien Lecornu be the next Prime Minister of France?
+  66150929  0.5537  Will Donald Trump win Nobel Peace Prize in 2025?
+  75166350  0.5537  Will the 2025 Guinea referendum pass?
+  78638313  0.5538  Will Jeannette Jara come in second in the 1st round of the 2025 Chilean presiden
+  67266070  0.5538  Will CDU/CSU, SPD, and BSW form the next German Government?
+  69903079  0.5538  Will Na Kyung-won be elected the next president of South Korea?
+  59126083  0.5539  New French government formed in July?
+  78073079  0.5540  Will Blaublitz Akita win on 2025-11-02?
+  71153453  0.5541  Will Rafał Trzaskowski win the most votes in the first round of the Polish Presi
+  71428874  0.5542  Will Eric Essono Tsimi win the Cameroon Presidential Election?
+  71352684  0.5542  Will Evo Morales win the 2025 Bolivia presidential election?
+  74562322  0.5543  Will Juan Daniel Oviedo win the 2026 Colombian presidential election?
+  57205389  0.5543  Will Mohammad Bagher Ghalibaf be the next President of Iran?
+  62922935  0.5543  Will Andrés Ojeda win the 2024 Uruguay presidential election?
+  77723013  0.5543  Will the next Dutch government be PVV + GL/PvdA + VVD + CDA + D66?
+  72054017  0.5543  Will the next Prime Minister of Romania be Sebastian Burduja?
+  72054130  0.5545  Will the next Prime Minister of Romania be Delia Velculescu?
+  78559016  0.5545  Will Zohran Mamdani say "Bus" during his victory/concession speech?
+  78984615  0.5546  Will Gabriel Attal win the 2027 French presidential election?
+  67265952  0.5546  Will CDU/CSU and SPD form the next German Government?
+  78036388  0.5546  Will Emmanuel Grégoire win the Paris mayor election?
+  71352618  0.5546  Will Andrónico Rodríguez win the 2025 Bolivia presidential election?
+  72328749  0.5546  Will People's Party for Freedom and Democracy win the most seats in the 2025 Net
+  74567200  0.5547  Will Egypt win Intervision 2025?
+  58598859  0.5548  Laurent Berger next Prime Minister of France?
+  55744126  0.5548  Will Jacob Zuma be the next President of South Africa?
+  71353926  0.5549  Will Gnangbo Kacou win the 2025 Ivory Coast presidential election?
+  78072954  0.5549  Will Blaublitz Akita win on 2025-10-26?
+  75171316  0.5549  Will Devon McDaniel be the next Prime Minister of Jamaica after the election?
+  79030610  0.5549  Will Yoaz Hendel be the next Prime Minister of Israel?
+  71352700  0.5551  Will Branko Marinković win the 2025 Bolivia presidential election?
+  76026746  0.5551  Will Volt be part of the next Government of the Netherlands?
+  78677999  0.5551  Will Jeannette Jara come in third in the 1st round of the 2025 Chilean president
+  77632038  0.5551  Will Benin win on 2025-10-14?
+  65125869  0.5552  Will Jean-Yves Le Drian be the next French Prime Minister?
+  77774250  0.5552  Will Xi Jinping win the Nobel Peace Prize in 2026?
+  54030698  0.5552  Istanbul Mayoral Election 2024: Will AK win?
+  74562360  0.5552  Will Ivan Cepeda Castro win the 2026 Colombian presidential election?
+  78295383  0.5553  Will the People's Party for Freedom and Democracy win the fifth most seats in th
+  78984731  0.5553  Will Mathilde Panot win the 2027 French presidential election?
+  75988152  0.5553  Will Kazakhstan win on 2025-09-04?
+  78847581  0.5554  Will PACOR win the most seats in the 2026 Costa Rican Legislative Assembly elect
+  61952828  0.5554  Will FPÖ win the most seats in the 2024 Austrian legislative election?
+  64771057  0.5555  Will Magdalena Biejat be the next President of Poland?
+  66553286  0.5555  Will Kostas Tasoulas be next Greek President?
+  71768023  0.5555  Will Trzaskowski or Nawrocki win the diaspora vote?
+  59001806  0.5555  Tom Tugendhat next Conservative party leader?
+  64443719  0.5555  Will Schoof resign as Netherlands PM in 2024?
+  72361575  0.5556  Will Erna Solberg become the next Prime Minister of Norway?
+  78638359  0.5556  Will Francesca Muñoz come in second in the 1st round of the 2025 Chilean preside
+  57268097  0.5556  Will James Cleverly be next UK prime minister?
+  79030593  0.5556  Will Yariv Levin be the next Prime Minister of Israel?
+  70432192  0.5557  Will another country be the Jury Winner in the Eurovision 2025 Grand Final?
+  47713393  0.5557  Zherka Vs. Izi Prime
+  70884193  0.5557  Jagmeet Singh out as leader of New Democrats before June?
+  67266081  0.5558  Will another coalition form the next German Government?
+  70627286  0.5558  Will another party win the most seats in the House of Representatives in the 202
+  51091915  0.5559  Mohamed Deif still in Hamas leadership through March 1?
+  72328733  0.5559  Will the Party for Freedom win the most seats in the 2025 Netherlands parliament
+  64771048  0.5560  Will Grzegorz Braun be the next President of Poland?
+  79030549  0.5561  Will Yair Lapid be the next Prime Minister of Israel?
+  78968809  0.5561  Will Mauritania win on 2025-11-15?
+  64770582  0.5562  Will Gustavo Jalkh win the 2025 Ecuadorian Presidential Election?
+  78683145  0.5562  Will Mamadu Iaia Djaló win the 2025 Guinea-Bissau presidential election?
+  23610495  0.5562  Will Eric Zemmour win the 2022 French presidential election?
+  78932063  0.5563  Will Keir Starmer say "Pension" during the next Prime Minister's Questions?
+  78984630  0.5563  Will Raphaël Glucksmann win the 2027 French presidential election?
+  79030571  0.5564  Will Yossi Cohen be the next Prime Minister of Israel?
+  71802938  0.5564  Will Dr Viliami Uasike Latu be the next Prime Minister of Tonga after the electi
+  67493425  0.5565  Aleksandar Vučić out as President of Serbia before May?
+  72328785  0.5565  Will Denk win the most seats in the 2025 Netherlands parliamentary election?
+  75730584  0.5566  Will Laurent Wauquiez be the next Prime Minister of France?
+  77338018  0.5566  Will Laurent Wauquiez be the next Prime Minister of France?
+  71428880  0.5567  Will Samuel Eto’o win the Cameroon Presidential Election?
+  46953313  0.5568  Another African coup by October 31?
+  75644386  0.5568  Will Petr Fiala be the next Prime Minister of the Czech Republic after the elect
+  72034540  0.5569  Will the next government of Suriname be VHP/ABOP?
+  64011622  0.5569  Will another party win the most seats in the 2024 Sri Lankan Parliamentary elect
+  62471716  0.5570  Will Zouhair Maghzaoui win the Tunisia presidential election?
+  72054095  0.5571  Will the next Prime Minister of Romania be Crin Antonescu?
+  73665062  0.5571  Xi Jinping seen in public before August?
+  75810629  0.5571  Will Pedro Tinoco de Faria win the 2026 Portugal presidential election?
+  79027082  0.5571  Will Godwin Friday be the next Prime Minister of Saint Vincent and the Grenadine
+  74681364  0.5572  Paetongtarn Shinawatra out as PM of Thailand by December 31?
+  70342048  0.5573  Will Si Woo Kim win The 2025 RBC Heritage?
+  70914910  0.5573  Will the next Government of Australia be led by another formation?
+  78984701  0.5574  Will Yaël Braun-Pivet win the 2027 French presidential election?
+  57621758  0.5575  Will Antonio Ecarri Angola Win the 2024 Venezuela presidential election?
+  76222733  0.5575  Will Sanae Takaichi be the next Prime Minister of Japan?
+  77338106  0.5575  Will Jean-Louis Borloo be the next Prime Minister of France?
+  56690110  0.5575  Will Remigijus Zemaitaitis win the 2024 Lithuanian presidential election?
+  64013752  0.5576  Will Mircea Geoană win the 2024 Romanian Presidential election?
+  71802574  0.5576  Will Pope Leo XIV meet with Xi Jinping in 2025?
+  65410143  0.5577  Will Oleg Gaidukevich win the 2025 Belarus Presidential Election?
+  78984696  0.5577  Will Élisabeth Borne win the 2027 French presidential election?
+  75986751  0.5577  Will Benin win on 2025-09-05?
+  74562312  0.5580  Will Claudia López win the 2026 Colombian presidential election?
+  79030604  0.5580  Will Ayelet Shaked be the next Prime Minister of Israel?
+  75810607  0.5580  Will André Ventura win the 2026 Portugal presidential election?
+  52788421  0.5581  Will Bilawal Bhutto Zardari be next prime minister of Pakistan?
+  72054078  0.5581  Will the next Prime Minister of Romania be Kelemen Hunor?
+  75810602  0.5582  Will André Pestana win the 2026 Portugal presidential election?
+  69174321  0.5583  Will Livre win the most seats in the 2025 Portuguese legislative election?
+  78723018  0.5583  Will Jeannette Jara come in fourth in the 1st round of the 2025 Chilean presiden
+  76222745  0.5583  Will Takayuki Kobayashi be the next Prime Minister of Japan?
+  66700478  0.5583  Bayrou out as French PM in 2025?
+  73426745  0.5583  Biden seen in public before August?
+  69294131  0.5583  Yoon out as president of South Korea before May?
+  78723063  0.5583  Will Francesca Muñoz come in fourth in the 1st round of the 2025 Chilean preside
+  77935685  0.5584  Will Norway win on 2025-11-16?
+  78984575  0.5584  Will Marine Le Pen win the 2027 French presidential election?
+  72614341  0.5584  Will DIY win the most seats in the House of Councillors following the 2025 Japan
+  74567227  0.5584  Will Saudi Arabia win Intervision 2025?
+  63439477  0.5585  Will the Liberal Democratic Party win the most seats in the 2024 Japanese genera
+  74562303  0.5585  Will Vicky Dávila win the 2026 Colombian presidential election?
+  62504487  0.5585  Khamenei out as Supreme Leader of Iran in 2024?
+  72515378  0.5586  Will Damir Dzumhur win the 2025 Boss Open?
+  78721911  0.5586  Will Keir Starmer say "Crisis" during the next Prime Minister's Questions?
+  78888148  0.5587  Will Fernando Zamora Castellanos win the 2026 Costa Rican presidential election?
+  73248105  0.5587  Will Jensen Huang be TIME's Person of the Year for 2025?
+  71240627  0.5587  Will Lee Jun-seok not endorse any candidate?
+  64771139  0.5588  Will Joanna Senyszyn be the next President of Poland?
+  72054073  0.5588  Will the next Prime Minister of Romania be Cătălin Drulă?
+  73248044  0.5588  Will Elon Musk be TIME's Person of the Year for 2025?
+  65365259  0.5588  Sánchez resigns as PM of Spain before March?
+  66150944  0.5588  Maduro out in 2025?
+  57268063  0.5588  Will Kemi Badenoch be next UK prime minister?
+  71352652  0.5589  Will Rodrigo Paz win the 2025 Bolivia presidential election?
+  70348232  0.5589  Will One Nation win the Seat of Bennelong in the 2025 Australian Election?
+  78678044  0.5590  Will Francesca Muñoz come in third in the 1st round of the 2025 Chilean presiden
+  72515332  0.5591  Will Matteo Arnaldi win the 2025 Boss Open?
+  72815700  0.5592  Khamenei out as Supreme Leader of Iran by Friday?
+  78546304  0.5592  Khamenei out as Supreme Leader of Iran in 2026?
+  54032100  0.5592  Dutch government formed before June?
+  78642247  0.5593  Will Unidad por Chile hold the most seats in the Chamber of Deputies?
+  72515337  0.5593  Will Jiri Lehecka win the 2025 Boss Open?
+  71721313  0.5593  Will Joyce Banda win the 2025 Malawi presidential election?
+  71352629  0.5593  Will Manfred Reyes Villa win the 2025 Bolivia presidential election?
+  75987039  0.5594  Will Benin win on 2025-09-08?
+  68933068  0.5594  Will Luiz Inácio Lula da Silva be the first leader out in 2025?
+  67265990  0.5594  Will CDU/CSU, SPD, and Greens form the next German Government?
+  71721419  0.5594  Will Ralph Volcère win the 2025 Seychelles presidential election?
+  31128172  0.5595  Will Nancy Pelosi visit Taiwan before September 2022?
+  64771007  0.5595  Will Waldemar Witkowski be the next President of Poland?
+  28638145  0.5595  Will Rodolfo Hernández win the 2022 Colombian presidential election?
+  70627259  0.5595  Will PFP win the most seats in the House of Representatives in the 2025 Philippi
+  76027246  0.5595  Will Party for Freedom win the third most seats in the 2025 Netherlands parliame
+  73735120  0.5596  Will International Court of Justice win the Nobel Peace Prize in 2025?
+  78720520  0.5596  Will 50PLUS be part of the next Government of the Netherlands?
+  67776398  0.5596  Will Trump meet with Narendra Modi in his first 100 days?
+  66741397  0.5597  Will Greenland vote for independence in 2025?
+  75810597  0.5597  Will Joana Amaral Dias win the 2026 Portugal presidential election?
+  71352663  0.5597  Will Jhonny Fernández win the 2025 Bolivia presidential election?
+  79030057  0.5598  Will Siniša Karan win the 2025 Republika Srpska presidential election?
+  64242444  0.5598  Elise Stefanik confirmed as UN ambassador?
+  71428868  0.5598  Will Akere Muna win the Cameroon Presidential Election?
+  77722983  0.5598  Will the next Dutch government be GL/PvdA + VVD + CDA?
+  72054112  0.5599  Will the next Prime Minister of Romania be Florin Cîțu?
+  65636948  0.5599  Will FDP be part of the next German government?
+  71159956  0.5600  Will the National Party of Suriname win the most seats in the 2025 Suriname elec
+  75171325  0.5600  Will Dayton Campbell be the next Prime Minister of Jamaica after the election?
+  74567261  0.5601  Will Venezuela win Intervision 2025?
+  77355271  0.5601  Will Benin win on 2025-10-10?
+  78559016  0.5601  Will Zohran Mamdani say "Muslim" or "Islam" during his victory/concession speech
+  57621740  0.5601  Will Edmundo González win the 2024 Venezuela presidential election?
+  62922913  0.5603  Will Álvaro Delgado win the 2024 Uruguay presidential election?
+  71721441  0.5604  Will Robert Moumou win the 2025 Seychelles presidential election?
+  74315715  0.5604  Japan prime minister Ishiba out by September 30?
+  72034524  0.5605  Will the next government of Suriname be VHP/NPS/ABOP?
+  58536132  0.5606  Will Albania win?
+  58317225  0.5606  Will Albania win?
+  71352623  0.5606  Will Samuel Doria Medina win the 2025 Bolivia presidential election?
+  72054012  0.5606  Will the next Prime Minister of Romania be Ilie Bolojan?
+  78073258  0.5607  Will V-Varen Nagasaki win on 2025-11-08?
+  74080472  0.5607  Will SDP hold the second most seats in the House of Councillors following the 20
+  57268051  0.5608  Will Robert Jenrick be next UK prime minister?
+  68325062  0.5608  Will the next Pope be from Asia?
+  75167178  0.5609  Will APNU win the most seats in the 2025 Guyana National Assembly election?
+  61196479  0.5609  Will another candidate win the 2024 São Paulo mayoral election?
+  77774205  0.5609  Will UNRWA win the Nobel Peace Prize in 2026?
+  72614238  0.5610  Will DIY hold the most seats in the House of Councillors following the 2025 Japa
+  74562351  0.5610  Will Abelardo de la Espriella  win the 2026 Colombian presidential election?
+  75644400  0.5611  Will Vít Rakušan be the next Prime Minister of the Czech Republic after the elec
+  77983415  0.5611  Will Luiz Inácio Lula da Silva be the next leader out in 2025?
+  66658365  0.5612  Will Jair Bolsonaro attend presidential inauguration?
+  78721911  0.5613  Will Keir Starmer say "Agriculture" during the next Prime Minister's Questions?
+  65410209  0.5614  Will Anna Kanopatskaya win the 2025 Belarus Presidential Election?
+  79085781  0.5615  Will Alaves win on 2025-11-29?
+  67586278  0.5616  Will FIT-U win the most seats in the Chamber of Deputies following the 2025 Arge
+  71159996  0.5617  Will the Reform and Renewal Movement win the most seats in the 2025 Suriname ele
+  75943863  0.5618  Abdul-Malik out as leader of Houthis by September 30?
+  78232622  0.5619  Will Mauritania win on 2025-11-12?
+  56690100  0.5619  Will Andrius Mazuronis win the 2024 Lithuanian presidential election?
+  59001444  0.5619  Kemi Badenoch next Conservative party leader?
+  77630588  0.5620  Will Fortuna Sittard win on 2025-11-08?
+  76026743  0.5620  Will SGP be part of the next Government of the Netherlands?
+  78073188  0.5620  Will V-Varen Nagasaki win on 2025-11-02?
+  71443582  0.5620  Shehbaz Sharif out in 2025?
+  75988615  0.5620  Will Kazakhstan win on 2025-09-07?
+  78678059  0.5621  Will Marco Enríquez-Ominami come in third in the 1st round of the 2025 Chilean p
+  78638328  0.5622  Will Gonzalo Winter come in second in the 1st round of the 2025 Chilean presiden
+  70627157  0.5622  Will PDP win the most seats in the House of Representatives in the 2025 Philippi
+  74560562  0.5622  Gintautas Paluckas out as Lithuania prime minister by December 31?
+  78638375  0.5622  Will Marco Enríquez-Ominami come in second in the 1st round of the 2025 Chilean 
+  64771072  0.5622  Will Adrian Zandberg be the next President of Poland?
+  70025470  0.5622  Will Yoo Seong-min be the People's Power Party candidate for president?
+  56690086  0.5623  Will Ingrida Simonyte win the 2024 Lithuanian presidential election?
+  79101068  0.5623  Will Fortuna Sittard win on 2025-12-13?
+  71802593  0.5624  Will Samia Suluhu Hassan win the 2025 Tanzania presidential election?
+  27070255  0.5624  Will Gustavo Petro win the 2022 Colombian presidential election?
+  71190248  0.5624  Will Sovereignty win the Triple Crown?
+  76027173  0.5624  Will the Forum for Democracy win the third most seats in the 2025 Netherlands pa
+  78968799  0.5625  Will Libya win on 2025-11-15?
+  78783384  0.5625  Will Alaves win on 2025-11-22?
+  74562192  0.5625  Will MIRA‑CJL win the most seats in the 2026 Colombian Chamber of Representative
+  78242702  0.5626  Will PAOK win on 2025-11-06?
+  71353909  0.5626  Will Simone Gbagbo win the 2025 Ivory Coast presidential election?
+  67345128  0.5627  Will the Liberals win the most seats in the next Ontario Parliamentary election?
+  64771040  0.5628  Will Krzysztof Stanowski be the next President of Poland?
+  70957053  0.5628  Will Lulzim Basha be the next Prime Minister of Albania after the 2025 election?
+  78232907  0.5628  Will New Zealand win on 2025-11-18?
+  67266023  0.5629  Will CDU/CSU, SPD, and FDP form the next German Government?
+  72080516  0.5629  Pedro Sánchez out as PM of Spain in 2025?
+  78984625  0.5629  Will François Hollande win the 2027 French presidential election?
+  72054106  0.5629  Will the next Prime Minister of Romania be Raluca Turcan?
+  75810661  0.5629  Will José Cardoso win the 2026 Portugal presidential election?
+  71160146  0.5629  Will Gonzalo Winter win the Chilean presidential election?
+  73665372  0.5630  Putin out as President of Russia by end of 2026?
+  73700677  0.5630  Will Nicolien van Vroonhoven-Kok become the next Prime Minister of the Netherlan
+  73996039  0.5631  Will TIME's Person of the Year for 2025 be a woman?
+  76472836  0.5631  Will Matheus Lima win 400m Men Hurdles at 2025 World Athletics Championships?
+  71352705  0.5631  Will María Galindo win the 2025 Bolivia presidential election?
+  75810735  0.5631  Will Catarina Martins win the 2026 Portugal presidential election?
+  72054125  0.5631  Will the next Prime Minister of Romania be Anca Dragu?
+  78232757  0.5632  Will Afghanistan win on 2025-11-13?
+  67586288  0.5632  Will FIT-U hold the most seats in the Chamber of Deputies following the 2025 Arg
+  61946037  0.5632  Will AfD win the most votes in the 2024 Brandenburg election?
+  74562158  0.5633  Will PH win the most seats in the 2026 Colombian Chamber of Representatives elec
+  74562388  0.5633  Will Carlos Felipe Córdoba win the 2026 Colombian presidential election?
+  78678014  0.5634  Will Gonzalo Winter come in third in the 1st round of the 2025 Chilean president
+  55744163  0.5634  Will Pieter Groenewald be the next President of South Africa?
+  78932064  0.5634  Will Keir Starmer say "Working People" during the next Prime Minister's Question
+  64771100  0.5634  Will Maciej Maciak be the next President of Poland?
+  78678034  0.5634  Will José Antonio Kast come in third in the 1st round of the 2025 Chilean presid
+  70569167  0.5635  New Pope announced by May 9?
+  78329677  0.5636  Paul Biya out as President of Cameroon by December 31?
+  77354312  0.5636  Will Kazakhstan win on 2025-10-10?
+  77935198  0.5636  Will Norway win on 2025-11-13?
+  77723028  0.5636  Will the next Dutch government be GL/PvdA + CDA?
+  76222724  0.5637  Will Shinjirō Koizumi be the next Prime Minister of Japan?
+  76222729  0.5637  Will Yoshimasa Hayashi be the next Prime Minister of Japan?
+  71428851  0.5639  Will Cabral Libii win the Cameroon Presidential Election?
+  74367335  0.5639  Will the next Prime Minister of Hungary be László Toroczkai?
+  67266055  0.5640  Will SPD, FDP, and Greens form the next German Government?
+  77355079  0.5640  Will Namibia win on 2025-10-09?
+  72054058  0.5641  Will the next Prime Minister of Romania be George Simion?
+  64770988  0.5642  Will Sławomir Mentzen be the next President of Poland?
+  76473034  0.5643  Will Yuki Hashioka win Long Jump Men at 2025 World Athletics Championships?
+  75810621  0.5644  Will Manuela Magno win the 2026 Portugal presidential election?
+  78678069  0.5646  Will Alberto Undurraga come in third in the 1st round of the 2025 Chilean presid
+  78638349  0.5646  Will José Antonio Kast come in second in the 1st round of the 2025 Chilean presi
+  78638386  0.5646  Will Alberto Undurraga come in second in the 1st round of the 2025 Chilean presi
+  79030587  0.5647  Will Gideon Sa’ar be the next Prime Minister of Israel?
+  57151969  0.5647  New Iranian President by Friday?
+  77354762  0.5647  Will Kazakhstan win on 2025-10-13?
+  61952817  0.5647  Will SPÖ win the most seats in the 2024 Austrian legislative election?
+  60037417  0.5647  Lucie Castets appointed as French PM by August 31?
+  75810725  0.5648  Will Rui Moreira win the 2026 Portugal presidential election?
+  78888163  0.5648  Will Juan Carlos Hidalgo Bogantes win the 2026 Costa Rican presidential election
+  64770561  0.5648  Will Luisa González win the 2025 Ecuadorian Presidential Election?
+  65846784  0.5650  Sisi out as President of Egypt by March 31?
+  74562346  0.5651  Will Germán Vargas Lleras win the 2026 Colombian presidential election?
+  64447295  0.5651  Will John Mahama be the next President of Ghana?
+  79011987  0.5651  Will Gambia win on 2025-11-18?
+  78536906  0.5652  Will Grenada win on 2025-11-14?
+  78764103  0.5653  Will Shōnan Bellmāre win on 2025-12-06?
+  70569201  0.5653  New Pope announced by May 31?
+  71428886  0.5653  Will Joshua Osih win the Cameroon Presidential Election?
+  65410229  0.5654  Will Sergei Syrankov win the 2025 Belarus Presidential Election?
+  23610381  0.5654  Will Marine Le Pen win the 2022 French presidential election?
+  37714828  0.5655  Will Atiku Abubakar be elected as President of Nigeria in the upcoming 2023 Pres
+  37714806  0.5655  Will Peter Obi be elected as President of Nigeria in the upcoming 2023 President
+  61120048  0.5655  Macron out as president of France in 2024?
+  77722978  0.5655  Will the next Dutch government be GL/PvdA + VVD?
+  78978805  0.5655  Will PAOK win on 2025-11-27?
+  75986809  0.5655  Will Mauritania win on 2025-09-05?
+  55744111  0.5656  Will Cyril Ramaphosa be the next President of South Africa?
+  70957021  0.5656  Will Dashamir Shehi be the next Prime Minister of Albania after the 2025 electio
+  78666424  0.5656  Will Chad win on 2025-11-17?
+  76472659  0.5657  Will Reynold Cheruiyot win 1500m Men at 2025 World Athletics Championships?
+  71428845  0.5657  Will Maurice Kamto win the Cameroon Presidential Election?
+  13075032  0.5657  Will Benjamin Netanyahu remain prime minister of Israel through June 30, 2021?
+  78984590  0.5658  Will Édouard Philippe win the 2027 French presidential election?
+  72614300  0.5658  Will CDP win the most seats in the House of Councillors following the 2025 Japan
+  78888108  0.5658  Will David Hernández Brenes win the 2026 Costa Rican presidential election?
+  68324971  0.5659  New Pope before July?
+  78683175  0.5660  Will Herculano Armando Bequinsa win the 2025 Guinea-Bissau presidential election
+  78634337  0.5661  Will CR Vasco da Gama win on 2025-11-28?
+  78116921  0.5661  Will D66 win 18–19 seats in the 2025 Netherlands parliamentary election?
+  76425225  0.5661  Will Alaves win on 2025-09-27?
+  71160267  0.5662  Will Marco Enríquez-Ominami win the Chilean presidential election?
+  78551656  0.5662  Will Roasso Kumamoto win on 2025-11-29?
+  78723078  0.5663  Will Marco Enríquez-Ominami come in fourth in the 1st round of the 2025 Chilean 
+  64447402  0.5663  Will someone else be the next President of Ghana?
+  69173779  0.5663  Will Schumer remain Minority Leader through 2025?
+  78637544  0.5663  Will Elon register any party before 2027?
+  75170534  0.5663  Will Irfaan Ali win the 2025 Guyana presidential election?
+  67266037  0.5664  Will CDU/CSU, FDP, and Greens for the next German Government?
+  78642242  0.5664  Will Izquierda Ecologista Popular Animalista y Humanista hold the most seats in 
+  73248117  0.5664  Will Jerome Powell be TIME's Person of the Year for 2025?
+  72405264  0.5664  Will the Volt Netherlands win the second most seats in the 2025 Netherlands parl
+  74562336  0.5665  Will Sergio Fajardo win the 2026 Colombian presidential election?
+  79030554  0.5665  Will Gadi Eizenkot be the next Prime Minister of Israel?
+  75167903  0.5666  Will PNP (People’s National Party) win the most seats in the 2025 Jamaica House 
+  78932064  0.5668  Will Keir Starmer say "Reform" during the next Prime Minister's Questions?
+  77983405  0.5668  Will Volodymyr Zelenskyy be the next leader out in 2025?
+  75986893  0.5668  Will Zambia win on 2025-09-08?
+  74080445  0.5668  Will JIP hold the second most seats in the House of Councillors following the 20
+  75644405  0.5669  Will Zdeněk Hřib be the next Prime Minister of the Czech Republic after the elec
+  71353915  0.5669  Will Pascal Affi N'Guessan win the 2025 Ivory Coast presidential election?
+  73700687  0.5669  Will Caroline van der Plas become the next Prime Minister of the Netherlands?
+  79023729  0.5670  Will Makalé Camara win the 2025 Guinean presidential election?
+  71428908  0.5670  Will Bello Bouba Maïgari win the Cameroon Presidential Election?
+  75221411  0.5670  Will Alaves win on 2025-08-22?
+  78985233  0.5671  Will Macron call a referendum by December 31?
+  69174296  0.5671  Will the Left Bloc win the most seats in the 2025 Portuguese legislative electio
+  56698052  0.5673  Will Groen win the most seats in the Belgian federal elections?
+  75810633  0.5673  Will Henrique Gouveia e Melo win the 2026 Portugal presidential election?
+  74562041  0.5673  Will PH win the most seats in the 2026 Colombian Senate election?
+  75170548  0.5674  Will Azruddin Mohamed win the 2025 Guyana presidential election?
+  78888118  0.5674  Will Marco David Rodríguez Badilla win the 2026 Costa Rican presidential electio
+  69903056  0.5675  Will Hong Joon-pyo be elected the next president of South Korea?
+  76027204  0.5675  Will the Volt Netherlands win the third most seats in the 2025 Netherlands parli
+  75664598  0.5675  French confidence vote fails?
+  66660968  0.5676  Will Tanya Plibersek be the next Prime Minister of Australia after the 2025 elec
+  68325091  0.5676  Will the next Pope be from Oceania?
+  76222893  0.5677  Next French confidence vote passes?
+  77935560  0.5678  Will Armenia win on 2025-11-16?
+  74805705  0.5678  Will Jeannette Jara win the 1st round of the 2025 Chilean presidential election?
+  78072904  0.5679  Will V-Varen Nagasaki win on 2025-10-25?
+  77723018  0.5679  Will the next Dutch government be GL/PvdA + D66 + CDA?
+  75987226  0.5679  Will Mauritania win on 2025-09-09?
+  76472892  0.5680  Will Alastair Chalmers win 400m Men Hurdles at 2025 World Athletics Championship
+  78723053  0.5681  Will José Antonio Kast come in fourth in the 1st round of the 2025 Chilean presi
+  76472650  0.5682  Will Timothy Cheruiyot win 1500m Men at 2025 World Athletics Championships?
+  77930288  0.5682  Will New Zealand win on 2025-11-15?
+  78723033  0.5682  Will Gonzalo Winter come in fourth in the 1st round of the 2025 Chilean presiden
+  74805760  0.5683  Will Marco Enríquez-Ominami win the 1st round of the 2025 Chilean presidential e
+  76222757  0.5684  Will Yuichiro Tamaki be the next Prime Minister of Japan?
+  72361585  0.5685  Will Sylvi Listhaug become the next Prime Minister of Norway?
+  57268161  0.5685  Will Jeremy Hunt be next UK prime minister?
+  67811225  0.5685  Will PAOK win on 2025-02-13?
+  72614193  0.5685  Will CDP hold the most seats in the House of Councillors following the 2025 Japa
+  76484581  0.5686  Will the next UK election be called by June 30, 2026?
+  78623227  0.5686  Will Burundi win on 2025-11-18?
+  76222737  0.5686  Will Taro Kono be the next Prime Minister of Japan?
+  65325552  0.5687  Will Syria hold national elections by January 31?
+  74805746  0.5687  Will Francesca Muñoz win the 1st round of the 2025 Chilean presidential election
+  78995776  0.5688  Will Australia win?
+  67586251  0.5688  Will UCR win the most seats in the Chamber of Deputies following the 2025 Argent
+  75986455  0.5688  Will Ghana win on 2025-09-04?
+  75988719  0.5689  Will Belarus win on 2025-09-08?
+  77722988  0.5689  Will the next Dutch government be GL/PvdA + VVD + D66?
+  73700672  0.5690  Will Geert Wilders become the next Prime Minister of the Netherlands?
+  77930293  0.5690  Will North Macedonia win on 2025-11-13?
+  71160201  0.5690  Will José Antonio Kast win the Chilean presidential election?
+  78979777  0.5690  Will Legia Warszawa win on 2025-11-27?
+  75982144  0.5690  Will Korea Republic win on 2025-09-06?
+  78847540  0.5691  Will PEL win the most seats in the 2026 Costa Rican Legislative Assembly electio
+  58598538  0.5692  Will Venezuela win?
+  58764247  0.5692  Will Venezuela win?
+  74562370  0.5692  Will Roy Barreras win the 2026 Colombian presidential election?
+  78638338  0.5692  Will Félix González come in second in the 1st round of the 2025 Chilean presiden
+  78237809  0.5692  Lecornu  out as French PM by November 30?
+  73735064  0.5692  Will UNRWA win the Nobel Peace Prize in 2025?
+  76472871  0.5692  Will Carl Bengstrom win 400m Men Hurdles at 2025 World Athletics Championships?
+  77773830  0.5693  Will Keita Nakajima win the 2025 DP World India Championship?
+  75981805  0.5693  Will North Macedonia win on 2025-09-04?
+  78666449  0.5693  Will Senegal win on 2025-11-18?
+  78723088  0.5693  Will Alberto Undurraga come in fourth in the 1st round of the 2025 Chilean presi
+  78232892  0.5694  Will Nigeria win on 2025-11-18?
+  54388997  0.5694  Haiti Prime Minister resigns in March?
+  78238256  0.5695  Will Haiti win on 2025-11-18?
+  76026745  0.5695  Will SP be part of the next Government of the Netherlands?
+  75981810  0.5695  Will Norway win on 2025-09-04?
+  76590874  0.5696  Will PAOK win on 2025-09-24?
+  72054035  0.5697  Will the next Prime Minister of Romania be Marcel Ciolacu?
+  74001543  0.5697  Will Jorge “Tuto” Quiroga win the most votes in the first round of the 2025 Boli
+  78559016  0.5698  Will Zohran Mamdani say "Next Mayor" during his victory/concession speech?
+  72965623  0.5699  Khamenei out as Supreme Leader of Iran by July 31?
+  71428892  0.5699  Will Chris Fomunyoh win the Cameroon Presidential Election?
+  76222741  0.5699  Will Toshimitsu Motegi be the next Prime Minister of Japan?
+  78847520  0.5700  Will PNG win the most seats in the 2026 Costa Rican Legislative Assembly electio
+  59001784  0.5700  Jeremy Hunt next Conservative party leader?
+  64771191  0.5700  Will Karol Nawrocki be the next President of Poland?
+  59001542  0.5700  James Cleverly next Conservative party leader?
+  68932938  0.5701  Will Volodymyr Zelenskyy be the first leader out in 2025?
+  77935322  0.5701  Will Armenia win on 2025-11-13?
+  78888168  0.5702  Will Natalia Díaz Quintana win the 2026 Costa Rican presidential election?
+  78723043  0.5702  Will Félix González come in fourth in the 1st round of the 2025 Chilean presiden
+  72054101  0.5703  Will the next Prime Minister of Romania be Dacian Cioloș?
+  78678024  0.5703  Will Félix González come in third in the 1st round of the 2025 Chilean president
+  55744177  0.5703  Will another ANC candidate be the next President of South Africa?
+  73834143  0.5703  Romania Parliamentary Election called in 2025?
+  76472986  0.5704  Will Jorge Hodelin win Long Jump Men at 2025 World Athletics Championships?
+  76526608  0.5704  Will CDA win 25–27 seats in the 2025 Netherlands parliamentary election?
+  76915318  0.5705  Will PAOK win on 2025-10-02?
+  57267985  0.5705  Will Keir Starmer be next UK prime minister?
+  70185217  0.5705  Will Zenaba Chaning Gninga win the 2025 Gabonese Presidential election?
+  78073319  0.5705  Will Sagan Tosu win on 2025-11-08?
+  77354490  0.5706  Will Norway win on 2025-10-11?
+  76027304  0.5706  Will the Volt Netherlands win the fourth most seats in the 2025 Netherlands parl
+  75810625  0.5706  Will Luís Marques Mendes win the 2026 Portugal presidential election?
+  79030537  0.5707  Will Benjamin Netanyahu be the next Prime Minister of Israel?
+  78984746  0.5707  Will Juan Branco win the 2027 French presidential election?
+  77355304  0.5708  Will Ghana win on 2025-10-12?
+  65410155  0.5709  Will Alexander Khabnyak win the 2025 Belarus Presidential Election?
+  76472466  0.5710  Will Orlando Bennett win 110m Hurdles Men at 2025 World Athletics Championships?
+  75810616  0.5710  Will Aristides Teixeira win the 2026 Portugal presidential election?
+  79016516  0.5710  Will Nigeria win on 2025-11-16?
+  70185190  0.5710  Will Thierry Yvon Michel N’goma win the 2025 Gabonese Presidential election?
+  58598933  0.5710  Manuel Bompard next Prime Minister of France?
+  71153466  0.5711  Will Karol Nawrocki win the most votes in the first round of the Polish Presiden
+  67586220  0.5711  Will UP hold the most seats in the Chamber of Deputies following the 2025 Argent
+  59833983  0.5711  Will someone else be the next Conservative party leader?
+  75810647  0.5712  Will Ângela Maryah win the 2026 Portugal presidential election?
+  67586222  0.5712  Will UP win the most seats in the Chamber of Deputies following the 2025 Argenti
+  78683190  0.5712  Will Baciro Djá win the 2025 Guinea-Bissau presidential election?
+  74562375  0.5713  Will Enrique Peñalosa win the 2026 Colombian presidential election?
+  76026743  0.5714  Will JA21 be part of the next Government of the Netherlands?
+  73700697  0.5714  Will Henri Bontenbal become the next Prime Minister of the Netherlands?
+  75988663  0.5715  Will Norway win on 2025-09-08?
+  75244570  0.5715  Will Brazilian president Lula announce re-election run by December 31?
+  74562168  0.5715  Will PLC win the most seats in the 2026 Colombian Chamber of Representatives ele
+  71352657  0.5716  Will José Carlos Sánchez Verazaín win the 2025 Bolivia presidential election?
+  77930378  0.5716  Will Senegal win on 2025-11-15?
+  75171334  0.5716  Will Ann-Marie Vaz be the next Prime Minister of Jamaica after the election?
+  75986972  0.5716  Will Liberia win on 2025-09-08?
+  65369622  0.5718  Will Xi Jinping attend presidential inauguration?
+  66079432  0.5718  Khamenei out as Supreme Leader of Iran in 2025?
+  67586250  0.5718  Will UCR hold the most seats in the Chamber of Deputies following the 2025 Argen
+  68159847  0.5718  Will PAOK win on 2025-02-20?
+  75171330  0.5719  Will Pearnel Charles be the next Prime Minister of Jamaica after the election?
+  77521229  0.5719  Lecornu  out as French PM by October 31?
+  76260698  0.5719  Lecornu  out as French PM by October 31?
+  78551746  0.5720  Will Montedio Yamagata win on 2025-11-29?
+  78839236  0.5720  Will Oman win on 2025-11-18?
+  66079723  0.5720  Putin out as President of Russia in 2025?
+  77355330  0.5721  Will Zambia win on 2025-10-12?
+  75730635  0.5721  Will Yaël Braun-Pivet be the next Prime Minister of France?
+  77338064  0.5721  Will Yaël Braun-Pivet be the next Prime Minister of France?
+  70185135  0.5721  Will Stéphane Germain Iloko win the 2025 Gabonese Presidential election?
+  78073241  0.5722  Will Roasso Kumamoto win on 2025-11-08?
+  78634166  0.5722  Will CR Vasco da Gama win on 2025-11-23?
+  77355399  0.5723  Will Burkina Faso win on 2025-10-12?
+  79030599  0.5723  Will Moshe Feiglin be the next Prime Minister of Israel?
+  75986580  0.5724  Will Libya win on 2025-09-04?
+  77354983  0.5724  Will Burkina Faso win on 2025-10-08?
+  72405236  0.5724  Will the JA21 win the second most seats in the 2025 Netherlands parliamentary el
+  76526613  0.5724  Will CDA win 28 or more seats in the 2025 Netherlands parliamentary election?
+  77355107  0.5725  Will Zambia win on 2025-10-08?
+  77917663  0.5726  Will Alaves win on 2025-11-02?
+  77354622  0.5726  Will Belarus win on 2025-10-12?
+  75982101  0.5726  Will Sri Lanka win on 2025-09-06?
+  78548067  0.5727  Will Fagiano Okayama win on 2025-11-30?
+  74367331  0.5727  Will the next Prime Minister of Hungary be Klára Dobrev?
+  75810637  0.5728  Will António José Seguro win the 2026 Portugal presidential election?
+  77355256  0.5728  Will Mauritania win on 2025-10-10?
+  75220832  0.5728  Will Alaves win on 2025-08-16?
+  68131678  0.5728  New Pope in 2025?
+  76769049  0.5729  Will Trabzonspor win on 2025-09-27?
+  78721912  0.5729  Will Keir Starmer say "Green" during the next Prime Minister's Questions?
+  67586212  0.5730  Will LLA win the most seats in the Chamber of Deputies following the 2025 Argent
+  77723038  0.5730  Will the next Dutch government be GL/PvdA?
+  77627888  0.5730  Will Norway win on 2025-10-14?
+  74562341  0.5731  Will Juan Manuel Galán win the 2026 Colombian presidential election?
+  75988885  0.5731  Will Norway win on 2025-09-09?
+  73993500  0.5731  Ahmed al-Sharaa out as leader of Syria in 2025?
+  77723033  0.5731  Will the next Dutch government be GL/PvdA + D66?
+  71352508  0.5731  Will Jennifer Geerlings-Simons be the next president of Suriname after the elect
+  75987080  0.5733  Will Ghana win on 2025-09-08?
+  78944355  0.5733  Will Cho Eun-hee win the 2026 Seoul Mayoral Election
+  68323576  0.5733  Will no new pope be elected in 2025?
+  65570718  0.5734  Justin Trudeau out as leader of Liberals before April?
+  59090928  0.5734  Macron resigns before August?
+  77627978  0.5734  Will Korea Republic win on 2025-10-14?
+  74562383  0.5735  Will Paloma Valencia win the 2026 Colombian presidential election?
+  57267996  0.5735  Will Priti Patel be next UK prime minister?
+  78623211  0.5735  Will Lesotho win on 2025-11-18?
+  78714654  0.5736  Will FREPASNA win the most seats in the 2025 Guinea-Bissau National People’s Ass
+  73492885  0.5736  Paetongtarn Shinawatra out as Prime Minister of Thailand in July?
+  75986523  0.5737  Will Sierra Leone win on 2025-09-04?
+  75982250  0.5737  Will Sri Lanka win on 2025-09-09?
+  56934923  0.5737  Will the EPP win 180-189 seats in the European Parliament?
+  78721912  0.5737  Will Keir Starmer say "Footing" during the next Prime Minister's Questions?
+  75987005  0.5737  Will Libya win on 2025-09-08?
+  33726151  0.5738  Will Ali Khamenei remain Supreme Leader of Iran through 2022?
+  78176818  0.5738  Will Alaves win on 2025-11-08?
+  58598890  0.5738  Jean-Luc Melenchon next Prime Minister of France?
+  75866384  0.5739  Will Alaves win on 2025-09-13?
+  65165993  0.5739  Georgescu banned from Romania election?
+  73700692  0.5739  Will Rob Jetten become the next Prime Minister of the Netherlands?
+  71240381  0.5740  Kim Moon-soo out as PPP presidential candidate?
+  71159969  0.5741  Will the Pertjajah Luhur win the most seats in the 2025 Suriname election?
+  77983436  0.5742  Will Sanae Takaichi be the next leader out in 2025?
+  78679461  0.5742  Will Miss Universe 2025 be won by a country that has never won before?
+  75810666  0.5743  Will Pedro Passos Coelho win the 2026 Portugal presidential election?
+  77615329  0.5743  Will Alaves win on 2025-10-26?
+  78536845  0.5743  Will Saudi Arabia win on 2025-11-18?
+  67586212  0.5743  Will LLA hold the most seats in the Chamber of Deputies following the 2025 Argen
+  75986445  0.5743  Will Chad win on 2025-09-04?
+  75509700  0.5744  Will PAOK win on 2025-08-28?
+  77377748  0.5744  Will CR Vasco da Gama win on 2025-10-26?
+  76526629  0.5744  Will GroenLinks–PvdA win 26–28 seats in the 2025 Netherlands parliamentary elect
+  72328816  0.5744  Will Volt Netherlands win the most seats in the 2025 Netherlands parliamentary e
+  76027183  0.5744  Will the JA21 win the third most seats in the 2025 Netherlands parliamentary ele
+  70306900  0.5744  Will Poilievre say "India" or "Indian" during Canadian Election Debate on April 
+  58598737  0.5744  Jordan Bardella next Prime Minister of France?
+  76773808  0.5745  Will RFK Akhmat Groznyi win on 2025-09-27?
+  75986527  0.5745  Will São Tomé e Príncipe win on 2025-09-04?
+  48362200  0.5745  Will KO get over 31% of votes in the 2023 Polish parliamentary election?
+  48920562  0.5745  Will Joe Biden be the 2023 TIME Person of the Year?
+  69174929  0.5746  Will Rui Rocha be the next Prime Minister of Portugal after the 2025 election?
+  62922922  0.5746  Will Yamandú Orsi win the 2024 Uruguay presidential election?
+  74805718  0.5747  Will Gonzalo Winter win the 1st round of the 2025 Chilean presidential election?
+  78968815  0.5747  Will Madagascar win on 2025-11-17?
+  74881311  0.5747  Will Kairat Almaty win on 2025-08-12?
+  78683160  0.5747  Will João de Deus Mendes win the 2025 Guinea-Bissau presidential election?
+  78073034  0.5747  Will Roasso Kumamoto win on 2025-11-02?
+  76345564  0.5748  Will Alaves win on 2025-09-24?
+  73415434  0.5748  Abdul-Malik al-Houthi out as leader of the Houthi government before August?
+  63439503  0.5748  Will the another party win the most seats in the 2024 Japanese general election?
+  75363328  0.5748  Will Rodrigo Paz Pereira win by 10–15%?
+  75448294  0.5748  Will Brann win on 2025-08-27?
+  26786917  0.5748  Will Bongbong Marcos be elected President of the Philippines in 2022?
+  66553253  0.5748  Will Panagiotis Pikrammenos be next Greek President?
+  64770551  0.5749  Will Daniel Noboa win the 2025 Ecuadorian Presidential Election?
+  78888138  0.5749  Will Álvaro Roberto Ramos Chaves win the 2026 Costa Rican presidential election?
+  78247587  0.5750  Will Roasso Kumamoto win on 2025-11-23?
+  17803654  0.5750  Will Canada hold a federal election in 2021?
+  52973787  0.5750  Canada federal election in 2024?
+  58205008  0.5751  Will Poland win?
+  58567173  0.5751  Will Poland win?
+  58395059  0.5751  Will Poland win?
+  77354456  0.5751  Will Azerbaijan win on 2025-10-10?
+  76612963  0.5751  Will Carlos Roberto Massa Júnior win the 2026 Brazilian presidential election?
+  64495841  0.5752  Will Dragan Primorac be the next President of Croatia?
+  78944405  0.5753  Will Cho Kuk win the 2026 Seoul Mayoral Election
+  78944365  0.5753  Will Ahn Cheol-soo win the 2026 Seoul Mayoral Election
+  77631963  0.5753  Will Gambia win on 2025-10-14?
+  79030062  0.5754  Will Branko Blanuša win the 2025 Republika Srpska presidential election?
+  76344991  0.5754  Will Alaves win on 2025-09-20?
+  78295433  0.5754  Will the Volt Netherlands win the fifth most seats in the 2025 Netherlands parli
+  77331299  0.5755  Will Kuwait win on 2025-10-09?
+  57621665  0.5755  Will Nicolas Maduro Win the 2024 Venezuela presidential election?
+  77377865  0.5755  Will CR Vasco da Gama win on 2025-11-02?
+  61793186  0.5756  Will Sajith Premadasa win the Sri Lankan presidential election?
+  56934916  0.5756  Will the EPP win 170-179 seats in the European Parliament?
+  23651378  0.5756  Will Boris Johnson be the Prime Minister of the United Kingdom on March 20, 2022
+  77331443  0.5757  Will Grenada win on 2025-10-11?
+  78623196  0.5757  Will Lesotho win on 2025-11-15?
+  77638838  0.5757  Will CR Vasco da Gama win on 2025-11-08?
+  78642252  0.5757  Will Chile Grande y Unido hold the most seats in the Chamber of Deputies?
+  72054028  0.5758  Will the next Prime Minister of Romania be Ludovic Orban?
+  77354804  0.5759  Will Azerbaijan win on 2025-10-13?
+  77935610  0.5759  Will Albania win on 2025-11-16?
+  46383834  0.5759  Trump heavier than 260 lbs?
+  77331262  0.5760  Will Korea Republic win on 2025-10-10?
+  66267430  0.5760  Macron out in 2025?
+  77374914  0.5760  Will RFK Akhmat Groznyi win on 2025-11-02?
+  77935535  0.5761  Will Hungary win on 2025-11-16?
+  78638344  0.5761  Will Johannes Kaiser come in second in the 1st round of the 2025 Chilean preside
+  78542729  0.5761  Will Trabzonspor win on 2025-11-29?
+  75171321  0.5761  Will Joan Gordon-Webley be the next Prime Minister of Jamaica after the election
+  72034476  0.5762  Will the next Prime Minister of Romania be a member of POT?
+  77632058  0.5762  Will DR Congo win on 2025-10-14?
+  76027280  0.5762  Will the JA21 win the fourth most seats in the 2025 Netherlands parliamentary el
+  75981868  0.5763  Will New Zealand win on 2025-09-05?
+  79101085  0.5763  Will Heracles Almelo win on 2025-12-13?
+  77935875  0.5763  Will Haiti win on 2025-11-13?
+  75986986  0.5763  Will Chad win on 2025-09-08?
+  69174893  0.5764  Will Pedro Nuno Santos be the next Prime Minister of Portugal after the 2025 ele
+  71160188  0.5764  Will Johannes Kaiser win the Chilean presidential election?
+  39023953  0.5764  Will Erdoğan win the 2023 Turkish presidential election?
+  75986603  0.5764  Will Botswana win on 2025-09-04?
+  78839174  0.5765  Will Oman win on 2025-11-14?
+  78839215  0.5765  Will Zimbabwe win on 2025-11-17?
+  78536861  0.5765  Will Morocco win on 2025-11-18?
+  77774270  0.5766  Will Narendra Modi win the Nobel Peace Prize in 2026?
+  77935641  0.5766  Will Serbia win on 2025-11-16?
+  78932064  0.5767  Will Keir Starmer say "Friend" 8+ times during the next Prime Minister's Questio
+  77377359  0.5767  Will CR Vasco da Gama win on 2025-10-15?
+  75810652  0.5769  Will António Filipe win the 2026 Portugal presidential election?
+  76472816  0.5770  Will Karsten Warholm win 400m Men Hurdles at 2025 World Athletics Championships?
+  74562365  0.5770  Will Daniel Quintero win the 2026 Colombian presidential election?
+  77354528  0.5770  Will Armenia win on 2025-10-11?
+  57998258  0.5770  Ursula von der Leyen reelected as EU president?
+  77355413  0.5771  Will Mali win on 2025-10-12?
+  60234065  0.5772  Keir Starmer out as UK PM before October?
+  71160280  0.5772  Will Franco Parisi win the Chilean presidential election?
+  61393599  0.5772  Starmer out as UK prime minister in 2024?
+  27070450  0.5772  Will Sergio Fajardo win the 2022 Colombian presidential election?
+  75987128  0.5772  Will São Tomé e Príncipe win on 2025-09-09?
+  78721912  0.5772  Will Keir Starmer say "Infrastructure" during the next Prime Minister's Question
+  78678029  0.5773  Will Johannes Kaiser come in third in the 1st round of the 2025 Chilean presiden
+  77176687  0.5773  Will TIME's Person of the Year for 2025 be a human?
+  74805727  0.5774  Will Félix González win the 1st round of the 2025 Chilean presidential election?
+  78540835  0.5775  Will Nigeria win on 2025-11-13?
+  78888113  0.5775  Will Claudio Alberto Alpízar Otoya win the 2026 Costa Rican presidential electio
+  75988643  0.5775  Will Faroe Islands win on 2025-09-08?
+  75988452  0.5775  Will Armenia win on 2025-09-06?
+  77355035  0.5775  Will Ghana win on 2025-10-08?
+  71160294  0.5776  Will Alberto Undurraga win the Chilean presidential election?
+  27070315  0.5776  Will Federico Gutiérrez win the 2022 Colombian presidential election?
+  34588822  0.5776  Will Boris Johnson be the next UK Prime Minister?
+  75988031  0.5776  Will Peru win on 2025-09-04?
+  77356562  0.5777  Will Alaves win on 2025-10-20?
+  78548108  0.5777  Will Fagiano Okayama win on 2025-11-08?
+  77104904  0.5777  Abdul-Malik out as leader of Houthis by December 31?
+  74562307  0.5777  Will Luis Gilberto Murillo win the 2026 Colombian presidential election?
+  49383388  0.5777  Will Benjamin Netanyahu be the 2023 TIME Person of the Year?
+  65410198  0.5777  Will Olga Sustanova win the 2025 Belarus Presidential Election?
+  63207352  0.5777  Who will lead on 538 on Friday?
+  71352635  0.5778  Will Jorge “Tuto” Quiroga win the 2025 Bolivia presidential election?
+  77373691  0.5778  Will Alanyaspor win on 2025-11-03?
+  76472867  0.5779  Will Patrik Domotor win 400m Men Hurdles at 2025 World Athletics Championships?
+  72328796  0.5779  Will Forum for Democracy win the most seats in the 2025 Netherlands parliamentar
+  77627973  0.5779  Will Puerto Rico win on 2025-10-14?
+  79030577  0.5779  Will Yair Golan be the next Prime Minister of Israel?
+  69207226  0.5780  Brazilian Supreme Court Minister Alexandre de Moraes be impeached 2025?
+  75982234  0.5780  Will New Zealand win on 2025-09-09?
+  62922869  0.5780  Will another candidate win the 2024 Moldova presidential election?
+  65362752  0.5781  Will Syria hold national elections before July?
+  75988766  0.5781  Will Armenia win on 2025-09-09?
+  77355092  0.5781  Will Congo win on 2025-10-08?
+  71160241  0.5781  Will Ximena Rincón win the Chilean presidential election?
+  77355021  0.5781  Will Mali win on 2025-10-08?
+  75448204  0.5782  Will PAOK win on 2025-08-21?
+  67062599  0.5782  AfD banned before German election?
+  23651520  0.5782  Will Boris Johnson be the Prime Minister of the United Kingdom on May 20, 2022?
+  77354583  0.5783  Will Türkiye win on 2025-10-11?
+  78073221  0.5783  Will Montedio Yamagata win on 2025-11-02?
+  75167913  0.5783  Will JPP (Jamaica Progressive Party) win the most seats in the 2025 Jamaica Hous
+  64728621  0.5783  Will another candidate be the next President of Namibia?
+  78072937  0.5784  Will Montedio Yamagata win on 2025-10-26?
+  75363333  0.5785  Will Rodrigo Paz Pereira win by 5–10%?
+  78714674  0.5785  Will Platforma Reupblicana “Nô Kumpu Guiné” win the most seats in the 2025 Guine
+  77355000  0.5785  Will Libya win on 2025-10-08?
+  77627898  0.5785  Will New Zealand win on 2025-10-14?
+  78536830  0.5785  Will Morocco win on 2025-11-14?
+  75987173  0.5785  Will DR Congo win on 2025-09-09?
+  78536810  0.5785  Will Zimbabwe win on 2025-11-13?
+  71149735  0.5786  Will Saylor say "Billion" 20+ times during his Strategy World 2025 keynote?
+  77935332  0.5786  Will Hungary win on 2025-11-13?
+  78638381  0.5786  Will Franco Parisi come in second in the 1st round of the 2025 Chilean president
+  75986686  0.5786  Will Gambia win on 2025-09-05?
+  75988536  0.5786  Will North Macedonia win on 2025-09-07?
+  77373644  0.5786  Will Kocaelispor win on 2025-10-31?
+  78232862  0.5786  Will Tunisia win on 2025-11-18?
+  67774252  0.5786  Japan prime minister Ishiba out before July?
+  75986775  0.5787  Will Burundi win on 2025-09-05?
+  75987186  0.5788  Will Gambia win on 2025-09-09?
+  77557350  0.5788  Will Trump say "Smart" or "High IQ" during Egypt summit?
+  70665229  0.5788  Will Progress Singapore Party (PSP) win the 2025 Singapore parliamentary electio
+  77632878  0.5789  Will Armenia win on 2025-10-14?
+  78295621  0.5789  Mahmoud Abbas out as Palestinian President by December 31?
+  49990012  0.5789  Will Javier Milei win by more than 5% in the 2023 Argentina Presidential electio
+  75171311  0.5789  Will Mark Golding be the next Prime Minister of Jamaica after the election?
+  74080455  0.5790  Will DPP hold the second most seats in the House of Councillors following the 20
+  71802605  0.5790  Will Tundu Lissu win the 2025 Tanzania presidential election?
+  71428856  0.5791  Will Franck Biya win the Cameroon Presidential Election?
+  76748321  0.5791  Will Alaves win on 2025-10-05?
+  78979792  0.5791  Will HNK Rijeka win on 2025-11-27?
+  78764178  0.5791  Will Fagiano Okayama win on 2025-12-06?
+  34581856  0.5791  Will Rishi Sunak be the next UK Prime Minister?
+  72614336  0.5791  Will SDP win the most seats in the House of Councillors following the 2025 Japan
+  75988475  0.5791  Will Cyprus win on 2025-09-06?
+  78932065  0.5791  Will Keir Starmer say "Scotland" during the next Prime Minister's Questions?
+  75987053  0.5792  Will Sierra Leone win on 2025-09-09?
+  78683140  0.5792  Will Umaro Sissoco Embaló win the 2025 Guinea-Bissau presidential election?
+  71352537  0.5792  Will Krishna Mathoera be the next president of Suriname after the election?
+  69174917  0.5792  Will André Ventura be the next Prime Minister of Portugal after the 2025 electio
+  78546545  0.5792  Will PFK Krylia Sovetov Samara win on 2025-11-30?
+  77354752  0.5792  Will North Macedonia win on 2025-10-13?
+  70957099  0.5793  Will Adriatik Lapaj be the next Prime Minister of Albania after the 2025 electio
+  75986931  0.5793  Will Botswana win on 2025-09-08?
+  78232682  0.5794  Will Cambodia win on 2025-11-13?
+  72614232  0.5794  Will SDP hold the most seats in the House of Councillors following the 2025 Japa
+  73700663  0.5794  Will Dilan Yeşilgöz-Zegerius become the next Prime Minister of the Netherlands?
+  78232657  0.5794  Will Tunisia win on 2025-11-14?
+  77052429  0.5795  Will Trabzonspor win on 2025-10-03?
+  76612936  0.5795  Will Tarcisio de Freitas win the 2026 Brazilian presidential election?
+  48362190  0.5795  Will PiS get over 36% of votes in the 2023 Polish parliamentary election?
+  78678064  0.5796  Will Franco Parisi come in third in the 1st round of the 2025 Chilean presidenti
+  78546146  0.5797  Will AS Steenvoorde win on 2025-11-16?
+  71802926  0.5798  Will Siaosi Sovaleni be the next Prime Minister of Tonga after the election?
+  76472704  0.5798  Will Samuel Pihlstrom win 1500m Men at 2025 World Athletics Championships?
+  77355069  0.5799  Will Liberia win on 2025-10-09?
+  75987196  0.5799  Will Burundi win on 2025-09-09?
+  75986663  0.5799  Will South Sudan win on 2025-09-05?
+  77354485  0.5799  Will North Macedonia win on 2025-10-10?
+  77355506  0.5799  Will Liberia win on 2025-10-13?
+  78944375  0.5799  Will Park Yong-jin win the 2026 Seoul Mayoral Election
+  74805768  0.5799  Will Alberto Undurraga win the 1st round of the 2025 Chilean presidential electi
+  71159942  0.5799  Will the General Liberation and Development Party win the most seats in the 2025
+  22249405  0.5800  Will a single person become Time's 2021 Person of the Year?
+  78723048  0.5800  Will Johannes Kaiser come in fourth in the 1st round of the 2025 Chilean preside
+  77355013  0.5800  Will Chad win on 2025-10-08?
+  79021968  0.5801  Will KRC Genk win on 2025-11-27?
+  58598900  0.5801  Eric Ciotti next Prime Minister of France?
+  51589363  0.5802  Abbas still President of Palestine by Jan 31?
+  75986878  0.5802  Will Nigeria win on 2025-09-06?
+  77331250  0.5802  Will Grenada win on 2025-10-08?
+  77354975  0.5803  Will Sierra Leone win on 2025-10-08?
+  77935240  0.5803  Will Albania win on 2025-11-13?
+  75988280  0.5803  Will Faroe Islands win on 2025-09-05?
+  77331455  0.5803  Will Uzbekistan win on 2025-10-13?
+  55744170  0.5803  Will another non-ANC candidate be the next President of South Africa?
+  71352502  0.5804  Will Chan Santokhi be the next president of Suriname after the election?
+  71721413  0.5804  Will Alain St Ange win the 2025 Seychelles presidential election?
+  75986551  0.5804  Will Central African Republic win on 2025-09-04?
+  78073002  0.5805  Will Roasso Kumamoto win on 2025-10-26?
+  77632053  0.5805  Will Botswana win on 2025-10-14?
+  78247542  0.5805  Will Montedio Yamagata win on 2025-11-23?
+  71160010  0.5805  Will the Democracy and Development through Unity win the most seats in the 2025 
+  78559016  0.5805  Will Zohran Mamdani say "Immigrant" during his victory/concession speech?
+  78243478  0.5806  Will Legia Warszawa win on 2025-11-06?
+  77521229  0.5806  Lecornu  out as French PM by December 31?
+  76260697  0.5806  Lecornu  out as French PM by December 31?
+  75988349  0.5806  Will Greece win on 2025-09-05?
+  78714659  0.5806  Will PS win the most seats in the 2025 Guinea-Bissau National People’s Assembly 
+  77372806  0.5807  Will Heracles Almelo win on 2025-10-25?
+  78238545  0.5807  Will Kocaelispor win on 2025-11-23?
+  78232642  0.5807  Will IR Iran win on 2025-11-13?
+  77355206  0.5807  Will Gambia win on 2025-10-10?
+  77627958  0.5808  Will Canada win on 2025-10-14?
+  77941579  0.5808  Will PAOK win on 2025-10-23?
+  77331204  0.5808  Will New Zealand win on 2025-10-09?
+  78295408  0.5808  Will the JA21 win the fifth most seats in the 2025 Netherlands parliamentary ele
+  78536891  0.5808  Will Saudi Arabia win on 2025-11-14?
+  75810671  0.5808  Will Jorge Pinto win the 2026 Portugal presidential election?
+  75988110  0.5808  Will Peru win on 2025-09-09?
+  65410124  0.5809  Will Alexander Lukashenko win the 2025 Belarus Presidential Election?
+  75981836  0.5809  Will Albania win on 2025-09-04?
+  78666439  0.5809  Will Kenya win on 2025-11-18?
+  77354723  0.5810  Will Denmark win on 2025-10-12?
+  34266238  0.5810  Will Netanyahu be the next Prime Minister of Israel?
+  78944370  0.5810  Will Park Ju-min win the 2026 Seoul Mayoral Election
+  78232732  0.5810  Will Russia win on 2025-11-15?
+  71352531  0.5811  Will Ashwin Adhin be the next president of Suriname after the election?
+  71159914  0.5811  Will the Progressive Reform Party win the most seats in the 2025 Suriname electi
+  77935302  0.5812  Will Serbia win on 2025-11-13?
+  71721285  0.5813  Will Lazarus Chakwera win the 2025 Malawi presidential election?
+  76472888  0.5813  Will Alessandro Sibilio win 400m Men Hurdles at 2025 World Athletics Championshi
+  77631978  0.5813  Will Burundi win on 2025-10-14?
+  67344376  0.5813  Will Noboa win outright in 1st round of Ecuador Election?
+  71352513  0.5815  Will Gregory Rusland be the next president of Suriname after the election?
+  77475204  0.5816  Will Kasımpaşa win the Süper Lig?
+  75447980  0.5816  Will Brann win on 2025-08-21?
+  71721296  0.5816  Will Atupele Muluzi win the 2025 Malawi presidential election?
+  75988205  0.5817  Will Malta win on 2025-09-04?
+  77632898  0.5817  Will Türkiye win on 2025-10-14?
+  59091023  0.5817  Nigel Farage next Conservative party leader?
+  75986976  0.5817  Will Madagascar win on 2025-09-08?
+  62471727  0.5817  Will Ayachi Zammel win the Tunisia presidential election?
+  57267940  0.5818  Will Rishi Sunak be next UK prime minister?
+  61150856  0.5818  Will Kamala lead in RCP by 1.5-1.9 September 6?
+  76612971  0.5819  Will Flávio Bolsonaro win the 2026 Brazilian presidential election?
+  76472688  0.5819  Will Federico Riva win 1500m Men at 2025 World Athletics Championships?
+  79060971  0.5819  Will Eyüpspor win on 2025-12-13?
+  76472664  0.5820  Will Romain Mornet win 1500m Men at 2025 World Athletics Championships?
+  61150928  0.5820  Will Kamala lead in RCP by 2.5-2.9 September 6?
+  76631565  0.5820  Will Brann win on 2025-09-25?
+  75986543  0.5821  Will Madagascar win on 2025-09-04?
+  78721913  0.5821  Will Keir Starmer say "Covid" or "Pandemic" during the next Prime Minister's Que
+  75363353  0.5821  Will Jorge "Tuto" Quiroga win by 10–15%?
+  75987248  0.5821  Will Mauritius win on 2025-09-09?
+  75987235  0.5822  Will South Sudan win on 2025-09-09?
+  78241662  0.5822  Will PFK Krylia Sovetov Samara win on 2025-11-23?
+  74805736  0.5822  Will José Antonio Kast win the 1st round of the 2025 Chilean presidential electi
+  77331359  0.5822  Will Canada win on 2025-10-10?
+  78723083  0.5822  Will Franco Parisi come in fourth in the 1st round of the 2025 Chilean president
+  74080426  0.5822  Will LDP hold the second most seats in the House of Councillors following the 20
+  77355352  0.5823  Will Libya win on 2025-10-12?
+  73248093  0.5823  Will Zohran Mamdani be TIME's Person of the Year for 2025?
+  77331191  0.5823  Will New Caledonia win on 2025-10-08?
+  77627918  0.5823  Will Montenegro win on 2025-10-13?
+  44920712  0.5823  Will Sumar win over 13.5% of votes in the 2023 Spanish general election?
+  78666363  0.5823  Will Trump win FIFA Peace Prize?
+  76498480  0.5823  Will Trabzonspor win on 2025-09-20?
+  77355480  0.5824  Will Sierra Leone win on 2025-10-12?
+  72361569  0.5824  Will Jonas Gahr Støre become the next Prime Minister of Norway?
+  78536815  0.5824  Will Venezuela win on 2025-11-18?
+  78678049  0.5824  Will Ximena Rincón come in third in the 1st round of the 2025 Chilean presidenti
+  78638364  0.5824  Will Ximena Rincón come in second in the 1st round of the 2025 Chilean president
+  77355151  0.5825  Will Botswana win on 2025-10-09?
+  71149745  0.5825  Will Saylor say "Gold" during his Strategy World 2025 keynote?
+  77983441  0.5825  Will Dick Schoof be the next leader out in 2025?
+  78542679  0.5826  Will Trabzonspor win on 2025-11-24?
+  56934880  0.5826  Will the EPP win less than 150 seats in the European Parliament?
+  74367346  0.5826  Will the next Prime Minister of Hungary be János Lázár?
+  78238550  0.5826  Will Alanyaspor win on 2025-11-23?
+  76472904  0.5826  Will Ismail Nezir win 400m Men Hurdles at 2025 World Athletics Championships?
+  78623222  0.5827  Will Malawi win on 2025-11-18?
+  75981898  0.5827  Will Canada win on 2025-09-05?
+  78683185  0.5827  Will José Mário Vaz win the 2025 Guinea-Bissau presidential election?
+  78839184  0.5828  Will Sudan win on 2025-11-14?
+  75989010  0.5828  Will Haiti win on 2025-09-05?
+  48530080  0.5829  Will Netanyahu still be Prime Minister of Israel by the end of 2023?
+  75988714  0.5829  Will Montenegro win on 2025-09-08?
+  78232762  0.5830  Will Thailand win on 2025-11-13?
+  73700682  0.5830  Will Dick Schoof become the next Prime Minister of the Netherlands?
+  76612946  0.5830  Will Jair Bolsonaro win the 2026 Brazilian presidential election?
+  76612959  0.5831  Will Eduardo Bolsonaro win the 2026 Brazilian presidential election?
+  78247527  0.5831  Will Kataller Toyama win on 2025-11-23?
+  78546039  0.5831  Will AS Mutzig win on 2025-11-16?
+  75987154  0.5831  Will Nigeria win on 2025-09-09?
+  71802956  0.5832  Will Siaosi Pōhiva be the next Prime Minister of Tonga after the election?
+  57268090  0.5832  Will Boris Johnson be next UK prime minister?
+  77373390  0.5832  Will Trabzonspor win on 2025-10-18?
+  77355125  0.5832  Will Burundi win on 2025-10-09?
+  78232777  0.5832  Will Japan win on 2025-11-18?
+  71721447  0.5833  Will Charles De Clarisse win the 2025 Seychelles presidential election?
+  34338594  0.5833  Will Liz Truss remain Prime Minister of the United Kingdom through 2022?
+  77354284  0.5833  Will Faroe Islands win on 2025-10-09?
+  77355442  0.5833  Will São Tomé e Príncipe win on 2025-10-13?
+  77373671  0.5834  Will Trabzonspor win on 2025-11-01?
+  77052444  0.5834  Will Kocaelispor win on 2025-10-04?
+  75982306  0.5834  Will Canada win on 2025-09-09?
+  78243614  0.5835  Will HNK Rijeka win on 2025-11-06?
+  67586234  0.5835  Will PRO win the most seats in the Chamber of Deputies following the 2025 Argent
+  76526624  0.5835  Will GroenLinks–PvdA win 23–25 seats in the 2025 Netherlands parliamentary elect
+  77355285  0.5835  Will DR Congo win on 2025-10-10?
+  78968784  0.5835  Will Bahrain win on 2025-11-17?
+  64170184  0.5836  Will Trump nominate Miriam Adelson for Israeli Ambassador?
+  78232611  0.5836  Will Tunisia win on 2025-11-12?
+  77633900  0.5836  Will Trabzonspor win on 2025-11-08?
+  74367327  0.5836  Will the next Prime Minister of Hungary be Péter Magyar?
+  75988871  0.5836  Will Albania win on 2025-09-09?
+  72054023  0.5836  Will the next Prime Minister of Romania be Cătălin Predoiu?
+  75986794  0.5836  Will Lesotho win on 2025-09-05?
+  78944345  0.5836  Will Oh Se-hoon win the 2026 Seoul Mayoral Election
+  77354376  0.5836  Will Greece win on 2025-10-09?
+  70584310  0.5837  Will the next Pope require 2 or fewer ballots?
+  54030687  0.5837  Istanbul Mayoral Election 2024: Will CHP win?
+  71802599  0.5838  Will Dorothy Semu win the 2025 Tanzania presidential election?
+  61150829  0.5838  Will Kamala lead in RCP by 1-1.4 September 6?
+  78232627  0.5838  Will Russia win on 2025-11-12?
+  76768925  0.5839  Will Alanyaspor win on 2025-09-26?
+  79104180  0.5840  Will Trabzonspor win on 2025-12-14?
+  79023717  0.5840  Will Mamady Doumbouya win the 2025 Guinean presidential election?
+  76307510  0.5841  Will Alanyaspor win on 2025-09-13?
+  75988311  0.5841  Will Montenegro win on 2025-09-05?
+  75989104  0.5841  Will Haiti win on 2025-09-09?
+  78932066  0.5843  Will Keir Starmer say "Access" during the next Prime Minister's Questions?
+  77354595  0.5843  Will Albania win on 2025-10-11?
+  72328739  0.5843  Will GreenLeft–Labour win the most seats in the 2025 Netherlands parliamentary e
+  78232717  0.5843  Will Venezuela win on 2025-11-14?
+  78536840  0.5843  Will Mozambique win on 2025-11-14?
+  61502525  0.5844  Will Kamala lead in RCP by 2.5-2.9 September 13?
+  71721308  0.5844  Will Enoch Chihana win the 2025 Malawi presidential election?
+  71160023  0.5844  Will the Surinamese Labour Party win the most seats in the 2025 Suriname electio
+  70956992  0.5844  Will Arlind Qori be the next Prime Minister of Albania after the 2025 election?
+  78968794  0.5845  Will Somalia win on 2025-11-17?
+  56935593  0.5845  Will the EPP win the most seats in European Parliament?
+  58598798  0.5845  Gabriel Attal next Prime Minister of France?
+  23610715  0.5846  Will Luiz da Silva win 2022 Presidential Elections in Brazil?
+  77930338  0.5847  Will Japan win on 2025-11-14?
+  75982312  0.5847  Will Malta win on 2025-09-09?
+  77632088  0.5848  Will Senegal win on 2025-10-14?
+  44643652  0.5848  Will Macron remain President of France through July 10?
+  78944380  0.5848  Will Park Hong-keun win the 2026 Seoul Mayoral Election
+  60912602  0.5849  Will Kamala lead by 1-1.4 August 30?
+  59001797  0.5849  Priti Patel next Conservative party leader?
+  76307568  0.5849  Will Alanyaspor win on 2025-09-17?
+  75730567  0.5850  Will there be no new Prime Minister of France?
+  77338009  0.5850  Will there be no new Prime Minister of France?
+  78536871  0.5850  Will Uganda win on 2025-11-18?
+  76612950  0.5851  Will Fernando Haddad win the 2026 Brazilian presidential election?
+  75810611  0.5852  Will Orlando Cruz win the 2026 Portugal presidential election?
+  77355470  0.5852  Will Djibouti win on 2025-10-12?
+  54030710  0.5852  Istanbul Mayoral Election 2024: Will another party win?
+  77633910  0.5852  Will Alanyaspor win on 2025-11-08?
+  71721302  0.5852  Will Dalitso Kabame win the 2025 Malawi presidential election?
+  75987048  0.5852  Will Lesotho win on 2025-09-08?
+  77354733  0.5853  Will Greece win on 2025-10-12?
+  77627933  0.5853  Will Albania win on 2025-10-14?
+  56426341  0.5853  Rishi Sunak out before next UK election?
+  77338246  0.5854  Will another person be the next Prime Minister of France?
+  78944400  0.5855  Will Jeon Hyun-heui win the 2026 Seoul Mayoral Election
+  77354293  0.5855  Will Montenegro win on 2025-10-09?
+  78559017  0.5856  Will Zohran Mamdani say "Million" or "Billion" or "Trillion" 5+ times during his
+  72034481  0.5856  Will the next Prime Minister of Romania be an Independent?
+  55113935  0.5856  Will Hikaru Nakamura win FIDE Candidates 2024?
+  69174944  0.5856  Will Mariana Mortágua be the next Prime Minister of Portugal after the 2025 elec
+  67586236  0.5856  Will PRO hold the most seats in the Chamber of Deputies following the 2025 Argen
+  78976871  0.5857  Modi out before 2027?
+  78932066  0.5857  Will Keir Starmer say "Gentleman" or "Lady" 6+ times during the next Prime Minis
+  78723068  0.5858  Will Ximena Rincón come in fourth in the 1st round of the 2025 Chilean president
+  75509717  0.5858  Will HNK Rijeka win on 2025-08-28?
+  77354519  0.5858  Will Hungary win on 2025-10-11?
+  77354987  0.5859  Will Mauritius win on 2025-10-08?
+  78666434  0.5859  Will Mozambique win on 2025-11-17?
+  76612955  0.5859  Will Michelle Bolsonaro win the 2026 Brazilian presidential election?
+  67498201  0.5860  Milei out as President of Argentina in 2025?
+  75986570  0.5860  Will Angola win on 2025-09-04?
+  78801845  0.5861  Will Trabzonspor win on 2025-12-07?
+  77935317  0.5861  Will Netherlands win on 2025-11-14?
+  77628065  0.5861  Will Australia win on 2025-10-14?
+  61150889  0.5861  Will Kamala lead in RCP by 2-2.4 September 6?
+  74805731  0.5861  Will Johannes Kaiser win the 1st round of the 2025 Chilean presidential election
+  74367322  0.5861  Will the next Prime Minister of Hungary be Viktor Orbán?
+  61150941  0.5861  Will Kamala lead in RCP by 3+ September 6?
+  75988467  0.5862  Will Austria win on 2025-09-06?
+  67302561  0.5862  Kim Jong Un out as Supreme Leader of North Korea in 2025?
+  77983352  0.5862  Will Recep Tayyip Erdoğan be the next leader out in 2025?
+  78718138  0.5863  Will RFK Akhmat Groznyi win on 2025-12-05?
+  78623206  0.5863  Will Malawi win on 2025-11-15?
+  65130753  0.5863  Will Joe Biden be TIME's Person of the Year for 2024?
+  71160048  0.5863  Will the Alternative 2020 win the most seats in the 2025 Suriname election?
+  77354928  0.5863  Will Oman win on 2025-10-11?
+  75988502  0.5863  Will Hungary win on 2025-09-06?
+  76222753  0.5864  Will Yoshihiko Noda be the next Prime Minister of Japan?
+  77373482  0.5864  Will Eyüpspor win on 2025-10-20?
+  77632028  0.5864  Will Nigeria win on 2025-10-14?
+  72614310  0.5864  Will JIP win the most seats in the House of Councillors following the 2025 Japan
+  76612967  0.5864  Will Renan Santos win the 2026 Brazilian presidential election?
+  75171339  0.5865  Will Fayval Williams be the next Prime Minister of Jamaica after the election?
+  75981858  0.5865  Will Australia win on 2025-09-05?
+  62922974  0.5865  Will another candidate win the 2024 Uruguay presidential election?
+  79061005  0.5865  Will Alanyaspor win on 2025-12-13?
+  70665205  0.5865  Will People's Action Party (PAP) win the 2025 Singapore parliamentary election?
+  78546277  0.5866  Will AS Furiani-Agliani win on 2025-11-16?
+  75372751  0.5866  Will Qarabag win on 2025-08-19?
+  75982243  0.5868  Will Australia win on 2025-09-09?
+  75988794  0.5868  Will Hungary win on 2025-09-09?
+  74080481  0.5869  Will CPJ hold the second most seats in the House of Councillors following the 20
+  75981795  0.5869  Will Saudi Arabia win on 2025-09-04?
+  77374509  0.5870  Will PFK Krylia Sovetov Samara win on 2025-10-18?
+  75986804  0.5870  Will South Africa win on 2025-09-05?
+  75466081  0.5870  Will Qarabag win on 2025-08-27?
+  75363348  0.5871  Will Jorge "Tuto" Quiroga win by 5–10%?
+  75986556  0.5871  Will Tunisia win on 2025-09-04?
+  76026744  0.5871  Will GL/PvdA be part of the next Government of the Netherlands?
+  77355064  0.5871  Will Madagascar win on 2025-10-08?
+  78021775  0.5872  Will Legia Warszawa win on 2025-10-23?
+  61502535  0.5872  Will Kamala lead in RCP by 3+ September 13?
+  71159982  0.5872  Will the Brotherhood and Unity in Politics win the most seats in the 2025 Surina
+  78709587  0.5872  Will Uganda win on 2025-11-15?
+  67586265  0.5872  Will HNP win the most seats in the Chamber of Deputies following the 2025 Argent
+  61502440  0.5872  Will Kamala lead in RCP by 1-1.4 September 13?
+  76609316  0.5872  Will Fernando Haddad qualify for Brazil's presidential runoff?
+  78944350  0.5873  Will Na Kyung-won win the 2026 Seoul Mayoral Election
+  76773796  0.5873  Will PFK Krylia Sovetov Samara win on 2025-09-26?
+  70025407  0.5873  Will Hong Joon-pyo be the People's Power Party candidate for president?
+  78628647  0.5873  Poilievre out as leader of Conservatives before 2027?
+  77355343  0.5874  Will Mauritius win on 2025-10-12?
+  78752781  0.5874  Will Kenya win on 2025-11-14?
+  56934952  0.5876  Will the EPP win 200 or more seats in the European Parliament?
+  71428897  0.5877  Will Abakar Ahamat win the Cameroon Presidential Election?
+  77632848  0.5878  Will Serbia win on 2025-10-14?
+  69458294  0.5878  Poilievre out as leader of Conservatives in 2025?
+  77374839  0.5878  Will PFK Krylia Sovetov Samara win on 2025-11-01?
+  76472654  0.5878  Will Isaac Nader win 1500m Men at 2025 World Athletics Championships?
+  77632953  0.5878  Will Hungary win on 2025-10-14?
+  75988836  0.5878  Will Austria win on 2025-09-09?
+  76498532  0.5879  Will Alanyaspor win on 2025-09-21?
+  75986835  0.5879  Will Senegal win on 2025-09-05?
+  77355180  0.5879  Will São Tomé e Príncipe win on 2025-10-10?
+  23651405  0.5880  Will Boris Johnson be the Prime Minister of the United Kingdom on January 20, 20
+  77354684  0.5880  Will Faroe Islands win on 2025-10-12?
+  77632073  0.5881  Will Morocco win on 2025-10-14?
+  64014017  0.5881  Germany confidence vote in 2024?
+  72034465  0.5882  Will the next Prime Minister of Romania be a member of UDMR?
+  75448188  0.5882  Will HNK Rijeka win on 2025-08-21?
+  78847485  0.5882  Will PLP win the most seats in the 2026 Costa Rican Legislative Assembly electio
+  77354587  0.5882  Will Serbia win on 2025-10-11?
+  77373538  0.5882  Will Trabzonspor win on 2025-10-25?
+  75987181  0.5885  Will Senegal win on 2025-09-09?
+  77355367  0.5885  Will Angola win on 2025-10-12?
+  72614203  0.5885  Will JIP hold the most seats in the House of Councillors following the 2025 Japa
+  77354915  0.5885  Will Haiti win on 2025-10-13?
+  75986779  0.5886  Will Morocco win on 2025-09-05?
+  78683170  0.5886  Will Mário da Silva Júnior win the 2025 Guinea-Bissau presidential election?
+  66343409  0.5888  Nigel Farage out as Leader of Reform before March?
+  77052469  0.5888  Will Alanyaspor win on 2025-10-04?
+  77355241  0.5889  Will Nigeria win on 2025-10-10?
+  74562317  0.5889  Will David Luna Sánchez win the 2026 Colombian presidential election?
+  79023723  0.5889  Will Abdoulaye Yéro Baldé win the 2025 Guinean presidential election?
+  75988232  0.5889  Will Spain win on 2025-09-04?
+  75982110  0.5889  Will Maldives win on 2025-09-06?
+  77355485  0.5890  Will South Sudan win on 2025-10-13?
+  77354351  0.5890  Will Malta win on 2025-10-09?
+  56690118  0.5890  Will another candidate win the 2024 Lithuanian presidential election?
+  75986858  0.5890  Will Ethiopia win on 2025-09-05?
+  78839205  0.5890  Will Qatar win on 2025-11-17?
+  52407159  0.5891  Mexican Presidential Election: Will Jorge Álvarez Máynez win?
+  77631998  0.5891  Will South Africa win on 2025-10-14?
+  70584385  0.5891  Will the next Pope require 20 or more ballots?
+  74367340  0.5892  Will the next Prime Minister of Hungary be István Kapitány?
+  78801865  0.5892  Will Kocaelispor win on 2025-12-07?
+  75986760  0.5892  Will Zimbabwe win on 2025-09-05?
+  77354600  0.5892  Will Spain win on 2025-10-11?
+  66660952  0.5893  Will Jim Chalmers be the next Prime Minister of Australia after the 2025 electio
+  61502509  0.5894  Will Kamala lead in RCP by 2-2.4 September 13?
+  75986908  0.5894  Will Central African Republic win on 2025-09-07?
+  78238100  0.5894  Will Jamaica win on 2025-11-18?
+  75987240  0.5894  Will Angola win on 2025-09-09?
+  67586267  0.5895  Will HNP hold the most seats in the Chamber of Deputies following the 2025 Argen
+  75987146  0.5895  Will South Africa win on 2025-09-09?
+  55113926  0.5895  Will Fabiano Caruana win FIDE Candidates 2024?
+  77331367  0.5895  Will Australia win on 2025-10-10?
+  77773975  0.5896  Will Marcel Siem win the 2025 DP World India Championship?
+  77355026  0.5896  Will Central African Republic win on 2025-10-08?
+  76915105  0.5896  Will Brann win on 2025-10-02?
+  76273702  0.5896  Will Qarabag win on 2025-09-16?
+  77635134  0.5896  Will CF Rayo Majadahonda win on 2025-10-28?
+  77354864  0.5896  Will Oman win on 2025-10-08?
+  75986903  0.5897  Will Morocco win on 2025-09-08?
+  78944415  0.5897  Will Kang Hoon-sik win the 2026 Seoul Mayoral Election
+  71721401  0.5898  Will Dr Patrick Herminie win the 2025 Seychelles presidential election?
+  66784468  0.5898  Will Viktor Orban attend presidential inauguration?
+  78845024  0.5899  Will Alanyaspor win on 2025-12-08?
+  77355040  0.5899  Will Djibouti win on 2025-10-08?
+  74805751  0.5899  Will Ximena Rincón win the 1st round of the 2025 Chilean presidential election?
+  71160062  0.5900  Will another party win the most seats in the 2025 Suriname election?
+  73248077  0.5900  Will Pope Leo XIV be TIME's Person of the Year for 2025?
+  27100303  0.5900  Will Xi Jinping remain General Secretary of the CCP through 2022?
+  77355437  0.5901  Will Zimbabwe win on 2025-10-13?
+  70883961  0.5901  Another Canada election called in 2025?
+  76472824  0.5902  Will Alison dos Santos win 400m Men Hurdles at 2025 World Athletics Championship
+  75986848  0.5902  Will Egypt win on 2025-09-05?
+  71444003  0.5906  Modi out in 2025?
+  52788428  0.5906  Will Imran Khan be next prime minister of Pakistan?
+  78237679  0.5907  Will Poland win on 2025-11-17?
+  79023740  0.5907  Will Faya Lansana Millimono win the 2025 Guinean presidential election?
+  66372775  0.5907  Will the next UK election be called by December 31?
+  68924947  0.5907  Portugal confidence vote fails today?
+  75987093  0.5907  Will Zimbabwe win on 2025-09-09?
+  76609316  0.5908  Will Tarcisio de Frietas qualify for Brazil's presidential runoff?
+  75987063  0.5908  Will Ethiopia win on 2025-09-09?
+  75982228  0.5909  Will Saudi Arabia win on 2025-09-08?
+  75986873  0.5910  Will Tunisia win on 2025-09-08?
+  77355290  0.5910  Will South Sudan win on 2025-10-10?
+  74805764  0.5910  Will Franco Parisi win the 1st round of the 2025 Chilean presidential election?
+  71352525  0.5911  Will Maya Parbhoe be the next president of Suriname after the election?
+  77628024  0.5911  Will IR Iran win on 2025-10-14?
+  78425252  0.5911  Will Zohran Mamdani win by 20–25%?
+  75988428  0.5911  Will Serbia win on 2025-09-06?
+  78631524  0.5912  Kim Jong Un out as Supreme Leader of North Korea before 2027?
+  77935307  0.5912  Will Poland win on 2025-11-14?
+  66660912  0.5912  Will Peter Dutton be the next Prime Minister of Australia after the 2025 electio
+  76472858  0.5913  Will Ismail Doudai Abakar win 400m Men Hurdles at 2025 World Athletics Champions
+  77355427  0.5913  Will Lesotho win on 2025-10-13?
+  75810656  0.5914  Will Raul Perestrello win the 2026 Portugal presidential election?
+  78425257  0.5914  Will Zohran Mamdani win by more than 25%?
+  75981762  0.5915  Will Bahrain win on 2025-09-03?
+  75813742  0.5916  Will Mahmoud Abbas attend the UN General Assembly?
+  56934907  0.5916  Will the EPP win 160-169 seats in the European Parliament?
+  77354298  0.5916  Will Austria win on 2025-10-09?
+  78548183  0.5916  Will Kashiwa Reysol win on 2025-11-30?
+  78932066  0.5918  Will Keir Starmer say "Government" 8+ times during the next Prime Minister's Que
+  77373405  0.5918  Will Samsunspor win on 2025-10-19?
+  77355422  0.5918  Will Madagascar win on 2025-10-12?
+  75982260  0.5918  Will Maldives win on 2025-09-09?
+  77983374  0.5918  Will Benjamin Netanyahu be the next leader out in 2025?
+  78944360  0.5919  Will Han Dong-hoon win the 2026 Seoul Mayoral Election
+  76307443  0.5919  Will Samsunspor win on 2025-09-13?
+  77355456  0.5919  Will Tunisia win on 2025-10-13?
+  77355299  0.5919  Will Senegal win on 2025-10-10?
+  77331395  0.5921  Will Peru win on 2025-10-10?
+  78021685  0.5921  Will HNK Rijeka win on 2025-10-23?
+  70025508  0.5921  Will Na Kyung-won be the People's Power Party candidate for president?
+  74080450  0.5921  Will JCP hold the second most seats in the House of Councillors following the 20
+  75986844  0.5922  Will Sudan win on 2025-09-05?
+  77373656  0.5922  Will Samsunspor win on 2025-11-02?
+  78932063  0.5923  Will Keir Starmer say "Thousand" or "Million" or "Billion" 15+ times during the 
+  77373560  0.5923  Will Alanyaspor win on 2025-10-25?
+  78932064  0.5923  Will Keir Starmer say "Mr. Speaker" 30+ times during the next Prime Minister's Q
+  67586288  0.5923  Will SER win the most seats in the Chamber of Deputies following the 2025 Argent
+  75987142  0.5923  Will Egypt win on 2025-09-09?
+  77355231  0.5923  Will Lesotho win on 2025-10-10?
+  77355166  0.5923  Will Zimbabwe win on 2025-10-10?
+  73248055  0.5925  Will Pope Francis be TIME's Person of the Year for 2025?
+  75986677  0.5925  Will Kenya win on 2025-09-05?
+  73700668  0.5925  Will Frans Timmermans become the next Prime Minister of the Netherlands?
+  77331451  0.5926  Will Cuba win on 2025-10-11?
+  25580552  0.5926  Will the Wordle word on Pi day contain a "P" or an "I"?
+  76222749  0.5927  Will Yōko Kamikawa be the next Prime Minister of Japan?
+  50786748  0.5927  Will Xi Jinping be the 2023 TIME Person of the Year?
+  77331236  0.5929  Will Morocco win on 2025-10-09?
+  70584375  0.5929  Will the next Pope require 15–19 ballots?
+  75987000  0.5929  Will Somalia win on 2025-09-08?
+  75988841  0.5930  Will Serbia win on 2025-09-09?
+  78116873  0.5931  Will JA21 win 13 or more seats in the 2025 Netherlands parliamentary election?
+  75986648  0.5932  Will Somalia win on 2025-09-05?
+  76307515  0.5932  Will Samsunspor win on 2025-09-17?
+  78238482  0.5932  Will Samsunspor win on 2025-11-23?
+  77628039  0.5933  Will Russia win on 2025-10-14?
+  52665821  0.5933  El Salvador Presidential Election: Will Manuel Flores win?
+  78232772  0.5933  Will Singapore win on 2025-11-13?
+  77331340  0.5933  Will IR Iran win on 2025-10-10?
+  56934944  0.5934  Will the EPP win 190-199 seats in the European Parliament?
+  77935900  0.5934  Will Jamaica win on 2025-11-13?
+  71802950  0.5935  Will Semisi Sika be the next Prime Minister of Tonga after the election?
+  73248038  0.5936  Will Donald Trump be TIME's Person of the Year for 2025?
+  77632403  0.5937  Will Saudi Arabia win on 2025-10-14?
+  75987106  0.5937  Will Kenya win on 2025-09-09?
+  76526633  0.5937  Will GroenLinks–PvdA win 29 or more seats in the 2025 Netherlands parliamentary 
+  75986515  0.5938  Will Guinea-Bissau win on 2025-09-04?
+  75988237  0.5938  Will Netherlands win on 2025-09-04?
+  75810592  0.5939  Will Tim Vieira win the 2026 Portugal presidential election?
+  78237699  0.5939  Will Kosovo win on 2025-11-18?
+  76472912  0.5940  Will another person win 400m Men Hurdles at 2025 World Athletics Championships?
+  77374690  0.5940  Will PFK Krylia Sovetov Samara win on 2025-10-25?
+  78804614  0.5940  Will PFK Krylia Sovetov Samara win on 2025-12-07?
+  78542800  0.5941  Will Alanyaspor win on 2025-12-01?
+  77355175  0.5941  Will South Africa win on 2025-10-10?
+  62224994  0.5942  Will another candidate win the Mozambican presidential election?
+  78932063  0.5942  Will Keir Starmer say "Thousand" or "Million" or "Billion" 10+ times during the 
+  71721424  0.5942  Will Robin Johnston win the 2025 Seychelles presidential election?
+  75987168  0.5944  Will Sudan win on 2025-09-09?
+  23998732  0.5945  Will Mario Draghi be elected as President of Italy in the upcoming 2022 Presiden
+  78709612  0.5945  Will Tanzania win on 2025-11-14?
+  70956976  0.5946  Will Sali Berisha be the next Prime Minister of Albania after the 2025 election?
+  75988629  0.5947  Will Spain win on 2025-09-07?
+  68322545  0.5948  Will Tony Blair be named in Epstein files?
+  67774253  0.5948  Japan prime minister Ishiba out in 2025?
+  75986922  0.5948  Will Mozambique win on 2025-09-08?
+  71721430  0.5949  Will Danny Faure win the 2025 Seychelles presidential election?
+  74881373  0.5949  Will Pafos win on 2025-08-12?
+  75982215  0.5949  Will Bahrain win on 2025-09-08?
+  68933151  0.5950  Will Recep Tayyip Erdoğan be the first leader out in 2025?
+  77355616  0.5950  Will Ethiopia win on 2025-10-08?
+  71149734  0.5951  Will Saylor say "China" during his Strategy World 2025 keynote?
+  65130803  0.5951  Will Benjamin Netanyahu be TIME's Person of the Year for 2024?
+  75810730  0.5952  Will Paulo Portas win the 2026 Portugal presidential election?
+  77355188  0.5952  Will Tunisia win on 2025-10-10?
+  77354970  0.5953  Will Angola win on 2025-10-08?
+  75986948  0.5953  Will Guinea-Bissau win on 2025-09-08?
+  77331400  0.5953  Will Malta win on 2025-10-12?
+  68933051  0.5953  Will Abdel Fattah el-Sisi be the first leader out in 2025?
+  77331284  0.5954  Will Cuba win on 2025-10-08?
+  72034443  0.5954  Will the next Prime Minister of Romania be a member of PSD?
+  75981778  0.5955  Will Singapore win on 2025-09-04?
+  79030582  0.5955  Will Itamar Ben Gvir be the next Prime Minister of Israel?
+  75986746  0.5955  Will Tanzania win on 2025-09-05?
+  75986732  0.5956  Will Mozambique win on 2025-09-05?
+  70584363  0.5956  Will the next Pope require 11–14 ballots?
+  77935658  0.5957  Will Israel win on 2025-11-16?
+  77930363  0.5957  Will Israel win on 2025-11-13?
+  64282546  0.5957  Will Trump nominate another person for Israeli Ambassador?
+  79023750  0.5957  Will Mohamed Nabé win the 2025 Guinean presidential election?
+  76498552  0.5957  Will Samsunspor win on 2025-09-21?
+  78714664  0.5958  Will PT win the most seats in the 2025 Guinea-Bissau National People’s Assembly 
+  77355394  0.5958  Will Central African Republic win on 2025-10-12?
+  78116858  0.5958  Will JA21 win fewer than 9 seats in the 2025 Netherlands parliamentary election?
+  66660929  0.5958  Will Anthony Albanese be the next Prime Minister of Australia after the 2025 ele
+  78764032  0.5959  Will Kashiwa Reysol win on 2025-12-06?
+  77983410  0.5959  Will Vladimir Putin be the next leader out in 2025?
+  78634226  0.5959  Will SC Corinthians Paulista win on 2025-11-23?
+  77331332  0.5960  Will Russia win on 2025-10-10?
+  75988047  0.5960  Will Venezuela win on 2025-09-04?
+  78551731  0.5961  Will Vegalta Sendai win on 2025-11-29?
+  74562379  0.5961  Will Juan Carlos Pinzón win the 2026 Colombian presidential election?
+  71428840  0.5961  Will Paul Biya win the Cameroon Presidential Election?
+  77941470  0.5962  Will KRC Genk win on 2025-10-23?
+  55113950  0.5962  Will Alireza Firouzja win FIDE Candidates 2024?
+  78683180  0.5963  Will Siga Batista win the 2025 Guinea-Bissau presidential election?
+  57624100  0.5963  Will another candidate Win the 2024 Venezuela presidential election?
+  77354901  0.5963  Will Saudi Arabia win on 2025-10-08?
+  78683165  0.5963  Will Fernando Dias da Costa win the 2025 Guinea-Bissau presidential election?
+  72034487  0.5964  Will the next Prime Minister of Romania be from another party?
+  78968825  0.5964  Will Equatorial Guinea win on 2025-11-17?
+  78683155  0.5964  Will João Bernardo Vieira win the 2025 Guinea-Bissau presidential election?
+  77935575  0.5965  Will Kosovo win on 2025-11-15?
+  78683150  0.5967  Will Honório Augusto Lopes win the 2025 Guinea-Bissau presidential election?
+  75942480  0.5968  Subianto out as president of Indonesia in 2025?
+  75448115  0.5969  Will Samsunspor win on 2025-08-21?
+  60668761  0.5969  Will Kamala lead by by 1-1.4 August 23?
+  67586297  0.5969  Will SER hold the most seats in the Chamber of Deputies following the 2025 Argen
+  75982160  0.5970  Will Japan win on 2025-09-06?
+  79104217  0.5970  Will Samsunspor win on 2025-12-14?
+  78542684  0.5971  Will Konyaspor win on 2025-11-24?
+  77355408  0.5972  Will Ethiopia win on 2025-10-12?
+  71721436  0.5975  Will Kisna Louise win the 2025 Seychelles presidential election?
+  77632068  0.5975  Will Sudan win on 2025-10-14?
+  78630633  0.5976  Milei out as President of Argentina before 2027?
+  49990020  0.5976  Will Sergio Massa win by more than 5% in the 2023 Argentina Presidential electio
+  77983426  0.5976  Will Sébastien Lecornu be the next leader out in 2025?
+  77377852  0.5976  Will SC Corinthians Paulista win on 2025-11-02?
+  75986701  0.5976  Will Malawi win on 2025-09-05?
+  77627903  0.5976  Will Japan win on 2025-10-14?
+  24976316  0.5977  Who will win the 2022 South Korean presidential election?
+  75987068  0.5977  Will Tanzania win on 2025-09-09?
+  70665215  0.5978  Will Workers' Party (WP) win the 2025 Singapore parliamentary election?
+  52788412  0.5978  Will Nawaz Sharif be next prime minister of Pakistan?
+  75986962  0.5979  Will Malawi win on 2025-09-08?
+  75986722  0.5979  Will Uganda win on 2025-09-05?
+  71428913  0.5980  Will Tomaïno Ndam Njoya win the Cameroon Presidential Election?
+  68749082  0.5981  Will Plzen win on 2025-03-13?
+  76871490  0.5982  Will Qarabag win on 2025-10-01?
+  77340231  0.5982  Will Trump say "Nobel" during events with PM of Canada on Oct 7?
+  78021512  0.5982  Spain snap election called by June 30, 2026?
+  78752791  0.5983  Will Equatorial Guinea win on 2025-11-14?
+  77355050  0.5983  Will Egypt win on 2025-10-08?
+  78721912  0.5983  Will Keir Starmer say "AI" during the next Prime Minister's Questions?
+  78539485  0.5984  Will PEC Zwolle win on 2025-11-28?
+  77631948  0.5984  Will Mozambique win on 2025-10-14?
+  77941796  0.5984  Will Kashiwa Reysol win on 2025-11-08?
+  58598944  0.5985  Marine Le Pen next Prime Minister of France?
+  70957068  0.5986  Will Tom Doshi be the next Prime Minister of Albania after the 2025 election?
+  74881396  0.5986  Will KF Shkendija win on 2025-08-12?
+  54546333  0.5987  Senegal Presidential Election: Amadou Ba wins?
+  77354361  0.5987  Will Netherlands win on 2025-10-09?
+  58129045  0.5988  Mike Johnson out as Speaker before Election?
+  77355133  0.5992  Will Kenya win on 2025-10-09?
+  77373350  0.5992  Will Konyaspor win on 2025-10-18?
+  77631938  0.5993  Will Somalia win on 2025-10-14?
+  78845039  0.5993  Will Beşiktaş JK win on 2025-12-08?
+  75986991  0.5993  Will Uganda win on 2025-09-08?
+  77627994  0.5994  Will Venezuela win on 2025-10-14?
+  29239702  0.5994  Will Boris Johnson remain Prime Minister of the United Kingdom through August?
+  75981753  0.5995  Will Qatar win on 2025-09-03?
+  64443713  0.5995  New Netherlands election called in 2024?
+  54546377  0.5996  Senegal Presidential Election: Mahammed Dionne wins?
+  44920694  0.5997  Will PSOE win over 28.0% of votes in the 2023 Spanish general election?
+  75988247  0.5997  Will Poland win on 2025-09-04?
+  60668768  0.5998  Will Kamala lead by by 1.5-1.9 August 23?
+  77331246  0.5999  Will Bahrain win on 2025-10-09?
+  70957007  0.6000  Will Ilir Meta be the next Prime Minister of Albania after the 2025 election?
+  70956962  0.6000  Will Edi Rama be the next Prime Minister of Albania after the 2025 election?
+  79023745  0.6000  Will Abdoulaye Kourouma win the 2025 Guinean presidential election?
+  72614294  0.6000  Will LDP win the most seats in the House of Councillors following the 2025 Japan
+  77638698  0.6000  Will SC Corinthians Paulista win on 2025-11-05?
+  68932965  0.6000  Will Ahmed al-Sharaa be the first leader out in 2025?
+  75988138  0.6001  Will Venezuela win on 2025-09-09?
+  77355626  0.6001  Will Guinea-Bissau win on 2025-10-08?
+  68932947  0.6002  Will Benjamin Netanyahu be the first leader out in 2025?
+  77632388  0.6002  Will Qatar win on 2025-10-14?
+  77941721  0.6002  Will Kashiwa Reysol win on 2025-10-25?
+  48293178  0.6002  Will the next speaker be elected by Oct 31?
+  72614213  0.6003  Will DPP hold the most seats in the House of Councillors following the 2025 Japa
+  76472722  0.6003  Will another person win 1500m Men at 2025 World Athletics Championships?
+  77373573  0.6003  Will Konyaspor win on 2025-10-26?
+  78021901  0.6004  Will Samsunspor win on 2025-10-23?
+  71160076  0.6005  Will The New Lion win the most seats in the 2025 Suriname election?
+  72614320  0.6006  Will DPP win the most seats in the House of Councillors following the 2025 Japan
+  77983399  0.6007  Will Donald Trump be the next leader out in 2025?
+  75988574  0.6008  Will Netherlands win on 2025-09-07?
+  77355193  0.6008  Will Somalia win on 2025-10-09?
+  79098311  0.6008  Will Guinea win on 2025-11-18?
+  78116863  0.6009  Will JA21 win 9–10 seats in the 2025 Netherlands parliamentary election?
+  70584318  0.6010  Will the next Pope require 3–4 ballots?
+  77355138  0.6010  Will Mozambique win on 2025-10-09?
+  77355372  0.6010  Will Egypt win on 2025-10-12?
+  78545555  0.6010  Will GSI Pontivy win on 2025-11-15?
+  78944385  0.6011  Will Chong Won-oh win the 2026 Seoul Mayoral Election
+  77354696  0.6011  Will Netherlands win on 2025-10-12?
+  77331381  0.6012  Will Venezuela win on 2025-10-10?
+  75981768  0.6012  Will Malaysia win on 2025-09-04?
+  77631993  0.6015  Will Uganda win on 2025-10-14?
+  58599000  0.6016  Another New Popular Front member next Prime Minister of France?
+  62471741  0.6017  Will another candidate win the Tunisia presidential election?
+  75988375  0.6018  Will Israel win on 2025-09-05?
+  56934888  0.6019  Will the EPP win 150-159 seats in the European Parliament?
+  77983394  0.6019  Will Keir Starmer be the next leader out in 2025?
+  54546387  0.6020  Senegal Presidential Election: Aly Ngouille Ndiaye wins?
+  70957036  0.6020  Will Agron Shehaj be the next Prime Minister of Albania after the 2025 election?
+  72773330  0.6022  US recognizes Reza Pahlavi as leader of Iran before August?
+  70584338  0.6022  Will the next Pope require 7–8 ballots?
+  72614188  0.6022  Will LDP hold the most seats in the House of Councillors following the 2025 Japa
+  57343947  0.6024  Jeremy Corbyn elected to parliament in UK election?
+  67498191  0.6024  Meloni out as Prime Minister of Italy in 2025?
+  66783300  0.6025  Ontario election called before May?
+  78944390  0.6026  Will Seo Young-kyo win the 2026 Seoul Mayoral Election
+  54546367  0.6028  Senegal Presidential Election: Anta Babacar Ngom wins?
+  77355246  0.6028  Will Sudan win on 2025-10-10?
+  75988691  0.6030  Will Israel win on 2025-09-08?
+  72034454  0.6030  Will the next Prime Minister of Romania be a member of AUR?
+  79055110  0.6030  Will Guinea win on 2025-11-15?
+  77354471  0.6030  Will Ukraine win on 2025-10-10?
+  78721910  0.6030  Will Keir Starmer say "United Kingdom" during the next Prime Minister's Question
+  77331223  0.6031  Will Japan win on 2025-10-10?
+  70185226  0.6031  Will another candidate win the 2025 Gabonese Presidential election?
+  77355161  0.6032  Will Uganda win on 2025-10-09?
+  76915014  0.6032  Will Plzen win on 2025-10-02?
+  53835239  0.6032  Slovakia Presidential Election: Will Štefan Harabin win?
+  76631771  0.6033  Will Plzen win on 2025-09-25?
+  76766004  0.6033  Will PEC Zwolle win on 2025-09-27?
+  71721395  0.6034  Will Wavel Ramkalawan win the 2025 Seychelles presidential election?
+  77355112  0.6034  Will Malawi win on 2025-10-09?
+  75448009  0.6035  Will Shkendija win on 2025-08-21?
+  71721291  0.6036  Will Peter Mutharika win the 2025 Malawi presidential election?
+  77355380  0.6036  Will Guinea-Bissau win on 2025-10-12?
+  76219841  0.6037  Next French Prime Minister appointed by September 19?
+  68160022  0.6037  Will Plzen win on 2025-02-20?
+  54546357  0.6037  Senegal Presidential Election: Bassirou Diomaye Faye wins?
+  63597863  0.6039  Will G2 win Blast Premier World Final 2024?
+  75986431  0.6039  Will Seychelles win on 2025-09-03?
+  77633604  0.6039  Will Jamaica win on 2025-10-14?
+  58599024  0.6039  Someone else next Prime Minister of France?
+  77355451  0.6040  Will Malawi win on 2025-10-13?
+  59001817  0.6040  David Cameron next Conservative party leader?
+  68933112  0.6041  Will Vladimir Putin be the first leader out in 2025?
+  78848456  0.6041  Japanese Snap Election Called by June 30, 2026?
+  78247602  0.6042  Will Vegalta Sendai win on 2025-11-23?
+  73248083  0.6042  Will Benjamin Netanyahu be TIME's Person of the Year for 2025?
+  78932064  0.6043  Will Keir Starmer say "UK" or "United Kingdom" during the next Prime Minister's 
+  75986618  0.6045  Will Eswatini win on 2025-09-04?
+  78235351  0.6046  Will PEC Zwolle win on 2025-11-23?
+  77355097  0.6047  Will Tanzania win on 2025-10-08?
+  72034449  0.6047  Will the next Prime Minister of Romania be a member of PNL?
+  75989005  0.6047  Will Jamaica win on 2025-09-05?
+  75981874  0.6048  Will Indonesia win on 2025-09-05?
+  77331196  0.6050  Will Poland win on 2025-10-09?
+  77632938  0.6050  Will Israel win on 2025-10-14?
+  68932992  0.6051  Will Shigeru Ishiba be the first leader out in 2025?
+  77354500  0.6053  Will Israel win on 2025-10-11?
+  78073230  0.6054  Will Vegalta Sendai win on 2025-11-08?
+  77983358  0.6055  Will Kim Jong Un be the next leader out in 2025?
+  74881344  0.6055  Will Viktoria Plzen win on 2025-08-12?
+  77628034  0.6056  Will Tanzania win on 2025-10-14?
+  60668778  0.6058  Will Kamala lead by by 2+ August 23?
+  75988648  0.6059  Will Kosovo win on 2025-09-08?
+  75989052  0.6060  Will Jamaica win on 2025-09-09?
+  13267674  0.6060  Who will win the 2021 Peruvian Presidential Election?
+  77983389  0.6060  Will Javier Milei be the next leader out in 2025?
+  77631953  0.6062  Will Seychelles win on 2025-10-14?
+  55113973  0.6064  Will Ian Nepomniachtchi win FIDE Candidates 2024?
+  77372623  0.6064  Will PEC Zwolle win on 2025-10-18?
+  75987115  0.6067  Will Seychelles win on 2025-09-09?
+  79023734  0.6067  Will Ibrahima Abé Sylla win the 2025 Guinean presidential election?
+  54546342  0.6067  Senegal Presidential Election: Idrissa Seck wins?
+  45075108  0.6067  Ecuador Presidential Election: Will Luisa González win?
+  68932982  0.6068  Will Keir Starmer be the first leader out in 2025?
+  77354873  0.6068  Will Qatar win on 2025-10-08?
+  75986537  0.6070  Will Equatorial Guinea win on 2025-09-04?
+  52665830  0.6071  El Salvador Presidential Election: Will Luis Parada win?
+  71721407  0.6071  Will Marco Francis win the 2025 Seychelles presidential election?
+  77373038  0.6072  Will PEC Zwolle win on 2025-11-02?
+  77630708  0.6073  Will PEC Zwolle win on 2025-11-08?
+  56935623  0.6074  Will ID win the most seats in European Parliament?
+  75982178  0.6075  Will Indonesia win on 2025-09-08?
+  76307795  0.6077  Will PEC Zwolle win on 2025-09-13?
+  70584353  0.6077  Will the next Pope require 9–10 ballots?
+  78683195  0.6078  Will Gabriel Fernando Indi win the 2025 Guinea-Bissau presidential election?
+  75988551  0.6078  Will Poland win on 2025-09-07?
+  26591226  0.6079  2022 Hungarian elections: Will Fidesz win at least 113 parliamentary seats?
+  78798772  0.6080  Will PEC Zwolle win on 2025-12-06?
+  75986888  0.6081  Will Rwanda win on 2025-09-06?
+  48293169  0.6082  Will the next speaker be elected by Oct 15?
+  78073050  0.6082  Will Vegalta Sendai win on 2025-10-26?
+  77354718  0.6082  Will Poland win on 2025-10-12?
+  72614277  0.6082  Will CPJ hold the most seats in the House of Councillors following the 2025 Japa
+  67498197  0.6089  Meloni out as Prime Minister of Italy before July?
+  77372811  0.6089  Will PEC Zwolle win on 2025-10-25?
+  58598954  0.6089  Another National Rally member the next Prime Minister of France?
+  75986863  0.6090  Will Equatorial Guinea win on 2025-09-08?
+  72034471  0.6090  Will the next Prime Minister of Romania be a member of SOS?
+  77983431  0.6092  Will Nicolás Maduro be the next leader out in 2025?
+  75987015  0.6092  Will Eswatini win on 2025-09-08?
+  76498228  0.6094  Will PEC Zwolle win on 2025-09-21?
+  77983457  0.6094  Will Friedrich Merz be the next leader out in 2025?
+  23611228  0.6095  Will Jair Bolsonaro win 2022 Presidential Elections in Brazil?
+  77983452  0.6095  Will Mahmoud Abbas be the next leader out in 2025?
+  76765961  0.6096  Will PEC Zwolle win on 2025-09-24?
+  79101057  0.6098  Will PEC Zwolle win on 2025-12-13?
+  69174958  0.6098  Will Paulo Raimundo be the next Prime Minister of Portugal after the 2025 electi
+  74837774  0.6099  Will Trump nominate no one before 2027?
+  72034460  0.6100  Will the next Prime Minister of Romania be a member of USR?
+  77983384  0.6101  Will Gavin Newsom be the next leader out in 2025?
+  69174885  0.6102  Will Luís Montenegro be the next Prime Minister of Portugal after the 2025 elect
+  68933097  0.6102  Will Javier Milei be the first leader out in 2025?
+  53835232  0.6103  Slovakia Presidential Election: Will Ivan Korčok win?
+  77354942  0.6103  Will Indonesia win on 2025-10-11?
+  48799497  0.6104  Will the next speaker be elected by Oct 17?
+  77355326  0.6105  Will Eswatini win on 2025-10-12?
+  77354845  0.6109  Will Kosovo win on 2025-10-13?
+  77983368  0.6111  Will Ali Khamenei be the next leader out in 2025?
+  68933160  0.6112  Will Kim Jong Un be the first leader out in 2025?
+  77049566  0.6114  Will PEC Zwolle win on 2025-10-04?
+  54421086  0.6115  Indian Election: Modi reelected?
+  70584326  0.6115  Will the next Pope require 5–6 ballots?
+  56400601  0.6116  UK election in January 2025 or later?
+  72614315  0.6119  Will JCP win the most seats in the House of Councillors following the 2025 Japan
+  76219842  0.6120  Next French Prime Minister appointed by September 12?
+  52788433  0.6121  Will another person be next prime minister of Pakistan?
+  75987101  0.6121  Will Rwanda win on 2025-09-09?
+  55637405  0.6121  Panama Presidential Election: Will Romulo Roux win?
+  64170207  0.6121  Will Trump nominate  David M. Friedman for Israeli Ambassador?
+  70665205  0.6122  Will PAP win less than 75 seats in the Singapore election?
+  55637501  0.6122  Panama Presidential Election: Will Ricardo Martinelli win?
+  77355497  0.6124  Will Equatorial Guinea win on 2025-10-13?
+  75986658  0.6127  Will Guinea win on 2025-09-05?
+  77632008  0.6131  Will Rwanda win on 2025-10-14?
+  75986935  0.6132  Will Guinea win on 2025-09-08?
+  77983363  0.6133  Will Xi Jinping be the next leader out in 2025?
+  77354418  0.6135  Will Kosovo win on 2025-10-10?
+  77632043  0.6135  Will Guinea win on 2025-10-14?
+  77355218  0.6136  Will Seychelles win on 2025-10-10?
+  68933032  0.6136  Will Giorgia Meloni be the first leader out in 2025?
+  70665216  0.6137  Will PAP win between 75 and 77 seats in the Singapore election?
+  48878139  0.6138  Will the next speaker be elected by Oct 20?
+  79023755  0.6138  Will Elhadj Bouna Keita win the 2025 Guinean presidential election?
+  57268177  0.6138  Will another person be next UK prime minister?
+  72614208  0.6139  Will JCP hold the most seats in the House of Councillors following the 2025 Japa
+  22519713  0.6140  Who will win the 2021 Chilean presidential elections?
+  73248049  0.6140  Will Xi Jinping be TIME's Person of the Year for 2025?
+  77355120  0.6141  Will Equatorial Guinea win on 2025-10-09?
+  68933134  0.6143  Will Donald Trump be the first leader out in 2025?
+  77354960  0.6144  Will Eswatini win on 2025-10-08?
+  72080517  0.6144  Spain snap election called in 2025?
+  70914872  0.6145  Australia election results in a hung parliament?
+  44804517  0.6146  Guatemala Presidential Election: Will Bernardo Arévalo win?
+  68933003  0.6146  Will Nicolás Maduro be the first leader out in 2025?
+  70430812  0.6148  Will any candidate win outright in 1st round of Poland Election?
+  72279718  0.6149  Polish snap election called in 2025?
+  77354891  0.6149  Will Indonesia win on 2025-10-08?
+  73700707  0.6150  Will Klaas Dijkhoff become the next Prime Minister of the Netherlands?
+  77355261  0.6154  Will Rwanda win on 2025-10-10?
+  78944395  0.6157  Will Hong Ihk-pyo win the 2026 Seoul Mayoral Election
+  52665801  0.6157  El Salvador Presidential Election: Will Joel Sanchez win?
+  48323154  0.6162  Will the next speaker be elected by Oct 10?
+  77983379  0.6166  Will Anthony Albanese be the next leader out in 2025?
+  64770574  0.6167  Will Jan Topić win the 2025 Ecuadorian Presidential Election?
+  77355146  0.6170  Will Guinea win on 2025-10-09?
+  71803030  0.6170  Will another person be the next Prime Minister of Tonga after the election?
+  68933042  0.6175  Will Ali Khamenei be the first leader out in 2025?
+  70665279  0.6181  Will PAP win 90 or more seats in the Singapore election?
+  67923842  0.6182  Government coalition formed within 100 days of German election?
+  76219842  0.6183  Next French Prime Minister appointed by September 10?
+  77336766  0.6187  Next French Prime Minister appointed by October 31?
+  74047756  0.6188  Will Mike Waltz receive 53 YEA votes in his UN Ambassador confirmation vote?
+  56400569  0.6190  UK election in September?
+  77458201  0.6194  Next French Prime Minister appointed by October 9?
+  65602569  0.6198  Canada election called before 2025?
+  68933021  0.6198  Will Gavin Newsom be the first leader out in 2025?
+  77336765  0.6200  Next French Prime Minister appointed by October 17?
+  74047738  0.6200  Will Mike Waltz receive 49 YEA votes in his UN Ambassador confirmation vote?
+  74047751  0.6201  Will Mike Waltz receive 52 YEA votes in his UN Ambassador confirmation vote?
+  68933124  0.6207  Will Xi Jinping be the first leader out in 2025?
+  68924644  0.6208  Portugal snap election called before July?
+  78551726  0.6208  Will Júbilo Iwata win on 2025-11-29?
+  68932955  0.6210  Will Anthony Albanese be the first leader out in 2025?
+  77983462  0.6219  Will Pedro Sánchez be the next leader out in 2025?
+  74047742  0.6224  Will Mike Waltz receive 50 YEA votes in his UN Ambassador confirmation vote?
+  74047760  0.6227  Will Mike Waltz receive 54 YEA votes in his UN Ambassador confirmation vote?
+  71721636  0.6228  Will another candidate win the Polish presidential election?
+  46623646  0.6230  2023 Singaporean presidential election: Will Tan Kin Lian win?
+  76222719  0.6231  Will there be no new Prime Minister of Japan?
+  78714669  0.6232  Will MUNDO-GB  win the most seats in the 2025 Guinea-Bissau National People’s As
+  23611597  0.6232  Will João Doria win 2022 Presidential Elections in Brazil?
+  77510398  0.6235  Japanese Snap Election Called by December 31, 2025?
+  58599012  0.6239  Another Ensemble member next Prime Minister of France?
+  67924490  0.6240  Ukraine election called in 2025?
+  43333064  0.6243  Argentina Presidential Election: Will Javier Milei win?
+  56400577  0.6244  UK election in October?
+  74047734  0.6250  Will Mike Waltz receive fewer than 49 YEA votes in his UN Ambassador confirmatio
+  78073304  0.6254  Will Júbilo Iwata win on 2025-11-09?
+  73700702  0.6255  Will Ahmed Aboutaleb become the next Prime Minister of the Netherlands?
+  68933168  0.6256  Will no leader be out in 2025?
+  77336765  0.6262  Next French Prime Minister appointed by October 10?
+  54546350  0.6270  Senegal Presidential Election: Khalifa Sall wins?
+  55637454  0.6270  Panama Presidential Election: Will Jose Gabriel Carrizo win?
+  70665246  0.6272  Will PAP win between 81 and 83 seats in the Singapore election?
+  74047747  0.6278  Will Mike Waltz receive 51 YEA votes in his UN Ambassador confirmation vote?
+  78247532  0.6290  Will Júbilo Iwata win on 2025-11-23?
+  55637392  0.6293  Panama Presidential Election: Will Martin Torrijos win?
+  67774251  0.6302  Netherlands election called before May?
+  46623634  0.6302  2023 Singaporean presidential election: Will Ng Kok Song win?
+  55637358  0.6304  Panama Presidential Election: Will Jose Raul Mulino win?
+  74047764  0.6304  Will Mike Waltz receive 55 or more YEA votes in his UN Ambassador confirmation v
+  77983347  0.6305  Will Emmanuel Macron be the next leader out in 2025?
+  75493295  0.6313  Dilan Yeşilgöz out as VVD leader before Netherlands election?
+  77764210  0.6313  Will Trump say "Where are you from" during Australia PM events on October 20?
+  51704406  0.6315  Will a world leader shit themselves before March?
+  55637375  0.6315  Panama Presidential Election: Will Ricardo Lombana win?
+  78073176  0.6321  Will Júbilo Iwata win on 2025-11-02?
+  44920674  0.6322  Will PP win a plurality in the 2023 Spanish general election?
+  64724722  0.6326  UK election called before 2025?
+  51095680  0.6326  UK election called by end of year?
+  46350657  0.6328  Zimbabwe Presidential Election: Will Mnangagwa win?
+  78072981  0.6329  Will Júbilo Iwata win on 2025-10-26?
+  23611411  0.6353  Will Sergio Moro win 2022 Presidential Elections in Brazil?
+  49349779  0.6381  Indonesia Election: Prabowo Subianto wins?
+  53835225  0.6388  Slovakia Presidential Election: Will Peter Pellegrini win?
+  68933012  0.6408  Will Emmanuel Macron be the first leader out in 2025?
+  52407150  0.6410  Mexican Presidential Election: Will Xóchitl Gálvez win?
+  52410954  0.6434  Finnish Presidential Election: Will Li Andersson win?
+  51898407  0.6436  Bangladesh Election: Sheikh Hasina reelected as Prime Minister?
+  56400593  0.6452  UK election in December?
+  46623621  0.6456  2023 Singaporean presidential election: Will Tharman Shanmugaratnam win?
+  49148609  0.6469  Egypt Presidential Election: Will Abdel Fattah el-Sisi win?
+  46345285  0.6474  Argentina Presidential Election: Will Sergio Massa win?
+  50497938  0.6503  Taiwan Presidential Election: Will Ko Wen-je win?
+  55637545  0.6521  Panama Presidential Election: Will another candidate win?
+  54546399  0.6556  Senegal Presidential Election: Another candidate wins?
+  77983447  0.6563  Will no listed leader be out in 2025?
+  46345296  0.6580  Argentina Presidential Election: Will Patricia Bullrich win?
+  77216908  0.6702  Nothing Ever Happens: World Leader Out Edition
+  77338087  0.6872  Will an election be called instead of appointing a Prime Minister?
+  76222887  0.6880  Will elections be called before a new Prime Minister is appointed?
+  75730726  0.6880  Will elections be called before a new Prime Minister is appointed?

@@ -1,0 +1,436 @@
+# Entertainment - Entertainment_Awards_Stage
+# count=433, avg_conf=0.5613
+====================================================================================================
+  54030851  0.4579  Will The Boy and the Heron win the Oscar for Best Animated Feature Film?
+  69542369  0.4619  Nothing Ever Happens
+  65282876  0.4633  Fact check: Was Luigi Mangione a lone actor?
+  62792481  0.4651  Will Haruki Murakami win the Nobel prize in literature?
+  71025625  0.4675  Will Jesus Christ return before GTA VI?
+  77054770  0.4760  Will Kei Kawamura & Yumi Takada (Rental Family) be nominated for Achievement in 
+  74042029  0.4760  Will Monsters: The Lyle and Erik Menendez Story win the Emmy for Outstanding Lim
+  77055381  0.4833  Will Avatar: Fire and Ash win Best Production Design at the 98th Academy Awards?
+  67811902  0.4857  Will "Abbott Elementary" win Best Cast in a Comedy Series at the 2025 SAG Awards
+  77054773  0.4862  Will Robin D. Cook (Frankenstein) be nominated for Achievement in Casting at the
+  77681318  0.4864  Will Aimee Lou Wood (The White Lotus) win Best Supporting Actress – Television a
+  77054975  0.4878  Will Die My Love win Best Makeup and Hairstyling at the 98th Academy Awards?
+  77054947  0.4883  Will Bugonia win Best Makeup and Hairstyling at the 98th Academy Awards?
+  62792439  0.4887  Will Ngũgĩ wa Thiong'o win the Nobel prize in literature?
+  77055153  0.4895  Will 2000 Meters to Andriivka be nominated for Best Documentary Feature at the 9
+  77055416  0.4906  Will Wake Up Dead Man win Best Production Design at the 98th Academy Awards?
+  76098615  0.4944  Will "The Testament of Ann Lee" win the 2025 Golden Lion?
+  74598771  0.4949  Will Martin Enitan win Love Island season 12?
+  77054772  0.4950  Will Francine Maisler (Sinners) be nominated for Achievement in Casting at the 9
+  68089087  0.4951  Will "The Brutalist" win Best Production Design at the 2025 Oscars?
+  18054072  0.4953  Will The Queen's Gambit win the Emmy Award for Best Limited Series?
+  76939757  0.4966  Will Ayo Edebiri win Best Supporting Actress at the 98th Academy Awards?
+  77055239  0.4978  Will Avatar: Fire and Ash win Best Costume Design at the 98th Academy Awards?
+  55716767  0.4980  Will Barney cry?
+  77055367  0.4983  Will Frankenstein win Best Production Design at the 98th Academy Awards?
+  77681277  0.5002  Will Erin Doherty (Adolescence) win Best Supporting Actress – Television at the 
+  77056590  0.5009  Will If I Had Legs I'd Kick You win Best Original Screenplay at the 98th Academy
+  77054775  0.5010  Will Zootopia 2 be nominated for Best Animated Feature at the 98th Academy Award
+  77054769  0.5013  Will Nina Gold (Hamnet) be nominated for Achievement in Casting at the 98th Acad
+  77055672  0.5020  Will Nouvelle Vague win Best Cinematography at the 98th Academy Awards?
+  76937641  0.5029  Nothing Ever Happens:  Jerome Powell Edition
+  77055406  0.5032  Will Bugonia win Best Production Design at the 98th Academy Awards?
+  27610076  0.5044  Will Alex and Natalie win "Proof of Love"?
+  77682474  0.5047  Will Michael Shannon (Death by Lightning) win Best Actor – Limited Series at the
+  74598738  0.5048  Will Tommy Bradley win Love Island season 12?
+  77054769  0.5049  Will Margery Simkin (Avatar: Fire and Ash) be nominated for Achievement in Casti
+  73010993  0.5051  Will Cierra win Season 7 of Love Island USA?
+  72047792  0.5051  Will Harry Moulding win Britain's Got Talent 2025?
+  76939263  0.5053  Will Jacob Elordi be nominated for Best Supporting Actor at the 98th Academy Awa
+  74042084  0.5055  Will Gary Oldman win the Emmy for Outstanding Lead Actor in a Drama Series?
+  78981819  0.5056  Will NewJeans perform again by March 31?
+  77056388  0.5067  Will Nouvelle Vague win Best Adapted Screenplay at the 98th Academy Awards?
+  77679768  0.5074  Will Cate Blanchett (Father Mother Sister Brother)
+  67811926  0.5083  Will "The Day of the Jackal" win Best Cast in a Drama Series at the 2025 SAG Awa
+  77056580  0.5084  Will Father Mother Sister Brother win Best Original Screenplay at the 98th Acade
+  68132241  0.5091  Will "The Brutalist" win Best Original Score at the 2025 Oscars?
+  76939527  0.5093  Will Jeremy Strong win Best Supporting Actor at the 98th Academy Awards?
+  54151156  0.5097  Will Killers of the Flower Moon win the Oscar for Best Costume Design?
+  76098596  0.5098  Will "Frankenstein" win the 2025 Golden Lion?
+  77054771  0.5099  Will Cassandra Kulukundis (One Battle After Another) be nominated for Achievemen
+  74037663  0.5106  Will Gillis say "gay" during the opening monologue at the ESPYs?
+  77055204  0.5113  Will Bugonia win Best Costume Design at the 98th Academy Awards?
+  77680242  0.5113  Will Jason Isaacs (The White Lotus) win Best Supporting Actor – Television at th
+  76939568  0.5123  Will Jonathan Bailey win Best Supporting Actor at the 98th Academy Awards?
+  74041965  0.5130  Will Adam Brody win the Emmy for Outstanding Lead Actor in a Comedy Series?
+  54151166  0.5132  Will Napoleon win the Oscar for Best Costume Design?
+  79015927  0.5132  Who will finish higher: Hamilton or Russell?
+  78421769  0.5132  Who will finish higher: Hamilton or Russell?
+  74037661  0.5141  Will Gillis say "Retard/retarded" during the opening monologue at the ESPYs?
+  77683616  0.5142  Will The Beast In Me win Best Television Limited Series at the 83rd Golden Globe
+  77055150  0.5157  Will Deaf President Now! be nominated for Best Documentary Feature at the 98th A
+  65362676  0.5162  Will 'The Piano Lesson' be nominated for Oscar for Best Picture?
+  77054770  0.5167  Will Jennifer Venditti (Marty Supreme) be nominated for Achievement in Casting a
+  76098649  0.5172  Will "Sotto le nuvole (Below the Clouds)" win the 2025 Golden Lion?
+  67573417  0.5174  Will Mikey Madison win Best Actress in the 2025 Critics' Choice Awards?
+  77681293  0.5181  Will Carrie Coon (The White Lotus) win Best Supporting Actress – Television at t
+  77054971  0.5182  Will Marty Supreme win Best Makeup and Hairstyling at the 98th Academy Awards?
+  69772149  0.5184  Romious vs. Lee
+  68132305  0.5185  Will "The Wild Robot" win Best Original Score at the 2025 Oscars?
+  77055376  0.5188  Will Hamnet win Best Production Design at the 98th Academy Awards?
+  68089160  0.5193  Will "Wallace & Gromit: Vengeance Most Fowl" win Best Animated Feature at the 20
+  77055371  0.5194  Will Sinners win Best Production Design at the 98th Academy Awards?
+  74042109  0.5197  Will Andor win the Emmy for Outstanding Drama Series?
+  76939549  0.5201  Will Jacob Elordi win Best Supporting Actor at the 98th Academy Awards?
+  76939522  0.5203  Will Adam Sandler win Best Supporting Actor at the 98th Academy Awards?
+  77055199  0.5204  Will Downton Abbey: The Grand Finale win Best Costume Design at the 98th Academy
+  77682464  0.5205  Will Brian Tyree Henry (Dope Thief) win Best Actor – Limited Series at the 83rd 
+  68089157  0.5210  Will "Nosferatu" win Best Production Design at the 2025 Oscars?
+  77682084  0.5210  Will Bella Ramsey (The Last of Us) win Best Actress – Television Drama at the 83
+  68132370  0.5215  Will "Gladiator II" win Best Costume Design at the 2025 Oscars?
+  76939554  0.5218  Will Jack O'Connell win Best Supporting Actor at the 98th Academy Awards?
+  77055436  0.5218  Will Kiss of the Spider Woman win Best Production Design at the 98th Academy Awa
+  78069322  0.5225  Will Miles O'Neill win the 2025–2026 Davey O'Brien Award?
+  75455352  0.5225  Will Steve Cohen and Seminole Hard Rock Entertainment receive a license for Metr
+  55715538  0.5227  Will Ansem KO Barney?
+  67811818  0.5229  Will Colman Domingo win Best Actor at the 2025 BAFTA Awards for "Sing Sing"?
+  68089174  0.5231  Will "The Wild Robot" win Best Sound at the 2025 Oscars?
+  77680247  0.5236  Will Patrick Schwarzenegger (The White Lotus) win Best Supporting Actor – Televi
+  73130973  0.5237  Will Chris win Season 7 of Love Island USA?
+  66744905  0.5239  Will Johni Broome win the Wooden Award?
+  77681324  0.5241  Will Marion Cotillard (The Morning Show) win Best Supporting Actress – Televisio
+  74042088  0.5242  Will Pedro Pascal win the Emmy for Outstanding Lead Actor in a Drama Series?
+  76939559  0.5246  Will Sean Bean win Best Supporting Actor at the 98th Academy Awards?
+  74042114  0.5247  Will The Diplomat win the Emmy for Outstanding Drama Series?
+  52361246  0.5251  Will Abbott Elementary win Outstanding Comedy Series at the 75th Emmys?
+  76939262  0.5255  Will Andrew Garfield be nominated for Best Supporting Actor at the 98th Academy 
+  76939335  0.5257  Will Jesse Plemons win Best Actor at the 98th Academy Awards?
+  77681882  0.5260  Will Diego Luna (Andor) win Best Actor – Television Drama at the 83rd Golden Glo
+  73220154  0.5262  Will Pink perform during the Super Bowl LX halftime show?
+  76939517  0.5262  Will Paul Mescal win Best Supporting Actor at the 98th Academy Awards?
+  52361822  0.5263  Will Kieran Culkin win Lead Drama Actor at the 75th Emmys?
+  77682078  0.5264  Will Sydney Chandler (Alien: Earth) win Best Actress – Television Drama at the 8
+  77680198  0.5264  Will Owen Cooper (Adolescence) win Best Supporting Actor – Television at the 83r
+  76939705  0.5265  Will Ariana Grande win Best Supporting Actress at the 98th Academy Awards?
+  55715522  0.5268  Will Barney KO Ansem?
+  71025624  0.5269  New Playboi Carti Album before GTA VI?
+  77681877  0.5271  Will Gary Oldman (Slow Horses) win Best Actor – Television Drama at the 83rd Gol
+  52746183  0.5274  Will American Fiction win the Oscar for Best Adapted Screenplay?
+  77680236  0.5276  Will Ebon Moss-Bachrach (The Bear) win Best Supporting Actor – Television at the
+  68627065  0.5276  Niagara vs. Saint Peter's
+  77055167  0.5278  Will Hamnet win Best Costume Design at the 98th Academy Awards?
+  68132398  0.5278  Will "Nosferatu" win Best Costume Design at the 2025 Oscars?
+  61846958  0.5278  Anna Sawai wins Best Drama Actress? - Emmys
+  68362022  0.5279  Will Kanye West attend the Oscars?
+  77056788  0.5282  Will Sydney Sweeney win Best Actress at the 98th Academy Awards?
+  76098637  0.5283  Will "Orphan (Árva)" win the 2025 Golden Lion?
+  74598733  0.5284  Will Harrison Solomon win Love Island season 12?
+  76939331  0.5284  Will Paul Mescal win Best Actor at the 98th Academy Awards?
+  76162864  0.5292  Will any other outcome occur in Alcaraz vs. Sinner?
+  73853000  0.5292  Will any other outcome occur in Alcaraz vs. Sinner?
+  73220146  0.5297  Will Christina Aguilera perform during the Super Bowl LX halftime show?
+  77055421  0.5303  Will Nouvelle Vague win Best Production Design at the 98th Academy Awards?
+  61853570  0.5306  Will another actor win the Emmy for Lead Actor a Limited Series?
+  76939301  0.5308  Will Leonardo DiCaprio win Best Actor at the 98th Academy Awards?
+  68412723  0.5312  Will "El Mal" win Best Original Song at the 2025 Oscars?
+  77055175  0.5313  Will Sinners win Best Costume Design at the 98th Academy Awards?
+  77475744  0.5322  Will Ethan Hawke (Blue Moon) win Best Actor – Drama at the 83rd Golden Globes?
+  77424348  0.5323  Will Aldrich Potgieter win the Baycurrent Classic 2025?
+  73220149  0.5323  Will Metallica perform during the Super Bowl LX halftime show?
+  76098601  0.5326  Will "Elisa" win the 2025 Golden Lion?
+  77468539  0.5326  Will Andy Richter & Emma Slater win Dancing with the Stars Season 34?
+  76939264  0.5328  Will Miles Caton be nominated for Best Supporting Actor at the 98th Academy Awar
+  74042132  0.5332  Will Severance win the Emmy for Outstanding Drama Series?
+  66975316  0.5335  Will "Here We Go (Uh Oh)" by Coco Jones win Best R&B Song?
+  76939262  0.5336  Will Oscar Isaac be nominated for Best Supporting Actor at the 98th Academy Awar
+  77055184  0.5339  Will Kiss of the Spider Woman win Best Costume Design at the 98th Academy Awards
+  77055431  0.5340  Will Hedda win Best Production Design at the 98th Academy Awards?
+  52361831  0.5344  Will Jeremy Strong win Lead Drama Actor at the 75th Emmys?
+  66982613  0.5350  Will Colman Domingo win Best Actor at the 2025 Oscars?
+  66984743  0.5351  Will Clarence Maclin win Best Supporting Actor at the 2025 Oscars?
+  74037660  0.5351  Will Gillis say "Philadelphia" during the opening monologue at the ESPYs?
+  71275576  0.5352  Will Aaron Judge win Triple Crown?
+  62829701  0.5354  Will Kamala say "hola" during Univision town hall on October 10?
+  73220147  0.5356  Will Miley Cyrus perform during the Super Bowl LX halftime show?
+  67812043  0.5358  Will Colman Domingo win Best Actor at the 2025 SAG Award for "Sing Sing"?
+  77682296  0.5360  Will Ellen Pompeo (Good American Family) win Best Actress – Limited Series at th
+  77055362  0.5360  Will Wicked: For Good win Best Production Design at the 98th Academy Awards?
+  68412749  0.5360  Will "Like A Bird" win Best Original Song at the 2025 Oscars?
+  77682068  0.5361  Will Rhea Seehorn (Pluribus) win Best Actress – Television Drama at the 83rd Gol
+  77055386  0.5363  Will Marty Supreme win Best Production Design at the 98th Academy Awards?
+  76939544  0.5369  Will Andrew Garfield win Best Supporting Actor at the 98th Academy Awards?
+  65611185  0.5370  Will 'The Brutalist' win the Golden Globe for Best Original Score?
+  76529321  0.5370  Will "A Big Bold Beautiful Journey" gross less than 125% of "The Senior"?
+  52361849  0.5376  Will Bob Odenkirk win Lead Drama Actor at the 75th Emmys?
+  23994508  0.5377  Will 'Jackass Forever' get 80% or higher Tomatometer Score?
+  65362474  0.5378  Will 'Sing Sing' be nominated for Oscar for Best Picture?
+  77054990  0.5378  Will One Battle After Another win Best Makeup and Hairstyling at the 98th Academ
+  72515568  0.5382  Will Ten Bob Tony win the 2025 Queen Anne Stakes?
+  77680203  0.5383  Will Tramell Tillman (Severance) win Best Supporting Actor – Television at the 8
+  76098587  0.5384  Will "A House of Dynamite" win the 2025 Golden Lion?
+  77055214  0.5389  Will Snow White win Best Costume Design at the 98th Academy Awards?
+  77682469  0.5390  Will Sterling K Brown (Washington Black) win Best Actor – Limited Series at the 
+  76939253  0.5390  Will Wagner Moura be nominated for Best Actor at the 98th Academy Awards?
+  38049453  0.5392  Will "Everything Everywhere All At Once" win the Oscar for Best Picture?
+  77055229  0.5397  Will Nouvelle Vague win Best Costume Design at the 98th Academy Awards?
+  76098633  0.5398  Will "Un film fatto per Bene (Bravo Bene)" win the 2025 Golden Lion?
+  77055194  0.5400  Will Hedda win Best Costume Design at the 98th Academy Awards?
+  77681902  0.5403  Will Ethan Hawke (The Lowdown) win Best Actor – Television Drama at the 83rd Gol
+  68866406  0.5403  Pepperdine vs. St. Mary's
+  52361253  0.5405  Will Jury Duty win Outstanding Comedy Series at the 75th Emmys?
+  75455355  0.5405  Will SL Green Caesars Entertainment and Roc Nation receive a license for Caesars
+  54311307  0.5408  Ansem vs. Barney
+  68024519  0.5410  Manhattan vs. Iona
+  68866645  0.5410  Manhattan vs. Iona
+  54030398  0.5412  Will The Fire Inside win the Oscar for Best Original Song?
+  77683559  0.5413  Will Task win Best Television Limited Series at the 83rd Golden Globes?
+  67812047  0.5413  Will Mikey Madison win Best Actor at the 2025 SAG Award for "Anora"?
+  77055180  0.5415  Will Marty Supreme win Best Costume Design at the 98th Academy Awards?
+  66983020  0.5417  Will Mikey Madison win Best Actress at the 2025 Oscars?
+  78068803  0.5418  Will Omar Cooper win the 2025–2026 Biletnikoff Award?
+  76939081  0.5425  Will Springsteen: Deliver Me from Nowhere win Best Picture at the 98th Academy A
+  52447471  0.5427  Will Nicolas Cage win the Oscar for Best Actor?
+  77681887  0.5427  Will Timothy Olyphant (Alien: Earth) win Best Actor – Television Drama at the 83
+  65611200  0.5429  Will 'The Wild Robot' win the Golden Globe for Best Original Score?
+  77056324  0.5432  Will One Battle After Another win Best Adapted Screenplay at the 98th Academy Aw
+  68627037  0.5437  Sacred Heart vs. Manhattan
+  76939572  0.5439  Will Peter Dinklage win Best Supporting Actor at the 98th Academy Awards?
+  54151174  0.5443  Will Oppenheimer win the Oscar for Best Costume Design?
+  77680231  0.5444  Will Billy Crudup (The Morning Show) win Best Supporting Actor – Television at t
+  72515495  0.5455  Will Notable Speech win the 2025 Queen Anne Stakes?
+  68089104  0.5455  Will "Conclave" win Best Production Design at the 2025 Oscars?
+  66271184  0.5455  Will 'El Mal' win the Golden Globe for Best Original Song?
+  65611234  0.5457  Will 'Dune: Part Two' win the Golden Globe for Best Original Score?
+  68265647  0.5460  Wagner vs. Long Island University
+  77056305  0.5464  Will Anthony Maras be nominated for Best Director at the 98th Academy Awards?
+  68132356  0.5464  Will "Conclave" win Best Costume Design at the 2025 Oscars?
+  77055163  0.5464  Will Wicked: For Good win Best Costume Design at the 98th Academy Awards?
+  77682063  0.5466  Will Kathy Bates (Matlock) win Best Actress – Television Drama at the 83rd Golde
+  76939540  0.5469  Will Miles Caton win Best Supporting Actor at the 98th Academy Awards?
+  76939259  0.5469  Will Sean Penn be nominated for Best Supporting Actor at the 98th Academy Awards
+  77378690  0.5481  Will Wolf Alice (‘The Clearing’) win the 2025 Mercury Prize?
+  52400257  0.5482  Will "American Fiction" win the Oscar for Best Picture?
+  77681872  0.5484  Will Adam Scott (Severance) win Best Actor – Television Drama at the 83rd Golden
+  73292028  0.5485  Will Jake Paul win by points or technical decision?
+  77679815  0.5499  Will Rose Byrne (If I Had Legs I'd Kick You) win Best Actress – Musical or Comed
+  78068970  0.5501  Will Hollywood Smothers win the 2025–2026 Doak Walker Award?
+  76939327  0.5502  Will Wagner Moura win Best Actor at the 98th Academy Awards?
+  77683164  0.5506  Will The White Lotus win Best Television Series – Drama at the 83rd Golden Globe
+  52447416  0.5507  Will Colman Domingo win the Oscar for Best Actor?
+  77680016  0.5507  Will Tessa Thompson (Hedda) win Best Actress – Drama at the 83rd Golden Globes?
+  32905005  0.5509  Emmys 2022: Will ‘Succession’ win Outstanding Drama Series?
+  62887010  0.5515  Will Kamala say "Milton" during Univision town hall on October 10?
+  52447408  0.5518  Will Paul Giamatti win the Oscar for Best Actor?
+  77682480  0.5525  Will Paul Giamatti (Black Mirror) win Best Actor – Limited Series at the 83rd Go
+  76529330  0.5526  Will "A Big Bold Beautiful Journey" gross 150% or more of "The Senior"?
+  77055426  0.5526  Will Springsteen: Deliver Me from Nowhere win Best Production Design at the 98th
+  73220145  0.5530  Will No Doubt perform during the Super Bowl LX halftime show?
+  66985563  0.5532  Will Playboi Carti perform during Super Bowl LIX halftime show?
+  54030417  0.5532  Will It Never Went Away win the Oscar for Best Original Song?
+  68024579  0.5542  Richmond vs. St. Joseph's
+  76098606  0.5544  Will "À pied d’œuvre (At Work)" win the 2025 Golden Lion?
+  31291546  0.5547  Will 'Bullet Train' get an 85% or higher Tomatometer Score?
+  73220145  0.5552  Will Robbie Williams perform during the Super Bowl LX halftime show?
+  73220151  0.5552  Will Harry Styles perform during the Super Bowl LX halftime show?
+  68132252  0.5554  Will "Conclave" win Best Original Score at the 2025 Oscars?
+  66746104  0.5556  Will 'The Auditorium, Vol. 1' win Best Rap Album?
+  76939509  0.5557  Will Sean Penn win Best Supporting Actor at the 98th Academy Awards?
+  77683580  0.5564  Will Sirens win Best Television Limited Series at the 83rd Golden Globes?
+  77684396  0.5570  Will Bugonia win Best Original Score – Motion Picture at the 83rd Golden Globes?
+  78068980  0.5570  Will Robert Henry Jr. win the 2025–2026 Doak Walker Award?
+  66271149  0.5576  Will 'Beautiful That Way' win the Golden Globe for Best Original Song?
+  66271670  0.5577  Will Ralph Fiennes win the Golden Globe for Best Actor - Drama?
+  76939027  0.5582  Will One Battle After Another win Best Picture at the 98th Academy Awards?
+  77679568  0.5582  Will Joaquin Phoenix (Eddington) win Best Actor – Musical or Comedy at the 83rd 
+  55984927  0.5587  Ansem vs. Barney go the distance?
+  77679079  0.5590  Will Miles Caton (Sinners) win Best Supporting Actor – Motion Picture at the 83r
+  77475764  0.5594  Will Russell Crowe (Nuremberg) win Best Actor – Drama at the 83rd Golden Globes?
+  74042128  0.5594  Will The Pitt win the Emmy for Outstanding Drama Series?
+  77475915  0.5598  Will Wagner Moura (The Secret Agent) be nominated for Best Actor – Drama at the 
+  77681897  0.5600  Will Sterling K. Brown (Paradise) win Best Actor – Television Drama at the 83rd 
+  77680000  0.5613  Will Sydney Sweeney (Christy) win Best Actress – Drama at the 83rd Golden Globes
+  77055391  0.5614  Will One Battle After Another win Best Production Design at the 98th Academy Awa
+  54030439  0.5618  Will What Was I Made For? win the Oscar for Best Original Song?
+  66271685  0.5618  Will Sebastian Stan win the Golden Globe for Best Actor - Drama?
+  77475729  0.5621  Will Paul Mescal (Hamnet) win Best Actor – Drama at the 83rd Golden Globes?
+  77683185  0.5625  Will Andor win Best Television Series – Drama at the 83rd Golden Globes?
+  77681924  0.5626  Will Mark Ruffalo (Task) win Best Actor – Television Drama at the 83rd Golden Gl
+  77680047  0.5628  Will Margot Robbie (A Big Bold Beautiful Journey) win Best Actress – Drama at th
+  52361840  0.5631  Will Pedro Pascal win Lead Drama Actor at the 75th Emmys?
+  77681867  0.5633  Will Noah Wyle (The Pitt) win Best Actor – Television Drama at the 83rd Golden G
+  77055209  0.5638  Will Springsteen: Deliver Me from Nowhere win Best Costume Design at the 98th Ac
+  61846942  0.5639  Hiroyuki Sanada wins Best Drama Actor? - Emmys
+  77682073  0.5643  Will Carrie Coon (The Gilded Age) win Best Actress – Television Drama at the 83r
+  52447478  0.5644  Will someone else win the Oscar for Best Actor?
+  52745785  0.5650  Will Maestro win the Oscar for Best Original Screenplay?
+  77681892  0.5652  Will Pedro Pascal (The Last of Us) win Best Actor – Television Drama at the 83rd
+  77683174  0.5665  Will The Last of Us win Best Television Series – Drama at the 83rd Golden Globes
+  73220151  0.5670  Will Olivia Rodrigo perform during the Super Bowl LX halftime show?
+  77681912  0.5674  Will Morgan Spector (The Gilded Age) win Best Actor – Television Drama at the 83
+  77681678  0.5679  Will Jean Smart (Hacks) win Best Actress – Television Musical or Comedy at the 8
+  77055189  0.5689  Will One Battle After Another win Best Costume Design at the 98th Academy Awards
+  65611220  0.5695  Will 'Challengers' win the Golden Globe for Best Original Score?
+  77683202  0.5695  Will The Diplomat win Best Television Series – Drama at the 83rd Golden Globes?
+  77679047  0.5703  Will Sean Penn (One Battle After Another) win Best Supporting Actor – Motion Pic
+  77055399  0.5708  Will The Phoenician Scheme win Best Production Design at the 98th Academy Awards
+  69005728  0.5712  La Salle vs. St. Joseph's
+  67788127  0.5712  La Salle vs. St. Joseph's
+  77055224  0.5717  Will The Phoenician Scheme win Best Costume Design at the 98th Academy Awards?
+  77683990  0.5717  Will The Smashing Machine win Best Motion Picture – Drama at the 83rd Golden Glo
+  77681907  0.5720  Will Walton Goggins (Fallout) win Best Actor – Television Drama at the 83rd Gold
+  77683758  0.5725  Will Only Murders in the Building win Best Television Series – Comedy or Musical
+  77055411  0.5732  Will The Fantastic Four: First Steps win Best Production Design at the 98th Acad
+  66271656  0.5733  Will Colman Domingo win the Golden Globe for Best Actor - Drama?
+  78422064  0.5734  Barcelos vs. Simon
+  77475719  0.5735  Will Wagner Moura (The Secret Agent) win Best Actor – Drama at the 83rd Golden G
+  77475759  0.5739  Will Joel Edgerton (Train Dreams) win Best Actor – Drama at the 83rd Golden Glob
+  68666921  0.5744  St. Joseph's vs. La Salle
+  68412774  0.5749  Will "Never Too Late" win Best Original Song at the 2025 Oscars?
+  77680215  0.5755  Will John Turturro (Severance) win Best Supporting Actor – Television at the 83r
+  77681723  0.5758  Will Uzo Aduba (The Residence) win Best Actress – Television Musical or Comedy a
+  65611174  0.5764  Will 'Conclave' win the Golden Globe for Best Original Score?
+  77679758  0.5774  Will Emma Mackey (Ella McCay) win Best Actress – Musical or Comedy at the 83rd G
+  77684000  0.5774  Will Nuremberg win Best Motion Picture – Drama at the 83rd Golden Globes?
+  65611208  0.5779  Will 'Emilia Pérez' win the Golden Globe for Best Original Score?
+  77055218  0.5779  Will The Fantastic Four: First Steps win Best Costume Design at the 98th Academy
+  77683159  0.5781  Will Stranger Things win Best Television Series – Drama at the 83rd Golden Globe
+  68412741  0.5784  Will "The Journey" win Best Original Song at the 2025 Oscars?
+  77679600  0.5785  Will Ethan Hawke (Blue Moon) win Best Actor – Musical or Comedy at the 83rd Gold
+  77681718  0.5787  Will Natasha Lyonne (Poker Face) win Best Actress – Television Musical or Comedy
+  77684411  0.5789  Will A House of Dynamite win Best Original Score – Motion Picture at the 83rd Go
+  77681490  0.5792  Will Martin Short (Only Murders in the Building) win Best Actor – Television Mus
+  66271613  0.5809  Will Adrien Brody win the Golden Globe for Best Actor - Drama?
+  77679736  0.5813  Will Cynthia Erivo (Wicked: For Good) win Best Actress – Musical or Comedy at th
+  77683208  0.5813  Will Pluribus win Best Television Series – Drama at the 83rd Golden Globes?
+  77681713  0.5823  Will Rachel Sennott (I Love LA) win Best Actress – Television Musical or Comedy 
+  77683958  0.5825  Will It Was Just an Accident win Best Motion Picture – Drama at the 83rd Golden 
+  77683149  0.5826  Will Severance win Best Television Series – Drama at the 83rd Golden Globes?
+  67675651  0.5828  Saint Peter's vs. Manhattan
+  77682115  0.5829  Will Helen Mirren (Mobland) win Best Actress – Television Drama at the 83rd Gold
+  52400267  0.5833  Will "Maestro" win the Oscar for Best Picture?
+  77679800  0.5841  Will Alison Brie (Together) win Best Actress – Musical or Comedy at the 83rd Gol
+  77475749  0.5842  Will Colin Farrell (Ballad of a Small Player) win Best Actor – Drama at the 83rd
+  77683154  0.5843  Will Paradise win Best Television Series – Drama at the 83rd Golden Globes?
+  77684401  0.5843  Will Marty Supreme win Best Original Score – Motion Picture at the 83rd Golden G
+  68426193  0.5850  Seton Hall vs. St. John's
+  78538599  0.5852  St. Francis (PA) Red Flash vs. La Salle Explorers (W)
+  68626913  0.5853  Wagner vs. St. Francis (PA)
+  77475769  0.5856  Will Matthew McConaughey (The Lost Bus) win Best Actor – Drama at the 83rd Golde
+  78627233  0.5862  Spread: La Salle Explorers (-18.5)
+  77679557  0.5863  Will Benedict Cumberbatch (The Roses) win Best Actor – Musical or Comedy at the 
+  78596856  0.5863  Spread: La Salle Explorers (-16.5)
+  77679789  0.5864  Will Elizabeth Olsen (Eternity) win Best Actress – Musical or Comedy at the 83rd
+  78625433  0.5868  Spread: La Salle Explorers (-17.5)
+  77683984  0.5868  Will A House of Dynamite win Best Motion Picture – Drama at the 83rd Golden Glob
+  77679606  0.5869  Will Lee Byung-hun (No Other Choice) win Best Actor – Musical or Comedy at the 8
+  77681522  0.5874  Will Glen Powell (Chad Powers) win Best Actor – Television Musical or Comedy at 
+  77683752  0.5874  Will Hacks win Best Television Series – Comedy or Musical at the 83rd Golden Glo
+  77679805  0.5878  Will Kaya Scodelario (Kaya Scodelario) win Best Actress – Musical or Comedy at t
+  77681500  0.5887  Will Jeremy Allen White (The Bear) win Best Actor – Television Musical or Comedy
+  77683979  0.5893  Will Springsteen Deliver Me from Nowhere win Best Motion Picture – Drama at the 
+  77681511  0.5904  Will Steve Martin (Only Murders in the Building) win Best Actor – Television Mus
+  78735226  0.5911  Spread: La Salle Explorers (-4.5)
+  77683001  0.5911  Will Ella McCay win Best Motion Picture – Musical or Comedy at the 83rd Golden G
+  77948875  0.5920  Will anyone other than the listed individuals win Staten Island?
+  77679536  0.5921  Will George Clooney (Jay Kelly) win Best Actor – Musical or Comedy at the 83rd G
+  77683344  0.5924  Will Scarlet win Best Motion Picture – Animated at the 83rd Golden Globes?
+  78724443  0.5924  Spread: La Salle Explorers (-5.5)
+  65611197  0.5933  Will Gabriel Labelle win the Golden Globe for Best Actor in a Movie - Musical or
+  77681527  0.5936  Will Ted Danson (A Man on the Inside) win Best Actor – Television Musical or Com
+  78596856  0.5938  Spread: La Salle Explorers (-15.5)
+  77475734  0.5944  Will Oscar Isaac (Frankenstein) win Best Actor – Drama at the 83rd Golden Globes
+  77683169  0.5952  Will The Gilded Age win Best Television Series – Drama at the 83rd Golden Globes
+  77681698  0.5954  Will Ayo Edebiri (The Bear) win Best Actress – Television Musical or Comedy at t
+  77679552  0.5956  Will Robert Pattinson (Mickey 17) win Best Actor – Musical or Comedy at the 83rd
+  77679514  0.5965  Will Jesse Plemons (Bugonia) win Best Actor – Musical or Comedy at the 83rd Gold
+  77681683  0.5966  Will Jenna Ortega (Wednesday) win Best Actress – Television Musical or Comedy at
+  77682948  0.5970  Will Sorry Baby win Best Motion Picture – Musical or Comedy at the 83rd Golden G
+  77681688  0.5973  Will Quinta Brunson (Abbott Elementary) win Best Actress – Television Musical or
+  77679752  0.5983  Will Olivia Colman (The Roses) win Best Actress – Musical or Comedy at the 83rd 
+  77683011  0.5984  Will Blue Moon win Best Motion Picture – Musical or Comedy at the 83rd Golden Gl
+  68466780  0.5992  La Salle vs. George Washington
+  67984224  0.5992  Richmond vs. La Salle
+  77679731  0.6001  Will Emma Stone (Bugonia) win Best Actress – Musical or Comedy at the 83rd Golde
+  77679578  0.6003  Will Tim Robinson (Friendship) win Best Actor – Musical or Comedy at the 83rd Go
+  77681532  0.6004  Will Domhnall Gleeson (The Paper) win Best Actor – Television Musical or Comedy 
+  65611237  0.6010  Will Sebastian Stan win the Golden Globe for Best Actor in a Movie - Musical or 
+  77679508  0.6017  Will Timothee Chalamet (Marty Supreme) win Best Actor – Musical or Comedy at the
+  77681484  0.6019  Will Seth Rogen (The Studio) win Best Actor – Television Musical or Comedy at th
+  77679820  0.6027  Will Chase Infiniti (One Battle After Another) win Best Actress – Musical or Com
+  77679584  0.6027  Will Chris Evans (Materialists) win Best Actor – Musical or Comedy at the 83rd G
+  77681693  0.6027  Will Kristen Bell (Nobody Wants This) win Best Actress – Television Musical or C
+  77683773  0.6039  Will The Bear win Best Television Series – Comedy or Musical at the 83rd Golden 
+  78450401  0.6042  Wagner Seahawks vs. Seton Hall Pirates
+  77683143  0.6056  Will The Pitt win Best Television Series – Drama at the 83rd Golden Globes?
+  66271482  0.6058  Will 'Wicked' win the Golden Globe for Best Musical or Comedy?
+  77682937  0.6068  Will Bugonia win Best Motion Picture – Musical or Comedy at the 83rd Golden Glob
+  65611174  0.6074  Will Jesse Eisenberg win the Golden Globe for Best Actor in a Movie - Musical or
+  77681517  0.6084  Will Benito Skinner (Overcompensating) win Best Actor – Television Musical or Co
+  71802760  0.6088  Will Laura Donnelly win the Tony for Best Leading Actress in a Play 2025?
+  66271441  0.6088  Will 'Emilia Pérez' win the Golden Globe for Best Musical or Comedy?
+  65611208  0.6095  Will Jesse Plemons win the Golden Globe for Best Actor in a Movie - Musical or C
+  77683747  0.6106  Will The Studio win Best Television Series – Comedy or Musical at the 83rd Golde
+  66271421  0.6113  Will 'Anora' win the Golden Globe for Best Musical or Comedy?
+  77679520  0.6113  Will Brendan Fraser (Rental Family) win Best Actor – Musical or Comedy at the 83
+  71802776  0.6137  Will Sadie Sink win the Tony for Best Leading Actress in a Play 2025?
+  66271430  0.6165  Will 'Challengers' win the Golden Globe for Best Musical or Comedy?
+  77683021  0.6170  Will Nouvelle Vague win Best Motion Picture – Musical or Comedy at the 83rd Gold
+  77679595  0.6173  Will Leonardo DiCaprio (One Battle After Another) win Best Actor – Musical or Co
+  71802781  0.6180  Will Sarah Snook win the Tony for Best Leading Actress in a Play 2025?
+  77683788  0.6180  Will The Paper win Best Television Series – Comedy or Musical at the 83rd Golden
+  71802861  0.6180  Will "Dead Outlaw" win the Tony for Best Original Score 2025?
+  77681495  0.6181  Will Nathan Fielder (The Rehearsal) win Best Actor – Television Musical or Comed
+  71802771  0.6189  Will LaTanya Richardson Jackson win the Tony for Best Leading Actress in a Play 
+  77679531  0.6190  Will Will Arnett (Is This Thing On?) win Best Actor – Musical or Comedy at the 8
+  77679562  0.6197  Will Tonatiuh (Kiss of the Spider Woman) win Best Actor – Musical or Comedy at t
+  77683763  0.6214  Will Abbott Elementary win Best Television Series – Comedy or Musical at the 83r
+  77679573  0.6217  Will Benicio Del Toro (The Phoenician Scheme) win Best Actor – Musical or Comedy
+  77683793  0.6224  Will I Love LA win Best Television Series – Comedy or Musical at the 83rd Golden
+  77682958  0.6225  Will Rental Family win Best Motion Picture – Musical or Comedy at the 83rd Golde
+  71802766  0.6229  Will Mia Farrow win the Tony for Best Leading Actress in a Play 2025?
+  77682985  0.6230  Will The Naked Gun win Best Motion Picture – Musical or Comedy at the 83rd Golde
+  77679742  0.6249  Will Kate Hudson (Song Sung Blue) win Best Actress – Musical or Comedy at the 83
+  77681506  0.6250  Will Adam Brody (Nobody Wants This) win Best Actor – Television Musical or Comed
+  77682927  0.6253  Will Marty Supreme win Best Motion Picture – Musical or Comedy at the 83rd Golde
+  65611217  0.6256  Will Glen Powell win the Golden Globe for Best Actor in a Movie - Musical or Com
+  77682990  0.6260  Will Song Sung Blue win Best Motion Picture – Musical or Comedy at the 83rd Gold
+  65611184  0.6263  Will Hugh Grant win the Golden Globe for Best Actor in a Movie - Musical or Come
+  71802831  0.6267  Will Jasmine Amy Rogers win the Tony for Best Leading Actress in a Musical 2025?
+  77682932  0.6275  Will Wicked For Good win Best Motion Picture – Musical or Comedy at the 83rd Gol
+  71802837  0.6277  Will Megan Hilty win the Tony for Best Leading Actress in a Musical 2025?
+  77683768  0.6304  Will Nobody Wants This win Best Television Series – Comedy or Musical at the 83r
+  66271455  0.6306  Will 'A Real Pain' win the Golden Globe for Best Musical or Comedy?
+  71802920  0.6308  Will James Monroe Inglehart win the Tony for Best Leading Actor in a Musical 202
+  77682974  0.6315  Will Kiss of the Spider Woman win Best Motion Picture – Musical or Comedy at the
+  71802849  0.6316  Will Nicole Scherzinger win the Tony for Best Leading Actress in a Musical 2025?
+  77679542  0.6328  Will Hugh Jackman (Song Sung Blue) win Best Actor – Musical or Comedy at the 83r
+  71802793  0.6335  Will Cole Escola win the Tony for Best Leading Actor in a Play 2025?
+  71802810  0.6346  Will Daniel Dae Kim win the Tony for Best Leading Actor in a Play 2025?
+  71802914  0.6370  Will Jeremy Jordan win the Tony for Best Leading Actor in a Musical 2025?
+  77682979  0.6372  Will Father Mother Sister Brother win Best Motion Picture – Musical or Comedy at
+  71802855  0.6374  Will Jennifer Simard win the Tony for Best Leading Actress in a Musical 2025?
+  71802909  0.6374  Will Jonathan Groff win the Tony for Best Leading Actor in a Musical 2025?
+  71802843  0.6395  Will Audra McDonald win the Tony for Best Leading Actress in a Musical 2025?
+  71802799  0.6406  Will Jon Michael Hill win the Tony for Best Leading Actor in a Play 2025?
+  77682969  0.6407  Will Is This Thing On win Best Motion Picture – Musical or Comedy at the 83rd Go
+  66271471  0.6408  Will 'The Substance' win the Golden Globe for Best Musical or Comedy?
+  71802816  0.6412  Will Harry Lennix win the Tony for Best Leading Actor in a Play 2025?
+  71802788  0.6413  Will George Clooney win the Tony for Best Leading Actor in a Play 2025?
+  77683016  0.6415  Will No Other Choice win Best Motion Picture – Musical or Comedy at the 83rd Gol
+  77682953  0.6421  Will Materialists win Best Motion Picture – Musical or Comedy at the 83rd Golden
+  71802733  0.6431  Will "John Proctor Is the Villain" win the Tony for Best Play 2025?
+  37758470  0.6434  Golden Globes: Will "Everything Everywhere All At Once" win Best Picture - Music
+  71802903  0.6436  Will Tom Francis win the Tony for Best Leading Actor in a Musical 2025?
+  71802867  0.6465  Will "Death Becomes Her" win the Tony for Best Original Score 2025?
+  71802891  0.6466  Will Darren Criss win the Tony for Best Leading Actor in a Musical 2025?
+  71802885  0.6490  Will "Real Women Have Curves" win the Tony for Best Original Score 2025?
+  71802689  0.6498  Will "Dead Outlaw" win the Tony for Best Musical 2025?
+  77682996  0.6500  Will Together win Best Motion Picture – Musical or Comedy at the 83rd Golden Glo
+  77683778  0.6500  Will Wednesday win Best Television Series – Comedy or Musical at the 83rd Golden
+  71802897  0.6510  Will Andrew Durand win the Tony for Best Leading Actor in a Musical 2025?
+  71802821  0.6517  Will Louis McCartney win the Tony for Best Leading Actor in a Play 2025?
+  77683027  0.6519  Will One Battle After Another win Best Motion Picture – Musical or Comedy at the
+  77683783  0.6530  Will The Rehearsal win Best Television Series – Comedy or Musical at the 83rd Go
+  71802873  0.6558  Will "Maybe Happy Ending" win the Tony for Best Original Score 2025?
+  71802684  0.6585  Will "Buena Vista Social Club" win the Tony for Best Musical 2025?
+  71802728  0.6606  Will "The Hills of California" win the Tony for Best Play 2025?
+  71802701  0.6647  Will "Maybe Happy Ending" win the Tony for Best Musical 2025?
+  71802722  0.6656  Will "English" win the Tony for Best Play 2025?
+  71802695  0.6677  Will "Death Becomes Her" win the Tony for Best Musical 2025?
+  71802879  0.6697  Will "Operation Mincemeat" win the Tony for Best Original Score 2025?
+  71802739  0.6879  Will "Oh, Mary!" win the Tony for Best Play 2025?
+  71802707  0.6969  Will "Operation Mincemeat" win the Tony for Best Musical 2025?
+  71802745  0.7026  Will "Purpose" win the Tony for Best Play 2025?

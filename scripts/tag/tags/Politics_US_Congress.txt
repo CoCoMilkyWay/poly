@@ -1,0 +1,647 @@
+# Politics_US - Politics_US_Congress
+# count=644, avg_conf=0.6259
+====================================================================================================
+  69577952  0.4970  Will the next Government of Canada be a Conservative minority?
+  69577924  0.5008  Will the next Government of Canada be a Liberal minority?
+  56970931  0.5105  Another state bans lab-grown meat in May?
+  66376784  0.5130  Will Mark Carney be the next leader of the Canadian Liberal Party?
+  78977791  0.5231  Will Christoph La'Flare Chapman be the Republican nominee for Senate in Georgia?
+  63971809  0.5237  Will Elise Stefanik be the first elected Speaker of the House for the 119th cong
+  69577942  0.5257  Will the next Government of Canada be a Conservative majority?
+  63447227  0.5259  Will New Mexico be the last state to be called by the AP?
+  69577916  0.5267  Will the next Government of Canada be a Liberal majority?
+  61679863  0.5280  Will Kamala Harris drop out in September?
+  63447163  0.5282  Will Georgia be the last state to be called by the AP?
+  69291683  0.5300  Will Jagmeet Singh lose his seat?
+  63447199  0.5307  Will Florida be the last state to be called by the AP?
+  70627839  0.5326  Will the Liberal Party win between 41% and 44% of the vote in the 2025 Canadian 
+  63447148  0.5338  Will Minnesota be the last state to be called by the AP?
+  70627805  0.5356  Will the Liberal Party win between 35% and 38% of the vote in the 2025 Canadian 
+  78977580  0.5359  Will Julie Gonzales be the Democratic nominee for Senate in Colorado?
+  69808840  0.5361  Will the Liberal Party win the Northwest Territories seat in the next Canadian E
+  69245451  0.5367  Will the Liberals win more than 210 seats in the next Canadian Election?
+  63447111  0.5370  Will Michigan be the last state to be called by the AP?
+  63447261  0.5374  Will Maine be the last state to be called by the AP?
+  51172599  0.5375  Will Chile vote to change its constitution?
+  72925635  0.5382  GENIUS Act signed into law in 2025?
+  78632903  0.5383  Will a province schedule a referendum to leave Canada before 2027?
+  64493239  0.5386  Will Byron Donalds be the first elected Speaker of the House for the 119th congr
+  63447100  0.5389  Will Pennsylvania be the last state to be called by the AP?
+  70883810  0.5396  Will a province schedule a referendum to leave Canada in 2025?
+  64011063  0.5401  Will Frank LaRose be appointed as the next Ohio senator?
+  63686417  0.5406  AP calls Michigan by 8:00 AM Nov 6?
+  63447182  0.5407  Will Arizona be the last state to be called by the AP?
+  63447089  0.5412  Will Nevada be the last state to be called by the AP?
+  64327711  0.5415  Will Roy Altman be appointed as the next Florida senator?
+  63447248  0.5415  Will Alaska be the last state to be called by the AP?
+  69768553  0.5429  Will Cory Booker break the record for the longest filibuster?
+  77641768  0.5431  Will Ann Diener win the Alaska Senate race in 2026?
+  63447123  0.5436  Will New Hampshire be the last state to be called by the AP?
+  63447079  0.5436  Will Wisonsin be the last state to be called by the AP?
+  60080052  0.5436  Will Kamala say "Couch" in August?
+  69808842  0.5443  Will the Liberal Party win the Yukon seat in the next Canadian Election?
+  74802794  0.5444  Any fleeing Texas House Democrats arrested by Friday?
+  63971739  0.5445  Will Hakeem Jeffries be the first elected Speaker of the House for the 119th con
+  59473546  0.5449  Clarence Thomas impeached?
+  69614881  0.5453  Supreme Court unblocks Alien Enemies Act?
+  74562188  0.5454  Will La U win the most seats in the 2026 Colombian Chamber of Representatives el
+  76973233  0.5454  Marshall vs. Louisiana
+  64980464  0.5454  Marshall vs. Louisiana
+  67903980  0.5454  Marshall vs. Louisiana
+  76612927  0.5456  Bill Maher cancelled by December 31?
+  77467133  0.5460  No Cut October
+  11808450  0.5464  Will Harriet Tubman appear on the face of the $20 bill by July 1, 2021?
+  76535948  0.5464  Will Kamala Harris say "Beautiful Bill" on the Rachel Maddow Show on September 2
+  66700535  0.5465  Will Mitch McConnell vote to confirm Tulsi Gabbard Jr. as Director of National I
+  67788922  0.5477  Oral Roberts vs. North Dakota
+  40946217  0.5480  Will Sam Altman testify before congress by May 31?
+  74562096  0.5491  Will Salvación Nacional win the most seats in the 2026 Colombian Senate election
+  73259800  0.5500  Thune fires Senate Parliamentarian MacDonough before July?
+  78937042  0.5504  Will Michael Swanson be the Democratic nominee for Senate in Texas?
+  36348711  0.5505  Will SBF attend Maxine Water's Congressional hearing?
+  63971727  0.5509  Will Tom Emmer be the first elected Speaker of the House for the 119th congress?
+  63447191  0.5511  Will Virginia be the last state to be called by the AP?
+  63447269  0.5511  Will Colorado be the last state to be called by the AP?
+  63447276  0.5515  Will another state be the last state to be called by the AP?
+  78977768  0.5518  Will Earl Carter be the Republican nominee for Senate in Georgia?
+  63447133  0.5519  Will North Carolina be the last state to be called by the AP?
+  64327733  0.5521  Will James Fishback be appointed as the next Florida senator?
+  64493261  0.5525  Will Vivek Ramaswamy be the first elected Speaker of the House for the 119th con
+  63598344  0.5527  Will 538 call all 50 states correctly?
+  79061010  0.5533  Spread: Longwood Lancers (-16.5)
+  69500592  0.5537  Will the Liberal Party win the most seats in Alberta in the next Canadian Electi
+  74562173  0.5541  Will Green Alliance win the most seats in the 2026 Colombian Chamber of Represen
+  15829915  0.5547  Will the AAVE governance proposal AIP 22 pass?
+  61391106  0.5553  Will Kamala say "wall" at debate?
+  78977550  0.5555  Will John Hickenlooper be the Democratic nominee for Senate in Colorado?
+  47499781  0.5564  Will Kevin McCarthy remain Speaker through Oct 15?
+  70627238  0.5576  Will Liberal win the most seats in the House of Representatives in the 2025 Phil
+  74562163  0.5580  Will Conservative win the most seats in the 2026 Colombian Chamber of Representa
+  61426135  0.5593  Alexandre de Moraes impeached in September?
+  74876566  0.5594  Any Texas House Democrats arrested by August 19?
+  70900982  0.5601  Will Alberta vote for independence in 2025?
+  69174280  0.5603  Will the Liberal Initiative win the most seats in the 2025 Portuguese legislativ
+  64529627  0.5605  Will Nancy Mace's trans bathroom bill pass in 2024?
+  63968555  0.5605  Will Rick Scott be the next Senate Majority Leader?
+  63971749  0.5609  Will Steve Scalise be the first elected Speaker of the House for the 119th congr
+  78937032  0.5609  Will Colin Allred be the Democratic nominee for Senate in Texas?
+  60927328  0.5615  Hill vs. Ricci
+  64493274  0.5617  Will Thomas Massie be the first elected Speaker of the House for the 119th congr
+  64011113  0.5621  Will Mike Carey be appointed as the next Ohio senator?
+  78977329  0.5621  Will Dakarai Larriett be the Democratic nominee for Senate in Alabama?
+  64493249  0.5623  Will Elon Musk be the first elected Speaker of the House for the 119th congress?
+  71195696  0.5626  Democratic senator calls on Fetterman to resign in May?
+  69245384  0.5629  Will the Liberals win between 140-149 seats in the next Canadian Election?
+  64215227  0.5631  Will Jim Jordan be the first elected Speaker of the House for the 119th congress
+  74562183  0.5637  Will CR win the most seats in the 2026 Colombian Chamber of Representatives elec
+  71513016  0.5642  Will next reconciliation bill end taxes on tips in 2025?
+  63598513  0.5661  Will 538 call fewer than 43 states correctly?
+  74562086  0.5662  Will AICO win the most seats in the 2026 Colombian Senate election?
+  78937048  0.5662  Will James Talarico be the Democratic nominee for Senate in Texas?
+  63968498  0.5662  Will John Thune be the next Senate Majority Leader?
+  63968619  0.5666  Will John Barrasso be the next Senate Majority Leader?
+  70910176  0.5673  Will Carney government pass a confidence vote before June?
+  45579529  0.5675  Will Mitch McConnell still be a Senator on August 4?
+  58879620  0.5680  Another Dem House member calls for Biden to drop out by Friday?
+  74562078  0.5682  Will CJL/MIRA win the most seats in the 2026 Colombian Senate election?
+  26282438  0.5682  Will Katie Britt win the 2022 Alabama Republican Senate nomination?
+  63971760  0.5687  Will Pete Sessions be the first elected Speaker of the House for the 119th congr
+  63598408  0.5699  Will 538 call 47 states correctly?
+  63598385  0.5700  Will 538 call 48 states correctly?
+  78937037  0.5702  Will Emily Morgul be the Democratic nominee for Senate in Texas?
+  70584977  0.5704  Will the next pop be elected in 3 days?
+  63598424  0.5706  Will 538 call 46 states correctly?
+  63598453  0.5710  Will 538 call 44 states correctly?
+  68687867  0.5710  CHIPS Act repealed before July?
+  67262178  0.5717  Will Bill Cassidy vote to confirm Tulsi Gabbard Jr. as Director of National Inte
+  63968565  0.5720  Will John Cornyn be the next Senate Majority Leader?
+  70306871  0.5720  Will Carney say "Carbon Tax" during Canadian Election Debate on April 17?
+  78937058  0.5722  Will Jasmine Crockett be the Democratic nominee for Senate in Texas?
+  62059701  0.5726  Matt Gaetz out as Congressman in 2024?
+  74562046  0.5727  Will PCC win the most seats in the 2026 Colombian Senate election?
+  63968602  0.5727  Will Joni Ernst be the next Senate Majority Leader?
+  77989611  0.5735  Will the GENIUS Act (S. 394) be signed into law by December 31 2025?
+  74562064  0.5736  Will CR win the most seats in the 2026 Colombian Senate election?
+  69245403  0.5744  Will the Liberals win between 150-159 seats in the next Canadian Election?
+  66696659  0.5749  Debt ceiling raised or suspended before June?
+  63971713  0.5749  Will Mike Johnson be the first elected Speaker of the House for the 119th congre
+  74562074  0.5750  Will COM win the most seats in the 2026 Colombian Senate election?
+  74562051  0.5750  Will PLC win the most seats in the 2026 Colombian Senate election?
+  70175141  0.5754  Will the Senate confirm Ed Martin before July?
+  78977464  0.5755  Will Rodney Walker be the Republican nominee for Senate in Alabama?
+  60551047  0.5756  Will Missouri's abortion protection measure pass?
+  77723048  0.5756  Will there be no coalition by October 31?
+  72924046  0.5759  Clarity Act signed into law in 2025?
+  70627625  0.5760  Will the Liberal Party win 5+ seats in Alberta?
+  78977784  0.5761  Will Derek Dooley be the Republican nominee for Senate in Georgia?
+  63598482  0.5777  Will 538 call 43 states correctly?
+  50784348  0.5779  Will any Republican congressman come out as gay before March?
+  79069961  0.5798  William & Mary Tribe vs. St. John's Red Storm: O/U 179.5
+  78546575  0.5809  Will CD Tondela win on 2025-11-29?
+  76934630  0.5812  Will CD Tondela win on 2025-09-27?
+  76777566  0.5812  Will CD Tondela win on 2025-09-27?
+  60868744  0.5812  Will Montana's abortion protection measure pass?
+  63598437  0.5813  Will 538 call 45 states correctly?
+  70910404  0.5814  Liberal party signs coalition agreement before August?
+  69212127  0.5816  Will the Liberal Party win the Canadian election by 9-12%?
+  77373186  0.5819  Will CD Tondela win on 2025-10-26?
+  30949188  0.5824  Will the Kansas "Value Them Both" anti-abortion amendment pass?
+  50616394  0.5824  Will Kevin McCarthy resign from the House in 2023?
+  78248819  0.5826  Spread: Virginia (-3.5)
+  74562178  0.5830  Will CD win the most seats in the 2026 Colombian Chamber of Representatives elec
+  70348182  0.5830  Will the Labor Party win by 30–39 seats?
+  63940891  0.5831  Kamala publicly concedes by noon Wednesday?
+  61075844  0.5832  Will California's Living Wage Act pass?
+  70306834  0.5833  Will Carney say "Land Reform" during Canadian Election Debate on April 17?
+  78977444  0.5837  Will Jared Hudson be the Republican nominee for Senate in Alabama?
+  66540049  0.5838  Will 50 Senators vote to confirm Tulsi Gabbard as as Director of National Intell
+  53213463  0.5838  Mayorkas impeached by Feb 15?
+  77643418  0.5846  Will the Republicans win the Kentucky Senate race in 2026?
+  78249549  0.5846  Louisiana vs. South Alabama: 1H Moneyline
+  66540061  0.5846  Will 51 Senators vote to confirm Tulsi Gabbard as as Director of National Intell
+  63598357  0.5848  Will 538 call 49 states correctly?
+  64571872  0.5849  Will Gaetz be sworn in with the new congress?
+  64093431  0.5851  Will the GOP use 'Nuclear Option' to break filibuster?
+  60351630  0.5852  Will Florida's abortion protection measure pass?
+  77128129  0.5854  John Thune out as Senate Majority leader by October 31?
+  79026765  0.5854  William & Mary Tribe vs. St. John's Red Storm: O/U 168.5
+  71513014  0.5855  Will next reconciliation bill extend income tax cut for high earners in 2025?
+  70181149  0.5859  Will the Liberal Party win by 125–149 seats?
+  77645232  0.5860  Spread: Virginia (-17.5)
+  66540097  0.5860  Will 52 Senators vote to confirm Tulsi Gabbard as as Director of National Intell
+  68414722  0.5866  The 'Bill' Epstein Parlay
+  77845651  0.5871  Spread: Virginia (-16.5)
+  65559410  0.5877  Drone detection legislation passes in 2024?
+  67890683  0.5878  Will Tim Walz announce Senate run before July?
+  77644012  0.5879  Will the Republicans win the Alabama Senate race in 2026?
+  78113361  0.5880  1H Spread: Virginia (-6.5)
+  60351636  0.5881  Will New York's abortion protection measure pass?
+  78811125  0.5883  Appalachian State vs. James Madison: 1H Moneyline
+  61084322  0.5888  Will California pass SB 1047 AI safety bill?
+  63971786  0.5888  Will Austin Scott be the first elected Speaker of the House for the 119th congre
+  66540122  0.5891  Will 53 Senators vote to confirm Tulsi Gabbard as as Director of National Intell
+  71025153  0.5891  Italian Citizenship Residency Requirement Referendum
+  60351608  0.5895  Will Nevada's abortion protection measure pass?
+  75253343  0.5897  Will the Bills and Bears combine for 42 or more points?
+  77643413  0.5897  Will the Democrats win the Kentucky Senate race in 2026?
+  78274759  0.5901  Spread: James Madison (-6.5)
+  76257612  0.5905  Nepal intervention by September 30?
+  60545582  0.5905  Will Arizona's abortion protection measure pass?
+  66540030  0.5907  Will 49 Senators vote to confirm Tulsi Gabbard as as Director of National Intell
+  19007688  0.5908  What will the margin be in Newsom’s recall election?
+  71844520  0.5912  Debt ceiling raised or suspended before July?
+  48328097  0.5914  Will Mitch McConnell remain senator through 2023?
+  59245809  0.5915  50+ Dem house reps call Biden to drop out by Friday?
+  52952185  0.5916  Ilhan Omar expelled from Congress before March?
+  49619526  0.5917  Will Ohio’s abortion referendum pass?
+  67103251  0.5917  Will 50 senators vote to confirm Kash Patel as FBI Director?
+  67103284  0.5918  Will 52 senators vote to confirm Kash Patel as FBI Director?
+  76698416  0.5919  Will CA River Plate win on 2025-09-20?
+  76772962  0.5925  Will CA River Plate win on 2025-09-28?
+  70181131  0.5926  Will the Liberal Party win by 150 or more seats?
+  78416951  0.5926  1H Spread: Virginia (-3.5)
+  77644007  0.5934  Will the Democrats win the Alabama Senate race in 2026?
+  66540135  0.5936  Will 54 or more Senators vote to confirm Tulsi Gabbard as as Director of Nationa
+  67103315  0.5937  Will 54 senators vote to confirm Kash Patel as FBI Director?
+  63971771  0.5939  Will Jack Bergman be the first elected Speaker of the House for the 119th congre
+  71513014  0.5944  Will next reconciliation bill end electric vehicle tax credits in 2025?
+  79023094  0.5945  Will Elise Stefanik vote “Yea” on an Epstein disclosure bill/resolution in 2025?
+  78113350  0.5945  Illinois vs. Washington: 1H Moneyline
+  76766819  0.5947  Will CA River Plate win on 2025-09-24?
+  74562060  0.5950  Will CD win the most seats in the 2026 Colombian Senate election?
+  61419958  0.5951  Will Biden's 538 approval reach 43% in September?
+  67103305  0.5956  Will 53 senators vote to confirm Kash Patel as FBI Director?
+  63080346  0.5962  Will Nebraska's abortion protection measure pass?
+  65169348  0.5963  <180 MPs vote to impeach Yoon?
+  67103217  0.5966  Will fewer than 49 senators vote to confirm Kash Patel as FBI Director?
+  78642158  0.5970  Will Chile Grande y Unido gain the most seats in the Senate election?
+  60351619  0.5973  Will Colorado's abortion protection measure pass?
+  23612039  0.5975  Senate: Will a Democrat (Warnock) or Republican (Walker) win in Georgia?
+  67103264  0.5975  Will 51 senators vote to confirm Kash Patel as FBI Director?
+  66540013  0.5976  Less than 49 Senators vote to confirm Tulsi Gabbard as as Director of National I
+  79070250  0.5979  Spread: Washington State (-10.5)
+  76307948  0.5982  Will CA River Plate win on 2025-09-17?
+  78113358  0.5985  Virginia vs. North Carolina: 1H Moneyline
+  78545146  0.5986  Will CA River Plate win on 2025-11-09?
+  76393757  0.5988  Washington State vs. North Texas: O/U 56.5
+  73847783  0.5994  Will the Republican Party control the House after the 2026 Midterm elections?
+  60351612  0.5998  Will South Dakota's abortion protection measure pass?
+  17655554  0.5998  Will a second union vote be approved by the NLRB at the Bessemer Amazon Warehous
+  78249580  0.6000  1H Spread: James Madison (-3.5)
+  78465531  0.6003  1H Spread: Washington State (-1.5)
+  34754717  0.6003  Will the Digital Commodities Consumer Protection Act (DCCPA) become law by Dec 3
+  37714209  0.6003  Will Steve Scalise be elected Speaker of the House in the 118th Congress?
+  77642395  0.6008  Will the Republicans win the Texas Senate race in 2026?
+  55667334  0.6008  Abortion on the 2024 ballot in Arizona?
+  33019612  0.6016  Will Nancy Pelosi be elected Speaker of the House for the 118th Congress?
+  67101625  0.6030  Will Bill Cassidy vote to confirm Robert Kennedy Jr. as Secretary of Health and 
+  39371106  0.6032  Will there be a Senate vacancy in Pennsylvania by EOY?
+  60351625  0.6036  Will Maryland's abortion protection measure pass?
+  71513015  0.6038  Will next reconciliation bill lift debt ceiling in 2025?
+  55981884  0.6049  Will the NDA win 300-325 seats?
+  77642390  0.6049  Will the Democrats win the Texas Senate race in 2026?
+  65439745  0.6056  Will AOC lead House oversight committee?
+  74562069  0.6057  Will U win the most seats in the 2026 Colombian Senate election?
+  73847778  0.6060  Will the Democratic Party control the House after the 2026 Midterm elections?
+  27965009  0.6065  Will Kevin McCarthy be elected Speaker of the House in the 118th Congress?
+  43409172  0.6065  US debt ceiling hike by June 2?
+  77338981  0.6065  Will CA River Plate win on 2025-10-12?
+  61075828  0.6065  Will Washington's anti-carbon cap initiative pass?
+  73847731  0.6069  Will the Republican Party control the Senate after the 2026 Midterm elections?
+  76152125  0.6072  Bills vs. Jets
+  62760657  0.6072  Bills vs. Jets
+  48362209  0.6075  Will TD get over 11% of votes in the 2023 Polish parliamentary election?
+  77137286  0.6076  First enacted funding bill include ACA premium subsidy extension?
+  58280848  0.6080  Will Reform win 7+ seats in UK Election?
+  78249568  0.6082  Virginia vs. California: 1H Moneyline
+  77946452  0.6090  Spread: Washington (-4.5)
+  42825323  0.6092  US debt ceiling hike by June 1?
+  78566331  0.6092  James Madison vs. Marshall: 1H O/U 28.5
+  59245834  0.6097  10+ Dem senators call on Biden to drop out by Friday?
+  65169405  0.6101  200-219 MPs vote to impeach Yoon?
+  66741776  0.6102  Will every Republican Senator vote to confirm RFK Jr?
+  57807542  0.6103  Will FdI receive more than 27% of votes?
+  71513013  0.6104  Will next reconciliation bill reduce taxes on Social Security in 2025?
+  10107409  0.6106  Will there be enough signatures for a vote on the recall of Gov. Newsom by March
+  59155184  0.6107  15+ Dem House reps call Biden to drop out by Friday?
+  79055858  0.6111  Spread: Washington (-14.5)
+  78034502  0.6112  Spread: Washington (-5.5)
+  77221567  0.6112  Spread: Washington (-5.5)
+  78113349  0.6113  Illinois vs. Washington: 1H O/U 26.5
+  63654681  0.6116  CA-45 election: Tran (D) vs. Steel (R)
+  64093673  0.6118  Will Republicans control 221 seats in the House after the election?
+  63406817  0.6121  Will the AP call the election on November 6?
+  49868039  0.6121  Another House member censured by Nov 30?
+  74047798  0.6122  Will Trump veto a bill in 2025?
+  63406898  0.6124  Will the AP call the election on November 13?
+  73847727  0.6127  Will the Democratic Party control the Senate after the 2026 Midterm elections?
+  49620181  0.6127  Virginia State Legislature: Will Republicans gain full control?
+  76006688  0.6127  Will Chelsea Clinton announce run for congress by December 31?
+  71025154  0.6136  Italian solidary responsibility of the client, contractor, and subcontractor for
+  78116369  0.6138  Spread: Washington (-3.5)
+  63406836  0.6138  Will the AP call the election on November 8?
+  43329886  0.6142  US debt ceiling hike by June 5?
+  65169430  0.6144  240+ MPs vote to impeach Yoon?
+  78757126  0.6145  James Madison vs. Marshall: O/U 53.5
+  76780843  0.6149  Will the California redistricting referendum not pass?
+  78154148  0.6153  Illinois vs. Washington: 1H O/U 27.5
+  60559307  0.6157  NY-17 election: Jones (D) vs. Lawler (R)
+  63406909  0.6165  Will the AP call the election on November 14?
+  51019315  0.6165  Elizabeth Warren crypto bill become law by June?
+  65169374  0.6166  180-199 MPs vote to impeach Yoon?
+  77062171  0.6169  Spread: Washington (-6.5)
+  63441975  0.6170  Will the AP call the election by November 6?
+  77136430  0.6178  Will Angus King vote "Yea" on the next funding bill?
+  64093616  0.6179  Will Republicans control 219 seats in the House after the election?
+  63441996  0.6179  Will the AP call the election by November 8?
+  67103324  0.6180  Will 55 or more senators vote to confirm Kash Patel as FBI Director?
+  77518101  0.6181  Spread: Washington (-9.5)
+  77434539  0.6182  Spread: Washington (-10.5)
+  78631133  0.6182  Spread: Washington (-10.5)
+  78901120  0.6198  Spread: Washington (-17.5)
+  78565179  0.6199  Spread: Washington (-11.5)
+  77503887  0.6199  Spread: Washington (-11.5)
+  37714517  0.6200  Will a House Speaker be elected by end of Friday?
+  77060086  0.6208  Paul Finebaum announces Alabama Senate run by December 31?
+  67158026  0.6209  Wild vs. Senators
+  78113349  0.6212  1H Spread: Washington (-3.5)
+  78800471  0.6213  Blues vs. Senators
+  60634969  0.6213  Will Republicans have between 215 and 219 seats in House after election?
+  23630373  0.6220  Which party will control the U.S. Senate after the 2022 election?
+  64093845  0.6222  Will Republicans control 226 seats in the House after the election?
+  41914284  0.6225  US debt ceiling hike by July 1?
+  25986704  0.6225  Will the bill making Daylight Savings Time permanent be signed into law by April
+  73665278  0.6228  Congressman joins the America Party before August?
+  64093765  0.6230  Will Republicans control 224 seats in the House after the election?
+  77376022  0.6230  Predators vs. Senators
+  65087424  0.6230  Predators vs. Senators
+  64093943  0.6232  Will Republicans control 229 seats in the House after the election?
+  73430425  0.6235  Elon forms new party within 1 day of the spending bill passing?
+  63406962  0.6244  Will the AP call the election on November 17?
+  69673144  0.6244  Lightning vs. Senators
+  65169414  0.6246  220-239 MPs vote to impeach Yoon?
+  78807786  0.6256  Spread: Washington (-16.5)
+  73419869  0.6257  Will Thom Tillis vote for the next reconciliation bill?
+  65783164  0.6257  Senators vs. Jets
+  63442054  0.6259  Will the AP call the election by November 30?
+  71758073  0.6267  Will the next reconciliation bill be passed between August 4 and August 10?
+  69291425  0.6267  U.S. enacts stablecoin bill in 2025?
+  77096050  0.6269  Will the next government funding bill be a clean CR?
+  65639637  0.6270  Congress pay raise removed from funding bill by Friday?
+  63406848  0.6270  Will the AP call the election on November 9?
+  79070250  0.6272  Spread: Washington (-15.5)
+  70350312  0.6279  AOC announces senate run in 2025?
+  17700321  0.6283  Will the US Senate pass H.R. 3684 INVEST in America Act by August 10, 2021?
+  78249568  0.6283  Virginia vs. California: 1H O/U 26.5
+  78453096  0.6290  Senators vs. Blues
+  66054607  0.6290  Senators vs. Blues
+  77174635  0.6290  Senators vs. Blues
+  67439017  0.6291  Senators vs. Lightning
+  67439099  0.6291  Senators vs. Lightning
+  77215270  0.6291  Senators vs. Lightning
+  64093894  0.6292  Will Republicans control 227 seats in the House after the election?
+  68762348  0.6293  Karen Bass recall election called before September?
+  77986782  0.6294  Illinois vs. Washington: O/U 53.5
+  73419868  0.6295  Will Susan Collins vote for the next reconciliation bill?
+  60634957  0.6296  Will Republicans have between 210 and 214 seats in House after election?
+  78296351  0.6297  Virginia vs. California: 1H O/U 27.5
+  64093921  0.6300  Will Republicans control 228 seats in the House after the election?
+  43457028  0.6302  US debt ceiling hike by June 3?
+  70385663  0.6304  Will reconciliation bill be passed by Memorial day?
+  66540047  0.6307  Will 50 Senators vote to confirm RFK as Secretary of HHS?
+  78378822  0.6308  GOP uses 'Nuclear Option' to break filibuster by December 31?
+  67304519  0.6310  Will any Democratic Senator vote to confirm RFK Jr?
+  79023095  0.6311  Will James Comer vote “Yea” on an Epstein disclosure bill/resolution in 2025?
+  64093723  0.6313  Will Republicans control 222 seats in the House after the election?
+  71758085  0.6314  Will the next reconciliation bill be passed between August 18 and August 24?
+  71758068  0.6317  Will the next reconciliation bill be passed between July 28 and August 3?
+  63442036  0.6319  Will the AP call the election by November 9?
+  57229564  0.6321  Will Republicans have 56 or more seats in Senate after election?
+  64093817  0.6323  Will Republicans control 225 seats in the House after the election?
+  63406931  0.6329  Will the AP call the election on November 15?
+  64093640  0.6334  Will Republicans control 220 seats in the House after the election?
+  66540095  0.6334  Will 53 Senators vote to confirm RFK as Secretary of HHS?
+  71758057  0.6336  Will the next reconciliation bill be passed between July 14 and July 20?
+  66540113  0.6339  Will 54 Senators vote to confirm RFK as Secretary of HHS?
+  71758051  0.6339  Will the next reconciliation bill be passed between July 7 and July 13?
+  67103240  0.6344  Will 49 senators vote to confirm Kash Patel as FBI Director
+  78149278  0.6344  Bills vs. Panthers: 1H Moneyline
+  66540068  0.6348  Will 52 Senators vote to confirm RFK as Secretary of HHS?
+  64093492  0.6349  Will Republicans control 218 or fewer seats in the House after the election?
+  71758062  0.6356  Will the next reconciliation bill be passed between July 21 and July 27?
+  60634939  0.6357  Will Republicans have between 205 and 209 seats in House after election?
+  66540058  0.6357  Will 51 Senators vote to confirm RFK as Secretary of HHS?
+  79102805  0.6364  Senators vs. Wild
+  66054357  0.6364  Senators vs. Wild
+  60634983  0.6365  Will Republicans have between 220 and 224 seats in House after election?
+  71758090  0.6365  Will the next reconciliation bill be passed between August 25 and August 31?
+  64093735  0.6366  Will Republicans control 223 seats in the House after the election?
+  71758038  0.6366  Will the next reconciliation bill be passed before July?
+  71442933  0.6368  Will Trump sign a bill into law before June?
+  71758045  0.6369  Will the next reconciliation bill be passed between July 1 and July 6?
+  66879676  0.6370  Senators vs. Rangers
+  54387895  0.6371  Congress passes bill banning TikTok by April 30?
+  57229546  0.6371  Will Republicans have 54 seats in Senate after election?
+  64093989  0.6372  Will Republicans control 230 or more seats in the House after the election?
+  60317917  0.6376  Bills vs. Bears
+  23612142  0.6380  Senate: Will a Democrat (Barnes) or Republican (Johnson) win in Wisconsin?
+  53800159  0.6384  House control after 2024 election?
+  60634999  0.6386  Will Republicans have between 225 and 229 seats in House after election?
+  57229502  0.6391  Will Republicans have 51 seats in Senate after election?
+  67439005  0.6391  Senators vs. Predators
+  30949348  0.6396  Will Gay Marriage pass the U.S. Senate?
+  66363080  0.6396  Stars vs. Senators
+  77718755  0.6396  Stars vs. Senators
+  66540022  0.6403  Will 49 Senators vote to confirm RFK as Secretary of HHS?
+  73419870  0.6409  Will Lisa Murkowski vote for the next reconciliation bill?
+  47459577  0.6413  Bills vs. Raiders
+  73495702  0.6414  Will Trump sign the Reconciliation bill by July 31?
+  66540063  0.6417  Will 56 or more Senators vote to confirm Hegseth?
+  32239784  0.6417  538: Will voters prefer Republicans or Democrats on September 9?
+  75811193  0.6420  Will Trump say "Big beautiful bill" this week? (September 1 - 7)
+  77989612  0.6420  Will the Continuing Appropriations and Extensions Act (H.R.5371) be signed into 
+  77387295  0.6420  Kraken vs. Senators
+  59119950  0.6422  House overturns Biden's SAB 121 veto?
+  77872641  0.6424  Bills vs. Panthers
+  60791931  0.6424  Bills vs. Panthers
+  76780866  0.6425  Will the California redistricting referendum pass by 40% or more?
+  67100049  0.6426  Utah vs. Senators
+  77632377  0.6426  Utah vs. Senators
+  66974795  0.6427  Will Trump sign a bill into law in his first week?
+  77135818  0.6427  Which chamber will move first on a funding bill?
+  73495726  0.6427  Will Trump sign the Reconciliation bill on July 6?
+  78678330  0.6432  Will the California redistricting referendum pass by <26%?
+  43330953  0.6435  Will 140 or more House Republicans vote for the debt ceiling deal by June 4?
+  57229514  0.6438  Will Republicans have 52 seats in Senate after election?
+  76931996  0.6440  Saints vs. Bills: O/U 42.5
+  78678335  0.6440  Will the California redistricting referendum pass by 26–27%?
+  69673170  0.6441  Panthers vs. Senators
+  57229447  0.6441  Will Republicans have 50 seats in Senate after election?
+  73014401  0.6445  Trump signs bill selling federal land before September?
+  51055221  0.6454  US Congress approve more Ukraine aid in 2023?
+  75411908  0.6458  California redistricting referendum passes?
+  77136430  0.6470  Will John Fetterman vote "Yea" on the next funding bill?
+  67843457  0.6473  Will the House pass a budget resolution by Friday?
+  13852546  0.6478  Will a bill which increases long-term capital gains taxes above 20% become law b
+  60635007  0.6481  Will Republicans have 230 or more seats in House after election?
+  65503196  0.6482  Senators vs. Kraken
+  66540133  0.6484  Will 55 or more Senators vote to confirm RFK as Secretary of HHS?
+  57229423  0.6487  Will Republicans have 49 or fewer seats in Senate after election?
+  79138358  0.6487  Bills vs. Texans: 1H Moneyline
+  47745840  0.6488  Senate control after 2024 election?
+  77416838  0.6490  Senators vs. Lightning: O/U 6.5
+  66540006  0.6490  Less than 49 Senators vote to confirm RFK as Secretary of HHS?
+  57229527  0.6493  Will Republicans have 53 seats in Senate after election?
+  77588295  0.6494  Predators vs. Senators: O/U 5.5
+  78985240  0.6498  Congress passes Epstein disclosure bill/resolution in 2025?
+  79016501  0.6499  Kings vs. Senators: O/U 5.5
+  76780862  0.6500  Will the California redistricting referendum pass by 30-40%?
+  20980103  0.6501  Will the bipartisan infrastructure bill become law by November 19, 2021?
+  66540011  0.6509  Less than 50 Senators vote to confirm Hegseth?
+  70239555  0.6514  Hurricanes vs. Senators
+  67439179  0.6523  Senators vs. Panthers
+  73419869  0.6523  Will Rand Paul vote for the next reconciliation bill?
+  75213103  0.6529  Will Texas enact a redistricting law by August 22?
+  74805954  0.6530  Will the Texas House pass HB 4 by August 19?
+  73462724  0.6530  Will reconciliation bill be passed by July 2?
+  47744752  0.6531  Commanders vs. Bills
+  57229556  0.6531  Will Republicans have 55 seats in Senate after election?
+  78425212  0.6532  Will the U.S. House of Representatives session be announced by November 7?
+  10033623  0.6534  How many Senators will vote to convict Donald Trump on incitement by March 1?
+  79138358  0.6535  Bills vs. Texans: 1H O/U 22.5
+  63321691  0.6543  Bills vs. Seahawks
+  33757491  0.6545  TX-34 House: Will a Democrat (Gonzalez) or Republican (Flores) win?
+  20188523  0.6547  Will the bipartisan infrastructure bill become law by November 4, 2021?
+  73419868  0.6556  Will Ron Johnson vote for the next reconciliation bill?
+  66540026  0.6563  Will 50-52 Senators vote to confirm Hegseth?
+  37670129  0.6569  Will a House Speaker be elected by end of Wednesday?
+  66465278  0.6572  Congressional term limits in 2025?
+  71758112  0.6575  Will the next reconciliation bill be passed on or after September 1?
+  77423685  0.6575  Any US state legislature votes on secession by June 30, 2026?
+  73175436  0.6576  Will reconciliation bill be passed by July 4?
+  68970333  0.6590  House passes bill banning Chinese student visas before June?
+  75942057  0.6596  House passes Epstein disclosure bill/resolution in 2025?
+  66463254  0.6600  Will 24 or more Democratic senators vote in favor of the Laken Riley Act?
+  20979977  0.6604  Will the bipartisan infrastructure bill become law by November 11, 2021?
+  61386130  0.6609  SAVE act becomes law before election?
+  70385667  0.6609  Will reconciliation bill be passed by June 30?
+   8297044  0.6624  Which party will control the senate?
+  78541287  0.6625  Senators vs. Stars
+  66054541  0.6625  Senators vs. Stars
+  79084356  0.6628  Bills vs. Texans: O/U 44.5
+  78843388  0.6631  Stars vs. Senators: O/U 5.5
+  73421769  0.6635  Will reconciliation bill be passed by July 5?
+  78425212  0.6650  Will the U.S. House of Representatives session be announced by November 30?
+  66463009  0.6656  Will less than 8 Democratic senators vote in favor of the Laken Riley Act?
+  73419867  0.6658  Will Mitch McConnell vote for the next reconciliation bill?
+  79122150  0.6659  Bills vs. Texans: O/U 43.5
+  65222896  0.6667  Senators vs. Hurricanes
+  62519523  0.6667  Bills vs. Texans
+  79083892  0.6667  Bills vs. Texans
+  21141769  0.6668  Will the bipartisan infrastructure bill become law by Noon, November 15, 2021?
+  77549247  0.6676  Senators vs. Panthers: O/U 5.5
+  73421768  0.6685  Will reconciliation bill be passed by July 3?
+  78852396  0.6685  Stars vs. Senators: O/U 6.5
+  31811717  0.6689  Republican House and Republican Senate after U.S. 2022 Midterms?
+  71036132  0.6696  Will reconciliation bill be passed by July 31?
+  75375298  0.6697  California Legislature approves redistricting referendum by August 23?
+  31811778  0.6703  Democratic House and Democratic Senate after U.S. 2022 Midterms?
+  31811677  0.6706  Republican House and Democratic Senate after U.S. 2022 Midterms?
+  31811833  0.6722  Democratic House and Republican Senate after U.S. 2022 Midterms?
+  56210001  0.6729  2024 Balance of Power: D Prez, R Senate, D House
+  78330761  0.6730  Will exactly 56 U.S. senators vote "Yea" on the next funding bill by November 30
+  71036132  0.6731  Will reconciliation bill be passed by August 31?
+  56209993  0.6732  2024 Balance of Power: D Prez, D Senate, R House
+  58315310  0.6733  Reform wins between 15% and 19% of votes?
+  68413099  0.6746  "Drain the Swamp Act" passes the House before May?
+  78330781  0.6749  Will exactly 60 U.S. senators vote "Yea" on the next funding bill by November 30
+  56209984  0.6753  2024 Balance of Power: D Prez, D Senate, D House
+  21975601  0.6754  Will a US debt ceiling raise be enacted by December 15th?
+  78425212  0.6759  Will the U.S. House of Representatives session be announced by November 15?
+  78985386  0.6761  Will no house vote on an Epstein disclosure resolution/bill occur by December 31
+  77137454  0.6762  Will exactly 56 U.S. senators vote "Yea" on the next funding bill by October 31?
+  65644605  0.6762  Will less than 10 Republicans vote in favor of government funding bill?
+  66463141  0.6764  Will 16-19 Democratic senators vote in favor of the Laken Riley Act?
+  65644656  0.6765  Will 50-99 Republicans vote in favor of government funding bill?
+  56210010  0.6768  2024 Balance of Power: D Prez, R Senate, R House
+  66540047  0.6775  Will 53-55 Senators vote to confirm Hegseth?
+  78864341  0.6776  Will no vote occur on a new funding bill by November 30?
+  78330791  0.6776  Will no vote occur on a new funding bill by November 30?
+  56210031  0.6778  2024 Balance of Power: R Prez, D Senate, R House
+  21987470  0.6779  Will the US Senate pass the Build Back Better Act by Christmas Eve?
+  66661296  0.6784  "Make Greenland Great Again Act" passes the House before March?
+  77137472  0.6785  Will exactly 60 U.S. senators vote "Yea" on the next funding bill by October 31?
+  77067209  0.6786  Will the Senate pass funding bill by October 2?
+  66463217  0.6787  Will 20-23 Democratic senators vote in favor of the Laken Riley Act?
+  74805964  0.6796  Will the Texas House vote on HB 4 by August 19?
+  58315281  0.6797  Reform wins >23% of votes?
+  78864316  0.6806  Will between 219 and 220 U.S. House members vote "Yea" on the next funding bill 
+  65644721  0.6807  Will 210 or more Republicans vote in favor of government funding bill?
+  78864305  0.6809  Will fewer than 215 U.S. House members vote "Yea" on the next funding bill by No
+  74047688  0.6823  House passes Epstein disclosure bill/resolution by August 31?
+  77137482  0.6829  Will no vote occur on a new funding bill by October 31?
+  65644214  0.6834  Congress passes funding bill before Trump inauguration?
+  78864321  0.6837  Will between 221 and 222 U.S. House members vote "Yea" on the next funding bill 
+  79016500  0.6842  Spread: Senators (-1.5)
+  78236808  0.6842  Spread: Senators (-1.5)
+  77804259  0.6842  Spread: Senators (-1.5)
+  78627395  0.6842  Spread: Senators (-1.5)
+  78756988  0.6842  Spread: Senators (-1.5)
+  78193612  0.6842  Spread: Senators (-1.5)
+  78929795  0.6842  Spread: Senators (-1.5)
+  77674693  0.6842  Spread: Senators (-1.5)
+  78020823  0.6842  Spread: Senators (-1.5)
+  78323217  0.6842  Spread: Senators (-1.5)
+  77717867  0.6842  Spread: Senators (-1.5)
+  78845185  0.6842  Spread: Senators (-1.5)
+  77588295  0.6842  Spread: Senators (-1.5)
+  77137444  0.6848  Will fewer than 55 U.S. senators vote "Yea" on the next funding bill by October 
+  65683233  0.6849  Congress passes funding bill before 2025?
+  78330751  0.6852  Will fewer than 55 U.S. senators vote "Yea" on the next funding bill by November
+  65644708  0.6861  Will 200-209 Republicans vote in favor of government funding bill?
+  66463016  0.6862  Will 8-11 Democratic senators vote in favor of the Laken Riley Act?
+  78985316  0.6867  Will fewer than 210 house members vote “Yea” on an Epstein disclosure resolution
+  56210036  0.6868  2024 Balance of Power: R Prez, R Senate, D House
+  78330776  0.6878  Will exactly 59 U.S. senators vote "Yea" on the next funding bill by November 30
+  77067210  0.6884  Will the Senate pass funding bill by October 1?
+  78864311  0.6884  Will between 217 and 218 U.S. House members vote "Yea" on the next funding bill 
+  78864331  0.6888  Will between 225 and 226 U.S. House members vote "Yea" on the next funding bill 
+  77137467  0.6892  Will exactly 59 U.S. senators vote "Yea" on the next funding bill by October 31?
+  56210021  0.6896  2024 Balance of Power: R Prez, D Senate, D House
+  78330771  0.6901  Will exactly 58 U.S. senators vote "Yea" on the next funding bill by November 30
+  78864336  0.6902  Will more than 227 or more U.S. House members vote "Yea" on the next funding bil
+  58315332  0.6904  Reform wins between 11% and 15% of votes?
+  65720784  0.6904  Will House and Senate pass funding bill by midnight?
+  73461066  0.6909  Will the Reconciliation bill receive fewer than 213 votes?
+  78864346  0.6914  Will between 215 and 216 U.S. House members vote "Yea" on the next funding bill 
+  77067210  0.6919  Will the Senate pass funding bill by October 5?
+  73419876  0.6919  Will 51+ senators vote for the next reconciliation bill?
+  65644641  0.6920  Will 25-49 Republicans vote in favor of government funding bill?
+  22530195  0.6926  Will the US Senate pass the Build Back Better Act by January 9?
+  77137463  0.6935  Will exactly 58 U.S. senators vote "Yea" on the next funding bill by October 31?
+  69010189  0.6936  Will any Democratic senator vote for government funding bill by Friday?
+  66463060  0.6943  Will 12-15 Democratic senators vote in favor of the Laken Riley Act?
+  77137477  0.6947  Will 61 or more U.S. senators vote "Yea" on the next funding bill by October 31?
+  73461088  0.6947  Will the Reconciliation bill receive 219 or more votes?
+  78864326  0.6962  Will between 223 and 224 U.S. House members vote "Yea" on the next funding bill 
+  65644676  0.6970  Will 150-174 Republicans vote in favor of government funding bill?
+  65723924  0.6973  House passes funding bill by midnight?
+  75935507  0.6975  Spread: Bills (-1.5)
+  77092532  0.6975  Spread: Bills (-1.5)
+  78985321  0.6978  Will between 210 and 219 house members vote “Yea” on an Epstein disclosure resol
+  75489143  0.6980  Spread: Bills (-2.5)
+  78985351  0.6985  Will between 250 and 254 house members vote “Yea” on an Epstein disclosure resol
+  78330756  0.6987  Will exactly 55 U.S. senators vote "Yea" on the next funding bill by November 30
+  77137449  0.6989  Will exactly 55 U.S. senators vote "Yea" on the next funding bill by October 31?
+  65644697  0.6989  Will 175-199 Republicans vote in favor of government funding bill?
+  65644624  0.6998  Will 10-24 Republicans vote in favor of government funding bill?
+  79138358  0.7008  1H Spread: Bills (-2.5)
+  78542636  0.7028  1H Spread: Bills (-6.5)
+  65642578  0.7029  Will between 190 and 199 Democratic congressmen vote for funding bill?
+  78539042  0.7035  1H Spread: Bills (-5.5)
+  78985371  0.7039  Will between 280 and 289 house members vote “Yea” on an Epstein disclosure resol
+  77092533  0.7044  Spread: Bills (-4.5)
+  77374969  0.7044  Spread: Bills (-4.5)
+  76332556  0.7044  Spread: Bills (-4.5)
+  78161049  0.7045  1H Spread: Bills (-4.5)
+  78596856  0.7045  1H Spread: Bills (-4.5)
+  77137458  0.7046  Will exactly 57 U.S. senators vote "Yea" on the next funding bill by October 31?
+  76332557  0.7046  Spread: Bills (-6.5)
+  78782022  0.7046  Spread: Bills (-6.5)
+  77092533  0.7046  Spread: Bills (-6.5)
+  78985331  0.7047  Will between 230 and 234 house members vote “Yea” on an Epstein disclosure resol
+  65642561  0.7048  Will between 200 and 211 Democratic congressmen vote for funding bill?
+  76332555  0.7054  Spread: Bills (-5.5)
+  78816223  0.7054  Spread: Bills (-5.5)
+  21175490  0.7056  Will The Build Back Better Act pass the House of Representatives by November 19,
+  65642692  0.7072  Will fewer than 160 Democratic congressmen vote for funding bill?
+  78985326  0.7073  Will between 220 and 229 house members vote “Yea” on an Epstein disclosure resol
+  77067219  0.7073  Will House and Senate pass funding bill by October 2?
+  77092532  0.7076  Spread: Bills (-3.5)
+  77646658  0.7076  Spread: Bills (-3.5)
+  76332558  0.7076  Spread: Bills (-3.5)
+  79084356  0.7076  Spread: Bills (-3.5)
+  78985341  0.7076  Will between 240 and 244 house members vote “Yea” on an Epstein disclosure resol
+  78985346  0.7079  Will between 245 and 249 house members vote “Yea” on an Epstein disclosure resol
+  78149277  0.7083  1H Spread: Bills (-3.5)
+  78846853  0.7083  1H Spread: Bills (-3.5)
+  29916740  0.7086  Will the U.S. Senate pass a Reconciliation Bill by August 15?
+  73461071  0.7087  Will the Reconciliation bill receive 213–214 votes?
+  76931994  0.7092  Spread: Bills (-14.5)
+  56210042  0.7092  2024 Balance of Power: R Prez R Senate R House
+  77067210  0.7095  Will the Senate pass funding bill by September 30?
+  78985336  0.7099  Will between 235 and 239 house members vote “Yea” on an Epstein disclosure resol
+  65642609  0.7100  Will between 180 and 189 Democratic congressmen vote for funding bill?
+  78477835  0.7102  Spread: Bills (-8.5)
+  77193197  0.7102  Spread: Bills (-8.5)
+  78985356  0.7102  Will between 255 and 259 house members vote “Yea” on an Epstein disclosure resol
+  78985376  0.7104  Will between 290 and 299 house members vote “Yea” on an Epstein disclosure resol
+  77874445  0.7107  Spread: Bills (-7.5)
+  76332556  0.7107  Spread: Bills (-7.5)
+  76931993  0.7111  Spread: Bills (-13.5)
+  73461082  0.7113  Will the Reconciliation bill receive 217–218 votes?
+  78985381  0.7118  Will 300 or more house members vote “Yea” on an Epstein disclosure resolution/bi
+  73461077  0.7120  Will the Reconciliation bill receive 215–216 votes?
+  77067218  0.7120  Will House and Senate pass funding bill by October 1?
+  78985366  0.7125  Will between 270 and 279 house members vote “Yea” on an Epstein disclosure resol
+  11774165  0.7135  How many Yea votes in the House for the American Rescue Plan?
+  78985361  0.7136  Will between 260 and 269 house members vote “Yea” on an Epstein disclosure resol
+  73849914  0.7139  2026 Balance of Power: R Senate, R House
+  76931995  0.7145  Spread: Bills (-16.5)
+  77067219  0.7165  Will House and Senate pass funding bill by October 5?
+  73849910  0.7175  2026 Balance of Power: R Senate, D House
+  65644290  0.7185  Will the first House vote on CR funding bill pass?
+  68927214  0.7190  House passes funding bill by Thursday?
+  78542636  0.7194  Spread: Bills (-9.5)
+  76931995  0.7198  Spread: Bills (-17.5)
+  77217698  0.7198  Will House and Senate pass funding bill by November 30?
+  77128101  0.7198  Will House and Senate pass funding bill by October 31?
+  76931994  0.7198  Spread: Bills (-15.5)
+  65642639  0.7209  Will between 170 and 179 Democratic congressmen vote for funding bill?
+  65688894  0.7263  Congress passes funding bill today?
+  65642683  0.7271  Will between 160 and 169 Democratic congressmen vote for funding bill?
+  78927802  0.7333  Will the House vote on a government funding bill today?
+  77067219  0.7337  Will House and Senate pass funding bill by September 30?
+  77128102  0.7350  Will House and Senate pass funding bill by October 15?
+  73849902  0.7376  2026 Balance of Power: D Senate, D House
+  73849906  0.7508  2026 Balance of Power: D Senate, R House

@@ -1,79 +1,92 @@
 #!/usr/bin/env python3
+"""
+从 tag/tags/*.txt 读取分类结果，按 start_block 画滑动窗口时序图。
+"""
 
 import json
-import tempfile
 import webbrowser
 from collections import Counter
 from collections import deque
 from pathlib import Path
 
-import duckdb
 from tqdm import tqdm
 
 
-def load_stage0_db_path(repo_root: Path) -> Path:
-    config_path = repo_root / "config.json"
-    with config_path.open("r", encoding="utf-8") as f:
-        config = json.load(f)
-    db_rel = config["db_path_stage0"]
-    db_path = (repo_root / db_rel).resolve()
-    assert db_path.exists(), f"stage0 db not found: {db_path}"
-    return db_path
+def _parse_tag_files(tags_dir: Path) -> list[dict]:
+    """从 tags/*.txt 解析出 (tag_name, start_block) 列表"""
+    assert tags_dir.exists(), f"tags dir not found: {tags_dir}"
+
+    parsed_rows = []
+    for tag_file in sorted(tags_dir.glob("*.txt")):
+        tag_name = tag_file.stem  # 文件名即 tag 名
+        with tag_file.open("r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#") or line.startswith("="):
+                    continue
+                # 格式: start_block  confidence  question
+                parts = line.split(None, 2)
+                if len(parts) < 2:
+                    continue
+                try:
+                    start_block = int(parts[0])
+                except ValueError:
+                    continue
+                parsed_rows.append({
+                    "tag": tag_name,
+                    "start_block": start_block,
+                })
+
+    # 按 start_block 排序
+    parsed_rows.sort(key=lambda x: x["start_block"])
+    return parsed_rows
 
 
-def _extract_category(market: dict) -> str:
-    category = market.get("category")
-    if not category:
-        events = market.get("events", [])
-        if events:
-            category = events[0].get("category")
-    if not category:
-        return "__MISSING__"
-    return str(category)
-
-
-def _build_window_series(rows, window_size: int):
+def _build_window_series(rows: list[dict], window_size: int):
     assert window_size > 0, "window_size must be > 0"
     blocks = []
-    block_category_counts = []
+    block_tag_counts = []
     event_queue = deque()
     live_counter = Counter()
     right = 0
     n = len(rows)
-    for block in tqdm(sorted({r["first_seen_block"] for r in rows}),
-                      desc="Building window series", unit="blk"):
-        while right < n and rows[right]["first_seen_block"] <= block:
+
+    unique_blocks = sorted({r["start_block"] for r in rows})
+    for block in tqdm(unique_blocks, desc="Building window series", unit="blk"):
+        # 添加新事件
+        while right < n and rows[right]["start_block"] <= block:
             r = rows[right]
-            event_queue.append((r["first_seen_block"], r["category"]))
-            live_counter[r["category"]] += 1
+            event_queue.append((r["start_block"], r["tag"]))
+            live_counter[r["tag"]] += 1
             right += 1
+        # 移除窗口外的旧事件
         window_left = block - window_size + 1
         while event_queue and event_queue[0][0] < window_left:
-            old_block, old_category = event_queue.popleft()
-            _ = old_block
-            live_counter[old_category] -= 1
-            if live_counter[old_category] == 0:
-                del live_counter[old_category]
+            _, old_tag = event_queue.popleft()
+            live_counter[old_tag] -= 1
+            if live_counter[old_tag] == 0:
+                del live_counter[old_tag]
         blocks.append(block)
-        block_category_counts.append(dict(live_counter))
-    return blocks, block_category_counts
+        block_tag_counts.append(dict(live_counter))
+
+    return blocks, block_tag_counts
 
 
-def _plot_window_series(blocks, block_category_counts, categories) -> None:
+def _plot_window_series(blocks, block_tag_counts, tags: list[str]) -> None:
     traces = []
-    for category in categories:
-        y = [counts.get(category, 0) for counts in block_category_counts]
+    for tag in tags:
+        y = [counts.get(tag, 0) for counts in block_tag_counts]
         traces.append({
             "x": blocks,
             "y": y,
             "type": "scatter",
             "mode": "lines",
-            "name": category,
+            "name": tag,
         })
     payload = {
         "traces": traces,
         "layout": {
-            "title": "Stage0 Condition Category Count in Sliding Block Window",
+            "title": "Tag Distribution in Sliding Block Window",
             "xaxis": {"title": "block_number"},
             "yaxis": {"title": "condition_count_in_window"},
             "hovermode": "x unified",
@@ -84,7 +97,7 @@ def _plot_window_series(blocks, block_category_counts, categories) -> None:
 <html>
 <head>
   <meta charset="utf-8">
-  <title>db_category_window_plot</title>
+  <title>tag_window_plot</title>
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 </head>
 <body>
@@ -96,74 +109,34 @@ def _plot_window_series(blocks, block_category_counts, categories) -> None:
 </body>
 </html>
 """
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".html", prefix="db_category_plot_", delete=False,
-                                     encoding="utf-8") as f:
-        f.write(html)
-        temp_html = Path(f.name).resolve()
-    print(f"opening_plot: {temp_html}")
-    ok = webbrowser.open(temp_html.as_uri())
-    assert ok, "failed to open browser"
+    script_dir = Path(__file__).resolve().parent
+    html_path = script_dir / "tag" / "tag_plot.html"
+    html_path.write_text(html, encoding="utf-8")
+    print(f"saved: {html_path}")
+    webbrowser.open(html_path.as_uri())
 
 
-def summarize_category(db_path: str = "", window_size: int = 1000000) -> None:
-    repo_root = Path(__file__).resolve().parents[1]
-    db = Path(db_path).resolve() if db_path else load_stage0_db_path(repo_root)
+def plot_tags(window_size: int = 200000) -> None:
+    script_dir = Path(__file__).resolve().parent
+    tags_dir = script_dir / "tag" / "tags"
 
-    conn = duckdb.connect(str(db), read_only=True)
-    total = conn.execute("SELECT COUNT(*) FROM pm_condition_static").fetchone()[0]
-    rows = conn.execute(
-        """
-        SELECT
-          lower(hex(s.condition_id)) AS cid,
-          s.market_json::VARCHAR AS market_json,
-          c.first_seen_block AS first_seen_block
-        FROM pm_condition_static s
-        JOIN pm_condition_scan_class c ON s.condition_id = c.condition_id
-        ORDER BY c.first_seen_block ASC, cid ASC
-        """
-    ).fetchall()
-    assert len(rows) == total, "row count mismatch"
+    print(f"Reading tags from: {tags_dir}")
+    parsed_rows = _parse_tag_files(tags_dir)
+    print(f"Total samples: {len(parsed_rows)}")
 
-    cat_counter = Counter()
-    sample_condition = {}
-    parsed_rows = []
-    missing_counter = 0
-    for row in tqdm(rows, total=total, desc="Scanning categories", unit="cond"):
-        condition_id_hex = str(row[0])
-        market = json.loads(row[1])
-        first_seen_block = int(row[2])
-        category = _extract_category(market)
-        if category == "__MISSING__":
-            missing_counter += 1
-        cat_counter[category] += 1
-        if category not in sample_condition:
-            sample_condition[category] = "0x" + condition_id_hex
-        parsed_rows.append({
-            "condition_id": "0x" + condition_id_hex,
-            "category": category,
-            "first_seen_block": first_seen_block,
-        })
-
-    print(f"db: {db}")
-    print(f"total_conditions: {total}")
-    print(f"distinct_categories: {len(cat_counter)}")
-    print(f"missing_category_rows: {missing_counter}")
-    print(f"window_size: {window_size}")
+    # 统计每个 tag 的数量
+    tag_counter = Counter(r["tag"] for r in parsed_rows)
+    print(f"Distinct tags: {len(tag_counter)}")
+    print(f"Window size: {window_size}")
     print()
-    for category, cnt in cat_counter.most_common():
-        print(f"{cnt:8d}  {category:20s}  {sample_condition[category]}")
+    for tag, cnt in tag_counter.most_common():
+        print(f"{cnt:8d}  {tag}")
 
-    categories = [
-        category for category, _ in cat_counter.most_common()
-        if category not in {"-", "__MISSING__"}
-    ]
-    blocks, block_category_counts = _build_window_series(parsed_rows, window_size)
-    _plot_window_series(blocks, block_category_counts, categories)
+    # 构建时序数据
+    tags = [tag for tag, _ in tag_counter.most_common()]
+    blocks, block_tag_counts = _build_window_series(parsed_rows, window_size)
+    _plot_window_series(blocks, block_tag_counts, tags)
 
 
 if __name__ == "__main__":
-    # ---- 改这里 ----
-    summarize_category(
-        window_size=100000,
-    )
-    # summarize_category("/absolute/path/to/condition.duckdb", window_size=100000)
+    plot_tags(window_size=int(0.5*3600*24*30*1))

@@ -1,0 +1,1906 @@
+# Sports_Soccer - Sports_Soccer_Top_Leagues
+# count=1903, avg_conf=0.6408
+====================================================================================================
+  71768209  0.5195  Will Rafał Trzaskowski or Karol Nawrocki win Wrocław?
+  75371271  0.5469  Will the Chicago Bears finish with the best record in the NFL?
+  70457680  0.5514  Will AC Milan beat Atalanta?
+  64768885  0.5546  Will Sturm Graz beat Girona?
+  70137254  0.5554  Will Italy finish in the 2025 Eurovision top 10?
+  77860042  0.5561  Dern vs. Jandiroba
+  61106242  0.5563  Will Wolverhampton beat Nottingham Forest?
+  70137389  0.5565  Will Portugal finish in the 2025 Eurovision top 10?
+  77424777  0.5569  Will Nico Echavarria finish second at the Baycurrent Classic 2025?
+  64768900  0.5578  Will Girona beat Sturm Graz?
+  58356467  0.5584  Will Slovenia win?
+  58815226  0.5584  Will Slovenia win?
+  58205542  0.5584  Will Slovenia win?
+  58569868  0.5584  Will Slovenia win?
+  61946052  0.5587  Will SPD win the most votes in the 2024 Brandenburg election?
+  62477077  0.5608  Will Sturm Graz beat Club Brugge?
+  66979777  0.5625  Will Slovan Bratislava beat Stuttgart?
+  71148235  0.5627  Will Jack Draper win the 2025 Internazionali BNL d'Italia?
+  72638171  0.5634  Will the Los Angeles Angels have the best regular season record in the MLB?
+  61951834  0.5647  Will Wolverhampton beat Aston Villa?
+  68305258  0.5654  St. Mary's vs. Loyola Marymount
+  75186355  0.5657  Will Isaac Guerendo record the most fantasy points in Week 1?
+  77426014  0.5658  Will Mikumu Horikawa lead after Round 2 of the Baycurrent Classic 2025?
+  78542181  0.5670  Open de Moselle: Learner Tien vs Moez Echargui
+  62546216  0.5670  Will Wolverhampton beat Brentford?
+  66979794  0.5672  Will Stuttgart beat Slovan Bratislava?
+  78545662  0.5674  Will La Berrichonne de Châteauroux win on 2025-11-15?
+  61951474  0.5674  Will Sturm Graz beat Stade Brestois?
+  64732062  0.5676  Will Slovan Bratislava beat AC Milan?
+  61951824  0.5683  Will Aston Villa beat Wolverhampton?
+  72638161  0.5690  Will the St. Louis Cardinals have the best regular season record in the MLB?
+  58316369  0.5692  Will Cody Gakpo be Euro 2024 top scorer?
+  61524185  0.5696  Will Hikaru or Hans win 3rd place in SCC 2024?
+  64732077  0.5697  Will AC Milan beat Slovan Bratislava?
+  62198911  0.5716  Will Ipswich Town beat Aston Villa?
+  62515474  0.5716  Will Ipswich Town be relegated?
+  72683866  0.5716  Will Ulsan Hyundai beat Mamelodi Sundowns?
+  72638055  0.5716  Will the Chicago Cubs have the best regular season record in the MLB?
+  61905790  0.5717  Will AC Milan beat Liverpool?
+  67055636  0.5726  Will Ajax beat RFS?
+  66984457  0.5730  Will AC Milan beat Girona?
+  70742240  0.5733  Will VfB Stuttgart beat Heidenheim?
+  65289380  0.5736  Will Real Madrid beat Atalanta?
+  72729372  0.5740  Will Al Hilal beat Real Madrid?
+  75186180  0.5743  Will De'Von Achane record the most fantasy points in Week 1?
+  63927313  0.5752  Will Atalanta beat Stuttgart?
+  62193924  0.5753  Will Ludogorets beat Slavia Prague?
+  62193935  0.5757  Will Slavia Prague beat Ludogorets?
+  72729367  0.5758  Will Real Madrid beat Al Hilal?
+  75186696  0.5762  Will Emeka Egbuka record the most fantasy points in Week 1?
+  72695219  0.5763  Will Jamie Gittens sign with a new club during the transfer window?
+  53558775  0.5781  Will Mbappé sign for Real Madrid?
+  45506257  0.5781  Will Mbappé sign for Real Madrid?
+  63927218  0.5785  Will Stuttgart beat Atalanta?
+  65289368  0.5785  Will Atalanta beat Real Madrid?
+  70906491  0.5786  Will Bologna beat Juventus?
+  66984475  0.5786  Will Girona beat AC Milan?
+  58400307  0.5788  Neymar Jr. biggest loser?
+  78073120  0.5789  Will Hokkaidō Consadole Sapporo win on 2025-11-02?
+  78634296  0.5791  Will Red Bull Bragantino vs. Fortaleza EC end in a draw?
+  70906500  0.5791  Will Juventus beat Bologna?
+  75186482  0.5793  Will Amon-Ra St. Brown record the most fantasy points in Week 1?
+  58316401  0.5793  Will Phil Foden be Euro 2024 top scorer?
+  63893876  0.5799  Will Sturm Graz beat Borussia Dortmund?
+  72683872  0.5799  Will Mamelodi Sundowns beat Ulsan Hyundai?
+  75186550  0.5799  Will DK Metcalf record the most fantasy points in Week 1?
+  76781021  0.5805  Will Ousmane Dembélé win the 2026 Ballon d'Or?
+  75370907  0.5806  Will Raphinha be the top goal scorer in the 2025–26 La Liga season?
+  71154763  0.5810  Will Germany finish in the 2025 Eurovision top 5?
+  77425640  0.5811  Will Mikumu Horikawa lead after Round 1 of the Baycurrent Classic 2025?
+  62475492  0.5812  Will Stuttgart beat Sparta Praha?
+  65326877  0.5817  Will AC Milan beat Red Star Belgrade?
+  72729350  0.5818  Will Pachuca beat RB Salzburg?
+  62193585  0.5818  Will AZ Alkmaar beat IF Elfsborg?
+  67256450  0.5829  Will AC Milan beat Dinamo Zagreb?
+  68728608  0.5830  Will Robert Lewandowski win the 2025 Ballon d'Or?
+  63978091  0.5838  Will Slavia Praha beat Frankfurt?
+  62545429  0.5839  Will Slavia Praha beat Ajax?
+  70137267  0.5843  Will Germany finish in the 2025 Eurovision top 10?
+  78073236  0.5843  Will Vegalta Sendai vs. Roasso Kumamoto end in a draw?
+  71603981  0.5843  Will AC Milan beat AS Roma?
+  75186473  0.5844  Will Puka Nacua record the most fantasy points in Week 1?
+  67256310  0.5849  Will Slovan Bratislava beat Bayern Munich?
+  78634009  0.5850  Will Red Bull Bragantino vs. CA Mineiro end in a draw?
+  77377743  0.5851  Will Red Bull Bragantino vs. CR Vasco da Gama end in a draw?
+  56777286  0.5859  Will Bayer Leverkusen go undefeated?
+  65326956  0.5859  Will Feyenoord beat Sparta Praha?
+  65326889  0.5860  Will Red Star Belgrade beat AC Milan?
+  64768681  0.5861  Will Stuttgart beat Red Star Belgrade?
+  71317182  0.5862  Will Leroy Sane sign with a new club during the transfer window?
+  77386766  0.5863  Larger Margin of Victory: Mamdani vs Spanberger?
+  78073504  0.5863  Will Jeju SK FC win on 2025-11-08?
+  66984295  0.5866  Will Shakhtar Donetsk beat Stade Brestois?
+  72848215  0.5866  Terra Wortmann: Fonseca vs. Cobolli
+  78749625  0.5872  Albany Great Danes vs. Massachusetts Minutemen: O/U 160.5
+  65326889  0.5874  Will Slovan Bratislava beat Atletico Madrid?
+  45463891  0.5875  Will Mbappé join a Saudi club this transfer window?
+  73792476  0.5875  Alcaraz vs. Fritz – Will Alcaraz win by 6+ games?
+  64768640  0.5876  Will Red Star Belgrade beat Stuttgart?
+  58316314  0.5878  Will Cristiano Ronaldo be Euro 2024 top scorer?
+  78737024  0.5878  Albany Great Danes vs. Massachusetts Minutemen: O/U 162.5
+  78027728  0.5878  Will Qingdao Hainiu FC win on 2025-11-02?
+  64768931  0.5880  Will Juventus beat Aston Villa?
+  78027510  0.5887  Will Meizhou Hakka FC win on 2025-10-24?
+  77426018  0.5890  Will Kazuki Higa lead after Round 2 of the Baycurrent Classic 2025?
+  62545460  0.5892  Will Ajax beat Slavia Praha?
+  77425650  0.5893  Will Takanori Konishi lead after Round 1 of the Baycurrent Classic 2025?
+  72974287  0.5893  Will Real Madrid beat Pachuca?
+  65326974  0.5893  Will Sparta Praha beat Feyenoord?
+  67016870  0.5894  Will Tottenham beat Hoffenheim?
+  77426383  0.5896  Will Kazuki Higa lead after Round 3 of the Baycurrent Classic 2025?
+  64768913  0.5899  Will Aston Villa beat Juventus?
+  63978078  0.5902  Will Frankfurt beat Slavia Praha?
+  77631545  0.5908  Will LDU de Quito win on 2025-10-30?
+  72083264  0.5908  Will Emiliano Martinez sign with a new club during the transfer window?
+  77397662  0.5912  Will Ipswich Town FC win on 2025-11-04?
+  71603975  0.5913  Will AS Roma beat AC Milan?
+  75371001  0.5916  Will Iago Aspas be the top goal scorer in the 2025–26 La Liga season?
+  72729356  0.5918  Will RB Salzburg beat Pachuca?
+  68728721  0.5921  Will Ousmane Dembele win the 2025 Ballon d'Or?
+  58316352  0.5921  Will Jude Bellingham be Euro 2024 top scorer?
+  78753225  0.5921  Albany Great Danes vs. Massachusetts Minutemen: O/U 156.5
+  17658544  0.5921  Will Messi sign a contract to stay with FC Barcelona by September 1?
+  77377529  0.5922  Will EC Juventude vs. Red Bull Bragantino end in a draw?
+  78544931  0.5923  Will AS Quetigny Football win on 2025-11-15?
+  75370383  0.5926  Will Serhou Guirassy be the top goal scorer in the 2025–26 Bundesliga season?
+  64769649  0.5928  Will Braga beat Hoffenheim?
+  61951429  0.5928  Will Stade Brestois beat Sturm Graz?
+  64732454  0.5930  Will Feyenoord beat Manchester City?
+  78073531  0.5932  Will Pohang Steelers FC win on 2025-11-01?
+  77939619  0.5935  Will Barnsley FC win on 2025-11-01?
+  59833891  0.5936  Will Germany win the 3rd most medals?
+  67256865  0.5936  Will Sturm Graz beat RB Leipzig?
+  72181430  0.5938  Will zero total goals be scored in regulation time?
+  61909855  0.5939  Will Girona beat Paris Saint-Germain?
+  67581573  0.5939  Will Stuttgart beat Borussia Dortmund?
+  78247077  0.5939  Will Jeonbuk Hyundai Motors FC win on 2025-11-22?
+  72439684  0.5943  Will Germany beat France?
+  77939569  0.5943  Will Aldershot Town FC win on 2025-11-01?
+  78740624  0.5945  Albany Great Danes vs. Massachusetts Minutemen: O/U 161.5
+  78764123  0.5947  Will Kyōto Sanga FC win on 2025-12-06?
+  75243347  0.5947  Will Angers be relegated from Ligue 1 after the 2025–26 season?
+  77939388  0.5949  Will Crawley Town FC win on 2025-11-01?
+  71838107  0.5950  Will Alpine have the highest Constructor score at the 2025 Monaco Grand Prix?
+  74520282  0.5951  Will Mgladbach win the 2025–26 Bundesliga?
+  72887759  0.5951  Will Boca Juniors beat Bayern Munich?
+  77635624  0.5951  Will Real Ávila CF win on 2025-10-30?
+  63365663  0.5953  Will Twente beat Lazio?
+  67256895  0.5954  Will Bologna beat Sporting CP?
+  72974293  0.5957  Will Pachuca beat Real Madrid?
+  67256300  0.5959  Will Bayern Munich beat Slovan Bratislava?
+  61394447  0.5959  Will Rodri win the Ballon d’Or?
+  78173468  0.5960  Will Hamburger SV win on 2025-11-08?
+  78544976  0.5960  Will France d'Aizenay Football win on 2025-11-15?
+  76773845  0.5960  Will FK Krasnodar win on 2025-09-27?
+  78551250  0.5963  Will Jeonbuk Hyundai Motors FC win on 2025-11-30?
+  67824243  0.5964  Will Feyenoord win on 2025-02-18?
+  77951405  0.5964  Will Kylian Mbappé rank in Google’s Top 5 Most Searched People of 2025?
+  61909843  0.5964  Will Paris Saint-Germain beat Girona?
+  63893856  0.5964  Will Borussia Dortmund beat Sturm Graz?
+  78761352  0.5967  Will FK Spartak Moskva vs. FK Dinamo Moskva end in a draw?
+  78072925  0.5968  Will Fujieda MYFC vs. Ventforet Kōfu end in a draw?
+  77914107  0.5970  Will Hamburger SV win on 2025-11-02?
+  65326881  0.5971  Will Atletico Madrid beat Slovan Bratislava?
+  63365435  0.5971  Will Slavia Praha beat Athletic Bilbao?
+  58316360  0.5972  Will Alvaro Morata be Euro 2024 top scorer?
+  78934671  0.5972  Will FC København win on 2025-11-26?
+  72392899  0.5972  Will Kylian Mbappé be the top goalscorer at the 2025 FIFA Club World Cup?
+  75370452  0.5972  Will Deniz Undav be the top goal scorer in the 2025–26 Bundesliga season?
+  63331249  0.5973  Will Juventus beat Stuttgart?
+  65369164  0.5974  Will FK Qarabag beat IF Elfsborg?
+  63927126  0.5974  Will Feyenoord beat RB Salzburg?
+  77425810  0.5977  Will Nicolai Hojgaard lead after Round 2 of the Baycurrent Classic 2025?
+  70703767  0.5978  Will Osasuna beat Sevilla?
+  75371005  0.5980  Will Cristhian Stuani be the top goal scorer in the 2025–26 La Liga season?
+  76498288  0.5980  Will LDU de Quito win on 2025-09-18?
+  68451164  0.5981  Will Real Betis Beat Real Madrid?
+  67928529  0.5981  Will Lazio beat Napoli?
+  64769660  0.5982  Will Hoffenheim beat Braga?
+  75370467  0.5982  Will Jonas Wind be the top goal scorer in the 2025–26 Bundesliga season?
+  62477158  0.5983  Will Aston Villa beat Bayern Munich?
+  78247037  0.5983  Will Daejeon Hana Citizen FC win on 2025-11-22?
+  67016847  0.5983  Will Hoffenheim beat Tottenham?
+  73183496  0.5987  Will Madani first lead in the 1st round?
+  75453703  0.5988  Will Lassine Sinayoko be the top goal scorer in the 2025-26 Ligue 1 season?
+  63893798  0.5988  Will Monaco beat Bologna?
+  70618478  0.5988  Will Mallorca beat Barcelona?
+  70703777  0.5990  Will Sevilla beat Osasuna?
+  74520729  0.5990  Will Angers win the 2025–26 French Ligue 1?
+  68451120  0.5990  Will Lazio beat AC Milan?
+  75261431  0.5991  Will Hamburger SV win on 2025-08-24?
+  67298830  0.5991  Will Lazio beat Braga?
+  63365761  0.5991  Will Lazio beat Twente?
+  78027653  0.5992  Will Meizhou Hakka FC win on 2025-11-01?
+  78548093  0.5993  Will Kyōto Sanga FC win on 2025-11-30?
+  65326888  0.5993  Will Sturm Graz beat LOSC Lille?
+  67016854  0.5993  Will Malmo FF beat Twente?
+  78245237  0.5994  Will FC København win on 2025-11-23?
+  78073588  0.5995  Will Jeonbuk Hyundai Motors FC win on 2025-11-08?
+  77425823  0.5995  Will Christiaan Bezuidenhout lead after Round 2 of the Baycurrent Classic 2025?
+  78549416  0.5997  Will FC København win on 2025-11-30?
+  77397613  0.6001  Will Ipswich Town FC win on 2025-11-01?
+  62301813  0.6001  Will Real Madrid beat Atletico Madrid?
+  79125464  0.6001  Will VfB Stuttgart win on 2025-11-30?
+  77630593  0.6001  Will Fortuna Sittard vs. SC Heerenveen end in a draw?
+  61622407  0.6002  Will Germany win?
+  58834957  0.6002  Will Germany win?
+  58316856  0.6002  Will Germany win?
+  58478013  0.6002  Will Germany win?
+  61465062  0.6002  Will Germany win?
+  58715380  0.6002  Will Germany Win?
+  72083243  0.6003  Will Luis Diaz sign with a new club during the transfer window?
+  71276529  0.6003  Will Leverkusen beat Dortmund?
+  75370403  0.6004  Will Lois Openda be the top goal scorer in the 2025–26 Bundesliga season?
+  78073374  0.6004  Will Jeonbuk Hyundai Motors FC win on 2025-10-25?
+  79022055  0.6005  Will VfB Stuttgart win on 2025-11-27?
+  75453141  0.6008  Will Torino be relegated from Serie A after the 2025-26 season?
+  75370393  0.6009  Will Michael Olise be the top goal scorer in the 2025–26 Bundesliga season?
+  77941691  0.6009  Will Kyōto Sanga FC win on 2025-10-25?
+  75370927  0.6010  Will Oihan Sancet be the top goal scorer in the 2025–26 La Liga season?
+  75370388  0.6010  Will Patrik Schick be the top goal scorer in the 2025–26 Bundesliga season?
+  78551275  0.6011  Will Daejeon Hana Citizen FC win on 2025-11-30?
+  73183534  0.6014  Will Madani first lead in the 8th round or later?
+  63894098  0.6014  Will AC Milan beat Real Madrid?
+  74519795  0.6015  Will Alaves win the 2025–26 La Liga?
+  74562091  0.6016  Will LIGA win the most seats in the 2026 Colombian Senate election?
+  77374876  0.6018  Will FK Krasnodar win on 2025-11-02?
+  63978207  0.6018  Will Ludogorets beat Athletic Bilbao?
+  78804619  0.6019  Will FK Krasnodar win on 2025-12-07?
+  70342378  0.6019  Will another team have the second-highest Constructor score at the Saudi Arabian
+  67581560  0.6019  Will Borussia Dortmund beat Stuttgart?
+  77636661  0.6020  Will FK Krasnodar win on 2025-11-09?
+  78976296  0.6021  Will Real Ávila CF win on 2025-12-04?
+  68451060  0.6022  Will VfB Stuttgart beat Bayern Munich?
+  75203225  0.6022  Will VfB Stuttgart beat Bayern Munich?
+  78923775  0.6023  EC Bahia vs. CR Vasco da Gama: O/U 2.5
+  67928545  0.6023  Will Napoli beat Lazio?
+  64732258  0.6027  Will RB Salzburg beat Bayer Leverkusen?
+  75370917  0.6028  Will Julian Alvarez be the top goal scorer in the 2025–26 La Liga season?
+  62476235  0.6030  Will AC Milan beat Bayer Leverkusen?
+  75370957  0.6034  Will Mikel Oyarzabal be the top goal scorer in the 2025–26 La Liga season?
+  67298805  0.6034  Will Braga beat Lazio?
+  64769435  0.6034  Will Lazio beat Ludogorets?
+  75370437  0.6034  Will Michy Batshuayi be the top goal scorer in the 2025–26 Bundesliga season?
+  71031425  0.6035  Will Real Madrid beat Celta Vigo?
+  70618469  0.6037  Will Barcelona beat Mallorca?
+  63331265  0.6037  Will Stuttgart beat Juventus?
+  78027658  0.6037  Will Meizhou Hakka FC vs. Dalian Yingbo FC end in a draw?
+  58158193  0.6038  Will Hungary win Group A?
+  75453599  0.6038  Will Georges Mikautadze be the top goal scorer in the 2025-26 Ligue 1 season?
+  70660724  0.6039  Will Getafe beat Real Madrid?
+  77940077  0.6039  Will FC København win on 2025-10-21?
+  68451098  0.6040  Will AC Milan beat Lazio?
+  62476211  0.6041  Will Bayer Leverkusen beat AC Milan?
+  78073865  0.6042  Will Lionel Messi be the #2 searched person on Google this year?
+  67256869  0.6042  Will Sporting CP beat Bologna?
+  64732247  0.6043  Will Bayer Leverkusen beat RB Salzburg?
+  62476769  0.6045  Will Atletico Madrid beat Benfica?
+  64769582  0.6045  Will Ludogorets beat Lazio?
+  71031439  0.6045  Will Celta Vigo beat Real Madrid?
+  75453581  0.6046  Will Matias Goncalo Ramos be the top goal scorer in the 2025-26 Ligue 1 season?
+  78073456  0.6046  Will Daejeon Hana Citizen FC win on 2025-10-26?
+  70660717  0.6046  Will Real Madrid beat Getafe?
+  62477089  0.6047  Will Club Brugge beat Sturm Graz?
+  77425622  0.6047  Will Keita Nakajima lead after Round 1 of the Baycurrent Classic 2025?
+  62301825  0.6047  Will Atletico Madrid beat Real Madrid?
+  67581529  0.6047  Will Atletico Madrid beat Real Madrid?
+  67016759  0.6049  Will Frankfurt beat Ferencvaros?
+  78736621  0.6049  Will 1899 Hoffenheim win on 2025-11-21?
+  62881451  0.6051  Will Germany beat Bosnia and Herzegovina?
+  64332120  0.6051  Will Germany beat Bosnia and Herzegovina?
+  77425645  0.6051  Will Kazuki Higa lead after Round 1 of the Baycurrent Classic 2025?
+  63331250  0.6051  Will Sturm Graz beat Sporting CP?
+  65611204  0.6052  Will Atletico Madrid beat Barcelona?
+  75186072  0.6052  Will Tua Tagovailoa record the most fantasy points in Week 1?
+  75453712  0.6052  Will Gauthier Hein be the top goal scorer in the 2025-26 Ligue 1 season?
+  67256962  0.6052  Will Stuttgart beat Paris Saint-Germain?
+  77348062  0.6053  Will Needham Market FC win on 2025-10-11?
+  65611193  0.6053  Will Barcelona beat Atletico Madrid?
+  69046704  0.6053  Will Barcelona beat Atlético Madrid?
+  75370378  0.6053  Will Harry Kane be the top goal scorer in the 2025–26 Bundesliga season?
+  76465247  0.6055  Will 1899 Hoffenheim win on 2025-09-28?
+  71310991  0.6055  Will Real Sociedad beat Atlético Madrid?
+  77397559  0.6055  Will Southampton FC win on 2025-11-01?
+  58158654  0.6055  Will Slovenia win Group C?
+  72083216  0.6056  Will Alejandro Garnacho sign with a new club during the transfer window?
+  75186635  0.6056  Will Khalil Shakir record the most fantasy points in Week 1?
+  75370937  0.6056  Will Lamine Yamal be the top goal scorer in the 2025–26 La Liga season?
+  67016783  0.6057  Will Ferencvaros beat Frankfurt?
+  77978836  0.6058  Swiss Indoors Basel: Jakub Mensik vs Joao Fonseca
+  74520248  0.6058  Will Leverkusen win the 2025–26 Bundesliga?
+  72887667  0.6059  Will Kylian Mbappé score the most total goals in the 2025 FIFA Club World Cup?
+  63894088  0.6059  Will Real Madrid beat AC Milan?
+  67016490  0.6059  Will Sparta Praha beat Inter Milan?
+  67256744  0.6060  Will Feyenoord beat Lille?
+  75866532  0.6061  Will 1899 Hoffenheim win on 2025-09-13?
+  77316197  0.6061  Will 1899 Hoffenheim win on 2025-10-19?
+  65289676  0.6061  Will Shakhtar Donetsk beat Bayern Munich?
+  78108395  0.6062  Swiss Indoors Basel: Joao Fonseca vs Jaume Munar
+  63927141  0.6062  Will RB Salzburg beat Feyenoord?
+  75370952  0.6063  Will Vinicius Junior be the top goal scorer in the 2025–26 La Liga season?
+  78073598  0.6064  Will Daejeon Hana Citizen FC win on 2025-11-08?
+  63365424  0.6064  Will Athletic Bilbao beat Slavia Praha?
+  77568712  0.6066  Will 1899 Hoffenheim win on 2025-10-25?
+  77941857  0.6067  Will Kyōto Sanga FC win on 2025-11-09?
+  78631296  0.6067  Will SC Bastia win on 2025-11-15?
+  78247052  0.6068  Will Gwangju FC win on 2025-11-22?
+  61951641  0.6068  Will Feyenoord beat Bayer Leverkusen?
+  71311197  0.6068  Will Monchengladbach beat Bayern Munich?
+  74520538  0.6069  Will Botafogo win the 2025 Brasileiro Serie A league?
+  74519817  0.6069  Will Oviedo win the 2025–26 La Liga?
+  65330890  0.6069  Will Fenerbahce beat Athletic Bilbao?
+  72083215  0.6069  Will Jeremie Frimpong sign with a new club during the transfer window?
+  63085321  0.6069  Will Torino win the Serie A?
+  58316280  0.6070  Will Kylian Mbappe be Euro 2024 top scorer?
+  78545515  0.6073  Will Andrézieux-Bouthéon FC win on 2025-11-15?
+  77635313  0.6074  Will Real Zaragoza win on 2025-10-29?
+  78241827  0.6074  Will FC København win on 2025-11-04?
+  75370413  0.6075  Will Victor Boniface be the top goal scorer in the 2025–26 Bundesliga season?
+  77348405  0.6076  Will Folkestone Invicta FC win on 2025-10-11?
+  76425088  0.6076  Will Bayer Leverkusen win on 2025-09-27?
+  68325371  0.6077  Will Raphinha be the top Champions League scorer?
+  64768950  0.6077  Will Bologna beat LOSC Lille?
+  62477181  0.6078  Will Bayern Munich beat Aston Villa?
+  78624983  0.6078  Hapoel Tel Aviv vs. Saski Baskonia
+  75370423  0.6079  Will Jamal Musiala be the top goal scorer in the 2025–26 Bundesliga season?
+  75370972  0.6079  Will Vedat Muriqi be the top goal scorer in the 2025–26 La Liga season?
+  62545439  0.6079  Will IF Elfsborg beat Roma?
+  78073483  0.6079  Will Jeonbuk Hyundai Motors FC win on 2025-11-01?
+  76344658  0.6080  Will VfB Stuttgart win on 2025-09-19?
+  68451050  0.6080  Will Bayern Munich beat VfB Stuttgart?
+  75203235  0.6080  Will Bayern Munich beat VfB Stuttgart?
+  70457577  0.6081  Will Bayern Munich beat FC Heidenheim?
+  78031669  0.6081  Will João Fonseca be the #1 searched athlete on Google this year?
+  67016760  0.6081  Will Lazio beat Real Sociedad?
+  72196174  0.6081  Will Inter Milan win 6-0?
+  76345238  0.6082  Will Bayer Leverkusen win on 2025-09-21?
+  63331148  0.6083  Will AC Milan beat Club Brugge?
+  77917653  0.6083  Will Real Betis vs. Mallorca end in a draw?
+  78976106  0.6083  Will CD Numancia vs. RCD Mallorca end in a draw?
+  78634059  0.6084  Will EC Vitória win on 2025-11-19?
+  75370932  0.6085  Will Ferran Torres be the top goal scorer in the 2025–26 La Liga season?
+  75501904  0.6086  Will Ciro Immobile be the top goal scorer in the 2025-26 Serie A season?
+  68451153  0.6087  Will Real Madrid Beat Real Betis?
+  71604597  0.6087  Will VfB Stuttgart beat RB Leipzig?
+  71479339  0.6088  Will Mallorca beat Real Madrid?
+  71604592  0.6089  Will RB Leipzig beat VfB Stuttgart?
+  58158592  0.6089  Will France win Group D?
+  75453648  0.6089  Will Matthis Abline be the top goal scorer in the 2025-26 Ligue 1 season?
+  75453680  0.6089  Will Cheikh Sabaly be the top goal scorer in the 2025-26 Ligue 1 season?
+  78546433  0.6091  Will FK Baltika Kaliningrad vs. FK Spartak Moskva end in a draw?
+  75370472  0.6091  Will Mohammed Amoura be the top goal scorer in the 2025–26 Bundesliga season?
+  71479333  0.6092  Will Real Madrid beat Mallorca?
+  76344900  0.6092  Will 1899 Hoffenheim win on 2025-09-20?
+  78880574  0.6093  Grêmio FBPA vs. CR Vasco da Gama: O/U 2.5
+  77640546  0.6093  Will FC København win on 2025-11-09?
+  76631700  0.6095  Will VfB Stuttgart win on 2025-09-25?
+  77635478  0.6095  Will Real Sporting de Gijón win on 2025-10-29?
+  67256615  0.6095  Will Juventus beat Benfica?
+  67811244  0.6095  Will Roma beat FC Porto?
+  75501950  0.6096  Will Assane Diao be the top goal scorer in the 2025-26 Serie A season?
+  76346338  0.6096  Will Bayer Leverkusen win on 2025-09-18?
+  75370947  0.6096  Will Broja Iglesias be the top goal scorer in the 2025–26 La Liga season?
+  63447067  0.6096  Will Real Madrid beat Barcelona?
+  71276552  0.6096  Will Real Madrid beat Barcelona?
+  75501725  0.6096  Will Parma finish in the top 4 in the 2025-26 Serie A season?
+  72887753  0.6097  Will Bayern Munich beat Boca Juniors?
+  48286015  0.6098  Palace (-0.5) vs. Nott. Forest (+0.5)
+  74519751  0.6098  Will Betis win the 2025–26 La Liga?
+  62263134  0.6100  Will FCSB beat FK RFS?
+  75370418  0.6101  Will Nick Woltemade be the top goal scorer in the 2025–26 Bundesliga season?
+  62544959  0.6101  Will Dynamo Kyiv beat Hoffenheim?
+  78216527  0.6101  Will VfB Stuttgart win on 2025-11-09?
+  63085267  0.6102  Will Atalanta win the Serie A?
+  75370976  0.6102  Will Dodi Lukebakio be the top goal scorer in the 2025–26 La Liga season?
+  78764173  0.6103  Will Shimizu S-Pulse vs. Fagiano Okayama end in a draw?
+  62301891  0.6103  Will Bayer Leverkusen beat Bayern Munich?
+  71310985  0.6104  Will Atlético Madrid beat Real Sociedad?
+  74520569  0.6104  Will Fluminense win the 2025 Brasileiro Serie A league?
+  61905692  0.6104  Will Bayern Munich beat Dinamo Zagreb?
+  75243281  0.6105  Will Alavés be relegated from La Liga after the 2025–26 season?
+  75453137  0.6105  Will Verona be relegated from Serie A after the 2025-26 season?
+  75453632  0.6105  Will Ludovic Ajorque be the top goal scorer in the 2025-26 Ligue 1 season?
+  61905599  0.6106  Will Real Madrid beat VfB Stuttgart?
+  67256983  0.6107  Will Paris Saint-Germain beat Stuttgart?
+  75220964  0.6107  Will 1899 Hoffenheim win on 2025-08-23?
+  56396108  0.6107  Will Real Madrid win?
+  77316356  0.6109  Will Atalanta vs. Lazio end in a draw?
+  67256747  0.6110  Will Benfica beat Juventus?
+  78934676  0.6110  Will FC København vs. Qairat FK end in a draw?
+  74520407  0.6110  Will Torino win the 2025–26 Serie A league?
+  77962634  0.6111  Real Oviedo vs. Osasuna: O/U 2.5
+  71276535  0.6111  Will Dortmund beat Leverkusen?
+  55755694  0.6111  Will Barcelona win?
+  78027516  0.6111  Will Meizhou Hakka FC vs. Yunnan Yukun FC end in a draw?
+  62545463  0.6112  Will Roma beat IF Elfsborg?
+  72083225  0.6112  Will Luka Modric sign with a new club during the transfer window?
+  66979134  0.6114  Will Benfica beat Barcelona?
+  62193857  0.6115  Will Midtjylland beat Hoffenheim?
+  74520609  0.6117  Will Vasco da Gama win the 2025 Brasileiro Serie A league?
+  67298698  0.6117  Will Anderlecht beat Hoffenheim?
+  67256447  0.6117  Will Real Madrid beat Stade Brestois?
+  73186604  0.6118  Will Real Madrid beat RB Salzburg?
+  67014957  0.6118  Will Real Madrid beat RB Salzburg?
+  63927096  0.6119  Will Paris Saint-Germain beat Atletico Madrid?
+  58316343  0.6119  Will Romelu Lukaku be Euro 2024 top scorer?
+  77638898  0.6120  Will EC Vitória win on 2025-11-09?
+  62544929  0.6120  Will Hoffenheim beat Dynamo Kyiv?
+  75370432  0.6120  Will Tim Kleindienst be the top goal scorer in the 2025–26 Bundesliga season?
+  62263528  0.6121  Will Roma beat Athletic Bilbao?
+  70457569  0.6121  Will FC Heidenheim beat Bayern Munich?
+  55755620  0.6121  Will Atletico Madrid win?
+  77874505  0.6121  Will Valencia win on 2025-11-01?
+  63978219  0.6122  Will Athletic Bilbao beat Ludogorets?
+  67298737  0.6122  Will Hoffenheim beat Anderlecht?
+  75501880  0.6122  Will Marcus Thuram be the top goal scorer in the 2025-26 Serie A season?
+  77638748  0.6123  Will EC Vitória win on 2025-11-05?
+  67256897  0.6123  Will RB Leipzig beat Sturm Graz?
+  68665290  0.6123  Will Bayer Leverkusen win on 2025-03-11?
+  61906107  0.6125  Will Juventus beat PSV?
+  76586015  0.6126  DEN vs. LAC: O/U 55.5
+  59486101  0.6130  Will Morocco win Gold in Men's Football (Soccer)?
+  66984455  0.6130  Will Feyenoord beat Bayern Munich?
+  78173226  0.6130  Will 1899 Hoffenheim win on 2025-11-08?
+  71276546  0.6132  Will Barcelona beat Real Madrid?
+  63447077  0.6132  Will Barcelona beat Real Madrid?
+  76773831  0.6132  Will FK Rubin Kazan win on 2025-09-27?
+  78263202  0.6132  Fortuna Sittard vs. SC Heerenveen: Both Teams to Score
+  77425425  0.6134  Will Nicolai Hojgaard lead after Round 1 of the Baycurrent Classic 2025?
+  78546621  0.6134  Will FK Rubin Kazan win on 2025-11-30?
+  77373191  0.6136  Will CD Tondela vs. Sporting CP end in a draw?
+  74519785  0.6136  Will Getafe win the 2025–26 La Liga?
+  77914122  0.6136  Will 1899 Hoffenheim win on 2025-11-02?
+  68451191  0.6137  Will Real Betis vs. Real Madrid End in a Draw?
+  75501917  0.6137  Will Gianluca Scamacca be the top goal scorer in the 2025-26 Serie A season?
+  75370447  0.6137  Will Ermedin Demirovic be the top goal scorer in the 2025–26 Bundesliga season?
+  63331161  0.6137  Will Club Brugge beat AC Milan?
+  75370986  0.6138  Will Javi Puado be the top goal scorer in the 2025–26 La Liga season?
+  77052547  0.6138  Will Göztepe SK vs. Rams Başakşehir FK end in a draw?
+  77475219  0.6139  Will Rizespor win the Süper Lig?
+  75370996  0.6140  Will Daniel Raba be the top goal scorer in the 2025–26 La Liga season?
+  77377827  0.6140  Will EC Bahia vs. Red Bull Bragantino end in a draw?
+  78073440  0.6140  Will Daejeon Hana Citizen FC win on 2025-11-01?
+  71311191  0.6140  Will Bayern Munich beat Monchengladbach?
+  74519790  0.6141  Will Osasuna win the 2025–26 La Liga?
+  78934666  0.6141  Will Bayer 04 Leverkusen win on 2025-11-25?
+  63927121  0.6141  Will Atletico Madrid beat Paris Saint-Germain?
+  78808609  0.6142  Will FC København win on 2025-12-07?
+  75370912  0.6142  Will Ante Budimir be the top goal scorer in the 2025–26 La Liga season?
+  76915432  0.6142  Will VfB Stuttgart win on 2025-10-02?
+  75221927  0.6143  Will Celta Vigo vs. Real Betis end in a draw?
+  62544931  0.6144  Will Lazio beat Nice?
+  77372763  0.6145  Will SC Heerenveen vs. NAC Breda end in a draw?
+  63331778  0.6145  Will Feyenoord beat Benfica?
+  79082233  0.6145  Will Hellas Verona FC win on 2025-11-29?
+  63927004  0.6146  Will Benfica beat Bayern Munich?
+  73092509  0.6146  Will Benfica beat Bayern Munich?
+  77348208  0.6147  Will Dorking Wanderers FC vs. Aldershot Town FC end in a draw?
+  74520600  0.6147  Will Gremio win the 2025 Brasileiro Serie A league?
+  71311180  0.6148  Will Real Valladolid beat Mallorca?
+  61951669  0.6148  Will Bayer Leverkusen beat Feyenoord?
+  75371020  0.6150  Will Inaki Williams be the top goal scorer in the 2025–26 La Liga season?
+  77939971  0.6151  Will Bayer 04 Leverkusen win on 2025-10-21?
+  74520559  0.6151  Will Atletico MG win the 2025 Brasileiro Serie A league?
+  72392973  0.6152  Will Serge Gnabry be the top goalscorer at the 2025 FIFA Club World Cup?
+  62477100  0.6152  Will Real Madrid beat LOSC Lille?
+  61905617  0.6152  Will VfB Stuttgart beat Real Madrid?
+  77870939  0.6152  Will VfB Stuttgart win on 2025-11-01?
+  66979872  0.6153  Will Juventus beat Club Brugge?
+  74519813  0.6153  Will Elche win the 2025–26 La Liga?
+  76748325  0.6153  Will VfB Stuttgart win on 2025-10-05?
+  77426150  0.6153  Will Nico Echavarria lead after Round 3 of the Baycurrent Classic 2025?
+  77377675  0.6154  Will EC Vitória win on 2025-11-01?
+  74290375  0.6154  Will Fabian Ruiz sign with a new club during the transfer window?
+  77425784  0.6154  Will Nico Echavarria lead after Round 2 of the Baycurrent Classic 2025?
+  72683726  0.6155  Will Borussia Dortmund beat Fluminense?
+  66979156  0.6157  Will Barcelona beat Benfica?
+  77378313  0.6157  Will FC København win on 2025-11-01?
+  71276564  0.6157  Will Lazio beat Juventus?
+  78220011  0.6157  Will Athletic Club win on 2025-11-09?
+  74519760  0.6158  Will Girona win the 2025–26 La Liga?
+  77425440  0.6158  Will Christiaan Bezuidenhout lead after Round 1 of the Baycurrent Classic 2025?
+  75370457  0.6158  Will Robert Glatzel be the top goal scorer in the 2025–26 Bundesliga season?
+  78241947  0.6159  Will Athletic Club win on 2025-11-05?
+  70097853  0.6160  Will another team have the second highest Constructor score at the Bahrain GP?
+  78935014  0.6160  FC København vs. Qairat FK: Both Teams to Score
+  64768960  0.6161  Will LOSC Lille beat Bologna?
+  62263155  0.6161  Will FK RFS beat FCSB?
+  77348204  0.6162  Will Dorking Wanderers FC win on 2025-10-11?
+  77372959  0.6162  Will Feyenoord Rotterdam win on 2025-11-01?
+  71276583  0.6162  Will Benfica beat Sporting?
+  75907099  0.6163  Will Lazio win on 2025-09-14?
+  74520549  0.6163  Will Bragantino win the 2025 Brasileiro Serie A league?
+  71311174  0.6165  Will Mallorca beat Real Valladolid?
+  72134554  0.6165  Will Bayern Munich win the FIFA Club World Cup?
+  75453136  0.6167  Will Pisa be relegated from Serie A after the 2025-26 season?
+  78976326  0.6167  Will Real Zaragoza win on 2025-12-04?
+  78978555  0.6167  Will FC Bayern München win on 2025-11-26?
+  75371038  0.6168  Will Roberto Fernandez be the top goal scorer in the 2025–26 La Liga season?
+  67298706  0.6168  Will Frankfurt beat AS Roma?
+  67016785  0.6169  Will Real Sociedad beat Lazio?
+  76424864  0.6169  Will VfL Wolfsburg win on 2025-09-27?
+  70302607  0.6169  Will another team have the highest Constructor score at the Saudi Arabian GP?
+  63331741  0.6169  Will Benfica beat Feyenoord?
+  62544962  0.6170  Will Nice beat Lazio?
+  76666999  0.6171  Will 1899 Hoffenheim win on 2025-10-03?
+  64769430  0.6171  Will FK Qarabag beat Lyon?
+  71276588  0.6172  Will Sporting beat Benfica?
+  74520315  0.6172  Will Hamburger SV win the 2025–26 Bundesliga?
+  75453731  0.6172  Will Abdoulaye Toure be the top goal scorer in the 2025-26 Ligue 1 season?
+  78545952  0.6173  Will Blagnac FC win on 2025-11-16?
+  78450385  0.6174  Anadolu Efes vs. Olimpia Milano
+  76769024  0.6174  Will Gaziantep FK win on 2025-09-27?
+  75221804  0.6175  Will Real Oviedo vs. Real Madrid end in a draw?
+  62476398  0.6175  Will Red Star Belgrade beat Inter Milan?
+  66979156  0.6176  Will Bayer Leverkusen beat Atlético Madrid?
+  77871075  0.6177  Will Bayer Leverkusen win on 2025-11-01?
+  65289686  0.6177  Will Bayern Munich beat Shakhtar Donetsk?
+  65330917  0.6179  Will Athletic Bilbao beat Fenerbahce?
+  75342589  0.6180  Will VfL Wolfsburg win on 2025-08-31?
+  73092531  0.6181  Will Flamengo beat LAFC?
+  70906721  0.6181  Will RB Leipzig beat Bayern Munich?
+  65611202  0.6181  Will RB Leipzig beat Bayern Munich?
+  75370398  0.6181  Will Jonathan Burkardt be the top goal scorer in the 2025–26 Bundesliga season?
+  75370428  0.6181  Will Maximilian Beier be the top goal scorer in the 2025–26 Bundesliga season?
+  64768923  0.6182  Will Benfica beat AS Monaco?
+  78976126  0.6182  Will Real Sporting de Gijón win on 2025-12-03?
+  74520296  0.6182  Will Hoffenheim win the 2025–26 Bundesliga?
+  65326876  0.6186  Will LOSC Lille beat Sturm Graz?
+  68424574  0.6186  Will Bayer Leverkusen win on 2025-03-05?
+  75453689  0.6187  Will Wesley Said be the top goal scorer in the 2025-26 Ligue 1 season?
+  63084555  0.6187  Will Stuttgart win the Bundesliga?
+  77871065  0.6187  Will Bayern München win on 2025-11-01?
+  75243280  0.6188  Will Getafe be relegated from La Liga after the 2025–26 season?
+  77636539  0.6188  Will Vitória SC win on 2025-11-08?
+  73092525  0.6189  Will LAFC beat Flamengo?
+  71276570  0.6190  Will Juventus beat Lazio?
+  78545420  0.6190  Will Aviron Bayonnais FC win on 2025-11-15?
+  63331621  0.6191  Will Barcelona beat Bayern Munich?
+  74519741  0.6191  Will Villarreal win the 2025–26 La Liga?
+  78263204  0.6191  FC Twente '65 vs. Telstar 1963: Both Teams to Score
+  63331633  0.6191  Will Bayern Munich beat Barcelona?
+  78544936  0.6192  Will AS Quetigny Football vs. AS Saint-Étienne end in a draw?
+  75371015  0.6193  Will Abel Ruiz be the top goal scorer in the 2025–26 La Liga season?
+  75370442  0.6193  Will Karim Adeyemi be the top goal scorer in the 2025–26 Bundesliga season?
+  75501977  0.6193  Will Andrea Pinamonti be the top goal scorer in the 2025-26 Serie A season?
+  78823062  0.6193  Will Hellas Verona FC win on 2025-11-23?
+  78247457  0.6194  Will Fujieda MYFC win on 2025-11-23?
+  75203230  0.6194  Will VfB Stuttgart and Bayern Munich end in a draw?
+  56396004  0.6194  Will Bayern Munich win?
+  63978567  0.6194  Will Lyon beat Hoffenheim?
+  75501926  0.6195  Will Riccardo Orsolini be the top goal scorer in the 2025-26 Serie A season?
+  78073583  0.6195  Will Gwangju FC win on 2025-11-08?
+  35773970  0.6195  Will Tunisia qualify from Group D?
+  58157557  0.6195  Will Turkiye win Group F?
+  76871520  0.6196  Will Bayer Leverkusen win on 2025-10-01?
+  62301881  0.6196  Will Bayern Munich beat Bayer Leverkusen?
+  67928549  0.6196  Will Bayern Munich beat Bayer Leverkusen?
+  78923776  0.6196  CR Flamengo vs. Red Bull Bragantino: Both Teams to Score
+  23311561  0.6197  Serie A: Who will win the Juventus v. Napoli game on January 6?
+  62193868  0.6198  Will Hoffenheim beat Midtjylland?
+  78823158  0.6198  Will Toulouse FC vs. Angers SCO end in a draw?
+  78890928  0.6198  Will Vitória SC win on 2025-12-08?
+  62476385  0.6199  Will Inter Milan beat Red Star Belgrade?
+  71317181  0.6200  Will Lionel Messi sign with a new club during the transfer window?
+  75453138  0.6200  Will Sassuolo be relegated from Serie A after the 2025-26 season?
+  77374905  0.6201  Will FK Baltika Kaliningrad win on 2025-11-02?
+  51395980  0.6201  Will Girona win La Liga 2023-24?
+  77874490  0.6201  Will Athletic Club win on 2025-11-01?
+  77636656  0.6201  Will FK Baltika Kaliningrad vs. FK Krasnodar end in a draw?
+  77914112  0.6201  Will VfL Wolfsburg win on 2025-11-02?
+  78434197  0.6202  Lecce vs. Verona: O/U 2.5
+  76346324  0.6202  Will FC Kopenhagen win on 2025-09-18?
+  75501885  0.6202  Will Ademola Lookman be the top goal scorer in the 2025-26 Serie A season?
+  75221455  0.6203  Will Mallorca vs. Celta Vigo end in a draw?
+  76498166  0.6203  Will FC Twente '65 win on 2025-09-19?
+  74520739  0.6204  Will Brest win the 2025–26 French Ligue 1?
+  75453594  0.6204  Will Mika Biereth be the top goal scorer in the 2025-26 Ligue 1 season?
+  62263555  0.6205  Will Athletic Bilbao beat Roma?
+  63331523  0.6205  Will Bayer Leverkusen beat Stade Brestois?
+  76586021  0.6206  DEN vs. LAC: O/U 58.5
+  76765980  0.6206  Will FC Twente '65 win on 2025-09-26?
+  74520528  0.6206  Will Palmeiras win the 2025 Brasileiro Serie A league?
+  77373701  0.6206  Will Gaziantep FK win on 2025-11-03?
+  78545405  0.6206  Will FC Fleury 91 win on 2025-11-15?
+  78548118  0.6207  Will Shimizu S-Pulse vs. Cerezo Ōsaka end in a draw?
+  77193118  0.6207  Will Vitória SC win on 2025-10-04?
+  73170143  0.6207  Mallorca Championships: Michelsen vs. Holt
+  78242552  0.6207  Will FC Basel 1893 win on 2025-11-06?
+  75385001  0.6208  Will FC Kopenhagen win on 2025-08-20?
+  70457523  0.6208  Will Real Madrid beat Athletic Club?
+  78072919  0.6209  Will Fujieda MYFC win on 2025-10-25?
+  77636651  0.6209  Will FK Baltika Kaliningrad win on 2025-11-09?
+  77635634  0.6209  Will Real Avilés CF win on 2025-10-30?
+  75466111  0.6209  Will FC Kopenhagen win on 2025-08-27?
+  75453140  0.6210  Will Genoa be relegated from Serie A after the 2025-26 season?
+  77636503  0.6211  Will FK Pari Nizhnii Novgorod vs. FK Rubin Kazan end in a draw?
+  68088514  0.6213  Will Sporting CP win on 2025-02-19?
+  77635872  0.6213  Will Hertha BSC vs. SV 07 Elversberg end in a draw?
+  61906119  0.6213  Will PSV beat Juventus?
+  78545632  0.6214  Will Angoulême Charente FC win on 2025-11-15?
+  76707736  0.6214  Will VfL Wolfsburg win on 2025-10-04?
+  74520681  0.6214  Will Nice win the 2025–26 French Ligue 1?
+  63978553  0.6215  Will Hoffenheim beat Lyon?
+  63331271  0.6216  Will Sporting CP beat Sturm Graz?
+  78031563  0.6216  Will Cristiano Ronaldo be the #1 searched athlete on Google this year?
+  63085233  0.6216  Will Napoli win the Serie A?
+  66984466  0.6217  Will Bayern Munich beat Feyenoord?
+  78241872  0.6217  Will Bayer 04 Leverkusen win on 2025-11-05?
+  74520392  0.6217  Will Fiorentina win the 2025–26 Serie A league?
+  78837367  0.6217  Red Bull Bragantino vs. CA Mineiro: Both Teams to Score
+  78241797  0.6217  Will Real Madrid CF win on 2025-11-04?
+  67664213  0.6217  Will Sporting CP win on 2025-02-11?
+  78804588  0.6218  Will FC Famalicão win on 2025-12-06?
+  68384257  0.6219  Will Real Madrid vs. Atletico Madrid end in a draw?
+  62301850  0.6219  Will Real Madrid vs. Atletico Madrid end in a draw?
+  78242662  0.6219  Will Real Betis Balompié vs. Olympique Lyonnais end in a draw?
+  67016961  0.6220  Will Porto beat Olympiacos?
+  77959034  0.6220  Spread: RC Strasbourg Alsace (-1.5)
+  78073603  0.6220  Will Gwangju FC win on 2025-11-02?
+  67298673  0.6221  Will AS Roma beat Frankfurt?
+  78717354  0.6221  Will Bayer 04 Leverkusen win on 2025-12-02?
+  78976091  0.6221  Will Real Murcia CF vs. Cádiz CF end in a draw?
+  77635706  0.6221  Will Real Murcia CF vs. Antequera CF end in a draw?
+  75243281  0.6222  Will Osasuna be relegated from La Liga after the 2025–26 season?
+  66979132  0.6223  Will Atlético Madrid beat Bayer Leverkusen?
+  75453585  0.6223  Will Bradley Barcola be the top goal scorer in the 2025-26 Ligue 1 season?
+  75186616  0.6223  Will Rome Odunze record the most fantasy points in Week 1?
+  78073571  0.6224  Will Daegu FC win on 2025-11-08?
+  58316409  0.6224  Will Antoine Griezmann be Euro 2024 top scorer?
+  62477080  0.6224  Will LOSC Lille beat Real Madrid?
+  35773232  0.6224  Will Senegal qualify from Group A?
+  78844650  0.6224  Will Los Angeles FC win on 2025-11-22?
+  78072893  0.6225  Will Hokkaidō Consadole Sapporo vs. FC Mito Holly Hock end in a draw?
+  75453627  0.6226  Will Terem Moffi be the top goal scorer in the 2025-26 Ligue 1 season?
+  62193736  0.6228  Will Lazio beat Dynamo Kiev?
+  75370922  0.6229  Will Gonzalo Garcia be the top goal scorer in the 2025–26 La Liga season?
+  23576529  0.6229  Will Sevilla win 2021-22 La Liga?
+  17692884  0.6229  Will Lionel Messi sign for Paris-Saint Germain on or before September 1?
+  78978550  0.6230  Will Arsenal FC vs. FC Bayern München end in a draw?
+  77941696  0.6230  Will Kyōto Sanga FC vs. Kashima Antlers end in a draw?
+  78241842  0.6230  Will Sporting CP win on 2025-11-04?
+  71600151  0.6230  Will  SC Freiburg beat Eintracht Frankfurt?
+  73092514  0.6231  Will Bayern Munich beat Benfica?
+  63926973  0.6231  Will Bayern Munich beat Benfica?
+  77568657  0.6231  Will Borussia Mönchengladbach vs. Bayern München end in a draw?
+  78544966  0.6231  Will US Avranches Mont-Saint-Michel vs. Paris 13 Atletico end in a draw?
+  65289461  0.6231  Will Club Brugge beat Sporting CP?
+  76307544  0.6232  Will Gaziantep FK win on 2025-09-14?
+  78545880  0.6232  Will Montreuil FC win on 2025-11-16?
+  78031579  0.6232  Will Kylian Mbappé be the #1 searched athlete on Google this year?
+  68325494  0.6233  Will Julian Alvarez be the top Champions League scorer?
+  78804604  0.6233  Will FK Baltika Kaliningrad win on 2025-12-07?
+  63085338  0.6233  Will Fiorentina win the Serie A?
+  77914127  0.6234  Will FC Nantes win on 2025-11-02?
+  78546469  0.6234  Will FC Famalicão win on 2025-11-29?
+  67811231  0.6234  Will FC Porto beat Roma?
+  58398905  0.6234  Neymar Jr. biggest winner?
+  75370981  0.6234  Will Gorka Guruzeta be the top goal scorer in the 2025–26 La Liga season?
+  76871567  0.6234  Will Sporting CP win on 2025-10-01?
+  75453608  0.6235  Will Pierre-Emerick Aubameyang be the top goal scorer in the 2025-26 Ligue 1 sea
+  74520595  0.6236  Will Sao Paulo win the 2025 Brasileiro Serie A league?
+  75501935  0.6237  Will Kenan Yildiz be the top goal scorer in the 2025-26 Serie A season?
+  72333731  0.6237  Will Real Madrid win Group H at the FIFA Club World Cup?
+  68325383  0.6239  Will Jose Vinicius Junior be the top Champions League scorer?
+  62355032  0.6240  CLE vs. LV: Will there be 37 or more combined points scored?
+  56651253  0.6240  Will Bayern Munich win against Real Madrid?
+  45593472  0.6241  2023 FIDE World Cup: Will Hikaru Nakamura win top 3?
+  78073565  0.6241  Will Daegu FC win on 2025-11-02?
+  75453662  0.6241  Will Anssumane Fati be the top goal scorer in the 2025-26 Ligue 1 season?
+  67256418  0.6242  Will Stade Brestois beat Real Madrid?
+  63894228  0.6242  Will Juventus beat LOSC Lille?
+  74247045  0.6243  MLS: Will LAFC beat Portland?
+  77636569  0.6244  Will Sporting CP win on 2025-11-08?
+  72883529  0.6244  Palmeiras and Al Ahly: 3+ Goals Scored?
+  58316417  0.6244  Will another player be Euro 2024 top scorer?
+  74520524  0.6244  Will Flamengo win the 2025 Brasileiro Serie A league?
+  74519733  0.6245  Will Barcelona win the 2025–26 La Liga?
+  70906703  0.6245  Will Bayern Munich beat RB Leipzig?
+  65611190  0.6245  Will Bayern Munich beat RB Leipzig?
+  78034484  0.6246  CA Huracán vs. CA Central Córdoba: O/U 1.5
+  75370408  0.6246  Will Luis Diaz be the top goal scorer in the 2025–26 Bundesliga season?
+  75370942  0.6247  Will Marcus Rashford be the top goal scorer in the 2025–26 La Liga season?
+  64769667  0.6247  Will IF Elfsborg beat Athletic Bilbao?
+  75453137  0.6248  Will Cremonese be relegated from Serie A after the 2025-26 season?
+  74519737  0.6248  Will Atletico Madrid win the 2025–26 La Liga?
+  76307965  0.6248  Will CA Vélez Sarsfield vs. Racing Club end in a draw?
+  74520367  0.6249  Will Juventus win the 2025–26 Serie A league?
+  72196228  0.6249  Will Inter Milan win 6-5?
+  75453727  0.6250  Will Martin Satriano be the top goal scorer in the 2025-26 Ligue 1 season?
+  63331746  0.6251  Will Atletico Madrid beat LOSC Lille?
+  62477087  0.6251  Will Juventus beat RB Leipzig?
+  78242647  0.6251  Will Bologna FC 1909 vs. SK Brann end in a draw?
+  75501959  0.6252  Will Edin Dzeko be the top goal scorer in the 2025-26 Serie A season?
+  76777674  0.6252  Will FC Famalicão win on 2025-09-28?
+  77374805  0.6252  Will FK Rubin Kazan win on 2025-11-01?
+  74520372  0.6253  Will AC Milan win the 2025–26 Serie A league?
+  78130039  0.6253  Will VfL Wolfsburg win on 2025-11-07?
+  71600157  0.6253  Will Eintracht Frankfurt beat  SC Freiburg?
+  71010934  0.6254  Will Athletic Club win on 2025-05-08?
+  78073648  0.6254  Will FC Seoul win on 2025-11-09?
+  61982353  0.6254  Will RC Celta de Vigo win La Liga?
+  78031619  0.6255  Will Ousmane Dembélé be the #1 searched athlete on Google this year?
+  77374809  0.6256  Will FK Rubin Kazan vs. FK Dinamo Moskva end in a draw?
+  78110757  0.6256  Real Betis vs. Atletico Madrid: Both Teams to Score
+  78261399  0.6256  VfB Stuttgart vs. FC Augsburg: Both Teams to Score
+  77941508  0.6257  Will FCSB vs. Bologna FC 1909 end in a draw?
+  75453640  0.6258  Will Achraf Hakimi be the top goal scorer in the 2025-26 Ligue 1 season?
+  77941450  0.6258  Will FC Basel 1893 win on 2025-10-23?
+  75302076  0.6258  Will 1899 Hoffenheim vs. Eintracht Frankfurt end in a draw?
+  76345016  0.6258  Will Lazio vs. AS Roma end in a draw?
+  76708172  0.6260  Will Eintracht Frankfurt vs. Bayern München end in a draw?
+  77374547  0.6261  Will Club León FC win on 2025-11-01?
+  78781578  0.6261  Borussia Dortmund vs. VfB Stuttgart: Both Teams to Score
+  71276593  0.6261  Will Benfica and Sporting end in a draw?
+  75371024  0.6261  Will Alex Baena be the top goal scorer in the 2025–26 La Liga season?
+  75453675  0.6262  Will Esteban Lepaul be the top goal scorer in the 2025-26 Ligue 1 season?
+  63331778  0.6263  Will LOSC Lille beat Atletico Madrid?
+  78073104  0.6264  Will Fujieda MYFC win on 2025-11-02?
+  78073289  0.6265  Will Fujieda MYFC win on 2025-11-09?
+  61950465  0.6265  Will Barcelona beat Monaco?
+  78545525  0.6265  Will Hauts Lyonnais win on 2025-11-15?
+  74520437  0.6266  Will Verona win the 2025–26 Serie A league?
+  75501899  0.6267  Will Artem Dovbyk be the top goal scorer in the 2025-26 Serie A season?
+  74519799  0.6267  Will Mallorca win the 2025–26 La Liga?
+  74519771  0.6267  Will Valencia win the 2025–26 La Liga?
+  77636594  0.6268  Will FK Lokomotiv Moskva vs. FK Orenburg end in a draw?
+  63085242  0.6268  Will Juventus win the Serie A?
+  77373282  0.6268  Will Vitória SC win on 2025-11-01?
+  75384937  0.6269  Will Bodo/Glimt vs. Sturm Graz end in a draw?
+  63331502  0.6269  Will Stade Brestois beat Bayer Leverkusen?
+  72333687  0.6269  Will Bayern Munich win Group C at the FIFA Club World Cup?
+  79021978  0.6270  Will FC Basel 1893 win on 2025-11-27?
+  75652488  0.6271  Will Sturm Graz vs. Bodo/Glimt end in a draw?
+  70727018  0.6272  Will Athletic Club win on 2025-05-01?
+  75243271  0.6273  Will Hamburger SV be relegated from the Bundesliga after the 2025–26 season?
+  54031763  0.6273  Will Bayern Munich win the Bundesliga 2023-24?
+  68424563  0.6274  Will Bayern Munich vs. Bayer Leverkusen end in a draw?
+  62301903  0.6274  Will Bayern Munich vs. Bayer Leverkusen end in a draw?
+  79082277  0.6274  Will AC Milan vs. SS Lazio end in a draw?
+  75453613  0.6274  Will Amine Gouiri be the top goal scorer in the 2025-26 Ligue 1 season?
+  78263203  0.6274  SBV Excelsior vs. Heracles Almelo: O/U 2.5
+  77636483  0.6274  Will FC Alverca win on 2025-11-08?
+  77052512  0.6274  Will Gaziantep FK win on 2025-10-05?
+  74519746  0.6274  Will Athletic Bilbao win the 2025–26 La Liga?
+  72849523  0.6275  Real Madrid vs. Al Hilal: 4+ Goals Scored?
+  78976336  0.6275  Will Burgos CF win on 2025-12-04?
+  77951407  0.6276  Will Lionel Messi rank in Google’s Top 5 Most Searched People of 2025?
+  74520533  0.6277  Will Cruzeiro win the 2025 Brasileiro Serie A league?
+  75453684  0.6277  Will Frank Magri be the top goal scorer in the 2025-26 Ligue 1 season?
+  63085255  0.6277  Will AC Milan win the Serie A?
+  61950457  0.6277  Will Monaco beat Barcelona?
+  77193084  0.6278  Will FC Alverca win on 2025-10-04?
+  78548046  0.6278  Will FC Tōkyō win on 2025-11-09?
+  75501922  0.6278  Will Valentin Castellanos be the top goal scorer in the 2025-26 Serie A season?
+  74519728  0.6278  Will Real Madrid win the 2025–26 La Liga?
+  68451129  0.6278  Will AC Milan vs. Lazio End in a Draw?
+  75501870  0.6279  Will Moise Kean be the top goal scorer in the 2025-26 Serie A season?
+  75453636  0.6280  Will Breel Embolo be the top goal scorer in the 2025-26 Ligue 1 season?
+  77053349  0.6280  Will Querétaro FC win on 2025-10-04?
+  26651904  0.6281  Serie A: Who will win the Juventus vs. Inter game on April 3?
+  75370967  0.6281  Will Ayoze Perez be the top goal scorer in the 2025–26 La Liga season?
+  72333741  0.6282  Will RB Salzburg win Group H at the FIFA Club World Cup?
+  78110767  0.6282  VfL Wolfsburg vs. 1899 Hoffenheim: Both Teams to Score
+  63978493  0.6283  Will Lazio beat Porto?
+  75501968  0.6283  Will Francesco Camarda be the top goal scorer in the 2025-26 Serie A season?
+  62304151  0.6284  Will Besiktas beat Ajax?
+  70742446  0.6284  Will Bayern Munich beat Mainz?
+  77816849  0.6284  Swiss Indoors Basel, Qualification: Pedro Martinez vs Kamil Majchrzak
+  66979857  0.6284  Will Club Brugge beat Juventus?
+  77372995  0.6284  Will FC Twente '65 win on 2025-11-02?
+  74126221  0.6285  Nordea Open: Carabelli vs. De Jong
+  35773791  0.6285  Will France qualify from Group D?
+  63365746  0.6286  Will Hoffenheim beat Porto?
+  76586025  0.6286  DEN vs. LAC: O/U 54.5
+  70742495  0.6287  Will Hoffenheim beat Dortmund?
+  78890478  0.6287  Will Carnoux FC win on 2025-11-15?
+  78241752  0.6287  Will FC Bayern München win on 2025-11-04?
+  74520590  0.6287  Will Santos win the 2025 Brasileiro Serie A league?
+  65368842  0.6288  Will Hoffenheim beat FCSB?
+  78241407  0.6288  Will CA Vélez Sarsfield vs. CA Talleres end in a draw?
+  68705348  0.6288  Will Atletico Madrid vs. Real Madrid end in a draw?
+  76425048  0.6288  Will Atletico Madrid vs. Real Madrid end in a draw?
+  77373991  0.6289  Will Los Angeles FC win on 2025-10-18?
+  75844854  0.6289  Will Lazio vs. Verona end in a draw?
+  72974599  0.6290  Real Madrid vs. Pachuca: 4+ Goals Scored?
+  15488903  0.6290  Will Germany be the Group F winner in the Euro 2020?
+  48286037  0.6290  Aston Villa (-0.5) vs. Wolves (+0.5)
+  68325483  0.6290  Will Michael Olise be the top Champions League scorer?
+  77374796  0.6290  Will FK Pari Nizhnii Novgorod vs. FK Baltika Kaliningrad end in a draw?
+  70457536  0.6290  Will Athletic Club beat Real Madrid?
+  78545752  0.6291  Will FC Girondins de Bordeaux win on 2025-11-16?
+  75453590  0.6291  Will Desire Doue be the top goal scorer in the 2025-26 Ligue 1 season?
+  75906784  0.6291  Will Stade Brestois 29 vs. Paris FC end in a draw?
+  78243548  0.6292  Will BK Häcken vs. RC Strasbourg Alsace end in a draw?
+  74520417  0.6292  Will Sassuolo win the 2025–26 Serie A league?
+  74520585  0.6293  Will Vitoria win the 2025 Brasileiro Serie A league?
+  72196163  0.6293  Will Inter Milan win 5-4?
+  75370991  0.6295  Will Dani Olmo be the top goal scorer in the 2025–26 La Liga season?
+  73303152  0.6296  Will Germany win 2–1?
+  77378176  0.6297  Will Sønderjyske Fodbold vs. FC Fredericia end in a draw?
+  78545692  0.6297  Will Canet Roussillon FC win on 2025-11-15?
+  78270404  0.6297  Spread: CA Vélez Sarsfield (-0.5)
+  78704182  0.6297  Spread: CA Vélez Sarsfield (-0.5)
+  78244768  0.6298  Will FK Bodø/Glimt win on 2025-11-21?
+  72849524  0.6298  Pachuca vs. RB Salzburg: 3+ Goals Scored?
+  77871070  0.6299  Will Bayern München vs. Bayer Leverkusen end in a draw?
+  63331249  0.6301  Will Real Madrid beat Borussia Dortmund?
+  78545344  0.6301  Will Stade Lavallois Mayenne FC win on 2025-11-15?
+  56396120  0.6301  Will Bayern Munich and Real Madrid Draw?
+  78976276  0.6302  Will Girona FC win on 2025-12-03?
+  74520451  0.6302  Will Cremonese win the 2025–26 Serie A league?
+  75453666  0.6302  Will Mostafa Mohamed be the top goal scorer in the 2025-26 Ligue 1 season?
+  23576560  0.6302  Will Atletico Madrid win 2021-22 La Liga?
+  63365419  0.6302  Will Lyon beat Besiktas?
+  75866231  0.6302  Will Real Sociedad vs. Real Madrid end in a draw?
+  77374493  0.6303  Will Querétaro FC win on 2025-11-02?
+  71482575  0.6303  Internazionali BNL d'Italia: Carlos Alcaraz vs. Jack Draper
+  76344926  0.6303  Will 1899 Hoffenheim vs. Bayern München end in a draw?
+  77940151  0.6305  Will Real Madrid CF vs. Juventus FC end in a draw?
+  77379335  0.6305  Will SK Brann vs. FK Bodø/Glimt end in a draw?
+  75501941  0.6305  Will Christian Pulisic be the top goal scorer in the 2025-26 Serie A season?
+  78244803  0.6306  Will Molde FK win on 2025-11-22?
+  78890503  0.6306  Will FC Mulhouse win on 2025-11-15?
+  72731054  0.6306  PSG vs. Atlético Madrid: 3+ Goals Scored?
+  75453657  0.6306  Will Jean Philippe Krasso be the top goal scorer in the 2025-26 Ligue 1 season?
+  56651263  0.6306  Will Real Madrid vs. Bayern Munich end in a draw?
+  76748367  0.6307  Will VfB Stuttgart vs. 1. FC Heidenheim end in a draw?
+  70618522  0.6307  Will Espanyol beat Valencia?
+  77379267  0.6308  Will Molde FK win on 2025-10-26?
+  76821241  0.6308  Will Los Angeles FC win on 2025-09-27?
+  76626199  0.6309  Will Los Angeles FC win on 2025-09-21?
+  71311185  0.6309  Will Mallorca vs. Real Valladolid end in a draw?
+  71479344  0.6310  Will Real Madrid vs. Mallorca end in a draw?
+  75302292  0.6310  Will Real Madrid vs. Mallorca end in a draw?
+  78546236  0.6310  Will FC Pen Hir win on 2025-11-16?
+  75261404  0.6311  Will Borussia Mönchengladbach vs. Hamburger SV end in a draw?
+  78073451  0.6311  Will FC Seoul win on 2025-11-01?
+  71966357  0.6312  LEC: G2 vs. Movistar KOI
+  78110768  0.6313  Borussia Mönchengladbach vs. Bayern München: Both Teams to Score
+  78073445  0.6313  Will Daejeon Hana Citizen FC vs. FC Seoul end in a draw?
+  75371010  0.6313  Will Cyle Larin be the top goal scorer in the 2025–26 La Liga season?
+  77630603  0.6313  Will FC Twente '65 win on 2025-11-07?
+  79125457  0.6314  Will Hamburger SV vs. VfB Stuttgart end in a draw?
+  77425394  0.6314  Will Nico Echavarria lead after Round 1 of the Baycurrent Classic 2025?
+  68325320  0.6315  Will Serhou Guirassy be the top Champions League scorer?
+  77568505  0.6315  Will AS Monaco FC vs. Toulouse FC end in a draw?
+  77940082  0.6315  Will FC København vs. BV Borussia 09 Dortmund end in a draw?
+  74520720  0.6315  Will Metz win the 2025–26 French Ligue 1?
+  68325359  0.6315  Will Harry Kane be the top Champions League scorer?
+  62545823  0.6315  Will Frankfurt beat Besiktas?
+  78551751  0.6316  Will Montedio Yamagata vs. Fujieda MYFC end in a draw?
+  64732299  0.6316  Will Bayern Munich beat Paris Saint-Germain?
+  77636691  0.6318  Will FC Porto win on 2025-11-09?
+  78764043  0.6318  Will FC Machida Zelvia win on 2025-12-06?
+  75220938  0.6319  Will Bayer Leverkusen vs. 1899 Hoffenheim end in a draw?
+  64769654  0.6319  Will Athletic Bilbao beat IF Elfsborg?
+  76766829  0.6319  Will Racing Club vs. CA Vélez Sarsfield end in a draw?
+  76424939  0.6320  Will AS Monaco FC win on 2025-09-27?
+  76748649  0.6320  Will Borussia Mönchengladbach vs. SC Freiburg end in a draw?
+  77568717  0.6320  Will 1899 Hoffenheim vs. 1. FC Heidenheim end in a draw?
+  63084456  0.6321  Will Bayer Leverkusen win the Bundesliga?
+  75370903  0.6321  Will Alexander Sorloth be the top goal scorer in the 2025–26 La Liga season?
+  63085283  0.6321  Will AS Roma win the Serie A?
+  78798757  0.6322  Will FC Twente '65 win on 2025-12-07?
+  78545545  0.6322  Will FC Challans win on 2025-11-15?
+  76871507  0.6322  Will FC Kopenhagen win on 2025-10-01?
+  75453707  0.6322  Will Ferreira Vitinha be the top goal scorer in the 2025-26 Ligue 1 season?
+  67811296  0.6323  Will FC Midtjylland beat Real Sociedad?
+  79022035  0.6323  Will Real Betis Balompié vs. FC Utrecht end in a draw?
+  75453622  0.6323  Will Emanuel Emegha be the top goal scorer in the 2025-26 Ligue 1 season?
+  63894216  0.6324  Will LOSC Lille beat Juventus?
+  75501913  0.6326  Will Lorenzo Lucca be the top goal scorer in the 2025-26 Serie A season?
+  77049468  0.6326  Will FC Twente '65 win on 2025-10-05?
+  77374656  0.6327  Will FK Rubin Kazan vs. FK Baltika Kaliningrad end in a draw?
+  77379230  0.6327  Will Molde FK win on 2025-10-19?
+  77816841  0.6327  Swiss Indoors Basel, Qualification: Adrian Mannarino vs Remy Bertola
+  79083903  0.6327  Bayer Leverkusen vs. Borussia Dortmund: Both Teams to Score
+  77635154  0.6327  Will SD Logroñés vs. Real Racing Club end in a draw?
+  78110766  0.6327  Bayern München vs. Bayer Leverkusen: Both Teams to Score
+  78173473  0.6328  Will Hamburger SV vs. Borussia Dortmund end in a draw?
+  79022323  0.6329  MH Maccabi Tel Aviv vs. Olympique Lyonnais: Both Teams to Score
+  75243283  0.6329  Will Mallorca be relegated from La Liga after the 2025–26 season?
+  75243348  0.6329  Will Brest be relegated from Ligue 1 after the 2025–26 season?
+  75866448  0.6330  Will SC Freiburg vs. VfB Stuttgart end in a draw?
+  78110758  0.6332  Girona vs. Real Oviedo: Both Teams to Score
+  65369288  0.6332  Will Lyon beat Frankfurt?
+  78545338  0.6333  Will Le Cellier Mauves FC vs. Stade Lavallois Mayenne FC end in a draw?
+  73303222  0.6333  Will Germany win 4–1?
+  63331265  0.6333  Will Borussia Dortmund beat Real Madrid?
+  75453671  0.6333  Will Igor Paixao be the top goal scorer in the 2025-26 Ligue 1 season?
+  74520387  0.6333  Will Lazio win the 2025–26 Serie A league?
+  75825779  0.6334  Will Bayer Leverkusen vs. Eintracht Frankfurt end in a draw?
+  77635629  0.6335  Will Real Ávila CF vs. Real Avilés CF end in a draw?
+  71838083  0.6335  Will another team have the second highest Constructor score at the 2025 Monaco G
+  78548158  0.6335  Will FC Machida Zelvia win on 2025-11-30?
+  62477074  0.6335  Will RB Leipzig beat Juventus?
+  78110766  0.6335  RB Leipzig vs. VfB Stuttgart: Both Teams to Score
+  78549005  0.6336  Will Molde FK win on 2025-11-30?
+  78717349  0.6336  Will BV Borussia 09 Dortmund vs. Bayer 04 Leverkusen end in a draw?
+  78823052  0.6336  Will Stade Brestois 29 vs. FC Metz end in a draw?
+  75784420  0.6336  Will Angers finish in the top 4 of the Ligue 1 2025–26 standings?
+  77500097  0.6336  Zalgiris Kaunas vs. Olimpia Milano
+  78230802  0.6336  Ceará SC vs. Fortaleza EC: Both Teams to Score
+  77634650  0.6337  Will Querétaro FC win on 2025-11-07?
+  76773869  0.6337  Will FK Zenit vs. FK Orenburg end in a draw?
+  77373528  0.6337  Will Antalyaspor vs. Rams Başakşehir FK end in a draw?
+  71603950  0.6337  Will Lazio beat Inter Milan?
+  77636681  0.6337  Will FC Famalicão win on 2025-11-09?
+  63365735  0.6338  Will Porto beat Hoffenheim?
+  78717304  0.6338  Will Hamburger SV vs. Holstein Kiel end in a draw?
+  61905628  0.6338  Will Real Madrid vs. VfB Stuttgart end in a draw?
+  78110767  0.6338  Bayer Leverkusen vs. SC Freiburg: Both Teams to Score
+  79022319  0.6339  Bologna FC 1909 vs. FC Red Bull Salzburg: Both Teams to Score
+  76591101  0.6339  Will FC Basel win on 2025-09-24?
+  65368982  0.6339  Will Lazio beat Ajax?
+  65289455  0.6340  Will Bayer Leverkusen beat Inter Milan?
+  78755501  0.6340  Will SC Heerenveen vs. PSV end in a draw?
+  76369569  0.6340  Will Los Angeles FC win on 2025-09-17?
+  78976384  0.6340  Will Valencia CF win on 2025-12-04?
+  23576501  0.6340  Will Real Madrid win 2021-22 La Liga?
+  76345586  0.6340  Will Real Sociedad vs. Mallorca end in a draw?
+  78270405  0.6341  CA Vélez Sarsfield vs. CA Talleres: O/U 1.5
+  75453603  0.6341  Will Arnaud Kalimuendo be the top goal scorer in the 2025-26 Ligue 1 season?
+  77635766  0.6341  Will Eintracht Frankfurt vs. BV Borussia 09 Dortmund end in a draw?
+  75501972  0.6342  Will Rafael Leao be the top goal scorer in the 2025-26 Serie A season?
+  64769906  0.6342  Will Olympiacos beat FCSB?
+  70618515  0.6344  Will Valencia beat Espanyol?
+  76591092  0.6345  Will Sport-Club Freiburg vs. FC Basel end in a draw?
+  70136528  0.6345  Will Bayern beat Dortmund?
+  79022081  0.6345  Will FK Crvena zvezda vs. FCSB end in a draw?
+  78176801  0.6347  FC Utrecht vs. NEC: Both Teams to Score
+  72196026  0.6347  Will PSG win 2-1?
+  73813705  0.6347  Will PSG win 2-1?
+  70742503  0.6347  Will Dortmund beat Hoffenheim?
+  75866575  0.6347  Will Bayern München vs. Hamburger SV end in a draw?
+  77568490  0.6347  Will Hamburger SV vs. VfL Wolfsburg end in a draw?
+  61982056  0.6347  Will Atletico Madrid win La Liga?
+  75221279  0.6348  Will Elche CF vs. Real Betis end in a draw?
+  78270400  0.6348  CA Banfield vs. CA Lanús: O/U 1.5
+  75370895  0.6348  Will Kylian Mbappe be the top goal scorer in the 2025–26 La Liga season?
+  75370462  0.6349  Will Andrej Kramaric be the top goal scorer in the 2025–26 Bundesliga season?
+  78804573  0.6349  Will FC Alverca win on 2025-12-07?
+  76575996  0.6349  Will Real Madrid advance to the round of 16?
+  66984513  0.6349  Will the match between Feyenoord Rotterdam and Bayern Munich end in a draw?
+  58157532  0.6349  Will Czechia win Group F?
+  61982342  0.6351  Will Villarreal CF win La Liga?
+  63084492  0.6352  Will RB Leipzig win the Bundesliga?
+  78021723  0.6352  Will RC Strasbourg Alsace vs. Jagiellonia Białystok end in a draw?
+  78110756  0.6353  Real Betis vs. Mallorca: Both Teams to Score
+  77276013  0.6354  Will Bayern München vs. Borussia Dortmund end in a draw?
+  71801529  0.6354  Taça de Portugal Final: Benfica vs. Sporting
+  79021973  0.6355  Will KRC Genk vs. FC Basel 1893 end in a draw?
+  78631361  0.6355  Will FC Montceau Bourgogne win on 2025-11-15?
+  78828366  0.6356  Real Betis vs. Girona: Both Teams to Score
+  77373415  0.6356  Will Gaziantep FK vs. Antalyaspor end in a draw?
+  75243348  0.6356  Will Metz be relegated from Ligue 1 after the 2025–26 season?
+  63395511  0.6356  Will Frankfurt beat FK RFS?
+  77611704  0.6357  Will Bayer Leverkusen vs. SC Freiburg end in a draw?
+  77373322  0.6357  Will FC Porto win on 2025-11-02?
+  75221390  0.6358  Will Paris Saint-Germain FC vs. Angers SCO end in a draw?
+  79022316  0.6358  Real Betis Balompié vs. FC Utrecht: Both Teams to Score
+  61982413  0.6358  Will Sevilla FC win La Liga?
+  77193154  0.6359  Will FC Famalicão win on 2025-10-05?
+  70906424  0.6359  Will Marseille beat LOSC?
+  61982327  0.6359  Will Real Betis win La Liga?
+  75212435  0.6359  Will Bayern München vs. RB Leipzig end in a draw?
+  65368949  0.6359  Will Ajax beat Lazio?
+  64769735  0.6361  Will FCSB beat Olympiacos?
+  61951148  0.6361  Will RB Leipzig beat Atletico Madrid?
+  78241772  0.6361  Will FK Bodø/Glimt win on 2025-11-04?
+  73291965  0.6361  Real Madrid vs. Juventus: 3+ Goals Scored?
+  72196187  0.6362  Will Inter Milan win 6-1?
+  76821236  0.6362  Will St. Louis City SC vs. Los Angeles FC end in a draw?
+  78176801  0.6363  FC Groningen vs. FC Twente '65: Both Teams to Score
+  77093045  0.6363  Will Los Angeles FC win on 2025-10-05?
+  63365435  0.6364  Will Besiktas beat Lyon?
+  79125482  0.6365  Will FSV Mainz 05 win on 2025-11-30?
+  62193726  0.6366  Will Dynamo Kiev beat Lazio?
+  75501723  0.6366  Will Udinese finish in the top 4 in the 2025-26 Serie A season?
+  76576007  0.6367  Will Bayern Munich advance to the round of 16?
+  78779928  0.6368  Will Bayern München vs. SC Freiburg end in a draw?
+  74520619  0.6368  Will Sport Recife win the 2025 Brasileiro Serie A league?
+  77316008  0.6368  Will SC Freiburg vs. Eintracht Frankfurt end in a draw?
+  71600162  0.6368  Will SC Freiburg vs. Eintracht Frankfurt end in a draw?
+  77316364  0.6368  Will Toulouse FC vs. FC Metz end in a draw?
+  78963371  0.6369  CA Central Córdoba vs. CA Banfield: O/U 1.5
+  77635993  0.6369  Will TSV Fortuna 95 Düsseldorf vs. SC Freiburg end in a draw?
+  63395530  0.6370  Will FK RFS beat Frankfurt?
+  75221568  0.6370  Will Olympique Lyonnais vs. FC Metz end in a draw?
+  35774652  0.6371  Will Portugal qualify from Group H?
+  78545058  0.6371  Will RCO Agde vs. Montpellier HSC end in a draw?
+  77957440  0.6372  Will Lazio vs. Cagliari end in a draw?
+  75453694  0.6372  Will Joaquin Panichelli be the top goal scorer in the 2025-26 Ligue 1 season?
+  75453698  0.6372  Will Sambou Soumano be the top goal scorer in the 2025-26 Ligue 1 season?
+  70136541  0.6372  Will Dortmund beat Bayern?
+  77640119  0.6372  Will FK Bodø/Glimt win on 2025-11-09?
+  61982317  0.6372  Will Real Sociedad win La Liga?
+  76576002  0.6374  Will Atlético Madrid advance to the round of 16?
+  78823117  0.6375  Will Paris FC win on 2025-11-23?
+  78173246  0.6375  Will Bayer Leverkusen vs. 1. FC Heidenheim end in a draw?
+  68325525  0.6375  Will Rodrygo be the top Champions League scorer?
+  75453568  0.6377  Will Ousmane Dembele be the top goal scorer in the 2025-26 Ligue 1 season?
+  78781575  0.6377  Bayern München vs. SC Freiburg: Both Teams to Score
+  65289486  0.6378  Will Inter Milan beat Bayer Leverkusen?
+  67256612  0.6380  Will Inter Milan beat Monaco?
+  73658638  0.6381  PSG vs. Real Madrid: 3+ Goals Scored?
+  78545782  0.6382  Will FC Marmande 47 win on 2025-11-16?
+  77634644  0.6382  Will FC Juárez vs. Querétaro FC end in a draw?
+  77373760  0.6382  Will Los Angeles FC win on 2025-10-08?
+  61951138  0.6383  Will Atletico Madrid beat RB Leipzig?
+  68325471  0.6383  Will Mohamed Salah be the top Champions League scorer?
+  72887690  0.6384  Benfica vs. Auckland City: 7+ Goals Scored?
+  78265000  0.6384  Valencia vs. Real Betis: Both Teams to Score
+  67016803  0.6385  Will the match between Lazio and Real Sociedad end in a draw?
+  78242557  0.6387  Will FC Basel 1893 vs. FCSB end in a draw?
+  78270408  0.6388  CA San Lorenzo de Almagro vs. CD Riestra: Both Teams to Score
+  76498360  0.6389  Will Mazatlán FC vs. Atlas FC end in a draw?
+  77979257  0.6390  Will Los Angeles FC win on 2025-11-02?
+  71159612  0.6390  Will another team have the highest Constructor score at the 2025 Italian Grand P
+  78247057  0.6390  Will Gwangju FC vs. Ulsan HD FC end in a draw?
+  76748882  0.6390  Will RC Strasbourg Alsace vs. Angers SCO end in a draw?
+  63978507  0.6390  Will Porto beat Lazio?
+  70463807  0.6391  Will Real Madrid vs. Athletic Club end in a draw?
+  78736610  0.6391  Will FSV Mainz 05 win on 2025-11-21?
+  77635917  0.6392  Will SC Paderborn 07 vs. Bayer 04 Leverkusen end in a draw?
+  76831306  0.6392  Will Atletico Madrid vs. Eintracht Frankfurt end in a draw?
+  71276575  0.6393  Will Lazio vs. Juventus end in a draw?
+  77611915  0.6393  Will Lazio vs. Juventus end in a draw?
+  64769729  0.6394  Will FC Midtjylland beat Frankfurt?
+  75784418  0.6394  Will Toulouse finish in the top 4 of the Ligue 1 2025–26 standings?
+  73303125  0.6394  Will Germany win 1–0?
+  73540507  0.6394  Will PSG vs. Bayern Munich end in a draw after regulation time?
+  63085296  0.6394  Will Lazio win the Serie A?
+  77635398  0.6394  Will Atlètic Sant Just FC vs. RCD Mallorca end in a draw?
+  67256753  0.6394  Will Monaco beat Inter Milan?
+  77635645  0.6395  Will CD Atlético Baleares vs. Club Gimnàstic de Tarragona end in a draw?
+  76915362  0.6396  Will FC Porto win on 2025-10-02?
+  78545792  0.6397  Will AC Cambrai vs. Entente Feignies Aulnoye FC end in a draw?
+  65368853  0.6398  Will FCSB beat Hoffenheim?
+  55755763  0.6398  Who will advance: Dortmund or Atletico Madrid?
+  76498364  0.6398  Will Atlas FC win on 2025-09-19?
+  75501720  0.6398  Will Atalanta finish in the top 4 in the 2025-26 Serie A season?
+  79085705  0.6399  SBV Excelsior vs. NAC Breda: O/U 3.5
+  78244808  0.6400  Will Molde FK vs. SK Brann end in a draw?
+  58399068  0.6401  Velasco biggest winner?
+  76465206  0.6402  Will SC Freiburg vs. 1899 Hoffenheim end in a draw?
+  75243282  0.6403  Will Valencia be relegated from La Liga after the 2025–26 season?
+  78021786  0.6404  Will FC Drita vs. AS Omónoia Leukosías end in a draw?
+  65369317  0.6404  Will Frankfurt beat Lyon?
+  78241621  0.6404  Will FK Orenburg vs. FK Baltika Kaliningrad end in a draw?
+  56396312  0.6405  Real Madrid vs. Bayern Munich: Who will advance?
+  76345117  0.6406  Will 1. FC Köln win on 2025-09-20?
+  75501865  0.6406  Will Lautaro Martinez be the top goal scorer in the 2025-26 Serie A season?
+  77640144  0.6406  Will Molde FK win on 2025-11-09?
+  75453617  0.6407  Will Olivier Giroud be the top goal scorer in the 2025-26 Ligue 1 season?
+  77640139  0.6407  Will FK Haugesund vs. Molde FK end in a draw?
+  77373221  0.6407  Will FC Famalicão win on 2025-11-01?
+  78173488  0.6407  Will Borussia Mönchengladbach vs. 1. FC Köln end in a draw?
+  78546110  0.6407  Will FC Chalonnais win on 2025-11-16?
+  75371034  0.6408  Will Jude Bellingham be the top goal scorer in the 2025–26 La Liga season?
+  78976331  0.6408  Will Real Zaragoza vs. Burgos CF end in a draw?
+  77635675  0.6408  Will Atlético Palma del Río CF vs. Real Betis Balompié end in a draw?
+  78546241  0.6409  Will FC Pen Hir vs. Les Sables FCOC Vendée end in a draw?
+  74520734  0.6409  Will Paris FC win the 2025–26 French Ligue 1?
+  75371029  0.6409  Will Antoine Griezmann be the top goal scorer in the 2025–26 La Liga season?
+  79083905  0.6410  AC Milan vs. SS Lazio: Both Teams to Score
+  78551797  0.6410  Spread: Kristiansund BK (-0.5)
+  63084442  0.6411  Will Bayern Munich win the Bundesliga?
+  79082116  0.6412  Will 1899 Hoffenheim vs. FC Augsburg end in a draw?
+  75906939  0.6412  Will FC Metz vs. Angers SCO end in a draw?
+  76936503  0.6412  Will Atlético Melilla CF vs. Atlético Palma del Río CF end in a draw?
+  76425146  0.6412  Will FSV Mainz 05 win on 2025-09-27?
+  69046716  0.6413  Will Atlético Madrid beat Barcelona
+  72925310  0.6413  Mamelodi vs. Dortmund: 4+ Goals Scored?
+  63084508  0.6413  Will Borussia Dortmund win the Bundesliga?
+  77379411  0.6414  Will FK Bodø/Glimt win on 2025-11-01?
+  78241867  0.6415  Will Sport Lisboa e Benfica vs. Bayer 04 Leverkusen end in a draw?
+  76345033  0.6415  Will FSV Mainz 05 win on 2025-09-20?
+  61981976  0.6416  Will Real Madrid win La Liga?
+  68325505  0.6416  Will Bukayo Saka be the top Champions League scorer?
+  79085704  0.6417  SBV Excelsior vs. NAC Breda: O/U 2.5
+  76769927  0.6417  Will Atlas FC win on 2025-09-27?
+  78545627  0.6417  Will L'Union Saint-Jean FC vs. Angoulême Charente FC end in a draw?
+  76871528  0.6418  Will Bayer Leverkusen vs. PSV Eindhoven end in a draw?
+  75501894  0.6419  Will Santiago Gimenez be the top goal scorer in the 2025-26 Serie A season?
+  76307904  0.6419  Will Feyenoord Rotterdam vs. SC Heerenveen end in a draw?
+  67808860  0.6421  Bodo Glimt vs. FC Twente
+  75501722  0.6421  Will Torino finish in the top 4 in the 2025-26 Serie A season?
+  68325514  0.6422  Will Cody Gakpo be the top Champions League scorer?
+  64769910  0.6422  Will Frankfurt beat FC Midtjylland?
+  62545810  0.6423  Will Besiktas beat Frankfurt?
+  77316056  0.6424  Will Paris FC win on 2025-10-19?
+  79085704  0.6425  SBV Excelsior vs. NAC Breda: O/U 1.5
+  76498331  0.6426  Will CF Cruz Azul vs. FC Juárez end in a draw?
+  75501875  0.6426  Will Jonathan David be the top goal scorer in the 2025-26 Serie A season?
+  77193364  0.6427  Will Atlético Palma del Río CF vs. Atlético Melilla CF end in a draw?
+  78110778  0.6427  Lazio vs. Juventus: Both Teams to Score
+  78031568  0.6427  Will Lionel Messi be the #1 searched athlete on Google this year?
+  73658672  0.6428  Will Real Madrid beat PSG in regulation time?
+  73711964  0.6428  Will Real Madrid beat PSG in Regulation Time?
+  55755636  0.6429  Will Borussia Dortmund vs Atlético Madrid be a draw?
+  78073642  0.6431  Will Pohang Steelers FC vs. FC Seoul end in a draw?
+  76777576  0.6431  Will Sport Lisboa e Benfica vs. Rio Ave FC end in a draw?
+  75466119  0.6432  Will FC Kopenhagen vs. FC Basel end in a draw?
+  78545063  0.6432  Will Montpellier HSC win on 2025-11-15?
+  76307549  0.6433  Will Gaziantep FK vs. Kocaelispor end in a draw?
+  78110767  0.6434  Hamburger SV vs. VfL Wolfsburg: Both Teams to Score
+  63331282  0.6434  Will the match between Real Madrid and Borussia Dortmund end in a draw?
+  71603944  0.6434  Will Inter Milan beat Lazio?
+  75501719  0.6435  Will Bologna finish in the top 4 in the 2025-26 Serie A season?
+  75342651  0.6436  Will FSV Mainz 05 win on 2025-08-31?
+  72196011  0.6436  Will Inter Milan win 1-0?
+  79021415  0.6436  Arsenal FC vs. FC Bayern München: Both Teams to Score
+  75453722  0.6436  Will Santiago Hidalgo be the top goal scorer in the 2025-26 Ligue 1 season?
+  78668607  0.6437  Bologna FC 1909 vs. SK Brann: Both Teams to Score
+  73813734  0.6437  Will PSG win 3-1?
+  72196048  0.6437  Will PSG win 3-1?
+  79022320  0.6438  FK Crvena zvezda vs. FCSB: Both Teams to Score
+  23576592  0.6438  Will FC Barcelona win 2021-22 La Liga?
+  78548036  0.6438  Will FC Machida Zelvia win on 2025-11-09?
+  75453644  0.6439  Will Folarin Balogun be the top goal scorer in the 2025-26 Ligue 1 season?
+  75501964  0.6439  Will Paulo Dybala be the top goal scorer in the 2025-26 Serie A season?
+  78243538  0.6439  Will FC Drita win on 2025-11-06?
+  75453138  0.6441  Will Lecce be relegated from Serie A after the 2025-26 season?
+  77635963  0.6442  Will FV Illertissen vs. 1. FC Magdeburg end in a draw?
+  77914132  0.6442  Will FC Nantes vs. FC Metz end in a draw?
+  77611724  0.6443  Will FC Metz win on 2025-10-26?
+  73658663  0.6443  Will PSG beat Real Madrid in regulation time?
+  73711960  0.6443  Will PSG beat Real Madrid in Regulation Time?
+  22008674  0.6443  Serie A: Who will win the Roma v. Inter Milan game on December 4?
+  75501908  0.6443  Will Evan Ferguson be the top goal scorer in the 2025-26 Serie A season?
+  77525324  0.6444  Will Paris FC win on 2025-10-24?
+  78247582  0.6444  Will Ehime FC vs. Roasso Kumamoto end in a draw?
+  76769863  0.6444  Will Atlas FC win on 2025-09-24?
+  61982077  0.6444  Will Athletic Bilbao win La Liga?
+  78956167  0.6446  Feyenoord Rotterdam vs. NEC: Both Teams to Score
+  75453572  0.6447  Will Mason Greenwood be the top goal scorer in the 2025-26 Ligue 1 season?
+  78216660  0.6448  Will FSV Mainz 05 win on 2025-11-09?
+  79083902  0.6448  Spread: Bayer Leverkusen (-1.5)
+  78261404  0.6448  Spread: Bayer Leverkusen (-1.5)
+  78781573  0.6448  Spread: Bayer Leverkusen (-1.5)
+  77741324  0.6448  Will FC Metz win on 2025-10-29?
+  72889577  0.6448  Will any other team have the highest Constructor score at the 2025 Austrian Gran
+  78546221  0.6449  Will FC Saint-Cyr Collonges au Mont d'Or win on 2025-11-16?
+  77373122  0.6451  Will FC Arouca win on 2025-10-25?
+  78976256  0.6451  Will CE Sabadell FC vs. RC Deportivo La Coruña end in a draw?
+  73170160  0.6452  RB Salzburg vs. Real Madrid: 4+ Goals Scored?
+  75221468  0.6452  Will Paris FC win on 2025-08-23?
+  76328108  0.6453  Will Paris FC win on 2025-09-21?
+  78261405  0.6453  Spread: Nottingham Forest (-0.5)
+  75221800  0.6453  Will RC Strasbourg Alsace vs. FC Nantes end in a draw?
+  78031995  0.6453  Spread: CD Guadalajara (-0.5)
+  78353200  0.6453  Spread: CD Guadalajara (-0.5)
+  76777688  0.6453  Will FC Arouca win on 2025-09-29?
+  77338793  0.6454  Will CD Riestra vs. CA Vélez Sarsfield end in a draw?
+  63084534  0.6454  Will Frankfurt win the Bundesliga?
+  75301963  0.6455  Will RB Leipzig vs. 1. FC Heidenheim end in a draw?
+  73540498  0.6456  PSG vs. Bayern Munich: 4+ Goals Scored?
+  75220764  0.6459  Will Racing Club de Lens vs. Olympique Lyonnais end in a draw?
+  77870914  0.6460  Will AS Monaco FC win on 2025-11-01?
+  77049556  0.6461  Will SC Heerenveen vs. SBV Excelsior end in a draw?
+  79082260  0.6462  Will AS Monaco FC vs. Paris Saint-Germain FC end in a draw?
+  75243346  0.6464  Will Paris FC be relegated from Ligue 1 after the 2025–26 season?
+  77870919  0.6465  Will AS Monaco FC vs. Paris FC end in a draw?
+  76766083  0.6466  Will FC Utrecht vs. SC Heerenveen end in a draw?
+  75370899  0.6466  Will Robert Lewandowski be the top goal scorer in the 2025–26 La Liga season?
+  78021781  0.6467  Will FC Drita win on 2025-10-23?
+  78551799  0.6467  Spread: Brisbane Roar FC (-0.5)
+  72196123  0.6467  Will PSG win 5-1?
+  77914097  0.6469  Will 1. FC Köln win on 2025-11-02?
+  55643289  0.6472  Will Atletico Madrid vs Borussia Dortmund be a draw?
+  61981998  0.6473  Will Barcelona win La Liga?
+  73138404  0.6474  Benfica vs. Bayern Munich: 3+ Goals Scored?
+  68325535  0.6474  Will Jamie Bynoe-Gittens be the top Champions League scorer?
+  61982068  0.6474  Will Girona FC win La Liga?
+  67581570  0.6474  Will Sporting CP beat FC Porto?
+  75730116  0.6474  Will Mgladbach finish in the top 4 of the Bundesliga 2025–26 standings?
+  61982368  0.6475  Will Valencia CF win La Liga?
+  79038917  0.6477  Will FC Metz win on 2025-11-28?
+  77316391  0.6478  Will FC Metz win on 2025-10-19?
+  74520543  0.6478  Will Bahia win the 2025 Brasileiro Serie A league?
+  78243422  0.6479  Will 1. FSV Mainz 05 win on 2025-11-06?
+  77543297  0.6479  KK Crvena Zvezda vs. Real Madrid
+  77379344  0.6480  Will Molde FK win on 2025-11-01?
+  75342805  0.6480  Will Paris FC win on 2025-08-31?
+  73210943  0.6481  Flamengo vs. Bayern Munich: 3+ Goals Scored?
+  73540502  0.6481  Will PSG beat Bayern Munich in regulation time?
+  75501727  0.6482  Will Sassuolo finish in the top 4 in the 2025-26 Serie A season?
+  76915424  0.6482  Will FC Basel vs. VfB Stuttgart end in a draw?
+  73266408  0.6483  Dortmund vs. Monterrey: 3+ Goals Scored?
+  78263204  0.6485  FC Twente '65 vs. Telstar 1963: O/U 3.5
+  75730135  0.6485  Will Alaves finish in the top 4 of the La Liga 2025–26 standings?
+  77940166  0.6485  Will FC Bayern München vs. Club Brugge KV end in a draw?
+  68325437  0.6486  Will Jonathan David be the top Champions League scorer?
+  75730117  0.6487  Will Stuttgart finish in the top 4 of the Bundesliga 2025–26 standings?
+  77939976  0.6489  Will Bayer 04 Leverkusen vs. Paris Saint-Germain FC end in a draw?
+  70640633  0.6489  Will Athletic Bilbao finish second in La Liga?
+  78979747  0.6490  Will FC Drita win on 2025-11-27?
+  68325329  0.6490  Will Kylian Mbappe be the top Champions League scorer?
+  78934616  0.6492  Will BV Borussia 09 Dortmund vs. Villarreal CF end in a draw?
+  62193744  0.6493  Will the match between Dynamo Kiev and Lazio end in a draw?
+  67581562  0.6493  Will FC Porto beat Sporting CP?
+  76345095  0.6494  Will RB Leipzig vs. 1. FC Köln end in a draw?
+  65369003  0.6495  Will the match between Ajax and Lazio end in a draw?
+  78779792  0.6495  Will Racing Club de Lens vs. RC Strasbourg Alsace end in a draw?
+  78545992  0.6495  Will Vendée Fontenay Foot vs. FC Chamalières end in a draw?
+  76667004  0.6495  Will Paris FC win on 2025-10-03?
+  77374466  0.6497  Will Atlas FC win on 2025-11-01?
+  75384993  0.6497  Will FC Basel vs. FC Kopenhagen end in a draw?
+  77378318  0.6498  Will FC København vs. FC Fredericia end in a draw?
+  78979112  0.6498  Spread: SC Freiburg (-1.5)
+  77942003  0.6498  Spread: SC Freiburg (-1.5)
+  61905744  0.6499  Will LOSC Lille beat Sporting CP?
+  78976241  0.6499  Will CD Atlético Baleares vs. RCD Espanyol de Barcelona end in a draw?
+  75501727  0.6500  Will Verona finish in the top 4 in the 2025-26 Serie A season?
+  78846367  0.6501  Vancouver Whitecaps FC vs. Los Angeles FC: Both Teams to Score
+  77871080  0.6501  Will FSV Mainz 05 win on 2025-11-01?
+  78551696  0.6502  Will Ehime FC win on 2025-11-29?
+  78823057  0.6503  Will FC Metz win on 2025-11-23?
+  78241747  0.6503  Will Paris Saint-Germain FC vs. FC Bayern München end in a draw?
+  68325392  0.6503  Will Ousmane Dembele be the top Champions League scorer?
+  58158206  0.6504  Will Switzerland win Group A?
+  78631740  0.6504  Will FC Arouca vs. SC Braga end in a draw?
+  77634745  0.6504  Will Atlas FC win on 2025-11-07?
+  78545400  0.6505  Will APM Metz vs. FC Fleury 91 end in a draw?
+  77611855  0.6505  Will VfB Stuttgart vs. FSV Mainz 05 end in a draw?
+  75533533  0.6506  Will FSV Mainz 05 win on 2025-08-24?
+  78309995  0.6506  FC Juárez vs. Querétaro FC: Both Teams to Score
+  76465317  0.6506  Will FC Metz win on 2025-09-28?
+  78804082  0.6506  Will Saint-Pauloise FC vs. ES Dominicaine end in a draw?
+  75501725  0.6507  Will Pisa finish in the top 4 in the 2025-26 Serie A season?
+  78549000  0.6508  Will Sarpsborg 08 FF vs. Molde FK end in a draw?
+  74520442  0.6508  Will Lecce win the 2025–26 Serie A league?
+  78668606  0.6508  VfB Stuttgart vs. Feyenoord Rotterdam: Both Teams to Score
+  78781570  0.6509  Spread: Eintracht Frankfurt (-1.5)
+  78717274  0.6509  Will SC Freiburg vs. SV Darmstadt 98 end in a draw?
+  77635443  0.6512  Will Club Portugalete vs. Real Valladolid CF end in a draw?
+  77568777  0.6513  Will Borussia Dortmund vs. 1. FC Köln end in a draw?
+  79056901  0.6513  Saski Baskonia vs. FC Bayern Munchen
+  74520402  0.6513  Will Como win the 2025–26 Serie A league?
+  75906829  0.6513  Will Paris FC win on 2025-09-14?
+  78551691  0.6514  Will Hokkaidō Consadole Sapporo vs. Ehime FC end in a draw?
+  78245257  0.6514  Will FC Nordsjælland vs. FC Fredericia end in a draw?
+  75866240  0.6515  Will VfL Wolfsburg vs. 1. FC Köln end in a draw?
+  75501955  0.6515  Will Mehdi Taremi be the top goal scorer in the 2025-26 Serie A season?
+  72676303  0.6515  Will Germany U21 beat Slovenia U21?
+  79022316  0.6516  KRC Genk vs. FC Basel 1893: Both Teams to Score
+  75784415  0.6516  Will Nantes finish in the top 4 of the Ligue 1 2025–26 standings?
+  75730116  0.6516  Will Freiburg finish in the top 4 of the Bundesliga 2025–26 standings?
+  78551802  0.6516  Spread: Perth Glory FC (-0.5)
+  77636024  0.6516  Will SV Darmstadt 98 vs. FC Schalke 04 end in a draw?
+  71237343  0.6517  Will PSG beat Inter Milan in the first half?
+  68325543  0.6517  Will Jude Bellingham be the top Champions League scorer?
+  79083916  0.6518  1899 Hoffenheim vs. FC Augsburg: Both Teams to Score
+  78979621  0.6519  Will 1. FSV Mainz 05 win on 2025-11-27?
+  78780111  0.6519  Will 1. FC Heidenheim vs. Borussia Mönchengladbach end in a draw?
+  75784418  0.6520  Will Rennes finish in the top 4 of the Ligue 1 2025–26 standings?
+  35773270  0.6521  Will Netherlands qualify from Group A?
+  78072970  0.6521  Will Ehime FC win on 2025-10-26?
+  79021416  0.6521  Olympiakós SFP vs. Real Madrid CF: Both Teams to Score
+  75220768  0.6521  Will 1. FC Heidenheim vs. VfL Wolfsburg end in a draw?
+  76667042  0.6522  Will 1899 Hoffenheim vs. 1. FC Köln end in a draw?
+  64732241  0.6524  Will Inter Milan beat RB Leipzig?
+  78283000  0.6525  Spread: Chicago Fire FC (-0.5)
+  78031114  0.6525  Spread: Chicago Fire FC (-0.5)
+  76777693  0.6527  Will FC Arouca vs. FC Porto end in a draw?
+  75221292  0.6528  Will Paris FC win on 2025-08-17?
+  75501722  0.6529  Will US Cremonese finish in the top 4 in the 2025-26 Serie A season?
+  66984256  0.6530  Will Sporting CP beat RB Leipzig?
+  78110757  0.6530  Real Madrid vs. Barcelona: Both Teams to Score
+  77379263  0.6530  Will FK Bodø/Glimt vs. Molde FK end in a draw?
+  78551800  0.6530  Spread: Sydney FC (-0.5)
+  78021856  0.6533  Will 1. FSV Mainz 05 win on 2025-10-23?
+  71237356  0.6534  Will Inter Milan beat PSG in the first half?
+  71838164  0.6534  Will another team have the highest Constructor score at the 2025 Monaco Grand Pr
+  78216655  0.6534  Will Eintracht Frankfurt vs. FSV Mainz 05 end in a draw?
+  72196128  0.6537  Will Inter Milan win 5-1?
+  78261404  0.6537  Spread: Aston Villa (-0.5)
+  75501931  0.6537  Will Romelu Lukaku be the top goal scorer in the 2025-26 Serie A season?
+  78130014  0.6538  Will Paris FC win on 2025-11-07?
+  78110755  0.6538  Real Madrid vs. Valencia: Both Teams to Score
+  74571636  0.6538  Will Los Angeles FC win the 2025 Leagues Cup?
+  75784419  0.6539  Will Auxerre finish in the top 4 of the Ligue 1 2025–26 standings?
+  78033904  0.6539  Spread: Middlesbrough FC (-0.5)
+  78533188  0.6539  Spread: Middlesbrough FC (-0.5)
+  78185803  0.6539  Spread: Middlesbrough FC (-0.5)
+  75370962  0.6540  Will Hugo Duro be the top goal scorer in the 2025–26 La Liga season?
+  73540511  0.6541  Will Bayern Munich beat PSG in regulation time?
+  68325445  0.6541  Will Lautaro Martinez be the top Champions League scorer?
+  78545435  0.6542  Will FC Sochaux-Montbéliard win on 2025-11-15?
+  76328155  0.6543  Will FC Metz win on 2025-09-21?
+  78180401  0.6544  Spread: CF Monterrey (-0.5)
+  78104805  0.6544  FC Bayern Munchen vs. Virtus Bologna
+  75453717  0.6545  Will Moses Simon be the top goal scorer in the 2025-26 Ligue 1 season?
+  78247577  0.6545  Will Ehime FC win on 2025-11-23?
+  75221582  0.6547  Will FC Metz win on 2025-08-23?
+  78173353  0.6547  Will AS Monaco FC vs. Racing Club de Lens end in a draw?
+  75453577  0.6547  Will Khvicha Kvaratskhelia be the top goal scorer in the 2025-26 Ligue 1 season?
+  78717319  0.6547  Will RB Leipzig vs. 1. FC Magdeburg end in a draw?
+  77378215  0.6548  Will FC Fredericia win on 2025-10-26?
+  75501726  0.6548  Will AC Milan finish in the top 4 in the 2025-26 Serie A season?
+  70640624  0.6549  Will Atlético Madrid finish second in La Liga?
+  68325401  0.6549  Will Evangelos Pavlidis be the top Champions League scorer?
+  77870924  0.6551  Will Paris FC win on 2025-11-01?
+  78033907  0.6552  Spread: Sheffield United FC (-0.5)
+  78185805  0.6552  Spread: Sheffield United FC (-0.5)
+  78533190  0.6552  Spread: Sheffield United FC (-0.5)
+  78824768  0.6553  Stade Brestois 29 vs. FC Metz: Both Teams to Score
+  79013771  0.6553  Olimpia Milano vs. Hapoel Tel Aviv
+  56651247  0.6553  Will Real Madrid win against Bayern Munich
+  75784416  0.6554  Will Lorient finish in the top 4 of the Ligue 1 2025–26 standings?
+  77870886  0.6555  Will 1. FC Heidenheim vs. Eintracht Frankfurt end in a draw?
+  78265002  0.6556  Athletic Club vs. Real Oviedo: Both Teams to Score
+  19067704  0.6556  Will Real Madrid or Inter Milan win their Champions League match on September 15
+  76465352  0.6556  Will 1. FC Köln vs. VfB Stuttgart end in a draw?
+  66984165  0.6557  Will RB Leipzig beat Sporting CP?
+  78546408  0.6557  SSC Napoli vs. Eintracht Frankfurt: Both Teams to Score
+  77635968  0.6558  Will 1. FC Magdeburg win on 2025-10-29?
+  78261403  0.6559  Hamburger SV vs. Borussia Dortmund: Both Teams to Score
+  75730130  0.6560  Will Osasuna finish in the top 4 of the La Liga 2025–26 standings?
+  75342617  0.6560  Will VfL Wolfsburg vs. FSV Mainz 05 end in a draw?
+  75453653  0.6561  Will Fabian Ruiz be the top goal scorer in the 2025-26 Ligue 1 season?
+  77784485  0.6561  Will Pisa SC vs. Lazio end in a draw?
+  72731053  0.6561  Bayern Munich vs. Auckland City: 5+ Goals Scored?
+  75501945  0.6561  Will Kevin De Bruyne be the top goal scorer in the 2025-26 Serie A season?
+  78270405  0.6561  CA Vélez Sarsfield vs. CA Talleres: Both Teams to Score
+  74520361  0.6564  Will Inter win the 2025–26 Serie A league?
+  79042497  0.6565  PEC Zwolle vs. SC Heerenveen: Both Teams to Score
+  77373296  0.6566  Will FC Arouca win on 2025-11-02?
+  78923775  0.6566  EC Bahia vs. CR Vasco da Gama: Both Teams to Score
+  73502486  0.6568  Will Real Madrid vs. Borussia Dortmund end in a draw after regulation time?
+  75866358  0.6568  Will FSV Mainz 05 vs. RB Leipzig end in a draw?
+  78824766  0.6569  Spread: SS Lazio (-1.5)
+  78828364  0.6569  Elche CF vs. Real Madrid: Both Teams to Score
+  78031992  0.6570  Spread: Club Santos Laguna (-0.5)
+  79083909  0.6570  Bayern München vs. FC St. Pauli: Both Teams to Score
+  75730138  0.6570  Will Betis finish in the top 4 of the La Liga 2025–26 standings?
+  77193145  0.6572  Will FC Arouca win on 2025-10-05?
+  77193470  0.6573  Will CF Inter de Valdemoro win on 2025-10-04?
+  75501718  0.6573  Will Napoli finish in the top 4 in the 2025-26 Serie A season?
+  75342858  0.6575  Will FC Metz win on 2025-08-31?
+  75730129  0.6577  Will Rayo Vallecano finish in the top 4 of the La Liga 2025–26 standings?
+  78261405  0.6579  Bayer Leverkusen vs. 1. FC Heidenheim: Both Teams to Score
+  73183460  0.6580  Will Olympique Lyon play in Ligue 1?
+  78216463  0.6582  Will FC Metz win on 2025-11-09?
+  78935013  0.6582  FC København vs. Qairat FK: O/U 3.5
+  66458443  0.6585  Supercopa Seminal: Barcelona vs. Athletic Bilbao
+  70640616  0.6586  Will Real Madrid finish second in La Liga?
+  62073717  0.6587  Will Luis Diaz be the top goalscorer in the EPL?
+  71801538  0.6588  DFB-Pokal Final: Arminia vs. VfB Stuttgart
+  78551802  0.6589  Spread: Adelaide United FC (-0.5)
+  76707668  0.6589  Will FC Metz win on 2025-10-04?
+  78780095  0.6591  Will 1. FC Köln vs. Eintracht Frankfurt end in a draw?
+  70160043  0.6592  Will Lazio vs. Bodo/Glimt end in a draw?
+  75501726  0.6592  Will Fiorentina finish in the top 4 in the 2025-26 Serie A season?
+  78401800  0.6593  Spread: Birmingham City FC (-0.5)
+  75221168  0.6595  Will FC Metz win on 2025-08-17?
+  78245262  0.6595  Will FC Fredericia win on 2025-11-23?
+  78711383  0.6596  Real Madrid vs. Panathinaikos
+  78551795  0.6596  Spread: Rosenborg BK (-0.5)
+  77636448  0.6597  Will FC Arouca win on 2025-11-07?
+  78631735  0.6597  Will FC Arouca win on 2025-12-01?
+  78804538  0.6597  Will FC Arouca win on 2025-12-07?
+  77378181  0.6597  Will FC Fredericia win on 2025-10-20?
+  78930979  0.6598  Molde FK vs. SK Brann: Both Teams to Score
+  77193150  0.6599  Will FC Arouca vs. FC Famalicão end in a draw?
+  78545997  0.6601  Will FC Chamalières win on 2025-11-16?
+  78073247  0.6602  Will Ehime FC win on 2025-11-08?
+  77474353  0.6602  FC Bayern Munchen vs. Zalgiris Kaunas
+  75730136  0.6603  Will Elche finish in the top 4 of the La Liga 2025–26 standings?
+  78785170  0.6606  Osasuna vs. Real Sociedad: O/U 2.5
+  76328147  0.6607  Will AS Monaco FC vs. FC Metz end in a draw?
+  75501724  0.6607  Will Genoa finish in the top 4 in the 2025-26 Serie A season?
+  73502481  0.6608  Will Real Madrid beat Borussia Dortmund in regulation time?
+  78668607  0.6608  Real Betis Balompié vs. Olympique Lyonnais: Both Teams to Score
+  78110768  0.6608  Borussia Dortmund vs. 1. FC Köln: Both Teams to Score
+  77275424  0.6611  Will FSV Mainz 05 vs. Bayer Leverkusen end in a draw?
+  77914137  0.6611  Will FC Metz win on 2025-11-02?
+  77959039  0.6614  Bologna vs. Torino: O/U 2.5
+  69877027  0.6614  Will Bodo/Glimt vs. Lazio end in a draw?
+  78736616  0.6616  Will FSV Mainz 05 vs. 1899 Hoffenheim end in a draw?
+  78897720  0.6617  Osasuna vs. Real Sociedad: O/U 1.5
+  76344755  0.6617  Will Hamburger SV vs. 1. FC Heidenheim end in a draw?
+  75342830  0.6617  Will Paris FC vs. FC Metz end in a draw?
+  75906895  0.6618  Will FC Metz win on 2025-09-14?
+  75501982  0.6619  Will Santiago Castro be the top goal scorer in the 2025-26 Serie A season?
+  78551801  0.6619  Spread: Auckland FC (-0.5)
+  75730135  0.6620  Will Oviedo finish in the top 4 of the La Liga 2025–26 standings?
+  77635796  0.6620  Will 1. FC Heidenheim 1846 vs. Hamburger SV end in a draw?
+  78283001  0.6621  Spread: Seattle Sounders FC (-0.5)
+  78630374  0.6621  Spread: Seattle Sounders FC (-0.5)
+  78110768  0.6622  1899 Hoffenheim vs. 1. FC Heidenheim: Both Teams to Score
+  77570282  0.6622  Spread: Eintracht Frankfurt (-0.5)
+  77959046  0.6622  Spread: Eintracht Frankfurt (-0.5)
+  76508667  0.6622  Spread: Eintracht Frankfurt (-0.5)
+  78261399  0.6622  Spread: Eintracht Frankfurt (-0.5)
+  78391002  0.6622  Olympique Lyonnais vs. Paris Saint-Germain FC: Both Teams to Score
+  77500098  0.6623  Fenerbahce vs. FC Bayern Munchen
+  78218212  0.6626  AS Monaco FC vs. Paris FC: Both Teams to Score
+  75730134  0.6627  Will Levante finish in the top 4 of the La Liga 2025–26 standings?
+  68325308  0.6628  Will Robert Lewandowski be the top Champions League scorer?
+  75501720  0.6628  Will Juventus finish in the top 4 in the 2025-26 Serie A season?
+  58158170  0.6628  Will Germany win Group A?
+  75730117  0.6628  Will Leverkusen finish in the top 4 of the Bundesliga 2025–26 standings?
+  63084577  0.6628  Will another team win the Bundesliga?
+  78072997  0.6629  Will Ehime FC win on 2025-11-02?
+  76328116  0.6629  Will Paris FC vs. RC Strasbourg Alsace end in a draw?
+  75221194  0.6629  Will FC Metz vs. RC Strasbourg Alsace end in a draw?
+  72716180  0.6630  Will Germany U21 beat Czechia U21?
+  77275586  0.6631  Will 1. FC Köln vs. FC Augsburg end in a draw?
+  75730128  0.6632  Will Getafe finish in the top 4 of the La Liga 2025–26 standings?
+  77959036  0.6634  Spread: Cagliari (-0.5)
+  77635978  0.6636  Will SpVgg Greuther Fürth 1903 vs. 1. FC Kaiserslautern end in a draw?
+  32810321  0.6636  Champions League: Who will win the Inter vs. Bayern game on September 7?
+  77316021  0.6637  Will Racing Club de Lens vs. Paris FC end in a draw?
+  78551795  0.6640  FK Haugesund vs. Molde FK: Both Teams to Score
+  75730122  0.6641  Will Hoffenheim finish in the top 4 of the Bundesliga 2025–26 standings?
+  76508650  0.6642  Spread: PSV Eindhoven (-0.5)
+  78261400  0.6642  Spread: SC Freiburg (-0.5)
+  77959040  0.6642  Spread: SC Freiburg (-0.5)
+  78218208  0.6643  Lille OSC vs. Angers SCO: O/U 2.5
+  78824767  0.6643  Spread: Aston Villa (-1.5)
+  78218207  0.6644  Racing Club de Lens vs. FC Lorient: Both Teams to Score
+  73502457  0.6645  Real Madrid vs. Dortmund: 3+ Goals Scored?
+  78021861  0.6650  Will 1. FSV Mainz 05 vs. HŠK Zrinjski Mostar end in a draw?
+  78033898  0.6652  Cruzeiro EC vs. EC Vitória: O/U 2.5
+  78241777  0.6655  Will FK Bodø/Glimt vs. AS Monaco FC end in a draw?
+  78717324  0.6655  Will 1. FC Magdeburg win on 2025-12-02?
+  40338064  0.6656  Will Real Madrid beat Liverpool? 2023-03-15
+  75501719  0.6656  Will Roma finish in the top 4 in the 2025-26 Serie A season?
+  73502491  0.6658  Will Borussia Dortmund beat Real Madrid in regulation time?
+  79125476  0.6658  Will SC Freiburg vs. FSV Mainz 05 end in a draw?
+  78824768  0.6658  Spread: RB Leipzig (-1.5)
+  79040697  0.6658  Spread: RB Leipzig (-1.5)
+  78935023  0.6663  BV Borussia 09 Dortmund vs. Villarreal CF: Both Teams to Score
+  39326860  0.6665  Will Napoli beat Frankfurt? (02/21/2023)
+  78781579  0.6665  FC Augsburg vs. Hamburger SV: Both Teams to Score
+  78033895  0.6665  EC Bahia vs. Red Bull Bragantino: O/U 2.5
+  75784417  0.6667  Will Nice finish in the top 4 of the Ligue 1 2025–26 standings?
+  78230803  0.6668  Grêmio FBPA vs. Cruzeiro EC: O/U 2.5
+  76748510  0.6669  Will Hamburger SV vs. FSV Mainz 05 end in a draw?
+  78785169  0.6669  Villarreal vs. Mallorca: O/U 2.5
+  76327924  0.6670  Will Paris Saint-Germain FC vs. Racing Club de Lens end in a draw?
+  75730120  0.6670  Will Eintracht Frankfurt finish in the top 4 of the Bundesliga 2025–26 standings
+  77635948  0.6671  Will 1. FSV Mainz 05 vs. VfB Stuttgart end in a draw?
+  78835565  0.6671  Spread: Sheffield United FC (-1.5)
+  58282066  0.6672  Euro 2024: Favorite fails to advance beyond group stage?
+  75342915  0.6673  Will AS Monaco FC vs. RC Strasbourg Alsace end in a draw?
+  75730114  0.6674  Will VfL Wolfsburg finish in the top 4 of the Bundesliga 2025–26 standings?
+  78265004  0.6675  Elche CF vs. Real Sociedad: Both Teams to Score
+  78835576  0.6675  Spread: Birmingham City FC (-1.5)
+  78897729  0.6677  Villarreal vs. Mallorca: O/U 3.5
+  78717244  0.6678  Will Hertha BSC vs. 1. FC Kaiserslautern end in a draw?
+  78261398  0.6679  Eintracht Frankfurt vs. FSV Mainz 05: Both Teams to Score
+  78533191  0.6679  Spread: West Bromwich Albion FC (-1.5)
+  78185804  0.6679  Spread: West Bromwich Albion FC (-1.5)
+  78243427  0.6681  Will 1. FSV Mainz 05 vs. ACF Fiorentina end in a draw?
+  75730136  0.6682  Will Girona finish in the top 4 of the La Liga 2025–26 standings?
+  78551799  0.6683  Spread: Melbourne City FC (-0.5)
+  78835575  0.6684  Spread: Middlesbrough FC (-1.5)
+  78837374  0.6684  Spread: SE Palmeiras (-1.5)
+  78880576  0.6684  Spread: SE Palmeiras (-1.5)
+  78923777  0.6684  Spread: SE Palmeiras (-1.5)
+  78230800  0.6684  Spread: SE Palmeiras (-1.5)
+  78033894  0.6684  Spread: SE Palmeiras (-1.5)
+  78033899  0.6684  Spread: SE Palmeiras (-1.5)
+  77570285  0.6685  Spread: RB Leipzig (-0.5)
+  78261405  0.6685  Spread: RB Leipzig (-0.5)
+  77959038  0.6685  Spread: RB Leipzig (-0.5)
+  78328026  0.6688  Will 1. FC Köln vs. FC Bayern München end in a draw?
+  75342834  0.6688  Will 1. FC Köln vs. SC Freiburg end in a draw?
+  61982437  0.6688  Will another team win La Liga?
+  78110767  0.6689  VfB Stuttgart vs. FSV Mainz 05: Both Teams to Score
+  75730115  0.6690  Will FC Koln finish in the top 4 of the Bundesliga 2025–26 standings?
+  78923773  0.6690  Mirassol FC vs. Ceará SC: Both Teams to Score
+  79083914  0.6690  Werder Bremen vs. 1. FC Köln: Both Teams to Score
+  78533190  0.6691  Spread: Coventry City FC (-0.5)
+  78185805  0.6691  Spread: Coventry City FC (-0.5)
+  79022320  0.6691  FK Crvena zvezda vs. FCSB: O/U 3.5
+  78534995  0.6693  Spread: SE Palmeiras (-0.5)
+  78131806  0.6693  Pisa SC vs. Lazio: Both Teams to Score
+  75730122  0.6693  Will FC Heidenheim finish in the top 4 of the Bundesliga 2025–26 standings?
+  75730131  0.6694  Will Sevilla finish in the top 4 of the La Liga 2025–26 standings?
+  75730121  0.6695  Will Union Berlin finish in the top 4 of the Bundesliga 2025–26 standings?
+  75501721  0.6695  Will Cagliari finish in the top 4 in the 2025-26 Serie A season?
+  79040707  0.6697  FC Metz vs. Stade Rennais FC 1901: Both Teams to Score
+  78031989  0.6697  SC Heerenveen vs. NAC Breda: O/U 2.5
+  77914102  0.6699  Will 1. FC Köln vs. Hamburger SV end in a draw?
+  77640487  0.6699  Will FC Fredericia win on 2025-11-09?
+  78218209  0.6700  FC Nantes vs. FC Metz: Both Teams to Score
+  78738364  0.6700  Spread: FSV Mainz 05 (-1.5)
+  77942033  0.6701  Spread: FC Midtjylland (-0.5)
+  78242947  0.6701  Spread: FC Midtjylland (-0.5)
+  78242948  0.6701  Spread: FC Basel 1893 (-0.5)
+  78283002  0.6702  Spread: Vancouver Whitecaps FC (-0.5)
+  68325455  0.6703  Will Antoine Griezmann be the top Champions League scorer?
+  78094004  0.6707  Querétaro FC vs. Mazatlán FC: O/U 2.5
+  70742518  0.6707  Will Hoffenheim vs. Dortmund end in a draw
+  79022321  0.6707  Panathinaikós AO vs. SK Puntigamer Sturm Graz: O/U 1.5
+  75784417  0.6707  Will Lille finish in the top 4 of the Ligue 1 2025–26 standings?
+  79022319  0.6708  FK Crvena zvezda vs. FCSB: O/U 2.5
+  75730118  0.6708  Will Mainz finish in the top 4 of the Bundesliga 2025–26 standings?
+  75784412  0.6710  Will Metz finish in the top 4 of the Ligue 1 2025–26 standings?
+  78263203  0.6710  Spread: FC Twente '65 (-1.5)
+  78956171  0.6710  Spread: FC Twente '65 (-1.5)
+  77613480  0.6711  US Sassuolo Calcio vs. AS Roma: O/U 2.5
+  78546401  0.6711  Spread: Newcastle United FC (-1.5)
+  78935014  0.6711  Spread: Newcastle United FC (-1.5)
+  78185806  0.6714  Spread: Millwall FC (-0.5)
+  78533194  0.6714  Spread: Millwall FC (-0.5)
+  75730121  0.6716  Will RB Leipzig finish in the top 4 of the Bundesliga 2025–26 standings?
+  78218207  0.6717  Spread: AC Milan (-0.5)
+  78002225  0.6717  Spread: AC Milan (-0.5)
+  78923776  0.6718  CR Flamengo vs. Red Bull Bragantino: O/U 2.5
+  79083904  0.6719  AC Milan vs. SS Lazio: O/U 3.5
+  75501728  0.6719  Will Lecce finish in the top 4 in the 2025-26 Serie A season?
+  78979111  0.6720  Spread: Aston Villa FC (-2.5)
+  78668594  0.6720  Spread: Aston Villa FC (-2.5)
+  75730119  0.6722  Will Hamburger SV finish in the top 4 of the Bundesliga 2025–26 standings?
+  75784416  0.6722  Will Lyon finish in the top 4 of the Ligue 1 2025–26 standings?
+  78264999  0.6724  Valencia vs. Real Betis: O/U 2.5
+  78230804  0.6727  CA Mineiro vs. EC Bahia: Both Teams to Score
+  77959040  0.6727  Olympique de Marseille vs. Angers SCO: O/U 3.5
+  66462988  0.6727  Supercopa Semfinal: Real Madrid vs. Mallorca
+  78546399  0.6727  FC Internazionale Milano vs. Qairat FK: O/U 4.5
+  75784416  0.6729  Will Le Havre finish in the top 4 of the Ligue 1 2025–26 standings?
+  40049015  0.6731  Will Benfica beat Club Brugge? (03/07/2023)
+  78835574  0.6731  Spread: Millwall FC (-1.5)
+  76508659  0.6732  FC Kopenhagen vs. Bayer Leverkusen: O/U 2.5
+  77741329  0.6732  Will FC Metz vs. Racing Club de Lens end in a draw?
+  78031990  0.6732  Deportivo Toluca FC vs. CF Pachuca: O/U 3.5
+  75730119  0.6733  Will St Pauli finish in the top 4 of the Bundesliga 2025–26 standings?
+  75730114  0.6733  Will FC Augsburg finish in the top 4 of the Bundesliga 2025–26 standings?
+  78110755  0.6734  Real Sociedad vs. Athletic Club: Both Teams to Score
+  78031987  0.6736  Spread: FC Twente '65 (-0.5)
+  75730131  0.6736  Will Espanyol finish in the top 4 of the La Liga 2025–26 standings?
+  78031995  0.6739  Querétaro FC vs. CD Guadalajara: O/U 2.5
+  75730133  0.6742  Will Villarreal finish in the top 4 of the La Liga 2025–26 standings?
+  78353199  0.6743  Club León FC vs. Club Puebla: O/U 2.5
+  78738365  0.6745  FSV Mainz 05 vs. 1899 Hoffenheim: Both Teams to Score
+  78391006  0.6746  AS Monaco FC vs. Racing Club de Lens: Both Teams to Score
+  78897720  0.6746  Villarreal vs. Mallorca: O/U 1.5
+  39294458  0.6748  Will Benfica beat Club Brugge? (2/15/2023)
+  78549431  0.6748  Will FC Fredericia win on 2025-12-01?
+  78031103  0.6751  Spread: Charlotte FC (-0.5)
+  78587180  0.6751  Spread: Charlotte FC (-0.5)
+  41685228  0.6752  Will Man City beat Bayern? 2023-04-19
+  40049110  0.6753  Will Bayern beat PSG? (03/08/2023)
+  78033897  0.6753  Ceará SC vs. Fluminense FC: O/U 2.5
+  79022317  0.6756  Spread: Nottingham Forest FC (-2.5)
+  75784416  0.6757  Will Strasbourg finish in the top 4 of the Ligue 1 2025–26 standings?
+  78867968  0.6757  Spread: US Sassuolo Calcio (-1.5)
+  78401794  0.6758  Spread: Leicester City FC (-0.5)
+  78533188  0.6758  Spread: Leicester City FC (-0.5)
+  78185804  0.6758  Spread: Leicester City FC (-0.5)
+  78033905  0.6758  Spread: Leicester City FC (-0.5)
+  78930975  0.6758  Hamarkameratene vs. FK Haugesund: O/U 2.5
+  78551795  0.6758  FK Bodø/Glimt vs. Bryne FK: O/U 3.5
+  75730130  0.6759  Will Mallorca finish in the top 4 of the La Liga 2025–26 standings?
+  78533194  0.6759  Spread: Watford FC (-0.5)
+  77527102  0.6760  Spread: Leeds United (-0.5)
+  78242948  0.6762  FC Basel 1893 vs. FCSB: Both Teams to Score
+  78533192  0.6763  Spread: Ipswich Town FC (-0.5)
+  78185806  0.6763  Spread: Ipswich Town FC (-0.5)
+  78033907  0.6763  Spread: Ipswich Town FC (-0.5)
+  78668608  0.6763  Spread: GNK Dinamo Zagreb (-0.5)
+  77942033  0.6763  Spread: GNK Dinamo Zagreb (-0.5)
+  78880577  0.6764  SE Palmeiras vs. EC Vitória: O/U 2.5
+  77959044  0.6765  Spread: FC St. Pauli (-0.5)
+  78218210  0.6765  Fiorentina vs. Lecce: O/U 2.5
+  77527101  0.6766  Spread: AC Milan (-1.5)
+  79083903  0.6766  Spread: AC Milan (-1.5)
+  78434196  0.6766  Spread: AC Milan (-1.5)
+  77378323  0.6767  Will FC Fredericia win on 2025-11-01?
+  79083904  0.6768  AC Milan vs. SS Lazio: O/U 2.5
+  77941043  0.6769  Spread: Liverpool FC (-1.5)
+  75501724  0.6773  Will Como finish in the top 4 in the 2025-26 Serie A season?
+  77570272  0.6779  Spread: Olympique de Marseille (-0.5)
+  78546402  0.6779  Spread: Olympique de Marseille (-0.5)
+  75784413  0.6782  Will Lens finish in the top 4 of the Ligue 1 2025–26 standings?
+  75730132  0.6786  Will Celta Vigo finish in the top 4 of the La Liga 2025–26 standings?
+  78935025  0.6786  SK Slavia Praha vs. Athletic Club: O/U 2.5
+  78534988  0.6787  Cruzeiro EC vs. Fluminense FC: O/U 2.5
+  75730128  0.6787  Will Athletic Bilbao finish in the top 4 of the La Liga 2025–26 standings?
+  75533543  0.6788  Will FSV Mainz 05 vs. 1. FC Köln end in a draw?
+  75501725  0.6789  Will Lazio finish in the top 4 in the 2025-26 Serie A season?
+  78033895  0.6789  EC Juventude vs. SE Palmeiras: O/U 2.5
+  78546407  0.6790  Paris Saint-Germain FC vs. FC Bayern München: Both Teams to Score
+  78033902  0.6790  CA Mineiro vs. Ceará SC: O/U 1.5
+  77613479  0.6792  Stade Rennais FC 1901 vs. OGC Nice: O/U 2.5
+  78282990  0.6792  Spread: San Diego FC (-0.5)
+  75730120  0.6794  Will Werder Bremen finish in the top 4 of the Bundesliga 2025–26 standings?
+  77959035  0.6794  RB Leipzig vs. VfB Stuttgart: O/U 3.5
+  78218209  0.6795  Torino vs. Pisa SC: O/U 2.5
+  75730118  0.6797  Will Bayern Munich finish in the top 4 of the Bundesliga 2025–26 standings?
+  77474364  0.6798  FC Bayern Munchen vs. Olimpia Milano
+  78824769  0.6799  Spread: Stade Brestois 29 (-1.5)
+  78668607  0.6802  Real Betis Balompié vs. Olympique Lyonnais: O/U 2.5
+  78546403  0.6806  Sport Lisboa e Benfica vs. Bayer 04 Leverkusen: Both Teams to Score
+  78935014  0.6807  Spread: FC København (-1.5)
+  78846366  0.6807  Spread: Vancouver Whitecaps FC (-1.5)
+  78031113  0.6807  Spread: Vancouver Whitecaps FC (-1.5)
+  76508651  0.6808  Spread: Juventus (-0.5)
+  77613477  0.6808  Spread: Juventus (-0.5)
+  21676508  0.6808  UEFA Champions League: Will the goal difference in Chelsea v. Juventus be greate
+  78824765  0.6809  Spread: FC St. Pauli (-1.5)
+  79022321  0.6810  Spread: Panathinaikós AO (-1.5)
+  79022319  0.6813  FK Crvena zvezda vs. FCSB: O/U 1.5
+  78265004  0.6813  Elche CF vs. Real Sociedad: O/U 2.5
+  79022316  0.6816  KRC Genk vs. FC Basel 1893: O/U 3.5
+  75730115  0.6818  Will Dortmund finish in the top 4 of the Bundesliga 2025–26 standings?
+  77959038  0.6818  Spread: FSV Mainz 05 (-0.5)
+  78401790  0.6818  Spread: Southampton FC (-0.5)
+  78033905  0.6818  Spread: Southampton FC (-0.5)
+  79083912  0.6819  AS Monaco FC vs. Paris Saint-Germain FC: Both Teams to Score
+  78837368  0.6820  Red Bull Bragantino vs. CA Mineiro: O/U 2.5
+  78824767  0.6820  SS Lazio vs. US Lecce: O/U 2.5
+  78031113  0.6822  Spread: Portland Timbers (-0.5)
+  79022315  0.6826  Real Betis Balompié vs. FC Utrecht: O/U 2.5
+  77942003  0.6828  SC Freiburg vs. FC Utrecht: O/U 2.5
+  77613478  0.6829  Bayer Leverkusen vs. SC Freiburg: O/U 2.5
+  78031994  0.6830  Pumas de la UNAM vs. Atlético San Luis: O/U 2.5
+  75730129  0.6831  Will Valencia finish in the top 4 of the La Liga 2025–26 standings?
+  79022316  0.6831  Real Betis Balompié vs. FC Utrecht: O/U 3.5
+  78031994  0.6833  Spread: Deportivo Toluca FC (-0.5)
+  78353199  0.6833  Spread: Deportivo Toluca FC (-0.5)
+  70640643  0.6834  Will another team finish second in La Liga?
+  79022319  0.6836  Spread: FK Crvena zvezda (-1.5)
+  78401792  0.6836  Spread: Coventry City FC (-1.5)
+  78835578  0.6836  Spread: Coventry City FC (-1.5)
+  78033907  0.6836  Spread: Coventry City FC (-1.5)
+  77570285  0.6838  Hamburger SV vs. VfL Wolfsburg: O/U 2.5
+  77613477  0.6838  Lazio vs. Juventus: O/U 2.5
+  77941973  0.6840  Spread: Aston Villa FC (-1.5)
+  75730137  0.6842  Will Real Sociedad finish in the top 4 of the La Liga 2025–26 standings?
+  78242946  0.6842  FC Utrecht vs. FC Porto: O/U 2.5
+  78835578  0.6842  Spread: Charlton Athletic FC (-1.5)
+  70710618  0.6843  Copa del Rey Final: Real Madrid vs. Barcelona
+  77570282  0.6844  Spread: 1899 Hoffenheim (-1.5)
+  79083915  0.6844  Spread: 1899 Hoffenheim (-1.5)
+  78979114  0.6844  Spread: Fenerbahçe SK (-1.5)
+  79083916  0.6851  1899 Hoffenheim vs. FC Augsburg: O/U 3.5
+  78668614  0.6852  SK Puntigamer Sturm Graz vs. Nottingham Forest FC: O/U 2.5
+  78551796  0.6855  Spread: FK Bodø/Glimt (-2.5)
+  77635983  0.6855  Will 1. FC Kaiserslautern win on 2025-10-29?
+  75784414  0.6856  Will Paris St-Germain finish in the top 4 of the Ligue 1 2025–26 standings?
+  78923773  0.6858  Spread: Mirassol FC (-1.5)
+  78031988  0.6858  Spread: FC Groningen (-0.5)
+  78176801  0.6858  Spread: FC Groningen (-0.5)
+  78668605  0.6859  VfB Stuttgart vs. Feyenoord Rotterdam: O/U 2.5
+  78176800  0.6860  Spread: FC Utrecht (-0.5)
+  77941043  0.6860  Spread: Chelsea FC (-2.5)
+  78033897  0.6861  Spread: Mirassol FC (-0.5)
+  78033901  0.6861  Spread: Mirassol FC (-0.5)
+  79022315  0.6861  KRC Genk vs. FC Basel 1893: O/U 2.5
+  40338073  0.6862  Will Napoli beat Frankfurt? 2023-03-15
+  77941983  0.6862  FCSB vs. Bologna FC 1909: O/U 2.5
+  78401793  0.6866  Spread: Derby County FC (-0.5)
+  78033903  0.6866  Spread: Derby County FC (-0.5)
+  75730132  0.6867  Will Barcelona finish in the top 4 of the La Liga 2025–26 standings?
+  78031994  0.6868  Spread: FC Juárez (-0.5)
+  78867967  0.6869  US Sassuolo Calcio vs. Pisa SC: O/U 2.5
+  78218208  0.6872  Spread: FC Nantes (-0.5)
+  78131806  0.6872  Spread: Lazio (-0.5)
+  78391006  0.6872  FC Lorient vs. Toulouse FC: O/U 2.5
+  77962635  0.6873  Real Madrid vs. Valencia: O/U 3.5
+  77617076  0.6876  Spread: Real Madrid (-0.5)
+  78668614  0.6877  Spread: Nottingham Forest FC (-1.5)
+  78309995  0.6879  Spread: FC Juárez (-1.5)
+  77941983  0.6879  Spread: Bologna FC 1909 (-1.5)
+  78781572  0.6879  Spread: Bologna FC 1909 (-1.5)
+  79022319  0.6879  Spread: Bologna FC 1909 (-1.5)
+  77962635  0.6880  Spread: Real Madrid (-2.5)
+  78930977  0.6881  Spread: FK Bodø/Glimt (-1.5)
+  78534991  0.6881  São Paulo FC vs. Red Bull Bragantino: O/U 2.5
+  79083901  0.6881  Bayer Leverkusen vs. Borussia Dortmund: O/U 2.5
+  75784415  0.6882  Will Marseille finish in the top 4 of the Ligue 1 2025–26 standings?
+  78668607  0.6883  Bologna FC 1909 vs. SK Brann: O/U 2.5
+  77959035  0.6883  VfL Wolfsburg vs. 1899 Hoffenheim: O/U 3.5
+  79083901  0.6883  Bayer Leverkusen vs. Borussia Dortmund: O/U 3.5
+  78031989  0.6885  Club Puebla vs. CF Cruz Azul: O/U 2.5
+  78261404  0.6888  Bayer Leverkusen vs. 1. FC Heidenheim: O/U 3.5
+  78956165  0.6889  Spread: FC Groningen (-1.5)
+  77959033  0.6890  Spread: Toulouse FC (-0.5)
+  78391004  0.6890  Spread: Toulouse FC (-0.5)
+  77942012  0.6890  Spread: Celtic FC (-1.5)
+  79022315  0.6891  Real Betis Balompié vs. FC Utrecht: O/U 1.5
+  78033894  0.6891  Spread: Santos FC (-0.5)
+  79040697  0.6892  Borussia Mönchengladbach vs. RB Leipzig: O/U 3.5
+  78218210  0.6892  Spread: Stade Rennais FC 1901 (-0.5)
+  79040697  0.6893  Borussia Mönchengladbach vs. RB Leipzig: O/U 2.5
+  75730134  0.6894  Will Real Madrid finish in the top 4 of the La Liga 2025–26 standings?
+  79022315  0.6896  KRC Genk vs. FC Basel 1893: O/U 1.5
+  78835576  0.6898  Spread: Leicester City FC (-1.5)
+  79083916  0.6898  1899 Hoffenheim vs. FC Augsburg: O/U 2.5
+  78033899  0.6899  SE Palmeiras vs. Cruzeiro EC: O/U 2.5
+  75784419  0.6900  Will Monaco finish in the top 4 of the Ligue 1 2025–26 standings?
+  75501722  0.6900  Will Inter finish in the top 4 in the 2025-26 Serie A season?
+  78546402  0.6901  Spread: Manchester City FC (-1.5)
+  78935014  0.6901  Spread: Manchester City FC (-1.5)
+  77959037  0.6904  Spread: Olympique Lyonnais (-0.5)
+  78218204  0.6904  Spread: Olympique Lyonnais (-0.5)
+  77613475  0.6904  Spread: Olympique Lyonnais (-0.5)
+  78781574  0.6904  VfL Wolfsburg vs. Bayer Leverkusen: O/U 2.5
+  78218210  0.6908  Stade Rennais FC 1901 vs. RC Strasbourg Alsace: O/U 2.5
+  78673594  0.6909  Spread: San Diego FC (-1.5)
+  79083904  0.6909  AC Milan vs. SS Lazio: O/U 1.5
+  78546405  0.6910  Spread: Tottenham Hotspur FC (-1.5)
+  77941973  0.6911  Olympique Lyonnais vs. FC Basel 1893: O/U 2.5
+  77941973  0.6912  Spread: Olympique Lyonnais (-1.5)
+  78824771  0.6912  Spread: Olympique Lyonnais (-1.5)
+  79022322  0.6912  Spread: Olympique Lyonnais (-1.5)
+  78094003  0.6913  Spread: Querétaro FC (-0.5)
+  78261405  0.6913  1899 Hoffenheim vs. RB Leipzig: O/U 3.5
+  78110766  0.6913  FSV Mainz 05 vs. Werder Bremen: Both Teams to Score
+  78401794  0.6914  Spread: Ipswich Town FC (-1.5)
+  78835574  0.6914  Spread: Ipswich Town FC (-1.5)
+  79042497  0.6916  PEC Zwolle vs. SC Heerenveen: O/U 2.5
+  79128899  0.6917  Spread: FC Utrecht (-1.5)
+  78956167  0.6917  Spread: FC Utrecht (-1.5)
+  78717249  0.6921  Will 1. FC Kaiserslautern win on 2025-12-02?
+  75784414  0.6923  Will Paris FC finish in the top 4 of the Ligue 1 2025–26 standings?
+  78824768  0.6924  Stade Brestois 29 vs. FC Metz: O/U 2.5
+  77941993  0.6930  Feyenoord Rotterdam vs. Panathinaikós AO: O/U 2.5
+  78533189  0.6931  Spread: Southampton FC (-1.5)
+  78185801  0.6931  Spread: Southampton FC (-1.5)
+  77941973  0.6932  Spread: FC Red Bull Salzburg (-0.5)
+  22008854  0.6935  Serie A: Will the goal difference in Roma v. Inter Milan be more or less than 1?
+  77959036  0.6939  Bayern München vs. Bayer Leverkusen: O/U 3.5
+  78824769  0.6939  Spread: FC Nantes (-1.5)
+  78546407  0.6942  Spread: FK Bodø/Glimt (-0.5)
+  75730137  0.6943  Will Atletico Madrid finish in the top 4 of the La Liga 2025–26 standings?
+  78265002  0.6945  Athletic Club vs. Real Oviedo: O/U 2.5
+  79042496  0.6946  PEC Zwolle vs. SC Heerenveen: O/U 1.5
+  78018402  0.6950  FC Bayern Munchen vs. Real Madrid
+  79040706  0.6951  Spread: Stade Rennais FC 1901 (-1.5)
+  76508654  0.6951  Spread: Benfica (-2.5)
+  79042497  0.6953  PEC Zwolle vs. SC Heerenveen: O/U 3.5
+  77845643  0.6959  FC Bayern Munchen vs. Olympiacos B.C.
+  78242946  0.6960  FC Basel 1893 vs. FCSB: O/U 2.5
+  78956171  0.6960  FC Volendam vs. FC Twente '65: O/U 3.5
+  78880575  0.6963  Spread: Santos FC (-1.5)
+  78828365  0.6963  Spread: Real Madrid (-1.5)
+  78265001  0.6963  Spread: Real Madrid (-1.5)
+  76508660  0.6963  Spread: Real Madrid (-1.5)
+  78546403  0.6966  Spread: Chelsea FC (-1.5)
+  78935024  0.6966  Spread: Chelsea FC (-1.5)
+  78050798  0.6969  Spread: Deportivo Toluca FC (-1.5)
+  78031991  0.6969  Spread: Deportivo Toluca FC (-1.5)
+  77941081  0.6971  Galatasaray SK vs. FK Bodø/Glimt: O/U 3.5
+  77941963  0.6971  Fenerbahçe SK vs. VfB Stuttgart: O/U 2.5
+  79021414  0.6974  Spread: Arsenal FC (-1.5)
+  78546317  0.6974  Spread: Arsenal FC (-1.5)
+  78218204  0.6979  Spread: Lazio (-1.5)
+  78353200  0.6988  Spread: Club León FC (-0.5)
+  78031994  0.6988  Spread: Club León FC (-0.5)
+  77613476  0.6989  Olympique Lyonnais vs. RC Strasbourg Alsace: O/U 2.5
+  78835577  0.6992  Spread: Derby County FC (-1.5)
+  77527102  0.6993  Paris FC vs. FC Nantes: O/U 2.5
+  78261401  0.6996  Spread: Borussia Mönchengladbach (-0.5)
+  78824770  0.6996  Spread: Toulouse FC (-1.5)
+  78031992  0.6997  CD Guadalajara vs. Atlas FC: O/U 3.5
+  78781579  0.7000  FC Augsburg vs. Hamburger SV: O/U 2.5
+  77570284  0.7001  Spread: Bayern München (-2.5)
+  79083908  0.7001  Spread: Bayern München (-2.5)
+  77959036  0.7001  Spread: Bayern München (-2.5)
+  78781575  0.7001  Spread: Bayern München (-2.5)
+  79083910  0.7002  Genoa CFC vs. Hellas Verona FC: O/U 2.5
+  77613480  0.7007  Lille OSC vs. FC Metz: O/U 2.5
+  77959033  0.7009  Spread: VfL Wolfsburg (-0.5)
+  79083911  0.7009  Genoa CFC vs. Hellas Verona FC: O/U 3.5
+  79022319  0.7011  Bologna FC 1909 vs. FC Red Bull Salzburg: O/U 1.5
+  78546407  0.7013  FK Bodø/Glimt vs. AS Monaco FC: Both Teams to Score
+  78391007  0.7015  Paris FC vs. Stade Rennais FC 1901: O/U 2.5
+  78131806  0.7016  Pisa SC vs. Lazio: O/U 2.5
+  77941078  0.7016  FC Bayern München vs. Club Brugge KV: O/U 3.5
+  79083901  0.7021  Bayer Leverkusen vs. Borussia Dortmund: O/U 1.5
+  79083916  0.7029  1899 Hoffenheim vs. FC Augsburg: O/U 1.5
+  78033901  0.7030  SC Recife vs. Mirassol FC: O/U 2.5
+  78979112  0.7030  FC Viktoria Plzeň vs. SC Freiburg: O/U 2.5
+  78391002  0.7031  Olympique Lyonnais vs. Paris Saint-Germain FC: O/U 3.5
+  78781575  0.7031  Bayern München vs. SC Freiburg: O/U 3.5
+  78391006  0.7031  AS Monaco FC vs. Racing Club de Lens: O/U 3.5
+  78031995  0.7032  Atlas FC vs. Club León FC: O/U 2.5
+  78434194  0.7034  Inter vs. Lazio: O/U 2.5
+  79021417  0.7036  Club Atlético de Madrid vs. FC Internazionale Milano: O/U 2.5
+  79040706  0.7036  Como 1907 vs. US Sassuolo Calcio: O/U 2.5
+  78781572  0.7036  Stade Rennais FC 1901 vs. AS Monaco FC: O/U 3.5
+  78668615  0.7037  Spread: FC Red Bull Salzburg (-1.5)
+  78668174  0.7038  FC Bayern Munchen vs. Barcelona
+  78546405  0.7040  Spread: Juventus FC (-0.5)
+  77959037  0.7040  Paris FC vs. Olympique Lyonnais: O/U 2.5
+  77570282  0.7043  1899 Hoffenheim vs. 1. FC Heidenheim: O/U 2.5
+  78031990  0.7049  Spread: Atlético San Luis (-0.5)
+  78031989  0.7049  Spread: Atlético San Luis (-0.5)
+  78261401  0.7054  Borussia Mönchengladbach vs. 1. FC Köln: O/U 2.5
+  79021415  0.7055  Arsenal FC vs. FC Bayern München: O/U 3.5
+  77265216  0.7055  Spread: Atletico Madrid (-0.5)
+  77660271  0.7055  Spread: Atletico Madrid (-0.5)
+  78309995  0.7057  FC Juárez vs. Querétaro FC: O/U 2.5
+  78846367  0.7059  Vancouver Whitecaps FC vs. Los Angeles FC: O/U 2.5
+  77570281  0.7061  Stade Brestois 29 vs. Paris Saint-Germain FC: O/U 3.5
+  79040707  0.7064  Como 1907 vs. US Sassuolo Calcio: O/U 1.5
+  78391004  0.7064  FC Metz vs. OGC Nice: O/U 2.5
+  78033899  0.7065  São Paulo FC vs. EC Bahia: O/U 2.5
+  78261402  0.7068  Spread: Bayern München (-1.5)
+  78218213  0.7068  Paris Saint-Germain FC vs. OGC Nice: O/U 3.5
+  73508003  0.7069  FIFA Club World Cup: Real Madrid vs. Dortmund (To Advance)
+  78176802  0.7070  FC Groningen vs. FC Twente '65: O/U 2.5
+  78781579  0.7078  Spread: FC Augsburg (-1.5)
+  79021415  0.7085  Arsenal FC vs. FC Bayern München: O/U 2.5
+  78261402  0.7087  Hamburger SV vs. Borussia Dortmund: O/U 3.5
+  78218212  0.7090  AS Monaco FC vs. Paris FC: O/U 3.5
+  78546403  0.7092  Sport Lisboa e Benfica vs. Bayer 04 Leverkusen: O/U 2.5
+  79040707  0.7096  FC Metz vs. Stade Rennais FC 1901: O/U 3.5
+  79083909  0.7097  Bayern München vs. FC St. Pauli: O/U 2.5
+  77941079  0.7099  Spread: Real Madrid CF (-1.5)
+  79021416  0.7099  Spread: Real Madrid CF (-1.5)
+  78265002  0.7100  Spread: Atletico Madrid (-2.5)
+  78031114  0.7103  Spread: Inter Miami CF (-1.5)
+  78551794  0.7106  FK Haugesund vs. Molde FK: O/U 3.5
+  79022318  0.7106  Nottingham Forest FC vs. Malmö FF: O/U 1.5
+  77959039  0.7107  FC Nantes vs. AS Monaco FC: O/U 2.5
+  77941078  0.7108  Real Madrid CF vs. Juventus FC: O/U 2.5
+  79040707  0.7109  FC Metz vs. Stade Rennais FC 1901: O/U 2.5
+  78824770  0.7111  FC Nantes vs. FC Lorient: O/U 2.5
+  78534991  0.7113  Spread: São Paulo FC (-0.5)
+  78033900  0.7113  Spread: São Paulo FC (-0.5)
+  79021418  0.7118  Club Atlético de Madrid vs. FC Internazionale Milano: O/U 1.5
+  77959047  0.7118  Spread: Borussia Dortmund (-0.5)
+  78261402  0.7118  Spread: Borussia Dortmund (-0.5)
+  69118967  0.7120  Champions League Quarterfinals: Bayern vs. Inter Milan
+  77962635  0.7120  Real Sociedad vs. Athletic Club: O/U 2.5
+  78218209  0.7121  FC Nantes vs. FC Metz: O/U 2.5
+  78546404  0.7125  Spread: Club Atlético de Madrid (-2.5)
+  79083910  0.7127  Genoa CFC vs. Hellas Verona FC: O/U 1.5
+  78391006  0.7133  Spread: Paris FC (-0.5)
+  77959045  0.7137  FC Metz vs. Racing Club de Lens: O/U 2.5
+  78867969  0.7140  Torino FC vs. Como 1907: O/U 2.5
+  76508655  0.7144  Spread: Paris Saint Germain (-1.5)
+  79040707  0.7151  FC Metz vs. Stade Rennais FC 1901: O/U 1.5
+  78935023  0.7152  FK Bodø/Glimt vs. Juventus FC: O/U 3.5
+  78979112  0.7153  Spread: FC Porto (-1.5)
+  78242946  0.7153  Spread: FC Porto (-1.5)
+  79021420  0.7161  Sporting CP vs. Club Brugge KV: O/U 3.5
+  77613475  0.7163  VfB Stuttgart vs. FSV Mainz 05: O/U 2.5
+  78935023  0.7163  BV Borussia 09 Dortmund vs. Villarreal CF: O/U 2.5
+  78261406  0.7164  Spread: Werder Bremen (-0.5)
+  77527101  0.7164  Spread: Werder Bremen (-0.5)
+  78935023  0.7171  Spread: Juventus FC (-1.5)
+  78781574  0.7171  Spread: Juventus FC (-1.5)
+  78391004  0.7171  Spread: AS Monaco FC (-0.5)
+  77959039  0.7171  Spread: AS Monaco FC (-0.5)
+  78546398  0.7172  Spread: FC Internazionale Milano (-3.5)
+  78891819  0.7173  Spread: Sport Lisboa e Benfica (-1.5)
+  78546402  0.7176  Spread: Sport Lisboa e Benfica (-0.5)
+  78546408  0.7178  Paris Saint-Germain FC vs. FC Bayern München: O/U 3.5
+  77962635  0.7178  Spread: Atletico Madrid (-1.5)
+  78828364  0.7178  Spread: Atletico Madrid (-1.5)
+  78546408  0.7181  Spread: Paris Saint-Germain FC (-0.5)
+  79083909  0.7183  Bayern München vs. FC St. Pauli: O/U 1.5
+  78781571  0.7185  Spread: Borussia Mönchengladbach (-1.5)
+  78880575  0.7185  Santos FC vs. Mirassol FC: O/U 2.5
+  78738365  0.7198  FSV Mainz 05 vs. 1899 Hoffenheim: O/U 2.5
+  79083906  0.7201  Spread: Paris FC (-1.5)
+  77527100  0.7201  Spread: Paris FC (-1.5)
+  78546407  0.7212  FK Bodø/Glimt vs. AS Monaco FC: O/U 3.5
+  79021414  0.7215  Arsenal FC vs. FC Bayern München: O/U 1.5
+  79021420  0.7221  Sporting CP vs. Club Brugge KV: O/U 1.5
+  79021417  0.7229  Spread: Club Atlético de Madrid (-1.5)
+  78781568  0.7231  1. FC Köln vs. Eintracht Frankfurt: Both Teams to Score
+  78031103  0.7240  Spread: Los Angeles FC (-1.5)
+  78781569  0.7245  Spread: Paris Saint-Germain FC (-2.5)
+  78781577  0.7247  Spread: Borussia Dortmund (-1.5)
+  77570281  0.7247  Spread: Borussia Dortmund (-1.5)
+  78261399  0.7248  Eintracht Frankfurt vs. FSV Mainz 05: O/U 3.5
+  78923775  0.7249  Spread: São Paulo FC (-1.5)
+  78546399  0.7262  Spread: FC Barcelona (-1.5)
+  78218212  0.7282  Spread: AS Monaco FC (-1.5)
+  77570271  0.7282  Spread: AS Monaco FC (-1.5)
+  78935013  0.7282  Spread: AS Monaco FC (-1.5)
+  78781570  0.7282  Spread: AS Monaco FC (-1.5)
+  79083913  0.7283  Spread: Werder Bremen (-1.5)
+  78824765  0.7287  Spread: FC Internazionale Milano (-1.5)
+  78935023  0.7287  Spread: BV Borussia 09 Dortmund (-1.5)
+  77959038  0.7325  FSV Mainz 05 vs. Werder Bremen: O/U 3.5
+  78781572  0.7333  1. FC Heidenheim vs. Borussia Mönchengladbach: Both Teams to Score
+  78110767  0.7334  1. FC Köln vs. Hamburger SV: Both Teams to Score
+  77570281  0.7337  Spread: Paris Saint-Germain FC (-1.5)
+  78391002  0.7337  Spread: Paris Saint-Germain FC (-1.5)
+  78218213  0.7337  Spread: Paris Saint-Germain FC (-1.5)
+  77959041  0.7337  Spread: Paris Saint-Germain FC (-1.5)
+  79021415  0.7337  Spread: Paris Saint-Germain FC (-1.5)
+  79083910  0.7337  Spread: Paris Saint-Germain FC (-1.5)
+  77941079  0.7354  Spread: FC Bayern München (-2.5)
+  76508675  0.7380  Spread: Bayern Munich (-1.5)
+  77959035  0.7381  Spread: 1. FC Köln (-0.5)
+  78110766  0.7435  1. FC Heidenheim vs. Eintracht Frankfurt: Both Teams to Score
+  78781569  0.7489  1. FC Köln vs. Eintracht Frankfurt: O/U 2.5
+  78781570  0.7525  1. FC Heidenheim vs. Borussia Mönchengladbach: O/U 2.5
+  77959046  0.7579  1. FC Heidenheim vs. Eintracht Frankfurt: O/U 3.5
+  77959036  0.7637  1. FC Köln vs. Hamburger SV: O/U 2.5

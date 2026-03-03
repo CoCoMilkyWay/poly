@@ -1,0 +1,195 @@
+# Coverage Analysis
+# Model: BAAI/bge-small-en-v1.5
+# Sample size: 170000
+# Include description: False
+
+====================================================================================================
+Label distribution (all 50 tags, sorted by count):
+----------------------------------------------------------------------------------------------------
+   17320 (10.19%)  avg=0.7708  Crypto_Price_Ethereum
+   13276 ( 7.81%)  avg=0.7619  Crypto_Price_Bitcoin
+   12762 ( 7.51%)  avg=0.7130  Crypto_Price_Solana
+   12487 ( 7.35%)  avg=0.7508  Crypto_Price_XRP
+   11644 ( 6.85%)  avg=0.6701  Crypto_Price_Altcoin_Memecoin
+    7984 ( 4.70%)  avg=0.6519  Sports_Football_College
+    7741 ( 4.55%)  avg=0.6531  Sports_Basketball_NBA
+    7620 ( 4.48%)  avg=0.6208  Politics_US_Trump
+    6559 ( 3.86%)  avg=0.6730  Sports_Esports
+    4687 ( 2.76%)  avg=0.6235  Sports_Football_NFL
+    4659 ( 2.74%)  avg=0.6434  Sports_Baseball_MLB
+    4503 ( 2.65%)  avg=0.5986  Politics_US_Presidential
+    4460 ( 2.62%)  avg=0.6300  Sports_Soccer_Other
+    4378 ( 2.58%)  avg=0.6342  Sports_Soccer_Premier_League
+    4369 ( 2.57%)  avg=0.7292  Weather_Temperature
+    4096 ( 2.41%)  avg=0.6354  Sports_Tennis
+    3750 ( 2.21%)  avg=0.6412  Sports_Basketball_College
+    3749 ( 2.21%)  avg=0.6142  Sports_Golf
+    3687 ( 2.17%)  avg=0.6279  Sports_Soccer_Champions_Europa
+    3358 ( 1.98%)  avg=0.6419  Sports_Hockey_NHL
+    2656 ( 1.56%)  avg=0.6095  Sports_Racing_Motorsport
+    2226 ( 1.31%)  avg=0.5657  Politics_World_Elections
+    2079 ( 1.22%)  avg=0.6322  Economy_Stock_Market
+    1974 ( 1.16%)  avg=0.6196  Sports_Soccer_Americas
+    1903 ( 1.12%)  avg=0.6408  Sports_Soccer_Top_Leagues
+    1881 ( 1.11%)  avg=0.5901  Politics_World_War_Conflict
+    1709 ( 1.01%)  avg=0.5555  Entertainment_Movies
+    1276 ( 0.75%)  avg=0.6336  Sports_Combat_UFC_Boxing
+     943 ( 0.55%)  avg=0.5942  Tech_BigTech
+     812 ( 0.48%)  avg=0.6182  Economy_Fed_Central_Bank
+     803 ( 0.47%)  avg=0.6167  Sports_Basketball_WNBA
+     723 ( 0.43%)  avg=0.5580  Entertainment_Music
+     712 ( 0.42%)  avg=0.6435  Tech_AI
+     644 ( 0.38%)  avg=0.6259  Politics_US_Congress
+     603 ( 0.35%)  avg=0.6040  Weather_Disaster
+     597 ( 0.35%)  avg=0.6324  Politics_World_Diplomacy_Trade
+     566 ( 0.33%)  avg=0.6041  Society_Business
+     553 ( 0.33%)  avg=0.6276  Crypto_Market_ETF_Institutional
+     525 ( 0.31%)  avg=0.6196  Crypto_Market_DeFi_NFT
+     505 ( 0.30%)  avg=0.5602  Entertainment_TV_Streaming
+     497 ( 0.29%)  avg=0.6007  Sports_Other
+     494 ( 0.29%)  avg=0.6473  Crypto_Market_Airdrop_Launch
+     433 ( 0.25%)  avg=0.5613  Entertainment_Awards_Stage
+     390 ( 0.23%)  avg=0.6049  Economy_Indicators
+     368 ( 0.22%)  avg=0.5607  Society_Legal
+     269 ( 0.16%)  avg=0.6201  Economy_Commodity
+     249 ( 0.15%)  avg=0.6079  Crypto_Market_Regulation_Security
+     192 ( 0.11%)  avg=0.5457  Society_Miscellaneous
+     179 ( 0.11%)  avg=0.5976  Society_Social_Media
+     150 ( 0.09%)  avg=0.6786  Tech_Space
+----------------------------------------------------------------------------------------------------
+Tags with samples: 50/50
+Tags with zero samples: 0
+
+====================================================================================================
+Bottom 10 tags by mean confidence (lowest 10 samples each):
+====================================================================================================
+
+[Society_Miscellaneous] count=192, avg_conf=0.5457
+----------------------------------------------------------------------------------------------------
+  0.4722  Will Volodymyr Zelenskyy attend Pope Francis' funeral?
+  0.4770  Will Thomas Pynchon win the 2025 Nobel Prize in Literature?
+  0.4814  Will Pablo Picasso’s “Femme assise près d'une fenêtre (Marie-Thérèse)” sell for more than 
+  0.4867  Will Hélène Cixous win the 2025 Nobel Prize in Literature?
+  0.4880  Will Beirut airport close by August 5?
+  0.4918  Any more New Orleans escapees captured before Monday?
+  0.4949  Any more New Orleans escapees captured by Wednesday?
+  0.4975  Will they find another Jewish tunnel in NYC by Monday?
+  0.5017  Will Claude pass Grok by November 15 on the UnifAI Polyarena?
+  0.5018  Lily Phillips sex event cancelled?
+
+[Entertainment_Movies] count=1709, avg_conf=0.5555
+----------------------------------------------------------------------------------------------------
+  0.4328  Which film will gross more in their domestic box office releases: Dune or Shang-Chi?
+  0.4642  Jacob Elordi announced as next James Bond?
+  0.4690  Will KPop Demon Hunters be nominated for Best Animated Feature at the 98th Academy Awards?
+  0.4708  James Norton announced as next James Bond?
+  0.4708  James Norton announced as next James Bond?
+  0.4713  Will Put Your Soul on Your Hand and Walk be nominated for Best Documentary Feature at the 
+  0.4741  Fact check: Was Tyler Robinson a lone actor?
+  0.4745  Cosmo Jarvis announced as next James Bond?
+  0.4748  Will Bret Howe & Mary Vernieu (Wake Up Dead Man) be nominated for Achievement in Casting a
+  0.4763  Will "Memoir of a Snail" win Best Animated Feature at the 2025 Oscars?
+
+[Entertainment_Music] count=723, avg_conf=0.5580
+----------------------------------------------------------------------------------------------------
+  0.4572  Justin & Hailey Bieber divorce in 2025?
+  0.4577  Lily Phillips has sex with between 1-249 men in a day?
+  0.4613  Lily Phillips has sex with between 500-749 men in a day?
+  0.4626  Will Playboi Carti release new album in 2024?
+  0.4651  Is John McAfee alive?
+  0.4651  Is John McAfee alive?
+  0.4696  Will Anne Carson win the Nobel prize in literature?
+  0.4718  Will Douglas Aibel & Nina Gold (Jay Kelly) be nominated for Achievement in Casting at the 
+  0.4721  Will Travis Kelce and Taylor Swift break up by Nov 1?
+  0.4748  Lily Phillips has sex with between 750-999 men in a day?
+
+[Entertainment_TV_Streaming] count=505, avg_conf=0.5602
+----------------------------------------------------------------------------------------------------
+  0.4469  Will Saxson die in Season 3 of the White Lotus?
+  0.4500  Will Mook die in Season 3 of the White Lotus?
+  0.4556  Will Rick Hatchett die in Season 3 of the White Lotus?
+  0.4624  Will Lochlan die in Season 3 of the White Lotus?
+  0.4667  Will Annie and Nick get married by the end of the Love Is Blind Season 9 finale?
+  0.4705  Will Nick Fuentes admit he's gay?
+  0.4735  Will Jim Hollinger die in Season 3 of the White Lotus?
+  0.4782  Will Kalybriah and Edmond get married by the end of the Love Is Blind Season 9 finale?
+  0.4782  Will Ripley win the Emmy for Outstanding Limited Series?
+  0.4783  Will Ali and Anton get married by the end of the Love Is Blind Season 9 finale?
+
+[Society_Legal] count=368, avg_conf=0.5607
+----------------------------------------------------------------------------------------------------
+  0.4604  Is P. Diddy queer?
+  0.4688  Will Jamaica Kincaid win the Nobel prize in literature?
+  0.4746  Istanbul mayor İmamoğlu released from custody in March?
+  0.4762  Istanbul mayor İmamoğlu released from custody before May?
+  0.4776  Will Thomas Pynchon win the Nobel prize in literature?
+  0.4785  Was Sam Altman fired for sexually abusing his sister?
+  0.4869  Will John Mulaney actually fight children?
+  0.4902  Will Alexis Wright win the Nobel prize in literature?
+  0.4976  Kate Middleton’s medical records leaked by Sunday?
+  0.5018  Tel Aviv bus bomber arrested today?
+
+[Entertainment_Awards_Stage] count=433, avg_conf=0.5613
+----------------------------------------------------------------------------------------------------
+  0.4579  Will The Boy and the Heron win the Oscar for Best Animated Feature Film?
+  0.4619  Nothing Ever Happens
+  0.4633  Fact check: Was Luigi Mangione a lone actor?
+  0.4651  Will Haruki Murakami win the Nobel prize in literature?
+  0.4675  Will Jesus Christ return before GTA VI?
+  0.4760  Will Kei Kawamura & Yumi Takada (Rental Family) be nominated for Achievement in Casting at
+  0.4760  Will Monsters: The Lyle and Erik Menendez Story win the Emmy for Outstanding Limited or An
+  0.4833  Will Avatar: Fire and Ash win Best Production Design at the 98th Academy Awards?
+  0.4857  Will "Abbott Elementary" win Best Cast in a Comedy Series at the 2025 SAG Awards?
+  0.4862  Will Robin D. Cook (Frankenstein) be nominated for Achievement in Casting at the 98th Acad
+
+[Politics_World_Elections] count=2226, avg_conf=0.5657
+----------------------------------------------------------------------------------------------------
+  0.4417  Will Cătălin Cîrstoiu be the next Mayor of Bucharest?
+  0.4479  Will Dan Trifu be the next Mayor of Bucharest?
+  0.4496  Will Robert Negoiță be the next Mayor of Bucharest?
+  0.4594  Will Sebastian Burduja be the next Mayor of Bucharest?
+  0.4598  Will Marian Vanghelie be the next Mayor of Bucharest?
+  0.4621  Will Gerald Murnane win the Nobel prize in literature?
+  0.4623  Will Virgil Alexandru Zidaru be the next Mayor of Bucharest?
+  0.4646  Will Cristian Popescu Piedone be the next Mayor of Bucharest?
+  0.4656  Will Javier Milei attend Pope Francis' funeral?
+  0.4693  Will Ciprian Ciucu be the next Mayor of Bucharest?
+
+[Politics_World_War_Conflict] count=1881, avg_conf=0.5901
+----------------------------------------------------------------------------------------------------
+  0.4798  Will Vance visit Greenland before July?
+  0.4903  Will India invade Pakistan before July?
+  0.4908  Will Pakistan invade India before July?
+  0.4909  Will China invades Taiwan before GTA VI?
+  0.4944  Will Jesus Christ return in 2025?
+  0.4946  Will South Korea move its capital to Sejong in 2025?
+  0.4954  Will Pakistan reopen its airspace to India before May?
+  0.4962  Will Hu Zhongming be the next Vice Chair of China’s Central Military Commission?
+  0.5001  Will Kim Jong Un meet with Sanae Takaichi by December 31?
+  0.5024  Will Reza Pahlavi enter Iran before September?
+
+[Tech_BigTech] count=943, avg_conf=0.5942
+----------------------------------------------------------------------------------------------------
+  0.4785  Will Chloe Malle be named the next editor-in-chief of Vogue?
+  0.4807  Disney sues over Grok copyright in August?
+  0.4864  Will Playboi Carti release new album by Friday?
+  0.4883  Will 'The Apothecary Diaries' win Crunchyroll Anime of the Year 2025?
+  0.4891  Will Kanye release ‘Vultures’ Vol. 1 by Feb 9?
+  0.4918  Will 'Furiosa: A Mad Max Saga' gross most in 2024?
+  0.4929  Jonathan Anderson joins Dior creative director before February?
+  0.4940  Will Taylor Swift say "Era" during Late Night with Seth Meyers?
+  0.4954  Bird flu vaccine in 2025?
+  0.4966  Did the Alaska balloon come from China?
+
+[Society_Social_Media] count=179, avg_conf=0.5976
+----------------------------------------------------------------------------------------------------
+  0.5101  Will Taylor Swift's appearance on New Heights get between 10 and 20 million views the firs
+  0.5103  Will Taylor Swift's appearance on New Heights get between 20 and 30 million views the firs
+  0.5266  Will VOY A LLeVARTE PA PR by Bad Bunny be the 3rd most streamed song globally on Spotify f
+  0.5275  Will Don’t Say You Love Me by Jin be the 2nd most streamed song globally on Spotify for 20
+  0.5330  Will Don’t Say You Love Me by Jin be the 3rd most streamed song globally on Spotify for 20
+  0.5334  Will the Drake AI song still be on Spotify on Friday?
+  0.5354  Will NUEVAYoL by Bad Bunny be the 2nd most streamed song globally on Spotify for 2025?
+  0.5407  Will NUEVAYoL by Bad Bunny be the 3rd most streamed song globally on Spotify for 2025?
+  0.5413  Less than 26m people watch Trump inauguration?
+  0.5463  Will back to friends by sombr be the #1 song on Spotify this week?

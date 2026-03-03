@@ -1,0 +1,606 @@
+# Weather - Weather_Disaster
+# count=603, avg_conf=0.6040
+====================================================================================================
+  57500754  0.4768  Larry Connor successful submarine trip to Titanic?
+  47225202  0.4823  Is the Earth flat?
+  64765550  0.4917  Will Bryson break a window by Friday?
+  55141530  0.4976  Diddy flees US in March?
+  59438257  0.4997  Will Georgia be the tipping point state?
+  59438395  0.5007  Will Virginia be the tipping point state?
+  65171229  0.5029  Will the Gävle Goat burn in 2024?
+  78938194  0.5092  Will the Gävle Goat burn in 2025?
+  57082696  0.5117  Diddy flees the country by Sunday?
+  72709816  0.5159  Will the Kharg Island oil terminal be hit in June?
+  77099743  0.5160  Will there be No Shutdown?
+  74520481  0.5187  Nothing Ever Happens: August
+  62753816  0.5192  Will either FL, MN, NH, or TX flip in 2024?
+  75245888  0.5210  Will 2025 be the second hottest year on record?
+  73497747  0.5215  Nothing Ever Happens: July
+  73665072  0.5215  Nothing Ever Happens: July
+  59438361  0.5217  Will Michigan be the tipping point state?
+  68207726  0.5244  Human case of new COVID disease before April?
+  54030006  0.5259  Will 2024 have the hottest March on record?
+  27649099  0.5267  Will Taiwan report 20,000 or more daily COVID-19 cases by May 10?
+  78941307  0.5269  Will 2026 be the second-hottest year on record?
+  64489131  0.5273  10+ monkeypox cases in US in 2024?
+  68627149  0.5282  Charlotte vs. North Texas
+  71122754  0.5286  Will the Baglihar Dam be hit in May?
+  66498017  0.5287  Will the Palisades fire burn between 50-60k acres in total?
+  25241954  0.5308  Will the City of Ottawa cease its state of emergency by March 2, 2022?
+  59438319  0.5313  Will Nevada be the tipping point state?
+  70744342  0.5313  1,200+ Measles cases in U.S. before June?
+  52407469  0.5319  Will 2024 be the hottest year on record?
+  70382267  0.5324  1,000+ Measles cases in U.S. before June?
+  66537793  0.5330  100+ Bird Flu cases in U.S. before April?
+  27968284  0.5340  Will the 7-day COVID-19 case average in the USA be above 200,000 again by August
+  76158893  0.5353  Sun vs. Dream
+  53049716  0.5358  Will Farcaster's growth peak on Saturday?
+  66498192  0.5362  Will the Palisades fire burn 60k  or more acres in total?
+  23600478  0.5363  Will the 7-day COVID-19 case average in the USA be above 600,000 on February 1, 
+  76019733  0.5369  Will there be between 1600 and 1649 measles cases in the U.S. on December 31?
+  71844469  0.5378  1,100+ Measles cases in U.S. before June?
+  67787953  0.5380  North Texas vs. Rice
+  23600407  0.5382  Will the 7-day COVID-19 Case average in the USA be above 200,000 on February 1, 
+  68411407  0.5383  300+ Measles cases in U.S. before April?
+  21321222  0.5384  Will the U.S. 7-day COVID-19 case average on November 23rd be higher than it was
+  78625010  0.5384  Lincoln (CA) Oaks vs. Pepperdine Waves
+  65686319  0.5385  100+ Bird Flu cases in U.S. before 2025?
+  75203466  0.5386  Zelensky in Alaska by Sunday?
+  59438469  0.5388  Will Maine be the tipping point state?
+  78941317  0.5388  Will 2026 be the fourth-hottest year on record?
+  78941322  0.5388  Will 2026 be the fifth-hottest year on record?
+  23599250  0.5391  Will the US 7-day average of Covid-19 cases on February 18 be higher than on Feb
+  67676213  0.5391  New Orleans vs. Incarnate Word
+  76670944  0.5396  VEG vs. Sharks
+  76670977  0.5396  VEG vs. Sharks
+  71903950  0.5400  Sun vs Dream
+  64570098  0.5405  Another monkeypox case in US in 2024?
+  50827634  0.5406  Will the Doomsday Clock move closer to Midnight in 2024?
+  66150845  0.5408  Will 2025 be the hottest year on record?
+  26849452  0.5414  Will the 7-day COVID-19 case average in the USA be below 20,000 by May 31?
+  72388107  0.5416  Dream vs Sun
+  66110261  0.5418  Boeing at fault for South Korea plane crash?
+  23600499  0.5418  Will the 7-day COVID-19 case average in the USA be above 800,000 on February 1, 
+  76670976  0.5424  Utah vs. VEG
+  23600332  0.5427  Will the U.S. 7-day COVID-19 Case average be below 100,000 by April 1, 2022?
+  76019738  0.5432  Will there be between 1650 and 1699 measles cases in the U.S. on December 31?
+  78941312  0.5440  Will 2026 be the third-hottest year on record?
+  27850728  0.5440  Will Taiwan report 40,000 or more daily COVID-19 cases by May 16?
+  77221942  0.5445  Current shutdown longest  in U.S. history?
+  23599207  0.5455  Will the US 7-day average of Covid-19 cases on February 11 be higher than on Feb
+  66497924  0.5461  Will the Palisades fire burn between 40-50k acres in total?
+  62268175  0.5464  Will Helene make landfall at category 2?
+  22665975  0.5466  Will Texas or Virginia have a higher 7-day COVID-19 case average on January 1, 2
+  68770012  0.5468  500+ Measles cases in U.S. before April?
+  23600360  0.5469  Will the U.S. 7-day COVID-19 Case average be below 100,000 by April 15, 2022?
+  23600523  0.5480  Will the 7-day COVID-19 case average in the USA be above 1,000,000 on February 1
+  53049707  0.5481  Will Farcaster's growth peak on Friday?
+  76628560  0.5484  CS: SemperFi vs Ground Zero
+  19958503  0.5488  Will the 7-day COVID-19 case average on November 17th be higher than it was a we
+  23600712  0.5491  Will the 7-day COVID-19 Case average in the USA be above 400,000 on March 1, 202
+  78941301  0.5496  Will 2026 be the hottest year on record?
+  23599064  0.5497  Will the US 7-day average of Covid-19 cases on January 28, 2022 be higher than o
+  78583718  0.5500  Nothing Ever Happens: November
+  75874526  0.5500  Dream vs. Sun
+  76240064  0.5500  Dream vs. Sun
+  64575479  0.5500  Will the Doomsday Clock move closer to Midnight?
+  75731263  0.5500  Nothing Ever Happens: September
+  27610591  0.5504  Will the 7-day COVID-19 case average in the USA be above 100,000 again by August
+  77467201  0.5504  Will October 2025 be the 2nd hottest on record?
+  77095843  0.5506  Nothing Ever Happens: October
+  23599132  0.5508  Will the US 7-day average of Covid-19 cases on February 4, 2022 be higher than o
+  62750999  0.5514  Will Milton make landfall as a category 4?
+  60597791  0.5517  Confirmed case of monkeypox in US by Aug 31?
+  76019783  0.5518  Will there be between 1490 and 1499 measles cases in the U.S. on September 30?
+  76019788  0.5521  Will there be between 1500 and 1509 measles cases in the U.S. on September 30?
+  71844470  0.5523  1,300+ Measles cases in U.S. before July?
+  23600379  0.5524  Will the U.S. 7-day COVID-19 Case average be below 100,000 by May 1, 2022?
+  14688514  0.5532  Will the US have fewer than 1000 COVID-19 cases on any day on or before Septembe
+  59438490  0.5536  Will Florida be the tipping point state?
+  24942238  0.5536  Will Ottawa cease to be in a state of emergency before February 22, 2022?
+  76005663  0.5536  1,550+ Measles cases in U.S. by October 31?
+  69148800  0.5537  Lightning vs. Utah
+  77387420  0.5537  Lightning vs. Utah
+  73223325  0.5540  1,350+ Measles cases in U.S. before August?
+  66111089  0.5543  Human to human bird flu transmission before February?
+  76570393  0.5543  1,600+ Measles cases in U.S. by October 31?
+  16679573  0.5543  Will 19 states have high or substantial COVID-19 community spread on any day on 
+  23799647  0.5547  Will the 7-day COVID-19 Case average in the USA be above 500,000 on February 1, 
+  76019773  0.5551  Will there be fewer than 1480 measles cases in the U.S. on September 30?
+  76019778  0.5553  Will there be between 1480 and 1489 measles cases in the U.S. on September 30?
+  59438280  0.5556  Will New Mexico be the tipping point state?
+  76019792  0.5566  Will there be between 1510 and 1519 measles cases in the U.S. on September 30?
+  23600416  0.5567  Will the 7-day COVID-19 Case average in the USA be above 400,000 on February 1, 
+  78797803  0.5569  William & Mary Tribe vs. St. John's Red Storm
+  19174880  0.5571  Will the United States average less than 75k Covid cases by November 15?
+  77346411  0.5576  South Florida vs. North Texas
+  60384305  0.5576  Monkeypox pandemic in 2024?
+  77467206  0.5578  Will October 2025 be the 3rd hottest on record?
+  62268185  0.5579  Will Helene make landfall at category 3?
+  65994796  0.5580  100+ Bird Flu cases in U.S. before February?
+  62751050  0.5588  Will Milton make landfall as a category 5?
+  66599869  0.5591  Wild vs. Predators
+  59438374  0.5596  Will North Carolina be the tipping point state?
+  61113828  0.5596  Confirmed case of monkeypox in US by Oct 31?
+  72671865  0.5597  Sky vs Dream
+  73037990  0.5597  Sky vs Dream
+  21977400  0.5598  Will California or Florida have a higher 7-day COVID-19 case average on Christma
+  17040386  0.5599  Will any US state report a record high 7-day COVID-19 case average before Januar
+  23600237  0.5601  Will the U.S. 7-day COVID-19 Case average be below 100,000 by February 15, 2022?
+  11777323  0.5604  Will North Dakota have the most COVID-19 cases per 100k residents on May 15, 202
+  66493591  0.5604  Arsonists arrested in connection with LA wildfires?
+  60673616  0.5604  10+ monkeypox cases in US by October 31?
+  76019796  0.5611  Will there be 1520+ measles cases in the U.S. on September 30?
+  18927334  0.5611  Will Wisconsin or South Carolina have a higher 7-day COVID-19 case average on Oc
+  21973766  0.5613  Will the 7-day average of COVID cases on December 17th be higher than the 7-day 
+  46925538  0.5613  Will Idalia hit Florida as Category 4 hurricane?
+  66497340  0.5617  Will the Palisades fire burn less than 20k acres in total?
+  16895394  0.5619  Will 40 or more US states have high/substantial COVID-19 community spread on any
+  62750987  0.5619  Will Milton make landfall as a category 3?
+  64662512  0.5623  New Mexico vs. Hawai'i
+  75129819  0.5629  1,375+ Measles cases in U.S. by August 31?
+  57300887  0.5629  Bird flu pandemic in 2024?
+  75684544  0.5640  1,400+ Measles cases in U.S. by August 31?
+  66497475  0.5647  Will the Palisades fire burn between 30-40k acres in total?
+  55333685  0.5649  Ethena crash in 2024?
+  22827621  0.5650  Will the USA report a 7-day COVID-19 case average of 300k or more by January 8?
+  72693529  0.5655  Iran behind June 12 internet outages?
+  60597869  0.5662  Confirmed case of monkeypox in US by Sep 30?
+  62750976  0.5664  Will Milton make landfall as a category 2 or lower?
+  78071197  0.5668  Will Melissa make landfall at category 2?
+  54890560  0.5670  Haiti intervention by April 30?
+  66497370  0.5674  Will the Palisades fire burn between 20-30k acres in total?
+  60673600  0.5679  100+ monkeypox cases in US by October 31?
+  68411417  0.5688  Measles pandemic before July?
+  45268152  0.5696  North Korea nuke by August 15?
+  78071208  0.5698  Will Melissa make landfall at category 4?
+  59993422  0.5698  Maduro out before September?
+  69148723  0.5699  Lightning vs. Stars
+  59543079  0.5709  CrowdStrike outage fixed by Noon?
+  74878731  0.5709  2025 August second hottest on record?
+  74549826  0.5710  Mercury vs Fever
+  57841222  0.5710  2024 June hottest on record?
+  29531103  0.5710  Will Celsius announce bankruptcy by July 13?
+  76670955  0.5721  Lightning vs. Predators
+  77387381  0.5721  Lightning vs. Predators
+  64439807  0.5723  Bird flu pandemic before August 2025?
+  11810515  0.5723  Will Texas, Florida, or California have the highest 7-day daily average of COVID
+  78031375  0.5732  Will Earthquake by Jisoo be the #1 searched song on Google this year?
+  62887016  0.5733  Will Kamala say "hurricane" during Univision town hall on October 10?
+  72570500  0.5734  LA curfew enacted by Friday?
+  62034781  0.5736  Longshoremen east coast strike by Oct 1?
+  69742929  0.5738  2025 April hottest on record?
+  78552495  0.5739  Maduro out by March 31, 2026?
+  78071202  0.5740  Will Melissa make landfall at category 3?
+  75684544  0.5741  1,415+ Measles cases in U.S. by September 5?
+  72025117  0.5741  Fever vs Mystics
+  75189809  0.5743  Mystics vs Fever
+  72268158  0.5743  Mystics vs Fever
+  62268194  0.5743  Will Helene make landfall at category 4 or stronger?
+  74625111  0.5745  Fever vs Wings
+  73240372  0.5745  Fever vs Wings
+  78963373  0.5745  Spread: CA San Lorenzo de Almagro (-1.5)
+  68332740  0.5759  Another commercial airline evacuation before March?
+  45033562  0.5760  MH370 black box found by September 30?
+  76118240  0.5761  Fever vs. Mystics
+  68265263  0.5762  Wild vs. Utah
+  65087580  0.5762  Wild vs. Utah
+  75955800  0.5762  Sun vs. Sky
+  75512987  0.5762  Sun vs. Sky
+  75915169  0.5762  Fever vs. Mercury
+  78071214  0.5764  Will Melissa make landfall at category 5?
+  67675910  0.5767  Florida Gulf Coast vs. North Florida
+  77467196  0.5767  Will October 2025 be the 1st hottest on record?
+  60074722  0.5768  2024 August hottest on record?
+  77645247  0.5768  Wild vs. Stars: O/U 6.5
+  78552485  0.5768  Maduro out by November 30, 2025?
+  65649055  0.5772  Bird flu declared public health emergency before April?
+  44252400  0.5775  Will NASA record 2023 as the hottest year on record? (1.03°C or higher)
+  57879873  0.5778  Roaring Kitty stream over 1 hour late?
+  77387286  0.5784  Wild vs. Stars
+  69390526  0.5784  Wild vs. Stars
+  76670967  0.5784  Wild vs. Stars
+  65783103  0.5784  Wild vs. Stars
+  74866523  0.5786  Fever vs Mercury
+  72754383  0.5791  Sky vs Sun
+  75110226  0.5791  Sky vs Sun
+  78633263  0.5794  Nord Stream pipeline turned on before 2027?
+  77631488  0.5800  Wild vs. Stars: O/U 5.5
+  66196652  0.5801  Fact Check: Connection between New Orleans and Las Vegas attacks?
+  78764026  0.5803  Spread: North Texas Mean Green (-3.5)
+  75684553  0.5805  1,415+ Measles cases in U.S. by September 12?
+  68225453  0.5813  North Florida vs. Florida Gulf Coast
+  17334878  0.5815  Will daily atmospheric CO2 be above 416.2 ppm on August 3, 2021?
+  62268156  0.5817  Will Helene make landfall at category 1 or weaker?
+  54661918  0.5823  MH370 underwater wreckage found before July?
+  72157253  0.5828  2025 June hottest on record?
+  68448945  0.5830  2025 March hottest on record?
+  66324616  0.5831  Blues vs. Wild
+  68866592  0.5831  Blues vs. Wild
+  78765827  0.5831  Spread: North Texas Mean Green (-2.5)
+  78760427  0.5834  Spread: New Mexico Lobos (-14.5)
+  69673107  0.5835  Wild vs. Devils
+  77459642  0.5835  Wild vs. Devils
+  59157737  0.5838  2024 July hottest on record?
+  66497330  0.5838  Will the Palisades fire be fully contained by January 26?
+  53840517  0.5841  Was the AT&T cellular outage caused by a solar flare?
+  74797208  0.5842  2025 August hottest on record?
+  66453800  0.5842  Will the Palisades fire be 50% contained by January 31?
+  45085335  0.5843  Explosion at Zaporizhzhia nuclear plant by July 31?
+  77946445  0.5843  Spread: North Texas (-27.5)
+  44724216  0.5846  Explosion at Zaporizhzhia nuclear plant by July 12?
+  46304528  0.5850  Will the Lahaina fire in Maui be fully contained this week?
+  78794619  0.5854  Spread: North Texas Mean Green (-1.5)
+  66453224  0.5857  Will the Palisades fire be 50% contained by January 12?
+  76005654  0.5857  1,475+ Measles cases in U.S. by September 30?
+  69531924  0.5857  Nord Stream pipeline turned on in 2025?
+  66453673  0.5859  Will the Palisades fire be fully contained by January 31?
+  73870741  0.5859  Sun vs Sparks
+  74866522  0.5859  Sun vs Sparks
+  72086596  0.5864  5kt meteor strike in 2025?
+  77946462  0.5864  Spread: New Mexico (-3.5)
+  66453666  0.5867  Will the Palisades fire be fully contained by January 19?
+  16415160  0.5871  Will daily atmospheric CO2 be above 418.5 ppm on July 22, 2021?
+  27669663  0.5873  NHL: Will the Wild beat the Flames by more than 1.5 goals in their April 28, 8:0
+  66453669  0.5875  Will the Palisades fire be 50% contained by January 19?
+  20941361  0.5876  Will daily atmospheric CO2 be above 414 ppm on November 13, 2021?
+  75810042  0.5877  2025 September second hottest on record?
+  75129809  0.5878  1,425+ Measles cases in U.S. by September 30?
+  77503887  0.5878  Spread: North Texas (-2.5)
+  65009985  0.5878  2024 December hottest on record?
+  65726561  0.5880  MH370 underwater wreckage found by June 30?
+  78249548  0.5884  1H Spread: North Texas (-3.5)
+  73118853  0.5888  Sparks vs Sky
+  63965218  0.5889  Will the November 2024 temperature increase be between 1.35-1.39°C?
+  66324827  0.5891  Wild vs. Sharks
+  79035756  0.5895  William & Mary Tribe vs. St. John's Red Storm: O/U 175.5
+  78113366  0.5896  1H Spread: North Texas (-14.5)
+  77645248  0.5896  Spread: North Texas (-4.5)
+  65652854  0.5897  Another state declare a state of emergency over bird flu in 2024?
+  75936739  0.5897  Spread: Hawai'i (-8.5)
+  77471334  0.5900  Spread: North Texas (-1.5)
+  78248834  0.5900  Spread: North Texas (-5.5)
+  61233391  0.5901  2024 September hottest on record?
+  77215274  0.5906  Wild vs. Blues
+  78404339  0.5906  1H Spread: North Texas (-4.5)
+  78072621  0.5915  Will Melissa become a category 2 hurricane?
+  78807835  0.5921  Spread: North Texas (-18.5)
+  66495648  0.5923  Will all LA wildfires be fully contained before February?
+  78251347  0.5924  Spread: North Texas (-6.5)
+  47471473  0.5924  Will Lee hit the US as a tropical storm?
+  77988582  0.5925  Spread: North Texas (-26.5)
+  76999573  0.5925  Fever vs. Aces
+  76756742  0.5925  Fever vs. Aces
+  76675431  0.5925  Fever vs. Aces
+  66496443  0.5931  Will LA wildfires burn 50-60k acres by Sunday?
+  78398939  0.5936  Spread: North Texas (-7.5)
+  74926815  0.5937  2025 August third hottest on record?
+  73037992  0.5939  Fever vs Aces
+  78969516  0.5939  Spread: North Texas (-17.5)
+  47221296  0.5940  Will Lee become a Category 5 hurricane?
+  71874129  0.5941  X data center fire confirmed arson before July?
+  46866091  0.5941  Will Idalia hit Florida as a major hurricane?
+  78807816  0.5941  Spread: New Mexico (-14.5)
+  76785276  0.5941  Spread: New Mexico (-14.5)
+  78113337  0.5949  1H Spread: New Mexico (-1.5)
+  66146850  0.5950  New pandemic in 2025?
+  46468487  0.5951  Will Hilary hit US as a hurricane?
+  45839494  0.5952  Explosion at Zaporizhzhia nuclear plant by Sep 30?
+  78072620  0.5953  Will Melissa become a category 4 hurricane?
+  14960301  0.5954  Will daily atmospheric CO2 be above 419 ppm on June 16, 2021?
+  78724434  0.5954  Spread: New Mexico Lobos (-13.5)
+  59542233  0.5955  CrowdStrike outage fixed by Friday night?
+  65330782  0.5957  New pandemic before July?
+  66074172  0.5960  2025 January hottest on record?
+  73321552  0.5960  Sky vs Sparks
+  71903952  0.5960  Sky vs Sparks
+  62465442  0.5964  2024 October hottest on record?
+  66493589  0.5966  Will the Sunset wildfire reach Hollywood Blvd by Friday?
+  63961104  0.5966  2024 November hottest on record?
+  78071191  0.5968  Will Melissa make landfall at category 1 or weaker?
+  64522042  0.5970  30m Bluesky users in November?
+  76199552  0.5971  Lynx vs. Fever
+  77214742  0.5973  Spread: South Florida (-29.5)
+  50739476  0.5979  New lockdown in US?
+  61661522  0.5984  Will Francine hit US as a hurricane?
+  63965199  0.5984  Will the November 2024 temperature increase be between 1.30-1.34°C?
+  76670944  0.5985  Wild vs. Jets
+  78237096  0.5985  Wild vs. Jets
+  75552322  0.5986  Fever vs. Lynx
+  73402520  0.5990  Fever vs Lynx
+  75489699  0.5993  Spread: Hawaii (-1.5)
+  78733426  0.5994  Spread: New Mexico Lobos (-12.5)
+  35688799  0.5995  Will Twitter report any outages by December 15, 2022?
+  78072621  0.5996  Will Melissa become a category 3 hurricane?
+  78070427  0.5997  Will an Air India aviation disaster be the #1 searched news on Google this year?
+  79063048  0.5998  Spread: New Mexico (-15.5)
+  64446694  0.5999  100+ Bird Flu cases by Friday?
+  75473885  0.6006  Lynx vs Fever
+  75810037  0.6012  2025 September hottest on record?
+  66453223  0.6015  Will the Palisades fire be fully contained by Sunday?
+  76785294  0.6019  Spread: North Texas (-12.5)
+  77633355  0.6025  Will there be exactly 4 earthquakes of magnitude 7.0 or higher worldwide by Dece
+  75936817  0.6026  Spread: North Texas (-9.5)
+  79030708  0.6027  Will 27 named typhoons occur in the Northwest Pacific in 2025?
+  77459643  0.6031  Lightning vs. Avalanche
+  68265233  0.6034  Flames vs. Lightning
+  78366700  0.6034  Flames vs. Lightning
+  77633345  0.6038  Will there be exactly 2 earthquakes of magnitude 7.0 or higher worldwide by Dece
+  79030714  0.6040  Will 28 named typhoons occur in the Northwest Pacific in 2025?
+  75270762  0.6041  Mercury vs Storm
+  71824012  0.6041  Mercury vs Storm
+  66460050  0.6046  Will Palisades wildfire spread to Beverly Hills by Sunday?
+  76473471  0.6054  Dream vs. Fever
+  65994906  0.6054  Another state declare a state of emergency over bird flu before February?
+  71703209  0.6055  Dream vs Fever
+  73805558  0.6055  Dream vs Fever
+  77777250  0.6055  Spread: New Mexico (-13.5)
+  78668794  0.6055  Spread: Flames (-1.5)
+  78584199  0.6055  Spread: Flames (-1.5)
+  78929793  0.6055  Spread: Flames (-1.5)
+  77645250  0.6056  Spread: South Florida (-21.5)
+  78072620  0.6059  Will Melissa become a category 5 hurricane?
+  75810047  0.6061  2025 September third hottest on record?
+  79030720  0.6064  Will 29 named typhoons occur in the Northwest Pacific in 2025?
+  37382406  0.6065  Will Twitter report any outages by January 6, 2023?
+  79030737  0.6069  Will 32 named typhoons occur in the Northwest Pacific in 2025?
+  77053923  0.6070  Will the announcers say "Wild" during Jets vs Dolphins game? (September 29)
+  78270402  0.6073  Spread: CA River Plate (-1.5)
+  66496453  0.6076  Will LA wildfires burn 60-70k acres by Sunday?
+  77633350  0.6076  Will there be exactly 3 earthquakes of magnitude 7.0 or higher worldwide by Dece
+  72157234  0.6077  Will a cat 5 hurricane make US landfall during Hurricane Season 2025?
+  79030731  0.6079  Will 31 named typhoons occur in the Northwest Pacific in 2025?
+  77633360  0.6083  Will there be exactly 5 earthquakes of magnitude 7.0 or higher worldwide by Dece
+  77633365  0.6096  Will there be more than 5 earthquakes of magnitude 7.0 or higher worldwide by De
+  77416827  0.6097  Wild vs. Blues: O/U 5.5
+  54889738  0.6102  Boeing emergency landing in US by Mar 31?
+  77645241  0.6103  Spread: New Mexico (-12.5)
+  71595152  0.6108  Storm vs Mercury
+  72428672  0.6108  Storm vs Mercury
+  71984749  0.6114  Storm vs Lynx
+  54264712  0.6117  MOG all time high by Friday?
+  50500158  0.6118  Iceland volcanic eruption by Dec 31?
+  66495742  0.6118  Will LA wildfires burn 40-50k acres by Sunday?
+  54659490  0.6125  Boeing emergency landing by next Friday?
+  66496536  0.6129  Will LA wildfires burn 80k or more acres by Sunday?
+  65222865  0.6129  Lightning vs. Flames
+  76393807  0.6129  Spread: Coastal Carolina (-10.0)
+  74907180  0.6130  Storm vs Aces
+  72956998  0.6130  Storm vs Aces
+  54812096  0.6138  Another Boeing emergency landing by Friday?
+  76586011  0.6141  Spread: SEA (-6.5)
+  66454945  0.6144  Will Palisades wildfire spread to Malibu by Sunday?
+  75712474  0.6147  Storm vs. Lynx
+  79030703  0.6147  Will less than 27 named typhoons occur in the Northwest Pacific in 2025?
+  77633335  0.6150  Will there be exactly 0 earthquakes of magnitude 7.0 or higher worldwide by Dece
+  70482010  0.6152  Hurricanes vs. Devils
+  65783085  0.6152  Hurricanes vs. Devils
+  70748977  0.6152  Hurricanes vs. Devils
+  78072621  0.6154  Will Melissa become a category 1 hurricane?
+  79030725  0.6154  Will 30 named typhoons occur in the Northwest Pacific in 2025?
+  72590921  0.6161  Lynx vs Storm
+  74785636  0.6161  Lynx vs Storm
+  71784695  0.6163  Fever vs Dream
+  72550395  0.6163  Fever vs Dream
+  70441459  0.6175  Devils vs. Hurricanes
+  77215271  0.6175  Devils vs. Hurricanes
+  70441443  0.6175  Devils vs. Hurricanes
+  65783158  0.6175  Devils vs. Hurricanes
+  70836795  0.6175  Devils vs. Hurricanes
+  76586011  0.6178  Spread: SEA (-10.5)
+  76586010  0.6184  Spread: SEA (-8.5)
+  79030743  0.6185  Will greater than 32 named typhoons occur in the Northwest Pacific in 2025?
+  76392949  0.6187  Fever vs. Dream
+  72106204  0.6189  Sun vs Fever
+  72835548  0.6189  Sun vs Fever
+  66422357  0.6199  Will the Palisades wildfire be contained by Friday?
+  67439114  0.6209  Avalanche vs. Flames
+  68866534  0.6209  Avalanche vs. Flames
+  26649786  0.6210  NHL: Will the Hurricanes beat the Wild by more than 1.5 goals in their April 2, 
+  73199893  0.6215  Sparks vs Fever
+  73563806  0.6215  Sparks vs Fever
+  78150708  0.6218  Hurricanes vs. Jets
+  67439039  0.6218  Hurricanes vs. Jets
+  77632378  0.6225  Flames vs. Wild
+  78453097  0.6225  Jets vs. Hurricanes
+  68586941  0.6225  Jets vs. Hurricanes
+  66463214  0.6229  Palisades fire burns 40,000 or more acres by Friday?
+  66453226  0.6232  Will Palisades wildfire spread to Santa Monica by Sunday?
+  35607061  0.6233  Will SBF’s tweet storm spell "HAPPENED"?
+  66463012  0.6234  Palisades fire burns  20,000-25,000 acres by Friday?
+  72081784  0.6240  Major meteor strike (10kt+) in 2025?
+  23999748  0.6241  Will an earthquake with magnitude 8.0 or above occur anywhere on Earth before Ju
+  66495669  0.6243  Will LA wildfires burn 30-40k acres by Sunday?
+  77633340  0.6245  Will there be exactly 1 earthquake of magnitude 7.0 or higher worldwide by Decem
+  66879621  0.6249  Wild vs. Avalanche
+  68265289  0.6249  Wild vs. Avalanche
+  66324712  0.6257  Avalanche vs. Wild
+  68866428  0.6257  Avalanche vs. Wild
+  78453095  0.6257  Avalanche vs. Wild
+  75753114  0.6257  Fever vs. Sparks
+  76775677  0.6258  Predators vs. Hurricanes
+  69390534  0.6258  Predators vs. Hurricanes
+  78800471  0.6258  Predators vs. Hurricanes
+  66495660  0.6258  Will LA wildfires burn les than 30k acres by Sunday?
+  70023342  0.6260  Will more than 23 named storms occur in the 2025 Atlantic hurricane season?
+  66496460  0.6262  Will LA wildfires burn 70-80k acres by Sunday?
+  78377085  0.6272  Spread: St. John's Red Storm (-27.5)
+  78755038  0.6273  Spread: St. John's Red Storm (-4.5)
+  76586010  0.6273  Spread: SEA (-9.5)
+  66463020  0.6275  Palisades fire burns  25,000-30,000 acres by Friday?
+  61949519  0.6277  Will there be more than 14 named storms during Atlantic Hurricane Season?
+  49943796  0.6278  Iceland volcanic eruption by Nov 17?
+  66463137  0.6280  Palisades fire burns  35,000-40,000 acres by Friday?
+  46550821  0.6281  Will there be widespread flooding in LA?
+  78724445  0.6282  Spread: St. John's Red Storm (-5.5)
+  66462988  0.6285  Palisades fire burns less than 15,000 acres by Friday?
+  72157225  0.6288  Will a hurricane make landfall in the US in June?
+  77093137  0.6293  Will Hurricane Imelda make landfall in the US?
+  78714081  0.6300  Wild vs. Flames
+  69956221  0.6300  Wild vs. Flames
+  58874461  0.6305  Will Beryl hit the US as a tropical storm?
+  78459851  0.6306  Spread: St. John's Red Storm (-24.5)
+  79033956  0.6312  Spread: St. John's Red Storm (-28.5)
+  66463004  0.6313  Palisades fire burns  15,000-20,000 acres by Friday?
+  78634464  0.6317  Spread: St. John's Red Storm (-6.5)
+  70023331  0.6321  Will between 20 and 23 named storms occur in the 2025 Atlantic hurricane season?
+  77174639  0.6322  Hurricanes vs. Predators
+  73945227  0.6332  Fever vs Sun
+  50021316  0.6334  Iceland volcanic eruption by Nov 30?
+  56659559  0.6334  Will there be more than 25 named storms during Atlantic Hurricane Season?
+  27412631  0.6339  Will there be 19 or more named storms during the 2022 Atlantic Hurricane Season?
+  66463057  0.6349  Palisades fire burns  30,000-35,000 acres by Friday?
+  74785634  0.6349  Fever vs Sparks
+  78503045  0.6352  Spread: St. John's Red Storm (-26.5)
+  19143124  0.6359  Will another Hurricane Make Landfall in the Lower 48 States Before October 15?
+  79026765  0.6367  Spread: St. John's Red Storm (-29.5)
+  58853996  0.6367  Will Beryl hit US as a hurricane?
+  78380652  0.6371  Spread: St. John's Red Storm (-25.5)
+  72683410  0.6372  Cat 3+ hurricane hits Miami in 2025?
+  18052908  0.6373  Will there be 19 or more named storms during the Atlantic hurricane season?
+  70023321  0.6374  Will between 16 and 19 named storms occur in the 2025 Atlantic hurricane season?
+  75874529  0.6374  Sparks vs. Storm
+  43099853  0.6378  Will there be 19 or more named storms during the 2023 Atlantic Hurricane Season?
+  24850671  0.6379  NHL: Will the Hurricanes beat the Wild by more than 1.5 goals in their February 
+  72695985  0.6380  Magnitude 6.5+ earthquake in LA before 2026?
+  74947786  0.6383  Sky vs Fever
+  71595150  0.6383  Sky vs Fever
+  66454946  0.6387  Palisades wildfire burns 10,000 acres by Friday?
+  49899801  0.6392  Iceland volcanic eruption by Nov 15?
+  45787412  0.6393  Will a hurricane make landfall in the US in August?
+  76046464  0.6396  Sky vs. Fever
+  45037556  0.6402  Will a hurricane make landfall in the lower 48 U.S. states in July?
+  33889150  0.6403  Will a hurricane make landfall in the lower 48 U.S. states in October?
+  78070462  0.6414  Will extreme heatwaves be the #1 searched news on Google this year?
+  59850162  0.6417  538 favorite when forecast is turned on?
+  28168502  0.6424  Will there be a named tropical system (storm, hurricane) Alex that forms by May 
+  74625112  0.6424  Sparks vs Storm
+  66879681  0.6427  Hurricanes vs. Stars
+  77387361  0.6427  Hurricanes vs. Stars
+  70023311  0.6432  Will between 12 and 15 named storms occur in the 2025 Atlantic hurricane season?
+  48054819  0.6436  Will a hurricane make landfall in the US in October?
+  33357073  0.6440  Will a hurricane make landfall in the lower 48 U.S. states by October 31?
+  70023281  0.6441  Will less than 12 named storms occur in the 2025 Atlantic hurricane season?
+  61949510  0.6442  Will there be between 11 and 14 named storms during Atlantic Hurricane Season?
+  21440979  0.6444  Will there be an earthquake of magnitude 4.5 or higher in conterminous U.S. by N
+  73198539  0.6445  Will a hurricane make landfall in the US before August?
+  31441126  0.6448  Will a hurricane make landfall in the lower 48 U.S. states by August 31?
+  61949501  0.6456  Will there be less than 11 named storms during Atlantic Hurricane Season?
+  21933899  0.6462  Will there be an earthquake of magnitude 4.5 or higher in the conterminous U.S. 
+  48054258  0.6469  Will there be 21+ named storms during the Atlantic Hurricane Season?
+  73482944  0.6469  Storm vs Dream
+  75189810  0.6469  Storm vs Dream
+  67439157  0.6470  Utah vs. Hurricanes
+  18633291  0.6475  Will a Hurricane Make Landfall in the Lower 48 States in September?
+  75110225  0.6490  Dream vs Storm
+  72106206  0.6490  Dream vs Storm
+  56659550  0.6494  Will there be between 21 and 25 named storms during Atlantic Hurricane Season?
+  72611985  0.6509  State of Emergency in LA by Friday?
+  72428678  0.6512  Fever vs Sky
+  74428064  0.6512  Fever vs Sky
+  29246684  0.6534  Will a hurricane make landfall in the lower 48 U.S. states by July 15?
+  68132643  0.6536  Megaquake in March?
+  56659529  0.6543  Will there be less than 16 named storms during Atlantic Hurricane Season?
+  69534916  0.6547  Megaquake before May?
+  75247033  0.6556  Will a hurricane make landfall in the US by August 31?
+  76857121  0.6557  Will a hurricane make landfall in the US by October 31?
+  65124707  0.6561  Tsunami flooding in downtown San Francisco?
+  66111255  0.6563  Megaquake in January?
+  68132641  0.6564  Megaquake in 2025?
+  74988270  0.6566  Storm vs Sparks
+  72835541  0.6566  Storm vs Sparks
+  72282730  0.6571  Megaquake in June?
+  47183978  0.6572  Will a hurricane make landfall in the US in September?
+  67263936  0.6572  Megaquake in February?
+  75247032  0.6579  Will a hurricane form by August 31?
+  70985451  0.6580  Megaquake in May?
+  60509751  0.6591  Megaquake in August?
+  56659543  0.6594  Will there be between 16 and 20 named storms during Atlantic Hurricane Season?
+  66457217  0.6611  Palisades wildfire containment >0% by Sunday?
+  66324575  0.6612  Hurricanes vs. Lightning
+  76670976  0.6612  Hurricanes vs. Lightning
+  78112616  0.6618  Hurricanes vs. Stars: O/U 6.5
+  73198576  0.6622  Megaquake before August?
+  49379672  0.6628  Will a hurricane make landfall in the US in November?
+  73240374  0.6631  Sun vs Storm
+  73805559  0.6631  Sun vs Storm
+  77387344  0.6632  Hurricanes vs. Avalanche
+  78070422  0.6641  Will a major Kamchatka earthquake be the #1 searched news on Google this year?
+  78109015  0.6649  Hurricanes vs. Stars: O/U 5.5
+  66496574  0.6653  Sunset wildfire burns 1k or more acres by Sunday?
+  78070432  0.6653  Will a major Philippines earthquake and related tsunami alerts be the #1 searche
+  18427000  0.6670  Will a major hurricane make landfall in the lower 48 states before September 15?
+  69742928  0.6676  Earthquake 7.0 or above in April?
+  78029823  0.6680  Hurricanes vs. Avalanche: O/U 6.5
+  73993090  0.6682  Megaquake by August 31?
+  74667962  0.6682  Megaquake by August 31?
+  76527743  0.6692  Another 5.0 or above earthquake in Greece by September 30?
+  47184929  0.6694  Will a major hurricane make landfall in the US in September?
+  70023375  0.6694  Named storm forms before hurricane season?
+  74468674  0.6696  Storm vs Sun
+  73726366  0.6696  Storm vs Sun
+  77093100  0.6708  Megaquake by December 31?
+  62510726  0.6713  Megaquake in October?
+  78020813  0.6717  Hurricanes vs. Avalanche: O/U 5.5
+  65042269  0.6720  Megaquake in December?
+  69534908  0.6725  Earthquake 7.0 or above before May?
+  61393611  0.6733  Megaquake in September?
+  62842079  0.6744  Category 5 hurricane hits US before election?
+  75654302  0.6747  Will a hurricane form by September 30?
+  77092482  0.6753  Megaquake by October 31?
+  68866417  0.6755  Lightning vs. Hurricanes
+  76670946  0.6755  Lightning vs. Hurricanes
+  75654302  0.6767  Will a hurricane make landfall in the US by September 30?
+  68305121  0.6783  Flames vs. Hurricanes
+  78541287  0.6783  Flames vs. Hurricanes
+  78382192  0.6831  Megaquake by November 30?
+  74796023  0.6835  Megaquake by September 30?
+  75352063  0.6836  Storm vs Sky
+  74305768  0.6836  Storm vs Sky
+  75793650  0.6849  Sky vs. Storm
+  65087289  0.6858  Avalanche vs. Hurricanes
+  73198576  0.6859  Earthquake 7.0 or above before August?
+  78064300  0.6863  Hurricanes vs. Wild
+  67439104  0.6863  Hurricanes vs. Wild
+  67618545  0.6880  6.0+ earthquake in Mediterranean by next Friday?
+  70958831  0.6884  Earthquake 7.0 or above in May?
+  74241505  0.6903  Earthquake 7.0 or above by July 31?
+  74052816  0.6903  Earthquake 7.0 or above by July 31?
+  71030045  0.6944  Another Earthquake 7.0 or above in May?
+  74066834  0.6954  Earthquake 7.0 or above by August 31?
+  74637373  0.6954  Earthquake 7.0 or above by August 31?
+  74241505  0.6954  Earthquake 7.0 or above by August 31?
+  75631395  0.6957  Storm vs. Fever
+  77469443  0.6980  Nothing Ever Happens: Natural Disaster Edition
+  74637401  0.7032  Earthquake 7.0 or above by September 30?
+  73118859  0.7041  Fever vs Storm
+  74704450  0.7041  Fever vs Storm
+  77556334  0.7074  Another 7.0 or above earthquake by October 31?
+  76486887  0.7074  Another 7.0 or above earthquake by October 31?
+  76613887  0.7074  Another 7.0 or above earthquake by October 31?
+  75527429  0.7077  Another 7.0 or above earthquake by August 31?
+  78323217  0.7142  Spread: Hurricanes (-1.5)
+  77631487  0.7142  Spread: Hurricanes (-1.5)
+  78118015  0.7142  Spread: Hurricanes (-1.5)
+  78540999  0.7142  Spread: Hurricanes (-1.5)
+  77717866  0.7142  Spread: Hurricanes (-1.5)
+  78756988  0.7142  Spread: Hurricanes (-1.5)
+  78236810  0.7142  Spread: Hurricanes (-1.5)
+  78627396  0.7142  Spread: Hurricanes (-1.5)
+  77416835  0.7142  Spread: Hurricanes (-1.5)
+  78843387  0.7142  Spread: Hurricanes (-1.5)
+  79102524  0.7142  Spread: Hurricanes (-1.5)
+  79016500  0.7142  Spread: Hurricanes (-1.5)
+  78971177  0.7142  Spread: Hurricanes (-1.5)
+  77549248  0.7142  Spread: Hurricanes (-1.5)
+  78407804  0.7142  Spread: Hurricanes (-1.5)
+  78711991  0.7142  Spread: Hurricanes (-1.5)
+  77806292  0.7142  Spread: Hurricanes (-1.5)
+  66054651  0.7154  Wild vs. Hurricanes
+  77502811  0.7154  Wild vs. Hurricanes
+  76613888  0.7164  Another 7.0 or above earthquake by September 30?
+  75527439  0.7164  Another 7.0 or above earthquake by September 30?
+  76454051  0.7164  Another 7.0 or above earthquake by September 30?
+  78382152  0.7179  Another 7.0 or above earthquake by November 30?
+  78382152  0.7223  Another 7.0 or above earthquake by November 15?
+  78627396  0.7226  Wild vs. Hurricanes: O/U 6.5

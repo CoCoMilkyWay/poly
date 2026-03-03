@@ -51,7 +51,7 @@ def dump_condition_question_pairs(db_path: str = "") -> None:
     for cid_hex, market_json in tqdm(rows, total=total, desc="Scanning questions", unit="cond"):
         market = json.loads(market_json)
         question = _extract_question(market).replace("\n", " ").strip()
-        print(f"0x{cid_hex} | {question}")
+        print(f"{question}")
 
 
 if __name__ == "__main__":

@@ -1,0 +1,715 @@
+# Tech - Tech_AI
+# count=712, avg_conf=0.6435
+====================================================================================================
+  46428975  0.4339  Will Logan Paul and Nina Agdal's engagement be called off?
+  65399958  0.4653  Are the New Jersey mystery drones aliens?
+  47507120  0.4658  Are the Peruvian Aliens real?
+  78421769  0.4883  Who will finish higher: Ocon or Bearman?
+  79015925  0.4883  Who will finish higher: Ocon or Bearman?
+  77423706  0.4919  Once Upon a Farm in 2025?
+  68132374  0.5027  Will "I'm Not a Robot" win Best Action Short Film at the 2025 Oscars?
+  54030884  0.5069  Will Robot Dreams win the Oscar for Best Animated Feature Film?
+  68089170  0.5129  Will "The Wild Robot" win Best Animated Feature at the 2025 Oscars?
+  71030145  0.5172  Will Steve Witkoff be next National Security Advisor?
+  57776785  0.5175  Is Drake’s verse in "Wah Gwan Delilah" AI?
+  74913707  0.5214  Will GPT-6 be released before GTA VI?
+  47422255  0.5398  Is Vivek Ramaswamy GCR?
+  76628514  0.5399  CS: Gentle Mates vs 9INE
+  77722764  0.5469  Will Saif Ali Khan be ranked #1 globally in Google’s Year in Search 2025 Actors?
+  76275581  0.5497  NRFI: Twins vs. Angels
+  76234157  0.5497  NRFI: Twins vs. Angels
+  76192943  0.5497  NRFI: Twins vs. Angels
+  74924268  0.5500  Will GPT-6 be released by March 31, 2026?
+  78073765  0.5510  Will Bianca Censori be the #2 searched person on Google this year?
+  77951403  0.5512  Will Billie Eilish rank in Google’s Top 5 Most Searched People of 2025?
+  78036049  0.5550  Will Bianca Censori rank in Google’s Top 5 Most Searched People of 2025?
+  65839174  0.5553  Will GPT-5 be released by June 30?
+  62225368  0.5554  草莓软糖是男人还是女人 (man or woman)?
+  77951403  0.5554  Will Pope Leo XIV rank in Google’s Top 5 Most Searched People of 2025?
+  77951407  0.5557  Will María Corina Machado rank in Google’s Top 5 Most Searched People of 2025?
+  77951406  0.5569  Will Katy Perry rank in Google’s Top 5 Most Searched People of 2025?
+  74866521  0.5577  Dream vs Sky
+  73984141  0.5577  Dream vs Sky
+  62272136  0.5601  Will Mira Murati join Anthropic?
+  78422065  0.5608  Hokit vs. Gimenis
+  78336197  0.5611  MIT Engineers vs. Harvard Crimson
+  78073760  0.5612  Will Pope Leo XIV be the #2 searched person on Google this year?
+  77722724  0.5618  Will Joseph Quinn be ranked #1 globally in Google’s Year in Search 2025 Actors?
+  77722664  0.5621  Will Sydney Sweeney be ranked #1 globally in Google’s Year in Search 2025 Actors
+  78940174  0.5625  Will GPT-6 be released by December 31, 2026?
+  77670080  0.5635  Will Bianca Censori be the #1 searched person on Google this year?
+  76490189  0.5640  Gantt vs. Livingston
+  77722769  0.5648  Will Dharmendra be ranked #1 globally in Google’s Year in Search 2025 Actors?
+  77722434  0.5650  Will Dharmendra be ranked #1 globally in Google’s Year in Search 2025 Passings?
+  71648104  0.5667  PGL Astana: Aurora vs. FURIA
+  77722739  0.5669  Will Karla Sofía Gascón be ranked #1 globally in Google’s Year in Search 2025 Ac
+  77951406  0.5670  Will Jimmy Carter rank in Google’s Top 5 Most Searched People of 2025?
+  77722734  0.5672  Will Mikey Madison be ranked #1 globally in Google’s Year in Search 2025 Actors?
+  74885508  0.5677  GPT-5 scores above 40% on Humanity’s Last Exam?
+  78031659  0.5679  Will Terry Rozier be the #1 searched athlete on Google this year?
+  69738224  0.5684  Will GPT-5 be released by April 30?
+  77951408  0.5686  Will Diddy rank in Google’s Top 5 Most Searched People of 2025?
+  77722719  0.5689  Will Florence Pugh be ranked #1 globally in Google’s Year in Search 2025 Actors?
+  77722744  0.5698  Will Owen Cooper be ranked #1 globally in Google’s Year in Search 2025 Actors?
+  77670050  0.5701  Will Pope Leo XIV be the #1 searched person on Google this year?
+  74839112  0.5714  Will Elon Musk say "xAI" 2 or more times during the August 6 AMA?
+  46587252  0.5716  Will Friend Tech fall off?
+  77722709  0.5717  Will Ariana Grande be ranked #1 globally in Google’s Year in Search 2025 Actors?
+  69738232  0.5719  Will GPT-5 be released by May 31?
+  57228991  0.5728  Scarlett Johansson sues OpenAI in May?
+  72724156  0.5742  Boss Open: Auger-Aliassime vs. Fritz
+  77951403  0.5745  Will Imane Khelif rank in Google’s Top 5 Most Searched People of 2025?
+  78073830  0.5746  Will Diddy be the #2 searched person on Google this year?
+  72140293  0.5746  Will Donald Trump or Elon Musk Say "IQ" during the press conference?
+  77977911  0.5755  Grokipedia released by October 24?
+  77795248  0.5764  Shenzhen 2: Sho Shimabukuro vs Harold Mayot
+  78031674  0.5764  Will Vaibhav Sooryavanshi be the #1 searched athlete on Google this year?
+  77795251  0.5765  Shenzhen 2: Jie Cui vs Yi Zhou
+  65839168  0.5765  Will GPT-5 be released by March 31?
+  71149745  0.5768  Will Saylor say "Growth" during his Strategy World 2025 keynote?
+  78036050  0.5770  Will Andy Byron rank in Google’s Top 5 Most Searched People of 2025?
+  65557477  0.5774  Fact Check: Are Mystery Drones a government test?
+  77722749  0.5777  Will Adrien Brody be ranked #1 globally in Google’s Year in Search 2025 Actors?
+  47776682  0.5783  Will a human have a Neuralink chip implanted by the end of 2023?
+  62312647  0.5785  Will Kamala say "AI" during her Nevada speech?
+  74814557  0.5796  Will GPT-5 be released on August 10?
+  77106814  0.5796  Grokipedia released by October 31?
+  77795249  0.5803  Olbia: Nerman Fatic vs Hugo Grenier
+  74814538  0.5803  Will GPT-5 be released on August 6?
+  71739526  0.5807  Gamrot vs. Klein
+  70386610  0.5811  Will GPT-5 be released by July 31?
+  77670065  0.5815  Will Diddy be the #1 searched person on Google this year?
+  72848206  0.5817  Terra Wortmann: Rublev vs. Ofner
+  77951406  0.5827  Will Pope Francis rank in Google’s Top 5 Most Searched People of 2025?
+  76651681  0.5827  Will Tesla acquire xAI in 2025?
+  74666990  0.5828  Will GPT-5 be released by August 10?
+  78796430  0.5829  Spread: Portland Pilots (-2.5)
+  70664809  0.5834  Will ChatGPT reach 1b monthly active users in 2025?
+  78073920  0.5843  Will Imane Khelif be the #2 searched person on Google this year?
+  78031639  0.5844  Will Terence Crawford be the #1 searched athlete on Google this year?
+  78073802  0.5845  Will Andy Byron be the #2 searched person on Google this year?
+  78596617  0.5846  Will William Mouw win the World Wide Technology Championship?
+  73993665  0.5847  FISSURE Playground 1: 3DMAX vs. Rare Atom
+  74814562  0.5847  Will GPT-5 be released on August 11?
+  52512650  0.5848  Sundar Pichai out as Google CEO in 2024?
+  74814553  0.5850  Will GPT-5 be released on August 9?
+  78073815  0.5863  Will Volodymyr Zelenskyy be the #2 searched person on Google this year?
+  77722424  0.5867  Will Pope Francis be ranked #1 globally in Google’s Year in Search 2025 Passings
+  76393797  0.5869  Spread: Louisiana Tech (-10.0)
+  75877760  0.5870  BLAST Open: Flyquest vs. G2
+  66379971  0.5885  Will GPT-5 be released by December 31?
+  50178536  0.5885  OpenAI board out by end of week?
+  78031654  0.5886  Will Shohei Ohtani be the #1 searched athlete on Google this year?
+  77951406  0.5886  Will Volodymyr Zelenskyy rank in Google’s Top 5 Most Searched People of 2025?
+  72973417  0.5886  Terra Wortmann: Machac vs. Bublik
+  77722699  0.5887  Will David Corenswet be ranked #1 globally in Google’s Year in Search 2025 Actor
+  77951404  0.5888  Will Kamala Harris rank in Google’s Top 5 Most Searched People of 2025?
+  74814572  0.5888  Will GPT-5 be released on August 13?
+  71472168  0.5888  PGL Astana: ODDIK vs. Aurora
+  57200658  0.5891  OpenAI apologizes to Scarlett Johansson by Friday?
+  78981008  0.5892  Will another AI-generated song reach number 1 on any Billboard chart by June 30?
+  74229784  0.5892  Will GPT-5 be released by August 31?
+  39360920  0.5896  Will GPT-4 have 500b+ parameters?
+  74814543  0.5897  Will GPT-5 be released on August 7?
+  74814548  0.5898  Will GPT-5 be released on August 8?
+  78240512  0.5901  Grokipedia released by November 7?
+  77951407  0.5902  Will Kendrick Lamar rank in Google’s Top 5 Most Searched People of 2025?
+  67018420  0.5905  Naimov vs. Ofli
+  77951407  0.5905  Will Andrew Tate rank in Google’s Top 5 Most Searched People of 2025?
+  78031664  0.5906  Will Luka Dončić be the #1 searched athlete on Google this year?
+  48920545  0.5907  Will AI be the 2023 TIME Person of the Year?
+  75081940  0.5909  Will JD Vance say "Drone" or "AI" or "Artificial Intelligence" during his remark
+  77418499  0.5915  Spread: Wake Forest (-2.5)
+  77951403  0.5916  Will Mark Carney rank in Google’s Top 5 Most Searched People of 2025?
+  78073785  0.5917  Will Kendrick Lamar be the #2 searched person on Google this year?
+  74814576  0.5921  Will GPT-5 be released on August 14?
+  77951406  0.5924  Will Ali Khamenei rank in Google’s Top 5 Most Searched People of 2025?
+  67847116  0.5925  Will GPT-4.5 be released by March 31?
+  78240513  0.5925  Grokipedia released by November 15?
+  78073855  0.5928  Will Kylian Mbappé be the #2 searched person on Google this year?
+  74814567  0.5939  Will GPT-5 be released on August 12?
+  57876861  0.5940  OpenAI Sora public release in June?
+  56975941  0.5941  Will Ilya join Anthropic?
+  50187571  0.5941  Over 500 OpenAI resignations this week?
+  74814581  0.5947  Will GPT-5 be released on August 15 or later?
+  77106814  0.5950  Grokipedia released by December 31?
+  77670085  0.5951  Will Andy Byron be the #1 searched person on Google this year?
+  68627145  0.5953  Utah Tech vs. Grand Canyon
+  77951402  0.5953  Will Jair Bolsonaro rank in Google’s Top 5 Most Searched People of 2025?
+  74666990  0.5954  Will GPT-5 be released by August 5?
+  78031574  0.5954  Will Erling Haaland be the #1 searched athlete on Google this year?
+  78073915  0.5963  Will Andrew Tate be the #2 searched person on Google this year?
+  78596597  0.5966  Will Erik Van Rooyen win the World Wide Technology Championship?
+  74406379  0.5966  Will GPT-5 be released by August 15?
+  77722404  0.5967  Will George Foreman be ranked #1 globally in Google’s Year in Search 2025 Passin
+  78073885  0.5971  Will Mark Carney be the #2 searched person on Google this year?
+  78663085  0.5971  Spread: Magic (-5.5)
+  69540537  0.5971  Spread: Magic (-5.5)
+  70026018  0.5971  Spread: Magic (-5.5)
+  69744405  0.5971  Spread: Magic (-5.5)
+  78040947  0.5971  Spread: Magic (-5.5)
+  69459778  0.5971  Spread: Magic (-5.5)
+  78232939  0.5971  Spread: Magic (-5.5)
+  78126705  0.5971  Spread: Magic (-5.5)
+  70277768  0.5971  Spread: Magic (-5.5)
+  77492906  0.5971  Spread: Magic (-5.5)
+  77563081  0.5971  Spread: Magic (-5.5)
+  79025324  0.5973  Spread: Wake Forest (-5.5)
+  78073890  0.5976  Will Kamala Harris be the #2 searched person on Google this year?
+  78073775  0.5979  Will Zohran Mamdani be the #2 searched person on Google this year?
+  77722679  0.5983  Will Ana de Armas be ranked #1 globally in Google’s Year in Search 2025 Actors?
+  77670485  0.5986  Will Mistral be the first company to have an AI model hit 1500 on Chatbot Arena 
+  62262659  0.5991  Will Kamala Harris say "AI" during her Pennsylvania speech?
+  77670142  0.5992  Will Terence Crawford be the #1 searched person on Google this year?
+  78639382  0.5997  Open de Moselle: Matteo Berrettini vs Learner Tien
+  78073875  0.5997  Will Ali Khamenei be the #2 searched person on Google this year?
+  77670040  0.5998  Will Volodymyr Zelenskyy be the #1 searched person on Google this year?
+  46186585  0.6001  Musk vs. Zuck: Will the richer man win?
+  78073780  0.6003  Will Donald Trump be the #2 searched person on Google this year?
+  77670116  0.6007  Will Jannik Sinner be the #1 searched person on Google this year?
+  66110640  0.6008  Sundar Pichai out as Google CEO in 2025?
+  39002608  0.6011  Will Biden mention "AI" during his SOTU?
+  60039841  0.6014  GPT-5 released in 2024?
+  57301041  0.6014  Sam Altman out as OpenAI CEO before July?
+  66431022  0.6014  Sam Altman out as OpenAI CEO before April?
+  77951404  0.6017  Will Vladimir Putin rank in Google’s Top 5 Most Searched People of 2025?
+  70581764  0.6022  IEM Melbourne: paiN vs. Complexity
+  74803170  0.6025  Will Bernie Sanders say "AI" or "Artificial Intelligence" during his West Virgin
+  78073840  0.6032  Will Vladimir Putin be the #2 searched person on Google this year?
+  77951408  0.6033  Will Zohran Mamdani rank in Google’s Top 5 Most Searched People of 2025?
+  77722714  0.6033  Will Timothée Chalamet be ranked #1 globally in Google’s Year in Search 2025 Act
+  77722369  0.6033  Will Robert Redford be ranked #1 globally in Google’s Year in Search 2025 Passin
+  56975948  0.6035  Will Ilya join Google?
+  77951405  0.6038  Will Justin Trudeau rank in Google’s Top 5 Most Searched People of 2025?
+  76815798  0.6047  Will JD Vance say "AI" or "Artificial Intelligence" during remarks in NC on Sept
+  77951407  0.6058  Will Benjamin Netanyahu rank in Google’s Top 5 Most Searched People of 2025?
+  77098582  0.6062  Valorant: QT DIG∞ vs Delight
+  67386301  0.6063  Will Karoline Leavitt say OpenAI in her next press briefing?
+  77722384  0.6063  Will D’Angelo be ranked #1 globally in Google’s Year in Search 2025 Passings?
+  77722414  0.6067  Will Mohammed Sinwar be ranked #1 globally in Google’s Year in Search 2025 Passi
+  77670055  0.6068  Will Kendrick Lamar be the #1 searched person on Google this year?
+  77722419  0.6076  Will Giorgio Armani be ranked #1 globally in Google’s Year in Search 2025 Passin
+  68407506  0.6077  Build Wars: Webflow vs. Lovable
+  77951433  0.6080  Will Bernie say "AI" or "Artificial Intelligence" during the GOTV rally with AOC
+  77670070  0.6087  Will Zohran Mamdani be the #1 searched person on Google this year?
+  77951404  0.6088  Will Sam Altman rank in Google’s Top 5 Most Searched People of 2025?
+  67847103  0.6094  Will GPT-4.5 be released by February 28?
+  53562117  0.6096  OpenAI Sora public release before May?
+  78073880  0.6096  Will Justin Trudeau be the #2 searched person on Google this year?
+  77951403  0.6098  Will Donald Trump rank in Google’s Top 5 Most Searched People of 2025?
+  76292489  0.6100  Will Moonshot have the second best AI model on September 30?
+  67618923  0.6103  Will Karoline Leavitt say OpenAI during next White House press briefing?
+  70178704  0.6105  Will any AI score ≥30% on ARC-AGI-2 by June 30?
+  78073870  0.6105  Will Jair Bolsonaro be the #2 searched person on Google this year?
+  66975518  0.6111  Will Perplexity AI buy TikTok?
+  77670095  0.6115  Will Luigi Mangione be the #1 searched person on Google this year?
+  78073835  0.6118  Will Sam Altman be the #2 searched person on Google this year?
+  70382579  0.6122  Will OpenAI acquire Windsurf before August?
+  77670010  0.6123  Will Donald Trump be the #1 searched person on Google this year?
+  77722364  0.6125  Will Gene Hackman be ranked #1 globally in Google’s Year in Search 2025 Passings
+  77670137  0.6128  Will Shedeur Sanders be the #1 searched person on Google this year?
+  50827592  0.6129  Will Google have the best LLM before 2024?
+  78944755  0.6131  Google Trends Parlay
+  76301040  0.6132  Will Moonshot have the top AI model on September 30?
+  74919965  0.6132  Will Moonshot have the top AI model on September 30?
+  76292509  0.6135  Will Microsoft have the second best AI model on September 30?
+  78073825  0.6141  Will Benjamin Netanyahu be the #2 searched person on Google this year?
+  72974481  0.6146  Terra Wortmann: Khachanov vs. Etcheverry
+  77722704  0.6150  Will Zendaya be ranked #1 globally in Google’s Year in Search 2025 Actors?
+  72974507  0.6152  Terra Wortmann: Michelsen vs. Medvedev
+  76292514  0.6152  Will Tencent have the second best AI model on September 30?
+  74037324  0.6154  Hyperunit backed by Paradigm in 2025?
+  78339647  0.6157  Will OpenAI IPO by December 31 2026?
+  77951405  0.6162  Will Joe Biden rank in Google’s Top 5 Most Searched People of 2025?
+  51703778  0.6164  NYT drop OpenAI case by March?
+  72936390  0.6165  Will Rutte say "AI" or "Artificial Intelligence" during NATO Public Forum Addres
+  76301151  0.6166  Will Tencent have the top AI model on October 31?
+  77670045  0.6170  Will Vladimir Putin be the #1 searched person on Google this year?
+  78940404  0.6171  Anthropic acquired before 2027?
+  77514111  0.6174  Will Meituan have the second best AI model at the end of June 2026?
+  77951404  0.6174  Will Greta Thunberg rank in Google’s Top 5 Most Searched People of 2025?
+  77514016  0.6177  Will Meituan have the top AI model at the end of June 2026?
+  26048055  0.6177  Will "peace" hit its Google Trends all time high (global, monthly) before June 2
+  76292479  0.6178  Will Alibaba have the second best AI model on September 30?
+  78240945  0.6183  Will Ari Weinstein leave OpenAI by December 31, 2026?
+  78073850  0.6185  Will Timothée Chalamet be the #2 searched person on Google this year?
+  50244294  0.6186  Adam D'Angelo leaves OpenAI board by Nov 30?
+  74106656  0.6188  FISSURE Playground 1: Complexity vs. SAW
+  76301365  0.6194  Will Moonshot have the second best AI model on October 31?
+  50082674  0.6200  Ilya still at OpenAI on Jan 1?
+  77670445  0.6204  Will xAI be the first company to have an AI model hit 1500 on Chatbot Arena by J
+  76585996  0.6204  ARI vs. SF: O/U 58.5
+  78073820  0.6207  Will Greta Thunberg be the #2 searched person on Google this year?
+  76301360  0.6208  Will Tencent have the second best AI model on October 31?
+  78073895  0.6208  Will Joe Biden be the #2 searched person on Google this year?
+  77951403  0.6211  Will Timothée Chalamet rank in Google’s Top 5 Most Searched People of 2025?
+  54340020  0.6218  Musk drops OpenAI case in March?
+  67788132  0.6219  Stanford vs. Georgia Tech
+  77670030  0.6220  Will Benjamin Netanyahu be the #1 searched person on Google this year?
+  77951408  0.6222  Will Elon Musk rank in Google’s Top 5 Most Searched People of 2025?
+  77722429  0.6223  Will Diogo Jota be ranked #1 globally in Google’s Year in Search 2025 Passings?
+  70025896  0.6224  Anthropic acquired in 2025?
+  68453313  0.6225  OpenAI social app before June?
+  76586003  0.6232  ARI vs. SF: O/U 55.5
+  77933103  0.6233  Will Alibaba’s Qwen 3 Max win the NOF1.ai competition?
+  78339647  0.6233  Will OpenAI IPO by December 31 2025?
+  76301351  0.6233  Will Microsoft have the second best AI model on October 31?
+  76301156  0.6240  Will Moonshot have the top AI model on October 31?
+  77670035  0.6241  Will Sam Altman be the #1 searched person on Google this year?
+  74919940  0.6244  Will Alibaba have the top AI model on September 30?
+  76301017  0.6244  Will Alibaba have the top AI model on September 30?
+  77722409  0.6247  Will Ismail Haniyeh be ranked #1 globally in Google’s Year in Search 2025 Passin
+  54339781  0.6253  OpenAI renamed to ClosedAI in March?
+  70178694  0.6256  Will any AI score ≥20% on ARC-AGI-2 by June 30?
+  78321966  0.6257  Will Trump say "AI" or "Artificial Intelligence" during Xi events on October 29?
+  77670475  0.6259  Will Alibaba be the first company to have an AI model hit 1500 on Chatbot Arena 
+  77670465  0.6263  Will no company have an AI model hit 1500 on Chatbot Arena by June 30 2026?
+  77514106  0.6270  Will Mistral have the second best AI model at the end of June 2026?
+  76301342  0.6270  Will Alibaba have the second best AI model on October 31?
+  72889492  0.6271  Terra Wortmann: Michelsen vs. Tsitsipas
+  67772194  0.6283  Will Elon Musk buy OpenAI before May?
+  39398969  0.6284  Will Bing suspend its AI chatbot by February 28?
+  73127372  0.6284  Jony Ive out at OpenAI before August?
+  78240945  0.6284  Will Conrad Kramer leave OpenAI by December 31, 2026?
+  77670105  0.6285  Will Nicolás Maduro be the #1 searched person on Google this year?
+  62305462  0.6289  Sam Altman out as OpenAI CEO in 2024?
+  77638060  0.6292  Will Bernie say "AI" or "Artificial Intelligence" during CNN town hall on Octobe
+  76292484  0.6294  Will Mistral AI have the second best AI model on September 30?
+  50071683  0.6305  OpenAI permanent CEO by Dec 31?
+  77514101  0.6307  Will Moonshot have the second best AI model at the end of June 2026?
+  75407868  0.6307  Will Trump say "AI" or "Artificial Intelligence" during events with South Korean
+  61783781  0.6308  Will Kamala Harris say "artificial intelligence" during her Pennsylvania rally?
+  65601974  0.6310  Will Gemini have the top AI model on December 31?
+  77670480  0.6311  Will Z.ai be the first company to have an AI model hit 1500 on Chatbot Arena by 
+  77764211  0.6316  Will Trump say "AI" or "Artificial Intelligence" during Australia PM events on O
+  77514011  0.6317  Will Mistral have the top AI model at the end of June 2026?
+  78075741  0.6320  Will Palantir say "AI Growth" during earnings call?
+  78928835  0.6321  Will Trump say "AI" or "Artificial Intelligence" during the private dinner on No
+  70178676  0.6321  Will any AI score ≥20% on ARC-AGI-2 by April 30?
+  50243599  0.6328  Sam Altman back on OpenAI board by Nov 30?
+  72080519  0.6332  Will a candidate say "AI" or "Artificial Intelligence" during NYC Democratic Pri
+  78932065  0.6335  Will Keir Starmer say "AI" or "Artificial Intelligence" during the next Prime Mi
+  77514081  0.6336  Will Alibaba have the second best AI model at the end of June 2026?
+  74919945  0.6336  Will Mistral AI have the top AI model on September 30?
+  61705255  0.6338  Will Kamala Harris say "artificial intelligence" during her North Carolina rally
+  66153938  0.6339  Will Alibaba have the top AI model on June 30?
+  65602029  0.6340  Will Claude have the top AI model on December 31?
+  77514006  0.6340  Will Moonshot have the top AI model at the end of June 2026?
+  77503271  0.6343  Will Trump say "AI" or "Artificial Intelligence" during speech to Israeli Parlia
+  76301347  0.6343  Will Mistral AI have the second best AI model on October 31?
+  76301133  0.6344  Will Alibaba have the top AI model on October 31?
+  71881810  0.6345  Will Powell say "AI" or "Artificial Intelligence" during Princeton Commencement 
+  76301256  0.6347  Will Tencent have the best AI model on October 31?
+  74123657  0.6349  Will Trump say "Beautiful coal" or "Clean coal" during his AI speech on July 23?
+  70710568  0.6352  Will Trump say "AI" or "Artificial Intelligence" during his 100 Day Commemorativ
+  70021060  0.6354  Will Buffett say "A.I" or "Artificial Intelligence" during May 3 Shareholders Me
+  72657737  0.6355  Will Trump say "AI / Artificial Intelligence" during his 250th Army Anniversary 
+  78076093  0.6357  Will Microsoft say "OpenAI" during earnings call?
+  66153236  0.6358  Will Moonshot have the top AI model on December 31?
+  76301261  0.6358  Will Moonshot have the best AI model on October 31?
+  70180905  0.6361  PGL Bucharest: Complexity vs. G2
+  78982202  0.6364  Will Bill Ackman say "AI" or "Artificial Intelligence" during the X Space event 
+  66153228  0.6364  Will Tencent have the top AI model on December 31?
+  78239978  0.6365  Will Trump say "AI" or "Artificial Intelligence" during Japan troop visit on Oct
+  72279728  0.6372  Will Donald Trump say "AI / Artificial Intelligence" during Merz events on June 
+  69002254  0.6372  Will Trump say "AI" or "Artificial Intelligence" during his meeting with the NAT
+  67386291  0.6372  Will Karoline Leavitt say AI or artificial intelligence in her next press briefi
+  66230833  0.6374  Will Sam Altman get OpenAI equity by June 30?
+  78940394  0.6374  Will Sam Altman get OpenAI equity by June 30?
+  79058300  0.6374  Will Trump say "AI" or "Artificial Intelligence" 2+ times during Saudi Investmen
+  76301142  0.6375  Will Microsoft have the top AI model on October 31?
+  77340235  0.6376  Will Trump say "AI" or "Artificial Intelligence" during events with PM of Canada
+  74123658  0.6377  Will Trump say "Genius" during his AI speech on July 23?
+  76301138  0.6380  Will Mistral AI have the top AI model on October 31?
+  68406600  0.6380  Will Donald Trump say AI or Artificial Intelligence during his presser with Star
+  74880569  0.6384  Will anyone say "OpenAI" 5+ times during the OpenAI livestream on August 7?
+  78113506  0.6384  Will Trump say "AI" or "Artificial Intelligence" during Malaysia events on Octob
+  70136688  0.6385  Will Alibaba have the top AI model on May 31?
+  77670460  0.6392  Will DeepSeek be the first company to have an AI model hit 1500 on Chatbot Arena
+  74031202  0.6395  FISSURE Playground 1: Complexity vs. BIG
+  67217841  0.6397  Will Mistral have a #1 AI model this year?
+  61911681  0.6398  Will Kamala Harris say "artificial intelligence" during her Wisconsin rally?
+  68892674  0.6401  Will Trump say "AI" or "Artificial Intelligence" during his presser with Ireland
+  67300433  0.6402  Will Karoline Leavitt say "AI" or "Artificial Intelligence" during the next Whit
+  74919918  0.6403  Will xAI have the top AI model on September 30?
+  76300992  0.6403  Will xAI have the top AI model on September 30?
+  76011481  0.6408  Meek Mill releases AI app in 2025?
+  68454507  0.6409  Will Donald Trump say "AI" or "Artificial Intelligence" during his presser with 
+  75689342  0.6409  Will JD Vance say "AI" or "Artificial Intelligence" during remarks in Wisconsin 
+  76366050  0.6409  Anthropic IPO in 2025?
+  76301246  0.6410  Will Microsoft have the best AI model on October 31?
+  76292458  0.6419  Will Meta have the second best AI model on September 30?
+  70306923  0.6419  Will Carney say "AI" or "Artificial Intelligence" during Canadian Election Debat
+  76292453  0.6419  Will xAI have the second best AI model on September 30?
+  77506192  0.6420  Will Moonshot have the second best AI model at the end of November 2025?
+  70178711  0.6422  Will any AI score ≥85% on ARC-AGI-2 by November 3?
+  77506197  0.6423  Will Mistral have the second best AI model at the end of November 2025?
+  67575759  0.6425  Will Donald Trump say "AI" or "Artificial Intelligence" during Super Bowl pregam
+  74880571  0.6425  Will anyone say "Multimodal" during the OpenAI livestream on August 7?
+  65842643  0.6427  Will another model be the top AI model on January 31?
+  74919923  0.6428  Will Meta have the top AI model on September 30?
+  76300997  0.6428  Will Meta have the top AI model on September 30?
+  68165144  0.6429  Will Alibaba have the top AI model on March 31?
+  65718996  0.6430  CCT Semis: Magnus vs. Maxime
+  72047742  0.6430  Will Trump say "AI" or "Artificial Intelligence" during Pittsburgh rally on May 
+  50539047  0.6433  Will OpenAI be for-profit by March?
+  50082768  0.6433  Sam back as CEO of OpenAI?
+  65602041  0.6433  Will another model be the top AI model on December 31?
+  77513986  0.6433  Will Alibaba have the top AI model at the end of June 2026?
+  66110648  0.6434  Sam Altman out as OpenAI CEO in 2025?
+  77513679  0.6439  Will Moonshot have the top AI model at the end of November 2025?
+  70622978  0.6439  Will Michael Saylor say "A.I" or "Artificial Intelligence" during the Q1 2025 St
+  68927765  0.6440  Will Alibaba have the top AI model on April 30?
+  77513921  0.6445  Will Meituan have the best AI model at the end of June 2026?
+  67217736  0.6446  DeepSeek better than all OpenAI models before June?
+  68172147  0.6446  Will Trump say "AI" or "Artificial Intelligence at CPAC conference on Saturday?
+  73424398  0.6448  Will Alibaba have the top AI model on August 31?
+  77506342  0.6450  Will Moonshot have the second best AI model at the end of December 2025?
+  77506172  0.6450  Will Alibaba have the second best AI model at the end of November 2025?
+  67214674  0.6451  Will StepFun have the top AI model on February 28?
+  78075752  0.6452  Will Google say "DeepMind / Deep Mind" during earnings call?
+  68203058  0.6453  Will Karoline Leavitt say "AI" or "Artificial Intelligence" during next White Ho
+  70459144  0.6453  Will Karoline Leavitt say "AI" or "Artificial Intelligence" during next White Ho
+  69255635  0.6453  Will Karoline Leavitt say "AI" or "artificial intelligence" during next White Ho
+  68728105  0.6453  Will Karoline Leavitt say "AI" or "Artificial Intelligence" during next White Ho
+  68963266  0.6453  Will Karoline Leavitt say "AI" or "Artificial Intelligence" during next White Ho
+  69565504  0.6453  Will Karoline Leavitt say "AI" or "Artificial Intelligence" during next White Ho
+  76292518  0.6459  Will Z.ai have the second best AI model on September 30?
+  76301238  0.6460  Will Alibaba have the best AI model on October 31?
+  76301242  0.6461  Will Mistral AI have the best AI model on October 31?
+  77514196  0.6461  Will Moonshot have the top AI model at the end of December 2025?
+  67217828  0.6463  Will Zhipu AI have a #1 AI model this year?
+  67618814  0.6468  Will Karoline Leavitt say AI or Artificial Intelligence during next White House 
+  77513684  0.6469  Will Mistral have the top AI model at the end of November 2025?
+  74880567  0.6472  Will anyone say "China" during the OpenAI livestream on August 7?
+  76658983  0.6473  Nothing Ever Happens: AI Edition
+  74880566  0.6473  Will anyone say "Sam" or "Altman" during the OpenAI livestream on August 7?
+  51703443  0.6475  OpenAI settlement with NYT by March?
+  70021127  0.6475  Will Trump say "AI" or "Artificial Intelligence" during NRCC Dinner on April 8?
+  61193649  0.6477  Will Apple invest in OpenAI in 2024?
+  78281780  0.6477  Will Trump say "AI" or "Artificial Intelligence" during Korea CEOs Luncheon on O
+  76099189  0.6480  Will anyone say "OpenAI deal" during Oracle's 1st Quarter Fiscal Year 2026 Earni
+  77506347  0.6482  Will Mistral have the second best AI model at the end of December 2025?
+  54343939  0.6488  Will Biden say "AI" or "Artificial Intelligence" during his State of the Union a
+  68406624  0.6492  Will Karoline Leavitt say AI or Artificial Intelligence during next White House 
+  67214693  0.6492  Will Alibaba have the top AI model on February 28?
+  78328926  0.6493  Will Trump say "AI" or "Artificial Intelligence" during the America Business For
+  71448413  0.6494  Will Trump say "AI" or "Artificial Intelligence" during his May 13 interview?
+  72042155  0.6499  Will Alibaba have the top AI model on July 31?
+  75373811  0.6500  OpenAI browser by September 30?
+  77676093  0.6502  Will anyone say "AI" or "Artificial Intelligence" during South Park e6 s27?
+  67878593  0.6502  Will Karoline Leavitt say AI/Artificial Intelligence during next White House pre
+  70630369  0.6505  Will OpenAI acquire Chrome before before August?
+  77513911  0.6505  Will Moonshot have the best AI model at the end of June 2026?
+  66153912  0.6505  Will Meta have the top AI model on June 30?
+  50461342  0.6508  Will an AI win the $5 million AI Math Olympiad Prize before August?
+  72925232  0.6509  Terra Wortmann: Rublev vs. Etcheverry
+  78559018  0.6510  Will Zohran Mamdani say "AI" or "Artificial Intelligence" during his victory/con
+  65130668  0.6510  OpenAI Sora public release in 2024?
+  65446483  0.6512  Will OpenAI sue Elon Musk before 2025?
+  66153878  0.6513  Will xAI have the top AI model on June 30?
+  77513916  0.6513  Will Mistral have the best AI model at the end of June 2026?
+  76301030  0.6514  Will Z.ai have the top AI model on September 30?
+  74919950  0.6514  Will Z.ai have the top AI model on September 30?
+  67847879  0.6514  Will Brian Armstrong say AI/Artificial Intelligence times during his X space?
+  71149743  0.6515  Will Joe Biden say "AI" or "Artificial Intelligence" during his May 8 interview?
+  51678849  0.6517  OpenAI settlement with NYT by end of 2024?
+  66153179  0.6520  Will Alibaba have the top AI model on December 31?
+  71836542  0.6521  OpenAI announces development of glasses/headset before August?
+  67852258  0.6525  Will Trump say "AI" or "Artificial Intelligence" during his Thursday press confe
+  77504570  0.6525  Will Powell say "AI" or "Artificial Intelligence" during speech on October 14?
+  77514201  0.6527  Will Mistral have the top AI model at the end of December 2025?
+  77513659  0.6527  Will Alibaba have the top AI model at the end of November 2025?
+  71352293  0.6529  Will Trump say "AI" or "Artificial Intelligence" at Medicare Drug Price Plan Eve
+  77506322  0.6529  Will Alibaba have the second best AI model at the end of December 2025?
+  76301355  0.6533  Will Z.ai have the second best AI model on October 31?
+  73783783  0.6544  OpenAI browser in July?
+  65445829  0.6546  Will Elon respond to OpenAI today?
+  67536987  0.6547  Will Trump say "AI" or "artificial intelligence" during his February 4 press con
+  50081239  0.6548  Will Sam Altman sue OpenAI?
+  69288479  0.6548  Will Trump say "AI" or "Artificial Intelligence" during today's Education Event?
+  78408674  0.6550  Will Powell say "AI" or "Artificial Intelligence" 3+ times during December press
+  76301112  0.6550  Will xAI have the top AI model on October 31?
+  76301323  0.6551  Will Meta have the second best AI model on October 31?
+  76301117  0.6553  Will Meta have the top AI model on October 31?
+  66153192  0.6554  Will Mistral AI have the top AI model on December 31?
+  67217861  0.6556  Will 01A1 have a #1 AI model this year?
+  76301319  0.6556  Will xAI have the second best AI model on October 31?
+  77670440  0.6560  Will OpenAI be the first company to have an AI model hit 1500 on Chatbot Arena b
+  70136660  0.6563  Will xAI have the top AI model on May 31?
+  74880568  0.6566  Will anyone say "It's a good model" during the OpenAI livestream on August 7?
+  76292474  0.6567  Will DeepSeek have the second best AI model on September 30?
+  79022925  0.6568  Will a dLLM be the top AI model before 2027?
+  54145132  0.6571  OpenAI settlement with Elon Musk before July?
+  75253916  0.6576  Will OpenAI launch a token in 2025?
+  77513891  0.6583  Will Alibaba have the best AI model at the end of June 2026?
+  78074372  0.6583  Will anyone say "AI" or "Artificial Intelligence" during the FED board meeting o
+  74880572  0.6584  Will anyone say "Open Source" during the OpenAI livestream on August 7?
+  66153208  0.6586  Will Microsoft have the top AI model on December 31?
+  76301147  0.6587  Will Z.ai have the top AI model on October 31?
+  74123655  0.6587  Will Trump say "AI" or "Artificial Intelligence" 5+ times during his AI speech o
+  77506267  0.6588  Will Moonshot have the best AI model at the end of November 2025?
+  67772353  0.6589  Will Elon Musk buy OpenAI in 2025?
+  60586309  0.6595  Will Trump say "AI" or "Artificial Intelligence" at his press conference?
+  77514176  0.6600  Will Alibaba have the top AI model at the end of December 2025?
+  67932331  0.6600  Will Trump and Elon say "AI" or "Artificial Intelligence" during their Feb 18 in
+  74673432  0.6605  Will Powell say "AI" or "Artificial Intelligence" during September press confere
+  68927755  0.6607  Will Meta have the top AI model on April 30?
+  74880570  0.6607  Will anyone say "Roadmap" during the OpenAI livestream on August 7?
+  75733520  0.6608  OpenAI browser by October 31?
+  78559137  0.6608  Will Andrew Cuomo say "AI" or "Artificial Intelligence" during his victory/conce
+  62307757  0.6610  OpenAI becomes a for-profit before April 2025?
+  77977912  0.6611  OpenAI browser by October 24?
+  68927709  0.6612  Will xAI have the top AI model on April 30?
+  69448384  0.6613  Will Trump say "AI" or "Artificial Intelligence" during today's event with the G
+  71436325  0.6614  Will Powell say "AI" or "Artificial Intelligence" during Framework Review speech
+  74880571  0.6614  Will anyone say "Browser" during the OpenAI livestream on August 7?
+  43097729  0.6617  Will DeSantis say "A.I." and/or "Artificial Intelligence" during his Twitter Spa
+  66746222  0.6620  Will Trump say "AI" or "Artificial Intelligence" during his inauguration speech?
+  73742374  0.6622  Will Grok-4 be the top AI before August?
+  70023202  0.6622  Will Trump say "AI" or "Artificial Intelligence" between April 7 and April 11?
+  72608936  0.6623  Will anyone say "AI" or "Artificial Intelligence" during the 2nd Democratic Mayo
+  73415415  0.6624  Will OpenAI release an open source model before September?
+  76099188  0.6628  Will anyone say "Healthcare AI" during Oracle's 1st Quarter Fiscal Year 2026 Ear
+  74919936  0.6628  Will DeepSeek have the top AI model on September 30?
+  76301012  0.6628  Will DeepSeek have the top AI model on September 30?
+  58407562  0.6628  Will Biden say "AI" or "Artificial intelligence"  during the debate?
+  65602019  0.6631  Will Grok have the top AI model on December 31?
+  78940144  0.6631  OpenAI acquired before 2027?
+  69619162  0.6631  Will Trump say "AI" or "Artificial Intelligence" by April 4?
+  65445996  0.6633  Will Elon Musk settle lawsuit with OpenAI before 2025?
+  77506272  0.6633  Will Mistral have the best AI model at the end of November 2025?
+  68321119  0.6634  Will Trump say "AI" or "Artificial Intelligence" during Macron presser today?
+  77944367  0.6637  Will any AI reach $50k in Alpha Arena AI trading competition?
+  77692080  0.6638  Will anyone say "AI" or "Artificial Intelligence" during 1st NYC mayoral debate 
+  67188440  0.6642  DeepSeek better than all OpenAI models before March?
+  73747589  0.6644  Will anyone say "AI" or "Artificial Intelligence" 7+ times during the Q2 2025 Ne
+  67021371  0.6644  Will Trump say  "AI" or "artificial intelligence" during Fox News Oval Office in
+  73424365  0.6645  Will xAI have the top AI model on August 31?
+  69494079  0.6646  Will Elon say "AI" or "Artificial Intelligence" during Baier interview on Thursd
+  67802699  0.6647  Will Sam Altman get OpenAI equity in 2025?
+  77816153  0.6648  Will anyone say "AI" or "Artificial Intelligence" during 2nd NYC mayoral debate 
+  67299398  0.6648  Alibaba AI model better than DeepSeek before March?
+  74839116  0.6650  Will Elon Musk say "AGI / Artificial General Intelligence" during the August 6 A
+  68165135  0.6651  Will Meta have the top AI model on March 31?
+  72042161  0.6652  Will Meta have the top AI model on July 31?
+  68165048  0.6652  Will xAI have the top AI model on March 31?
+  68925234  0.6655  Will Volodymyr Zelenskyy say "AI" or "Artificial Intelligence" during his Busine
+  76099186  0.6657  Will anyone say "AI forecast" during Oracle's 1st Quarter Fiscal Year 2026 Earni
+  73424370  0.6662  Will Meta have the top AI model on August 31?
+  68124284  0.6663  Will Trump say "AI" or "Artificial Intelligence" during Miami investment confere
+  72042137  0.6663  Will xAI have the top AI model on July 31?
+  78070457  0.6666  Will the GPT-5 launch be the #1 searched news on Google this year?
+  67386233  0.6666  Will Trump say 'AI' or 'artificial intelligence' during the 2025 State of the Un
+  76301251  0.6669  Will Z.ai have the best AI model on October 31?
+  76366048  0.6669  OpenAI IPO in 2025?
+  77506247  0.6671  Will Alibaba have the best AI model at the end of November 2025?
+  61391090  0.6672  Will Kamala say "Artificial Intelligence" at debate?
+  65130784  0.6673  Will  Artificial Intelligence be TIME's Person of the Year for 2024?
+  74880569  0.6677  Will anyone say "Deep Research" during the OpenAI livestream on August 7?
+  66153109  0.6679  Will xAI have the top AI model on December 31?
+  66153810  0.6680  OpenAI announces it has achieved AGI before July?
+  71832027  0.6680  Will OpenAI launch a new consumer hardware product in 2025?
+  74681328  0.6680  Will Trump say "AI" or "Artificial Intelligence" this week?
+  70191450  0.6680  Will Trump say "AI" or "Artificial Intelligence" this week?
+  56782695  0.6683  OpenAI public release of search product by Friday?
+  67214654  0.6688  Will xAI have the top AI model on February 28?
+  70306816  0.6688  Will Musk say "AI" or "Artificial Intelligence" during the Q1 2025 Tesla earning
+  66153137  0.6691  Will Meta have the top AI model on December 31?
+  62307817  0.6698  Will Sam Altman take equity in OpenAI in 2024?
+  75239271  0.6700  Will OpenAI acquire Chrome by December 31?
+  69615852  0.6701  Will Trump say "AI" or "Artificial Intelligence" during tariff event on April 2?
+  76301213  0.6707  Will xAI have the best AI model on October 31?
+  78857124  0.6708  Will Mistral have the best AI model for math at the end of 2025?
+  76301218  0.6709  Will Meta have the best AI model on October 31?
+  76301337  0.6710  Will DeepSeek have the second best AI model on October 31?
+  77514091  0.6711  Will xAI have the second best AI model at the end of June 2026?
+  77513996  0.6712  Will xAI have the top AI model at the end of June 2026?
+  65842577  0.6715  Will xAI have the top AI model on January 31?
+  67386216  0.6718  Will Jerome Powell say "AI" or "Artificial Intelligence" during the March meetin
+  77684585  0.6719  Will any AI model reach 1500+ on Chatbot Arena by Dec 31?
+  65842619  0.6721  Will Meta have the top AI model on January 31?
+  70306925  0.6723  Will Poilievre say "AI" or "Artificial Intelligence" during Canadian Election De
+  78076091  0.6725  Will Microsoft say "AI / Artificial Intelligence" during earnings call?
+  77514086  0.6728  Will Z.ai have the second best AI model at the end of June 2026?
+  66153221  0.6730  Will Z.ai have the top AI model on December 31?
+  67218531  0.6731  Will Powell say "AI" or "Artificial Intelligence" during January press conferenc
+  67217849  0.6741  Will Alibaba have a #1 AI model this year?
+  77933464  0.6745  Will DeepSeek’s DeepSeek V3.1 Chat lose the NOF1.ai competition?
+  72140287  0.6750  Will Donald Trump or Elon Musk Say "AI / Artificial Intelligence" during the pre
+  74363142  0.6752  OpenAI browser by August 31?
+  67217856  0.6753  Will Nvidia have a #1 AI model this year?
+  78857098  0.6753  Will Alibaba have the best AI model for math at the end of 2025?
+  72925240  0.6756  Terra Wortmann: Auger-Aliassime vs. Khachanov
+  76301129  0.6763  Will DeepSeek have the top AI model on October 31?
+  71436335  0.6768  Will Trump say "AI" or "Artificial Intelligence" during Gulf Leaders Summit on M
+  67214644  0.6769  Will Meta have the top AI model on February 28?
+  56782352  0.6770  OpenAI announces search competitor on Monday?
+  53530624  0.6774  Will OpenAI launch a Web Search Product by March 31?
+  77513991  0.6775  Will Z.ai have the top AI model at the end of June 2026?
+  61364513  0.6775  Will Trump say "AI" or "Artificial Intelligence" during Lex interview?
+  68080162  0.6775  Will OpenAI release an open source model before July?
+  70136671  0.6779  Will DeepSeek have the top AI model on May 31?
+  76292449  0.6780  Will OpenAI have the second best AI model on September 30?
+  74880567  0.6788  Will anyone say "GPT" 15+ times during the OpenAI livestream on August 7?
+  73248065  0.6804  Will Artificial Intelligence be TIME's Person of the Year for 2025?
+  78070102  0.6806  Will ChatGPT’s global AI chatbot market share be between 82% and 83% on October 
+  77513669  0.6807  Will xAI have the top AI model at the end of November 2025?
+  78940414  0.6811  AI model scores ≥ 90% on FrontierMath Benchmark before 2027?
+  77506182  0.6813  Will xAI have the second best AI model at the end of November 2025?
+  78857119  0.6814  Will Moonshot have the best AI model for math at the end of 2025?
+  71149733  0.6825  Will Saylor say "AI" or "Artificial Intelligence" 5+ times during his Strategy W
+  77933469  0.6827  Will Google’s Gemini 2.5 Pro lose the NOF1.ai competition?
+  78728649  0.6829  Will Mistral have the best AI model for coding at the end of 2025?
+  77514096  0.6834  Will DeepSeek have the second best AI model at the end of June 2026?
+  78728644  0.6844  Will Moonshot have the best AI model for coding at the end of 2025?
+  73424392  0.6844  Will DeepSeek have the top AI model on August 31?
+  68927734  0.6847  Will DeepSeek have the top AI model on April 30?
+  77514186  0.6848  Will xAI have the top AI model at the end of December 2025?
+  77506177  0.6848  Will Z.ai have the second best AI model at the end of November 2025?
+  78279419  0.6854  OpenAI announces it has achieved AGI before 2027?
+  67774289  0.6854  OpenAI acquired in 2025?
+  77506332  0.6855  Will xAI have the second best AI model at the end of December 2025?
+  76300987  0.6856  Will OpenAI have the top AI model on September 30?
+  74919913  0.6856  Will OpenAi have the top AI model on September 30?
+  72042149  0.6858  Will DeepSeek have the top AI model on July 31?
+  78728624  0.6862  Will Alibaba have the best AI model for coding at the end of 2025?
+  68165161  0.6865  Will DeepSeek have the top AI model on March 31?
+  61121083  0.6874  Will Kamala Harris say  "AI" or "Artificial Intelligence" during CNN interview?
+  69256029  0.6874  Will Trump say "AI" or "Artificial Intelligence" during Digital Asset Summit?
+  66153164  0.6878  Will DeepSeek have the top AI model on December 31?
+  77506327  0.6881  Will Z.ai have the second best AI model at the end of December 2025?
+  67217787  0.6882  Will xAI have a #1 AI model this year?
+  76301233  0.6887  Will DeepSeek have the best AI model on October 31?
+  51717928  0.6889  OpenAI announces it has achieved AGI in 2024?
+  77514001  0.6890  Will DeepSeek have the top AI model at the end of June 2026?
+  78070087  0.6891  Will ChatGPT’s global AI chatbot market share be between 79% and 80% on October 
+  70906283  0.6894  OpenAI becomes a for-profit in 2025?
+  77513664  0.6895  Will Z.ai have the top AI model at the end of November 2025?
+  76301315  0.6897  Will OpenAI have the second best AI model on October 31?
+  77933088  0.6901  Will Google’s Gemini 2.5 Pro win the NOF1.ai competition?
+  78070107  0.6904  Will ChatGPT’s global AI chatbot market share be between 83% and 84% on October 
+  67188424  0.6909  Will a Chinese AI model become #1 before April?
+  77513896  0.6913  Will Z.ai have the best AI model at the end of June 2026?
+  78070097  0.6916  Will ChatGPT’s global AI chatbot market share be between 81% and 82% on October 
+  67214571  0.6916  Will DeepSeek have the top AI model on February 28?
+  78070082  0.6918  Will ChatGPT’s global AI chatbot market share be between 78% and 79% on October 
+  78076052  0.6921  Will Amazon say "Gen-AI / Generative AI" during earnings call?
+  66153868  0.6927  Will OpenAI have the top AI model on June 30?
+  77514181  0.6928  Will Z.ai have the top AI model at the end of December 2025?
+  77506187  0.6934  Will DeepSeek have the second best AI model at the end of November 2025?
+  67891733  0.6935  AI model scores ≥ 90% on FrontierMath Benchmark in 2025?
+  73129068  0.6941  OpenAI $1T+ valuation in 2025?
+  73850475  0.6943  Will Trump say "AI" or "Artificial Intelligence" during the Energy and Innovatio
+  42508943  0.6949  Will Trump mention "AI/GPT" during his CNN town hall?
+  73421749  0.6950  Apple Siri partnership with OpenAI/Anthropic before September?
+  76301108  0.6960  Will OpenAI have the top AI model on October 31?
+  78939104  0.6960  Will a Chinese AI model become #1 by June 30?
+  77506337  0.6973  Will DeepSeek have the second best AI model at the end of December 2025?
+  77933083  0.6975  Will DeepSeek’s DeepSeek V3.1 Chat win the NOF1.ai competition?
+  77670450  0.6978  Will Anthropic be the first company to have an AI model hit 1500 on Chatbot Aren
+  78070092  0.6986  Will ChatGPT’s global AI chatbot market share be between 80% and 81% on October 
+  67217810  0.6987  Will Meta have a #1 AI model this year?
+  77670455  0.6988  Will Google be the first company to have an AI model hit 1500 on Chatbot Arena b
+  74123652  0.6988  Will Trump say "OpenAI" during his AI speech on July 23?
+  77513674  0.6992  Will DeepSeek have the top AI model at the end of November 2025?
+  77933459  0.6992  Will Anthropic’s Claude 4.5 Sonnet lose the NOF1.ai competition?
+  77506257  0.6995  Will xAI have the best AI model at the end of November 2025?
+  70350305  0.6995  OpenAI social app in 2025?
+  78857103  0.6998  Will Z.ai have the best AI model for math at the end of 2025?
+  70136645  0.7003  Will OpenAI have the top AI model on May 31?
+  77506252  0.7023  Will Z.ai have the best AI model at the end of November 2025?
+  77514191  0.7035  Will DeepSeek have the top AI model at the end of December 2025?
+  66390894  0.7037  OpenAI announces it has achieved AGI in 2025?
+  68927718  0.7046  Will OpenAI have the top AI model on April 30?
+  65285323  0.7051  Will "AI" or "Artificial Intelligence" be in the manifesto?
+  77513906  0.7053  Will DeepSeek have the best AI model at the end of June 2026?
+  77933479  0.7057  Will xAI’s Grok 4 lose the NOF1.ai competition?
+  78857109  0.7062  Will xAI have the best AI model for math at the end of 2025?
+  73780432  0.7063  OpenAI browser in 2025?
+  68165070  0.7074  Will OpenAI have the top AI model on March 31?
+  65602007  0.7078  Will ChatGPT have the top AI model on December 31?
+  77514076  0.7079  Will OpenAI have the second best AI model at the end of June 2026?
+  78857114  0.7080  Will DeepSeek have the best AI model for math at the end of 2025?
+  72042143  0.7087  Will OpenAI have the top AI model on July 31?
+  73424359  0.7088  Will OpenAi have the top AI model on August 31?
+  51974265  0.7093  Will OpenAI release GPT-4.5 before April?
+  78728629  0.7099  Will Z.ai have the best AI model for coding at the end of 2025?
+  67217771  0.7103  Will DeepSeek have a #1 AI model this year?
+  78070112  0.7105  Will ChatGPT’s global AI chatbot market share be 84% or higher on October 31 202
+  77933098  0.7108  Will xAI’s Grok 4 win the NOF1.ai competition?
+  78070117  0.7110  Will ChatGPT’s global AI chatbot market share be less than 78% on October 31 202
+  78728634  0.7113  Will xAI have the best AI model for coding at the end of 2025?
+  77513981  0.7122  Will OpenAI have the top AI model at the end of June 2026?
+  66153092  0.7122  Will OpenAI have the top AI model on December 31?
+  39360823  0.7125  Will OpenAI release GPT-4 by May 31?
+  65842560  0.7129  Will OpenAI have the top AI model on January 31?
+  77506262  0.7137  Will DeepSeek have the best AI model at the end of November 2025?
+  67214588  0.7146  Will OpenAI have the top AI model on February 28?
+  76292463  0.7155  Will Anthropic have the second best AI model on September 30?
+  77933078  0.7179  Will Anthropic’s Claude 4.5 Sonnet win the NOF1.ai competition?
+  68080161  0.7197  Will OpenAI release an open source model in 2025?
+  73540349  0.7202  Will a Chinese AI model become #1 in 2025?
+  74919928  0.7204  Will Anthropic have the top AI model on September 30?
+  76301002  0.7204  Will Anthropic have the top AI model on September 30?
+  77506167  0.7225  Will OpenAI have the second best AI model at the end of November 2025?
+  77513886  0.7227  Will OpenAI have the best AI model at the end of June 2026?
+  76292469  0.7229  Will Google have the second best AI model on September 30?
+  77513654  0.7250  Will OpenAI have the top AI model at the end of November 2025?
+  76301327  0.7265  Will Anthropic have the second best AI model on October 31?
+  78728639  0.7269  Will DeepSeek have the best AI model for coding at the end of 2025?
+  77506317  0.7272  Will OpenAI have the second best AI model at the end of December 2025?
+  77514171  0.7292  Will OpenAI have the top AI model at the end of December 2025?
+  76301121  0.7301  Will Anthropic have the top AI model on October 31?
+  77514071  0.7308  Will Anthropic have the second best AI model at the end of June 2026?
+  76301007  0.7315  Will Google have the top AI model on September 30?
+  74919932  0.7315  Will Google have the top AI model on September 30?
+  66153889  0.7324  Will Anthropic have the top AI model on June 30?
+  76301332  0.7330  Will Google have the second best AI model on October 31?
+  77513976  0.7341  Will Anthropic have the top AI model at the end of June 2026?
+  78857093  0.7359  Will OpenAI have the best AI model for math at the end of 2025?
+  77506242  0.7365  Will OpenAI have the best AI model at the end of November 2025?
+  76301125  0.7378  Will Google have the top AI model on October 31?
+  73424375  0.7393  Will Anthropic have the top AI model on August 31?
+  77506162  0.7393  Will Anthropic have the second best AI model at the end of November 2025?
+  68927745  0.7395  Will Anthropic have the top AI model on April 30?
+  66153860  0.7407  Will Google have the top AI model on June 30?
+  72042132  0.7410  Will Anthropic have the top AI model on July 31?
+  77506312  0.7432  Will Anthropic have the second best AI model at the end of December 2025?
+  66153125  0.7433  Will Anthropic have the top AI model on December 31?
+  77513649  0.7435  Will Anthropic have the top AI model at the end of November 2025?
+  78728619  0.7437  Will OpenAI have the best AI model for coding at the end of 2025?
+  67217765  0.7438  Will OpenAI have a #1 AI model this year?
+  70136610  0.7444  Will Google have the top AI model on May 31?
+  67214618  0.7448  Will Anthropic have the top AI model on February 28?
+  68165095  0.7451  Will Anthropic have the top AI model on March 31?
+  76301228  0.7453  Will Google have the best AI model on October 31?
+  65842607  0.7454  Will Anthropic have the top AI model on January 31?
+  77514166  0.7462  Will Anthropic have the top AI model at the end of December 2025?
+  76301223  0.7469  Will Anthropic have the best AI model on October 31?
+  78075752  0.7503  Will Google say "AI / Artificial Intelligence" during earnings call?
+  68927697  0.7504  Will Google have the top AI model on April 30?
+  72042126  0.7506  Will Google have the top AI model on July 31?
+  68165039  0.7514  Will Google have the top AI model on March 31?
+  77514066  0.7540  Will Google have the second best AI model at the end of June 2026?
+  73424381  0.7542  Will Google have the top AI model on August 31?
+  77513881  0.7560  Will Anthropic have the best AI model at the end of June 2026?
+  77513971  0.7566  Will Google have the top AI model at the end of June 2026?
+  66153072  0.7575  Will Google have the top AI model on December 31?
+  67214560  0.7578  Will Google have the top AI model on February 28?
+  65842547  0.7582  Will Google have the top AI model on January 31?
+  66542969  0.7584  Will an open-source AI model become Top 3 this year?
+  77506237  0.7638  Will Anthropic have the best AI model at the end of November 2025?
+  78857088  0.7643  Will Anthropic have the best AI model for math at the end of 2025?
+  77506157  0.7650  Will Google have the second best AI model at the end of November 2025?
+  77513644  0.7678  Will Google have the top AI model at the end of November 2025?
+  78857083  0.7697  Will Google have the best AI model for math at the end of 2025?
+  77506307  0.7707  Will Google have the second best AI model at the end of December 2025?
+  77513876  0.7720  Will Google have the best AI model at the end of June 2026?
+  77514161  0.7733  Will Google have the top AI model at the end of December 2025?
+  67217800  0.7756  Will Anthropic have a #1 AI model this year?
+  77506232  0.7816  Will Google have the best AI model at the end of November 2025?
+  78728614  0.7816  Will Anthropic have the best AI model for coding at the end of 2025?
+  78728609  0.7821  Will Google have the best AI model for coding at the end of 2025?
+  77933474  0.7915  Will OpenAI’s GPT 5 lose the NOF1.ai competition?
+  77933093  0.8058  Will OpenAI’s GPT 5 win the NOF1.ai competition?

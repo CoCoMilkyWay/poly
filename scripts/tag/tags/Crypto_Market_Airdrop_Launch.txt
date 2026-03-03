@@ -1,0 +1,497 @@
+# Crypto_Market - Crypto_Market_Airdrop_Launch
+# count=494, avg_conf=0.6473
+====================================================================================================
+  19915544  0.5089  Will Nicki Minaj get the COVID-19 vaccine by November 29th?
+  47226209  0.5137  Was the moon landing faked?
+  66150793  0.5291  North Korea missile test by January 31?
+  70622823  0.5315  AOC spotted in another private jet in April?
+  67252576  0.5330  Will ICE detain 400-499 people on January 29?
+  67252572  0.5382  Will ICE detain 400-499 people on January 28?
+  53797256  0.5396  Odie successfully lands on the moon by Thursday?
+  67252650  0.5398  Will ICE detain 700-799 people on January 29?
+  16676216  0.5401  Will 188 million people have received a dose of an approved COVID-19 vaccine in 
+  16648871  0.5403  Will Partyround launch on the iOS App Store before September 1st, 2021?
+  39360591  0.5414  Will ChatGPT remain free through April 30?
+  67297963  0.5421  Will ICE detain less than 600 people on January 31?
+  67252551  0.5426  Will ICE detain less than 400 people on January 29?
+  67252651  0.5437  Will ICE detain 700-799 people on January 28?
+  67297985  0.5443  Will ICE detain 700-799 people on January 31?
+  67918291  0.5456  AOC charged before July?
+  20223404  0.5467  Will more than 2.25 million people travel through a TSA checkpoint on Friday, Oc
+  57724364  0.5469  Roaring Kitty dumps GME calls by Friday?
+  67298024  0.5471  Will ICE detain 800-899 people on January 31?
+  67298010  0.5477  Will ICE detain 800-899 people on January 30?
+  67252555  0.5487  Will ICE detain less than 400 people on January 28?
+  69497201  0.5495  Gastelum vs. Pyfer
+  72125565  0.5495  Gastelum vs. Pyfer
+  57086374  0.5509  NYC-Dublin portal back online by Monday?
+  66194071  0.5526  Cybertruck explosion perp charged by Wednesday?
+  67298078  0.5527  Will ICE detain 1100-1199 people on January 30?
+  67298076  0.5534  Will ICE detain 1100-1199 people on January 31?
+  50342162  0.5541  Will the Blast bridge be exploited by end of February?
+  67301482  0.5560  North Korea missile test by February 14?
+  77427332  0.5567  Will DraftKings acquire Railbird by December 31?
+  67212278  0.5577  Will ICE detain 500-549 people in the next update (Jan 27)?
+  13359363  0.5593  Will 170 million people have received a dose of an approved COVID-19 vaccine in 
+  67252677  0.5594  Will ICE detain 800 or more people on January 29?
+  12950113  0.5597  Will 130 million people have received a dose of an approved COVID-19 vaccine in 
+  73254952  0.5604  Will Jaxson Dart start before Week 4?
+  57003142  0.5609  NYC-Dublin portal back online by Friday?
+  69449779  0.5617  Giza Pyramid underground structures confirmed?
+  66415704  0.5618  Will Facebook implement "community notes" before April?
+  67336854  0.5619  Will ICE detain 800+ people on February 1?
+  16648554  0.5631  Will Founders Fund invest in the next announced Onlyfans fundraising round in 20
+  19844004  0.5633  Will Facebook be online at midnight ET, October 5th?
+  67212234  0.5638  Will ICE detain 400-449 people in the next update (Jan 27)?
+  67212305  0.5642  Will ICE detain 600-649 people in the next update (Jan 27)?
+  67252673  0.5644  Will ICE detain 800 or more people on January 28?
+  77815717  0.5648  Will Procreate Pocket be #1 Paid App in the US Apple App Store on October 24?
+  70185546  0.5656  Will only OP_CTV be activated in 2025?
+  78116642  0.5667  Will Procreate Pocket be #1 Paid App in the US Apple App Store on October 31?
+  73993872  0.5675  Will DraftKings acquire Railbird by October 31?
+  66694447  0.5685  RedNote/Xiaohongshu #1 app on Jan 24?
+  67212222  0.5696  Will ICE detain 350-399 people in the next update (Jan 27)?
+  70185558  0.5703  Will only OP_CAT be activated in 2025?
+  74567643  0.5707  Will UAE airdrop aid into Gaza?
+  74249120  0.5716  Will the FDA approve TransCon hGH sBLA?
+  50636963  0.5732  Will OpenSea announce bankruptcy by March 1?
+  70185590  0.5736  Will neither OP_CTV nor OP_CAT be activated in 2025?
+  72936395  0.5759  Will Rutte say "Cyberattack" or "Cyber Attack" during NATO Public Forum Address 
+  70185572  0.5762  Will both OP_CTV and OP_CAT be activated in 2025?
+  78076032  0.5763  Will Lyft say "Safety" during earnings call?
+  74968372  0.5768  BLAST Bounty: Virtus.Pro vs. FaZe
+  67109938  0.5788  650 or more Detainers Lodged in next ICE update?
+  60386364  0.5798  EDL declared terrorist org in August?
+  65318477  0.5810  Hawk Tuah OnlyFans by January 31?
+  78076072  0.5820  Will Uber say "Uber Copter" during earnings call?
+  40873045  0.5824  Will Uniswap's wallet be live on the iOS app store by April 30?
+  75166415  0.5843  @nubcat unsuspended from X by Friday?
+  77676094  0.5844  Will anyone say "Polymarket" during South Park e6 s27?
+  78979818  0.5858  Will Kuopion PS win on 2025-11-27?
+  43026344  0.5867  Will EIP-4844 be implemented by EOY?
+  78243483  0.5870  Will Kuopion PS win on 2025-11-06?
+  74520514  0.5882  Will BRICS add a new member by December 31?
+  75372654  0.5894  @nubcat unsuspended from X by August 31?
+  70362319  0.5899  ChatGPT o3 released today?
+  70362329  0.5909  ChatGPT o3 released by Friday?
+  68360138  0.5919  Optifye.ai pivot before April?
+  75492099  0.5943  Will Hyperliquid's HIP-3 upgrade go live on mainnet by December 31?
+  67656929  0.5953  Will Gemini run an Ad during Super Bowl LIX?
+  52521427  0.5953  EIP-4844 doesn't launch by end of 2024?
+  74567641  0.5955  Will US airdrop aid into Gaza?
+  79100564  0.5971  Spread: Valparaiso Beacons (-6.5)
+  27655320  0.5995  Will the Twitter profile @ElonJet remain active through September 1?
+  55365444  0.5998  GPT-5 announced in Q2 2024?
+  77563082  0.6002  Spread: PHO (-5.5)
+  71273452  0.6011  Another L1 fundraise announced before May 19?
+  79071761  0.6016  Spread: Valparaiso Beacons (-3.5)
+  78546387  0.6018  Will Opendoor (OPEN) finish week of November 10 above $6.00?
+  79084356  0.6025  Spread: Valparaiso Beacons (-4.5)
+  55365456  0.6035  GPT-5 announced in Q3 2024?
+  66539024  0.6054  TikTok sale announced before April?
+  78070760  0.6060  Will Atlas introduce ads by October 31?
+  74815221  0.6063  BLAST Bounty: TNL vs. Natus Vincere
+  55365485  0.6079  GPT-5 announced in Q4 2024?
+  49429009  0.6082  Starlink available in Gaza by Nov 30?
+  78076031  0.6086  Will Lyft say "Waymo" during earnings call?
+  79085704  0.6086  Spread: Fortuna Sittard (-1.5)
+  53048265  0.6088  Farcaster unique users more than 25k on Feb 5?
+  79037559  0.6095  Spread: UIC Flames (-10.5)
+  79039367  0.6102  Spread: Temple Owls (-1.5)
+  79035757  0.6105  Spread: UIC Flames (-11.5)
+   5239712  0.6112  Will Airbnb begin publicly trading before Jan 1, 2021?
+  67539580  0.6114  Will ALEX WICE win the PvP trading competition?
+  10150716  0.6119  Will Robinhood allow buying of $GME on February 2nd?
+  78451015  0.6120  Will Chainlink reach $20 in November?
+  30153922  0.6129  Will FTX's deal with BlockFi be announced by July 31?
+  76487292  0.6136  Will Zama launch a token in 2025?
+  78546387  0.6141  Will Opendoor (OPEN) finish week of November 10 above $8.00?
+  78076274  0.6143  Will Coinbase say "Subscription" during earnings call?
+  62354465  0.6147  Farcaster airdrop in 2024?
+  51055420  0.6148  Starlink available in Gaza by Jan 31?
+  76586064  0.6153  Spread: GB (-14.5)
+  68933185  0.6161  Will Aqua Tribe be the Crypto the Game Season 3 winner?
+  62353272  0.6176  Puffer airdrop in 2024?
+  68359879  0.6184  Will Portnoy launch $greed3 in February?
+  78076032  0.6184  Will Lyft say "FreeNow / Free Now" during earnings call?
+  78546387  0.6192  Will Opendoor (OPEN) finish week of November 10 above $5.00?
+  78076272  0.6197  Will Coinbase say "International" during earnings call?
+  77901521  0.6205  Will Aztec launch a token in 2025?
+  59330075  0.6207  Shooter identity released by tonight?
+  62353692  0.6211  Linea airdrop in 2024?
+  62185871  0.6212  Will Berachain not launch a token in 2024?
+  78380592  0.6215  TikTok sale announced by November 30?
+  75176066  0.6219  BLAST Bounty: Vitality vs. Liquid
+  73301979  0.6221  Will Infinex launch a token in 2025?
+  52898112  0.6224  OpenSea acquired before March?
+  78075751  0.6230  Will Google say "EU / European Union" during earnings call?
+  62353310  0.6235  Pudgy Penguins airdrop in 2024?
+  76362193  0.6244  Will Canton launch a token in 2025?
+  68647496  0.6246  Will Brad Garlinghouse attend the March 7 Crypto Summit?
+  75776197  0.6250  Will Axiom launch a token in 2025?
+  78629384  0.6253  Will Variational launch a token in 2025?
+  74807822  0.6254  BLAST Bounty: FUT vs. B8
+  77493456  0.6256  Will prjx launch a token in 2025?
+  68933199  0.6257  Will Blue Tribe be the Crypto the Game Season 3 winner?
+  64999846  0.6259  Will Enron launch a token in 2024?
+  14091513  0.6261  Will total sales exceed $20M for the Cryptopunks auction at Christie’s?
+  73753820  0.6261  Will Robinhood launch stock tokens in the US before 2026?
+  66703186  0.6263  Yuga Labs announce the sale of CryptoPunks in January?
+  68647538  0.6266  Will Michael Saylor attend the March 7 Crypto Summit?
+  68933210  0.6268  Will Gold Tribe be the Crypto the Game Season 3 winner?
+  76655928  0.6276  TikTok sale announced by October 31?
+  74880572  0.6278  Will anyone say "Gemini" during the OpenAI livestream on August 7?
+  67057897  0.6283  Will David Portnoy launch a coin in January?
+  79118180  0.6286  Will Infinex launch a token by June 30, 2026?
+  68933237  0.6288  Will Orange Tribe be the Crypto the Game Season 3 winner?
+  76659030  0.6294  Will Rabby launch a token in 2025?
+  23604922  0.6298  Will StarkNet have a token by May 1st, 2022?
+  78891299  0.6306  Will NVIDIA say "TSMC" during earnings call?
+  51015442  0.6314  Jupiter airdrop in 2023?
+  73256177  0.6321  Will MegaETH perform an airdrop by September 30?
+  76393799  0.6328  Spread: Air Force (-4.5)
+  77651279  0.6328  Spread: Air Force (-4.5)
+  64730145  0.6341  Will $PNUT be listed first on Robinhood?
+  55676299  0.6344  Magic Eden airdrop by June 30?
+  77645241  0.6349  Spread: Air Force (-5.5)
+  73256177  0.6350  Will MegaETH perform an airdrop by June 30?
+  69215052  0.6355  Linea airdrop in Q2 2025?
+  58639317  0.6357  Puffer airdrop by September 30?
+  53791655  0.6358  Puffer airdrop by June 30?
+  63968298  0.6359  Hawk Tuah token by Thanksgiving?
+  76393813  0.6361  Spread: UAB (-11.5)
+  78853526  0.6364  OpenAI receives federal backstop for infrastructure before July?
+  67882987  0.6365  Will Apple launch an Airtag on February 19?
+  53529973  0.6368  Drift airdrop by June 30?
+  73256675  0.6370  Will lighter perform an airdrop by September 30?
+  69215031  0.6371  Farcaster airdrop in Q2 2025?
+  75778728  0.6372  Will Meteora launch a token in 2025?
+  23604894  0.6375  Will Arbitrum have a token by May 1st, 2022?
+  53529927  0.6376  Linea airdrop by June 30?
+  78534998  0.6381  Fortaleza EC vs. Grêmio FBPA: O/U 2.5
+  75407971  0.6385  GPT ads by December 31?
+  77806517  0.6385  Will edgeX launch a token in 2025?
+  61620995  0.6389  Farcaster airdrop by September 30?
+  52971968  0.6389  Will JUP be above $1.00 one week after airdrop?
+  62186009  0.6391  Will Hyperliquid not launch a token in 2024?
+  79117550  0.6392  Will Infinex launch a token by March 31, 2026?
+  52936624  0.6393  Will JUP be between $0.70 and $1.00 one day after airdrop?
+  67539608  0.6396  Will BASED16Z win the PvP trading competition?
+  78280150  0.6397  1H Spread: Air Force (-1.5)
+  78248810  0.6399  Spread: Air Force (-1.5)
+  53526041  0.6405  Aevo airdrop by June 30?
+  73288472  0.6408  250+ pump.fun graduated tokens on June 30?
+  64730154  0.6410  Will $MOG be listed first on Robinhood?
+  62353268  0.6415  Rainbow airdrop in 2024?
+  25981651  0.6415  Will Coinbase’s NFT marketplace be live by May 1st, 2022?
+  78722990  0.6417  Will StandX launch a token in 2025?
+  62353298  0.6417  Jumper airdrop in 2024?
+  72040704  0.6418  Linea airdrop in Q3 2025?
+  73288398  0.6420  250+ pump.fun graduated tokens on June 29?
+  78628904  0.6420  Uniswap protocol fee switch enabled by June 30?
+  73258915  0.6420  250+ pump.fun graduated tokens on June 27?
+  73256176  0.6423  Will MegaETH perform an airdrop by December 31?
+  67890315  0.6426  Will GameStop launch a coin by April 1?
+  72040699  0.6426  Farcaster airdrop in Q3 2025?
+  61749086  0.6432  Will Pump.fun launch a token in 2024?
+  62353357  0.6437  Zircuit airdrop in 2024?
+  77304189  0.6440  Will Phantom launch a token in 2025?
+  47735702  0.6442  zkSync airdrop in 2023?
+  55676207  0.6445  Zerion airdrop by June 30?
+  72971845  0.6452  Will Hyperliquid perform an airdrop by September 30?
+  70619648  0.6453  Will FARTCOIN be listed on Coinbase before June?
+  76099186  0.6455  Will anyone say "Multicloud" 3+ times during Oracle's 1st Quarter Fiscal Year 20
+  53526120  0.6457  Saga airdrop by June 30?
+  55676149  0.6460  Zora airdrop by June 30?
+  73288351  0.6465  250+ pump.fun graduated tokens on June 28?
+  76099192  0.6466  Will anyone say "Cloud infrastructure" 3+ times during Oracle's 1st Quarter Fisc
+  64448175  0.6467  Will $Pnut be listed first on Coinbase?
+  52971960  0.6467  Will JUP be between $0.70 and $1.00 one week after airdrop?
+  78076342  0.6473  Will Snowflake say "Azure" during earnings call?
+  64199278  0.6473  Coinbase top 10 app on Friday?
+  23599615  0.6476  Will Coinbase’s NFT marketplace be live by April 1st, 2022?
+  55676254  0.6484  Mantle airdrop by June 30?
+  66114228  0.6489  Linea airdrop in Q1 2025?
+  78076341  0.6490  Will Snowflake say "Open Source" during earnings call?
+  72971864  0.6496  Will Hyperliquid perform an airdrop by June 30?
+  62353788  0.6498  Scroll airdrop in 2024?
+  62353584  0.6499  Swell airdrop in 2024?
+  65325579  0.6500  Will Coinbase announce Peanut the Squirrel as next listing?
+  21948707  0.6500  Will Coinbase’s NFT marketplace launch before 2022?
+  66114369  0.6502  Farcaster airdrop in Q1 2025?
+  77983902  0.6507  Will Stable announce an ICO by October 24?
+  62353575  0.6509  Rabby airdrop in 2024?
+  27372880  0.6511  Will Coinbase’s NFT marketplace be live by July 1st, 2022?
+  78534468  0.6513  Will Sentient launch a token in 2025?
+  77302504  0.6515  Will Hyperliquid perform an airdrop by December 31, 2026?
+  62353681  0.6517  Berachain airdrop in 2024?
+  78249556  0.6519  1H Spread: Air Force (-0.5)
+  54033510  0.6522  Zircuit airdrop by June 30?
+  70619657  0.6524  Will FARTCOIN be listed on Robinhood before June?
+  16856384  0.6526  Will Cardano support smart contracts on Mainnet by October 1st, 2021?
+  78466221  0.6527  Uniswap protocol fee switch enabled by December 31?
+  78880574  0.6527  Spread: Grêmio FBPA (-1.5)
+  78033898  0.6527  Spread: Grêmio FBPA (-1.5)
+  62353668  0.6528  Avail airdrop in 2024?
+  23604907  0.6535  Will zkSync have a token by May 1st, 2022?
+  69214962  0.6536  Rainbow airdrop in Q2 2025?
+  78076343  0.6540  Will Snowflake say "AWS" during earnings call?
+  67219617  0.6547  Will Coinbase run an Ad during Super Bowl LIX?
+  73288520  0.6548  250+ pump.fun graduated tokens on July 1?
+  68925250  0.6550  Will FARTCOIN be listed on Coinbase in March?
+  78940284  0.6550  Will OpenAI launch a token before 2027?
+  11735026  0.6551  Will any of SuperRare, Zora, Foundation, OpenSea, or NiftyGateway have a live to
+  55676266  0.6551  Backpack airdrop by June 30?
+  62353388  0.6555  Pump.fun airdrop in 2024?
+  58639364  0.6560  Zircuit airdrop by September 30?
+  72040702  0.6562  Rainbow airdrop in Q3 2025?
+  55676014  0.6564  Argent airdrop by June 30?
+  51016265  0.6569  Drift airdrop by March 1?
+  62353278  0.6570  Astaria airdrop in 2024?
+  53246569  0.6571  Wormhole airdrop in June?
+  55450728  0.6573  No Eigenlayer token launch in 2024?
+  53526130  0.6575  zkSync airdrop by June 30?
+  53529986  0.6579  MarginFi airdrop by June 30?
+  62353294  0.6581  Aleo airdrop in 2024?
+  54958885  0.6582  Initia airdrop by June 30?
+  50584369  0.6583  zkSync airdrop by April?
+  49340980  0.6583  LayerZero airdrop in 2023?
+  40118378  0.6583  zkSync airdrop by June 1?
+  73256618  0.6585  Will lighter perform an airdrop by December 31?
+  58639393  0.6587  Swell airdrop by September 30?
+  69214970  0.6588  Jumper airdrop in Q2 2025?
+  62353289  0.6589  PartyDAO airdrop in 2024?
+  76898887  0.6589  Nothing Ever Happens: Airdrops Edition
+  69214982  0.6592  Rabby airdrop in Q2 2025?
+  75776216  0.6599  Will Unit launch a token in 2025?
+  40417499  0.6599  Will Arbitrum's token address have a letter in it?
+  77983470  0.6602  Will Stable launch a token in 2025?
+  53526110  0.6602  Rainbow airdrop by June 30?
+  53791665  0.6606  Swell airdrop by June 30?
+  53526096  0.6607  Pudgy Penguins airdrop by June 30?
+  78941604  0.6617  Will Backpack launch a token by December 31, 2026?
+  58639357  0.6618  Pudgy Penguins airdrop by September 30?
+  23604973  0.6619  Will Layer Zero have a token by May 1st, 2022?
+  62353595  0.6620  Base airdrop in 2024?
+  64730047  0.6621  Will $POPCAT be listed first on Robinhood?
+  55676137  0.6623  Jumper airdrop by June 30?
+  50896977  0.6625  Pudgy Penguins airdrop before March?
+  64448197  0.6627  Will $Mog be listed first on Coinbase?
+  58639230  0.6628  Rainbow airdrop by September 30?
+  71464159  0.6629  Will FARTCOIN be listed on Hyperliquid this week?
+  66114347  0.6629  Rainbow airdrop in Q1 2025?
+  74356837  0.6631  Will Pump.fun perform an airdrop by September 30?
+  61620983  0.6634  Scroll airdrop by September 30?
+  58639349  0.6637  Jumper airdrop by September 30?
+  62185953  0.6638  Will Hyperliquid launch a token in September?
+  53526085  0.6641  Hyperliquid airdrop by June 30?
+  55676280  0.6642  Phantom airdrop by June 30?
+  72971865  0.6645  Will Hyperliquid perform an airdrop by December 31?
+  72040704  0.6645  Jumper airdrop in Q3 2025?
+  72040703  0.6651  Rabby airdrop in Q3 2025?
+  55676040  0.6651  Astaria airdrop by June 30?
+  69215017  0.6654  Aleo airdrop in Q2 2025?
+  72326613  0.6655  Will Pump.fun perform an airdrop by June 30?
+  75888634  0.6655  Will Gavin Newsom launch a token in September?
+  53520097  0.6656  Will STRK be between $1.50 and $2.00 one day after airdrop?
+  58639324  0.6660  Astaria airdrop by September 30?
+  53529933  0.6660  Scroll airdrop by June 30?
+  53529942  0.6664  LayerZero airdrop by June 30?
+  69215009  0.6664  PartyDAO airdrop in Q2 2025?
+  69214995  0.6666  Astaria airdrop in Q2 2025?
+  53490350  0.6671  Starknet airdrop in February?
+  53481200  0.6677  EigenLayer airdrop by June 30?
+  53246577  0.6678  No Wormhole airdrop before July?
+  68885613  0.6680  Will FIFA launch a cryptocurrency before June?
+  55676220  0.6681  PartyDAO airdrop by June 30?
+  53791644  0.6682  Etherfi airdrop by June 30?
+  76484480  0.6686  Will Base launch a token in 2025?
+  53520089  0.6686  Will STRK be between $1.00 and $1.50 one day after airdrop?
+  58639404  0.6693  Eigenlayer airdrop by September 30?
+  76487199  0.6693  Will Ostium launch a token in 2025?
+  58639329  0.6695  PartyDAO airdrop by September 30?
+  66114447  0.6697  Jumper airdrop in Q1 2025?
+  64730194  0.6705  Will another coin be listed first on Robinhood?
+  66114326  0.6706  Rabby airdrop in Q1 2025?
+  78534997  0.6709  Spread: Fortaleza EC (-0.5)
+  51054715  0.6709  Saga airdrop By March 1?
+  53791632  0.6711  Ethena airdrop by June 30?
+  78894429  0.6712  Will Spark launch a token by December 31?
+  72040700  0.6712  Astaria airdrop in Q3 2025?
+  72040701  0.6712  PartyDAO airdrop in Q3 2025?
+  69214976  0.6712  Avail airdrop in Q2 2025?
+  23604383  0.6714  Will Dharma airdrop a native token by March 31st, 2022?
+  53791674  0.6714  Taiko airdrop by June 30?
+  73067089  0.6714  Will Pump.fun launch a token by September 30?
+  50584295  0.6714  LayerZero airdrop by April?
+  51016287  0.6716  Kamino airdrop by March 1?
+  78894429  0.6716  Will Spark launch a token by March 31?
+  58639336  0.6716  Aleo airdrop by September 30?
+  53526103  0.6719  Rabby airdrop by June 30?
+  73843552  0.6720  Will Coinbase's TBA app launch before October?
+  78076272  0.6725  Will Coinbase say "Decentralized Exchange / DEX" during earnings call?
+  72040703  0.6728  Aleo airdrop in Q3 2025?
+  72326557  0.6728  Will Pump.fun launch a token by June 30?
+  57047396  0.6728  Nillion airdrop by June 30?
+  50585549  0.6731  EigenLayer airdrop by April?
+  23640352  0.6731  Will MetaMask launch a token by December 31st, 2022?
+  56542794  0.6732  $FRIEND major exchange listing by May 10?
+  53526048  0.6733  Aleo airdrop by June 30?
+  55676232  0.6734  Rysk airdrop by June 30?
+  58639382  0.6737  Rabby airdrop by September 30?
+  50585752  0.6745  Aleo airdrop by April?
+  75776160  0.6746  Will Abstract launch a token in 2025?
+  78373741  0.6747  Will MetaMask launch a token by June 30?
+  72040699  0.6747  Avail airdrop in Q3 2025?
+  66666215  0.6749  Will Berachain launch a token in January?
+  68278183  0.6749  Will Kanye launch a token on multiple blockchains?
+  53565348  0.6754  WIF listed on Coinbase or Binance in February?
+  53526059  0.6758  Base airdrop by June 30?
+  65723574  0.6761  No Opensea token launch by July?
+  76487434  0.6766  Will Felix Protocol launch a token in 2025?
+  66114420  0.6766  PartyDAO airdrop in Q1 2025?
+  78630243  0.6769  Will USD.AI launch a token by March 31?
+  62353601  0.6770  MetaMask airdrop in 2024?
+  58639371  0.6772  pump.fun airdrop by September 30?
+  55676107  0.6773  pump.fun airdrop by June 30?
+  71429763  0.6777  Will FARTCOIN SPOT be listed on Hyperliquid before May 14?
+  53529952  0.6777  Tensor airdrop by June 30?
+  61620964  0.6778  Berachain airdrop by September 30?
+  78076276  0.6784  Will Coinbase say "Crypto Winter" during earnings call?
+  53529964  0.6785  Berachain airdrop by June 30?
+  69536630  0.6787  Will Fartcoin be listed on a t1 exchange before May?
+  64449339  0.6788  Will $POPCAT be listed first on Binance?
+  66114359  0.6788  Avail airdrop in Q1 2025?
+  69215038  0.6790  Base airdrop in Q2 2025?
+  51591057  0.6793  Jupiter airdrop by Jan 31?
+  64448253  0.6793  Will $FWOG be listed first on Coinbase?
+  23602938  0.6795  Will MetaMask launch a token by March 1st, 2022?
+  50637315  0.6798  OpenSea token by May 1?
+  53526066  0.6798  Blast airdrop by June 30?
+  58639436  0.6799  Base airdrop by September 30?
+  45191195  0.6807  Will OpenSea announce a token by September 30?
+  66114439  0.6809  Aleo airdrop in Q1 2025?
+  51063264  0.6809  Rainbow airdrop by March 1?
+  51017611  0.6812  Another Celestia airdrop by March 1?
+  62185862  0.6817  Will Berachain launch a token in December?
+  66114305  0.6817  Astaria airdrop in Q1 2025?
+  72326613  0.6824  Will Pump.fun perform an airdrop by July 31?
+  66114200  0.6824  Berachain airdrop in Q1 2025?
+  25061287  0.6825  Will President Biden issue an executive order mentioning cryptocurrency by Febru
+  50342229  0.6827  Blast airdrop by May?
+  72040702  0.6829  Base airdrop in Q3 2025?
+  52485018  0.6831  WIF listed on Coinbase or Binance?
+  74356836  0.6831  Will Pump.fun perform an airdrop by December 31?
+  67342951  0.6832  OpenSea airdrop before July?
+  50637187  0.6833  OpenSea token >1 billion a week after launch?
+  62185832  0.6834  Will Berachain launch a token in November?
+  55676197  0.6837  Foundation airdrop by June 30?
+  69215025  0.6839  MetaMask airdrop in Q2 2025?
+  73779547  0.6839  Will Pump.fun perform an airdrop by August 31?
+  73779528  0.6839  Will Pump.fun perform an airdrop by July 18?
+  53013476  0.6840  Will Andrew Tate launch a cryptocurrency in February?
+  62185996  0.6840  Will Hyperliquid launch a token in December?
+  53529993  0.6841  Parcl airdrop by June 30?
+  51016275  0.6841  marginfi airdrop by March 1?
+  41373895  0.6844  LayerZero airdrop by June 15?
+  78941603  0.6848  Will Backpack launch a token by December 31?
+  78628683  0.6850  Will Pump.fun perform an airdrop by March 31?
+  64323375  0.6852  Hyperliquid airdrop today?
+  23602918  0.6853  Will MetaMask launch a token by February 1st, 2022?
+  73067089  0.6855  Will Pump.fun launch a token by December 31?
+  78941604  0.6856  Will Backpack launch a token by March 31?
+  55676244  0.6858  MetaMask airdrop by June 30?
+  62185985  0.6859  Will Hyperliquid launch a token in November?
+  39598097  0.6860  Will the FDV of OpenSea's token 1 week after launch be above Blur's FDV?
+  41105553  0.6861  MetaMask airdrop by June 1?
+  53246560  0.6861  Wormhole airdrop in May?
+  65571271  0.6866  OpenSea airdrop before April?
+  53246551  0.6866  Wormhole airdrop in April?
+  62185780  0.6866  Will Berachain launch a token in October?
+  23600891  0.6871  Will OpenSea launch a token by June 1st, 2022?
+  72326558  0.6872  Will Pump.fun launch a token by July 31?
+  68278155  0.6877  Will Kanye launch a token on Ethereum?
+  78887705  0.6877  Will StandX launch a token by March 31?
+  62185974  0.6878  Will Hyperliquid launch a token in October?
+  74636666  0.6885  Will Opensea launch a token by September 30?
+  51018236  0.6886  Base airdrop by May 1?
+  66114340  0.6892  Base airdrop in Q1 2025?
+  73256167  0.6894  Will Monad perform an airdrop by September 30?
+  68278145  0.6897  Will Kanye launch a token on Binance Smart Chain?
+  49945320  0.6906  Blur airdrop by Nov 20?
+  49943431  0.6906  Friend.Tech airdrop in 2023?
+  73256168  0.6913  Will Monad perform an airdrop by June 30?
+  56389665  0.6914  Will Friend.Tech airdrop by Thursday?
+  58639441  0.6914  MetaMask airdrop by September 30?
+  51062399  0.6919  Rabby airdrop by March 1?
+  40419315  0.6927  Arbitrum token FDV >$5b one week after launch?
+  41179672  0.6930  Will OpenSea announce a token by May 31?
+  50638662  0.6931  OpenSea token announcement in 2024?
+  72040702  0.6933  MetaMask airdrop in Q3 2025?
+  57047413  0.6943  Story Protocol airdrop by June 30?
+  39664828  0.6947  Arbitrum airdrop by March 31st?
+  18559197  0.6951  Will OpenSea launch a token by the end of 2021?
+  66114289  0.6953  MetaMask airdrop in Q1 2025?
+  23604213  0.6953  Will Showtime airdrop a native token by March 31st, 2022?
+  23601030  0.6954  Will OpenSea launch a token by December 31st, 2022?
+  47707259  0.6955  LayerZero airdrop by Oct 31?
+  23604609  0.6965  Will Cozy Finance airdrop a native token by March 31st, 2022?
+  64448123  0.6967  Will $POPCAT be listed first on Coinbase?
+  65723455  0.6967  OpenSea token market cap (FDV) <$1B one day after launch?
+  34624249  0.6967  Will Arbitrum airdrop a native token before 2023?
+  23600858  0.6969  Will OpenSea launch a token by March 1st, 2022?
+  49346153  0.6971  Celestia token above $2 one week after airdrop?
+  39598582  0.6979  Will OpenSea announce a token by March 31?
+  53285096  0.6980  Wormhole token FDV more than 7 billion a week after airdrop?
+  53246543  0.6980  Wormhole airdrop in March?
+  39598119  0.6987  Will the FDV of OpenSea's token be above $10b 1 week after launch?
+  67532160  0.6988  Will Berachain launch a token in February?
+  65325557  0.6993  Will Coinbase announce Popcat as next listing?
+  39598132  0.7001  Will the FDV of OpenSea's token be above $15b 1 week after launch?
+  51016297  0.7007  Tensor airdrop by March 1?
+  73256167  0.7009  Will Monad perform an airdrop by December 31?
+  49346143  0.7014  Celestia token above $1 one week after airdrop?
+  39598109  0.7015  Will the FDV of OpenSea's token be above $5b 1 week after launch?
+  53285087  0.7028  Wormhole token FDV between 6-7 billion a week after airdrop?
+  23604655  0.7038  Will Zerion airdrop a native token by March 31st, 2022?
+  76058668  0.7039  Hypurr NFT airdrop by November 30?
+  52708479  0.7040  Friend.Tech airdrop before May?
+  76562607  0.7043  Will Monad perform an airdrop by November 30?
+  23604016  0.7044  Will Zora airdrop a native token by March 31st, 2022?
+  76054752  0.7048  Will Monad perform an airdrop by October 31?
+  23600309  0.7055  Will OpenSea launch a token or go public first?
+  74636665  0.7058  Will Opensea launch a token by December 31?
+  51016305  0.7059  Wormhole airdrop by March 1?
+  65723466  0.7060  Opensea token market cap (FDV) $1-3b one day after launch?
+  23604573  0.7068  Will Zapper airdrop a native token by March 31st, 2022?
+  23600788  0.7071  Will OpenSea launch a token by February 1st, 2022?
+  53246532  0.7079  Wormhole airdrop in February?
+  53285053  0.7082  Wormhole token FDV less than 4 billion a week after airdrop?
+  53526074  0.7092  Friend.Tech airdrop by June 30?
+  41105697  0.7092  Lens Protocol Airdrop by May 1?
+  65723504  0.7095  Opensea token market cap (FDV) $5-10b one day after launch?
+  65723489  0.7100  Opensea token market cap (FDV) $3-5b one day after launch?
+  49346214  0.7108  Celestia token above $5 one week after airdrop?
+  41373831  0.7112  Sui Airdrop by May 15?
+  65723524  0.7117  Opensea token market cap (FDV) $10-15b one day after launch?
+  74636666  0.7126  Will Opensea launch a token by October 31?
+  23604238  0.7126  Will Rainbow airdrop a native token by March 31st, 2022?
+  53285075  0.7127  Wormhole token FDV between 5-6 billion a week after airdrop?
+  23604144  0.7145  Will Bored Ape Yacht Club airdrop a native token by March 31st, 2022?
+  77771099  0.7146  Will Monad perform an airdrop by December 15?
+  53285062  0.7151  Wormhole token FDV between 4-5 billion a week after airdrop?
+  78595650  0.7177  Will Monad perform an airdrop by November 25?
+  78582508  0.7178  Will Monad perform an airdrop by November 20?
+  77220512  0.7179  Token Launch Party Parlay
+  77460252  0.7183  Will Monad perform an airdrop by November 15?
+  23604403  0.7196  Will Nifty Gateway airdrop a native token by March 31st, 2022?
+  23604347  0.7202  Will Opyn airdrop a native token by March 31st, 2022?
+  23604419  0.7226  Will Known Origin airdrop a native token by March 31st, 2022?
+  23604189  0.7234  Will Fractional airdrop a native token by March 31st, 2022?
+  23604047  0.7258  Will RabbitHole airdrop a native token by March 31st, 2022?
+  23603954  0.7260  Will MetaMask airdrop a native token by March 31st, 2022?
+  47575991  0.7261  Friend.Tech airdrop by Nov 30?
+  23603994  0.7307  Will Foundation airdrop a native token by March 31st, 2022?
+  65719974  0.7346  Abstract token launch by January 31?
+  23604118  0.7363  Will Hop Protocol airdrop a native token by March 31st, 2022?
+  23603981  0.7368  Will OpenSea airdrop a native token by March 31st, 2022?

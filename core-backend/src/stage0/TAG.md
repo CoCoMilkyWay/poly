@@ -1,233 +1,76 @@
 
-## Sports
-- Basketball_NBA_SpreadTotal
-- Basketball_NBA_Moneyline
-- Basketball_NCAA_Men
-- Basketball_NCAA_Women
-- Basketball_International
-- AmericanFootball_NFL_Game
-- AmericanFootball_NFL_PlayerProp
-- AmericanFootball_NCAA_College
-- Baseball_MLB_Game
-- Baseball_MLB_PlayerProp
-- Baseball_International
-- IceHockey_NHL_Game
-- IceHockey_International
-- Soccer_EPL
-- Soccer_UCL
-- Soccer_Europa
-- Soccer_LaLiga
-- Soccer_SerieA
-- Soccer_Bundesliga
-- Soccer_Ligue1
-- Soccer_MLS
-- Soccer_International_Tournament
-- Tennis_ATP
-- Tennis_WTA
-- Tennis_GrandSlam
-- Golf_PGA
-- Golf_Majors
-- Cricket_IPL
-- Cricket_International
-- Motorsport_F1_Race
-- Motorsport_F1_Championship
-- Motorsport_NASCAR
-- Combat_UFC
-- Combat_Boxing
-- Combat_WWE
-- Esports_LeagueOfLegends
-- Esports_DotaCS
-- Olympics_MedalTable
-- Olympics_EventResult
-- MultiSport_Other
+## Crypto_Price
+- Crypto_Price_Bitcoin               # Bitcoin BTC price prediction threshold target up down
+- Crypto_Price_Ethereum              # Ethereum ETH price prediction threshold target up down
+- Crypto_Price_Solana                # Solana SOL price prediction threshold target up down
+- Crypto_Price_XRP                   # XRP Ripple price prediction threshold target up down
+- Crypto_Price_Altcoin_Memecoin      # Altcoin memecoin price DOGE SHIB PEPE WIF BONK prediction
 
-## Politics_Elections
-- US_President_General
-- US_President_Primary
-- US_Senate
-- US_House
-- US_Governor
-- US_StateBallot
-- US_Party_Control
-- US_CabinetAppointments
-- US_SpeakerLeadership
-- UK_GeneralElection
-- UK_ParliamentLeadership
-- EU_Parliament
-- France_NationalElection
-- Germany_FederalElection
-- India_LokSabha
-- Pakistan_NationalElection
-- Canada_FederalElection
-- LatAm_NationalElection
-- MENA_NationalElection
-- APAC_NationalElection
+## Crypto_Market
+- Crypto_Market_ETF_Institutional    # Crypto ETF approval flow MicroStrategy institutional holding
+- Crypto_Market_Airdrop_Launch       # Crypto airdrop token launch protocol listing TGE
+- Crypto_Market_DeFi_NFT             # DeFi protocol NFT project TVL yield staking onchain
+- Crypto_Market_Regulation_Security  # Crypto regulation SEC CFTC exchange hack exploit
 
-## Politics_Governance
-- Legislation_US_Federal
-- Legislation_State
-- Court_SCOTUS
-- Court_International
-- ExecutiveOrder
-- Diplomacy_SummitTreaty
-- WarConflict_Military
-- Sanctions_TradePolicy
-- Immigration_Border
-- Polling_Approval
+## Sports_Basketball
+- Sports_Basketball_NBA              # NBA basketball game player playoff finals MVP champion Bucks Heat Lakers Magic Bulls Celtics beat win team
+- Sports_Basketball_WNBA             # WNBA women basketball game player season
+- Sports_Basketball_College          # College basketball NCAA March Madness tournament CBB
 
-## Macro_Finance
-- CentralBank_FedDecision
-- CentralBank_FedGuidance
-- CentralBank_NonUS
-- Inflation_CPI
-- Inflation_PPI
-- Labor_NFPJobs
-- Labor_Unemployment
-- Growth_GDP
-- Growth_Recession
-- Housing_Indicators
-- Consumer_RetailSales
-- Manufacturing_PMIIISM
-- Rates_Yields
-- FX_DXYMajors
-- Commodities_Oil
-- Commodities_Gas
-- Commodities_Metals
-- Equity_IndexLevel
-- Equity_Earnings
-- Credit_BankStress
+## Sports_Football
+- Sports_Football_NFL                # NFL American football game Super Bowl playoff player AFC NFC Division draft trade sign team Chiefs Ravens Eagles Cowboys
+- Sports_Football_College            # College football NCAA CFB bowl game playoff
 
-## Crypto_Blockchain
-- BTC_PriceLevel
-- ETH_PriceLevel
-- MajorAlt_SOLBNBADA
-- MemeCoin_DOGEPEPE
-- MarketCap_Dominance
-- ETF_ApprovalFlow
-- Exchange_ListDelist
-- Exchange_SolvencyOutage
-- Regulation_SEC_CFTC
-- Stablecoin_PegReserve
-- DeFi_TVL_Yield
-- DeFi_ProtocolLaunch
-- Airdrop_Announcement
-- Airdrop_EligibilityClaim
-- Layer1_UpgradeFork
-- Layer2_MainnetAirdrop
-- NFT_PFPBluechip
-- NFT_MarketVolume
-- Security_ExploitHack
-- Onchain_Metrics
+## Sports_Soccer
+- Sports_Soccer_Premier_League       # English Premier League EPL soccer football match
+- Sports_Soccer_Champions_Europa     # UEFA Champions League Europa League UCL UEL soccer
+- Sports_Soccer_Top_Leagues          # La Liga Serie A Bundesliga Ligue 1 top European soccer
+- Sports_Soccer_Americas             # MLS Liga MX CONCACAF South America World Cup soccer
+- Sports_Soccer_Other                # Other soccer leagues cups international friendly match
 
-## Tech_AI
-- AI_ModelRelease
-- AI_ProductLaunch
-- AI_RegulationPolicy
-- AI_CompanyPartnership
-- AI_SafetyIncident
-- BigTech_Earnings
-- BigTech_MAInvestment
-- BigTech_LeadershipChange
-- Hardware_Semiconductors
-- Hardware_ConsumerDevices
-- Space_SpaceXLaunch
-- Space_AgencyMission
-- Internet_PlatformPolicy
-- Cybersecurity_Breach
-- Gaming_ReleaseSales
+## Sports_Individual
+- Sports_Baseball_MLB                # MLB baseball game World Series player pitcher home run
+- Sports_Hockey_NHL                  # NHL ice hockey game Stanley Cup playoff player
+- Sports_Tennis                      # Tennis Grand Slam ATP WTA Wimbledon US Open French Open
+- Sports_Golf                        # Golf PGA Tour major Masters US Open British PGA Championship
+- Sports_Racing_Motorsport           # F1 Formula 1 NASCAR MotoGP IndyCar racing Grand Prix
+- Sports_Combat_UFC_Boxing           # UFC MMA boxing fight knockout wrestling combat sports
+- Sports_Esports                     # Esports gaming LoL CSGO Dota Valorant tournament competition
+- Sports_Other                       # Cricket Olympics chess pickleball other sports events
 
-## Business_Companies
-- Mergers_Acquisitions
-- IPO_SPO
-- Bankruptcy_Restructuring
-- Layoffs_Hiring
-- Guidance_RaiseCut
-- Lawsuit_Fines
-- SupplyChain_Operations
-- PrivateCompany_Valuation
-- VentureFunding
-- CorporateGovernance
+## Politics_US
+- Politics_US_Presidential           # US presidential election primary caucus electoral vote
+- Politics_US_Congress               # US Congress Senate House legislation bill vote
+- Politics_US_Trump                  # Trump administration executive order action statement
 
-## Entertainment_Culture
-- Film_BoxOffice
-- Film_Awards
-- TV_Streaming
-- Music_Charts
-- Music_Awards
-- Celebrity_Relationships
-- Celebrity_HealthLegal
-- Creator_Influencer
-- Fashion_Luxury
-- Art_Auction
+## Politics_World
+- Politics_World_Elections           # Global elections international leaders prime minister president
+- Politics_World_War_Conflict        # War military conflict Ukraine Russia Gaza Israel Middle East
+- Politics_World_Diplomacy_Trade     # Diplomacy sanctions tariffs trade war summit treaty
 
-## Social_Media_PublicFigure
-- Elon_Musk_Actions
-- Trump_Statements
-- Biden_Statements
-- Politician_SpeechKeyword
-- X_Twitter_PostCount
-- YouTube_TikTok_Stats
-- Interview_DebateMentions
-- Personal_Announcement
-- Lawsuit_or_Ban
-- Reputation_Polls
+## Economy_Finance
+- Economy_Fed_Central_Bank           # Federal Reserve interest rate FOMC ECB BOJ central bank
+- Economy_Stock_Market               # Stock market index price earnings S&P Nasdaq Dow equity
+- Economy_Indicators                 # Economic indicators CPI inflation employment GDP PMI data
+- Economy_Commodity                  # Commodity price oil gold natural gas silver copper
 
-## Science_Health
-- COVID_Cases
-- COVID_Variants
-- InfectiousDisease_NonCOVID
-- Vaccines_Treatment
-- FDA_Approval
-- PublicHealthPolicy
-- Biotech_TrialResults
-- SpaceScience_Discovery
-- Climate_Indicator
-- Research_Publication
+## Tech
+- Tech_AI                            # AI artificial intelligence model GPT OpenAI Anthropic Google
+- Tech_BigTech                       # Big tech Apple Google Meta Microsoft Amazon product launch
+- Tech_Space                         # SpaceX NASA rocket launch satellite space mission Starship
 
-## Weather_Disaster
-- Hurricane_LandfallCategory
-- Storm_RainFlood
-- Heat_Cold_Record
-- Drought_Wildfire
-- Earthquake_Tsunami
-- Volcano_Geologic
-- Insurance_LossEstimate
-- CityWeather_DailyMetric
-- Seasonal_Outlook
-- Disaster_Response
+## Entertainment
+- Entertainment_Movies               # Movies film box office gross opening weekend Rotten Tomatoes score Oscars Academy Awards Golden Globe BAFTA SAG Award Critics Choice best actor actress director cinema
+- Entertainment_Music                # Music Grammy Billboard chart album artist concert award Mercury Prize songwriter
+- Entertainment_TV_Streaming         # TV streaming Netflix Emmy show series reality television podcast Joe Rogan talk show Dancing with the Stars DWTS Love Is Blind
+- Entertainment_Awards_Stage         # Tony Award Broadway theater musical drama stage play performance
 
-## Law_Crime
-- Criminal_IndictmentTrial
-- Civil_Lawsuit
-- Regulatory_Enforcement
-- Antitrust
-- Election_LegalChallenge
-- CorruptionEthics
-- Sentencing_Pardon
-- Police_PublicSafety
-- InternationalCourt
-- Compliance_Audit
+## Weather
+- Weather_Temperature                # City temperature forecast weather New York London high low
+- Weather_Disaster                   # Natural disaster hurricane earthquake wildfire flood extreme
 
-## Society_Demographics
-- Migration_Refugees
-- Education_Policy
-- Religion_Society
-- Labor_StrikesUnions
-- Housing_Affordability
-- Inequality_Poverty
-- CrimeRate_Stats
-- Survey_OpinionGeneral
-- InternetCulture_Memes
-- Misc_HumanInterest
-
-## Meta_MarketStructure
-- QuestionResolutionDate
-- QuestionAmbiguityFix
-- DataSourceMethodology
-- MultiCondition_Parlay
-- RangeBucket_Value
-- Binary_YesNo_Generic
-- HeadToHead_Generic
-- TimeWindow_EventByDate
-- Duplicate_or_Repost
-- Other_Unclassified
+## Society
+- Society_Social_Media               # Social media platform Twitter X TikTok followers downloads viral trending
+- Society_Legal                      # Legal crime arrest trial verdict sentence court lawsuit indictment prison jail convicted guilty plea murder defamation
+- Society_Business                   # Business corporate merger acquisition IPO bankruptcy layoff company earnings
+- Society_Miscellaneous              # Miscellaneous events lottery auction art port shipping travel other

@@ -1,0 +1,556 @@
+# Crypto_Market - Crypto_Market_ETF_Institutional
+# count=553, avg_conf=0.6276
+====================================================================================================
+  71124521  0.5013  Will the next Pope be in favor of Making Priestly Celibacy Optional?
+  47746761  0.5077  Will Aella find someone new to seriously date in 2023?
+  65285427  0.5190  Fact Check: was Luigi Mangione paid?
+  63598341  0.5224  Will Silver call all 50 states correctly?
+  52175527  0.5275  Will Ecuadorian drug lord Fito remain at large throughout January?
+  38757696  0.5316  Did Dustin Moskovitz bail out SBF?
+  77265200  0.5396  Diniz vs. Pinto
+  25266160  0.5409  Will ECDC announce a new COVID-19 "Variant of Concern" before August 2022?
+  67984209  0.5440  Wofford vs. VMI
+  63598481  0.5479  Will Silver call 43 states correctly?
+  78970586  0.5491  VMI Keydets vs. Richmond Spiders
+  56975956  0.5496  Will Ilya join X?
+  63598423  0.5509  Will Silver call 46 states correctly?
+  63598381  0.5511  Will Silver call 48 states correctly?
+  74559075  0.5512  FDA approves PTC Therapeutics’ Vatiquinone for Friedreich’s ataxia?
+  63598440  0.5515  Will Silver call 45 states correctly?
+  71731295  0.5544  Will Robert MacIntyre win the 2025 Charles Schwab Challenge?
+  71731349  0.5561  Will Michael Kim win the 2025 Charles Schwab Challenge?
+  14476357  0.5566  Will Emily Ratajkowski’s NFT go for more than $2 million at Christie’s?
+  76226701  0.5575  Dyer vs. Foro
+  74558993  0.5578  FDA approves Insmed’s Brensocatib for bronchiectasis?
+  38757681  0.5589  Did Kevin O'Leary bail out SBF?
+  24237882  0.5592  Will Frog Nation DAO vote to remove Sifu as Wonderland’s treasury manager?
+  67864427  0.5603  Incarnate Word vs. Texas A&M-CC
+  71276491  0.5604  PGL Astana: Natus Vincere vs. M80
+  74559226  0.5626  FDA approves Dordaviprone?
+  79029895  0.5629  Alcaraz vs. Auger-Aliassime: Match O/U 21.5
+  69147233  0.5647  Manhattan vs. Incarnate Word
+  67539796  0.5649  Will Ackman head US Wealth Fund?
+  74559122  0.5650  FDA approves Sanofi’s Rilzabrutinib for immune thrombocytopenia?
+  78980085  0.5667  Will Awawat win the Orderly trading competition?
+  78119199  0.5667  Carnelossi vs. Alencar
+  65087559  0.5670  Fact Check: Luigi Mangione motivated by denied claims?
+  79029896  0.5671  Alcaraz vs. Auger-Aliassime: Match O/U 22.5
+  18096786  0.5675  Will PNAS retract Dan Ariely’s 2012 paper on dishonesty by October 1, 2021?
+  75126950  0.5680  Will the Swiss referendum over the e-ID Act pass?
+  74558972  0.5683  FDA approves PharmaTher Holdings’ Ketamine?
+  68426216  0.5686  Incarnate Word vs. Texas A&M Commerce
+  50219689  0.5699  Will CZ remain CEO of Binance through 2023?
+  71731316  0.5701  Will Aaron Rai win the 2025 Charles Schwab Challenge?
+  72651696  0.5724  Boss Open: Perricard vs. Auger-Aliassime
+  35607900  0.5732  Will Nexo become insolvent by EOY?
+  72526412  0.5736  FDA approves Merck’s clesrovimab infant RSV prevention (MK‑1654)?
+  74249120  0.5737  Will the FDA approve RP1 (vusolimogene oderparepvec) BLA?
+  75352061  0.5737  Lynx vs Liberty
+  74988272  0.5737  Lynx vs Liberty
+  74549824  0.5743  Liberty vs Lynx
+  75231186  0.5743  Liberty vs Lynx
+  74559216  0.5744  FDA approves Leqembi auto-injection for early Alzheimer’s?
+  33351559  0.5746  Prop 27: Will California legalize online sports betting?
+  72890561  0.5746  FDA approves Regeneron’s Dupixent for bullous pemphigoid?
+  78980080  0.5748  Will Satsdart win the Orderly trading competition?
+  74559198  0.5752  FDA approves Donidalorsen?
+  70061453  0.5753  Nepomniachtchi vs. Keymer
+  74559028  0.5755  FDA approves Tonix Pharmaceuticals’ TNX-102 SL for fibromyalgia?
+  78372744  0.5758  Will no one dissent the December Fed decision?
+  76307451  0.5765  Will Antalyaspor win on 2025-09-13?
+  72688051  0.5777  Boss Open: Engel vs. Auger-Aliassime
+  69449785  0.5777  Underground Pyramid structures confirmed by peer review?
+  78980049  0.5784  Will Taiki Maeda win the Orderly trading competition?
+  74249120  0.5785  Will the FDA approve Sepiapterin NDA?
+  79060977  0.5786  Will Antalyaspor win on 2025-12-13?
+  29570411  0.5786  Will Brian Armstrong remain CEO of Coinbase through August?
+  77508868  0.5809  Will the MetaDAO proposal to engage in a $6M OTC deal pass?
+  68201067  0.5812  Bybit insolvent in 2025?
+  59564668  0.5828  Will Kraken IPO in 2024?
+  68184959  0.5835  Stephen F. Austin vs. Incarnate Word
+  68200580  0.5837  Bybit insolvent before April?
+  78076221  0.5843  Will Chipotle say "Automation" during earnings call?
+  74561533  0.5844  Will no one dissent the Fed decision?
+  78880571  0.5849  Spread: SC Corinthians Paulista (-1.5)
+  69772248  0.5867  Demopoulos vs. Alencar
+  78888502  0.5869  Spread: Shelton (-1.5) vs Auger-Aliassime (+1.5)
+  78249550  0.5870  Old Dominion vs. UL Monroe: 1H Moneyline
+  78963372  0.5870  Instituto AC Córdoba vs. CA Talleres: O/U 1.5
+  78722643  0.5875  Spread: Richmond Spiders (-6.5)
+  74559207  0.5883  FDA approves FILSPARI REMS modification?
+  78751435  0.5886  Spread: Richmond Spiders (-5.5)
+  78022438  0.5895  Spread: Wizards (-8.5)
+  76671810  0.5897  Spread: UL Monroe (-6.5)
+  74559104  0.5904  FDA approves Capricor Therapeutics’ Deramiocel for Duchenne muscular dystrophy b
+  77418485  0.5907  Spread: UL Monroe (-3.5)
+  70582605  0.5913  Ponzinibbio vs. Rodriguez
+  74561518  0.5916  Will two people dissent the Fed decision?
+  70297798  0.5918  Will Meta settle with the FTC?
+  32195413  0.5919  Will Joe Biden's FiveThirtyEight approval rating be 41.0% or higher on August 31
+  76417579  0.5927  LoL: BFXY vs DNF.C
+  76785293  0.5932  Spread: UL Monroe (-2.5)
+  77346462  0.5932  Spread: UL Monroe (-2.5)
+  58046579  0.5934  Will Roaring Kitty Profit from GME options?
+  77647679  0.5935  Spread: Toledo (-26.5)
+  78980054  0.5943  Will Salsa Tekila win the Orderly trading competition?
+  74559188  0.5951  FDA approves EYLEA HD?
+  78076073  0.5958  Will Uber say "Autonomous" during earnings call?
+  72890570  0.5963  FDA approves Unicycive’s Oxylanthanum Carbonate (OLC)?
+  77645253  0.5964  Spread: Toledo (-24.5)
+  45792234  0.5971  Will Curve's founder get liquidated?
+  31247222  0.5983  Will Joe Biden's FiveThirtyEight approval rating be 39.0% or higher on August 4?
+  74249122  0.5984  Will the FDA approve Aficamten NDA?
+  77951490  0.5987  Will MapLight Therapeutics Inc IPO closing market capitalization be between 700 
+  69459764  0.5990  Spread: Magic (-8.5)
+  69823969  0.5990  Spread: Magic (-8.5)
+  69744395  0.5990  Spread: Magic (-8.5)
+  70277808  0.5990  Spread: Magic (-8.5)
+  69540563  0.5990  Spread: Magic (-8.5)
+  70026038  0.5990  Spread: Magic (-8.5)
+  31555233  0.5992  Will Joe Biden's FiveThirtyEight approval rating be 39.0% or higher on August 11
+  78785171  0.5999  Spread: Alaves (-1.5)
+  78856126  0.6001  Spread: Toledo (-4.5)
+  78774828  0.6002  Spread: Liberty Flames (-6.5)
+  78566355  0.6006  Northern Illinois vs. Toledo: 1H Moneyline
+  75936720  0.6007  Spread: Toledo (-7.5)
+  78765828  0.6009  Spread: Liberty Flames (-5.5)
+  77951469  0.6010  Will Navan Inc IPO closing market capitalization be between 8 billion and 9 bill
+  76671832  0.6011  Spread: Toledo (-14.5)
+  78565158  0.6011  Spread: Toledo (-14.5)
+  77545096  0.6013  Spread: Toledo (-9.5)
+  78880572  0.6016  EC Bahia vs. Fortaleza EC: O/U 2.5
+  79039367  0.6016  Spread: Temple Owls (-2.5)
+  78942524  0.6017  Spread: Toledo (-5.5)
+  78807765  0.6018  Spread: Toledo (-3.5)
+  78980059  0.6026  Will Gold Mansacks win the Orderly trading competition?
+  67500657  0.6027  U.S. sovereign wealth fund operational in Trump's first 100 days?
+  78076274  0.6029  Will CAVA say "AUV" during earnings call?
+  78375511  0.6044  Will Consensys IPO by December 31 2025?
+  77265234  0.6051  Alaves vs. Elche CF: O/U 1.5
+  77346470  0.6052  Spread: Toledo (-10.5)
+  78033896  0.6053  Spread: SC Corinthians Paulista (-0.5)
+  78534990  0.6053  Spread: SC Corinthians Paulista (-0.5)
+  78033902  0.6053  Spread: SC Corinthians Paulista (-0.5)
+  67580573  0.6057  Will 10% or more CIA personnel accept buyout offer before March?
+  78434196  0.6057  Spread: Atalanta (-1.5)
+  77570281  0.6057  Spread: Atalanta (-1.5)
+  78022008  0.6064  Erste Bank Open: Matteo Berrettini vs Cameron Norrie
+  76785312  0.6068  Spread: Toledo (-21.5)
+  78811126  0.6073  Troy vs. Old Dominion: 1H Moneyline
+  77951495  0.6078  Will MapLight Therapeutics Inc IPO closing market capitalization be between 1 bi
+  27381215  0.6091  Will Proposal 100 for Compound Finance pass?
+  78940194  0.6095  Will MicroStrategy announce bankruptcy before 2027?
+  64798872  0.6096  Will MicroStrategy announce bankruptcy by May 31?
+  76424840  0.6096  Spread: Guardians (-1.5)
+  76306579  0.6096  Spread: Guardians (-1.5)
+  76234176  0.6096  Spread: Guardians (-1.5)
+  76192953  0.6096  Spread: Guardians (-1.5)
+  76384599  0.6096  Spread: Guardians (-1.5)
+  75625793  0.6096  Spread: Guardians (-1.5)
+  76344654  0.6096  Spread: Guardians (-1.5)
+  58400777  0.6096  Alan Keating VPIP above 85%? - Celebrity poker game
+  77851042  0.6097  Spread: Toledo (-25.5)
+  77951500  0.6102  Will MapLight Therapeutics Inc IPO closing market capitalization be above 1.3 bi
+  77849317  0.6103  Erste Bank Open: Alexei Popyrin vs Matteo Berrettini
+  78076273  0.6105  Will CAVA say "Automation" during earnings call?
+  78085752  0.6106  Spread: Toledo (-1.5)
+  78640141  0.6115  Spread: Toledo (-15.5)
+  68361092  0.6117  Will MicroStrategy announce bankruptcy in 2025?
+  77944830  0.6119  Will Sifu win the Synthetix trading competition?
+  66151175  0.6128  Kraken IPO in 2025?
+  78704184  0.6129  Spread: Instituto AC Córdoba (-0.5)
+  74559132  0.6140  FDA approves Outlook Therapeutics’ ONS-5010 for wet AMD?
+  78855827  0.6148  Spread: Iona Gaels (-3.5)
+  76782636  0.6155  Will OpenAI not IPO by December 31, 2026?
+  56436255  0.6159  $EIGEN transferable before CZ gets out of prison?
+  78033896  0.6163  SC Corinthians Paulista vs. Grêmio FBPA: O/U 2.5
+  77944810  0.6170  Will IcoBeast win the Synthetix trading competition?
+  78938995  0.6171  Celonis IPO before 2027?
+  76586019  0.6181  Spread: LAC (-3.5)
+  78864827  0.6181  Spread: Iona Gaels (-4.5)
+  77989612  0.6182  Will the Digital Asset Market Clarity Act of 2025 (H.R.3633) be signed into law 
+  78866469  0.6183  1H Spread: Raptors (-5.5)
+  78980075  0.6186  Will Ponzi Trader win the Orderly trading competition?
+  78888262  0.6190  Spread: Iona Gaels (-5.5)
+  77849318  0.6191  Erste Bank Open: Tomas Etcheverry vs Nicolai Budkov Kjaer
+  78963376  0.6191  Spread: CA Aldosivi (-1.5)
+  74559226  0.6192  FDA approves UX111?
+  76366049  0.6192  Celonis IPO in 2025?
+  78020812  0.6195  Spread: Predators (-1.5)
+  78407803  0.6195  Spread: Predators (-1.5)
+  79057518  0.6195  Spread: Predators (-1.5)
+  78497815  0.6195  Spread: Predators (-1.5)
+  78627394  0.6195  Spread: Predators (-1.5)
+  77934443  0.6195  Spread: Predators (-1.5)
+  78978573  0.6195  Spread: Predators (-1.5)
+  77416830  0.6195  Spread: Predators (-1.5)
+  66185845  0.6200  NYSE marketwide circuit breaker in 2025?
+  78857626  0.6204  Spread: Iona Gaels (-2.5)
+  77933484  0.6210  Will Alibaba’s Qwen 3 Max lose the NOF1.ai competition?
+  75936532  0.6210  Spread: SMU (-3.5)
+  76586024  0.6211  Spread: LAC (-4.5)
+  72888247  0.6211  Will OpenAI accuse Microsoft of violating antitrust before August?
+  70067994  0.6216  Spread: Raptors (-6.5)
+  77804247  0.6216  Spread: Raptors (-6.5)
+  69943631  0.6216  Spread: Raptors (-6.5)
+  69377633  0.6216  Spread: Raptors (-6.5)
+  69663182  0.6216  Spread: Raptors (-6.5)
+  69419899  0.6216  Spread: Raptors (-6.5)
+  69585545  0.6216  Spread: Raptors (-6.5)
+  79035606  0.6216  Spread: Raptors (-6.5)
+  75186156  0.6216  ATP Cincinnati - Sinner vs. Auger-Aliassime
+  75867097  0.6217  Spread: Padres (-1.5)
+  76275576  0.6217  Spread: Padres (-1.5)
+  76344645  0.6217  Spread: Padres (-1.5)
+  76424829  0.6217  Spread: Padres (-1.5)
+  75785889  0.6217  Spread: Padres (-1.5)
+  76070388  0.6217  Spread: Padres (-1.5)
+  76384592  0.6217  Spread: Padres (-1.5)
+  76234154  0.6217  Spread: Padres (-1.5)
+  76192946  0.6217  Spread: Padres (-1.5)
+  75905756  0.6217  Spread: Padres (-1.5)
+  75949641  0.6217  Spread: Padres (-1.5)
+  76306577  0.6217  Spread: Padres (-1.5)
+  76109552  0.6217  Spread: Padres (-1.5)
+  75835189  0.6217  Spread: Padres (-1.5)
+  75989128  0.6217  Spread: Padres (-1.5)
+  75469810  0.6217  Spread: Padres (-1.5)
+  78722771  0.6220  NYSE marketwide circuit breaker before 2027?
+  77334597  0.6224  Spread: Raptors (-3.5)
+  69585531  0.6224  Spread: Raptors (-3.5)
+  70068023  0.6224  Spread: Raptors (-3.5)
+  69943641  0.6224  Spread: Raptors (-3.5)
+  78553285  0.6224  Spread: Raptors (-3.5)
+  69419895  0.6224  Spread: Raptors (-3.5)
+  69663157  0.6224  Spread: Raptors (-3.5)
+  69502109  0.6224  Spread: Raptors (-3.5)
+  69377657  0.6224  Spread: Raptors (-3.5)
+  69823912  0.6224  Spread: Raptors (-3.5)
+  76026026  0.6226  Will Hugo Martingale win the Ansem Invitational trading competition?
+  79044606  0.6227  Spread: Raptors (-7.5)
+  79116601  0.6227  Spread: Raptors (-7.5)
+  69943645  0.6227  Spread: Raptors (-7.5)
+  69585512  0.6227  Spread: Raptors (-7.5)
+  69419901  0.6227  Spread: Raptors (-7.5)
+  70068007  0.6227  Spread: Raptors (-7.5)
+  77780851  0.6227  Spread: Raptors (-7.5)
+  75486603  0.6228  Will the LayerZero proposal to acquire Stargate (STG) pass?
+  77944754  0.6240  Will DegenPing win the Synthetix trading competition?
+  76026012  0.6243  Will Gainzy win the Ansem Invitational trading competition?
+  65646796  0.6244  NYSE marketwide circuit breaker before 2025?
+  78033901  0.6245  EC Vitória vs. SC Corinthians Paulista: O/U 2.5
+  13320891  0.6246  What will Edward Snowden’s NFT “Stay Free” sell for at auction?
+  69419885  0.6246  Spread: Raptors (-5.5)
+  69377660  0.6246  Spread: Raptors (-5.5)
+  79033805  0.6246  Spread: Raptors (-5.5)
+  69943643  0.6246  Spread: Raptors (-5.5)
+  70068009  0.6246  Spread: Raptors (-5.5)
+  69585506  0.6246  Spread: Raptors (-5.5)
+  78466892  0.6246  Spread: Raptors (-5.5)
+  69663179  0.6246  Spread: Raptors (-5.5)
+  69585510  0.6247  Spread: Raptors (-4.5)
+  70068025  0.6247  Spread: Raptors (-4.5)
+  69377624  0.6247  Spread: Raptors (-4.5)
+  69663177  0.6247  Spread: Raptors (-4.5)
+  69943655  0.6247  Spread: Raptors (-4.5)
+  78497504  0.6247  Spread: Raptors (-4.5)
+  78560486  0.6247  Spread: Raptors (-4.5)
+  69419883  0.6247  Spread: Raptors (-4.5)
+  77807848  0.6249  Spread: Troy (-5.5)
+  69585529  0.6251  Spread: Raptors (-2.5)
+  78655882  0.6251  Spread: Raptors (-2.5)
+  70068035  0.6251  Spread: Raptors (-2.5)
+  69943667  0.6251  Spread: Raptors (-2.5)
+  78081702  0.6251  Spread: Raptors (-2.5)
+  69502123  0.6251  Spread: Raptors (-2.5)
+  69377643  0.6251  Spread: Raptors (-2.5)
+  69823889  0.6251  Spread: Raptors (-2.5)
+  69663175  0.6251  Spread: Raptors (-2.5)
+  69419905  0.6251  Spread: Raptors (-2.5)
+  78555088  0.6251  Spread: Raptors (-2.5)
+  70068015  0.6252  Spread: Raptors (-10.5)
+  69585515  0.6252  Spread: Raptors (-10.5)
+  78864667  0.6252  Spread: Raptors (-10.5)
+  78880572  0.6256  Spread: EC Bahia (-1.5)
+  78923775  0.6256  Spread: EC Bahia (-1.5)
+  78963377  0.6256  Spread: CA Lanús (-1.5)
+  76586014  0.6259  Spread: LAC (-6.5)
+  69585533  0.6261  Spread: Raptors (-9.5)
+  78855666  0.6261  Spread: Raptors (-9.5)
+  70068012  0.6261  Spread: Raptors (-9.5)
+  69419881  0.6272  Spread: Raptors (-1.5)
+  69502101  0.6272  Spread: Raptors (-1.5)
+  69943653  0.6272  Spread: Raptors (-1.5)
+  78654083  0.6272  Spread: Raptors (-1.5)
+  69663169  0.6272  Spread: Raptors (-1.5)
+  78036059  0.6272  Spread: Raptors (-1.5)
+  78040297  0.6272  Spread: Raptors (-1.5)
+  69377639  0.6272  Spread: Raptors (-1.5)
+  69823901  0.6272  Spread: Raptors (-1.5)
+  69585543  0.6272  Spread: Raptors (-1.5)
+  77062221  0.6281  Spread: Troy (-2.5)
+  76671829  0.6281  Spread: Troy (-2.5)
+  76586019  0.6284  Spread: LAC (-7.5)
+  76586018  0.6288  Spread: LAC (-1.5)
+  70068017  0.6291  Spread: Raptors (-11.5)
+  77962636  0.6294  Spread: Villarreal (-1.5)
+  78785170  0.6294  Spread: Villarreal (-1.5)
+  76025999  0.6294  Will Intern win the Ansem Invitational trading competition?
+  70068027  0.6297  Spread: Raptors (-12.5)
+  69421463  0.6299  Spread: Mavericks (-6.5)
+  78605481  0.6299  Spread: Mavericks (-6.5)
+  70150980  0.6299  Spread: Mavericks (-6.5)
+  69786538  0.6299  Spread: Mavericks (-6.5)
+  78303104  0.6299  Spread: Mavericks (-6.5)
+  69705275  0.6299  Spread: Mavericks (-6.5)
+  76109553  0.6299  Spread: Angels (-1.5)
+  76192948  0.6299  Spread: Angels (-1.5)
+  76275581  0.6299  Spread: Angels (-1.5)
+  76070387  0.6299  Spread: Angels (-1.5)
+  70150986  0.6305  Spread: Mavericks (-11.5)
+  69705263  0.6305  Spread: Mavericks (-11.5)
+  76586075  0.6306  Spread: ATL (-8.5)
+  69661545  0.6308  Spread: Pelicans (-6.5)
+  69421528  0.6308  Spread: Pelicans (-6.5)
+  69421518  0.6309  Spread: Pelicans (-7.5)
+  69661557  0.6309  Spread: Pelicans (-7.5)
+  77942603  0.6309  Spread: Pelicans (-7.5)
+  69421481  0.6310  Spread: Mavericks (-3.5)
+  69786558  0.6310  Spread: Mavericks (-3.5)
+  77334598  0.6310  Spread: Mavericks (-3.5)
+  78733274  0.6310  Spread: Mavericks (-3.5)
+  79122003  0.6312  Spread: Raptors (-8.5)
+  69585525  0.6313  Spread: Raptors (-8.5)
+  69419911  0.6313  Spread: Raptors (-8.5)
+  70068039  0.6313  Spread: Raptors (-8.5)
+  76026008  0.6315  Will Ansem win the Ansem Invitational trading competition?
+  78938996  0.6316  Remote IPO before 2027?
+  77944850  0.6320  Will Ponzi Trader win the Synthetix trading competition?
+  78294103  0.6321  Spread: Mavericks (-7.5)
+  69705251  0.6321  Spread: Mavericks (-7.5)
+  70150982  0.6321  Spread: Mavericks (-7.5)
+  78603681  0.6321  Spread: Mavericks (-7.5)
+  69786571  0.6321  Spread: Mavericks (-7.5)
+  69705253  0.6330  Spread: Mavericks (-9.5)
+  78106006  0.6330  Spread: Mavericks (-9.5)
+  70150960  0.6330  Spread: Mavericks (-9.5)
+  78639681  0.6330  Spread: Mavericks (-9.5)
+  69421512  0.6332  Spread: Pelicans (-3.5)
+  78589289  0.6332  Spread: Pelicans (-3.5)
+  69661587  0.6332  Spread: Pelicans (-3.5)
+  78207704  0.6332  Spread: Pelicans (-3.5)
+  69786536  0.6332  Spread: Mavericks (-5.5)
+  69421461  0.6332  Spread: Mavericks (-5.5)
+  70150978  0.6332  Spread: Mavericks (-5.5)
+  78333706  0.6332  Spread: Mavericks (-5.5)
+  78760277  0.6332  Spread: Mavericks (-5.5)
+  69705277  0.6333  Spread: Mavericks (-10.5)
+  70150976  0.6333  Spread: Mavericks (-10.5)
+  78106007  0.6333  Spread: Mavericks (-10.5)
+  78704187  0.6335  Spread: CA Unión (-1.5)
+  76366052  0.6337  Remote IPO in 2025?
+  77213607  0.6338  Spread: Troy (-1.5)
+  77944991  0.6338  Will EthBoi win the Synthetix trading competition?
+  70150988  0.6340  Spread: Mavericks (-12.5)
+  69705279  0.6340  Spread: Mavericks (-12.5)
+  69622602  0.6348  Spread: Mavericks (-2.5)
+  69786560  0.6348  Spread: Mavericks (-2.5)
+  69421477  0.6348  Spread: Mavericks (-2.5)
+  69786562  0.6350  Spread: Mavericks (-4.5)
+  69421483  0.6350  Spread: Mavericks (-4.5)
+  78753076  0.6350  Spread: Mavericks (-4.5)
+  78880573  0.6354  EC Juventude vs. Cruzeiro EC: O/U 2.5
+  69421520  0.6354  Spread: Pelicans (-9.5)
+  78668604  0.6355  Spread: AS Roma (-1.5)
+  78434194  0.6355  Spread: AS Roma (-1.5)
+  78979115  0.6355  Spread: AS Roma (-1.5)
+  78824767  0.6355  Spread: AS Roma (-1.5)
+  77959044  0.6355  Spread: AS Roma (-1.5)
+  77942023  0.6355  Spread: AS Roma (-1.5)
+  69661576  0.6357  Spread: Pelicans (-5.5)
+  69421516  0.6357  Spread: Pelicans (-5.5)
+  69421508  0.6357  Spread: Pelicans (-4.5)
+  69661555  0.6357  Spread: Pelicans (-4.5)
+  78589290  0.6357  Spread: Pelicans (-4.5)
+  69421540  0.6362  Spread: Pelicans (-11.5)
+  70026180  0.6362  Spread: Pelicans (-2.5)
+  69421536  0.6362  Spread: Pelicans (-2.5)
+  78211304  0.6362  Spread: Pelicans (-2.5)
+  69661589  0.6362  Spread: Pelicans (-2.5)
+  78567677  0.6362  Spread: Pelicans (-2.5)
+  69421538  0.6364  Spread: Pelicans (-10.5)
+  69705244  0.6368  Spread: Mavericks (-14.5)
+  70150962  0.6368  Spread: Mavericks (-14.5)
+  69705246  0.6370  Spread: Mavericks (-15.5)
+  70150964  0.6370  Spread: Mavericks (-15.5)
+  69461491  0.6377  Spread: Knicks (-13.5)
+  70232503  0.6377  Spread: Knicks (-13.5)
+  69659817  0.6377  Spread: Knicks (-13.5)
+  69742694  0.6377  Spread: Knicks (-13.5)
+  69340521  0.6377  Spread: Knicks (-13.5)
+  70154327  0.6377  Spread: Knicks (-13.5)
+  78553285  0.6377  Spread: Knicks (-13.5)
+  69945192  0.6377  Spread: Knicks (-13.5)
+  70150968  0.6378  Spread: Mavericks (-13.5)
+  69705281  0.6378  Spread: Mavericks (-13.5)
+  76026035  0.6378  Will TraderTrader350 win the Ansem Invitational trading competition?
+  69421550  0.6383  Spread: Pelicans (-8.5)
+  69661573  0.6383  Spread: Pelicans (-8.5)
+  78022438  0.6383  Spread: Pelicans (-8.5)
+  76586004  0.6395  Spread: SF (-1.5)
+  78270406  0.6398  Spread: CA Unión (-0.5)
+  77892442  0.6400  Erste Bank Open: Aleksandar Kovacevic vs Matteo Arnaldi
+  78625283  0.6401  1H Spread: Mavericks (-3.5)
+  78303104  0.6401  1H Spread: Mavericks (-3.5)
+  78033896  0.6402  Spread: EC Bahia (-0.5)
+  78033902  0.6402  Spread: EC Bahia (-0.5)
+  78630683  0.6402  Spread: Mavericks (-8.5)
+  69705242  0.6402  Spread: Mavericks (-8.5)
+  70150994  0.6402  Spread: Mavericks (-8.5)
+  78297702  0.6402  Spread: Mavericks (-8.5)
+  69786573  0.6402  Spread: Mavericks (-8.5)
+  50906245  0.6403  Will Logan Paul refund CryptoZoo investors by Jan 31?
+  78963373  0.6406  Spread: CA Independiente (-1.5)
+  78555086  0.6409  Spread: Pelicans (-1.5)
+  69421514  0.6409  Spread: Pelicans (-1.5)
+  69661571  0.6409  Spread: Pelicans (-1.5)
+  78234707  0.6409  Spread: Pelicans (-1.5)
+  70026158  0.6409  Spread: Pelicans (-1.5)
+  74037035  0.6413  Citigroup launches a USD stablecoin in 2025?
+  77214736  0.6413  Spread: Golden (-18.5)
+  69421504  0.6415  Spread: Mavericks (-1.5)
+  69622620  0.6415  Spread: Mavericks (-1.5)
+  69786534  0.6415  Spread: Mavericks (-1.5)
+  78900670  0.6415  Spread: Mavericks (-1.5)
+  78160908  0.6415  Spread: Mavericks (-1.5)
+  69663151  0.6418  Spread: Raptors (-0.5)
+  69502103  0.6418  Spread: Raptors (-0.5)
+  69419879  0.6418  Spread: Raptors (-0.5)
+  69377655  0.6418  Spread: Raptors (-0.5)
+  69943669  0.6418  Spread: Raptors (-0.5)
+  69823891  0.6418  Spread: Raptors (-0.5)
+  69585508  0.6418  Spread: Raptors (-0.5)
+  78980064  0.6419  Will Route2FI win the Orderly trading competition?
+  78117704  0.6421  1H Spread: Mavericks (-5.5)
+  74245505  0.6432  Trump enacts a de minimis crypto tax exemption before 2026?
+  78031987  0.6437  PEC Zwolle vs. NEC: O/U 3.5
+  78923777  0.6450  Spread: Botafogo FR (-1.5)
+  78880577  0.6450  Spread: Botafogo FR (-1.5)
+  69375901  0.6462  Spread: Pistons (-13.5)
+  69459809  0.6462  Spread: Pistons (-13.5)
+  78814273  0.6462  Spread: Pistons (-13.5)
+  69867756  0.6462  Spread: Pistons (-13.5)
+  78938998  0.6467  OpenAI IPO before 2027?
+  33476515  0.6475  Will Kalshi get approval for midterm markets?
+  78629644  0.6480  Will USD.AI launch a token in 2025?
+  77613480  0.6482  Spread: AS Roma (-0.5)
+  78339657  0.6495  OpenAI $1t+ IPO before 2027?
+  66263549  0.6498  Cardano ETF in 2025?
+  78034483  0.6501  Spread: CA Independiente (-0.5)
+  78704182  0.6501  Spread: CA Independiente (-0.5)
+  78270404  0.6501  Spread: CA Independiente (-0.5)
+  75835141  0.6553  Spread: Mets (-1.5)
+  75748914  0.6553  Spread: Mets (-1.5)
+  75867418  0.6553  Spread: Mets (-1.5)
+  76424836  0.6553  Spread: Mets (-1.5)
+  75946487  0.6553  Spread: Mets (-1.5)
+  76192940  0.6553  Spread: Mets (-1.5)
+  76109560  0.6553  Spread: Mets (-1.5)
+  76344650  0.6553  Spread: Mets (-1.5)
+  76070348  0.6553  Spread: Mets (-1.5)
+  75905701  0.6553  Spread: Mets (-1.5)
+  75596970  0.6553  Spread: Mets (-1.5)
+  75469791  0.6553  Spread: Mets (-1.5)
+  76384602  0.6553  Spread: Mets (-1.5)
+  75548615  0.6553  Spread: Mets (-1.5)
+  75785887  0.6553  Spread: Mets (-1.5)
+  75509627  0.6553  Spread: Mets (-1.5)
+  75988951  0.6553  Spread: Mets (-1.5)
+  75705315  0.6553  Spread: Mets (-1.5)
+  78807808  0.6562  Spread: Liberty (-3.5)
+  78248808  0.6562  Spread: Liberty (-3.5)
+  78938998  0.6563  Applied Intuition IPO before 2027?
+  76366051  0.6563  Applied Intuition IPO in 2025?
+  75936738  0.6569  Spread: Liberty (-6.5)
+  78546403  0.6582  Spread: Villarreal CF (-1.5)
+  78033898  0.6586  Spread: Cruzeiro EC (-1.5)
+  78880573  0.6586  Spread: Cruzeiro EC (-1.5)
+  78923774  0.6586  Spread: Cruzeiro EC (-1.5)
+  76393791  0.6589  Spread: Liberty (-5.5)
+  69255824  0.6612  Will Trump say "ETF" or "Exchange Traded Fund" during Digital Asset Summit?
+  78987520  0.6614  Spread: Liberty (-2.5)
+  77645219  0.6617  Spread: Liberty (-10.5)
+  76026016  0.6657  Will Ponzitrader win the Ansem Invitational trading competition?
+  17396291  0.6663  Will Cryptarbitrage win the CryptOG Charity Poker Tournament?
+  78249558  0.6680  1H Spread: Liberty (-2.5)
+  78033898  0.6681  Grêmio FBPA vs. EC Juventude: O/U 2.5
+  78330545  0.6685  1H Spread: Liberty (-1.5)
+  35604091  0.6694  Will Crypto.com become insolvent by EOY?
+  69013759  0.6712  Will $AI16Z be the next coin listed on Robinhood?
+  68370065  0.6724  Will MicroStrategy be margin called in 2025?
+  64568498  0.6762  Doge ETF approved by July 31?
+  54307191  0.6776  Doge ETF approved in 2024?
+  54350904  0.6778  Solana ETF approved in 2024?
+  77330289  0.6811  Will Microstrategy announce a Bitcoin purchase October 7-13?
+  78076273  0.6819  Will Coinbase say "Institution / Institutional" during earnings call?
+  66663115  0.6822  MicroStrategy purchases more Bitcoin before inauguration?
+  66386714  0.6822  MicroStrategy purchases more Bitcoin before inauguration?
+  66184737  0.6822  MicroStrategy purchases more Bitcoin before inauguration?
+  79126192  0.6828  Will Microstrategy announce a Bitcoin purchase November 18-24?
+  58566023  0.6832  Biden campaign accepts crypto donations before August?
+  66150801  0.6840  Doge ETF approved in 2025?
+  66146831  0.6841  Solana ETF approved in 2025?
+  71469376  0.6845  Will MicroStrategy purchase between 8000 and 12000 BTC between May 13–19?
+  65729757  0.6869  Will MicroStrategy hold 500k+ BTC before Trump inauguration?
+  65603680  0.6871  Litecoin ETF approved by July 31?
+  65285309  0.6880  Will "Crypto" or "Bitcoin" be in the manifesto?
+  75353871  0.6882  MicroStrategy purchases >5000 BTC August 19-25?
+  69732133  0.6889  Will MicroStrategy hold 600k+ BTC before June?
+  66944437  0.6904  Will MicroStrategy purchase more Bitcoin in January?
+  69219288  0.6904  Will MicroStrategy buy 200+ Bitcoin in next purchase?
+  69492747  0.6904  Will MicroStrategy buy 200+ Bitcoin in next purchase?
+  65844261  0.6913  Will MicroStrategy purchase more Bitcoin in 2024?
+  65398125  0.6913  Will MicroStrategy purchase more Bitcoin in 2024?
+  65559789  0.6913  Will MicroStrategy purchase more Bitcoin in 2024?
+  64489227  0.6913  Will MicroStrategy purchase more Bitcoin in 2024?
+  64731692  0.6913  Will MicroStrategy purchase more Bitcoin in 2024?
+  69732131  0.6917  Will MicroStrategy purchase Bitcoin April 1-7?
+  65398146  0.6955  Will MicroStrategy hold 500k+ BTC before 2025?
+  71431796  0.6955  Will MicroStrategy purchase Bitcoin May 13-19?
+  66263585  0.6957  Pepe ETF in 2025?
+  70051892  0.6966  Will MicroStrategy purchase Bitcoin April 8-14?
+  70584509  0.6968  Will MicroStrategy purchase Bitcoin April 22-28?
+  69453690  0.6972  Will MicroStrategy purchase Bitcoin March 25-31?
+  52137737  0.6976  Will SEC delay Bitcoin ETF decision?
+  63447363  0.6981  MSFT shareholders vote for Bitcoin investment?
+  78423022  0.6985  Will MicroStrategy announce holding 650k+ BTC by November 30?
+  30093714  0.7003  Will SEC approve Bitwise ETF by June 29?
+  66236081  0.7014  Litecoin ETF approved in 2025?
+  69732141  0.7020  Will MicroStrategy hold 550k+ BTC before May?
+  76814537  0.7021  Will MicroStrategy announce holding 650k+ BTC by October 31?
+  75353813  0.7038  Will MicroStrategy purchase Bitcoin August 19-25?
+  48250999  0.7051  Will the SEC approve BlackRock's Bitcoin ETF by March 30?
+  71443985  0.7054  Will MicroStrategy hold 650k+ BTC before July?
+  75068464  0.7062  Will MicroStrategy purchase Bitcoin August 12-18?
+  70952093  0.7063  Will MicroStrategy hold 600k+ BTC before July?
+  66146834  0.7080  Ripple ETF approved in 2025?
+  75767283  0.7080  Will MicroStrategy hold 650k+ BTC by September 30?
+  64798893  0.7094  Will MicroStrategy market cap dip to $50b in 2024?
+  66184726  0.7104  Will MicroStrategy hold 500k+ BTC before March?
+  64492043  0.7106  Will MicroStrategy hold 400k+ BTC before 2025?
+  66150821  0.7123  MicroStrategy sells any Bitcoin in 2025?
+  68455009  0.7124  Will MicroStrategy hold 550k+ BTC before April?
+  46071185  0.7138  US Ethereum ETF approved in 2023?
+  45040485  0.7158  Will the SEC approve BlackRock's Bitcoin ETF by December 31?
+  52139057  0.7174  Bitcoin ETF doesn't get approval by Jan 15?
+  52094270  0.7201  SEC approves first spot Bitcoin ETF on Jan 10?
+  52094261  0.7214  SEC approves first spot Bitcoin ETF on Jan 9?
+  52094251  0.7219  SEC approves first spot Bitcoin ETF on Jan 8?
+  66111232  0.7236  Will Microstrategy vote to increase common stock supply pass?
+  44489510  0.7256  Will the SEC approve BlackRock's Bitcoin ETF by August 31?
+  74321954  0.7283  Will MicroStrategy hold 630k+ BTC by August 31?
+  68370066  0.7315  Will MicroStrategy be forced to liquidate Bitcoin holdings in 2025?
+  74280622  0.7317  Will MicroStrategy hold 620k+ BTC by August 31?
+  75767312  0.7387  Will MicroStrategy hold 680k+ BTC by December 31?
+  74599250  0.7389  Will MicroStrategy hold 650k+ BTC by August 31?
+  50623249  0.7444  Bitcoin ETF approved by Jan 15?

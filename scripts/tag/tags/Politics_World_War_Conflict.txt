@@ -1,0 +1,1884 @@
+# Politics_World - Politics_World_War_Conflict
+# count=1881, avg_conf=0.5901
+====================================================================================================
+  69534899  0.4798  Will Vance visit Greenland before July?
+  70671217  0.4903  Will India invade Pakistan before July?
+  71352001  0.4908  Will Pakistan invade India before July?
+  71025625  0.4909  Will China invades Taiwan before GTA VI?
+  69296099  0.4944  Will Jesus Christ return in 2025?
+  72322877  0.4946  Will South Korea move its capital to Sejong in 2025?
+  70706826  0.4954  Will Pakistan reopen its airspace to India before May?
+  77947220  0.4962  Will Hu Zhongming be the next Vice Chair of China’s Central Military Commission?
+  78585679  0.5001  Will Kim Jong Un meet with Sanae Takaichi by December 31?
+  72773265  0.5024  Will Reza Pahlavi enter Iran before September?
+  77774195  0.5041  Will Greta Thunberg win the Nobel Peace Prize in 2026?
+  77774225  0.5048  Will Tamim bin Hamad Al Thani win the Nobel Peace Prize in 2026?
+  53563929  0.5049  Will Azerbaijan invade Armenia before April?
+  78336227  0.5053  Whitman Missionaries vs. Idaho Vandals
+  74370192  0.5059  Will China invade Taiwan by end of 2026?
+  78886029  0.5075  Will India strike Pakistan by November 30?
+  68172131  0.5078  Tel Aviv bus bomber arrested by Friday?
+  69147000  0.5083  Chattanooga vs. Middle Tennessee
+  52443488  0.5094  Will Pakistan strike Iran by Saturday?
+  74570614  0.5104  Missing Epstein cell footage released in 2025?
+  59694863  0.5112  Will Netanyahu meet with Biden?
+  51898113  0.5123  Will Maersk resume shipping through Red Sea by Jan 15?
+  77103719  0.5129  El Dafrawy vs. Zendeli
+  77774220  0.5136  Will Volodymyr Zelenskyy win the Nobel Peace Prize in 2026?
+  51392676  0.5148  Will Maersk resume shipping through Red Sea by March 31?
+  72965173  0.5153  Will Putin meet with Zelenskyy before August?
+  13237366  0.5155  Will the Ever Given exit the Great Bitter Lake in the Suez Canal by April 22?
+  74361401  0.5156  Will Thailand capture Preah Vihear temple by July 31?
+  73198520  0.5158  Will the Iranian regime fall before August?
+  52095394  0.5166  Will North Korea invade South Korea in 2024?
+  53839919  0.5170  Will Israel invade Lebanon before April?
+  77774185  0.5178  Will Yulia Navalnaya win the Nobel Peace Prize in 2026?
+  46021122  0.5181  Will Musk fight Zuck in 2023?
+  78797786  0.5182  Old Dominion Monarchs vs. George Washington Revolutionaries
+  78630113  0.5200  Will the U.S. invade Iran before 2027?
+  74603299  0.5200  Will Putin meet with Zelenskyy by August 31?
+  72891117  0.5202  Will Israel's Ben Gurion Airport reopen before July?
+  44149849  0.5202  Will the missing submarine be found by June 23?
+  75369324  0.5204  Will Al-Ittihad beat Al-Nassr?
+  72641321  0.5206  Will Saudi Arabia beat Haiti?
+  73735092  0.5208  Will Yulia Navalnaya win the Nobel Peace Prize in 2025?
+  75378221  0.5209  Will Zelenskyy and Putin meet next in Russia?
+  78886028  0.5211  Will India strike Pakistan by November 14?
+  78669682  0.5216  Will Zelenskyy and Putin meet next in US before 2027?
+  75375430  0.5219  Will Putin meet with Zelenskyy by September 30?
+  75369314  0.5230  Will Al-Nassr beat Al-Ittihad?
+  64570106  0.5235  Will ICC withdraw its arrest warrant against Netanyahu before July?
+  73735096  0.5238  Will Volodymyr Zelensky win the Nobel Peace Prize in 2025?
+  72894910  0.5244  Will the Iranian regime fall before July?
+  33680817  0.5246  Will Putin and Zelensky meet in person before 2023?
+  50743578  0.5246  Will the Suez Canal close in 2023?
+  71311964  0.5247  Will Pope Leo visit Ukraine first?
+  48530428  0.5249  Will Bashar al-Assad still be in power in Syria by the end of 2023?
+  72816037  0.5250  Will Khamenei leave Iran before July?
+  78972906  0.5255  Will India strike Pakistan by December 31, 2026?
+  58008243  0.5258  Malawi Vice President's plane found by Tuesday?
+  67342973  0.5262  Will North Korea invade South Korea in 2025?
+  13601304  0.5265  Will the Ever Given exit the Great Bitter Lake in the Suez Canal by May 20?
+  58995862  0.5268  Andrew Tate flee the EU?
+  41106031  0.5269  Will Sweden join NATO by April 30?
+  27104193  0.5272  Will Volodymyr Zelenskyy be President of Ukraine on June 30?
+  12499312  0.5272  Will the Ever Given be dislodged from the Suez Canal by March 30?
+  73145568  0.5276  Will Iran withdraw from the NPT before August?
+  67676062  0.5278  Montana vs. Northern Arizona
+  15795233  0.5278  Will there be more than 1K daily COVID-19 cases in Japan on August 27?
+  70469684  0.5278  Will Putin meet with Zelenskyy before July?
+  72894853  0.5280  Will the Iranian regime fall in 2025?
+  77429369  0.5281  Will Hamas release all Israeli hostages by October 15?
+  51282432  0.5283  Will Maersk resume shipping through Red Sea by end of 2023?
+  69255394  0.5285  Mahmoud Khalil released from custody before May?
+  75378260  0.5285  Will Zelenskyy  and Putin meet next in Belarus?
+  78630873  0.5289  Will North Korea invade South Korea before 2027?
+  75411372  0.5290  Will Israel extradite Tom Alexandrovich to the US by September 30?
+  75378265  0.5294  Will Zelenskyy and Putin not meet?
+  57235777  0.5296  Will Milady flip BAYC in 2024?
+  76818025  0.5297  Will Putin meet with Zelenskyy by June 30, 2026?
+  75378255  0.5298  Will Zelenskyy and Putin meet next in Hungary?
+  72778054  0.5299  Iran nuclear test in 2025?
+  77459071  0.5302  Will Hamas release all Israeli hostages by October 13?
+  73198529  0.5303  Iranian coup attempt before August?
+  71446582  0.5311  Will Putin meet with Zelenskyy by Friday?
+  77104665  0.5312  Will Trump and Putin meet next in South Korea?
+  78630763  0.5313  Putin and Zelenskyy shake hands by June 30?
+  73735078  0.5314  Will Alexei Gorinov win the Nobel Peace Prize in 2025?
+  75378216  0.5314  Will Zelenskyy and Putin meet next in Turkey?
+  75693682  0.5316  Kilmar Abrego Garcia deported by September 30?
+  68487806  0.5319  Will Volodymyr Zelenskyy say "Nuclear" during his Baier interview?
+  76053685  0.5321  Will Zohran Mamdani say "Homeless" or "Homelessness" during Fighting Oligarchy t
+  27995508  0.5327  Will the 7-day COVID-19 case average in the USA be below 50,000 by May 31?
+  42306568  0.5330  Will Volodymyr Zelenskyy remain President of Ukraine through June 30?
+  77947230  0.5331  Will Wang Haijiang be the next Vice Chair of China’s Central Military Commission
+  77430205  0.5331  Will Hamas release all Israeli hostages by October 10?
+  61678656  0.5337  Will there be another debate?
+  67788724  0.5339  Pennsylvania vs. Yale
+  78714886  0.5342  Will Palestine take second place in Miss Universe 2025?
+  77387021  0.5343  Rahiki vs. Mulumba
+  74961861  0.5344  Will Trump and Putin meet next in Hungary?
+  72777903  0.5345  Iranian coup attempt before July?
+  65636892  0.5345  Will the CDU/CSU be part of the next German government?
+  78632883  0.5345  Will North and South Korea engage in direct talks by June 30?
+  58674238  0.5346  Infowars shut down before August?
+  75378245  0.5346  Will Zelenskyy and Putin meet next in Saudi Arabia?
+  78669719  0.5347  Will Zelenskyy and Putin meet next in Kazakhstan before 2027?
+  77021177  0.5348  Will Hamas release all Israeli hostages by October 31?
+  53764046  0.5350  Will Ukraine win Eurovision 2024?
+  60625298  0.5351  Jingliang vs. Prates
+  54150228  0.5352  More hostages in Gaza freed before April?
+  78633464  0.5352  Iran nuclear test before 2027?
+  72809816  0.5352  Fordow nuclear facility destroyed before July?
+  77671042  0.5353  Pakistan strike on India by October 31?
+  25961741  0.5356  Will China report a record high 7-day COVID-19 case average by May 1?
+  41949642  0.5357  Will Sweden join NATO by June 30?
+  60795866  0.5358  France loses visa-free access to any African nation in 2024?
+  69182143  0.5361  Fact Check: Did the U.S. hit Iranian spy ship?
+  29362608  0.5364  Will Sergei Shoigu remain Minister of Defense of Russia through July 2022?
+  67026158  0.5366  Fauci extradited to Russia before April?
+  68105015  0.5368  The Citadel vs. Chattanooga
+  48563653  0.5369  Did Israeli intelligence have advanced knowledge of the Attack?
+  76053687  0.5369  Will Zohran Mamdani say "ICE" during Fighting Oligarchy town hall on September 6
+  51092049  0.5370  Will Hamas release any more hostages by Jan 15?
+  50904835  0.5371  Will Zelensky remain President of Ukraine through March?
+  78554505  0.5373  Will the Iranian regime fall before 2027?
+  53447587  0.5378  Will Sweden join NATO by March 31?
+  72143519  0.5379  Angels vs. Guardians
+  72103053  0.5379  Angels vs. Guardians
+  72184049  0.5379  Angels vs. Guardians
+  70376763  0.5387  Amorim vs. Viana
+  75378274  0.5387  Will Zelenskyy and Putin meet next in Switzerland?
+  78886038  0.5388  Pakistan strike on India by November 30?
+  76515559  0.5390  Will Israel participate in Eurovision 2026?
+  77456391  0.5391  Will Hamas release all Israeli hostages by October 12?
+  73260271  0.5392  US x Iran nuclear talks resume before August?
+  77774240  0.5396  Will Benjamin Netanyahu win the Nobel Peace Prize in 2026?
+  65367870  0.5397  Netanyahu out before April?
+  66112004  0.5404  Will Erdogan visit Syria by January?
+  78669651  0.5404  Will Zelenskyy and Putin meet next in Russia before 2027?
+  76053685  0.5405  Will Zohran Mamdani say "Pizza" or "Hamburger" during Fighting Oligarchy town ha
+  67064248  0.5405  Will Trump meet with Benjamin Netanyahu in his first 100 days?
+  65728012  0.5408  Will Netanyahu meet with MBS before April?
+  74918187  0.5408  Trump, Putin, and Zelensky meet together by August 31?
+  73415416  0.5409  Will Netanyahu meet with Ahmed al-Sharaa before August?
+  65320901  0.5411  Stirling vs. Tokkos
+  67386225  0.5411  Will Karoline Leavitt say Israel in her next press briefing?
+  72967798  0.5414  Will the Iranian regime survive U.S. military strikes?
+  76527762  0.5414  Will Party of Action and Solidarity (PAS) be part of the next Government of the 
+  67675686  0.5421  Wofford vs. Mercer
+  74918207  0.5421  Putin and Zelenskyy shake hands in 2025?
+  74363057  0.5422  Will Iran withdraw from the NPT in 2025?
+  68129509  0.5423  Will Russia capture Yunakivka before April?
+  65088856  0.5424  Will Tucker say "Jew" or "Jewish" during Lavrov interview?
+  78933911  0.5425  Will Netanyahu be pardoned in 2025?
+  71196673  0.5426  Pakistan military strike on India in May?
+  67813263  0.5428  Files proving Epstein or Maxwell were Mossad released before July?
+  70431662  0.5429  Will Russia capture Mala Tokmacka in April?
+  77459161  0.5430  Will Hamas release any more hostages by October 11?
+  75299358  0.5431  Trump, Putin, and Zelensky meet by August 23?
+  78668188  0.5431  American Eagles vs. George Washington Revolutionaries
+  72814569  0.5433  US x Iran nuclear talks resume before July?
+  44292120  0.5433  Will Shoigu still be Russian Minister of Defense on July 1?
+  54849232  0.5433  Will Israel invade Lebanon before May?
+  52520507  0.5434  Will Israel invade Lebanon before March?
+  71153289  0.5434  Muhammad vs. Della Maddalena
+  53253068  0.5436  More migrant encounters at border in February compared to January?
+  14734736  0.5438  Will the Ever Given exit the Great Bitter Lake in the Suez Canal by July 25?
+  64279427  0.5441  Will France beat Israel?
+  62842168  0.5441  Will France beat Israel?
+  51281712  0.5441  Will Sweden join NATO by January 31?
+  41106038  0.5445  Will Sweden join NATO by May 31?
+  78299352  0.5450  Will Israel strike Lebanon on October 30?
+  62512273  0.5450  Will Israel target an Iranian nuclear facility?
+  78669698  0.5454  Will Zelenskyy and Putin not meet before 2027?
+  44919692  0.5455  Will Sweden join NATO by August 31?
+  78669687  0.5455  Will Zelenskyy and Putin meet next in Hungary before 2027?
+  77430165  0.5457  Will Hamas release any more hostages by October 10?
+  50621371  0.5457  Will Hamas release 12+ hostages in a single day by EoY?
+  75512985  0.5457  Liberty vs. Dream
+  60625262  0.5457  Tuivasa vs. Rozenstruik
+  78669693  0.5457  Will Zelenskyy  and Putin meet next in Belarus before 2027?
+  40113888  0.5458  Will Ukraine win Eurovision 2023?
+  76053685  0.5458  Will Zohran Mamdani say "Socialist" or "Socialism" during Fighting Oligarchy tow
+  74918177  0.5460  Trump, Putin, and Zelensky meet together by September 30?
+  57187975  0.5460  ICC issues an arrest warrant for Netanyahu?
+  67788077  0.5460  Mercer vs. Furman
+  78633514  0.5461  Will Iran withdraw from the NPT before 2027?
+  78299352  0.5462  Will Israel strike Lebanon on November 2?
+  77062140  0.5464  Magomedov vs. Pyfer
+  67788104  0.5465  Lehigh vs. Navy
+  68487773  0.5465  Will Volodymyr Zelenskyy say "Donbas" during his Baier interview?
+  72936014  0.5467  Will Israel invade Iran before July?
+  54547171  0.5468  Haiti intervention in March?
+  77020744  0.5468  Will Hamas release any more hostages by October 31?
+  78669646  0.5469  Will Zelenskyy and Putin meet next in Turkey before 2027?
+  65011036  0.5469  Will a nuclear weapon detonate by June 30?
+  38712118  0.5469  Will a nuclear weapon detonate by June 30?
+  68507189  0.5470  Rice vs. UTSA
+  78630673  0.5472  Will Hezbollah disarm by March 31?
+  62751508  0.5472  Will Israel strike Iran on Tuesday?
+  74040504  0.5473  Armenia agrees to establish Zangezur Corridor in 2025?
+  65728000  0.5476  Will Netanyahu visit Egypt in 2024?
+  60233520  0.5477  Hezbollah enters Israel in August?
+  44997701  0.5478  Will Sweden join NATO by October 31?
+  16028534  0.5484  Will the 7-day average COVID-19 case count in the US be less than 15,000 for the
+  62751524  0.5484  Will Israel strike Iran on Wednesday?
+  74011217  0.5486  US x Iran nuclear talks resume by August 31?
+  74802231  0.5486  Pakistan strike on India by Friday?
+  61667153  0.5486  Will Kamala and Trump both say "Hamas" at debate?
+  64279437  0.5486  Will Israel beat France?
+  62842158  0.5486  Will Israel beat France?
+  68925038  0.5489  Erdoğan out in 2025?
+  74802210  0.5490  India strike on Pakistan by Friday?
+  72883563  0.5490  Will USA beat Saudi Arabia?
+  76019476  0.5492  Will Volodymyr Zelenskyy visit Russia in 2025?
+  67676158  0.5493  George Washington vs. St. Bonaventure
+  70103231  0.5496  Will Russia capture Yunakivka before June?
+  51674209  0.5496  North Korea nuke by March 31?
+  68265410  0.5500  The Citadel vs. Furman
+  71242251  0.5501  Pakistan air/missile strike on Indian soil in May?
+  76053680  0.5502  Will Zohran Mamdani say "Halal" during Fighting Oligarchy town hall on September
+  73198492  0.5504  Will Russia capture Udachne before August?
+  78299352  0.5504  Will Israel strike Lebanon on October 31?
+  76554047  0.5505  Liberty vs. Mercury
+  76392950  0.5505  Liberty vs. Mercury
+  75793652  0.5505  Liberty vs. Mercury
+  74961827  0.5505  Will Trump and Putin meet next in Italy / Vatican?
+  52134514  0.5506  Will Israel invade Lebanon by January 20?
+  48685553  0.5508  Will Azerbaijan invade Armenia by Nov 30?
+  68487801  0.5509  Will Volodymyr Zelenskyy say "Germany" during his Baier interview?
+  67885752  0.5510  Southern Indiana vs. Western Illinois
+  45791385  0.5510  Will Niger's coup trigger military intervention?
+  61984231  0.5511  Will Israel invade Lebanon in September?
+  78628193  0.5511  US-Iran nuclear deal before 2027?
+  78886038  0.5511  Pakistan strike on India by November 14?
+  78669708  0.5514  Will Zelenskyy and Putin meet next in Switzerland before 2027?
+  66736276  0.5514  Will Israel annex Lebanese territory before July?
+  67807657  0.5514  Will Russia capture Kupiansk by April 30?
+  62469858  0.5515  Will Israeli troops enter Beirut by October 31?
+  76527762  0.5515  Will Social Democratic European Party (PSDE) be part of the next Government of t
+  77671042  0.5515  Pakistan strike on India by December 31?
+  72373722  0.5515  Harvard international students ban ended before August?
+  78937494  0.5516  Will Israel strike Lebanon on November 19?
+  51667790  0.5517  Who's out first: Benjamin Netanyahu or Yahya Sinwar?
+  78669677  0.5519  Will Zelenskyy and Putin meet next in Saudi Arabia before 2027?
+  78299353  0.5520  Will Israel strike Lebanon on November 4?
+  67386495  0.5520  Will Russia recapture Sudzha by April 30?
+  55334330  0.5521  North Korea nuke by May 31?
+  75378226  0.5522  Will Zelenskyy and Putin meet next in Italy / Vatican?
+  74406012  0.5522  China coup attempt in 2025?
+  78631974  0.5523  Will Lebanon join the Abraham Accords before 2027?
+  76053688  0.5523  Will Zohran Mamdani say "Dream" 3+ times during Fighting Oligarchy town hall on 
+  67503162  0.5524  Du Plessis vs. Strickland
+  51673249  0.5524  Will a nuclear weapon detonate by June 30, 2024?
+  68207637  0.5525  New Coronavirus Pandemic in 2025?
+  65556233  0.5525  Mystery Drones searching for nuclear weapons?
+  77459171  0.5526  Will Hamas release any more hostages by October 12?
+  26852925  0.5527  Will the 7-day COVID-19 case average in the USA be below 10,000 by December 31?
+  76770532  0.5528  Progressive Cities Parlay
+  75943854  0.5530  Trump, Putin, and Zelensky meet together by December 31?
+  70061458  0.5531  Carlsen vs. Abdusattorov
+  68213660  0.5531  Will RFK end Influenza vaccine recommendation in 2025?
+  78335646  0.5532  Navy Midshipmen vs. Presbyterian Blue Hose
+  76527764  0.5532  Will Patriotic Electoral Bloc (BEP) be part of the next Government of the Moldov
+  62751490  0.5535  Will Israel strike Iran on Monday?
+  39307768  0.5535  Will another flying object be downed by the U.S. on February 15?
+  78232672  0.5540  Will Hong Kong SAR win on 2025-11-13?
+  65088606  0.5540  Will Tucker say "West" 5 or more times during Lavrov interview?
+  74289108  0.5540  Will Russia capture Slovainsk in 2025?
+  50500036  0.5542  Will Houthis seize another ship by December 8?
+  74604890  0.5542  Harvard international students ban ended by August 31?
+  79039367  0.5543  Spread: George Washington Revolutionaries (-14.5)
+  72835551  0.5544  Dream vs Liberty
+  73870739  0.5544  Dream vs Liberty
+  59684327  0.5544  Will Netanyahu meet with Trump?
+  75378231  0.5545  Will Zelenskyy and Putin meet next in Ukraine?
+  68426300  0.5545  Yale vs. Harvard
+  77346455  0.5545  Utah State vs. Hawaii
+  67788137  0.5547  Wofford vs. The Citadel
+  74704448  0.5547  Liberty vs Sun
+  74625110  0.5547  Liberty vs Sun
+  68884906  0.5547  Will Mahmoud Khalil be deported before July?
+  68507252  0.5547  Incarnate Word vs. Northwestern State
+  75377510  0.5549  Putin and Zelenskyy talk by August 22?
+  78372939  0.5549  Will Trump meet with Benjamin Netanyahu by November 30?
+  75657677  0.5549  Will Netanyahu meet with Ahmed al-Sharaa by September 30?
+  65636955  0.5550  Will the Left be part of the next German government?
+  67664433  0.5550  Will the U.S. abandon Syrian base before August?
+  62921400  0.5550  Will Israel strike Iran on Saturday Oct 19?
+  12618679  0.5553  Will there be more than 140 million confirmed COVID-19 cases globally by April 2
+  78299353  0.5553  Will Israel strike Lebanon on November 3?
+  73321550  0.5554  Liberty vs Dream
+  68487690  0.5554  Will Volodymyr Zelenskyy say "Putin" 5+ times during his Baier interview?
+  74370184  0.5555  Erdoğan out by end of 2026?
+  78985238  0.5558  US x Iran nuclear talks resume by March 31?
+  54962076  0.5558  More hostages in Gaza freed before May?
+  76053684  0.5559  Will Zohran Mamdani say "Fascism" or "Fascist" during Fighting Oligarchy town ha
+  58843143  0.5559  Will a nuclear weapon detonate in 2024?
+  39364807  0.5559  Will another flying object be downed by the U.S. on February 16?
+  65730424  0.5559  Will Turkey leave NATO by June 30?
+  68129528  0.5559  Will Trump meet with Abdel Fattah El-Sisi in 2025?
+  49939452  0.5560  Will Hamas release more hostages by November 30?
+  62751533  0.5560  Will Israel strike Iran on Thursday?
+  78637366  0.5560  Will Trump meet with Abdel Fattah El-Sisi in 2026?
+  52632308  0.5562  Will Russia invade Alaska before March?
+  77104660  0.5562  Will Trump and Putin meet next in a Gulf country?
+  67788254  0.5562  Wyoming vs. New Mexico
+  67675516  0.5565  The Citadel vs. VMI
+  68627245  0.5565  The Citadel vs. VMI
+  78299352  0.5566  Will Israel strike Lebanon on October 29?
+  78559018  0.5566  Will Zohran Mamdani say "Socialist" or "Socialism" during his victory/concession
+  70628278  0.5567  India military action against Pakistan before June?
+  78295574  0.5568  Will Russia enter Novopavlivka by November 30?
+  47698015  0.5568  Will the missing F-35 be found by September 20?
+  73248026  0.5568  Will Trump meet with Netanyahu before August?
+  56391156  0.5569  ICC arrest warrants for Israeli leaders by May 15?
+  76527765  0.5569  Will Alternative Bloc (PA) be part of the next Government of the Moldova?
+  57533769  0.5570  Will Israel invade Lebanon before September?
+  78897939  0.5570  Ursu vs Amos
+  63207862  0.5570  Will Israel strike Iran on Tuesday Oct 22?
+  74961832  0.5571  Will Trump and Putin meet next in Ukraine?
+  77104704  0.5571  Will Trump and Putin meet next in Ukraine?
+  75253200  0.5572  Putin body double in Alaska confirmed by August 31?
+  73735111  0.5573  Will  Doctors Without Borders (Médecins Sans Frontières) win the Nobel Peace Pri
+  62921341  0.5573  Will Israel strike Iran on Tuesday Oct 15?
+  63395815  0.5574  East coast port strike in January?
+  72936392  0.5574  Will Rutte say "nuclear" during NATO Public Forum Address on June 24?
+  72082706  0.5575  Will Russia capture Udachne before July?
+  68466699  0.5575  Idaho State vs. Eastern Washington
+  60624868  0.5577  Du Plessis vs. Adesanya
+  76300480  0.5577  Nothing Ever Happens: Military Edition
+  62751559  0.5578  Will Israel strike Iran on Saturday?
+  69026042  0.5580  Seattle vs. Utah Valley
+  68144782  0.5580  Seattle vs. Utah Valley
+  77376219  0.5580  Will Israel not announce ceasefire in October?
+  77062124  0.5581  Jourdain vs. Dias
+  79030356  0.5581  Spread: George Washington Revolutionaries (-15.5)
+  76527761  0.5582  Will Together (BeÎ) be part of the next Government of the Moldova?
+  51318400  0.5582  JN.1 most common COVID variant in US by Dec 23?
+  74286080  0.5582  Will Russia capture Novopavlivka by August 31?
+  64566604  0.5582  Benjamin Netanyahu arrested in 2024?
+  63595220  0.5585  Will Russia capture Pokrovsk in 2024?
+  78554290  0.5585  Will Israel strike Lebanon on November 9?
+  68487737  0.5585  Will Volodymyr Zelenskyy say "Peace" 2+ times during his Baier interview?
+  75592265  0.5586  Sun vs. Liberty
+  11354741  0.5586  Will there be more than 120 million confirmed COVID-19 cases globally by April 1
+  78631974  0.5586  Will Kuwait join the Abraham Accords before 2027?
+  51866766  0.5587  Any Hamas leader out in January?
+  63207872  0.5588  Will Israel strike Iran on Wednesday Oct 23?
+  62199168  0.5589  Will Russia capture Vuhledar before October?
+  72291346  0.5589  Will Russia capture Sumy before October?
+  76053681  0.5591  Will Zohran Mamdani say "New York" or "New Yorker" 12+ times during Fighting Oli
+  56699152  0.5591  Zelensky remains President of Ukraine through September?
+  43336884  0.5592  Will Sweden join NATO by July 12?
+  52203584  0.5592  Will the ICJ find Israel guilty of genocide before April?
+  77376160  0.5593  Will Israel first announce ceasefire on October 19?
+  73735116  0.5595  Will Mediterranean Sea Rescue organizations win the Nobel Peace Prize in 2025?
+  76667189  0.5596  Zurcher vs. Magomedov
+  73198472  0.5596  Will Russia capture Khotin before August?
+  20679912  0.5597  Will the 7-day COVID-19 case average in the UK be greater than 44,000 on Novembe
+  55870333  0.5599  Israel aid package by April 30?
+  78554291  0.5599  Will Israel strike Lebanon on November 13?
+  65279447  0.5599  Martial law in South Korea again in 2024?
+  62548841  0.5600  Strike on Dimonah nuclear base in October?
+  78937493  0.5600  Will Israel strike Lebanon on November 15?
+  47231739  0.5603  Adesanya vs. Strickland
+  76527763  0.5603  Will Democracy at Home (DA) be part of the next Government of the Moldova?
+  67864366  0.5604  George Washington vs. Davidson
+  67496473  0.5604  Will Russia recapture Sudzha by June 30?
+  65327378  0.5604  Assad public appearance before 2025?
+  78559018  0.5604  Will Zohran Mamdani say "Jew" or "Jewish" during his victory/concession speech?
+  73221188  0.5605  Will Russia capture Yunakivka before August?
+  79022815  0.5606  Will Maduro's rule survive a US military engagement?
+  75888927  0.5607  Will Greta Thunberg enter Gaza by September 15?
+  60033820  0.5607  Iran Nuke in 2024?
+  48249764  0.5609  Will Sweden join NATO by December 31?
+  68747296  0.5609  Eastern Washington vs. Northern Arizona
+  68144794  0.5609  Eastern Washington vs. Northern Arizona
+  77376200  0.5609  Will Israel first announce ceasefire on October 28?
+  52210647  0.5611  Will Sweden join NATO by February 29?
+  63885341  0.5611  Turcios vs. Sopaj
+  75622973  0.5612  Hawai'i vs. Arizona
+  74286055  0.5613  Will Russia capture Dorozhnje by August 31?
+  63207905  0.5614  Will Israel strike Iran on Saturday Oct 26?
+  60591596  0.5615  Will Russia capture Toretsk before October?
+  75654208  0.5615  Will Russia capture Novopavlivka by September 30?
+  67018277  0.5617  Magomedov vs. Page
+  78554290  0.5617  Will Israel strike Lebanon on November 6?
+  62921328  0.5617  Will Israel strike Iran on Monday or earlier?
+  63207844  0.5617  Will Israel strike Iran on Monday or earlier?
+  62512284  0.5619  Will Israel target an Iranian oil or gas facility?
+  60238006  0.5619  Iran strike on US military in August?
+  65692241  0.5619  Will The Left make it into the Bundestag as a Fraktion?
+  51673803  0.5619  Netanyahu out by June 30?
+  78891009  0.5620  Will Israel strike Greater Beirut by November 30?
+  62509576  0.5620  Will Tim Walz say "Iran" during the debate?
+  73260272  0.5620  Will Zohran Mamdani be deported before November?
+  59119645  0.5621  Will France recognize Palestine before September?
+  78554291  0.5621  Will Israel strike Lebanon on November 14?
+  74409231  0.5622  Will Israel raid Gaza aid ship Handala by Saturday?
+  75378240  0.5622  Will Zelenskyy and Putin meet next in Qatar / UAE?
+  67096595  0.5622  Was JFK assassinated by a foreign government?
+  77376210  0.5624  Will Israel first announce ceasefire on October 30?
+  65011029  0.5625  Will a nuclear weapon detonate by March 31?
+  61075416  0.5625  Will AfD make it into Thuringia or Saxony government?
+  75732806  0.5625  Will Russia capture Pokrovsk train station by October 31?
+  75085851  0.5626  Will Russia capture Dobropillia by August 20?
+  76375202  0.5627  Will Russia capture Novopavlivka by October 31?
+  76377178  0.5627  Will Russia capture Novopavlivka by October 31?
+  78937494  0.5627  Will Israel strike Lebanon on November 20?
+  76377179  0.5628  Will Russia capture Velykomykhailivka by October 31?
+  51095478  0.5628  Haniyeh still in Hamas leadership through March 1?
+  68547506  0.5629  Eastern Washington vs. Montana
+  49501702  0.5629  Will Zelensky visit Israel by Nov 10?
+  78854586  0.5629  Will Zohran Mamdani be deported by December 31?
+  67018287  0.5630  Pavlovich vs. Rozenstruik
+  78630764  0.5630  Will Russia test a nuclear weapon by March 31 2026?
+  74363003  0.5630  Will Russia capture Udachne by August 31?
+  78554291  0.5631  Will Israel strike Lebanon on November 11?
+  72967158  0.5632  UK strike on Iran before July?
+  78937493  0.5632  Will Israel strike Lebanon on November 18?
+  76335812  0.5632  NATO downs another Russian drone by September 30?
+  73995378  0.5633  Zelenskyy out as Ukraine president by October 31?
+  78968804  0.5633  Will Libya vs. Mauritania end in a draw?
+  61941212  0.5635  Hezbollah enters Israel in September?
+  71351644  0.5636  US-Saudi Arabia nuclear deal in 2025?
+  74566445  0.5636  Thailand strikes Cambodia by August 31?
+  64331888  0.5638  Will Georgia beat Ukraine?
+  62881039  0.5638  Will Georgia beat Ukraine?
+  63927004  0.5638  Will Young Boys beat Shakhtar Donetsk?
+  62512324  0.5638  Will Israel target Tehran?
+  74252488  0.5639  Will Hezbollah disarm in 2025?
+  78380202  0.5639  Will Russia capture Novopavlivka by November 30?
+  76053682  0.5639  Will Zohran Mamdani say "Thousand / Million / Billion" 8+ times during Fighting 
+  75085852  0.5639  Will Russia capture Dobropillia by August 31?
+  77376131  0.5640  Will Israel first announce ceasefire on October 13?
+  77376140  0.5640  Will Israel first announce ceasefire on October 15?
+  75888926  0.5640  Will Greta Thunberg enter Gaza by September 10?
+  78248833  0.5640  Navy vs. North Texas
+  67304977  0.5643  Iran Nuke in 2025?
+  74358945  0.5644  Thailand strikes Cambodia by Friday?
+  78973086  0.5645  China coup attempt before 2027?
+  78631974  0.5645  Will Azerbaijan join the Abraham Accords before 2027?
+  67807668  0.5646  Will Russia capture Kupiansk by August 31?
+  59965561  0.5646  Ben Gvir out as Israel Minister of National Security by August 31?
+  74367576  0.5646  Will Israel raid Gaza aid ship Handala by Monday?
+  73816646  0.5647  Will a country leave BRICS before 2026?
+  74844588  0.5648  Will Russia capture Dovha Balka by October 31?
+  78554290  0.5648  Will Israel strike Lebanon on November 8?
+  72081766  0.5648  Will Russia capture Mykolaivka before July?
+  65170538  0.5649  Assad leaves Syria before 2025?
+  67339277  0.5650  Will Russia capture Pokrovsk by March 31?
+  70376697  0.5650  Aliskerov vs. Muniz
+  67018319  0.5650  Aliskerov vs. Muniz
+  67339305  0.5652  Will Russia capture Pokrovsk by June 30?
+  78379812  0.5652  NATO downs another Russian drone by November 30?
+  78669656  0.5652  Will Zelenskyy and Putin meet next in Italy / Vatican before 2027?
+  77379244  0.5653  Will Israel raid another ship of the Gaza flotilla by October 15?
+  76053686  0.5653  Will Zohran Mamdani say "Muslim" or "Jewish" during Fighting Oligarchy town hall
+  78937494  0.5653  Will Israel strike Lebanon on November 21?
+  77376121  0.5653  Will Israel first announce ceasefire on October 11?
+  78379452  0.5654  Will Russia capture Velykomykhailivka by November 30?
+  78884183  0.5654  George Washington Revolutionaries vs. Longwood Lancers (W)
+  76940050  0.5655  NATO downs another Russian drone by October 31?
+  69297974  0.5655  Will Russia capture Yunakivka before May?
+  77376191  0.5655  Will Israel first announce ceasefire on October 26?
+  78299352  0.5656  Will Israel strike Lebanon on November 1?
+  78380402  0.5656  Will Russia capture Dovha Balka by November 30?
+  78630864  0.5658  Will Russia capture Sloviansk by June 30?
+  75732805  0.5658  Will Russia capture Pokrovsk train station by September 30?
+  77376215  0.5658  Will Israel first announce ceasefire on October 31?
+  78807833  0.5659  South Florida vs. Navy
+  74567642  0.5659  Will France airdrop aid into Gaza?
+  57152303  0.5659  Will Iran blame Israel for helicopter crash?
+  67675524  0.5660  Bucknell vs. Army
+  78765827  0.5660  Spread: Campbell Fighting Camels (-7.5)
+  77816152  0.5662  Will anyone say "Genocide" during 2nd NYC mayoral debate on October 22?
+  68769918  0.5662  Will Russia recapture Sudzha by March 31?
+  77376135  0.5662  Will Israel first announce ceasefire on October 14?
+  68724884  0.5662  U.S. announces resumption of direct flights to Russia before May?
+  77387022  0.5663  Nufttillaev vs. Leka
+  76527761  0.5664  Will Respect Moldova Movement (MRM) be part of the next Government of the Moldov
+  78583258  0.5664  Will Russia capture all of Kupiansk by November 30?
+  27023933  0.5664  Will Russia's ambassador to any EU country be recalled or expelled before June 1
+  72936392  0.5664  Will Rutte say "Nazi" or "Hitler" during NATO Public Forum Address on June 24?
+  59996394  0.5666  Venezuela intervention by August 31?
+  60309411  0.5666  Will Israel invade Lebanon before November?
+  78628343  0.5666  Will Belgium recognize Palestine before 2027?
+  65367285  0.5667  Will Türkiye recognize Syrian government by March 31?
+  78669662  0.5667  Will Zelenskyy and Putin meet next in Ukraine before 2027?
+  27016783  0.5669  Will Pope Francis visit Ukraine by May 13, 2022?
+  63207933  0.5669  No Israel strike Iran on by Sunday Oct 27?
+  67984582  0.5670  Eastern Washington vs. Northern Colorado
+  60591515  0.5670  Will Russia capture Pokrovsk before November?
+  77677742  0.5671  Will Russia capture Pokrovsk train station by November 30?
+  78630764  0.5672  Will Russia test a nuclear weapon by November 30 2025?
+  73713460  0.5672  Epstein or Maxwell confirmed Mossad operatives in 2025?
+  73497544  0.5672  US strikes Yemen before August?
+  72291356  0.5673  Will Russia capture Khotin before July?
+  78554290  0.5673  Will Israel strike Lebanon on November 10?
+  68487825  0.5674  Will Volodymyr Zelenskyy say "NATO" during his Baier interview?
+  61667087  0.5674  Will Kamala and Trump both say "Israel" at debate?
+  75121470  0.5674  Will Russia capture Dobropillia by September 30?
+  77017215  0.5675  Will Israel raid Gaza aid flotilla on October 2 ET?
+  76375194  0.5675  Will Russia capture Ivanopillya by October 31?
+  77376110  0.5676  Will Israel first announce ceasefire on October 9?
+  78380512  0.5677  Will Russia capture Ivanopillya by November 30?
+  72401446  0.5677  Will Israel raid Greta Thunberg's ship by Monday?
+  72931307  0.5678  US forces in Iran before August?
+  78897129  0.5678  Thailand strikes Cambodia by November 30?
+  50021118  0.5680  Will Hamas release 20+ hostages in a single day by Nov 30?
+  62921358  0.5680  Will Israel strike Iran on Wednesday Oct 16?
+  63031446  0.5681  Will Czech Republic beat Ukraine?
+  73019628  0.5681  Will Russia capture Yablunivka before August?
+  74358936  0.5681  Thailand strikes Cambodia by July 31?
+  75085568  0.5682  Will Russia capture all of Pokrovsk by August 31?
+  73674706  0.5682  Will Russia capture Kupiansk by October 31?
+  28434885  0.5682  Will Russia expand its number of federal subjects by October 1, 2022?
+  77985082  0.5683  Will Russia capture all of Pokrovsk by October 31?
+  72086606  0.5683  Will Russia invade Finland in 2025?
+  66817736  0.5683  Zelenskyy out as Ukraine president before July?
+  63365957  0.5684  Magomedov vs. Petrosyan
+  11567188  0.5685  Will 400 million doses of a COVID-19 vaccine have been administered globally by 
+  78237117  0.5685  Will Iraq win on 2025-11-18?
+  76506331  0.5686  Will Israel strike Yemen on September 19 ET?
+  76293026  0.5686  Will Israel not strike Yemen by 15 ET?
+  77376156  0.5686  Will Israel first announce ceasefire on October 18?
+  74844587  0.5687  Will Russia capture Ivanopillya by September 30?
+  70914784  0.5687  India military strike on Pakistan today?
+  77376196  0.5687  Will Israel first announce ceasefire on October 27?
+  73993509  0.5687  Ahmed al-Sharaa out as leader of Syria by August 31?
+  78299353  0.5687  Will Israel strike Lebanon on November 5?
+  77376164  0.5688  Will Israel first announce ceasefire on October 20?
+  77951392  0.5688  Will Russia capture Kupiansk by November 30?
+  63207883  0.5688  Will Israel strike Iran on Thursday Oct 24?
+  72322869  0.5688  Will North and South Korea engage in direct talks in 2025?
+  68185166  0.5689  Army vs. Bucknell
+  63130093  0.5689  Will Russia recapture Sudzha before December?
+  78973496  0.5689  Hezbollah strike on Israel by March 31?
+  63926977  0.5690  Will Shakhtar Donetsk beat Young Boys?
+  75735299  0.5690  Hemedti out of power by December 31?
+  71753338  0.5690  Will Russia capture Pokrovsk by August 31?
+  25500450  0.5690  Will Russia expand its number of federal subjects by July 1, 2022?
+  76895536  0.5691  Will Israel not strike Yemen by October 1 ET?
+  77376168  0.5691  Will Israel first announce ceasefire on October 21?
+  68144762  0.5691  Georgia Southern vs. James Madison
+  76785295  0.5691  Georgia Southern vs. James Madison
+  74843296  0.5692  Will Belgium recognize Palestine in 2025?
+  50502537  0.5692  Will Elon Musk visit Gaza in 2023?
+  72328571  0.5692  Will Greta Thunberg enter Gaza by Friday?
+  78036598  0.5693  Will Russia enter Kostyantynivka by October 31?
+  74885828  0.5693  Trump, Putin, and Zelensky seen together by August 31?
+  78679751  0.5693  Will Kanye visit Israel by December 31?
+  78559018  0.5694  Will Zohran Mamdani say "Anti-semitic" during his victory/concession speech?
+  75982139  0.5694  Will United States vs. Korea Republic end in a draw?
+  68213649  0.5694  Will RFK end COVID-19 vaccine recommendation in 2025?
+  49422753  0.5695  Will Hamas release more hostages by November 17?
+  51095428  0.5696  Yahya Sinwar still Hamas leader through March 1?
+  77860044  0.5696  Klein vs. Rebecki
+  73674707  0.5696  Will Russia capture Pokrovsk by October 31?
+  76375213  0.5697  Will Russia capture Dobropillia by November 30?
+  74961842  0.5698  Will Trump and Putin meet next in Qatar, Saudi Arabia, or UAE?
+  12627944  0.5698  Will 1 billion doses of a COVID-19 vaccine have been administered globally by Ap
+  72710295  0.5698  Strike on Israel's Dimonah nuclear base in June?
+  62751583  0.5698  No Israel strike on Iran by Sunday?
+  45594438  0.5700  North Korea nuke by December 31?
+  76781636  0.5701  Will Israel not strike Yemen by September 30 ET?
+  71196689  0.5701  Another India military strike on Pakistan by Friday?
+  75906764  0.5702  UAB vs. Navy
+  64488259  0.5702  Will Russia use a nuclear weapon in 2024?
+  77643323  0.5702  Will Trump visit Israel again by Dec 31?
+  77376172  0.5702  Will Israel first announce ceasefire on October 22?
+  76219031  0.5704  Will Israel strike Yemen on September 9 ET?
+  67103227  0.5704  Israel withdraws from Lebanon before March?
+  57535316  0.5705  Yahya Sinwar still Hamas leader before September?
+  76895518  0.5705  Will Israel strike Yemen on September 28 ET?
+  76781624  0.5705  Will Israel strike Yemen on September 28 ET?
+  68265244  0.5707  James Madison vs. UL Monroe
+  78237111  0.5707  Will Iraq win on 2025-11-13?
+  67984278  0.5708  Mercer vs. The Citadel
+  75121574  0.5708  Will Russia capture Kupiansk by September 30?
+  72924751  0.5710  US x Iran nuclear talks resume by Friday?
+  75906700  0.5710  Northern Illinois vs. Maryland
+  48790881  0.5710  Will Biden visit Israel by end of week?
+  55332744  0.5711  Ukraine aid package in April?
+  57190577  0.5711  Netanyahu out by October 31?
+  74887664  0.5711  IDF Chief Eyal  Zamir out by December 31, 2025?
+  48531042  0.5712  Will Israel officially state they were subject to a cyber attack on October 7th?
+  78937494  0.5713  Will Israel strike Lebanon on November 16?
+  49429355  0.5713  Will Hamas release 20+ hostages in a single day by Nov 15?
+  77376116  0.5713  Will Israel first announce ceasefire on October 10?
+  78641121  0.5713  Will Israel allow independent journalists into Gaza by December 31?
+  78559016  0.5714  Will Zohran Mamdani say "New York" or "New Yorker" 10+ times during his victory/
+  78554291  0.5714  Will Israel strike Lebanon on November 12?
+  65691239  0.5715  Dern vs. Ribas
+  77376176  0.5716  Will Israel first announce ceasefire on October 23?
+  67927892  0.5716  Bitlord vs. Korean Jew
+  77387680  0.5716  Will Israel raid another ship of the Gaza flotilla by October 10?
+  72126470  0.5716  Will Russia capture Yunakivka before July?
+  62921710  0.5717  No Israel strike Iran by Sunday Oct 20?
+  68132637  0.5717  Israel x Hamas ceasefire cancelled before April?
+  78669672  0.5718  Will Zelenskyy and Putin meet next in Qatar / UAE before 2027?
+  48597478  0.5718  Will Egypt open its border for Palestinian refugees by Oct 15?
+  74567641  0.5719  Will Egypt airdrop aid into Gaza?
+  76392852  0.5720  Rhode Island vs Holy Cross
+  77985082  0.5720  Will Russia capture all of Pokrovsk by November 30?
+  78335576  0.5721  Maine Black Bears vs. George Washington Revolutionaries
+  61390568  0.5721  Will Kamala say "Palestine" or "Palestinian" at debate?
+  62921435  0.5721  Will Israel strike Iran on Sunday Oct 20?
+  62236751  0.5722  Will JD Vance say "Israel" during the debate?
+  74844588  0.5722  Will Russia capture Stepanivka by September 30?
+  78546301  0.5722  Will Russia capture all of Pokrovsk by November 14?
+  75654189  0.5723  US x Iran nuclear talks resume by December 31?
+  77062140  0.5723  Muniz vs. Shahbazyan
+  77017501  0.5724  Will Russia capture Stepanivka by October 31?
+  68172266  0.5725  Will Ukraine agree to pay back U.S. aid before July?
+  68627133  0.5725  Seattle vs. Southern Utah
+  48683161  0.5725  Will Egypt open its border for Palestinian refugees by Oct 20?
+  72848206  0.5725  Terra Wortmann: Sinner vs. Hanfmann
+  63207918  0.5726  Will Israel strike Iran on Sunday Oct 27?
+  66184635  0.5727  Ukraine agrees to resume Russian natural gas transit in January?
+  67825741  0.5727  James Madison vs. Coastal Carolina
+  75493286  0.5727  Will Russia capture all of Pokrovsk by September 30?
+  68866544  0.5727  Utah vs. Kraken
+  66054389  0.5727  Utah vs. Kraken
+  65539649  0.5728  Western Kentucky vs. James Madison
+  76219040  0.5728  Will Israel strike Yemen on September 11 ET?
+  74234082  0.5729  Netanyahu out by August 31?
+  78973046  0.5729  Will Russia capture Kostyantynivka by March 31?
+  70058373  0.5729  Turkish airbase in Syria before May?
+  71863541  0.5730  Liberty vs Fever
+  72714024  0.5730  Liberty vs Fever
+  76465161  0.5730  James Madison vs. Liberty
+  51895644  0.5731  Will Hezbollah deploy ground forces in Israel in January?
+  78559018  0.5731  Will Zohran Mamdani say "Fascism" or "Fascist" during his victory/concession spe
+  52744198  0.5732  Will Israel attack Iran by February 15?
+  64331901  0.5732  Will Ukraine beat Georgia?
+  62881012  0.5732  Will Ukraine beat Georgia?
+  76219048  0.5733  Will Israel strike Yemen on September 13 ET?
+  76293012  0.5733  Will Israel strike Yemen on September 13 ET?
+  72366970  0.5733  Japan parliament dissolved before July?
+  76219058  0.5733  Will Israel strike Yemen on September 15 ET?
+  76293021  0.5733  Will Israel strike Yemen on September 15 ET?
+  78630764  0.5734  Will Russia test a nuclear weapon by December 31 2025?
+  54963932  0.5735  Was Moscow attack a false flag?
+  64288859  0.5736  Goyat vs. Nunes
+  77017219  0.5736  Will Israel raid Gaza aid flotilla on October 3 ET?
+  62751545  0.5736  Will Israel strike Iran on Friday?
+  78595920  0.5736  Will Israel strike Greater Beirut by December 31?
+  50383486  0.5737  Respiratory illness surge in China declared a global pandemic by Feb 1?
+  77017224  0.5737  Will Israel raid Gaza aid flotilla on October 4 ET?
+  68056404  0.5738  Israel withdraws from Lebanon before July?
+  55856901  0.5738  Iran Nuke by July 31?
+  76895532  0.5740  Will Israel strike Yemen on October 1 ET?
+  23997175  0.5740  Which will report a higher 7-day COVID-19 case average per capita on February 8:
+  78627416  0.5740  Will Donald Trump visit Israel in 2026?
+  53998833  0.5742  Will Meltem Demirors say "inflows" at least 5 times during the debate?
+  76260810  0.5742  Will Greta Thunberg enter Gaza by December 31?
+  69497308  0.5743  Godinez vs. Polastri
+  73922072  0.5744  Zohran Mamdani citizenship revoked in 2025?
+  63365937  0.5744  Whittaker vs. Chimaev
+  78985232  0.5744  Iran Nuke before 2027?
+  67944064  0.5745  Washington State vs. St. Mary's
+  59916690  0.5745  Will Israel invade Lebanon by Friday?
+  60120284  0.5745  Will Israel invade Lebanon by Friday?
+  65406001  0.5745  Will Hamas allow IDF to remain in Gaza?
+  78565206  0.5745  James Madison vs. Marshall
+  77376181  0.5745  Will Israel first announce ceasefire on October 24?
+  77376105  0.5746  Will Israel first announce ceasefire on October 8?
+  62921388  0.5746  Will Israel strike Iran on Friday Oct 18?
+  76781632  0.5746  Will Israel strike Yemen on September 30 ET?
+  76895528  0.5746  Will Israel strike Yemen on September 30 ET?
+  67343012  0.5746  Will Russia capture Siversk before May?
+  78248819  0.5746  Virginia vs. California
+  77017254  0.5746  Will Israel not raid Gaza aid flotilla by October 10 ET?
+  43097672  0.5747  Will DeSantis mention "Russia" or "Putin" during his Twitter Space?
+  76058773  0.5747  Will Israel not raid Gaza aid flotilla by September 30 ET?
+  71192307  0.5748  Will Trump visit Israel in May?
+  76219053  0.5749  Will Israel strike Yemen on September 14 ET?
+  76293016  0.5749  Will Israel strike Yemen on September 14 ET?
+  62751572  0.5750  Will Israel strike Iran on Sunday?
+  71842604  0.5751  Will Russia capture Kostyantynivka by August 31?
+  77466352  0.5751  Will Russia capture Novopavlivka by December 31?
+  44264827  0.5751  Russian Coup: Putin vs Wagner
+  73186525  0.5751  Will Trump visit Israel before August?
+  74885828  0.5753  Trump, Putin, and Zelensky seen together in 2025?
+  66079720  0.5754  Netanyahu out by 2025?
+  77387810  0.5755  Will Russia capture Uspenivka by October 31?
+  67386481  0.5755  Will Russia recapture Sudzha by February 28?
+  77017510  0.5756  Will Russia capture Rodynske by October 31?
+  78631504  0.5756  Zohran Mamdani citizenship revoked before 2027?
+  75121592  0.5756  Will Russia capture Kostyantynivka by September 30?
+  75493286  0.5756  Will Russia capture Rodynske by September 15?
+  77376205  0.5756  Will Israel first announce ceasefire on October 29?
+  72086596  0.5757  Will Russia invade a NATO country in 2025?
+  67675691  0.5757  James Madison vs. Toledo
+  76375174  0.5757  Will Russia capture Pokrovsk train station by December 31?
+  33970291  0.5758  Will Russia use a nuclear weapon before 2023?
+  63486864  0.5758  Netanyahu out in 2024?
+  56172919  0.5758  Will Columbia divest from Israel by end of May?
+  25694366  0.5759  Will there be more than 4 million Ukrainian refugees by March 24?
+  67675833  0.5759  New Mexico vs. Air Force
+  48872253  0.5760  Giants vs. Commanders
+  72936396  0.5760  Will Rutte say "Defense" 20+ times during NATO Public Forum Address on June 24?
+  50739500  0.5761  Yahya Sinwar still Hamas leader by EOY?
+  68426337  0.5762  Western Michigan vs. Northern Illinois
+  66825710  0.5762  Makhachev vs. Moicano
+  77354933  0.5764  Will Iraq win on 2025-10-11?
+  74785632  0.5765  Wings vs Liberty
+  78299342  0.5765  Will Israel strike Gaza on October 30?
+  27133159  0.5766  Will President Biden visit Ukraine by June 1, 2022?
+  78554290  0.5766  Will Israel strike Lebanon on November 7?
+  77426465  0.5767  Will Trump visit Israel by October 15?
+  76375155  0.5767  Will Russia capture Rodynske by September 30?
+  62480230  0.5767  Will Israeli troops enter Bint Jbeil by October 15?
+  76219036  0.5767  Will Israel strike Yemen on September 10 ET?
+  78897890  0.5767  Kiwitt vs Jafaru
+  78379812  0.5769  NATO downs another Russian drone by December 31?
+  77376126  0.5769  Will Israel first announce ceasefire on October 12?
+  67788142  0.5770  VCU vs. George Washington
+  78299342  0.5770  Will Israel strike Gaza on November 2?
+  76278279  0.5770  Liberty vs. Sky
+  77376186  0.5770  Will Israel first announce ceasefire on October 25?
+  78379352  0.5771  Will Russia capture Rodynske by November 30?
+  76506327  0.5771  Will Israel strike Yemen on September 18 ET?
+  48448635  0.5771  Hamas still in power in Gaza by Oct 31?
+  49381000  0.5772  Will Egypt open its border for Palestinian refugees by Nov 30?
+  67788337  0.5772  James Madison vs. Georgia Southern
+  65088581  0.5772  Will Tucker say "NATO" 5 or more times during Lavrov interview?
+  74278274  0.5773  Will Israel raid Gaza aid ship Handala by Friday?
+  75748752  0.5773  Will Israel strike Syria on Tuesday September 2?
+  48486336  0.5774  Iran in possession of nuclear weapons by EoY?
+  77376101  0.5774  Will Israel first announce ceasefire on October 7?
+  72288888  0.5774  Will France recognize Palestine in 2025?
+  67903913  0.5775  Idaho vs. Eastern Washington
+  78854536  0.5776  Will Russia capture all of Pokrovsk by November 21?
+  78120004  0.5776  US x Venezuela military engagement by October 27?
+  68385906  0.5776  Lehigh vs. Army
+  73674719  0.5776  Will Russia capture Kostyantynivka by October 31?
+  78583258  0.5777  Will Russia capture all of Kupiansk by December 31?
+  62022710  0.5777  Israeli forces enters Lebanon in September?
+  77376146  0.5779  Will Israel first announce ceasefire on October 16?
+  76506346  0.5779  Will Israel strike Yemen on September 22 ET?
+  74286080  0.5780  Will Russia capture Rodynske by August 31?
+  75121593  0.5780  Will Russia capture Rodynske by August 20?
+  67026185  0.5780  Will Donald Trump visit Israel in 2025?
+  71312643  0.5781  India-Pakistan declare war before June?
+  63207893  0.5781  Will Israel strike Iran on Friday Oct 25?
+  65636929  0.5782  Will BSW be part of the next German government?
+  77386607  0.5784  Nothing Ever Happens: Russian Capture Edition
+  77472063  0.5784  Will any country leave NATO by June 30, 2026?
+  62921366  0.5784  Will Israel strike Iran on Thursday Oct 17?
+  65000013  0.5785  Will Russia abandon Syrian naval base before April?
+  69179312  0.5786  US forces in Yemen in 2025?
+  51320084  0.5786  Saudi Arabia and Yemeni Houthis peace deal by end of 2023?
+  63771150  0.5786  Will Army beat Air Force by 22 or more points?
+  67549935  0.5787  Will the U.S. take over Gaza in 2025?
+  76366356  0.5787  Israel banned from Eurovision 2026 by November 30?
+  13519296  0.5787  Will there be more than 160 million confirmed COVID-19 cases globally by May 10,
+  77355251  0.5788  Will Sudan vs. Mauritania end in a draw?
+  78440344  0.5788  Navy vs. North Texas: O/U 66.5
+  76818045  0.5789  Will Russia invade a NATO country by June 30, 2026?
+  77985062  0.5790  Will Russia capture Uspenivka by November 30?
+  78380132  0.5790  Will Russia capture Drobysheve by November 30?
+  68886093  0.5790  Will a US ally get a nuke in 2025?
+  61068230  0.5791  Yahya Sinwar still Hamas leader by October 31?
+  77216409  0.5791  Zelenskyy out as Ukraine president by December 31?
+  68386001  0.5791  Air Force vs. New Mexico
+  62222927  0.5791  Will Zelensky say "criminal" during his UN address?
+  74569248  0.5793  Will Austria join NATO by December 31?
+  76454212  0.5794  Will Israel strike Yemen 2 times by September 30?
+  67891061  0.5794  Will Germany declare a state of emergency in February?
+  77985072  0.5794  Will Russia capture Kostyantynivka by November 30?
+  77220861  0.5794  US x Venezuela military engagement by November 30?
+  50587989  0.5794  Will the Palestinian Authority gain control of Gaza in 2023?
+  64288875  0.5796  Bahdi vs. Casamonica
+  75906748  0.5796  West Virginia vs. Ohio
+  76257706  0.5796  Hezbollah strike on Israel by September 30?
+  73415398  0.5797  Will Syria join the Abraham Accords in 2025?
+  77017198  0.5798  Will Israel raid Gaza aid flotilla on September 28 ET?
+  63031609  0.5798  Will Israel beat Italy?
+  76506336  0.5799  Will Israel strike Yemen on September 20 ET?
+  71772221  0.5799  Israel strike on Iranian nuclear facility in May?
+  57725507  0.5799  Infowars shuttered by Friday?
+  78335976  0.5799  District of Columbia Firebirds vs. George Washington Revolutionaries (W)
+  78452945  0.5800  Navy vs. North Texas: O/U 67.5
+  75981852  0.5801  Will Syria win on 2025-09-04?
+  78036599  0.5801  Will Russia capture Orikhiv by November 30?
+  78937474  0.5802  Will Israel strike Gaza on November 19?
+  78937494  0.5802  Will Israel strike Lebanon on November 17?
+  48916828  0.5802  Will Trump visit Israel by Nov 15?
+  76781620  0.5803  Will Israel strike Yemen on September 27 ET?
+  72082716  0.5803  Will Russia capture Yablunivka before July?
+  61067976  0.5803  Will Belarus invade Ukraine before October?
+  77220840  0.5804  Will Israel strike Yemen 2 times by October 31?
+  64014025  0.5804  German Bundestag dissolved in 2024?
+  67890688  0.5804  Will any country leave NATO in 2025?
+  72550398  0.5805  Sky vs Liberty
+  75433306  0.5805  Sky vs Liberty
+  49858404  0.5805  American aid to Israel by Nov 30?
+  63031433  0.5805  Will Ukraine beat Czech Republic?
+  71784697  0.5805  Liberty vs Sky
+  72977306  0.5805  Israel strike on Iran on June 30?
+  48760405  0.5806  Will Hamas surrender in 2023?
+  72705522  0.5806  Israel strike on Iran on June 19?
+  77017245  0.5806  Will Israel raid Gaza aid flotilla on October 9 ET?
+  76781628  0.5806  Will Israel strike Yemen on September 29 ET?
+  76895523  0.5806  Will Israel strike Yemen on September 29 ET?
+  76265015  0.5806  Polish strike on Belarus by September 30?
+  76091086  0.5806  US x Venezuela military engagement by September 30?
+  76506341  0.5807  Will Israel strike Yemen on September 21 ET?
+  70427679  0.5807  Will Russia capture Kupiansk by December 31?
+  77265203  0.5808  Kowalkiewicz vs. Polastri
+  76895541  0.5808  Will Israel strike Yemen on  September 25 ET?
+  76781611  0.5808  Will Israel strike Yemen on September 25 ET?
+  76259201  0.5808  Will Israel strike Turkey by September 30?
+  76781706  0.5809  Will Israel raid Gaza aid flotilla by October 3?
+  77017232  0.5810  Will Israel raid Gaza aid flotilla on October 6 ET?
+  63640363  0.5811  Will JD Vance say "Russia" 5 or more times during the Joe Rogan podcast?
+  65000015  0.5811  Will Russia pull out of Syria before April 2025?
+  77017207  0.5811  Will Israel raid Gaza aid flotilla on September 30 ET?
+  74468675  0.5811  Liberty vs Wings
+  74907181  0.5811  Liberty vs Wings
+  72642458  0.5811  Iran strike on Israel in June?
+  72364797  0.5813  Will Israel raid Greta Thunberg's ship by Friday?
+  71772220  0.5813  Israel strike on Iranian nuclear facility before July?
+  69179314  0.5813  Will Hamas enter Israel by Friday?
+  76506351  0.5813  Will Israel strike Yemen on September 23 ET?
+  78424328  0.5814  US x Venezuela military engagement by November 1?
+  76814470  0.5814  Will Russia capture Drobysheve by October 31?
+  76506356  0.5815  Will Israel not strike Yemen by September 23 ET?
+  76781615  0.5816  Will Israel strike Yemen on September 26 ET?
+  76895510  0.5816  Will Israel strike Yemen on  September 26 ET?
+  66691853  0.5816  Israel parliament dissolves by Jan 31?
+  71753299  0.5816  Will Russia capture territory in Dnipropetrovsk Oblast by June 30?
+  77898120  0.5818  Will Israel strike Gaza on October 22?
+  72977305  0.5819  Israel strike on Iran on June 28?
+  67506779  0.5819  Will Russia capture territory in Dnipropetrovsk Oblast by April 30?
+  78668606  0.5819  Ferencvárosi TC vs. PFK Ludogorets 1945 Razgrad: O/U 2.5
+  76375109  0.5820  Will Russia capture Sumy by December 31?
+  48760876  0.5820  Will Hezbollah officially join the war in 2023?
+  74370183  0.5821  Zelenskyy out as Ukraine president by end of 2026?
+  78460970  0.5821  US x Venezuela military engagement by November 5?
+  74843296  0.5821  Will The Netherlands recognize Palestine in 2025?
+  76781606  0.5821  Will Israel strike Yemen on September 24 ET?
+  72401456  0.5821  Zelenskyy x Putin talk before July?
+  75906765  0.5822  North Texas vs. Western Michigan
+  62632237  0.5822  Will Navy and Air Force combine for 37 or more points?
+  76375222  0.5823  Will Russia capture all of Pokrovsk by December 31?
+  74968362  0.5823  Lebanon coup attempt by December 31?
+  78591810  0.5823  Will Russia capture all of Vovchansk by November 30?
+  73064689  0.5824  US x Iran ceasefire before August?
+  48530899  0.5824  Will the US publicly state that Iran was directly involved with the recent attac
+  79027251  0.5824  US x Venezuela military engagement by November 21?
+  74326786  0.5824  Witkoff in Qatar by Friday?
+  48867294  0.5825  Will the New York Times definitively state Israel was not behind the Gaza hospit
+  43020189  0.5825  Will a nuclear weapon detonate by December 31?
+  62351534  0.5825  Israeli forces enter Lebanon before November?
+  75888626  0.5826  Will Israel raid Gaza aid flotilla by September 30?
+  68547687  0.5826  West Virginia vs. Utah
+  75490631  0.5826  US x Venezuela military engagement by October 31?
+  77387364  0.5828  Utah vs. Jets
+  78628344  0.5829  Will Greece recognize Palestine before 2027?
+  64662190  0.5829  Navy vs. East Carolina
+  48760374  0.5829  Will Egypt open its border for Palestinian refugees by Nov 1?
+  73198538  0.5829  Strike on Israel's Dimonah nuclear base before August?
+  77017249  0.5829  Will Israel raid Gaza aid flotilla on October 10 ET?
+  70914785  0.5830  India military strike on Pakistan by Friday?
+  71029940  0.5831  India military strike on Pakistan by Friday?
+  72925240  0.5831  Terra Wortmann: Marozsan vs. Machac
+  78299343  0.5833  Will Israel strike Gaza on November 4?
+  78628345  0.5833  Will The Netherlands recognize Palestine before 2027?
+  77220849  0.5833  Will Israel strike Yemen 4 times by October 31?
+  77632413  0.5834  Will Iraq win on 2025-10-14?
+  76890048  0.5835  Will Greece recognize Palestine in 2025?
+  76219044  0.5835  Will Israel strike Yemen on September 12 ET?
+  76293008  0.5835  Will Israel strike Yemen on September 12 ET?
+  78631974  0.5835  Will Syria join the Abraham Accords before 2027?
+  66224050  0.5836  Assad leaves Russia before 2026?
+  77376151  0.5836  Will Israel first announce ceasefire on October 17?
+  78754580  0.5836  Washington College Shoremen vs. Navy Midshipmen
+  61235403  0.5836  Will Ukraine win the most medals in the 2024 Paralympics?
+  78854686  0.5837  Thailand strikes Cambodia by December 31?
+  78897129  0.5837  Thailand strikes Cambodia by December 31?
+  77898120  0.5837  Will Israel strike Gaza on October 20?
+  68225376  0.5837  Holy Cross vs. Navy
+  61380710  0.5838  Will Ukraine win the third most medals in the 2024 Paralympics?
+  51628660  0.5839  Will Ye say something antisemitic before February?
+  78248826  0.5839  West Virginia vs. Houston
+  49501900  0.5840  Fuel shipments to Gaza by Nov 30?
+  58407554  0.5840  Will Biden say "Israel" during the debate?
+  26475205  0.5842  Will Russia remain in G20 through November 1, 2022?
+  67788044  0.5843  Army vs. Loyola Maryland
+  73984145  0.5843  Fever vs Liberty
+  74225279  0.5843  Fever vs Liberty
+  69098537  0.5844  Will Suez Canal traffic recover to pre-Houthi levels before July?
+  76818890  0.5844  Will Netanyahu say "Charlie" or "Kirk" during address to UN General Assembly on 
+  78299342  0.5845  Will Israel strike Gaza on October 31?
+  73064605  0.5845  US x Iran ceasefire before July?
+  68507065  0.5846  Washington State vs. Pepperdine
+  48950868  0.5847  Will Rafah border crossing open for humanitarian aid by Sunday?
+  62587895  0.5847  Will Russia capture Kurakhove before December?
+  78633913  0.5847  Ahmed al-Sharaa out as leader of Syria before 2027?
+  78258548  0.5847  Navy vs. North Texas: O/U 64.5
+  66744357  0.5848  Will Israel withdraw from Philadelphi corridor by March 8?
+  72977296  0.5849  Israel strike on Iran on June 21?
+  77017211  0.5849  Will Israel raid Gaza aid flotilla on October 1 ET?
+  71122745  0.5849  Pakistan military strike on India by Friday?
+  72696625  0.5849  Iran strike on Israel by Monday?
+  67339359  0.5849  Will Russia capture Pokrovsk by December 31?
+  76454208  0.5850  Will Israel strike Yemen 1 time by September 30?
+  77017241  0.5850  Will Israel raid Gaza aid flotilla on October 8 ET?
+  39433888  0.5851  Will Russia use a nuclear weapon by June 30?
+  67548545  0.5851  Will the U.S. take over Gaza before July?
+  76818892  0.5852  Will Netanyahu say "Yemen" during address to UN General Assembly on Sept 26?
+  69297892  0.5852  Will Ukraine control Grafovka on March 31?
+  48448005  0.5852  Will Hezbollah deploy ground forces in Israel by Oct 14?
+  23996895  0.5852  Which country will report a higher 7-day COVID-19 case average per capita on Feb
+  76293004  0.5854  Will Israel strike Yemen on or before September 11 ET?
+  73540357  0.5854  US recognize Somaliland in 2025?
+  53445565  0.5854  More hostages in Gaza freed by Feb 29?
+  77676094  0.5855  Will anyone say "Palestine" during South Park e6 s27?
+  65610216  0.5857  Israel and Saudi Arabia normalize relations before April?
+  71351125  0.5857  Another India x Pakistan ceasefire announced by Friday?
+  78985238  0.5858  Will a US ally get a nuke before 2027?
+  68890424  0.5858  Will Ukraine agree to give up the rest of Donbas in 2025?
+  78379352  0.5859  Will Russia capture Rodynske by December 31?
+  77898120  0.5859  Will Israel strike Gaza on October 21?
+  77985072  0.5860  Will Russia capture Lyman by November 30?
+  67891489  0.5860  Will Russia rejoin the G7 in 2025?
+  48557391  0.5862  Falcons vs. Commanders
+  65781491  0.5862  Falcons vs. Commanders
+  78972906  0.5864  Will Hamas agree to disarm by March 31?
+  78554288  0.5864  Will Israel strike Gaza on November 13?
+  26313802  0.5865  Will there be more than 5 million Ukrainian refugees by April 30, 2022?
+  76454217  0.5865  Will Israel strike Yemen 3 times by September 30?
+  68487720  0.5865  Will Volodymyr Zelenskyy say "Russia" 5+ times during his Baier interview?
+  78973056  0.5865  Will Russia capture Kostyantynivka by December 31, 2026?
+  77017228  0.5866  Will Israel raid Gaza aid flotilla on October 5 ET?
+  53791508  0.5866  Russian nuke in space in 2024?
+  74567640  0.5866  Will Jordan airdrop aid into Gaza?
+  78627413  0.5869  Will Donald Trump visit Ukraine in 2026?
+  55598401  0.5869  No Israel ground offensive in Rafah before April 19?
+  73063404  0.5869  US forces in Iran in 2025?
+  77220845  0.5870  Will Israel strike Yemen 3 times by October 31?
+  67675901  0.5870  Utah vs. West Virginia
+  76785270  0.5870  Utah vs. West Virginia
+  78630543  0.5871  Will Ukraine agree to give up the rest of Donbas before 2027?
+  69005689  0.5871  Fordham vs. George Washington
+  49339254  0.5871  Will Hezbollah officially join the war by Nov 30?
+  76781646  0.5872  Will Israel strike Yemen on or before September 22 ET?
+  39002542  0.5873  Will Biden mention "Russia/Putin" 10 or more times during his SOTU?
+  75748752  0.5873  Will Israel strike Syria on Saturday August 30?
+  66736252  0.5875  Israel withdraws from Syria before April?
+  76506317  0.5875  Will Israel strike Yemen on September 16 ET?
+  72977297  0.5875  Israel strike on Iran on June 25?
+  74370193  0.5876  Netanyahu out by end of 2026?
+  67849793  0.5877  Trump, Putin, and Zelensky seen together before July?
+  78295573  0.5877  Will Russia enter Lyman by November 30?
+  76895514  0.5877  Will Israel strike Yemen onSeptember 27 ET?
+  74040485  0.5878  Azerbaijan x Armenia peace deal in 2025?
+  71350269  0.5878  Will the US recognize Palestine in 2025?
+  72125567  0.5878  Salkilld vs. Ashmouz
+  62908816  0.5878  Israel withdraws from Lebanon before November?
+  66691872  0.5879  Israel parliament dissolves by March 31?
+  77220830  0.5879  Will Israel strike Yemen 0 times by October 31?
+  72705522  0.5881  Israel strike on Iran on June 15?
+  76191119  0.5881  Utah vs. Wyoming
+  78295574  0.5882  Will Russia enter Huliaipole by November 30?
+  61779671  0.5882  Will Israel invade Syria in 2024?
+  73214081  0.5883  Israel strikes Iran before August?
+  74039550  0.5883  Will Israel strike Syria on July 19?
+  75121536  0.5883  Will Russia capture Siversk by September 30?
+  76454204  0.5884  Will Israel strike Yemen 0 times by September 30?
+  72705523  0.5885  Israel strike on Iran on June 20?
+  58255656  0.5885  ARCH Will Ukraine win?
+  74567643  0.5885  Will Israel airdrop aid into Gaza?
+  67026289  0.5886  Will Donald Trump visit Ukraine in 2025?
+  78628343  0.5886  Will New Zealand recognize Palestine before 2027?
+  76892152  0.5886  Will Netanyahu's UN speech be less than 15 minutes long?
+  60591448  0.5887  Will Russia capture Chasiv Yar before October?
+  78937474  0.5887  Will Israel strike Gaza on November 15?
+  76009165  0.5887  AFD deaths foul play confirmed in 2025?
+  68706995  0.5887  Air Force vs. Utah State
+  76191126  0.5887  Air Force vs. Utah State
+  75888624  0.5887  Will Israel raid Gaza aid flotilla by September 15?
+  78299343  0.5887  Will Israel strike Gaza on November 3?
+  76506322  0.5888  Will Israel strike Yemen on September 17 ET?
+  72977297  0.5888  Israel strike on Iran on June 26?
+  76659068  0.5889  Israeli parliament dissolved by March 31?
+  73497045  0.5889  Will Suez Canal traffic recover to pre-Houthi levels before September?
+  62549797  0.5890  Another Iran strike on Israel in October?
+  78422064  0.5891  Salikhov vs. Medic
+  78065465  0.5891  US x Venezuela military engagement by October 24?
+  76465156  0.5892  West Virginia vs. Kansas
+  76257707  0.5893  Hezbollah strike on Israel by September 15?
+  77677733  0.5893  Will Russia capture Siversk by November 30?
+  72815699  0.5893  Will Iran close the Strait of Hormuz before July?
+  65294664  0.5894  Commanders vs. Saints
+  50906306  0.5894  Will Israel start flooding Hamas tunnels by December 15?
+  72977296  0.5895  Israel strike on Iran on June 22?
+  78292751  0.5895  Navy vs. North Texas: 1H O/U 31.5
+  72936004  0.5895  U.S. refuels Israeli jets for strikes on Iran before July?
+  70427689  0.5896  Will Russia capture Siversk by August 31?
+  65088648  0.5896  Will Tucker say "Syria" during Lavrov interview?
+  76219063  0.5897  Will Israel not strike Yemen between September 8-15 ET?
+  67018267  0.5897  Adesanya vs. Imavov
+  68626931  0.5898  George Washington vs. Fordham
+  75606030  0.5898  Israel strikes Yemen again by August 31?
+  78036599  0.5898  Will Russia capture Huliaipole by December 31?
+  78973116  0.5898  Will Russia rejoin the G7 before 2027?
+  70427672  0.5898  Will Russia capture territory in Dnipropetrovsk Oblast by May 31?
+  76894267  0.5899  Will Israel raid Gaza aid flotilla by October 10?
+  48527569  0.5900  Saudi and Israel peace deal by March 2024?
+  68305227  0.5900  California Baptist vs. Seattle
+  78985233  0.5900  Will Israel launch a major ground offensive in Lebanon by March 31?
+  77898120  0.5901  Will Israel strike Gaza on October 23?
+  72705525  0.5901  Israel strike on Iran on June 18?
+  72977297  0.5901  Israel strike on Iran on June 24?
+  67984248  0.5902  St. Joseph's vs. George Washington
+  77628029  0.5904  Will IR Iran vs. Tanzania end in a draw?
+  69291543  0.5905  Will Ukraine agree to Trump nuclear plant deal before July?
+  67845459  0.5905  Israel x Hamas ceasefire cancelled before March?
+  77017236  0.5906  Will Israel raid Gaza aid flotilla on October 7 ET?
+  78378972  0.5906  US x Venezuela military engagement by November 7?
+  67347173  0.5907  Egypt/Jordan agree to take 100k+ Gazan refugees before April?
+  76814432  0.5908  Nothing Ever Happens: Russia Edition
+  71842603  0.5910  Will Russia capture Kostyantynivka by December 31?
+  77645231  0.5912  Washington State vs. Virginia
+  57349525  0.5914  Will Israel halt Rafah operation in May?
+  76781641  0.5915  Will Israel strike Yemen on or before September 23 ET?
+  76890048  0.5916  Will New Zealand recognize Palestine in 2025?
+  77017202  0.5917  Will Israel raid Gaza aid flotilla on September 29 ET?
+  72977297  0.5919  Israel strike on Iran on June 23?
+  64488351  0.5919  Song vs. Salikhov
+  76892170  0.5920  Will Netanyahu's UN speech be be between 30-35 minutes long?
+  76375128  0.5921  Will Russia capture Siversk by October 31?
+  77103721  0.5922  Al-Selawe vs. Babene
+  76892179  0.5922  Will Netanyahu's UN speech be more than 40 minutes long?
+  65367266  0.5922  Will Russia recognize Syrian government by March 31?
+  76892165  0.5923  Will Netanyahu's UN speech be be between 25-30 minutes long?
+  58565957  0.5923  Israel parliament dissolves in 2024?
+  70296535  0.5923  North Korean soldier caught in Ukraine before May?
+  76892161  0.5924  Will Netanyahu's UN speech be be between 20-25 minutes long?
+  72705523  0.5924  Israel strike on Iran on June 14?
+  77816152  0.5924  Will anyone say "War Crime" or "War Criminal" during 2nd NYC mayoral debate on O
+  78380322  0.5926  Will Russia enter Siversk by November 30?
+  68185017  0.5926  Portland vs. Pacific
+  72977306  0.5927  Israel strike on Iran on June 27?
+  76973223  0.5928  Rhode Island vs. Western Michigan
+  78554288  0.5928  Will Israel strike Gaza on November 14?
+  66700483  0.5929  Netanyahu attends Auschwitz commemoration in Poland?
+  78591829  0.5930  Will Russia capture Kupiansk-Vuzlovyi by November 30?
+  67506767  0.5931  Will Russia capture territory in Dnipropetrovsk Oblast by February 28?
+  78554289  0.5931  Will Israel strike Gaza on November 11?
+  62587670  0.5932  Will Russia capture Siversk before December?
+  52475468  0.5932  Will Iran or Pakistan declare war against the other in January?
+  78299342  0.5933  Will Israel strike Gaza on November 6?
+  73214071  0.5933  Israel strikes Iran before July?
+  77643324  0.5935  Will Trump visit Gaza by Dec 31?
+  78452945  0.5935  Navy vs. North Texas: 1H O/U 34.5
+  65088823  0.5935  Will Tucker say "WW3" during Lavrov interview?
+  65053290  0.5935  Will Hegseth say "Ukraine" during the interview?
+  78591809  0.5935  Will Russia capture all of Vovchansk by December 31?
+  77729436  0.5936  Will Israel annex Gaza territory by June 30 2026?
+  73248025  0.5936  Israeli parliament dissolved before August?
+  78329671  0.5936  Will Russia recapture territory in Vilne by November 30?
+  76940864  0.5937  Will Trump say Thousand / Million / Billion 10+ times during Netanyahu events on
+  62222940  0.5937  Will Zelensky say "Putin" during his UN address?
+  71232781  0.5937  Pakistan air/missile strike on Indian soil by Friday?
+  71350270  0.5937  Pakistan air/missile strike on Indian soil by Friday?
+  75748750  0.5938  Will Israel strike Syria on Monday September 1?
+  76191099  0.5939  Washington State vs. North Texas
+  75748751  0.5939  Will Israel strike Syria on Sunday August 31?
+  74039552  0.5940  Will Israel strike Syria on July 21?
+  73492885  0.5940  Nuclear weapon detonation before October?
+  77898120  0.5940  Will Israel strike Gaza on October 24?
+  74567640  0.5941  Will Spain airdrop aid into Gaza?
+  76426520  0.5941  Raiders vs. Commanders
+  76818896  0.5941  Will Netanyahu say "Abraham Accord" during address to UN General Assembly on Sep
+  74363095  0.5941  Israeli parliament dissolved by August 31?
+  77100782  0.5942  Israel strikes Iran by October 3?
+  76058768  0.5943  Will Israel raid Gaza aid flotilla between September 28-30 ET?
+  76058244  0.5943  Will Israel raid Gaza aid flotilla by September 20?
+  50904894  0.5943  Will Hamas surrender before February?
+  78937474  0.5944  Will Israel strike Gaza on November 20?
+  73634995  0.5944  Israel strikes Yemen by Monday?
+  74286090  0.5945  Will Russia capture Lyman by December 31?
+  73993499  0.5945  Will Israeli troops enter Suwayda by July 31?
+  74039550  0.5945  Will Israel strike Syria on July 20?
+  76892175  0.5946  Will Netanyahu's UN speech be be between 35-40 minutes long?
+  76058754  0.5947  Will Israel raid Gaza aid flotilla between September 19-21 ET?
+  78937474  0.5948  Will Israel strike Gaza on November 18?
+  76818893  0.5949  Will Netanyahu say "Iran" 25+ times during address to UN General Assembly on Sep
+  75121631  0.5949  Will Russia capture Myrnohrad by August 31?
+  77502297  0.5950  Israel x Hamas ceasefire cancelled by October 31?
+  78628344  0.5951  Will the US recognize Palestine before 2027?
+  77426459  0.5952  Will Trump visit Gaza by Oct 31?
+  66736227  0.5952  Israel withdraws from Lebanon before February?
+  75888625  0.5952  Will Israel raid Gaza aid flotilla by September 10?
+  50422733  0.5952  Hamas command center under al-Shifa Hospital?
+  77220835  0.5953  Will Israel strike Yemen 1 times by October 31?
+  76257725  0.5954  Will Israel strike Syria by September 30?
+  78554288  0.5954  Will Israel strike Gaza on November 9?
+  55743238  0.5954  Iran response to Israel by April 19?
+  75606039  0.5955  Israel strikes Yemen again by September 15?
+  62223017  0.5955  Will Zelensky say "HIMARS" during his UN address?
+  48760701  0.5955  Will Iran officially join the war in 2023?
+  76259201  0.5955  Will Israel strike Turkey by December 31?
+  76091094  0.5957  US x Venezuela military engagement by December 31?
+  74843295  0.5957  Will Canada recognize Palestine in 2025?
+  78633293  0.5957  Will Israel annex West Bank territory before 2027?
+  78379282  0.5957  Will Russia capture Myrnohrad by November 15?
+  71350259  0.5958  India air/missile strike on Pakistan soil by Friday?
+  48530304  0.5959  Any hostage deal brokered with Hamas by Nov 1?
+  75934912  0.5961  Will Israel annex West Bank territory in 2025?
+  53804253  0.5961  Israel x Hamas ceasefire before April?
+  76014182  0.5961  Israeli parliament dissolved by October 31?
+  76892157  0.5962  Will Netanyahu's UN speech be be between 15-20 minutes long?
+  78937474  0.5962  Will Israel strike Gaza on November 21?
+  68466775  0.5963  Rhode Island vs. Massachusetts
+  77946452  0.5963  Illinois vs. Washington
+  78295631  0.5964  Israel withdraws from Lebanon by December 31?
+  77935225  0.5964  Will Ukraine win on 2025-11-13?
+  77346464  0.5966  Navy vs. Temple
+  78628243  0.5966  Israel and Saudi Arabia normalize relations by March 31?
+  65955176  0.5966  Azerbaijan blames Russia for downing plane?
+  74039551  0.5969  Will Israel strike Syria on July 18?
+  74039551  0.5971  Will Israel strike Syria on July 22?
+  50265035  0.5971  Will the Hamas x Israel ceasefire last the full 4 days?
+  78036598  0.5971  Will Russia enter Siversk by October 31?
+  76853851  0.5972  Will Finland recognize Palestine in 2025?
+  63484377  0.5972  Israel withdraws from Lebanon before December?
+  76454221  0.5973  Will Israel strike Yemen 4 or more times by September 30?
+  78890519  0.5973  Will Russia capture Rivnopillia by December 31?
+  77604475  0.5974  Spread: Commanders (-3.5)
+  75943778  0.5974  Will Russia capture Myrnohrad by October 31?
+  75689318  0.5974  Israel strikes Iran by September 30?
+  53524970  0.5974  Russian nuke in space by March 31?
+  76781706  0.5975  Will Israel raid Gaza aid flotilla by September 27?
+  62514528  0.5975  Another Iran strike on Israel by Friday?
+  46470681  0.5975  Military intervention in Niger by September 15?
+  78628343  0.5975  Will Austria recognize Palestine before 2027?
+  47705416  0.5977  Military intervention in Niger by October 31?
+  78628344  0.5978  Will Finland recognize Palestine before 2027?
+  74520512  0.5979  Will Russia capture Myrnohrad by September 30?
+  72815699  0.5980  Will Iran declare war on Israel before July?
+  62222785  0.5980  Will Zelensky say "money" 5 or more times during his UN address?
+  67658620  0.5981  Will Trump visit Gaza in first 100 days?
+  76785308  0.5981  Rice vs. Navy
+  65361910  0.5981  Will Russia abandon Syrian naval base before 2025?
+  72653407  0.5984  Israel strike on Tehran before July?
+  74797617  0.5984  Russia coup attempt in 2025?
+  66637342  0.5984  Commanders vs. Lions
+  55944000  0.5985  Will Russia control Chasiv Yar on May 9?
+  76058759  0.5986  Will Israel raid Gaza aid flotilla between September 22-24 ET?
+  78415021  0.5988  Hezbollah strike on Israel by December 31?
+  76890048  0.5988  Will Austria recognize Palestine in 2025?
+  74039552  0.5988  Will Israel strike Syria on July 23?
+  77677733  0.5989  Will Russia capture Myrnohrad by November 30?
+  73176490  0.5989  Will Israel or Iran break the ceasefire first?
+  73705850  0.5989  Another Israel strike on Yemen in July?
+  67776295  0.5990  Israel x Hamas ceasefire cancelled by Saturday?
+  66736257  0.5991  Will Israel annex Syrian territory before July?
+  23997019  0.5991  Which country will report a higher 7-day COVID-19 case average per capita on Feb
+  77692078  0.5992  Will anyone say "War Crime" or "War Criminal" during 1st NYC mayoral debate on O
+  78685012  0.5993  Nuclear weapon detonation by June 30?
+  72814522  0.5993  Israel confirms it has nuclear weapons in 2025?
+  78554288  0.5994  Will Israel strike Gaza on November 10?
+  61157375  0.5995  Will Ukraine hold Kursk through 2024?
+  75689320  0.5996  Israel strikes Iran by October 31?
+  67342976  0.5996  China x Philippines military clash by June 30?
+  76818893  0.5998  Will Netanyahu say "Goon" during address to UN General Assembly on Sept 26?
+  75081936  0.5999  Will JD Vance say "Israel" or "Gaza" during his remarks to US troops in UK on Au
+  25580912  0.6000  Will Ukraine be a member state of the European Union by July 31, 2022?
+  77977922  0.6000  Will Russia capture Yampil' by November 30?
+  78299342  0.6003  Will Israel strike Gaza on November 1?
+  78379652  0.6003  Will Hamas agree to disarm by November 30?
+  77346426  0.6003  Indiana vs. Oregon
+  68866611  0.6003  Indiana vs. Oregon
+  68547683  0.6003  Indiana vs. Oregon
+  78329672  0.6003  Will Russia recapture territory in Kucheriv Yar by November 30?
+  72705525  0.6004  Israel strike on Iran on June 16?
+  57572811  0.6005  Will Biden let Ukraine strike Russia with US weapons?
+  62547448  0.6005  Israel strikes Iranian oil in October?
+  63887501  0.6006  Iran strike on Israel on Nov 5?
+  67026815  0.6006  Will Iran close the Strait of Hormuz in 2025?
+  74671105  0.6007  Will MrBeast say "War" or "Military" during his next video?
+  75748751  0.6008  Will Israel strike Syria on Friday August 29?
+  62505809  0.6009  Iran strike on Israel today?
+  74242752  0.6010  Another Israel strike on Yemen by July 31?
+  52217072  0.6012  Continued US strikes against Houthis?
+  75988324  0.6013  Will Ukraine win on 2025-09-05?
+  68487676  0.6013  Will Volodymyr Zelenskyy say "Ukraine" 10+ times during his Baier interview?
+  77935625  0.6013  Will Ukraine win on 2025-11-16?
+  67844081  0.6013  Will Israel annex Gazan territory before July?
+  61425253  0.6015  Will Trump say "Israel" at debate?
+  68487757  0.6015  Will Volodymyr Zelenskyy say "Crimea" during his Baier interview?
+  75979404  0.6016  Will Israel strike Syria by September 15?
+  77354795  0.6017  Will Ukraine win on 2025-10-13?
+  75943769  0.6019  Will Russia capture Siversk by December 31?
+  78299343  0.6019  Will Israel strike Gaza on November 5?
+  61704641  0.6019  Will Sinwar leave Gaza by October 31?
+  73540358  0.6019  Israel strikes Iran before September?
+  78554289  0.6020  Will Israel strike Gaza on November 8?
+  62222870  0.6021  Will Zelensky say "we need" 3 or more times during his UN address?
+  57734893  0.6022  France sends military trainers to Ukraine before July?
+  71442858  0.6022  Another Houthi strike on Israel in May?
+  76465177  0.6023  North Texas vs. Army
+  62587663  0.6023  Will Russia capture Chasiv Yar before December?
+  66386723  0.6024  Will Russia abandon Syrian naval base before July?
+  76019844  0.6025  Will Israel strike Iraq by October 31?
+  69147239  0.6026  Elon vs. Army
+  57265658  0.6026  New EU country recognizes Palestine before July?
+  68092689  0.6028  U.S. recognizes Russian sovereignty over Crimea in 2025?
+  69025966  0.6029  George Washington vs. George Mason
+  72977107  0.6029  Will Israel declare war on Iran before July?
+  48916289  0.6029  Will Iran close the Strait of Hormuz in 2023?
+  74520150  0.6032  Israel strikes Yemen by August 31?
+  75369030  0.6032  Israel strikes Yemen by August 31?
+  78591829  0.6032  Will Russia capture Kupiansk-Vuzlovyi by December 31?
+  78554289  0.6033  Will Israel strike Gaza on November 12?
+  76818895  0.6033  Will Netanyahu say "Slander" during address to UN General Assembly on Sept 26?
+  78627583  0.6033  Will Iran close the Strait of Hormuz before 2027?
+  74031842  0.6034  Another Israel strike on Damascus by July 31?
+  73128063  0.6035  Iran strike on Qatar today?
+  62547519  0.6035  Israel strike on Iranian nuclear facility in 2024?
+  74598416  0.6036  Israel strikes Yemen by August 15?
+  68627057  0.6037  Army vs. Colgate
+  74573165  0.6037  Will the UK recognize Palestine in 2025?
+  74567642  0.6038  Will Saudi Arabia airdrop aid into Gaza?
+  78937473  0.6040  Will Israel strike Gaza on November 16?
+  71163095  0.6040  Will Israel launch a major ground offensive in Gaza by next Tuesday?
+  72705524  0.6040  Israel strike on Iran on June 17?
+  77800016  0.6041  Trump x Putin Meeting in Hungary by Dec 31?
+  69297825  0.6042  Will Ukraine control Demidovka on March 31?
+  68466738  0.6044  Indiana vs. Washington
+  76046465  0.6044  Liberty vs. Storm
+  67339175  0.6044  China x Taiwan military clash by June 30?
+  77915828  0.6045  Commanders vs. Chiefs
+  65446368  0.6045  Will Army beat Navy by 7 or more points?
+  76821532  0.6046  Ukraine election held by June 30, 2026?
+  79027255  0.6046  Will Russia capture Myrnohrad by November 21?
+  78628344  0.6046  Will Italy recognize Palestine before 2027?
+  76058749  0.6047  Will Israel raid Gaza aid flotilla between September 16–18 ET?
+  78728700  0.6048  Will Russia capture all of Myrnohrad by November 30?
+  25579434  0.6048  Will Russia have its UNSC permanent member status stripped by April 30, 2022?
+  76855740  0.6048  Houthi strike on Israel by September 30?
+  76219655  0.6048  Houthi strike on Israel by September 30?
+  78972133  0.6049  Will Israel strike 0 countries in 2026?
+  73173412  0.6049  Israel x Iran ceasefire broken by June 27?
+  48283370  0.6049  Commanders vs. Bears
+  63771136  0.6049  Will Army beat Air Force
+  73037994  0.6050  Liberty vs Storm
+  76058745  0.6050  Will Israel raid Gaza aid flotilla before September 16 ET?
+  74843295  0.6050  Will Italy recognize Palestine in 2025?
+  77062672  0.6051  Will Israel strike 0 countries in October 2025?
+  62470296  0.6052  Will Tim Walz say "Israel" during the debate?
+  76295600  0.6052  US civil war in 2025?
+  76490624  0.6053  Israel strike on Yemen by September 19?
+  48531858  0.6054  Will Israel have full control of its territory on Nov 1?
+  74086621  0.6055  Will Israeli troops enter Suwayda in 2025?
+  77103558  0.6055  Will Russia capture Yampil' by October 31?
+  78299942  0.6056  Israel x Hamas ceasefire cancelled by November 30?
+  74968363  0.6056  Will Israel carry out an airstrike on the West Bank by September 30?
+  74601957  0.6056  Will Hamas agree to disarm by December 31?
+  78237122  0.6056  Will Iraq vs. United Arab Emirates end in a draw?
+  73198501  0.6056  Houthi strike on Israel before August?
+  78379022  0.6057  Israel strikes Iran by November 30?
+  76058764  0.6057  Will Israel raid Gaza aid flotilla between September 25-27 ET?
+  69774589  0.6058  Israel military action against Iran in April?
+  75606038  0.6058  Another Houthi strike on Israel by August 31?
+  75369049  0.6058  Israel strikes Yemen by August 22?
+  61157668  0.6062  Crimean bridge hit before October?
+  65088550  0.6062  Will Tucker say "Ukraine" 10 or more times during Lavrov interview?
+  60508472  0.6063  Will Ukraine take the Kursk Nuclear Plant by Aug 31?
+  74359473  0.6063  Houthi strike on Israel by August 31?
+  71029933  0.6065  Israel military action against Iran before June?
+  68487708  0.6066  Will Volodymyr Zelenskyy say "Ceasefire" 5+ times during his Baier interview?
+  75212744  0.6066  U.S. x Russia Nuclear deal by December 31?
+  75806391  0.6066  Israel strike on Yemen by September 30?
+  76292886  0.6066  Israel strike on Yemen by September 30?
+  76526250  0.6066  Israel strike on Yemen by September 30?
+  75988740  0.6067  Will Ukraine win on 2025-09-09?
+  66735098  0.6068  Israel announces ceasefire by January 16?
+  62223023  0.6069  Will Zelensky say "nuclear" during his UN address?
+  69182149  0.6070  Israel military action against Iranian nuclear facility in March?
+  77860045  0.6072  Raposo vs. Maksum
+  76821456  0.6072  Ukraine election called by June 30, 2026?
+  78299381  0.6073  Will Israel launch a major ground offensive in Lebanon by December 31?
+  59965871  0.6074  Turkey suspends diplomatic relations with Israel?
+  58004094  0.6075  Next Israel x Hamas ceasefire in June?
+  70303049  0.6076  Israel x Hamas ceasefire before June?
+  25975585  0.6079  Will Ukraine become a European Union candidate country by July 31st?
+  48493410  0.6080  Will Israel regain control of all territory by Oct 11?
+  75606039  0.6081  Another Houthi strike on Israel by September 15?
+  77513491  0.6081  Israel x Hamas ceasefire cancelled by December 31?
+  78477399  0.6082  Lions vs. Commanders
+  53757302  0.6082  Israel + Hamas hostage deal by Ramadan?
+  64058154  0.6083  Iran strike on Israel by Friday?
+  72696743  0.6083  Iran strike on Israel by Friday?
+  65955185  0.6084  Russia claims responsibility for downing Azerbaijan plane?
+  25836965  0.6085  Will Ukraine formally cede Crimea, Luhansk, or Donetsk by May 31, 2022?
+  21302704  0.6087  Will Germany or United Kingdom report a higher 7-day COVID-19 case average per c
+  62222963  0.6087  Will Zelensky say "slava Ukraini" during his UN address?
+  74242742  0.6088  Another Israel strike on Yemen by Friday?
+  73705859  0.6088  Another Israel strike on Yemen by Friday?
+  52520679  0.6088  US call for Gaza ceasefire before March?
+  58280586  0.6088  Crimean bridge hit before July?
+  73214081  0.6089  Israel strikes Iran before 2026?
+  73604428  0.6090  Storm vs Liberty
+  63732168  0.6090  Iran strike on Israel by Nov 8?
+  76375147  0.6090  Will Russia capture Myrnohrad by December 31?
+  74295452  0.6090  Will Israel annex any territory by December 31?
+  60204849  0.6091  Iran military response by Tuesday?
+  78630083  0.6092  U.S. recognizes Russian sovereignty over Crimea before 2027?
+  77220541  0.6095  Israel strike on Yemen by October 15?
+  76855740  0.6095  Houthi strike on Israel by October 15?
+  68488448  0.6096  Obama or Biden tweets about Ukraine by Friday?
+  71873460  0.6097  Another Houthi strike on Israel before July?
+  48493388  0.6097  Will Israel regain control of all territory by Oct 9?
+  62192437  0.6097  Iran strike on Israel before November?
+  76818896  0.6098  Will Netanyahu say "Israel" 50+ times during address to UN General Assembly on S
+  67771487  0.6098  Gaza mass population relocation in 2025?
+  68024434  0.6098  Pacific vs. San Francisco
+  78554289  0.6099  Will Israel strike Gaza on November 7?
+  77860044  0.6099  Al-Selwady vs. Camilo
+  69255611  0.6101  Will Jerome Powell say "Ukraine" during the May meeting?
+  63971851  0.6102  Israel strikes Iranian oil in 2024?
+  77220854  0.6102  Will Israel strike Yemen 5 or more times by October 31?
+  53756444  0.6102  Ukraine aid package by March 31?
+  72288879  0.6103  Israel and Lebanon normalize relations in 2025?
+  74039549  0.6103  Will Israel strike Syria on July 17?
+  68184986  0.6104  Massachusetts vs. George Washington
+  57996513  0.6104  North Korea x South Korea military clash in June?
+  76219654  0.6104  Houthi strike on Israel by September 15?
+  78585599  0.6109  Israel x Hamas ceasefire cancelled by March 31, 2026?
+  77020640  0.6109  Will UEFA ban or suspend Israel by October 31?
+  78985234  0.6110  Will Israel launch a major ground offensive in Gaza by March 31?
+  48454753  0.6111  Will Israel regain control of all territory by Oct 8?
+  68265311  0.6112  Wyoming vs. Nevada
+  51705040  0.6112  Will Iran officially join the war before February?
+  48761895  0.6112  Will Israel launch a major ground offensive in Gaza on Monday?
+  78628344  0.6113  Will Japan recognize Palestine before 2027?
+  54849277  0.6113  Israel ground offensive in Rafah by April 30?
+  64046733  0.6113  Hamas leadership out of Qatar before Trump in office?
+  78897209  0.6113  Israel and Indonesia normalize relations by June 30, 2026?
+  72925221  0.6113  Terra Wortmann: Shapovalov vs. Cobolli
+  66079417  0.6114  Nuclear weapon detonation in 2025?
+  78630564  0.6114  Israel and Lebanon normalize relations before 2027?
+  72709713  0.6114  Iran ballistic missile strike on Israel by Friday?
+  69147224  0.6118  Liberty vs. Oregon
+  74843296  0.6118  Will Japan recognize Palestine in 2025?
+  57618038  0.6118  Israel withdraws from Gaza before September?
+  68603057  0.6120  Israel x Hamas ceasefire cancelled by Friday?
+  78565199  0.6121  Air Force vs. San Jose State
+  76821356  0.6121  Will Ukraine recapture Crimean territory by June 30, 2026?
+  55486418  0.6121  Iran response to Israel by Monday?
+  74234088  0.6121  Israel strike on Damascus by August 31?
+  67062785  0.6122  Ukraine lowers conscription age before May 9?
+  60920459  0.6122  Crimean bridge hit before September?
+  68607265  0.6123  Israel x Hamas ceasefire cancelled by next Friday?
+  60828322  0.6123  Iran military response before October?
+  76892837  0.6123  Israel strike on Yemen by October 1?
+  67537269  0.6124  Israel x Hamas Ceasefire Phase II by March 15?
+  78583939  0.6124  Israel strike on Yemen by November 30?
+  76292887  0.6124  Israel strike on Yemen by September 15?
+  75979424  0.6124  Israel strike on Yemen by September 15?
+  71188751  0.6124  Will Israel launch a major ground offensive in Gaza in May?
+  67547831  0.6125  U.S. forces in Gaza before April?
+  49504852  0.6126  Temporary ceasefire for hostages deal by Nov 10?
+  75942056  0.6126  Israel strike on Damascus by September 30?
+  65446378  0.6127  Will Army and Navy combine for 39 or more points?
+  69743726  0.6127  Will Black Sea ceasefire go into effect before May?
+  63520840  0.6127  Another Iran strike on Israel in 2024?
+  62504857  0.6128  Israel withdraws from Gaza before November?
+  76818897  0.6128  Will Netanyahu say "Palau" or "Paraguay" or "Hungary" during address to UN Gener
+  73415406  0.6129  Israel x Iran ceasefire broken by August 31?
+  65730068  0.6129  Will Ukraine join NATO before July?
+  78937474  0.6130  Will Israel strike Gaza on November 17?
+  60508336  0.6130  Will Ukraine hold Kursk through Aug 31?
+  74358795  0.6130  Thailand x Cambodia ceasefire by August 15?
+  48493399  0.6131  Will Israel regain control of all territory by Oct 10?
+  73137749  0.6131  Will Trump say "Iran / Israel" 15+ times during his NATO speech?
+  76940860  0.6131  Will Trump say Israel 7+ times during Netanyahu events on September 29?
+  71723189  0.6131  Will the Vatican host Russia-Ukraine peace talks before September?
+  48491181  0.6132  Will Israel regain control of all territory by Oct 15?
+  76526249  0.6133  Israel strike on Yemen by September 22?
+  72848196  0.6133  Terra Wortmann: Humbert vs. Shapovalov
+  76260782  0.6135  Fact Check: Did US Refuel Israeli Aircraft in the Qatar Strike?
+  78898679  0.6136  Thailand x Cambodia military engagement by March 31, 2026?
+  49429758  0.6140  Egypt accept >1k Gazan refugees by Nov 15?
+  76659068  0.6141  Israeli parliament dissolved by December 31?
+  75906750  0.6141  Army vs. Kansas State
+  78379282  0.6142  Will Russia capture Myrnohrad by November 7?
+  78380063  0.6142  Will Israel strike 0 countries in November 2025?
+  69207491  0.6142  Israel retaliates against Houthis in March?
+  77062681  0.6142  Will Israel strike 2 countries in October 2025?
+  73063611  0.6142  Terra Wortmann: Medvedev vs. Bublik
+  76818889  0.6143  Will Netanyahu say "Proxy" during address to UN General Assembly on Sept 26?
+  76940257  0.6144  Israel strike on Damascus by October 31?
+  72704759  0.6145  Will Iran declare war on Israel by Friday?
+  76940860  0.6145  Will Trump say Palestine during Netanyahu events on September 29?
+  75654349  0.6145  Israel x Iran ceasefire broken by September 30?
+  71439221  0.6146  Israel parliament dissolved in 2025?
+  74802220  0.6147  India x Pakistan military clash by August 31?
+  72808642  0.6148  Israel x Iran ceasefire before July?
+  74362823  0.6149  Israel x Iran ceasefire broken by October 31?
+  58599744  0.6149  Will Ukraine win?
+  58394959  0.6149  Will Ukraine win?
+  63321734  0.6149  Bears vs. Commanders
+  77317610  0.6149  Bears vs. Commanders
+  78630253  0.6151  Ukraine signs peace deal with Russia by March 31?
+  75806390  0.6151  Israel strike on Yemen by September 5?
+  67252402  0.6151  Israel and Saudi Arabia normalize relations in 2025?
+  77062690  0.6152  Will Israel strike 4 countries in October 2025?
+  55444328  0.6152  Will Ukraine join NATO in 2024?
+  78886028  0.6153  India x Pakistan military clash by November 30?
+  74396512  0.6154  Thailand x Cambodia ceasefire by July 31?
+  61943646  0.6156  Israel claims responsibility for Hezbollah pager attack?
+  67343298  0.6157  China x India military clash by June 30?
+  64662371  0.6158  UTSA vs. Army
+  63038528  0.6158  Panthers vs. Commanders
+  63208103  0.6159  Israel x Iran peace deal in 2024?
+  55598385  0.6159  Israel ground offensive in Rafah between April 13-19?
+  60080879  0.6160  Ukraine election scheduled in 2024?
+  55706860  0.6160  Israel military action against Iran by April 15?
+  51629361  0.6161  Will Ukraine receive F-16s by end of January?
+  63732164  0.6161  Iran strike on Israel before December?
+  76859637  0.6162  Russian strike on a NATO member by October 31?
+  76671833  0.6162  North Texas vs. Army: O/U 49.5
+  64662477  0.6162  Wyoming vs. Washington State
+  70671209  0.6164  India x Pakistan military clash before July?
+  78985239  0.6164  Russian strike on Poland by June 30?
+  78728700  0.6164  Will Russia capture all of Myrnohrad by December 31?
+  76785216  0.6165  Army vs. East Carolina
+  71029941  0.6165  Israel military action on Yemen before June?
+  71844539  0.6165  Israel military action on Yemen before June?
+  44999617  0.6168  Will Russia & Ukraine declare a ceasefire by EOY?
+  21977294  0.6168  Will Poland or the United Kingdom report a higher 7-day COVID-19 case average pe
+  52829759  0.6168  Israel x Hamas ceasefire before March?
+  46590098  0.6168  Will "Ukraine" be said 10 or more times in the RNC primary debate on August 23?
+  58834745  0.6171  Austria vs. Turkey - Who will advance?
+  62505993  0.6171  Crimean bridge hit before November?
+  73415406  0.6172  Israel x Iran ceasefire broken by July 31?
+  66774875  0.6172  Israel announces ceasefire by Sunday?
+  68184947  0.6173  Santa Clara vs. Washington State
+  62223003  0.6173  Will Zelensky say "Kursk" during his UN address?
+  78628253  0.6173  Israel and Saudi Arabia normalize relations before 2027?
+  76586012  0.6175  Spread: SEA (-7.5)
+  66774867  0.6176  Israel announces ceasefire by January 17?
+  63077058  0.6176  U.S. arms embargo on Israel in 2024?
+  77981382  0.6176  Illinois vs. Washington: O/U 54.5
+  60546040  0.6176  Will Ukraine hold Kursk through October 31?
+  77898140  0.6176  Israel strikes Gaza by October 31?
+  77513491  0.6176  Israel strikes Gaza by October 31?
+  77721466  0.6176  Israel strikes Gaza by October 31?
+  77062209  0.6177  Air Force vs. Navy
+  70296536  0.6179  Chinese soldier caught in Ukraine before May?
+  60232818  0.6180  Iran military response tonight?
+  78299982  0.6181  Israel x Hamas ceasefire cancelled by November 7?
+  66074168  0.6181  Israel x Hamas ceasefire by March 31?
+  69181333  0.6181  Israel x Hamas ceasefire by March 31?
+  62266527  0.6181  Israel x Hezbollah Ceasefire in September?
+  66599784  0.6182  Kraken vs. Jets
+  77387344  0.6182  Kraken vs. Jets
+  73996505  0.6182  Israel strike on Damascus by July 31?
+  51704851  0.6182  Hamas lose power in Gaza before February?
+  21090572  0.6183  Will Germany or Poland report a higher 7-day COVID-19 case average per capita on
+  68410636  0.6184  Israel withdraws from Syria before July?
+  67676150  0.6184  Northwestern vs. Washington
+  77062677  0.6185  Will Israel strike 1 country in October 2025?
+  76818890  0.6185  Will Netanyahu say "Antisemitic" or "Antisemitism" 5+ times during address to UN
+  77104922  0.6186  Will Ukraine recapture territory in Kucheriv Yar by October 31?
+  48843169  0.6187  Will Israel launch a major ground offensive in Gaza by Oct 31?
+  75736749  0.6187  Israel strike on Damascus by September 15?
+  60074756  0.6187  Israel military action against Iran in August?
+  69252036  0.6189  Israel x Hamas ceasefire before May?
+  54962058  0.6189  Israel x Hamas ceasefire before May?
+  67339763  0.6190  North Korea x South Korea military clash by June 30?
+  78631794  0.6191  NATO article 5 before 2027?
+  58004117  0.6192  Next Israel x Hamas ceasefire in August?
+  77898150  0.6193  Will Israel launch a major ground offensive in Gaza by October 31?
+  57083169  0.6193  Israel x Hamas ceasefire in May?
+  76818891  0.6194  Will Netanyahu say "Hamas" 15+ times during address to UN General Assembly on Se
+  73173412  0.6195  Israel x Iran ceasefire broken by July 11?
+  76818897  0.6195  Will Netanyahu say "October 7" or "October 7th" during address to UN General Ass
+  68105051  0.6197  Fresno State vs. Air Force
+  50815506  0.6197  Will "Ukraine" be said 8 or more times in the 4th RNC primary debate?
+  68024544  0.6200  Oregon vs. Wisconsin
+  77466362  0.6200  Israel x Hamas Ceasefire Phase II by October 31?
+  72333521  0.6200  Israel intercepts Greta Thunberg's ship before reaching Gaza?
+  64443701  0.6201  Crimean bridge hit before 2025?
+  60034343  0.6204  Iran military response by Monday?
+  61236313  0.6204  Iran military response by Monday?
+  72889492  0.6205  Terra Wortmann: Halys vs. Medvedev
+  78985241  0.6206  China x Philippines military clash before 2027?
+  72705353  0.6207  Will Israel declare war on Iran by Friday?
+  76818896  0.6208  Will Netanyahu say "Qatar" during address to UN General Assembly on Sept 26?
+  73421722  0.6208  Israel withdraws from Syria before October?
+  60237202  0.6209  UK civil war in 2024?
+  68162188  0.6209  US recognizes Russian sovereignty over Ukraine?
+  78886028  0.6210  India x Pakistan military clash by November 14?
+  65318132  0.6210  Will KJP say "Ukraine" during press briefing?
+  78380073  0.6210  Will Israel strike 2 countries in November 2025?
+  72081793  0.6210  Another Israel military action on Yemen in May?
+  71442799  0.6210  Another Israel military action on Yemen in May?
+  77632408  0.6210  Will Saudi Arabia vs. Iraq end in a draw?
+  65955347  0.6210  Israel x Hamas ceasefire by January 31?
+  53015105  0.6211  Ukraine aid package in February?
+  76535604  0.6212  Will Trump say "Israel" or "Gaza" or "Hamas" 7+ times during the Fox News interv
+  77062685  0.6213  Will Israel strike 3 countries in October 2025?
+  69181920  0.6213  Israel military action against Iran in March?
+  72282730  0.6214  Russia x Ukraine prisoner exchange by June 15?
+  72815698  0.6214  Israel announces end of military operations against Iran before July?
+  68866629  0.6216  Jets vs. Kraken
+  78972153  0.6219  Will Israel strike 4 countries in 2026?
+  77771859  0.6219  Washington State vs. Virginia: O/U 55.5
+  78972198  0.6219  Will Israel strike 13 countries in 2026?
+  78972138  0.6220  Will Israel strike 1 country in 2026?
+  78628344  0.6220  Will Germany recognize Palestine before 2027?
+  50422276  0.6221  Will the Hamas x Israel ceasefire last 8 days?
+  67850281  0.6221  Will Ukraine agree to give up Russian territory in Kursk?
+  73918039  0.6222  Israel strikes Yemen by Friday?
+  73634994  0.6222  Israel strikes Yemen by Friday?
+  73415425  0.6222  Israel strikes Yemen by Friday?
+  72936397  0.6223  Will Rutte say "Russia" or "Ukraine" 10+ times during NATO Public Forum Address 
+  78583918  0.6223  Israel strike on Yemen by December 31?
+  66424521  0.6223  Makhachev vs. Tsarukyan
+  67984035  0.6223  Sweden vs. USA
+  78898679  0.6223  Thailand x Cambodia military engagement by November 30, 2025?
+  77020612  0.6223  Will FIFA ban or suspend Israel in 2025?
+  72648337  0.6223  Israel military action against Iran before August?
+  78985234  0.6224  US recognizes Russian sovereignty over Ukraine before 2027?
+  76265147  0.6226  Polish strike on Russia by September 30?
+  74843296  0.6226  Will Germany recognize Palestine in 2025?
+  62223538  0.6226  Israel x Hezbollah Ceasefire in 2024?
+  78972143  0.6226  Will Israel strike 2 countries in 2026?
+  77091108  0.6230  Israel x Hamas ceasefire by October 3?
+  50499062  0.6230  Will the Hamas x Israel ceasefire last 10 days?
+  51626399  0.6233  Another Israel x Hamas ceasefire by Jan 15?
+  73666040  0.6233  Israel x Hamas ceasefire by Wednesday?
+  58004169  0.6233  Next Israel x Hamas ceasefire in October?
+  72843655  0.6236  Israel x Iran ceasefire before July 15?
+  47735656  0.6237  NATO article 5 by November 30?
+  74242752  0.6240  Israel strikes Syria by August 31?
+  75748731  0.6240  Israel strikes Syria by August 31?
+  70011572  0.6240  Will Trump say "Gaza" 10+ times during Netanyahu events today?
+  53998389  0.6243  Israel x Hamas ceasefire by Monday?
+  78897209  0.6244  Israel and Indonesia normalize relations by December 31, 2026?
+  77645242  0.6245  Wyoming vs. Air Force
+  78972163  0.6246  Will Israel strike 6 countries in 2026?
+  63595189  0.6248  Another Israeli military action against Iran in 2024?
+  48017870  0.6248  Will "Ukraine" be said 10 or more times in the 2nd RNC primary debate?
+  76260706  0.6249  Fact Check: Flotilla hit by Israeli drone?
+  74567639  0.6253  Will Germany airdrop aid into Gaza?
+  69731714  0.6254  Israel retaliates against Houthis before May?
+  58004205  0.6254  No Israel x Hamas ceasefire in 2024?
+  74359471  0.6256  Syria strikes Israel by August 31?
+  72565370  0.6257  Israel x Hamas ceasefire before August?
+  69052103  0.6258  East African countries agree to take 100k+ Gazan refugees before July?
+  67984169  0.6258  Air Force vs. Wyoming
+  60790439  0.6258  Israel x Hamas ceasefire before October?
+  68487714  0.6258  Will Volodymyr Zelenskyy say "War" 5+ times during his Baier interview?
+  54542039  0.6259  Israel ground offensive in Rafah by March 31?
+  78380068  0.6261  Will Israel strike 1 country in November 2025?
+  77898140  0.6264  Israel strikes Gaza by October 24?
+  71839042  0.6266  Russia x Ukraine prisoner swap before July?
+  76265147  0.6266  Russian strike on Poland by September 30?
+  58004105  0.6266  Next Israel x Hamas ceasefire in July?
+  78929794  0.6268  Jets vs. Kraken: O/U 5.5
+  77354937  0.6269  Will Iraq vs. Indonesia end in a draw?
+  76818895  0.6271  Will Netanyahu say "Human Shield" during address to UN General Assembly on Sept 
+  78379942  0.6272  Russian strike on a NATO member by December 31?
+  75377529  0.6272  Israel x Hamas ceasefire by October 31?
+  49902959  0.6272  Will Israel announce 24h+ humanitarian pause by Nov 30?
+  55598370  0.6273  Israel ground offensive in Rafah between April 8-12?
+  25743501  0.6276  Will NATO declare a No Fly-Zone over any Ukrainian territory by April 30, 2022?
+  77418478  0.6276  Navy vs. Temple: O/U 53.5
+  76785288  0.6276  Spread: Air Force (-6.5)
+  48447564  0.6276  Israel and Hamas ceasefire by Oct 31?
+  73951694  0.6276  Israel x Hamas ceasefire by August 31?
+  48958435  0.6278  Will Israel launch a major ground offensive in Gaza by Sunday?
+  57801489  0.6278  Iran response to Israel by Sunday?
+  55743222  0.6278  Iran response to Israel by Sunday?
+  69252043  0.6279  Israel x Hamas ceasefire before July?
+  57725709  0.6279  Israel x Hamas ceasefire before July?
+  74362823  0.6279  Israel x Iran ceasefire broken by December 31?
+  78972188  0.6279  Will Israel strike 11 countries in 2026?
+  63771158  0.6281  Will Army and Air Force combine for 42 or more points?
+  73951684  0.6282  Israel x Hamas ceasefire by August 15?
+  78972936  0.6282  Ukraine election held by December 31, 2026?
+  70430988  0.6282  Will Black Sea ceasefire go into effect before July?
+  78379712  0.6283  Israel x Hamas Ceasefire Phase II by November 30?
+  72695994  0.6284  Israel military action against Iran by Monday?
+  71478202  0.6285  Will Israel launch a major ground offensive in Gaza by Friday?
+  48760129  0.6285  Will Israel launch a major ground offensive in Gaza by Friday?
+  78972148  0.6285  Will Israel strike 3 countries in 2026?
+  76821365  0.6287  Ukraine recognizes Russian sovereignty over its territory by June 30, 2026?
+  77384667  0.6287  Israel strike on Damascus by December 31?
+  63208143  0.6287  Israel withdraws from Gaza in 2024?
+  77898150  0.6287  Will Israel launch a major ground offensive in Gaza by December 31?
+  50501204  0.6288  Will Israel launch a major ground offensive in South Gaza by Dec 8?
+  55592982  0.6288  Iran response to Israel by Friday?
+  55332772  0.6288  Iran response to Israel by Friday?
+  52898459  0.6289  US/Iran declare war before March?
+  78972158  0.6290  Will Israel strike 5 countries in 2026?
+  78380078  0.6290  Will Israel strike 3 countries in November 2025?
+  67849070  0.6291  Israel x Egypt sever diplomatic relations before July?
+  78863011  0.6291  Israel x Syria security agreement by January 31?
+  69731695  0.6292  Israel military action against Iran before July?
+  72288880  0.6292  Israel military action against Iran before 2026?
+  60949967  0.6294  Commanders vs. Patriots
+  74919882  0.6294  Commanders vs. Patriots
+  77020904  0.6296  Israel x Hamas ceasefire by October 10?
+  78972203  0.6297  Will Israel strike 14 countries in 2026?
+  78641471  0.6297  Israel x Iran ceasefire broken by March 31, 2026?
+  75081936  0.6301  Will JD Vance say "Ukraine" or "Russia" 5+ times during his remarks to US troops
+  74396512  0.6302  Thailand x Cambodia ceasefire by Sunday, July 27?
+  75285284  0.6303  Will Trump say "Russia" or "Ukraine" 15+ times during Zelensky events on August 
+  78982500  0.6303  Will Ukraine agree to cede territory to Russia before 2027?
+  69210916  0.6304  Energy infrastructure ceasefire in Ukraine in March?
+  67342989  0.6304  China x Philippines military clash by December 31?
+  76586012  0.6309  NO vs. SEA: O/U 53.5
+  53799157  0.6309  Israel ground offensive in Rafah by March 15?
+  68866561  0.6309  Air Force vs. UNLV
+  77346452  0.6309  Air Force vs. UNLV
+  67787965  0.6309  Air Force vs. UNLV
+  74295461  0.6310  North Korea x South Korea military clash by August 31?
+  78897299  0.6310  Israel and Syria normalize relations by June 30, 2026?
+  72704797  0.6311  Israel military action against Iran in July?
+  78972183  0.6311  Will Israel strike 10 countries in 2026?
+  76785288  0.6311  Hawaii vs. Air Force
+  49666465  0.6313  Will "Ukraine" be said 10 or more times in the 3rd RNC primary debate?
+  74563328  0.6313  Israel x Hamas ceasefire by September 30?
+  75411259  0.6314  Israel x Hamas ceasefire by August 23?
+  51095621  0.6315  US call for Gaza ceasefire before February?
+  75698625  0.6315  Russia announces air truce by September 30?
+  74242752  0.6318  Israel strikes Syria by July 31?
+  74883813  0.6318  Russia announces air truce by August 31?
+  77017512  0.6320  Successful Ukrainian counterattack in Donbass by October 31?
+  52752780  0.6322  Border + Ukraine aid deal by Feb 9?
+  73011784  0.6324  Terra Wortmann: Bublik vs. Khachanov
+  78249557  0.6325  Army vs. Air Force: 1H Moneyline
+  68925434  0.6326  Will Ukraine agree to cede territory to Russia in 2025?
+  67892204  0.6326  Ukraine election held by December 31, 2025?
+  78972193  0.6327  Will Israel strike 12 countries in 2026?
+  77428193  0.6327  Will Trump establish a Gaza “Board of Peace” in 2025?
+  78380083  0.6327  Will Israel strike 4 or more countries in November 2025?
+  75208895  0.6329  Russia x Ukraine prisoner exchange by August 31?
+  76257828  0.6330  Qatar strike on Israel by September 30?
+  62223032  0.6331  Will Zelensky say "peace" 3 or more times during his UN address?
+  77557351  0.6331  Will Trump say "8 Wars" during Egypt summit?
+  69207489  0.6333  Israel retaliates against Houthis by Friday?
+  78630274  0.6335  Ukraine signs peace deal with Russia before 2027?
+  70752516  0.6335  Russia x Ukraine ceasefire before June?
+  78898680  0.6338  Thailand x Cambodia military engagement by December 31, 2025?
+  74086564  0.6338  Syria strikes Israel by July 31?
+  72081793  0.6338  Another Israel military action on Yemen before July?
+  72608945  0.6338  Another Israel military action on Yemen before July?
+  78985240  0.6341  China x Taiwan military clash before 2027?
+  77766459  0.6341  Wyoming vs. Air Force: O/U 59.5
+  76671764  0.6342  Washington vs. Washington State: O/U 51.5
+  77485711  0.6343  Air Force vs. UNLV: O/U 64.5
+  76893092  0.6344  Israel x Syria security agreement by October 31?
+  76508652  0.6345  Slavia Praha vs. Bodo/Glimt: O/U 3.5
+  57536850  0.6345  Israel military action against Iran by end of 2024?
+  58004129  0.6345  Next Israel x Hamas ceasefire in September?
+  49345494  0.6346  Patriots vs. Commanders
+  73223306  0.6346  Israel x Hamas ceasefire by July 15?
+  59558102  0.6347  Israel military action against Yemen by Monday?
+  78972173  0.6347  Will Israel strike 8 countries in 2026?
+  76257819  0.6348  Israel strike on Gulf State by September 30?
+  75658741  0.6348  Israel x Syria security agreement by September 30?
+  77478914  0.6349  Israel x Hamas Ceasefire Phase II by December 31?
+  66150952  0.6351  Israel withdraws from Gaza in 2025?
+  74563310  0.6351  Israel x Hamas ceasefire by September 15?
+  77062695  0.6352  Will Israel strike 5 or more countries in October 2025?
+  77374968  0.6353  Bears vs. Commanders: O/U 50.5
+  60119847  0.6355  Iran military response by Sunday?
+  75733474  0.6357  Successful Ukrainian counterattack in Donbass by September 15?
+  76375249  0.6359  Successful Ukrainian counterattack in Donbass by September 30?
+  77214741  0.6359  Fighting Camels vs. Wolfpack: O/U 55.5
+  78565210  0.6360  Spread: Army (-6.5)
+  77213598  0.6360  Spread: Army (-6.5)
+  75092966  0.6362  Ukraine signs peace deal with Russia in 2025?
+  78384542  0.6363  Spread: Army (-0.5)
+  51492348  0.6363  Jets vs. Commanders
+  60317908  0.6363  Jets vs. Commanders
+  78863011  0.6366  Israel x Syria security agreement by November 30?
+  78671345  0.6368  Will Donald Trump say "Israel / Gaza" 6+ times during Syria President events on 
+  74802220  0.6368  India x Pakistan military clash by Friday?
+  72889583  0.6368  Terra Wortmann: Bergs vs. Khachanov
+  78565209  0.6369  Temple vs. Army
+  58004180  0.6369  Next Israel x Hamas ceasefire in November?
+  49221562  0.6369  Israel and Hamas ceasefire by Nov 30?
+  57533754  0.6370  Israel x Hamas ceasefire before September?
+  72808639  0.6371  Israel x Iran ceasefire by Friday?
+  62222771  0.6371  Will Zelensky say "Russia" 10 or more times during his UN address?
+  77340228  0.6372  Will Trump say "Seven wars" during events with PM of Canada on Oct 7?
+  60015288  0.6374  Iran military response today?
+  34628961  0.6378  Will there be a negotiated settlement between Russia and Ukraine by Dec 31?
+  67339180  0.6380  China x Taiwan military clash by December 31?
+  78628473  0.6383  Ukraine agrees not to join NATO before 2027?
+  77331336  0.6383  Will Russia vs. IR Iran end in a draw?
+  78972168  0.6383  Will Israel strike 7 countries in 2026?
+  67625915  0.6384  Ireland, Norway, or Spain accepts Gazan refugees in February?
+  76371726  0.6385  Another Russian incursion in Polish airspace by September 30?
+  61071022  0.6387  Iran military response by Friday?
+  61383128  0.6387  Iran military response by Friday?
+  60626863  0.6387  Iran military response by Friday?
+  60268752  0.6387  Iran military response by Friday?
+  60016164  0.6387  Iran military response by Friday?
+  60470629  0.6387  Iran military response by Friday?
+  71157166  0.6388  Israel x Hamas ceasefire before 2026?
+  77838441  0.6389  Wyoming vs. Air Force: O/U 57.5
+  77502627  0.6394  Israel strikes Gaza by October 17?
+  77721465  0.6394  Israel strikes Gaza by October 17?
+  73951432  0.6398  Israel x Hamas ceasefire by July 22?
+  78972178  0.6399  Will Israel strike 9 countries in 2026?
+  63070901  0.6400  North Korea x South Korea military clash in 2024?
+  73131129  0.6400  Qatar military action against Iran by Friday?
+  78985235  0.6401  China x India military clash by December 31, 2026?
+  74234083  0.6402  Israel withdraws from Syria in 2025?
+  77418490  0.6403  Air Force vs. UNLV: O/U 65.5
+  76940865  0.6407  Will Trump say Gaza 5+ times during Netanyahu events on September 29?
+  76938122  0.6407  Another Russian incursion in Polish airspace by October 31?
+  63887488  0.6408  Israel military strike against Iran in November?
+  62509333  0.6408  Israel declares war on Iran in October?
+  76940173  0.6410  Russian strike on Poland by December 31?
+  76671831  0.6411  Spread: Army (-3.5)
+  74242775  0.6412  Israel strikes Syria by Friday?
+  77417566  0.6414  Bears vs. Commanders: O/U 49.5
+  48842655  0.6415  Israel or Palestine responsible for Gaza hospital explosion?
+  78972208  0.6415  Will Israel strike 15 or more countries in 2026?
+  68265279  0.6416  Washington vs. Wisconsin
+  72704806  0.6416  Israel announces end of military operations against Iran by Friday?
+  70303040  0.6420  Russia x Ukraine ceasefire before October?
+  78580728  0.6420  Temple vs. Army: 1H O/U 22.5
+  78855219  0.6423  Will Trump say "Israel" or "Gaza" 7+ times during Saudi PM events on November 18
+  61467039  0.6426  Ukraine strike on Moscow by September 30?
+  77464142  0.6426  Spread: Army (-18.5)
+  65258810  0.6427  Navy vs. Army
+  73220040  0.6428  Israel x Syria security deal before September?
+  75129085  0.6429  Successful Ukrainian counterattack in Donbass?
+  50620000  0.6429  Another Israel x Hamas ceasefire in 2023?
+  48529887  0.6429  Israel and Hamas ceasefire in 2023?
+  68890454  0.6430  EU/NATO country announces peacekeeping force in Ukraine in 2025?
+  78897299  0.6431  Israel and Syria normalize relations by December 31, 2026?
+  67624168  0.6432  Ukraine recognizes Russian sovereignty over its territory by December 31, 2025?
+  74359476  0.6432  Syria strikes Israel by December 31?
+  60304033  0.6433  Israel x Hamas ceasefire in 2024?
+  74405984  0.6439  Humanitarian airdrops over Gaza by August 8?
+  67547829  0.6440  U.S. forces in Gaza before July?
+  66387305  0.6441  Israel x Egypt sever diplomatic relations before February?
+  74031852  0.6441  Syria strikes Israel by Friday?
+  76465143  0.6443  Washington vs. Washington State
+  58004196  0.6445  Next Israel x Hamas ceasefire in December?
+  77645226  0.6446  Washington vs. Michigan
+  78898509  0.6448  Turkish forces in Gaza in 2025?
+  67788916  0.6451  Army vs. Navy
+  67623952  0.6451  Ukraine agrees not to join NATO in 2025?
+  77020895  0.6452  Israel x Hamas ceasefire by October 17?
+  51092011  0.6453  Another Israel x Hamas ceasefire before February?
+  71188752  0.6453  Another Israel military action on Yemen by Friday?
+  71154791  0.6453  Another Israel military action on Yemen by Friday?
+  71720010  0.6453  Another Israel military action on Yemen by Friday?
+  71514331  0.6453  Another Israel military action on Yemen by Friday?
+  53599086  0.6455  Israel ground offensive in Rafah by Friday?
+  78677931  0.6455  Temple vs. Army: O/U 45.5
+  76576044  0.6461  Israel x Syria security agreement by December 31?
+  69181914  0.6461  Israeli military action against Iran by Friday?
+  55836384  0.6462  Israel military action against Iran by Friday?
+  72649353  0.6462  Israel military action against Iran by Friday?
+  62189539  0.6463  Israel military action against Yemen before November?
+  62505373  0.6463  Israel military action against Yemen before November?
+  62549868  0.6465  Israel military response against Iran in October?
+  78566327  0.6465  Temple vs. Army: 1H O/U 23.5
+  71025623  0.6466  Russia-Ukraine Ceasefire before GTA VI?
+  78409111  0.6468  Will Trump say "Russia" or "Ukraine" 12+ times during Hungary PM events on Novem
+  69012558  0.6470  Russia x Ukraine Ceasefire in March?
+  54962020  0.6471  Muslim group responsible for Moscow attack?
+  68747360  0.6484  Oregon vs. Washington
+  72288880  0.6484  Israel and Syria normalize relations by December 31, 2025?
+  57346021  0.6485  Ceasefire between Russia and Ukraine before October?
+  69181334  0.6488  Israel x Hamas ceasefire by Friday?
+  73463710  0.6488  Israel x Hamas ceasefire by Friday?
+  72287755  0.6488  Israel x Hamas ceasefire by Friday?
+  73674698  0.6488  Israel x Hamas ceasefire by Friday?
+  74242780  0.6488  Israel x Hamas ceasefire by Friday?
+  75285287  0.6489  Will Trump say "Crimea" or "Donetsk" during Zelensky events on August 18?
+  63595233  0.6492  Another Israeli military action against Iran before the election?
+  78721131  0.6492  Spread: Army (-7.5)
+  77062228  0.6492  Spread: Army (-7.5)
+  77503268  0.6500  Will Trump say "Eight Wars" during speech to Israeli Parliament on October 13?
+  74520150  0.6501  U.S. forces in Gaza in 2025?
+  62505888  0.6503  Ukraine strike on Moscow before November?
+  66079447  0.6504  Ukraine joins NATO in 2025?
+  67343304  0.6506  China x India military clash by December 31?
+  43636718  0.6508  Will Ukraine sever the land bridge between Crimea and Russia before Nov 1?
+  73059807  0.6511  Israeli ground operation against Fordow before August?
+  75654273  0.6515  Ukraine hits Moscow by September 30?
+  78409111  0.6515  Will Trump say "Eight Wars" during Hungary PM events on November 7?
+  76940192  0.6517  Israel strike on Gulf State by December 31?
+  61157689  0.6519  Ukraine hits Moscow by Sept 30?
+  76535058  0.6520  Will Trump say "Israel" or "Gaza" 7+ times during events with UK Prime Minister 
+  77557350  0.6521  Will Trump say "Russia" or "Ukraine" during Egypt summit?
+  68488724  0.6523  Trump severs ties with Ukraine before May?
+  62508612  0.6526  Israel military response against Iran today?
+  62546512  0.6526  Israel military response against Iran today?
+  62553740  0.6526  Israel military response against Iran today?
+  56136213  0.6530  Palestine a UN member state before U.S. election?
+  60920190  0.6531  Ukraine hits Moscow by August 31?
+  74362880  0.6531  Ukraine hits Moscow by August 31?
+  67018271  0.6531  Russia x Ukraine ceasefire before July?
+  71122679  0.6538  Israel military action on Yemen by Friday?
+  78632384  0.6548  U.S. forces in Gaza before 2027?
+  61908201  0.6550  Israel military action against Yemen by Friday?
+  67339780  0.6553  North Korea x South Korea military clash by December 31?
+  78671345  0.6556  Will Donald Trump say "Ukraine / Russia" 5+ times during Syria President events 
+  62635820  0.6557  Israel military response against Iran by Sunday?
+  78585563  0.6570  Ukraine hits Moscow by November 30?
+  62508692  0.6573  Israel military response against Iran by Friday?
+  63207373  0.6573  Israel military response against Iran by Friday?
+  62546912  0.6573  Israel military response against Iran by Friday?
+  62837327  0.6573  Israel military response against Iran by Friday?
+  78632854  0.6576  Ukraine joins NATO before 2027?
+  75377548  0.6585  Russia x Ukraine ceasefire by October 31?
+  74887636  0.6586  Russia x Ukraine ceasefire by August 15?
+  64443693  0.6588  Ukraine hits Moscow before 2025?
+  77346468  0.6598  Spread: Army (-17.5)
+  77979313  0.6599  Russia x Ukraine ceasefire by November 30?
+  76254227  0.6602  Another Israel military action against Qatar by September 30?
+  74887635  0.6607  Russia x Ukraine ceasefire by August 31?
+  63966976  0.6612  Trump ends Ukraine war before inauguration?
+  74370192  0.6617  Russia x Ukraine ceasefire by end of 2026?
+  61901668  0.6618  Russia x Ukraine Ceasefire in 2024?
+  51055731  0.6623  Ceasefire between Russia and Ukraine by June 30?
+  73816646  0.6627  Russia x Ukraine ceasefire by March 31, 2026?
+  54030393  0.6631  NATO/EU troops fighting in Ukraine before July?
+  78280150  0.6634  Army vs. Air Force: O/U 48.5
+  75411259  0.6635  Russia x Ukraine ceasefire by August 23?
+  78240948  0.6638  US x Russia military clash by June 30, 2026?
+  64662315  0.6639  Washington vs. Oregon
+  63364243  0.6652  Trump ends Ukraine war in first 90 days?
+  76818016  0.6659  NATO/EU troops fighting in Ukraine in June 30, 2026?
+  76652660  0.6664  Will Trump say "Seven Wars" during address to UN General Assembly on September 2
+  63047050  0.6670  Israel military action against Iraq before November?
+  69012548  0.6676  Russia x Ukraine Ceasefire by Friday?
+  68927797  0.6676  Russia x Ukraine Ceasefire by Friday?
+  77633211  0.6677  Ukraine Tomahawk missile strike by December 31?
+  68642941  0.6683  Sea/Air ceasefire in Ukraine before May?
+  66079733  0.6691  Russia x Ukraine ceasefire in 2025?
+  76027514  0.6696  Israel military action against Qatar in 2025?
+  78330546  0.6699  Army vs. Air Force: 1H O/U 24.5
+  73995377  0.6705  Ukraine hits Moscow by July 31?
+  78249557  0.6705  Army vs. Air Force: 1H O/U 23.5
+  48530569  0.6707  Israeli troops on the ground in Gaza by the end of this week?
+  76818007  0.6716  Ukraine hits Moscow by December 31?
+  77681148  0.6721  Will Trump say "Eight Wars" or "Nine Wars" during events with the President of U
+  77467553  0.6727  NATO x Russia military clash by March 31, 2026?
+  62634582  0.6728  Israel military action against Iraq by Sunday?
+  66737704  0.6735  Russia x Ukraine ceasefire by February 1?
+  72815708  0.6737  Iran x Israel conflict ends before July?
+  68891575  0.6739  Will Ukraine take responsibility for X attack by Friday?
+  62758735  0.6754  Israel military action against Iraq by Friday?
+  63961038  0.6785  Trump ends Gaza war in first 100 days?
+  54964328  0.6820  Ukraine responsible for Moscow attack?
+  67386523  0.6825  NATO/EU troops fighting in Ukraine in 2025?
+  64170914  0.6826  Israel military action against Iraq before December?
+  76816060  0.6837  NATO x Russia military clash in 2025?
+  76361056  0.6862  Israel strikes 3 different countries by September 30?
+  78633884  0.6868  Foreign intervention in Gaza by March 31?
+  48489320  0.6882  Will another nation declare war in the Israel-Hamas conflict?
+  72705240  0.6918  Iran x Israel conflict ends by Friday?
+  78070412  0.6926  Will the Israel–Iran conflict be the #1 searched news on Google this year?
+  76371660  0.6936  Russia x Ukraine buffer zone agreement by December 31?
+  77729757  0.6948  Foreign intervention in Gaza in 2025?
+  69768564  0.7001  Israel x Turkey military clash in 2025?
+  72086624  0.7018  US x Russia military clash by December 31?
+  78632314  0.7024  Israel x Turkey military clash before 2027?
+  61067993  0.7025  Belarus x Ukraine military clash by Sep 30?
+  75077699  0.7026  Gaza or Ukraine ceasefire first?
+  78070417  0.7119  Will the Gaza–Israel conflict be the #1 searched news on Google this year?

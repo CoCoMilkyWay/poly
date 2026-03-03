@@ -1,0 +1,195 @@
+# Society - Society_Miscellaneous
+# count=192, avg_conf=0.5457
+====================================================================================================
+  70659293  0.4722  Will Volodymyr Zelenskyy attend Pope Francis' funeral?
+  77346796  0.4770  Will Thomas Pynchon win the 2025 Nobel Prize in Literature?
+  14457888  0.4814  Will Pablo Picasso’s “Femme assise près d'une fenêtre (Marie-Thérèse)” sell for 
+  77346805  0.4867  Will Hélène Cixous win the 2025 Nobel Prize in Literature?
+  60001224  0.4880  Will Beirut airport close by August 5?
+  71644512  0.4918  Any more New Orleans escapees captured before Monday?
+  71714275  0.4949  Any more New Orleans escapees captured by Wednesday?
+  52174788  0.4975  Will they find another Jewish tunnel in NYC by Monday?
+  78546997  0.5017  Will Claude pass Grok by November 15 on the UnifAI Polyarena?
+  65087795  0.5018  Lily Phillips sex event cancelled?
+  38749328  0.5048  Will more than 2.2 million people travel through a TSA checkpoint on any day by 
+  77346800  0.5054  Will Anne Carson win the 2025 Nobel Prize in Literature?
+  78241173  0.5074  Will Evelyn rank #1 among girl names on the SSA’s official list for 2025?
+  72039446  0.5083  Any more New Orleans escapees captured by Friday?
+  71714275  0.5083  Any more New Orleans escapees captured by Friday?
+  31215387  0.5089  Will there be more than 10,000 Monkeypox cases in the USA by August 1, 2022?
+  21221204  0.5121  Will Pablo Picasso's “Femme accroupie en costume turc II (Jacqueline)” (Lot 44C)
+  21222379  0.5122  Will Willem do Kooning's “Untitled VII” (Lot 40C) sell for more than $12m at Chr
+  14729491  0.5127  Will Pablo Picasso’s “Nu couché à la libellule” sell for more than HK$68M at Chr
+  76098641  0.5131  Will "L’étranger (The Stranger)" win the 2025 Golden Lion?
+  72126480  0.5132  Nothing Ever Happens: June
+  78942496  0.5135  Will the total number of TSA passengers for November 23-30 be between 22,000,000
+  77951573  0.5141  Will the Empress Eugénie brooch be recovered by October 31?
+  70751464  0.5144  Nothing Ever Happens: May
+  27143428  0.5147  Will Andy Warhol’s 'Shot Sage Blue Marilyn' sell at Christie's for $200 million 
+  25056425  0.5150  Will more than 2 million people travel through a TSA checkpoint on any day on or
+  78295211  0.5159  Will another Louvre heist robber be arrested by October 31?
+  41762024  0.5163  Will Stephen King still have a Blue checkmark on 4/21?
+  21219057  0.5163  Will Paul Cezanne's “L'Estaque aux toits rouges” (Lot 10C) sell for more than $5
+  14451705  0.5172  Will Joan Miró’s “Femme (Femme debout)” sell for more than $10 million at Christ
+  71644512  0.5172  All New Orleans escapees captured by Friday?
+  14407955  0.5173  Will Robert Colescott’s “George Washington Carver Crossing the Delaware” sell fo
+  51392684  0.5175  Will Maersk resume shipping through Red Sea by June 30?
+  56128657  0.5182  Columbia resumes in-person classes by Wed?
+  75411344  0.5191  Will Carney visit Halifax by October 31?
+  32316821  0.5191  Will more than 2.5 million people travel through a TSA checkpoint on any day by 
+  78942491  0.5191  Will the total number of TSA passengers for November 23-30 be between 20,000,000
+  23056968  0.5195  Will more than 2.10 million people travel through a TSA checkpoint on any day be
+  78942512  0.5198  Will the total number of TSA passengers for November 23-30 be between 24,000,000
+  78942486  0.5202  Will the total number of TSA passengers for November 23-30 be between 18,000,000
+  62792498  0.5211  Will someone else win the Nobel prize in literature?
+  17542984  0.5211  Will more than 2.3 million people travel through a TSA checkpoint on any day on 
+  77895890  0.5235  Will any Louvre heist robbers be arrested by October 19?
+  69455150  0.5241  Will Ashton Hall post another facial Ice Bath by Friday?
+  26499641  0.5243  Will more than 2 million people travel through a TSA checkpoint on 7 consecutive
+  77895890  0.5248  Will any Louvre heist robbers be arrested by October 24?
+  56204755  0.5251  Will Beeple's Everyday Feature a Penis Today?
+  77895889  0.5254  Will any Louvre heist robbers be arrested by October 20?
+  29571709  0.5256  Will more than 2.4 million people travel through a TSA checkpoint on any day on 
+  78728601  0.5257  Will more than 2.8 million people travel through a TSA checkpoint on any day by 
+  14451585  0.5260  Will Pablo Picasso’s “Femme dans un fauteuil” sell for more than $20 million at 
+  73816654  0.5261  Will there be at least 1400 measles cases in the U.S. in 2025?
+  16823038  0.5263  Will more than 2.3 million people travel through a TSA checkpoint on any day on 
+  71842612  0.5264  All New Orleans escapees captured in May?
+  55329595  0.5266  Port of Baltimore temporary channel open by April 15?
+  14497082  0.5270  Will Henry Moore's “Girl: Bust” sell for more than $1 million at Christie’s?
+  68360465  0.5276  Luigi Mangione mistrial?
+  77895890  0.5279  Will any Louvre heist robbers be arrested by October 31?
+  29118572  0.5279  Will more than 2.4 million people travel through a TSA checkpoint on any day on 
+  30607682  0.5282  Will more than 2.5 million people travel through a TSA checkpoint on any day bef
+  65646639  0.5286  Mystery drones shot down in 2024?
+  27610181  0.5288  Will more than 2.4 million people travel through a TSA checkpoint on any day on 
+  31441447  0.5292  Will more than 2.5 million people travel through a TSA checkpoint on any day by 
+  78942502  0.5294  Will the total number of TSA passengers for November 23-30 be greater than 26,00
+  65358492  0.5297  Luigi Mangione not extradited to New York by February?
+  28715546  0.5308  Will more than 2.4 million people travel through a TSA checkpoint on any day on 
+  14614639  0.5310  Will more than 2.25 million people travel through a TSA checkpoint on any day on
+  16028820  0.5312  Will FEWOCiOUS’s “His Name Is Victor” have a final sale price of more than $500K
+  78942481  0.5315  Will the total number of TSA passengers for November 23-30 be less than 18,000,0
+  15292004  0.5320  Will more than 2 million people travel through a TSA checkpoint on any day on or
+  71235982  0.5328  Will the Black Woman statue be removed from Times Square early?
+  35206864  0.5328  The Thiel Parlay
+  37111755  0.5332  Will more than 2.5 million people travel through a TSA checkpoint on any day by 
+  55295655  0.5333  Will the Port of Baltimore reopen in April?
+  14409539  0.5334  Will Andy Warhol’s “Marilyn Monroe” sell for more than $3 million at Sotheby’s?
+  65289836  0.5341  Luigi Mangione extradited to New York before 2025?
+  68024509  0.5344  Saint Peter's vs. Mt. St. Mary's
+  77951572  0.5346  Will the Tiara of Empress Eugénie be recovered by October 31?
+  76019752  0.5352  Will there be between 1800 and 1849 measles cases in the U.S. on December 31?
+  73665061  0.5362  Xi Jinping seen in public by Friday?
+  49106889  0.5363  Will Cruise relaunch driverless taxis in SF by EoY?
+  55295689  0.5377  Will the Port of Baltimore reopen in July?
+  17944157  0.5399  Will more than 2.5 million people travel through a TSA checkpoint on any day on 
+  12952483  0.5400  Will more than 1.75 million people travel through a TSA checkpoint on any day on
+  21726594  0.5403  Will more than 3.45 million people travel via New York City subway on any day be
+  61661735  0.5403  Biden at the beach for 5+ workdays in September?
+  22828951  0.5403  Will more than 2.25 million people travel through a TSA checkpoint on any day be
+  65358873  0.5407  New Jersey mystery drones from foreign country?
+  20460295  0.5408  Will more than 2.05 million people travel through a TSA checkpoint on Friday, Oc
+  21222209  0.5408  Will Edward Hopper's “Two Puritans” (Lot 39C) sell for more than $15m at Christi
+  69772104  0.5409  1,000+ Measles cases in U.S. before May?
+  74247669  0.5420  Will None in 2025 occur?
+  14451662  0.5420  Will Andy Warhol’s “Two Marilyns” sell for more than $18 million at Christie’s?
+  77951573  0.5420  Will any piece of the Sapphire set be recovered by October 31?
+  55295677  0.5428  Will the Port of Baltimore reopen in June?
+  25124194  0.5429  Will more than 2.5 million people travel through a TSA checkpoint on any day on 
+  14409611  0.5431  Will Hockney’s “Self-Portrait on the Terrace” sell for more than $12 million at 
+  68362118  0.5432  Will FYRE Festival 2 sell out?
+  62226719  0.5435  Will Beeple's Everyday feature SBF and Diddy today?
+  68451289  0.5436  Andrew Tate extradited to Romania before May?
+  51428618  0.5438  Will 'The Color Purple' gross over $20m on Christmas Day?
+  15722240  0.5449  Will more than 2.25 million people travel through a TSA checkpoint on any day on
+  77951382  0.5450  Will any Louvre heist robbers be arrested by December 31?
+  21223036  0.5453  Will Joan Miro's "Peinture poème” (Lot 71C) sell for more than $12m at Christie’
+  77020848  0.5454  Evidence Elon Musk went to Epstein's Island made public in 2025?
+  64798447  0.5455  Will a balloon deflate during the 2024 Macy's Thanksgiving Day Parade?
+  21221552  0.5455  Will Pablo Picasso's “Homme à la pipe” (Lot 58C) sell for more than $20m at Chri
+  55295698  0.5456  Will the Port of Baltimore reopen in August or later?
+  12373838  0.5457  Will more than 1.75 million people travel through a TSA checkpoint on any day on
+  76019724  0.5461  Will there be fewer than 1550 measles cases in the U.S. on December 31?
+  21219398  0.5462  Will Alfred Sisley's “La Seine à Argenteuil” (Lot 5C) sell for more than $3m at 
+  71720057  0.5465  Biden seen in public before June?
+  69534889  0.5482  700+ Measles cases in U.S. before May?
+  64807057  0.5483  The Thanksgiving Special
+  21222105  0.5486  Will Claude Monet's “Au jardin, la famille de l’artiste” (Lot 41C) sell for more
+  21219231  0.5498  Will Vincent van Gogh's “Jeune homme au bleuet” (Lot 20C) sell for more than $7m
+  66783214  0.5515  Will there be 500-600k rides on the DC metro on Jan 20?
+  66783230  0.5524  Will there be 600-700k rides on the DC metro on Jan 20?
+  43024120  0.5530  Will 'The Little Mermaid' gross over $120 million on Memorial Day weekend?
+  16028736  0.5544  Will FEWOCiOUS’s “My Mama’s Dream” have a final sale price of more than $700K at
+  68362639  0.5545  Will an Erewhon open in NYC in 2025?
+  70874646  0.5550  Will U.S. tourism decline in April?
+  21219300  0.5557  Will Claude Monet's “Le bassin d'Argenteuil” (Lot 15C) sell for more than $25m a
+  14497105  0.5558  Will Marc Chagall’s “Les trois bouquets” sell for more than $1 million at Christ
+  19841311  0.5559  Will there be a named tropical system Wanda that forms before November 1st, 2021
+  72969398  0.5565  Record low border encounters in June?
+  78942153  0.5567  >3.1 million TSA travelers any day November 23-30?
+  65993322  0.5570  Will another person win Cracker of the Year?
+  14451744  0.5573  Will Georges Seurat's “Paysage et personnages” sell for more than $8 million at 
+  54960205  0.5574  Do Kwon extradited before May?
+  73127361  0.5575  Will Jony Ive join Meta before August?
+  14086218  0.5577  Will more than 1.75 million people travel through a TSA checkpoint on any day on
+  77951573  0.5578  Will the Empress Eugénie decorative bow be recovered by October 31?
+  61707084  0.5584  Another Biden beach day in September?
+  28002777  0.5599  Will Andy Warhol's Self Portrait sell for more than $16 million at Sotheby's?
+  21219124  0.5608  Will Vincent van Gogh's “Meules de blé” (Lot 8C) sell for more than $30m at Chri
+  14729549  0.5617  Will Adrian Ghenie's "The Collector I" sell for more than HK$65M at Christie’s?
+  16028834  0.5619  Will FEWOCiOUS’s “I Taught Myself How To Fly” have a final sale price of more th
+  55295667  0.5624  Will the Port of Baltimore reopen in May?
+  66783199  0.5635  Will there be 400-500k rides on the DC metro on Jan 20?
+  14451605  0.5653  Will Roy Lichtenstein’s “Interior: Perfect Pitcher” sell for more than $30 milli
+  14729462  0.5657  Will Sanyu’s “Potted Chrysanthemums” sell for more than HK$120M at Christie’s?
+  64806575  0.5664  Scorigami on Thanksgiving?
+  66783180  0.5669  Will there be less than 400k rides on the DC metro on Jan 20?
+  56539098  0.5679  Will Society Man win the 2024 Kentucky Derby?
+  66265809  0.5679  Starmer inquiry into grooming gangs before February?
+  27321525  0.5695  Will Girl with Balloon (by Banksy) sell for £500k or more at Sotheby’s?
+  65559400  0.5701  Runway closures due to Mystery Drones by Friday?
+  11806236  0.5709  Will Beeple's "Everydays: The First 5000 Days" sell for more than $20 million in
+  78944325  0.5711  Will more people travel on Thanksgiving than last year?
+  21221102  0.5713  Will Gerhard Richter's “Abstraktes Bild” (Lot 27C) sell for more than $35m at Ch
+  63600130  0.5718  Lunchly recall in 2024?
+  31285310  0.5723  Will there be a Mega Millions jackpot winner on July 29?
+  71439225  0.5739  Record low border encounters in May?
+  78735234  0.5750  Spread: Saint Peter's Peacocks (-6.5)
+  14457781  0.5756  Will Claude Monet’s “Waterloo Bridge” sell for more than $35 million at Christie
+  70874645  0.5762  Will U.S. summer tourism decline in 2025?
+  61147329  0.5767  Favorite to win on Polymarket on Friday?
+  68366834  0.5773  Will there be between 105k and 120k border encounters in February?
+  53877518  0.5773  New mystery balloon shot down by Sunday?
+  77676092  0.5775  Will anyone say "Nobel" or "Peace Prize" during South Park e6 s27?
+  77951573  0.5786  Will any piece of Napoleon’s emerald wedding gift set be recovered by October 31
+  68366826  0.5786  Will there be between 90k and 105k border encounters in February?
+  66783297  0.5797  Will there be 700k or more rides on the DC metro on Jan 20?
+  77938389  0.5799  Will any of the stolen Louvre jewels be returned by December 31?
+  68320815  0.5799  OX.FUN insolvent before April?
+  12333001  0.5814  Will Beeple's “Ocean Front” sell for more than $25 million at auction?
+  11320229  0.5821  Will Beeple's "Everydays: The First 5000 Days" sell for more than $10 million in
+  78749635  0.5828  Spread: Saint Peter's Peacocks (-5.5)
+  21415361  0.5828  What will the “Official Edition” of the United States Constitution sell for at S
+  68366816  0.5839  Will there be between 75k and 90k border encounters in February?
+  77938389  0.5839  Will any of the stolen Louvre jewels be returned by October 31
+  68366807  0.5848  Will there be less than 75k border encounters in February?
+  75722456  0.5849  Will there be a Powerball jackpot winner by September 28?
+  21408026  0.5856  Will ConstitutionDAO win the Sotheby’s auction for the United States Constitutio
+  78192951  0.5888  Over 150,000 bidders in the MegaETH public sale?
+  21218937  0.5891  Will Claude Monet’s “Nymphéas (fragment)” (Lot 1C) sell for more than $1m at Chr
+  14457646  0.5905  Will van Gogh’s “Le pont de Trinquetaille” sell for more than $35 million at Chr
+   6913114  0.5911  Will any art piece on Superrare sell for more than $100k before 2021?
+  75722465  0.5917  Will there be a Powerball jackpot winner by August 31?
+  54851198  0.5937  More border encounters in March vs. Feb?
+  64567932  0.5938  Will David Hockney's "Four Empty Vases" sell for $5m or more?
+  68366849  0.5942  Will there be 120k or more border encounters in February?
+  75210692  0.5958  Will a Millennium Prize Problem be solved before the end of 2025?
+  75722457  0.5959  Will there be a Powerball jackpot winner by September 14?
+  73248099  0.5979  Will another person/thing be TIME's Person of the Year for 2025?
+  78941574  0.6038  Will there be a Powerball jackpot winner tonight?
+  53048249  0.6053  Farcaster unique users between 15-20k on Feb 5?
+  53048257  0.6085  Farcaster unique users between 20-25k on Feb 5?
+  12332955  0.6116  What will Beeple's “Ocean Front” sell for in its Nifty Gateway auction?
+  13197782  0.6132  What will Pak’s Sotheby’s auction generate in total sales?
+  11021165  0.6445  What will Beeple's "Everydays: The First 5000 Days" sell for at auction?

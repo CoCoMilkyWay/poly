@@ -1,0 +1,371 @@
+# Society - Society_Legal
+# count=368, avg_conf=0.5607
+====================================================================================================
+  54113350  0.4604  Is P. Diddy queer?
+  62792369  0.4688  Will Jamaica Kincaid win the Nobel prize in literature?
+  69244549  0.4746  Istanbul mayor İmamoğlu released from custody in March?
+  69455346  0.4762  Istanbul mayor İmamoğlu released from custody before May?
+  62792454  0.4776  Will Thomas Pynchon win the Nobel prize in literature?
+  50069409  0.4785  Was Sam Altman fired for sexually abusing his sister?
+  70994669  0.4869  Will John Mulaney actually fight children?
+  62792395  0.4902  Will Alexis Wright win the Nobel prize in literature?
+  54884676  0.4976  Kate Middleton’s medical records leaked by Sunday?
+  68168879  0.5018  Tel Aviv bus bomber arrested today?
+  70181256  0.5025  Kilmar Abrego Garcia released from custody in April?
+  66376517  0.5026  Will Skip Bayless settle with his accuser before April?
+  61661984  0.5030  Cops who arrested Tyreek Hill fired?
+  71477515  0.5035  Menendez brother released from custody before August?
+  52096786  0.5052  Will any MIT faculty lose their job due to plagiarism in January?
+  78728700  0.5078  Will Sydney Sweeney apologize for her jeans ad in 2025?
+  65277999  0.5079  Will Jay-Z settle with his accuser before April?
+  70430962  0.5095  Stuart vs. Breezy
+  57093226  0.5098  Will Giuliani appear in court for Arizona indictment?
+  59329378  0.5106  Fact Check: Was it a real gun?
+  27647589  0.5149  Will the mystery couple win "Proof of Love"?
+  71842612  0.5153  Another New Orleans inmate captured before Monday?
+  73993508  0.5158  Yoon out of custody by August 31?
+  19692507  0.5161  Will Britney Spears’ father James Spears be charged with a crime by Halloween?
+  71480619  0.5177  Menendez brother resentenced to allow parole?
+  72563084  0.5179  Menswear Guy deported before August?
+  78633444  0.5182  Yoon out of custody before 2027?
+  68654895  0.5189  Lucy Guo arrested before April?
+  64570085  0.5202  Bolsonaro arrested in 2024?
+  27847738  0.5207  Will Amber Heard be found liable for defaming Johnny Depp?
+  48323362  0.5217  Will Caroline testify?
+  71754680  0.5219  Another New Orleans inmate captured by Wednesday?
+  68043025  0.5221  Hayden Davis in jail in 2025?
+  68265573  0.5226  Robert Morris vs. IUPUI
+  78295211  0.5228  Will another Louvre heist robber be arrested by November 30?
+  71442560  0.5235  Will Karen Read be sentenced to no prison time?
+  58276029  0.5235  Ryan Selkis arrested in 2024?
+  68278200  0.5238  Will Kanye name his token Jew?
+  57495378  0.5241  Will Caitlyn Jenner sue Sahil?
+  70304478  0.5242  Kilmar Abrego Garcia released from custody before July?
+  65087228  0.5243  No Brian Thompson Perp arrested by Sunday?
+  61952909  0.5252  Diddy released from custody before October?
+  55363686  0.5252  J. K. Rowling arrested in April?
+  73816652  0.5256  Yoon out of custody by July 31?
+  78068950  0.5265  Will Justice Haynes win the 2025–2026 Doak Walker Award?
+  65046103  0.5270  Daniel Penny not sentenced to prison?
+  64492039  0.5272  ICC arrest warrant for Netanyahu before inauguration?
+  68324345  0.5279  Will Jamie Dimon be named in Epstein files?
+  69820468  0.5279  Deel CEO jailed in 2025?
+  59991633  0.5281  María Corina Machado arrested before October?
+  74268644  0.5295  Jerome Powell in jail in 2025
+  76823484  0.5299  SBF released from custody in 2025?
+  69454204  0.5303  Lee Jae-myung arrested in 2025?
+  64605438  0.5308  Diddy released from custody by Monday?
+  75469301  0.5311  Mikey Shelton in jail in 2025?
+  68401305  0.5315  Georgescu in jail before Romanian election?
+  78295211  0.5320  Will another Louvre heist robber be arrested by December 31?
+  47743804  0.5327  Aella: Will more men report they were spanked than women?
+  70053101  0.5328  Bond lowered for teen stabbing suspect?
+  61993577  0.5339  Diddy released from custody before November?
+  66708964  0.5340  Will Yoon be sentenced to prison in 2025?
+  77462855  0.5341  HasanAbi arrested by October 31?
+  75725757  0.5344  Fact Check: Is the suspect Robin Westman?
+  55141553  0.5347  Will Justin Bieber accuse Diddy of misconduct?
+  68401126  0.5351  Romanian politician Georgescu guilty in 2025?
+  66184927  0.5355  South Korea First Lady Keon-hee arrested before April?
+  71442619  0.5361  Will Harvey Weinstein be sentenced to no prison time?
+  67774294  0.5368  South Korea First Lady Keon-hee arrested in 2025?
+  61918251  0.5370  Diddy released from custody by Friday?
+  73454035  0.5371  Zohran Mamdani arrested before September?
+  64170181  0.5372  Nickal vs. Craig
+  65559384  0.5372  Will any arrests be made related to Mystery Drones?
+  62026521  0.5373  Mark Robinson domestic misconduct allegations?
+  71754579  0.5376  Will 6 inmates be captured by Friday?
+  68493028  0.5376  Lee vs. Aldrich
+  57726243  0.5380  Fauci jail in 2024?
+  67675975  0.5383  Elon vs. Charleston
+  61349645  0.5384  Alexandre de Moraes jail in 2024?
+  76526356  0.5386  Grimace vs. Brokenn
+  71754680  0.5393  Another New Orleans inmate captured by Friday?
+  66376518  0.5393  Skip Bayless arrested before April?
+  71754606  0.5398  Will 5 inmates be captured by Friday?
+  70622342  0.5399  Hegseth caught drinking before June?
+  63116020  0.5401  Hiestand vs. Hadley
+  71754590  0.5402  Will 8 inmates be captured by Friday?
+  78891339  0.5403  James Comey’s indictment dismissed before trial?
+  71754596  0.5414  Will 9 inmates be captured by Friday?
+  59966003  0.5415  Edmundo González arrested before October?
+  61497589  0.5416  Lauren Chen subpoenaed in September?
+  64609876  0.5421  Diddy released from custody before December?
+  71442582  0.5422  Will Karen Read be sentenced to between 20 and 30 years in prison?
+  63480519  0.5423  Elon Musk arrested in 2024?
+  78721971  0.5424  Jair Bolsonaro in jail by January 31?
+  27412094  0.5424  (To be Emergency Resolved) Will Amber Heard be found guilty of defaming Johnny D
+  65046118  0.5424  Will Daniel Penny sentenced to less than 5 years?
+  57188275  0.5425  ICC issues an arrest warrant for Yahya Sinwar?
+  44260297  0.5426  Will Prigozhin be arrested by July 15?
+  70582638  0.5428  Smotherman vs. Sidey
+  61705124  0.5432  Will Kamala Harris say "convicted felon" during her North Carolina rally?
+  78721960  0.5432  Jair Bolsonaro in jail by November 30?
+  61075746  0.5433  Pavel Durov's girlfriend charged in August?
+  71754585  0.5434  Will 7 inmates be captured by Friday?
+  68162209  0.5435  Will Stacey Abrams be arrested in 2025?
+  61632606  0.5435  Will Tyreek Hill sue the cops?
+  71442588  0.5436  Will Karen Read be sentenced to more than 30 years in prison?
+  65166020  0.5436  Calin Georgescu arrested in 2024?
+  71754612  0.5442  Will 4 inmates be captured by Friday?
+  69177653  0.5444  Will Rippling mole be arrested by Friday?
+  76940079  0.5445  James Comey arrested by October 31?
+  78422066  0.5445  Valentin vs. McVey
+  76932708  0.5447  Greta Thunberg arrested by October 15?
+  60790406  0.5448  Mass arrests at DNC?
+  48323911  0.5452  Will SBF testify?
+  62026562  0.5455  Mark Robinson illegitimate child allegations?
+  74843285  0.5456  Lee Jun-seok in jail in 2025?
+  74362982  0.5459  South Korea First Lady Keon-hee arrested by August 31?
+  52826267  0.5462  Zvbear arrested before February?
+  57727104  0.5467  Hunter Biden found guilty in gun case?
+  54960345  0.5470  Dan Schneider arrested by April 30?
+  75725344  0.5472  Fact Check: Is the suspect transgender?
+  77103794  0.5473  D4vd arrested by October 31?
+  56689563  0.5478  Kendrick arrested by Friday?
+  71442576  0.5479  Will Karen Read be sentenced to between 10 and 20 years in prison?
+  69608629  0.5479  Emmers vs. Miranda
+  68442873  0.5481  Andrew Tate arrested before April?
+  61871377  0.5483  Fact Check: Is the suspect a foreign actor?
+  74602863  0.5489  Will Lee Jun-seok be arrested by August 31?
+  58038235  0.5490  Hunter Biden sentenced to rehab in gun case?
+  71442571  0.5490  Will Karen Read be sentenced to between 5 and 10 years in prison?
+  69536029  0.5492  Joe Gatto charged with sex crime?
+  77062139  0.5496  Emmett vs. Zalal
+  62026486  0.5497  Mark Robinson Nazi allegations?
+  58444541  0.5499  Oakland mayor Sheng Thao indicted before August?
+  71442565  0.5501  Will Karen Read be sentenced to less than 5 years in prison?
+  76892028  0.5510  James Comey in jail in 2025?
+  65046146  0.5513  Will Daniel Penny sentenced to more than 10 years years?
+  65087213  0.5515  Brian Thompson Perp arrested on Sunday?
+  71442641  0.5519  Will Harvey Weinstein be sentenced to between 20 and 30 years in prison?
+  78721970  0.5520  Jair Bolsonaro in jail by December 31?
+  65087165  0.5521  Brian Thompson Perp arrested on Thursday?
+  78847689  0.5523  Nicolas Sarkozy in jail by March 31?
+  50540718  0.5527  Will another 'Forbes 30 Under 30' be arrested in 2023?
+  73922091  0.5527  Lee Sang-min in jail by August 15?
+  67927936  0.5528  sugaR vs. Jack.Poor
+  46066784  0.5529  Tory Lanez sentence over 8.5 years?
+  67903870  0.5532  Fordham vs. Richmond
+  71442646  0.5532  Will Harvey Weinstein be sentenced to more than 30 years in prison?
+  53530316  0.5533  Will Ian Miles Cheong be arrested in February?
+  68225295  0.5535  Mercer vs. Iona
+  76892018  0.5535  James Comey arrested by September 30?
+  65046132  0.5538  Will Daniel Penny sentenced to 5-10 years?
+  12620704  0.5538  How many charges will Derek Chauvin be convicted of?
+  56650433  0.5539  Drake arrested by Friday?
+  56809858  0.5539  Drake arrested by Friday?
+  39626554  0.5542  Wisconsin Supreme Court: Protasiewicz (D) vs. Kelly (R)
+  78629954  0.5542  Lee Jae-myung arrested before 2027?
+  13937540  0.5548  Will Rudy Giuliani be indicted for a federal crime by August 1?
+  66152213  0.5548  Supreme Court vacancy in 2025?
+  76490187  0.5548  Aly vs. Baraniewski
+  57076264  0.5550  Scottie Scheffler assault charge dropped?
+  60869122  0.5554  Andrew Tate arrested in August?
+  54777776  0.5555  SBF sentence more than 50 years?
+  71442624  0.5558  Will Harvey Weinstein be sentenced to less than 5 years in prison?
+  76289892  0.5558  D4vd arrested by September 30?
+  71754601  0.5559  Will 10 inmates be captured by Friday?
+  66504456  0.5559  Will Supreme Court delay the Tiktok ban?
+  67864340  0.5560  Howard vs. Delaware State
+  68626891  0.5561  Stonehill vs. Fairleigh Dickinson
+  68305160  0.5561  Stonehill vs. Fairleigh Dickinson
+  78628373  0.5562  Will Yoon be sentenced to prison before 2027?
+  67944124  0.5564  Marist vs. Mercer
+  65087198  0.5566  Brian Thompson Perp arrested on Saturday?
+  65087182  0.5567  Brian Thompson Perp arrested on Friday?
+  60346276  0.5571  Carles Puigdemont arrested in August?
+  71442636  0.5571  Will Harvey Weinstein be sentenced to between 10 and 20 years in prison?
+  76893367  0.5572  Park Sung-jae in jail by October 31?
+  63770040  0.5574  Lewis vs. Diniz
+  71442630  0.5576  Will Harvey Weinstein be sentenced to between 5 and 10 years in prison?
+  47782133  0.5577  Hillary Clinton jail by EoY?
+  68265598  0.5577  Winthrop vs. Longwood
+  74234051  0.5585  South Korea First Lady Keon-hee arrested by July 31?
+  71739529  0.5585  Reese vs. Todorović
+  72565135  0.5585  Gavin Newsom arrested by Friday?
+  77557671  0.5587  Grant vs. Jourdain
+  75684515  0.5591  Lisa Cook arrested by September 30?
+  78295491  0.5592  Park Sung-jae in jail by November 15?
+  71442697  0.5593  Harvey Weinstein acquitted on all charges in New York retrial?
+  75979460  0.5595  Greta Thunberg arrested by September 30?
+  73298215  0.5597  Yoon arrested before September?
+  58325824  0.5599  Martin Shkreli jail in 2024?
+  67788741  0.5601  Mercer vs. Manhattan
+  54066757  0.5607  SBF reduced sentence because autism?
+  70743051  0.5608  Wisconsin judge convicted for obstructing immigration operation?
+  65278094  0.5609  Jay-Z in jail before April?
+  53763167  0.5609  Yulia Navalnaya arrested in February?
+  67944118  0.5614  Bradley vs. Drake
+  40835659  0.5617  Will CZ be arrested by April 30?
+  51628778  0.5620  CZ jail before March?
+  66111239  0.5620  Yoon arrested by January 31?
+  66510872  0.5620  Yoon arrested by Friday?
+  66263039  0.5620  Yoon arrested by Friday?
+  66238160  0.5620  Yoon arrested by Friday?
+  68627254  0.5622  Longwood vs. Winthrop
+  72401504  0.5625  Hamilton vs. Russell
+  73422402  0.5625  Hamilton vs. Russell
+  72889514  0.5625  Hamilton vs. Russell
+  72038178  0.5625  Hamilton vs. Russell
+  43562535  0.5625  Will CZ be arrested by June 30?
+  65086496  0.5625  Brian Thompson Perp arrested by Friday?
+  65167473  0.5625  Brian Thompson Perp arrested by Friday?
+  65278128  0.5627  Jay-Z arrested in 2024?
+  61870244  0.5629  Fact Check: Is the suspect a U.S. citizen?
+  55141645  0.5631  Diddy arrested in March?
+  62026505  0.5632  Mark Robinson pedophile allegations?
+  70582647  0.5639  Petersen vs. Mayes
+  58036148  0.5639  Hunter Biden sentenced to over 10 years in gun case?
+  67813261  0.5641  Will anyone be charged as a result of Epstein file release?
+  70376768  0.5642  Chandler vs. Edwards
+  68426273  0.5645  Hampton vs. Towson
+  68094597  0.5648  Dave Portnoy in jail in 2025?
+  65092052  0.5651  Hailey Welch jail in 2024?
+  76941256  0.5652  John Brennan arrested by October 31?
+  68162202  0.5653  Stacey Abrams charged in 2025?
+  57763636  0.5654  Roaring Kitty jail in 2024?
+  74238116  0.5660  Jerome Powell federally charged by August 31?
+  68627028  0.5666  Mercer vs. Marist
+  68787487  0.5667  Delaware vs. Campbell
+  78678166  0.5668  D4vd arrested by December 31?
+  47782098  0.5669  Anthony Fauci jail by EoY?
+  65087152  0.5678  Brian Thompson Perp arrested Today?
+  55601022  0.5679  Supreme Court vacancy in 2024?
+  75442403  0.5680  Lee Jun-seok arrested by September 30?
+  65449910  0.5681  Grant vs.Taveras
+  75411399  0.5684  Han Duck-soo in jail by September 30?
+  54777677  0.5686  SBF sentence less than 5 years?
+  73922081  0.5689  Han Duck-soo in jail by August 15?
+  67774030  0.5689  Walker vs. Mayes
+  57093363  0.5690  Diddy arrested in May?
+  75733511  0.5692  Kweon Seong-dong in jail by October 31?
+  57495715  0.5696  Sahil arrested by Friday?
+  69212471  0.5700  Senator Eichorn guilty of soliciting a child?
+  61747548  0.5700  Caroline Ellison not sentenced to prison?
+  70869528  0.5701  Kanye West arrested in 2025?
+  67675478  0.5703  Richmond vs. Davidson
+  68866497  0.5703  Richmond vs. Davidson
+  67864335  0.5703  Campbell vs. Delaware
+  57541053  0.5707  Iggy Azalea criminal charges in 2024?
+  69454200  0.5708  Lee Jae-myung arrested before July?
+  18634759  0.5710  Will Theranos executive Elizabeth Holmes be found guilty of fraud?
+  78280729  0.5710  Park Sung-jae in jail by November 30?
+  36109529  0.5710  Will SBF or Bitboy be arrested first?
+  66233807  0.5711  Arrest in the Suchir Balaji case before April?
+  45827641  0.5717  Will CZ be arrested by Aug 31?
+  61391123  0.5726  Will Kamala say "convicted felon" at debate?
+  54113227  0.5729  Eric Adams criminal charges before April?
+  69772128  0.5731  Emmett vs. Murphy
+  76857150  0.5738  Will Letitia James be charged with a crime by December 31?
+  57502613  0.5743  Fauci criminal charges by June 30?
+  71442701  0.5745  Karen Read acquitted on all charges?
+  77055156  0.5748  Han Duck-soo in jail by December 31?
+  61349672  0.5752  Brazilian Judge Moraes arrested in September?
+  66194100  0.5752  Cybertruck explosion perp arrested by Sunday?
+  67381738  0.5753  Ziam vs. Davis
+  77948783  0.5754  Lee Jong-seop in jail by November 15?
+  62832609  0.5758  Rodriguez vs. Morono
+  77103724  0.5760  Cartwright vs. Loughran
+  77265203  0.5760  Usman vs. Walker
+  78847687  0.5764  Nicolas Sarkozy in jail by December 31?
+  73290534  0.5767  Yoon arrested by July 15?
+  73290525  0.5770  Yoon arrested before July?
+  77429358  0.5772  JB Pritzker arrested by December 31?
+  55077072  0.5777  Diddy arrested before May?
+  65286275  0.5778  Will Luigi  Mangione plead guilty?
+  67659152  0.5780  Dave Portnoy in jail before March?
+  48323662  0.5780  SBF sentenced to 50+ years?
+  57046485  0.5785  Bob Menendez convicted?
+  75206438  0.5785  Gavin Newsom arrested by December 31?
+  50459343  0.5787  CZ jail in 2023?
+  69608643  0.5793  Mederos vs. Hubbard
+  76364526  0.5799  New arrests in Charlie Kirk shooting by September 30?
+  76360633  0.5803  Tyler Robinson charged in Kirk shooting?
+  71442652  0.5813  Will Diddy be sentenced to no prison time?
+  57841639  0.5830  Steve Bannon jail by July 1?
+  59000569  0.5832  Diddy arrested before August?
+  69206689  0.5848  Rojas guilty in Texas illegal abortion case?
+  44803566  0.5848  Will CZ be arrested by July 31?
+  76059035  0.5849  Choo Kyung-ho in jail by October 31?
+  70904871  0.5855  Celsius founder sentenced to 20+ years?
+  73262879  0.5863  Yoon in jail before August?
+  68414670  0.5869  White girlfriend who shot Black bf guilty?
+  54704056  0.5871  archSBF sentenced to more than 50 years?
+  61747649  0.5877  Caroline Ellison sentenced to 36-47 months in prison?
+  61747730  0.5877  Caroline Ellison sentenced to 60 or more months in prison?
+  54809253  0.5887  SLERF criminal charges in March?
+  72125561  0.5887  Pena vs. Harrison
+  67220461  0.5897  A$AP Rocky sentenced to prison?
+  78714757  0.5898  Cho Tae-yong in jail by November 30?
+  61747673  0.5901  Caroline Ellison sentenced to 48-59 months in prison?
+  66431023  0.5908  Sam Altman arrested before July?
+  72566565  0.5922  Karen Bass arrested by Friday?
+  68024629  0.5923  Towson vs. Campbell
+  65012777  0.5923  Daniel Penny found guilty?
+  66376522  0.5924  Andrew Tate guilty of human trafficking in 2025?
+  71442691  0.5928  Will Diddy be sentenced to more than 50 years in prison?
+  61869847  0.5933  Fact Check: Suspect registered D or R?
+  46704222  0.5936  Will SBF get Adderall in jail?
+  68466752  0.5939  Campbell vs. Charleston
+  78685652  0.5942  Sam Altman in jail by December 31?
+  78541504  0.5946  Hwang Kyo-ahn in jail by November 30?
+  46300227  0.5947  Will SBF plead guilty by August 21?
+  71629936  0.5951  Comey jailed before July?
+  69542644  0.5954  Bolsonaro guilty?
+  64488367  0.5955  Cong vs. Fernandes
+  71437158  0.5962  Gordon vs. Moisés
+  59235473  0.5966  Alec Baldwin guilty of manslaughter?
+  76490189  0.5968  Hwang vs. McCorry
+  78119197  0.5971  Delija vs. Cortes-Acosta
+  71442684  0.5972  Will Diddy be sentenced to between 40 and 50 years in prison?
+  61918083  0.5975  Will Diddy plead guilty to all charges?
+  61747573  0.5977  Caroline Ellison sentenced to 1-11 months in prison?
+  58038260  0.5981  Hunter Biden sentenced to community service in gun case?
+  78382183  0.5983  Choo Kyung-ho in jail by November 30?
+  78380552  0.5985  Choo Kyung-ho in jail by December 31?
+  52443800  0.5987  Andrew Tate guilty of human trafficking in 2024?
+  45583285  0.5989  SBF jail by August 31?
+  50067781  0.5991  Sam Altman criminal charges by Nov 30?
+  70063959  0.6001  Yoon in jail before July?
+  57888929  0.6003  Judge launches investigation into facebook comment?
+  61917631  0.6008  Will Diddy plead guilty to any charges?
+  71442673  0.6016  Will Diddy be sentenced to between 20 and 30 years in prison?
+  78897099  0.6018  Oh Se-hoon in jail by November 30?
+  57571152  0.6019  Diddy arrested before July?
+  58674229  0.6020  Karen Read guilty of murder?
+  69057396  0.6022  Karen Read guilty in officer's death?
+  71442668  0.6040  Will Diddy be sentenced to between 10 and 20 years in prison?
+  71442679  0.6041  Will Diddy be sentenced to between 30 and 40 years in prison?
+  62186299  0.6043  Hoffman vs. Warwick
+  76226701  0.6044  Blair vs. Sanches
+  71442662  0.6060  Will Diddy be sentenced to between 5 and 10 years in prison?
+  71442657  0.6072  Will Diddy be sentenced to less than 5 years in prison?
+  61747599  0.6073  Caroline Ellison sentenced to 12-23 months in prison?
+  57500935  0.6078  Sam Trabucco criminal charges before July?
+  67220522  0.6081  A$AP Rocky convicted of a felony?
+  61741409  0.6084  Caroline Ellison sentenced to prison?
+  61747609  0.6088  Caroline Ellison sentenced to 24-35 months in prison?
+  56206063  0.6102  CZ sentenced to 36 months or more in prison?
+  65369699  0.6107  Jay-Z criminal charges in 2024?
+  56206045  0.6122  CZ sentenced to 24-29 months in prison?
+  56206013  0.6126  CZ sentenced to 6-11 months in prison?
+  56206004  0.6131  CZ sentenced to less than 6 months in prison?
+  56206040  0.6137  CZ sentenced to 18-23 months in prison?
+  56206053  0.6138  CZ sentenced to 30-35 months in prison?
+  66742539  0.6138  Caitlin Clark stalker pleads guilty?
+  71446601  0.6157  Will Diddy be sentenced to life in prison?
+  69529920  0.6164  BitBoy convicted?
+  68492954  0.6164  Turner vs. Bahamondes
+  48407781  0.6173  SBF sentenced to life?
+  65012731  0.6182  Daniel Penny found guilty of manslaughter?
+  56206029  0.6192  CZ sentenced to 12-17 months in prison?
+  71035379  0.6223  Diddy found guilty of sex trafficking?
+  53490170  0.6309  CZ sentenced to prison?
+  50544973  0.6323  Young Thug found guilty of racketeering?
+  71035633  0.6326  Diddy guilty of all charges?
+  48323025  0.6377  SBF guilty of any charges?
+  44377856  0.6396  Will YNW Melly be found guilty?
+  57541022  0.6398  Ansem criminal charges in 2024?
+  48323438  0.6424  SBF guilty of all charges?
+  71035135  0.6441  Diddy convicted of a felony?

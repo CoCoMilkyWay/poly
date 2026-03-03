@@ -1,0 +1,569 @@
+# Society - Society_Business
+# count=566, avg_conf=0.6041
+====================================================================================================
+  14382500  0.4818  Will Kippenberger's "Martin, Into the Corner, You Should Be Ashamed of Yourself"
+  66270886  0.4942  Will Dave Canales get fired?
+  62060540  0.4963  RFK Jr & Cheryl Hines divorce in 2024?
+  43065356  0.4964  Will Gerri Kellman or Connor Roy be CEO at the end of Succession S4?
+  38757688  0.4982  Did Jaan Tallinn bail out SBF?
+  77517858  0.4995  Will The Life of a Showgirl’s second-week album sales be between 550k and 600k?
+  14451761  0.4998  Will Joan Mitchell's "Untitled" sell for more than $15 million at Christie’s?
+  77517863  0.5033  Will The Life of a Showgirl’s second-week album sales be between 500k and 550k?
+  73968726  0.5098  Will Andrew Cuomo drop out?
+  31175040  0.5118  Will the Gorgosaurus skeleton sell for more than $6 million at Sotheby's?
+  77517838  0.5118  Will The Life of a Showgirl’s second-week album sales be between 350k and 400k?
+  77517843  0.5132  Will The Life of a Showgirl’s second-week album sales be between 400k and 450k?
+  66495741  0.5135  Will 'Den of Thieves 2: Pantera' opening weekend gross $19-22m?
+  67661018  0.5142  Ye divorce before April?
+  22210554  0.5143  Will Joseph Delong announce he’s leaving SushiSwap as CTO before 2022?
+  78728531  0.5158  Will federal employees receive back pay after the government shutdown?
+  64567874  0.5173  Will Cecily Brown's "The Butcher and the Policeman" sell for $5m or more?
+  66495671  0.5184  Will 'Den of Thieves 2: Pantera' opening weekend gross $16-19m?
+  71476953  0.5207  Will 'Lilo & Stitch' gross more than $170m opening weekend?
+  76392843  0.5220  Lindenwood vs Charleston Southern
+  75455353  0.5224  Will Thor Equities Legends Hospitality Saratoga Casino Holdings and Chickasaw Na
+  44414002  0.5239  Will 'Indiana Jones and the Dial of Destiny' gross more than $100m on its 5-day 
+  64206897  0.5243  Will Gladiator II gross between $53-60m on opening weekend?
+  67573562  0.5258  Is Markiplier engaged?
+  46307653  0.5260  Will 'Strays' gross over $20m opening weekend?
+  68265357  0.5263  St. Bonaventure vs. St. Joseph's
+  69066502  0.5263  Mt. St. Mary's vs. Iona
+  45266169  0.5265  Huobi Insolvent in 2023?
+  66497319  0.5279  Will 'Den of Thieves 2: Pantera' opening weekend gross $22m or more?
+  77517853  0.5279  Will The Life of a Showgirl’s second-week album sales be 600k or more?
+  70062104  0.5282  Will 'The Amateur' make more than $19m on its domestic opening weekend?
+  67788150  0.5282  Chattanooga vs. Samford
+  68305121  0.5285  North Carolina A&T vs. Northeastern
+  45756555  0.5298  Did SBF launch BALD?
+  64206879  0.5314  Will Gladiator II gross less than $53m on opening weekend?
+  67944219  0.5318  MD Eastern Shore vs. Howard
+  69457148  0.5319  Social security checks delayed/not sent before July?
+  67788410  0.5327  North Carolina A&T vs. Elon
+  77517848  0.5336  Will The Life of a Showgirl’s second-week album sales be between 450k and 500k
+  47185917  0.5338  Will 'My Big Fat Greek Wedding 3' gross over $10m opening weekend?
+  66495663  0.5343  Will 'Den of Thieves 2: Pantera' opening weekend gross less than $16m?
+  68385894  0.5350  Chattanooga vs. VMI
+  49101212  0.5352  Will Bitboy remarry by EOY?
+  67676255  0.5354  Howard vs. MD Eastern Shore
+  64206937  0.5355  Will Gladiator II gross between $67-75m on opening weekend?
+  67675780  0.5357  Tarleton vs. Utah Valley
+  14407753  0.5364  Will Banksy’s “Love is in the Air” sell for more than $5 million at Sotheby’s?
+  55533813  0.5365  Will HOBBES reach $1b first?
+  31127641  0.5372  Will 'DC League of Super-Pets' gross more than $30 million domestically on its o
+  63598449  0.5373  Will Silver call 44 states correctly?
+  14457875  0.5373  Will Mark Rothko’s “Untitled” sell for more than $40 million at Christie’s?
+  46947473  0.5383  Will 'The Equalizer 3' gross over $35m Labor Day weekend?
+  64493875  0.5385  Will Joan Mitchell's "City Landscape" sell for $18m or greater?
+  68666880  0.5386  St. Bonaventure vs. Davidson
+  38795403  0.5390  Did Changpeng Zhao (CZ) bail out SBF?
+  67676196  0.5392  Texas A&M Commerce vs. McNeese State
+  28384923  0.5404  Will ‘Top Gun: Maverick’ gross $140 million or more on the 4-day Memorial Weeken
+  68707126  0.5405  Utah Valley vs. Tarleton
+  70062063  0.5416  Will 'King of Kings' make between $15-18m on its domestic opening weekend?
+  67675665  0.5417  William & Mary vs. Delaware
+  74284987  0.5420  Will Astronomer CEO Andy Byron sue Coldplay?
+  68706960  0.5420  Marist vs. Mt. St. Mary's
+  31017489  0.5423  Will 'DC League of Super-Pets' gross more than $40 million domestically on its o
+  52938064  0.5427  Will 'Argylle' gross under $20m opening weekend?
+  75455352  0.5429  Will Bally’s Corporation receive a license for Bally’s New York casino in The Br
+  75657584  0.5430  Sabrina Carpenter's 'Man's Best Friend' >375k first week sales?
+  14407902  0.5433  Will George Condo’s “Reclining Blue Form” sell for more than $3.5 million at Sot
+  67825761  0.5433  Charleston vs. North Carolina A&T
+  14408004  0.5433  Will Cy Twombly’s “Untitled (Rome)” sell for more than $45 million at Sotheby’s?
+  52938094  0.5440  Will 'Argylle' gross over $30m opening weekend?
+  69451633  0.5449  Will 'A Working Man' gross less than 11m on opening weekend?
+  70062077  0.5451  Will 'King of Kings' make between $18-21m on its domestic opening weekend?
+  64206956  0.5453  Will Gladiator II gross more than $75m on opening weekend?
+  52978813  0.5454  Will 'Inside Out 2' gross most in 2024?
+  78034493  0.5456  Will Elon Musk’s $1T Tesla pay deal pass?
+  78248808  0.5456  Delaware Blue Hens vs. Liberty
+  68385947  0.5457  North Carolina A&T vs. Hofstra
+  68627198  0.5457  North Carolina A&T vs. Hofstra
+  68866380  0.5476  Delaware vs. Towson
+  67788346  0.5476  Delaware vs. Towson
+  70062100  0.5479  Will 'King of Kings' make between $21-24m on its domestic opening weekend?
+  68225485  0.5481  Texas A&M Commerce vs. New Orleans
+  33891493  0.5483  Will Credit Suisse announce they are filing for bankruptcy before 2023?
+  67675934  0.5488  Bethune-Cookman vs. Prairie View A&M
+  69175290  0.5489  St. Mary's vs. American University
+  69298089  0.5496  Baldoni x Lively lawsuit dismissed before July?
+  14407826  0.5500  Will Basquiat’s “Versus Medici” sell for more than $50 million at Sotheby’s?
+  51024222  0.5510  Will 'Wonka' gross over $40m over its opening weekend?
+  77946443  0.5518  Middle Tennessee vs. Delaware Blue Hens
+  78072251  0.5521  Will Paramount acquire Warner Bros. Discovery?
+  70062117  0.5528  Will 'King of Kings' make more than $24m on its domestic opening weekend?
+  66117297  0.5545  Nara & Lucky divorce in 2025?
+  46110453  0.5548  Will 'Barbie' gross over $35m over August 11-13?
+  54424796  0.5555  Dave Calhoun out as Boeing CEO before May?
+  59716096  0.5559  1,000+ Delta flight cancelations today?
+  52475670  0.5560  Will Spirit Airlines announce bankruptcy by Jan 31?
+  51024208  0.5566  Will 'Wonka' gross over $35m over its opening weekend?
+  68201446  0.5567  Will Hooters file for bankruptcy before June?
+  78985235  0.5570  50-year GSE-eligible mortgages by December 31?
+  68627045  0.5579  Mt. St. Mary's vs. Quinnipiac
+  78891330  0.5579  Will Disney say "Moana 2" during earnings call?
+  40948306  0.5586  Will 'Dungeons & Dragons: Honor Among Thieves' gross more than $45 million domes
+  58044770  0.5590  Will Kevin Spacey declare bankruptcy?
+  68889766  0.5591  Will 'Opus' gross between 5-7m on opening weekend?
+  39924937  0.5592  Will Silvergate announce it is filing for bankruptcy by March 31, 2023?
+  69026016  0.5595  St. Joseph's vs. Dayton
+  40948300  0.5596  Will 'Dungeons & Dragons: Honor Among Thieves' gross more than $40 million domes
+  68265632  0.5597  William & Mary vs. Towson
+  65600919  0.5597  Honda and Nissan merger announced before February?
+  14456782  0.5599  Will Piet Mondrian’s “Composition: No. II” sell for more than $30 million at Chr
+  74249122  0.5604  Will the FDA approve Odronextamab/Ordspono Resubmitted BLA?
+  60306961  0.5606  Will 'It Ends with Us' gross more than $44m on its opening weekend?
+  40193237  0.5608  Will uninsured SVB depositors get all their money back by June 30?
+  61985184  0.5608  Will another company be the largest company by mcap on September 30?
+  56975975  0.5617  Will Ilya join another company?
+  40195355  0.5619  Will uninsured SVB depositors get all their money back by EOY?
+  16643290  0.5621  Will weekly jobless claims exceed 373K for the week ending on July 10?
+  57997121  0.5629  Will 'Inside Out 2' gross more than $108m opening weekend?
+  60306924  0.5639  Will 'It Ends with Us' gross less than $40m opening weekend?
+  12101492  0.5657  Will weekly jobless claims exceed 650K for the week ending on April 3?
+  45243871  0.5674  Will 'Oppenheimer' gross over $50m on opening weekend?
+  40948293  0.5676  Will 'Dungeons & Dragons: Honor Among Thieves' gross more than $35 million domes
+  52938085  0.5677  Will 'Argylle' gross between $25m and $30m opening weekend?
+  52938074  0.5682  Will 'Argylle' gross between $20m and $25m opening weekend?
+  68707024  0.5685  Florida A&M vs. Bethune-Cookman
+  56173486  0.5685  Will 'Challengers' gross more than $22m opening weekend?
+  53200000  0.5687  Will Adam Neumann buy back WeWork in February?
+  53208232  0.5689  Will Adam Neumann buy back WeWork in 2024?
+  19067893  0.5690  Will weekly jobless claims exceed 310K for the week ending on September 11?
+  78076071  0.5697  Will Uber say "Driver Incentives" during earnings call?
+  67676265  0.5698  North Carolina A&T vs. Campbell
+  14409345  0.5699  Will Jeff Koons' “Pancakes” sell for more than $1.5 million at Sotheby’s?
+  78363910  0.5703  Will Live Nation Entertainment (LYV) beat quarterly earnings?
+  56173438  0.5724  Will 'Challengers' gross between $16m and $19m opening weekend?
+  68265558  0.5724  Samford vs. VMI
+  45471745  0.5725  Will 'Oppenheimer' gross over $50m on its second weekend?
+  56173451  0.5729  Will 'Challengers' gross between $19m and $22m opening weekend?
+  16648094  0.5734  Will Clubhouse officially announce they’ve been acquired in 2021?
+  37640706  0.5734  Will Genesis announce it is filing for bankruptcy by January 31, 2023?
+  78076071  0.5741  Will Uber say "Safety" during earnings call?
+  72576637  0.5742  Will Cluely declare bankruptcy in 2025?
+  75162471  0.5743  Will Phantom daily builder revenue hit $200k in 2025?
+  78546393  0.5745  Will Airbnb (ABNB) finish week of November 10 above $150?
+  78886949  0.5755  Over $100M committed to the Solomon public sale?
+  26475730  0.5767  Will Unslashed Insurance payout for an Anchor + UST depeg by June 30, 2022?
+  46109133  0.5768  Will WeWork announce bankruptcy in 2023?
+  74074839  0.5770  Andy Byron out as Astronomer CEO by next Friday?
+  78113357  0.5771  Missouri vs. Vanderbilt: 1H Moneyline
+  32893973  0.5774  Will weekly jobless initial claims exceed 213k for the week ending on September 
+  79056929  0.5778  Regent Royals vs. William & Mary Tribe
+  11355105  0.5783  Will Clubhouse officially announce they’ve been acquired before June 1st, 2021?
+  33759911  0.5794  Will weekly jobless initial claims exceed 190k for the week ending October 1?
+  78756827  0.5795  Spread: William & Mary Tribe (-2.5)
+  17673819  0.5796  Will weekly jobless claims exceed 385K for the week ending on August 7?
+  76782605  0.5802  Will Anthropic not IPO by June 30, 2026?
+  78075962  0.5805  Will Starbucks say "Promotion" during earnings call?
+  78891330  0.5806  Will Disney say "NFL Deal" during earnings call?
+  13034433  0.5809  Will weekly jobless claims exceed 720K for the week ending on April 10?
+  76785239  0.5809  Spread: Vanderbilt (-22.5)
+  78633143  0.5817  Cap on gambling loss deductions repealed before 2027?
+  78546363  0.5818  Will Airbnb (ABNB) close above $140 end of November?
+  78886948  0.5819  Over $120M committed to the Solomon public sale?
+  78891330  0.5819  Will Disney say "Subscriber" during earnings call?
+  78733425  0.5820  Spread: William & Mary Tribe (-1.5)
+  76366054  0.5823  Vanta IPO in 2025?
+  48013890  0.5831  Bitboy divorce by Oct 14?
+  47781450  0.5831  Will 'Expend4bles' gross over $12.5m opening weekend?
+  73772205  0.5834  Cap on gambling loss deductions repealed in 2025?
+  52968260  0.5842  Will FTX payouts start in Q3 2024?
+  76671757  0.5842  Spread: Vanderbilt (-27.5)
+  75698901  0.5843  Will another company be the second largest in the world by market cap on Septemb
+  78072267  0.5845  Will no acquisition occur by May 31 2026?
+  78546393  0.5845  Will Airbnb (ABNB) finish week of November 10 above $140?
+  78076053  0.5848  Will Amazon say "Shutdown / Shut Down" during earnings call?
+  78891330  0.5851  Will Disney say "DraftKings" during earnings call?
+  60306934  0.5855  Will 'It Ends with Us' gross between $40m and $44m opening weekend?
+  78886948  0.5857  Over $60M committed to the Solomon public sale?
+  46110463  0.5858  Will 'Oppenheimer' gross over $20m over August 11-13?
+  36185060  0.5862  Will SBF show up to the NYT DealBook Summit?
+  78075963  0.5863  Will Starbucks say "Non Dairy" during earnings call?
+  77774534  0.5877  Will Southwest Airlines (LUV) beat quarterly earnings?
+  78886949  0.5879  Over $80M committed to the Solomon public sale?
+  76461578  0.5882  Will Jabil (JBL) beat its quarterly EPS estimate?
+  52968252  0.5884  Will FTX payouts start in Q2 2024?
+  78075903  0.5885  Will Roku say "Roku City" during earnings call?
+  52968276  0.5888  FTX doesn't start payouts in 2024?
+  56975985  0.5901  Ilya joins a new company?
+  77645258  0.5905  Will Domino's Pizza (DPZ) say "Most Delicious" during earnings call?
+  52968269  0.5907  Will FTX payouts start in Q4 2024?
+  78846366  0.5914  Spread: Philadelphia Union (-1.5)
+  78075962  0.5916  Will Starbucks say "Loyalty" during earnings call?
+  78886949  0.5919  Over $140M committed to the Solomon public sale?
+  78072262  0.5924  Will Comcast acquire Warner Bros. Discovery?
+  78891331  0.5924  Will Disney say "Debt" during earnings call?
+  78076070  0.5925  Will Uber say "Regulator / Regulation" during earnings call?
+  77951459  0.5931  Will Navan Inc IPO closing market capitalization be between 6 billion and 7 bill
+  66185868  0.5932  Will WeWork declare bankruptcy before July?
+  78075961  0.5938  Will Starbucks say "Shutdown / Shut Down" during earnings call?
+  78938997  0.5940  Vanta IPO before 2027?
+  64570504  0.5943  Will another company be the largest company in the world by market cap on Decemb
+  70593508  0.5945  Will 'The Accountant 2' gross between $28-31m on opening weekend?
+  78812925  0.5945  South Florida vs. Navy: 1H Moneyline
+  78099284  0.5947  Will Confluent (CFLT) beat quarterly earnings?
+  49421446  0.5949  Will WeWork announce bankruptcy by November 12?
+  78581998  0.5950  Will Consensys IPO by March 31 2026?
+  78409040  0.5950  Will Consensys IPO by June 30 2026?
+  52968240  0.5951  Will FTX payouts start in Q1 2024?
+  78938994  0.5953  Once Upon a Farm IPO before 2027?
+  78546393  0.5953  Will Airbnb (ABNB) finish week of November 10 above $135?
+  70593500  0.5958  Will 'The Accountant 2' gross between $25-28m on opening weekend?
+  70593516  0.5958  Will 'The Accountant 2' gross more than $31m on opening weekend?
+  78168019  0.5967  Over $3B committed to the MegaETH public sale?
+  78886949  0.5971  Over $20M committed to the Solomon public sale?
+  67810150  0.5977  FCSB vs. PAOK
+  70706839  0.5981  Will anyone audibly fart during the Berkshire Hathaway Shareholders Meeting?
+  78075691  0.5984  Will Carvana (CVNA) beat quarterly earnings?
+  78891331  0.5985  Will Disney say "Cruise" during earnings call?
+  76366053  0.5985  Deel IPO in 2025?
+  72889502  0.5990  HSBC Championships: Popyrin vs. Draper
+  78249578  0.5998  Marshall vs. Coastal Carolina Chanticleers: 1H Moneyline
+  78938995  0.6001  Deel IPO before 2027?
+  78075961  0.6002  Will Starbucks say "Union" during earnings call?
+  78075421  0.6006  Will EA say "Live Service" during earnings call?
+  77951454  0.6006  Will Navan Inc IPO closing market capitalization be between 5 billion and 6 bill
+  70593488  0.6009  Will 'The Accountant 2' gross less than $25m on opening weekend?
+  76461577  0.6009  Will Costco Wholesale (COST) beat its quarterly EPS estimate?
+  78582148  0.6011  Will Consensys IPO by September 30 2026?
+  78106624  0.6011  Will Estée Lauder Companies (EL) beat quarterly earnings?
+  78377932  0.6016  Will Rivian Automotive (RIVN) beat quarterly earnings?
+  78106324  0.6017  Will Roku (ROKU) beat quarterly earnings?
+  78333075  0.6020  Over $1.1B committed to the MegaETH public sale?
+  74800604  0.6023  Will anyone say "Theater attendance" during the Q2 2025 AMC earnings call?
+  77062565  0.6024  Will Other be the second most valuable company on October 31?
+  78076223  0.6026  Will Chipotle say "Shutdown / Shut Down" during earnings call?
+  77775269  0.6028  Will Union Pacific (UNP) beat quarterly earnings?
+  78184941  0.6029  Over $1B committed to the MegaETH public sale?
+  77645258  0.6035  Will Domino's Pizza (DPZ) say "Stuffed" 3+ times during earnings call?
+  78075881  0.6035  Will Apple say "Shutdown / Shut Down" during earnings call?
+  77990971  0.6043  Will Penske Automotive Group (PAG) beat quarterly earnings?
+  68652067  0.6044  Goldman Sachs lays off 1000+ in March?
+  78891279  0.6049  Will Walmart say "OnePay / One Pay" during earnings call?
+  78891329  0.6049  Will Disney say "Competition" during earnings call?
+  78422055  0.6051  Will Goodyear Tire & Rubber (GT) beat quarterly earnings?
+  78246766  0.6052  Will Charles River Laboratories (CRL) beat quarterly earnings?
+  78075742  0.6058  Will Palantir say "Government Contract" during earnings call?
+  76499334  0.6059  Will MillerKnoll (MLKN) beat its quarterly EPS estimate?
+  78422214  0.6059  Will Wendy’s (WEN) beat quarterly earnings?
+  78891278  0.6062  Will Walmart say "Shutdown / Shut Down" during earnings call?
+  35902508  0.6065  Will Genesis announce it is filing for bankruptcy by EOY?
+  78582208  0.6066  Will Consensys IPO by December 31 2026?
+  78886948  0.6070  Over $40M committed to the Solomon public sale?
+  78891329  0.6070  Will Disney say "Buyback" during earnings call?
+  77645257  0.6072  Will Domino's Pizza (DPZ) say "Carryout" 5+ times during earnings call?
+  78076242  0.6073  Will Dell say "New Product" during earnings call?
+  70061450  0.6076  Klarna IPO in 2025?
+  77422876  0.6076  Will American Airlines Group (AAL) beat quarterly earnings?
+  76782468  0.6076  Will Freddie Mac not IPO by June 30, 2026?
+  67294387  0.6077  Will fewer than 50k federal employees accept the buyout?
+  78075711  0.6077  Will Procter & Gamble say "Toothpaste" during earnings call?
+  68081552  0.6078  Will PMF or Die build a $1m business in 90 days?
+  77775209  0.6080  Will Tractor Supply (TSCO) beat quarterly earnings?
+  78076272  0.6091  Will CAVA say "Loyalty" during earnings call?
+  50581303  0.6091  Will Circle IPO by June?
+  78076031  0.6093  Will Lyft say "Membership" during earnings call?
+  78857177  0.6100  Will Urban Outfitters (URBN) beat quarterly earnings?
+  78849315  0.6102  Will Frontline (FRO) beat quarterly earnings?
+  77774629  0.6102  Will FTI Consulting (FCN) beat quarterly earnings?
+  77771829  0.6102  Will Northern Trust (NTRS) beat quarterly earnings?
+  78415490  0.6104  Will Papa John’s International (PZZA) beat quarterly earnings?
+  78184861  0.6104  Over $4B committed to the MegaETH public sale?
+  78291641  0.6106  Over $1.4B committed to the MegaETH public sale?
+  70622779  0.6110  Will Michael Saylor say "Billion" 50+ times during the Q1 2025 Strategy earnings
+  78076031  0.6110  Will Lyft say "Competition" during earnings call?
+  77645257  0.6113  Will Domino's Pizza (DPZ) say "Parmesan" 3+ times during earnings call?
+  78075963  0.6117  Will Starbucks say "Comparable Sales" during earnings call?
+  70021042  0.6118  Will Buffett say "Supply chain" during May 3 Shareholders Meeting?
+  78292061  0.6118  Over $1.2B committed to the MegaETH public sale?
+  78076031  0.6120  Will Lyft say "Expansion" during earnings call?
+  78857072  0.6121  Will Dolby Laboratories (DLB) beat quarterly earnings?
+  78076072  0.6121  Will Uber say "Expansion" during earnings call?
+  76491183  0.6122  Freddie Mac IPO in 2025?
+  77773399  0.6122  Will Otis Worldwide (OTIS) beat quarterly earnings?
+  78105894  0.6125  Will Mastercard (MA) beat quarterly earnings?
+  67294402  0.6126  Will 50-100k federal employees accept the buyout?
+  77224166  0.6128  Will Byrna Technologies (BYRN) beat quarterly earnings?
+  75127673  0.6133  Will BLS stop reporting payroll data this year?
+  77989143  0.6135  Will Electronic Arts (EA) beat quarterly earnings?
+  78373851  0.6136  Will Peloton Interactive (PTON) beat quarterly earnings?
+  76927145  0.6139  Will PepsiCo (PEP) beat quarterly earnings?
+  78076277  0.6140  Will CAVA say "Digital" during earnings call?
+  78076312  0.6140  Will Hims say "Shutdown / Shut Down" during earnings call?
+  72973616  0.6141  HSBC Championships: Nakashima vs. Draper
+  78680611  0.6145  Will Playboy (PLBY) beat quarterly earnings?
+  76461577  0.6146  Will Accenture (ACN) beat its quarterly EPS estimate?
+  40207900  0.6148  Will SVB be acquired by Monday night?
+  61230614  0.6153  Pershing Square IPO in 2024?
+  77418015  0.6153  Will Coca-Cola (KO) beat quarterly earnings?
+  78849215  0.6156  Will Femasys (FEMY) beat quarterly earnings?
+  78245616  0.6159  Will Palantir Technologies (PLTR) beat quarterly earnings?
+  76461568  0.6163  Will Cintas (CTAS) beat its quarterly EPS estimate?
+  78849416  0.6165  Will Burlington Stores (BURL) beat quarterly earnings?
+  78371731  0.6167  Will Fidelity National Financial (FNF) beat quarterly earnings?
+  78076093  0.6170  Will Microsoft say "Shutdown / Shut Down" during earnings call?
+  76499333  0.6171  Will Concentrix (CNXC) beat its quarterly EPS estimate?
+  67294416  0.6173  Will 100-150k federal employees accept the buyout?
+  59194659  0.6175  Will Circle IPO in 2024?
+  75362636  0.6177  Will anyone say "Professional" during the Q2 2025 Nvidia earnings call?
+  76366048  0.6178  Brex IPO in 2025?
+  78891280  0.6179  Will Walmart say "SNAP" during earnings call?
+  78367566  0.6181  Will Monster Beverage (MNST) beat quarterly earnings?
+  78938997  0.6182  Freddie Mac IPO before 2027?
+  78324914  0.6182  Will Qualcomm (QCOM) beat quarterly earnings?
+  78076277  0.6183  Will CAVA say "Same Store" during earnings call?
+  78680281  0.6183  Will Oklo (OKLO) beat quarterly earnings?
+  78076342  0.6184  Will Snowflake say "Competition" during earnings call?
+  78938997  0.6186  Ramp IPO before 2027?
+  77951332  0.6190  Will Ares Capital (ARCC) beat quarterly earnings?
+  78075811  0.6191  Will DraftKings say "iGaming" during earnings call?
+  78075811  0.6194  Will DraftKings say "Feature" during earnings call?
+  77224325  0.6196  Will Applied Digital (APLD) beat quarterly earnings?
+  76499334  0.6197  Will Progress Software (PRGS) beat its quarterly EPS estimate?
+  77423615  0.6197  Will Las Vegas Sands (LVS) beat quarterly earnings?
+  78075751  0.6198  Will Google say "Antitrust" during earnings call?
+  78850355  0.6198  Will AECOM (ACM) beat quarterly earnings?
+  77950912  0.6200  Will Teladoc Health (TDOC) beat quarterly earnings?
+  76366047  0.6205  Ramp IPO in 2025?
+  78076221  0.6207  Will Chipotle say "Transaction Growth" during earnings call?
+  78680531  0.6209  Will Rumble (RUM) beat quarterly earnings?
+  78075742  0.6212  Will Palantir say "Shutdown / Shut Down" during earnings call?
+  78075712  0.6213  Will Procter & Gamble say "Mason Campus" during earnings call?
+  76927144  0.6214  Will Johnson & Johnson (JNJ) beat quarterly earnings?
+  77774960  0.6216  Will PG&E (PCG) beat quarterly earnings?
+  77950792  0.6217  Will Procter & Gamble (PG) beat quarterly earnings?
+  78075810  0.6218  Will DraftKings say "Regulation" during earnings call?
+  77223657  0.6222  Will Glacier Bancorp (GBCI) beat quarterly earnings?
+  78680661  0.6224  Will Pixelworks (PXLW) beat quarterly earnings?
+  78076274  0.6227  Will CAVA say "Hyphen" during earnings call?
+  77989281  0.6228  Will JetBlue Airways (JBLU) beat quarterly earnings?
+  78372051  0.6230  Will Moderna (MRNA) beat quarterly earnings?
+  78076093  0.6235  Will Microsoft say "Activision" during earnings call?
+  67294527  0.6238  Will 500k or more federal employees accept the buyout?
+  78075422  0.6240  Will EA say "Competition" during earnings call?
+  78076052  0.6242  Will Amazon say "Supply Chain" during earnings call?
+  78075882  0.6243  Will Apple say "The Studio" during earnings call?
+  77990062  0.6244  Will Uber Technologies (UBER) beat quarterly earnings?
+  67294481  0.6244  Will 300-350k federal employees accept the buyout?
+  72930846  0.6245  HSBC Championships: Lehecka vs. Diallo
+  78680381  0.6245  Will Flutter Entertainment (FLUT) beat quarterly earnings?
+  78368391  0.6246  Will Expedia Group (EXPE) beat quarterly earnings?
+  78364410  0.6247  Will Sonos (SONO) beat quarterly earnings?
+  67294473  0.6249  Will 250-300k federal employees accept the buyout?
+  77951012  0.6252  Will Royal Caribbean Cruises (RCL) beat quarterly earnings?
+  76366046  0.6252  Mistral AI IPO in 2025?
+  77423705  0.6253  Wealthfront IPO in 2025?
+  78938995  0.6254  Brex IPO before 2027?
+  64214414  0.6255  X and Truth Social merger announced before August?
+  77951282  0.6255  Will IMAX (IMAX) beat quarterly earnings?
+  76927146  0.6256  Will Delta Air Lines (DAL) beat quarterly earnings?
+  78361989  0.6257  Will Hinge Health (HNGE) beat quarterly earnings?
+  78362410  0.6259  Will Cabot (CBT) beat quarterly earnings?
+  78369011  0.6259  Will Ralph Lauren (RL) beat quarterly earnings?
+  76781780  0.6261  Will Fannie Mae not IPO by June 30, 2026?
+  78781573  0.6263  Spread: Brighton (-1.5)
+  76927149  0.6264  Will Jefferies (JEF) beat quarterly earnings?
+  78245616  0.6264  Will Ares Management (ARES) beat quarterly earnings?
+  78075421  0.6265  Will EA say "Player Engagement" during earnings call?
+  77989952  0.6266  Will Starbucks (SBUX) beat quarterly earnings?
+  78076223  0.6268  Will Chipotle say "Supply Chain" during earnings call?
+  78378422  0.6268  Will Shopify (SHOP) beat quarterly earnings?
+  78103264  0.6269  Will Clorox (CLX) beat quarterly earnings?
+  78075811  0.6270  Will DraftKings say "Competitor" during earnings call?
+  78076277  0.6277  Will CAVA say "Salmon" during earnings call?
+  67294464  0.6278  Will 200-250k federal employees accept the buyout?
+  78323664  0.6279  Will AppLovin (APP) beat quarterly earnings?
+  76927147  0.6279  Will JPMorgan Chase (JPM) beat quarterly earnings?
+  78100654  0.6281  Will Oatly Group (OTLY) beat quarterly earnings?
+  77990132  0.6281  Will United Parcel Service (UPS) beat quarterly earnings?
+  78249837  0.6285  Will Forge Global Holdings (FRGE) beat quarterly earnings?
+  78938994  0.6289  Wealthfront IPO before 2027?
+  77420376  0.6289  Will Northrop Grumman (NOC) beat quarterly earnings?
+  77222525  0.6295  Will Penguin Solutions (PENG) beat quarterly earnings?
+  78075711  0.6295  Will Procter & Gamble say "Laundry" during earnings call?
+  70950046  0.6297  Will anyone audibly fart during Robinhood earnings call?
+  78366260  0.6298  Will Marathon Petroleum (MPC) beat quarterly earnings?
+  78857506  0.6298  Will Intuit (INTU) beat quarterly earnings?
+  78075741  0.6299  Will Palantir say "Commercial Growth" during earnings call?
+  78075812  0.6299  Will DraftKings say "Engagement" during earnings call?
+  78326015  0.6301  Will Atmos Energy (ATO) beat quarterly earnings?
+  78857477  0.6304  Will Walmart (WMT) beat quarterly earnings?
+  77774546  0.6306  Will CBRE Group (CBRE) beat quarterly earnings?
+  77420550  0.6306  Will PulteGroup (PHM) beat quarterly earnings?
+  78325364  0.6311  Will TKO Group Holdings (TKO) beat quarterly earnings?
+  76936257  0.6314  Will Carnival Corporation (CCL) beat quarterly earnings?
+  76366052  0.6315  Glean IPO in 2025?
+  78891281  0.6315  Will Walmart say "Competition" during earnings call?
+  77417510  0.6316  Will Chubb (CB) beat quarterly earnings?
+  77423225  0.6316  Will Verizon Communications (VZ) beat quarterly earnings?
+  78857976  0.6317  Will Abercrombie & Fitch (ANF) beat quarterly earnings?
+  78673253  0.6318  Will Tower Semiconductor (TSEM) beat quarterly earnings?
+  78076276  0.6319  Will CAVA say "Expansion" during earnings call?
+  70622961  0.6319  Will Michael Saylor say "Recession" during the Q1 2025 Strategy earnings call?
+  78365620  0.6321  Will Figma (FIG) beat quarterly earnings?
+  30153413  0.6323  Will an FTX acquisition of Robinhood be announced by September 20?
+  78248486  0.6325  Will Frontdoor (FTDR) beat quarterly earnings?
+  78680711  0.6326  Will Cisco Systems (CSCO) beat quarterly earnings?
+  67294429  0.6326  Will 150-200k federal employees accept the buyout?
+  78849125  0.6329  Will Woodward (WWD) beat quarterly earnings?
+  78415311  0.6333  Will Tripadvisor (TRIP) beat quarterly earnings?
+  78891280  0.6334  Will Walmart say "Brick and Mortar" during earnings call?
+  78368130  0.6335  Will Warner Bros. Discovery (WBD) beat quarterly earnings?
+  78938997  0.6337  Mistral AI IPO before 2027?
+  76366048  0.6337  Cerebras IPO in 2025?
+  78076202  0.6340  Will Reddit say "Shutdown / Shut Down" during earnings call?
+  78368310  0.6342  Will DuPont de Nemours (DD) beat quarterly earnings?
+  78415011  0.6342  Will Yelp (YELP) beat quarterly earnings?
+  78099933  0.6343  Will Etsy (ETSY) beat quarterly earnings?
+  77420443  0.6346  Will Philip Morris International (PM) beat quarterly earnings?
+  76936108  0.6347  Will Omnicom Group (OMC) beat quarterly earnings?
+  78075813  0.6349  Will DraftKings say "Marketing" during earnings call?
+  77773669  0.6349  Will WD-40 Company (WDFC) beat quarterly earnings?
+  78376631  0.6349  Will Carlyle Secured Lending (CGBD) beat quarterly earnings?
+  78075712  0.6350  Will Procter & Gamble say "Revenue" during earnings call?
+  78938995  0.6352  Glean IPO before 2027?
+  67294491  0.6352  Will 350-400k federal employees accept the buyout?
+  78076275  0.6352  Will Coinbase say "Custodial / Custody" during earnings call?
+  78104614  0.6355  Will Coinbase Global (COIN) beat quarterly earnings?
+  78075711  0.6355  Will Procter & Gamble say "Shutdown / Shut Down" during earnings call?
+  67294511  0.6356  Will 450-500k federal employees accept the buyout?
+  78104744  0.6357  Will Eli Lilly and Company (LLY) beat quarterly earnings?
+  77773519  0.6358  Will Raymond James Financial (RJF) beat quarterly earnings?
+  77419573  0.6359  Will Lockheed Martin (LMT) beat quarterly earnings?
+  78680901  0.6359  Will Gambling.com Group (GAMB) beat quarterly earnings?
+  74235483  0.6360  Will anyone say "Activision" during the Q4 2025 Microsoft earnings call?
+  77774769  0.6361  Will Hasbro (HAS) beat quarterly earnings?
+  74235732  0.6361  Will anyone say "Service" during the Q3 2025 Apple earnings call?
+  78418331  0.6365  Will BuzzFeed (BZFD) beat quarterly earnings?
+  78076342  0.6366  Will Snowflake say "Partnership" during earnings call?
+  78857987  0.6368  Will Kohls (KSS) beat quarterly earnings?
+  67294501  0.6368  Will 400-450k federal employees accept the buyout?
+  77222544  0.6370  Will AZZ (AZZ) beat quarterly earnings?
+  78075711  0.6370  Will Procter & Gamble say "Advertising" during earnings call?
+  78369501  0.6376  Will DraftKings (DKNG) beat quarterly earnings?
+  78110684  0.6382  Will Shake Shack (SHAK) beat quarterly earnings?
+  76536009  0.6384  Will Stubhub’s market cap be between $9B and $10B at market close on IPO day?
+  78363320  0.6384  Will Marriott International (MAR) beat quarterly earnings?
+  78858036  0.6386  Will DICK'S Sporting Goods (DKS) beat quarterly earnings?
+  78102074  0.6387  Will Paramount Group (PSKY) beat quarterly earnings?
+  77645258  0.6388  Will Domino's Pizza (DPZ) say "Competition" during earnings call?
+  78857666  0.6389  Will Zoom Communications (ZM) beat quarterly earnings?
+  76491024  0.6390  Fannie Mae IPO in 2025?
+  78680091  0.6391  Will The RealReal (REAL) beat quarterly earnings?
+  77422273  0.6394  Will Hilton Worldwide Holdings (HLT) beat quarterly earnings?
+  78857636  0.6403  Will Bath & Body Works (BBWI) beat quarterly earnings?
+  76927146  0.6405  Will Wells Fargo (WFC) beat quarterly earnings?
+  76099191  0.6405  Will anyone say "RPO/Remaining Performance Obligation" 3+ times during Oracle's 
+  76927143  0.6407  Will Domino’s Pizza (DPZ) beat quarterly earnings?
+  78075713  0.6407  Will Procter & Gamble say "E-commerce" during earnings call?
+  74235581  0.6410  Will anyone say "Antitrust" during the Q2 2025 Google earnings call?
+  78938998  0.6412  Cerebras IPO before 2027?
+  78938994  0.6413  Anysphere (Cursor) IPO before 2027?
+  74235805  0.6416  Will anyone say "Channel" during the Q2 2025 Meta earnings call?
+  78857186  0.6417  Will Weibo (WB) beat quarterly earnings?
+  77418163  0.6417  Will East West Bancorp (EWBC) beat quarterly earnings?
+  66079514  0.6418  Circle IPO in 2025?
+  52484141  0.6418  No Reddit IPO in 2024
+  77224156  0.6420  Will Unity Bancorp (UNTY) beat quarterly earnings?
+  78365520  0.6420  Will European Wax Center (EWCZ) beat quarterly earnings?
+  76927147  0.6420  Will Levi Strauss & Co. (LEVI) beat quarterly earnings?
+  78938996  0.6420  Rippling IPO before 2027?
+  77959047  0.6422  Spread: Brighton (-0.5)
+  77989202  0.6424  Will Invesco (IVZ) beat quarterly earnings?
+  78100464  0.6425  Will MGM Resorts International (MGM) beat quarterly earnings?
+  78371851  0.6426  Will Hyatt Hotels (H) beat quarterly earnings?
+  76536014  0.6431  Will Stubhub’s market cap be between $10B and $11B at market close on IPO day?
+  78367190  0.6436  Will ConocoPhillips (COP) beat quarterly earnings?
+  78938998  0.6439  Fannie Mae IPO before 2027?
+  76936107  0.6441  Will McCormick & Company (MKC) beat quarterly earnings?
+  78075741  0.6441  Will Palantir say "Partnership" during earnings call?
+  77645257  0.6446  Will Domino's Pizza (DPZ) say "Recession" during earnings call?
+  78076293  0.6450  Will Robinhood say "Shutdown / Shut Down" during earnings call?
+  76693969  0.6454  LoL: CFO vs TSW
+  76507398  0.6454  Will Bullish (BLSH) beat its quarterly EPS estimate?
+  76366047  0.6457  Rippling IPO in 2025?
+  71025154  0.6465  Italian small businesses – dismissals and related compensation referendum
+  77951812  0.6467  Will Bed Bath & Beyond (BBBY) beat quarterly earnings?
+  76936126  0.6467  Will Bank of America (BAC) beat quarterly earnings?
+  78325615  0.6469  Will Humana (HUM) beat quarterly earnings?
+  78858046  0.6471  Will Best Buy (BBY) beat quarterly earnings?
+  78111104  0.6474  Will Colgate-Palmolive (CL) beat quarterly earnings?
+  78246106  0.6475  Will Hess Midstream (HESM) beat quarterly earnings?
+  78419151  0.6479  Will KKR & Co (KKR) beat quarterly earnings?
+  78857406  0.6480  Will Dycom Industries (DY) beat quarterly earnings?
+  76536026  0.6483  Will Subhub’s market cap be at least $13B at market close on IPO day?
+  76936088  0.6485  Will Constellation Brands (STZ) beat quarterly earnings?
+  76099187  0.6486  Will anyone say "Capital expenditure" during Oracle's 1st Quarter Fiscal Year 20
+  78076091  0.6489  Will Microsoft say "Teams" during earnings call?
+  77420630  0.6490  Will Quest Diagnostics (DGX) beat quarterly earnings?
+  78325495  0.6492  Will Fidelity National Information Services (FIS) beat quarterly earnings?
+  78076022  0.6494  Will Meta say "Antitrust" during earnings call?
+  78075531  0.6495  Will Boeing (BA) beat quarterly earnings?
+  78076221  0.6500  Will Chipotle say "Share Purchase" during earnings call?
+  76936135  0.6501  Will Abbott Laboratories (ABT) beat quarterly earnings?
+  78111185  0.6505  Will Reddit (RDDT) beat quarterly earnings?
+  78245876  0.6506  Will Hims & Hers Health (HIMS) beat quarterly earnings?
+  77645256  0.6508  Will Tesla (TSLA) say "Acquisition" during earnings call?
+  78857786  0.6510  Will The J. M. Smucker (SJM) beat quarterly earnings?
+  76099187  0.6514  Will anyone say "SaaS momentum" during Oracle's 1st Quarter Fiscal Year 2026 Ear
+  78075712  0.6515  Will Procter & Gamble say "Dividend" during earnings call?
+  78857296  0.6521  Will Palo Alto Networks (PANW) beat quarterly earnings?
+  76936116  0.6522  Will Citizens Financial Group (CFG) beat quarterly earnings?
+  78106474  0.6524  Will Hilton Grand Vacations (HGV) beat quarterly earnings?
+  78673550  0.6526  Will Getty Images Holdings (GETY) beat quarterly earnings?
+  78420651  0.6528  Will Franklin Resources (BEN) beat quarterly earnings?
+  78368220  0.6528  Will Consolidated Edison (ED) beat quarterly earnings?
+  77774544  0.6539  Will Blackstone (BX) beat quarterly earnings?
+  78366450  0.6540  Will Pinterest (PINS) beat quarterly earnings?
+  75362632  0.6542  Will anyone say "Enterprise" during the Q2 2025 Nvidia earnings call?
+  78857526  0.6545  Will The Gap (GAP) beat quarterly earnings?
+  78248836  0.6550  Will FS KKR Capital (FSK) beat quarterly earnings?
+  78680751  0.6554  Will The Walt Disney Company (DIS) beat quarterly earnings?
+  77950972  0.6555  Will Piper Sandler Companies (PIPR) beat quarterly earnings?
+  78680511  0.6558  Will Circle Internet Group (CRCL) beat quarterly earnings?
+  78102744  0.6562  Will Anheuser-Busch (BUD) beat quarterly earnings?
+  78891330  0.6562  Will Disney say "Acquisition" during earnings call?
+  76936239  0.6563  Will Charles Schwab (SCHW) beat quarterly earnings?
+  78371631  0.6570  Will News Corp (NWSA) beat quarterly earnings?
+  78857927  0.6572  Will Workday (WDAY) beat quarterly earnings?
+  77951762  0.6572  Will Booking Holdings (BKNG) beat quarterly earnings?
+  78416341  0.6576  Will Eventbrite (EB) beat quarterly earnings?
+  77989552  0.6581  Will Labcorp Holdings (LH) beat quarterly earnings?
+  77421260  0.6587  Will Ameriprise Financial (AMP) beat quarterly earnings?
+  78075902  0.6587  Will Roku say "Acquisition" during earnings call?
+  78076311  0.6594  Will Hims say "Collaboration" during earnings call?
+  78110944  0.6595  Will Airbnb (ABNB) beat quarterly earnings?
+  78364110  0.6604  Will PJT Partners (PJT) beat quarterly earnings?
+  74800602  0.6605  Will anyone say "Partnership" during the Q2 2025 AMC earnings call?
+  76936182  0.6605  Will Morgan Stanley (MS) beat quarterly earnings?
+  78372141  0.6616  Will Dropbox (DBX) beat quarterly earnings?
+  77223883  0.6621  Will Bank of New York Mellon (BK) beat quarterly earnings?
+  77223535  0.6622  Will ServisFirst Bancshares (SFBS) beat quarterly earnings?
+  77951735  0.6637  Will BGC Group (BGC) beat quarterly earnings?
+  78099414  0.6648  Will CVS Health (CVS) beat quarterly earnings?
+  74235807  0.6656  Will anyone say "Antitrust" during the Q2 2025 Meta earnings call?
+  78857446  0.6675  Will Bullish (BLSH) beat quarterly earnings?
+  74235480  0.6686  Will anyone say "Teams" during the Q4 2025 Microsoft earnings call?
+  78075422  0.6702  Will EA say "Acquisition" during earnings call?
+  77421190  0.6706  Will Moody's (MCO) beat quarterly earnings?
+  76099191  0.6723  Will anyone say "Partner ecosystem" during Oracle's 1st Quarter Fiscal Year 2026
+  77423075  0.6727  Will Boston Beer (SAM) beat quarterly earnings?
+  78326225  0.6735  Will HubSpot (HUBS) beat quarterly earnings?
+  78325215  0.6737  Will MetLife (MET) beat quarterly earnings?
+  78245756  0.6738  Will Grab Holdings (GRAB) beat quarterly earnings?
+  78857316  0.6739  Will Lowe's Companies (LOW) beat quarterly earnings?
+  78364680  0.6742  Will Bumble (BMBL) beat quarterly earnings?
+  51862769  0.6745  Paramount merger/acquisition in Q1?
+  78673500  0.6756  Will Bain Capital Specialty Finance (BCSF) beat quarterly earnings?
+  76927142  0.6767  Will Goldman Sachs (GS) beat quarterly earnings?
+  77422383  0.6789  Will International Business Machines (IBM) beat quarterly earnings?
+  78419311  0.6795  Will Berkshire Hathaway (BRK.A) beat quarterly earnings?
+  78245616  0.6834  Will Williams Companies (WMB) beat quarterly earnings?
+  77774540  0.6855  Will AllianceBernstein (AB) beat quarterly earnings?
+  78849055  0.6862  Will Williams-Sonoma (WSM) beat quarterly earnings?
+  76936069  0.6874  Will Interactive Brokers Group (IBKR) beat quarterly earnings?
+  77645257  0.6939  Will Domino's Pizza (DPZ) say "Acquisition" during earnings call?
+  78857586  0.6947  Will BJ's Wholesale Club Holdings (BJ) beat quarterly earnings?
+  78076293  0.7011  Will Robinhood say "Social" during earnings call?

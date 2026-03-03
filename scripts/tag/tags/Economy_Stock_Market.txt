@@ -1,0 +1,2082 @@
+# Economy_Finance - Economy_Stock_Market
+# count=2079, avg_conf=0.6322
+====================================================================================================
+  67659240  0.5063  iPhone SE 4 under $500?
+  63320910  0.5144  Evidence released that Kamala worked at McDonald's?
+  25294432  0.5154  Who will have a higher net worth on April 20th: Mark Zuckerberg or Michael Bloom
+  14382323  0.5256  Will Basquiat's "Untitled (Soap)" sell for more than 15 million?
+  76628543  0.5263  CS: RUBY vs m1x
+  78116353  0.5269  Will the #1 album have between 95 thousand and 100 thousand pure sales for the w
+  41261970  0.5279  Will Milady outperform BAYC?
+  78116358  0.5344  Will the #1 album have between 100 thousand and 105 thousand pure sales for the 
+  63115992  0.5361  Font vs. Phillips
+  28386454  0.5384  Will 'Top Gun: Maverick' get a 95% or higher Tomatometer Score?
+  67984234  0.5401  Charleston Southern vs. High Point
+  70347988  0.5417  Will the U.S. collect between $100b and $200b in revenue in 2025?
+  53049744  0.5437  Will Farcaster's growth peak on Tuesday?
+  70347979  0.5456  Will the U.S. collect less than $100b in revenue in 2025?
+  28167267  0.5472  Will 'Top Gun: Maverick' get an 85% or higher Tomatometer Score?
+  21221362  0.5501  Will Ed Ruscha's “Ripe” (Lot 37C) sell for more than $22m at Christie’s on Novem
+  70348016  0.5502  Will the U.S. collect between $1t and $2t in revenue in 2025?
+  76513895  0.5518  Mercury vs. Liberty
+  73482946  0.5526  Mercury vs Wings
+  61985056  0.5537  Will AAPL be the largest company by mcap on September 30?
+  72187223  0.5574  Sun vs Liberty
+  73240377  0.5592  Liberty vs Mercury
+  23603717  0.5616  Who will have a higher net worth on February 20: Warren Buffett or Sergey Brin?
+  73407784  0.5617  Will Tesla deliver less than 300000 vehicles in Q2?
+  72926103  0.5618  U.S. fertility rate up in Q1 2025?
+  46351048  0.5621  Will Milady outperform BAYC through Aug 31?
+  61742963  0.5627  Blonde Broker vs Ashley
+  72916449  0.5631  Mercury vs Liberty
+  74346290  0.5631  Mercury vs Liberty
+  72875956  0.5635  Mercury vs Sun
+  74704451  0.5638  Mercury vs Sky
+  72997553  0.5638  Mercury vs Sky
+  76077586  0.5648  Mercury vs. Sun
+  75712475  0.5650  Sky vs. Mercury
+  16061159  0.5651  Will F9 gross more than $62M domestically on opening weekend?
+  68144836  0.5653  Texas A&M Commerce vs. SE Louisiana
+  78891329  0.5657  Will Disney say "ESPN" during earnings call?
+  77060048  0.5666  US fertility rate up in Q3 2025?
+  66147382  0.5667  Will Siqi Chen refund >$500,000 in $ZERO losses?
+  67027772  0.5672  Will Elon Musk's net worth be between $440B and $445B on January 31?
+  77815840  0.5676  Will Tesla deliver less than 350000 vehicles in Q4 2025
+  78891329  0.5678  Will Disney say "Zootopia" during earnings call?
+  74785635  0.5686  Sun vs Mercury
+  67903828  0.5693  Prairie View A&M vs. Southern
+  71984751  0.5695  Sky vs Mercury
+  62262844  0.5698  Will Kamala Harris say "opportunity economy" 2 or more times during her Pennsylv
+  73529408  0.5701  U.S. fertility rate up in Q2 2025?
+   7880132  0.5716  What will the average sale price of a PS5 be on StockX on Christmas Day?
+  69048202  0.5720  Over vs Under Line: 217.5
+  69300589  0.5720  Over vs Under Line: 217.5
+  69298877  0.5720  Over vs Under Line: 217.5
+  69271527  0.5720  Over vs Under Line: 217.5
+  60386039  0.5745  Will Harris lead by 0.6-1 points on August 16?
+  78075961  0.5746  Will Starbucks say "Canada" during earnings call?
+  57845162  0.5752  Will $MOTHER hit $500 Million FDV in June?
+  77424269  0.5758  Greg Goes All In profitable in September?
+  61783889  0.5760  Will Kamala Harris say "opportunity economy" during her Pennsylvania rally?
+  67944291  0.5765  Stephen F. Austin vs. Texas A&M Commerce
+  77062586  0.5775  Will Jeff Bezos be richest person on October 31?
+  78113329  0.5780  UL Monroe vs. Southern Miss: 1H Moneyline
+  78749925  0.5780  Spread: Middle Tennessee (-1.5)
+  78076072  0.5784  Will Uber say "Delivery" during earnings call?
+  76335452  0.5787  Will Warren Buffett be richest person on December 31?
+  78940881  0.5787  Will Warren Buffett be richest person on December 31?
+  78546366  0.5797  Will Apple (AAPL) finish week of November 10 above $280?
+  78546332  0.5797  Will Apple (AAPL) close above $320 end of November?
+  78940693  0.5801  Will Warren Buffett be richest person on March 31?
+  75936720  0.5803  Spread: Tulsa (-3.5)
+  78373136  0.5803  Will Tesla dip to $308 in November?
+  70150926  0.5804  Over 242.5
+  69423192  0.5804  Over 242.5
+  70026003  0.5804  Over 242.5
+  70026068  0.5804  Over 242.5
+  69866147  0.5804  Over 242.5
+  69744427  0.5804  Over 242.5
+  70151009  0.5804  Over 242.5
+  69463168  0.5804  Over 242.5
+  69786556  0.5804  Over 242.5
+  69703616  0.5804  Over 242.5
+  69744367  0.5804  Over 242.5
+  69946975  0.5804  Over 242.5
+  69906558  0.5804  Over 242.5
+  69943709  0.5804  Over 242.5
+  69742658  0.5804  Over 242.5
+  69622747  0.5804  Over 242.5
+  69622584  0.5804  Over 242.5
+  69542133  0.5804  Over 242.5
+  69866123  0.5804  Over 242.5
+  69540507  0.5804  Over 242.5
+  69540598  0.5804  Over 242.5
+  69542089  0.5804  Over 242.5
+  69864415  0.5804  Over 242.5
+  58404937  0.5807  Was Barron involved in $DJT?
+  77062578  0.5808  Will Mark Zuckerberg be richest person on October 31?
+  60841260  0.5809  Will Harris publicly support tax on unrealized gains?
+  76005738  0.5811  Will Elon Musk's net worth be between $380b and $390b on August 31?
+  78373134  0.5821  Will Tesla reach $615 in November?
+  78076032  0.5848  Will Lyft say "International" during earnings call?
+  60386052  0.5850  Will Harris lead by 1.1-1.5 points on August 16?
+  60386061  0.5854  Will Harris lead by 1.6-1.9 points on August 16?
+  78373132  0.5859  Will Tesla dip to $420 in November?
+  78546364  0.5864  Will Apple (AAPL) finish week of November 10 above $240?
+  60386019  0.5865  Will Harris lead by 0.1-0.5 points on August 16?
+  76335345  0.5867  Will Warren Buffett be richest person on September 30?
+  77062198  0.5867  Spread: Arizona (-20.5)
+  18136426  0.5868  Will OpenTable’s “Seated diners from online, phone, and walk-in reservations” da
+  78076073  0.5873  Will Uber say "Taylor Swift" during earnings call?
+  78076072  0.5876  Will Uber say "Waymo" during earnings call?
+  78546366  0.5878  Will Apple (AAPL) finish week of November 10 above $290?
+  60123641  0.5883  Will Harris lead by 0.1-0.4 points on August 9?
+  77633511  0.5890  Will Oracle be the second-largest company in the world by market cap on December
+  78891328  0.5892  Will Disney say "Abu Dhabi" during earnings call?
+  78891280  0.5892  Will Walmart say "Skip" during earnings call?
+  78075902  0.5894  Will Roku say "Howdy" during earnings call?
+  78075961  0.5896  Will Starbucks say "Peppermint" during earnings call?
+  78373136  0.5897  Will Tesla dip to $398 in November?
+  78812924  0.5900  South Alabama vs. UL Monroe: 1H Moneyline
+  78373133  0.5901  Will Tesla dip to $375 in November?
+  78565210  0.5910  Spread: Eastern Michigan (-2.5)
+  78811124  0.5910  Spread: Eastern Michigan (-2.5)
+  78546365  0.5913  Will Apple (AAPL) finish week of November 10 above $275?
+  78076751  0.5914  Spread: Southern Miss (-13.5)
+  78891279  0.5925  Will Walmart say "Automation" during earnings call?
+  78076072  0.5925  Will Uber say "Lyft" during earnings call?
+  60123649  0.5926  Will Harris lead by 0.5-0.9 points on August 9?
+  78546343  0.5927  Will Tesla (TSLA) close above $470 end of November?
+  78373133  0.5928  Will Tesla reach $480 in November?
+  71269985  0.5929  Over 206.5
+  70637338  0.5929  Over 206.5
+  71430416  0.5929  Over 206.5
+  71187185  0.5929  Over 206.5
+  71487885  0.5929  Over 206.5
+  70718422  0.5929  Over 206.5
+  71484527  0.5929  Over 206.5
+  70757352  0.5929  Over 206.5
+  69459784  0.5929  Over 206.5
+  71276755  0.5929  Over 206.5
+  71566453  0.5929  Over 206.5
+  79059458  0.5930  Spread: Tennessee (-41.5)
+  78075902  0.5932  Will Roku say "Brazil" during earnings call?
+  78076072  0.5938  Will Uber say "Freight" during earnings call?
+  78546343  0.5940  Will Tesla (TSLA) close above $460 end of November?
+  78075962  0.5946  Will Starbucks say "Holiday" during earnings call?
+  77951464  0.5950  Will Navan Inc IPO closing market capitalization be between 7 billion and 8 bill
+  71364596  0.5950  Over 231.5
+  69585460  0.5950  Over 231.5
+  70314814  0.5950  Over 231.5
+  69823857  0.5950  Over 231.5
+  71273357  0.5950  Over 231.5
+  69622638  0.5950  Over 231.5
+  69377590  0.5950  Over 231.5
+  70232320  0.5950  Over 231.5
+  69828869  0.5950  Over 231.5
+  70502103  0.5950  Over 231.5
+  69419819  0.5950  Over 231.5
+  69659796  0.5950  Over 231.5
+  71273389  0.5950  Over 231.5
+  71443931  0.5950  Over 231.5
+  69786620  0.5950  Over 231.5
+  69943615  0.5950  Over 231.5
+  69375920  0.5950  Over 231.5
+  70027688  0.5950  Over 231.5
+  70151095  0.5950  Over 231.5
+  70068090  0.5950  Over 231.5
+  70068042  0.5950  Over 231.5
+  69461576  0.5950  Over 231.5
+  69377666  0.5950  Over 231.5
+  70154310  0.5950  Over 231.5
+  69945253  0.5950  Over 231.5
+  70152859  0.5950  Over 231.5
+  71205761  0.5950  Over 231.5
+  70152616  0.5950  Over 231.5
+  70232395  0.5950  Over 231.5
+  69382684  0.5950  Over 231.5
+  69543718  0.5950  Over 231.5
+  70110297  0.5950  Over 231.5
+  69622682  0.5950  Over 231.5
+  69377696  0.5950  Over 231.5
+  69587180  0.5950  Over 231.5
+  71356103  0.5950  Over 231.5
+  69379372  0.5950  Over 231.5
+  69473362  0.5950  Over 231.5
+  69906507  0.5950  Over 231.5
+  69938480  0.5950  Over 231.5
+  70031021  0.5950  Over 231.5
+  69869561  0.5950  Over 231.5
+  69747754  0.5950  Over 231.5
+  69701949  0.5950  Over 231.5
+  70152911  0.5950  Over 231.5
+  70222016  0.5950  Over 231.5
+  69503796  0.5950  Over 231.5
+  70152689  0.5950  Over 231.5
+  71187138  0.5950  Over 231.5
+  70026154  0.5950  Over 231.5
+  69424909  0.5950  Over 231.5
+  70223633  0.5950  Over 231.5
+  69542195  0.5950  Over 231.5
+  69421542  0.5950  Over 231.5
+  70069711  0.5950  Over 231.5
+  69784906  0.5950  Over 231.5
+  70225370  0.5950  Over 231.5
+  69987292  0.5950  Over 231.5
+  69908239  0.5950  Over 231.5
+  70716788  0.5950  Over 231.5
+  69867774  0.5950  Over 231.5
+  69783201  0.5950  Over 231.5
+  69784849  0.5950  Over 231.5
+  69866063  0.5950  Over 231.5
+  69661464  0.5950  Over 231.5
+  70154363  0.5950  Over 231.5
+  69340497  0.5950  Over 231.5
+  70232312  0.5950  Over 231.5
+  69866210  0.5950  Over 231.5
+  69943500  0.5950  Over 231.5
+  69661636  0.5950  Over 231.5
+  70677967  0.5950  Over 231.5
+  69703555  0.5950  Over 231.5
+  70031046  0.5950  Over 231.5
+  69464881  0.5950  Over 231.5
+  69502215  0.5950  Over 231.5
+  70152739  0.5950  Over 231.5
+  69345466  0.5950  Over 231.5
+  69459829  0.5950  Over 231.5
+  69946889  0.5950  Over 231.5
+  70232120  0.5950  Over 231.5
+  69943561  0.5950  Over 231.5
+  70232442  0.5950  Over 231.5
+  69788274  0.5950  Over 231.5
+  70071453  0.5950  Over 231.5
+  69343753  0.5950  Over 231.5
+  69823920  0.5950  Over 231.5
+  69702036  0.5950  Over 231.5
+  70071406  0.5950  Over 231.5
+  69419889  0.5950  Over 231.5
+  70071324  0.5950  Over 231.5
+  78075881  0.5955  Will Apple say "Apple Pay" during earnings call?
+  77213262  0.5956  Will Elon Musk's net worth be between $490b and $500b on October 31?
+  70031085  0.5959  Over 221.5
+  69742733  0.5959  Over 221.5
+  69461545  0.5959  Over 221.5
+  69788258  0.5959  Over 221.5
+  69702042  0.5959  Over 221.5
+  69545359  0.5959  Over 221.5
+  69783178  0.5959  Over 221.5
+  70068152  0.5959  Over 221.5
+  69823846  0.5959  Over 221.5
+  69943637  0.5959  Over 221.5
+  70232196  0.5959  Over 221.5
+  69503816  0.5959  Over 221.5
+  69946990  0.5959  Over 221.5
+  69585547  0.5959  Over 221.5
+  69622543  0.5959  Over 221.5
+  70151065  0.5959  Over 221.5
+  69424854  0.5959  Over 221.5
+  69582134  0.5959  Over 221.5
+  69663165  0.5959  Over 221.5
+  70557969  0.5959  Over 221.5
+  69500253  0.5959  Over 221.5
+  69421471  0.5959  Over 221.5
+  69864387  0.5959  Over 221.5
+  69706936  0.5959  Over 221.5
+  70232172  0.5959  Over 221.5
+  69587225  0.5959  Over 221.5
+  69661582  0.5959  Over 221.5
+  71492963  0.5959  Over 221.5
+  69742708  0.5959  Over 221.5
+  71447345  0.5959  Over 221.5
+  69664851  0.5959  Over 221.5
+  69542181  0.5959  Over 221.5
+  69619169  0.5959  Over 221.5
+  69908227  0.5959  Over 221.5
+  70152825  0.5959  Over 221.5
+  70069658  0.5959  Over 221.5
+  69540549  0.5959  Over 221.5
+  70150972  0.5959  Over 221.5
+  69340552  0.5959  Over 221.5
+  69340422  0.5959  Over 221.5
+  70748891  0.5959  Over 221.5
+  69379312  0.5959  Over 221.5
+  70152675  0.5959  Over 221.5
+  70422967  0.5959  Over 221.5
+  69823796  0.5959  Over 221.5
+  69461460  0.5959  Over 221.5
+  69705267  0.5959  Over 221.5
+  69659834  0.5959  Over 221.5
+  69502136  0.5959  Over 221.5
+  69823883  0.5959  Over 221.5
+  69869511  0.5959  Over 221.5
+  69505516  0.5959  Over 221.5
+  70152893  0.5959  Over 221.5
+  70221953  0.5959  Over 221.5
+  69424917  0.5959  Over 221.5
+  69502165  0.5959  Over 221.5
+  69823979  0.5959  Over 221.5
+  70355165  0.5959  Over 221.5
+  69823956  0.5959  Over 221.5
+  70026218  0.5959  Over 221.5
+  70027661  0.5959  Over 221.5
+  70552886  0.5959  Over 221.5
+  69946915  0.5959  Over 221.5
+  70026028  0.5959  Over 221.5
+  69744387  0.5959  Over 221.5
+  70152749  0.5959  Over 221.5
+  70350118  0.5959  Over 221.5
+  69582108  0.5959  Over 221.5
+  69913266  0.5959  Over 221.5
+  70232253  0.5959  Over 221.5
+  69620903  0.5959  Over 221.5
+  69701901  0.5959  Over 221.5
+  69661508  0.5959  Over 221.5
+  70423020  0.5959  Over 221.5
+  70277794  0.5959  Over 221.5
+  78075811  0.5960  Will DraftKings say "NBC" during earnings call?
+  78075881  0.5973  Will Apple say "Modem" during earnings call?
+  78037152  0.5973  Spread: Southern Miss (-11.5)
+  77946465  0.5975  Spread: Southern Miss (-12.5)
+  70306867  0.5978  Will Musk say "Mars" during the Q1 2025 Tesla earnings call?
+  77645258  0.5982  Will Domino's Pizza (DPZ) say "Sauce" during earnings call?
+  78546344  0.5985  Will Tesla (TSLA) close above $510 end of November?
+  78546343  0.5988  Will Tesla (TSLA) close above $450 end of November?
+  78075901  0.5988  Will Roku say "Hour" during earnings call?
+  76499333  0.5989  Will CarMax (KMX) beat its quarterly EPS estimate?
+  73747593  0.5990  Will anyone say "Canada" during the Q2 2025 Netflix earnings call?
+  78075902  0.5991  Will Roku say "Holiday" during earnings call?
+  78374491  0.5991  Will Warby Parker (WRBY) beat quarterly earnings?
+  78891299  0.5995  Will NVIDIA say "Talent" during earnings call?
+  70306756  0.5996  Will Musk say "China" 3+ times during the Q1 2025 Tesla earnings call?
+  77213241  0.5997  Will Elon Musk's net worth be between $440b and $450b on October 31?
+  78416141  0.5997  Will GoPro (GPRO) beat quarterly earnings?
+  76393807  0.5997  Spread: Tulsa (-14.0)
+  78075961  0.5999  Will Starbucks say "Pumpkin Spice" during earnings call?
+  78076032  0.6001  Will Lyft say "Revenue" during earnings call?
+  78812930  0.6002  Spread: Tennessee (-38.5)
+  76671763  0.6002  Spread: Tennessee (-38.5)
+  78022762  0.6002  Spread: Southern Miss (-10.5)
+  78076071  0.6002  Will Uber say "Uber Explore" during earnings call?
+  78371931  0.6005  Will Akamai Technologies (AKAM) beat quarterly earnings?
+  63477333  0.6008  Will Harris lead in RCP by 0.5-0.9 on Nov 4?
+  78546349  0.6008  Will Tesla (TSLA) close above $430 end of November?
+  78249573  0.6009  1H Spread: Minnesota (-1.5)
+  77062574  0.6010  Will Larry Ellison be richest person on October 31?
+  57723120  0.6011  Will Berkshire Hathaway resume public trading today?
+  76848318  0.6015  Will Butters Stotch make a trade during South Park's prediction market episode?
+  67504796  0.6019  Did Kamala buy ads on Majority Report?
+  78076223  0.6023  Will Chipotle say "Carne Asada" during earnings call?
+  77774719  0.6024  Will Harley-Davidson (HOG) beat quarterly earnings?
+  77761556  0.6024  Russell 2000 (RUT) Up or Down on October 17?
+  77062551  0.6024  Will Apple be the second most valuable company on October 31?
+  70306851  0.6030  Will Musk say "Inflation" during the Q1 2025 Tesla earnings call?
+  78075421  0.6030  Will EA say "Saudi Arabia" during earnings call?
+  78076011  0.6031  Will Chipotle Mexican Grill (CMG) beat quarterly earnings?
+  78892149  0.6031  Spread: Tennessee (-40.5)
+  78546342  0.6033  Will Tesla (TSLA) close above $440 end of November?
+  78274000  0.6034  Russell 2000 (RUT) Up or Down on October 29?
+  78621383  0.6034  Netflix (NFLX) Up or Down on November 6?
+  78187594  0.6035  Russell 2000 (RUT) Up or Down on October 27?
+  16788239  0.6035  Will Iron Finance V2’s TVL be above $500m on August 1, 2021?
+  78546344  0.6037  Will Tesla (TSLA) close above $500 end of November?
+  78075902  0.6040  Will Roku say "Tariff" during earnings call?
+  76936136  0.6043  Will Kinder Morgan (KMI) beat quarterly earnings?
+  78891280  0.6044  Will Walmart say "Prescription" during earnings call?
+  66387522  0.6049  Magnificent 7 shrinks below 25% of S&P 500 in 2025?
+  76461568  0.6051  Will Micron Tech (MU) beat its quarterly EPS estimate?
+  77062519  0.6051  Will Apple be the most valuable company on October 31?
+  78715730  0.6052  Spread: Rice (-1.5)
+  76785219  0.6052  Spread: Minnesota (-5.5)
+  78076033  0.6052  Will Lyft say "Mobileye" during earnings call?
+  78856476  0.6054  Will NVIDIA (NVDA) beat quarterly earnings?
+  77989147  0.6054  Will Tesla (TSLA) say "Optimus" 3+ times during earnings call?
+  78414601  0.6054  Greg Goes All In profitable in October?
+  77213258  0.6056  Will Elon Musk's net worth be between $480b and $490b on October 31?
+  77062537  0.6058  Will Microsoft be the second most valuable company on October 31?
+  78248813  0.6058  Spread: Minnesota (-3.5)
+  57843606  0.6058  $GME all time high in June?
+  70068056  0.6059  Over 224.5
+  69823784  0.6059  Over 224.5
+  69540553  0.6059  Over 224.5
+  69663171  0.6059  Over 224.5
+  70232297  0.6059  Over 224.5
+  69742725  0.6059  Over 224.5
+  69784876  0.6059  Over 224.5
+  69543695  0.6059  Over 224.5
+  70152629  0.6059  Over 224.5
+  70026059  0.6059  Over 224.5
+  70232225  0.6059  Over 224.5
+  69582193  0.6059  Over 224.5
+  69620860  0.6059  Over 224.5
+  69461462  0.6059  Over 224.5
+  69945220  0.6059  Over 224.5
+  70031032  0.6059  Over 224.5
+  69503791  0.6059  Over 224.5
+  69869494  0.6059  Over 224.5
+  70552912  0.6059  Over 224.5
+  69943548  0.6059  Over 224.5
+  69500277  0.6059  Over 224.5
+  70027682  0.6059  Over 224.5
+  69987280  0.6059  Over 224.5
+  70748871  0.6059  Over 224.5
+  70154306  0.6059  Over 224.5
+  69622646  0.6059  Over 224.5
+  70068102  0.6059  Over 224.5
+  70151000  0.6059  Over 224.5
+  69913256  0.6059  Over 224.5
+  69424884  0.6059  Over 224.5
+  69705269  0.6059  Over 224.5
+  71205753  0.6059  Over 224.5
+  70314780  0.6059  Over 224.5
+  69661569  0.6059  Over 224.5
+  70350136  0.6059  Over 224.5
+  70225355  0.6059  Over 224.5
+  69945247  0.6059  Over 224.5
+  70026238  0.6059  Over 224.5
+  69783180  0.6059  Over 224.5
+  69946897  0.6059  Over 224.5
+  69542163  0.6059  Over 224.5
+  69343779  0.6059  Over 224.5
+  69424864  0.6059  Over 224.5
+  71443945  0.6059  Over 224.5
+  69340554  0.6059  Over 224.5
+  70232318  0.6059  Over 224.5
+  70068134  0.6059  Over 224.5
+  69545375  0.6059  Over 224.5
+  70677989  0.6059  Over 224.5
+  70502134  0.6059  Over 224.5
+  71447355  0.6059  Over 224.5
+  69622579  0.6059  Over 224.5
+  70422994  0.6059  Over 224.5
+  69864395  0.6059  Over 224.5
+  69742739  0.6059  Over 224.5
+  69706962  0.6059  Over 224.5
+  70221975  0.6059  Over 224.5
+  69659852  0.6059  Over 224.5
+  70151067  0.6059  Over 224.5
+  69379370  0.6059  Over 224.5
+  70027674  0.6059  Over 224.5
+  69869447  0.6059  Over 224.5
+  69701875  0.6059  Over 224.5
+  69823903  0.6059  Over 224.5
+  69505486  0.6059  Over 224.5
+  70154371  0.6059  Over 224.5
+  71273345  0.6059  Over 224.5
+  71187156  0.6059  Over 224.5
+  70152661  0.6059  Over 224.5
+  70232206  0.6059  Over 224.5
+  69866057  0.6059  Over 224.5
+  69943611  0.6059  Over 224.5
+  69702044  0.6059  Over 224.5
+  69382670  0.6059  Over 224.5
+  70152891  0.6059  Over 224.5
+  69587241  0.6059  Over 224.5
+  69661504  0.6059  Over 224.5
+  69947006  0.6059  Over 224.5
+  69823867  0.6059  Over 224.5
+  70031057  0.6059  Over 224.5
+  69379292  0.6059  Over 224.5
+  71356099  0.6059  Over 224.5
+  70069747  0.6059  Over 224.5
+  69582097  0.6059  Over 224.5
+  69464855  0.6059  Over 224.5
+  77223459  0.6060  Will Helen of Troy (HELE) beat quarterly earnings?
+  76526353  0.6060  Blonde Broker vs. JennaX
+  78076271  0.6061  Will CAVA say "Spice" during earnings call?
+  78546377  0.6062  Will Tesla (TSLA) finish week of November 10 above $460?
+  70021024  0.6064  Will Buffett say "China" during May 3 Shareholders Meeting?
+  78110874  0.6065  Will Virtu Financial (VIRT) beat quarterly earnings?
+  78546378  0.6066  Will Tesla (TSLA) finish week of November 10 above $470?
+  78546349  0.6068  Will Tesla (TSLA) close above $410 end of November?
+  67027671  0.6068  Will Elon Musk's net worth be between $430B and $435B on January 31
+  78857206  0.6068  Will La-Z-Boy (LZB) beat quarterly earnings?
+  78076053  0.6069  Will Amazon say "Third Party Sellers" during earnings call?
+  70306832  0.6070  Will Musk say "Rare Earth" during the Q1 2025 Tesla earnings call?
+  77062528  0.6070  Will Other be the most valuable company on October 31?
+  78374111  0.6070  Will ICU Medical (ICUI) beat quarterly earnings?
+  78075741  0.6071  Will Palantir say "International" during earnings call?
+  79128898  0.6072  Spread: AZ (-1.5)
+  78031986  0.6072  Spread: AZ (-1.5)
+  78956168  0.6072  Spread: AZ (-1.5)
+  77509108  0.6075  Spread: Tennessee (-10.5)
+  77774549  0.6077  Will Coursera (COUR) beat quarterly earnings?
+  70622876  0.6077  Will Michael Saylor say "China" during the Q1 2025 Strategy earnings call?
+  56223264  0.6077  Capital gains tax increase before election day?
+  76586014  0.6077  Spread: WAS (-3.5)
+  78578183  0.6078  Netflix (NFLX) Up or Down on November 5?
+  78075421  0.6079  Will EA say "The Sims" during earnings call?
+  78075881  0.6080  Will Apple say "Streaming" during earnings call?
+  25294071  0.6080  Who will have a higher net worth on April 20th: Bill Gates or Warren Buffet?
+  77971636  0.6082  Russell 2000 (RUT) Up or Down on October 22?
+  78565209  0.6084  Spread: Rice (-2.5)
+  78075711  0.6084  Will Procter & Gamble say "Beauty" during earnings call?
+  78546349  0.6086  Will Tesla (TSLA) close above $400 end of November?
+  77062226  0.6087  Spread: Rice (-4.5)
+  78755036  0.6088  Spread: Syracuse Orange (-27.5)
+  77062533  0.6092  Will NVIDIA be the second most valuable company on October 31?
+  78076341  0.6093  Will Snowflake say "Hiring" during earnings call?
+  69783260  0.6093  Over 212.5
+  70152763  0.6093  Over 212.5
+  69823936  0.6093  Over 212.5
+  69582138  0.6093  Over 212.5
+  70674604  0.6093  Over 212.5
+  70753990  0.6093  Over 212.5
+  71430412  0.6093  Over 212.5
+  70152813  0.6093  Over 212.5
+  70232456  0.6093  Over 212.5
+  69619191  0.6093  Over 212.5
+  70634009  0.6093  Over 212.5
+  69459774  0.6093  Over 212.5
+  70026164  0.6093  Over 212.5
+  71566447  0.6093  Over 212.5
+  70512255  0.6093  Over 212.5
+  69987344  0.6093  Over 212.5
+  69908188  0.6093  Over 212.5
+  69379332  0.6093  Over 212.5
+  70745493  0.6093  Over 212.5
+  70355179  0.6093  Over 212.5
+  70069691  0.6093  Over 212.5
+  70149231  0.6093  Over 212.5
+  70277792  0.6093  Over 212.5
+  69701958  0.6093  Over 212.5
+  69461514  0.6093  Over 212.5
+  71484567  0.6093  Over 212.5
+  70679671  0.6093  Over 212.5
+  69585535  0.6093  Over 212.5
+  69943663  0.6093  Over 212.5
+  70232537  0.6093  Over 212.5
+  70232555  0.6093  Over 212.5
+  69419834  0.6093  Over 212.5
+  69823977  0.6093  Over 212.5
+  70962027  0.6093  Over 212.5
+  70068021  0.6093  Over 212.5
+  69502158  0.6093  Over 212.5
+  78546376  0.6094  Will Tesla (TSLA) finish week of November 10 above $450?
+  77936712  0.6096  Russell 2000 (RUT) Up or Down on October 21?
+  78546377  0.6097  Will Tesla (TSLA) finish week of November 10 above $430?
+  70020974  0.6098  Will Buffett say "Apple" during May 3 Shareholders Meeting?
+  78680221  0.6098  Will Theravance Biopharma (TBPH) beat quarterly earnings?
+  76927143  0.6100  Will Citigroup (C) beat quarterly earnings?
+  78891300  0.6100  Will NVIDIA say "Taiwan" during earnings call?
+  76586032  0.6101  IND vs. TEN: O/U 52.5
+  78076243  0.6102  Will Dell say "Dell Pro Max" during earnings call?
+  69943546  0.6103  Over 225.5
+  69706976  0.6103  Over 225.5
+  71447331  0.6103  Over 225.5
+  69587229  0.6103  Over 225.5
+  69702016  0.6103  Over 225.5
+  71273347  0.6103  Over 225.5
+  70502124  0.6103  Over 225.5
+  70026240  0.6103  Over 225.5
+  70031040  0.6103  Over 225.5
+  69913270  0.6103  Over 225.5
+  70150966  0.6103  Over 225.5
+  69545345  0.6103  Over 225.5
+  69382672  0.6103  Over 225.5
+  70068154  0.6103  Over 225.5
+  69867746  0.6103  Over 225.5
+  70314812  0.6103  Over 225.5
+  70552888  0.6103  Over 225.5
+  70225345  0.6103  Over 225.5
+  69783171  0.6103  Over 225.5
+  69500273  0.6103  Over 225.5
+  70232229  0.6103  Over 225.5
+  70716772  0.6103  Over 225.5
+  69543697  0.6103  Over 225.5
+  69661585  0.6103  Over 225.5
+  69379389  0.6103  Over 225.5
+  70069709  0.6103  Over 225.5
+  69424868  0.6103  Over 225.5
+  69946873  0.6103  Over 225.5
+  70027712  0.6103  Over 225.5
+  69866059  0.6103  Over 225.5
+  69823869  0.6103  Over 225.5
+  70154356  0.6103  Over 225.5
+  69542159  0.6103  Over 225.5
+  70152925  0.6103  Over 225.5
+  69943593  0.6103  Over 225.5
+  70152677  0.6103  Over 225.5
+  69343765  0.6103  Over 225.5
+  69620892  0.6103  Over 225.5
+  69823792  0.6103  Over 225.5
+  71205755  0.6103  Over 225.5
+  70748905  0.6103  Over 225.5
+  70068128  0.6103  Over 225.5
+  69424919  0.6103  Over 225.5
+  70068062  0.6103  Over 225.5
+  69945237  0.6103  Over 225.5
+  69659854  0.6103  Over 225.5
+  70232188  0.6103  Over 225.5
+  70026116  0.6103  Over 225.5
+  71356089  0.6103  Over 225.5
+  70677977  0.6103  Over 225.5
+  69947018  0.6103  Over 225.5
+  69742741  0.6103  Over 225.5
+  69464865  0.6103  Over 225.5
+  69784935  0.6103  Over 225.5
+  69664871  0.6103  Over 225.5
+  70423010  0.6103  Over 225.5
+  69663190  0.6103  Over 225.5
+  69622648  0.6103  Over 225.5
+  69582085  0.6103  Over 225.5
+  70232275  0.6103  Over 225.5
+  69340536  0.6103  Over 225.5
+  69828860  0.6103  Over 225.5
+  69701893  0.6103  Over 225.5
+  70031087  0.6103  Over 225.5
+  70027663  0.6103  Over 225.5
+  69784859  0.6103  Over 225.5
+  69340473  0.6103  Over 225.5
+  69987286  0.6103  Over 225.5
+  69823897  0.6103  Over 225.5
+  69503820  0.6103  Over 225.5
+  69869523  0.6103  Over 225.5
+  69864385  0.6103  Over 225.5
+  69505488  0.6103  Over 225.5
+  70154336  0.6103  Over 225.5
+  71443941  0.6103  Over 225.5
+  71187152  0.6103  Over 225.5
+  70221943  0.6103  Over 225.5
+  69945222  0.6103  Over 225.5
+  69473356  0.6103  Over 225.5
+  69747748  0.6103  Over 225.5
+  70152637  0.6103  Over 225.5
+  69866224  0.6103  Over 225.5
+  69379288  0.6103  Over 225.5
+  69582208  0.6103  Over 225.5
+  69869469  0.6103  Over 225.5
+  69742714  0.6103  Over 225.5
+  69661536  0.6103  Over 225.5
+  70026042  0.6103  Over 225.5
+  69461495  0.6103  Over 225.5
+  78673090  0.6103  Will Tyson Foods (TSN) beat quarterly earnings?
+  66422200  0.6103  Magnificent 7 shrinks below 30% of S&P 500 in 2025?
+  78075882  0.6105  Will Apple say "Wearable" during earnings call?
+  78075961  0.6107  Will Starbucks say "Condiment Bar" during earnings call?
+  78546377  0.6107  Will Tesla (TSLA) finish week of November 10 above $440?
+  78991121  0.6107  Spread: Illinois (-16.5)
+  78274749  0.6107  Spread: Illinois (-13.5)
+  78546378  0.6109  Will Tesla (TSLA) finish week of November 10 above $425?
+  77062541  0.6110  Will Google be the second most valuable company on October 31?
+  78230796  0.6111  Apple (AAPL) Up or Down on October 28?
+  78690510  0.6112  Will NYSE Composite (NYA) close over 19,200 on Friday of the week of Nov 10 – No
+  76586024  0.6112  IND vs. TEN: O/U 56.5
+  78075750  0.6112  Will Google say "Privacy" during earnings call?
+  78546343  0.6113  Will Tesla (TSLA) close above $490 end of November?
+  78360402  0.6113  Russell 2000 (RUT) Up or Down on October 31?
+  63082215  0.6114  Will Trump sell shares of DJT before the election?
+  78075901  0.6114  Will Roku say "FreeWheel / Free Wheel" during earnings call?
+  70355187  0.6115  Over 216.5
+  69461530  0.6115  Over 216.5
+  70557981  0.6115  Over 216.5
+  70152755  0.6115  Over 216.5
+  69742766  0.6115  Over 216.5
+  70068037  0.6115  Over 216.5
+  70232581  0.6115  Over 216.5
+  69947022  0.6115  Over 216.5
+  69823942  0.6115  Over 216.5
+  70679675  0.6115  Over 216.5
+  69661559  0.6115  Over 216.5
+  69620899  0.6115  Over 216.5
+  70674589  0.6115  Over 216.5
+  69869506  0.6115  Over 216.5
+  69908174  0.6115  Over 216.5
+  70221947  0.6115  Over 216.5
+  70512257  0.6115  Over 216.5
+  69421500  0.6115  Over 216.5
+  69582142  0.6115  Over 216.5
+  69913254  0.6115  Over 216.5
+  69582191  0.6115  Over 216.5
+  70745497  0.6115  Over 216.5
+  71492959  0.6115  Over 216.5
+  70232520  0.6115  Over 216.5
+  69619167  0.6115  Over 216.5
+  70232499  0.6115  Over 216.5
+  69419870  0.6115  Over 216.5
+  69824012  0.6115  Over 216.5
+  69540579  0.6115  Over 216.5
+  69987348  0.6115  Over 216.5
+  70152811  0.6115  Over 216.5
+  70962003  0.6115  Over 216.5
+  70423002  0.6115  Over 216.5
+  70151061  0.6115  Over 216.5
+  69701994  0.6115  Over 216.5
+  70069680  0.6115  Over 216.5
+  70232212  0.6115  Over 216.5
+  69783284  0.6115  Over 216.5
+  69502167  0.6115  Over 216.5
+  70026174  0.6115  Over 216.5
+  69701905  0.6115  Over 216.5
+  69943671  0.6115  Over 216.5
+  70422973  0.6115  Over 216.5
+  70753982  0.6115  Over 216.5
+  69379348  0.6115  Over 216.5
+  70350122  0.6115  Over 216.5
+  70149259  0.6115  Over 216.5
+  69340432  0.6115  Over 216.5
+  69585517  0.6115  Over 216.5
+  71447329  0.6115  Over 216.5
+  69744417  0.6115  Over 216.5
+  69864367  0.6115  Over 216.5
+  69340546  0.6115  Over 216.5
+  69622557  0.6115  Over 216.5
+  70277774  0.6115  Over 216.5
+  70232138  0.6115  Over 216.5
+  69705271  0.6115  Over 216.5
+  69502119  0.6115  Over 216.5
+  70634015  0.6115  Over 216.5
+  78460141  0.6117  Spread: Minnesota (-4.5)
+  76586030  0.6118  Spread: WAS (-1.5)
+  67027695  0.6121  Will Elon Musk's net worth be between $435B and $440B on January 31
+  78891329  0.6123  Will Disney say "Margin" during earnings call?
+  78058003  0.6124  Russell 2000 (RUT) Up or Down on October 24?
+  77645255  0.6126  Will Tesla (TSLA) say "Robotaxi" 5+ times during earnings call?
+  78076031  0.6126  Will Lyft say "May / Mobility" during earnings call?
+  77903861  0.6127  Russell 2000 (RUT) Up or Down on October 20?
+  78837375  0.6127  Netflix (NFLX) Up or Down on November 11?
+  75935992  0.6127  Spread: Illinois (-3.5)
+  78076243  0.6127  Will Dell say "RTX Pro 6000" during earnings call?
+  77989147  0.6127  Will Tesla (TSLA) say "Robotaxi" 10+ times during earnings call?
+  78075243  0.6128  Will Intel say "Shutdown / Shut Down" during earnings call?
+  79139700  0.6128  Netflix (NFLX) Up or Down on November 18?
+  78076402  0.6129  Will Celsius say "Influencer" during earnings call?
+  73747598  0.6129  Will anyone say "Anime" during the Q2 2025 Netflix earnings call?
+  78076312  0.6129  Will Hims say "Lab Testing" during earnings call?
+  78807786  0.6130  Spread: Tennessee (-39.5)
+  78807794  0.6132  Spread: Illinois (-14.5)
+  78673640  0.6132  Will Chegg (CHGG) beat quarterly earnings?
+  78076242  0.6134  Will Dell say "Nvidia" 5+ times during earnings call?
+  76936069  0.6134  Will United Natural Foods (UNFI) beat quarterly earnings?
+  78546379  0.6134  Will Tesla (TSLA) finish week of November 10 above $445?
+  70014284  0.6135  Fear & Greed Index says "Extreme Fear" every day this week?
+  76393776  0.6135  Spread: Illinois (-27.5)
+  78690511  0.6135  Will NYSE Composite (NYA) close over 19,350 on Friday of the week of Nov 10 – No
+  77990192  0.6136  Will UnitedHealth Group (UNH) beat quarterly earnings?
+  73747592  0.6136  Will anyone say "Movie" 7+ times during the Q2 2025 Netflix earnings call?
+  76586022  0.6137  Spread: WAS (-6.5)
+  73747591  0.6138  Will anyone say "India" during the Q2 2025 Netflix earnings call?
+  78075883  0.6139  Will Apple say "Siri" during earnings call?
+  70021012  0.6139  Will Buffett say "Real estate" during May 3 Shareholders Meeting?
+  78664583  0.6141  Netflix (NFLX) Up or Down on November 7?
+  78076312  0.6142  Will Hims say "Canada" during earnings call?
+  78076402  0.6142  Will Celsius say "Recall" during earnings call?
+  79028566  0.6142  Spread: Syracuse Orange (-15.5)
+  74800601  0.6142  Will anyone say "Dead City" during the Q2 2025 AMC earnings call?
+  77419835  0.6142  Will Mattel (MAT) beat quarterly earnings?
+  78187592  0.6144  Apple (AAPL) Up or Down on October 27?
+  78014800  0.6144  Apple (AAPL) Up or Down on October 23?
+  77062177  0.6145  Spread: Oklahoma (-45.5)
+  62199201  0.6145  Iggy Azalea vs. Profits
+  79104148  0.6145  Spread: Indiana Hoosiers (-29.5)
+  76626439  0.6146  Spread: Minnesota Twins (-1.5)
+  76666985  0.6146  Spread: Minnesota Twins (-1.5)
+  78114555  0.6148  Spread: Indiana (-26.5)
+  77852841  0.6148  Spread: Indiana (-26.5)
+  73747596  0.6152  Will anyone say "Russia" during the Q2 2025 Netflix earnings call?
+  78546377  0.6152  Will Tesla (TSLA) finish week of November 10 above $455?
+  70020967  0.6153  Will Buffett say "Tesla" during May 3 Shareholders Meeting?
+  78891301  0.6153  Will NVIDIA say "Arizona" during earnings call?
+  78546378  0.6153  Will Tesla (TSLA) finish week of November 10 above $485?
+  77773259  0.6154  Will O'Reilly Automotive (ORLY) beat quarterly earnings?
+  78546378  0.6156  Will Tesla (TSLA) finish week of November 10 above $475?
+  78373135  0.6156  Will Tesla dip to $435 in November?
+  78546378  0.6156  Will Tesla (TSLA) finish week of November 10 above $465?
+  69661565  0.6157  Over 217.5
+  70350157  0.6157  Over 217.5
+  69788256  0.6157  Over 217.5
+  69421485  0.6157  Over 217.5
+  69582152  0.6157  Over 217.5
+  70221949  0.6157  Over 217.5
+  69622577  0.6157  Over 217.5
+  70026190  0.6157  Over 217.5
+  70277802  0.6157  Over 217.5
+  70961991  0.6157  Over 217.5
+  69744419  0.6157  Over 217.5
+  69582216  0.6157  Over 217.5
+  70422965  0.6157  Over 217.5
+  69913246  0.6157  Over 217.5
+  69823946  0.6157  Over 217.5
+  70753968  0.6157  Over 217.5
+  69502132  0.6157  Over 217.5
+  69340534  0.6157  Over 217.5
+  70232557  0.6157  Over 217.5
+  69705257  0.6157  Over 217.5
+  69663184  0.6157  Over 217.5
+  70068003  0.6157  Over 217.5
+  69783292  0.6157  Over 217.5
+  69908200  0.6157  Over 217.5
+  70069693  0.6157  Over 217.5
+  69379350  0.6157  Over 217.5
+  69540569  0.6157  Over 217.5
+  70679677  0.6157  Over 217.5
+  70355193  0.6157  Over 217.5
+  69823983  0.6157  Over 217.5
+  70423004  0.6157  Over 217.5
+  69869527  0.6157  Over 217.5
+  69419844  0.6157  Over 217.5
+  70149219  0.6157  Over 217.5
+  69987324  0.6157  Over 217.5
+  69943633  0.6157  Over 217.5
+  69502156  0.6157  Over 217.5
+  70027659  0.6157  Over 217.5
+  69864359  0.6157  Over 217.5
+  70557987  0.6157  Over 217.5
+  70512285  0.6157  Over 217.5
+  70152778  0.6157  Over 217.5
+  71492949  0.6157  Over 217.5
+  70634036  0.6157  Over 217.5
+  70232214  0.6157  Over 217.5
+  70232458  0.6157  Over 217.5
+  69461538  0.6157  Over 217.5
+  69620882  0.6157  Over 217.5
+  69946982  0.6157  Over 217.5
+  69585541  0.6157  Over 217.5
+  70232140  0.6157  Over 217.5
+  69742748  0.6157  Over 217.5
+  69659850  0.6157  Over 217.5
+  70152821  0.6157  Over 217.5
+  71447325  0.6157  Over 217.5
+  70552910  0.6157  Over 217.5
+  70745517  0.6157  Over 217.5
+  70151079  0.6157  Over 217.5
+  70674614  0.6157  Over 217.5
+  69701899  0.6157  Over 217.5
+  69340442  0.6157  Over 217.5
+  69587207  0.6157  Over 217.5
+  69701960  0.6157  Over 217.5
+  78075742  0.6158  Will Palantir say "Revenue guidance" during earnings call?
+  78273989  0.6158  Apple (AAPL) Up or Down on October 29?
+  70020939  0.6158  Will Buffett say "Recession" 3+ times during May 3 Shareholders Meeting?
+  77224203  0.6158  Will Nurix Therapeutics (NRIX) beat quarterly earnings?
+  77062560  0.6161  Will Oracle be the second most valuable company on October 31?
+  79066361  0.6162  Spread: Syracuse Orange (-11.5)
+  78076071  0.6163  Will Uber say "Joby" during earnings call?
+  77418500  0.6164  Spread: Minnesota (-9.5)
+  68887385  0.6166  Will Fear & Greed Index report "Extreme Fear" on March 31?
+  78076313  0.6168  Will Hims say "Zava" during earnings call?
+  78076341  0.6169  Will Snowflake say "Europe" during earnings call?
+  78673040  0.6170  Will Occidental Petroleum (OXY) beat quarterly earnings?
+  78076271  0.6170  Will CAVA say "Dining" during earnings call?
+  77421867  0.6171  Will CME Group (CME) beat quarterly earnings?
+  78100194  0.6172  Will Kraft Heinz (KHC) beat quarterly earnings?
+  78761466  0.6172  Netflix (NFLX) Up or Down on November 10?
+  78075962  0.6174  Will Starbucks say "Oatmilk / Oat Milk" during earnings call?
+  76586031  0.6174  IND vs. TEN: O/U 51.5
+  78113347  0.6175  1H Spread: Indiana (-14.5)
+  74800601  0.6176  Will anyone say "IMAX" during the Q2 2025 AMC earnings call?
+  15755069  0.6177  Will Iron Finance’s Overall TVL be above $2 billion on July 1, 2021?
+  78076222  0.6178  Will Chipotle say "Chipotle Lane / Chipotlane" during earnings call?
+  78076242  0.6179  Will Dell say "PowerEdge / Power Edge" during earnings call?
+  78415091  0.6179  Will Under Armour (UAA) beat quarterly earnings?
+  78076091  0.6181  Will Microsoft say "M365 / Microsoft 365" during earnings call?
+  77633491  0.6183  Will Alphabet be the second-largest company in the world by market cap on Decemb
+  73747596  0.6184  Will anyone say "Netflix" 30+ times during the Q2 2025 Netflix earnings call?
+  78857946  0.6185  Will Semtech (SMTC) beat quarterly earnings?
+  78075962  0.6186  Will Starbucks say "Protein" during earnings call?
+  78110914  0.6186  Will Waystar Holding (WAY) beat quarterly earnings?
+  63124476  0.6190  $300m in $WLFI sold before election?
+  78075751  0.6190  Will Google say "Waymo" during earnings call?
+  78247826  0.6190  Will Lyft (LYFT) beat quarterly earnings?
+  78891279  0.6193  Will Walmart say "Tariff" during earnings call?
+  78230796  0.6193  Microsoft (MSFT) Up or Down on October 28?
+  77971633  0.6193  Apple (AAPL) Up or Down on October 22?
+  78690511  0.6193  Will NYSE Composite (NYA) close over 18,600 on Friday of the week of Nov 10 – No
+  76586025  0.6194  Spread: WAS (-4.5)
+  78857426  0.6195  Will Wix.Com (WIX) beat quarterly earnings?
+  77221558  0.6195  Spread: Illinois (-8.5)
+  78248822  0.6196  Spread: Illinois (-12.5)
+  74082103  0.6196  Will Hyperliquid launch stocks perps in 2025?
+  78076342  0.6197  Will Snowflake say "Iceberg" during earnings call?
+  77346416  0.6200  Spread: Minnesota (-7.5)
+  77739498  0.6200  Microsoft (MSFT) Up or Down on October 16?
+  78317200  0.6200  Microsoft (MSFT) Up or Down on October 30?
+  76586032  0.6201  IND vs. TEN: O/U 54.5
+  75625803  0.6202  Spread: Braves (-1.5)
+  76234163  0.6202  Spread: Braves (-1.5)
+  76070368  0.6202  Spread: Braves (-1.5)
+  75705287  0.6202  Spread: Braves (-1.5)
+  76275577  0.6202  Spread: Braves (-1.5)
+  76109560  0.6202  Spread: Braves (-1.5)
+  76465149  0.6202  Spread: Braves (-1.5)
+  75669864  0.6202  Spread: Braves (-1.5)
+  74800600  0.6204  Will anyone say "Loyalty" during the Q2 2025 AMC earnings call?
+  73747588  0.6205  Will anyone say "Million", "Billion", or "Trillion" 15+ times during the Q2 2025
+  74235577  0.6206  Will anyone say "Subscription" during the Q2 2025 Google earnings call?
+  77224137  0.6208  Will Fastenal (FAST) beat quarterly earnings?
+  78075241  0.6209  Will Intel say "Department of Defense" during earnings call?
+  78891301  0.6211  Will NVIDIA say "H20" during earnings call?
+  77062524  0.6212  Will Oracle be the most valuable company on October 31?
+  78891300  0.6212  Will NVIDIA say "Gaming" during earnings call?
+  78111145  0.6213  Will Fox (FOXA) beat quarterly earnings?
+  75936654  0.6214  Spread: Indiana (-36.5)
+  78857556  0.6214  Will Anteris Technologies Global (AVR) beat quarterly earnings?
+  78891281  0.6214  Will Walmart say "Automotive" during earnings call?
+  77645258  0.6216  Will Domino's Pizza (DPZ) say "Inflation" during earnings call?
+  77903822  0.6218  Apple (AAPL) Up or Down on October 20?
+  77062596  0.6218  Will Warren Buffett be richest person on October 31?
+  78014801  0.6219  Microsoft (MSFT) Up or Down on October 23?
+  77645255  0.6221  Will Tesla (TSLA) say "Optimus" during earnings call?
+  78546377  0.6221  Will Tesla (TSLA) finish week of November 10 above $480?
+  78076242  0.6221  Will Dell say "Confidence" during earnings call?
+  77062183  0.6221  Spread: Illinois (-9.5)
+  78899559  0.6223  Spread: Illinois (-15.5)
+  78621375  0.6223  FTSE 100 (UKX) Up or Down on November 6?
+  78075882  0.6224  Will Apple say "M3" during earnings call?
+  78075742  0.6224  Will Palantir say "Foundry" during earnings call?
+  73747597  0.6225  Will anyone say "America" during the Q2 2025 Netflix earnings call?
+  78075743  0.6227  Will Palantir say "Automotive" during earnings call?
+  68887469  0.6227  Will Fear & Greed Index report "Extreme Greed" on March 31?
+  78075751  0.6228  Will Google say "Pixel" during earnings call?
+  78075963  0.6228  Will Starbucks say "Smart Queue / SmartQ" during earnings call?
+  78857687  0.6230  Will Deere (DE) beat quarterly earnings?
+  76461569  0.6231  Will Fedex (FDX) beat its quarterly EPS estimate?
+  78058000  0.6231  Apple (AAPL) Up or Down on October 24?
+  78325144  0.6232  Will DoorDash (DASH) beat quarterly earnings?
+  78273991  0.6232  Microsoft (MSFT) Up or Down on October 29?
+  73426697  0.6233  Cluely $1B valuation in 2025?
+  78389953  0.6234  1H Spread: Tennessee (-0.5)
+  78891299  0.6236  Will NVIDIA say "Tariff" during earnings call?
+  78076402  0.6236  Will Celsius say "Essential" during earnings call?
+  78100084  0.6236  Will Garmin (GRMN) beat quarterly earnings?
+  78249574  0.6238  1H Spread: Indiana (-11.5)
+  78690511  0.6239  Will NYSE Composite (NYA) close over 19,500 on Friday of the week of Nov 10 – No
+  78075422  0.6240  Will EA say "Mobile" during earnings call?
+  77951232  0.6242  Will General Dynamics (GD) beat quarterly earnings?
+  78283751  0.6243  1H Spread: Indiana (-12.5)
+  78076311  0.6243  Will Hims say "Europe" during earnings call?
+  78248820  0.6244  Spread: Texas (-1.5)
+  77418486  0.6244  Spread: Texas (-1.5)
+  78565170  0.6245  Spread: Indiana (-14.5)
+  77761526  0.6248  Microsoft (MSFT) Up or Down on October 17?
+  77420970  0.6248  Will Texas Instruments (TXN) beat quarterly earnings?
+  78075881  0.6249  Will Apple say "China" during earnings call?
+  78899250  0.6253  Will Tesla (TSLA) close at $460-$465 on the final day of trading of the week of 
+  76393736  0.6254  Spread: Michigan (-27.5)
+  78076402  0.6254  Will Celsius say "Alcohol" during earnings call?
+  78880574  0.6255  Netflix (NFLX) Up or Down on November 12?
+  77645235  0.6255  Spread: Northwestern (-3.5)
+  77645236  0.6258  Spread: Indiana (-27.5)
+  78148749  0.6258  Spread: Indiana (-27.5)
+  77946455  0.6258  Spread: Indiana (-24.5)
+  78292751  0.6259  Spread: Texas (-2.5)
+  77346429  0.6259  Spread: Texas (-2.5)
+  78076243  0.6259  Will Dell say "Zoho" during earnings call?
+  78849375  0.6261  Will PagerDuty (PD) beat quarterly earnings?
+  60865221  0.6261  Will Pelosi say "Stocks" at DNC speech?
+  74235734  0.6263  Will anyone say "M3" during the Q3 2025 Apple earnings call?
+  78807797  0.6264  Spread: Indiana (-30.5)
+  77971632  0.6264  Microsoft (MSFT) Up or Down on October 22?
+  78076201  0.6265  Will Reddit say "TikTok" during earnings call?
+  78076241  0.6265  Will Dell say "AI Factory" during earnings call?
+  77440758  0.6265  Spread: Hornets (-2.5)
+  69702006  0.6265  Spread: Hornets (-2.5)
+  78486693  0.6265  Spread: Hornets (-2.5)
+  77707060  0.6265  Spread: Hornets (-2.5)
+  77942263  0.6265  Spread: Hornets (-2.5)
+  78899005  0.6266  Will Microsoft (MSFT) close at $490-$500 on the final day of trading of the week
+  77297670  0.6267  Spread: Giants (-3.5)
+  74235733  0.6267  Will anyone say "iPhone" during the Q3 2025 Apple earnings call?
+  74235734  0.6268  Will anyone say "China" during the Q3 2025 Apple earnings call?
+  78076093  0.6269  Will Microsoft say "Phi" during earnings call?
+  78075882  0.6269  Will Apple say "Manufacturing" during earnings call?
+  78899245  0.6270  Will Tesla (TSLA) close at $455-$460 on the final day of trading of the week of 
+  78362710  0.6271  Will Pfizer (PFE) beat quarterly earnings?
+  78075713  0.6271  Will Procter & Gamble say "Tariff" during earnings call?
+  76671783  0.6272  Spread: Indiana (-6.5)
+  78249577  0.6272  1H Spread: Syracuse (-1.5)
+  78323474  0.6273  Will McDonald’s (MCD) beat quarterly earnings?
+  77936652  0.6273  Microsoft (MSFT) Up or Down on October 21?
+  78814724  0.6274  Spread: Michigan (-10.5)
+  77224269  0.6275  Will Richardson Electronics (RELL) beat quarterly earnings?
+  78857177  0.6275  Will Powell Industries (POWL) beat quarterly earnings?
+  78360391  0.6276  Microsoft (MSFT) Up or Down on October 31?
+  76785257  0.6276  Spread: Northwestern (-6.5)
+  78726243  0.6277  Spread: South Florida Bulls (-2.5)
+  78076023  0.6278  Will Meta say "Llama" during earnings call?
+  78076011  0.6278  Will Meta say "TikTok" during earnings call?
+  77645237  0.6279  Spread: Texas (-12.5)
+  78111014  0.6280  Will Chevron (CVX) beat quarterly earnings?
+  78857927  0.6280  Spread: Indiana (-29.5)
+  78891299  0.6280  Will NVIDIA say "Cosmos" during earnings call?
+  76499332  0.6281  Will Pathward Financial (CASH) beat its quarterly EPS estimate?
+  75362635  0.6283  Will anyone say "Production" during the Q2 2025 Nvidia earnings call?
+  69340513  0.6283  Spread: Knicks (-17.5)
+  69742700  0.6283  Spread: Knicks (-17.5)
+  76393756  0.6283  Spread: Texas (-40.5)
+  78680241  0.6284  Will iHeartMedia (IHRT) beat quarterly earnings?
+  78057999  0.6285  Microsoft (MSFT) Up or Down on October 24?
+  78075752  0.6285  Will Google say "Regulator / Regulation" during earnings call?
+  78899229  0.6285  Will Tesla (TSLA) close at $440-$445 on the final day of trading of the week of 
+  77422117  0.6287  Will Evercore (EVR) beat quarterly earnings?
+  74800604  0.6288  Will anyone say "Interview" during the Q2 2025 AMC earnings call?
+  74235731  0.6288  Will anyone say "Manufacturing" during the Q3 2025 Apple earnings call?
+  63124007  0.6288  $100m in $WLFI sold before election?
+  77417084  0.6288  Will American Express (AXP) beat quarterly earnings?
+  78075752  0.6290  Will Google say "Android" during earnings call?
+  78368030  0.6291  Will Datadog (DDOG) beat quarterly earnings?
+  78417741  0.6291  Will Allbirds (BIRD) beat quarterly earnings?
+  77903822  0.6291  Microsoft (MSFT) Up or Down on October 20?
+  78857366  0.6292  Will Viking Holdings (VIK) beat quarterly earnings?
+  78075742  0.6294  Will Palantir say "Hadean" during earnings call?
+  78248396  0.6294  Will Sunoco (SUN) beat quarterly earnings?
+  78294551  0.6294  Spread: Indiana (-22.5)
+  78899234  0.6296  Will Tesla (TSLA) close at $445-$450 on the final day of trading of the week of 
+  78891279  0.6296  Will Walmart say "Omnichannel" during earnings call?
+  78110788  0.6296  Will Teleflex (TFX) beat quarterly earnings?
+  78899240  0.6297  Will Tesla (TSLA) close at $450-$455 on the final day of trading of the week of 
+  79057659  0.6298  Spread: Indiana (-28.5)
+  78076052  0.6299  Will Amazon say "Operating Margin" during earnings call?
+  77335361  0.6300  Will Equifax Inc. (EFX) beat quarterly earnings?
+  78076092  0.6301  Will Microsoft say "Gaming" during earnings call?
+  76586029  0.6303  Spread: WAS (-7.5)
+  78248812  0.6305  Spread: Indiana (-21.5)
+  78076403  0.6305  Will Celsius say "Amazon" during earnings call?
+  78076312  0.6307  Will Hims say "FDA" during earnings call?
+  77422006  0.6307  Will Churchill Downs (CHDN) beat quarterly earnings?
+  78248813  0.6308  Spread: Michigan (-21.5)
+  78938996  0.6308  SpaceX (Space Exploration Technologies Corp.) IPO before 2027?
+  77224231  0.6309  Will Neogen (NEOG) beat quarterly earnings?
+  78317198  0.6310  Netflix (NFLX) Up or Down on October 30?
+  69340517  0.6310  Spread: Knicks (-19.5)
+  69742723  0.6310  Spread: Knicks (-19.5)
+  76586023  0.6310  IND vs. TEN: O/U 49.5
+  78075241  0.6310  Will Intel say "Personal Computing" during earnings call?
+  74800600  0.6311  Will anyone say "Innovation" during the Q2 2025 AMC earnings call?
+  78680831  0.6314  Will Newsmax (NMAX) beat quarterly earnings?
+  78396700  0.6315  Hawks vs. Pacers: 1H Moneyline
+  78106054  0.6316  Will Roblox (RBLX) beat quarterly earnings?
+  78076093  0.6318  Will Microsoft say "Azure" during earnings call?
+  78534993  0.6318  FTSE 100 (UKX) Up or Down on November 4?
+  78230800  0.6318  Netflix (NFLX) Up or Down on October 28?
+  70020987  0.6318  Will Buffett say "Semiconductor" during May 3 Shareholders Meeting?
+  78546378  0.6320  Will Tesla (TSLA) finish week of November 10 above $435?
+  71769492  0.6320  Spread: Knicks (-3.5)
+  69906499  0.6320  Spread: Knicks (-3.5)
+  70154299  0.6320  Spread: Knicks (-3.5)
+  69945212  0.6320  Spread: Knicks (-3.5)
+  69461466  0.6320  Spread: Knicks (-3.5)
+  70674610  0.6320  Spread: Knicks (-3.5)
+  78625283  0.6320  Spread: Knicks (-3.5)
+  78983471  0.6320  Spread: Knicks (-3.5)
+  70552916  0.6320  Spread: Knicks (-3.5)
+  69659811  0.6320  Spread: Knicks (-3.5)
+  70232510  0.6320  Spread: Knicks (-3.5)
+  77431802  0.6320  Spread: Knicks (-3.5)
+  69582172  0.6320  Spread: Knicks (-3.5)
+  78893479  0.6320  Spread: Knicks (-3.5)
+  69502154  0.6320  Spread: Knicks (-3.5)
+  78283300  0.6320  Spread: Knicks (-3.5)
+  71566467  0.6320  Spread: Knicks (-3.5)
+  78101503  0.6320  Spread: Knicks (-3.5)
+  77800647  0.6321  Spread: Northwestern (-2.5)
+  77959041  0.6321  Spread: Genoa (-0.5)
+  78690509  0.6322  Will Dow Jones (DJI) close over 44,000 on Friday of the week of Nov 10 – Nov 14?
+  74800599  0.6322  Will anyone say "Streaming" during the Q2 2025 AMC earnings call?
+  77847442  0.6322  Spread: Troy (-4.5)
+  78812930  0.6322  South Carolina vs. Texas A&M: 1H Moneyline
+  78681061  0.6323  Will Quantum Computing (QUBT) beat quarterly earnings?
+  77959038  0.6325  Spread: Newcastle (-0.5)
+  78261401  0.6325  Spread: Newcastle (-0.5)
+  77774830  0.6325  Will Honeywell International (HON) beat quarterly earnings?
+  77774554  0.6326  Will Ford Motor (F) beat quarterly earnings?
+  78040557  0.6326  Spread: Knicks (-6.5)
+  77804247  0.6326  Spread: Knicks (-6.5)
+  69582189  0.6326  Spread: Knicks (-6.5)
+  70552902  0.6326  Spread: Knicks (-6.5)
+  71769479  0.6326  Spread: Knicks (-6.5)
+  70154288  0.6326  Spread: Knicks (-6.5)
+  69945214  0.6326  Spread: Knicks (-6.5)
+  70232543  0.6326  Spread: Knicks (-6.5)
+  71848421  0.6326  Spread: Knicks (-6.5)
+  69906501  0.6326  Spread: Knicks (-6.5)
+  72091014  0.6326  Spread: Knicks (-6.5)
+  69659836  0.6326  Spread: Knicks (-6.5)
+  71566439  0.6326  Spread: Knicks (-6.5)
+  69461471  0.6326  Spread: Knicks (-6.5)
+  70674587  0.6326  Spread: Knicks (-6.5)
+  77604476  0.6326  Spread: Knicks (-6.5)
+  69502142  0.6326  Spread: Knicks (-6.5)
+  79019474  0.6326  Spread: Knicks (-6.5)
+  78075712  0.6326  Will Procter & Gamble say "Inflation" during earnings call?
+  77989882  0.6327  Will SoFi Technologies (SOFI) beat quarterly earnings?
+  78076202  0.6328  Will Reddit say "Reddit Pro" 3+ times during earnings call?
+  78076023  0.6328  Will Meta say "Hiring" during earnings call?
+  76461569  0.6329  Will Factset Research (FDS) beat its quarterly EPS estimate?
+  68887397  0.6329  Will Fear & Greed Index report "Fear" on March 31?
+  78014803  0.6330  DAX (DAX) Up or Down on October 23?
+  74235580  0.6332  Will anyone say "Wiz" during the Q2 2025 Google earnings call?
+  78690509  0.6332  Will Dow Jones (DJI) close over 43,000 on Friday of the week of Nov 10 – Nov 14?
+  78187594  0.6332  Netflix (NFLX) Up or Down on October 27?
+  78076242  0.6333  Will Dell say "Windows 10" during earnings call?
+  75362637  0.6333  Will anyone say "China" during the Q2 2025 Nvidia earnings call?
+  77645255  0.6333  Will Tesla (TSLA) say "Bigger and longer" during earnings call?
+  77299135  0.6334  Spread: Giants (-2.5)
+  77951072  0.6334  Will ZoomInfo Technologies (GTM) beat quarterly earnings?
+  78075242  0.6336  Will Intel say "Intel Foundry" during earnings call?
+  74235581  0.6336  Will anyone say "Privacy" during the Q2 2025 Google earnings call?
+  78076241  0.6336  Will Dell say "China" during earnings call?
+  77297896  0.6337  Spread: Giants (-6.5)
+  75488965  0.6337  Spread: Giants (-6.5)
+  78849256  0.6338  Will Home Depot (HD) beat quarterly earnings?
+  74235735  0.6338  Will anyone say "Vision" during the Q3 2025 Apple earnings call?
+  78899208  0.6340  Will Tesla (TSLA) close at <$425 on the final day of trading of the week of Nov 
+  77739507  0.6340  Netflix (NFLX) Up or Down on October 16?
+  74800599  0.6341  Will anyone say "Rotten Tomatoes" during the Q2 2025 AMC earnings call?
+  77977782  0.6342  Spread: Texas (-7.5)
+  78230799  0.6344  DAX (DAX) Up or Down on October 28?
+  78014805  0.6344  Netflix (NFLX) Up or Down on October 23?
+  74235479  0.6345  Will anyone say "M365" during the Q4 2025 Microsoft earnings call?
+  78187593  0.6346  DAX (DAX) Up or Down on October 27?
+  78075882  0.6346  Will Apple say "Widget" during earnings call?
+  78076092  0.6347  Will Microsoft say "Copilot" during earnings call?
+  78274001  0.6347  Netflix (NFLX) Up or Down on October 29?
+  78899213  0.6347  Will Tesla (TSLA) close at $425-$430 on the final day of trading of the week of 
+  78076023  0.6348  Will Meta say "Ray-Ban" during earnings call?
+  78075242  0.6349  Will Intel say "Nvidia" during earnings call?
+  78076402  0.6350  Will Celsius say "Competition" during earnings call?
+  69340515  0.6350  Spread: Knicks (-18.5)
+  69742721  0.6350  Spread: Knicks (-18.5)
+  67308310  0.6350  Total Over/Under 48.5
+  76785236  0.6350  Spread: Indiana (-7.5)
+  77214727  0.6353  Spread: Northwestern (-11.5)
+  78075753  0.6354  Will Google say "Wiz" during earnings call?
+  69742702  0.6355  Spread: Knicks (-14.5)
+  69340529  0.6355  Spread: Knicks (-14.5)
+  78075242  0.6356  Will Intel say "Data Center" during earnings call?
+  77423395  0.6356  Will 3M (MMM) beat quarterly earnings?
+  74235735  0.6356  Will anyone say "Tariff" during the Q3 2025 Apple earnings call?
+  73747593  0.6356  Will anyone say "Recession" during the Q2 2025 Netflix earnings call?
+  78076402  0.6356  Will Celsius say "NFL" during earnings call?
+  78690511  0.6361  Will NYSE Composite (NYA) close over 18,750 on Friday of the week of Nov 10 – No
+  68887452  0.6362  Will Fear & Greed Index report "Greed" on March 31?
+  78850796  0.6362  Will Amer Sports (AS) beat quarterly earnings?
+  77761536  0.6362  Netflix (NFLX) Up or Down on October 17?
+  77775159  0.6362  Will T-Mobile US (TMUS) beat quarterly earnings?
+  78371551  0.6362  Will Opendoor Technologies (OPEN) beat quarterly earnings?
+  77645256  0.6363  Will Tesla (TSLA) say "Grok" during earnings call?
+  77421350  0.6363  Will AT&T (T) beat quarterly earnings?
+  73747589  0.6365  Will anyone say "Advertisement" during the Q2 2025 Netflix earnings call?
+  77946462  0.6365  Spread: Troy (-9.5)
+  78690511  0.6365  Will NYSE Composite (NYA) close over 18,900 on Friday of the week of Nov 10 – No
+  78274000  0.6365  DAX (DAX) Up or Down on October 29?
+  77739518  0.6366  DAX (DAX) Up or Down on October 16?
+  78248810  0.6367  Spread: Syracuse (-2.5)
+  78372351  0.6368  Will OneStream (OS) beat quarterly earnings?
+  78247996  0.6369  Will Chime Financial (CHYM) beat quarterly earnings?
+  76099188  0.6369  Will anyone say "Stargate" during Oracle's 1st Quarter Fiscal Year 2026 Earnings
+  67387576  0.6370  Will Robinhood run an Ad during Super Bowl LIX?
+  77062195  0.6370  Spread: Northwestern (-10.5)
+  78075240  0.6371  Will Intel say "Xeon" during earnings call?
+  77761547  0.6373  DAX (DAX) Up or Down on October 17?
+  78075743  0.6374  Will Palantir say "Gotham Platform" during earnings call?
+  78076091  0.6374  Will Microsoft say "CapEx" during earnings call?
+  77947183  0.6375  Spread: Troy (-8.5)
+  78452945  0.6375  Spread: Troy (-8.5)
+  78681101  0.6377  Will DeFi Technologies (DEFT) beat quarterly earnings?
+  78621372  0.6383  Nikkei 225 (NIK) Up or Down on November 6?
+  78418751  0.6384  Spread: Syracuse (-1.5)
+  78857806  0.6384  Will HP (HPQ) beat quarterly earnings?
+  78076273  0.6386  Will CAVA say "Acceleration" during earnings call?
+  75362638  0.6388  Will anyone say "Automotive" during the Q2 2025 Nvidia earnings call?
+  78076311  0.6388  Will Hims say "Tariff" during earnings call?
+  76099192  0.6388  Will anyone say "Debt level" during Oracle's 1st Quarter Fiscal Year 2026 Earnin
+  77298175  0.6389  Spread: Giants (-4.5)
+  77418344  0.6389  Will General Motors (GM) beat quarterly earnings?
+  78176801  0.6389  Spread: AZ (-0.5)
+  75362633  0.6389  Will anyone say "Gaming" during the Q2 2025 Nvidia earnings call?
+  78673270  0.6389  Will Howard Hughes Holdings (HHH) beat quarterly earnings?
+  78857896  0.6390  Will Dell Technologies (DELL) beat quarterly earnings?
+  78415931  0.6390  Will Sweetgreen (SG) beat quarterly earnings?
+  60229803  0.6391  NYSE marketwide circuit breaker in August?
+  77971636  0.6391  Netflix (NFLX) Up or Down on October 22?
+  78058003  0.6392  Netflix (NFLX) Up or Down on October 24?
+  78076401  0.6393  Will Celsius say "PepsiCo" during earnings call?
+  78075241  0.6393  Will Intel say "AIPC" during earnings call?
+  78076021  0.6394  Will Meta say "Maverick" during earnings call?
+  78076023  0.6394  Will Meta say "Scout" during earnings call?
+  77298645  0.6394  Spread: Giants (-10.5)
+  69659828  0.6395  Spread: Knicks (-9.5)
+  69906493  0.6395  Spread: Knicks (-9.5)
+  70552920  0.6395  Spread: Knicks (-9.5)
+  69945188  0.6395  Spread: Knicks (-9.5)
+  78754876  0.6395  Spread: Knicks (-9.5)
+  70154302  0.6395  Spread: Knicks (-9.5)
+  69742719  0.6395  Spread: Knicks (-9.5)
+  71769481  0.6395  Spread: Knicks (-9.5)
+  70232545  0.6395  Spread: Knicks (-9.5)
+  78857478  0.6395  Spread: Knicks (-9.5)
+  69461497  0.6395  Spread: Knicks (-9.5)
+  77936672  0.6396  Netflix (NFLX) Up or Down on October 21?
+  69340544  0.6397  Spread: Knicks (-20.5)
+  74235580  0.6399  Will anyone say "Pixel" during the Q2 2025 Google earnings call?
+  78075422  0.6404  Will EA say "Skate" during earnings call?
+  77298514  0.6404  Spread: Giants (-9.5)
+  77971636  0.6405  DAX (DAX) Up or Down on October 22?
+  78076403  0.6406  Will Celsius say "Input Cost" during earnings call?
+  77989141  0.6406  Will CoStar Group (CSGP) beat quarterly earnings?
+  77645256  0.6407  Will Tesla (TSLA) say "Diner" during earnings call?
+  70552892  0.6409  Spread: Knicks (-4.5)
+  70232527  0.6409  Spread: Knicks (-4.5)
+  78963665  0.6409  Spread: Knicks (-4.5)
+  77449741  0.6409  Spread: Knicks (-4.5)
+  78101504  0.6409  Spread: Knicks (-4.5)
+  69582202  0.6409  Spread: Knicks (-4.5)
+  71566437  0.6409  Spread: Knicks (-4.5)
+  69906513  0.6409  Spread: Knicks (-4.5)
+  71769465  0.6409  Spread: Knicks (-4.5)
+  70674583  0.6409  Spread: Knicks (-4.5)
+  78619882  0.6409  Spread: Knicks (-4.5)
+  69461469  0.6409  Spread: Knicks (-4.5)
+  78895282  0.6409  Spread: Knicks (-4.5)
+  69659826  0.6409  Spread: Knicks (-4.5)
+  69502171  0.6409  Spread: Knicks (-4.5)
+  69945200  0.6409  Spread: Knicks (-4.5)
+  70154318  0.6409  Spread: Knicks (-4.5)
+  72091012  0.6409  Spread: Knicks (-4.5)
+  76671795  0.6409  Spread: Texas (-39.5)
+  78148747  0.6410  Spread: Troy (-7.5)
+  78248832  0.6410  Spread: Troy (-7.5)
+  79139699  0.6410  FTSE 100 (UKX) Up or Down on November 18?
+  77903822  0.6410  Netflix (NFLX) Up or Down on October 20?
+  78076292  0.6412  Will Robinhood say "International" during earnings call?
+  78076092  0.6412  Will Microsoft say "Server" during earnings call?
+  78075880  0.6413  Will Apple say "Apple Intelligence" during earnings call?
+  76927150  0.6413  Will Exxon Mobil (XOM) beat quarterly earnings?
+  78535439  0.6413  Spread: High Point Panthers (-3.5)
+  78680801  0.6414  Will Applied Materials (AMAT) beat quarterly earnings?
+  78664578  0.6414  FTSE 100 (UKX) Up or Down on November 7?
+  78102864  0.6415  Will Apple (AAPL) beat quarterly earnings?
+  74235480  0.6415  Will anyone say "Copilot" during the Q4 2025 Microsoft earnings call?
+  78368890  0.6415  Will SanDisk (SNDK) beat quarterly earnings?
+  78891279  0.6416  Will Walmart say "Dividend" during earnings call?
+  78076243  0.6416  Will Dell say "Dividend" 3+ times during earnings call?
+  78076401  0.6416  Will Celsius say "Tariff" during earnings call?
+  78503405  0.6417  Nikkei 225 (NIK) Up or Down on November 3?
+  77989147  0.6418  Will Tesla (TSLA) say "China" during earnings call?
+  78058002  0.6418  DAX (DAX) Up or Down on October 24?
+  77990981  0.6419  Will Microsoft (MSFT) beat quarterly earnings?
+  76927149  0.6419  Will NIKE (NKE) beat quarterly earnings?
+  64730069  0.6420  Will $NEIRO be listed first on Robinhood?
+  79089603  0.6420  Hawks vs. Suns: 1H Moneyline
+  75936144  0.6421  Spread: Syracuse (-21.5)
+  70154291  0.6421  Spread: Knicks (-7.5)
+  70552918  0.6421  Spread: Knicks (-7.5)
+  69461485  0.6421  Spread: Knicks (-7.5)
+  69906491  0.6421  Spread: Knicks (-7.5)
+  71848423  0.6421  Spread: Knicks (-7.5)
+  70232512  0.6421  Spread: Knicks (-7.5)
+  71769502  0.6421  Spread: Knicks (-7.5)
+  78509727  0.6421  Spread: Knicks (-7.5)
+  77225006  0.6421  Spread: Knicks (-7.5)
+  69945224  0.6421  Spread: Knicks (-7.5)
+  77780852  0.6421  Spread: Knicks (-7.5)
+  69659838  0.6421  Spread: Knicks (-7.5)
+  71566471  0.6421  Spread: Knicks (-7.5)
+  78899223  0.6422  Will Tesla (TSLA) close at $435-$440 on the final day of trading of the week of 
+  78621382  0.6422  Tesla (TSLA) Up or Down on November 6?
+  78364230  0.6422  Will Hertz Global Holdings (HTZ) beat quarterly earnings?
+  77696868  0.6422  Russell 2000 (RUT) Up or Down - October 15
+  78690508  0.6425  Will Dow Jones (DJI) close over 42,000 on Friday of the week of Nov 10 – Nov 14?
+  70744345  0.6425  Fear & Greed Index says "Extreme Fear" next Friday?
+  77298569  0.6426  Spread: Giants (-8.5)
+  69742706  0.6426  Spread: Knicks (-12.5)
+  69461473  0.6426  Spread: Knicks (-12.5)
+  78538884  0.6426  Spread: Knicks (-12.5)
+  69340519  0.6426  Spread: Knicks (-12.5)
+  69659840  0.6426  Spread: Knicks (-12.5)
+  70232535  0.6426  Spread: Knicks (-12.5)
+  70154325  0.6426  Spread: Knicks (-12.5)
+  69945218  0.6426  Spread: Knicks (-12.5)
+  78076241  0.6427  Will Dell say "EPS Growth" during earnings call?
+  78076011  0.6430  Will Meta say "WhatsApp" during earnings call?
+  78761496  0.6431  FTSE 100 (UKX) Up or Down on November 10?
+  77298911  0.6434  Spread: Giants (-7.5)
+  70232547  0.6438  Spread: Knicks (-10.5)
+  78857478  0.6438  Spread: Knicks (-10.5)
+  69340511  0.6438  Spread: Knicks (-10.5)
+  70154322  0.6438  Spread: Knicks (-10.5)
+  70552894  0.6438  Spread: Knicks (-10.5)
+  69659848  0.6438  Spread: Knicks (-10.5)
+  69461499  0.6438  Spread: Knicks (-10.5)
+  69945216  0.6438  Spread: Knicks (-10.5)
+  69742692  0.6438  Spread: Knicks (-10.5)
+  70232377  0.6440  Spread: Nuggets (-5.5)
+  78375101  0.6440  Spread: Nuggets (-5.5)
+  78942073  0.6440  Spread: Nuggets (-5.5)
+  78652283  0.6440  Spread: Nuggets (-5.5)
+  70071431  0.6440  Spread: Nuggets (-5.5)
+  69747719  0.6440  Spread: Nuggets (-5.5)
+  70150918  0.6440  Spread: Nuggets (-5.5)
+  69946960  0.6440  Spread: Nuggets (-5.5)
+  69503824  0.6440  Spread: Nuggets (-5.5)
+  78214904  0.6440  Spread: Nuggets (-5.5)
+  69423176  0.6440  Spread: Nuggets (-5.5)
+  69582214  0.6440  Spread: Knicks (-2.5)
+  70552906  0.6440  Spread: Knicks (-2.5)
+  78162709  0.6440  Spread: Knicks (-2.5)
+  69502152  0.6440  Spread: Knicks (-2.5)
+  71566463  0.6440  Spread: Knicks (-2.5)
+  77942604  0.6440  Spread: Knicks (-2.5)
+  70674581  0.6440  Spread: Knicks (-2.5)
+  78636085  0.6440  Spread: Knicks (-2.5)
+  69906489  0.6440  Spread: Knicks (-2.5)
+  78281499  0.6440  Spread: Knicks (-2.5)
+  71769500  0.6440  Spread: Knicks (-2.5)
+  78578178  0.6440  Nikkei 225 (NIK) Up or Down on November 5?
+  57724054  0.6441  Berkshire Hathaway closes above $600k today?
+  78076311  0.6442  Will Hims say "Regulation" during earnings call?
+  78378192  0.6442  Will Advanced Micro Devices (AMD) beat quarterly earnings?
+  78075242  0.6447  Will Intel say "Security" during earnings call?
+  78899218  0.6450  Will Tesla (TSLA) close at $430-$435 on the final day of trading of the week of 
+  73747594  0.6450  Will anyone say "Gaming" during the Q2 2025 Netflix earnings call?
+  78075741  0.6450  Will Palantir say "Warp Speed" during earnings call?
+  69340538  0.6451  Spread: Knicks (-15.5)
+  69742696  0.6451  Spread: Knicks (-15.5)
+  78806894  0.6451  Spread: Knicks (-15.5)
+  78075241  0.6451  Will Intel say "Smart Factory" during earnings call?
+  74235805  0.6451  Will anyone say "Reality" during the Q2 2025 Meta earnings call?
+  74235806  0.6452  Will anyone say "Maverick" during the Q2 2025 Meta earnings call?
+  78891301  0.6454  Will NVIDIA say "GM / General Motors" during earnings call?
+  77645256  0.6455  Will Tesla (TSLA) say "Recession" during earnings call?
+  78075390  0.6456  Will Allstate (ALL) beat quarterly earnings?
+  77903861  0.6458  DAX (DAX) Up or Down on October 20?
+  78534979  0.6458  Nikkei 225 (NIK) Up or Down on November 4?
+  78534994  0.6459  Tesla (TSLA) Up or Down on November 4?
+  78247676  0.6460  Will U-Haul Holding (UHAL.B) beat quarterly earnings?
+  74235808  0.6465  Will anyone say "Instagram" during the Q2 2025 Meta earnings call?
+  78938994  0.6466  Anthropic IPO before 2027?
+  78076022  0.6466  Will Meta say "China" during earnings call?
+  77942623  0.6467  Spread: Toronto Blue Jays (-1.5)
+  76666970  0.6467  Spread: Toronto Blue Jays (-1.5)
+  76991118  0.6467  Spread: Toronto Blue Jays (-1.5)
+  76950477  0.6467  Spread: Toronto Blue Jays (-1.5)
+  77210818  0.6467  Spread: Toronto Blue Jays (-1.5)
+  76707632  0.6467  Spread: Toronto Blue Jays (-1.5)
+  77784451  0.6467  Spread: Toronto Blue Jays (-1.5)
+  76909948  0.6467  Spread: Toronto Blue Jays (-1.5)
+  76626445  0.6467  Spread: Toronto Blue Jays (-1.5)
+  76869782  0.6467  Spread: Toronto Blue Jays (-1.5)
+  76545872  0.6467  Spread: Toronto Blue Jays (-1.5)
+  76585804  0.6467  Spread: Toronto Blue Jays (-1.5)
+  75362637  0.6468  Will anyone say "Inference" during the Q2 2025 Nvidia earnings call?
+  78076091  0.6469  Will Microsoft say "LinkedIn" during earnings call?
+  78837365  0.6469  Nikkei 225 (NIK) Up or Down on November 11?
+  77989146  0.6469  Will Integra LifeSciences Holdings (IART) beat quarterly earnings?
+  75936460  0.6470  Spread: Texas A&M (-29.5)
+  70026101  0.6470  Spread: Pacers (-17.5)
+  69864407  0.6470  Spread: Pacers (-17.5)
+  69783161  0.6470  Spread: Pacers (-17.5)
+  77224005  0.6471  Will BlackRock (BLK) beat quarterly earnings?
+  78625282  0.6474  Spread: Nuggets (-3.5)
+  69869549  0.6474  Spread: Nuggets (-3.5)
+  69747733  0.6474  Spread: Nuggets (-3.5)
+  70557961  0.6474  Spread: Nuggets (-3.5)
+  69946928  0.6474  Spread: Nuggets (-3.5)
+  78509715  0.6474  Spread: Nuggets (-3.5)
+  69503785  0.6474  Spread: Nuggets (-3.5)
+  78920475  0.6474  Spread: Nuggets (-3.5)
+  70071421  0.6474  Spread: Nuggets (-3.5)
+  70232389  0.6474  Spread: Nuggets (-3.5)
+  69423153  0.6474  Spread: Nuggets (-3.5)
+  70150928  0.6474  Spread: Nuggets (-3.5)
+  78539045  0.6476  Spread: High Point Panthers (-2.5)
+  21304463  0.6480  Will total value locked in DeFi be $115 billion or higher on November 27th?
+  76782596  0.6480  Will Anthropic’s market cap be between $400B and $600B at market close on IPO da
+  78076092  0.6480  Will Microsoft say "Stargate" during earnings call?
+  78681031  0.6481  Will StoneX Group (SNEX) beat quarterly earnings?
+  78075242  0.6481  Will Intel say "Panther Lake" during earnings call?
+  74235617  0.6481  Will anyone say "Operating Margin" during the Q2 2025 Amazon earnings call?
+  76782587  0.6483  Will Anthropic’s market cap be between $200B and $300B at market close on IPO da
+  70014231  0.6484  Fear & Greed Index says "Extreme Fear" on Friday?
+  69744100  0.6484  Fear & Greed Index says "Extreme Fear" on Friday?
+  68887372  0.6484  Fear & Greed Index says "Extreme Fear" on Friday?
+  70461065  0.6484  Fear & Greed Index says "Extreme Fear" on Friday?
+  70177335  0.6484  Fear & Greed Index says "Extreme Fear" on Friday?
+  78075891  0.6484  Will Caterpillar (CAT) beat quarterly earnings?
+  78076011  0.6485  Will Meta say "Oakley" during earnings call?
+  68887418  0.6486  Will Fear & Greed Index report "Neutral" on March 31?
+  69340438  0.6486  Spread: Pacers (-9.5)
+  69540627  0.6486  Spread: Pacers (-9.5)
+  69701955  0.6486  Spread: Pacers (-9.5)
+  69783165  0.6486  Spread: Pacers (-9.5)
+  70151073  0.6486  Spread: Pacers (-9.5)
+  78578182  0.6488  Tesla (TSLA) Up or Down on November 5?
+  70026090  0.6488  Spread: Pacers (-22.5)
+  78075752  0.6488  Will Google say "Profitability" during earnings call?
+  77990002  0.6490  Will Sysco (SYY) beat quarterly earnings?
+  78269358  0.6492  1H Spread: Syracuse (-0.5)
+  78248646  0.6493  Will Icahn Enterprises (IEP) beat quarterly earnings?
+  78857916  0.6494  Will Autodesk (ADSK) beat quarterly earnings?
+  69747723  0.6496  Spread: Nuggets (-1.5)
+  70232375  0.6496  Spread: Nuggets (-1.5)
+  69423149  0.6496  Spread: Nuggets (-1.5)
+  69503800  0.6496  Spread: Nuggets (-1.5)
+  70071447  0.6496  Spread: Nuggets (-1.5)
+  70557946  0.6496  Spread: Nuggets (-1.5)
+  69869559  0.6496  Spread: Nuggets (-1.5)
+  69946926  0.6496  Spread: Nuggets (-1.5)
+  73747597  0.6496  Will anyone say "Interface" during the Q2 2025 Netflix earnings call?
+  78076312  0.6496  Will Hims say "Vitamin" during earnings call?
+  76586032  0.6497  Spread: IND (-3.5)
+  79064548  0.6499  1H Spread: Eagles (-1.5)
+  74235807  0.6499  Will anyone say "WhatsApp" during the Q2 2025 Meta earnings call?
+  69864411  0.6501  Spread: Pacers (-19.5)
+  69783163  0.6501  Spread: Pacers (-19.5)
+  70026078  0.6501  Spread: Pacers (-19.5)
+  76782601  0.6501  Will Anthropic’s market cap be $600B or greater at market close on IPO day?
+  78076202  0.6502  Will Reddit say "Traffic" during earnings call?
+  76782444  0.6502  Will Freddie Mac’s market cap be less than $150B at market close on IPO day?
+  57708337  0.6505  $GME market cap >$10b at Monday close?
+  76099189  0.6506  Will anyone say "Valuation concern" during Oracle's 1st Quarter Fiscal Year 2026
+  78966966  0.6506  Nikkei 225 (NIK) Up or Down on November 14?
+  79139699  0.6507  Nikkei 225 (NIK) Up or Down on November 18?
+  78414731  0.6507  Will USA Rare Earth (USAR) beat quarterly earnings?
+  76936210  0.6509  Will Tesla (TSLA) beat quarterly earnings?
+  77645256  0.6510  Will Tesla (TSLA) say "Inflation" during earnings call?
+  74800602  0.6510  Will anyone say "Retail" during the Q2 2025 AMC earnings call?
+  75625879  0.6510  Spread: Mariners (-1.5)
+  75785870  0.6510  Spread: Mariners (-1.5)
+  75946526  0.6510  Spread: Mariners (-1.5)
+  75867399  0.6510  Spread: Mariners (-1.5)
+  75989133  0.6510  Spread: Mariners (-1.5)
+  75524296  0.6510  Spread: Mariners (-1.5)
+  76306575  0.6510  Spread: Mariners (-1.5)
+  75548619  0.6510  Spread: Mariners (-1.5)
+  76384592  0.6510  Spread: Mariners (-1.5)
+  75905756  0.6510  Spread: Mariners (-1.5)
+  76344641  0.6510  Spread: Mariners (-1.5)
+  76192941  0.6510  Spread: Mariners (-1.5)
+  75835188  0.6510  Spread: Mariners (-1.5)
+  76275577  0.6510  Spread: Mariners (-1.5)
+  76424827  0.6510  Spread: Mariners (-1.5)
+  75669962  0.6510  Spread: Mariners (-1.5)
+  75705304  0.6510  Spread: Mariners (-1.5)
+  75597024  0.6510  Spread: Mariners (-1.5)
+  72328129  0.6510  Will Broadcom beat Q2 earnings forecast ($1.57 EPS)?
+  74235576  0.6512  Will anyone say "Family Link" during the Q2 2025 Google earnings call?
+  76782591  0.6513  Will Anthropic’s market cap be between $300B and $400B at market close on IPO da
+  69864409  0.6513  Spread: Pacers (-18.5)
+  69783192  0.6513  Spread: Pacers (-18.5)
+  70026070  0.6513  Spread: Pacers (-18.5)
+  69340450  0.6515  Spread: Pacers (-14.5)
+  69864437  0.6515  Spread: Pacers (-14.5)
+  69540604  0.6515  Spread: Pacers (-14.5)
+  70026074  0.6515  Spread: Pacers (-14.5)
+  69783196  0.6515  Spread: Pacers (-14.5)
+  78076201  0.6516  Will Reddit say "Machine Translation" during earnings call?
+  77374950  0.6517  Spread: Seattle Mariners (-1.5)
+  76585802  0.6517  Spread: Seattle Mariners (-1.5)
+  76950459  0.6517  Spread: Seattle Mariners (-1.5)
+  77397076  0.6517  Spread: Seattle Mariners (-1.5)
+  77679977  0.6517  Spread: Seattle Mariners (-1.5)
+  76991110  0.6517  Spread: Seattle Mariners (-1.5)
+  76869775  0.6517  Spread: Seattle Mariners (-1.5)
+  76510459  0.6517  Spread: Seattle Mariners (-1.5)
+  76707622  0.6517  Spread: Seattle Mariners (-1.5)
+  76850150  0.6517  Spread: Seattle Mariners (-1.5)
+  77210809  0.6517  Spread: Seattle Mariners (-1.5)
+  76909940  0.6517  Spread: Seattle Mariners (-1.5)
+  69864423  0.6518  Spread: Pacers (-10.5)
+  69701945  0.6518  Spread: Pacers (-10.5)
+  69783167  0.6518  Spread: Pacers (-10.5)
+  69540587  0.6518  Spread: Pacers (-10.5)
+  69340426  0.6518  Spread: Pacers (-10.5)
+  70151055  0.6518  Spread: Pacers (-10.5)
+  69503802  0.6519  Spread: Nuggets (-2.5)
+  70557983  0.6519  Spread: Nuggets (-2.5)
+  69869557  0.6519  Spread: Nuggets (-2.5)
+  77225003  0.6519  Spread: Nuggets (-2.5)
+  69747758  0.6519  Spread: Nuggets (-2.5)
+  78897069  0.6519  Spread: Nuggets (-2.5)
+  70232365  0.6519  Spread: Nuggets (-2.5)
+  70071445  0.6519  Spread: Nuggets (-2.5)
+  69423151  0.6519  Spread: Nuggets (-2.5)
+  70150940  0.6519  Spread: Nuggets (-2.5)
+  69946942  0.6519  Spread: Nuggets (-2.5)
+  79010163  0.6521  Nikkei 225 (NIK) Up or Down on November 17?
+  74235614  0.6523  Will anyone say "Grocery" during the Q2 2025 Amazon earnings call?
+  78891279  0.6526  Will Walmart say "Upper Income" during earnings call?
+  69661553  0.6526  Spread: Hornets (-0.5)
+  69702038  0.6526  Spread: Hornets (-0.5)
+  78326315  0.6526  Will Beyond Meat (BYND) beat quarterly earnings?
+  78420361  0.6526  Will Celsius Holdings (CELH) beat quarterly earnings?
+  79139699  0.6527  Tesla (TSLA) Up or Down on November 18?
+  78075711  0.6529  Will Procter & Gamble say "Trade" during earnings call?
+  78680931  0.6530  Will Virgin Galactic Holdings (SPCE) beat quarterly earnings?
+  77223582  0.6532  Will Truist Financial (TFC) beat quarterly earnings?
+  76782583  0.6533  Will Anthropic’s market cap be between $100B and $200B at market close on IPO da
+  78076092  0.6533  Will Microsoft say "Windows" during earnings call?
+  74235732  0.6535  Will anyone say "Intelligence" during the Q3 2025 Apple earnings call?
+  78958265  0.6535  1H Spread: Hawks (-1.5)
+  78396699  0.6535  1H Spread: Hawks (-1.5)
+  78240106  0.6535  1H Spread: Hawks (-1.5)
+  78920475  0.6535  1H Spread: Hawks (-1.5)
+  78363640  0.6536  Will Apollo Global Management (APO) beat quarterly earnings?
+  78726231  0.6537  Spread: Rams (-5.5)
+  78690500  0.6537  Will Nasdaq 100 (NDX) close over 20,250 on Friday of the week of Nov 10 – Nov 14
+  74235808  0.6537  Will anyone say "Meta AI" during the Q2 2025 Meta earnings call?
+  70026086  0.6537  Spread: Pacers (-20.5)
+  69864413  0.6537  Spread: Pacers (-20.5)
+  70026076  0.6538  Spread: Pacers (-15.5)
+  69340452  0.6538  Spread: Pacers (-15.5)
+  69783157  0.6538  Spread: Pacers (-15.5)
+  69540629  0.6538  Spread: Pacers (-15.5)
+  69864405  0.6538  Spread: Pacers (-15.5)
+  74800605  0.6539  Will anyone say "Advertisement" during the Q2 2025 AMC earnings call?
+  78247197  0.6539  Will New York Times (NYT) beat quarterly earnings?
+  78301306  0.6539  1H Spread: Hawks (-4.5)
+  78362219  0.6539  Will Toast (TOST) beat quarterly earnings?
+  76782448  0.6540  Will Freddie Mac’s market cap be between $150B and $200B at market close on IPO 
+  69946924  0.6541  Spread: Nuggets (-6.5)
+  70232363  0.6541  Spread: Nuggets (-6.5)
+  78218505  0.6541  Spread: Nuggets (-6.5)
+  69503804  0.6541  Spread: Nuggets (-6.5)
+  69423184  0.6541  Spread: Nuggets (-6.5)
+  69747721  0.6541  Spread: Nuggets (-6.5)
+  70150930  0.6541  Spread: Nuggets (-6.5)
+  70071451  0.6541  Spread: Nuggets (-6.5)
+  78857466  0.6541  Spread: Nuggets (-6.5)
+  74800598  0.6541  Will anyone say "Landlord" during the Q2 2025 AMC earnings call?
+  57704721  0.6542  $GME market cap between $14-16 billion on Friday?
+  70026088  0.6545  Spread: Pacers (-21.5)
+  78664575  0.6545  Nikkei 225 (NIK) Up or Down on November 7?
+  69864417  0.6545  Spread: Pacers (-12.5)
+  69540615  0.6545  Spread: Pacers (-12.5)
+  70151075  0.6545  Spread: Pacers (-12.5)
+  69783169  0.6545  Spread: Pacers (-12.5)
+  69340440  0.6545  Spread: Pacers (-12.5)
+  78940274  0.6546  1H Spread: Hawks (-2.5)
+  78110974  0.6547  Will Cboe Global Markets (CBOE) beat quarterly earnings?
+  78843214  0.6547  Spread: Rams (-3.5)
+  76071086  0.6547  Spread: Rams (-3.5)
+  76931966  0.6547  Spread: Rams (-3.5)
+  78477833  0.6547  Spread: Rams (-3.5)
+  77092848  0.6547  Spread: Rams (-3.5)
+  78105774  0.6547  Will Intercontinental Exchange (ICE) beat quarterly earnings?
+  78761456  0.6549  Tesla (TSLA) Up or Down on November 10?
+  78075753  0.6549  Will Google say "Search Advertising" during earnings call?
+  77420165  0.6550  Will Netflix (NFLX) beat quarterly earnings?
+  74235804  0.6550  Will anyone say "Scout" during the Q2 2025 Meta earnings call?
+  78690500  0.6551  Will Nasdaq 100 (NDX) close over 21,000 on Friday of the week of Nov 10 – Nov 14
+  78857346  0.6551  Will Target (TGT) beat quarterly earnings?
+  78076291  0.6552  Will Robinhood say "Expense" during earnings call?
+  78344498  0.6555  Spread: Nuggets (-4.5)
+  78216727  0.6555  Spread: Nuggets (-4.5)
+  70150942  0.6555  Spread: Nuggets (-4.5)
+  78940274  0.6555  Spread: Nuggets (-4.5)
+  69503787  0.6555  Spread: Nuggets (-4.5)
+  70232399  0.6555  Spread: Nuggets (-4.5)
+  69747760  0.6555  Spread: Nuggets (-4.5)
+  70071449  0.6555  Spread: Nuggets (-4.5)
+  69423164  0.6555  Spread: Nuggets (-4.5)
+  69946930  0.6555  Spread: Nuggets (-4.5)
+  78652282  0.6555  Spread: Nuggets (-4.5)
+  77298176  0.6557  Spread: Eagles (-5.5)
+  77773599  0.6558  Will SEI Investments (SEIC) beat quarterly earnings?
+  78690498  0.6558  Will S&P 500 (SPX) close over 5,625 on Friday of the week of Nov 10 – Nov 14?
+  78317197  0.6558  FTSE 100 (UKX) Up or Down on October 30?
+  78076312  0.6560  Will Hims say "Testosterone" during earnings call?
+  78690499  0.6561  Will Nasdaq 100 (NDX) close over 20,000 on Friday of the week of Nov 10 – Nov 14
+  71769490  0.6561  Spread: Knicks (-0.5)
+  70674598  0.6561  Spread: Knicks (-0.5)
+  71484555  0.6561  Spread: Knicks (-0.5)
+  69906481  0.6561  Spread: Knicks (-0.5)
+  69582200  0.6561  Spread: Knicks (-0.5)
+  71566435  0.6561  Spread: Knicks (-0.5)
+  69502146  0.6561  Spread: Knicks (-0.5)
+  70026232  0.6561  Spread: Knicks (-0.5)
+  78230799  0.6563  Tesla (TSLA) Up or Down on October 28?
+  78664579  0.6564  Tesla (TSLA) Up or Down on November 7?
+  78164510  0.6564  Spread: Spurs (-12.5)
+  78735074  0.6564  Spread: Spurs (-12.5)
+  78230799  0.6564  FTSE 100 (UKX) Up or Down on October 28?
+  77774899  0.6565  Will Intel (INTC) beat quarterly earnings?
+  78758626  0.6568  Spread: Rams (-6.5)
+  76931967  0.6568  Spread: Rams (-6.5)
+  77092849  0.6568  Spread: Rams (-6.5)
+  79084352  0.6568  Spread: Rams (-6.5)
+  69784838  0.6569  Spread: Rockets (-22.5)
+  77942603  0.6570  Spread: Spurs (-7.5)
+  79080602  0.6570  Spread: Spurs (-7.5)
+  70232347  0.6570  Spread: Spurs (-7.5)
+  76782458  0.6571  Will Freddie Mac’s market cap be between $250B and $300B at market close on IPO 
+  76931966  0.6574  Spread: Rams (-1.5)
+  77092848  0.6574  Spread: Rams (-1.5)
+  78690499  0.6574  Will S&P 500 (SPX) close over 6,000 on Friday of the week of Nov 10 – Nov 14?
+  78317197  0.6575  Tesla (TSLA) Up or Down on October 30?
+  78846844  0.6575  1H Spread: Eagles (-0.5)
+  78511886  0.6577  Spread: Nuggets (-10.5)
+  70150946  0.6577  Spread: Nuggets (-10.5)
+  69946971  0.6577  Spread: Nuggets (-10.5)
+  79118400  0.6577  Spread: Nuggets (-10.5)
+  78763876  0.6577  Spread: Nuggets (-10.5)
+  70232381  0.6577  Spread: Nuggets (-10.5)
+  78708079  0.6577  Spread: Nuggets (-10.5)
+  69788278  0.6577  Spread: Nuggets (-10.5)
+  78761487  0.6577  Nikkei 225 (NIK) Up or Down on November 10?
+  69543693  0.6578  Spread: Rockets (-13.5)
+  69784861  0.6578  Spread: Rockets (-13.5)
+  78547885  0.6578  Spread: Rockets (-13.5)
+  69461553  0.6578  Spread: Rockets (-13.5)
+  69784870  0.6578  Spread: Rockets (-19.5)
+  78945674  0.6581  Spread: Suns (-5.5)
+  69424898  0.6581  Spread: Suns (-5.5)
+  77492906  0.6581  Spread: Suns (-5.5)
+  76781768  0.6582  Will Fannie Mae’s market cap be between $300B and $350B at market close on IPO d
+  78014803  0.6583  FTSE 100 (UKX) Up or Down on October 23?
+  78857846  0.6584  Will Analog Devices (ADI) beat quarterly earnings?
+  69946962  0.6584  Spread: Nuggets (-8.5)
+  69788290  0.6584  Spread: Nuggets (-8.5)
+  69503806  0.6584  Spread: Nuggets (-8.5)
+  70150944  0.6584  Spread: Nuggets (-8.5)
+  78598282  0.6584  Spread: Nuggets (-8.5)
+  70232367  0.6584  Spread: Nuggets (-8.5)
+  78861067  0.6584  Spread: Nuggets (-8.5)
+  78731481  0.6584  Spread: Nuggets (-8.5)
+  78273999  0.6585  FTSE 100 (UKX) Up or Down on October 29?
+  70637374  0.6586  Spread: Rockets (-7.5)
+  69461592  0.6586  Spread: Rockets (-7.5)
+  69379407  0.6586  Spread: Rockets (-7.5)
+  79073401  0.6586  Spread: Rockets (-7.5)
+  78996071  0.6586  Spread: Rockets (-7.5)
+  69543732  0.6586  Spread: Rockets (-7.5)
+  78600080  0.6586  Spread: Rockets (-7.5)
+  69664837  0.6586  Spread: Rockets (-7.5)
+  78249247  0.6587  1H Spread: Colts (-1.5)
+  76586031  0.6587  Spread: IND (-6.5)
+  78690498  0.6588  Will S&P 500 (SPX) close over 5,550 on Friday of the week of Nov 10 – Nov 14?
+  78414921  0.6589  Will Marex Group (MRX) beat quarterly earnings?
+  78076403  0.6589  Will Celsius say "Vibe" during earnings call?
+  69784856  0.6590  Spread: Rockets (-18.5)
+  69543712  0.6591  Spread: Rockets (-15.5)
+  78211304  0.6591  Spread: Rockets (-15.5)
+  69784854  0.6591  Spread: Rockets (-15.5)
+  69788268  0.6593  Spread: Nuggets (-16.5)
+  69587184  0.6593  Spread: Nuggets (-16.5)
+  79125662  0.6593  Spread: Nuggets (-14.5)
+  69788282  0.6593  Spread: Nuggets (-14.5)
+  69587152  0.6593  Spread: Nuggets (-14.5)
+  78682881  0.6595  Spread: Nuggets (-9.5)
+  69946979  0.6595  Spread: Nuggets (-9.5)
+  69423168  0.6595  Spread: Nuggets (-9.5)
+  78772877  0.6595  Spread: Nuggets (-9.5)
+  70232369  0.6595  Spread: Nuggets (-9.5)
+  70150932  0.6595  Spread: Nuggets (-9.5)
+  78605480  0.6595  Spread: Nuggets (-9.5)
+  69788307  0.6595  Spread: Nuggets (-9.5)
+  78076202  0.6596  Will Reddit say "OpenAI / Open AI" during earnings call?
+  78014804  0.6597  Tesla (TSLA) Up or Down on October 23?
+  78422249  0.6597  Will AMC Entertainment Holdings (AMC) beat quarterly earnings?
+  77951132  0.6597  Will Alphabet (GOOGL) beat quarterly earnings?
+  78075242  0.6599  Will Intel say "Tariff" during earnings call?
+  78187594  0.6599  Tesla (TSLA) Up or Down on October 27?
+  74235482  0.6599  Will anyone say "LinkedIn" during the Q4 2025 Microsoft earnings call?
+  78187593  0.6599  FTSE 100 (UKX) Up or Down on October 27?
+  78245650  0.6600  1H Spread: Colts (-2.5)
+  78880572  0.6600  Tesla (TSLA) Up or Down on November 12?
+  78880569  0.6601  Nikkei 225 (NIK) Up or Down on November 12?
+  76781772  0.6601  Will Fannie Mae’s market cap be between $350B and $400B at market close on IPO d
+  77462421  0.6601  Spread: Suns (-3.5)
+  70152719  0.6601  Spread: Suns (-3.5)
+  77225006  0.6601  Spread: Suns (-3.5)
+  69424911  0.6601  Spread: Suns (-3.5)
+  78670284  0.6601  Spread: Suns (-3.5)
+  78985394  0.6601  Spread: Suns (-3.5)
+  70071411  0.6602  Spread: Nuggets (-7.5)
+  69503814  0.6602  Spread: Nuggets (-7.5)
+  69747748  0.6602  Spread: Nuggets (-7.5)
+  70232379  0.6602  Spread: Nuggets (-7.5)
+  78859266  0.6602  Spread: Nuggets (-7.5)
+  70150954  0.6602  Spread: Nuggets (-7.5)
+  78681081  0.6602  Spread: Nuggets (-7.5)
+  69423178  0.6602  Spread: Nuggets (-7.5)
+  69946932  0.6602  Spread: Nuggets (-7.5)
+  76586022  0.6603  Spread: IND (-4.5)
+  78076024  0.6603  Will Meta say "Threads" during earnings call?
+  69784873  0.6604  Spread: Rockets (-20.5)
+  76782579  0.6605  Will Anthropic’s market cap be less than $100B at market close on IPO day?
+  77705259  0.6605  Spread: Rams (-2.5)
+  78782019  0.6605  Spread: Rams (-2.5)
+  78690499  0.6605  Will S&P 500 (SPX) close over 5,925 on Friday of the week of Nov 10 – Nov 14?
+  76931967  0.6606  Spread: Rams (-4.5)
+  78629034  0.6606  Spread: Rams (-4.5)
+  77092849  0.6606  Spread: Rams (-4.5)
+  77092660  0.6607  Spread: Eagles (-6.5)
+  76931971  0.6607  Spread: Eagles (-6.5)
+  76782453  0.6610  Will Freddie Mac’s market cap be between $200B and $250B at market close on IPO 
+  78273999  0.6611  Tesla (TSLA) Up or Down on October 29?
+  77570283  0.6615  Spread: Como (-0.5)
+  69587186  0.6615  Spread: Nuggets (-11.5)
+  78511886  0.6615  Spread: Nuggets (-11.5)
+  70232393  0.6615  Spread: Nuggets (-11.5)
+  69788292  0.6615  Spread: Nuggets (-11.5)
+  69946973  0.6615  Spread: Nuggets (-11.5)
+  78337306  0.6615  Spread: Nuggets (-11.5)
+  79118400  0.6615  Spread: Nuggets (-11.5)
+  70150948  0.6615  Spread: Nuggets (-11.5)
+  78736874  0.6615  Spread: Nuggets (-11.5)
+  78690500  0.6616  Will Nasdaq 100 (NDX) close over 19,750 on Friday of the week of Nov 10 – Nov 14
+  69788270  0.6616  Spread: Nuggets (-17.5)
+  69587154  0.6616  Spread: Nuggets (-17.5)
+  52484094  0.6617  Will Reddit IPO at between $2.5b-5b valuation?
+  76332527  0.6617  Spread: Eagles (-3.5)
+  76931970  0.6617  Spread: Eagles (-3.5)
+  79118551  0.6617  Spread: Eagles (-3.5)
+  77092659  0.6617  Spread: Eagles (-3.5)
+  78900820  0.6617  Spread: Eagles (-3.5)
+  77775030  0.6618  Will S&T Bancorp (STBA) beat quarterly earnings?
+  69587168  0.6620  Spread: Nuggets (-19.5)
+  78690500  0.6621  Will Nasdaq 100 (NDX) close over 20,500 on Friday of the week of Nov 10 – Nov 14
+  78360401  0.6621  Tesla (TSLA) Up or Down on October 31?
+  78513687  0.6621  Spread: Nuggets (-12.5)
+  70150916  0.6621  Spread: Nuggets (-12.5)
+  78738674  0.6621  Spread: Nuggets (-12.5)
+  79123802  0.6621  Spread: Nuggets (-12.5)
+  78128505  0.6621  Spread: Nuggets (-12.5)
+  69788280  0.6621  Spread: Nuggets (-12.5)
+  78299501  0.6621  Spread: Nuggets (-12.5)
+  69587174  0.6621  Spread: Nuggets (-12.5)
+  78365890  0.6622  Will Wingstop (WING) beat quarterly earnings?
+  78229306  0.6626  1H Spread: Suns (-0.5)
+  78301302  0.6626  1H Spread: Suns (-0.5)
+  52484084  0.6628  Will Reddit IPO at a less than $2.5b valuation?
+  76332522  0.6628  Spread: Eagles (-4.5)
+  79084352  0.6628  Spread: Eagles (-4.5)
+  76931970  0.6628  Spread: Eagles (-4.5)
+  77092659  0.6628  Spread: Eagles (-4.5)
+  79123802  0.6628  Spread: Nuggets (-13.5)
+  69587176  0.6628  Spread: Nuggets (-13.5)
+  69788288  0.6628  Spread: Nuggets (-13.5)
+  78303103  0.6628  Spread: Nuggets (-13.5)
+  78132106  0.6628  Spread: Nuggets (-13.5)
+  74235478  0.6630  Will anyone say "Server" during the Q4 2025 Microsoft earnings call?
+  76586032  0.6635  Spread: IND (-10.5)
+  70152715  0.6637  Spread: Suns (-6.5)
+  69424892  0.6637  Spread: Suns (-6.5)
+  78816073  0.6637  Spread: Suns (-6.5)
+  55897096  0.6637  $DJT market cap between $2b and $3b on April 30?
+  77690357  0.6638  Microsoft (MSFT) Up or Down - October 15
+  70232162  0.6639  Spread: Hawks (-5.5)
+  77606274  0.6639  Spread: Hawks (-5.5)
+  69742680  0.6639  Spread: Hawks (-5.5)
+  78111365  0.6641  Will Strategy (MSTR) beat quarterly earnings?
+  76053050  0.6642  Spread: Eagles (-8.5)
+  69664843  0.6643  Spread: Suns (-1.5)
+  69505502  0.6643  Spread: Suns (-1.5)
+  70152702  0.6643  Spread: Suns (-1.5)
+  69424888  0.6643  Spread: Suns (-1.5)
+  78207704  0.6643  Spread: Suns (-1.5)
+  52484117  0.6643  Will Reddit IPO at between $10b-12.5b valuation?
+  69587166  0.6644  Spread: Nuggets (-15.5)
+  69788284  0.6644  Spread: Nuggets (-15.5)
+  76781760  0.6645  Will Fannie Mae’s market cap be between $200B and $250B at market close on IPO d
+  76781776  0.6646  Will Fannie Mae’s market cap be $400B or greater at market close on IPO day?
+  77299379  0.6649  Spread: Eagles (-10.5)
+  77299341  0.6650  Spread: Eagles (-13.5)
+  57704708  0.6652  $GME market cap between $12-14 billion on Friday?
+  69587189  0.6654  Spread: Nuggets (-20.5)
+  78690500  0.6655  Will Nasdaq 100 (NDX) close over 20,750 on Friday of the week of Nov 10 – Nov 14
+  77690357  0.6655  Apple (AAPL) Up or Down - October 15
+  77223845  0.6656  Will Key (KEY) beat quarterly earnings?
+  77971635  0.6658  Tesla (TSLA) Up or Down on October 22?
+  78420831  0.6658  Will MarketAxess Holdings (MKTX) beat quarterly earnings?
+  77761527  0.6659  Tesla (TSLA) Up or Down on October 17?
+  78175451  0.6660  Spread: Rams (-12.5)
+  52484133  0.6661  Will Reddit IPO at a greater than $15b valuation?
+  77874444  0.6662  Spread: Eagles (-7.5)
+  77299530  0.6662  Spread: Eagles (-7.5)
+  77374982  0.6662  Spread: Eagles (-7.5)
+  75935326  0.6662  Spread: Eagles (-7.5)
+  77298909  0.6664  Spread: Eagles (-9.5)
+  56968296  0.6664  $AMC all time high by Friday?
+  77299568  0.6664  Spread: Colts (-16.5)
+  77300490  0.6664  Spread: Colts (-23.5)
+  55897081  0.6666  $DJT market cap between $1b and $2b on April 30?
+  78207843  0.6666  Spread: Rams (-13.5)
+  77971635  0.6668  FTSE 100 (UKX) Up or Down on October 22?
+  69587178  0.6668  Spread: Nuggets (-18.5)
+  69788272  0.6668  Spread: Nuggets (-18.5)
+  78252848  0.6668  Spread: Rams (-14.5)
+  78033904  0.6669  Spread: Sheffield Wednesday FC (-0.5)
+  74800605  0.6670  Will anyone say "Seasonality" during the Q2 2025 AMC earnings call?
+  78100363  0.6672  Will Meta Platforms (META) beat quarterly earnings?
+  77440758  0.6672  Spread: Suns (-2.5)
+  79116603  0.6672  Spread: Suns (-2.5)
+  78666684  0.6672  Spread: Suns (-2.5)
+  69424890  0.6672  Spread: Suns (-2.5)
+  70152705  0.6672  Spread: Suns (-2.5)
+  78938501  0.6672  Spread: Suns (-2.5)
+  69664865  0.6672  Spread: Suns (-2.5)
+  76781756  0.6675  Will Fannie Mae’s market cap be less than $200B at market close on IPO day?
+  77299530  0.6676  Spread: Colts (-17.5)
+  77936672  0.6676  Tesla (TSLA) Up or Down on October 21?
+  78058002  0.6677  Tesla (TSLA) Up or Down on October 24?
+  77298176  0.6678  Spread: Colts (-5.5)
+  78542637  0.6678  Spread: Colts (-5.5)
+  71154767  0.6679  Fear & Greed Index says "Greed" on Friday?
+  71311520  0.6679  Fear & Greed Index says "Greed" on Friday?
+  78014801  0.6680  Nikkei 225 (NIK) Up or Down on October 23?
+  78076202  0.6680  Will Reddit say "Game" during earnings call?
+  78402099  0.6681  1H Spread: Hawks (-0.5)
+  79089603  0.6681  1H Spread: Hawks (-0.5)
+  78954665  0.6681  1H Spread: Hawks (-0.5)
+  78691880  0.6681  1H Spread: Hawks (-0.5)
+  78229308  0.6681  1H Spread: Hawks (-0.5)
+  78076202  0.6683  Will Reddit say "Smartly" during earnings call?
+  77903822  0.6683  Tesla (TSLA) Up or Down on October 20?
+  65365190  0.6684  $MSTR added to Nasdaq 100?
+  69424882  0.6685  Spread: Suns (-4.5)
+  70152698  0.6685  Spread: Suns (-4.5)
+  78945674  0.6685  Spread: Suns (-4.5)
+  52484102  0.6685  Will Reddit IPO at between $5b-7.5b valuation?
+  76936286  0.6686  Will Lamb Weston Holdings (LW) beat quarterly earnings?
+  69587170  0.6686  Spread: Nuggets (-21.5)
+  69742678  0.6687  Spread: Hawks (-3.5)
+  70232168  0.6687  Spread: Hawks (-3.5)
+  78250907  0.6687  Spread: Hawks (-3.5)
+  69542161  0.6687  Spread: Hawks (-3.5)
+  69340501  0.6687  Spread: Hawks (-3.5)
+  70422977  0.6687  Spread: Hawks (-3.5)
+  78900669  0.6687  Spread: Hawks (-3.5)
+  78216844  0.6688  Spread: Colts (-3.5)
+  77092700  0.6688  Spread: Colts (-3.5)
+  77092702  0.6689  Spread: Colts (-6.5)
+  78477836  0.6689  Spread: Colts (-6.5)
+  77374977  0.6689  Spread: Colts (-6.5)
+  78076021  0.6689  Will Meta say "Dividend" during earnings call?
+  78230797  0.6691  Nikkei 225 (NIK) Up or Down on October 28?
+  78076021  0.6691  Will Meta say "Advertising" during earnings call?
+  78891820  0.6693  Spread: Eagles (-2.5)
+  77604476  0.6693  Spread: Eagles (-2.5)
+  76332526  0.6693  Spread: Eagles (-2.5)
+  77298023  0.6693  Spread: Eagles (-2.5)
+  77739458  0.6694  Spread: Hawks (-6.5)
+  70151041  0.6694  Spread: Hawks (-6.5)
+  69377713  0.6694  Spread: Hawks (-6.5)
+  70232164  0.6694  Spread: Hawks (-6.5)
+  69742660  0.6694  Spread: Hawks (-6.5)
+  77604478  0.6694  Spread: Hawks (-6.5)
+  77739508  0.6694  Tesla (TSLA) Up or Down on October 16?
+  78317194  0.6694  Nikkei 225 (NIK) Up or Down on October 30?
+  76931968  0.6695  Spread: Eagles (-1.5)
+  78782018  0.6695  Spread: Eagles (-1.5)
+  77092658  0.6695  Spread: Eagles (-1.5)
+  76332524  0.6695  Spread: Eagles (-1.5)
+  77572084  0.6695  Spread: Eagles (-1.5)
+  52484110  0.6697  Will Reddit IPO at between $7.5b-10b valuation?
+  69943684  0.6699  Spread: Hawks (-17.5)
+  55153871  0.6700  $DJT market cap between $9-$10b on April 5?
+  78033887  0.6701  Atlas global browser market share 1%+ on October 31?
+  74235577  0.6702  Will anyone say "Operating Margin" during the Q2 2025 Google earnings call?
+  77739518  0.6704  FTSE 100 (FTSE) Up or Down on October 16?
+  78360390  0.6707  Nikkei 225 (NIK) Up or Down on October 31?
+  75936587  0.6710  Spread: USC (-27.5)
+  76393760  0.6711  Spread: USC (-20.5)
+  78076291  0.6713  Will Robinhood say "Trading Volume" during earnings call?
+  77299887  0.6714  Spread: Colts (-18.5)
+  70152735  0.6714  Spread: Suns (-9.5)
+  78273991  0.6715  Nikkei 225 (NIK) Up or Down on October 29?
+  55153893  0.6715  $DJT market cap between $11-$12b on April 5?
+  70422943  0.6716  Spread: Hawks (-1.5)
+  79073401  0.6716  Spread: Hawks (-1.5)
+  69542173  0.6716  Spread: Hawks (-1.5)
+  69661454  0.6716  Spread: Hawks (-1.5)
+  77642459  0.6716  Spread: Hawks (-1.5)
+  78344498  0.6716  Spread: Hawks (-1.5)
+  70232158  0.6716  Spread: Hawks (-1.5)
+  78945674  0.6716  Spread: Hawks (-1.5)
+  77984533  0.6716  Spread: Hawks (-1.5)
+  69340503  0.6716  Spread: Hawks (-1.5)
+  69742662  0.6716  Spread: Hawks (-1.5)
+  69786568  0.6716  Spread: Hawks (-1.5)
+  52484124  0.6717  Will Reddit IPO at between $12.5b-15b valuation?
+  78690499  0.6717  Will S&P 500 (SPX) close over 5,775 on Friday of the week of Nov 10 – Nov 14?
+  78898869  0.6717  Spread: Hawks (-4.5)
+  69742664  0.6717  Spread: Hawks (-4.5)
+  70232160  0.6717  Spread: Hawks (-4.5)
+  78690499  0.6718  Will S&P 500 (SPX) close over 5,700 on Friday of the week of Nov 10 – Nov 14?
+  77299709  0.6720  Spread: Colts (-19.5)
+  77989668  0.6720  Will MSCI (MSCI) beat quarterly earnings?
+  77433395  0.6720  Spread: Rams (-7.5)
+  77298647  0.6721  Spread: Colts (-14.5)
+  77906841  0.6721  Spread: Colts (-14.5)
+  74235806  0.6722  Will anyone say "Threads" during the Q2 2025 Meta earnings call?
+  78503405  0.6722  Nasdaq 100 (NDX) Up or Down on November 3?
+  77588273  0.6726  Spread: Colts (-8.5)
+  76586016  0.6728  Spread: IND (-7.5)
+  78372491  0.6729  Will CRISPR Therapeutics (CRSP) beat quarterly earnings?
+  77903861  0.6730  FTSE 100 (UKX) Up or Down on October 20?
+  78621374  0.6730  Nasdaq 100 (NDX) Up or Down on November 6?
+  77942273  0.6730  Spread: Hawks (-2.5)
+  78346298  0.6730  Spread: Hawks (-2.5)
+  78952864  0.6730  Spread: Hawks (-2.5)
+  78240106  0.6730  Spread: Hawks (-2.5)
+  69340483  0.6730  Spread: Hawks (-2.5)
+  69742668  0.6730  Spread: Hawks (-2.5)
+  69542171  0.6730  Spread: Hawks (-2.5)
+  70232146  0.6730  Spread: Hawks (-2.5)
+  77298579  0.6730  Spread: Colts (-13.5)
+  78534981  0.6732  Nasdaq 100 (NDX) Up or Down on November 4?
+  78076201  0.6732  Will Reddit say "Election" during earnings call?
+  69943675  0.6733  Spread: Hawks (-9.5)
+  69377700  0.6733  Spread: Hawks (-9.5)
+  70151029  0.6733  Spread: Hawks (-9.5)
+  69742650  0.6733  Spread: Hawks (-9.5)
+  78076201  0.6734  Will Reddit say "Algorithm" during earnings call?
+  70151045  0.6735  Spread: Hawks (-10.5)
+  69377686  0.6735  Spread: Hawks (-10.5)
+  69742652  0.6735  Spread: Hawks (-10.5)
+  69943693  0.6735  Spread: Hawks (-10.5)
+  70071419  0.6735  Spread: Nuggets (-0.5)
+  69423182  0.6735  Spread: Nuggets (-0.5)
+  69747744  0.6735  Spread: Nuggets (-0.5)
+  69503812  0.6735  Spread: Nuggets (-0.5)
+  70557948  0.6735  Spread: Nuggets (-0.5)
+  71273431  0.6735  Spread: Nuggets (-0.5)
+  69869577  0.6735  Spread: Nuggets (-0.5)
+  69943678  0.6738  Spread: Hawks (-14.5)
+  70151017  0.6738  Spread: Hawks (-14.5)
+  69377688  0.6738  Spread: Hawks (-14.5)
+  78058002  0.6738  FTSE 100 (UKX) Up or Down on October 24?
+  77971633  0.6740  Nikkei 225 (NIK) Up or Down on October 22?
+  77092701  0.6743  Spread: Colts (-4.5)
+  57704698  0.6745  $GME market cap between $10-12 billion on Friday?
+  70151033  0.6745  Spread: Hawks (-16.5)
+  69377690  0.6745  Spread: Hawks (-16.5)
+  69943690  0.6745  Spread: Hawks (-16.5)
+  77564880  0.6748  Spread: Colts (-9.5)
+  77299041  0.6749  Spread: Colts (-10.5)
+  70152723  0.6750  Spread: Suns (-8.5)
+  78819674  0.6750  Spread: Suns (-8.5)
+  69424894  0.6750  Spread: Suns (-8.5)
+  69943697  0.6752  Spread: Hawks (-13.5)
+  69377704  0.6752  Spread: Hawks (-13.5)
+  70151025  0.6752  Spread: Hawks (-13.5)
+  78494043  0.6755  Spread: Southern Miss Golden Eagles (-0.5)
+  78369161  0.6760  Will US Foods Holding (USFD) beat quarterly earnings?
+  78578181  0.6762  Nasdaq 100 (NDX) Up or Down on November 5?
+  74235808  0.6763  Will anyone say "Advertising" during the Q2 2025 Meta earnings call?
+  78817876  0.6764  Spread: Suns (-7.5)
+  70152721  0.6764  Spread: Suns (-7.5)
+  69424900  0.6764  Spread: Suns (-7.5)
+  69742648  0.6766  Spread: Hawks (-8.5)
+  69943707  0.6766  Spread: Hawks (-8.5)
+  78295902  0.6766  Spread: Hawks (-8.5)
+  69377674  0.6766  Spread: Hawks (-8.5)
+  70151043  0.6766  Spread: Hawks (-8.5)
+  77419324  0.6768  Spread: Colts (-7.5)
+  77193200  0.6768  Spread: Colts (-7.5)
+  77936702  0.6770  FTSE 100 (UKX) Up or Down on October 21?
+  77223619  0.6778  Will State Street (STT) beat quarterly earnings?
+  78076313  0.6780  Will Hims say "Peptide" during earnings call?
+  77887039  0.6780  Spread: Colts (-11.5)
+  77298910  0.6780  Spread: Colts (-11.5)
+  77936692  0.6781  Nikkei 225 (NIK) Up or Down on October 21?
+  77903861  0.6782  Nikkei 225 (NIK) Up or Down on October 20?
+  78076073  0.6785  Will Uber say "Market Share" during earnings call?
+  70151027  0.6787  Spread: Hawks (-15.5)
+  69943699  0.6787  Spread: Hawks (-15.5)
+  69377676  0.6787  Spread: Hawks (-15.5)
+  69742640  0.6787  Spread: Hawks (-11.5)
+  70151023  0.6787  Spread: Hawks (-11.5)
+  69943695  0.6787  Spread: Hawks (-11.5)
+  69377672  0.6787  Spread: Hawks (-11.5)
+  77761547  0.6788  FTSE 100 (FTSE) Up or Down on October 17?
+  70151013  0.6788  Spread: Hawks (-7.5)
+  78294103  0.6788  Spread: Hawks (-7.5)
+  69742646  0.6788  Spread: Hawks (-7.5)
+  69377684  0.6788  Spread: Hawks (-7.5)
+  69943682  0.6788  Spread: Hawks (-7.5)
+  77297905  0.6791  Spread: Colts (-2.5)
+  78175452  0.6791  Spread: Colts (-2.5)
+  78837365  0.6791  Nasdaq 100 (NDX) Up or Down on November 11?
+  77739509  0.6792  Nikkei 225 (NIK) Up or Down on October 16?
+  78923764  0.6793  Dow Jones (DJI) Up or Down on November 13?
+  76332524  0.6794  Spread: Eagles (-0.5)
+  77874442  0.6797  Spread: Colts (-12.5)
+  77298513  0.6797  Spread: Colts (-12.5)
+  77761546  0.6797  Nikkei 225 (NIK) Up or Down on October 17?
+  77588272  0.6799  Spread: Colts (-1.5)
+  77092700  0.6799  Spread: Colts (-1.5)
+  69377702  0.6803  Spread: Hawks (-12.5)
+  70151015  0.6803  Spread: Hawks (-12.5)
+  69943719  0.6803  Spread: Hawks (-12.5)
+  78076291  0.6805  Will Robinhood say "Football" during earnings call?
+  77299680  0.6808  Spread: Colts (-20.5)
+  78058000  0.6809  Nikkei 225 (NIK) Up or Down on October 24?
+  78956169  0.6810  Spread: Go Ahead Eagles (-1.5)
+  78076291  0.6815  Will Robinhood say "Marketing" during earnings call?
+  78503405  0.6819  Dow Jones (DJI) Up or Down on November 3?
+  77299342  0.6819  Spread: Colts (-15.5)
+  78188051  0.6819  Spread: Colts (-15.5)
+  79010165  0.6819  Nasdaq 100 (NDX) Up or Down on November 17?
+  78621375  0.6822  Dow Jones (DJI) Up or Down on November 6?
+  77989831  0.6839  Will Shutterstock (SSTK) beat quarterly earnings?
+  78966966  0.6840  Nasdaq 100 (NDX) Up or Down on November 14?
+  77775080  0.6844  Will SS&C Technologies Holdings (SSNC) beat quarterly earnings?
+  78534981  0.6857  Dow Jones (DJI) Up or Down on November 4?
+  79139699  0.6859  Nasdaq 100 (NDX) Up or Down on November 18?
+  78664576  0.6867  Nasdaq 100 (NDX) Up or Down on November 7?
+  78837366  0.6872  Dow Jones (DJI) Up or Down on November 11?
+  70152733  0.6873  Spread: Suns (-0.5)
+  69664875  0.6873  Spread: Suns (-0.5)
+  69424880  0.6873  Spread: Suns (-0.5)
+  69505504  0.6873  Spread: Suns (-0.5)
+  78761486  0.6883  Nasdaq 100 (NDX) Up or Down on November 10?
+  78880570  0.6884  Nasdaq 100 (NDX) Up or Down on November 12?
+  78578182  0.6888  Dow Jones (DJI) Up or Down on November 5?
+  78230798  0.6906  Nasdaq 100 (NDX) Up or Down on October 28?
+  69906497  0.6909  Spread: Hawks (-0.5)
+  70026030  0.6909  Spread: Hawks (-0.5)
+  69661474  0.6909  Spread: Hawks (-0.5)
+  70422979  0.6909  Spread: Hawks (-0.5)
+  70232144  0.6909  Spread: Hawks (-0.5)
+  69786550  0.6909  Spread: Hawks (-0.5)
+  69340465  0.6909  Spread: Hawks (-0.5)
+  69542155  0.6909  Spread: Hawks (-0.5)
+  78324804  0.6912  Will Arm Holdings (ARM) beat quarterly earnings?
+  79139699  0.6914  Dow Jones (DJI) Up or Down on November 18?
+  78966969  0.6920  Dow Jones (DJI) Up or Down on November 14?
+  78107014  0.6921  Will S&P Global (SPGI) beat quarterly earnings?
+  78664577  0.6924  Dow Jones (DJI) Up or Down on November 7?
+  78690500  0.6933  Will S&P 500 (SPX) close over 5,850 on Friday of the week of Nov 10 – Nov 14?
+  78317195  0.6934  Nasdaq 100 (NDX) Up or Down on October 30?
+  78273991  0.6943  Nasdaq 100 (NDX) Up or Down on October 29?
+  79010166  0.6946  Dow Jones (DJI) Up or Down on November 17?
+  78014802  0.6956  Nasdaq 100 (NDX) Up or Down on October 23?
+  78360400  0.6957  Nasdaq 100 (NDX) Up or Down on October 31?
+  78110815  0.6962  Will Tradeweb Markets (TW) beat quarterly earnings?
+  77739508  0.6967  Nasdaq 100 (NDX) Up or Down on October 16?
+  74800603  0.6976  Will anyone say "Investor" during the Q2 2025 AMC earnings call?
+  78621373  0.6980  S&P 500 (SPX) Up or Down on November 6?
+  78923762  0.6985  S&P 500 (SPX) Up or Down on November 13?
+  77690367  0.6987  Tesla (TSLA) Up or Down - October 15
+  78503404  0.6989  S&P 500 (SPX) Up or Down on November 3?
+  78761486  0.6990  Dow Jones (DJI) Up or Down on November 10?
+  77971633  0.6990  Nasdaq 100 (NDX) Up or Down on October 22?
+  63772757  0.6991  S&P500 all time high after election is called?
+  78880570  0.6999  Dow Jones (DJI) Up or Down on November 12?
+  78187593  0.7002  Nasdaq 100 (NDX) Up or Down on October 27?
+  77761547  0.7013  Nasdaq 100 (NDX) Up or Down on October 17?
+  78230798  0.7019  Dow Jones (DJI) Up or Down on October 28?
+  78317196  0.7020  Dow Jones (DJI) Up or Down on October 30?
+  77903860  0.7037  Nasdaq 100 (NDX) Up or Down on October 20?
+  77936702  0.7040  Nasdaq 100 (NDX) Up or Down on October 21?
+  78534980  0.7042  S&P 500 (SPX) Up or Down on November 4?
+  78360400  0.7049  Dow Jones (DJI) Up or Down on October 31?
+  78273999  0.7052  Dow Jones (DJI) Up or Down on October 29?
+  78058000  0.7055  Nasdaq 100 (NDX) Up or Down on October 24?
+  78325024  0.7060  Will Robinhood Markets (HOOD) beat quarterly earnings?
+  78966967  0.7078  S&P 500 (SPX) Up or Down on November 14?
+  78014802  0.7084  Dow Jones (DJI) Up or Down on October 23?
+  78837365  0.7092  S&P 500 (SPX) Up or Down on November 11?
+  77696868  0.7095  FTSE 100 (FTSE) Up or Down - October 15
+  78578178  0.7096  S&P 500 (SPX) Up or Down on November 5?
+  77971635  0.7099  Dow Jones (DJI) Up or Down on October 22?
+  79139697  0.7118  S&P 500 (SPX) Up or Down on November 18?
+  78664574  0.7128  S&P 500 (SPX) Up or Down on November 7?
+  79010163  0.7133  S&P 500 (SPX) Up or Down on November 17?
+  77696858  0.7143  Nikkei 225 (NIK) Up or Down - October 15
+  77739518  0.7146  Dow Jones (DJI) Up or Down on October 16?
+  77761546  0.7158  Dow Jones (DJI) Up or Down on October 17?
+  77420055  0.7158  Will Nasdaq (NDAQ) beat quarterly earnings?
+  77903861  0.7175  Dow Jones (DJI) Up or Down on October 20?
+  78880568  0.7178  S&P 500 (SPX) Up or Down on November 12?
+  77696858  0.7180  Nasdaq 100 (NDX) Up or Down - October 15
+  78761486  0.7198  S&P 500 (SPX) Up or Down on November 10?
+  78058001  0.7202  Dow Jones (DJI) Up or Down on October 24?
+  78230796  0.7237  S&P 500 (SPX) Up or Down on October 28?
+  78317194  0.7253  S&P 500 (SPX) Up or Down on October 30?
+  78273991  0.7278  S&P 500 (SPX) Up or Down on October 29?
+  78360391  0.7280  S&P 500 (SPX) Up or Down on October 31?
+  78014801  0.7313  S&P 500 (SPX) Up or Down on October 23?
+  78187591  0.7330  S&P 500 (SPX) Up or Down on October 27?
+  77739509  0.7333  S&P 500 (SPX) Up or Down on October 16?
+  77774551  0.7343  Will Dow (DOW) beat quarterly earnings?
+  77971632  0.7344  S&P 500 (SPX) Up or Down on October 22?
+  77761546  0.7359  S&P 500 (SPX) Up or Down on October 17?
+  77903851  0.7395  S&P 500 (SPX) Up or Down on October 20?
+  77696868  0.7408  Dow Jones (DJI) Up or Down - October 15
+  78057999  0.7413  S&P 500 (SPX) Up or Down on October 24?
+  77936692  0.7421  S&P 500 (SPX) Up or Down on October 21?
+  77696858  0.7650  S&P 500 (SPX) Up or Down - October 15

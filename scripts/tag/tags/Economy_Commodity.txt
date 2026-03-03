@@ -1,0 +1,272 @@
+# Economy_Finance - Economy_Commodity
+# count=269, avg_conf=0.6201
+====================================================================================================
+  69334066  0.4784  Is Earth flat?
+  68642969  0.5019  Will Ontario cut off electricity to the US before May?
+  59438307  0.5090  Will Arizona be the tipping point state?
+  65009969  0.5211  Will 'Wicked' gross more than $500 million domestically by January 9?
+  76786967  0.5247  CS: HOTU vs RUBY
+  65357853  0.5264  Will McDonald's worker get reward money before April?
+  68730062  0.5295  Will GTA 6 cost $100+?
+  51359552  0.5352  Do Kwon extradited before March?
+  16031441  0.5366  Will Vija Celmins’ “Untitled (Ocean)” sell for more than $6.5M at Phillips?
+  48640858  0.5381  Will any major Iranian oil refinery be taken out by Nov 30?
+  79030384  0.5479  Will the Steam Machine cost $700 or more at release?
+  73426745  0.5615  Elon no longer world's richest before 2026?
+  61989040  0.5619  Musk remains richest man through September 30?
+  16031411  0.5648  Will David Hockney’s “A Neat Lawn” sell for more than $18M at Phillips?
+  67027808  0.5657  Will Elon Musk's net worth be between $445B and $450B on January 31?
+  16031454  0.5677  Will Gerhard Richter’s “Abstraktes Bild” sell for more than $5.5M at Phillips?
+  43870369  0.5744  Will 'Elemental' gross over $37.5m on opening weekend?
+  55682575  0.5744  Will April 2024 show an increase of between 1.26°C-1.31°C?
+  48948988  0.5812  Saudi Aramco's 2023 net income >$120 billion?
+  55682553  0.5814  Will April 2024 show an increase between 1.14°C-1.19°C?
+  74968400  0.5830  Will OPEC hike production by next meeting?
+  55489419  0.5850  Will the US gain more than 303k jobs in April?
+  55682582  0.5851  Will April 2024 show an increase of greater than 1.31°C?
+  25693749  0.5856  Will the US hit its highest recorded gas price per gallon according to AAA by Ma
+  55682564  0.5866  Will April 2024 show an increase between 1.20°C-1.25°C?
+  48957183  0.5872  Saudi Aramco's 2023 net income >$100 billion?
+  76671792  0.5892  Spread: Utah (-3.5)
+  77645239  0.5892  Spread: Utah (-3.5)
+  77434533  0.5896  Spread: Utah (-6.5)
+  67384738  0.5897  Will America be profitable any month in 2025?
+  77213246  0.5899  Will Elon Musk's net worth be between $450b and $460b on October 31?
+  67652588  0.5911  Will inflation reach more than 10% in 2025?
+  78127145  0.5916  Spread: Utah (-14.5)
+  55489409  0.5917  Will the US gain between 250-303k jobs in April?
+  77458751  0.5922  Spread: Utah (-5.5)
+  77849316  0.5927  Spread: Utah (-4.5)
+  43839630  0.5929  Will U.S. inflation be greater than -0.1% from May to June 2023?
+  55489377  0.5939  Will the US gain less than 150k jobs in April?
+  78942524  0.5944  Spread: Utah (-7.5)
+  77480334  0.5944  Spread: Utah (-7.5)
+  55489386  0.5949  Will the US gain between 150-200k jobs in April?
+  78807805  0.5949  Spread: Utah (-9.5)
+  77514508  0.5949  Spread: Utah (-9.5)
+  78260349  0.5949  Spread: Utah (-9.5)
+  78469132  0.5952  Spread: Utah (-11.5)
+  43839659  0.5956  Will U.S. inflation be greater than 0.2% from May to June 2023?
+  78470932  0.5957  Spread: Utah (-12.5)
+  66661446  0.5958  Will monthly inflation increase by 0.4% in December?
+  76393789  0.5970  Spread: Utah (-23.5)
+  78330546  0.5977  Spread: Utah (-10.5)
+  76785273  0.5977  Spread: Utah (-10.5)
+  68093281  0.5987  Is there between 147341858 and 146000000 Troy Ounces of Gold in Fort Knox?
+  66745954  0.5991  Will monthly inflation increase by 0.2% in January?
+  43839670  0.5997  Will U.S. inflation be greater than 0.3% from May to June 2023?
+  78982312  0.5998  Will inflation reach more than 10% in 2026?
+  75125456  0.6004  Will monthly inflation increase by 0.2% in August?
+  43839639  0.6012  Will U.S. inflation be greater than 0.0% from May to June 2023?
+  68093271  0.6018  Is there more than 147341858 Troy Ounces of Gold in Fort Knox?
+  78985266  0.6019  Will monthly inflation increase by 0.2% in November?
+  77847461  0.6021  Spread: Utah (-1.5)
+  77588292  0.6021  Spread: Utah (-1.5)
+  79106119  0.6021  Spread: Utah (-1.5)
+  78789379  0.6021  Spread: Utah (-1.5)
+  78971176  0.6021  Spread: Utah (-1.5)
+  78722801  0.6021  Spread: Utah (-1.5)
+  77761066  0.6021  Spread: Utah (-1.5)
+  78540997  0.6021  Spread: Utah (-1.5)
+  77674692  0.6021  Spread: Utah (-1.5)
+  78472592  0.6021  Spread: Utah (-1.5)
+  78886678  0.6021  Spread: Utah (-1.5)
+  66745985  0.6022  Will monthly inflation increase by 0.3% in January?
+  75125451  0.6028  Will monthly inflation increase by 0.1% in August?
+  48911446  0.6030  Will Saudi Arabia agree to sell oil to China in Yuan in 2023?
+  66661371  0.6034  Will monthly inflation increase by 0.3% or less in December?
+  75125461  0.6045  Will monthly inflation increase by 0.3% in August?
+  28051322  0.6053  Will U.S. inflation be more than 0.2% from March to April 2022?
+  66745927  0.6054  Will monthly inflation increase by 0.1% or less in January?
+  42545257  0.6056  Will U.S. inflation be greater than -0.1% from April to May 2023?
+  42545281  0.6065  Will U.S. inflation be greater than 0.2% from April to May 2023?
+  28171287  0.6065  Will the AAA US average national gas price drop below $4.00 by June 30, 2022?
+  41455870  0.6067  Will U.S. inflation be greater than 0.4% from March to April 2023?
+  38601676  0.6069  Will US inflation be more than 0.2% from December 2022 to January 2023?
+  67849697  0.6070  Will egg prices be between $5.75 and $6.00 in March?
+  66746004  0.6070  Will monthly inflation increase by 0.4% or more in January?
+  41455856  0.6071  Will U.S. inflation be greater than 0.2% from March to April 2023?
+  67657084  0.6071  Will monthly inflation increase by 0.3% in February?
+  71471257  0.6073  Will monthly inflation increase by 0.1% in May?
+  75125447  0.6076  Will monthly inflation increase by 0.0% or less in August?
+  39293798  0.6076  Will U.S. inflation be greater than 0.3% from January to February 2023?
+  71471263  0.6078  Will monthly inflation increase by 0.2% in May?
+  27106424  0.6080  Will U.S. inflation be more than 0.6% from March to April 2022?
+  67849743  0.6081  Will egg prices be more than $6.00 in March?
+  43839649  0.6081  Will U.S. inflation be greater than 0.1% from May to Jun 2023?
+  38601692  0.6083  Will US inflation be more than 0.4% from December 2022 to January 2023?
+  68045681  0.6087  Gold missing from Fort Knox?
+  42545274  0.6090  Will U.S. inflation be greater than 0.1% from April to May 2023?
+  29239017  0.6090  Will the AAA average US gas price reach $5.00 by June 20, 2022?
+  40467828  0.6092  Will U.S. inflation be greater than 0.3% from February to March 2023?
+  26056149  0.6095  Will the AAA US average national gas price drop below $4 by April 8, 2022?
+  78982311  0.6098  Will inflation reach more than 5% in 2026?
+  76335189  0.6102  Will monthly inflation increase by 0.5% or more in September?
+  54546893  0.6102  Will US gain more than 275k jobs in March?
+  41455864  0.6103  Will U.S. inflation be greater than 0.3% from March to April 2023?
+  25693824  0.6103  Will the AAA average US gas price still be above $4 on March 25, 2022?
+  41455849  0.6105  Will U.S. inflation be greater than 0.1% from March to April 2023?
+  40467807  0.6106  Will U.S. inflation be greater than 0.1% from February to March 2023?
+  38601684  0.6112  Will US inflation be more than 0.3% from December 2022 to January 2023?
+  42545265  0.6115  Will U.S. inflation be greater than 0.0% from April to May 2023?
+  71471268  0.6123  Will monthly inflation increase by 0.3% in May?
+  25440323  0.6128  Will the U.S. inflation be 0.7% or more from January to February 2022?
+  29045303  0.6128  Will U.S. inflation be more than 0.7% from April to May 2022?
+  27569713  0.6131  Will the AAA US average national gas price drop below $4.00 by May 10, 2022?
+  76393737  0.6133  Spread: Missouri (-26.5)
+  66661469  0.6137  Will monthly inflation increase by 0.5% or more in December?
+  39293825  0.6137  Will US inflation be greater than 0.6% from January to February 2023?
+  70135537  0.6144  Will monthly inflation increase by 0.5% or more in April?
+  71471251  0.6144  Will monthly inflation increase by 0.0% or less in May?
+  28198031  0.6145  Will U.S. inflation be more than 0.5% from April to May 2022?
+  41455877  0.6158  Will U.S. inflation be greater than 0.5% from March to April 2023?
+  70630257  0.6159  Will Gold hit $3,600 before June?
+  55682479  0.6165  Will April 2024 show an increase of less than 1.14C?
+  67849676  0.6166  Will egg prices be between $5.50 and $5.75 in March?
+  70135505  0.6166  Will monthly inflation increase by 0.4% in March?
+  68962577  0.6166  Will monthly inflation increase by 0.4% in March?
+  71471273  0.6168  Will monthly inflation increase by 0.4% or more in May?
+  76393798  0.6169  Spread: Nevada (-9.5)
+  27016052  0.6173  Will the AAA US average national gas price drop below $4.00 by April 25, 2022?
+  78985282  0.6174  Will monthly inflation increase by 0.5% or more in November?
+  68962538  0.6175  Will monthly inflation increase by 0.2% in March?
+  38601698  0.6176  Will US inflation be more than 0.5% from December 2022 to January 2023?
+  68093323  0.6194  Is there less than 10000000 Troy Ounces of Gold in Fort Knox?
+  67657139  0.6195  Will monthly inflation increase by 0.5% or more in February?
+  75935992  0.6202  Spread: Missouri (-6.5)
+  78807775  0.6202  Spread: Missouri (-6.5)
+  56814039  0.6203  Will May 2024 show an increase greater than 1.30C?
+  70135479  0.6204  Will monthly inflation increase by 0.3% in March?
+  68962553  0.6204  Will monthly inflation increase by 0.3% in March?
+  67849602  0.6210  Will egg prices be less than $5.00 in March?
+  77765042  0.6216  Will Gold close above $5000 at the end of 2025?
+  67849654  0.6216  Will egg prices be between $5.25 and $5.50 in March?
+  63358506  0.6218  Will Silver close over $40 at the end of 2024?
+  39293817  0.6221  Will US inflation be greater than 0.5% from January to February 2023?
+  66152153  0.6222  Will Gold close at $3,200 or more at the end of 2025?
+  68093301  0.6223  Is there between 146000000 and 140000000 Troy Ounces of Gold in Fort Knox?
+  63358539  0.6229  Will Gold close over $3,000 at the end of 2024?
+  48918931  0.6233  Will Saudi Arabia boost oil production in Q4?
+  68962523  0.6237  Will monthly inflation increase by 0.1% or less in March?
+  77665681  0.6238  Spread: Missouri (-2.5)
+  78839925  0.6249  Spread: Missouri (-7.5)
+  66152018  0.6250  Will Gold close under $2,500 at the end of 2025?
+  76671726  0.6255  Spread: Missouri (-10.5)
+  67849621  0.6259  Will egg prices be between $5.00 and $5.25 in March?
+  67464048  0.6260  Will average US gas price hit $4 in February?
+  56813988  0.6263  Will May 2024 show an increase of less than 1.03C?
+  25733384  0.6268  Will the AAA average US gas price reach $5 by March 31, 2022?
+  28675830  0.6269  Will the price of a barrel of crude oil be $110 or more on June 3, 2022?
+  70469914  0.6271  Will Gold close above $4000 at the end of 2025?
+  63476946  0.6274  Will Gold close at $3,200 or more at the end of 2024?
+  66152032  0.6276  Will Gold close at $2,500-2,600 at the end of 2025?
+  77645228  0.6295  Spread: Missouri (-1.5)
+  30868873  0.6298  Will the price of a barrel of crude oil be $100 or more on July 22, 2022?
+  77765007  0.6300  Will Gold close between $4100 and $4200 at the end of 2025?
+  67464049  0.6304  Will average US gas price hit $3.50 in February?
+  27569939  0.6304  Will a barrel of crude oil close at $100 or more on May 4, 2022?
+  77765037  0.6312  Will Gold close between $4700 and $4800 at the end of 2025?
+  70469888  0.6314  Will Gold close between $3700 and $3800 at the end of 2025?
+  77765012  0.6324  Will Gold close between $4200 and $4300 at the end of 2025?
+  48680478  0.6324  Will crude oil hit $100 in 2023?
+  70469846  0.6328  Will Gold close between $3300 and $3400 at the end of 2025?
+  29963153  0.6333  Will the price of a barrel of crude oil be $105 or more on June 30, 2022?
+  30603425  0.6334  Will the price of a barrel of crude oil be $100 or more on July 18, 2022?
+  68962590  0.6336  Will monthly inflation increase by 0.5% or more in March?
+  66152139  0.6340  Will Gold close at $3,100-3,200 at the end of 2025?
+  63476822  0.6341  Will Gold close under $2,500 at the end of 2024?
+  70469837  0.6343  Will Gold close between $3200 and $3300 at the end of 2025?
+  76855853  0.6345  Will Gold hit $4000 by June 30, 2026?
+  66152056  0.6347  Will Gold close at $2,600-2,700 at the end of 2025?
+  48918709  0.6352  Will crude oil hit $120 in 2023?
+  70469858  0.6355  Will Gold close between $3400 and $3500 at the end of 2025?
+  66152116  0.6356  Will Gold close at $2,900-3,000 at the end of 2025?
+  66152128  0.6357  Will Gold close at $3,000-3,100 at the end of 2025?
+  63476834  0.6357  Will Gold close at $2,500-2,600 at the end of 2024?
+  67841447  0.6358  Will average US gas price be $3.14 or less on February 21?
+  66152101  0.6359  Will Gold close at $2,800-2,900 at the end of 2025?
+  13520020  0.6361  Will inflation be 0.2% or more from March to April?
+  31288348  0.6364  Will the price of a barrel of crude oil be $100 or more on August 8, 2022?
+  14417093  0.6371  Will inflation be 0.4% or more from April to May?
+  77765057  0.6373  Will Gold close between $4900 and $5000 at the end of 2025?
+  76461568  0.6375  Will General Mills (GIS) beat its quarterly EPS estimate?
+  67841458  0.6377  Will average US gas price be $3.15 on February 21?
+  77765047  0.6378  Will Gold close between $4000 and $4100 at the end of 2025?
+  70469878  0.6379  Will Gold close between $3600 and $3700 at the end of 2025?
+  67841478  0.6383  Will average US gas price be $3.17 on February 21?
+  28233904  0.6387  Will the price of a barrel of crude oil be $105 or more on May 26, 2022?
+  70469904  0.6389  Will Gold close between $3900 and $4000 at the end of 2025?
+  63476931  0.6389  Will Gold close at $3,100-3,200 at the end of 2024?
+  67841486  0.6390  Will average US gas price be $3.18 or more on February 21?
+  77765052  0.6391  Will Gold close between $4800 and $4900 at the end of 2025?
+  63476848  0.6397  Will Gold close at $2,600-2,700 at the end of 2024?
+  63476896  0.6403  Will Gold close at $2,900-3,000 at the end of 2024?
+  63476920  0.6404  Will Gold close at $3,000-3,100 at the end of 2024?
+  66152083  0.6405  Will Gold close at $2,700-2,800 at the end of 2025?
+  70469896  0.6406  Will Gold close between $3800 and $3900 at the end of 2025?
+  29086274  0.6406  Will the price of a barrel of crude oil be $120 or more on June 9, 2022?
+  67774079  0.6410  25% steel tariff in effect before May?
+  29399713  0.6418  Will the price of a barrel of crude oil be $120 or more on June 17, 2022?
+  63476878  0.6423  Will Gold close at $2,800-2,900 at the end of 2024?
+  67841468  0.6433  Will average US gas price be $3.16 on February 21?
+  70629714  0.6434  Will Gold hit $3,600 before May?
+  77765017  0.6435  Will Gold close between $4300 and $4400 at the end of 2025?
+  77765022  0.6436  Will Gold close between $4400 and $4500 at the end of 2025?
+  12099373  0.6436  Will inflation be 0.5% or more from February to March?
+  29085679  0.6439  Will natural gas close above $9 on June 10, 2022?
+  29399079  0.6443  Will natural gas close above $9 on June 17, 2022?
+  26276631  0.6453  Will the price of a barrel of crude oil be $105 or more on April 15, 2022?
+  63476865  0.6454  Will Gold close at $2,700-2,800 at the end of 2024?
+  48949752  0.6454  Saudi Arabia non-oil GDP % up in Q3?
+  27091214  0.6459  Will the price of a barrel of crude oil be $100 or more on April 25, 2022?
+  77224306  0.6459  Will Resources Connection (RGP) beat quarterly earnings?
+  31016244  0.6462  Will the price of a barrel of crude oil be $100 or more on August 1, 2022?
+  29963692  0.6464  Will natural gas close above $6 on June 30, 2022?
+  70469869  0.6469  Will Gold close between $3500 and $3600 at the end of 2025?
+  77765032  0.6470  Will Gold close between $4600 and $4700 at the end of 2025?
+  31554282  0.6472  Will the price of a barrel of crude oil be $90 or more on August 15, 2022?
+  29681675  0.6481  Will natural gas close above $8 on June 24, 2022?
+  33348005  0.6499  Will the price of a barrel of crude oil be $85.00 or more on September 26, 2022?
+  76855854  0.6510  Will Gold hit $4000 by March 31, 2026?
+  77765027  0.6514  Will Gold close between $4500 and $4600 at the end of 2025?
+  24123719  0.6514  Will the price of lumber be above $1,150 as of market close on February 7, 2022?
+  29681600  0.6517  Will the price of a barrel of crude oil be $115 or more on June 24, 2022?
+  27934016  0.6521  Will the price of wheat close above $1070 on May 20, 2022?
+  26591287  0.6523  Will the price of wheat close above $1050 on April 29, 2022?
+  30603358  0.6528  Will natural gas close above $6 on July 18, 2022?
+  30868461  0.6529  Will natural gas close above $7 on July 22, 2022?
+  31288208  0.6530  Will natural gas close above $8 on August 8, 2022?
+  73840780  0.6533  50% copper tariff in effect by August 1?
+  24942563  0.6541  Will the price of a barrel of crude oil be $100 or more on March 1, 2022?
+  67770160  0.6542  Will Gold hit $3,000 before March?
+  30332772  0.6546  Will natural gas close above $6 on July 11, 2022?
+  68209144  0.6564  Will the price of gas be 3.14 or less on February 28?
+  33024546  0.6566  Will the price of a barrel of crude oil be $87.50 or more on September 19, 2022?
+  68209184  0.6571  Will the price of gas be 3.17 on February 28?
+  31554784  0.6572  Will natural gas close above $8 on August 15, 2022?
+  27934144  0.6573  Will natural gas close above $8 on May 20, 2022?
+  68209153  0.6575  Will the price of gas be 3.15 on February 28?
+  28563971  0.6585  Will natural gas close above $8 on May 27, 2022?
+  25743750  0.6586  Will the price of a barrel of crude oil reach $150 by March 25, 2022?
+  31016131  0.6588  Will natural gas close above $8 on August 1, 2022?
+  68209198  0.6613  Will the price of gas be 3.18 or higher on February 28?
+  34343373  0.6613  Will the price of a barrel of crude oil be $87.50 or more on October 24, 2022? (
+  68209169  0.6636  Will the price of gas be 3.16 on February 28?
+  33482036  0.6649  Will the price of a barrel of crude oil be $80 or more on October 3, 2022? (NOV 
+  25502000  0.6662  Will the price of a barrel of crude oil be $115 or more on March 15, 2022?
+  25978872  0.6671  Will the price of wheat close above $1200 on March 25, 2022?
+  32199709  0.6676  Will the price of a barrel of crude oil be $90 or more on August 29, 2022? (OCT 
+  33762083  0.6693  Will the price of a barrel of crude oil be $80 or more on October 10, 2022? (NOV
+  32603847  0.6706  Will the price of a barrel of crude oil be $90 or more on September 12, 2022? (O
+  34051516  0.6728  Will the price of a barrel of crude oil be $90 or more on October 17, 2022? (NOV
+  48950525  0.6734  Venezuela oil production >1 million barrels/day by Q1 2024?
+  27412445  0.6765  Will the price of natural gas close at $7.00 or more on April 29, 2022?
+  33347734  0.6812  Will the price of natural gas be $8.00 or more on September 26, 2022? (OCT 2022 
+  31816665  0.6833  Will the price of natural gas be $8.50 or more on August 22, 2022? (SEP 2022 fut
+  32603923  0.6887  Will the price of natural gas be $9 or more on September 12, 2022? (OCT 2022 Fut
+  33024653  0.6900  Will the price of natural gas be $8.25 or more on September 19, 2022? (OCT 2022 
+  34343553  0.6934  Will the price of natural gas be $6.50 or more on October 24, 2022? (NOV 2022 Fu
+  33481980  0.6967  Will the price of natural gas be $7.00 or more on October 3, 2022? (NOV 2022 Fut
+  33762275  0.6983  Will the price of natural gas be $7.00 or more on October 10, 2022? (NOV 2022 Fu
+  32199472  0.7001  Will the price of natural gas be $10 or more on August 29, 2022? (OCT 2022 Futur
+  34051254  0.7015  Will the price of natural gas be $7.00 or more on October 17, 2022? (NOV 2022 Fu

@@ -1,0 +1,393 @@
+# Economy_Finance - Economy_Indicators
+# count=390, avg_conf=0.6049
+====================================================================================================
+  71767741  0.4736  Claude 4 released in May?
+  52978832  0.4974  Will 'Joker 2' gross most in 2024?
+  78640551  0.5190  Will Mamdani pass the 2% Millionaire Tax before 2027?
+  68330520  0.5228  DeSantis ends Florida property tax before July?
+  47779279  0.5285  GTA 6 release date by end of year?
+  69333689  0.5294  Will the IRS collect more taxes this year than last?
+  69451643  0.5445  Will 'A Working Man' gross between 11-14m on opening weekend?
+  69451653  0.5476  Will 'A Working Man' gross between 14-17m on opening weekend?
+  69451665  0.5479  Will 'A Working Man' gross more than 17m on opening weekend?
+  16878258  0.5500  How many new US residential sales will the U.S. Census Bureau report for June?
+  22397037  0.5525  Will the USA report a 7-day COVID-19 case average of 200k or more before January
+  76137834  0.5530  Will the US loose jobs in September?
+  78638040  0.5543  Will Mamdani raise the minimum wage to $30 before 2027?
+  65691443  0.5550  Will the number of federal employees decrease by less than 25,000 between Decemb
+  65691530  0.5552  Will the number of federal employees decrease by 100,000-200,000 between Decembe
+  72566576  0.5556  Will the US add less than 50k jobs in June?
+  57885415  0.5560  Will US gain more than 300k jobs in June?
+  23596907  0.5569  Will income taxes rise for the highest tax bracket in 2022?
+  23224931  0.5585  Will the USA report a 7-day COVID-19 case average of 600k or more by January 8?
+  65691543  0.5607  Will the number of federal employees decrease by 200,000 or more between Decembe
+  65366160  0.5622  Will US add more than 300k jobs in December 2024?
+  72566582  0.5626  Will the US add between 50k and 99k jobs in June?
+  16414476  0.5633  Will Facebook report having more than 3.6 billion Monthly Active People in Q2 20
+  66654004  0.5647  Will there be over 300k jobs added in January 2025?
+  68410625  0.5664  Canada out of Five Eyes before July?
+  70014171  0.5668  Will the US add more than 250k jobs in April?
+  70014039  0.5676  Will the US add less than 50k jobs in April?
+  76137855  0.5678  Will the US add more than 125k jobs in September?
+  30986009  0.5703  Will weekly jobless claims exceed 255k for the week ending on July 23?
+  34049622  0.5704  Will weekly jobless initial claims exceed 220k for the week ending October 8?
+  71029496  0.5706  Will the US add less than 50k jobs in May?
+  65366065  0.5714  Will US add less than 100k jobs in December 2024?
+  57198235  0.5718  Will US add more than 300k jobs in May?
+  57885363  0.5720  Will US gain less than 150k jobs in June?
+  33183340  0.5722  Will weekly jobless initial claims exceed 205k for the week ending on September 
+  72566601  0.5722  Will the US add 200k or more jobs in June?
+  10980591  0.5727  Will the federal minimum wage be $9.50 per hour or higher by April 1?
+  16410905  0.5730  Will weekly jobless claims exceed 364K for the week ending on July 3?
+  17040212  0.5735  Will weekly jobless claims exceed 360K for the week ending on July 17?
+  21745828  0.5737  Will weekly jobless claims exceed 260K for the week ending on November 27?
+  23600838  0.5747  Will the US have a higher COVID-19 Case Average per capita than France, Italy, a
+  64209835  0.5747  Will the US gain less than 100,000 jobs in November?
+  31772530  0.5753  Will weekly jobless claims exceed 265k for the week ending on August 13?
+  66653991  0.5765  Will there be 250-300k jobs added in January 2025?
+  72566590  0.5770  Will the US add between 100k and 149k jobs in June?
+  65366129  0.5770  Will US add between 250k and 300k jobs in December 2024?
+  33437429  0.5773  Will weekly jobless initial claims exceed 215k for the week ending September 24?
+  74522826  0.5782  Will the US add less than 50k jobs in August?
+  68368442  0.5784  Will the Department of the Interior be most efficient on March 31?
+  23600898  0.5786  Will Italy have a higher COVID-19 Case Average per capita than the US, France, a
+  17805915  0.5791  How many new US residential sales will the U.S. Census Bureau report for July?
+  62761313  0.5796  Will Vance say "inflation" during Detroit rally on October 8?
+  74522845  0.5802  Will the US add more than 200k jobs in August?
+  64209953  0.5803  Will the US gain more than 250,000 jobs in November?
+  71025153  0.5803  Italian imposition of term limits on employment contracts referendum
+  71029508  0.5808  Will the US add between 50k and 99k jobs in May?
+  17908653  0.5811  Will weekly jobless claims exceed 375K for the week ending on August 14?
+  70014058  0.5814  Will the US add between 50k and 100k jobs in April?
+  66653912  0.5814  Will there be less than 100k jobs added in January 2025?
+  17397470  0.5815  Will weekly jobless claims exceed 400K for the week ending on July 31?
+  23600928  0.5817  Will Spain have a higher COVID-19 Case Average per capita than the US, France, a
+  21611095  0.5818  Will France or the USA report a higher 7-day COVID-19 case average per capita on
+  57885406  0.5819  Will US gain between 250k and 300k jobs in June?
+  12370132  0.5821  Will daily atmospheric CO2 be above 418.25 ppm on March 23, 2021?
+  76137843  0.5825  Will the US add between 50k and 75k jobs in September?
+  57198178  0.5828  Will US add less than 150k jobs in May?
+  17160625  0.5833  Will weekly jobless claims exceed 419K for the week ending on July 24?
+  76137851  0.5835  Will the US add between 100k and 125k jobs in September?
+  67695887  0.5839  Will more than 300k jobs be added in February?
+  68368476  0.5841  Will the Social Security Administration be most efficient on March 31?
+  66653978  0.5848  Will there be 200-250k jobs added in January 2025?
+  70014073  0.5848  Will the US add between 100k and 150k jobs in April?
+  62789873  0.5849  Will the US add more than 250,000 jobs in October?
+  62789706  0.5850  Will the US add less than 100,000 jobs in October?
+  65366084  0.5855  Will US add between 100k and 150k jobs in December 2024?
+  66653931  0.5860  Will there be 100-150k jobs added in January 2025?
+  70014148  0.5862  Will the US add between 200k and 250k jobs in April?
+  11816623  0.5864  Will daily atmospheric CO2 be above 418 ppm on March 22, 2021?
+  57198225  0.5869  Will US add between 250-300k jobs in May?
+  72566596  0.5870  Will the US add between 150k and 199k jobs in June?
+  61504486  0.5871  US adds less than 100k jobs in September?
+  18166299  0.5874  Will weekly jobless claims exceed 348K for the week ending on August 21?
+  76137847  0.5880  Will the US add between 75k and 100k jobs in September?
+  70014133  0.5887  Will the US add between 150k and 200k jobs in April?
+  53053060  0.5888  Will US gain more than 353k jobs in February?
+  55489395  0.5889  Will the US gain between 200-250k jobs in April?
+  65366608  0.5895  Will US unemployment be 4.4% or higher in December 2024?
+  73543431  0.5895  Will the US add less than 50k jobs in July?
+  66653957  0.5897  Will there be 150-200k jobs added in January 2025?
+  72644122  0.5900  Will monthly inflation increase by 0.2% in June?
+  67695824  0.5901  Will less than 100k jobs be added in February?
+  68768518  0.5904  Will the US add less than 50k jobs in March?
+  73543449  0.5909  Will the US add more than 200k jobs in July?
+  59957201  0.5911  Will the US gain more than 300k jobs in July?
+  68368376  0.5912  Will the Department of Education be most efficient on March 31?
+  59957031  0.5912  Will the US gain less than 100k jobs in July?
+  57885373  0.5918  Will US gain between 150k and 200k jobs in June?
+  53053021  0.5919  Will US gain less than 200k jobs in February?
+  65366095  0.5919  Will US add between 150k and 200k jobs in December 2024?
+  57885390  0.5919  Will US gain between 200k and 250k jobs in June?
+  65366108  0.5921  Will US add between 200k and 250k jobs in December 2024?
+  74522830  0.5921  Will the US add between 50k and 100k jobs in August?
+  77176705  0.5928  Next BLS jobs report by Oct 3, 2025, 8:30 AM ET?
+  74522835  0.5938  Will the US add between 100k and 150k jobs in August?
+  60119749  0.5940  US adds more than 300k jobs in August?
+  71029521  0.5940  Will the US add between 100k and 149k jobs in May?
+  68368486  0.5941  Will the Department of Health and Human Services be most efficient on March 31?
+  57198207  0.5942  Will US add between 200-250k jobs in May?
+  71029549  0.5942  Will the US add 200k or more jobs in May?
+  60119647  0.5946  US adds less than 100k jobs in August?
+  68368453  0.5950  Will the Department of Agriculture be most efficient on March 31?
+  75247027  0.5954  Will US GDP growth in 2025 be greater than 2.5%?
+  72644133  0.5955  Will monthly inflation increase by 0.4% or more in June?
+  76137860  0.5957  Will the US add between 0 and 25k jobs in September?
+  62789716  0.5960  Will the US add 100-150k jobs in October?
+  72444664  0.5963  Will the June 2025 unemployment rate be 4.1%?
+  68768583  0.5964  Will the US add more than 250k jobs in March?
+  76895355  0.5967  Will annual inflation increase by between 24% and 26.9% in December?
+  57198190  0.5967  Will US add between 150-200k jobs in May?
+  70135509  0.5968  Will annual inflation increase by 2.6% in April?
+  64209910  0.5970  Will the US gain between 100-150k jobs in November?
+  76137839  0.5971  Will the US add between 25k and 50k jobs in September?
+  67652558  0.5972  Will inflation reach more than 6% in 2025?
+  65366589  0.5973  Will US unemployment be 4.3% in December 2024?
+  67695874  0.5974  Will 250-300k jobs be added in February?
+  74522840  0.5975  Will the US add between 150k and 200k jobs in August?
+  76895368  0.5976  Will annual inflation increase by between 33% and 35.9% in December?
+  76895373  0.5978  Will annual inflation increase by between 36% and 38.9% in December?
+  29398787  0.5979  Will U.S. inflation be more than 0.9% from May to June 2022?
+  72444675  0.5979  Will the June 2025 unemployment rate be 4.3%?
+  20940807  0.5980  Will the USA or European Union report a higher 7-day COVID-19 case average per c
+  62789863  0.5986  Will the US add 200-250k jobs in October?
+  76335176  0.5989  Will monthly inflation increase by 0.2% in September?
+  72644091  0.5991  Will annual inflation increase by 2.3% in June?
+  76335185  0.5992  Will monthly inflation increase by 0.4% in September?
+  65366561  0.5993  Will US unemployment be 4.1% or lower in December 2024?
+  67695838  0.5993  Will 100-150k jobs be added in February?
+  36828526  0.5994  Will U.S. inflation be greater than -0.2% from November to December 2022?
+  45322841  0.5994  Will U.S. inflation be greater than 0.2% from June to July 2023?
+  67652501  0.5996  Will inflation reach more than 3% in 2025?
+  64282982  0.5996  Will inflation increase by 2.6% in November?
+  72444680  0.5999  Will the June 2025 unemployment rate be 4.4%?
+  65366577  0.6000  Will US unemployment be 4.2% in December 2024?
+  72444670  0.6004  Will the June 2025 unemployment rate be 4.2%?
+  76895350  0.6005  Will annual inflation increase by less than 24% in December?
+  70135477  0.6009  Will annual inflation increase by 2.5% in April?
+  78982312  0.6009  Will inflation reach more than 6% in 2026?
+  45322826  0.6011  Will U.S. inflation be greater than 0.0% from June to July 2023?
+  67652510  0.6011  Will inflation reach more than 4% in 2025?
+  36828243  0.6013  Will U.S. inflation be greater than -0.3% from November to December 2022?
+  66656456  0.6018  Will the January unemployment rate be 4.3% or higher?
+  78985277  0.6023  Will monthly inflation increase by 0.4% in November?
+  68643823  0.6024  Will U.S. GDP growth be greater than 2% in Q1 2025?
+  47504651  0.6027  Will U.S. inflation be greater than 0.3% from August to September 2023?
+  36828688  0.6027  Will U.S. inflation be greater than -0.1% from November to December 2022?
+  70135462  0.6028  Will annual inflation increase by 2.4% in April?
+  67652581  0.6028  Will inflation reach more than 8% in 2025?
+  71025153  0.6028  Italian Employment with increasing protection Referendum
+  67695863  0.6030  Will 200-250k jobs be added in February?
+  53053051  0.6032  Will US gain 300k-353k jobs in February?
+  68768533  0.6033  Will the US add between 50-100k jobs in March?
+  64282994  0.6036  Will inflation increase by 2.7% in November?
+  62789849  0.6036  Will the US add 150-200k jobs in October?
+  64209936  0.6036  Will the US gain between 200-250k jobs in November?
+  71029616  0.6039  Will the May 2025 unemployment rate be 4.5%?
+  71029535  0.6041  Will the US add between 150k and 199k jobs in May?
+  33770989  0.6044  Will UK inflation be 8.9% or more in September 2022?
+  70951968  0.6046  Will US GDP growth in Q2 2025 be greater than 2%?
+  76858805  0.6046  Will annual inflation increase by between 33% and 35.9% in September?
+  76895364  0.6047  Will annual inflation increase by between 30% and 32.9% in December?
+  64209923  0.6048  Will the US gain between 150-200k jobs in November?
+  75247021  0.6048  Will US GDP growth in 2025 be between 2.0% and 2.5%?
+  36828787  0.6048  Will U.S. inflation be greater than 0.0% from November to December 2022?
+  47504640  0.6049  Will U.S. inflation be greater than 0.2% from August to September 2023?
+  53053040  0.6049  Will US gain 250k-300k jobs in February?
+  78942295  0.6051  Will US GDP growth in 2026 be greater than 2.5%?
+  76858810  0.6053  Will annual inflation increase by between 36% and 38.9% in September?
+  66656420  0.6053  Will the January unemployment rate be 4.1%?
+  73543436  0.6053  Will the US add between 50k and 100k jobs in July?
+  74520809  0.6057  Will US GDP growth in Q2 2025 be greater than 3.5%?
+  33061929  0.6059  Will U.S. inflation be more than 0.2% from August to September 2022?
+  72644106  0.6061  Will annual inflation increase by 2.6% or more in June?
+  30684066  0.6062  Will U.S. inflation be more than 0.7% from June to July 2022?
+  30689347  0.6062  Will U.S. inflation be more than 0.5% from June to July 2022?
+  78982311  0.6064  Will inflation reach more than 3% in 2026?
+  72644101  0.6064  Will annual inflation increase by 2.5% in June?
+  71029590  0.6065  Will the May 2025 unemployment rate be 4.3%?
+  74520794  0.6066  Will US GDP growth in Q2 2025 be between 2.0% and 2.5%?
+  68768543  0.6066  Will the US add between 100-150k jobs in March?
+  70014152  0.6067  Will the April 2025 unemployment rate be 4.5%?
+  66745843  0.6067  Will annual inflation increase by 2.7% in January?
+  67695856  0.6067  Will 150-200k jobs be added in February?
+  74520799  0.6067  Will US GDP growth in Q2 2025 be between 2.5% and 3.0%?
+  77504570  0.6070  Will Powell say "Employment" or "Unemployment" 15+ times during speech on Octobe
+  27609627  0.6070  Will U.S. inflation be more than 0.4% from March to April 2022?
+  78982312  0.6071  Will inflation reach more than 4% in 2026?
+  73997696  0.6072  Will monthly inflation increase by 0.4% in July?
+  76895378  0.6072  Will annual inflation increase by 39% or higher in December?
+  54546872  0.6073  Will US gain less than 200k jobs in March?
+  70135536  0.6074  Will annual inflation increase by 2.7% or more in April?
+  75125465  0.6074  Will monthly inflation increase by 0.4% or more in August?
+  76335163  0.6078  Will annual inflation increase by 3.1% in September?
+  71029603  0.6079  Will the May 2025 unemployment rate be 4.4%?
+  78329716  0.6081  Will US GDP growth in Q4 2025 be greater than 3.5%?
+  53053030  0.6082  Will US gain 200k-250k jobs in February?
+  66745831  0.6082  Will annual inflation increase by 2.6% or less in January?
+  72644096  0.6083  Will annual inflation increase by 2.4% in June?
+  71029576  0.6083  Will the May 2025 unemployment rate be 4.2%?
+  31740780  0.6084  Will U.S. inflation be more than 0.2% from July to August 2022?
+  76895360  0.6085  Will annual inflation increase by between 27% and 29.9% in December?
+  60119739  0.6085  US adds between 250k and 300k jobs in August?
+  76094109  0.6085  Will the September 2025 unemployment rate be 4.1%?
+  73543440  0.6085  Will the US add between 100k and 150k jobs in July?
+  71471228  0.6095  Will annual inflation increase by 2.3% in May?
+  33062048  0.6096  Will U.S. inflation be more than 0.4% from August to September 2022?
+  70014077  0.6097  Will the April 2025 unemployment rate be 4.3%?
+  78982311  0.6098  Will inflation reach more than 8% in 2026?
+  65360836  0.6098  Will US annual inflation be 2.7% in December?
+  66745908  0.6099  Will annual inflation increase by 2.8% in January?
+  67657070  0.6101  Will monthly inflation increase by 0.2% in February?
+  76335151  0.6105  Will annual inflation increase by 3.2% in September?
+  72644085  0.6109  Will annual inflation increase by 2.2% or less in June?
+  70014130  0.6110  Will the April 2025 unemployment rate be 4.4%?
+  76858815  0.6111  Will annual inflation increase by 39% or higher in September?
+  67694672  0.6111  Will the unemployment rate for February be less than or equal to 3.9%?
+  76094119  0.6112  Will the September 2025 unemployment rate be 4.3%?
+  76094123  0.6113  Will the September 2025 unemployment rate be 4.4%?
+  74520804  0.6116  Will US GDP growth in Q2 2025 be between 3.0% and 3.5%?
+  40467821  0.6116  Will U.S. inflation be greater than 0.2% from February to March 2023?
+  76335167  0.6118  Will annual inflation increase by 3.3% or more in September?
+  73997678  0.6118  Will monthly inflation increase by 0.0% or less in July?
+  76335159  0.6118  Will annual inflation increase by 3.0% in September?
+  66745925  0.6122  Will annual inflation increase by 2.9% or more in January?
+  66656437  0.6122  Will the January unemployment rate be 4.2%?
+  40467800  0.6124  Will U.S. inflation be greater than 0.0% from February to March 2023?
+  73543445  0.6124  Will the US add between 150k and 200k jobs in July?
+  76094115  0.6125  Will the September 2025 unemployment rate be 4.2%?
+  70014056  0.6125  Will the April 2025 unemployment rate be 4.2%?
+  59957194  0.6125  Will the US gain between 250k and 300k jobs in July?
+  31740670  0.6128  Will U.S. inflation be more than 0.0% from July to August 2022?
+  68368420  0.6129  Will the Department of Labor be most efficient on March 31?
+  23595690  0.6130  Will the U-3 unemployment rate in January be above 3.6%?
+  67657128  0.6132  Will monthly inflation increase by 0.4% in February?
+  67657047  0.6133  Will monthly inflation increase by 0.1% or less in February?
+  68768575  0.6134  Will the US add between 200-250k jobs in March?
+  61504542  0.6134  US adds ore than 250k jobs in September?
+  65360826  0.6134  Will US annual inflation be 2.6% or less in December?
+  76858800  0.6135  Will annual inflation increase by between 30% and 32.9% in September?
+  78942290  0.6138  Will US GDP growth in 2026 be between 2.0% and 2.5%?
+  73997701  0.6140  Will monthly inflation increase by 0.5% or more in July?
+  68768566  0.6141  Will the US add between 150-200k jobs in March?
+  75130700  0.6142  Will the August 2025 unemployment rate be 4.1%?
+  64283007  0.6143  Will inflation increase by 2.8% or more in November?
+  78329706  0.6144  Will US GDP growth in Q4 2025 be between 2.5% and 3.0%?
+  39293807  0.6148  Will US inflation be greater than 0.4% from January to February 2023?
+  61504498  0.6151  US adds between 100k and 150k jobs in September?
+  23036318  0.6154  Will annual inflation in the USA be 7.0% or more in December 2021?
+  76858796  0.6154  Will annual inflation increase by less than 27% in September?
+  75125412  0.6159  Will annual inflation increase by 2.6% or less in August?
+  71029563  0.6159  Will the May 2025 unemployment rate be ≤4.1%?
+  72444658  0.6160  Will the June 2025 unemployment rate be ≤4.0%?
+  78329701  0.6162  Will US GDP growth in Q4 2025 be between 2.0% and 2.5%?
+  71471245  0.6162  Will annual inflation increase by 2.6% or more in May?
+  67695821  0.6164  Will the unemployment rate for February be exactly 4.1%?
+  76335155  0.6165  Will annual inflation increase by 2.9% or less in September?
+  73997658  0.6166  Will annual inflation increase by 2.7% in July?
+  59957050  0.6166  Will the US gain between 100k and 150k jobs in July?
+  61504510  0.6167  US adds between 150k and 200k jobs in September?
+  76889728  0.6168  Will monthly inflation be between 1.2% and 1.4% in September?
+  23595663  0.6169  Will the U-3 unemployment rate in January be above 3.4%?
+  23595776  0.6169  Will the U-3 unemployment rate in January be above 4.0%?
+  23644039  0.6170  Will the U.S. annual inflation on January 2022 exceed 7.2%?
+  71471239  0.6172  Will annual inflation increase by 2.5% in May?
+  78329711  0.6173  Will US GDP growth in Q4 2025 be between 3.0% and 3.5%?
+  75125417  0.6174  Will annual inflation increase by 2.7% in August?
+  65360848  0.6174  Will US annual inflation be 2.8% in December?
+  67695808  0.6175  Will the unemployment rate for February be exactly 4.0%?
+  60119655  0.6175  US adds between 100k and 150k jobs in August?
+  67695828  0.6175  Will the unemployment rate for February be exactly 4.2%?
+  61504528  0.6176  US adds between 200k and 250k jobs in September?
+  64289108  0.6177  Will the November unemployment rate be 4.0% or less?
+  73543464  0.6177  Will the July 2025 unemployment rate be 4.1%?
+  75125422  0.6178  Will annual inflation increase by 2.8% in August?
+  72444687  0.6182  Will the June 2025 unemployment rate be ≥4.5%?
+  76858819  0.6182  Will annual inflation increase by between 27% and 29.9% in September?
+  75130704  0.6184  Will the August 2025 unemployment rate be 4.2%?
+  66656401  0.6187  Will the January unemployment rate be less than or equal to 4.0%?
+  61910302  0.6187  Unemployment rate over 4.2% in September?
+  23595728  0.6190  Will the U-3 unemployment rate in January be above 3.8%?
+  71471222  0.6191  Will annual inflation increase by 2.2% or less in May?
+  76889756  0.6192  Will monthly inflation be 3.0% or higher in September?
+  60119664  0.6193  US adds between 150k and 200k jobs in August?
+  64289216  0.6195  Will the November unemployment rate be 4.3% or more?
+  64289172  0.6196  Will the November unemployment rate be 4.2%?
+  23643944  0.6198  Will the U.S. annual inflation on January 2022 exceed 7.0%?
+  59957182  0.6199  Will the US gain between 200k and 250k jobs in July?
+  75125426  0.6199  Will annual inflation increase by 2.9% in August?
+  23595822  0.6201  Will the U-3 unemployment rate in January be above 4.2%?
+  76889733  0.6201  Will monthly inflation be between 1.5% and 1.7% in September?
+  23643879  0.6202  Will the U.S. annual inflation on January 2022 exceed 6.8%?
+  75130695  0.6204  Will the August 2025 unemployment rate be 4.0%?
+  65360880  0.6204  Will US annual inflation be 2.9% or greater in December?
+  68768545  0.6205  Will the March 2025 unemployment rate be between 4.1%?
+  73543472  0.6206  Will the July 2025 unemployment rate be 4.3%?
+  59957172  0.6207  Will the US gain between 150k and 200k jobs in July?
+  16865889  0.6207  Will the Manheim Used Vehicle Value Index be above 200 for July 2021?
+  22665562  0.6210  Will annual inflation in the European Union be 5.4% or more in December?
+  78985293  0.6210  Will annual inflation increase by 2.9% in November?
+  71471233  0.6212  Will annual inflation increase by 2.4% in May?
+  78985303  0.6214  Will annual inflation increase by 3.1% in November?
+  60119724  0.6215  US adds between 200k and 250k jobs in August?
+  75125430  0.6217  Will annual inflation increase by 3.0% or more in August?
+  73543468  0.6217  Will the July 2025 unemployment rate be 4.2%?
+  73997654  0.6226  Will annual inflation increase by 2.6% or less in July?
+  73543460  0.6228  Will the July 2025 unemployment rate be 4.0%?
+  78985298  0.6229  Will annual inflation increase by 3.0% in November?
+  76889751  0.6231  Will monthly inflation be between 2.7% and 2.9% in September?
+  61420609  0.6232  Unemployment rate over 4.2% in August?
+  70014034  0.6234  Will the April 2025 unemployment rate be ≤4.1%?
+  68768534  0.6238  Will the March 2025 unemployment rate be 4.0%?
+  76889741  0.6242  Will monthly inflation be between 2.1% and 2.3% in September?
+  75130690  0.6242  Will the August 2025 unemployment rate be ≤3.9%?
+  68768555  0.6244  Will the March 2025 unemployment rate be between 4.2%?
+  67657087  0.6248  Will annual inflation increase by 2.9% in February?
+  68962564  0.6249  Will annual inflation increase by 2.6% in March?
+  76889737  0.6251  Will monthly inflation be between 1.8% and 2.0% in September?
+  69207241  0.6255  Brazil’s 12-month inflation below 5.50% for December 2025?
+  67657141  0.6255  Will annual inflation increase by 3.1% or more in February?
+  73997668  0.6258  Will annual inflation increase by 2.9% in July?
+  16893280  0.6259  What will the Manheim Used Vehicle Value Index be for July 2021?
+  73997663  0.6266  Will annual inflation increase by 2.8% in July?
+  76094105  0.6267  Will the September 2025 unemployment rate be ≤4.0%?
+  76889746  0.6272  Will monthly inflation be between 2.4% and 2.6% in September?
+  16823790  0.6275  Will inflation be 0.6% or more from June to July?
+  68768522  0.6276  Will the March 2025 unemployment rate be ≤3.9%?
+  68962538  0.6277  Will annual inflation increase by 2.5% in March?
+  67695840  0.6278  Will the unemployment rate for February be greater than or equal to 4.3%?
+  13766947  0.6282  What will US GDP growth be in Q1 2021?
+  67657066  0.6282  Will annual inflation increase by 2.8% in February?
+  71029630  0.6284  Will the May 2025 unemployment rate be ≥4.6%?
+  67657049  0.6290  Will annual inflation increase by 2.7% or less in February?
+  76094127  0.6292  Will the September 2025 unemployment rate be ≥4.5%?
+  73997673  0.6293  Will annual inflation increase by 3.0% or more in July?
+  54546884  0.6293  Will US gain between 200k and 275k jobs in March?
+  68962575  0.6293  Will annual inflation increase by 2.7% in March?
+  73543456  0.6297  Will the July 2025 unemployment rate be ≤3.9%?
+  73494484  0.6309  June jobs report prints negative?
+  25466965  0.6312  Will annual inflation in the European Union be 5.9% or more in February?
+  77386681  0.6312  Next BLS jobs report during government shutdown?
+  69207235  0.6319  Brazil unemployment below 6.3% for Q4 2025?
+  68962527  0.6324  Will annual inflation increase by 2.4% or less in March?
+  70014170  0.6330  Will the April 2025 unemployment rate be ≥4.6%?
+  75130714  0.6335  Will the August 2025 unemployment rate be ≥4.4%?
+  70017342  0.6337  Negative GDP growth in Q3 2025?
+  69859891  0.6347  Negative GDP growth in 2025?
+  78329746  0.6355  Will annual inflation increase by 2.9% in October?
+  68962592  0.6360  Will annual inflation increase by 2.8% or more in March?
+  73543476  0.6362  Will the July 2025 unemployment rate be ≥4.4%?
+  68768565  0.6363  Will the March 2025 unemployment rate be between ≥4.3%?
+  78985309  0.6366  Will annual inflation increase by ≥3.2% in November?
+  78981881  0.6366  Negative GDP growth in 2026?
+  78985288  0.6376  Will annual inflation increase by ≤2.8% in November?
+  19104318  0.6376  Will inflation be 0.4% or more from August to September?
+  69859877  0.6376  Negative GDP growth in Q2 2025?
+  62789712  0.6393  Unemployment rate over 4.1% in October?
+  17875465  0.6396  Will inflation be 0.4% or more from July to August?
+  26864184  0.6408  Will annual inflation in the European Union be 7.8% or more in March?
+  68643975  0.6417  Negative GDP growth in Q1 2025?
+  78409670  0.6421  Will monthly inflation be between 1.8% and 2.0% in October?
+  78295574  0.6422  Negative GDP growth in Q4 2025?
+  22008227  0.6426  Will year-to-year inflation in the European Union be 5.2% or more in November?
+  60235042  0.6440  US GDP declines in Q3 2024?
+  78409680  0.6443  Will monthly inflation be between 2.4% and 2.6% in October?
+  41914448  0.6448  Did US GDP grow 3.0% or more in Q1 2023?
+  78409685  0.6454  Will monthly inflation be between 2.7% and 2.9% in October?
+  78329761  0.6475  Will annual inflation increase by ≥3.2% in October?
+  37870441  0.6478  Did US GDP grow more than 2.5% in Q4 2022?
+  42155543  0.6483  Did US GDP grow 2.0% or more in Q2 2023?
+  41914430  0.6494  Did US GDP grow 2.0% or more in Q1 2023?
+  78329741  0.6505  Will annual inflation increase by ≤2.8% in October?
+  53439841  0.6511  US inflation >0.1% from Jan to Feb 2024?
+  68093350  0.6516  No Data Reported in 2025?
+  54535307  0.6605  US inflation >0.4% from Feb to March 2024?
+  73543418  0.6610  July jobs report prints negative?
+  60872197  0.6633  Annual inflation above 2.5% in August?
+  55486382  0.6638  US inflation >0.2% from Feb to March 2024?
+  74522773  0.6654  August jobs report prints negative?
+  61748511  0.6673  Annual inflation above 2.2% in September?
+  69859895  0.6693  5% GDP contraction in Q3 2025?
+  62880280  0.6807  Annual inflation above 2.4% in October?

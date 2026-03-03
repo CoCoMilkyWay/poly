@@ -1,0 +1,153 @@
+# Tech - Tech_Space
+# count=150, avg_conf=0.6786
+====================================================================================================
+  78720680  0.5018  GTA 6 launch postponed again?
+  71035163  0.5147  North Korea missile test before June?
+  71802590  0.5149  Another North Korea missile test before June?
+  73568768  0.5157  Interstellar object confirmed aliens?
+  69174878  0.5226  North Korea missile test before April?
+  60470140  0.5254  Will stranded astronauts leave the ISS in 2024?
+  68724301  0.5325  North Korea missile test in March?
+  72890946  0.5385  North Korea missile test by June 30?
+  57897267  0.5402  North Korea missile test by June 21?
+  45266700  0.5405  Another North Korea missile test by July 31?
+  78176803  0.5418  Telstar 1963 vs. SBV Excelsior: O/U 3.5
+  75080637  0.5422  North Korea missile test by August 31?
+  46066412  0.5422  North Korea missile test by August 31?
+  45033056  0.5444  North Korea missile test by July 31?
+  72287745  0.5548  North Korea missile test by June 15?
+  59994756  0.5574  Will stranded astronauts leave the ISS by August 15?
+  75686859  0.5575  North Korea missile test by September 15?
+  67016304  0.5620  Will Elon Musk visit Stargate Texas site before March?
+  74359494  0.5621  North Korea missile test by August 15?
+  48285656  0.5645  North Korea missile test by October 15?
+  73260261  0.5684  North Korea missile test by July 15?
+  67624234  0.5700  Will NASA estimate a 5% chance of asteroid hitting Earth?
+  68449881  0.5710  Will the Firefly Lander Successfully Land on the Moon on Sunday?
+  69493877  0.5712  Will Elon say "Astronaut" during Baier interview on Thursday?
+  55600022  0.5741  Tesla Robotaxi unveiling delayed?
+  68085220  0.5748  Will NASA estimate a 4% chance of asteroid hitting Earth?
+  67624236  0.5789  Will NASA estimate a 3% chance of asteroid hitting Earth?
+  67847871  0.5806  Will Brian Armstrong say Milady during his X space?
+  67847865  0.5899  Will Brian Armstrong say Base during his X space?
+  64326645  0.5928  Will the chopsticks catch SpaceX's Super Heavy?
+  61504440  0.5938  Will Boeing Starliner successfully return to Earth?
+  78036601  0.5997  North Korea missile launch by October 31?
+  58441655  0.6105  Stranded astronauts depart on Boeing Starliner by July 4?
+  53990465  0.6117  Blast launch delayed?
+  78723860  0.6187  North Korea missile launch by November 30?
+  69494002  0.6188  Will Elon say "SpaceX" during Baier interview on Thursday?
+  58441631  0.6215  Stranded astronauts depart on Boeing Starliner by July 21?
+  68962313  0.6252  Will Trump attend SpaceX Starship Flight Test 9?
+  76778917  0.6274  North Korea missile launch by October 15?
+  76366051  0.6300  SpaceX (Space Exploration Technologies Corp.) IPO in 2025?
+  78723740  0.6332  North Korea missile launch by November 15?
+  78036600  0.6332  North Korea missile launch by November 15?
+  78372770  0.6332  North Korea missile launch by November 15?
+  78713049  0.6346  Will SpaceX rescue the stranded Chinese astronauts?
+  68962289  0.6353  Will the chopsticks catch SpaceX Starship Flight Test 9 Superheavy?
+  13075938  0.6361  Will NASA conduct a sustained flight of Ingenuity on Mars by April 12?
+  66817642  0.6375  Will Trump attend SpaceX Starship Flight Test 8?
+  66817569  0.6446  Will the chopsticks catch SpaceX Starship Flight Test 8 Superheavy?
+  78980221  0.6474  Will the Blue Origin New Glenn rocket explode during November 13 launch?
+  64495176  0.6491  Chopsticks catch SpaceX's 7th Starship Super Heavy?
+  66817628  0.6580  Will SpaceX Starship Flight Test 8 Superheavy survive re-entry?
+  72287711  0.6583  Will the chopsticks catch SpaceX Starship Flight Test 10 Superheavy booster?
+  77423725  0.6588  Rocket Lab’s Neutron Rocket Launch by December 31?
+  76260857  0.6597  Will the chopsticks catch SpaceX Starship Flight Test 11 Superheavy booster?
+  77815359  0.6599  Will the chopsticks catch SpaceX Starship Flight Test 12 Superheavy booster?
+  67267266  0.6600  SpaceX rescues stranded astronauts before March?
+  66274555  0.6618  SpaceX 7th Starship Super Heavy blows up?
+  67264761  0.6620  SpaceX rescues stranded astronauts before April?
+  17553788  0.6623  Will the Boeing CST-100 Starliner Spacecraft successfully dock with the ISS befo
+  77815360  0.6745  Will SpaceX Starship Flight Test 12 Superheavy explode?
+  41798023  0.6763  Will SpaceX's Starship reach outer space by December 31?
+  72287711  0.6764  Will SpaceX Starship Flight Test 10 Superheavy explode?
+  66106569  0.6766  Will SpaceX have between 160-179 launches in 2025?
+  68962298  0.6770  Will SpaceX Starship Flight Test 9 Superheavy explode?
+  76260859  0.6775  Will SpaceX Starship Flight Test 11 Superheavy explode?
+  78861587  0.6780  NASA Escapade launch by December 31?
+  66817623  0.6790  Will SpaceX Starship Flight Test 8 Superheavy explode?
+  66106561  0.6791  Will SpaceX have between 140-159 launches in 2025?
+  66106552  0.6819  Will SpaceX have between 120-139 launches in 2025?
+  66106539  0.6826  Will SpaceX have between 100-119 launches in 2025?
+  49945352  0.6826  Will SpaceX's Starship lift 500m from pad by Nov 19?
+  41798014  0.6830  Will SpaceX's Starship reach outer space by September 30?
+  66106589  0.6840  Will SpaceX have 200 or more launches in 2025?
+  66376716  0.6841  SpaceX 7th Starship upper stage successful splash down?
+  64495191  0.6856  SpaceX Flight 7 launch before February 2025?
+  41254764  0.6871  Will SpaceX's Starship reach outer space by June 30?
+  32270363  0.6874  Will NASA successfully launch the Space Launch System (SLS) into space by Septem
+  66106526  0.6896  Will SpaceX have less than 100 launches in 2025?
+  41254911  0.6916  Will SpaceX's Starship reach outer space by April 30?
+  18136296  0.6937  Will SpaceX's Starship successfully reach outer space by December 31, 2021?
+  37875713  0.6971  Will SpaceX's Starship successfully reach outer space by March 31, 2023?
+  66106578  0.6977  Will SpaceX have between 180-199 launches in 2025?
+  23646970  0.6979  Will SpaceX's Starship successfully reach outer space by December 31, 2022?
+  23646680  0.7019  Will SpaceX's Starship successfully reach outer space by February 28, 2022?
+  78940104  0.7026  SpaceX Starship fully reusable before 2027?
+  23646834  0.7030  Will SpaceX's Starship successfully reach outer space by September 30, 2022?
+  66376706  0.7031  SpaceX 7th Starship booster survives re-entry?
+  72411713  0.7035  Another SpaceX Dragon x NASA mission to the ISS in 2025?
+  23881257  0.7101  Will SpaceX's Starship successfully reach outer space by June 30, 2022?
+  68495265  0.7109  SpaceX Starship fully reusable in 2025?
+  54892833  0.7135  Will four SpaceX Starship launches successfully reach outer space in 2024?
+  54892846  0.7184  Will five or more SpaceX Starship launches successfully reach outer space in 202
+  51096159  0.7197  Will SpaceX's 3rd Starship go higher than its prior launch before April?
+  54892746  0.7197  Will two SpaceX Starship launches successfully reach outer space in 2024?
+  68962329  0.7234  Will the Starship for SpaceX Starship Flight Test 9 achieve a sucessful splashdo
+  66817633  0.7275  Will the Starship for SpaceX Starship Flight Test 8 achieve a succesful splashdo
+  54892808  0.7301  Will three SpaceX Starship launches successfully reach outer space in 2024?
+  66184460  0.7344  Will 22-24 SpaceX Starship launches successfully reach Space in 2025?
+  54892736  0.7351  Will one SpaceX Starship launch successfully reach outer space in 2024?
+  72287710  0.7363  Will the Starship for SpaceX Starship Flight Test 10 achieve a successful splash
+  76260860  0.7364  Will the Starship for SpaceX Starship Flight Test 11 achieve a successful splash
+  66184960  0.7397  Will 25 or more SpaceX Starship launches successfully reach Space in 2025?
+  66184339  0.7413  Will 4-6 SpaceX Starship launches successfully reach Space in 2025?
+  77815359  0.7415  Will SpaceX Starship Flight Test 12 launch by January 31?
+  66184316  0.7436  Will less than 4 SpaceX Starship launches successfully reach Space in 2025?
+  57804042  0.7446  SpaceX 4th Starship launch survives re-entry?
+  66184433  0.7460  Will 19-21 SpaceX Starship launches successfully reach Space in 2025?
+  76260858  0.7460  Will SpaceX Starship Flight Test 11 launch by September 30?
+  66817548  0.7466  Will SpaceX Starship Flight Test 8 launch before March?
+  66184358  0.7473  Will 7-9 SpaceX Starship launches successfully reach Space in 2025?
+  77815359  0.7481  Will SpaceX Starship Flight Test 12 launch by December 31?
+  66817584  0.7485  Will SpaceX Starship Flight Test 8 reach space?
+  71036246  0.7493  Will SpaceX Starship Flight Test 9 launch by May 31?
+  66184378  0.7497  Will 10-12 SpaceX Starship launches successfully reach Space in 2025?
+  66184410  0.7517  Will 16-18 SpaceX Starship launches successfully reach Space in 2025?
+  72287710  0.7519  Will SpaceX Starship Flight Test 10 launch by June 30?
+  51630813  0.7531  Will SpaceX's Starship launch before March?
+  66817560  0.7532  Will SpaceX Starship Flight Test 8 launch before April?
+  76260859  0.7539  Will SpaceX Starship Flight Test 11 launch by October 31?
+  73248622  0.7555  Will SpaceX Starship Flight Test 10 launch by August 31?
+  77815360  0.7564  Will SpaceX Starship Flight Test 12 launch by November 30?
+  75658656  0.7575  Will SpaceX Starship Flight Test 10 launch by August 27?
+  68962278  0.7575  Will SpaceX Starship Flight Test 9 launch by April 30?
+  68680576  0.7580  Will SpaceX Starship Flight Test 8 launch by March 6?
+  75529933  0.7588  Will SpaceX Starship Flight Test 10 launch by August 24?
+  12950068  0.7596  Will SpaceX successfully launch and land Starship SN15 by April 28, 2021?
+  75658656  0.7598  Will SpaceX Starship Flight Test 10 launch by August 26?
+  68643210  0.7599  Will SpaceX Starship Flight Test 8 launch by March 5?
+  73248621  0.7611  Will SpaceX Starship Flight Test 10 launch by August 1?
+  13801811  0.7612  Will SpaceX successfully launch and land Starship SN15 by May 11, 2021?
+  75646099  0.7614  Will SpaceX Starship Flight Test 10 launch by August 25?
+  68443149  0.7616  Will SpaceX Starship Flight Test 8 launch before March 15?
+  68603982  0.7645  Will SpaceX Starship Flight Test 8 launch by March 3?
+  66184394  0.7646  Will 13-15 SpaceX Starship launches successfully reach Space in 2025?
+  76260858  0.7648  Will SpaceX Starship Flight Test 11 launch by October 15?
+  71036245  0.7651  Will SpaceX Starship Flight Test 9 launch by May 20?
+  75205055  0.7657  Will SpaceX Starship Flight Test 10 launch by August 22?
+  73248621  0.7697  Will SpaceX Starship Flight Test 10 launch by August 15?
+  68962271  0.7706  Will SpaceX Starship Flight Test 9 launch by April 15?
+  73248620  0.7715  Will SpaceX Starship Flight Test 10 launch by July 20?
+  66184688  0.7743  SpaceX Starship 7th launch by Jan 10?
+  72287711  0.7773  Will SpaceX Starship Flight Test 10 launch by July 10?
+  66662906  0.7780  SpaceX Starship 7th launch by Jan 15?
+  57725746  0.7825  SpaceX Starship launch by Thursday?
+  64438951  0.8026  SpaceX 6th Starship launch reaches space?
+  53480559  0.8040  SpaceX Starship launch by March 15?
+  64174188  0.8048  SpaceX Starship launch by Nov 18?
+  57802574  0.8051  SpaceX 4th Starship launch reaches space?
+  66184668  0.8052  SpaceX Starship 7th launch reaches space?
+  64439082  0.8125  SpaceX Starship launch today?

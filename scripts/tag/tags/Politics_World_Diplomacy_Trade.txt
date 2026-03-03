@@ -1,0 +1,600 @@
+# Politics_World - Politics_World_Diplomacy_Trade
+# count=597, avg_conf=0.6324
+====================================================================================================
+  53326312  0.4787  Will Venezuela invade Guyana in February?
+  67343054  0.4807  Will Venezuela invade Guyana in 2025?
+  77774260  0.4874  Will Charlie Kirk win the Nobel Peace Prize in 2026?
+  57305683  0.4912  Will China invade Taiwan in May?
+  74247039  0.4929  Will Magnus Carlsen apologize to Hans Niemann in 2025?
+  78889748  0.5029  Will Pakistan invade India in 2025?
+  71439223  0.5051  Will India invade Pakistan in 2025?
+  48556831  0.5061  Will China invade Taiwan in 2023?
+  59438229  0.5119  Will Pennsylvania be the tipping point state?
+  78295301  0.5127  Will Jia Yueting enter mainland China by December 31?
+  70884156  0.5156  Yves Francois Blanchet out as leader of Bloc Quebecois before June?
+  62799619  0.5178  Will Wisconsin be the closest state?
+  72815153  0.5181  Iran agrees to end enrichment of uranium before August?
+  67267363  0.5186  Will China invade Taiwan in 2025?
+  75378288  0.5195  Will Zelenskyy and Putin meet next in Kazakhstan?
+  77947215  0.5196  Will Zhang Shengmin be the next Vice Chair of China’s Central Military Commissio
+  26791204  0.5264  Will Vladimir Putin become a defendant in the ICC (International Criminal Court)
+  77104647  0.5266  Will Trump and Putin meet next in Finland?
+  75377595  0.5288  Will Putin meet with Zelenskyy by August 22?
+  77104695  0.5320  Will Trump and Putin not meet?
+  74961852  0.5320  Will Trump and Putin not meet?
+  75378279  0.5323  Will Zelenskyy and Putin meet next in India?
+  68929642  0.5343  Will Ontario resume electricity surcharge to the U.S. by next Friday?
+  72038177  0.5360  Albon vs. Sainz
+  72889513  0.5360  Albon vs. Sainz
+  72401505  0.5360  Albon vs. Sainz
+  73422400  0.5360  Albon vs. Sainz
+  67806849  0.5365  Will Trump meet with Putin or Zelenskyy first?
+  74914272  0.5365  Will Trump meet with Putin or Zelenskyy first?
+  77104638  0.5367  Will Trump and Putin meet next in Belarus?
+  17909502  0.5377  Will fully vaccinated non-essential Canadian travelers be permitted to cross int
+  38715378  0.5377  Will NATO expand by June 30?
+  71754103  0.5399  Will Putin meet with Zelenskyy in 2025?
+  76652086  0.5400  Will China blockade Taiwan by June 30?
+  55743888  0.5403  U.S. drop charges against Assange before June?
+  69173777  0.5403  Will Xi visit the US before May?
+  66936896  0.5407  X allowed to operate in China before May?
+  59438351  0.5410  Will Wisconsin be the tipping point state?
+  74970132  0.5411  Will Trump meet with Putin in Alaska on August 15?
+  25468081  0.5423  Will NATO expand in 2022?
+  77104669  0.5428  Will Trump and Putin meet next in Japan?
+  78669713  0.5432  Will Zelenskyy and Putin meet next in India before 2027?
+  38034989  0.5443  Will NATO expand by March 31?
+  68774246  0.5453  Will the U.S. acquire Canadian territory in 2025?
+  74667885  0.5471  Will Trump talk to Xi Jinping in August?
+  78982699  0.5473  US takes Panama Canal before 2027?
+  74369693  0.5473  Will Ghislaine Maxwell cut a deal with the Feds by August 31?
+  75244372  0.5476  Will Donald Trump visit Belarus in 2025?
+  71320048  0.5477  India x Pakistan ceasefire announced before June?
+  67577786  0.5479  US-Iran nuclear deal in 2025?
+  72936390  0.5488  Will Rutte say "Drone" during NATO Public Forum Address on June 24?
+  70906122  0.5489  Will Xi visit the US before July?
+  74667894  0.5493  Will Trump meet with Xi Jinping in August?
+  67064270  0.5493  Will Trump meet with Xi Jinping in his first 100 days?
+  68732107  0.5498  Will Trump meet with Putin in Saudi Arabia before June?
+  70900984  0.5499  Will Canada join US as 51st state in 2025?
+  53248227  0.5510  Will Vladimir Putin say Lukashenko in his upcoming interview with Tucker Carlson
+  75698606  0.5514  Will Ghislaine Maxwell cut a deal with the Feds by September 30?
+  72399742  0.5519  Will Xi visit the US before September?
+  76940888  0.5519  Will Ghislaine Maxwell cut a deal with the Feds in 2025?
+  65120642  0.5525  Will Tucker say "China" 5 or more times during Lavrov interview?
+  61938150  0.5526  Will Kamala Harris say "ceasefire" during her Wisconsin rally?
+  75378236  0.5528  Will Zelenskyy and Putin meet next in China?
+  73415397  0.5537  Will Lebanon join the Abraham Accords in 2025?
+  77104652  0.5545  Will Trump and Putin meet next in Switzerland?
+  72399743  0.5552  Will Trump meet with Xi Jinping before August?
+  70179144  0.5553  Will Trump meet with Vladimir Putin in 2025?
+  65642979  0.5570  Will Canada join US as 51st state before July?
+  78669667  0.5571  Will Zelenskyy and Putin meet next in China before 2027?
+  78637364  0.5579  Will Trump meet with Aleksandr Lukashenko in 2026?
+  62262904  0.5585  Will Kamala Harris say "China" 3 or more times during her Pennsylvania speech?
+  78333726  0.5590  Will Donald Trump disparage Xi Jinping on Thursday?
+  53248208  0.5591  Will Vladimir Putin say Merkel in his upcoming interview with Tucker Carlson?
+  70339704  0.5592  Will Xi Jinping talk to Trump before May?
+  78372944  0.5601  Will Trump talk to Xi Jinping in November?
+  47822046  0.5601  Will Canada sanction India by October 31?
+  78372940  0.5602  Will Trump meet with Aleksandr Lukashenko in November?
+  77097290  0.5602  Will Trump meet with Aleksandr Lukashenko in October?
+  67027936  0.5623  Will Donald Trump visit China in 2025?
+  76653328  0.5634  Will Xi visit the US by December 31?
+  75698644  0.5635  Will Trump meet with Aleksandr Lukashenko in September?
+  76615825  0.5636  Will China blockade Taiwan by December 31?
+  73415398  0.5643  Will Kuwait join the Abraham Accords in 2025?
+  78372940  0.5650  Will Trump meet with Xi Jinping in November?
+  72936394  0.5652  Will Rutte say "Slovakia" during NATO Public Forum Address on June 24?
+  74961837  0.5658  Will Trump and Putin meet next in China?
+  77104699  0.5658  Will Trump and Putin meet next in China?
+  77336606  0.5665  Will Trump talk to Xi Jinping in October?
+  75698623  0.5677  Will Trump talk to Xi Jinping in September?
+  72936396  0.5685  Will Rutte say "NATO" 30+ times during NATO Public Forum Address on June 24?
+  74876237  0.5687  Will India agree to stop buying Russian oil by August 31?
+  78631974  0.5692  Will Saudi Arabia join the Abraham Accords before 2027?
+  65288205  0.5697  Kari Lake appointed ambassador to Mexico?
+  70020083  0.5704  Will Trump meet with Xi Jinping before July?
+  78631974  0.5708  Will Oman join the Abraham Accords before 2027?
+  77097288  0.5711  Will Trump meet with Xi Jinping in October?
+  77104685  0.5711  Will Trump and Putin meet next in another EU country?
+  74961817  0.5711  Will Trump and Putin meet next in another EU country?
+  74840316  0.5715  Will Azerbaijan join the Abraham Accords in 2025?
+  75698641  0.5716  Will Trump meet with Xi Jinping in September?
+  75210617  0.5717  Will India agree to stop buying Russian oil by September 30?
+  74242780  0.5721  Will Trump meet with Xi Jinping by October 31?
+  78891019  0.5722  Will Indonesia join the Abraham Accords in 2025?
+  73415396  0.5728  Will Saudi Arabia join the Abraham Accords in 2025?
+  75238969  0.5735  Will Trump meet with Aleksandr Lukashenko in 2025?
+  68607211  0.5742  U.S. anti-cartel operation outside of the U.S. before July?
+  69173528  0.5752  Canada backs out of F-35 deal?
+  74961856  0.5752  Will Trump and Putin meet next in another country?
+  77104690  0.5752  Will Trump and Putin meet next in another country?
+  73415396  0.5763  Will Oman join the Abraham Accords in 2025?
+  78637366  0.5773  Will Trump meet with Xi Jinping in 2026?
+  72936391  0.5773  Will Rutte say "Dome" during NATO Public Forum Address on June 24?
+  71436327  0.5778  Will Powell say "China" during June Press Conference?
+  70382015  0.5784  China-Vietnam trade deal before June?
+  72936391  0.5788  Will Rutte say "Poland" during NATO Public Forum Address on June 24?
+  66412445  0.5801  Will Trump acquire Greenland in 2025?
+  71519235  0.5818  Will EU increase sanctions on Russia before July?
+  77557350  0.5879  Will Trump say "Nobel" or "Peace prize" during Egypt summit?
+  50739213  0.5880  US travel ban for China in 2023?
+  73128107  0.5883  Will Powell say "China" during July Press Conference?
+  72936397  0.5884  Will Rutte say "Deadlock" during NATO Public Forum Address on June 24?
+  68128623  0.5901  Will Trump meet with Xi Jinping in 2025?
+  77075205  0.5908  ICC WWC: New Zealand vs. Sri Lanka
+  70304638  0.5922  Will the U.S. agree to a trade deal with Vietnam before July?
+  74876237  0.5932  India agrees to reduce purchases Russian oil by August 31?
+  68091087  0.5935  Trump bans China from buying US farmland?
+  70304675  0.5939  Will the U.S. agree to a trade deal with France before July?
+  75698597  0.5940  India agrees to reduce purchases Russian oil by September 30?
+  78634483  0.5951  Will a new country join the Abraham Accords before 2027?
+  69805029  0.5960  Will anyone audibly fart during tariff event on April 2?
+  74876039  0.5972  Will Trump impose more sanctions on Russia by August 31?
+  74798021  0.5974  Will Trump increase sanctions on Russia by August 15?
+  70304632  0.5978  Will the U.S. agree to a trade deal with South Korea before July?
+  74326815  0.5991  Will China lift rare earths export ban by December 31?
+  74640397  0.5991  Will Kamala Harris say "Tariff" during Colbert show on July 31?
+  70183466  0.5992  China-EU trade deal before June?
+  70148446  0.6009  US-EU trade deal before June?
+  70884209  0.6028  Will Canada raise tariffs on the U.S. before June?
+  73262915  0.6029  Will a new country join the Abraham Accords in 2025?
+  74295433  0.6030  More EU sanctions on Russia by August 31?
+  70304694  0.6037  Will the U.S. agree to a trade deal with Israel before July?
+  78630783  0.6045  Will a new country join the Abraham Accords by March 31?
+  74924494  0.6047  US tariff revenue up in Q3 2025?
+  70103011  0.6050  Will China increase tariffs on US before May?
+  70051905  0.6057  US-China trade deal before June?
+  75654358  0.6066  Will Trump impose more sanctions on Russia by September 30?
+  70306738  0.6072  Will Musk say "Tariff" 5+ times during the Q1 2025 Tesla earnings call?
+  70304624  0.6074  Will the U.S. agree to a trade deal with Mexico before July?
+  69903671  0.6075  Will South Korea counter tariff the U.S. in April?
+  69903718  0.6082  Will Vietnam counter tariff the U.S. in April?
+  78076032  0.6085  Will Lyft say "Tariff" during earnings call?
+  75654085  0.6087  More EU sanctions on Russia by September 30?
+  77557353  0.6087  Will Trump say "Peace" 5+ times during Egypt summit?
+  70304682  0.6094  Will the U.S. agree to a trade deal with Brazil before July?
+  78985229  0.6095  Will Americans receive tariff stimulus checks by December 31?
+  71438978  0.6097  Will India lift Indus Water Treaty suspension before July?
+  76940116  0.6100  More EU sanctions on Russia by October 31?
+  25509176  0.6102  Will any NATO member country invoke Article 5 by June 30, 2022?
+  70304588  0.6107  Will the U.S. agree to a trade deal with India before July?
+  70304598  0.6108  Will the U.S. agree to a trade deal with the European Union before July?
+  78637647  0.6112  U.S. agrees to a new trade deal with "Vietnam" before 2027?
+  70304688  0.6114  Will the U.S. agree to a trade deal with Argentina before July?
+  70097573  0.6114  Will the U.S. tariff rate on China be between 75% and 100% on April 30?
+  74040544  0.6114  Will Trump increase sanctions on Russia by September 15?
+  68647601  0.6115  Ukraine agrees to Trump mineral deal today?
+  68400729  0.6121  Ukraine agrees to Trump mineral deal by Friday?
+  70304606  0.6125  Will the U.S. agree to a trade deal with Japan before July?
+  35653323  0.6129  Will any NATO member country invoke Article 4 by EOY?
+  70304658  0.6132  Will the U.S. agree to a trade deal with the United Kingdom before July?
+  69255852  0.6133  Will Trump say "China" 3+ times during Digital Asset Summit?
+  73840752  0.6138  25% South Korea tariff in effect by August 1?
+  70304616  0.6147  Will the U.S. agree to a trade deal with Canada before July?
+  78637646  0.6149  U.S. agrees to a new trade deal with "South Korea" before 2027?
+  69903728  0.6159  Will Argentina counter tariff the U.S. in April?
+  69903679  0.6159  Will India counter tariff the U.S. in April?
+  69903657  0.6159  Will Mexico counter tariff the U.S. in April?
+  78116369  0.6160  1H Spread: Washington (-2.5)
+  74803173  0.6160  Will Bernie Sanders say "Tariff" during his West Virginia speech on August 8?
+  75979452  0.6160  EU sanctions on Israel by December 31?
+  69903707  0.6163  Will Israel counter tariff the U.S. in April?
+  67774081  0.6163  25% aluminum tariff in effect before May?
+  70097548  0.6170  Will the U.S. tariff rate on China be between 50% and 75% on April 30?
+  76671763  0.6172  Spread: Washington (-21.5)
+  70097593  0.6173  Will the U.S. tariff rate on China be between 100% and 150% on April 30?
+  70097661  0.6174  Will the U.S. tariff rate on China be more than 300% on April 30?
+  70097652  0.6175  Will the U.S. tariff rate on China be between 200% and 300% on April 30?
+  69903685  0.6175  Will Brazil counter tariff the U.S. in April?
+  77075209  0.6179  ICC WWC: New Zealand vs. Pakistan
+  67464039  0.6183  Will Trump increase tariffs on Mexico before May?
+  78240466  0.6186  More EU sanctions on Russia by December 31?
+  70097631  0.6187  Will the U.S. tariff rate on China be between 150% and 200% on April 30?
+  78637645  0.6193  U.S. agrees to a new trade deal with "Brazil" before 2027?
+  70304645  0.6197  Will the U.S. agree to a trade deal with Australia before July?
+  75166350  0.6199  EU sanctions on Iran by September 30?
+  78887368  0.6213  Will Trump create a tariff dividend by March 31?
+  70386584  0.6214  Trump trade deal before June?
+  67386220  0.6223  Will Karoline Leavitt say Tariffs 10+ times in her next press briefing?
+  78637645  0.6225  U.S. agrees to a new trade deal with "South Africa" before 2027?
+  69903569  0.6226  Will Canada counter tariff the U.S. in April?
+  78637647  0.6231  U.S. agrees to a new trade deal with "Mexico" before 2027?
+  78637646  0.6232  U.S. agrees to a new trade deal with "Russia" before 2027?
+  73184982  0.6232  Trump trade deal before August?
+  70304579  0.6232  Will the U.S. agree to a trade deal with China before July?
+  78076051  0.6234  Will Amazon say "Tariff" during earnings call?
+  78637645  0.6235  U.S. agrees to a new trade deal with "Israel" before 2027?
+  77557352  0.6237  Will Trump say "Ceasefire" during Egypt summit?
+  35653395  0.6238  Will any NATO member country invoke Article 5 by EOY?
+  71311373  0.6239  Will the U.S. tariff rate on China be between 75% and 100% on May 31?
+  72080486  0.6247  NATO article 5 in 2025?
+  73131760  0.6249  Will Trump attend NATO Summit?
+  70097540  0.6253  Will the U.S. tariff rate on China be between 20% and 50% on April 30?
+  78721911  0.6253  Will Keir Starmer say "Tariff" during the next Prime Minister's Questions?
+  70020918  0.6256  Will Buffett say "Tariff" 5+ times during May 3 Shareholders Meeting?
+  67464059  0.6265  Will Trump increase tariffs on Canada before May?
+  67464037  0.6267  Will Trump increase tariffs on China before May?
+  69902673  0.6267  Will Trump increase tariffs on China before May?
+  78637646  0.6274  U.S. agrees to a new trade deal with "European Union" before 2027?
+  78076274  0.6275  Will CAVA say "Tariff" during earnings call?
+  78637646  0.6279  U.S. agrees to a new trade deal with "Australia" before 2027?
+  71311367  0.6282  Will the U.S. tariff rate on China be between 50% and 75% on May 31?
+  71311378  0.6287  Will the U.S. tariff rate on China be between 100% and 150% on May 31?
+  70097502  0.6287  Will the U.S. tariff rate on China be less than 20% on April 30?
+  71478188  0.6287  Will the U.S. tariff rate on China be between 100% and 150% on August 15?
+  78637646  0.6288  U.S. agrees to a new trade deal with "Argentina" before 2027?
+  74874797  0.6290  50% India tariff in effect by August 27?
+  77692081  0.6293  Will anyone say "Tariff" 5+ times during 1st NYC mayoral debate on October 16?
+  70706569  0.6293  Will China confirm trade negotiations have begun by next Friday?
+  78637646  0.6294  U.S. agrees to a new trade deal with "United Kingdom" before 2027?
+  69542621  0.6294  Will Trump announce tariffs on South Korea on April 2?
+  71311384  0.6298  Will the U.S. tariff rate on China be more than 150% on May 31?
+  71478176  0.6301  Will the U.S. tariff rate on China be between 60% and 100% on August 15?
+  76932719  0.6302  Another NATO article 4 by October 15?
+  68969987  0.6315  US tariffs on European cars before May?
+  77816153  0.6316  Will anyone say "Tariff" 5+ times during 2nd NYC mayoral debate on October 22?
+  69542585  0.6317  Will Trump announce tariffs on Mexico on April 2?
+  74404369  0.6318  U.S. agrees to a new trade deal with "Vietnam"?
+  78637645  0.6319  U.S. agrees to a new trade deal with "Canada" before 2027?
+  70622806  0.6322  Will Michael Saylor say "Tariff" 3+ times during the Q1 2025 Strategy earnings c
+  78637644  0.6323  U.S. agrees to a new trade deal with "Pakistan" before 2027?
+  73850472  0.6328  Will Trump say "China" 5+ times during the Energy and Innovation Summit on July 
+  73840752  0.6328  50% Brazil tariff in effect by August 1?
+  71478182  0.6331  Will the U.S. tariff rate on China be greater than 150% on August 15?
+  78637645  0.6335  U.S. agrees to a new trade deal with "India" before 2027?
+  73840752  0.6338  25% Japan tariff in effect by August 1?
+  78637647  0.6339  U.S. agrees to a new trade deal with "Japan" before 2027?
+  69903665  0.6343  Will Japan counter tariff the U.S. in April?
+  73950002  0.6344  30% EU tariff in effect by August 1?
+  73186525  0.6344  Trump trade deal before July?
+  69808719  0.6344  Will Trump say "TikTok" during tariff event on April 2?
+  66950035  0.6346  Will Trump impose tariffs on Mexico before March?
+  73747590  0.6349  Will anyone say "Tariff" during the Q2 2025 Netflix earnings call?
+  71478158  0.6351  Will the U.S. tariff rate on China be less than 25% on August 15?
+  70884406  0.6352  Will Canada lower tariffs on the U.S. before June?
+  71160091  0.6354  Will Trump impose film tariff by Friday?
+  69542646  0.6355  Will Trump announce tariffs on France on April 2?
+  69903712  0.6359  Will Taiwan counter tariff the U.S. in April?
+  74235616  0.6361  Will anyone say "Tariff" during the Q2 2025 Amazon earnings call?
+  69542641  0.6366  Will Trump announce tariffs on Vietnam on April 2?
+  74404371  0.6368  U.S. agrees to a new trade deal with "South Korea"?
+  70304665  0.6371  Will the U.S. agree to a trade deal with Germany before July?
+  74808511  0.6378  Will Trump say "Tariff" 3+ times during his Squawk Box appearance on August 5?
+  77225784  0.6383  Will Trump create a tariff dividend in 2025?
+  62223862  0.6390  Will Donald Trump say "Trump Reciprocal Trade Act" during his North Carolina spe
+  78720112  0.6392  Will Joe Biden say "Tariff" during his appearance at the Ben Nelson Gala on Nove
+  71873601  0.6402  50% tariff goes into effect on EU by June 1?
+  75245868  0.6402  Will the U.S. tariff rate on China be between 100% and 150% on November 12?
+  75245864  0.6402  Will the U.S. tariff rate on China be between 60% and 100% on November 12?
+  70347822  0.6403  Will tariffs generate >$250b in 2025?
+  71311361  0.6404  Will the U.S. tariff rate on China be less than 50% on May 31?
+  71478164  0.6406  Will the U.S. tariff rate on China be between 25% and 40% on August 15?
+  67619118  0.6406  Will Karoline Leavitt say Tariff 8+ times during next White House press briefing
+  71478170  0.6407  Will the U.S. tariff rate on China be between 40% and 60% on August 15?
+  70011844  0.6409  Will Trump reduce majority of tariffs in April?
+  69542614  0.6410  Will Trump announce tariffs on Japan on April 2?
+  77468723  0.6412  UK sanctions on Russia by October 31?
+  70141179  0.6412  US announces withdrawal from WTO in 2025?
+  69825725  0.6416  Will Trump lower tariffs on China in April?
+  69615735  0.6417  Will Trump say "Fantastic job" during tariff event on April 2?
+  73840774  0.6422  35% Canada tariff in effect by August 1?
+  69542636  0.6424  Will Trump announce tariffs on Russia on April 2?
+  69542577  0.6428  Will Trump announce tariffs on Canada on April 2?
+  67878650  0.6430  Will Karoline Leavitt say Tariff 5+ times during next White House press briefing
+  67386294  0.6434  Will Jerome Powell say "Tariff" 10 or more times during the March meeting?
+  69542565  0.6434  Will Trump announce tariffs on China on April 2?
+  70053857  0.6435  Will Trump reduce or pause tariffs on South Korea in April?
+  71155221  0.6443  US-China trade deal in 2025?
+  70191353  0.6444  Will Karoline Leavitt say "Tariff" 10+ times during next White House press brief
+  75245872  0.6450  Will the U.S. tariff rate on China be greater than 150% on November 12?
+  66950042  0.6450  Will Trump impose tariffs on Canada before March?
+  66423003  0.6450  Will Trump impose tariffs on Mexico in his first week?
+  67459537  0.6451  Will Trump remove tariff on Mexico before March?
+  67575547  0.6459  Will Donald Trump say "Tariff" 5+ times during Super Bowl pregame interview?
+  70098752  0.6461  Will Trump increase tariffs on China by Friday?
+  69615825  0.6462  Will Trump say "Electricity" during tariff event on April 2?
+  78637647  0.6463  U.S. agrees to a new trade deal with "Indonesia" before 2027?
+  69902718  0.6463  54% tariff goes into effect on China by Wednesday?
+  78553615  0.6467  Will Trump say "Russia" or "China" 4+ times during C5+1 Summit on November 6?
+  71149737  0.6467  Will Joe Biden say "Tariff" during his May 8 interview?
+  68328500  0.6468  Mexico tariffs on China in effect before July?
+  67464046  0.6470  Will the EU impose tariffs on the U.S. before May?
+  70053840  0.6475  Will Trump reduce or pause tariffs on Vietnam in April?
+  75245852  0.6476  Will the U.S. tariff rate on China be less than 25% on November 12?
+  67261201  0.6476  Will Trump impose tariffs on Mexico in the first 100 days?
+  74404370  0.6477  U.S. agrees to a new trade deal with "South Africa"?
+  69565391  0.6478  Will Karoline Leavitt say "Tariff" 5+ times during next White House press briefi
+  74404371  0.6478  U.S. agrees to a new trade deal with "Israel"?
+  70184367  0.6479  Will courts block Trump's tariffs before June?
+  69615761  0.6480  Will Trump say "Apple" during tariff event on April 2?
+  69542609  0.6480  Will Trump announce tariffs on Brazil on April 2?
+  68489780  0.6484  Canada tariffs on China in effect before July?
+  67252231  0.6490  Will Trump impose tariffs on China before March?
+  69902862  0.6491  Will Trump lower tariffs on South Korea next?
+  70104679  0.6491  Will Trump raise or lower tariffs on China first?
+  69010115  0.6491  Trump tariff on EU alcohol before May?
+  74404368  0.6492  U.S. agrees to a new trade deal with "Russia"?
+  69542603  0.6494  Will Trump announce tariffs on Australia on April 2?
+  70386870  0.6495  Will Trump lower tariffs on Mexico by May 31?
+  75405580  0.6496  Will Powell say "Tariff" 5+ times during Jackson Hole speech on August 22?
+  74404368  0.6500  U.S. agrees to a new trade deal with "Brazil"?
+  69860058  0.6501  Will Trump reduce or pause tariffs on South Korea before June?
+  69542550  0.6502  Will Trump announce tariffs on India on April 2?
+  70381651  0.6504  Will Trump lower tariffs on China by April 30?
+  63610845  0.6506  Will Trump say "tariff" 5 or more times during Nevada rally on Oct 31?
+  70054009  0.6507  Will Trump reduce or pause tariffs on South Africa in April?
+  69542598  0.6507  Will Trump announce tariffs on Venezuela on April 2?
+  69902922  0.6508  Will Trump lower tariffs on Vietnam next?
+  70054067  0.6509  Will Trump reduce or pause tariffs on Sri Lanka in April?
+  70054030  0.6515  Will Trump reduce or pause tariffs on China in April?
+  75245860  0.6517  Will the U.S. tariff rate on China be between 40% and 60% on November 12?
+  63759763  0.6520  Will Trump say "Trump Reciprocal Trade Act" during Warren, MI rally?
+  64445305  0.6525  Will Trump impose large tariffs in his first 6 months?
+  74404366  0.6526  U.S. agrees to a new trade deal with "Argentina"?
+  70300547  0.6527  Trump imposes tariff on pharmaceuticals before May?
+  67459504  0.6528  Will Trump remove tariff on Mexico before May?
+  67261163  0.6530  Will Trump impose tariffs on France in the first 100 days?
+  69615654  0.6530  Will Trump say "Made in America" 2+ times during tariff event on April 2?
+  69902910  0.6531  Will Trump lower tariffs on Mexico next?
+  70306779  0.6532  Will Carney say "Tariffs" 3+ times during Canadian Election Debate on April 17?
+  75245856  0.6534  Will the U.S. tariff rate on China be between 25% and 40% on November 12?
+  74404370  0.6538  U.S. agrees to a new trade deal with "Mexico"?
+  70053888  0.6538  Will Trump reduce or pause tariffs on Japan in April?
+  69615809  0.6540  Will Trump say "Farmer" during tariff event on April 2?
+  74404367  0.6540  U.S. agrees to a new trade deal with "Australia"?
+  67259006  0.6541  Will Trump impose tariffs on Taiwan before March?
+  66424547  0.6542  Will Trump impose tariffs on Japan in his first week?
+  70054056  0.6542  Will Trump reduce or pause tariffs on Syria in April?
+  69902940  0.6543  Will Trump lower tariffs on Israel next?
+  69615662  0.6544  Will Trump say "VAT" or "Value added tax" during tariff event on April 2?
+  70053997  0.6545  Will Trump reduce or pause tariffs on Bangladesh in April?
+  69494906  0.6549  Will Jerome Powell say "tariff" 20 or more times during the May meeting?
+  70306777  0.6550  Will Poilievre say "Tariffs" 3+ times during Canadian Election Debate on April 1
+  67459531  0.6553  Will Trump remove tariff on Canada before March?
+  71995677  0.6555  50% tariff goes into effect on EU by July 9?
+  69859996  0.6556  Will Trump reduce or pause tariffs on Vietnam before June?
+  68685489  0.6557  Will Canada remove retaliatory tariffs on USA in March?
+  71995681  0.6559  US-EU trade agreement by July 9?
+  71352285  0.6560  Will Trump say "Tariff" 5+ times at Medicare Drug Price Plan Event?
+  74404366  0.6561  U.S. agrees to a new trade deal with "United Kingdom"?
+  69825722  0.6562  Will Trump lower tariffs on EU in April?
+  74404367  0.6564  U.S. agrees to a new trade deal with "Canada"?
+  74404365  0.6564  U.S. agrees to a new trade deal with "Pakistan"?
+  74404365  0.6565  U.S. agrees to a new trade deal with "European Union"?
+  70386919  0.6565  Will Trump lower tariffs on Canada by May 31?
+  71873460  0.6569  Trump tariffs Apple before July?
+  66422939  0.6570  Will Trump impose tariffs on Canada in his first week?
+  74404368  0.6570  U.S. agrees to a new trade deal with "India"?
+  67261147  0.6573  Will Trump impose tariffs on Canada in the first 100 days?
+  66424558  0.6574  Will Trump impose tariffs on the UK in his first week?
+  67464102  0.6574  Will Trump impose a blanket tariff of 20-30% on the EU by June 30?
+  74668045  0.6575  Will Trump agree to a tariff agreement with South Korea in August?
+  69808724  0.6576  Will Trump say "Piggy Bank" during tariff event on April 2?
+  69615546  0.6576  Will Trump say "Percent" 10+ times during tariff event on April 2?
+  74326805  0.6576  Will the EU impose new tariffs on US goods in 2025?
+  69255488  0.6578  Will Jerome Powell say "tariff" 5 or more times during the May meeting?
+  67021201  0.6579  Will Trump say "Tariff" during Fox News Oval Office interview?
+  66422925  0.6580  Will Trump impose tariffs on China in his first week?
+  69615836  0.6586  Will Trump say "Elon" during tariff event on April 2?
+  70053966  0.6587  Will Trump reduce or pause tariffs on India in April?
+  67505524  0.6588  Trump tariffs on Mexico in effect by May 1?
+  74404368  0.6588  U.S. agrees to a new trade deal with "Japan"?
+  69860051  0.6590  Will Trump reduce or pause tariffs on Japan before June?
+  63489171  0.6591  Will Trump say "Tariff" during Georgia rally on October 28?
+  69860114  0.6594  Will Trump reduce or pause tariffs on Bangladesh before June?
+  75773391  0.6595  Will anyone say "Tariffs" during Apple launch event on September 9?
+  67386203  0.6596  Will Jerome Powell say "Tariff" during the March meeting?
+  69860015  0.6597  Will Trump reduce or pause tariffs on China before June?
+  77340678  0.6600  Will Leavitt say "Tariff" during next White House press briefing?
+  67261295  0.6601  Will Trump impose tariffs on Japan in the first 100 days?
+  70306758  0.6604  Will Trump say "Tariff" 10+ times during his FOX Noticias interview?
+  70053911  0.6604  Will Trump reduce or pause tariffs on Taiwan in April?
+  69860099  0.6605  Will Trump reduce or pause tariffs on South Africa before June?
+  70466177  0.6605  Will Congress pass a bill limiting Trump's tariffs before July?
+  78381093  0.6605  Will Trump agree to a tariff agreement with Israel by November 30?
+  72117283  0.6608  Will the Court Force Trump to Refund Tariffs?
+  67261137  0.6608  Will Trump impose tariffs on China in the first 100 days?
+  70054050  0.6609  Will Trump reduce or pause tariffs on Pakistan in April?
+  68603059  0.6610  Will Trump 10% China tariff increase go into effect by Friday?
+  75689338  0.6613  Will JD Vance say "Trade" or "Tariff" 2+ times during remarks in Wisconsin on Au
+  69902958  0.6614  Will Trump lower tariffs on Argentina next?
+  69542649  0.6615  Will Trump announce tariffs on Germany on April 2?
+  74668044  0.6616  Will Trump agree to a tariff agreement with Israel in August?
+  72279729  0.6617  Will Donald Trump say "Tariff" 7+ times during Merz events on June 5?
+  74668043  0.6619  Will Trump agree to a tariff agreement with France in August?
+  70148164  0.6619  Will anyone be charged with insider trading Trump tariff announcement?
+  67464071  0.6621  Will Trump impose a blanket tariff of less than 10% on the EU by June 30?
+  78381093  0.6622  Will Trump agree to a tariff agreement with South Korea by November 30?
+  75698596  0.6626  Trump imposes tariff on semiconductors by September 30?
+  74668045  0.6627  Will Trump agree to a tariff agreement with Mexico in August?
+  67464113  0.6627  Will Trump impose a blanket tariff of 30-40% on the EU by June 30?
+  67464123  0.6628  Will Trump impose a blanket tariff of 40% or more on the EU by June 30?
+  67464134  0.6628  Will Trump impose no general tariff on the EU by June 30?
+  67459507  0.6628  Will Trump remove tariff on Canada before May?
+  70053901  0.6630  Will Trump reduce or pause tariffs on Cambodia in April?
+  69902833  0.6630  Will Trump lower tariffs on China next?
+  67464034  0.6630  Will courts block Trump's tariffs by Friday?
+  70023727  0.6630  Will courts block Trump's tariffs by Friday?
+  70386898  0.6630  Will Trump lower tariffs on Mexico by December 31?
+  69859928  0.6631  Will Trump reduce majority of tariffs before July?
+  70381656  0.6631  Will Trump lower tariffs on China by May 31?
+  69775971  0.6632  Will Trump announce a general Tariff on imports on April 2?
+  69902900  0.6634  Will Trump lower tariffs on Canada next?
+  75698606  0.6636  Trump imposes tariff on pharmaceuticals by September 30?
+  69825239  0.6637  Will Trump remove 10% blanket tariff in April?
+  67459520  0.6639  Will Trump remove tariff on China before March?
+  77521510  0.6640  100% tariff on China in effect by November 1?
+  67464091  0.6642  Will Trump impose a blanket tariff of 10-20% on the EU by June 30?
+  69860035  0.6643  Will Trump reduce or pause tariffs on Taiwan before June?
+  69902843  0.6643  Will Trump lower tariffs on Japan next?
+  72047741  0.6649  Will Trump say "Tariff" 10+ times during Pittsburgh rally on May 30?
+  74875192  0.6650  Trump imposes tariff on pharmaceuticals by August 31?
+  69860105  0.6652  Will Trump reduce or pause tariffs on Pakistan before June?
+  69615528  0.6655  Will Trump say "Billion" 10+ times during tariff event on April 2?
+  73466981  0.6657  Will Trump agree to a tariff agreement with Vietnam in July?
+  69860073  0.6658  Will Trump reduce or pause tariffs on India before June?
+  67261231  0.6660  Will Trump impose tariffs on Denmark in the first 100 days?
+  73840352  0.6661  Will anyone be charged for insider trading Trump tariff announcements?
+  67384471  0.6661  Will Trump impose tariffs on the EU in the first 100 days?
+  74914300  0.6661  Trump imposes tariff on semiconductors by August 31?
+  69860004  0.6662  Will Trump reduce or pause tariffs on Cambodia before June?
+  78381094  0.6663  Will Trump agree to a tariff agreement with France by November 30?
+  68406524  0.6666  Will Donald Trump say Tariff 5+ times during his presser with Starmer on Feb 27?
+  70053938  0.6679  Will Trump reduce or pause tariffs on Laos in April?
+  67505521  0.6679  Trump tariffs on Canada in effect by May 1?
+  69902824  0.6679  Will Trump lower tariffs on India next?
+  66423034  0.6680  Will Trump impose tariffs on the European Union  in his first week?
+  70016740  0.6681  90 day tariff pause rumor confirmed market manipulation?
+  73466978  0.6685  Will Trump agree to a tariff agreement with South Korea in July?
+  67459512  0.6686  Will Trump remove tariff on China before May?
+  73466980  0.6689  Will Trump agree to a tariff agreement with Israel in July?
+  78381093  0.6689  Will Trump agree to a tariff agreement with Mexico by November 30?
+  64733605  0.6689  Will Trump impose 25% tariff on Mexico or Canada before February?
+  67576890  0.6691  Will Trump impose tariffs on Brazil in the first 100 days?
+  68605734  0.6693  Canada tariffs on U.S. in effect by Friday?
+  70053927  0.6695  Will Trump reduce or pause tariffs on Switzerland in April?
+  76535602  0.6695  Will Trump say "Tariff" during the Fox News interview on September 18?
+  75698620  0.6697  Will Trump agree to a tariff agreement with South Korea in September?
+  77503269  0.6697  Will Trump say "Tariff" during speech to Israeli Parliament on October 13?
+  69615802  0.6698  Will Trump say "Mineral" during tariff event on April 2?
+  68652273  0.6704  Will Trump reduce tariffs on Mexico or Canada today?
+  70386986  0.6704  Will Trump lower tariffs on Canada by December 31?
+  67261155  0.6705  Will Trump impose tariffs on Taiwan in the first 100 days?
+  70102130  0.6707  Trump imposes 200% tariff on China before June?
+  69615841  0.6707  Will Trump say "NAFTA" during tariff event on April 2?
+  66950071  0.6711  Trump imposes 25% tariff on Canada and Mexico before March?
+  74668044  0.6719  Will Trump agree to a tariff agreement with Brazil in August?
+  70104623  0.6721  Will Trump say "Tariff" 20+ times during his cabinet meeting on April 10?
+  69336967  0.6725  Will Trump say "tariff" by March 28?
+  77504569  0.6726  Will Powell say "Tariff" 6+ times during speech on October 14?
+  78281781  0.6727  Will Trump say "Tariff" 10+ times during Korea CEOs Luncheon on October 28?
+  70053986  0.6727  Will Trump reduce or pause tariffs on European Union in April?
+  69255545  0.6728  Will Jerome Powell say "tariff" during the May meeting?
+  71473740  0.6730  US-China tariff agreement before 90 day deadline?
+  67261276  0.6733  Will Trump impose tariffs on Colombia in the first 100 days?
+  69860009  0.6734  Will Trump reduce or pause tariffs on Laos before June?
+  69860088  0.6734  Will Trump reduce or pause tariffs on Switzerland before June?
+  73466982  0.6738  Will Trump agree to a tariff agreement with France in July?
+  70386929  0.6743  Will Trump lower tariffs on Canada by July 31?
+  71035748  0.6745  Will Trump say "Tariff" 7+ times during Carney visit on May 6?
+  75698618  0.6746  Will Trump agree to a tariff agreement with Israel in September?
+  75698617  0.6749  Will Trump agree to a tariff agreement with France in September?
+  69615681  0.6752  Will Trump say "Japan" during tariff event on April 2?
+  67350127  0.6754  Will Trump impose tariff on oil from Mexico or Canada by next Friday?
+  74404369  0.6756  U.S. agrees to a new trade deal with "Indonesia"?
+  70053922  0.6757  Will Trump reduce or pause tariffs on Indonesia in April?
+  77137684  0.6759  Will Trump agree to a tariff agreement with South Korea in October?
+  69860041  0.6759  Will Trump reduce or pause tariffs on the European Union before June?
+  69615633  0.6762  Will Trump say "China" 3+ times during tariff event on April 2?
+  75407872  0.6762  Will Trump say "Tariff" 5+ times during events with South Korean president on Au
+  78036600  0.6763  Trump imposes tariff on semiconductors by December 31?
+  74668042  0.6764  Will Trump agree to a tariff agreement with Argentina in August?
+  70665202  0.6769  Will Trump say "Tariff" 5+ times during Norway PM events on April 24?
+  75698618  0.6771  Will Trump agree to a tariff agreement with Mexico in September?
+  74668041  0.6772  Will Trump agree to a tariff agreement with India in August?
+  73466977  0.6772  Will Trump agree to a tariff agreement with Mexico in July?
+  68685476  0.6774  Will Trump lower automobile tariffs on Canada/Mexico by next Friday?
+  70015777  0.6775  Will Trump lower tariffs on EU before July?
+  78381094  0.6777  Will Trump agree to a tariff agreement with Brazil by November 30?
+  70343514  0.6779  Will Trump say "Tariff" 3+ times during Easter Dinner on April 16?
+  78928834  0.6780  Will Trump say "Tariff" or "Investment" 5+ times during the private dinner on No
+  71436345  0.6781  Will Powell say "Tariff" 15+ times during June Press Conference?
+  71436309  0.6785  Will Powell say "Tariff" 15+ times during Framework Review speech on May 15?
+  74668041  0.6788  Will Trump agree to a tariff agreement with Canada in August?
+  78381093  0.6789  Will Trump agree to a tariff agreement with Argentina by November 30?
+  74235484  0.6790  Will Trump say "Tariff" 5+ times during Philippines President events on July 22?
+  69825238  0.6790  Will Trump 10% blanket tariff go into effect by Saturday?
+  77137685  0.6791  Will Trump agree to a tariff agreement with Israel in October?
+  74668040  0.6794  Will Trump agree to a tariff agreement with China in August?
+  70381669  0.6797  Will Trump lower tariffs on China by July 31?
+  78381093  0.6799  Will Trump agree to a tariff agreement with Canada by November 30?
+  69860079  0.6799  Will Trump reduce or pause tariffs on Indonesia before June?
+  70011577  0.6800  Will Trump say "Tariff" 10+ times during Netanyahu events today?
+  70015705  0.6801  Will Trump remove 10% blanket tariff before July?
+  65684625  0.6802  Will Powell say "tariff" 5 or more times during January press conference?
+  68124211  0.6803  Will Trump say "Tariff" 20 or more times during Miami investment conference?
+  72577623  0.6805  Will Trump say "Tariff" during Fort Bragg remarks on June 10?
+  69448294  0.6808  Will Trump say "Tariff" 3+ times during today's event with the Governor of Louis
+  70306770  0.6810  Will Trump say "Tariff" 10+ times during Meloni visit on April 17?
+  78381094  0.6814  Will Trump agree to a tariff agreement with Australia by November 30?
+  70015873  0.6816  Trump pauses any reciprocal tariff before Wednesday?
+  74668044  0.6816  Will Trump agree to a tariff agreement with Australia in August?
+  77137685  0.6818  Will Trump agree to a tariff agreement with France in October?
+  64329634  0.6824  Will Jerome Powell say "tariff" 5 or more times during December FOMC Press Confe
+  67259735  0.6826  Will Trump impose tariffs on any country before March?
+  79058302  0.6828  Will Trump say "Tariff" 5+ times during Saudi Investment Forum on November 19?
+  77764209  0.6828  Will Trump say "Tariff" 7+ times during Australia PM events on October 20?
+  69615554  0.6829  Will Trump say "Tariff" 15+ times during tariff event on April 2?
+  68161303  0.6830  Will Trump say "Tariff" 10 or more times during his Feb 20 Republican Governors 
+  78328928  0.6834  Will Trump say "Tariff" 7+ times during the America Business Forum on November 5
+  75200092  0.6834  Will Trump say "Secondary tariff" or "Sanction" during conference with Putin on 
+  78381094  0.6842  Will Trump agree to a tariff agreement with India by November 30?
+  75698627  0.6842  Will Trump agree to a tariff agreement with Brazil in September?
+  74916464  0.6843  Will Trump say "Tariff" 7+ times during the Purple Heart ceremony on August 7?
+  74918629  0.6847  Will Trump say "Tariff" 7+ times during the Armenian PM bilateral on August 8?
+  77137682  0.6847  Will Trump agree to a tariff agreement with Mexico in October?
+  70011676  0.6848  Trump pauses reciprocal tariffs on EU before Wednesday?
+  70148535  0.6849  Will Trump impose large tariffs in 2025?
+  76757419  0.6852  Will Trump say "Tariff" 5+ times during events with Turkish president on Septemb
+  73466983  0.6853  Will Trump agree to a tariff agreement with Brazil in July?
+  67261250  0.6857  Will Trump impose tariffs on Panama in the first 100 days?
+  66414829  0.6861  Will Trump say "tariff" during his Mar-a-Lago press conference?
+  67386190  0.6863  Will Trump say 'tariff' 5+ times times during the 2025 State of the Union?
+  73128109  0.6864  Will Powell say "Tariff" 15+ times during July Press Conference?
+  73466977  0.6866  Will Trump agree to a tariff agreement with Japan in July?
+  71713985  0.6870  Will Trump say "Tariff" 5+ times during events with South African President on M
+  75698622  0.6874  Will Trump agree to a tariff agreement with Argentina in September?
+  75698617  0.6877  Will Trump agree to a tariff agreement with Canada in September?
+  73466979  0.6881  Will Trump agree to a tariff agreement with European Union in July?
+  73466983  0.6881  Will Trump agree to a tariff agreement with Argentina in July?
+  65684468  0.6884  Will Powell say "tariff" during January press conference?
+  69902695  0.6885  Trump imposes 100% tariff on China before July?
+  78408671  0.6889  Will Powell say "Tariff" 13+ times during December press conference?
+  77341200  0.6889  Will Trump say "Tariff" 3+ times during events with President of Finland on Oct 
+  71478737  0.6892  Will Trump remove 10% blanket tariff in 2025?
+  64491969  0.6893  Trump imposes 40% tariff on China in first 100 days?
+  75698626  0.6898  Will Trump agree to a tariff agreement with Australia in September?
+  77137686  0.6899  Will Trump agree to a tariff agreement with Brazil in October?
+  74668042  0.6899  Will Trump agree to a tariff agreement with Germany in August?
+  68892545  0.6901  Will Trump say "Tariff" 5+ times during his presser with Ireland PM?
+  67505692  0.6907  Trump tariffs on China in effect by Friday?
+  75698621  0.6907  Will Trump agree to a tariff agreement with India in September?
+  73466979  0.6908  Will Trump agree to a tariff agreement with India in July?
+  76615649  0.6911  Will Powell say "Tariff" 15+ times during October press conference?
+  75979441  0.6911  Supreme Court rules in favor of Trump's tariffs?
+  77137683  0.6915  Will Trump agree to a tariff agreement with Argentina in October?
+  78381092  0.6917  Will Trump agree to a tariff agreement with China by November 30?
+  68321016  0.6917  Will Trump say "Tariff" 5+ times during Macron presser today?
+  69615750  0.6918  Will Trump say "Deficit" during tariff event on April 2?
+  73466982  0.6921  Will Trump agree to a tariff agreement with Australia in July?
+  74673426  0.6925  Will Powell say "Tariff" 15+ times during September press conference?
+  77981802  0.6927  Will Trump say "Tariff" during Diwali Celebration events on October 21?
+  78381092  0.6932  Will Trump agree to a tariff agreement with Germany by November 30?
+  64329628  0.6932  Will Jerome Powell say "tariff" during December FOMC Press Conference?
+  67852228  0.6935  Will Trump say "tariff" during his Thursday press conference?
+  78408670  0.6940  Will Powell say "Tariff inflation" during December press conference?
+  70137848  0.6940  Will Trump remove majority of reciprocal tariffs before 90 day deadline?
+  77137682  0.6954  Will Trump agree to a tariff agreement with Canada in October?
+  75129894  0.6955  US x China tariff agreement by November 10?
+  78946105  0.6956  Will Trump say "Tariff" during Signing tonight?
+  75698616  0.6956  Will Trump agree to a tariff agreement with China in September?
+  77137683  0.6965  Will Trump agree to a tariff agreement with Australia in October?
+  77137686  0.6972  Will Trump agree to a tariff agreement with India in October?
+  71149746  0.6972  Will Saylor say "Tariff" during his Strategy World 2025 keynote?
+  70011140  0.6984  Trump pauses all reciprocal tariffs other than China before Wednesday?
+  78381093  0.6987  Will Trump agree to a tariff agreement with Switzerland by November 30?
+  78321967  0.6989  Will Trump say "Tariff" 3+ times during Xi events on October 29?
+  73466978  0.6991  Will Trump agree to a tariff agreement with Germany in July?
+  74800530  0.6996  Will Trump agree to a tariff agreement with Switzerland in August?
+  75698627  0.7000  Will Trump agree to a tariff agreement with Germany in September?
+  77340231  0.7010  Will Trump say "Tariff" 7+ times during events with PM of Canada on Oct 7?
+  77137681  0.7027  Will Trump agree to a tariff agreement with China in October?
+  67537325  0.7037  New Trump tariffs by Friday?
+  75698620  0.7053  Will Trump agree to a tariff agreement with Switzerland in September?
+  77137682  0.7089  Will Trump agree to a tariff agreement with Germany in October?
+  69902971  0.7105  Will Trump not lower tariffs on any country by July 31?
+  77137684  0.7106  Will Trump agree to a tariff agreement with Switzerland in October?
+  73850476  0.7227  Will Trump say "Tariff" during the Energy and Innovation Summit on July 15?
+  77723588  0.7235  Will Trump say "Tariff" during ballroom dinner on October 15?

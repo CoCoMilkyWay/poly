@@ -1,0 +1,806 @@
+# Sports_Basketball - Sports_Basketball_WNBA
+# count=803, avg_conf=0.6167
+====================================================================================================
+  25591050  0.4414  Who will win the Democratic Nomination in the TX-28 House election: Jessica Cisn
+  69772162  0.4588  Will Gaitok die in Season 3 of the White Lotus?
+  61187369  0.4743  Will Lana Del Rey dump her boyfriend before October?
+  69772171  0.4849  Will Sritala die in Season 3 of the White Lotus?
+  69772283  0.4870  Will Chloe die in Season 3 of the White Lotus?
+  69772264  0.4875  Will Laurie die in Season 3 of the White Lotus?
+  55104212  0.4882  Taylor Swift + Travis Kelce break up before May?
+  66748062  0.4893  Will Lily Phillips break Bonnie Blue's  24hr sex record before April?
+  69772227  0.4898  Will Victoria die in Season 3 of the White Lotus?
+  69772217  0.4908  Will Belinda die in Season 3 of the White Lotus?
+  70671174  0.4917  Will Momo win Crunchyroll's Best Main Character Award for 2025?
+  32273528  0.4929  Will Brittney Griner return to the U.S. by December 31?
+  51058596  0.4945  Will Elon get someone pregnant before July?
+  66468388  0.4962  Karen Bass out as Mayor of LA before April?
+  69772251  0.4967  Will Jaclyn die in Season 3 of the White Lotus?
+  26474701  0.4970  Will Kim Kardashian announce she’s pregnant by July 31, 2022?
+  64446815  0.4987  Will another coach be the next coach fired?
+  68324993  0.5018  Will the Utah Jazz finish with the worst regular season record?
+  74598880  0.5023  Will Yaz Broom win Love Island season 12?
+  68490310  0.5055  Will Saiounia "Sai" Hughley win Survivor 48?
+  60594512  0.5064  Serena and Cordell together during Love Island reunion?
+  77428659  0.5075  Will Taylor Swift say "Pregnant" or "Pregnancy" during Late Night with Seth Meye
+  59836715  0.5076  Will Mollie O’Callaghan (AUS) win Gold in Women's 200m Freestyle?
+  74598767  0.5116  Will Jamie Rhodes win Love Island season 12?
+  77726660  0.5137  Will Lady Shenandoah win the 2025 TAB Everest?
+  74598864  0.5138  Will Emma Munro win Love Island season 12?
+  77141566  0.5143  Will Taylor Swift say "Pregnant" during Tonight Show on October 6?
+  70302664  0.5144  Who will get drafted first: Shedeur Sanders or Jaxson Dart?
+  78714860  0.5147  Will Lebanon take second place in Miss Universe 2025?
+  60645361  0.5151  Taylor Lorenz leaves WaPo in August?
+  73010981  0.5153  Will Amaya win Season 7 of Love Island USA?
+  73010987  0.5155  Will Andreina win Season 7 of Love Island USA?
+  74598849  0.5165  Will Lucy Quinn win Love Island season 12?
+  74329351  0.5167  Will Katie Wilson win the 2025 Seattle mayoral election?
+  77141633  0.5180  Will Jeremiah Ing win Survivor season 49?
+  76360196  0.5182  Tyler Robinson released by September 19?
+  77141663  0.5183  Will Jason Treul win Survivor season 49?
+  76260688  0.5189  Khaled Mashal public appearance by September 19?
+  73011040  0.5194  Will Yulissa win Season 7 of Love Island USA?
+  78241168  0.5200  Will Isabella rank #1 among girl names on the SSA’s official list for 2025?
+  74598844  0.5202  Will Angel Swift win Love Island season 12?
+  73011011  0.5203  Will Iris win Season 7 of Love Island USA?
+  68490377  0.5206  Will Bianca Roses win Survivor 48?
+  77141629  0.5206  Will Savannah Louie win Survivor season 49?
+  68324872  0.5208  Will the New York Knicks finish with the worst regular season record?
+  65995474  0.5211  Will Laura Loomer get her bluecheck back by Friday?
+  59682213  0.5213  Will Kamala Harris go on Hot Ones by August 31?
+  78241138  0.5220  Will Olivia rank #1 among girl names on the SSA’s official list for 2025?
+  62352385  0.5223  Lana Del Rey pregnant in 2024?
+  63446661  0.5227  Will Kevin Stefanski be the next coach fired?
+  64446731  0.5227  Will Kevin Stefanski be the next coach fired?
+  77944280  0.5227  Will Kevin Stefanski be the next coach fired?
+  76859319  0.5227  Will Kevin Stefanski be the next coach fired?
+  63446668  0.5230  Will Nick Sirianni be the next coach fired?
+  76006679  0.5233  Will Hakeem Jeffries endorse Mamdani?
+  73011022  0.5238  Will Olandria win Season 7 of Love Island USA?
+  74598869  0.5242  Will Poppy Harrison win Love Island season 12?
+  65125332  0.5244  Will Hailey Welch apologize by Friday?
+  77141641  0.5250  Will Steven Ramm win Survivor season 49?
+  73011028  0.5254  Will Taylor win Season 7 of Love Island USA?
+  68324620  0.5254  Will the Atlanta Hawks finish with the worst regular season record?
+  74598854  0.5259  Will Lauren Wood win Love Island season 12?
+  64013625  0.5260  AOC pregnant in 2024?
+  74598752  0.5265  Will Remell Mullings win Love Island season 12?
+  68490283  0.5275  Will Eva Erickson win Survivor 48?
+  74244208  0.5276  Kristin Cabot out as Astronomer CPO in July?
+  77141654  0.5284  Will Sophi Balerdi win Survivor season 49?
+  44193169  0.5287  Will Moriah Mills leak a sex tape with Zion Williamson?
+  74598821  0.5289  Will Megan "Meg" Moore win Love Island season 12?
+  78241183  0.5291  Will Sofia rank #1 among girl names on the SSA’s official list for 2025?
+  65846255  0.5306  Will Billy Donovan make the 2025 Class of the Naismith Basketball Hall of Fame?
+  68490389  0.5308  Will Chrissy Sarnowsky win Survivor 48?
+  74598839  0.5324  Will Yasmin Pettet win Love Island season 12?
+  59843125  0.5324  Will Emma McKeon (AUS) win Gold in Women's 100m Butterfly?
+  60392221  0.5335  Will Lonah Chemtai Salpeter (ISR) win gold in the Women’s Marathon?
+  71552022  0.5336  Will Breanna Nix win American Idol season 23?
+  78241153  0.5348  Will Charlotte rank #1 among girl names on the SSA’s official list for 2025?
+  68324851  0.5351  Will the Minnesota Timberwolves finish with the worst regular season record?
+  73332622  0.5355  Will Ace Bailey play in the Jazz Summer League?
+  73011034  0.5359  Will Belle-A win Season 7 of Love Island USA?
+  73010999  0.5365  Will Hannah win Season 7 of Love Island USA?
+  65846314  0.5373  Will Micky Arison make the 2025 Class of the Naismith Basketball Hall of Fame?
+  74598831  0.5382  Will Megan Forte Clarke win Love Island season 12?
+  52483093  0.5392  Will Sherrone Moore be the next head coach of the Michigan Wolverines?
+  59488567  0.5402  Who will 538 project as favorite on July 26?
+  61707144  0.5407  Shannon Sharpe fired from ESPN?
+  57005663  0.5410  Fantasy Top Hero arrested by end of May?
+  74598875  0.5412  Will Caprice Alexandra win Love Island season 12?
+  68121950  0.5414  Was the captain of crashed Delta flight a woman?
+  19916541  0.5415  Will Olivia Jade and Val Chmerkovskiy Win Season 30 of Dancing with the Stars?
+  75433308  0.5415  Lynx vs Dream
+  73240369  0.5415  Lynx vs Dream
+  78241178  0.5422  Will Ava rank #1 among girl names on the SSA’s official list for 2025?
+  66265898  0.5424  Starmer out before July?
+  64561534  0.5428  Will Lebron tweet again in November?
+  56462457  0.5429  Will LeBron retire before July?
+  77141687  0.5430  Will Rizo Velovic win Survivor season 49?
+  65846265  0.5431  Will Mark Few make the 2025 Class of the Naismith Basketball Hall of Fame?
+  60392209  0.5435  Will Sharon Lokedi (KEN) win gold in the Women’s Marathon?
+  68490422  0.5444  Will Mary Zheng win Survivor 48?
+  74598816  0.5452  Will Helena Ford win Love Island season 12?
+  78005549  0.5455  Will CJ McCollum lead the NBA in three pointers made during the 2025–26 NBA seas
+  78005609  0.5464  Will Kon Knueppel lead the NBA in three pointers made during the 2025–26 NBA sea
+  65125436  0.5473  Will Hailey Welch tweet again by Friday?
+  59841886  0.5482  Will Sarah Sjostrom (SWE) win Gold in Women's 100m Freestyle?
+  60392157  0.5483  Will Hellen Obiri (KEN) win gold in the Women’s Marathon?
+  70728663  0.5483  Angels vs. Twins
+  70769298  0.5483  Angels vs. Twins
+  70905432  0.5489  Will Lebron James retire before July?
+  77795248  0.5499  Tampico: Hanne Vandewinkel vs Harriet Dart
+  77141678  0.5504  Will Matt Williams win Survivor season 49?
+  78005594  0.5518  Will Sam Hauser lead the NBA in three pointers made during the 2025–26 NBA seaso
+  74598835  0.5518  Will Toni Laites win Love Island season 12?
+  56654620  0.5518  Drake's secret daughter confirmed by May 31?
+  70618390  0.5520  Will Shedeur Sanders be a top 20 draft pick?
+  77645244  0.5531  Troy vs. UL Monroe
+  77141700  0.5531  Will Sophie Segreti win Survivor season 49?
+  68265385  0.5532  Queens vs. North Alabama
+  73457342  0.5535  Will Katherine Legge win the 2025 NASCAR Grant Park 165?
+  78022260  0.5540  Will the Utah Jazz win more than 18.5 regular season games in 2025–26?
+  72973431  0.5544  Will Noa Essengue be drafted in the top 5 of the 2025 NBA Draft?
+  76197866  0.5547  Twins vs. Angels
+  76157206  0.5547  Twins vs. Angels
+  59843104  0.5554  Will Torri Huske (USA) win Gold in Women's 100m Butterfly?
+  78005805  0.5555  Will Ivica Zubac lead the NBA in blocks during the 2025–26 NBA season?
+  59841101  0.5556  Will Gretchen Walsh (USA) win Gold in Women's 50m Freestyle?
+  60549537  0.5558  Will Derrick Henry be the top Fantasy Flex Player?
+  60549445  0.5558  Will A.J. Brown be the top Fantasy Flex Player?
+  72477125  0.5564  Will Kasparas Jakucionis be the second pick of the 2025 NBA Draft?
+  60392172  0.5566  Will Amane Beriso Shankule (ETH) win gold in the Women’s Marathon?
+  68324981  0.5569  Will the Toronto Raptors finish with the worst regular season record?
+  72477045  0.5571  Will Dylan Harper be the second pick of the 2025 NBA Draft?
+  72477176  0.5572  Will Noa Essengue be the fourth pick of the 2025 NBA Draft?
+  60549467  0.5579  Will Puka Nacua be the top Fantasy Flex Player?
+  68377269  0.5588  Mary Kate Cornett OnlyFans by Friday?
+  78005925  0.5594  Will Shai Gilgeous-Alexander lead the NBA in blocks during the 2025–26 NBA seaso
+  59842024  0.5594  Will Torri Huske (USA) win Gold in Women's 100m Freestyle?
+  72477297  0.5596  Will Noa Essengue be the fifth pick of the 2025 NBA Draft?
+  68045851  0.5598  Tiffany Fong pregnant before July?
+  59843807  0.5604  Will Kaylee McKeowan (AUS) win Gold in 100m Women's Backstroke?
+  70703851  0.5605  Will Kasparas Jakucionis be the first pick of the 2025 NBA Draft?
+  59840171  0.5605  Will Regan Smith (USA) win Gold in Women's 200m Butterfly?
+  17557238  0.5607  Will Allyson Felix win a medal in the Women’s 400M?
+  77141691  0.5609  Will Sage Ahrens-Nichols win Survivor season 49?
+  72477246  0.5610  Will Kasparas Jakucionis be the fourth pick of the 2025 NBA Draft?
+  78005795  0.5611  Will Evan Mobley lead the NBA in blocks during the 2025–26 NBA season?
+  75186302  0.5612  Will Rhamondre Stevenson record the most fantasy points in Week 1?
+  72477038  0.5614  Will Kasparas Jakucionis be the third pick of the 2025 NBA Draft?
+  72477340  0.5614  Will Kasparas Jakucionis be the fifth pick of the 2025 NBA Draft?
+  59840762  0.5615  Will Kaylee McKeown (AUS) win Gold in Women's 200m Backstroke?
+  78004911  0.5615  Will Alperen Sengun lead the NBA in assists during the 2025–26 NBA season?
+  59843094  0.5615  Will Gretchen Walsh (USA) win Gold in Women's 100m Butterfly?
+  59840458  0.5617  Will Kaylee McKeown win the most gold medals?
+  71824010  0.5617  Sun vs Lynx
+  73321546  0.5617  Sun vs Lynx
+  68866511  0.5619  Charlotte vs. Rice
+  72476975  0.5621  Will Noa Essengue be the third pick of the 2025 NBA Draft?
+  75186171  0.5622  Will Ashton Jeanty record the most fantasy points in Week 1?
+  74598885  0.5625  Will Malisha Jordan win Love Island season 12?
+  72973457  0.5626  Will Noa Essengue be drafted in the top 10 of the 2025 NBA Draft?
+  77141637  0.5627  Will Michelle “MC” Chukwujekwu win Survivor season 49?
+  77141673  0.5634  Will Kristina Mills win Survivor season 49?
+  78004626  0.5637  Will Alperen Sengun lead the NBA in points during the 2025–26 NBA season?
+  68324650  0.5639  Will the Charlotte Hornets finish with the worst regular season record?
+  74880997  0.5642  Will Diana Shnaider win the 2025 WTA Cincinnati?
+  72477268  0.5644  Will Dylan Harper be the fifth pick of the 2025 NBA Draft?
+  63683354  0.5646  Kamala wins 275-263 - Sunbelt Sweep
+  68324922  0.5647  Will the Phoenix Suns finish with the worst regular season record?
+  78335727  0.5649  Mary Baldwin Fighting Squirrels vs. Longwood Lancers
+  60392149  0.5653  Will Sifan Hassan (NED) win gold in the Women’s Marathon?
+  78022256  0.5655  Will the Atlanta Hawks win more than 47.5 regular season games in 2025–26?
+  72973462  0.5655  Will Kasparas Jakucionis be drafted in the top 10 of the 2025 NBA Draft?
+  68324651  0.5655  Will the Charlotte Hornets finish with the best regular season record?
+  66506603  0.5656  Will Travis hunter only play offense?
+  78022258  0.5658  Will the Indiana Pacers win more than 37.5 regular season games in 2025–26?
+  78004846  0.5660  Will Darius Garland lead the NBA in assists during the 2025–26 NBA season?
+  78006131  0.5660  Will Tari Eason lead the NBA in steals during the 2025–26 NBA season?
+  73697106  0.5662  Will Victor Wembanyama be the NBA 2K26 cover athlete?
+  77946464  0.5663  UL Monroe vs. Southern Miss
+  59836809  0.5664  Will Erika Fairweather (NZL) win Gold in Women's 200m Freestyle?
+  65846125  0.5665  Will Carmelo Anthony make the 2025 Class of the Naismith Basketball Hall of Fame
+  73266493  0.5665  Will Zion leave the Pelicans before next season?
+  53569495  0.5667  Fani Willis off Georgia case by Feb 29?
+  78005498  0.5675  Will Darius Garland lead the NBA in three pointers made during the 2025–26 NBA s
+  78005443  0.5675  Will Tyrese Maxey lead the NBA in three pointers made during the 2025–26 NBA sea
+  59841988  0.5676  Will Gretchen Walsh (USA) win Gold in Women's 100m Freestyle?
+  74881055  0.5676  Will Ashlyn Krueger win the 2025 WTA Cincinnati?
+  78022260  0.5677  Will the New York Knicks win more than 53.5 regular season games in 2025–26?
+  75186270  0.5679  Will Isiah Pacheco record the most fantasy points in Week 1?
+  73424848  0.5681  Will the Phoenix Suns be Jonathan Kuminga's next team?
+  72476934  0.5681  Will Dylan Harper be the third pick of the 2025 NBA Draft?
+  65361966  0.5687  Will Isaac Guerendo play Week 15?
+  73172970  0.5689  Will Kyrie Irving opt in to his player option?
+  75186359  0.5691  Will Tyler Allgeier record the most fantasy points in Week 1?
+  75186464  0.5694  Will Justin Jefferson record the most fantasy points in Week 1?
+  59834100  0.5699  Will Erika Fairweather (NZL) win Gold in Women's 400m Freestyle?
+  11776740  0.5700  Will any Knicks game have greater than 20% attendance before the NBA season ends
+  73697115  0.5701  Will Luka Dončić be the NBA 2K26 cover athlete?
+  78005463  0.5707  Will Brice Sensabaugh lead the NBA in three pointers made during the 2025–26 NBA
+  78004501  0.5709  Will Tyrese Maxey lead the NBA in points during the 2025–26 NBA season?
+  72691925  0.5710  Bonnie Blue unbanned on OnlyFans in June?
+  78005458  0.5718  Will Trae Young lead the NBA in three pointers made during the 2025–26 NBA seaso
+  77141659  0.5719  Will Kimberly “Anne” Davis win Survivor season 49?
+  73697109  0.5719  Will Nikola Jokic be the NBA 2K26 cover athlete?
+  74881964  0.5719  Will the Minnesota Vikings win 10 or more regular season games?
+  60549174  0.5721  Will Justin Jefferson be the top Fantasy Flex Player?
+  73697112  0.5722  Will Cade Cunningham be the NBA 2K26 cover athlete?
+  78006116  0.5727  Will Matisse Thybulle lead the NBA in steals during the 2025–26 NBA season?
+  78022258  0.5729  Will the Oklahoma City Thunder win more than 62.5 regular season games in 2025–2
+  78005072  0.5730  Will Ivica Zubac lead the NBA in rebounds during the 2025–26 NBA season?
+  74881964  0.5736  Will the Los Angeles Chargers win 10 or more regular season games?
+  65846197  0.5737  Will Maya Moore make the 2025 Class of the Naismith Basketball Hall of Fame?
+  78539547  0.5741  Will Heracles Almelo win on 2025-11-29?
+  60546235  0.5744  Will Kyren Williams be the top Fantasy Running Back?
+  75186621  0.5750  Will Jakobi Meyers record the most fantasy points in Week 1?
+  78004556  0.5751  Will Pascal Siakam lead the NBA in points during the 2025–26 NBA season?
+  78022259  0.5754  Will the Minnesota Timberwolves win more than 49.5 regular season games in 2025–
+  78004621  0.5754  Will Jordan Poole lead the NBA in points during the 2025–26 NBA season?
+  78005845  0.5759  Will Mark Williams lead the NBA in blocks during the 2025–26 NBA season?
+  59840164  0.5760  Will Summer McIntosh (CAN) win Gold in Women's 200m Butterfly?
+  77372745  0.5762  Will Heracles Almelo win on 2025-10-19?
+  60035536  0.5765  Will Suni Lee (USA) win Gold in Women’s Individual All-Around Gymnastics?
+  71451135  0.5765  Will Kyrie Irving join a new team this offseason?
+  78004491  0.5765  Will Zion Williamson lead the NBA in points during the 2025–26 NBA season?
+  68707108  0.5768  Virginia vs. Syracuse
+  68400321  0.5769  Mary Kate Cornett dropped by sorority by Friday?
+  78005448  0.5771  Will Coby White lead the NBA in three pointers made during the 2025–26 NBA seaso
+  63168651  0.5773  Who will win white women?
+  71743735  0.5774  Wings vs Lynx
+  78022256  0.5775  Will the Denver Nuggets win more than 53.5 regular season games in 2025–26?
+  75186224  0.5777  Will Omarion Hampton record the most fantasy points in Week 1?
+  71593938  0.5781  Will Derrick White score 21+ points against the Knicks?
+  59804114  0.5783  Will Katie Ledecky (USA) win Gold in Women's 800m Freestyle?
+  71553019  0.5783  Lynx vs Wings
+  72469296  0.5783  Lynx vs Wings
+  61524576  0.5789  Jordan Love placed on IR?
+  78005137  0.5789  Will Nikola Vucevic lead the NBA in rebounds during the 2025–26 NBA season?
+  78005413  0.5793  Will Anfernee Simons lead the NBA in three pointers made during the 2025–26 NBA 
+  69147245  0.5796  Queens vs. Northern Arizona
+  73256236  0.5796  Will Demar Derozan join a new team this offseason?
+  78005453  0.5799  Will Jordan Poole lead the NBA in three pointers made during the 2025–26 NBA sea
+  60041319  0.5802  Will Yeo Seo-Jeong (KOR) win Gold in Women’s Vault Final?
+  74881960  0.5805  Will the Las Vegas Raiders win 7 or more regular season games?
+  74849955  0.5807  Will Kyren Williams be the Top Fantasy Running Back for the 2025–26 NFL Regular 
+  77174176  0.5807  The Life of a Showgirl Parlay
+  20187843  0.5810  Will Ben Simmons play in the 76ers’ season opener?
+  60549067  0.5814  Will CeeDee Lamb be the top Fantasy Flex Player?
+  75186592  0.5824  Will Jameson Williams record the most fantasy points in Week 1?
+  75186238  0.5829  Will Chuba Hubbard record the most fantasy points in Week 1?
+  78022258  0.5831  Will the Memphis Grizzlies win more than 39.5 regular season games in 2025–26?
+  60041260  0.5834  Will Shallon Olsen (CAN) win Gold in Women’s Vault Final?
+  78005117  0.5835  Will Alperen Sengun lead the NBA in rebounds during the 2025–26 NBA season?
+  75784996  0.5836  Will Marta win the 2025 Women’s Ballon d’Or?
+  78005238  0.5836  Will Neemias Queta lead the NBA in rebounds during the 2025–26 NBA season?
+  75793647  0.5841  Lynx vs. Sun
+  59834071  0.5846  Will Katie Ledecky (USA) win Gold in Women's 400m Freestyle?
+  75186030  0.5847  Will Caleb Williams record the most fantasy points in Week 1?
+  78005172  0.5855  Will Evan Mobley lead the NBA in rebounds during the 2025–26 NBA season?
+  74305766  0.5856  Sparks vs Sun
+  78625001  0.5857  Bethesda Lion Angels vs. Southern Utah Thunderbirds
+  77062185  0.5858  Syracuse vs. SMU Mustangs
+  77294756  0.5858  Utah vs. Predators
+  70239508  0.5858  Utah vs. Predators
+  21679377  0.5863  Will Lebron James be suspended for 3 or more games?
+  75186560  0.5863  Will Zay Flowers record the most fantasy points in Week 1?
+  78005132  0.5866  Will Isaiah Hartenstein lead the NBA in rebounds during the 2025–26 NBA season?
+  73118856  0.5866  Lynx vs Mystics
+  62878838  0.5866  Will Anfernee Simons lead the NBA in scoring?
+  74881956  0.5867  Will the New York Jets win 7 or more regular season games?
+  75186468  0.5869  Will CeeDee Lamb record the most fantasy points in Week 1?
+  73697111  0.5874  Will Bronny James be the NBA 2K26 cover athlete?
+  78005177  0.5880  Will Onyeka Okongwu lead the NBA in rebounds during the 2025–26 NBA season?
+  75186569  0.5883  Will Rashee Rice record the most fantasy points in Week 1?
+  71622354  0.5885  Lynx vs Sparks
+  73766796  0.5885  Lynx vs Sparks
+  78625003  0.5887  Wilson Phoenix vs. Towson Tigers
+  20187637  0.5889  Will Kyrie Irving play in an NBA game by October 31?
+  72973459  0.5889  Will Joan Beringer be drafted in the top 10 of the 2025 NBA Draft?
+  61394244  0.5891  Will the Atlanta Dream win the 2024 WNBA Finals?
+  59834061  0.5896  Will Summer McIntosh (CAN) win Gold in Women's 400m Freestyle?
+  75186045  0.5900  Will Drake Maye record the most fantasy points in Week 1?
+  73697113  0.5900  Will Tyrese Maxey be the NBA 2K26 cover athlete?
+  77141695  0.5901  Will Shannon Fairweather win Survivor season 49?
+  24066338  0.5906  NBA: Will the Hornets beat the Hawks by more than 3.5 points in their January 23
+  60041126  0.5907  Will Jade Carey (USA) win Gold in Women’s Vault Final?
+  73697112  0.5908  Will Giannis Antetokounmpo be the NBA 2K26 cover athlete?
+  78005233  0.5911  Will Moussa Diabate lead the NBA in rebounds during the 2025–26 NBA season?
+  23821747  0.5915  NBA: Will the Knicks beat the Hornets by more than 2.5 points in their January 1
+  71995260  0.5915  Will SGA score 33+ points against the Timberwolves?
+  78005900  0.5916  Will Isaiah Stewart lead the NBA in blocks during the 2025–26 NBA season?
+  72973427  0.5916  Will Derik Queen be drafted in the top 5 of the 2025 NBA Draft?
+  65846146  0.5917  Will Sue Bird make the 2025 Class of the Naismith Basketball Hall of Fame?
+  78006271  0.5917  Will Reed Sheppard lead the NBA in steals during the 2025–26 NBA season?
+  72477195  0.5918  Will Derik Queen be the fourth pick of the 2025 NBA Draft?
+  75784987  0.5929  Will Chloe Kelly win the 2025 Women’s Ballon d’Or?
+  62068481  0.5929  Lynx vs. Mercury Series Winner
+  71437466  0.5931  Will the Washington Mystics make the playoffs?
+  74907179  0.5935  Mystics vs Lynx
+  73482937  0.5935  Mystics vs Lynx
+  75784931  0.5936  Will Steph Catley win the 2025 Women’s Ballon d’Or?
+  24139900  0.5945  NBA: Will the Raptors beat the Hornets by more than 3.5 points in their January 
+  69956207  0.5947  Predators vs. Utah
+  71437383  0.5950  Will the Atlanta Dream win the 2025 WNBA Championship?
+  76342994  0.5955  Skye Valadez confirmed perp?
+  67903786  0.5957  Queens vs. Eastern Kentucky
+  78711385  0.5961  Elizabeth City State Vikings vs. East Carolina Pirates
+  49985170  0.5963  Will Draymond Green be suspended for 10+ games?
+  61394295  0.5963  Will the Dallas Wings win the 2024 WNBA Finals?
+  73697108  0.5964  Will Shai Gilgeous-Alexander be the NBA 2K26 cover athlete?
+  72477315  0.5965  Will Derik Queen be the fifth pick of the 2025 NBA Draft?
+  61394158  0.5965  Will the Chicago Sky win the 2024 WNBA Finals?
+  58485029  0.5965  Will another player be the first pick in the 2024 NBA Draft?
+  73697118  0.5965  Will Jalen Williams be the NBA 2K26 cover athlete?
+  78450401  0.5967  Elizabeth City State Vikings vs. Old Dominion Monarchs (W)
+  78797780  0.5972  Southern Utah Thunderbirds vs. Idaho Vandals (W)
+  74881959  0.5973  Will the Tennessee Titans win 7 or more regular season games?
+  71797283  0.5976  Will Pascal Siakam score 19+ points against the Knicks?
+  72476992  0.5976  Will Derik Queen be the third pick of the 2025 NBA Draft?
+  75186574  0.5984  Will DeVonta Smith record the most fantasy points in Week 1?
+  72714022  0.5991  Sparks vs Lynx
+  72997556  0.5991  Sparks vs Lynx
+  72973457  0.5995  Will Derik Queen be drafted in the top 10 of the 2025 NBA Draft?
+  61394260  0.5997  Will the Washington Mystics win the 2024 WNBA Finals?
+  75784944  0.6003  Will Emily Fox win the 2025 Women’s Ballon d’Or?
+  61393710  0.6004  Will the New York Liberty win the 2024 WNBA Finals?
+  25475980  0.6005  Will Kyrie Irving play any home games during the 2021-2022 NBA regular season?
+  78407195  0.6007  Harris-Stowe Hornets vs. Lindenwood Lions (W)
+  78022258  0.6008  Will the Charlotte Hornets win more than 27.5 regular season games in 2025–26?
+  71437388  0.6010  Will the Chicago Sky win the 2025 WNBA Championship?
+  71437449  0.6011  Will the Washington Mystics win the 2025 WNBA Championship?
+  61394096  0.6014  Will the Indiana Fever win the 2024 WNBA Finals?
+  67501581  0.6014  Will Emma Nelson (Player 937) win the Beast Games?
+  71725609  0.6019  Will Angel Reese win the 2025 WNBA MVP?
+  78005112  0.6025  Will Mark Williams lead the NBA in rebounds during the 2025–26 NBA season?
+  71437398  0.6025  Will the Dallas Wings win the 2025 WNBA Championship?
+  74881952  0.6029  Will the Seattle Seahawks win 9 or more regular season games?
+  71437431  0.6034  Will the New York Liberty win the 2025 WNBA Championship?
+  75392672  0.6036  Wings vs Sparks
+  78797805  0.6037  Delaware State Hornets vs. New Haven Chargers
+  66788488  0.6045  Will Kyren Williams score a touchdown?
+  66506670  0.6046  Travis Hunter doesn't play Offense or Defense in first 4 games?
+  33355564  0.6046  Will Miles Bridges play an NBA game in the 2022-23 regular season?
+  71437408  0.6049  Will the Indiana Fever win the 2025 WNBA Championship?
+  75784900  0.6051  Will Sandy Baltimore win the 2025 Women’s Ballon d’Or?
+  75186208  0.6053  Will Kyren Williams record the most fantasy points in Week 1?
+  71725579  0.6054  Will Jewell Loyd win the 2025 WNBA MVP?
+  76118241  0.6056  Wings vs. Sparks
+  74000816  0.6057  Will Gabby Thomas win the 2025 ESPYS award for Best Athlete - Women's Sports?
+  75784914  0.6059  Will Lucy Bronze win the 2025 Women’s Ballon d’Or?
+  78022257  0.6060  Will the Toronto Raptors win more than 39.5 regular season games in 2025–26?
+  72388110  0.6060  Sparks vs Wings
+  75189808  0.6060  Sparks vs Wings
+  73256237  0.6062  Will Zion Williamson join a new team this offseason?
+  47709564  0.6063  Damian Lillard traded before start of season?
+  60549566  0.6064  Will another player be the top Fantasy Flex Player?
+  75186601  0.6065  Will Tetairoa McMillan record the most fantasy points in Week 1?
+  74000820  0.6066  Will A’ja Wilson win the 2025 ESPYS award for Best Athlete - Women's Sports?
+  61393818  0.6067  Will the Las Vegas Aces win the 2024 WNBA Finals?
+  78022260  0.6069  Will the Phoenix Suns win more than 30.5 regular season games in 2025–26?
+  78538612  0.6072  Iona Gaels vs. New Haven Chargers (W)
+  59485835  0.6074  Will Belgium win Gold in Women's Basketball?
+  76164571  0.6078  Will Jaxson Dart play Week 1?
+  35362010  0.6079  Will Kyrie Irving play any games by November 15?
+  71797301  0.6079  Will Timothée Chalamet attend the Knicks Game 1?
+  75186288  0.6080  Will Javonte Williams record the most fantasy points in Week 1?
+  71555047  0.6083  Will Timothée Chalamet attend the Knicks Game 6?
+  71725539  0.6086  Will A'ja Wilson win the 2025 WNBA MVP?
+  79013773  0.6094  Elon Phoenix vs. Miami Hurricanes
+  67501598  0.6096  Will Yesenia Hernandez Jaime (Player 947) win the Beast Games?
+  68866690  0.6097  Seattle vs. Abilene Christian
+  67788467  0.6097  Seattle vs. Abilene Christian
+  71437414  0.6097  Will the Las Vegas Aces win the 2025 WNBA Championship?
+  79039367  0.6113  Spread: SMU Mustangs (-7.5)
+  78423908  0.6114  Will Mississippi St. (Women’s) win the 2025–2026 SEC Regular Season?
+  75186940  0.6118  Angels vs. Athletics
+  71781506  0.6118  Angels vs. Athletics
+  75227506  0.6118  Angels vs. Athletics
+  71660260  0.6118  Angels vs. Athletics
+  71700650  0.6118  Angels vs. Athletics
+  71741178  0.6118  Angels vs. Athletics
+  75268086  0.6118  Angels vs. Athletics
+  77946447  0.6119  Spread: SMU Mustangs (-3.5)
+  59807008  0.6120  Katie Ledecky wins 3 gold medals?
+  78504696  0.6131  Jazz vs. Hornets: 1H O/U 113.5
+  71725561  0.6134  Will Satou Sabally win the 2025 WNBA MVP?
+  59485853  0.6135  Will Australia win Gold in Women's Basketball?
+  59806998  0.6144  Katie Ledecky wins 2 gold medals?
+  61393892  0.6148  Will the Connecticut Sun win the 2024 WNBA Finals?
+  59806989  0.6151  Katie Ledecky wins 1 or fewer gold medals?
+  71725556  0.6153  Will Sabrina Ionescu win the 2025 WNBA MVP?
+  59485814  0.6154  Will China win Gold in Women's Basketball?
+  75834187  0.6155  Mystics vs. Sparks
+  60041344  0.6155  Will Alexa Moreno (MEX) win Gold in Women’s Vault Final?
+  73945228  0.6160  Mystics vs Sparks
+  77214734  0.6166  Spread: SMU Mustangs (-17.5)
+  71437393  0.6181  Will the Connecticut Sun win the 2025 WNBA Championship?
+  78423923  0.6184  Will Vanderbilt (Women’s) win the 2025–2026 SEC Regular Season?
+  75784963  0.6186  Will Hannah Hampton win the 2025 Women’s Ballon d’Or?
+  78423933  0.6186  Will Arkansas (Women’s) win the 2025–2026 SEC Regular Season?
+  71437403  0.6192  Will the Golden State Valkyries win the 2025 WNBA Championship?
+  60117320  0.6194  Will Any Other Team win Gold in Women’s Beach Volleyball?
+  74225282  0.6196  Sparks vs Mystics
+  75270758  0.6196  Sparks vs Mystics
+  79035756  0.6198  Spread: Queens (NC) Royals (-5.5)
+  71725603  0.6203  Will Brittney Griner win the 2025 WNBA MVP?
+  77346430  0.6203  Spread: SMU Mustangs (-19.5)
+  77438968  0.6211  Spread: SMU Mustangs (-18.5)
+  71450744  0.6217  Will Karl Smesko win WNBA Coach of the Year?
+  78819824  0.6222  Spread: Hawaii Rainbow Warriors (-18.5)
+  77062184  0.6223  Spread: SMU Mustangs (-16.5)
+  71437420  0.6230  Will the Los Angeles Sparks win the 2025 WNBA Championship?
+  78782022  0.6230  Spread: Hawaii Rainbow Warriors (-19.5)
+  60392257  0.6233  Will another athlete win gold in the Women’s Marathon?
+  79039357  0.6233  Spread: Queens (NC) Royals (-4.5)
+  54074222  0.6237  Will Caitlin Clark fail to beat Maravich's record by end of reg. season?
+  72601228  0.6240  WNBA: Will Angel Reese miss her first shot vs. Liberty?
+  71437437  0.6241  Will the Phoenix Mercury win the 2025 WNBA Championship?
+  59807017  0.6244  Katie Ledecky wins 4+ gold medals?
+  66596774  0.6248  Suns vs. Hawks
+  73782684  0.6248  Suns vs. Hawks
+  78336227  0.6248  Cornell Big Red vs. Kent State Golden Flashes
+  75785031  0.6248  Will Leah Williamson win the 2025 Women’s Ballon d’Or?
+  78625010  0.6255  Canisius Golden Griffins vs. Syracuse Orange (W)
+  71451178  0.6258  Will Sonia Citron win WNBA Rookie of the Year?
+  79027474  0.6260  Will a transgender women athlete compete at the 2026 Winter Games?
+  78423882  0.6261  Will South Carolina (Women’s) win the 2025–2026 SEC Regular Season?
+  78407216  0.6263  William & Mary Tribe vs. Davidson Wildcats (W)
+  71725545  0.6263  Will Napheesa Collier win the 2025 WNBA MVP?
+  71725585  0.6263  Will Arike Ogunbowale win the 2025 WNBA MVP?
+  61394142  0.6266  Will the Phoenix Mercury win the 2024 WNBA Finals?
+  71725615  0.6275  Will Jackie Young win the 2025 WNBA MVP?
+  73820484  0.6276  Hornets vs. Mavericks
+  77429770  0.6276  Hornets vs. Mavericks
+  78538606  0.6277  Delaware State Hornets vs. Syracuse Orange
+  68729936  0.6277  Paige VanZant vs. Mikael-Michelle Brown
+  72843515  0.6284  WNBA: Will Angel Reese miss her first shot vs. Mystics?
+  71725597  0.6286  Will Kahleah Copper win the 2025 WNBA MVP?
+  61393876  0.6287  Will the Minnesota Lynx win the 2024 WNBA Finals?
+  78884188  0.6290  Bethesda Lion Angels vs. San Jose State Spartans
+  67501453  0.6297  Will Courtney Ferris (Player 424) win the Beast Games?
+  78927392  0.6302  Eastern Kentucky Colonels vs. Kent State Golden Flashes
+  77714256  0.6307  Spread: Hornets (-3.5)
+  78470492  0.6307  Spread: Hornets (-3.5)
+  78754593  0.6308  VU of Lynchburg Dragons vs. Alabama State Hornets
+  61394054  0.6310  Will the Seattle Storm win the 2024 WNBA Finals?
+  71725573  0.6310  Will Kelsey Plum win the 2025 WNBA MVP?
+  71725590  0.6311  Will Rhyne Howard win the 2025 WNBA MVP?
+  78840985  0.6311  Kent State Golden Flashes vs. Wright State Raiders
+  77716055  0.6315  Spread: Hornets (-4.5)
+  78335647  0.6323  Indiana State Sycamores vs. Charlotte 49ers
+  63325111  0.6324  Who will win women?
+  69788250  0.6328  Spread: Clippers (-19.5)
+  69340471  0.6331  Spread: Warriors (-3.5)
+  69828852  0.6331  Spread: Warriors (-3.5)
+  69744371  0.6331  Spread: Warriors (-3.5)
+  69946883  0.6331  Spread: Warriors (-3.5)
+  70757346  0.6331  Spread: Warriors (-3.5)
+  78607281  0.6331  Spread: Warriors (-3.5)
+  69461504  0.6331  Spread: Warriors (-3.5)
+  70314808  0.6331  Spread: Warriors (-3.5)
+  70221945  0.6331  Spread: Warriors (-3.5)
+  78119505  0.6331  Spread: Warriors (-3.5)
+  77432646  0.6331  Spread: Warriors (-3.5)
+  70031013  0.6331  Spread: Warriors (-3.5)
+  78362500  0.6331  Spread: Warriors (-3.5)
+  69869571  0.6331  Spread: Warriors (-3.5)
+  71437425  0.6333  Will the Minnesota Lynx win the 2025 WNBA Championship?
+  59485824  0.6337  Will France win Gold in Women's Basketball?
+  78423938  0.6344  Will Tennessee (Women’s) win the 2025–2026 SEC Regular Season?
+  59485863  0.6346  Will Japan win Gold in Women's Basketball?
+  69105038  0.6354  Hawks vs. Hornets
+  64685373  0.6354  Hawks vs. Hornets
+  60035648  0.6356  Will another athlete win Gold in Women’s Individual All-Around Gymnastics?
+  79056908  0.6364  Alabama State Hornets vs. Vanderbilt Commodores (W)
+  71725567  0.6365  Will Alyssa Thomas win the 2025 WNBA MVP?
+  69946885  0.6365  Spread: Warriors (-5.5)
+  70031026  0.6365  Spread: Warriors (-5.5)
+  70221963  0.6365  Spread: Warriors (-5.5)
+  70314792  0.6365  Spread: Warriors (-5.5)
+  70757360  0.6365  Spread: Warriors (-5.5)
+  69461524  0.6365  Spread: Warriors (-5.5)
+  69744353  0.6365  Spread: Warriors (-5.5)
+  69340485  0.6365  Spread: Warriors (-5.5)
+  69869551  0.6365  Spread: Warriors (-5.5)
+  78807763  0.6374  Kent State Golden Flashes vs. Akron
+  71437443  0.6377  Will the Seattle Storm win the 2025 WNBA Championship?
+  70152679  0.6380  Spread: Warriors (-13.5)
+  69661595  0.6380  Spread: Warriors (-13.5)
+  70071390  0.6380  Spread: Warriors (-13.5)
+  69587201  0.6380  Spread: Warriors (-13.5)
+  40533361  0.6385  NBA: New York Knicks vs. Minnesota Timberwolves 2023-03-20
+  71450727  0.6385  Will Nate Tibbetts win WNBA Coach of the Year?
+  72601256  0.6386  WNBA: Will Angel Reese have more points than rebounds vs. Liberty?
+  78624984  0.6388  Queens (NC) Royals vs. Duquesne Dukes
+  63324059  0.6392  Hornets vs. Hawks
+  49105704  0.6392  Hornets vs. Hawks
+  68824351  0.6392  Hornets vs. Hawks
+  79143297  0.6392  Hornets vs. Hawks
+  78171700  0.6395  Hornets vs. Wizards: O/U 234.5
+  61392533  0.6395  Will Caitlin Clark win Rookie of the Year?
+  69271507  0.6409  Knicks vs Hornets
+  79059159  0.6410  Delaware State Hornets vs. New Haven Chargers: O/U 130.5
+  40757728  0.6411  NBA: Toronto Raptors vs. Washington Wizards 2023-03-26
+  69105117  0.6411  Knicks vs. Hornets
+  49791558  0.6411  Knicks vs. Hornets
+  64685311  0.6411  Knicks vs. Hornets
+  71450715  0.6416  Will Sandy Brondello win WNBA Coach of the Year?
+  71725551  0.6421  Will Breanna Stewart win the 2025 WNBA MVP?
+  78429094  0.6424  Timberwolves vs. Hornets: 1H O/U 111.5
+  69754486  0.6426  Hornets vs Pacers
+  71450756  0.6429  Will Tyler Marsh win WNBA Coach of the Year?
+  78407195  0.6434  Mississippi University For Women Owls vs. Alcorn State Braves (W)
+  78450403  0.6436  William Jessup Warriors vs. Sacramento State Hornets
+  77952133  0.6436  Nets vs. Hornets: O/U 229.5
+  71450780  0.6441  Will Sydney Johnson win WNBA Coach of the Year?
+  71725533  0.6443  Will Caitlin Clark win the 2025 WNBA MVP?
+  70152687  0.6448  Spread: Warriors (-17.5)
+  70071392  0.6448  Spread: Warriors (-17.5)
+  69587223  0.6448  Spread: Warriors (-17.5)
+  60041432  0.6448  Will another athlete win Gold in Women’s Vault Final?
+  71450738  0.6452  Will Lynne Roberts win WNBA Coach of the Year?
+  78566356  0.6453  Kent State Golden Flashes vs. Ball State: 1H Moneyline
+  70152673  0.6459  Spread: Warriors (-18.5)
+  69587235  0.6459  Spread: Warriors (-18.5)
+  70071394  0.6459  Spread: Warriors (-18.5)
+  78463291  0.6460  Timberwolves vs. Hornets: 1H O/U 113.5
+  78128507  0.6464  Hornets vs. 76ers: O/U 232.5
+  78137506  0.6464  Hornets vs. 76ers: O/U 235.5
+  78164509  0.6470  Hornets vs. 76ers: O/U 238.5
+  71450774  0.6471  Will Rachid Meziane win WNBA Coach of the Year?
+  79053608  0.6474  Thunder vs. Hornets: O/U 226.5
+  71450768  0.6475  Will Noelle Quinn win WNBA Coach of the Year?
+  70071368  0.6479  Spread: Warriors (-19.5)
+  63884352  0.6480  Pacers vs. Hornets
+  49345979  0.6480  Pacers vs. Hornets
+  78202303  0.6483  Hornets vs. Wizards: O/U 239.5
+  63606101  0.6484  Raptors vs. Hornets
+  79064409  0.6486  Thunder vs. Hornets: O/U 223.5
+  77300339  0.6486  Thunder vs. Hornets: O/U 223.5
+  66321555  0.6487  Suns vs. Hornets
+  77697669  0.6490  Hornets vs. Knicks
+  64941007  0.6490  Hornets vs. Knicks
+  49952457  0.6490  Hornets vs. Knicks
+  79100116  0.6492  Cleveland State Vikings vs. Kent State Golden Flashes
+  78797798  0.6492  Cleveland State Vikings vs. Kent State Golden Flashes
+  72886336  0.6499  WNBA: Will Angel Reese get 11+ rebounds against the Mystics?
+  77645253  0.6506  Kent State Golden Flashes vs. Toledo
+  78624999  0.6506  Davidson Wildcats vs. Charlotte 49ers
+  71450749  0.6510  Will Natalie Nakase win WNBA Coach of the Year?
+  78130306  0.6510  Hornets vs. 76ers: O/U 233.5
+  78574877  0.6515  Hornets vs. Pelicans: O/U 235.5
+  79057359  0.6515  Delaware State Hornets vs. New Haven Chargers: O/U 131.5
+  71450733  0.6523  Will Cheryl Reeve win WNBA Coach of the Year?
+  71450762  0.6524  Will Chris Koclanes win WNBA Coach of the Year?
+  74039767  0.6529  Will A’ja Wilson win the 2025 ESPYS award for Best WNBA Player?
+  54074208  0.6529  Will Caitlin Clark beat Maravich's record in game vs. Minnesota?
+  66596714  0.6534  Hornets vs. Suns
+  57770994  0.6539  Caitlin Clark scores 20+ against Mystics?
+  78735227  0.6541  Delaware State Hornets vs. Syracuse Orange: O/U 160.5
+  79039207  0.6542  Thunder vs. Hornets: O/U 229.5
+  78638031  0.6543  Raiders Team Total: O/U 18.5
+  71450992  0.6543  Will Angel Reese win WNBA Most Improved Player?
+  71451206  0.6543  Will Ajsa Sivka win WNBA Rookie of the Year?
+  78132106  0.6543  Hornets vs. 76ers: O/U 234.5
+  63760361  0.6547  Hornets vs. Timberwolves
+  71450721  0.6549  Will Becky Hammon win WNBA Coach of the Year?
+  74039759  0.6552  Will Napheesa Collier win the 2025 ESPYS award for Best WNBA Player?
+  78335676  0.6552  Troy Trojans vs. Kent State Golden Flashes
+  78970582  0.6554  Hornets vs. Pacers
+  69765450  0.6554  Hornets vs. Pacers
+  65219456  0.6554  Hornets vs. Pacers
+  77809649  0.6555  Hornets vs. Knicks: O/U 224.5
+  69553751  0.6558  Hornets vs Raptors
+  70037662  0.6558  Hornets vs Raptors
+  40418734  0.6558  NBA: Charlotte Hornets vs. Philadelphia 76ers 2023-03-17
+  59485785  0.6559  Will the USA win Gold in Women's Basketball?
+  40585719  0.6561  NBA: Dallas Mavericks vs. Charlotte Hornets 2023-03-24
+  74856427  0.6564  Will a dildo be thrown onto the court at a WNBA game on Wednesday?
+  40163775  0.6565  NBA: Charlotte Hornets vs. Utah Jazz 2023-03-11
+  78756836  0.6566  Delaware State Hornets vs. Syracuse Orange: O/U 157.5
+  78733428  0.6568  Delaware State Hornets vs. Syracuse Orange: O/U 159.5
+  78555087  0.6570  Hornets vs. Pelicans: O/U 233.5
+  78565158  0.6571  Kent State Golden Flashes vs. Ball State
+  40583796  0.6572  NBA: New Orleans Pelicans vs. Charlotte Hornets 2023-03-23
+  79013779  0.6573  UNCG Spartans vs. Queens (NC) Royals
+  78845326  0.6576  Kent State Golden Flashes vs. Akron: O/U 46.5
+  78335967  0.6577  Mississippi University For Women Owls vs. Jackson State Tigers (W)
+  79100553  0.6579  Spread: Sacramento State Hornets (-6.5)
+  40418895  0.6582  NBA: Toronto Raptors vs. Minnesota Timberwolves 2023-03-18
+  78754585  0.6582  Kent State Golden Flashes vs. Xavier Musketeers (W)
+  78888528  0.6582  Kent State Golden Flashes vs. Akron: O/U 48.5
+  69427722  0.6583  Hornets vs. Raptors
+  50869971  0.6583  Hornets vs. Raptors
+  78884179  0.6583  Hornets vs. Raptors
+  69952789  0.6583  Hornets vs. Raptors
+  71451217  0.6584  Will Madison Scott win WNBA Rookie of the Year?
+  78891829  0.6586  Jets Team Total: O/U 13.5
+  78636234  0.6586  Jets Team Total: O/U 13.5
+  78336147  0.6591  Mississippi University For Women Owls vs. Mississippi Valley State Delta Devils
+  79059008  0.6592  Thunder vs. Hornets: O/U 225.5
+  79039207  0.6593  Thunder vs. Hornets: O/U 230.5
+  74856431  0.6594  Will a dildo be thrown onto the court at a WNBA game on Monday?
+  77786255  0.6596  Kent State Golden Flashes vs. Toledo: O/U 50.5
+  77294958  0.6599  Thunder vs. Hornets: O/U 219.5
+  74856428  0.6602  Will a dildo be thrown onto the court at a WNBA game on Saturday?
+  78560476  0.6603  Suns vs. Warriors: O/U 232.5
+  79016491  0.6606  Raiders Team Total: O/U 19.5
+  78542637  0.6606  Raiders Team Total: O/U 19.5
+  78459691  0.6607  Timberwolves vs. Hornets: O/U 233.5
+  79096803  0.6607  Hawks vs. Suns: O/U 229.5
+  78463291  0.6609  Timberwolves vs. Hornets: O/U 235.5
+  77432636  0.6612  Hornets vs. Thunder: O/U 223.5
+  79098752  0.6612  Spread: Sacramento State Hornets (-5.5)
+  78555087  0.6612  Hornets vs. Pelicans: O/U 234.5
+  39599663  0.6613  NBA: Minnesota Timberwolves vs. Charlotte Hornets 2023-02-24
+  39321723  0.6614  NBA: Knicks vs. Hawks (02/15/2023)
+  78450414  0.6616  Kent State Golden Flashes vs. West Virginia Mountaineers (W)
+  40349817  0.6617  NBA: Toronto Raptors vs. Oklahoma City Thunder 2023-03-16
+  78337447  0.6617  Bills Team Total: O/U 19.5
+  78594680  0.6620  Hornets vs. Pelicans: O/U 229.5
+  40839038  0.6621  NBA: Oklahoma City Thunder vs. Phoenix Suns 2023-04-02
+  78420092  0.6621  Timberwolves vs. Hornets: O/U 229.5
+  78758680  0.6630  Delaware State Hornets vs. Syracuse Orange: O/U 156.5
+  78897529  0.6632  Kent State Golden Flashes vs. Akron: O/U 49.5
+  78751435  0.6633  Delaware State Hornets vs. Syracuse Orange: O/U 161.5
+  62264196  0.6633  WNBA: Liberty vs. Aces Series Winner
+  74882609  0.6634  Next dildo thrown onto WNBA court is green/yellow?
+  79078950  0.6635  Spread: Sacramento State Hornets (-4.5)
+  77780850  0.6639  Hornets vs. Knicks: O/U 223.5
+  77440758  0.6643  Hornets vs. Thunder: O/U 215.5
+  40757681  0.6643  NBA: Charlotte Hornets vs. Dallas Mavericks 2023-03-26
+  71451200  0.6643  Will Saniya Rivers win WNBA Rookie of the Year?
+  77811449  0.6644  Hornets vs. Knicks: O/U 226.5
+  78149267  0.6647  Jets Team Total: O/U 19.5
+  78513838  0.6647  Jets Team Total: O/U 19.5
+  71451036  0.6648  Will Cameron Brink win WNBA Most Improved Player?
+  71451019  0.6655  Will Leonie Fiebich win WNBA Most Improved Player?
+  71450341  0.6659  Will Tiffany Hayes win WNBA Sixth Player of the Year?
+  40463477  0.6662  NBA: Oklahoma City Thunder vs. Phoenix Suns 2023-03-19
+  71450398  0.6666  Will Cecilia Zandalasini win WNBA Sixth Player of the Year?
+  71450851  0.6666  Will Angel Reese win WNBA Defensive Player of the Year?
+  78459691  0.6668  Timberwolves vs. Hornets: O/U 234.5
+  71451047  0.6670  Will Jade Melbourne win WNBA Most Improved Player?
+  40349448  0.6671  NBA: Charlotte Hornets vs. Cleveland Cavaliers 2023-03-14
+  79116601  0.6671  Hornets vs. Raptors: O/U 237.5
+  78924223  0.6678  Titans Team Total: O/U 13.5
+  77843852  0.6685  Kent State Golden Flashes vs. Toledo: O/U 48.5
+  79087952  0.6686  Kent State Golden Flashes vs. Wright State Raiders: O/U 153.5
+  78578478  0.6687  Suns vs. Warriors: O/U 234.5
+  78576678  0.6688  Suns vs. Warriors: O/U 233.5
+  71450709  0.6693  Will Stephanie White win WNBA Coach of the Year?
+  74856429  0.6698  Will a dildo be thrown onto the court at a WNBA game on Thursday?
+  25743923  0.6706  Will Brittney Griner play in her next scheduled game?
+  77815050  0.6710  Hornets vs. Knicks: O/U 225.5
+  40244578  0.6713  NBA: Golden State Warriors vs. Phoenix Suns 2023-03-13
+  71451166  0.6715  Will Paige Bueckers win WNBA Rookie of the Year?
+  71450359  0.6715  Will Leonie Fiebich win WNBA Sixth Player of the Year?
+  77822250  0.6721  Kent State Golden Flashes vs. Toledo: O/U 49.5
+  79042957  0.6722  Cleveland State Vikings vs. Kent State Golden Flashes: O/U 163.5
+  71450387  0.6723  Will Jordin Canada win WNBA Sixth Player of the Year?
+  40533343  0.6727  NBA: Charlotte Hornets vs. Indiana Pacers 2023-03-20
+  71451172  0.6728  Will Dominique Malonga win WNBA Rookie of the Year?
+  78587939  0.6731  Kent State Golden Flashes vs. Ball State: 1H O/U 22.5
+  78407207  0.6733  Nevada Wolf Pack vs. Sacramento State Hornets (W)
+  71450981  0.6733  Will Rickea Jackson win WNBA Most Improved Player?
+  78335987  0.6736  Kent State Golden Flashes vs. James Madison Dukes (W)
+  39246741  0.6736  NBA: Hawks vs. Hornets (02/13/2023)
+  74856430  0.6737  Will a dildo be thrown onto the court at a WNBA game on Sunday?
+  74039754  0.6740  Will Caitlin Clark win the 2025 ESPYS award for Best WNBA Player?
+  78538618  0.6748  Queens (NC) Royals vs. Villanova Wildcats
+  71450439  0.6752  Will Aarion McDonald win WNBA Sixth Player of the Year?
+  71451008  0.6753  Will Rhyne Howard win WNBA Most Improved Player?
+  40048963  0.6757  NBA: New York Knicks vs. Charlotte Hornets 2023-03-07
+  41081890  0.6758  NBA: Charlotte Hornets vs. Toronto Raptors 2023-04-04
+  79118401  0.6762  Hornets vs. Raptors: O/U 239.5
+  78336127  0.6763  Lynchburg Hornets vs. Queens (NC) Royals
+  79019614  0.6764  Titans Team Total: O/U 18.5
+  78422254  0.6764  Titans Team Total: O/U 18.5
+  71451041  0.6767  Will Aliyah Boston win WNBA Most Improved Player?
+  62996794  0.6767  WNBA Finals: Liberty vs. Lynx Series Winner
+  78584339  0.6768  Kent State Golden Flashes vs. Ball State: 1H O/U 23.5
+  77503888  0.6768  Spread: Kent State Golden Flashes (-2.5)
+  78850416  0.6769  Titans Team Total: O/U 16.5
+  78152047  0.6769  Titans Team Total: O/U 16.5
+  78209644  0.6769  Titans Team Total: O/U 16.5
+  74039763  0.6778  Will Breanna Stewart win the 2025 ESPYS award for Best WNBA Player?
+  40834031  0.6779  NBA: Oklahoma City Thunder vs. Charlotte Hornets 2023-03-28
+  78333846  0.6781  Titans Team Total: O/U 17.5
+  71450868  0.6788  Will Cameron Brink win WNBA Defensive Player of the Year?
+  79057368  0.6789  Spread: Kent State Golden Flashes (-11.5)
+  78566356  0.6789  Kent State Golden Flashes vs. Ball State: 1H O/U 21.5
+  79037559  0.6792  Spread: Kent State Golden Flashes (-8.5)
+  71450856  0.6792  Will Ezi Magbegor win WNBA Defensive Player of the Year?
+  40115993  0.6793  NBA: Detroit Pistons vs. Charlotte Hornets 2023-03-09
+  40838964  0.6794  NBA: Charlotte Hornets vs. Toronto Raptors 2023-04-02
+  79087952  0.6795  Spread: Kent State Golden Flashes (-4.5)
+  40418811  0.6796  NCAAB: Indiana Hoosiers vs. Kent State Golden Flashes 2023-03-17
+  76814691  0.6797  WNBA Semifinals: Aces vs. Fever Series Winner
+  71451189  0.6797  Will Aneesah Morrow win WNBA Rookie of the Year?
+  71450371  0.6799  Will Dana Evans win WNBA Sixth Player of the Year?
+  71450404  0.6803  Will Dorka Juhasz win WNBA Sixth Player of the Year?
+  79143301  0.6805  Queens (NC) Royals vs. South Carolina Gamecocks (W)
+  39779428  0.6806  NBA: Charlotte Hornets vs. Phoenix Suns 2023-03-01
+  71451183  0.6808  Will Kiki Iriafen win WNBA Rookie of the Year?
+  79028555  0.6809  Spread: Kent State Golden Flashes (-10.5)
+  38711239  0.6809  NBA: Raptors vs. Suns (01/30/2023)
+  77550486  0.6811  Spread: Kent State Golden Flashes (-1.5)
+  71451212  0.6816  Will Aziaha James win WNBA Rookie of the Year?
+  79077162  0.6817  Spread: Kent State Golden Flashes (-3.5)
+  77346475  0.6817  Spread: Kent State Golden Flashes (-3.5)
+  71451030  0.6823  Will Maddy Siegrist win WNBA Most Improved Player?
+  78624988  0.6833  Walsh Cavaliers vs. Kent State Golden Flashes (W)
+  79028555  0.6840  Spread: Kent State Golden Flashes (-9.5)
+  71450353  0.6846  Will Marina Mabrey win WNBA Sixth Player of the Year?
+  71450381  0.6847  Will Shatori Walker-Kimbrough win WNBA Sixth Player of the Year?
+  71450376  0.6849  Will Temi Fagbenle win WNBA Sixth Player of the Year?
+  74854648  0.6850  Another dildo thrown at WNBA game by Friday?
+  59485874  0.6852  Will another counrty win Gold in Women's Basketball?
+  71451003  0.6858  Will Kamilla Cardoso win WNBA Most Improved Player?
+  71450365  0.6863  Will Maddy Siegrist win WNBA Sixth Player of the Year?
+  71450416  0.6869  Will Monique Billings win WNBA Sixth Player of the Year?
+  71451052  0.6871  Will Natasha Mack win WNBA Most Improved Player?
+  71451195  0.6873  Will Hailey Van Lith win WNBA Rookie of the Year?
+  76814693  0.6878  WNBA Semifinals: Lynx vs. Mercury Series Winner
+  78587939  0.6885  Kent State Golden Flashes vs. Ball State: O/U 47.5
+  71450832  0.6891  Will A'ja Wilson win WNBA Defensive Player of the Year?
+  38809352  0.6892  NBA: Hornets vs. Pistons (02/03/2023)
+  39679046  0.6895  NBA: Charlotte Hornets vs. Detroit Pistons 2023-02-27
+  71450433  0.6899  Will Stephanie Talbot win WNBA Sixth Player of the Year?
+  71450880  0.6900  Will Brittney Griner win WNBA Defensive Player of the Year?
+  71450392  0.6906  Will Alysha Clark win WNBA Sixth Player of the Year?
+  71450862  0.6907  Will Jonquel Jones win WNBA Defensive Player of the Year?
+  71450838  0.6908  Will Napheesa Collier win WNBA Defensive Player of the Year?
+  71450874  0.6916  Will Aliyah Boston win WNBA Defensive Player of the Year?
+  71450410  0.6933  Will Kayla Thornton win WNBA Sixth Player of the Year?
+  71450422  0.6940  Will Myisha Hines-Allen win WNBA Sixth Player of the Year?
+  71450998  0.6948  Will Kate Martin win WNBA Most Improved Player?
+  71450975  0.6952  Will Gabby Williams win WNBA Most Improved Player?
+  74803726  0.6960  Another dildo thrown at WNBA game by August 10?
+  71450348  0.6963  Will Sophie Cunningham win WNBA Sixth Player of the Year?
+  71450427  0.6963  Will Odyssey Sims win WNBA Sixth Player of the Year?
+  71450885  0.6987  Will Skylar Diggins win WNBA Defensive Player of the Year?
+  62556181  0.6996  WNBA: Liberty vs. Aces Game 3
+  62504820  0.7003  WNBA: Liberty vs. Aces Game 2
+  71450445  0.7009  Will Lexie Brown win WNBA Sixth Player of the Year?
+  71450987  0.7009  Will Caitlin Clark win WNBA Most Improved Player?
+  71451024  0.7042  Will Julie Vanloo win WNBA Most Improved Player?
+  71450451  0.7044  Will Emily Engstler win WNBA Sixth Player of the Year?
+  73574324  0.7054  Will Aliyah Boston lead the WNBA in points per game this season?
+  62352774  0.7060  WNBA: Lynx vs. Sun Series Winner
+  62193310  0.7069  WNBA: Liberty vs. Dream Game 2
+  62352791  0.7080  WNBA: Liberty vs. Aces Game 1
+  73574387  0.7116  Will Angel Reese lead the WNBA in rebounds per game this season?
+  62685229  0.7119  WNBA: Aces vs. Liberty Game 3
+  73574268  0.7136  Will Satou Sabally lead the WNBA in points per game this season?
+  71450845  0.7149  Will Breanna Stewart win WNBA Defensive Player of the Year?
+  73574241  0.7151  Will A'ja Wilson lead the WNBA in points per game this season?
+  62071586  0.7155  WNBA: Liberty vs. Dream Game 1
+  63084185  0.7157  WNBA Finals: Lynx vs. Liberty Game 4
+  63243281  0.7165  WNBA Finals: Liberty vs. Lynx Game 5
+  73574412  0.7166  Will Aliyah Boston lead the WNBA in rebounds per game this season?
+  62193329  0.7168  WNBA: Aces vs. Storm Game 2
+  73574287  0.7177  Will Sabrina Ionescu lead the WNBA in points per game this season?
+  73574307  0.7214  Will Arike Ogunbowale lead the WNBA in points per game this season?
+  73574392  0.7217  Will A'ja Wilson lead the WNBA in rebounds per game this season?
+  73574301  0.7226  Will Nneka Ogwumike lead the WNBA in points per game this season?
+  71450457  0.7245  Will Any Other Player win WNBA Sixth Player of the Year?
+  73574319  0.7248  Will Dearica Hamby lead the WNBA in points per game this season?
+  62071615  0.7250  WNBA: Aces vs. Storm Game 1
+  73574296  0.7258  Will Jackie Young lead the WNBA in points per game this season?
+  73574416  0.7263  Will Satou Sabally lead the WNBA in rebounds per game this season?
+  63047001  0.7266  WNBA Finals: Lynx vs. Liberty Game 3
+  73574235  0.7271  Will Napheesa Collier lead the WNBA in points per game this season?
+  73574313  0.7276  Will Rhyne Howard lead the WNBA in points per game this season?
+  62883057  0.7278  WNBA Finals: Liberty vs. Lynx Game 1
+  73574291  0.7287  Will Paige Bueckers lead the WNBA in points per game this season?
+  62996775  0.7309  WNBA Finals: Liberty vs Lynx Game 2
+  73574398  0.7317  Will Napheesa Collier lead the WNBA in rebounds per game this season?
+  73574272  0.7321  Will Skylar Diggins lead the WNBA in points per game this season?
+  62556166  0.7324  WNBA: Lynx vs. Sun Game 3
+  73574431  0.7332  Will Dearica Hamby lead the WNBA in rebounds per game this season?
+  73574277  0.7335  Will Kelsey Mitchell lead the WNBA in points per game this season?
+  73574258  0.7338  Will Kelsey Plum lead the WNBA in points per game this season?
+  73574407  0.7342  Will Kiki Iriafen lead the WNBA in rebounds per game this season?
+  62685241  0.7343  WNBA: Sun vs. Lynx Game 4
+  73574426  0.7358  Will Nneka Ogwumike lead the WNBA in rebounds per game this season?
+  62504838  0.7364  WNBA: Lynx vs. Sun Series Game 2
+  62193298  0.7367  WNBA: Sun vs. Fever Game 2
+  73574440  0.7383  Will Jessica Shepard lead the WNBA in rebounds per game this season?
+  62352801  0.7407  WNBA: Lynx vs. Sun Series Game 1
+  73574421  0.7418  Will Brionna Jones lead the WNBA in rebounds per game this season?
+  62192848  0.7420  WNBA: Lynx vs. Mercury Game 2
+  73574253  0.7423  Will Caitlin Clark lead the WNBA in points per game this season?
+  73574282  0.7424  Will Brittney Sykes lead the WNBA in points per game this season?
+  73574263  0.7429  Will Allisha Gray lead the WNBA in points per game this season?
+  73574445  0.7442  Will Kayla Thornton lead the WNBA in rebounds per game this season?
+  62071607  0.7454  WNBA: Lynx vs. Mercury Game 1
+  73574402  0.7474  Will Azura Stevens lead the WNBA in rebounds per game this season?
+  62071599  0.7493  WNBA: Sun vs. Fever Game 1
+  71450890  0.7517  Will Any Other Player win WNBA Defensive Player of the Year?
+  73574247  0.7520  Will Breanna Stewart lead the WNBA in points per game this season?
+  73574435  0.7539  Will Alyssa Thomas lead the WNBA in rebounds per game this season?
+  74169799  0.7766  WNBA All-Star Game winner

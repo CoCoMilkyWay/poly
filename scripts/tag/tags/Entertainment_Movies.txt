@@ -1,0 +1,1712 @@
+# Entertainment - Entertainment_Movies
+# count=1709, avg_conf=0.5555
+====================================================================================================
+  17945793  0.4328  Which film will gross more in their domestic box office releases: Dune or Shang-
+  74806304  0.4642  Jacob Elordi announced as next James Bond?
+  77054775  0.4690  Will KPop Demon Hunters be nominated for Best Animated Feature at the 98th Acade
+  54850083  0.4708  James Norton announced as next James Bond?
+  74806296  0.4708  James Norton announced as next James Bond?
+  77055152  0.4713  Will Put Your Soul on Your Hand and Walk be nominated for Best Documentary Featu
+  76363726  0.4741  Fact check: Was Tyler Robinson a lone actor?
+  54850100  0.4745  Cosmo Jarvis announced as next James Bond?
+  77054768  0.4748  Will Bret Howe & Mary Vernieu (Wake Up Dead Man) be nominated for Achievement in
+  68089117  0.4763  Will "Memoir of a Snail" win Best Animated Feature at the 2025 Oscars?
+  74806324  0.4765  Henry Cavill announced as next James Bond?
+  54849997  0.4765  Henry Cavill announced as next James Bond?
+  54850090  0.4771  Rege-Jean Page announced as next James Bond?
+  68132289  0.4810  Will "Wander to Wonder" win Best Animated Short Film at the 2025 Oscars?
+  77054776  0.4815  Will Little Amélie or the Character of Rain be nominated for Best Animated Featu
+  67811928  0.4833  Will "The Bear" win Best Cast in a Comedy Series at the 2025 SAG Awards?
+  76939236  0.4836  Will Die My Love be nominated for Best Picture at the 98th Academy Awards?
+  77055000  0.4852  Will Kokuho win Best Makeup and Hairstyling at the 98th Academy Awards?
+  54850010  0.4855  Damson Idris announced as next James Bond?
+  71519269  0.4857  Will 'HAIKYU!! The Dumpster Battle' win Crunchyroll's Film of the Year Award for
+  68132258  0.4859  Will "In the Shadow of the Cypress" win Best Animated Short Film at the 2025 Osc
+  67811726  0.4865  Will Marianne Jean-Baptiste win Best Actress at the 2025 BAFTA Awards for "Hard 
+  67573371  0.4869  Will Aunjanue Ellis-Taylor win Best Supporting Actress in the 2025 Critics' Choi
+  76939564  0.4873  Will Diego Luna win Best Supporting Actor at the 98th Academy Awards?
+  74806338  0.4882  Jack Lowdon announced as next James Bond?
+  67811720  0.4882  Will Edward Berger win Best Director at the 2025 BAFTA Awards for "Conclave"?
+  68132354  0.4891  Will "I Am Ready, Warden" win Best Documentary Short Film at the 2025 Oscars?
+  77054952  0.4898  Will 28 Years Later win Best Makeup and Hairstyling at the 98th Academy Awards?
+  77055668  0.4898  Will Bugonia win Best Cinematography at the 98th Academy Awards?
+  77056334  0.4899  Will Bugonia win Best Adapted Screenplay at the 98th Academy Awards?
+  54849984  0.4899  Aaron Taylor-Johnson announced as next James Bond?
+  74806291  0.4899  Aaron Taylor-Johnson announced as next James Bond?
+  77055644  0.4900  Will 28 Years Later win Best Cinematography at the 98th Academy Awards?
+  77055154  0.4915  Will Endless Cookie be nominated for Best Documentary Feature at the 98th Academ
+  77054773  0.4918  Will Lucy Bevan & Emily Brockmann (F1) be nominated for Achievement in Casting a
+  67811968  0.4919  Will "Hacks" win Best Cast in a Comedy Series at the 2025 SAG Awards?
+  76939731  0.4924  Will Inga Ibsdotter Lilleaas win Best Supporting Actress at the 98th Academy Awa
+  68132396  0.4929  Will "Instruments of a Beating Heart" win Best Documentary Short Film at the 202
+  77055151  0.4933  Will Apocalypse in the Tropics be nominated for Best Documentary Feature at the 
+  76939349  0.4936  Will Ethan Hawke win Best Actor at the 98th Academy Awards?
+  77056119  0.4944  Will Bugonia win Best Film Editing at the 98th Academy Awards?
+  67811937  0.4944  Will "Only Murders in the Building" win Best Cast in a Comedy Series at the 2025
+  77055662  0.4945  Will Avatar: Fire and Ash win Best Cinematography at the 98th Academy Awards?
+  67573383  0.4949  Will Marianne Jean-Baptiste win Best Actress in the 2025 Critics' Choice Awards?
+  76939235  0.4949  Will Avatar: Fire and Ash be nominated for Best Picture at the 98th Academy Awar
+  76939071  0.4951  Will Avatar: Fire and Ash win Best Picture at the 98th Academy Awards?
+  74806308  0.4952  Harris Dickinson announced as next James Bond?
+  77054776  0.4953  Will In Your Dreams be nominated for Best Animated Feature at the 98th Academy A
+  77055154  0.4966  Will Springsteen: Deliver Me from Nowhere be nominated for Best Documentary Feat
+  52747165  0.4966  Will America Ferrera win the Oscar for Best Supporting Actress?
+  67811960  0.4968  Will "Shrinking" win Best Cast in a Comedy Series at the 2025 SAG Awards?
+  67811759  0.4969  Will Denis Villeneuve win Best Director at the 2025 BAFTA Awards for "Dune: Part
+  75249387  0.4981  Will Lilo and Stitch be the second highest grossing movie of 2025?
+  67573353  0.4983  Will Danielle Deadwyler win Best Supporting Actress in the 2025 Critics' Choice 
+  77099439  0.4984  Will Ethan Hawke be nominated for Best Actor at the 98th Academy Awards?
+  76939715  0.4987  Will Wunmi Mosaku win Best Supporting Actress at the 98th Academy Awards?
+  54030895  0.4993  Will Spider-Man: Across the Spider Verse win the Oscar for Best Animated Feature
+  67812059  0.4998  Will Jeremy Strong win Best Actor at the 2025 SAG Award for "The Apprentice"?
+  61853857  0.4998  Will Brie Larson  win the Emmy for Lead Actress for a Limited Series?
+  67573396  0.4999  Will Margaret Qualley win Best Supporting Actress in the 2025 Critics' Choice Aw
+  54030862  0.5002  Will Elemental win the Oscar for Best Animated Feature Film?
+  77056300  0.5003  Will Wunmi Mosaku be nominated for Best Supporting Actress at the 98th Academy A
+  77054777  0.5004  Will Arco be nominated for Best Animated Feature at the 98th Academy Awards?
+  77056301  0.5009  Will Ayo Edebiri be nominated for Best Supporting Actress at the 98th Academy Aw
+  65362739  0.5009  Will 'The Seed of the Sacred Fig' be nominated for Oscar for Best Picture?
+  76939228  0.5014  Will The Lost Bus be nominated for Best Picture at the 98th Academy Awards?
+  18207538  0.5016  Will Black Widow be the highest grossing domestic film of 2021?
+  67811956  0.5020  Will "Shōgun" win Best Cast in a Drama Series at the 2025 SAG Awards?
+  67811904  0.5023  Will "Bridgerton" win Best Cast in a Drama Series at the 2025 SAG Awards?
+  52747148  0.5025  Will Danielle Brooks win the Oscar for Best Supporting Actress?
+  27336892  0.5033  Will ‘Doctor Strange in the Multiverse of Madness’ gross between $180 million an
+  76939226  0.5033  Will Thunderbolts be nominated for Best Picture at the 98th Academy Awards?
+  71159914  0.5038  China bans US films before July?
+  70055541  0.5040  China bans US films in April?
+  71519297  0.5041  Will 'The Colors Within' win Crunchyroll's Film of the Year Award for 2025?
+  77055005  0.5041  Will The Ugly Stepsister win Best Makeup and Hairstyling at the 98th Academy Awa
+  77681282  0.5052  Will Hannah Einbinder (Hacks) win Best Supporting Actress – Television at the 83
+  77056293  0.5053  Will Thomasin McKenzie be nominated for Best Supporting Actress at the 98th Acad
+  77057015  0.5054  Will Kleber Mendonça Filho win Best Director at the 98th Academy Awards?
+  77055152  0.5057  Will Come See Me in the Good Light be nominated for Best Documentary Feature at 
+  76939054  0.5058  Will Bugonia win Best Picture at the 98th Academy Awards?
+  33189695  0.5058  Will 'Don't Worry Darling' gross more than $20 million domestically on its openi
+  67811829  0.5059  Will Ralph Finnes win Best Actor at the 2025 BAFTA Awards for "Conclave"?
+  77055689  0.5061  Will Anemone win Best Cinematography at the 98th Academy Awards?
+  75249397  0.5062  Will Zootopia 2 be the second highest grossing movie of 2025?
+  67573414  0.5064  Will Isabella Rossellini win Best Supporting Actress in the 2025 Critics' Choice
+  77055153  0.5067  Will Architecton be nominated for Best Documentary Feature at the 98th Academy A
+  68132341  0.5067  Will "I'm Still Here" win Best International Feature Film at the 2025 Oscars?
+  68132236  0.5069  Will "Beautiful Men" win Best Animated Short Film at the 2025 Oscars?
+  68089505  0.5072  Will 'The Brutalist' win 2 Oscars at the 2025 Academy Awards?
+  77055171  0.5072  Will Frankenstein win Best Costume Design at the 98th Academy Awards?
+  68132411  0.5073  Will "The Man Who Could Not Remain Silent" win Best Action Short Film at the 202
+  67573372  0.5082  Will Karla Sofía Gascón win Best Actress in the 2025 Critics' Choice Awards?
+  68412725  0.5083  Will "The Brutalist" win Best Cinematography at the 2025 Oscars?
+  67811941  0.5083  Will "The Diplomat" win Best Cast in a Drama Series at the 2025 SAG Awards?
+  38796114  0.5087  Will "The Banshees of Inisherin" win the Oscar for Best Picture?
+  68089496  0.5087  Will 'The Brutalist' win 1 Oscars at the 2025 Academy Awards?
+  76939727  0.5087  Will Amy Madigan win Best Supporting Actress at the 98th Academy Awards?
+  67573033  0.5088  Will 'The Brutalist' win Best Cinematography in the 2025 Critics' Choice Awards?
+  74806387  0.5088  No one announced as next James Bond?
+  75249382  0.5089  Will Avatar 3 be the second highest grossing movie of 2025?
+  77056124  0.5094  Will Avatar: Fire and Ash win Best Film Editing at the 98th Academy Awards?
+  76939256  0.5095  Will Kevin O'Leary be nominated for Best Supporting Actor at the 98th Academy Aw
+  64735132  0.5099  Will "Moana 2" have a Tomatometer score of 85-89?
+  77054932  0.5103  Will The Smashing Machine win Best Makeup and Hairstyling at the 98th Academy Aw
+  77054966  0.5104  Will Christy win Best Makeup and Hairstyling at the 98th Academy Awards?
+  77056538  0.5108  Will A House of Dynamite win Best Original Screenplay at the 98th Academy Awards
+  77054772  0.5108  Will Tiffany Little Canfield & Bernard Telsey (Wicked: For Good) be nominated fo
+  77056576  0.5109  Will Roofman win Best Original Screenplay at the 98th Academy Awards?
+  77056393  0.5109  Will Nuremberg win Best Adapted Screenplay at the 98th Academy Awards?
+  76939753  0.5111  Will Rebecca Ferguson win Best Supporting Actress at the 98th Academy Awards?
+  76939531  0.5111  Will Delroy Lindo win Best Supporting Actor at the 98th Academy Awards?
+  52400216  0.5116  Will "Killers of the Flower Moon" win the Oscar for Best Picture?
+  66984812  0.5117  Will Edward Norton win Best Supporting Actor at the 2025 Oscars?
+  68089118  0.5118  Will "Dune: Part Two" win Best Production Design at the 2025 Oscars?
+  75370205  0.5119  Will 'Lilo & Stitch' have the third best domestic opening weekend in 2025?
+  77056585  0.5120  Will Sorry Baby win Best Original Screenplay at the 98th Academy Awards?
+  67811969  0.5121  Will "Slow Horses" win Best Cast in a Drama Series at the 2025 SAG Awards?
+  76939258  0.5122  Will Akira Emoto be nominated for Best Supporting Actor at the 98th Academy Awar
+  77056572  0.5122  Will After the Hunt win Best Original Screenplay at the 98th Academy Awards?
+  76939067  0.5123  Will A House of Dynamite win Best Picture at the 98th Academy Awards?
+  67106140  0.5126  Will Brady Corbet win Best Director at the 2025 Oscars for "The Brutalist"?
+  77681313  0.5127  Will Laurie Metcalf (Monster: The Ed Gein Story) win Best Supporting Actress – T
+  67811739  0.5127  Will Brady Corbet win Best Director at the 2025 BAFTA Awards for "The Brutalist"
+  76939700  0.5129  Will Teyana Taylor win Best Supporting Actress at the 98th Academy Awards?
+  67106183  0.5131  Will Jacques Audiard win Best Director at the 2025 Oscars for "Emilia Pérez"?
+  76939236  0.5131  Will A House of Dynamite be nominated for Best Picture at the 98th Academy Award
+  77056605  0.5131  Will Blue Moon win Best Original Screenplay at the 98th Academy Awards?
+  77056311  0.5131  Will Edward Berger be nominated for Best Director at the 98th Academy Awards?
+  77055154  0.5133  Will Selena y Los Dinos be nominated for Best Documentary Feature at the 98th Ac
+  75249459  0.5134  Will Avatar 3 be the third highest grossing movie of 2025?
+  77056378  0.5134  Will Hedda win Best Adapted Screenplay at the 98th Academy Awards?
+  76939258  0.5135  Will Adam Sandler be nominated for Best Supporting Actor at the 98th Academy Awa
+  77056299  0.5137  Will Samantha Morton be nominated for Best Supporting Actress at the 98th Academ
+  77056293  0.5139  Will Amy Madigan be nominated for Best Supporting Actress at the 98th Academy Aw
+  65362565  0.5139  Will 'Gladiator 2' be nominated for Oscar for Best Picture?
+  77055676  0.5139  Will Train Dreams win Best Cinematography at the 98th Academy Awards?
+  71519280  0.5141  Will 'Mononoke The Movie: The Phantom in the Rain' win Crunchyroll's Film of the
+  64735078  0.5141  Will "Moana 2" have a Tomatometer score of less than 60?
+  76939264  0.5142  Will Jeremy Strong be nominated for Best Supporting Actor at the 98th Academy Aw
+  67573380  0.5143  Will Ariana Grande win Best Supporting Actress in the 2025 Critics' Choice Award
+  77054980  0.5146  Will After the Hunt win Best Makeup and Hairstyling at the 98th Academy Awards?
+  52978822  0.5147  Will 'Deadpool 3' gross most in 2024?
+  77056339  0.5149  Will Wake Up Dead Man win Best Adapted Screenplay at the 98th Academy Awards?
+  67811700  0.5149  Will Jacques Audiard win Best Director at the 2025 BAFTA Awards for "Emilia Pére
+  76939261  0.5150  Will Takehiro Hira be nominated for Best Supporting Actor at the 98th Academy Aw
+  77056562  0.5153  Will The Secret Agent win Best Original Screenplay at the 98th Academy Awards?
+  77055152  0.5153  Will The Perfect Neighbor be nominated for Best Documentary Feature at the 98th 
+  77682454  0.5154  Will Jason Bateman (Black Rabbit) win Best Actor – Limited Series at the 83rd Go
+  77457114  0.5155  Will “My Father the BTK Killer” be the top global Netflix movie this week?
+  54030873  0.5157  Will Nimona win the Oscar for Best Animated Feature Film?
+  75249454  0.5158  Will Lilo and Stitch be the third highest grossing movie of 2025?
+  77056312  0.5158  Will Park Chan-wook be nominated for Best Director at the 98th Academy Awards?
+  27336704  0.5159  Will ‘Doctor Strange in the Multiverse of Madness’ gross $180 million or less on
+  77057006  0.5160  Will Park Chan-wook win Best Director at the 98th Academy Awards?
+  74806316  0.5160  Pierce Brosnan announced as next James Bond?
+  67811735  0.5162  Will Mikey Madison win Best Actress at the 2025 BAFTA Awards for "Anora"?
+  77055152  0.5162  Will Cutting Through Rocks be nominated for Best Documentary Feature at the 98th
+  76939711  0.5164  Will Elle Fanning win Best Supporting Actress at the 98th Academy Awards?
+  68375961  0.5165  Will Timothée Chalamet bring his mom to the Oscars?
+  76939259  0.5167  Will Delroy Lindo be nominated for Best Supporting Actor at the 98th Academy Awa
+  52745763  0.5169  Will Anatomy of a Fall win the Oscar for Best Original Screenplay?
+  76939252  0.5169  Will Joaquin Phoenix be nominated for Best Actor at the 98th Academy Awards?
+  76939260  0.5170  Will Paul Mescal be nominated for Best Supporting Actor at the 98th Academy Awar
+  64735089  0.5170  Will "Moana 2" have a Tomatometer score of 60-69?
+  71519275  0.5171  Will 'Look Back' win Crunchyroll's Film of the Year Award for 2025?
+  67106135  0.5171  Will "Conclave" win Best Adapted Screenplay at the 2025 Oscars?
+  77682491  0.5173  Will Jacob Elordi (The Narrow Road to the Deep North) win Best Actor – Limited S
+  39560370  0.5173  Will Austin Butler win the Oscar for Best Actor in a Leading Role?
+  77056294  0.5173  Will Hailee Steinfeld be nominated for Best Supporting Actress at the 98th Acade
+  75974405  0.5173  Will "The Conjuring: Last Rites" Opening Weekend Box Office be between $57m and 
+  77680209  0.5174  Will Ike Barinholtz (The Studio) win Best Supporting Actor – Television at the 8
+  77682676  0.5177  Will Yorgos Lanthimos (Bugonia) win Best Director at the 83rd Golden Globes?
+  77683564  0.5178  Will Monster The Ed Gein Story win Best Television Limited Series at the 83rd Go
+  77680220  0.5178  Will Sam Rockwell (The White Lotus) win Best Supporting Actor – Television at th
+  76939275  0.5179  Will Sydney Sweeney be nominated for Best Actress at the 98th Academy Awards?
+  52747173  0.5179  Will Jodie Foster win the Oscar for Best Supporting Actress?
+  76939086  0.5181  Will Rental Family win Best Picture at the 98th Academy Awards?
+  68089170  0.5182  Will "Wicked" win Best Production Design at the 2025 Oscars?
+  77056557  0.5182  Will Rental Family win Best Original Screenplay at the 98th Academy Awards?
+  66227667  0.5182  Will Captain America: Brave New World be the top grossing movie of 2025?
+  67811711  0.5183  Will "The Brutalist" win Best Original Screenplay at the 2025 BAFTA Awards?
+  34755563  0.5184  Will ‘Black Panther: Wakanda Forever’ gross between $180-$220 million domestical
+  52745755  0.5185  Will The Holdovers win the Oscar for Best Original Screenplay?
+  67573100  0.5185  Will 'Nickel Boys' win Best Cinematography in the 2025 Critics' Choice Awards?
+  68132254  0.5186  Will "The Brutalist" win Best Film Editing at the 2025 Oscars?
+  67106137  0.5186  Will "The Brutalist" win Best Original Screenplay at the 2025 Oscars?
+  77467223  0.5186  Marwan Barghouti released by October 31?
+  77056086  0.5187  Will A House of Dynamite win Best Film Editing at the 98th Academy Awards?
+  68132394  0.5187  Will "The Last Ranger" win Best Action Short Film at the 2025 Oscars?
+  77056295  0.5189  Will Teyana Taylor be nominated for Best Supporting Actress at the 98th Academy 
+  66982660  0.5190  Will "I'm Still Here" win Best Picture at the 2025 Oscars?
+  76939771  0.5190  Will Odessa A'zion win Best Supporting Actress at the 98th Academy Awards?
+  76939234  0.5191  Will Nouvelle Vague be nominated for Best Picture at the 98th Academy Awards?
+  77056368  0.5192  Will Train Dreams win Best Adapted Screenplay at the 98th Academy Awards?
+  67573073  0.5193  Will 'The Seed of the Sacred Fig' win Best Foreign Language Film in the 2025 Cri
+  68612228  0.5194  Will 'Mickey 17' gross between 20-24m on its opening weekend?
+  38796122  0.5195  Will "All Quiet on the Western Front" win the Oscar for Best Picture?
+  76939322  0.5197  Will Michael B. Jordan win Best Actor at the 98th Academy Awards?
+  52746658  0.5197  Will Robert De Niro win the Oscar for Best Supporting Actor?
+  76939274  0.5198  Will Cynthia Erivo be nominated for Best Actress at the 98th Academy Awards?
+  77056595  0.5198  Will The Smashing Machine win Best Original Screenplay at the 98th Academy Award
+  78930801  0.5198  Will Dune: Messiah be the top grossing movie of 2026?
+  57233227  0.5198  'Furiosa: A Mad Max Saga' between $38-44m Opening Weekend?
+  76939248  0.5198  Will Lee Byung-hun be nominated for Best Actor at the 98th Academy Awards?
+  67573355  0.5198  Will Cynthia Erivo win Best Actress in the 2025 Critics' Choice Awards?
+  77056754  0.5198  Will Cynthia Erivo win Best Actress at the 98th Academy Awards?
+  67811850  0.5200  Will Sebastian Stan win Best Actor at the 2025 BAFTA Awards for "The Apprentice"
+  76939224  0.5203  Will After the Hunt be nominated for Best Picture at the 98th Academy Awards?
+  39402694  0.5207  Will "Pinocchio" win the Oscar for Best Animated Feature Film?
+  52746647  0.5208  Will Robert Downey Jr. win the Oscar for Best Supporting Actor?
+  76939749  0.5209  Will Mari Yamamoto win Best Supporting Actress at the 98th Academy Awards?
+  75974400  0.5209  Will "The Conjuring: Last Rites" Opening Weekend Box Office be between $52m and 
+  77056813  0.5211  Will Eva Victor win Best Actress at the 98th Academy Awards?
+  77056141  0.5212  Will It Was Just an Accident win Best Film Editing at the 98th Academy Awards?
+  77056128  0.5212  Will The Smashing Machine win Best Film Editing at the 98th Academy Awards?
+  77054957  0.5213  Will Kiss of the Spider Woman win Best Makeup and Hairstyling at the 98th Academ
+  77056292  0.5214  Will Elle Fanning be nominated for Best Supporting Actress at the 98th Academy A
+  75249467  0.5215  Will Zootopia 2 be the third highest grossing movie of 2025?
+  75370084  0.5216  Will 'Avatar: Fire and Ash' have the second best domestic opening weekend in 202
+  77055652  0.5216  Will Frankenstein win Best Cinematography at the 98th Academy Awards?
+  64735145  0.5218  Will "Moana 2" have a Tomatometer score of 90 or more?
+  76939260  0.5218  Will Andrew Scott be nominated for Best Supporting Actor at the 98th Academy Awa
+  77056296  0.5218  Will Laura Dern be nominated for Best Supporting Actress at the 98th Academy Awa
+  19745767  0.5220  Which movie will gross more domestically on opening weekend: Venom 2 or No Time 
+  68132353  0.5223  Will "Anuja" win Best Action Short Film at the 2025 Oscars?
+  77681287  0.5224  Will Allison Janney (The Diplomat) win Best Supporting Actress – Television at t
+  77056354  0.5226  Will Frankenstein win Best Adapted Screenplay at the 98th Academy Awards?
+  65611231  0.5226  Will 'Conclave' win the Golden Globe for Best Screenplay?
+  77056547  0.5226  Will It Was Just an Accident win Best Original Screenplay at the 98th Academy Aw
+  76939229  0.5229  Will The Testament of Ann Lee be nominated for Best Picture at the 98th Academy 
+  76939719  0.5231  Will Emily Blunt win Best Supporting Actress at the 98th Academy Awards?
+  77055657  0.5232  Will Marty Supreme win Best Cinematography at the 98th Academy Awards?
+  67812002  0.5232  Will Jonathan Bailey win Best Actor at the 2025 SAG Award for "Wicked"?
+  76939264  0.5232  Will Mark Hamill be nominated for Best Supporting Actor at the 98th Academy Awar
+  77457094  0.5237  Will “Identity Thief” be the top global Netflix movie this week?
+  64735118  0.5238  Will "Moana 2" have a Tomatometer score of 80-84?
+  66227769  0.5238  Will Lilo & Stitch be the top grossing movie of 2025?
+  75974410  0.5239  Will "The Conjuring: Last Rites" Opening Weekend Box Office be between $62m and 
+  76939257  0.5240  Will Sean Bean be nominated for Best Supporting Actor at the 98th Academy Awards
+  76939250  0.5240  Will Michael B. Jordan be nominated for Best Actor at the 98th Academy Awards?
+  68361969  0.5240  Will Travis Kelce attend the Oscars?
+  68132407  0.5242  Will "Wicked" win Best Costume Design at the 2025 Oscars?
+  76939513  0.5242  Will Stellan Skarsgård win Best Supporting Actor at the 98th Academy Awards?
+  77055634  0.5242  Will Hamnet win Best Cinematography at the 98th Academy Awards?
+  77055149  0.5243  Will Orwell: 2+2=5 be nominated for Best Documentary Feature at the 98th Academy
+  76939104  0.5243  Will The Secret Agent win Best Picture at the 98th Academy Awards?
+  68132390  0.5244  Will "The Seed of the Sacred Fig" win Best International Feature Film at the 202
+  65362490  0.5244  Will 'A Real Pain' be nominated for Oscar for Best Picture?
+  68089089  0.5244  Will "Alien: Romulus" win Best Visual Effects at the 2025 Oscars?
+  77056307  0.5244  Will Jafar Panahi be nominated for Best Director at the 98th Academy Awards?
+  26474395  0.5246  Will the Academy strip Will Smith’s Oscar by April 30?
+  76939275  0.5248  Will Eva Victor be nominated for Best Actress at the 98th Academy Awards?
+  76939263  0.5249  Will Jude Law be nominated for Best Supporting Actor at the 98th Academy Awards?
+  52747136  0.5249  Will Da'Vine Joy Randolph win the Oscar for Best Supporting Actress?
+  68612283  0.5251  Will 'Mickey 17' gross more than 24m on its opening weekend?
+  67812020  0.5251  Will Cynthia Erivo win Best Actor at the 2025 SAG Award for "Wicked"?
+  45471681  0.5252  Will 'Barbie' gross over $90m on its second weekend?
+  77475916  0.5252  Will Ethan Hawke (Blue Moon) be nominated for Best Actor – Drama at the 83rd Gol
+  66982215  0.5253  Will "The Brutalist" win Best Picture at the 2025 Oscars?
+  76939740  0.5253  Will Jennifer Lopez win Best Supporting Actress at the 98th Academy Awards?
+  64735110  0.5254  Will "Moana 2" have a Tomatometer score of 75-79?
+  67812033  0.5255  Will Kieran Culkin win Best Actor at the 2025 SAG Award for "A Real Pain"?
+  76939235  0.5256  Will Springsteen: Deliver Me From Nowhere be nominated for Best Picture at the 9
+  66227687  0.5257  Will Zootopia 2 be the top grossing movie of 2025?
+  77056552  0.5257  Will Jay Kelly win Best Original Screenplay at the 98th Academy Awards?
+  67106183  0.5257  Will "Nickel Boys" win Best Adapted Screenplay at the 2025 Oscars?
+  68089085  0.5258  Will "Flow" win Best Animated Feature at the 2025 Oscars?
+  76091461  0.5259  Will "The Conjuring: Last Rites" Opening Weekend Box Office be between $76-80m?
+  77056986  0.5259  Will Jafar Panahi win Best Director at the 98th Academy Awards?
+  65611200  0.5259  Will 'The Brutalist' win the Golden Globe for Best Screenplay?
+  77056310  0.5260  Will Jon M. Chu be nominated for Best Director at the 98th Academy Awards?
+  78036083  0.5260  Will Ne Zha 2 be the #1 searched movie on Google this year?
+  77054922  0.5261  Will Frankenstein win Best Makeup and Hairstyling at the 98th Academy Awards?
+  68089551  0.5261  Will 'The Brutalist' win 6+ Oscars at the 2025 Academy Awards?
+  77056310  0.5261  Will Noah Baumbach be nominated for Best Director at the 98th Academy Awards?
+  77056344  0.5262  Will Springsteen: Deliver Me from Nowhere win Best Adapted Screenplay at the 98t
+  77057019  0.5262  Will Jon M. Chu win Best Director at the 98th Academy Awards?
+  68412763  0.5263  Will "Soundtrack to a Coup d’Etat" win Best Documentary Feature Film at the 2025
+  77681298  0.5263  Will Parker Posey (The White Lotus) win Best Supporting Actress – Television at 
+  68089105  0.5264  Will "Inside Out 2" win Best Animated Feature at the 2025 Oscars?
+  68089525  0.5265  Will 'The Brutalist' win 3 Oscars at the 2025 Academy Awards?
+  68412774  0.5266  Will "Nosferatu" win Best Cinematography at the 2025 Oscars?
+  76939254  0.5267  Will Jesse Plemons be nominated for Best Actor at the 98th Academy Awards?
+  77680225  0.5269  Will Walton Goggins (The White Lotus) win Best Supporting Actor – Television at 
+  66227710  0.5270  Will Thunderbolts be the top grossing movie of 2025?
+  76939230  0.5271  Will Rental Family be nominated for Best Picture at the 98th Academy Awards?
+  67573070  0.5271  Will 'Dune: Part Two' win Best Cinematography in the 2025 Critics' Choice Awards
+  77093489  0.5272  Will Kathryn Bigelow be nominated for Best Director at the 98th Academy Awards?
+  77056296  0.5272  Will Angelina LookingGlass be nominated for Best Supporting Actress at the 98th 
+  52746175  0.5273  Will Oppenheimer win the Oscar for Best Adapted Screenplay?
+  71721654  0.5274  Will "Lilo & Stitch" Rotten Tomatoes score be between 85-89?
+  77682105  0.5274  Will Elisabeth Moss (The Handmaid’s Tale) win Best Actress – Television Drama at
+  68361984  0.5274  Will Blake Lively attend the Oscars?
+  77056349  0.5274  Will No Other Choice win Best Adapted Screenplay at the 98th Academy Awards?
+  76939264  0.5275  Will Paul Dano be nominated for Best Supporting Actor at the 98th Academy Awards
+  76939257  0.5275  Will Stellan Skarsgård be nominated for Best Supporting Actor at the 98th Academ
+  77056295  0.5275  Will Kate Hudson be nominated for Best Supporting Actress at the 98th Academy Aw
+  75370089  0.5275  Will 'Zootopia 2' have the second best domestic opening weekend in 2025?
+  75249481  0.5276  Will Jurassic World Rebirth be the third highest grossing movie of 2025?
+  67811840  0.5276  Will Hugh Grant win Best Actor at the 2025 BAFTA Awards for "Heretic"?
+  76939230  0.5277  Will Anemone be nominated for Best Picture at the 98th Academy Awards?
+  76091459  0.5277  Will "The Conjuring: Last Rites" Opening Weekend Box Office be between $72-76m?
+  76939223  0.5277  Will Novocaine be nominated for Best Picture at the 98th Academy Awards?
+  76939744  0.5277  Will Glenn Close win Best Supporting Actress at the 98th Academy Awards?
+  77056329  0.5279  Will Hamnet win Best Adapted Screenplay at the 98th Academy Awards?
+  76939109  0.5279  Will Train Dreams win Best Picture at the 98th Academy Awards?
+  77682502  0.5279  Will Matthew Rhys (The Beast In Me) win Best Actor – Limited Series at the 83rd 
+  68362073  0.5280  Will Kylie Jenner attend the Oscars?
+  77682260  0.5280  Will Jessica Chastain (The Savant) win Best Actress – Limited Series at the 83rd
+  77683575  0.5280  Will Dying for Sex win Best Television Limited Series at the 83rd Golden Globes?
+  66984780  0.5281  Will Danielle Deadwyler win Best Supporting Actress at the 2025 Oscars?
+  68089510  0.5282  Will 'Wicked' win 2 Oscars at the 2025 Academy Awards?
+  77056803  0.5283  Will June Squibb win Best Actress at the 98th Academy Awards?
+  79018738  0.5283  Will "Zootopia 2" 5-Day Opening Box Office be between 129m and 143m?
+  78930771  0.5284  Will Star Wars: The Mandalorian and Grogu be the top grossing movie of 2026?
+  66984716  0.5286  Will Guy Pearce win Best Supporting Actor at the 2025 Oscars?
+  54148897  0.5286  Will Barbie win the Oscar for Best Costume Design?
+  77682270  0.5286  Will Renee Zellweger (Bridget Jones Mad About the Boy) win Best Actress – Limite
+  76939580  0.5287  Will Benicio Del Toro win Best Supporting Actor at the 98th Academy Awards?
+  77056105  0.5288  Will Marty Supreme win Best Film Editing at the 98th Academy Awards?
+  68412738  0.5289  Will "Dune: Part Two" win Best Cinematography at the 2025 Oscars?
+  76939237  0.5289  Will The Smashing Machine be nominated for Best Picture at the 98th Academy Awar
+  67811956  0.5290  Will Ariana Grande win Best Supporting Actress at the 2025 SAG Award for "Wicked
+  67811703  0.5290  Will Cynthia Erivo win Best Actress at the 2025 BAFTA Awards for "Wicked"?
+  79018743  0.5291  Will "Zootopia 2" 5-Day Opening Box Office be between 143m and 157m?
+  65010528  0.5292  Will 'Kraven the Hunter' gross between $19-22m on 3-day opening weekend?
+  77056294  0.5292  Will Emily Blunt be nominated for Best Supporting Actress at the 98th Academy Aw
+  76939227  0.5293  Will Train Dreams be nominated for Best Picture at the 98th Academy Awards?
+  65010552  0.5293  Will 'Kraven the Hunter' gross more than $25m on 3-day opening weekend?
+  77682265  0.5293  Will Kaitlyn Dever (Apple Cider Vinegar) win Best Actress – Limited Series at th
+  66227583  0.5293  Will Avatar 3 be the top grossing movie of 2025?
+  67811925  0.5294  Will Jamie Lee Curtis win Best Supporting Actress at the 2025 SAG Award for "The
+  68089122  0.5294  Will "Dune: Part Two" win Best Visual Effects at the 2025 Oscars?
+  54850129  0.5295  Another actor announced as next James Bond actor?
+  77056991  0.5298  Will Yorgos Lanthimos win Best Director at the 98th Academy Awards?
+  67573048  0.5298  Will 'Kneecap' win Best Foreign Language Film in the 2025 Critics' Choice Awards
+  77056304  0.5299  Will Yorgos Lanthimos be nominated for Best Director at the 98th Academy Awards?
+  68132268  0.5299  Will "Magic Candies" win Best Animated Short Film at the 2025 Oscars?
+  52746206  0.5300  Will Zone of Interest win the Oscar for Best Adapted Screenplay?
+  66984746  0.5301  Will Isabella Rossellini win Best Supporting Actress at the 2025 Oscars?
+  66271657  0.5303  Will Margaret Qualley win the Golden Globe for Best Supporting Actress - Motion 
+  66984766  0.5303  Will Stanley Tucci win Best Supporting Actor at the 2025 Oscars?
+  67811748  0.5303  Will "Kneecap" win Best Original Screenplay at the 2025 BAFTA Awards?
+  77056542  0.5303  Will Marty Supreme win Best Original Screenplay at the 98th Academy Awards?
+  66984762  0.5304  Will Felicity Jones win Best Supporting Actress at the 2025 Oscars?
+  77056300  0.5305  Will Ariana Grande be nominated for Best Supporting Actress at the 98th Academy 
+  76939246  0.5305  Will Joel Edgerton be nominated for Best Actor at the 98th Academy Awards?
+  47185904  0.5305  Will 'The Nun II' gross over $40m opening weekend?
+  65331153  0.5305  Will "Sonic 3" Rotten Tomatoes score be below 60?
+  67812063  0.5306  Will Ralph Fiennes win Best Actor at the 2025 SAG Award for "Conclave"?
+  67811710  0.5306  Will Karla Sofía Gascón win Best Actress at the 2025 BAFTA Awards for "Emilia Pé
+  77679984  0.5306  Will Rose Byrne (If I Had Legs I'd Kick You) win Best Actress – Drama at the 83r
+  66984855  0.5307  Will Jeremy Strong win Best Supporting Actor at the 2025 Oscars?
+  77457074  0.5308  Will “KPop Demon Hunters” be the top global Netflix movie this week?
+  67811710  0.5309  Will "The Brutalist" win Best Film at the 2025 BAFTA Awards?
+  68089494  0.5310  Will "The Brutalist" win the most Oscars in the 2025 Academy Awards?
+  75974415  0.5310  Will "The Conjuring: Last Rites" Opening Weekend Box Office be more than $67m?
+  13481998  0.5311  Will Chadwick Boseman win Best Actor at the 2021 Oscars?
+  77056298  0.5313  Will Greta Lee be nominated for Best Supporting Actress at the 98th Academy Awar
+  67573004  0.5314  Will 'Nosferatu' win Best Cinematography in the 2025 Critics' Choice Awards?
+  66983006  0.5314  Will Karla Sofía Gascón win Best Actress at the 2025 Oscars?
+  76939261  0.5315  Will Stephen Graham be nominated for Best Supporting Actor at the 98th Academy A
+  65362516  0.5315  Will 'Nickel Boys' be nominated for Oscar for Best Picture?
+  68132272  0.5316  Will "Conclave" win Best Film Editing at the 2025 Oscars?
+  77056761  0.5316  Will Rose Byrne win Best Actress at the 98th Academy Awards?
+  65010542  0.5319  Will 'Kraven the Hunter' gross between $22-25m on 3-day opening weekend?
+  68132301  0.5320  Will "Yuck!" win Best Animated Short Film at the 2025 Oscars?
+  67811722  0.5321  Will "A Real Pain" win Best Original Screenplay at the 2025 BAFTA Awards?
+  68089493  0.5321  Will 'Wicked' win 1 Oscars at the 2025 Academy Awards?
+  61846925  0.5321  Jean Smart wins Best Comedy Actress? - Emmys
+  52707243  0.5322  Will Yorgos Lanthimos win the Oscar for Best Director?
+  67812030  0.5323  Will Karla Sofía Gascón win Best Actor at the 2025 SAG Award for "Emilia Pérez"?
+  76218608  0.5323  Will "Demon Slayer" Opening Weekend Box Office be more than $85m?
+  77054962  0.5324  Will Hamnet win Best Makeup and Hairstyling at the 98th Academy Awards?
+  77056297  0.5324  Will Mari Yamamoto be nominated for Best Supporting Actress at the 98th Academy 
+  77056783  0.5324  Will Tessa Thompson win Best Actress at the 98th Academy Awards?
+  54581238  0.5325  'Arthur the King' over $15m opening weekend?
+  79018733  0.5327  Will "Zootopia 2" 5-Day Opening Box Office be between 115m and 129m?
+  65611212  0.5329  Will 'A Real Pain' win the Golden Globe for Best Screenplay?
+  77056306  0.5329  Will Clint Bentley be nominated for Best Director at the 98th Academy Awards?
+  79018727  0.5330  Will "Zootopia 2" 5-Day Opening Box Office be less than 115m?
+  52745771  0.5331  Will Past Lives win the Oscar for Best Original Screenplay?
+  77056100  0.5334  Will Hamnet win Best Film Editing at the 98th Academy Awards?
+  78552535  0.5335  Will "Now You See Me: Now You Don't" score at least 60 on the Rotten Tomatoes To
+  77056960  0.5336  Will Paul Thomas Anderson win Best Director at the 98th Academy Awards?
+  76939274  0.5336  Will June Squibb be nominated for Best Actress at the 98th Academy Awards?
+  23760039  0.5337  Will “Jackass Forever” gross domestically more than $20 million on the opening w
+  77057011  0.5338  Will Guillermo del Toro win Best Director at the 98th Academy Awards?
+  77457099  0.5339  Will “We Have Always Lived in the Castle” be the top global Netflix movie this w
+  77054768  0.5339  Will Yngvill Kolset Haga & Avy Kaufman (Sentimental Value) be nominated for Achi
+  52747156  0.5340  Will Emily Blunt win the Oscar for Best Supporting Actress?
+  74568275  0.5340  Will "The Bad Guys 2" Opening Weekend Box Office be between $19m and $22m?
+  77055684  0.5340  Will No Other Choice win Best Cinematography at the 98th Academy Awards?
+  52400233  0.5341  Will "The Holdovers" win the Oscar for Best Picture?
+  29086590  0.5342  Will 'Jurassic World Dominion' get a 70% or higher Tomatometer Score?
+  78930796  0.5342  Will Avengers: Doomsday be the top grossing movie of 2026?
+  76939278  0.5342  Will Lucy Liu be nominated for Best Actress at the 98th Academy Awards?
+  67106196  0.5343  Will "Sing Sing" win Best Adapted Screenplay at the 2025 Oscars?
+  51134628  0.5343  'Dune 2' bigger opening weekend than 'Dune'?
+  77682291  0.5344  Will Amanda Seyfried (Long Bright River) win Best Actress – Limited Series at th
+  77682696  0.5345  Will Kleber Mendonca Filho (The Secret Agent) win Best Director at the 83rd Gold
+  77680037  0.5345  Will Lucy Liu (Rosemead) win Best Actress – Drama at the 83rd Golden Globes?
+  78930786  0.5345  Will Spider-Man: Brand New Day be the top grossing movie of 2026?
+  76939277  0.5346  Will Rose Byrne be nominated for Best Actress at the 98th Academy Awards?
+  68089534  0.5346  Will 'The Brutalist' win 4-5 Oscars at the 2025 Academy Awards?
+  38049460  0.5346  Will "Top Gun: Maverick" win the Oscar for Best Picture?
+  76939091  0.5347  Will Frankenstein win Best Picture at the 98th Academy Awards?
+  52746669  0.5347  Will Mark Ruffalo win the Oscar for Best Supporting Actor?
+  77056312  0.5348  Will Zach Cregger be nominated for Best Director at the 98th Academy Awards?
+  76939249  0.5348  Will Paul Mescal be nominated for Best Actor at the 98th Academy Awards?
+  77682459  0.5348  Will Charlie Hunnam (Monster The Ed Gein Story) win Best Actor – Limited Series 
+  77056312  0.5349  Will Guillermo del Toro be nominated for Best Director at the 98th Academy Award
+  49344776  0.5349  Will 'The Marvels' gross more than $55 million domestically on its opening weeke
+  57233238  0.5349  'Furiosa: A Mad Max Saga' >$44m Opening Weekend?
+  77056305  0.5350  Will Paul Thomas Anderson be nominated for Best Director at the 98th Academy Awa
+  76939280  0.5350  Will Jodie Comer be nominated for Best Actress at the 98th Academy Awards?
+  76939251  0.5350  Will Willem Dafoe be nominated for Best Actor at the 98th Academy Awards?
+  19703629  0.5350  Will Venom: Let There Be Carnage gross between $64M and $72M domestically on ope
+  65010508  0.5350  Will 'Kraven the Hunter' gross between $16-19m on 3-day opening weekend?
+  77057001  0.5351  Will Kathryn Bigelow win Best Director at the 98th Academy Awards?
+  76939358  0.5351  Will Channing Tatum win Best Actor at the 98th Academy Awards?
+  48334382  0.5351  Will 'The Exorcist: Believer' gross over $28m opening weekend?
+  68412764  0.5352  Will "Maria" win Best Cinematography at the 2025 Oscars?
+  66699577  0.5352  Will 'Lilo & Stich' have the best domestic opening weekend in 2025?
+  39853001  0.5354  Will 'Creed III' gross more than $40 million domestically on its opening weekend
+  68361958  0.5354  Will Taylor Swift attend the Oscars?
+  23761514  0.5355  Will “Jackass Forever” gross domestically more than $40 million on the opening w
+  76939058  0.5356  Will It Was Just an Accident win Best Picture at the 98th Academy Awards?
+  34755304  0.5356  Will ‘Black Panther: Wakanda Forever’ gross more than $220 million domestically 
+  64206125  0.5357  Will 'Moana 2' gross between $135-150m on 5-day opening weekend?
+  52706348  0.5357  Will Sandra Hüller win the Oscar for Best Actress?
+  64206141  0.5357  Will 'Moana 2' gross between $150-165m on 5-day opening weekend?
+  76939248  0.5358  Will Leonardo DiCaprio be nominated for Best Actor at the 98th Academy Awards?
+  78930811  0.5358  Will The Super Mario Galaxy Movie be the top grossing movie of 2026?
+  60629677  0.5359  Will 'Alien: Romulus' gross more than $50m opening weekend?
+  66984812  0.5360  Will Monica Barbaro win Best Supporting Actress at the 2025 Oscars?
+  77056302  0.5360  Will Regina Hall be nominated for Best Supporting Actress at the 98th Academy Aw
+  77056307  0.5361  Will Benny Safdie be nominated for Best Director at the 98th Academy Awards?
+  72885236  0.5361  Will "28 Years Later" Opening Weekend Box Office be between $38-42m?
+  54111535  0.5361  Will 'Ghostbusters: Frozen Empire' over $50m opening weekend?
+  77682443  0.5362  Will Stephen Graham (Adolescence) win Best Actor – Limited Series at the 83rd Go
+  71721659  0.5363  Will "Lilo & Stitch" Rotten Tomatoes score be between 90-94?
+  77054942  0.5364  Will Sinners win Best Makeup and Hairstyling at the 98th Academy Awards?
+  77055639  0.5364  Will Sinners win Best Cinematography at the 98th Academy Awards?
+  77680062  0.5365  Will Eva Victor (Sorry, Baby) win Best Actress – Drama at the 83rd Golden Globes
+  29917303  0.5366  Will ‘Elvis’ gross more than $38 million domestically on its opening weekend?
+  67812019  0.5366  Will Yura Borisov win Best Actor at the 2025 SAG Award for "Anora"?
+  47576842  0.5366  Will 'A Haunting in Venice' gross over $14m opening weekend?
+  78552535  0.5366  Will "Now You See Me: Now You Don't" score at least 50 on the Rotten Tomatoes To
+  76218604  0.5367  Will "Demon Slayer" Opening Weekend Box Office be between $80m and $85m?
+  66982235  0.5367  Will "Conclave" win Best Picture at the 2025 Oscars?
+  77682250  0.5369  Will Meghann Fahy (Sirens) win Best Actress – Limited Series at the 83rd Golden 
+  77682448  0.5370  Will Mark Ruffalo (Task) win Best Actor – Limited Series at the 83rd Golden Glob
+  77056132  0.5370  Will Frankenstein win Best Film Editing at the 98th Academy Awards?
+  78552535  0.5370  Will "Now You See Me: Now You Don't" score at least 40 on the Rotten Tomatoes To
+  52400249  0.5370  Will "Anatomy of a Fall" win the Oscar for Best Picture?
+  77056363  0.5371  Will The Life of Chuck win Best Adapted Screenplay at the 98th Academy Awards?
+  77679090  0.5373  Will Jeremy Strong (Springsteen: Deliver Me from Nowhere) win Best Supporting Ac
+  77056302  0.5373  Will Glenn Close be nominated for Best Supporting Actress at the 98th Academy Aw
+  68089536  0.5374  Will "Conclave" win the most Oscars in the 2025 Academy Awards?
+  77682485  0.5374  Will Jude Law (Black Rabbit) win Best Actor – Limited Series at the 83rd Golden 
+  67106164  0.5375  Will "A Real Pain" win Best Original Screenplay at the 2025 Oscars?
+  65362664  0.5375  Will 'Nosferatu' be nominated for Oscar for Best Picture?
+  65331192  0.5376  Will "Sonic 3" Rotten Tomatoes score be between 80-89?
+  76939044  0.5376  Will Marty Supreme win Best Picture at the 98th Academy Awards?
+  55867740  0.5376  Will 'Deadpool & Wolverine' gross more than $170m opening weekend?
+  46110473  0.5376  Will 'The Last Voyage of the Demeter' gross over $8m on opening weekend?
+  77475754  0.5379  Will Lee Byung-hun (No Other Choice) win Best Actor – Drama at the 83rd Golden G
+  67774114  0.5380  Will "Paddington in Peru" Opening Weekend Box Office be between $18-21m?
+  23761211  0.5380  Will “Jackass Forever” gross domestically more than $25 million on the opening w
+  77387796  0.5381  Will "Tron: Ares" Opening Weekend Box Office be between 36m and 40m?
+  67811736  0.5381  Will "Conclave" win Best Film at the 2025 BAFTA Awards?
+  76091461  0.5382  Will "The Conjuring: Last Rites" Opening Weekend Box Office be more than $80m?
+  79018781  0.5382  Will "The Running Man" Opening Weekend Box Office be between 19m and 21m?
+  43024142  0.5383  Will 'Spider-Man: Across the Spider-Verse' gross over $100 million on opening we
+  66271669  0.5384  Will Isabella Rossellini win the Golden Globe for Best Supporting Actress - Moti
+  66982967  0.5384  Will Cynthia Erivo win Best Actress at the 2025 Oscars?
+  67573429  0.5385  Will Demi Moore win Best Actress in the 2025 Critics' Choice Awards?
+  76939354  0.5385  Will Colin Farrell win Best Actor at the 98th Academy Awards?
+  77056309  0.5386  Will Mona Fastvold be nominated for Best Director at the 98th Academy Awards?
+  77475774  0.5386  Will Rami Malek (Nuremberg) win Best Actor – Drama at the 83rd Golden Globes?
+  77057023  0.5387  Will Hikari win Best Director at the 98th Academy Awards?
+  45506296  0.5387  Will 'Haunted Mansion' gross over $30m on opening weekend?
+  66227659  0.5388  Will Jurassic World: Rebirth be the top grossing movie of 2025?
+  67811712  0.5389  Will Sean Baker win Best Director at the 2025 BAFTA Awards for "Anora"?
+  77387801  0.5389  Will "Tron: Ares" Opening Weekend Box Office be between 40m and 44m?
+  77056981  0.5389  Will Benny Safdie win Best Director at the 98th Academy Awards?
+  68089481  0.5390  Will 'Nosferatu' win an Oscar?
+  67774099  0.5390  Will "Paddington in Peru" Opening Weekend Box Office be between $15-18m?
+  66227735  0.5391  Will How to Train Your Dragon be the top grossing movie of 2025?
+  70062075  0.5391  Will 'The Amateur' make between $16-19m on its domestic opening weekend?
+  68089173  0.5391  Will "Wicked" win Best Visual Effects at the 2025 Oscars?
+  66984694  0.5392  Will Kieran Culkin win Best Supporting Actor at the 2025 Oscars?
+  68132374  0.5393  Will "Incident" win Best Documentary Short Film at the 2025 Oscars?
+  64206159  0.5393  Will 'Moana 2' gross between $165-180m on 5-day opening weekend?
+  68412736  0.5395  Will "No Other Land" win Best Documentary Feature Film at the 2025 Oscars?
+  74568270  0.5395  Will "The Bad Guys 2" Opening Weekend Box Office be between $16m and $19m?
+  55594764  0.5395  Will 'Civil War' gross between $20-23m opening weekend?
+  40578154  0.5395  Will 'John Wick: Chapter 4' gross more than $70 million domestically on its open
+  67573016  0.5396  Will 'Wicked' win Best Cinematography in the 2025 Critics' Choice Awards?
+  77056313  0.5397  Will Ryan Coogler be nominated for Best Director at the 98th Academy Awards?
+  67812046  0.5397  Will Edward Norton win Best Actor at the 2025 SAG Award for "A Complete Unknown"
+  52447438  0.5398  Will Andrew Scott win the Oscar for Best Actor?
+  68132283  0.5398  Will "Wicked" win Best Original Score at the 2025 Oscars?
+  44449337  0.5399  Will 'Indiana Jones and the Dial of Destiny' gross more than $70.5m on its 3-day
+  68132351  0.5400  Will "The Girl with the Needle" win Best International Feature Film at the 2025 
+  16663548  0.5401  Will Black Widow gross more than $87.5M domestically on opening weekend?
+  77056372  0.5403  Will Ballad of a Small Player win Best Adapted Screenplay at the 98th Academy Aw
+  55867700  0.5403  Will 'Deadpool & Wolverine' gross between $110m and $130m opening weekend?
+  65010462  0.5404  Will 'Kraven the Hunter' gross less than $16m on 3-day opening weekend?
+  77056818  0.5405  Will Laura Dern win Best Actress at the 98th Academy Awards?
+  51279439  0.5405  Will 'Aquaman and the Lost Kingdom' gross over $35m on its 4-day opening weekend
+  77684381  0.5405  Will Avatar Fire and Ash win Best Original Score – Motion Picture at the 83rd Go
+  72034784  0.5406  Will "Karate Kid: Legends" Rotten Tomatoes score be between 55-59?
+  41105333  0.5406  Will 'The Super Mario Bros. Movie' gross more than $150 million domestically on 
+  71721671  0.5406  Will "Lilo & Stitch" Rotten Tomatoes score be 98 or more?
+  65331181  0.5408  Will "Sonic 3" Rotten Tomatoes score be between 70-79?
+  78930816  0.5409  Will Jumanji 3 be the top grossing movie of 2026?
+  55867729  0.5409  Will 'Deadpool & Wolverine' gross between $150m and $170m opening weekend?
+  40578145  0.5409  Will 'John Wick: Chapter 4' gross more than $60 million domestically on its open
+  55867685  0.5410  Will 'Deadpool & Wolverine' gross less than $110m opening weekend?
+  77679122  0.5410  Will Jack O'Connell (Sinners) win Best Supporting Actor – Motion Picture at the 
+  76939233  0.5411  Will Warfare be nominated for Best Picture at the 98th Academy Awards?
+  66982380  0.5412  Will "Nickel Boys" win Best Picture at the 2025 Oscars?
+  77682661  0.5413  Will Kathryn Bigelow (A House of Dynamite) win Best Director at the 83rd Golden 
+  68412753  0.5414  Will "Emilia Pérez" win Best Cinematography at the 2025 Oscars?
+  76814681  0.5414  Will "One Battle After Another" gross 130% or more of "Gabby's Dollhouse"?
+  60824762  0.5414  Will 'Beetlejuice Beetlejuice' gross between $95m and $105m opening weekend?
+  66984834  0.5414  Will Yura Borisov win Best Supporting Actor at the 2025 Oscars?
+  66984783  0.5415  Will Willem Dafoe win Best Supporting Actor at the 2025 Oscars?
+  77056773  0.5415  Will Julia Roberts win Best Actress at the 98th Academy Awards?
+  77054937  0.5415  Will Weapons win Best Makeup and Hairstyling at the 98th Academy Awards?
+  77683354  0.5416  Will Demon Slayer Kimetsu No Yaiba win Best Motion Picture – Animated at the 83r
+  75974396  0.5416  Will "The Conjuring: Last Rites" Opening Weekend Box Office be less than $52m?
+  67572996  0.5416  Will 'All We Imagine as Light' win Best Foreign Language Film in the 2025 Critic
+  68132337  0.5417  Will "Death by Numbers" win Best Documentary Short Film at the 2025 Oscars?
+  77056383  0.5418  Will Is This Thing On? win Best Adapted Screenplay at the 98th Academy Awards?
+  75370180  0.5418  Will 'Avatar: Fire and Ash' have the third best domestic opening weekend in 2025
+  68089156  0.5420  Will "Kingdom of the Planet of the Apes" win Best Visual Effects at the 2025 Osc
+  77105203  0.5420  Will "Tron: Ares" Opening Weekend Box Office be between 45m and 50m?
+  77056971  0.5420  Will Chloé Zhao win Best Director at the 98th Academy Awards?
+  77056359  0.5421  Will Wicked: For Good win Best Adapted Screenplay at the 98th Academy Awards?
+  77680052  0.5421  Will Mariam Afshari (It Was Just an Accident) win Best Actress – Drama at the 83
+  55594734  0.5421  Will 'Civil War' gross more than $23m opening weekend?
+  78552275  0.5421  Will "The Running Man" score at least 85 on the Rotten Tomatoes Tomatometer?
+  76939278  0.5422  Will Amanda Seyfried be nominated for Best Actress at the 98th Academy Awards?
+  68412753  0.5422  Will "Porcelain War" win Best Documentary Feature Film at the 2025 Oscars?
+  76939232  0.5422  Will Frankenstein be nominated for Best Picture at the 98th Academy Awards?
+  77057028  0.5423  Will Derek Cianfrance win Best Director at the 98th Academy Awards?
+  67812006  0.5423  Will Adrien Brody win Best Actor at the 2025 SAG Award for "The Brutalist"?
+  52746194  0.5423  Will Barbie win the Oscar for Best Adapted Screenplay?
+  74568284  0.5423  Will "The Bad Guys 2" Opening Weekend Box Office be more than $25m?
+  76939723  0.5424  Will Chase Infiniti win Best Supporting Actress at the 98th Academy Awards?
+  75249485  0.5424  Will Superman be the third highest grossing movie of 2025?
+  66984732  0.5425  Will Ariana Grande win Best Supporting Actress at the 2025 Oscars?
+  77056798  0.5426  Will Kate Hudson win Best Actress at the 98th Academy Awards?
+  65331169  0.5426  Will "Sonic 3" Rotten Tomatoes score be between 60-69?
+  76939310  0.5427  Will Daniel Day-Lewis win Best Actor at the 98th Academy Awards?
+  78551984  0.5427  Will "Predator: Badlands" score at least 70 on the Rotten Tomatoes Tomatometer?
+  52447459  0.5427  Will Bradley Cooper win the Oscar for Best Actor?
+  66982268  0.5427  Will "Dune: Part Two" win Best Picture at the 2025 Oscars?
+  67774127  0.5429  Will "Paddington in Peru" Opening Weekend Box Office be more than $21m?
+  34755471  0.5429  Will ‘Black Panther: Wakanda Forever’ gross less than $180 million domestically 
+  52400276  0.5429  Will "The Zone of Interest" win the Oscar for Best Picture?
+  67811770  0.5430  Will Adrien Brody win Best Actor at the 2025 BAFTA Awards for "The Brutalist"?
+  56692217  0.5430  Will 'Kingdom of the Planet of the Apes' gross over $56m on its opening weekend?
+  77056976  0.5430  Will Ryan Coogler win Best Director at the 98th Academy Awards?
+  74568280  0.5431  Will "The Bad Guys 2" Opening Weekend Box Office be between $22m and $25m?
+  76939227  0.5431  Will Marty Supreme be nominated for Best Picture at the 98th Academy Awards?
+  77682276  0.5431  Will Rashida Jones (Black Mirror) win Best Actress – Limited Series at the 83rd 
+  76939252  0.5432  Will Daniel Day-Lewis be nominated for Best Actor at the 98th Academy Awards?
+  48053986  0.5433  Will 'The Creator' gross over $17m opening weekend?
+  72034789  0.5434  Will "Karate Kid: Legends" Rotten Tomatoes score be between 60-64?
+  56399590  0.5434  Will 'The Fall Guy' gross more than $28m opening weekend?
+  60824720  0.5436  Will 'Beetlejuice Beetlejuice' gross between $75m and $85m opening weekend?
+  77056308  0.5437  Will Josh Safdie be nominated for Best Director at the 98th Academy Awards?
+  67811908  0.5437  Will Monica Barbaro win Best Supporting Actress at the 2025 SAG Award for "A Com
+  67106112  0.5437  Will Sean Baker win Best Director at the 2025 Oscars for "Anora"?
+  72034778  0.5438  Will "Karate Kid: Legends" Rotten Tomatoes score be between 50-54?
+  64206113  0.5439  Will 'Moana 2' gross less than $135m on 5-day opening weekend?
+  78552765  0.5440  Will "Zootopia 2" score at least 85 on the Rotten Tomatoes Tomatometer?
+  60824744  0.5440  Will 'Beetlejuice Beetlejuice' gross between $85m and $95m opening weekend?
+  77683364  0.5441  Will Little Amelie or the Character of Rain win Best Motion Picture – Animated a
+  72034799  0.5441  Will "Karate Kid: Legends" Rotten Tomatoes score be between 70-74?
+  55867713  0.5441  Will 'Deadpool & Wolverine' gross between $130m and $150m opening weekend?
+  55595160  0.5443  Will 'Civil War' gross less than $17m opening weekend?
+  76939063  0.5443  Will Jay Kelly win Best Picture at the 98th Academy Awards?
+  77056567  0.5444  Will Weapons win Best Original Screenplay at the 98th Academy Awards?
+  55594805  0.5444  Will 'Civil War' gross between $17-20m opening weekend?
+  77056533  0.5444  Will Sinners win Best Original Screenplay at the 98th Academy Awards?
+  76939231  0.5444  Will No Other Choice be nominated for Best Picture at the 98th Academy Awards?
+  77682307  0.5445  Will Robin Wright (The Girlfriend) win Best Actress – Limited Series at the 83rd
+  76939031  0.5445  Will Hamnet win Best Picture at the 98th Academy Awards?
+  49622671  0.5446  Will ‘The Marvels’ have a bigger opening weekend than 'Morbius'?
+  77683963  0.5447  Will Avatar Fire and Ash win Best Motion Picture – Drama at the 83rd Golden Glob
+  66271644  0.5448  Will Felicity Jones win the Golden Globe for Best Supporting Actress - Motion Pi
+  77056742  0.5450  Will Jessie Buckley win Best Actress at the 98th Academy Awards?
+  76939251  0.5450  Will Colin Farrell be nominated for Best Actor at the 98th Academy Awards?
+  77056793  0.5451  Will Emily Blunt win Best Actress at the 98th Academy Awards?
+  77056303  0.5451  Will Chase Infiniti be nominated for Best Supporting Actress at the 98th Academy
+  76939233  0.5453  Will Wake Up Dead Man: A Knives Out Mystery be nominated for Best Picture at the
+  68132270  0.5453  Will "Nosferatu" win Best Makeup and Hairstyling at the 2025 Oscars?
+  76218596  0.5454  Will "Demon Slayer" Opening Weekend Box Office be between $70m and $75m?
+  66699505  0.5454  Will 'Zootopia 2' have the best domestic opening weekend in 2025?
+  77681308  0.5455  Will Catherine O'Hara (The Studio) win Best Supporting Actress – Television at t
+  77679084  0.5455  Will Josh O'Connor (Wake Up Dead Man) win Best Supporting Actor – Motion Picture
+  68132301  0.5455  Will "Wicked" win Best Makeup and Hairstyling at the 2025 Oscars?
+  65331206  0.5456  Will "Sonic 3" Rotten Tomatoes score be 90+?
+  78632041  0.5456  Will “KPop Demon Hunters” be the top global Netflix movie this week? (November 1
+  52671870  0.5456  Will Annette Bening win the Oscar for Best Actress?
+  70305683  0.5456  Will "Mission: Impossible – The Final Reckoning" Rotten Tomatoes score be betwee
+  71721665  0.5456  Will "Lilo & Stitch" Rotten Tomatoes score be between 95-97?
+  67106167  0.5456  Will "Emilia Pérez" win Best Adapted Screenplay at the 2025 Oscars?
+  71721648  0.5457  Will "Lilo & Stitch" Rotten Tomatoes score be between 80-84?
+  77475916  0.5457  Will Rami Malek (Nuremberg) be nominated for Best Actor – Drama at the 83rd Gold
+  66982583  0.5457  Will "Nosferatu" win Best Picture at the 2025 Oscars?
+  76256254  0.5457  Will "Downton Abbey" Opening Weekend Box Office be between $26m and $29m?
+  60824687  0.5457  Will 'Beetlejuice Beetlejuice' gross less than $75m opening weekend?
+  60071761  0.5458  Will 'Trap' gross more than $20m opening weekend?
+  72885241  0.5459  Will "28 Years Later" Opening Weekend Box Office be between $42-46m?
+  76939250  0.5460  Will Brad Pitt be nominated for Best Actor at the 98th Academy Awards?
+  72572728  0.5460  Will "How to Train Your Dragon" Opening Weekend Box Office be between $85m and $
+  76939225  0.5460  Will Jay Kelly be nominated for Best Picture at the 98th Academy Awards?
+  29354021  0.5461  Will ‘Jurassic World Dominion’ gross more than $150 million domestically in its 
+  40578161  0.5462  Will 'John Wick: Chapter 4' gross more than $80 million domestically on its open
+  17409257  0.5462  Will Jungle Cruise gross more than $30M domestically on opening weekend?
+  71721642  0.5463  Will "Lilo & Stitch" Rotten Tomatoes score be less than 80?
+  77056966  0.5463  Will Joachim Trier win Best Director at the 98th Academy Awards?
+  77056996  0.5464  Will Josh Safdie win Best Director at the 98th Academy Awards?
+  77056095  0.5464  Will No Other Choice win Best Film Editing at the 98th Academy Awards?
+  77475917  0.5465  Will Russell Crowe (Nuremberg) be nominated for Best Actor – Drama at the 83rd G
+  58874164  0.5465  Will 'Despicable Me 4' gross less than $105m on 5-day opening weekend?
+  77679063  0.5465  Will Jacob Elordi (Frankenstein) win Best Supporting Actor – Motion Picture at t
+  76939225  0.5466  Will Hamnet be nominated for Best Picture at the 98th Academy Awards?
+  77056313  0.5467  Will Chloé Zhao be nominated for Best Director at the 98th Academy Awards?
+  52746685  0.5470  Will Ryan Gosling win the Oscar for Best Supporting Actor?
+  77105209  0.5470  Will "Tron: Ares" Opening Weekend Box Office be greater than 50m?
+  76939306  0.5470  Will Timothée Chalamet win Best Actor at the 98th Academy Awards?
+  68328535  0.5470  Will 'Last Breath' between 3-6m on its opening weekend?
+  65611174  0.5470  Will 'Emilia Pérez' win the Golden Globe for Best Screenplay?
+  74244128  0.5471  Will "Fantastic Four: The First Steps" Opening Weekend Box Office be between $12
+  77054927  0.5471  Will Wicked: For Good win Best Makeup and Hairstyling at the 98th Academy Awards
+  77056081  0.5472  Will Sinners win Best Film Editing at the 98th Academy Awards?
+  39115650  0.5472  Will 'Ant-Man and the Wasp: Quantumania' gross more than $125 million domestical
+  75121679  0.5473  Will "Americana" Opening Weekend Box Office be more than $2m?
+  66982659  0.5473  Will Ralph Fiennes win Best Actor at the 2025 Oscars?
+  77682286  0.5474  Will Claire Danes (The Beast in Me) win Best Actress – Limited Series at the 83r
+  75370185  0.5474  Will 'Zootopia 2' have the third best domestic opening weekend in 2025?
+  77683622  0.5474  Will The Girlfriend win Best Television Limited Series at the 83rd Golden Globes
+  70062047  0.5474  Will 'King of Kings' make less than $15m on its domestic opening weekend?
+  11938638  0.5475  Will box office sales be higher than $200 million in the first quarter of 2021?
+  78930776  0.5475  Will Toy Story 5 be the top grossing movie of 2026?
+  67023018  0.5475  Will "Captain America" Opening Weekend Box Office be between $82-91m?
+  76939273  0.5476  Will Jessie Buckley be nominated for Best Actress at the 98th Academy Awards?
+  77055694  0.5476  Will Ballad of a Small Player win Best Cinematography at the 98th Academy Awards
+  72885231  0.5477  Will "28 Years Later" Opening Weekend Box Office be between $34-38m?
+  76939363  0.5478  Will Hugh Jackman win Best Actor at the 98th Academy Awards?
+  29129024  0.5478  Will ‘Jurassic World Dominion’ gross more than $180 million domestically in its 
+  66699424  0.5478  Will 'Captain America: Brave New World' have the best domestic opening weekend i
+  72885246  0.5478  Will "28 Years Later" Opening Weekend Box Office be more than $46m?
+  52447401  0.5479  Will Cillian Murphy win the Oscar for Best Actor?
+  68328545  0.5479  Will 'Last Breath' between 6-9m on its opening weekend?
+  76939228  0.5479  Will Sound of Falling be nominated for Best Picture at the 98th Academy Awards?
+  68132256  0.5479  Will "Emilia Pérez" win Best Makeup and Hairstyling at the 2025 Oscars?
+  77055680  0.5480  Will Wicked: For Good win Best Cinematography at the 98th Academy Awards?
+  68412727  0.5481  Will "Black Box Diaries" win Best Documentary Feature Film at the 2025 Oscars?
+  49500815  0.5481  Will 'The Marvels' gross more than $45 million domestically on its opening weeke
+  56399569  0.5482  Will 'The Fall Guy' gross less than $20m opening weekend?
+  64206172  0.5482  Will 'Moana 2' gross more than $180m on 5-day opening weekend?
+  77056137  0.5482  Will Springsteen: Deliver Me from Nowhere win Best Film Editing at the 98th Acad
+  77682666  0.5483  Will Park Chan-wook (No Other Choice) win Best Director at the 83rd Golden Globe
+  78886997  0.5483  Will "The Running Man" Opening Weekend Box Office be between 24m and 27m?
+  67811701  0.5483  Will "Anora" win Best Original Screenplay at the 2025 BAFTA Awards?
+  77055648  0.5484  Will F1: The Movie win Best Cinematography at the 98th Academy Awards?
+  74244133  0.5485  Will "Fantastic Four: The First Steps" Opening Weekend Box Office be between $13
+  65837262  0.5487  Will 'Nosferatu' gross between $20-25m on 5-day opening weekend?
+  77679290  0.5487  Will Teyana Taylor (One Battle After Another) win Best Supporting Actress – Moti
+  76939276  0.5488  Will Julia Roberts be nominated for Best Actress at the 98th Academy Awards?
+  76091460  0.5488  Will "The Conjuring: Last Rites" Opening Weekend Box Office be less than $72m?
+  68132305  0.5488  Will "Wicked" win Best Film Editing at the 2025 Oscars?
+  61846737  0.5488  Jeremy Allen White wins Best Comedy Actor? - Emmys
+  67023297  0.5488  Will "Captain America" Opening Weekend Box Office be more than $91m?
+  76218600  0.5489  Will "Demon Slayer" Opening Weekend Box Office be between $75m and $80m?
+  67573009  0.5489  Will 'Emilia Pérez' win Best Foreign Language Film in the 2025 Critics' Choice A
+  44648447  0.5489  Will 'Insidious: The Red Door' gross more than $26.5m on its 3-day opening weeke
+  76939247  0.5489  Will Denzel Washington be nominated for Best Actor at the 98th Academy Awards?
+  68089101  0.5490  Will "Dune: Part Two" win Best Sound at the 2025 Oscars?
+  77679747  0.5491  Will Eva Victor (Sorry Baby) win Best Actress – Musical or Comedy at the 83rd Go
+  66227640  0.5491  Will Superman be the top grossing movie of 2025?
+  72885207  0.5491  Will "Elio" Opening Weekend Box Office be between $23-26m?
+  77682671  0.5491  Will Jafar Panahi (It Was Just an Accident) win Best Director at the 83rd Golden
+  49344798  0.5492  Will 'The Marvels' gross more than $75 million domestically on its opening weeke
+  76256260  0.5492  Will "Downton Abbey" Opening Weekend Box Office be more than $29m?
+  78886992  0.5494  Will "The Running Man" Opening Weekend Box Office be between 21m and 24m?
+  68089520  0.5495  Will 'Wicked' win 3 Oscars at the 2025 Academy Awards?
+  77457119  0.5495  Will “The Woman in Cabin 10” be the top global Netflix movie this week?
+  52745777  0.5496  Will May December win the Oscar for Best Original Screenplay?
+  47034458  0.5496  Will ‘Taylor Swift: Eras Tour’ have a bigger opening weekend than 'Barbie'?
+  76218592  0.5496  Will "Demon Slayer" Opening Weekend Box Office be between $65m and $70m?
+  52447449  0.5496  Will Leonardo DiCaprio win the Oscar for Best Actor?
+  76939229  0.5497  Will The Life of Chuck be nominated for Best Picture at the 98th Academy Awards?
+  77056747  0.5497  Will Renate Reinsve win Best Actress at the 98th Academy Awards?
+  34464416  0.5497  Will 'Black Adam' gross more than $65 million domestically on its opening weeken
+  77056768  0.5497  Will Emma Stone win Best Actress at the 98th Academy Awards?
+  66982441  0.5497  Will "Sing Sing" win Best Picture at the 2025 Oscars?
+  75697268  0.5498  "The Conjuring: Last Rites" Rotten Tomatoes score is between 70 and 79?
+  66271613  0.5498  Will Selena Gomez win the Golden Globe for Best Supporting Actress - Motion Pict
+  66982389  0.5498  Will "A Real Pain" win Best Picture at the 2025 Oscars?
+  77470693  0.5499  Will "Roofman" (2025) score at least 86 on the Rotten Tomatoes Tomatometer?
+  65611190  0.5499  Will 'Anora' win the Golden Globe for Best Screenplay?
+  67573002  0.5501  Will 'Emilia Pérez' win 1 Oscars at the 2025 Academy Awards?
+  67573014  0.5501  Will 'Emilia Pérez' win 2 Oscars at the 2025 Academy Awards?
+  68412773  0.5501  Will "Sugarcane" win Best Documentary Feature Film at the 2025 Oscars?
+  78035996  0.5501  Will “Kpop Demon Hunters” be the top global Netflix movie this week? (October 28
+  65837214  0.5502  Will 'Nosferatu' gross under $20m on 5-day opening weekend?
+  76939234  0.5502  Will Weapons be nominated for Best Picture at the 98th Academy Awards?
+  77056297  0.5502  Will Tilda Swinton be nominated for Best Supporting Actress at the 98th Academy 
+  77683369  0.5502  Will Ne Zha 2 win Best Motion Picture – Animated at the 83rd Golden Globes?
+  76814670  0.5504  Will "One Battle After Another" gross less than 115% of "Gabby's Dollhouse"?
+  77056306  0.5504  Will Joachim Trier be nominated for Best Director at the 98th Academy Awards?
+  66982689  0.5504  Will Sebastian Stan win Best Actor at the 2025 Oscars?
+  72034794  0.5505  Will "Karate Kid: Legends" Rotten Tomatoes score be between 65-69?
+  78552870  0.5505  Will "Predator: Badlands" Opening Weekend Box Office be between 22m and 26m?
+  69173832  0.5506  Will 'Magazine Dreams' gross between 1-2m on opening weekend?
+  76256249  0.5506  Will "Downton Abbey" Opening Weekend Box Office be between $23m and $26m?
+  43870357  0.5507  Will 'The Flash' gross over $85m on opening weekend?
+  77679111  0.5507  Will Andrew Scott (Blue Moon) win Best Supporting Actor – Motion Picture at the 
+  53570299  0.5508  Will Colman Domingo win the BAFTA for Best Actor?
+  18440964  0.5508  Will Candyman gross more than $19M domestically on opening weekend?
+  78552865  0.5509  Will "Predator: Badlands" Opening Weekend Box Office be between 18m and 22m?
+  72034772  0.5509  Will "Karate Kid: Legends" Rotten Tomatoes score" Rotten Tomatoes score be less 
+  74568265  0.5510  Will "The Bad Guys 2" Opening Weekend Box Office be less than $16m?
+  77679343  0.5510  Will Laura Dern (Jay Kelly) win Best Supporting Actress – Motion Picture at the 
+  77679337  0.5511  Will Wunmi Mosaku (Sinners) win Best Supporting Actress – Motion Picture at the 
+  68132240  0.5512  Will "Anora" win Best Film Editing at the 2025 Oscars?
+  60629649  0.5512  Will 'Alien: Romulus' gross between $44m and $50m opening weekend?
+  77680021  0.5516  Will June Squibb (Eleanor the Great) win Best Actress – Drama at the 83rd Golden
+  23761285  0.5517  Will “Jackass Forever” gross domestically more than $30 million on the opening w
+  77679763  0.5517  Will Dakota Johnson (Materialists) win Best Actress – Musical or Comedy at the 8
+  78552585  0.5517  Will "Rental Family" score at least 87 on the Rotten Tomatoes Tomatometer?
+  67106118  0.5517  Will "Anora" win Best Original Screenplay at the 2025 Oscars?
+  68362016  0.5517  Will Ryan Reynolds attend the Oscars?
+  77387805  0.5518  Will "Tron: Ares" Opening Weekend Box Office be greater than 44m?
+  76939035  0.5518  Will Sinners win Best Picture at the 98th Academy Awards?
+  76939076  0.5518  Will No Other Choice win Best Picture at the 98th Academy Awards?
+  78940542  0.5518  Will Spider-Man: Brand New Day have the best domestic opening weekend in 2026?
+  78940527  0.5519  Will Star Wars: The Mandalorian and Grogu have the best domestic opening weekend
+  75697263  0.5519  "The Conjuring: Last Rites" Rotten Tomatoes score is between 60 and 69?
+  67812035  0.5519  Will Daniel Craig win Best Actor at the 2025 SAG Award for "Queer"?
+  53570276  0.5519  Will Paul Giamatti win the BAFTA for Best Actor?
+  76939318  0.5519  Will Dwayne Johnson win Best Actor at the 98th Academy Awards?
+  72034678  0.5519  Will "Karate Kid: Legends" gross $26m or more but less than $29m opening weekend
+  72034666  0.5519  Will "Karate Kid: Legends" gross $20m or more but less than $23m opening weekend
+  62633451  0.5520  Will CinemaScore give 'Joker: Folie à Deux' an F?
+  77722684  0.5522  Will Henry Cavill be ranked #1 globally in Google’s Year in Search 2025 Actors?
+  75370079  0.5522  Will 'A Minecraft Movie' have the second best domestic opening weekend in 2025?
+  66699598  0.5522  Will 'How to Train Your Dragon' have the best domestic opening weekend in 2025?
+  76939253  0.5522  Will Timothée Chalamet be nominated for Best Actor at the 98th Academy Awards?
+  40421215  0.5524  Will 'Shazam! Fury of the Gods' gross more than $25 million domestically on its 
+  76256244  0.5525  Will "Downton Abbey" Opening Weekend Box Office be between $20m and $23m?
+  74521052  0.5526  "Alien: Earth" Rotten Tomatoes score is between 80 and 89?
+  22490135  0.5526  Will 'Spider-Man: No Way Home' get a 90% or higher Critic Tomatometer Score?
+  73183444  0.5526  Will "M3GAN 2.0" Opening Weekend Box Office be between $19–22M?
+  68089546  0.5528  Will 'Wicked' win 6+ Oscars at the 2025 Academy Awards?
+  66982568  0.5530  Will Timothée Chalamet win Best Actor at the 2025 Oscars?
+  65362682  0.5530  Will 'Challengers' be nominated for Oscar for Best Picture?
+  70062065  0.5531  Will 'The Amateur' make between $13-16m on its domestic opening weekend?
+  67022796  0.5531  Will "Captain America" Opening Weekend Box Office be between $73-82m?
+  77682711  0.5531  Will Noah Baumbach (Jay Kelly) win Best Director at the 83rd Golden Globes?
+  68089157  0.5531  Will "Wicked" win Best Sound at the 2025 Oscars?
+  78930791  0.5532  Will The Hunger Games: Sunrise on the Reaping be the top grossing movie of 2026?
+  72885213  0.5532  Will "Elio" Opening Weekend Box Office be between $26-29m?
+  75249392  0.5532  Will Wicked: For Good be the second highest grossing movie of 2025?
+  68089477  0.5533  Will 'The Brutalist' win 0 Oscars at the 2025 Academy Awards?
+  78940517  0.5533  Will Scream 7 have the best domestic opening weekend in 2026?
+  72034672  0.5533  Will "Karate Kid: Legends" gross $23m or more but less than $26m opening weekend
+  72683243  0.5533  Will "Elio" Rotten Tomatoes score be between 85–89?
+  39852990  0.5533  Will 'Creed III' gross more than $35 million domestically on its opening weekend
+  78330892  0.5533  Will "Black to the Future" Opening Weekend Box Office be between 4.25m and 5m?
+  77679073  0.5533  Will Paul Mescal (Hamnet) win Best Supporting Actor – Motion Picture at the 83rd
+  74244123  0.5533  Will "Fantastic Four: The First Steps" Opening Weekend Box Office be between $11
+  78887002  0.5534  Will "The Running Man" Opening Weekend Box Office be greater than 27m?
+  68132273  0.5535  Will "Emilia Pérez" win Best Original Score at the 2025 Oscars?
+  70305701  0.5535  Will "Mission: Impossible – The Final Reckoning" Rotten Tomatoes score be betwee
+  72885218  0.5535  Will "Elio" Opening Weekend Box Office be more than $29m?
+  78930761  0.5536  Will Scream 7 be the top grossing movie of 2026?
+  77683338  0.5536  Will KPop Demon Hunters win Best Motion Picture – Animated at the 83rd Golden Gl
+  77679058  0.5536  Will Adam Sandler (Jay Kelly) win Best Supporting Actor – Motion Picture at the 
+  67774091  0.5536  Will "Paddington in Peru" Opening Weekend Box Office be less than $15m?
+  44648517  0.5537  Will 'Joy Ride' gross more than $13.5m on its 3-day opening weekend?
+  66983045  0.5537  Will Fernanda Torres win Best Actress at the 2025 Oscars?
+  72885201  0.5537  Will "Elio" Opening Weekend Box Office be between $20-23m?
+  77681703  0.5537  Will Selena Gomez (Only Murders in the Building) win Best Actress – Television M
+  17926904  0.5538  Will Free Guy gross more than $20M domestically on opening weekend?
+  76939247  0.5539  Will Matthew McConaughey be nominated for Best Actor at the 98th Academy Awards?
+  77682640  0.5539  Will Paul Thomas Anderson (One Battle After Another) win Best Director at the 83
+  76814676  0.5539  Will "One Battle After Another" gross between 115% and 130% of "Gabby's Dollhous
+  78552275  0.5540  Will "The Running Man" score at least 75 on the Rotten Tomatoes Tomatometer?
+  56399583  0.5540  Will 'The Fall Guy' gross between $24m and $28m opening weekend?
+  65837322  0.5540  Will 'Nosferatu' gross over $30m on 5-day opening weekend?
+  39402684  0.5541  Will Michelle Yeoh win the Oscar for Best Actress in a Leading Role?
+  43577669  0.5541  Will 'Transformers: Rise of the Beasts' gross over $45 million on opening weeken
+  66983031  0.5544  Will Demi Moore win Best Actress at the 2025 Oscars?
+  76939736  0.5544  Will Gwyneth Paltrow win Best Supporting Actress at the 98th Academy Awards?
+  77684947  0.5544  Will “KPop Demon Hunters” be the top global Netflix movie this week? (October 21
+  29876575  0.5545  Will ‘Thor: Love and Thunder’ gross more than $190 million domestically on its o
+  49344788  0.5547  Will 'The Marvels' gross more than $65 million domestically on its opening weeke
+  72683400  0.5547  Will "Smurfs" Rotten Tomatoes score be 70 or higher?
+  72572723  0.5547  Will "How to Train Your Dragon" Opening Weekend Box Office be between $78m and $
+  57763558  0.5548  Will 'Bad Boys: Ride or Die' gross more than $49m opening weekend?
+  77683399  0.5550  Will Animal Farm win Best Motion Picture – Animated at the 83rd Golden Globes?
+  68132339  0.5551  Will "A Lien" win Best Action Short Film at the 2025 Oscars?
+  76939237  0.5552  Will Sinners be nominated for Best Picture at the 98th Academy Awards?
+  33927740  0.5552  Will 'Lyle, Lyle, Crocodile' gross more than $18 million domestically on its ope
+  76256240  0.5553  Will "Downton Abbey" Opening Weekend Box Office be less than $20m?
+  78886987  0.5553  Will "The Running Man" Opening Weekend Box Office be less than 21m?
+  54303300  0.5553  Kung Fu Panda 4 over $36m opening weekend?
+  67496828  0.5553  Will 'Captain America' Opening Weekend Box Office be >$100m?
+  74521047  0.5554  "Alien: Earth" Rotten Tomatoes score is between 70 and 79?
+  62633433  0.5554  Will CinemaScore give 'Joker: Folie à Deux' a D?
+  69173857  0.5555  Will 'Magazine Dreams' gross between 2-3m on opening weekend?
+  77684184  0.5555  Will Bugonia win Best Screenplay – Motion Picture at the 83rd Golden Globes?
+  61630555  0.5556  Will 'Joker: Folie à Deux' gross less than $105m opening weekend?
+  15292213  0.5556  Will The Conjuring: The Devil Made Me Do It gross more than $25M domestically on
+  41105326  0.5557  Will 'The Super Mario Bros. Movie' gross more than $100 million domestically on 
+  68132285  0.5557  Will "Emilia Pérez" win Best Film Editing at the 2025 Oscars?
+  17154119  0.5557  Will Snake Eyes or Old gross more domestically opening weekend?
+  62468027  0.5557  Will 'Joker: Folie à Deux' gross between $48-54m opening weekend?
+  70305658  0.5557  Will "Mission: Impossible – The Final Reckoning" Rotten Tomatoes score be betwee
+  57997109  0.5557  Will 'Inside Out 2' gross between $99-108m opening weekend?
+  48053997  0.5558  Will 'PAW Patrol: The Mighty Movie' gross over $16m opening weekend?
+  79018786  0.5559  Will "The Running Man" Opening Weekend Box Office be greater than 21m?
+  65837271  0.5559  Will 'Nosferatu' gross between $25-30m on 5-day opening weekend?
+  72572734  0.5560  Will "How to Train Your Dragon" Opening Weekend Box Office be between $92m and $
+  56399576  0.5560  Will 'The Fall Guy' gross between $20m and $24m opening weekend?
+  76939249  0.5561  Will Dwayne Johnson be nominated for Best Actor at the 98th Academy Awards?
+  77683374  0.5561  Will Elio win Best Motion Picture – Animated at the 83rd Golden Globes?
+  68123046  0.5561  Will 'The Monkey' gross more than 15m on its opening weekend?
+  63326063  0.5562  Will 'Venom: The Last Dance' gross between $45-53m opening weekend?
+  67573431  0.5563  Will Zoe Saldaña win Best Supporting Actress in the 2025 Critics' Choice Awards?
+  67573018  0.5564  Will 'Flow' win Best Foreign Language Film in the 2025 Critics' Choice Awards?
+  76939279  0.5564  Will Emma Stone be nominated for Best Actress at the 98th Academy Awards?
+  52706336  0.5564  Will Lily Gladstone win the Oscar for Best Actress?
+  78697681  0.5564  Will "Predator: Badlands" Opening Weekend Box Office be between 29m and 31m?
+  67573394  0.5565  Will Angelina Jolie win Best Actress in the 2025 Critics' Choice Awards?
+  76939049  0.5565  Will Wicked: For Good win Best Picture at the 98th Academy Awards?
+  79018776  0.5566  Will "The Running Man" Opening Weekend Box Office be between 17m and 19m?
+  76218588  0.5566  Will "Demon Slayer" Opening Weekend Box Office be less than $65m?
+  77470693  0.5567  Will "Roofman" (2025) score at least 82 on the Rotten Tomatoes Tomatometer?
+  58874192  0.5568  Will 'Despicable Me 4' gross between $105m and $115m on 5-day opening weekend?
+  77682255  0.5568  Will Michelle Williams (Dying for Sex) win Best Actress – Limited Series at the 
+  73183439  0.5568  Will "M3GAN 2.0" Opening Weekend Box Office be between $16–19M?
+  70305697  0.5568  Will "Thunderbolts" Rotten Tomatoes score be between 80 and 89?
+  67811973  0.5568  Will Zoe Saldaña win Best Supporting Actress at the 2025 SAG Award for "Emilia P
+  77457089  0.5568  Will “Godzilla x Kong: The New Empire” be the top global Netflix movie this week
+  76939223  0.5569  Will One Battle After Another be nominated for Best Picture at the 98th Academy 
+  75370099  0.5570  Will 'Superman' have the second best domestic opening weekend in 2025?
+  68089537  0.5571  Will 'Wicked' win 4-5 Oscars at the 2025 Academy Awards?
+  78551985  0.5572  Will "Predator: Badlands" score at least 80 on the Rotten Tomatoes Tomatometer?
+  65362587  0.5572  Will 'A Different Man' be nominated for Oscar for Best Picture?
+  77105188  0.5572  Will "Black Phone 2" Opening Weekend Box Office be between 20m and 28m?
+  72572740  0.5573  Will "How to Train Your Dragon" Opening Weekend Box Office be more than  $99m?
+  77679316  0.5573  Will Emily Blunt (The Smashing Machine) win Best Supporting Actress – Motion Pic
+  62633411  0.5575  Will CinemaScore give 'Joker: Folie à Deux' a B?
+  61910426  0.5575  Will 'Transformers One' gross less than $42-49m opening weekend?
+  68089506  0.5576  Will "Wicked" win the most Oscars in the 2025 Academy Awards?
+  63326093  0.5576  Will 'Venom: The Last Dance' gross between $61-70m opening weekend?
+  74244137  0.5576  Will "Fantastic Four: The First Steps" Opening Weekend Box Office be more than $
+  57268657  0.5576  'The Garfield Movie' <$26m Opening Weekend?
+  34223332  0.5577  Will 'Halloween Ends' gross more than $45 million domestically on its opening we
+  68889781  0.5578  Will 'Black Bag' gross more than 7m on opening weekend?
+  57996950  0.5578  Will 'Inside Out 2' gross less than $90m opening weekend?
+  53570268  0.5578  Will Teo Yoo win the BAFTA for Best Actor?
+  72572711  0.5579  Will "Materialists" Opening Weekend Box Office be more than $16m?
+  77681303  0.5580  Will Jenny Slate (Dying for Sex) win Best Supporting Actress – Television at the
+  71476988  0.5580  Will 'Mission: Impossible - The Final Reckoning' gross less than $60m opening we
+  70305656  0.5581  Will "Thunderbolts" Rotten Tomatoes score be between 60 and 69?
+  77056300  0.5581  Will Gwyneth Paltrow be nominated for Best Supporting Actress at the 98th Academ
+  63326082  0.5581  Will 'Venom: The Last Dance' gross between $53-61m opening weekend?
+  77989641  0.5582  Will "Chainsaw Man – The Movie: Reze Arc" Opening Weekend Box Office be greater 
+  71476923  0.5582  Will 'Hurry Up Tomorrow' gross more than $6m opening weekend?
+  62801029  0.5582  Will 'Terrifier 3' gross more than $19m opening weekend?
+  77679106  0.5582  Will Akira Emoto (Rental Family) win Best Supporting Actor – Motion Picture at t
+  57996960  0.5582  Will 'Inside Out 2' gross between $90-99m opening weekend?
+  72034684  0.5583  Will "Karate Kid: Legends" gross $29m or more but less than $32m opening weekend
+  69173868  0.5584  Will 'Magazine Dreams' gross more than 3m on opening weekend?
+  75121674  0.5584  Will "Americana" Opening Weekend Box Office be between $1.5-2m?
+  72683390  0.5584  Will "Smurfs" Rotten Tomatoes score be between 50–59?
+  61630606  0.5584  Will 'Joker: Folie à Deux' gross between $135-150m opening weekend?
+  62468037  0.5585  Will 'Joker: Folie à Deux' gross between $54-60m opening weekend?
+  76939339  0.5585  Will Brendan Fraser win Best Actor at the 98th Academy Awards?
+  72318058  0.5585  Will "The Phoenician Scheme" Opening Weekend Box Office be between $5m and $7m?
+  29916795  0.5586  Will 'Thor: Love and Thunder' get a 75% or higher Tomatometer Score?
+  76939276  0.5586  Will Renate Reinsve be nominated for Best Actress at the 98th Academy Awards?
+  77457079  0.5586  Will “Ruth & Boaz” be the top global Netflix movie this week?
+  77679979  0.5586  Will Jessie Buckley (Hamnet) win Best Actress – Drama at the 83rd Golden Globes?
+  78940512  0.5586  Will Wuthering Heights have the best domestic opening weekend in 2026?
+  68132413  0.5587  Will "Flow" win Best International Feature Film at the 2025 Oscars?
+  63326112  0.5588  Will 'Venom: The Last Dance' gross more than $70m opening weekend?
+  72683385  0.5588  Will "Smurfs" Rotten Tomatoes score be between 40–49?
+  76939279  0.5589  Will Saoirse Ronan be nominated for Best Actress at the 98th Academy Awards?
+  67226120  0.5589  Will "Captain America: Brave New World" Rotten Tomatoes score be between 60 and 
+  78552875  0.5589  Will "Predator: Badlands" Opening Weekend Box Office be greater than 26m?
+  77056308  0.5589  Will James Cameron be nominated for Best Director at the 98th Academy Awards?
+  77682706  0.5589  Will Benny Safdie (The Smashing Machine) win Best Director at the 83rd Golden Gl
+  77680010  0.5589  Will Jennifer Lawrence (Die My Love) win Best Actress – Drama at the 83rd Golden
+  68132336  0.5590  Will "A Complete Unknown" win Best Costume Design at the 2025 Oscars?
+  56692196  0.5590  Will 'Kingdom of the Planet of the Apes' gross less than $46m on its opening wee
+  78552860  0.5590  Will "Predator: Badlands" Opening Weekend Box Office be less than 18m?
+  30328534  0.5590  Will ‘Thor: Love and Thunder’ gross more than $145 million domestically on its o
+  57763536  0.5591  Will 'Bad Boys: Ride or Die' gross less than $44m opening weekend?
+  77470693  0.5592  Will "Roofman" (2025) score at least 84 on the Rotten Tomatoes Tomatometer?
+  70305684  0.5594  Will "Thunderbolts" Rotten Tomatoes score be between 70 and 79?
+  77457104  0.5594  Will “Maze Runner: Death Cure” be the top global Netflix movie this week?
+  67811757  0.5595  Will Saoirse Ronan win Best Actress at the 2025 BAFTA Awards for "The Outrun"?
+  74568260  0.5595  Will "The Naked Gun" Opening Weekend Box Office be more than $26m?
+  67573050  0.5596  Will 'Emilia Pérez' win 4 Oscars at the 2025 Academy Awards?
+  77679825  0.5597  Will Amanda Seyfried (The Testament of Ann Lee) win Best Actress – Musical or Co
+  29876527  0.5597  Will ‘Elvis’ gross more than $45 million domestically on its opening weekend?
+  71476993  0.5597  Will 'Mission: Impossible - The Final Reckoning' gross between $60-65m opening w
+  29571391  0.5597  Will 'Lightyear' gross more than $90 million domestically on its opening weekend
+  77056808  0.5598  Will Cate Blanchett win Best Actress at the 98th Academy Awards?
+  45751486  0.5599  Will Barbenheimer overtake Star Wars: The Force Awakens?
+  67022782  0.5599  Will "Captain America" Opening Weekend Box Office be between $64-73m?
+  38049480  0.5601  Will "The Fabelmans" win the Oscar for Best Picture
+  52706323  0.5601  Will Emma Stone win the Oscar for Best Actress?
+  74568251  0.5602  Will "The Naked Gun" Opening Weekend Box Office be between $20m and $23m?
+  52706357  0.5602  Will Carey Mulligan win the Oscar for Best Actress?
+  62633400  0.5603  Will CinemaScore give 'Joker: Folie à Deux' an A?
+  59396967  0.5603  Will 'Twisters' gross less than $56m opening weekend?
+  78697676  0.5604  Will "Predator: Badlands" Opening Weekend Box Office be less than 29m?
+  77722754  0.5604  Will Liam Neeson be ranked #1 globally in Google’s Year in Search 2025 Actors?
+  72683228  0.5605  Will "Elio" Rotten Tomatoes score be between 70–74?
+  44220911  0.5605  Will 'No Hard Feelings' gross over $10m on opening weekend?
+  66982506  0.5605  Will "Wicked" win Best Picture at the 2025 Oscars?
+  72890974  0.5605  Will Will "Elio" Rotten Tomatoes score be between 70-74?
+  68132238  0.5606  Will "A Different Man" win Best Makeup and Hairstyling at the 2025 Oscars?
+  78552765  0.5606  Will "Zootopia 2" score at least 95 on the Rotten Tomatoes Tomatometer?
+  45358516  0.5606  Will 'Oppenheimer' gross over $80m on opening weekend?
+  61630587  0.5606  Will 'Joker: Folie à Deux' gross between $120-135m opening weekend?
+  78940522  0.5606  Will Michael have the best domestic opening weekend in 2026?
+  62468061  0.5606  Will 'Joker: Folie à Deux' gross between $60-66m opening weekend?
+  70062046  0.5607  Will 'The Amateur' make less than $13m on its domestic opening weekend?
+  66982171  0.5607  Will "Anora" win Best Picture at the 2025 Oscars?
+  72890957  0.5607  Will Will "Elio" Rotten Tomatoes score be less than 60?
+  52707261  0.5607  Will Justine Triet win the Oscar for Best Director?
+  67226141  0.5608  Will "Captain America: Brave New World" Rotten Tomatoes score be between 70 and 
+  66984732  0.5608  Will Denzel Washington win Best Supporting Actor at the 2025 Oscars?
+  30603526  0.5608  Will ‘Nope’ gross more than $60 million domestically on its opening weekend?
+  52707233  0.5608  Will Martin Scorsese win the Oscar for Best Director?
+  73183449  0.5609  Will "M3GAN 2.0" Opening Weekend Box Office be more than $22M?
+  75370094  0.5609  Will 'Wicked: For Good' have the second best domestic opening weekend in 2025?
+  65362467  0.5609  Will 'Emilia Perez' be nominated for Oscar for Best Picture?
+  43724566  0.5610  Will 'The Flash' gross over $100m on opening weekend?
+  45358621  0.5610  Will 'Barbie' gross over $170m on opening weekend?
+  77682681  0.5611  Will Josh Safdie (Marty Supreme) win Best Director at the 83rd Golden Globes?
+  69501142  0.5611  Will "A Minecraft Movie" Rotten Tomatoes score be between 50 and 60?
+  75697259  0.5611  "The Conjuring: Last Rites" Rotten Tomatoes score is between 50 and 59?
+  77054985  0.5613  Will Highest 2 Lowest win Best Makeup and Hairstyling at the 98th Academy Awards
+  72318053  0.5613  Will "The Phoenician Scheme" Opening Weekend Box Office be between $3m and $5m?
+  61630572  0.5613  Will 'Joker: Folie à Deux' gross between $105-120m opening weekend?
+  68089100  0.5613  Will "Better Man" win Best Visual Effects at the 2025 Oscars?
+  52400196  0.5614  Will "Oppenheimer" win the Oscar for Best Picture?
+  62467999  0.5614  Will 'Joker: Folie à Deux' gross less than $48m opening weekend?
+  78715668  0.5614  Will "Predator: Badlands" Opening Weekend Box Office be between 35m and 37m?
+  77056778  0.5615  Will Jennifer Lawrence win Best Actress at the 98th Academy Awards?
+  77056091  0.5615  Will F1: The Movie win Best Film Editing at the 98th Academy Awards?
+  77457109  0.5615  Will “Maze Runner: The Scorch Trials” be the top global Netflix movie this week?
+  52400241  0.5616  Will "Past Lives" win the Oscar for Best Picture?
+  23919808  0.5618  Will 'The Batman' gross $160 million or more on the opening weekend in the USA?
+  72683395  0.5618  Will "Smurfs" Rotten Tomatoes score be between 60–69?
+  70305710  0.5618  Will "Mission: Impossible – The Final Reckoning" Rotten Tomatoes score be betwee
+  78552375  0.5618  Will "Wicked: For Good" score at least 86 on the Rotten Tomatoes Tomatometer?
+  74244118  0.5618  Will "Fantastic Four: The First Steps" Opening Weekend Box Office be less than $
+  68612229  0.5618  Will 'Rule Breakers' gross between 6-9m on its opening weekend?
+  57763544  0.5618  Will 'Bad Boys: Ride or Die' gross between $44m and $49m opening weekend?
+  72572717  0.5618  Will "How to Train Your Dragon" Opening Weekend Box Office be less than $78m?
+  76939314  0.5619  Will Jeremy Allen White win Best Actor at the 98th Academy Awards?
+  75121663  0.5619  Will "Nobody 2" Opening Weekend Box Office be more than $14m?
+  78940552  0.5619  Will Avengers: Doomsday have the best domestic opening weekend in 2026?
+  58874208  0.5620  Will 'Despicable Me 4' gross between $115m and $125m on 5-day opening weekend?
+  78715663  0.5621  Will "Predator: Badlands" Opening Weekend Box Office be greater than 37m?
+  72885195  0.5621  Will "Elio" Opening Weekend Box Office be less than $20m?
+  77680027  0.5621  Will Jodie Foster (A Private Life) win Best Actress – Drama at the 83rd Golden G
+  56692208  0.5622  Will 'Kingdom of the Planet of the Apes' gross between $51m and $56m on its open
+  52707226  0.5623  Will Christopher Nolan win the Oscar for Best Director?
+  78552765  0.5623  Will "Zootopia 2" score at least 90 on the Rotten Tomatoes Tomatometer?
+  77475917  0.5624  Will Joel Edgerton (Train Dreams) be nominated for Best Actor – Drama at the 83r
+  63326049  0.5624  Will 'Venom: The Last Dance' gross less than $45m opening weekend?
+  77679095  0.5625  Will Delroy Lindo (Sinners) win Best Supporting Actor – Motion Picture at the 83
+  78330897  0.5626  Will "Black to the Future" Opening Weekend Box Office be greater than 5m?
+  66699397  0.5627  Will 'Jurassic World: Rebirth' have the best domestic opening weekend in 2025?
+  66982508  0.5627  Will Adrien Brody win Best Actor at the 2025 Oscars?
+  67106161  0.5628  Will James Mangold win Best Director at the 2025 Oscars for "A Complete Unknown"
+  77679360  0.5628  Will Kirsten Dunst (Roofman) win Best Supporting Actress – Motion Picture at the
+  72318064  0.5629  Will "The Phoenician Scheme" Opening Weekend Box Office be $7m or more?
+  74568255  0.5629  Will "The Naked Gun" Opening Weekend Box Office be between $23m and $26m?
+  78552586  0.5629  Will "Rental Family" score at least 90 on the Rotten Tomatoes Tomatometer?
+  77682701  0.5630  Will James Cameron (Avatar: Fire and Ash) win Best Director at the 83rd Golden G
+  67226109  0.5630  Will "Captain America: Brave New World" Rotten Tomatoes score be between 50 and 
+  78930756  0.5631  Will Wuthering Heights be the top grossing movie of 2026?
+  77475915  0.5632  Will Matthew McConaughey (The Lost Bus) be nominated for Best Actor – Drama at t
+  75697247  0.5632  "Downton Abbey: The Grand Finale" Rotten Tomatoes score is between 80 and 89?
+  77475739  0.5633  Will Daniel Day-Lewis (Anemone) win Best Actor – Drama at the 83rd Golden Globes
+  76939273  0.5633  Will Jessica Lange be nominated for Best Actress at the 98th Academy Awards?
+  78697686  0.5634  Will "Predator: Badlands" Opening Weekend Box Office be between 31m and 33m?
+  77684952  0.5634  Will “Held Hostage in My House” be the top global Netflix movie this week? (Octo
+  24743641  0.5634  Oscars 2022: Will 'The Power Of The Dog" win the Best Picture?
+  70305700  0.5635  Will "The Accountant 2" Rotten Tomatoes score be between 80 and 89?
+  77105193  0.5636  Will "Black Phone 2" Opening Weekend Box Office be greater than 28m?
+  61910332  0.5636  Will 'Transformers One' gross less than $35m opening weekend?
+  72890980  0.5638  Will Will "Elio" Rotten Tomatoes score be between 75-79?
+  23920096  0.5638  Will 'The Batman' gross $120 million or less on the opening weekend in the USA?
+  77679995  0.5639  Will Julia Roberts (After the Hunt) win Best Actress – Drama at the 83rd Golden 
+  73183415  0.5639  Will "F1" Opening Weekend Box Office be between $47–51M?
+  72683350  0.5640  Will "Superman" Rotten Tomatoes score be between 70–74?
+  72890962  0.5641  Will Will "Elio" Rotten Tomatoes score be between 60-64?
+  77679306  0.5641  Will Amy Madigan (Weapons) win Best Supporting Actress – Motion Picture at the 8
+  76939248  0.5641  Will Brendan Fraser be nominated for Best Actor at the 98th Academy Awards?
+  65321550  0.5642  Will 'Mufasa: The Lion King' gross between $52-58m on 3-day opening weekend?
+  72683222  0.5642  Will "Elio" Rotten Tomatoes score be less than 70?
+  67811750  0.5643  Will Demi Moore win Best Actress at the 2025 BAFTA Awards for "The Substance"?
+  72683361  0.5644  Will "Superman" Rotten Tomatoes score be between 80–89?
+  77679354  0.5644  Will Hailee Steinfeld (Sinners) win Best Supporting Actress – Motion Picture at 
+  78552235  0.5645  Will "Sarah's Oil" score at least 50 on the Rotten Tomatoes Tomatometer?
+  67106119  0.5646  Will "A Complete Unknown" win Best Adapted Screenplay at the 2025 Oscars?
+  77470693  0.5646  Will "Roofman" (2025) score at least 80 on the Rotten Tomatoes Tomatometer?
+  62801019  0.5646  Will 'Terrifier 3' gross between $16-19m opening weekend?
+  76939246  0.5646  Will Jeremy Allen White be nominated for Best Actor at the 98th Academy Awards?
+  74241593  0.5646  "Americana" Rotten Tomatoes score is between 85–89%?
+  77475704  0.5646  Will Michael B. Jordan (Sinners) win Best Actor – Drama at the 83rd Golden Globe
+  67022766  0.5647  Will "Dog Man" Opening Weekend Box Office be between $30-35m?
+  16903506  0.5647  Will Space Jam: A New Legacy or Black Widow gross more domestically on the July 
+  69451642  0.5648  Will 'The Chosen: Last Supper — Part 1' gross between 4-6m on opening weekend?
+  73183409  0.5648  Will "F1" Opening Weekend Box Office be between $43–47M?
+  72034805  0.5648  Will "Karate Kid: Legends" Rotten Tomatoes score be 75 or higher?
+  72080510  0.5648  Will 'Bring Her Back' gross more than $6.5m opening weekend?
+  61630629  0.5648  Will 'Joker: Folie à Deux' gross more than $150m opening weekend?
+  70305660  0.5648  Will "The Accountant 2" Rotten Tomatoes score be between 60 and 69?
+  40043639  0.5649  Will 'Scream VI' gross more than $40 million domestically on its opening weekend
+  67022768  0.5649  Will "Captain America" Opening Weekend Box Office be less than $64m?
+  76006574  0.5651  "Tron: Ares" Rotten Tomatoes score is between 60 and 69?
+  71476917  0.5652  Will 'Hurry Up Tomorrow' gross between $5.2-6m opening weekend?
+  77475915  0.5652  Will Paul Mescal (Hamnet) be nominated for Best Actor – Drama at the 83rd Golden
+  69501157  0.5653  Will "A Minecraft Movie" Rotten Tomatoes score be more than 60?
+  39402784  0.5653  Will 'Cocaine Bear' gross more than $12 million domestically on opening weekend?
+  77682645  0.5653  Will Chloe Zhao (Hamnet) win Best Director at the 83rd Golden Globes?
+  72683233  0.5653  Will "Elio" Rotten Tomatoes score be between 75–79?
+  40420864  0.5654  Will 'Shazam! Fury of the Gods' gross more than $35 million domestically on its 
+  77387773  0.5654  Will "Soul on Fire" Opening Weekend Box Office be greater than 4m?
+  77722674  0.5654  Will Ryan Reynolds be ranked #1 globally in Google’s Year in Search 2025 Actors?
+  62633423  0.5654  Will CinemaScore give 'Joker: Folie à Deux' a C?
+  67812002  0.5655  Will Pamela Anderson win Best Actor at the 2025 SAG Award for "The Last Showgirl
+  68123037  0.5655  Will 'The Monkey' gross between 12-15m on its opening weekend?
+  68612216  0.5656  Will 'Rule Breakers' gross between 3-6m on its opening weekend?
+  40421224  0.5656  Will 'Shazam! Fury of the Gods' gross more than $30 million domestically on its 
+  68612282  0.5656  Will 'Rule Breakers' gross more than 9m on its opening weekend?
+  72683340  0.5657  Will "Superman" Rotten Tomatoes score be less than 60?
+  74037986  0.5657  Will "I Know What You Did Last Summer" Opening Weekend Box Office be between $14
+  69451653  0.5658  Will 'The Chosen: Last Supper — Part 1' gross between 6-8m on opening weekend?
+  74521042  0.5658  "Alien: Earth" Rotten Tomatoes score is less than 70?
+  68132380  0.5658  Will "Emilia Pérez" win Best International Feature Film at the 2025 Oscars?
+  65324036  0.5658  Will "Mufasa: The Lion King" Rotten Tomatoes score be between 80-89?
+  67573031  0.5658  Will 'Emilia Pérez' win 3 Oscars at the 2025 Academy Awards?
+  74521033  0.5659  "The Witcher: Season 4" Rotten Tomatoes score is between 60 and 74?
+  77679300  0.5659  Will Inga Ibsdotter Lilleaas (Sentimental Value) win Best Supporting Actress – M
+  77687415  0.5659  Will "Black Phone 2" Opening Weekend Box Office be less than 20m?
+  77105183  0.5659  Will "Black Phone 2" Opening Weekend Box Office be less than 20m?
+  77682686  0.5659  Will Jon M. Chu (Wicked: For Good) win Best Director at the 83rd Golden Globes?
+  64214463  0.5660  Will 'Red One' gross less than $18m on opening weekend?
+  76939344  0.5660  Will George Clooney win Best Actor at the 98th Academy Awards?
+  66982564  0.5660  Will "Challengers" win Best Picture at the 2025 Oscars?
+  76939277  0.5660  Will Jennifer Lawrence be nominated for Best Actress at the 98th Academy Awards?
+  76006579  0.5661  "Tron: Ares" Rotten Tomatoes score is between 70 and 79?
+  71476905  0.5661  Will 'Hurry Up Tomorrow' gross less than $4.4m opening weekend?
+  77056114  0.5661  Will Wicked: For Good win Best Film Editing at the 98th Academy Awards?
+  69052715  0.5662  Will 'Snow White' gross more than 49m on opening weekend?
+  68122940  0.5662  Will 'The Monkey' gross less than 9m on its opening weekend?
+  72683326  0.5663  Will "Jurassic World: Rebirth" Rotten Tomatoes score be between 70–79?
+  66271632  0.5663  Will Ariana Grande win the Golden Globe for Best Supporting Actress - Motion Pic
+  70305644  0.5663  Will "Mission: Impossible – The Final Reckoning" Rotten Tomatoes score be less t
+  67106182  0.5664  Will "September 5" win Best Original Screenplay at the 2025 Oscars?
+  78930806  0.5664  Will Project Hail Mary be the top grossing movie of 2026?
+  52447424  0.5664  Will Jeffrey Wright win the Oscar for Best Actor?
+  69501125  0.5665  Will "A Minecraft Movie" Rotten Tomatoes score be between 40 and 50?
+  77475916  0.5665  Will Daniel Day-Lewis (Anemone) be nominated for Best Actor – Drama at the 83rd 
+  56692203  0.5665  Will 'Kingdom of the Planet of the Apes' gross between $46m and $51m on its open
+  73183427  0.5666  Will "F1" Opening Weekend Box Office be more than $55M?
+  75697243  0.5667  "Downton Abbey: The Grand Finale" Rotten Tomatoes score is between 70 and 79?
+  23919895  0.5668  Will 'The Batman' gross between $120 million and $160 million on the opening wee
+  74521023  0.5669  "The Witcher: Season 4" Rotten Tomatoes score is less than 45?
+  77682656  0.5670  Will Ryan Coogler (Sinners) win Best Director at the 83rd Golden Globes?
+  70432322  0.5670  Will 'Sinners' gross more than $54m on opening weekend?
+  55066411  0.5671  Will 'Godzilla x Kong: The New Empire' gross less than $50m opening weekend?
+  78552235  0.5671  Will "Sarah's Oil" score at least 80 on the Rotten Tomatoes Tomatometer?
+  78940532  0.5671  Will Toy Story 5 have the best domestic opening weekend in 2026?
+  64214536  0.5672  Will 'Red One' gross more than $27m on opening weekend?
+  67812015  0.5673  Will Timothée Chalamet win Best Actor at the 2025 SAG Award for "A Complete Unkn
+  62468073  0.5674  Will 'Joker: Folie à Deux' gross more than $66m opening weekend?
+  70305682  0.5674  Will "The Accountant 2" Rotten Tomatoes score be between 70 and 79?
+  72885225  0.5675  Will "28 Years Later" Opening Weekend Box Office be less than $34m?
+  77989636  0.5675  Will "Chainsaw Man – The Movie: Reze Arc" Opening Weekend Box Office be between 
+  53570283  0.5676  Will Bradley Cooper win the BAFTA for Best Actor?
+  79018765  0.5677  Will "The Running Man" Opening Weekend Box Office be less than 15m?
+  78551985  0.5677  Will "Predator: Badlands" score at least 90 on the Rotten Tomatoes Tomatometer?
+  77457084  0.5678  Will “Steve” be the top global Netflix movie this week?
+  69052703  0.5678  Will 'Snow White' gross between 44-49m on opening weekend?
+  70305645  0.5678  Will "Thunderbolts" Rotten Tomatoes score be less than 60?
+  68612205  0.5678  Will 'Rule Breakers' gross less than 3m on its opening weekend?
+  68328525  0.5679  Will 'Last Breath' gross less than 3m on its opening weekend?
+  77683384  0.5679  Will The Bad Guys 2 win Best Motion Picture – Animated at the 83rd Golden Globes
+  77056528  0.5679  Will Sentimental Value win Best Original Screenplay at the 98th Academy Awards?
+  75249463  0.5680  Will Wicked: For Good be the third highest grossing movie of 2025?
+  27055139  0.5680  Will 'Fantastic Beasts: The Secrets of Dumbledore' gross $53 million or more on 
+  68089120  0.5681  Will "Emilia Pérez" win Best Sound at the 2025 Oscars?
+  45275288  0.5681  Will 'Oppenheimer' gross over $65m on opening weekend?
+  63118088  0.5682  Will 'Smile 2' gross more than $27m opening weekend?
+  77989625  0.5682  Will "Chainsaw Man – The Movie: Reze Arc" Opening Weekend Box Office be less tha
+  74521028  0.5683  "The Witcher: Season 4" Rotten Tomatoes score is between 45 and 59?
+  64214516  0.5683  Will 'Red One' gross between $24-27m on opening weekend?
+  67812058  0.5683  Will Demi Moore win Best Actor at the 2025 SAG Award for "The Substance"?
+  40043650  0.5683  Will 'Scream VI' gross more than $45 million domestically on its opening weekend
+  77687420  0.5683  Will "Black Phone 2" Opening Weekend Box Office be between 20m and 23m?
+  39402676  0.5684  Will Cate Blanchett win the Oscar for Best Actress in a Leading Role?
+  77475724  0.5684  Will Dwayne Johnson (The Smashing Machine) win Best Actor – Drama at the 83rd Go
+  76526302  0.5685  Will "A Big Bold Beautiful Journey" Opening Weekend Box Office be between 2.5m a
+  77683409  0.5686  Will Predator Killer of Killers win Best Motion Picture – Animated at the 83rd G
+  65323998  0.5686  Will "Mufasa: The Lion King" Rotten Tomatoes score be between 70-79?
+  77683349  0.5686  Will Arco win Best Motion Picture – Animated at the 83rd Golden Globes?
+  72683238  0.5686  Will "Elio" Rotten Tomatoes score be between 80–84?
+  75407875  0.5688  Will "Honey Don't" Opening Weekend Box Office be less than $3m?
+  77475915  0.5689  Will Michael B. Jordan (Sinners) be nominated for Best Actor – Drama at the 83rd
+  77475916  0.5689  Will Jeremy Allen White (Springsteen: Deliver Me from Nowhere) be nominated for 
+  67542453  0.5690  Will "Love Hurts" Opening Weekend Box Office be more than $11m?
+  41374109  0.5690  Will 'Guardians of the Galaxy Vol. 3' gross more than $125 million domestically 
+  73183421  0.5691  Will "F1" Opening Weekend Box Office be between $51–55M?
+  72318041  0.5691  Will "The Phoenician Scheme" Opening Weekend Box Office be less than $3m?
+  52707253  0.5691  Will Jonathan Glazer win the Oscar for Best Director?
+  78330887  0.5691  Will "Black to the Future" Opening Weekend Box Office be between 3.5m and 4.25m?
+  69052687  0.5691  Will 'Snow White' gross between 39-44m on opening weekend?
+  58604023  0.5692  Will 'A Quiet Place: Day One' gross less than $48m opening weekend?
+  77988636  0.5692  Will "Springsteen: Deliver Me from Nowhere" Opening Weekend Box Office be less t
+  77137991  0.5692  "Black Phone 2" Rotten Tomatoes score is between 85 and 89?
+  77679100  0.5693  Will Jonathan Bailey (Wicked: For Good) win Best Supporting Actor – Motion Pictu
+  74286060  0.5693  "Happy Gilmore 2" Rotten Tomatoes score be between 40–49?
+  67811941  0.5693  Will "Conclave" win Best Cast in a Motion Picture at the 2025 SAG Awards?
+  37758460  0.5694  Golden Globes: Will "The Fabelmans" win Best Picture - Drama?
+  62801006  0.5694  Will 'Terrifier 3' gross less than $16m opening weekend?
+  63118062  0.5694  Will 'Smile 2' gross $24-27m opening weekend?
+  74037991  0.5694  Will "I Know What You Did Last Summer" Opening Weekend Box Office be more than $
+  72890968  0.5694  Will Will "Elio" Rotten Tomatoes score be between 65-69?
+  75370175  0.5695  Will 'A Minecraft Movie' have the third best domestic opening weekend in 2025?
+  77475709  0.5695  Will Leonardo DiCaprio (One Battle After Another) win Best Actor – Drama at the 
+  77679779  0.5695  Will Laura Dern (Is This Thing On?) win Best Actress – Musical or Comedy at the 
+  78887401  0.5696  Will “A Merry Little Ex-Mas” be the top global Netflix movie this week? (Novembe
+  75407885  0.5698  Will "Honey Don't" Opening Weekend Box Office be more than $3.5m?
+  78887062  0.5699  Will "Now You See Me: Now You Don't" Opening Weekend Box Office be between 21m a
+  69451633  0.5699  Will 'The Chosen: Last Supper — Part 1' gross less than 4m on opening weekend?
+  78552585  0.5699  Will "Rental Family" score at least 93 on the Rotten Tomatoes Tomatometer?
+  77056109  0.5700  Will Sentimental Value win Best Film Editing at the 98th Academy Awards?
+  38796130  0.5700  Will Brendan Fraser win the Oscar for Best Actor in a Leading Role?
+  77988641  0.5700  Will "Springsteen: Deliver Me from Nowhere" Opening Weekend Box Office be betwee
+  77470694  0.5700  Will "Roofman" (2025) score at least 90 on the Rotten Tomatoes Tomatometer?
+  70348156  0.5701  Will 'Sinners' gross less than $27m on opening weekend?
+  64214502  0.5701  Will 'Red One' gross between $21-24m on opening weekend?
+  71476976  0.5701  Will 'Final Destination: Bloodlines' gross between $48-52m opening weekend?
+  75121669  0.5702  Will "Americana" Opening Weekend Box Office be less than $1.5m?
+  55973033  0.5703  'Abigail' over $15m opening weekend?
+  72683309  0.5703  Will "Jurassic World: Rebirth" Rotten Tomatoes score be between 40–49?
+  55329504  0.5704  Will 'Monkey Man' gross more than $16m opening weekend?
+  78632051  0.5704  Will “Dr. Seuss's the Sneetches” be the top global Netflix movie this week? (Nov
+  22489865  0.5705  Will 'The Matrix Resurrections' get a 85% or higher Critic Tomatometer Score?
+  63118041  0.5706  Will 'Smile 2' gross $21-24m opening weekend?
+  76939226  0.5706  Will Sentimental Value be nominated for Best Picture at the 98th Academy Awards?
+  18177711  0.5707  Will PAW Patrol: The Movie and The Protege have a combined domestic opening week
+  69451664  0.5707  Will 'The Chosen: Last Supper — Part 1' gross more than 8m on opening weekend?
+  67811748  0.5707  Will "Emilia Pérez" win Best Film at the 2025 BAFTA Awards?
+  20979904  0.5708  Will 'Eternals' get 85% or higher Audience Score on Rotten Tomatoes?
+  72683356  0.5708  Will "Superman" Rotten Tomatoes score be between 75–79?
+  77682281  0.5708  Will Sarah Snook (All Her Fault) win Best Actress – Limited Series at the 83rd G
+  76526279  0.5709  Will "Him" Opening Weekend Box Office be less than 19m?
+  65321524  0.5709  Will 'Mufasa: The Lion King' gross less than $52m on 3-day opening weekend?
+  70305643  0.5710  Will "The Accountant 2" Rotten Tomatoes score be less than 60?
+  71476982  0.5710  Will 'Final Destination: Bloodlines' gross more than $52m opening weekend?
+  42503417  0.5710  Will 'Fast X' gross more than $65 million domestically on its opening weekend?
+  66699562  0.5711  Will 'A Minecraft Movie' have the best domestic opening weekend in 2025?
+  73451777  0.5712  Will "Jurassic World" Opening Weekend Box Office be between $139-150m?
+  78930766  0.5712  Will Michael be the top grossing movie of 2026?
+  77687425  0.5712  Will "Black Phone 2" Opening Weekend Box Office be between 23m and 26m?
+  66271631  0.5712  Will Timothée Chalamet win the Golden Globe for Best Actor - Drama?
+  65321569  0.5712  Will 'Mufasa: The Lion King' gross between $58-64m on 3-day opening weekend?
+  76006569  0.5712  "Tron: Ares" Rotten Tomatoes score is between 50 and 59?
+  78715653  0.5712  Will "Predator: Badlands" Opening Weekend Box Office be less than 33m?
+  68122962  0.5713  Will 'The Monkey' gross between 9-12m on its opening weekend?
+  77989631  0.5713  Will "Chainsaw Man – The Movie: Reze Arc" Opening Weekend Box Office be between 
+  73183433  0.5713  Will "M3GAN 2.0" Opening Weekend Box Office be less than $16M?
+  78930751  0.5713  Will Wicked: For Good be the top grossing movie of 2026?
+  65323972  0.5714  Will "Mufasa: The Lion King" Rotten Tomatoes score be below 60?
+  77680032  0.5714  Will Julia Garner (Weapons) win Best Actress – Drama at the 83rd Golden Globes?
+  69052629  0.5714  Will 'Snow White' gross less than 34m on opening weekend?
+  68132287  0.5714  Will "The Substance" win Best Makeup and Hairstyling at the 2025 Oscars?
+  78715658  0.5715  Will "Predator: Badlands" Opening Weekend Box Office be between 33m and 35m?
+  67226096  0.5715  Will "Captain America: Brave New World" Rotten Tomatoes score be less than 50?
+  67811777  0.5715  Will Timothée Chalamet win Best Actor at the 2025 BAFTA Awards for "A Complete U
+  68089478  0.5715  Will "Emilia Pérez" win the most Oscars in the 2025 Academy Awards?
+  75697164  0.5715  "One Battle After Another" Rotten Tomatoes score is between 85 and 89?
+  72683379  0.5715  Will "Smurfs" Rotten Tomatoes score be between 30–39?
+  75407880  0.5715  Will "Honey Don't" Opening Weekend Box Office be between $3-3.5m?
+  70348204  0.5715  Will 'Sinners' gross more than $37m on opening weekend?
+  72572705  0.5716  Will "Materialists" Opening Weekend Box Office be between $13m and $16m?
+  68093047  0.5716  Will "Anora" win the most Oscars in the 2025 Academy Awards?
+  72683314  0.5717  Will "Jurassic World: Rebirth" Rotten Tomatoes score be between 50–59?
+  64214482  0.5717  Will 'Red One' gross between $18-21m on opening weekend?
+  66227650  0.5717  Will The Fantastic Four: First Steps be the top grossing movie of 2025?
+  59397001  0.5717  Will 'Twisters' gross more than $61m opening weekend?
+  72683345  0.5718  Will "Superman" Rotten Tomatoes score be between 60–69?
+  68328554  0.5718  Will 'Last Breath' gross more than 9m on its opening weekend?
+  72034753  0.5718  Will "How to Train Your Dragon" Rotten Tomatoes score be between 85-89?
+  69501109  0.5719  Will "A Minecraft Movie" Rotten Tomatoes score be between 30 and 40?
+  65321589  0.5719  Will 'Mufasa: The Lion King' gross between $64-70m on 3-day opening weekend?
+  77687430  0.5719  Will "Black Phone 2" Opening Weekend Box Office be greater than 26m?
+  75697239  0.5721  "Downton Abbey: The Grand Finale" Rotten Tomatoes score is less than 70?
+  64566604  0.5721  'Wicked' grosses 2x more than 'Gladiator 2' on opening weekend?
+  66982300  0.5721  Will "Emilia Pérez" win Best Picture at the 2025 Oscars?
+  77680042  0.5721  Will Cate Blanchett (Black Bag) win Best Actress – Drama at the 83rd Golden Glob
+  63118030  0.5722  Will 'Smile 2' gross less than $21m opening weekend?
+  71476971  0.5722  Will 'Final Destination: Bloodlines' gross between $44-48m opening weekend?
+  76939248  0.5722  Will George Clooney be nominated for Best Actor at the 98th Academy Awards?
+  41374118  0.5723  Will 'Guardians of the Galaxy Vol. 3' gross more than $150 million domestically 
+  71476959  0.5723  Will 'Final Destination: Bloodlines' gross less than $40m opening weekend?
+  54151185  0.5724  Will Poor Things win the Oscar for Best Costume Design?
+  58604063  0.5724  Will 'A Quiet Place: Day One' gross more than $54m opening weekend?
+  76814665  0.5724  Will "The Smashing Machine" Opening Weekend Box Office be greater than 18m?
+  67573077  0.5725  Will 'Emilia Pérez' win between 5 and 7 Oscars at the 2025 Academy Awards?
+  70593489  0.5725  Will 'Star Wars III' gross less than $19m on opening weekend?
+  77680005  0.5725  Will Glenn Close (The Summer Book) win Best Actress – Drama at the 83rd Golden G
+  75697192  0.5726  "Him" Rotten Tomatoes score is between 85 and 89?
+  76526298  0.5726  Will "A Big Bold Beautiful Journey" Opening Weekend Box Office be less than 2.5m
+  76770869  0.5727  Will "The Official Release Party of a Showgirl" Opening Weekend Box Office be be
+  72080488  0.5727  Will 'Bring Her Back' gross less than $3.5m opening weekend?
+  70376702  0.5727  Schnell vs. Flick
+  65323987  0.5728  Will "Mufasa: The Lion King" Rotten Tomatoes score be between 60-69?
+  79018771  0.5728  Will "The Running Man" Opening Weekend Box Office be between 15m and 17m?
+  77679068  0.5728  Will Benicio Del Toro (One Battle After Another) win Best Supporting Actor – Mot
+  53570257  0.5729  Will Cillian Murphy win the BAFTA for Best Actor?
+  67811702  0.5729  Will "Anora" win Best Film at the 2025 BAFTA Awards?
+  76254287  0.5729  Will "The Long Walk" Opening Weekend Box Office be more than $15m?
+  76814640  0.5730  Will "The Strangers: Chapter 2" Opening Weekend Box Office be between 4.25m and 
+  71476911  0.5731  Will 'Hurry Up Tomorrow' gross between $4.4-5.2m opening weekend?
+  77682058  0.5731  Will Britt Lower (Severance) win Best Actress – Television Drama at the 83rd Gol
+  65321609  0.5732  Will 'Mufasa: The Lion King' gross more than $70m on 3-day opening weekend?
+  66982579  0.5732  Will Daniel Craig win Best Actor at the 2025 Oscars?
+  13354273  0.5732  Which film will win Best Picture at the 2021 Oscars?
+  72683320  0.5733  Will "Jurassic World: Rebirth" Rotten Tomatoes score be between 60–69?
+  74037941  0.5733  Will "Eddington" Opening Weekend Box Office be less than $5m?
+  74286069  0.5733  "Happy Gilmore 2" Rotten Tomatoes score be between 60–69?
+  78552375  0.5734  Will "Wicked: For Good" score at least 92 on the Rotten Tomatoes Tomatometer?
+  76770864  0.5734  Will "The Official Release Party of a Showgirl" Opening Weekend Box Office be le
+  77387768  0.5734  Will "Soul on Fire" Opening Weekend Box Office be between 3.5m and 4m?
+  74286064  0.5734  "Happy Gilmore 2" Rotten Tomatoes score be between 50–59?
+  72080505  0.5735  Will 'Bring Her Back' gross between $5.5-6.5m opening weekend?
+  67573096  0.5736  Will 'Emilia Pérez' win 8+ Oscars at the 2025 Academy Awards?
+  75247071  0.5736  Will "Nobody 2" Opening Weekend Box Office be more than $10m?
+  76006603  0.5737  "The Long Walk" Rotten Tomatoes score is between 94 and 95?
+  78330702  0.5738  Will “The Woman in Cabin 10” be the top global Netflix movie this week? (Novembe
+  78940547  0.5738  Will The Hunger Games: Sunrise on the Reaping have the best domestic opening wee
+  55066470  0.5739  Will 'Godzilla x Kong: The New Empire' gross between $50m-57.5m opening weekend?
+  76526288  0.5739  Will "Him" Opening Weekend Box Office be between 22m and 25m?
+  76526284  0.5739  Will "Him" Opening Weekend Box Office be between 19m and 22m?
+  75121649  0.5739  Will "Nobody 2" Opening Weekend Box Office be less than $11m?
+  67811745  0.5740  Will Coralie Fargeat win Best Director at the 2025 BAFTA Awards for "The Substan
+  63601565  0.5740  Will 'Wicked' gross more than $135m opening weekend?
+  78552235  0.5740  Will "Sarah's Oil" score at least 65 on the Rotten Tomatoes Tomatometer?
+  76939039  0.5741  Will Sentimental Value win Best Picture at the 98th Academy Awards?
+  70348176  0.5742  Will 'Sinners' gross between $27-32m on opening weekend?
+  66271686  0.5742  Will Zoe Saldaña win the Golden Globe for Best Supporting Actress - Motion Pictu
+  78940562  0.5742  Will Project Hail Mary have the best domestic opening weekend in 2026?
+  67811738  0.5743  Will "The Substance" win Best Original Screenplay at the 2025 BAFTA Awards?
+  66227617  0.5743  Will Wicked: For Good be the top grossing movie of 2025?
+  76006608  0.5743  "The Long Walk" Rotten Tomatoes score is between 96 and 97?
+  67542253  0.5744  Will "Love Hurts" Opening Weekend Box Office be less than $5m?
+  74037946  0.5744  Will "Eddington" Opening Weekend Box Office be between $5-6.5m?
+  69501092  0.5744  Will "A Minecraft Movie" Rotten Tomatoes score be less than 30?
+  78887395  0.5744  Will “Being Eddie” be the top global Netflix movie this week? (November 18 2025)
+  76814661  0.5745  Will "The Smashing Machine" Opening Weekend Box Office be between 11m and 18m?
+  78035985  0.5745  Will “The Woman in Cabin 10” be the top global Netflix movie this week? (October
+  78697691  0.5745  Will "Predator: Badlands" Opening Weekend Box Office be greater than 33m?
+  72572695  0.5745  Will "Materialists" Opening Weekend Box Office be less than $10m?
+  77475714  0.5746  Will Jeremy Allen White (Springsteen: Deliver Me from Nowhere) win Best Actor – 
+  59396977  0.5746  Will 'Twisters' gross between $56m and $61m opening weekend?
+  65362532  0.5746  Will 'A Complete Unknown' be nominated for Oscar for Best Picture?
+  78887067  0.5748  Will "Now You See Me: Now You Don't" Opening Weekend Box Office be between 24m a
+  69052654  0.5748  Will 'Snow White' gross between 34-39m on opening weekend?
+  77475914  0.5748  Will Dwayne Johnson (The Smashing Machine) be nominated for Best Actor – Drama a
+  76814645  0.5750  Will "The Strangers: Chapter 2" Opening Weekend Box Office be between 5m and 5.7
+  78887057  0.5750  Will "Now You See Me: Now You Don't" Opening Weekend Box Office be less than 21m
+  77683389  0.5751  Will The Twits win Best Motion Picture – Animated at the 83rd Golden Globes?
+  78036159  0.5753  Will Sinners be the #1 searched movie on Google this year?
+  77457124  0.5753  Will “Other” be the top global Netflix movie this week?
+  77387759  0.5753  Will "Soul on Fire" Opening Weekend Box Office be less than 3m?
+  22489835  0.5754  Will 'The Matrix Resurrections' get a 75% or higher Critic Tomatometer Score?
+  67303899  0.5754  Will "Companion" Opening Weekend Box Office be between $11-14m?
+  66984719  0.5755  Will Zoe Saldaña win Best Supporting Actress at the 2025 Oscars?
+  74843937  0.5756  Will "Freakier Friday" Opening Weekend Box Office be more than $39m?
+  77679295  0.5756  Will Jennifer Lopez (Kiss of the Spider Woman) win Best Supporting Actress – Mot
+  78036154  0.5756  Will Anora be the #1 searched movie on Google this year?
+  21303197  0.5756  Will 'House of Gucci' get 86% or higher Audience Score on Rotten Tomatoes?
+  70305717  0.5757  Will "Mission: Impossible – The Final Reckoning" Rotten Tomatoes score be 98 or 
+  72080499  0.5757  Will 'Bring Her Back' gross between $4.5-5.5m opening weekend?
+  66699609  0.5758  Will 'Michael' have the best domestic opening weekend in 2025?
+  77683394  0.5758  Will A Magnificent Life win Best Motion Picture – Animated at the 83rd Golden Gl
+  74037951  0.5759  Will "Eddington" Opening Weekend Box Office be more than $6.5m?
+  72317484  0.5760  Will "From the World of John Wick: Ballerina" Opening Weekend Box Office be $37m
+  76526293  0.5760  Will "Him" Opening Weekend Box Office be greater than 25m?
+  75689731  0.5761  Will "The Roses" Opening Weekend Box Office be more than $6m?
+  73451783  0.5762  Will "Jurassic World" Opening Weekend Box Office be more than $150m?
+  73451772  0.5762  Will "Jurassic World" Opening Weekend Box Office be between $128-139m?
+  77679349  0.5763  Will Regina Hall (One Battle After Another) win Best Supporting Actress – Motion
+  72572700  0.5763  Will "Materialists" Opening Weekend Box Office be between $10m and $13m?
+  71476965  0.5764  Will 'Final Destination: Bloodlines' gross between $40-44m opening weekend?
+  63601476  0.5765  Will 'Wicked' gross between $95-105m opening weekend?
+  72080493  0.5766  Will 'Bring Her Back' gross between $3.5-4.5m opening weekend?
+  73704564  0.5766  Will "Superman" Opening Weekend Box Office be between $100-108m?
+  76526307  0.5767  Will "A Big Bold Beautiful Journey" Opening Weekend Box Office be between 3m and
+  52400224  0.5767  Will "Barbie" win the Oscar for Best Picture?
+  75697135  0.5767  "Caught Stealing" Rotten Tomatoes score is between 70 and 74?
+  78552375  0.5768  Will "Wicked: For Good" score at least 80 on the Rotten Tomatoes Tomatometer?
+  76006564  0.5768  "Tron: Ares" Rotten Tomatoes score is less than 50?
+  73451767  0.5768  Will "Jurassic World" Opening Weekend Box Office be between $117-128m?
+  75697255  0.5768  "The Conjuring: Last Rites" Rotten Tomatoes score is less than 50?
+  67106191  0.5769  Will Coralie Fargeat win Best Director at the 2025 Oscars for "The Substance"?
+  66699374  0.5771  Will 'Superman' have the best domestic opening weekend in 2025?
+  77682094  0.5771  Will Jennifer Aniston (The Morning Show) win Best Actress – Television Drama at 
+  77683379  0.5772  Will In Your Dreams win Best Motion Picture – Animated at the 83rd Golden Globes
+  76254272  0.5772  Will "The Long Walk" Opening Weekend Box Office be less than $11m?
+  77684011  0.5773  Will After the Hunt win Best Motion Picture – Drama at the 83rd Golden Globes?
+  70593518  0.5774  Will 'Star Wars III' gross more than $25m on opening weekend?
+  75370195  0.5775  Will 'Superman' have the third best domestic opening weekend in 2025?
+  77387763  0.5777  Will "Soul on Fire" Opening Weekend Box Office be between 3m and 3.5m?
+  49910068  0.5779  Will 'The Hunger Games: The Ballad of Songbirds & Snakes' gross over $40m openin
+  68089481  0.5779  Will 'Wicked' win 0 Oscars at the 2025 Academy Awards?
+  49910078  0.5779  Will 'The Hunger Games: The Ballad of Songbirds & Snakes' gross over $50m openin
+  77682099  0.5779  Will Reese Witherspoon (The Morning Show) win Best Actress – Television Drama at
+  67303909  0.5779  Will "Companion" Opening Weekend Box Office be between $14-17m?
+  72683303  0.5780  Will "Jurassic World: Rebirth" Rotten Tomatoes score be less than 40?
+  31960024  0.5781  Will Beast or Dragon Ball Super: Super Hero gross more on opening weekend?
+  76814650  0.5782  Will "The Strangers: Chapter 2" Opening Weekend Box Office be greater than 5.75m
+  63601532  0.5783  Will 'Wicked' gross between $105-115m opening weekend?
+  73704559  0.5784  Will "Superman" Opening Weekend Box Office be less than $100m?
+  77988651  0.5786  Will "Springsteen: Deliver Me from Nowhere" Opening Weekend Box Office be greate
+  65636833  0.5787  Will Kate Winslet win the Golden Globe for Best Actress in a Movie - Drama?
+  70348196  0.5787  Will 'Sinners' gross between $32-37m on opening weekend?
+  77475917  0.5787  Will Colin Farrell (Ballad of a Small Player) be nominated for Best Actor – Dram
+  40043628  0.5787  Will 'Scream VI' gross more than $35 million domestically on its opening weekend
+  70593509  0.5787  Will 'Star Wars III' gross between $22-25m on opening weekend?
+  55066486  0.5788  Will 'Godzilla x Kong: The New Empire' gross between $57.5m-65m opening weekend?
+  76814635  0.5788  Will "The Strangers: Chapter 2" Opening Weekend Box Office be less than 4.25m?
+  23720051  0.5788  How much will “Scream” (2022) gross domestically on opening weekend?
+  75370190  0.5788  Will 'Wicked: For Good' have the third best domestic opening weekend in 2025?
+  77684942  0.5788  Will “The Woman in Cabin 10” be the top global Netflix movie this week? (October
+  67542272  0.5789  Will "Love Hurts" Opening Weekend Box Office be between $5-8m?
+  74241588  0.5789  "Americana" Rotten Tomatoes score is between 80–84%?
+  67542369  0.5790  Will "Love Hurts" Opening Weekend Box Office be between $8-11m?
+  77682691  0.5791  Will Guillermo Del Toro (Frankenstein) win Best Director at the 83rd Golden Glob
+  75689746  0.5791  Will "Caught Stealing" Opening Weekend Box Office be more than $10m?
+  76006543  0.5791  "The Smashing Machine" Rotten Tomatoes score is between 80 and 89?
+  78036011  0.5792  Will “A House of Dynamite” be the top global Netflix movie this week? (October 2
+  68447971  0.5792  Hollywood Epstein Parlay
+  74037981  0.5793  Will "I Know What You Did Last Summer" Opening Weekend Box Office be between $12
+  66982615  0.5793  Will "September" win Best Picture at the 2025 Oscars?
+  72034759  0.5794  Will "How to Train Your Dragon" Rotten Tomatoes score be between 90-94?
+  72890986  0.5794  Will Will "Elio" Rotten Tomatoes score be 80 or greater?
+  65611221  0.5795  Will 'The Substance' win the Golden Globe for Best Screenplay?
+  76770879  0.5795  Will "The Official Release Party of a Showgirl" Opening Weekend Box Office be be
+  76254277  0.5796  Will "The Long Walk" Opening Weekend Box Office be between $11m and $13m?
+  53570289  0.5796  Will Barry Keoghan win the BAFTA for Best Actor?
+  74241573  0.5797  "Nobody 2" Rotten Tomatoes score is between 80–89%?
+  77137977  0.5798  "Black Phone 2" Rotten Tomatoes score is between 70 and 74?
+  77684427  0.5798  Will Kiss of the Spider Woman win Best Original Score – Motion Picture at the 83
+  67226149  0.5798  Will "Captain America: Brave New World" Rotten Tomatoes score be greater than 80
+  70593499  0.5800  Will 'Star Wars III' gross between $19-22m on opening weekend?
+  75689726  0.5802  Will "The Roses" Opening Weekend Box Office be between $5-6m?
+  74241598  0.5803  "Americana" Rotten Tomatoes score is between 90–94%?
+  66699541  0.5804  Will 'Wicked: For Good' have the best domestic opening weekend in 2025?
+  67106194  0.5807  Will "The Substance" win Best Original Screenplay at the 2025 Oscars?
+  78330881  0.5807  Will "Black to the Future" Opening Weekend Box Office be less than 3.5m?
+  73183404  0.5807  Will "F1" Opening Weekend Box Office be less than $43M?
+  70432293  0.5807  Will 'Sinners' gross less than $44m on opening weekend?
+  65362627  0.5808  Will 'September 5' be nominated for Oscar for Best Picture?
+  77679116  0.5808  Will Bradley Cooper (Is This Thing On?) win Best Supporting Actor – Motion Pictu
+  73704569  0.5808  Will "Superman" Opening Weekend Box Office be between $108-116m?
+  75697160  0.5809  "One Battle After Another" Rotten Tomatoes score is between 80 and 84?
+  78887072  0.5810  Will "Now You See Me: Now You Don't" Opening Weekend Box Office be greater than 
+  78036006  0.5810  Will “I Know What You Did Last Summer” be the top global Netflix movie this week
+  65326782  0.5810  'Mufasa' vs. 'Sonic 3' opening weekend box office?
+  72317477  0.5810  Will "From the World of John Wick: Ballerina" Opening Weekend Box Office be betw
+  70432312  0.5810  Will 'Sinners' gross between $49m and $54m on opening weekend?
+  76526312  0.5810  Will "A Big Bold Beautiful Journey" Opening Weekend Box Office be greater than 3
+  66271645  0.5811  Will Daniel Craig win the Golden Globe for Best Actor - Drama?
+  77684982  0.5813  Will “Teenage Mutant Ninja Turtles (Any)” be the top global Netflix movie this w
+  63601554  0.5814  Will 'Wicked' gross between $125-135m opening weekend?
+  78330687  0.5814  Will “A House of Dynamite” be the top global Netflix movie this week? (November 
+  77679326  0.5814  Will Chase Infiniti (One Battle After Another) win Best Supporting Actress – Mot
+  70062080  0.5814  Will "The Amateur" Rotten Tomatoes score be between 55 and 60?
+  73451761  0.5816  Will "Jurassic World" Opening Weekend Box Office be less than $117m?
+  58604050  0.5816  Will 'A Quiet Place: Day One' gross between $48m and $54m opening weekend?
+  54111496  0.5818  Will 'Ghostbusters: Frozen Empire' gross under $35m opening weekend?
+  72317472  0.5818  Will "From the World of John Wick: Ballerina" Opening Weekend Box Office be betw
+  78887380  0.5820  Will “A House of Dynamite” be the top global Netflix movie this week? (November 
+  49980704  0.5820  Will ‘The Hunger Games: The Ballad of Songbirds & Snakes’ have a bigger opening 
+  77679311  0.5820  Will Elle Fanning (Sentimental Value) win Best Supporting Actress – Motion Pictu
+  74241568  0.5821  "Nobody 2" Rotten Tomatoes score is between 70–79%?
+  54111523  0.5823  Will 'Ghostbusters: Frozen Empire' gross between $45m-50m opening weekend?
+  55066495  0.5823  Will 'Godzilla x Kong: The New Empire' gross more than $65m opening weekend?
+  74286056  0.5824  "Happy Gilmore 2" Rotten Tomatoes score be less than 40?
+  63601465  0.5825  Will 'Wicked' gross less than $95m opening weekend?
+  77679284  0.5826  Will Ariana Grande (Wicked: For Good) win Best Supporting Actress – Motion Pictu
+  72317467  0.5829  Will "From the World of John Wick: Ballerina" Opening Weekend Box Office be less
+  68089089  0.5829  Will "A Complete Unknown" win Best Sound at the 2025 Oscars?
+  78036144  0.5830  Will Weapons be the #1 searched movie on Google this year?
+  77137986  0.5831  "Black Phone 2" Rotten Tomatoes score is between 80 and 84?
+  78036138  0.5831  Will One Battle After Another be the #1 searched movie on Google this year?
+  75697170  0.5832  "One Battle After Another" Rotten Tomatoes score is between 90 and 94?
+  68093057  0.5833  Will another movie win the most Oscars at the 2025 Academy Awards?
+  76006594  0.5833  "The Long Walk" Rotten Tomatoes score is between 90 and 91?
+  52746213  0.5833  Will Poor Things win the Oscar for Best Adapted Screenplay?
+  54111514  0.5833  Will 'Ghostbusters: Frozen Empire' gross between $40m-45m opening weekend?
+  77137946  0.5834  "The Smashing Machine" Rotten Tomatoes score is between 73 and 74?
+  74286074  0.5835  "Happy Gilmore 2" Rotten Tomatoes score be 70 or higher?
+  75697144  0.5835  "Caught Stealing" Rotten Tomatoes score is between 80 and 84?
+  78632036  0.5836  Will “A House of Dynamite” be the top global Netflix movie this week? (November 
+  77684432  0.5837  Will Wake Up Dead Man win Best Original Score – Motion Picture at the 83rd Golde
+  78887113  0.5837  Will "Keeper" Opening Weekend Box Office be greater than 5m?
+  76814600  0.5838  Will "One Battle After Another" Opening Weekend Box Office be between 20m and 23
+  78035990  0.5840  Will “The Perfect Neighbor” be the top global Netflix movie this week? (October 
+  77722759  0.5841  Will Pamela Anderson be ranked #1 globally in Google’s Year in Search 2025 Actor
+  76006599  0.5844  "The Long Walk" Rotten Tomatoes score is between 92 and 93?
+  76254282  0.5844  Will "The Long Walk" Opening Weekend Box Office be between $13m and $15m?
+  76814622  0.5844  Will "Gabby's Dollhouse: The Movie" Opening Weekend Box Office be between 19m an
+  77684179  0.5845  Will It Was Just an Accident win Best Screenplay – Motion Picture at the 83rd Go
+  45787832  0.5845  Will 'Meg 2: The Trench' gross over $23.5m on opening weekend?
+  76528969  0.5845  Will "One Battle After Another" Opening Weekend Box Office be between 23m and 29
+  77683359  0.5846  Will Zootopia 2 win Best Motion Picture – Animated at the 83rd Golden Globes?
+  72034736  0.5846  Will "How to Train Your Dragon" Rotten Tomatoes score be less than 75?
+  76814605  0.5846  Will "One Battle After Another" Opening Weekend Box Office be between 23m and 26
+  63601543  0.5847  Will 'Wicked' gross between $115-125m opening weekend?
+  73704579  0.5847  Will "Superman" Opening Weekend Box Office be more than $124m?
+  65636812  0.5848  Will Fernanda Torres win the Golden Globe for Best Actress in a Movie - Drama?
+  76939238  0.5849  Will Highest 2 Lowest be nominated for Best Picture at the 98th Academy Awards?
+  20645921  0.5849  Will 'Eternals' get 90% or higher Audience Score on Rotten Tomatoes?
+  77679321  0.5849  Will Glenn Close (Wake Up Dead Man) win Best Supporting Actress – Motion Picture
+  77684957  0.5850  Will “I Know What You Did Last Summer” be the top global Netflix movie this week
+  74843908  0.5850  Will "Weapons" Opening Weekend Box Office be more than $39m?
+  75697139  0.5852  "Caught Stealing" Rotten Tomatoes score is between 75 and 79?
+  76770883  0.5855  Will "The Official Release Party of a Showgirl" Opening Weekend Box Office be gr
+  78330692  0.5856  Will “The Perfect Neighbor” be the top global Netflix movie this week? (November
+  76770874  0.5857  Will "The Official Release Party of a Showgirl" Opening Weekend Box Office be be
+  77679795  0.5857  Will Lindsay Lohan (Freakier Friday) win Best Actress – Musical or Comedy at the
+  66944855  0.5858  Will "Flight Risk" Opening Weekend Box Office be $13m or more?
+  77137973  0.5858  "Black Phone 2" Rotten Tomatoes score is less than 70?
+  74843924  0.5859  Will "Freakier Friday" Opening Weekend Box Office be less than $29m?
+  70062059  0.5860  Will "The Amateur" Rotten Tomatoes score be between 50 and 55?
+  76814657  0.5862  Will "The Smashing Machine" Opening Weekend Box Office be less than 11m?
+  77684417  0.5863  Will Jay Kelly win Best Original Score – Motion Picture at the 83rd Golden Globe
+  76526357  0.5864  Will "The Senior" Opening Weekend Box Office be less than 2m?
+  77684437  0.5864  Will Sirat win Best Original Score – Motion Picture at the 83rd Golden Globes?
+  75121659  0.5865  Will "Nobody 2" Opening Weekend Box Office be between $12.5-14m?
+  76814595  0.5865  Will "One Battle After Another" Opening Weekend Box Office be less than 20m?
+  74568247  0.5866  Will "The Naked Gun" Opening Weekend Box Office be between $17m and $20m?
+  76814609  0.5866  Will "One Battle After Another" Opening Weekend Box Office be greater than 26m?
+  74843933  0.5867  Will "Freakier Friday" Opening Weekend Box Office be between $34m and $39m?
+  75697197  0.5868  "Him" Rotten Tomatoes score is between 90 and 94?
+  77105214  0.5868  Will "The Smashing Machine" Opening Weekend Box Office be less than 7m?
+  67811975  0.5869  Will "Wicked" win Best Cast in a Motion Picture at the 2025 SAG Awards?
+  54111504  0.5870  Will 'Ghostbusters: Frozen Empire' gross between $35m-40m opening weekend?
+  57268702  0.5870  'The Garfield Movie' >$30m Opening Weekend?
+  67303888  0.5871  Will "Companion" Opening Weekend Box Office be between $8-11m?
+  77681708  0.5871  Will Kristen Wiig (Palm Royale) win Best Actress – Television Musical or Comedy 
+  73704574  0.5873  Will "Superman" Opening Weekend Box Office be between $116-124m?
+  21142304  0.5875  Will 'Ghostbusters: Afterlife' get 86% or higher Audience Score on Rotten Tomato
+  67303919  0.5875  Will "Companion" Opening Weekend Box Office be more than $17m?
+  77684977  0.5876  Will “The Twits” be the top global Netflix movie this week? (October 21)
+  66699471  0.5876  Will 'The Fantastic Four: First Steps' have the best domestic opening weekend in
+  74241583  0.5876  "Americana" Rotten Tomatoes score is less than 80%?
+  75697126  0.5878  "Caught Stealing" Rotten Tomatoes score is less than 65?
+  77683974  0.5879  Will The Secret Agent win Best Motion Picture – Drama at the 83rd Golden Globes?
+  72034748  0.5881  Will "How to Train Your Dragon" Rotten Tomatoes score be between 80-84?
+  77684972  0.5882  Will “The Perfect Neighbor” be the top global Netflix movie this week? (October 
+  65362648  0.5882  Will 'Blitz' be nominated for Oscar for Best Picture?
+  77679332  0.5883  Will Gwyneth Paltrow (Marty Supreme) win Best Supporting Actress – Motion Pictur
+  76006584  0.5884  "Tron: Ares" Rotten Tomatoes score is 80 or above?
+  72034742  0.5885  Will "How to Train Your Dragon" Rotten Tomatoes score be between 75-79?
+  75697131  0.5886  "Caught Stealing" Rotten Tomatoes score is between 65 and 69?
+  78887098  0.5886  Will "Keeper" Opening Weekend Box Office be less than 4m?
+  78669827  0.5886  Will "Wicked: For Good" Opening Weekend Box Office be between 137m and 150m?
+  68089521  0.5886  Will "A Complete Unknown" win the most Oscars in the 2025 Academy Awards?
+  15520394  0.5886  How much will “In the Heights” gross domestically on opening weekend?
+  26593180  0.5888  Will 'Fantastic Beasts: The Secrets of Dumbledore' get a 80% or higher Tomatomet
+  74843929  0.5888  Will "Freakier Friday" Opening Weekend Box Office be between $29m and $34m?
+  66944785  0.5888  Will "Flight Risk" Opening Weekend Box Office be between $7m and $10m?
+  67303874  0.5888  Will "Companion" Opening Weekend Box Office be less than $8m?
+  65362603  0.5889  Will 'The Substance' be nominated for Oscar for Best Picture?
+  70432302  0.5890  Will 'Sinners' gross between $44m and $49m on opening weekend?
+  77105227  0.5890  Will "The Smashing Machine" Opening Weekend Box Office be between 10m and 11.5m?
+  76528973  0.5890  Will "One Battle After Another" Opening Weekend Box Office be greater than 29m?
+  74241564  0.5891  "Nobody 2" Rotten Tomatoes score is less than 70%?
+  74037970  0.5892  Will "Smurfs" Opening Weekend Box Office be more than $13m?
+  75689722  0.5897  Will "The Roses" Opening Weekend Box Office be less than $5m?
+  76020117  0.5897  Will "Hamilton" Opening Weekend Box Office be more than $11m?
+  74037965  0.5898  Will "Smurfs" Opening Weekend Box Office be between $11-13m?
+  66944764  0.5899  Will "Flight Risk" Opening Weekend Box Office be less than $7m?
+  74037960  0.5899  Will "Smurfs" Opening Weekend Box Office be between $9-11m?
+  77105219  0.5900  Will "The Smashing Machine" Opening Weekend Box Office be between 7m and 8.5m?
+  77137981  0.5903  "Black Phone 2" Rotten Tomatoes score is between 75 and 79?
+  67811724  0.5903  Will "A Complete Unknown" win Best Film at the 2025 BAFTA Awards?
+  75697187  0.5903  "Him" Rotten Tomatoes score is between 80 and 84?
+  78669822  0.5904  Will "Wicked: For Good" Opening Weekend Box Office be less than 137m?
+  70305712  0.5904  Will "Thunderbolts" Rotten Tomatoes score be 90 or higher?
+  14651721  0.5904  Will A Quiet Place Part II gross more domestically on opening weekend than A Qui
+  26049220  0.5907  Oscars 2022: Will Jessica Chastain win Best Actress?
+  70062052  0.5907  Will "The Amateur" Rotten Tomatoes score be less than 50?
+  52400286  0.5909  Will another film win the Oscar for Best Picture?
+  77679547  0.5909  Will Liam Neeson (The Naked Gun) win Best Actor – Musical or Comedy at the 83rd 
+  65324055  0.5910  Will "Mufasa: The Lion King" Rotten Tomatoes score be 90 or more?
+  75977371  0.5911  "Demon Slayer" grosses higher than "The Conjuring" opening weekend?
+  66982224  0.5911  Will "A Complete Unknown" win Best Picture at the 2025 Oscars?
+  77137951  0.5912  "The Smashing Machine" Rotten Tomatoes score is between 75 and 76?
+  75121654  0.5913  Will "Nobody 2" Opening Weekend Box Office be between $11-12.5m?
+  67811905  0.5914  Will "Anora" win Best Cast in a Motion Picture at the 2025 SAG Awards?
+  77684376  0.5914  Will Hamnet win Best Original Score – Motion Picture at the 83rd Golden Globes?
+  37758487  0.5917  Golden Globes: Will Cate Blanchett win Best Actress - Drama?
+  75697155  0.5918  "One Battle After Another" Rotten Tomatoes score is less than 80?
+  31291506  0.5920  Will 'Bullet Train' gross more than $32.5 million domestically on its opening we
+  66944798  0.5922  Will "Flight Risk" Opening Weekend Box Office be between $10m and $13m?
+  70062097  0.5927  Will "The Amateur" Rotten Tomatoes score be between 60 and 65?
+  66982683  0.5931  Will "The Substance" win Best Picture at the 2025 Oscars?
+  72034725  0.5931  Will "From the World of John Wick: Ballerina" Rotten Tomatoes score be between 7
+  77684173  0.5932  Will Marty Supreme win Best Screenplay – Motion Picture at the 83rd Golden Globe
+  75247066  0.5932  Will "Nobody 2" Opening Weekend Box Office be between $8.5-10m?
+  72683249  0.5936  Will "Elio" Rotten Tomatoes score be 90 or higher?
+  70062119  0.5937  Will "The Amateur" Rotten Tomatoes score be more than 65?
+  67542252  0.5938  Will "Heart Eyes" Opening Weekend Box Office be less than $6m?
+  74037976  0.5938  Will "I Know What You Did Last Summer" Opening Weekend Box Office be less than $
+  77105223  0.5938  Will "The Smashing Machine" Opening Weekend Box Office be between 8.5m and 10m?
+  74521037  0.5939  "The Witcher: Season 4" Rotten Tomatoes score is 75 or higher?
+  78887108  0.5939  Will "Keeper" Opening Weekend Box Office be between 4.5m and 5m?
+  67811955  0.5940  Will "Emilia Pérez" win Best Cast in a Motion Picture at the 2025 SAG Awards?
+  77684406  0.5941  Will F1 The Movie win Best Original Score – Motion Picture at the 83rd Golden Gl
+  77105231  0.5944  Will "The Smashing Machine" Opening Weekend Box Office be greater than 11.5m?
+  72034709  0.5945  Will "From the World of John Wick: Ballerina" Rotten Tomatoes score be less than
+  76528965  0.5946  Will "One Battle After Another" Opening Weekend Box Office be less than 23m?
+  74286037  0.5946  "The Naked Gun" Rotten Tomatoes score is between 60–69%?
+  76529423  0.5947  Will "Gabby's Dollhouse: The Movie" Opening Weekend Box Office be between 23m an
+  74843895  0.5947  Will "Weapons" Opening Weekend Box Office be less than $29m?
+  77137942  0.5948  "The Smashing Machine" Rotten Tomatoes score is less than 73?
+  76529427  0.5948  Will "Gabby's Dollhouse: The Movie" Opening Weekend Box Office be greater than 2
+  76814627  0.5949  Will "Gabby's Dollhouse: The Movie" Opening Weekend Box Office be greater than 2
+  78887406  0.5949  Will “In Your Dreams” be the top global Netflix movie this week? (November 18 20
+  77679784  0.5951  Will Jamie Lee Curtis (Freakier Friday) win Best Actress – Musical or Comedy at 
+  76526361  0.5956  Will "The Senior" Opening Weekend Box Office be between 2m and 2.5m?
+  72683366  0.5957  Will "Superman" Rotten Tomatoes score be 90 or higher?
+  74286042  0.5957  "The Naked Gun" Rotten Tomatoes score is between 70–79%?
+  74568243  0.5958  Will "The Naked Gun" Opening Weekend Box Office be less than $17m?
+  17654356  0.5959  Will “The Suicide Squad” gross more than $37.5M domestically on opening weekend?
+  75697182  0.5960  "Him" Rotten Tomatoes score is less than 80?
+  76006538  0.5960  "The Smashing Machine" Rotten Tomatoes score is less than 80?
+  67572985  0.5961  Will 'Emilia Pérez' win 0 Oscars at the 2025 Academy Awards?
+  77679053  0.5963  Will Stellan Skarsgard (Sentimental Value) win Best Supporting Actor – Motion Pi
+  74286051  0.5963  "The Naked Gun" Rotten Tomatoes score is between 80–89%?
+  75697148  0.5964  "Caught Stealing" Rotten Tomatoes score is 85 or higher?
+  75697272  0.5966  "The Conjuring: Last Rites" Rotten Tomatoes score is 80 or higher?
+  76006613  0.5967  "The Long Walk" Rotten Tomatoes score is 98 or above?
+  77475915  0.5967  Will Oscar Isaac (Frankenstein) be nominated for Best Actor – Drama at the 83rd 
+  77684204  0.5968  Will Wake Up Dead Man win Best Screenplay – Motion Picture at the 83rd Golden Gl
+  70305708  0.5968  Will "The Accountant 2" Rotten Tomatoes score be 90 or higher?
+  72034719  0.5970  Will "From the World of John Wick: Ballerina" Rotten Tomatoes score be between 6
+  76529418  0.5972  Will "Gabby's Dollhouse: The Movie" Opening Weekend Box Office be less than 23m?
+  72683332  0.5975  Will "Jurassic World: Rebirth" Rotten Tomatoes score be 80 or higher?
+  77684214  0.5976  Will The Secret Agent win Best Screenplay – Motion Picture at the 83rd Golden Gl
+  71240433  0.5977  Will 'Fight or Flight' gross more than $1.5m opening weekend?
+  26048192  0.5977  Oscars 2022: Will Will Smith win Best Actor?
+  77684391  0.5977  Will Frankenstein win Best Original Score – Motion Picture at the 83rd Golden Gl
+  71240419  0.5978  Will 'Fight or Flight' gross between $1.2-1.5m opening weekend?
+  74521056  0.5978  "Alien: Earth" Rotten Tomatoes score is 90 or higher?
+  78632056  0.5978  Will “Life of the Party” be the top global Netflix movie this week? (November 11
+  61743706  0.5979  'Speak No Evil' grosses >$13m opening weekend?
+  77682963  0.5981  Will Jay Kelly win Best Motion Picture – Musical or Comedy at the 83rd Golden Gl
+  76526365  0.5983  Will "The Senior" Opening Weekend Box Office be between 2.5m and 3m?
+  74037956  0.5985  Will "Smurfs" Opening Weekend Box Office be less than $9m?
+  77684366  0.5985  Will One Battle After Another win Best Original Score – Motion Picture at the 83
+  74241603  0.5987  "Americana" Rotten Tomatoes score is 95% or higher?
+  77683404  0.5987  Will Sneaks win Best Motion Picture – Animated at the 83rd Golden Globes?
+  70305688  0.5988  Will "Fight or Flight" Rotten Tomatoes score be between 70 and 79?
+  72034714  0.5989  Will "From the World of John Wick: Ballerina" Rotten Tomatoes score be between 5
+  77684194  0.5989  Will A House of Dynamite win Best Screenplay – Motion Picture at the 83rd Golden
+  70305696  0.5990  Will "Fight or Flight" Rotten Tomatoes score be between 80 and 89?
+  77684189  0.5997  Will Jay Kelly win Best Screenplay – Motion Picture at the 83rd Golden Globes?
+  78887103  0.6001  Will "Keeper" Opening Weekend Box Office be between 4m and 4.5m?
+  65636752  0.6002  Will Angelina Jolie win the Golden Globe for Best Actress in a Movie - Drama?
+  78036001  0.6003  Will “Don't Say a Word” be the top global Netflix movie this week? (October 28)
+  76814618  0.6005  Will "Gabby's Dollhouse: The Movie" Opening Weekend Box Office be between 17m an
+  77682650  0.6005  Will Joachim Trier (Sentimental Value) win Best Director at the 83rd Golden Glob
+  37758478  0.6007  Golden Globes: Will Brendan Fraser win Best Actor - Drama?
+  76006590  0.6008  "The Long Walk" Rotten Tomatoes score is less than 90?
+  77684967  0.6013  Will “Confessions of a Shopaholic” be the top global Netflix movie this week? (O
+  71240405  0.6014  Will 'Fight or Flight' gross between $0.9-1.2m opening weekend?
+  70305655  0.6015  Will "Fight or Flight" Rotten Tomatoes score be between 60 and 69?
+  67542277  0.6017  Will "Heart Eyes" Opening Weekend Box Office be between $6-9m?
+  74843904  0.6019  Will "Weapons" Opening Weekend Box Office be between $34m and $39m?
+  75247061  0.6021  Will "Nobody 2" Opening Weekend Box Office be less than $8.5m?
+  74843899  0.6022  Will "Weapons" Opening Weekend Box Office be between $29m and $34m?
+  33643635  0.6023  Will 'Smile' gross more than $17 million domestically on its opening weekend?
+  77687457  0.6023  Will "Good Fortune" Opening Weekend Box Office be less than 5m?
+  76526370  0.6025  Will "The Senior" Opening Weekend Box Office be greater than 3m?
+  77684371  0.6025  Will Sinners win Best Original Score – Motion Picture at the 83rd Golden Globes?
+  78036017  0.6027  Will another movie be the top global Netflix movie this week? (October 28)
+  75689741  0.6027  Will "Caught Stealing" Opening Weekend Box Office be between $8.5-10m?
+  77683943  0.6027  Will Hamnet win Best Motion Picture – Drama at the 83rd Golden Globes?
+  75697117  0.6028  "The Roses" Rotten Tomatoes score is between 65 and 69?
+  52400206  0.6030  Will "Poor Things" win the Oscar for Best Picture?
+  77679989  0.6032  Will Renate Reinsve (Sentimental Value) win Best Actress – Drama at the 83rd Gol
+  65636772  0.6034  Will Nicole Kidman win the Golden Globe for Best Actress in a Movie - Drama?
+  77137955  0.6034  "The Smashing Machine" Rotten Tomatoes score is 77 or above?
+  70305647  0.6035  Will "Fight or Flight" Rotten Tomatoes score be less than 60?
+  77683969  0.6037  Will No Other Choice win Best Motion Picture – Drama at the 83rd Golden Globes?
+  47024285  0.6039  Will 'Taylor Swift: The Eras Tour' movie gross over $100m opening weekend?
+  78887390  0.6040  Will “Frankenstein” be the top global Netflix movie this week? (November 18 2025
+  77684209  0.6040  Will Rental Family win Best Screenplay – Motion Picture at the 83rd Golden Globe
+  77683938  0.6040  Will One Battle After Another win Best Motion Picture – Drama at the 83rd Golden
+  75697112  0.6045  "The Roses" Rotten Tomatoes score is between 60 and 64?
+  71240391  0.6046  Will 'Fight or Flight' gross less than $0.9m opening weekend?
+  77684386  0.6047  Will Wicked For Good win Best Original Score – Motion Picture at the 83rd Golden
+  74286032  0.6047  "The Naked Gun" Rotten Tomatoes score is less than 60%?
+  76528927  0.6049  "Gabby’s Dollhouse" grosses higher than "One Battle After Another" opening weeke
+  77684987  0.6050  Will “Other” be the top global Netflix movie this week? (October 21)
+  77684962  0.6054  Will “The A-Team” be the top global Netflix movie this week? (October 21)
+  77989646  0.6055  Will "Regretting You" Opening Weekend Box Office be less than 7m?
+  78632046  0.6056  Will “Frankenstein” be the top global Netflix movie this week? (November 11 2025
+  26353530  0.6059  Oscars 2022: Will CODA win Best Picture?
+  48248450  0.6059  Will 'Taylor Swift: The Eras Tour' movie gross over $125m opening weekend?
+  75697107  0.6060  "The Roses" Rotten Tomatoes score is less than 60?
+  77989651  0.6063  Will "Regretting You" Opening Weekend Box Office be between 7m and 8m?
+  78669833  0.6064  Will "Wicked: For Good" Opening Weekend Box Office be between 150m and 163m?
+  72034765  0.6066  Will "How to Train Your Dragon" Rotten Tomatoes score be 95 or higher?
+  76020102  0.6068  Will "Hamilton" Opening Weekend Box Office be less than $8.8m?
+  74286024  0.6068  "Freakier Friday" Rotten Tomatoes score is between 70–89%?
+  67811924  0.6070  Will "A Complete Unknown" win Best Cast in a Motion Picture at the 2025 SAG Awar
+  74241613  0.6074  "The Fantastic Four: First Steps" Rotten Tomatoes score is between 80–89%?
+  78669838  0.6075  Will "Wicked: For Good" Opening Weekend Box Office be between 163m and 175m?
+  77687462  0.6078  Will "Good Fortune" Opening Weekend Box Office be between 5m and 6m?
+  77684158  0.6084  Will Hamnet win Best Screenplay – Motion Picture at the 83rd Golden Globes?
+  67542452  0.6085  Will "Heart Eyes" Opening Weekend Box Office be more than $12m?
+  77989661  0.6086  Will "Regretting You" Opening Weekend Box Office be greater than 9m?
+  77989656  0.6086  Will "Regretting You" Opening Weekend Box Office be between 8m and 9m?
+  77679526  0.6094  Will Daniel Craig (Wake Up Dead Man) win Best Actor – Musical or Comedy at the 8
+  75689736  0.6094  Will "Caught Stealing" Opening Weekend Box Office be less than $8.5m?
+  77683948  0.6099  Will Sinners win Best Motion Picture – Drama at the 83rd Golden Globes?
+  76814614  0.6100  Will "Gabby's Dollhouse: The Movie" Opening Weekend Box Office be less than 17m?
+  52978861  0.6113  Will another movie gross most in 2024?
+  77682943  0.6120  Will Wake Up Dead Man win Best Motion Picture – Musical or Comedy at the 83rd Go
+  77687467  0.6125  Will "Good Fortune" Opening Weekend Box Office be between 6m and 7m?
+  74520995  0.6125  "Weapons" Rotten Tomatoes score is between 85–89%?
+  75697251  0.6131  "Downton Abbey: The Grand Finale" Rotten Tomatoes score is 90 or higher?
+  74241578  0.6140  "Nobody 2" Rotten Tomatoes score is 90% or higher?
+  77683995  0.6140  Will Frankenstein win Best Motion Picture – Drama at the 83rd Golden Globes?
+  65636792  0.6142  Will Tilda Swinton win the Golden Globe for Best Actress in a Movie - Drama?
+  76020112  0.6143  Will "Hamilton" Opening Weekend Box Office be between $9.5m and $11m?
+  77687472  0.6145  Will "Good Fortune" Opening Weekend Box Office be greater than 7m?
+  76020107  0.6148  Will "Hamilton" Opening Weekend Box Office be between $8.8m and $9.5m?
+  77684153  0.6153  Will One Battle After Another win Best Screenplay – Motion Picture at the 83rd G
+  26354284  0.6154  Oscars 2022: Will Licorice Pizza win Best Original Screenplay?
+  67542368  0.6159  Will "Heart Eyes" Opening Weekend Box Office be between $9-12m?
+  77137996  0.6164  "Black Phone 2" Rotten Tomatoes score is 90 or higher?
+  74286019  0.6169  "Freakier Friday" Rotten Tomatoes score is between 50–69%?
+  77105170  0.6171  Will "Good Fortune" Opening Weekend Box Office be less than 8m?
+  77679774  0.6173  Will Pamela Anderson (The Naked Gun) win Best Actress – Musical or Comedy at the
+  78669844  0.6176  Will "Wicked: For Good" Opening Weekend Box Office be greater than 175m?
+  76006547  0.6178  "The Smashing Machine" Rotten Tomatoes score is 90 or above?
+  77684219  0.6180  Will Frankenstein win Best Screenplay – Motion Picture at the 83rd Golden Globes
+  75697175  0.6183  "One Battle After Another" Rotten Tomatoes score is 95 or higher?
+  65636723  0.6186  Will Pamela Anderson win the Golden Globe for Best Actress in a Movie - Drama?
+  75697121  0.6192  "The Roses" Rotten Tomatoes score is 70 or higher?
+  72034730  0.6196  Will "From the World of John Wick: Ballerina" Rotten Tomatoes score be 80 or hig
+  74241608  0.6202  "Fantastic 4" Rotten Tomatoes score is below 80%?
+  77684422  0.6208  Will Sentimental Value win Best Original Score – Motion Picture at the 83rd Gold
+  26052748  0.6221  Oscars 2022: Will any film win 6 or more awards?
+  77684168  0.6224  Will Sinners win Best Screenplay – Motion Picture at the 83rd Golden Globes?
+  77684199  0.6229  Will No Other Choice win Best Screenplay – Motion Picture at the 83rd Golden Glo
+  44796781  0.6230  Will 'Barbie' or 'Oppenheimer' have a higher Rotten Tomatoes rating?
+  74286014  0.6234  "Freakier Friday" Rotten Tomatoes score is less than 50%?
+  74520990  0.6236  "Weapons" Rotten Tomatoes score is less than 80%?
+  77684006  0.6241  Will Weapons win Best Motion Picture – Drama at the 83rd Golden Globes?
+  70309750  0.6244  "Sinners" Rotten Tomatoes score >95?
+  77105178  0.6255  Will "Good Fortune" Opening Weekend Box Office be greater than 12m?
+  77105174  0.6266  Will "Good Fortune" Opening Weekend Box Office be between 8m and 12m?
+  74241618  0.6267  "The Fantastic Four: First Steps" Rotten Tomatoes score 90+%?
+  70305713  0.6269  Will "Fight or Flight" Rotten Tomatoes score be 90 or higher?
+  74521004  0.6278  "Weapons" Rotten Tomatoes score is between 90–94%?
+  74521008  0.6280  "Weapons" Rotten Tomatoes score is between 80–84%?
+  77684224  0.6283  Will Weapons win Best Screenplay – Motion Picture at the 83rd Golden Globes?
+  74521000  0.6286  "Weapons" Rotten Tomatoes score is 95%+?
+  75697201  0.6290  "Him" Rotten Tomatoes score is 95 or higher?
+  45275148  0.6302  Will 'Barbie' gross 2x more than 'Oppenheimer' on opening weekend?
+  77683953  0.6358  Will Sentimental Value win Best Motion Picture – Drama at the 83rd Golden Globes
+  43872426  0.6376  Will 'Barbie' or 'Oppenheimer' gross more on opening weekend?
+  74286047  0.6407  "The Naked Gun" Rotten Tomatoes score is 90% or higher?
+  74286028  0.6425  "Freakier Friday" Rotten Tomatoes score is 90%+?
+  77684163  0.6494  Will Sentimental Value win Best Screenplay – Motion Picture at the 83rd Golden G

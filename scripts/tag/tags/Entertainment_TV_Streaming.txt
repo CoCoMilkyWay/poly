@@ -1,0 +1,508 @@
+# Entertainment - Entertainment_TV_Streaming
+# count=505, avg_conf=0.5602
+====================================================================================================
+  69772129  0.4469  Will Saxson die in Season 3 of the White Lotus?
+  69772276  0.4500  Will Mook die in Season 3 of the White Lotus?
+  69772120  0.4556  Will Rick Hatchett die in Season 3 of the White Lotus?
+  69772187  0.4624  Will Lochlan die in Season 3 of the White Lotus?
+  77461482  0.4667  Will Annie and Nick get married by the end of the Love Is Blind Season 9 finale?
+  57092819  0.4705  Will Nick Fuentes admit he's gay?
+  69772237  0.4735  Will Jim Hollinger die in Season 3 of the White Lotus?
+  77461482  0.4782  Will Kalybriah and Edmond get married by the end of the Love Is Blind Season 9 f
+  61853076  0.4782  Will Ripley win the Emmy for Outstanding Limited Series?
+  77461482  0.4783  Will Ali and Anton get married by the end of the Love Is Blind Season 9 finale?
+  74042009  0.4807  Will Keri Russell win the Emmy for Outstanding Lead Actress in a Drama Series?
+  16372185  0.4812  Will Brad McClelland be in the winning couple on Love Island UK Season 7?
+  74042060  0.4846  Will Only Murders in the Building win the Emmy for Outstanding Comedy Series?
+  74041979  0.4920  Will Martin Short win the Emmy for Outstanding Lead Actor in a Comedy Series?
+  77461482  0.4934  Will Kacie and Patrick get married by the end of the Love Is Blind Season 9 fina
+  77428656  0.4938  Will Taylor Swift say "Breakup" or "Break Up" during Late Night with Seth Meyers
+  61853494  0.4947  Will Richard Gadd win the Emmy for Lead Actor a Limited Series?
+  74041950  0.4966  Will Quinta Brunson win the Emmy for Outstanding Lead Actress in a Comedy Series
+  77428657  0.4990  Will Taylor Swift say "Wedding" during Late Night with Seth Meyers?
+  61853937  0.4993  Will Sofia Vergara win the Emmy for Lead Actress for a Limited Series?
+  77461481  0.5003  Will Megan and Jordan get married by the end of the Love Is Blind Season 9 final
+  61382421  0.5010  Will Kamala go on Lex Fridman podcast?
+  77428658  0.5012  Will Taylor Swift say "Cat" during Late Night with Seth Meyers?
+  69772196  0.5018  Will Pornchai die in Season 3 of the White Lotus?
+  61853538  0.5022  Will Tom Hollander win the Emmy for Lead Actor a Limited Series?
+  74041942  0.5033  Will Uzo Aduba win the Emmy for Outstanding Lead Actress in a Comedy Series?
+  77680258  0.5037  Will Ashley Walters (Adolescence) win Best Supporting Actor – Television at the 
+  73130963  0.5040  Will Jalen win Season 7 of Love Island USA?
+  73011307  0.5040  Will Jalen win Season 7 of Love Island USA?
+  75182678  0.5062  Will Taylor Swift's appearance on New Heights get between 50 and 60 million view
+  44726564  0.5064  Will Adam22 and Lena The Plug break up this month?
+  77141569  0.5068  Will Taylor Swift say "Eras" during Tonight Show on October 6?
+  74042079  0.5070  Will Sterling K Brown win the Emmy for Outstanding Lead Actor in a Drama Series?
+  74042096  0.5070  Will Noah Wyle win the Emmy for Outstanding Lead Actor in a Drama Series?
+  74041999  0.5072  Will Britt Lower win the Emmy for Outstanding Lead Actress in a Drama Series?
+  77981205  0.5073  Will Thomas Lee appear on the UpOnly podcast by December 31?
+  74042092  0.5080  Will Adam Scott win the Emmy for Outstanding Lead Actor in a Drama Series?
+  75182683  0.5082  Will Taylor Swift's appearance on New Heights get between 60 and 70 million view
+  77223191  0.5088  Will Bad Bunny say "Nicki" or "Minaj" during SNL appearance on October 4?
+  52361234  0.5091  Will Ted Lasso win Outstanding Comedy Series at the 75th Emmys?
+  75157731  0.5105  Will 'The Life of a Showgirl' be #1 for 6 straight weeks?
+  77428653  0.5107  Will Taylor Swift say "Poet" during Late Night with Seth Meyers?
+  77428660  0.5112  Will Taylor Swift say "Bunny" during Late Night with Seth Meyers?
+  77428654  0.5113  Will Taylor Swift say "Tour" during Late Night with Seth Meyers?
+  77468509  0.5115  Will Dylan Efron & Daniella Karagach win Dancing with the Stars Season 34?
+  61853967  0.5118  Willa another actress win the Emmy for Lead Actress for a Limited Series?
+  76464923  0.5122  Will JD Vance say Assassin during the Charlie Kirk Show on Monday September 15?
+  77141566  0.5131  Will Taylor Swift say "Bad Bunny" during Tonight Show on October 6?
+  77141568  0.5133  Will Taylor Swift say "Jason" during Tonight Show on October 6?
+  77428655  0.5135  Will Taylor Swift say "Egg" during Late Night with Seth Meyers?
+  74041989  0.5137  Will Kathy Bates win the Emmy for Outstanding Lead Actress in a Drama Series?
+  16935801  0.5156  Who will get more airtime in Episode 41 of the All In Podcast: David Sacks or Ja
+  77685206  0.5158  Will all Love Is Blind S9 finale couples get married?
+  76535949  0.5158  Will Kamala Harris say "Charlie" or "Kirk" on the Rachel Maddow Show on Septembe
+  47699622  0.5163  Will Blur Season 2 end this year?
+  74041955  0.5164  Will Ayo Edebiri win the Emmy for Outstanding Lead Actress in a Comedy Series?
+  76535948  0.5165  Will Kamala Harris say "Zohran" or "Mamdani" on the Rachel Maddow Show on Septem
+  50265361  0.5167  Will Blur Season 3 end by May?
+  76535945  0.5169  Will Kamala Harris say "Fundamental" on the Rachel Maddow Show on September 22?
+  62026496  0.5190  Mark Robinson sexual misconduct allegations?
+  77223191  0.5196  Will Bad Bunny say "Taylor" or "Swift" during SNL appearance on October 4?
+  75166057  0.5198  Will Taylor Swift release 'The Life of a Showgirl' today?
+  79031446  0.5198  Will Ordinary by Alex Warren be the 2nd most streamed song globally on Spotify f
+  77141568  0.5200  Will Taylor Swift say "Sabrina" or "Carpenter" during Tonight Show on October 6?
+  75157792  0.5202  Will 'The Life of a Showgirl' be #1 for 19 straight weeks?
+  75157756  0.5202  Will 'The Life of a Showgirl' be #1 for 11 straight weeks?
+  75157797  0.5203  Will 'The Life of a Showgirl' be #1 for 20 or more straight weeks?
+  74570614  0.5206  Missing Epstein cell footage released by August 31?
+  77683596  0.5207  Will Death by Lightning win Best Television Limited Series at the 83rd Golden Gl
+  74598713  0.5207  Will Ben Holbrough win Love Island season 12?
+  79031593  0.5210  Will Ordinary by Alex Warren be the 3rd most streamed song globally on Spotify f
+  75157764  0.5212  Will 'The Life of a Showgirl' be #1 for 13 straight weeks?
+  77468534  0.5213  Will Whitney Leavitt & Mark Ballas win Dancing with the Stars Season 34?
+  75157788  0.5214  Will 'The Life of a Showgirl' be #1 for 18 straight weeks?
+  77223188  0.5218  Will Bad Bunny say "Puerto Rico" during SNL appearance on October 4?
+  76535946  0.5222  Will Kamala Harris say "Education" on the Rachel Maddow Show on September 22?
+  77815540  0.5223  Will Sabrina Carpenter say "Domingo" during SNL appearance on October 18?
+  75157736  0.5227  Will 'The Life of a Showgirl' be #1 for 7 straight weeks?
+  77815540  0.5227  Will Sabrina Carpenter say "Taylor" or "Swift" during SNL appearance on October 
+  61853956  0.5229  Will Naomi Watts win the Emmy for Lead Actress for a Limited Series?
+  77379002  0.5231  Will “The Fate of Ophelia” have between 40–45 million views on Friday at noon?
+  75157726  0.5233  Will 'The Life of a Showgirl' be #1 for 5 straight weeks?
+  74640398  0.5234  Will Kamala Harris say "Zohran" or "Mamdani" during Colbert show on July 31?
+  74042040  0.5240  Will Abbott Elementary win the Emmy for Outstanding Comedy Series?
+  75157760  0.5241  Will 'The Life of a Showgirl' be #1 for 12 straight weeks?
+  75157783  0.5245  Will 'The Life of a Showgirl' be #1 for 17 straight weeks?
+  77428656  0.5246  Will Taylor Swift say "Sabrina" or "Carpenter" during Late Night with Seth Meyer
+  77683601  0.5246  Will The Savant win Best Television Limited Series at the 83rd Golden Globes?
+  78892288  0.5249  Will Don’t Say You Love Me by Jin be the most streamed song globally on Spotify 
+  73011284  0.5252  Will Jeremiah win Season 7 of Love Island USA?
+  73130942  0.5252  Will Jeremiah win Season 7 of Love Island USA?
+  78892248  0.5254  Will Ordinary by Alex Warren be the most streamed song globally on Spotify for 2
+  75157746  0.5256  Will 'The Life of a Showgirl' be #1 for 9 straight weeks?
+  74041960  0.5257  Will Jean Smart win the Emmy for Outstanding Lead Actress in a Comedy Series?
+  75125079  0.5259  Will Taylor Swift say "Pregnant" during Travis Kelce's podcast on Wednesday?
+  79031745  0.5259  Will Man I Need by Olivia Dean be the #1 song on Spotify this week?
+  77223189  0.5261  Will Bad Bunny say "Spanish" during SNL appearance on October 4?
+  55144800  0.5264  Sex tapes at Diddy's property confirmed by April 15?
+  77428654  0.5266  Will Taylor Swift say "Kelce" during Late Night with Seth Meyers?
+  75125080  0.5268  Will Taylor Swift say "Kanye" during Travis Kelce's podcast on Wednesday?
+  75157773  0.5269  Will 'The Life of a Showgirl' be #1 for 15 straight weeks?
+  75125079  0.5271  Will Taylor Swift say "Eras Tour" during Travis Kelce's podcast on Wednesday?
+  77981202  0.5272  Will Michael Saylor appear on the UpOnly podcast by December 31?
+  75125075  0.5272  Will Taylor Swift say "Baby" during Travis Kelce's podcast on Wednesday?
+  77378997  0.5276  Will “The Fate of Ophelia” have between 35–40 million views on Friday at noon?
+  75157768  0.5279  Will 'The Life of a Showgirl' be #1 for 14 straight weeks?
+  74041984  0.5281  Will Jeremy Allen White win the Emmy for Outstanding Lead Actor in a Comedy Seri
+  54851672  0.5286  Kate Middleton video fake?
+  74598826  0.5287  Will Shakira Khan win Love Island season 12?
+  61853844  0.5287  Will Jodie Foster win the Emmy for Lead Actress for a Limited Series?
+  77215788  0.5291  Will Zelah Glasson win Big Brother UK Series 22?
+  77379007  0.5292  Will “The Fate of Ophelia” have between 45–50 million views on Friday at noon?
+  74042024  0.5292  Will Dying for Sex win the Emmy for Outstanding Limited or Anthology Series?
+  70671172  0.5293  Will ‘Re:ZERO -Starting Life in Another World- Season 3’ win Crunchyroll's Best 
+  75157751  0.5297  Will 'The Life of a Showgirl' be #1 for 10 straight weeks?
+  76464921  0.5302  Will JD Vance say Jesus during the Charlie Kirk Show on Monday September 15?
+  23041971  0.5311  Will 'The Witcher: Season 2' be the #1 Netflix show worldwide on the week ending
+  77683570  0.5311  Will Black Rabbit win Best Television Limited Series at the 83rd Golden Globes?
+  77223186  0.5312  Will Bad Bunny say "Tour" during SNL appearance on October 4?
+  75157716  0.5312  Will 'The Life of a Showgirl' be #1 for 3 straight weeks?
+  61853462  0.5313  Will Jon Hamm win the Emmy for Lead Actor a Limited Series?
+  74042055  0.5314  Will Nobody Wants This win the Emmy for Outstanding Comedy Series?
+  75157711  0.5315  Will 'The Life of a Showgirl' be #1 for 2 straight weeks?
+  75157721  0.5316  Will 'The Life of a Showgirl' be #1 for 4 straight weeks?
+  74041946  0.5321  Will Kristen Bell win the Emmy for Outstanding Lead Actress in a Comedy Series?
+  60543341  0.5322  Elon x Kamala Harris interview in August?
+  77815541  0.5325  Will Sabrina Carpenter say "Wig" during SNL appearance on October 18?
+  62182924  0.5328  Diddy sex tape released before November?
+  74640398  0.5333  Will Kamala Harris say "Book" during Colbert show on July 31?
+  26055906  0.5334  Will Zelenskyy's show 'Servant of the People' be in the weekly Netflix Global To
+  75125076  0.5339  Will Taylor Swift say "Marry" or "Married" during Travis Kelce's podcast on Wedn
+  74042004  0.5341  Will Bella Ramsey win the Emmy for Outstanding Lead Actress in a Drama Series?
+  75125077  0.5344  Will Taylor Swift say "Swiftie" 3+ times during Travis Kelce's podcast on Wednes
+  75125080  0.5344  Will Taylor Swift say "Poet" during Travis Kelce's podcast on Wednesday?
+  65404898  0.5346  Joe Burrow and Olivia Holzmacher break up this season?
+  75157701  0.5350  Will 'The Life of a Showgirl' be #1 for 0 straight weeks?
+  77378992  0.5350  Will “The Fate of Ophelia” have between 30–35 million views on Friday at noon?
+  75157741  0.5352  Will 'The Life of a Showgirl' be #1 for 8 straight weeks?
+  75123415  0.5354  Will Taylor Swift release “The Life of a Showgirl” between September 16-30
+  61846722  0.5354  Shōgun wins Best Drama Series? - Emmys
+  74598723  0.5355  Will Dejon Noël‑Williams win Love Island season 12?
+  77683611  0.5355  Will All Her Fault win Best Television Limited Series at the 83rd Golden Globes?
+  65130814  0.5358  Will Joe Rogan be TIME's Person of the Year for 2024?
+  77223190  0.5359  Will Bad Bunny say "Kristi" or "Noem" during SNL appearance on October 4?
+  77815540  0.5367  Will Sabrina Carpenter say "New York" or "NYC" during SNL appearance on October 
+  74042119  0.5370  Will The Last of Us win the Emmy for Outstanding Drama Series?
+  77683554  0.5373  Will Adolescence win Best Television Limited Series at the 83rd Golden Globes?
+  75157706  0.5380  Will 'The Life of a Showgirl' be #1 for 1 straight week?
+  77815540  0.5381  Will Sabrina Carpenter say "Nervous" during SNL appearance on October 18?
+  74042035  0.5382  Will The Penguin win the Emmy for Outstanding Limited or Anthology Series?
+  77378987  0.5382  Will “The Fate of Ophelia” have between 25–30 million views on Friday at noon?
+  77468524  0.5385  Will Scott Hoying & Rylee Arnold win Dancing with the Stars Season 34?
+  77684597  0.5386  Will no Love Is Blind Season 9 couple get married by the finale?
+  74598748  0.5386  Will Shea Mannings win Love Island season 12?
+  58836487  0.5387  Will Biden go on the All-In Podcast?
+  74042141  0.5390  Will The White Lotus win the Emmy for Outstanding Drama Series?
+  61852920  0.5391  Will Baby Reindeer win the Emmy for Outstanding Limited Series?
+  75157778  0.5392  Will 'The Life of a Showgirl' be #1 for 16 straight weeks?
+  77981205  0.5393  Will Su Zhu appear on the UpOnly podcast by December 31?
+  77981205  0.5396  Will Anatoly Yakovenko appear on the UpOnly podcast by December 31?
+  77223186  0.5397  Will Bad Bunny say "Doja" or "Cat" 2+ times during SNL appearance on October 4?
+  77428661  0.5401  Will Taylor Swift say "Super Bowl" during Late Night with Seth Meyers?
+  77683591  0.5401  Will Dope Thief win Best Television Limited Series at the 83rd Golden Globes?
+  74041974  0.5406  Will Jason Segel win the Emmy for Outstanding Lead Actor in a Comedy Series?
+  63400303  0.5409  Will Trump smoke weed with Rogan?
+  58076556  0.5410  Will Andrew Tate do Threadguy podcast in June?
+  77981201  0.5419  Will Arthur Hayes appear on the UpOnly podcast by December 31?
+  77676093  0.5421  Will anyone say "Kristi" or "Noem" during South Park e6 s27?
+  61853034  0.5424  Will Fargo win the Emmy for Outstanding Limited Series?
+  23859089  0.5431  Will the top song on Spotify Charts hit 36M global streams for the week ending o
+  69010161  0.5433  Will 'American Murder: Gabby Petito: Season 1' be the top global Netflix show th
+  74041994  0.5437  Will Sharon Horgan win the Emmy for Outstanding Lead Actress in a Drama Series?
+  61853874  0.5444  Will Juno Temple win the Emmy for Lead Actress for a Limited Series?
+  76609258  0.5445  Jimmy Kimmel cancelled by September 30?
+  61853549  0.5445  Will Matt Bomer win the Emmy for Lead Actor a Limited Series?
+  78022007  0.5446  Will Jeff Yan say "HIP3" 3+ times during TBPN appearance on October 22?
+  14134154  0.5446  Will LeVar Burton be announced as the next permanent host of Jeopardy by August 
+  74042015  0.5447  Will Adolescence win the Emmy for Outstanding Limited or Anthology Series?
+  61853050  0.5451  Will Lessons In Chemistry win the Emmy for Outstanding Limited Series?
+  77223187  0.5459  Will Bad Bunny say "Latino" or "Immigrant" during SNL appearance on October 4?
+  76535950  0.5462  Will Kamala Harris say "Joe" or "Biden" 3+ times on the Rachel Maddow Show on Se
+  74042050  0.5464  Will Hacks win the Emmy for Outstanding Comedy Series?
+  77981203  0.5464  Will Jesse Pollak appear on the UpOnly podcast by December 31?
+  74042064  0.5466  Will Shrinking win the Emmy for Outstanding Comedy Series?
+  74042074  0.5467  Will What We Do in the Shadows win the Emmy for Outstanding Comedy Series?
+  60039584  0.5477  Will Kamala Harris go on SNL?
+  68412159  0.5478  Will Elon go on Daily Show before April?
+  61853063  0.5479  Will True Detective: Night Country win the Emmy for Outstanding Limited Series?
+  54692965  0.5480  Pornhub restores access in Texas by March 31?
+  61853528  0.5481  Will Andrew Scott win the Emmy for Lead Actor a Limited Series?
+  77981202  0.5483  Will ThreadGuy appear on the UpOnly podcast by December 31?
+  25577691  0.5484  Will the top song on Spotify Charts hit 29.0M global streams for the week ending
+  78027762  0.5486  Will Javier Milei appear on the UpOnly podcast by December 31?
+  69010187  0.5486  Will 'Temptation Island: Season 6' be the top global Netflix show this week?
+  62021581  0.5487  Will Kamala Harris say "abortion" during Oprah livestream?
+  77815539  0.5492  Will Sabrina Carpenter say "Coachella" during SNL appearance on October 18?
+  76464924  0.5492  Will JD Vance say Kash/Patel during the Charlie Kirk Show on Monday September 15
+  60598862  0.5493  Live audience at Trump/Harris debate?
+  77815539  0.5494  Will Sabrina Carpenter say "Album" during SNL appearance on October 18?
+  61944918  0.5498  Will Trump do a podcast with Hawk Tuah Girl?
+  63757948  0.5498  Will based16z be the biggest loser of The House Poker Night?
+  77981204  0.5500  Will Jeff Yan appear on the UpOnly podcast by December 31?
+  62028751  0.5504  Will Kamala Harris say "nazi" during Oprah livestream?
+  23876923  0.5508  Will 'Stay Close: Limited Series' be the #1 Netflix show worldwide on the week e
+  59090897  0.5509  Will Obama go on the All-In Podcast?
+  74042020  0.5511  Will Black Mirror win the Emmy for Outstanding Limited or Anthology Series?
+  77683585  0.5512  Will Black Mirror win Best Television Limited Series at the 83rd Golden Globes?
+  69288791  0.5517  Will “American Murder: Gabby Petito: Season 1” be the top global Netflix show th
+  52361294  0.5520  Will The Bear win Outstanding Comedy Series at the 75th Emmys?
+  19648491  0.5524  Will Taylor Swift’s re-recording of her album “Red” beat Kanye's "Donda" in firs
+  77981202  0.5524  Will Vitalik Buterin appear on the UpOnly podcast by December 31?
+  65289786  0.5525  Adin Ross unbanned from Twitch before 2025?
+  20895339  0.5527  Will the top song on Spotify Charts hit 60M global weekly streams for period Nov
+  39143546  0.5533  Will Joe Biden be shown during the Super Bowl LVII broadcast?
+  76464922  0.5537  Will JD Vance say Trans/Transgender 3+ times during the Charlie Kirk Show on Mon
+  77676096  0.5538  Will anyone say "Taylor" or "Swift" during South Park e6 s27?
+  74042069  0.5542  Will The Studio win the Emmy for Outstanding Comedy Series?
+  21826180  0.5548  Will Hellbound be the #1 Netflix show worldwide on Week 49, 2021 (Nov 29 - Dec 5
+  76777064  0.5550  Will Stokes Twins' next video get between 3–6 million views on day 1?
+  67613239  0.5551  Will Adin Ross put on the Retardio by Sunday?
+  77815539  0.5552  Will Sabrina Carpenter say "Espresso" during SNL appearance on October 18?
+  77981204  0.5557  Will Guy Young appear on the UpOnly podcast by December 31?
+  68770703  0.5558  Adin Ross unbanned from Twitch in 2025?
+  63640313  0.5558  Will JD Vance say "fentanyl" during the Joe Rogan podcast?
+  23876976  0.5560  Will 'Café con aroma de mujer: Season 1' be the #1 Netflix show worldwide on the
+  69288725  0.5562  Will “The Residence: Season 1” be the top global Netflix show this week?
+  77223189  0.5564  Will Bad Bunny say "Cardi" during SNL appearance on October 4?
+  76612927  0.5565  John Oliver cancelled by December 31?
+  76890757  0.5565  South Park: Trump x Satan baby is another sex or never revealed?
+  76931768  0.5566  Jimmy Kimmel cancelled by December 31?
+  69010153  0.5580  Will 'Toxic Town: Limited Series' be the top global Netflix show this week?
+  77223188  0.5581  Will Bad Bunny say "ICE" during SNL appearance on October 4?
+  76464921  0.5583  Will JD Vance say Radical/Extreme 2+ times during the Charlie Kirk Show on Monda
+  76777069  0.5583  Will Stokes Twins' next video get between 6–9 million views on day 1?
+  77773702  0.5587  Will Stokes Twins' next video get between 4–6 million views on day 1?
+  72047747  0.5587  Will Blackouts win Britain's Got Talent 2025?
+  78036076  0.5597  Will thiccy appear on the UpOnly podcast by December 31?
+  76612928  0.5599  Seth Meyers cancelled by December 31?
+  74042124  0.5599  Will Paradise win the Emmy for Outstanding Drama Series?
+  77773697  0.5599  Will Stokes Twins' next video get between 2–4 million views on day 1?
+  77773707  0.5600  Will Stokes Twins' next video get between 6–8 million views on day 1?
+  23876345  0.5602  Will 'Cobra Kai: Season 4' be the #1 Netflix show worldwide on the week ending J
+  76464920  0.5604  Will JD Vance say Patriot/Hero 4+ times during the Charlie Kirk Show on Monday S
+  74042045  0.5606  Will The Bear win the Emmy for Outstanding Comedy Series?
+  76464922  0.5609  Will JD Vance say American Dream during the Charlie Kirk Show on Monday Septembe
+  71984753  0.5610  Dream vs Sparks
+  77815540  0.5610  Will Sabrina Carpenter say "Dream" or "Dreamed" during SNL appearance on October
+  78073692  0.5612  Will the top song have between 85 million and 90 million streams for the week of
+  77981202  0.5613  Will Ansem appear on the UpOnly podcast by December 31?
+  77981202  0.5613  Will Gainzy appear on the UpOnly podcast by December 31?
+  71196710  0.5616  Will Journalism win the Preakness Stakes
+  63640333  0.5620  Will JD Vance say "abortion" during the Joe Rogan podcast?
+  69010178  0.5621  Will 'Adolescence: Limited Series' be the top global Netflix show this week?
+  69010170  0.5623  Will 'Beauty in Black: Season 1' be the top global Netflix show this week?
+  69288773  0.5624  Will “1883: Season 1” be the top global Netflix show this week?
+  78373143  0.5635  Will Netflix dip to $96.30 in November?
+  76464923  0.5639  Will JD Vance say Woke during the Charlie Kirk Show on Monday September 15?
+  77815541  0.5640  Will Sabrina Carpenter say "TikTok" during SNL appearance on October 18?
+  57845048  0.5643  Roaring Kitty breaks YouTube streaming record?
+  76777075  0.5648  Will Stokes Twins' next video get between 9–12 million views on day 1?
+  77428658  0.5650  Will Taylor Swift say "The Life of a Showgirl" during Late Night with Seth Meyer
+  77773712  0.5652  Will Stokes Twins' next video get between 8–10 million views on day 1?
+  78073686  0.5654  Will the top song have between 80 million and 85 million streams for the week of
+  23878120  0.5659  Will 'Archive 81' be the #1 Netflix show worldwide on the week ending January 30
+  76777084  0.5665  Will Stokes Twins' next video get 15 million or more views on day 1?
+  78061999  0.5669  Will GCR appear on the UpOnly podcast by December 31?
+  74042136  0.5670  Will Slow Horses win the Emmy for Outstanding Drama Series?
+  77461482  0.5671  Will Madison and Joe get married by the end of the Love Is Blind Season 9 finale
+  76464919  0.5674  Will JD Vance say Charlie/Kirk 50+ times during the Charlie Kirk Show on Monday 
+  68454701  0.5676  Will Shane Gillis say "retarded" on Saturday Night Live?
+  72554801  0.5678  BLAST.tv Austin Major stage 2: paiN vs. Lynn Vision
+  32904898  0.5687  Emmys 2022: Will ‘Ted Lasso’ win Outstanding Comedy Series?
+  76464918  0.5688  Will JD Vance say Charlie/Kirk 25+ times during the Charlie Kirk Show on Monday 
+  78036024  0.5688  Will Andrew Kang appear on the UpOnly podcast by December 31?
+  77773717  0.5688  Will Stokes Twins' next video get 10 million or more views on day 1?
+  61999461  0.5699  Will Kamala Harris say "racist" during Oprah livestream?
+  78373148  0.5704  Will Netflix reach $112 in November?
+  76777060  0.5705  Will Stokes Twins' next video get less than 3 million views on day 1?
+  69288752  0.5708  Will “Beauty in Black: Season 1” be the top global Netflix show this week?
+  77773692  0.5709  Will Stokes Twins' next video get less than 2 million views on day 1?
+  76777080  0.5710  Will Stokes Twins' next video get between 12-15 million views on day 1?
+  78887327  0.5714  Will “The Beast in Me” be the top global Netflix show this week? (November 18 20
+  63645841  0.5717  Will JD Vance say "Thiel" during the Joe Rogan podcast?
+  77683191  0.5718  Will Slow Horses win Best Television Series – Drama at the 83rd Golden Globes?
+  77685002  0.5722  Will “Splinter Cell: Deathwatch” be the top global Netflix show this week? (Octo
+  61999487  0.5725  Will Kamala Harris say "Israel" during Oprah livestream?
+  76777040  0.5725  Will Stokes Twins' next video get between 24-27 million views on week 1?
+  63640278  0.5728  Will JD Vance say "vaccine" during the Joe Rogan podcast?
+  75691778  0.5731  Will The Stokes Twins' next video get 30 million or more views on week 1?
+  78073752  0.5732  Will the top song have more than 10 million streams on October 24?
+  78073739  0.5733  Will the top song have between 9 million and 9.5 million streams on October 24?
+  69288799  0.5734  Will “Toxic Town: Limited Series” be the top global Netflix show this week?
+  75368254  0.5735  Will MrBeast say Subscribe / Subscribes during next video?
+  77773747  0.5736  Will Stokes Twins' next video get between 18–20 million views on week 1?
+  21437479  0.5738  Will Squid Game be the #1 Netflix show worldwide on Week 46, 2021 (Nov 15 - Nov 
+  62021560  0.5738  Will Kamala Harris say "Michelle" during Oprah livestream?
+  57849414  0.5739  Will Roaring Kitty exercise GME options on livestream?
+  20812987  0.5740  Will Squid Game be the #1 Netflix show worldwide on November 7?
+  75691770  0.5742  Will The Stokes Twins' next video get between 24-27 million views on week 1?
+  19914031  0.5742  Will Squid Game remain the #1 Netflix show in the US throughout the ‘second week
+  63400138  0.5743  Will Trump say "Pocahontas" on The Joe Rogan Experience?
+  32933654  0.5744  Emmys 2022: Will ‘White Lotus’ win Outstanding Limited Series?
+  24137861  0.5744  Will 'Ozark: Season 4' be the #1 Netflix show worldwide on the week ending Janua
+  63640085  0.5744  Will JD Vance say "Usha" during the Joe Rogan podcast?
+  19692421  0.5744  Will Squid Game remain the #1 Netflix show in the US throughout the first week o
+  25834992  0.5745  Will 'Vikings: Valhalla: Season 1' be the #1 Netflix show worldwide on the week 
+  76777038  0.5746  Will Stokes Twins' next video get between 21-24 million views on week 1?
+  78073745  0.5746  Will the top song have between 9.5 million and 10 million streams on October 24?
+  77773752  0.5748  Will Stokes Twins' next video get 20 million or more views on week 1?
+  57844294  0.5752  Roaring Kitty mentions Pelosi in livestream?
+  68361836  0.5752  Adin Ross unbanned from Twitch today?
+  76777040  0.5754  Will Stokes Twins' next video get between 18-21 million views on week 1?
+  78632119  0.5761  Will “The Bad Guys: Breaking In” be the top global Netflix show this week? (Nove
+  76777039  0.5761  Will Stokes Twins' next video get between 27-30 million views on week 1?
+  76777039  0.5764  Will Stokes Twins' next video get 30 million or more views on week 1?
+  78073676  0.5765  Will the top song have fewer than 75 million streams for the week of October 23?
+  75691766  0.5765  Will The Stokes Twins' next video get between 21-24 million views on week 1?
+  78887312  0.5766  Will “The Witcher: Season 4” be the top global Netflix show this week? (November
+  78073698  0.5767  Will the top song have more than 90 million streams for the week of October 23?
+  75691774  0.5771  Will The Stokes Twins' next video get between 27-30 million views on week 1?
+  21606049  0.5772  Will Squid Game be the #1 Netflix show worldwide on Week 47, 2021 (Nov 22 - Nov 
+  75691762  0.5773  Will The Stokes Twins' next video get between 18-21 million views on week 1?
+  78632113  0.5774  Will “The Witcher: Season 4” be the top global Netflix show this week? (November
+  63640320  0.5775  Will JD Vance say "childless cat lady" during the Joe Rogan podcast?
+  78073733  0.5777  Will the top song have between 8.5 million and 9 million streams on October 24?
+  63640304  0.5777  Will JD Vance say "mamaw" during the Joe Rogan podcast?
+  78073727  0.5777  Will the top song have between 8 million and 8.5 million streams on October 24?
+  53290753  0.5777  Tucker Carlson + Putin interview over 300 million views on X in first 24 hours?
+  63208209  0.5778  Who will go on Rogan first?
+  77685022  0.5779  Will “Is It Cake? Halloween: Season 1” be the top global Netflix show this week?
+  62021608  0.5779  Will Kamala Harris say "joy" during Oprah livestream?
+  69010209  0.5780  Will another show be the top global Netflix show this week?
+  69288807  0.5780  Will another show be the top global Netflix show this week?
+  78330647  0.5781  Will “The Witcher: Season 4” be the top global Netflix show this week? (November
+  77981203  0.5784  Will CZ appear on the UpOnly podcast by December 31?
+  78982092  0.5785  Will Glen Powell say "Sydney" or "Sweeney" during Saturday Night Live on Novembe
+  63640045  0.5787  Will JD Vance say "CIA" during the Joe Rogan podcast?
+  76609248  0.5791  Jimmy Kimmel hosts an episode of "Jimmy Kimmel Live!" by September 30?
+  77981203  0.5795  Will SBF appear on the UpOnly podcast by December 31?
+  77106880  0.5797  Will 'Eldest Daughter' be the most streamed song on 'The Life of a Showgirl' on 
+  63640369  0.5799  Will JD Vance say "China" 5 or more times during the Joe Rogan podcast?
+  78035952  0.5802  Will “Monster: The Ed Gein Story” be the top global Netflix show this week? (Oct
+  76777038  0.5802  Will Stokes Twins' next video get between 15-18 million views on week 1?
+  68443609  0.5803  Will Andrew Tate go on Joe Rogan before April?
+  72466945  0.5807  BLAST.tv Austin Major stage 2: paiN vs. Nemiga
+  69288698  0.5808  Will “Adolescence: Limited Series” be the top global Netflix show this week?
+  61846730  0.5811  The Bear wins Best Comedy Series? - Emmys
+  73027048  0.5812  BLAST.tv Austin Major: paiN vs. The MongolZ
+  61853091  0.5814  Will another show win the Emmy for Outstanding Limited Series?
+  77212318  0.5819  Will 'Elizabeth Taylor' be the least streamed song on The Life of a Showgirl on 
+  78373147  0.5819  Will Netflix reach $124.30 in November?
+  75128454  0.5820  Will Taylor Swift x Travis Kelce podcast get between 5-10m views on day 1?
+  78073721  0.5820  Will the top song have fewer than 8 million streams on October 24?
+  75691757  0.5821  Will The Stokes Twins' next video get between 15-18 million views on week 1?
+  77773732  0.5822  Will Stokes Twins' next video get between 12–14 million views on week 1?
+  77212323  0.5822  Will 'Eldest Daughter' be the least streamed song on The Life of a Showgirl on O
+  69010199  0.5823  Will Halo: Season 1 be the top global Netflix show this week?
+  77106888  0.5828  Will 'Father Figure' be the most streamed song on 'The Life of a Showgirl' on Oc
+  78632124  0.5828  Will “Death by Lightning” be the top global Netflix show this week? (November 11
+  78075901  0.5829  Will Roku say "Bundle" 3+ times during earnings call?
+  68365153  0.5830  Another MSNBC show cancelled before July?
+  63640109  0.5832  Will JD Vance say "JFK" during the Joe Rogan podcast?
+  77773737  0.5836  Will Stokes Twins' next video get between 14–16 million views on week 1?
+  61999469  0.5836  Will Kamala Harris say "DEI" during Oprah livestream?
+  77773742  0.5839  Will Stokes Twins' next video get between 16–18 million views on week 1?
+  58078878  0.5840  Andrew Tate x Ansem Podcast in June?
+  73213619  0.5841  Speed/Kai Super Mario Bros 100+ deaths each by end of livestream?
+  62021570  0.5842  Will Kamala Harris say "latina" during Oprah livestream?
+  63640079  0.5842  Will JD Vance say "McDonald's" during the Joe Rogan podcast?
+  63640116  0.5844  Will JD Vance say "weed" during the Joe Rogan podcast?
+  63640101  0.5844  Will JD Vance say "alien" during the Joe Rogan podcast?
+  77212333  0.5845  Will 'Father Figure' be the least streamed song on The Life of a Showgirl on Oct
+  75128450  0.5846  Will Taylor Swift x Travis Kelce podcast get less than 5m views on day 1?
+  75128459  0.5848  Will Taylor Swift x Travis Kelce podcast get between 10-15m views on day 1?
+  67015448  0.5849  Will Ross Ulbricht go on Joe Rogan before March?
+  78982091  0.5854  Will Glen Powell say "Sabrina" or "Carpenter" during Saturday Night Live on Nove
+  61999364  0.5854  Will Kamala Harris say "black" 3 or more times during Oprah livestream?
+  77946953  0.5855  Up Only podcast released by October 31?
+  77684992  0.5855  Will “Monster: The Ed Gein Story” be the top global Netflix show this week? (Oct
+  77773727  0.5855  Will Stokes Twins' next video get between 10–12 million views on week 1?
+  77212313  0.5856  Will 'Ruin The Friendship' be the least streamed song on The Life of a Showgirl 
+  62028765  0.5857  Will Kamala Harris say "KKK" during Oprah livestream?
+  69288782  0.5860  Will “Ms. Rachel: Season 1” be the top global Netflix show this week?
+  78982093  0.5864  Will Glen Powell say "Taylor" or "Swift" during Saturday Night Live on November 
+  78035957  0.5865  Will “The Diplomat” be the top global Netflix show this week? (October 28)
+  63640289  0.5874  Will JD Vance say "Dana" during the Joe Rogan podcast?
+  62028735  0.5879  Will Kamala Harris say "Mark Robinson" during Oprah livestream?
+  63640389  0.5880  Will JD Vance say "Kamala" 30 or more times during the Joe Rogan podcast?
+  67225367  0.5884  Taylor Swift shown on the Super Bowl LIX broadcast 6 times?
+  61999396  0.5886  Will Kamala Harris say "Project 2025"during Oprah livestream?
+  75691752  0.5887  Will The Stokes Twins' next video get less than 15 million views on week 1?
+  77106876  0.5892  Will 'Elizabeth Taylor' be the most streamed song on 'The Life of a Showgirl' on
+  78029502  0.5894  Up Only podcast released by December 31?
+  77685012  0.5897  Will “The Diplomat” be the top global Netflix show this week? (October 21)
+  78982092  0.5899  Will Glen Powell say "Top Gun" during Saturday Night Live on November 15?
+  76777040  0.5909  Will Stokes Twins' next video get less than 15 million views on week 1?
+  72714602  0.5911  BLAST.tv Austin Major: paiN vs. Nemiga
+  72738017  0.5913  BLAST.tv Austin Major: 3DMAX vs. paiN
+  67225381  0.5917  Taylor Swift shown on the Super Bowl LIX broadcast 7 times?
+  69010129  0.5919  Will 'Running Point: Season 1' be the top global Netflix show this week?
+  77685007  0.5920  Will “Six Kings Slam” be the top global Netflix show this week? (October 21)
+  60119034  0.5921  Will Trump stream with Adin Ross on August 5?
+  63400165  0.5921  Will Trump say "women's sports" on The Joe Rogan Experience?
+  74404448  0.5924  Will Warner Bros. Discovery acquire streaming rights to UFC next?
+  78330663  0.5927  Will “The Diplomat: Season 3” be the top global Netflix show this week? (Novembe
+  78075901  0.5929  Will Roku say "Live" during earnings call?
+  78330652  0.5934  Will “Bad Influencer” be the top global Netflix show this week? (November 4 2025
+  69288736  0.5938  Will “Zero Day: Limited Series” be the top global Netflix show this week?
+  77773722  0.5944  Will Stokes Twins' next video get less than 10 million views on week 1?
+  78035967  0.5945  Will “Mob War: Philadelphia vs. The Mafia” be the top global Netflix show this w
+  78546382  0.5948  Will Netflix (NFLX) finish week of November 10 above $1,150?
+  67225352  0.5953  Taylor Swift shown on the Super Bowl LIX broadcast 5 times?
+  67225423  0.5956  Taylor Swift shown on the Super Bowl LIX broadcast 10 or more times?
+  77106871  0.5958  Will 'Ruin The Friendship' be the most streamed song on 'The Life of a Showgirl'
+  77106861  0.5959  Will 'Honey' be the most streamed song on 'The Life of a Showgirl' on Oct 10th?
+  78029382  0.5961  Up Only podcast released by November 30?
+  77106851  0.5963  Will 'The Fate of Ophelia' be the most streamed song on 'The Life of a Showgirl'
+  78546383  0.5964  Will Netflix (NFLX) finish week of November 10 above $1,120?
+  78330637  0.5966  Will “Nightmares of Nature: Season 2” be the top global Netflix show this week? 
+  67225329  0.5966  Taylor Swift shown on the Super Bowl LIX broadcast 3 times?
+  63400220  0.5969  Will Trump say "fake news" on The Joe Rogan Experience?
+  77212300  0.5969  Will 'The Life of a Showgirl (feat. Sabrina Carpenter)' be the least streamed so
+  77106856  0.5980  Will 'The Life of a Showgirl (feat. Sabrina Carpenter)' be the most streamed son
+  63640094  0.5980  Will JD Vance say "Epstein" during the Joe Rogan podcast?
+  77212296  0.5983  Will 'The Fate of Ophelia' be the least streamed song on The Life of a Showgirl 
+  67225317  0.5986  Taylor Swift shown on the Super Bowl LIX broadcast 2 times?
+  61999455  0.5988  Will Kamala Harris say "liar" during Oprah livestream?
+  76609249  0.5989  Jimmy Kimmel hosts an episode of "Jimmy Kimmel Live!" by October 15?
+  63640382  0.5989  Will JD Vance say "border" 20 or more times during the Joe Rogan podcast?
+  61999342  0.5989  Will Kamala Harris say "border" during Oprah livestream?
+  77212304  0.5990  Will 'Honey' be the least streamed song on The Life of a Showgirl on Oct 10th?
+  63640069  0.5991  Will JD Vance say "tampon" during the Joe Rogan podcast?
+  76653309  0.5994  Jimmy Kimmel hosts an episode of "Jimmy Kimmel Live!" by December 31?
+  67225341  0.5997  Taylor Swift shown on the Super Bowl LIX broadcast 4 times?
+  67225410  0.5998  Taylor Swift shown on the Super Bowl LIX broadcast 9 times?
+  78632129  0.6000  Will “Squid Game: The Challenge: Season 2” be the top global Netflix show this w
+  77212343  0.6006  Will 'Wi$h Li$t' be the least streamed song on The Life of a Showgirl on Oct 10t
+  78887307  0.6007  Will “Nobody Wants This: Season 2” be the top global Netflix show this week? (No
+  78035977  0.6009  Will another show be the top global Netflix show this week? (October 28)
+  67225399  0.6010  Taylor Swift shown on the Super Bowl LIX broadcast 8 times?
+  63640326  0.6011  Will JD Vance say "Puerto Rico" during the Joe Rogan podcast?
+  76612928  0.6011  Jimmy Fallon cancelled by December 31?
+  77212348  0.6013  Will 'Wood' be the least streamed song on The Life of a Showgirl on Oct 10th?
+  61999430  0.6013  Will Kamala Harris say "Convicted Felon"during Oprah livestream?
+  78887322  0.6014  Will “Boots: Season 1” be the top global Netflix show this week? (November 18 20
+  78330642  0.6018  Will “Selling Sunset: Season 9” be the top global Netflix show this week? (Novem
+  57842853  0.6021  Roaring Kitty livestream on Friday?
+  77685027  0.6024  Will “Other” be the top global Netflix show this week? (October 21)
+  69288717  0.6026  Will “Running Point: Season 1” be the top global Netflix show this week?
+  77106901  0.6027  Will 'Wood' be the most streamed song on 'The Life of a Showgirl' on Oct 10th?
+  78035972  0.6027  Will “Nobody Wants This” be the top global Netflix show this week? (October 28)
+  78330632  0.6028  Will “Nobody Wants This” be the top global Netflix show this week? (November 4 2
+  78632107  0.6029  Will “Nobody Wants This: Season 2” be the top global Netflix show this week? (No
+  67581475  0.6032  Taylor Swift shown O/U 7.5 times on broadcast?
+  67225292  0.6033  Taylor Swift shown on the Super Bowl LIX broadcast 0 times?
+  63759820  0.6036  Will YouTube take down Steven Crowder’s election livestream?
+  57771307  0.6039  Roaring Kitty livestream by next Friday?
+  60236552  0.6039  Will Elon agree to stream with Adin Ross today?
+  78982092  0.6043  Will Glen Powell say "Trump" during Saturday Night Live on November 15?
+  77685017  0.6046  Will “Starting 5” be the top global Netflix show this week? (October 21)
+  67225307  0.6048  Taylor Swift shown on the Super Bowl LIX broadcast 1 time?
+  74041970  0.6055  Will Seth Rogan win the Emmy for Outstanding Lead Actor in a Comedy Series?
+  77212327  0.6062  Will 'CANCELLED!' be the least streamed song on The Life of a Showgirl on Oct 10
+  61999441  0.6065  Will Kamala Harris say "JD Vance" during Oprah livestream?
+  78982092  0.6067  Will Glen Powell say "Texas" during Saturday Night Live on November 15?
+  78062149  0.6071  Will light appear on the UpOnly podcast by December 31?
+  74404448  0.6076  Will Netflix acquire streaming rights to UFC next?
+  63640296  0.6078  Will JD Vance say "fake news" during the Joe Rogan podcast?
+  78632134  0.6080  Will “The Vince Staples Show” be the top global Netflix show this week? (Novembe
+  78503385  0.6081  Netflix (NFLX) Up or Down on November 3?
+  78075901  0.6086  Will Roku say "Roku Channel" during earnings call?
+  78887317  0.6095  Will “Marines” be the top global Netflix show this week? (November 18 2025)
+  58399054  0.6103  Jon Vlogs biggest winner?
+  57843387  0.6119  Roaring Kitty shows dexscreener in livestream?
+  78330668  0.6120  Will “Boots” be the top global Netflix show this week? (November 4 2025)
+  64718979  0.6121  Pump.fun disables livestreaming by Friday?
+  78982092  0.6127  Will Glen Powell say "Shutdown" or "Shut Down" during Saturday Night Live on Nov
+  78982091  0.6131  Will Glen Powell say "Running Man" 3+ times during Saturday Night Live on Novemb
+  77106896  0.6147  Will 'Wi$h Li$t' be the most streamed song on 'The Life of a Showgirl' on Oct 10
+  79010166  0.6151  Netflix (NFLX) Up or Down on November 17?
+  78534998  0.6151  Netflix (NFLX) Up or Down on November 4?
+  78035962  0.6159  Will “Boots” be the top global Netflix show this week? (October 28)
+  24471143  0.6163  Will The Joe Rogan Experience episode featuring Robert Malone still be available
+  77106884  0.6169  Will 'CANCELLED!' be the most streamed song on 'The Life of a Showgirl' on Oct 1
+  78966970  0.6177  Netflix (NFLX) Up or Down on November 14?
+  77684997  0.6188  Will “Boots” be the top global Netflix show this week? (October 21)
+  75978886  0.6194  Another MrBeast Twitch livestream by September 30?
+  75166441  0.6198  Will MrBeast's TeamWater livestream last between 48 and 72 hours?
+  78027576  0.6205  Taylor Swift “Opalite” 195M Spotify Streams on Friday?
+  77212308  0.6236  Will 'Opalite' be the least streamed song on The Life of a Showgirl on Oct 10th?
+  63399967  0.6249  Will Trump say "weave" on The Joe Rogan Experience?
+  75447943  0.6249  Another MrBeast Kick/YouTube livestream by December 31?
+  61621653  0.6252  ESPN back on DirecTV before Falcons vs. Eagles?
+  75166420  0.6261  Will MrBeast's TeamWater livestream last less than 6 hours?
+  75166445  0.6281  Will MrBeast's TeamWater livestream last more than 72 hours?
+  75166424  0.6282  Will MrBeast's TeamWater livestream last between 6 and 12 hours?
+  58400381  0.6287  Jon Vlogs biggest loser?
+  75166428  0.6295  Will MrBeast's TeamWater livestream last between 12 and 24 hours?
+  75166437  0.6296  Will MrBeast's TeamWater livestream last between 36 and 48 hours?
+  77106866  0.6297  Will 'Opalite' be the most streamed song on 'The Life of a Showgirl' on Oct 10th
+  75166432  0.6317  Will MrBeast's TeamWater livestream last between 24 and 36 hours?
+  77212338  0.6334  Will 'Actually Romantic' be the least streamed song on The Life of a Showgirl on
+  77106892  0.6335  Will 'Actually Romantic' be the most streamed song on 'The Life of a Showgirl' o
+  61381162  0.6380  ESPN back on DirecTV before US Open final?
+  78982092  0.6414  Will Glen Powell say "ICE" during Saturday Night Live on November 15?

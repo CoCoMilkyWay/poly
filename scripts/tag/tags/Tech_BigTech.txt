@@ -1,0 +1,946 @@
+# Tech - Tech_BigTech
+# count=943, avg_conf=0.5942
+====================================================================================================
+  73996684  0.4785  Will Chloe Malle be named the next editor-in-chief of Vogue?
+  60633166  0.4807  Disney sues over Grok copyright in August?
+  61620904  0.4864  Will Playboi Carti release new album by Friday?
+  70658985  0.4883  Will 'The Apothecary Diaries' win Crunchyroll Anime of the Year 2025?
+  52666436  0.4891  Will Kanye release ‘Vultures’ Vol. 1 by Feb 9?
+  52978852  0.4918  Will 'Furiosa: A Mad Max Saga' gross most in 2024?
+  65645613  0.4929  Jonathan Anderson joins Dior creative director before February?
+  77428655  0.4940  Will Taylor Swift say "Era" during Late Night with Seth Meyers?
+  66149292  0.4954  Bird flu vaccine in 2025?
+  54157968  0.4966  Did the Alaska balloon come from China?
+  70666173  0.4975  Timothée Chalamet and Kylie Jenner engaged in 2025?
+  73220067  0.4975  Will Luke Combs release an album in 2025?
+  69736072  0.4981  Will Pieter Mullier be the next Creative Director of Balenciaga?
+  69736096  0.4982  Will Stefano Cangiano be the next Creative Director of Balenciaga?
+  51014193  0.4984  Will Kanye release ‘Vultures’ by Friday?
+  59958019  0.4985  Another GTA 6 trailer released by October 4?
+  51591182  0.5009  Will the US confirm that aliens exist by June?
+  71027665  0.5034  GTA VI released before June 2026?
+  61622856  0.5045  iPhone 16 pro under $1000?
+  72576637  0.5047  Cluely CEO Roy Lee in jail in 2025
+  74037660  0.5047  Will Gillis say "Freak" during the opening monologue at the ESPYs?
+  19878134  0.5056  Will New World be a Top 3 game on Steam one month after release?
+  48402282  0.5057  Will Kari Lake be the next Speaker?
+  53801643  0.5058  Sony doesn't release Playstation 5 Pro in 2024?
+  62471671  0.5081  Will Berachain launch in 2024?
+  76292402  0.5084  Half-Life 3 released in 2025?
+  69736059  0.5095  Will Martine Rose be the next Creative Director of Balenciaga?
+  69736108  0.5098  Will Ricardo Tisci be the next Creative Director of Balenciaga?
+  68361948  0.5104  Will Elon Musk attend the Oscars?
+  61107363  0.5106  'Beetlejuice Beetlejuice' record September opening?
+  69736088  0.5108  Will John Galliano be the next Creative Director of Balenciaga?
+  48321742  0.5110  Will Jim Jordan be the next Speaker?
+  19649522  0.5118  Will New World be a Top 5 game on Steam two weeks after release?
+  27336914  0.5137  Will ‘Doctor Strange in the Multiverse of Madness’ gross $200 million or more on
+  69736117  0.5140  Will Luke and/or Lucie Meier be the next Creative Director of Balenciaga?
+  69736142  0.5148  Will someone else be the next Creative Director of Balenciaga?
+  77212411  0.5148  Will KPop Demon Hunters (Soundtrack from the Netflix Film) by KPop Demon Hunters
+  77428659  0.5149  Will Taylor Swift say "Engage" or "Engaged" during Late Night with Seth Meyers?
+  72288907  0.5149  Grok 4 released by December 31?
+  72288907  0.5150  Grok 4 released by September 30?
+  78930781  0.5150  Will The Odyssey be the top grossing movie of 2026?
+  78031784  0.5160  Will Only Murders in the Building be the #1 searched TV show on Google this year
+  61154782  0.5173  Will Tim Walz say "Tampon" during CNN interview?
+  47979700  0.5180  Will 'The Marvels' flop?
+  74363603  0.5190  Will Cluely CEO Roy Lee get a girlfriend by August 31?
+  75604816  0.5223  Julie Masino out as Cracker Barrel CEO in 2025?
+  20939695  0.5227  Will New World be a Top 3 game on Steam on November 8?
+  70961655  0.5244  Will Herbert Diess be announced as the next CEO of Tesla?
+  73776216  0.5244  Will Susan Wojcicki be the next CEO of X?
+  79031609  0.5249  Will BAILE INoLVIDABLE by Bad Bunny be the 3rd most streamed song globally on Sp
+  79031463  0.5250  Will BAILE INoLVIDABLE by Bad Bunny be the 2nd most streamed song globally on Sp
+  49902269  0.5253  GTA 6 trailer released by Dec 7?
+  79031478  0.5258  Will EoO by Bad Bunny be the 2nd most streamed song globally on Spotify for 2025
+  78857059  0.5264  Will Waymo operate in 11 cities on June 30 2026?
+  79031625  0.5269  Will EoO by Bad Bunny be the 3rd most streamed song globally on Spotify for 2025
+  57233217  0.5284  'Furiosa: A Mad Max Saga' <$38m Opening Weekend?
+  78857031  0.5290  Will Waymo operate in 6 cities on June 30 2026?
+  74924258  0.5291  Grok 5 released by March 31, 2026?
+  73740720  0.5293  Will Katherine Legge win the 2025 NASCAR Toyota Save Mart 350?
+  73776212  0.5302  Will Robyn Denholm be the next CEO of X?
+  65398068  0.5304  Will Mark Zuckerberg attend presidential inauguration?
+  60914065  0.5304  Will Ex-Amazon VP reveal who seduced his wife?
+  53801611  0.5306  Will Sony release the Playstation 5 Pro Q2 2024?
+  43065340  0.5310  Will Lukas Matsson be CEO at the end of Succession S4?
+  67386296  0.5313  Will Karoline Leavitt say DeepSeek in her next press briefing?
+  58132605  0.5315  Inside Out 2 opening bigger than Toy Story 4?
+  76628534  0.5316  CS: 9z vs Newstar
+  74924258  0.5318  Grok 5 released by December 31?
+  78892263  0.5321  Will BAILE INoLVIDABLE by Bad Bunny be the most streamed song globally on Spotif
+  78897890  0.5322  Plantic vs Bwogi
+  77372944  0.5324  Will Telstar 1963 win on 2025-11-01?
+  79057810  0.5327  Will Telstar 1963 win on 2025-12-13?
+  76098653  0.5329  Will "The Smashing Machine" win the 2025 Golden Lion?
+  78895783  0.5329  Will Bad Bunny be the second most streamed Spotify artist for 2025?
+  73776243  0.5332  Will Grok be the next CEO of X?
+  74037661  0.5332  Will Gillis say "Bieber" during the opening monologue at the ESPYs?
+  78857054  0.5334  Will Waymo operate in 10 cities on June 30 2026?
+  78857064  0.5335  Will Waymo operate in 12 or more cities on June 30 2026?
+  78857048  0.5338  Will Waymo operate in 9 cities on June 30 2026?
+  78857041  0.5339  Will Waymo operate in 8 cities on June 30 2026?
+  78892278  0.5342  Will EoO by Bad Bunny be the most streamed song globally on Spotify for 2025?
+  77630613  0.5344  Will Telstar 1963 win on 2025-11-07?
+  77981203  0.5348  Will Martin Shkreli appear on the UpOnly podcast by December 31?
+  78857016  0.5359  Will Waymo launch in Las Vegas by June 30 2026?
+  52098219  0.5360  Boeing Max 9 cleared to fly by Friday?
+  68094156  0.5363  Will Cursor support Grok-3 before April?
+  21142063  0.5364  Will New World be a Top 3 game on Steam on November 14, 5PM ET?
+  74927840  0.5365  GTA 6 launch postponed?
+  78857036  0.5365  Will Waymo operate in 7 cities on June 30 2026?
+  53801632  0.5367  Will Sony release the Playstation 5 Pro in Q4 2024?
+  77212402  0.5369  Will SOS by SZA be the top Spotify album for 2025?
+  58001302  0.5373  ChatGPT integration with iPhone before October?
+  68925204  0.5375  Will Volodymyr Zelenskyy say "Zelenskyy" during his Business Roundtable appearan
+  73776221  0.5379  Will Nikita Bier be the next CEO of X?
+  73776198  0.5379  Will John Legere be the next CEO of X?
+  52214777  0.5381  Will Saudi Aramco be the largest company in the world on January 31?
+  72936644  0.5381  Will Chamath launch a SPAC in 2025?
+  78895976  0.5383  Will Bad Bunny be the third most streamed Spotify artist for 2025?
+  73776253  0.5383  Will John Nitti be the next CEO of X?
+  53801619  0.5384  Will Sony release the Playstation 5 Pro in Q3 2024?
+  62236035  0.5384  Will Tim Walz say "Couch" during the debate?
+  73776203  0.5386  Will Sheryl Sandberg be the next CEO of X?
+  56624530  0.5388  Vultures 2 on Spotify by Friday?
+  78857026  0.5389  Will Waymo operate in 5 cities or less on June 30 2026?
+  75125078  0.5389  Will Taylor Swift say "Engaged" or "Engagement" during Travis Kelce's podcast on
+  74037663  0.5391  Will Gillis say "LeBron" during the opening monologue at the ESPYs?
+  74428062  0.5397  Dream vs Lynx
+  78940557  0.5398  Will Dune: Messiah have the best domestic opening weekend in 2026?
+  76486764  0.5399  Will 3DMAX win FISSURE Playground 2?
+  78892273  0.5403  Will NUEVAYoL by Bad Bunny be the most streamed song globally on Spotify for 202
+  44919506  0.5407  Will 'Mission: Impossible' gross over $100m on its 5-day open?
+  61154858  0.5409  Will Tim Walz say "IVF" during CNN interview?
+  73776238  0.5411  Will Keith Coleman be the next CEO of X?
+  76083235  0.5413  Will Apple launch another iPhone on September 9?
+  78554106  0.5415  Mamdani opens city-owned grocery store  by June 30?
+  68080740  0.5420  Will Grok remain the #1 model through March 31?
+  18161959  0.5422  Will Miso Robotics expand its restaurant partnerships in 2021?
+  66699441  0.5422  Will 'Avatar: Fire and Ash' have the best domestic opening weekend in 2025?
+  78031390  0.5422  Will Ordinary by Alex Warren be the #1 searched song on Google this year?
+  73776183  0.5423  Will Jason Calacanis be the next CEO of X?
+  75733520  0.5425  Will iPhone 17 cost more than $800?
+  70064036  0.5426  Will iPhone 17 cost $2,000 or more?
+  66974398  0.5427  Zuckerberg divorce in 2025?
+  75693759  0.5427  Will Apple release iPhone 17 by September 9?
+  73776207  0.5431  Will Gwynne Shotwell be the next CEO of X?
+  70064009  0.5434  Will iPhone 17 cost $1,500 or more?
+  24514811  0.5436  Will Axie Infinity's Battles V3 "Axie: Origin" be released by March 31, 2022?
+  78330697  0.5438  Will “Kpop Demon Hunters” be the top global Netflix movie this week? (November 4
+  70961839  0.5439  Will Tekedra Mawakana be announced as the next CEO of Tesla?
+   6913494  0.5441  Will Uniswap v3 launch before 2021?
+  53801600  0.5441  Will Sony release the Playstation 5 Pro in Q1 2024?
+  53485297  0.5442  Will Walmart buy Vizio in February?
+  78887385  0.5447  Will “KPop Demon Hunters” be the top global Netflix movie this week? (November 1
+  72890561  0.5449  FDA approves Gilead’s lenacapavir for treating HIV?
+  77722669  0.5450  Will Jenna Ortega be ranked #1 globally in Google’s Year in Search 2025 Actors?
+  46307643  0.5453  Will 'Blue Beetle' gross over $27m opening weekend?
+  54539356  0.5453  Kanye digital release of 'Vultures' Vol. 2 by Friday?
+  67381111  0.5462  Will Meta reincorporate in Texas before July?
+  65993217  0.5462  Will Elon Musk win Cracker of the Year?
+  78940174  0.5466  Will GPT-6 be released by June 30, 2026?
+  68410649  0.5485  Macbook Air M4 released before April?
+  51629125  0.5490  Will Google announce 1000+ new layoffs before February?
+  44925557  0.5492  Will 'Mission: Impossible' gross over $70m on its 3-day open?
+  75200031  0.5496  David Baszucki out as Roblox CEO in 2025?
+  78939094  0.5496  Musk out as Tesla CEO before 2027?
+  77815732  0.5500  Will Paprika Recipe Manager 3 be #1 Paid App in the US Apple App Store on Octobe
+  66861127  0.5508  Will TikTok be on the App Store on May 1?
+  51091736  0.5509  Another Tesla recall before July?
+  74260590  0.5517  Will Polymarket US go live in 2025?
+  24228203  0.5518  Will NASA have confirmed more than 4910 existing exoplanets by February 11?
+  34752609  0.5518  Will 'Avatar: The Way of Water' gross more than $650 million domestically by Jan
+  78036149  0.5519  Will KPop Demon Hunters be the #1 searched movie on Google this year?
+  70961611  0.5519  Will Drew Baglino be announced as the next CEO of Tesla?
+  70961641  0.5520  Will JB Straubel be announced as the next CEO of Tesla?
+  78888288  0.5521  Will Samsung release a trifold phone by December 31?
+  79055568  0.5524  Spread: Longwood Lancers (-14.5)
+  74839114  0.5529  Will Elon Musk say "Tesla" during the August 6 AMA?
+  77815727  0.5531  Will AutoSleep Track Sleep on Watch be #1 Paid App in the US Apple App Store on 
+  73813471  0.5532  Will @Grok resume replying by Friday?
+  36220274  0.5533  Will 'Avatar: The Way of Water' gross more than $175 million domestically on its
+  73776188  0.5535  Will David Sacks be the next CEO of X?
+  73752662  0.5536  Will @Grok resume replying by Wednesday?
+  78036088  0.5538  Will Lilo & Stitch be the #1 searched movie on Google this year?
+  78888288  0.5538  Will Samsung release a trifold phone by January 31?
+  67882920  0.5541  Will Apple launch another iPhone on February 19?
+  78857017  0.5551  Will Waymo launch in Denver by June 30 2026?
+  66185804  0.5554  Will BTS announce a new world tour in 2025?
+  64567900  0.5558  Will Jeff Koons's "Large Vase of Flowers" sell for $7m or more?
+  70059692  0.5559  Will iPhone 17 cost $1,000 or more?
+  79046566  0.5559  Spread: Longwood Lancers (-12.5)
+  65611544  0.5566  Minnesota Twins sale announced before July?
+  61910438  0.5568  Will 'Transformers One' gross more than $49m opening weekend?
+  61187399  0.5570  Mark Zuckerberg out as Facebook CEO in 2024?
+  78857017  0.5571  Will Waymo launch in Miami by June 30 2026?
+  78373148  0.5571  Will Netflix dip to $91 in November?
+  78888289  0.5577  Will Samsung release a trifold phone by November 30?
+  27180759  0.5578  Will Parag Agrawal remain CEO of Twitter through June 30?
+  71476999  0.5578  Will 'Mission: Impossible - The Final Reckoning' gross between $65-70m opening w
+  79037559  0.5579  Spread: Longwood Lancers (-13.5)
+  26858455  0.5579  Will Twitter add an edit button by June 30?
+  79057371  0.5579  Spread: Longwood Lancers (-15.5)
+  79031665  0.5580  Will APT. by Rosé and Bruno Mars be the 3rd most streamed song globally on Spoti
+  74558972  0.5582  FDA approves LENZ Therapeutics’ LNZ100 for presbyopia by August 31?
+  69494043  0.5586  Will Elon say "Starlink" during Baier interview on Thursday?
+  70961669  0.5590  Will Mary Barra be announced as the next CEO of Tesla?
+  77722729  0.5596  Will Rachel Zegler be ranked #1 globally in Google’s Year in Search 2025 Actors?
+  78031814  0.5596  Will House of the Dragon be the #1 searched TV show on Google this year?
+  78945092  0.5598  Will Paprika Recipe Manager 3 be #1 Paid App in the US Apple App Store on Novemb
+  71477004  0.5598  Will 'Mission: Impossible - The Final Reckoning' gross between $70-75m opening w
+  77951405  0.5599  Will Jimmy Kimmel rank in Google’s Top 5 Most Searched People of 2025?
+  77504785  0.5600  Will AutoSleep Track Sleep on Watch be #1 Paid App in the US Apple App Store on 
+  65321431  0.5604  Will 'Sonic 3' gross less than $56m on 3-day opening weekend?
+  70961792  0.5604  Will Lei Jun be announced as the next CEO of Tesla?
+  45587161  0.5606  Alien contact in 2023?
+  57703628  0.5608  Was Roaring Kitty GME YOLO update fake?
+  77193412  0.5608  Will CD Getxo win on 2025-10-04?
+  71477009  0.5609  Will 'Mission: Impossible - The Final Reckoning' gross more than $75m opening we
+  70961627  0.5610  Will Omead Afshar be announced as the next CEO of Tesla?
+  62233953  0.5612  Will $cult launch in 2024?
+  65321473  0.5613  Will 'Sonic 3' gross between $72-80m on 3-day opening weekend?
+  66694371  0.5615  RedNote/Xiaohongshu #1 app on Friday?
+  76083239  0.5616  Will Apple launch an iPhone Air on September 9?
+  78886658  0.5620  Will Waymo launch in London by June 30 2026?
+  78715226  0.5622  Will Paprika Recipe Manager 3 be #1 Paid App in the US Apple App Store on Novemb
+  77670147  0.5624  Will Canelo Alvarez be the #1 searched person on Google this year?
+  66193357  0.5624  Fact Check: Cybertruck explosion caused by lithium battery?
+  22219215  0.5625  Will the James Webb telescope be launched successfully before Christmas?
+  65321447  0.5626  Will 'Sonic 3' gross between $56-64m on 3-day opening weekend?
+  78892318  0.5629  Will APT. by Rosé and Bruno Mars be the most streamed song globally on Spotify f
+  64493858  0.5630  Will Ed Ruscha's "Standard Station" sell for $30m or greater?
+  78415535  0.5632  Will Paprika Recipe Manager 3 be #1 Paid App in the US Apple App Store on Novemb
+  70961823  0.5632  Will Dmitri Dolgov be announced as the next CEO of Tesla?
+  65321461  0.5635  Will 'Sonic 3' gross between $64-72m on 3-day opening weekend?
+  78373149  0.5637  Will Netflix dip to $84 in November?
+  70961714  0.5639  Will Andy Jassy be announced as the next CEO of Tesla?
+  26825767  0.5640  Will 'Sonic the Hedgehog 2' gross $50 million or more on opening weekend in the 
+  56975966  0.5642  Will Ilya join Apple?
+  65321485  0.5646  Will 'Sonic 3' gross more than $80m on 3-day opening weekend?
+  68965471  0.5646  Musk out as Tesla CEO in 2025?
+  73907451  0.5653  Lynx vs Sky
+  73832329  0.5653  Lynx vs Sky
+  70961700  0.5655  Will Lisa Su be announced as the next CEO of Tesla?
+  78857017  0.5656  Will Waymo launch in Nashville by June 30 2026?
+  57703929  0.5657  New GME YOLO update by Friday?
+  78940537  0.5663  Will The Odyssey have the best domestic opening weekend in 2026?
+  73776178  0.5663  Will Jack Dorsey be the next CEO of X?
+  44916992  0.5667  Rollbit rug by August 31?
+  78070442  0.5668  Will the assassination of Charlie Kirk be the #1 searched news on Google this ye
+  71773425  0.5669  IEM Dallas: 3DMAX vs. G2
+  78857017  0.5671  Will Waymo launch in New York City by June 30 2026?
+  23056575  0.5672  Will NASA have confirmed more than 4900 existing exoplanets by January 14?
+  70961744  0.5672  Will Li Bin be announced as the next CEO of Tesla?
+  78073860  0.5672  Will Katy Perry be the #2 searched person on Google this year?
+  16374784  0.5673  Will Tesla report more than 200k deliveries for Q2 2021?
+  69493971  0.5673  Will Elon say "Tesla" during Baier interview on Thursday?
+  11729910  0.5678  Will Uniswap v3 launch before April 30, 2021?
+  78415530  0.5679  Will AutoSleep Track Sleep on Watch be #1 Paid App in the US Apple App Store on 
+  77722374  0.5679  Will Diane Keaton be ranked #1 globally in Google’s Year in Search 2025 Passings
+  78069302  0.5685  Will Kyron Drones win the 2025–2026 Davey O'Brien Award?
+  78857016  0.5686  Will Waymo launch in Dallas by June 30 2026?
+  78373148  0.5686  Will Netflix dip to $105 in November?
+  78373147  0.5688  Will Netflix reach $147 in November?
+  77131810  0.5690  Will Tea Dating Advice be #1 Free App in the US Apple App Store on October 10?
+  70961776  0.5690  Will He Xiaopeng be announced as the next CEO of Tesla?
+  78036098  0.5691  Will Jurassic World: Rebirth be the #1 searched movie on Google this year?
+  66975569  0.5692  Will Walmart buy TikTok?
+  76777360  0.5692  Will CD Getxo win on 2025-09-27?
+  73755179  0.5693  Bezos divorce in 2025?
+  78031395  0.5693  Will Other be the #1 searched song on Google this year?
+  44526424  0.5695  Musk vs. Zuck: Aug 31
+  78373147  0.5695  Will Netflix reach $119 in November?
+  70961807  0.5696  Will Dara Khosrowshahi be announced as the next CEO of Tesla?
+  21325448  0.5698  Will NASA have confirmed more than 4580 existing exoplanets by November 27?
+  77815585  0.5709  Will Tea Dating Advice be #1 Free App in the US Apple App Store on October 24?
+  76335336  0.5711  Will Jeff Bezos be richest person on September 30?
+  76083236  0.5712  Will Apple launch an iPhone SE on September 9?
+  76628532  0.5715  CS: BIG vs RUBY
+  78073845  0.5716  Will María Corina Machado be the #2 searched person on Google this year?
+  62188136  0.5716  Will 'The Wild Robot' gross between $31m and $38m opening weekend?
+  72512391  0.5717  BLAST.tv Austin Major stage 2: FURIA vs. M80
+  46184517  0.5718  Musk vs. Zuck
+  77504775  0.5719  Will Procreate Pocket be #1 Paid App in the US Apple App Store on October 17?
+  78891330  0.5721  Will Disney say "YouTube TV" during earnings call?
+  78890493  0.5723  Will AS Magenta win on 2025-11-15?
+  70864533  0.5723  Will 'Thunderbolts' gross less than $67m on opening weekend?
+  78373148  0.5725  Will Netflix dip to $101.50 in November?
+  78945087  0.5726  Will Procreate Pocket be #1 Paid App in the US Apple App Store on November 21?
+  78036123  0.5726  Will Superman be the #1 searched movie on Google this year?
+  64003607  0.5730  Will $CULT launch on 11/9?
+  27611239  0.5731  Will Jack Dorsey return as CEO of Twitter by September 30?
+  62188108  0.5731  Will 'The Wild Robot' gross between $24m and $31m opening weekend?
+  25270664  0.5733  Will Kim Kardashian or Taylor Swift have a higher Google Trends 7-day rank in th
+  75208895  0.5735  Will Apple release AirTag 2 this year?
+  78031804  0.5735  Will Bridgerton be the #1 searched TV show on Google this year?
+  78373148  0.5735  Will Netflix dip to $108.50 in November?
+  69820268  0.5736  Will Tim Stokely buy TikTok before July?
+  25099074  0.5747  Will Donda 2 be available for download on stemplayer.com on 2/22/22?
+  78596566  0.5747  Will Victor Perez win the World Wide Technology Championship?
+  74328648  0.5748  Will Andrej Karpathy join one of Elon Musk's companies by August 31?
+  70961760  0.5748  Will William Li be announced as the next CEO of Tesla?
+  78940871  0.5748  Will Jeff Bezos be richest person on December 31?
+  76335443  0.5748  Will Jeff Bezos be richest person on December 31?
+  74886712  0.5751  BLAST Bounty: BIG vs. FURIA
+  70864545  0.5754  Will 'Thunderbolts' gross between $67m and 72m on opening weekend?
+  78373147  0.5756  Will Netflix reach $138.30 in November?
+  78944883  0.5756  Will Meitu- Photo & Video Editor be #1 Free App in the US Apple App Store on Nov
+  76667102  0.5757  Will Getafe win on 2025-10-03?
+  78715220  0.5760  Will Procreate Pocket be #1 Paid App in the US Apple App Store on November 14?
+  41456460  0.5763  Will FTX relaunch by June 30?
+  75244581  0.5764  Will Apple acquire Mistral by September 30?
+  76083241  0.5765  Will Apple launch another iPad on September 9?
+  77951405  0.5765  Will Charlie Kirk rank in Google’s Top 5 Most Searched People of 2025?
+  78940683  0.5769  Will Jeff Bezos be richest person on March 31?
+  66343411  0.5769  Is the Cybertruck manifesto real?
+  70961729  0.5770  Will Gwynne Shotwell be announced as the next CEO of Tesla?
+  74835976  0.5773  "The Outer Worlds 2" Metascore 80–89
+  78415520  0.5774  Will Procreate Pocket be #1 Paid App in the US Apple App Store on November 7?
+  70864555  0.5779  Will 'Thunderbolts' gross between $72m and 77m on opening weekend?
+  62188148  0.5783  Will 'The Wild Robot' gross more than $38m opening weekend?
+  70961580  0.5784  Will Tom Zhu be announced as the next CEO of Tesla?
+  77670025  0.5786  Will Taylor Swift be the #1 searched person on Google this year?
+  78373148  0.5787  Will Netflix reach $115.50 in November?
+  69729546  0.5789  Will Apple release a foldable iPhone in 2025?
+  47576852  0.5791  Will 'The Inventor' gross over $8m opening weekend?
+  70864576  0.5792  Will 'Thunderbolts' gross between $77m and 82m on opening weekend?
+  22836648  0.5793  Will the James Webb telescope be launched successfully in 2021?
+  78251107  0.5797  Will Trump announce TikTok deal by Thursday?
+  78031789  0.5798  Will The Night Agent be the #1 searched TV show on Google this year?
+  66699646  0.5798  Will 'Thunderbolts*' have the best domestic opening weekend in 2025?
+  78031350  0.5798  Will APT. by Rosé and Bruno Mars be the #1 searched song on Google this year?
+  78373135  0.5799  Will Tesla reach $495 in November?
+  73776225  0.5799  Will Elon Musk be the next CEO of X?
+  78857017  0.5800  Will Waymo launch in Washington DC by June 30 2026?
+  70961685  0.5802  Will Jim Farley be announced as the next CEO of Tesla?
+  78373143  0.5802  Will Netflix dip to $75.30 in November?
+  77220934  0.5803  Wicked vs Avatar: Bigger Domestic Opening Weekend?
+  78031774  0.5806  Will Severance be the #1 searched TV show on Google this year?
+  78715236  0.5811  Will Pro Camera by Moment be #1 Paid App in the US Apple App Store on November 1
+  78036103  0.5811  Will How to Train Your Dragon be the #1 searched movie on Google this year?
+  78036118  0.5815  Will Demon Slayer: Infinity Castle be the #1 searched movie on Google this year?
+  70864587  0.5815  Will 'Thunderbolts' gross more than $82m on opening weekend?
+  25260585  0.5816  Will Truth Social be the #1 Social Networking App in the US Apple App Store on M
+  66110669  0.5817  Dan Clancy out as Twitch CEO in 2025?
+  77504895  0.5817  Will Tea Dating Advice be #1 Free App in the US Apple App Store on October 17?
+  68209514  0.5817  Will Grok still be #1 Free app next Friday?
+  67386262  0.5821  Will Karoline Leavitt say Elon or Musk in her next press briefing?
+  67882903  0.5823  Will Apple launch an iPhone SE on February 19?
+  78546351  0.5825  Will Netflix (NFLX) close above $120 end of November?
+  78073770  0.5825  Will Jimmy Kimmel be the #2 searched person on Google this year?
+  78072272  0.5825  Will Netflix acquire Warner Bros. Discovery?
+  76088581  0.5827  Will Apple's iPhone 17 Pro cost more than $1000 when it launches?
+  77418924  0.5828  Football.Fun FDV above $1B one day after launch?
+  66110187  0.5831  Will another company be the largest company in the world by market cap on Januar
+  78546353  0.5832  Will Netflix (NFLX) close above $106 end of November?
+  77131815  0.5832  Will Threads be #1 Free App in the US Apple App Store on October 10?
+  73407795  0.5834  Will Tesla deliver 325000-350000 vehicles in Q2?
+  53987129  0.5835  Will Blast launch on February 27?
+  78070447  0.5837  Will a U.S. government shutdown be the #1 searched news on Google this year?
+  78031599  0.5839  Will Jake Paul be the #1 searched athlete on Google this year?
+  74835967  0.5840  "The Outer Worlds 2" Metascore 60–69
+  78373112  0.5841  Will Apple reach $280 in November?
+  73407789  0.5842  Will Tesla deliver 300000-325000 vehicles in Q2?
+  62236184  0.5842  Will Tim Walz say "VC" or "Venture Capitalist" during the debate?
+  78857017  0.5843  Will Waymo launch in Detroit by June 30 2026?
+  27648541  0.5843  Will Truth Social be the #1 Free Social Networking App in the US Apple App Store
+  73776229  0.5843  Will Marissa Mayer be the next CEO of X?
+  78546350  0.5844  Will Netflix (NFLX) close above $108 end of November?
+  78116737  0.5845  Will Threads be #1 Free App in the US Apple App Store on October 31?
+  77722694  0.5846  Will Pedro Pascal be ranked #1 globally in Google’s Year in Search 2025 Actors?
+  77670126  0.5846  Will Katy Perry be the #1 searched person on Google this year?
+  77815590  0.5847  Will Threads be #1 Free App in the US Apple App Store on October 24?
+  75128464  0.5847  Will Taylor Swift x Travis Kelce podcast get more than 15m views on day 1?
+  78022262  0.5847  Will Atlas have an iOS app live by October 31?
+  76083240  0.5850  Will Apple launch a Studio Display on September 9?
+  78596495  0.5852  Will Michael Brennan win the World Wide Technology Championship?
+  62069147  0.5855  Will Qualcomm acquire Intel?
+  23601738  0.5856  Will there be a variant that overtakes Omicron in the US by April 19th?
+  64609136  0.5858  Will Elon Musk buy MSNBC?
+  57736346  0.5858  Elon Musk's $56bn Tesla pay package approved?
+  66975722  0.5860  Will Steve Mnuchin buy TikTok?
+  57849362  0.5862  Will Roaring Kitty sell GME on livestream?
+  78596470  0.5862  Will Rico Hoey win the World Wide Technology Championship?
+  78373134  0.5864  Will Tesla reach $578 in November?
+  73407801  0.5867  Will Tesla deliver 350000-375000 vehicles in Q2?
+  78073930  0.5868  Will Kanye West / Ye be the #2 searched person on Google this year?
+  23799486  0.5868  Will OpenSea have more than $7 billion in volume in January 2022?
+  78546364  0.5870  Will Apple (AAPL) finish week of November 10 above $295?
+  70961596  0.5870  Will Zach Kirkhorn be announced as the next CEO of Tesla?
+  55533884  0.5870  Will TOSHI reach $1b first?
+  78116647  0.5871  Will SkyView be #1 Paid App in the US Apple App Store on October 31?
+  76505179  0.5872  Will Walmart acquire TikTok?
+  76083236  0.5876  Will Apple launch an iPad Air on September 9?
+  77633406  0.5878  Will Oracle be the second-largest company in the world by market cap on November
+  77815722  0.5880  Will TonalEnergy Tuner & Metronome be #1 Paid App in the US Apple App Store on O
+  77815845  0.5881  Will Tesla deliver between 350000 and 375000 vehicles in Q4 2025
+  71881818  0.5882  Apple announces iPhone assembly in the U.S. before September?
+  75492099  0.5883  Will Hyperliquid's HIP-3 upgrade go live on mainnet by September 30?
+  78373113  0.5884  Will Apple reach $288 in November?
+  78073935  0.5884  Will d4vd be the #2 searched person on Google this year?
+  71035182  0.5891  ChatGPT #1 app May 9?
+  68747290  0.5892  Seattle vs. Utah Tech
+  78546382  0.5892  Will Netflix (NFLX) finish week of November 10 above $1,170?
+  77815601  0.5896  Will McDonald’s be #1 Free App in the US Apple App Store on October 24?
+  78116652  0.5897  Will TonalEnergy Tuner & Metronome be #1 Paid App in the US Apple App Store on O
+  78546383  0.5898  Will Netflix (NFLX) finish week of November 10 above $1,060?
+  75943844  0.5899  Will Apple acquire Mistral by November 30?
+  76932719  0.5900  Will Tesla release Optimus by June 30, 2026?
+  77815855  0.5901  Will Tesla deliver between 400000 and 425000 vehicles in Q4 2025
+  77815865  0.5907  Will Tesla deliver between 450000 and 475000 vehicles in Q4 2025
+  78944861  0.5907  Will Threads be #1 Free App in the US Apple App Store on November 21?
+  77815860  0.5907  Will Tesla deliver between 425000 and 450000 vehicles in Q4 2025
+  78373147  0.5907  Will Netflix reach $131.30 in November?
+  72042011  0.5908  Will another company be the largest in the world by market cap on June 30?
+  77676093  0.5909  Will anyone say "Tegrity" or "Techrity" during South Park e6 s27?
+  78116632  0.5911  Will HotSchedules be #1 Paid App in the US Apple App Store on October 31?
+  74835962  0.5911  "The Outer Worlds 2" Metascore <60
+  78596627  0.5912  Will Ricky Castillo win the World Wide Technology Championship?
+  78076051  0.5912  Will Amazon say "Prime Day" during earnings call?
+  76083238  0.5912  Will Apple launch an AirPods on September 9?
+  77815875  0.5912  Will Tesla deliver 500000 or more vehicles in Q4 2025
+  75125081  0.5915  Will Taylor Swift say "Pre-order" during Travis Kelce's podcast on Wednesday?
+  56288018  0.5916  Elon Musk post "retardio" in April?
+  77815707  0.5917  Will HotSchedules be #1 Paid App in the US Apple App Store on October 24?
+  77815850  0.5919  Will Tesla deliver between 375000 and 400000 vehicles in Q4 2025
+  77670131  0.5921  Will d4vd be the #1 searched person on Google this year?
+  74835972  0.5921  "The Outer Worlds 2" Metascore 70–79
+  78031809  0.5922  Will The White Lotus be the #1 searched TV show on Google this year?
+  73816650  0.5924  New X CEO announced by July 31?
+  74559085  0.5924  FDA approves Telix Pharmaceuticals’ TLX250-CDx for kidney cancer imaging?
+  76829555  0.5924  Will Elon Musk post 600-639 tweets in October 2025?
+  78596450  0.5925  Will J.J. Spaun win the World Wide Technology Championship?
+  73407806  0.5926  Will Tesla deliver 375000-400000 vehicles in Q2?
+  78546339  0.5926  Will Amazon (AMZN) close above $280 end of November?
+  73407812  0.5926  Will Tesla deliver 400000-450000 vehicles in Q2?
+  77815870  0.5929  Will Tesla deliver between 475000 and 500000 vehicles in Q4 2025
+  78373115  0.5930  Will Microsoft dip to $398 in November?
+  77131801  0.5930  Will ChatGPT be #1 Free App in the US Apple App Store on October 10?
+  23601488  0.5930  Will there be a variant that overtakes Omicron in the US by February 15th?
+  77951434  0.5931  Will Bernie say "Musk" or "Zuckerberg" or "Bezos" 7+ times during the GOTV rally
+  78546366  0.5934  Will Apple (AAPL) finish week of November 10 above $300?
+  78546382  0.5934  Will Netflix (NFLX) finish week of November 10 above $1,100?
+  52214801  0.5934  Will another company be the largest company in the world on January 31?
+  57300298  0.5939  Microsoft buys Steam before July?
+  78022262  0.5939  Will Atlas have an iOS app live by December 31?
+  66386722  0.5941  Will Waymo surpass Uber SF market share in 2025?
+  78546335  0.5942  Will Microsoft (MSFT) close above $615 end of November?
+  77504900  0.5943  Will Threads be #1 Free App in the US Apple App Store on October 17?
+  73844126  0.5943  Will Grok have a MacOS desktop app live by August 31?
+  78086964  0.5944  Will Elon Musk post 600-639 tweets in December 2025?
+  77504780  0.5944  Will TonalEnergy Tuner & Metronome be #1 Paid App in the US Apple App Store on O
+  78945102  0.5944  Will SkyView be #1 Paid App in the US Apple App Store on November 21?
+  78373135  0.5945  Will Tesla reach $465 in November?
+  23601683  0.5946  Will there be a variant that overtakes Omicron in the US by March 15th?
+  78945097  0.5946  Will TonalEnergy Tuner & Metronome be #1 Paid App in the US Apple App Store on N
+  78373135  0.5946  Will Tesla reach $548 in November?
+  77722389  0.5946  Will Charlie Kirk be ranked #1 globally in Google’s Year in Search 2025 Passings
+  77951405  0.5948  Will Travis Kelce rank in Google’s Top 5 Most Searched People of 2025?
+  73254530  0.5950  MSI Play-in: G2 vs. FURIA
+  67188455  0.5952  Will DeepSeek still be #1 Free app on Friday?
+  67336593  0.5952  Will DeepSeek still be #1 Free app on Friday?
+  78717617  0.5952  Will Elon Musk post 60-79 tweets in November 2025?
+  78546384  0.5955  Will Netflix (NFLX) finish week of November 10 above $1,180?
+  74326844  0.5955  Will Grok have a MacOS desktop app live by December 31?
+  77638238  0.5956  Will Sora be the #1 Free App in the US Apple App Store on October 20?
+  77670075  0.5958  Will Jimmy Kimmel be the #1 searched person on Google this year?
+  76991112  0.5959  LoL: FlyQuest vs Vivo Keyd Stars
+  78715311  0.5959  Will Threads be #1 Free App in the US Apple App Store on November 14?
+  73407818  0.5960  Will Tesla deliver 450000 or more vehicles in Q2?
+  78373115  0.5963  Will Microsoft dip to $488 in November?
+  78036093  0.5965  Will A Minecraft Movie be the #1 searched movie on Google this year?
+  78596526  0.5966  Will Emiliano Grillo win the World Wide Technology Championship?
+  78373114  0.5967  Will Microsoft reach $638 in November?
+  78031819  0.5967  Will Other be the #1 searched TV show on Google this year?
+  77815575  0.5967  Will ChatGPT be #1 Free App in the US Apple App Store on October 24?
+  78373112  0.5968  Will Apple reach $332 in November?
+  74839113  0.5968  Will Elon Musk say "Ad format" during the August 6 AMA?
+  78116717  0.5969  Will Dave’s Hot Chicken be #1 Free App in the US Apple App Store on October 31?
+  78116722  0.5969  Will ChatGPT be #1 Free App in the US Apple App Store on October 31?
+  74404448  0.5970  Will Amazon acquire streaming rights to UFC next?
+  77951505  0.5970  Will MapLight not IPO by December 31, 2025?
+  78546382  0.5970  Will Netflix (NFLX) finish week of November 10 above $1,140?
+  78373112  0.5970  Will Apple reach $316 in November?
+  77670100  0.5971  Will Kanye West / Ye be the #1 searched person on Google this year?
+  78415668  0.5971  Will Threads be #1 Free App in the US Apple App Store on November 7?
+  76527723  0.5972  Will Apple release a new version of the Apple TV by December 31?
+  78036113  0.5975  Will Mission: Impossible – The Final Reckoning be the #1 searched movie on Googl
+  78373124  0.5976  Will Amazon dip to $148 in November?
+  78945077  0.5977  Will HotSchedules be #1 Paid App in the US Apple App Store on November 21?
+  69774590  0.5977  350k+ Tesla deliveries in Q1 2025?
+  76083241  0.5978  Will Apple launch an iMac on September 9?
+  77131781  0.5978  Will Sora be the #1 Free App in the US Apple App Store on October 3?
+  78036128  0.5979  Will The Fantastic Four: First Steps be the #1 searched movie on Google this yea
+  72401901  0.5980  Will Elon Musk endorse the Big Beautiful Bill?
+  78944856  0.5980  Will ChatGPT be #1 Free App in the US Apple App Store on November 21?
+  78373111  0.5982  Will Apple reach $352 in November?
+  44758888  0.5983  Will Threads be the most popular app a week after launch?
+  78546383  0.5985  Will Netflix (NFLX) finish week of November 10 above $1,160?
+  78596572  0.5986  Will Stephan Jaeger win the World Wide Technology Championship?
+  65124586  0.5987  Roaring Kitty shows GameStop holdings by Friday?
+  70148162  0.5987  Roaring Kitty shows GameStop holdings by Friday?
+  78373112  0.5989  Will Apple reach $272 in November?
+  78717754  0.5989  Will Elon Musk post 600-639 tweets in November 2025?
+  78373114  0.5990  Will Microsoft reach $608 in November?
+  77951407  0.5990  Will Bad Bunny rank in Google’s Top 5 Most Searched People of 2025?
+  78031794  0.5991  Will Andor be the #1 searched TV show on Google this year?
+  74835982  0.5992  "The Outer Worlds 2" Metascore 90+
+  77815616  0.5994  Will Dave’s Hot Chicken be #1 Free App in the US Apple App Store on October 24?
+  76083237  0.5994  Will Apple launch another MacBook on September 9?
+  78373116  0.5996  Will Microsoft dip to $435 in November?
+  78944898  0.5997  Will CapCut - Video Editor be #1 Free App in the US Apple App Store on November 
+  78982203  0.5998  Will Bill Ackman say "CEO" during the X Space event on November 18?
+  73016801  0.6000  Will Apple acquire Perplexity before September?
+  78546383  0.6000  Will Netflix (NFLX) finish week of November 10 above $1,130?
+  78415683  0.6001  Will McDonald's be #1 Free App in the US Apple App Store on November 7?
+  56923422  0.6002  Will Roaring Kitty tweet about GameStop today?
+  77504910  0.6004  Will McDonald’s be #1 Free App in the US Apple App Store on October 17?
+  78070760  0.6005  Will Atlas introduce ads by December 31?
+  78715231  0.6005  Will TonalEnergy Tuner & Metronome be #1 Paid App in the US Apple App Store on N
+  78415525  0.6006  Will TonalEnergy Tuner & Metronome be #1 Paid App in the US Apple App Store on N
+  77670152  0.6006  Will Mikey Madison be the #1 searched person on Google this year?
+  77504765  0.6007  Will HotSchedules be #1 Paid App in the US Apple App Store on October 17?
+  76829540  0.6008  Will Elon Musk post 540-559 tweets in October 2025?
+  76083235  0.6008  Will Apple launch an Apple Watch on September 9?
+  75735319  0.6010  Apple Vision Pro 2 released by December 31?
+  78715241  0.6011  Will SkyView be #1 Paid App in the US Apple App Store on November 14?
+  78031799  0.6012  Will Yellowjackets be the #1 searched TV show on Google this year?
+  78941723  0.6012  Backpack FDV above $1B one day after launch?
+  76527732  0.6013  Will Apple launch an iPhone Air by November 30?
+  78022261  0.6015  Will Atlas have a Windows app live by October 31?
+  76899254  0.6015  Will Apple release a MacBook with cellular connectivity by June 30?
+  78546351  0.6019  Will Netflix (NFLX) close above $116 end of November?
+  78546382  0.6023  Will Netflix (NFLX) finish week of November 10 above $1,070?
+  78715205  0.6024  Will Shadowrocket be #1 Paid App in the US Apple App Store on November 14?
+  78116743  0.6026  Will Google Gemini be #1 Free App in the US Apple App Store on October 31?
+  72140293  0.6026  Will Donald Trump or Elon Musk Say "Big Beautiful Bill" during the press confere
+  78546339  0.6027  Will Amazon (AMZN) close above $290 end of November?
+  78086948  0.6027  Will Elon Musk post 540-559 tweets in December 2025?
+  78546335  0.6028  Will Microsoft (MSFT) close above $585 end of November?
+  23601794  0.6028  Will there be a variant that overtakes Omicron in the US by May 17th?
+  78373126  0.6030  Will Amazon dip to $208 in November?
+  77633496  0.6031  Will Tesla be the second-largest company in the world by market cap on December 
+  78717806  0.6031  Will Elon Musk post 1000-1039 tweets in November 2025?
+  78415504  0.6032  Will Shadowrocket be #1 Paid App in the US Apple App Store on November 7?
+  57804703  0.6033  Nvidia CEO sign boobs again by Friday?
+  78546333  0.6034  Will Microsoft (MSFT) close above $435 end of November?
+  66975551  0.6037  Will Microsoft buy TikTok?
+  77131797  0.6039  Will Google Gemini be #1 Free App in the US Apple App Store on October 10?
+  77060058  0.6040  Snapchat acquired in 2025?
+  78415510  0.6040  Will HotSchedules be #1 Paid App in the US Apple App Store on November 7?
+  78086923  0.6042  Will Elon Musk post 440-459 tweets in December 2025?
+  78715210  0.6043  Will HotSchedules be #1 Paid App in the US Apple App Store on November 14?
+  77670111  0.6044  Will Sydney Sweeney be the #1 searched person on Google this year?
+  78116637  0.6044  Will AnkiMobile Flashcards be #1 Paid App in the US Apple App Store on October 3
+  78546335  0.6045  Will Microsoft (MSFT) close above $555 end of November?
+  78373126  0.6046  Will Google dip to $200 in November?
+  76222016  0.6046  Thunderpick WC: SAW vs. BIG
+  78373115  0.6047  Will Microsoft dip to $510 in November?
+  78373121  0.6047  Will Amazon dip to $168 in November?
+  78715306  0.6048  Will ChatGPT be #1 Free App in the US Apple App Store on November 14?
+  78415653  0.6049  Will ChatGPT be #1 Free App in the US Apple App Store on November 7?
+  77815712  0.6049  Will AnkiMobile Flashcards be #1 Paid App in the US Apple App Store on October 2
+  78717568  0.6051  Will Elon Musk post 440-459 tweets from November 7 to November 14, 2025?
+  78546334  0.6052  Will Microsoft (MSFT) close above $495 end of November?
+  78596480  0.6052  Will Kevin Yu win the World Wide Technology Championship?
+  77943863  0.6053  Will Sora be the #1 Free App in the US Apple App Store on October 31?
+  78546337  0.6053  Will Amazon (AMZN) close above $200 end of November?
+  78415648  0.6054  Will Dave’s Hot Chicken be #1 Free App in the US Apple App Store on November 7?
+  78373114  0.6056  Will Microsoft reach $585 in November?
+  78546335  0.6056  Will Amazon (AMZN) close above $210 end of November?
+  77809147  0.6057  Will Sora be the #1 Free App in the US Apple App Store on October 24?
+  76505180  0.6057  Will Microsoft acquire TikTok?
+  78373116  0.6059  Will Microsoft dip to $465 in November?
+  76083239  0.6060  Will Apple launch a new Apple TV on September 9?
+  78596587  0.6062  Will Beau Hossler win the World Wide Technology Championship?
+  72654140  0.6062  BLAST.tv Austin Major: G2 vs. 3DMAX
+  77504885  0.6062  Will ChatGPT be #1 Free App in the US Apple App Store on October 17?
+  53200557  0.6067  Will Warpcast break top 5 on the iOS App Store in February?
+  78373123  0.6068  Will Amazon dip to $216 in November?
+  78546333  0.6069  Will Microsoft (MSFT) close above $465 end of November?
+  77062546  0.6075  Will Amazon be the second most valuable company on October 31?
+  76083237  0.6075  Will Apple launch a HomePod on September 9?
+  57731780  0.6077  Will E*Trade kick Keith Gill off platform by Friday?
+  78022261  0.6077  Will Atlas have a Windows app live by December 31?
+  78596577  0.6079  Will Matti Schmid win the World Wide Technology Championship?
+  78076052  0.6081  Will Amazon say "RxPass" during earnings call?
+  79039138  0.6083  Will Elon Musk post 440-459 tweets from November 18 to November 25, 2025?
+  78717704  0.6085  Will Elon Musk post 400-419 tweets in November 2025?
+  78546368  0.6086  Will Microsoft (MSFT) finish week of November 10 above $560?
+  27609644  0.6086  Will Elon Musk become CEO of Twitter by September 30?
+  75773385  0.6086  Will anyone say "iPhone" 50+ times during Apple launch event on September 9?
+  76527724  0.6087  Will Apple release HomePod mini successor by December 31?
+  79024195  0.6088  Will diVine launch iOS app by December 31?
+  78373111  0.6088  Will Apple reach $300 in November?
+  78373124  0.6088  Will Google reach $355 in November?
+  78546334  0.6091  Will Microsoft (MSFT) close above $510 end of November?
+  78717694  0.6092  Will Elon Musk post 360-379 tweets in November 2025?
+  78945082  0.6094  Will AnkiMobile Flashcards be #1 Paid App in the US Apple App Store on November 
+  78546371  0.6094  Will Amazon (AMZN) finish week of November 10 above $275?
+  78546367  0.6096  Will Microsoft (MSFT) finish week of November 10 above $550?
+  67883015  0.6096  Will Apple launch an iMac on February 19?
+  78373114  0.6096  Will Microsoft reach $668 in November?
+  58004244  0.6096  Elon Musk bans Apple devices at his companies?
+  58163818  0.6098  Another largest company on June 21?
+  75773384  0.6099  Will anyone say "Camera" 5+ times during Apple launch event on September 9?
+  78031609  0.6100  Will Travis Kelce be the #1 searched athlete on Google this year?
+  78717739  0.6100  Will Elon Musk post 540-559 tweets in November 2025?
+  78546368  0.6102  Will Microsoft (MSFT) finish week of November 10 above $580?
+  78621372  0.6102  Microsoft (MSFT) Up or Down on November 6?
+  78546335  0.6104  Will Microsoft (MSFT) close above $600 end of November?
+  78717719  0.6104  Will Elon Musk post 460-479 tweets in November 2025?
+  78596500  0.6106  Will Keith Mitchell win the World Wide Technology Championship?
+  77131780  0.6106  Will Sora be the #1 Free App in the US Apple App Store on October 15?
+  77504770  0.6108  Will AnkiMobile Flashcards be #1 Paid App in the US Apple App Store on October 1
+  78546334  0.6108  Will Microsoft (MSFT) close above $570 end of November?
+  78031829  0.6109  Will Wednesday be the #1 searched TV show on Google this year?
+  53203071  0.6111  Will Warpcast flip X on the app store in February?
+  66110678  0.6111  Andy Jassy out as Amazon CEO in 2025?
+  78717714  0.6112  Will Elon Musk post 440-459 tweets in November 2025?
+  78944867  0.6114  Will Sora be #1 Free App in the US Apple App Store on November 21?
+  78373114  0.6114  Will Microsoft reach $555 in November?
+  67016783  0.6115  Will Larry Ellison buy TikTok before July?
+  66110654  0.6115  Tim Cook out as Apple CEO in 2025?
+  78031769  0.6115  Will Squid Game be the #1 searched TV show on Google this year?
+  78415515  0.6116  Will AnkiMobile Flashcards be #1 Paid App in the US Apple App Store on November 
+  78546334  0.6117  Will Microsoft (MSFT) close above $480 end of November?
+  78715215  0.6118  Will AnkiMobile Flashcards be #1 Paid App in the US Apple App Store on November 
+  72714575  0.6118  BLAST.tv Austin Major: Aurora vs. G2
+  78373121  0.6119  Will Google reach $280 in November?
+  78546367  0.6120  Will Microsoft (MSFT) finish week of November 10 above $460?
+  78546366  0.6120  Will Microsoft (MSFT) finish week of November 10 above $510?
+  74295536  0.6123  Will Apple acquire Perplexity in 2025?
+  75773383  0.6126  Will anyone say "iPhone" 100+ times during Apple launch event on September 9?
+  67882992  0.6128  Will Apple launch an Apple Watch on February 19?
+  78546340  0.6128  Will Amazon (AMZN) close above $300 end of November?
+  78373123  0.6129  Will Amazon dip to $196 in November?
+  78076073  0.6130  Will Uber say "Innovation" during earnings call?
+  78546366  0.6131  Will Microsoft (MSFT) finish week of November 10 above $530?
+  78546368  0.6134  Will Microsoft (MSFT) finish week of November 10 above $500?
+  77062509  0.6135  Will Google be the most valuable company on October 31?
+  78076032  0.6135  Will Lyft say "Innovation" during earnings call?
+  75698888  0.6136  Will Apple be the second largest company in the world by market cap on September
+  77670020  0.6137  Will Charlie Kirk be the #1 searched person on Google this year?
+  73008101  0.6137  Will Tesla launch a driverless Robotaxi service before August?
+  78578179  0.6140  Microsoft (MSFT) Up or Down on November 5?
+  69859912  0.6140  Intel x TSMC joint venture announced before July?
+  77633391  0.6140  Will Tesla be the second-largest company in the world by market cap on November 
+  78596475  0.6141  Will Michael Thorbjornsen win the World Wide Technology Championship?
+  77504880  0.6142  Will Google Gemini be #1 Free App in the US Apple App Store on October 17?
+  78031779  0.6145  Will The Bear be the #1 searched TV show on Google this year?
+  68448368  0.6148  Will Tesla launch robotaxis in California in 2025?
+  78546336  0.6149  Will Amazon (AMZN) close above $220 end of November?
+  78546370  0.6149  Will Amazon (AMZN) finish week of November 10 above $240?
+  78373122  0.6149  Will Amazon reach $312 in November?
+  77062504  0.6153  Will Microsoft be the most valuable company on October 31?
+  50077727  0.6154  Sam Altman announces new company by Nov 24?
+  78596485  0.6157  Will Thorbjorn Olesen win the World Wide Technology Championship?
+  76083240  0.6158  Will Apple launch a MacBook Air on September 9?
+  66386688  0.6159  Will Bezos announce Washington Post sale in 2025?
+  78546370  0.6160  Will Amazon (AMZN) finish week of November 10 above $225?
+  78935027  0.6161  Spread: Cornell Big Red (-4.5)
+  78073910  0.6163  Will Travis Kelce be the #2 searched person on Google this year?
+  49227637  0.6163  Will Apple announce M3 Chip at its "Scary Fast" event?
+  78945107  0.6165  Will My Aurora Forecast Pro be #1 Paid App in the US Apple App Store on November
+  78543334  0.6168  Will Hyperbeat launch a token in 2025?
+  33726869  0.6170  Will Elon Musk become CEO of Twitter by November 30?
+  78596465  0.6171  Will Garrick Higgo win the World Wide Technology Championship?
+  78373115  0.6171  Will Microsoft dip to $525 in November?
+  78546335  0.6171  Will Microsoft (MSFT) close above $525 end of November?
+  67882965  0.6171  Will Apple launch an iPad on February 19?
+  77062499  0.6172  Will NVIDIA be the most valuable company on October 31?
+  79139696  0.6172  Microsoft (MSFT) Up or Down on November 18?
+  77633386  0.6172  Will Alphabet be the second-largest company in the world by market cap on Novemb
+  78664575  0.6172  Microsoft (MSFT) Up or Down on November 7?
+  78373125  0.6173  Will Google dip to $220 in November?
+  78373122  0.6175  Will Amazon reach $292 in November?
+  78715321  0.6176  Will Google Gemini be #1 Free App in the US Apple App Store on November 14?
+  78546333  0.6176  Will Microsoft (MSFT) close above $450 end of November?
+  76281464  0.6178  Will BasedApp daily builder revenue hit $200k in 2025?
+  78546367  0.6179  Will Microsoft (MSFT) finish week of November 10 above $570?
+  78596521  0.6180  Will Jacob Bridgeman win the World Wide Technology Championship?
+  55533847  0.6180  Will POPCAT reach $1b first?
+  67214640  0.6180  Will Alphabet be the largest company in the world by market cap on February 28?
+  78546367  0.6181  Will Microsoft (MSFT) finish week of November 10 above $480?
+  78073790  0.6184  Will Bad Bunny be the #2 searched person on Google this year?
+  78373123  0.6185  Will Amazon reach $240 in November?
+  78962025  0.6186  Spread: Cornell Big Red (-5.5)
+  78546367  0.6187  Will Microsoft (MSFT) finish week of November 10 above $490?
+  78373126  0.6188  Will Amazon reach $276 in November?
+  20495439  0.6188  Will “meta” be included in Facebook’s new name?
+  78715316  0.6189  Will Sora be #1 Free App in the US Apple App Store on November 14?
+  78546369  0.6190  Will Amazon (AMZN) finish week of November 10 above $245?
+  60665885  0.6191  Will Sonic launch before 2025?
+  67882999  0.6191  Will Apple launch a HomePod on February 19?
+  77633486  0.6192  Will Apple be the second-largest company in the world by market cap on December 
+  78596622  0.6192  Will Luke Clanton win the World Wide Technology Championship?
+  78415673  0.6192  Will Google Gemini be #1 Free App in the US Apple App Store on November 7?
+  78373115  0.6193  Will Microsoft dip to $540 in November?
+  78596551  0.6194  Will Vince Whaley win the World Wide Technology Championship?
+  61198414  0.6194  Will Apple remain largest company through Sep 30?
+  76083242  0.6195  Will Apple launch a Glasses/Headset on September 9?
+  78373115  0.6196  Will Microsoft reach $570 in November?
+  47734622  0.6197  Will Tesla deliver a Cybertruck in Q3?
+  70297807  0.6203  Will Meta announce Instagram sale in 2025?
+  78076052  0.6204  Will Amazon say "Live Sports" during earnings call?
+  78596516  0.6204  Will Jesper Svensson win the World Wide Technology Championship?
+  78072257  0.6205  Will Amazon acquire Warner Bros. Discovery?
+  70785837  0.6206  LEC: GIANTX vs. Movistar
+  76504538  0.6207  Will Larry Ellison/Oracle acquire TikTok?
+  78546369  0.6208  Will Amazon (AMZN) finish week of November 10 above $265?
+  75119568  0.6210  Will Perplexity acquire Chrome in 2025?
+  78373123  0.6214  Will Amazon dip to $224 in November?
+  78373124  0.6215  Will Google reach $315 in November?
+  67214585  0.6216  Will Apple be the largest company in the world by market cap on February 28?
+  78546334  0.6216  Will Microsoft (MSFT) close above $540 end of November?
+  78596612  0.6216  Will Mark Hubbard win the World Wide Technology Championship?
+  78546371  0.6217  Will Google (GOOGL) finish week of November 10 above $305?
+  78546368  0.6219  Will Microsoft (MSFT) finish week of November 10 above $520?
+  73747592  0.6219  Will anyone say "Squid Game" during the Q2 2025 Netflix earnings call?
+  78546366  0.6220  Will Microsoft (MSFT) finish week of November 10 above $470?
+  78546369  0.6221  Will Amazon (AMZN) finish week of November 10 above $250?
+  78596455  0.6224  Will Si Woo Kim win the World Wide Technology Championship?
+  78031644  0.6227  Will Tom Aspinall be the #1 searched athlete on Google this year?
+  75570528  0.6227  Will BasedApp daily builder revenue hit $100k in 2025?
+  78076311  0.6229  Will Hims say "Amazon" during earnings call?
+  78546341  0.6229  Will Google (GOOGL) close above $300 end of November?
+  77951172  0.6231  Will Amazon.com (AMZN) beat quarterly earnings?
+  76083238  0.6231  Will Apple launch an AirTag on September 9?
+  78373113  0.6232  Will Microsoft reach $705 in November?
+  78596536  0.6236  Will John Keefer win the World Wide Technology Championship?
+  78546369  0.6238  Will Amazon (AMZN) finish week of November 10 above $270?
+  76732400  0.6238  Will BasedApp daily builder revenue hit $1M in 2025?
+  72287717  0.6240  Will Tesla launch a driverless Robotaxi service in 2025?
+  78373122  0.6242  Will Amazon reach $260 in November?
+  78944893  0.6244  Will GoWish - Your Digital Wishlist be #1 Free App in the US Apple App Store on 
+  72126480  0.6246  Will Tesla launch a driverless Robotaxi service before July?
+  78373127  0.6250  Will Amazon dip to $184 in November?
+  78546367  0.6251  Will Microsoft (MSFT) finish week of November 10 above $540?
+  78596460  0.6253  Will Max Greyserman win the World Wide Technology Championship?
+  78546371  0.6253  Will Amazon (AMZN) finish week of November 10 above $255?
+  78546373  0.6254  Will Google (GOOGL) finish week of November 10 above $290?
+  64490349  0.6256  Google forced to sell Chrome?
+  75698878  0.6257  Will Microsoft be the second largest company in the world by market cap on Septe
+  77633381  0.6258  Will Apple be the second-largest company in the world by market cap on November 
+  77943863  0.6259  Will Sora be the #1 Free App in the US Apple App Store on November 15?
+  79139697  0.6260  Google (GOOGL) Up or Down on November 18?
+  78546375  0.6261  Will Meta (META) finish week of November 10 above $700?
+  78938372  0.6261  Will Tesla be the largest company in the world by market cap on March 31?
+  78373125  0.6261  Will Google reach $290 in November?
+  73747594  0.6262  Will anyone say "Grand Theft Auto" during the Q2 2025 Netflix earnings call?
+  74234051  0.6264  Will Tesla launch a driverless Robotaxi service by August 31?
+  67387619  0.6264  Will Google run an Ad during Super Bowl LIX?
+  74235733  0.6266  Will anyone say "Streaming" during the Q3 2025 Apple earnings call?
+  16929800  0.6267  Will Jeff Bezos reach outer space by July 30?
+  79010164  0.6267  Microsoft (MSFT) Up or Down on November 17?
+  67883008  0.6271  Will Apple launch an Airpods product on February 19?
+  78938531  0.6274  Will Tesla be the largest company in the world by market cap on December 31?
+  66110460  0.6274  Will Tesla be the largest company in the world by market cap on December 31?
+  66110143  0.6275  Will NVIDIA be the largest company in the world by market cap on January 31?
+  75698896  0.6275  Will Google be the second largest company in the world by market cap on Septembe
+  77131805  0.6275  Will Sora by OpenAI be #1 Free App in the US Apple App Store on October 10?
+  77633481  0.6276  Will Microsoft be the second-largest company in the world by market cap on Decem
+  77633376  0.6278  Will Microsoft be the second-largest company in the world by market cap on Novem
+  78596505  0.6278  Will Pierceson Coody win the World Wide Technology Championship?
+  78076093  0.6279  Will Microsoft say "Cloud" during earnings call?
+  67882983  0.6280  Will Apple launch glasses/headset on February 19?
+  78546371  0.6281  Will Google (GOOGL) finish week of November 10 above $295?
+  78373123  0.6282  Will Amazon reach $232 in November?
+  78546373  0.6283  Will Google (GOOGL) finish week of November 10 above $310?
+  78546369  0.6284  Will Amazon (AMZN) finish week of November 10 above $230?
+  66738784  0.6285  Explode App #1 utility app in January?
+  78546370  0.6285  Will Amazon (AMZN) finish week of November 10 above $220?
+  67214555  0.6287  Will NVIDIA be the largest company in the world by market cap on February 7?
+  78116727  0.6288  Will Sora by OpenAI be #1 Free App in the US Apple App Store on October 31?
+  77815580  0.6288  Will Sora by OpenAI be #1 Free App in the US Apple App Store on October 24?
+  78596592  0.6289  Will Doug Ghim win the World Wide Technology Championship?
+  74235477  0.6291  Will anyone say "Cybersecurity" during the Q4 2025 Microsoft earnings call?
+  78073796  0.6292  Will Elon Musk be the #2 searched person on Google this year?
+  78373124  0.6293  Will Google reach $380 in November?
+  44762164  0.6294  Will Twitter sue Meta by July 15?
+  73816652  0.6296  Meta releases Llama 5 in 2025?
+  77809287  0.6297  Tech Release Parlay
+  55681257  0.6299  friend.tech v2 launch delayed?
+  68690078  0.6299  Will Apple release a new product line in 2025?
+  67219779  0.6299  Will Nvidia run an Ad during Super Bowl LIX?
+  77062514  0.6305  Will Amazon be the most valuable company on October 31?
+  67890680  0.6305  Will Amazon buy Lyft before July?
+  75698855  0.6306  Will NVIDIA be the largest company in the world by market cap on September 30?
+  55488542  0.6308  Blast/Blur buys OpenSea by April 30?
+  67214572  0.6308  Will Microsoft be the largest company in the world by market cap on February 28?
+  70581728  0.6310  IEM Melbourne: BIG vs. 3DMAX
+  78596607  0.6312  Will Max McGreevy win the World Wide Technology Championship?
+  78940124  0.6313  Will Tesla launch robotaxis in California by June 30?
+  75119813  0.6314  Will Tesla launch a driverless Robotaxi service by October 31?
+  78373122  0.6314  Will Meta reach $800 in November?
+  77670090  0.6320  Will Bad Bunny be the #1 searched person on Google this year?
+  70911220  0.6321  Will NVIDIA be the largest company in the world by market cap on May 31?
+  78596511  0.6321  Will Nick Taylor win the World Wide Technology Championship?
+  74235616  0.6322  Will anyone say "Delivery" during the Q2 2025 Amazon earnings call?
+  78076051  0.6324  Will Amazon say "Alexa+ / Alexa Plus" during earnings call?
+  75773386  0.6325  Will anyone say "India" during Apple launch event on September 9?
+  74235615  0.6328  Will anyone say "Advertising" during the Q2 2025 Amazon earnings call?
+  73424338  0.6330  Will Apple be the largest company in the world by market cap on August 31?
+  64605819  0.6330  Tesla bot at Trump inauguration?
+  67214643  0.6333  Will Alphabet be the largest company in the world by market cap on February 7?
+  69732171  0.6333  Will NVIDIA be the largest company in the world by market cap on April 30?
+  67219676  0.6335  Will OpenAI run an Ad during Super Bowl LIX?
+  68407349  0.6336  Will Nvidia CEO say "Microsoft" during earnings call today?
+  74235617  0.6338  Will anyone say "Third-Party Sellers" during the Q2 2025 Amazon earnings call?
+  74235731  0.6339  Will anyone say "Wearable" during the Q3 2025 Apple earnings call?
+  77513754  0.6340  Will Tesla be the largest company in the world by market cap on June 30?
+  72041988  0.6341  Will NVIDIA be the largest company in the world by market cap on June 30?
+  77513734  0.6341  Will NVIDIA be the largest company in the world by market cap on June 30?
+  70297813  0.6344  Will Meta be forced to sell Instagram or WhatsApp in 2025?
+  66110169  0.6349  Will Apple be the largest company in the world by market cap on January 31?
+  69732150  0.6350  Will Apple be the largest company in the world by market cap on April 30?
+  78938367  0.6351  Will Alphabet be the largest company in the world by market cap on March 31?
+  75698859  0.6354  Will Apple be the largest company in the world by market cap on September 30?
+  78938362  0.6355  Will Apple be the largest company in the world by market cap on March 31?
+  68454752  0.6355  Will Apple be the largest company in the world by market cap on March 31?
+  78715341  0.6357  Will GoWish - Your Digital Wishlist be #1 Free App in the US Apple App Store on 
+  74234052  0.6357  Will Tesla launch a driverless Robotaxi service by June 30, 2026?
+  77131820  0.6359  Will Google be #1 Free App in the US Apple App Store on October 10?
+  66110390  0.6362  Will Alphabet be the largest company in the world by market cap on December 31?
+  78938526  0.6362  Will Alphabet be the largest company in the world by market cap on December 31?
+  77513504  0.6372  Will NVIDIA be the largest company in the world by market cap on November 30?
+  72042083  0.6377  Will NVIDIA be the largest company in the world by market cap on July 31?
+  67214587  0.6378  Will Apple be the largest company in the world by market cap on February 7?
+  67882949  0.6381  Will Apple launch a MacBook on February 19?
+  75698892  0.6382  Will Amazon be the second largest company in the world by market cap on Septembe
+  77504890  0.6385  Will Sora by OpenAI be #1 Free App in the US Apple App Store on October 17?
+  78596637  0.6386  Will Patrick Fishburn win the World Wide Technology Championship?
+  78373123  0.6386  Will Amazon reach $248 in November?
+  78415658  0.6387  Will Sora by OpenAI be #1 Free App in the US Apple App Store on November 7?
+  75362634  0.6388  Will anyone say "Omniverse" during the Q2 2025 Nvidia earnings call?
+  23716861  0.6393  NFT marketplaces: Will OpenSea or LooksRare have higher 30d volume on January 31
+  52214763  0.6395  Will Apple be the largest company in the world on January 31?
+  78076051  0.6400  Will Amazon say "Sponsored Products" during earnings call?
+  77670015  0.6401  Will Elon Musk be the #1 searched person on Google this year?
+  78596582  0.6401  Will Mackenzie Hughes win the World Wide Technology Championship?
+  74919955  0.6402  Will Microsoft have the top AI model on September 30?
+  76301026  0.6402  Will Microsoft have the top AI model on September 30?
+  78546373  0.6402  Will Google (GOOGL) finish week of November 10 above $300?
+  74235616  0.6403  Will anyone say "Supply Chain" during the Q2 2025 Amazon earnings call?
+  75773387  0.6404  Will anyone say "Apple" 50+ times during Apple launch event on September 9?
+  77815596  0.6406  Will Google be #1 Free App in the US Apple App Store on October 24?
+  78076053  0.6407  Will Amazon say "Amazon Bedrock" during earnings call?
+  64570483  0.6407  Will Apple be the largest company in the world by market cap on December 31?
+  78938521  0.6407  Will Apple be the largest company in the world by market cap on December 31?
+  66110352  0.6407  Will Apple be the largest company in the world by market cap on December 31?
+  78596556  0.6408  Will Austin Eckroat win the World Wide Technology Championship?
+  77513749  0.6408  Will Alphabet be the largest company in the world by market cap on June 30?
+  57766379  0.6409  Apple x OpenAI partnership announced in WWDC 2024?
+  78373121  0.6412  Will Google reach $335 in November?
+  73424348  0.6413  Will Google be the largest company in the world by market cap on August 31?
+  77513744  0.6415  Will Apple be the largest company in the world by market cap on June 30?
+  72041994  0.6415  Will Apple be the largest company in the world by market cap on June 30?
+  70911188  0.6416  Will Apple be the largest company in the world by market cap on May 31?
+  78373124  0.6416  Will Google reach $300 in November?
+  77513524  0.6419  Will Tesla be the largest company in the world by market cap on November 30?
+  58005742  0.6422  NVIDIA largest company before July?
+  77513519  0.6423  Will Alphabet be the largest company in the world by market cap on November 30?
+  58163783  0.6423  Nvidia largest company on June 21?
+  78596632  0.6423  Will Patrick Rodgers win the World Wide Technology Championship?
+  58163807  0.6426  Apple largest company on June 21?
+  78596546  0.6431  Will Matt Wallace win the World Wide Technology Championship?
+  77633506  0.6434  Will Amazon be the second-largest company in the world by market cap on December
+  75773389  0.6437  Will anyone say "Steve Jobs" during Apple launch event on September 9?
+  78944878  0.6443  Will Google be #1 Free App in the US Apple App Store on November 21?
+  67219638  0.6445  Will Apple run an Ad during Super Bowl LIX?
+  75362636  0.6447  Will anyone say "Cosmos" during the Q2 2025 Nvidia earnings call?
+  68482648  0.6448  Will Trump launch a metaverse before July?
+  78596561  0.6448  Will Matt Kuchar win the World Wide Technology Championship?
+  77633401  0.6452  Will Amazon be the second-largest company in the world by market cap on November
+  75773388  0.6453  Will anyone say "M5" during Apple launch event on September 9?
+  68455007  0.6454  Will Google be the largest company in the world by market cap on March 31?
+  74234080  0.6457  Tesla launches unsupervised full self driving (FSD) by October 31?
+  68455014  0.6457  Will Microsoft be the largest company in the world by market cap on March 31?
+  78938357  0.6457  Will Microsoft be the largest company in the world by market cap on March 31?
+  66110156  0.6458  Will Microsoft be the largest company in the world by market cap on January 31?
+  72126481  0.6461  Tesla launches unsupervised full self driving (FSD) by June 30?
+  74234081  0.6461  Tesla launches unsupervised full self driving (FSD) by June 30?
+  78116732  0.6463  Will BigFuture School be #1 Free App in the US Apple App Store on October 31?
+  72126480  0.6464  Tesla launches unsupervised full self driving (FSD) by December 31?
+  73424327  0.6466  Will Microsoft be the largest company in the world by market cap on August 31?
+  72042089  0.6471  Will Apple be the largest company in the world by market cap on July 31?
+  75698851  0.6474  Will Microsoft be the largest company in the world by market cap on September 30
+  27137190  0.6477  Will Twitter announce a Musk acquisition by June 1, 2022?
+  78596445  0.6477  Will Ben Griffin win the World Wide Technology Championship?
+  78076022  0.6477  Will Meta say "VR / Virtual Reality" during earnings call?
+  77815606  0.6480  Will Amazon Prime Video be #1 Free App in the US Apple App Store on October 24?
+  76366053  0.6481  Anysphere (Cursor) IPO in 2025?
+  57499743  0.6483  NVIDIA largest company before June 15?
+  77504905  0.6484  Will Google be #1 Free App in the US Apple App Store on October 17?
+  67214573  0.6485  Will Microsoft be the largest company in the world by market cap on February 7?
+  69732181  0.6485  Will Microsoft be the largest company in the world by market cap on April 30?
+  70297809  0.6486  Will Meta announce WhatsApp sale in 2025?
+  69732191  0.6486  Will Google be the largest company in the world by market cap on April 30?
+  77513514  0.6489  Will Apple be the largest company in the world by market cap on November 30?
+  66110328  0.6490  Will Microsoft be the largest company in the world by market cap on December 31?
+  64570474  0.6490  Will Microsoft be the largest company in the world by market cap on December 31?
+  78938516  0.6490  Will Microsoft be the largest company in the world by market cap on December 31?
+  75698868  0.6493  Will Google be the largest company in the world by market cap on September 30?
+  78076052  0.6494  Will Amazon say "Project Kuiper" during earnings call?
+  78596602  0.6499  Will Steven Fisk win the World Wide Technology Championship?
+  78944903  0.6499  Will Temu: Shop Like a Billionaire be #1 Free App in the US Apple App Store on N
+  75773387  0.6502  Will anyone say "Revolutionary" during Apple launch event on September 9?
+  75773386  0.6502  Will anyone say "China" during Apple launch event on September 9?
+  66975524  0.6508  Will Meta buy TikTok?
+  70911254  0.6511  Will Google be the largest company in the world by market cap on May 31?
+  77513509  0.6515  Will Microsoft be the largest company in the world by market cap on November 30?
+  78944851  0.6516  Will BigFuture School be #1 Free App in the US Apple App Store on November 21?
+  72042101  0.6521  Will Google be the largest company in the world by market cap on July 31?
+  53527614  0.6524  Will Google or NVIDIA be worth more on March 1?
+  52214795  0.6527  Will Alphabet (Google) be the largest company in the world on January 31?
+  75362634  0.6532  Will anyone say "Robotic" during the Q2 2025 Nvidia earnings call?
+  76099190  0.6532  Will anyone say "Cloud guidance" during Oracle's 1st Quarter Fiscal Year 2026 Ea
+  78715331  0.6532  Will Amazon Prime Video be #1 Free App in the US Apple App Store on November 14?
+  72042006  0.6533  Will Google be the largest company in the world by market cap on June 30?
+  56930963  0.6537  Apple + OpenAI deal announced by Friday?
+  78415688  0.6538  Will Google be #1 Free App in the US Apple App Store on November 7?
+  65124145  0.6538  Roaring Kitty tweets company name by Friday?
+  74235615  0.6540  Will anyone say "Alexa Plus" during the Q2 2025 Amazon earnings call?
+  66975635  0.6540  Will Amazon buy TikTok?
+  52214768  0.6541  Will Microsoft be the largest company in the world on January 31?
+  78715326  0.6544  Will Google be #1 Free App in the US Apple App Store on November 14?
+  70911237  0.6549  Will Microsoft be the largest company in the world by market cap on May 31?
+  78715301  0.6552  Will BigFuture School be #1 Free App in the US Apple App Store on November 14?
+  78415663  0.6553  Will BigFuture School be #1 Free App in the US Apple App Store on November 7?
+  72041982  0.6555  Will Microsoft be the largest company in the world by market cap on June 30?
+  75773388  0.6559  Will anyone say "Million / Billion / Trillion" 7+ times during Apple launch even
+  76505179  0.6580  Will Meta acquire TikTok?
+  74235482  0.6594  Will anyone say "Cloud" during the Q4 2025 Microsoft earnings call?
+  73424343  0.6607  Will Amazon be the largest company in the world by market cap on August 31?
+  78582359  0.6611  Will MetaMask launch a token by September 30, 2026?
+  72042077  0.6620  Will Microsoft be the largest company in the world by market cap on July 31?
+  75698863  0.6626  Will Amazon be the largest company in the world by market cap on September 30?
+  76639770  0.6630  Will MetaMask launch a token in 2025?
+  67387604  0.6631  Will Amazon run an Ad during Super Bowl LIX?
+  76505179  0.6633  Will Amazon acquire TikTok?
+  78938382  0.6636  Will Amazon be the largest company in the world by market cap on March 31?
+  68455025  0.6636  Will Amazon be the largest company in the world by market cap on March 31?
+  78076050  0.6639  Will Amazon say "Robotics" during earnings call?
+  74235481  0.6644  Will anyone say "OpenAI" during the Q4 2025 Microsoft earnings call?
+  74235616  0.6659  Will anyone say "Project Kuiper" during the Q2 2025 Amazon earnings call?
+  69732161  0.6674  Will Amazon be the largest company in the world by market cap on April 30?
+  66110430  0.6678  Will Amazon be the largest company in the world by market cap on December 31?
+  78938541  0.6678  Will Amazon be the largest company in the world by market cap on December 31?
+  58163792  0.6688  Microsoft largest company on June 21?
+  71832027  0.6689  Will OpenAI launch a new consumer hardware product by March 31, 2026?
+  77513764  0.6700  Will Amazon be the largest company in the world by market cap on June 30?
+  72042000  0.6700  Will Amazon be the largest company in the world by market cap on June 30?
+  58403468  0.6704  Nvidia largest company next Friday?
+  75773384  0.6711  Will anyone say "Next Generation" during Apple launch event on September 9?
+  78939163  0.6711  Will OpenAI launch a new consumer hardware product by December 31, 2026?
+  23602963  0.6717  Will MetaMask launch a token by June 1st, 2022?
+  70911204  0.6717  Will Amazon be the largest company in the world by market cap on May 31?
+  77513534  0.6724  Will Amazon be the largest company in the world by market cap on November 30?
+  78070452  0.6734  Will the DeepSeek R1 launch be the #1 searched news on Google this year?
+  73850474  0.6741  Will Trump say "Amazon" during the Energy and Innovation Summit on July 15?
+  72042095  0.6744  Will Amazon be the largest company in the world by market cap on July 31?
+  51870246  0.6789  AI on Amazon speaker by June?
+  75773390  0.6845  Will anyone say or "Artificial Intelligence" during Apple launch event on Septem
+  74235618  0.6864  Will anyone say "Robotics" during the Q2 2025 Amazon earnings call?

@@ -1,0 +1,182 @@
+# Society - Society_Social_Media
+# count=179, avg_conf=0.5976
+====================================================================================================
+  75182659  0.5101  Will Taylor Swift's appearance on New Heights get between 10 and 20 million view
+  75182664  0.5103  Will Taylor Swift's appearance on New Heights get between 20 and 30 million view
+  79031630  0.5266  Will VOY A LLeVARTE PA PR by Bad Bunny be the 3rd most streamed song globally on
+  79031489  0.5275  Will Don’t Say You Love Me by Jin be the 2nd most streamed song globally on Spot
+  79031635  0.5330  Will Don’t Say You Love Me by Jin be the 3rd most streamed song globally on Spot
+  41647699  0.5334  Will the Drake AI song still be on Spotify on Friday?
+  79031473  0.5354  Will NUEVAYoL by Bad Bunny be the 2nd most streamed song globally on Spotify for
+  79031620  0.5407  Will NUEVAYoL by Bad Bunny be the 3rd most streamed song globally on Spotify for
+  66424230  0.5413  Less than 26m people watch Trump inauguration?
+  79031750  0.5463  Will back to friends by sombr be the #1 song on Spotify this week?
+  78895808  0.5526  Will The Weeknd be the second most streamed Spotify artist for 2025?
+  75130158  0.5542  Will Elon Musk change his X profile picture by August 31?
+  57702681  0.5554  Will Roaring Kitty tweet on Monday?
+  66788582  0.5562  TikTok removed from App Store by Monday?
+  56930923  0.5572  Will Roaring Kitty tweet between 50 and 74 times?
+  41651079  0.5599  Will the Drake AI song still be available on Youtube on Friday?
+  56930910  0.5601  Will Roaring Kitty tweet between 25 and 49 times?
+  78896001  0.5609  Will The Weeknd be the third most streamed Spotify artist for 2025?
+  56926293  0.5616  Will Roaring Kitty tweet on Tuesday?
+  66908897  0.5625  TikTok on the App Store again by Monday?
+  68485826  0.5660  New Epstein names released by Friday?
+  77379023  0.5685  Will “The Fate of Ophelia” have 1.5 Million Likes on Friday at Noon?
+  67882889  0.5689  Will Ye tweet again by next Friday?
+  56930940  0.5697  Will Roaring Kitty tweet between 75 and 99 times?
+  68364824  0.5700  Will Kanye tweet again by Friday?
+  66975649  0.5713  Will Bobby Kotick buy TikTok?
+  71429000  0.5714  Will the new Pope tweet from his personal account this month?
+  59680586  0.5716  Will Ryan Selkis tweet Jul 23 - Aug 31?
+  66830188  0.5716  Will Kevin O'Leary buy TikTok?
+  66775868  0.5722  Will Vivek Ramaswamy tweet again in January?
+  11319030  0.5726  How many more tweets will be on the @WHCOS account on March 4, 2021?
+  67027913  0.5728  Will TikTok be banned again before May?
+  67924985  0.5736  Will Donald Trump post 100-109 times on Truth Social from Feb 14-21?
+  67026831  0.5740  TikTok on App Store again before March?
+  56930902  0.5747  Will Roaring Kitty tweet less than 25 times?
+  66814986  0.5753  TikTok removed from App Store in January?
+  67925006  0.5755  Will Donald Trump post 120-129 times on Truth Social from Feb 14-21?
+  12664907  0.5761  How many more tweets will be on the @laurenboebert account on April 6, 2021?
+  56248401  0.5767  Drake diss track removed from Insta by Saturday?
+  74315724  0.5775  Will Roaring Kitty tweet again by December 31?
+  67925034  0.5776  Will Donald Trump post 140-149 times on Truth Social from Feb 14-21?
+  60522639  0.5776  Will Elon blame a foreign actor for Twitter crash?
+  76493101  0.5778  TikTok removed from App Store by September 30?
+  57080534  0.5783  Justin Bieber unfollows Diddy on Instagram by Sunday night?
+  67924939  0.5794  Will Donald Trump post 80-89 times on Truth Social from Feb 14-21?
+  10403355  0.5799  How many more tweets will be on the @MCuban account on February 10, 2021?
+  11648141  0.5801  How many more tweets will be on the @WHCOS account on March 12, 2021?
+  66975042  0.5803  TikTok on App Store again before February?
+  24115646  0.5807  Will Trump’s Truth Social launch on the iOS app store by March 31st?
+  34222656  0.5809  Will @kanyewest tweet again before November?
+  68337894  0.5813  Will SBF tweet again by Friday?
+  66908880  0.5821  Will TikTok be on the App Store by Friday?
+  11027938  0.5825  How many more tweets will be on the @SouljaBoy account on February 25, 2021?
+  67925046  0.5831  Will Donald Trump post 150-159 times on Truth Social from Feb 14-21?
+  70427695  0.5833  Will TikTok be banned before July?
+  75691527  0.5834  Taylor Swift's wedding post most-liked Instagram by August 31?
+  40685783  0.5835  Will Tiktok be banned in the US by May 31?
+  67924970  0.5838  Will Donald Trump post 90-99 times on Truth Social from Feb 14-21?
+  65125036  0.5841  Will Roaring Kitty tweet again today?
+  66652854  0.5843  @idrawline unbanned before February?
+  25098403  0.5854  Will @kanyewest tweet again by July 1, 2022?
+  66975656  0.5856  Will Frank McCourt buy TikTok?
+  12055322  0.5870  How many more tweets will be on the @mtgreenee account on March 22, 2021?
+  10694512  0.5880  How many more tweets will be on the @MCuban account on February 17, 2021?
+  45269025  0.5888  Will Twitter announce bankruptcy in 2023?
+  43097679  0.5888  Will DeSantis say "Trans" and/or "Transgender" during his Twitter Space?
+  60910768  0.5889  Will CZ tweet by Friday?
+  36187618  0.5905  Will Twitter be removed from the Apple app store by EOY?
+  67649769  0.5924  Will Kanye tweet 200 or more times on February 7?
+  78717458  0.5926  Will Elon Musk post 0-19 tweets from November 7 to November 14, 2025?
+  76565751  0.5928  Will Elon Musk post 10-19 tweets from September 18 to September 19, 2025?
+  12371091  0.5929  How many more tweets will be on the @mtgreenee account on March 30, 2021?
+  77072180  0.5948  Will Elon Musk post 0-19 tweets from October 3 to October 10, 2025?
+  76788819  0.5950  Will Elon Musk post 20-39 tweets from September 26 to October 3, 2025?
+  76829413  0.5951  Will Elon Musk post 20-39 tweets in October 2025?
+  76404787  0.5954  Will Elon Musk post 20-29 tweets on September 14, 2025?
+  78717607  0.5958  Will Elon Musk post 20-39 tweets in November 2025?
+  66975556  0.5963  Will Oracle buy TikTok?
+  76404783  0.5968  Will Elon Musk post 0-19 tweets on September 14, 2025?
+  51599756  0.5971  TikTok banned in the US by June 30?
+  66975583  0.5976  Will Rumble buy TikTok?
+  78717648  0.5978  Will Elon Musk post 180-199 tweets in November 2025?
+  76829453  0.5981  Will Elon Musk post 180-199 tweets in October 2025?
+  68172348  0.5982  Will Kanye tweet 200-399 times February 20-28?
+  76788852  0.5984  Will Elon Musk post 180-199 tweets from September 26 to October 3, 2025?
+  39777044  0.5984  Will @elonmusk have 23,391-23,410 tweets on March 6?
+  75371746  0.5989  Will Elon Musk tweet more August 19 than day before?
+  76788814  0.5989  Will Elon Musk post 0-19 tweets from September 26 to October 3, 2025?
+  78717602  0.5990  Will Elon Musk post 0-19 tweets in November 2025?
+  68172333  0.5991  Will Kanye tweet 100-199 times February 20-28?
+  76829408  0.5991  Will Elon Musk post 0-19 tweets in October 2025?
+  76505448  0.5991  Will Elon Musk post 20-39 tweets from September 19 to September 26, 2025?
+  78717508  0.5992  Will Elon Musk post 200-219 tweets from November 7 to November 14, 2025?
+  76565756  0.5997  Will Elon Musk post 20-29 tweets from September 18 to September 19, 2025?
+  78259659  0.6005  Will Elon Musk post 200-219 tweets from October 31 to November 7, 2025?
+  78717658  0.6009  Will Elon Musk post 220-239 tweets in November 2025?
+  78866273  0.6011  Will Elon Musk post 200-219 tweets from November 14 to November 21, 2025?
+  76505486  0.6014  Will Elon Musk post 180-199 tweets from September 19 to September 26, 2025?
+  78086818  0.6016  Will Elon Musk post 20-39 tweets in December 2025?
+  39777056  0.6016  Will @elonmusk have 23,411-23,430 tweets on March 6?
+  77234794  0.6020  Will Elon Musk post 200-219 tweets from October 7 to October 14, 2025?
+  77072228  0.6021  Will Elon Musk post 200-219 tweets from October 3 to October 10, 2025?
+  76788860  0.6021  Will Elon Musk post 220-239 tweets from September 26 to October 3, 2025?
+  76950525  0.6023  Will Elon Musk post 200-219 tweets from September 30 to October 7, 2025?
+  79039070  0.6026  Will Elon Musk post 200-219 tweets from November 18 to November 25, 2025?
+  65158379  0.6027  Will Roaring Kitty tweet today?
+  57761589  0.6027  Will Roaring Kitty tweet today?
+  66736279  0.6028  Will Trump save TikTok in first week?
+  76667008  0.6033  Will Elon Musk post 20-39 tweets from September 23 to September 30, 2025?
+  76109831  0.6034  Will Elon Musk post 200-219 tweets from September 9 to September 16, 2025?
+  78086858  0.6041  Will Elon Musk post 180-199 tweets in December 2025?
+  76505443  0.6042  Will Elon Musk post 0-19 tweets from September 19 to September 26, 2025?
+  39777068  0.6045  Will @elonmusk have 23,431-23,450 tweets on March 6?
+  76505495  0.6050  Will Elon Musk post 220-239 tweets from September 19 to September 26, 2025?
+  76788856  0.6055  Will Elon Musk post 200-219 tweets from September 26 to October 3, 2025?
+  78634445  0.6056  Will TikTok be banned by March 31?
+  38869745  0.6056  Will @elonmusk have more than 22,726 tweets on February 10?
+  39777033  0.6056  Will @elonmusk have 23,371-23,390 tweets on March 6?
+  76667047  0.6058  Will Elon Musk post 180-199 tweets from September 23 to September 30, 2025?
+  77957332  0.6058  Will Elon Musk post 200-219 tweets from October 24 to October 31, 2025?
+  69820292  0.6066  Will AppLovin buy TikTok?
+  12989028  0.6071  How many more tweets will be on the @ElonMusk account on April 14, 2021?
+  78086868  0.6072  Will Elon Musk post 220-239 tweets in December 2025?
+  77654939  0.6073  Will Elon Musk post 200-219 tweets from October 17 to October 24, 2025?
+  76667004  0.6074  Will Elon Musk post 0-19 tweets from September 23 to September 30, 2025?
+  76829458  0.6074  Will Elon Musk post 200-219 tweets in October 2025?
+  10107400  0.6076  How many more tweets will be on the @ElonMusk account on February 3, 2021?
+  78717653  0.6076  Will Elon Musk post 200-219 tweets in November 2025?
+  76231657  0.6077  Will Elon Musk post 200-219 tweets from September 12 to September 19, 2025?
+  76667056  0.6083  Will Elon Musk post 220-239 tweets from September 23 to September 30, 2025?
+  75371746  0.6085  Will Elon Musk tweet more August 20 than day before?
+  76505491  0.6088  Will Elon Musk post 200-219 tweets from September 19 to September 26, 2025?
+  78086848  0.6096  Will Elon Musk post 140-159 tweets in December 2025?
+  76384677  0.6096  Will Elon Musk post 200-219 tweets from September 16 to September 23, 2025?
+  66788621  0.6096  Will Trump say "TikTok" during victory rally?
+  77676093  0.6101  Will anyone say "TikTok" during South Park e6 s27?
+  74370174  0.6106  Will TikTok be banned in 2025?
+  76505180  0.6107  Will AppLovin acquire TikTok?
+  77942024  0.6116  Over 20M humans verified on World Network by December 31?
+  76667052  0.6128  Will Elon Musk post 200-219 tweets from September 23 to September 30, 2025?
+  78086873  0.6133  Will Elon Musk post 240-259 tweets in December 2025?
+  78086863  0.6134  Will Elon Musk post 200-219 tweets in December 2025?
+  66539028  0.6143  Will Trump save TikTok in first 100 days?
+  70427659  0.6156  TikTok sale announced in 2025?
+  39777022  0.6162  Will @elonmusk have 23,370 or fewer tweets on March 6?
+  35652660  0.6164  Will SBF's tweet storm be more than 22 tweets?
+  65124257  0.6169  Roaring Kitty posts on Reddit today?
+  56207636  0.6171  TikTok banned in the US in 2024?
+  68254687  0.6174  Did Kanye sell his twitter account?
+  55669187  0.6182  VanEck tweet "retardio" in April?
+  61954119  0.6198  TikTok banned in the US before May 2025?
+  21070657  0.6211  What will the outcome of Elon Musk’s November 6th Twitter Poll be?
+  74549753  0.6335  Elon Musk tweets 25+ times Tuesday?
+  74970725  0.6345  Elon Musk tweets 35+ times Monday?
+  50065939  0.6346  Tiktok banned in the US in 2023?
+  56536981  0.6354  @friendtech 3+ new posts by midnight?
+  12456075  0.6362  Will Donald Trump launch a new social media platform by June 15, 2021?
+  44649030  0.6373  Will unverified Twitter users be able to see more than 1k posts per day by July 
+  74970724  0.6378  Elon Musk tweets 35+ times Tuesday?
+  74845436  0.6404  Elon Musk tweets 25+ times Wednesday?
+  74549480  0.6404  Elon Musk tweets 25+ times Wednesday?
+  57668843  0.6410  Trump’s first TikTok >50M views by Sunday night?
+  74845443  0.6410  Elon Musk tweets 25+ times Sunday?
+  66117275  0.6428  TikTok banned in 2025?
+  74845443  0.6440  Elon Musk tweets 25+ times Thursday?
+  74549734  0.6440  Elon Musk tweets 25+ times Thursday?
+  74325450  0.6440  Elon Musk tweets 25+ times Thursday?
+  66975535  0.6456  Will X buy TikTok?
+  57730465  0.6517  Trump posts another TikTok by Friday?
+  74845442  0.6527  Elon Musk tweets 25+ times Saturday?
+  57668521  0.6530  Trump’s first TikTok >10M views by Sunday night?
+  57841194  0.6544  Trump’s first TikTok >115M views by Sunday?
+  57669045  0.6565  Trump’s first TikTok >25M views by Sunday night?
+  58084579  0.6599  Trump + Logan Paul TikTok >100M views by Friday?
+  74845442  0.6618  Elon Musk tweets 25+ times Friday?
+  57730768  0.6664  Trump’s first TikTok >100M views by Friday?
+  59717310  0.6686  Trump’s latest TikTok >30m views by Friday?
+  76505178  0.6764  Will Elon Musk / X (Twitter) acquire TikTok?
+  57729705  0.6950  Trump 10M TikTok followers by Friday?
