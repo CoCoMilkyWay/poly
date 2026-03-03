@@ -49,7 +49,6 @@ private:
 
   struct ConditionSeed {
     std::string condition_blob;
-    std::string question_blob;
     std::string condition_hex_lower;
     int64_t first_seen_block = 0;
   };
@@ -100,7 +99,7 @@ private:
   void ensure_cursor_floor();
 
   SeedScanBatch load_seed_scan_batch(int64_t start_block, int64_t head_block, size_t max_conditions) const;
-  void persist_results_in_txn(duckdb::Appender &ap, const std::vector<FetchResult> &rows, int64_t now_ms);
+  void persist_results_in_txn(duckdb::Appender &ap, const std::vector<FetchResult> &rows);
   int64_t get_scan_cursor();
   void set_scan_cursor_in_txn(duckdb::Connection &conn, int64_t block);
 

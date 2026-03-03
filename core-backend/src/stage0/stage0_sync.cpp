@@ -285,8 +285,7 @@ void StageSync::do_sync() {
     exec_sql("BEGIN TRANSACTION");
     if (!rows.empty()) {
       duckdb::Appender appender(*conn, "pm_condition_static");
-      int64_t now_ms = unix_ms_now();
-      persist_results_in_txn(appender, rows, now_ms);
+      persist_results_in_txn(appender, rows);
       appender.Close();
     }
     if (!rows.empty() || !empty_rows.empty()) {
@@ -577,77 +576,19 @@ void StageSync::init_schema() {
       "INSERT OR IGNORE INTO pm_sync_cursor (id, last_block) VALUES (0, -1)");
   stage0_db_.execute(
       "CREATE TABLE IF NOT EXISTS pm_condition_static ("
-      "id BIGINT NOT NULL, "
       "condition_id BLOB PRIMARY KEY, "
-      "question_id BLOB NOT NULL, "
-      "market_slug TEXT NOT NULL, "
-      "market_question TEXT NOT NULL, "
-      "market_description TEXT, "
-      "market_start_date TIMESTAMP, "
-      "market_end_date TIMESTAMP, "
-      "market_created_at TIMESTAMP, "
-      "market_image TEXT, "
-      "market_icon TEXT, "
-      "market_submitted_by BLOB, "
-      "market_resolved_by BLOB, "
-      "market_restricted BOOLEAN, "
-      "market_neg_risk BOOLEAN NOT NULL, "
-      "market_neg_risk_request_id TEXT, "
-      "market_cyom BOOLEAN, "
-      "market_group_item_title TEXT, "
-      "market_group_item_threshold TEXT, "
-      "market_enable_order_book BOOLEAN, "
-      "market_order_min_size DOUBLE, "
-      "market_order_min_tick DOUBLE, "
-      "market_clear_book_on_start BOOLEAN, "
-      "market_manual_activation BOOLEAN, "
-      "market_automatically_active BOOLEAN, "
-      "market_uma_bond TEXT, "
-      "market_uma_reward TEXT, "
-      "market_rewards_min_size DOUBLE, "
-      "market_rewards_max_spread DOUBLE, "
-      "market_holding_rewards_enable BOOLEAN, "
-      "market_rfq_enabled BOOLEAN, "
-      "market_fees_enabled BOOLEAN, "
-      "market_fee_type TEXT, "
-      "market_series_color TEXT, "
-      "market_show_gmp_series BOOLEAN, "
-      "market_show_gmp_outcome BOOLEAN, "
-      "event_ids BIGINT[], "
-      "event_tickers TEXT[], "
-      "event_slugs TEXT[], "
-      "event_titles TEXT[], "
-      "event_descriptions TEXT[], "
-      "event_resolution_sources TEXT[], "
-      "event_start_dates TIMESTAMP[], "
-      "event_creation_dates TIMESTAMP[], "
-      "event_end_dates TIMESTAMP[], "
-      "event_created_ats TIMESTAMP[], "
-      "event_images TEXT[], "
-      "event_icons TEXT[], "
-      "event_start_times TIMESTAMP[], "
-      "event_gmp_chart_modes TEXT[], "
-      "event_enable_order_books BOOLEAN[], "
-      "event_neg_risks BOOLEAN[], "
-      "event_enable_neg_risks BOOLEAN[], "
-      "event_show_all_outcomes BOOLEAN[], "
-      "event_show_market_images BOOLEAN[], "
-      "event_auto_resolveds BOOLEAN[], "
-      "event_auto_actives BOOLEAN[], "
-      "event_cyoms BOOLEAN[], "
-      "event_requires_translations BOOLEAN[], "
-      "tag_ids BIGINT[], "
-      "tag_labels TEXT[], "
-      "tag_slugs TEXT[], "
-      "tag_created_ats TIMESTAMP[], "
-      "reward_ids BIGINT[], "
-      "reward_condition_ids BLOB[], "
-      "reward_asset_addresses BLOB[], "
-      "reward_start_dates DATE[], "
-      "reward_end_dates DATE[], "
-      "first_seen_block BIGINT NOT NULL, "
-      "first_seen_ms BIGINT NOT NULL"
+      "market_json JSON NOT NULL"
       ")");
+  {
+    auto conn = stage0_db_.create_connection();
+    auto schema_result = conn->Query("PRAGMA table_info('pm_condition_static')");
+    assert(schema_result && !schema_result->HasError());
+    assert(schema_result->RowCount() == 2);
+    std::string col0_name = schema_result->GetValue(1, 0).GetValue<std::string>();
+    std::string col1_name = schema_result->GetValue(1, 1).GetValue<std::string>();
+    assert(col0_name == "condition_id");
+    assert(col1_name == "market_json");
+  }
   stage0_db_.execute(
       "CREATE TABLE IF NOT EXISTS pm_condition_scan_class ("
       "condition_id BLOB PRIMARY KEY, "
@@ -655,12 +596,6 @@ void StageSync::init_schema() {
       "first_seen_block BIGINT NOT NULL, "
       "first_seen_ms BIGINT NOT NULL"
       ")");
-  stage0_db_.execute(
-      "INSERT OR IGNORE INTO pm_condition_scan_class "
-      "SELECT condition_id, "
-      "CASE WHEN market_neg_risk THEN 'poly_negrisk' ELSE 'poly_ctf' END, "
-      "first_seen_block, first_seen_ms "
-      "FROM pm_condition_static");
 }
 
 void StageSync::load_known_conditions() {
@@ -716,7 +651,7 @@ StageSync::SeedScanBatch StageSync::load_seed_scan_batch(int64_t start_block, in
   }
 
   std::string sql =
-      "SELECT block_number, condition_id, question_id "
+      "SELECT block_number, condition_id "
       "FROM " +
       range_sql +
       " WHERE block_number >= " + std::to_string(start_block) +
@@ -734,9 +669,7 @@ StageSync::SeedScanBatch StageSync::load_seed_scan_batch(int64_t start_block, in
   for (idx_t row = 0; row < result->RowCount(); ++row) {
     int64_t block_number = result->GetValue(0, row).GetValue<int64_t>();
     std::string cond_blob = result->GetValue(1, row).GetValueUnsafe<std::string>();
-    std::string question_blob = result->GetValue(2, row).GetValueUnsafe<std::string>();
     assert(cond_blob.size() == 32);
-    assert(question_blob.size() == 32);
 
     if (block_number != current_block) {
       current_block = block_number;
@@ -750,7 +683,6 @@ StageSync::SeedScanBatch StageSync::load_seed_scan_batch(int64_t start_block, in
     seen_in_block.insert(cond_hex);
     out.seeds_by_block[block_number].push_back(ConditionSeed{
         .condition_blob = std::move(cond_blob),
-        .question_blob = std::move(question_blob),
         .condition_hex_lower = std::move(cond_hex),
         .first_seen_block = block_number,
     });
