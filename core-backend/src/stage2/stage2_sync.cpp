@@ -19,10 +19,15 @@ StageSync::StageSync(Database &stage1_db, Database &stage2_db, int base_interval
 
 void StageSync::start(asio::io_context &ioc) {
   ioc_ = &ioc;
+  stop_requested_ = false;
+  builder_.clear_stop();
   schedule_sync(1);
 }
 
-void StageSync::stop() { stop_requested_ = true; }
+void StageSync::stop() {
+  stop_requested_ = true;
+  builder_.request_stop();
+}
 
 auto StageSync::status() const -> const StageSync::Status & { return sync_; }
 

@@ -540,7 +540,14 @@ void EventBuilder::commit_worker_loop() {
 
 int64_t EventBuilder::cursor() const { return committed_progress_.cursor; }
 
+void EventBuilder::request_stop() { stop_requested_ = true; }
+
+void EventBuilder::clear_stop() { stop_requested_ = false; }
+
 bool EventBuilder::build_chunk(int64_t target_block) {
+  if (stop_requested_) {
+    return false;
+  }
   {
     std::unique_lock<std::mutex> lock(commit_mu_);
     if (commit_result_.has_value()) {
@@ -589,6 +596,11 @@ bool EventBuilder::build_chunk(int64_t target_block) {
 
   progress_.phase = 1;
   phase1_update_mappings(chunk_start, chunk_end);
+  if (stop_requested_) {
+    progress_.running = false;
+    chunk_log_.finish();
+    return false;
+  }
 
   // 写入 log header（phase1 之后，此时 token_map 已更新）
   chunk_log_.write_header(token_map_.size(), fpmm_map_.size(), cond_map_.size());
@@ -599,9 +611,19 @@ bool EventBuilder::build_chunk(int64_t target_block) {
 
   progress_.phase = 2;
   phase2_build_semantic_index(chunk_start, chunk_end);
+  if (stop_requested_) {
+    progress_.running = false;
+    chunk_log_.finish();
+    return false;
+  }
 
   progress_.phase = 3;
   phase3_process_transfers(chunk_start, chunk_end);
+  if (stop_requested_) {
+    progress_.running = false;
+    chunk_log_.finish();
+    return false;
+  }
 
   // 验证 transfer 分类完整性
   chunk_xfer_stats_.verify();

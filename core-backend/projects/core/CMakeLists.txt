@@ -83,6 +83,8 @@ set(SOURCES
     ${SRC_DIR}/infra/rpc_transport_beast.cpp
     ${SRC_DIR}/infra/rpc_transport_curl.cpp
     ${SRC_DIR}/stage0/stage0_sync.cpp
+    ${SRC_DIR}/stage0/stage0_sync_http.cpp
+    ${SRC_DIR}/stage0/stage0_sync_persist.cpp
     ${SRC_DIR}/stage1/stage1_sync.cpp
     ${SRC_DIR}/stage1/event_decode.cpp
     ${SRC_DIR}/stage2/stage2_utils.cpp

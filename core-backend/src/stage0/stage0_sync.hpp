@@ -81,6 +81,7 @@ private:
     size_t failed_seeds = 0;
     size_t empty_seeds = 0;
     std::vector<FetchResult> rows;
+    std::vector<std::string> debug_logs;
     bool done = false;
   };
 

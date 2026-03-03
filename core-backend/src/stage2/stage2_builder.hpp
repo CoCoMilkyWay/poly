@@ -7,6 +7,7 @@
 #include "stage2_models.hpp"
 #include "stage2_types.hpp"
 #include "stage2_utils.hpp"
+#include <atomic>
 #include <condition_variable>
 #include <functional>
 #include <limits>
@@ -31,6 +32,8 @@ public:
   int64_t cursor() const;
 
   bool build_chunk(int64_t target_block);
+  void request_stop();
+  void clear_stop();
 
   const BuildProgress &progress() const;
   const BuildProgress &committed_progress() const;
@@ -138,6 +141,7 @@ private:
   std::optional<CommitPayload> commit_payload_;
   std::optional<BuildProgress> commit_result_;
   std::optional<CommitPayload> commit_reusable_payload_;
+  std::atomic<bool> stop_requested_{false};
 
   void update_xfer_tree(TransferClass cls) {
     chunk_xfer_stats_.add(cls);

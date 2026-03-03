@@ -99,6 +99,9 @@ inline std::string q_get_hex_lower(const duckdb::unique_ptr<duckdb::Materialized
 
 void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
   TraceN("s2/phase1_map");
+  if (stop_requested_) {
+    return;
+  }
   auto conn = stage1_db_.create_connection();
   std::unordered_set<uint32_t> tokenreg_cond_idxs_seen;
   auto get_u256_i32 = [&](const duckdb::unique_ptr<duckdb::MaterializedQueryResult> &tbl, int col, idx_t row) {
@@ -116,6 +119,9 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
         "condition_preparation", start, end);
     if (cp) {
       for (idx_t i = 0; i < cp->RowCount(); ++i) {
+        if (stop_requested_) {
+          return;
+        }
         std::string cid = q_get_hex(cp, 0, i);
         int cnt = get_u256_i32(cp, 1, i);
         std::string qid = q_get_hex_lower(cp, 2, i);
@@ -139,6 +145,9 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
         "condition_resolution", start, end);
     if (cr) {
       for (idx_t i = 0; i < cr->RowCount(); ++i) {
+        if (stop_requested_) {
+          return;
+        }
         std::string cid = q_get_hex(cr, 0, i);
         std::string lower = to_lower(cid);
         auto it = cond_map_.find(lower);
@@ -158,6 +167,9 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
     if (tm) {
       tokenreg_cond_idxs_seen.reserve(static_cast<size_t>(tm->RowCount()));
       for (idx_t i = 0; i < tm->RowCount(); ++i) {
+        if (stop_requested_) {
+          return;
+        }
         std::string token0 = q_get_hex(tm, 0, i);
         std::string token1 = q_get_hex(tm, 1, i);
         std::string cid = q_get_hex(tm, 2, i);
@@ -297,6 +309,9 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
       return (lhs < rhs) ? lhs : rhs;
     };
     for (idx_t i = 0; i < rows->RowCount(); ++i) {
+      if (stop_requested_) {
+        return;
+      }
       std::string lower_cid = q_get_hex_lower(rows, 0, i);
       std::string collateral = q_get_hex_lower(rows, 1, i);
       uint8_t inferred_count = infer_outcome_count(lower_cid, rows->GetValue(2, i));
@@ -327,6 +342,9 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
   {
     TraceN("process_fpmm_rows");
     for (const auto &row : pending_fpmm_rows) {
+      if (stop_requested_) {
+        return;
+      }
       process_fpmm_row(row);
     }
   }
@@ -339,6 +357,9 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
         start, end);
     if (nrq) {
       for (idx_t i = 0; i < nrq->RowCount(); ++i) {
+        if (stop_requested_) {
+          return;
+        }
         std::string market_id = q_get_hex_lower(nrq, 0, i);
         std::string question_id = q_get_hex_lower(nrq, 1, i);
 
@@ -377,6 +398,9 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
 
 void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
   TraceN("s2/phase2_idx");
+  if (stop_requested_) {
+    return;
+  }
   auto conn = stage1_db_.create_connection();
   auto build_tx_key = [&](const duckdb::unique_ptr<duckdb::MaterializedQueryResult> &tbl, idx_t row) {
     TxKey key;
@@ -432,6 +456,9 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
     target_map.reserve(target_map.size() + reserve_hint);
     tx_op_logs.reserve(tx_op_logs.size() + reserve_hint);
     for (idx_t i = 0; i < row_count; ++i) {
+      if (stop_requested_) {
+        return;
+      }
       TxKey key = build_tx_key(rows, i);
       auto info = build_info(rows, i);
       int64_t semantic_log = info.log_index;
@@ -483,6 +510,9 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
     if (redemption) {
       src_redemption_rows = static_cast<int64_t>(redemption->RowCount());
       for (idx_t i = 0; i < redemption->RowCount(); ++i) {
+        if (stop_requested_) {
+          return;
+        }
         TxKey key = build_tx_key(redemption, i);
         RedemptionInfo info;
         info.log_index = q_get_i64(redemption, 2, i);
@@ -508,6 +538,9 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
     if (convert) {
       src_convert_rows = static_cast<int64_t>(convert->RowCount());
       for (idx_t i = 0; i < convert->RowCount(); ++i) {
+        if (stop_requested_) {
+          return;
+        }
         std::string market_id = q_get_hex_lower(convert, 3, i);
         TxMarketKey key;
         key.block = q_get_i64(convert, 0, i);
@@ -545,6 +578,9 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
       tx_order_.reserve(tx_order_.size() + reserve_hint);
       tx_op_logs.reserve(tx_op_logs.size() + reserve_hint);
       for (idx_t i = 0; i < row_count; ++i) {
+        if (stop_requested_) {
+          return;
+        }
         int64_t block = q_get_i64(order, 0, i);
         auto tx_hash = hex_to_bytes32(q_get_hex(order, 1, i));
         int64_t log_index = q_get_i64(order, 2, i);
@@ -587,6 +623,9 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
     if (fpmm_trade) {
       src_fpmm_trade_rows = static_cast<int64_t>(fpmm_trade->RowCount());
       for (idx_t i = 0; i < fpmm_trade->RowCount(); ++i) {
+        if (stop_requested_) {
+          return;
+        }
         std::string fpmm_addr = q_get_hex_lower(fpmm_trade, 3, i);
         if (!is_known_fpmm(fpmm_addr)) {
           skipped_fpmm_trade_unknown_fpmm_rows++;
@@ -624,6 +663,9 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
     if (fpmm_funding) {
       src_fpmm_funding_rows = static_cast<int64_t>(fpmm_funding->RowCount());
       for (idx_t i = 0; i < fpmm_funding->RowCount(); ++i) {
+        if (stop_requested_) {
+          return;
+        }
         std::string fpmm_addr = q_get_hex_lower(fpmm_funding, 3, i);
         if (!is_known_fpmm(fpmm_addr)) {
           skipped_fpmm_funding_unknown_fpmm_rows++;
@@ -695,6 +737,9 @@ void EventBuilder::phase2_build_semantic_index(int64_t start, int64_t end) {
 
 void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
   TraceN("s2/phase3_xfer");
+  if (stop_requested_) {
+    return;
+  }
   auto conn = stage1_db_.create_connection();
   auto transfers = query_block_range(
       *conn, stage1_db_,
@@ -748,6 +793,9 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
   {
     TraceN("classify_transfer_rows");
     for (idx_t i = 0; i < transfers->RowCount(); ++i) {
+      if (stop_requested_) {
+        return;
+      }
       int64_t block = q_get_i64(transfers, 0, i);
       int64_t log_idx = q_get_i64(transfers, 2, i);
       stage2_assert(log_idx >= 0 && log_idx < SORT_KEY_SCALE,
