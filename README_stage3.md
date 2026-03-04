@@ -14,9 +14,9 @@
 | Convert                                                    | 是         | `cost -= cost_before * qty / pos_before; pos -= qty` | `qty * (popcount - 1) / popcount - cost_before * qty / pos_before` | 否              |
 | FPMMBuy                                                    | 是         | `pos += qty; cost += qty * px`                       | `0`                                                                | 是              |
 | FPMMSell                                                   | 是         | `cost -= cost_before * qty / pos_before; pos -= qty` | `qty * px - cost_before * qty / pos_before`                        | 是              |
-| FPMMLPAdd                                                  | 否(资金流) | 不改 token `pos/cost`(仅记录事件)                    | `0`                                                                | 否              |
-| FPMMLPRemove                                               | 否(资金流) | 不改 token `pos/cost`(仅记录事件)                    | `0`                                                                | 否              |
-| FPMMLPReturn                                               | 否(资金流) | 不改 token `pos/cost`(仅记录事件)                    | `0`                                                                | 否              |
+| FPMMLPAdd                                                  | 否(资金流) | 不改 token `pos/cost`(0->FPMM mint)                  | `0`                                                                | 否              |
+| FPMMLPRemove                                               | 是(LP取回) | `pos += qty; cost += qty * px`                       | `0`                                                                | 否              |
+| FPMMLPReturn                                               | 是(LP退回) | `pos += qty; cost += qty * px`                       | `0`                                                                | 否              |
 | TransferInNegRisk / TransferInOther / TransferInNonPoly    | 是(转入)   | `pos += qty; cost` 不变                              | `0`                                                                | 否              |
 | TransferOutNegRisk / TransferOutOther / TransferOutNonPoly | 是(转出)   | `cost -= cost_before * qty / pos_before; pos -= qty` | `0`                                                                | 否              |
 
@@ -63,11 +63,11 @@ stage3_sync_tick
 │  │  ├─ event_type 与 amount 方向匹配
 │  │  └─ 乘除使用 i128 中间值,回写前断言不溢出
 │  ├─ 3.2 路由
-│  │  ├─ Buy类: OrderBuy/FPMMBuy/Split*
+│  │  ├─ Buy类: OrderBuy/FPMMBuy/Split*/FPMMLPRemove/FPMMLPReturn
 │  │  ├─ Sell类: OrderSell/FPMMSell/Merge*/Redemption*/Convert
 │  │  ├─ TransferIn类: TransferIn*
 │  │  ├─ TransferOut类: TransferOut*
-│  │  └─ LP资金流: FPMMLPAdd/FPMMLPRemove/FPMMLPReturn(仅记录,不计入 realized)
+│  │  └─ LP添加: FPMMLPAdd(仅记录,不改pos)
 │  ├─ 3.3 应用规则
 │  │  ├─ 公共计算
 │  │  │  ├─ qty = abs(amount), px = price_1e6/1e6
@@ -84,7 +84,8 @@ stage3_sync_tick
 │  │  │  ├─ assert pos_before > 0 && pos_before >= qty
 │  │  │  ├─ cost_removed = cost_before * qty / pos_before
 │  │  │  └─ cost -= cost_removed; pos -= qty; realized_delta = 0
-│  │  └─ LP资金流: 不改 token pos/cost; realized_delta = 0(但写入事实行)
+│  │  ├─ FPMMLPRemove/Return: pos += qty; cost += qty*px; realized_delta = 0
+│  │  └─ FPMMLPAdd: 不改 token pos/cost; realized_delta = 0(仅记录事件)
 │  ├─ 3.4 更新 last_price (仅 Order/FPMM 交易)
 │  │  └─ 若 event_type ∈ {OrderBuy, OrderSell, FPMMBuy, FPMMSell} 且 price > 0:
 │  │       last_price[(cond_idx, token_idx)] = price

@@ -98,11 +98,17 @@ int64_t StageSync::apply_event_to_state(const EventRow &row, CondState &st) cons
       return 0;
     }
     case EventType::FPMMLPAdd:
-    case EventType::FPMMLPRemove:
-    case EventType::FPMMLPReturn:
+      // LP 添加流动性：0->FPMM mint，用户没收到 token，不改 pos
       assert(row.amount >= 0);
-      // LP资金流事件：只保留事实行,不修改 token 状态。
       return 0;
+    case EventType::FPMMLPRemove:
+    case EventType::FPMMLPReturn: {
+      // LP 移除/返还：FPMM->用户，用户获得 token，计入持仓
+      int64_t qty = buy_qty();
+      st.positions[i] += qty;
+      st.cost[i] += mul_div_1e6(qty, row.price);
+      return 0;
+    }
     case EventType::TransferInNegRisk:
     case EventType::TransferInOther:
     case EventType::TransferInNonPoly: {
