@@ -166,12 +166,15 @@ private:
     int32_t token_count = 0;
   };
 
+  // Internal state uses double for precision in intermediate calculations.
+  // Values are converted to int64_t only when writing to database.
+  // Double has 52-bit mantissa (~15 decimal digits), sufficient for all Polymarket amounts.
   struct CondState {
-    std::array<int64_t, MAX_OUTCOMES> positions{};
-    std::array<int64_t, MAX_OUTCOMES> cost{};
-    std::array<int64_t, MAX_OUTCOMES> last_price{};
-    int64_t realized_pnl = 0;
-    int64_t unrealized_pnl = 0;
+    std::array<double, MAX_OUTCOMES> positions{};
+    std::array<double, MAX_OUTCOMES> cost{};
+    std::array<double, MAX_OUTCOMES> last_price{};
+    double realized_pnl = 0.0;
+    double unrealized_pnl = 0.0;
     int64_t event_count = 0;
     int64_t last_sort_key = 0;
   };
@@ -213,14 +216,14 @@ private:
 
   static constexpr int64_t kStage3ChunkBlocks = 100000;
   static constexpr size_t kEtaWindowSize = 20;
+  static constexpr double kPosEpsilon = 1e-9;
   int base_interval_seconds_ = 0;
   static constexpr int64_t kCursorSentinel = std::numeric_limits<int32_t>::min();
 
   static std::string normalize_addr(const std::string &addr);
-  static int64_t mul_div_1e6(int64_t amount, int64_t price);
-  static int64_t add_i64_checked(int64_t a, int64_t b);
-  static int64_t sub_i64_checked(int64_t a, int64_t b);
   static bool is_usd_collateral(int32_t collateral);
+  static bool is_trade_event(EventType ty);
+  static double compute_unrealized_pnl(const CondState &st);
 
   void init_schema() const;
   void load_conditions();
@@ -231,10 +234,7 @@ private:
   void do_sync_tick();
   bool process_chunk_locked() const;
 
-  int64_t convert_payout_amount(const ConditionInfo &cond, int64_t qty) const;
-  static bool is_trade_event(EventType ty);
-  static int64_t compute_unrealized_pnl(const CondState &st);
-  int64_t apply_event_to_state(const InputEvent &row, CondState &st) const;
+  double apply_event_to_state(const InputEvent &row, CondState &st) const;
 
   std::vector<TimelineEvent> load_timeline_events(const std::string &addr_lower, int64_t max_sort_key) const;
   std::vector<TimelineEntry> build_timeline(const std::vector<TimelineEvent> &events) const;

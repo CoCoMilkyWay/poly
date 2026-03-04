@@ -328,11 +328,11 @@ phase3_process_transfers(chunk)
 │  │  └─ 未落类 -> Unclassified -> assert(false)
 │  ├─ emit_raw_event(用户22类全部写入,含NonPoly)
 │  │  ├─ amount 按用户视角定符号(流入+,流出-)
-│  │  ├─ price规则:
+│  │  ├─ price规则(使用 double 计算后 round() 转 int64):
 │  │  │  ├─ Split/Merge/FPMMLPAdd/FPMMLPRemove/FPMMLPReturn: USDC类coll -> 1e6/outcome_count,否则0
-│  │  │  ├─ OrderBuy/Sell: USDC类coll -> quote_amount*1e6/tokens,否则0
-│  │  │  ├─ FPMMBuy/Sell: USDC类coll -> collateral_amount*1e6/tokens,否则0
-│  │  │  ├─ Redemption: USDC类coll -> payout_numerator[token_idx],否则0
+│  │  │  ├─ OrderBuy/Sell: USDC类coll -> round(quote_amount*1e6/tokens),否则0
+│  │  │  ├─ FPMMBuy/Sell: USDC类coll -> round(collateral_amount*1e6/tokens),否则0
+│  │  │  ├─ Redemption: USDC类coll -> round(payout_numerator[token_idx]*1e6/sum(payout_numerators)),否则0
 │  │  │  └─ Convert/TransferIn/TransferOut: 0
 │  │  └─ 落库编码: cond_idx=UNKNOWN_COND_IDX 时写 -1；token_idx 保留 255
 │  └─ update_xfer_tree

@@ -64,7 +64,7 @@ stage3_sync_tick
 │  │  ├─ cond_idx >= 0: condition_meta 必须存在
 │  │  ├─ token_idx ∈ [0, outcome_count)
 │  │  ├─ event_type 与 amount 方向匹配
-│  │  └─ 乘除使用 i128 中间值,回写前断言不溢出
+│  │  └─ 内部使用 double 计算,写入 DB 时 round() 转 int64
 │  ├─ 3.2 路由
 │  │  ├─ Buy类: OrderBuy/FPMMBuy/Split*/FPMMLPRemove/FPMMLPReturn
 │  │  ├─ Sell类: OrderSell/FPMMSell/Merge*/Redemption*/Convert
@@ -163,12 +163,13 @@ struct ConditionMeta {
   int64 payout_numerators[8];
 }
 
-// 用户在某 condition 下的状态 (持久化)
+// 用户在某 condition 下的状态
+// 内部计算使用 double，持久化时 round() 转 int64
 struct TokenCondState {
-  int64 pos[8];          // 各 outcome 持仓
-  int64 cost[8];         // 各 outcome 成本
-  int64 last_price[8];   // 各 outcome 最近成交价
-  int64 realized_pnl;    // 该 condition 已实现 pnl
+  double pos[8];          // 各 outcome 持仓 (内部 double，DB int64)
+  double cost[8];         // 各 outcome 成本 (内部 double，DB int64)
+  double last_price[8];   // 各 outcome 最近成交价 (内部 double，DB int64)
+  double realized_pnl;    // 该 condition 已实现 pnl (内部 double，DB int64)
   int64 event_count;
   int64 last_sort_key;
 }

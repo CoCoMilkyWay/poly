@@ -1,6 +1,6 @@
 #include "stage2_builder.hpp"
 #include <algorithm>
-#include <limits>
+#include <cmath>
 #include <type_traits>
 
 namespace stage2 {
@@ -185,16 +185,16 @@ TransferClass EventBuilder::classify_and_emit(
     if (is_user_addr(addr))
       push_event(addr, evt);
   };
+  // Price calculation using double: price_1e6 = collateral_amount * 1e6 / token_amount
+  // Double has 52-bit mantissa (~15 decimal digits), sufficient for USDC amounts up to $9 trillion.
   auto calc_price_if_usdc_collateral = [&](int64_t collateral_amount, int64_t token_amount) -> int64_t {
     if (!is_usdc_collateral(collateral)) {
       return 0;
     }
     stage2_assert(collateral_amount >= 0, AssertLevel::L0, "Input", "CollateralAmountNonNegativeForPrice");
     stage2_assert(token_amount > 0, AssertLevel::L0, "Input", "TokenAmountPositiveForPrice");
-    __int128 scaled = static_cast<__int128>(collateral_amount) * static_cast<__int128>(1000000);
-    __int128 px = scaled / static_cast<__int128>(token_amount);
-    stage2_assert(px <= std::numeric_limits<int64_t>::max(), AssertLevel::L0, "Input", "PriceFitsI64");
-    return static_cast<int64_t>(px);
+    double px = static_cast<double>(collateral_amount) * 1e6 / static_cast<double>(token_amount);
+    return static_cast<int64_t>(std::round(px));
   };
   auto patch_collateral_from_semantic = [&](const std::string &semantic_collateral_addr) {
     if (coll != static_cast<uint8_t>(Collateral::Unknown)) {
@@ -951,13 +951,26 @@ TransferClass EventBuilder::classify_and_emit(
       if (known_token) {
         if (is_user_addr(from)) {
           auto &payouts = conditions_[cond_idx].payout_numerators;
-          int64_t payout_price = is_usdc_collateral(collateral)
-                                     ? ((token_idx < payouts.size() && payouts[token_idx] >= 0)
-                                            ? static_cast<int64_t>(
-                                                  static_cast<__int128>(payouts[token_idx]) /
-                                                  static_cast<__int128>(1000000000000LL))
-                                            : 1000000)
-                                     : 0;
+          // Convert redemption payout to price_1e6:
+          // payout_price = payout_numerator[token_idx] * 1e6 / payout_denominator,
+          // where payout_denominator is the sum of all payout numerators.
+          int64_t payout_price = 0;
+          if (is_usdc_collateral(collateral)) {
+            double payout_denominator = 0.0;
+            for (int64_t p : payouts) {
+              if (p > 0) {
+                payout_denominator += static_cast<double>(p);
+              }
+            }
+            if (token_idx < static_cast<int>(payouts.size()) &&
+                payouts[token_idx] >= 0 &&
+                payout_denominator > 0.0) {
+              payout_price = static_cast<int64_t>(std::llround(
+                  static_cast<double>(payouts[token_idx]) * 1e6 / payout_denominator));
+            } else {
+              payout_price = 1000000; // Default $1 if payout unknown
+            }
+          }
           emit_if_user(from, RawEvent{sort_key, cond_idx, EventType::Redemption, token_idx, coll, 0, -amount, payout_price});
         }
         return TransferClass::Redemption;

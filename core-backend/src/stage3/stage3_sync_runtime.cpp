@@ -1,5 +1,7 @@
 #include "misc/profiler.hpp"
 #include "stage3_sync.hpp"
+#include <cmath>
+
 namespace stage3 {
 
 void StageSync::start(asio::io_context &ioc) {
@@ -266,8 +268,9 @@ bool StageSync::process_chunk_locked() const {
     const_cast<StageSync *>(this)->load_conditions();
   }
 
-  std::unordered_map<std::string, int64_t> user_realized_cum;
-  std::unordered_map<std::string, int64_t> user_unrealized_cum;
+  // Use double for cumulative PnL tracking to match internal state
+  std::unordered_map<std::string, double> user_realized_cum;
+  std::unordered_map<std::string, double> user_unrealized_cum;
   std::unordered_map<std::string, int32_t> user_token_count;
   user_realized_cum.reserve(touched_users.size() + 1);
   user_unrealized_cum.reserve(touched_users.size() + 1);
@@ -294,15 +297,16 @@ bool StageSync::process_chunk_locked() const {
     assert(sum_r && !sum_r->HasError());
     for (idx_t i = 0; i < sum_r->RowCount(); ++i) {
       const std::string uh = sum_r->GetValue(0, i).GetValueUnsafe<std::string>();
-      user_realized_cum.emplace(uh, sum_r->GetValue(1, i).GetValue<int64_t>());
-      user_unrealized_cum.emplace(uh, sum_r->GetValue(2, i).GetValue<int64_t>());
+      // Convert int64 from database to double
+      user_realized_cum.emplace(uh, static_cast<double>(sum_r->GetValue(1, i).GetValue<int64_t>()));
+      user_unrealized_cum.emplace(uh, static_cast<double>(sum_r->GetValue(2, i).GetValue<int64_t>()));
     }
     for (const auto &uhex : touched_users) {
       if (!user_realized_cum.count(uhex)) {
-        user_realized_cum.emplace(uhex, 0);
+        user_realized_cum.emplace(uhex, 0.0);
       }
       if (!user_unrealized_cum.count(uhex)) {
-        user_unrealized_cum.emplace(uhex, 0);
+        user_unrealized_cum.emplace(uhex, 0.0);
       }
     }
 
@@ -363,32 +367,36 @@ bool StageSync::process_chunk_locked() const {
       auto it = states.find(key);
       assert(it != states.end());
       CondState &st = it->second;
+      // Convert int64 from database to double for internal calculations
       for (int j = 0; j < MAX_OUTCOMES; ++j) {
-        st.positions[j] = old->GetValue(2 + j, i).GetValue<int64_t>();
-        st.cost[j] = old->GetValue(10 + j, i).GetValue<int64_t>();
-        st.last_price[j] = old->GetValue(18 + j, i).GetValue<int64_t>();
+        st.positions[j] = static_cast<double>(old->GetValue(2 + j, i).GetValue<int64_t>());
+        st.cost[j] = static_cast<double>(old->GetValue(10 + j, i).GetValue<int64_t>());
+        st.last_price[j] = static_cast<double>(old->GetValue(18 + j, i).GetValue<int64_t>());
       }
-      st.realized_pnl = old->GetValue(26, i).GetValue<int64_t>();
+      st.realized_pnl = static_cast<double>(old->GetValue(26, i).GetValue<int64_t>());
       st.event_count = old->GetValue(27, i).GetValue<int64_t>();
       st.last_sort_key = old->GetValue(28, i).GetValue<int64_t>();
       st.unrealized_pnl = compute_unrealized_pnl(st);
     }
   }
 
+  auto round_i64 = [](double v) -> int64_t {
+    return static_cast<int64_t>(std::llround(v));
+  };
   std::vector<FactRow> fact_rows;
   fact_rows.reserve(rows.size());
   for (const auto &row : rows) {
-    int64_t realized_delta = 0;
+    double realized_delta = 0.0;
     if (row.cond_idx >= 0) {
       PairKey key{row.user_hex, row.cond_idx};
       auto it = states.find(key);
       assert(it != states.end());
-      int64_t before_cond_unrealized = it->second.unrealized_pnl;
+      double before_cond_unrealized = it->second.unrealized_pnl;
       int before_nonzero = 0;
       int after_nonzero = 0;
       const auto &cond = conditions_[static_cast<size_t>(row.cond_idx)];
       for (int j = 0; j < cond.outcome_count; ++j) {
-        if (it->second.positions[j] != 0) {
+        if (it->second.positions[j] > kPosEpsilon) {
           before_nonzero++;
         }
       }
@@ -396,7 +404,7 @@ bool StageSync::process_chunk_locked() const {
       it->second.unrealized_pnl = compute_unrealized_pnl(it->second);
       user_unrealized_cum[row.user_hex] += (it->second.unrealized_pnl - before_cond_unrealized);
       for (int j = 0; j < cond.outcome_count; ++j) {
-        if (it->second.positions[j] != 0) {
+        if (it->second.positions[j] > kPosEpsilon) {
           after_nonzero++;
         }
       }
@@ -404,30 +412,32 @@ bool StageSync::process_chunk_locked() const {
       it->second.event_count++;
       it->second.last_sort_key = row.sort_key;
     }
-    int64_t &realized_cum = user_realized_cum[row.user_hex];
-    int64_t &unrealized_cum = user_unrealized_cum[row.user_hex];
+    double &realized_cum = user_realized_cum[row.user_hex];
+    double &unrealized_cum = user_unrealized_cum[row.user_hex];
     realized_cum += realized_delta;
     int32_t token_count = user_token_count[row.user_hex];
+    // Convert double to int64 for storage (round to nearest)
     fact_rows.push_back({
         row.user_hex,
         row.sort_key,
         row.cond_idx,
         row.token_idx,
         row.event_type,
-        realized_delta,
-        realized_cum,
-        unrealized_cum,
+        round_i64(realized_delta),
+        round_i64(realized_cum),
+        round_i64(unrealized_cum),
         token_count,
     });
   }
   assert(fact_rows.size() == rows.size());
+  // Validate state after processing (allow small negative due to floating point)
   for (const auto &[key, st] : states) {
     assert(key.cond_idx >= 0);
     assert(static_cast<size_t>(key.cond_idx) < conditions_.size());
     const auto &cond = conditions_[static_cast<size_t>(key.cond_idx)];
     for (int j = 0; j < cond.outcome_count; ++j) {
-      assert(st.positions[j] >= 0);
-      assert(st.cost[j] >= 0);
+      assert(st.positions[j] >= -1e-6);
+      assert(st.cost[j] >= -1e-6);
     }
   }
 
@@ -454,16 +464,17 @@ bool StageSync::process_chunk_locked() const {
               reinterpret_cast<duckdb::const_data_ptr_t>(user_blob.data()),
               user_blob.size()));
           ap.Append(key.cond_idx);
+          // Convert double to int64 for database storage (round to nearest)
           for (int j = 0; j < MAX_OUTCOMES; ++j) {
-            ap.Append(st.positions[j]);
+            ap.Append(round_i64(st.positions[j]));
           }
           for (int j = 0; j < MAX_OUTCOMES; ++j) {
-            ap.Append(st.cost[j]);
+            ap.Append(round_i64(st.cost[j]));
           }
           for (int j = 0; j < MAX_OUTCOMES; ++j) {
-            ap.Append(st.last_price[j]);
+            ap.Append(round_i64(st.last_price[j]));
           }
-          ap.Append(st.realized_pnl);
+          ap.Append(round_i64(st.realized_pnl));
           ap.Append(st.event_count);
           ap.Append(st.last_sort_key);
           ap.EndRow();
