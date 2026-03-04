@@ -66,6 +66,67 @@
       background: #991b1b;
       color: #fca5a5;
     }
+
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-overlay.show {
+      display: flex;
+    }
+
+    .modal-box {
+      background: #1a1a1a;
+      border: 2px solid #dc2626;
+      border-radius: 8px;
+      padding: 24px;
+      max-width: 400px;
+      text-align: center;
+    }
+
+    .modal-box h3 {
+      color: #dc2626;
+      margin-bottom: 12px;
+      font-size: 1.3em;
+    }
+
+    .modal-box p {
+      color: #fca5a5;
+      margin-bottom: 20px;
+    }
+
+    .modal-box .btn-group {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    .modal-box .btn-cancel {
+      background: #333;
+      color: #fff;
+      border: none;
+      padding: 8px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .modal-box .btn-danger {
+      background: #dc2626;
+      color: #fff;
+      border: none;
+      padding: 8px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
   </style>
 </head>
 
@@ -80,6 +141,17 @@
     {% include 'components/stage1.html' %}
     {% include 'components/stage2.html' %}
     {% include 'components/stage3.html' %}
+  </div>
+
+  <div class="modal-overlay" id="retag-modal">
+    <div class="modal-box">
+      <h3>⚠️ 警告</h3>
+      <p>reTag 将会丢失所有 tagging 进度！</p>
+      <div class="btn-group">
+        <button class="btn-cancel" onclick="closeRetagModal()">取消</button>
+        <button class="btn-danger" onclick="confirmRetag()">确认 reTag</button>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -130,7 +202,16 @@
       }
     }
 
-    async function reTagStage0() {
+    function reTagStage0() {
+      document.getElementById("retag-modal").classList.add("show");
+    }
+
+    function closeRetagModal() {
+      document.getElementById("retag-modal").classList.remove("show");
+    }
+
+    async function confirmRetag() {
+      closeRetagModal();
       const btn = document.getElementById("retag-btn");
       btn.disabled = true;
       btn.textContent = "reTag中...";
