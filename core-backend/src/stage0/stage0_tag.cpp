@@ -299,48 +299,72 @@ public:
 
     auto shape_info = outputs[0].GetTensorTypeAndShapeInfo();
     auto out_shape = shape_info.GetShape();
-    // [batch_size, seq_len, hidden_dim]
-    assert(out_shape.size() == 3);
     assert(out_shape[0] == batch_size);
-    int64_t hidden_dim = out_shape[2];
 
     const float *data = outputs[0].GetTensorData<float>();
-
-    // Mean pooling + L2 normalization
     std::vector<std::vector<float>> result(static_cast<size_t>(batch_size));
-    for (size_t b = 0; b < static_cast<size_t>(batch_size); ++b) {
-      std::vector<float> pooled(static_cast<size_t>(hidden_dim), 0.0f);
-      float mask_sum = 0.0f;
 
-      for (size_t s = 0; s < static_cast<size_t>(seq_len); ++s) {
-        float mask = static_cast<float>(batch[b].attention_mask[s]);
-        mask_sum += mask;
-        size_t offset = (b * static_cast<size_t>(seq_len) + s) * static_cast<size_t>(hidden_dim);
+    // 兼容两种输出格式：
+    // [B, S, H] - 需要 mean pooling
+    // [B, H]    - 已经 pooled（某些导出模型）
+    if (out_shape.size() == 2) {
+      // [B, H] - 已经pooled，只需L2 normalize
+      int64_t hidden_dim = out_shape[1];
+      for (size_t b = 0; b < static_cast<size_t>(batch_size); ++b) {
+        std::vector<float> emb(static_cast<size_t>(hidden_dim));
+        const float *row = data + b * static_cast<size_t>(hidden_dim);
+        float norm = 0.0f;
         for (size_t h = 0; h < static_cast<size_t>(hidden_dim); ++h) {
-          pooled[h] += data[offset + h] * mask;
+          emb[h] = row[h];
+          norm += row[h] * row[h];
         }
-      }
-
-      // Divide by mask sum
-      if (mask_sum > 0.0f) {
-        for (auto &v : pooled) {
-          v /= mask_sum;
+        norm = std::sqrt(norm);
+        if (norm > 1e-12f) {
+          for (auto &v : emb) {
+            v /= norm;
+          }
         }
+        result[b] = std::move(emb);
       }
+    } else {
+      // [B, S, H] - 需要 mean pooling + L2 normalize
+      assert(out_shape.size() == 3);
+      int64_t hidden_dim = out_shape[2];
+      size_t seq_len_sz = static_cast<size_t>(seq_len);
+      size_t hidden_dim_sz = static_cast<size_t>(hidden_dim);
 
-      // L2 normalize
-      float norm = 0.0f;
-      for (auto v : pooled) {
-        norm += v * v;
-      }
-      norm = std::sqrt(norm);
-      if (norm > 1e-12f) {
-        for (auto &v : pooled) {
-          v /= norm;
+      for (size_t b = 0; b < static_cast<size_t>(batch_size); ++b) {
+        std::vector<float> pooled(hidden_dim_sz, 0.0f);
+        float mask_sum = 0.0f;
+
+        for (size_t s = 0; s < seq_len_sz; ++s) {
+          float mask = static_cast<float>(batch[b].attention_mask[s]);
+          mask_sum += mask;
+          // offset提出来，避免内循环重复计算
+          const float *row = data + (b * seq_len_sz + s) * hidden_dim_sz;
+#pragma GCC ivdep
+          for (size_t h = 0; h < hidden_dim_sz; ++h) {
+            pooled[h] += row[h] * mask;
+          }
         }
-      }
 
-      result[b] = std::move(pooled);
+        // Divide by mask sum + L2 normalize (合并循环)
+        float norm = 0.0f;
+        float inv_mask = (mask_sum > 0.0f) ? (1.0f / mask_sum) : 0.0f;
+        for (size_t h = 0; h < hidden_dim_sz; ++h) {
+          pooled[h] *= inv_mask;
+          norm += pooled[h] * pooled[h];
+        }
+        norm = std::sqrt(norm);
+        if (norm > 1e-12f) {
+          float inv_norm = 1.0f / norm;
+          for (auto &v : pooled) {
+            v *= inv_norm;
+          }
+        }
+
+        result[b] = std::move(pooled);
+      }
     }
 
     return result;
@@ -434,7 +458,7 @@ std::vector<TagResult> Tagger::tag_batch(const std::vector<std::string> &questio
     for (size_t i = 0; i < num_labels; ++i) {
       const float *label = label_data + i * dim;
       float score = 0.0f;
-      // 连续内存 + 简单循环 -> 编译器自动SIMD向量化
+#pragma GCC ivdep
       for (size_t h = 0; h < dim; ++h) {
         score += query[h] * label[h];
       }
