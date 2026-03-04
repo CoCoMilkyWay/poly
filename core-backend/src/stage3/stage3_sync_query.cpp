@@ -1,6 +1,5 @@
 #include "misc/profiler.hpp"
 #include "stage3_sync.hpp"
-#include <cmath>
 
 namespace stage3 {
 
@@ -57,9 +56,6 @@ std::vector<StageSync::PositionRow> StageSync::get_positions_at(const std::strin
     uint32_t uidx = static_cast<uint32_t>(cond_idx);
     assert(uidx < conditions_.size());
     const auto &cond = conditions_[uidx];
-    auto round_i64 = [](double v) -> int64_t {
-      return static_cast<int64_t>(std::llround(v));
-    };
     for (int i = 0; i < cond.outcome_count; ++i) {
       if (st.positions[i] <= kPosEpsilon) {
         continue;
@@ -151,15 +147,7 @@ std::unordered_map<int32_t, StageSync::CondState> StageSync::build_state_until(c
     for (idx_t i = 0; i < base->RowCount(); ++i) {
       int32_t cond_idx = base->GetValue(0, i).GetValue<int32_t>();
       CondState st;
-      // Convert int64 from database to double for internal calculations
-      for (int j = 0; j < MAX_OUTCOMES; ++j) {
-        st.positions[j] = static_cast<double>(base->GetValue(1 + j, i).GetValue<int64_t>());
-        st.cost[j] = static_cast<double>(base->GetValue(9 + j, i).GetValue<int64_t>());
-        st.last_price[j] = static_cast<double>(base->GetValue(17 + j, i).GetValue<int64_t>());
-      }
-      st.realized_pnl = static_cast<double>(base->GetValue(25, i).GetValue<int64_t>());
-      st.event_count = base->GetValue(26, i).GetValue<int64_t>();
-      st.last_sort_key = base->GetValue(27, i).GetValue<int64_t>();
+      load_cond_state_values(st, *base, i, 1, 9, 17, 25, 26, 27);
       st.unrealized_pnl = compute_unrealized_pnl(st);
       states.emplace(cond_idx, st);
     }

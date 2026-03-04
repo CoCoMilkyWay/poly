@@ -101,7 +101,8 @@ inline void hash_to_curve(const std::string &condition_id, uint32_t index_set,
   BIGNUM *SQRT_EXP = bn_sqrt_exp();
   BNPtr yy, tmp;
 
-  assert(BN_bin2bn(h.data(), 32, x));
+  BIGNUM *parsed_x = BN_bin2bn(h.data(), 32, x);
+  assert(parsed_x != nullptr);
   BN_mod(x, x, P, ctx);
   do {
     BN_mod_add(x, x, BN_value_one(), P, ctx);
@@ -119,7 +120,8 @@ inline void hash_to_curve(const std::string &condition_id, uint32_t index_set,
 inline void decode_collection_point(const std::string &collection_id, BIGNUM *x, BIGNUM *y,
                                     BN_CTX *ctx) {
   assert(collection_id.size() == 32);
-  assert(BN_bin2bn(reinterpret_cast<const unsigned char *>(collection_id.data()), 32, x));
+  BIGNUM *parsed_x = BN_bin2bn(reinterpret_cast<const unsigned char *>(collection_id.data()), 32, x);
+  assert(parsed_x != nullptr);
   bool odd = BN_is_bit_set(x, 254) != 0;
   BN_clear_bit(x, 254);
   BN_clear_bit(x, 255);

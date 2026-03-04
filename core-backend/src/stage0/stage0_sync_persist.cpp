@@ -1,5 +1,6 @@
 #include "stage0_sync.hpp"
 
+#include <cstdlib>
 #include <iostream>
 #include <optional>
 
@@ -29,7 +30,7 @@ uint8_t hex_nibble(char c) {
             << " reason=" << reason
             << " raw=" << raw
             << " body=" << market_for_log.dump() << std::endl;
-  assert(false && "blob_parse_fail");
+  std::abort();
 }
 
 bool has_non_null(const json &obj, const char *key) {

@@ -221,6 +221,17 @@ private:
   static constexpr int64_t kCursorSentinel = std::numeric_limits<int32_t>::min();
 
   static std::string normalize_addr(const std::string &addr);
+  static int64_t round_i64(double v);
+  static void load_cond_state_values(CondState &st,
+                                     duckdb::MaterializedQueryResult &src,
+                                     idx_t row_idx,
+                                     int pos_col_begin,
+                                     int cost_col_begin,
+                                     int lp_col_begin,
+                                     int realized_col,
+                                     int event_count_col,
+                                     int last_sort_key_col);
+  static void append_cond_state_values(duckdb::Appender &ap, const CondState &st);
   static bool is_usd_collateral(int32_t collateral);
   static bool is_trade_event(EventType ty);
   static double compute_unrealized_pnl(const CondState &st);

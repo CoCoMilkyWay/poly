@@ -4,6 +4,42 @@
 
 namespace stage3 {
 
+int64_t StageSync::round_i64(double v) { return static_cast<int64_t>(std::llround(v)); }
+
+void StageSync::load_cond_state_values(CondState &st,
+                                       duckdb::MaterializedQueryResult &src,
+                                       idx_t row_idx,
+                                       int pos_col_begin,
+                                       int cost_col_begin,
+                                       int lp_col_begin,
+                                       int realized_col,
+                                       int event_count_col,
+                                       int last_sort_key_col) {
+  for (int j = 0; j < MAX_OUTCOMES; ++j) {
+    st.positions[j] = static_cast<double>(src.GetValue(pos_col_begin + j, row_idx).GetValue<int64_t>());
+    st.cost[j] = static_cast<double>(src.GetValue(cost_col_begin + j, row_idx).GetValue<int64_t>());
+    st.last_price[j] = static_cast<double>(src.GetValue(lp_col_begin + j, row_idx).GetValue<int64_t>());
+  }
+  st.realized_pnl = static_cast<double>(src.GetValue(realized_col, row_idx).GetValue<int64_t>());
+  st.event_count = src.GetValue(event_count_col, row_idx).GetValue<int64_t>();
+  st.last_sort_key = src.GetValue(last_sort_key_col, row_idx).GetValue<int64_t>();
+}
+
+void StageSync::append_cond_state_values(duckdb::Appender &ap, const CondState &st) {
+  for (int j = 0; j < MAX_OUTCOMES; ++j) {
+    ap.Append(round_i64(st.positions[j]));
+  }
+  for (int j = 0; j < MAX_OUTCOMES; ++j) {
+    ap.Append(round_i64(st.cost[j]));
+  }
+  for (int j = 0; j < MAX_OUTCOMES; ++j) {
+    ap.Append(round_i64(st.last_price[j]));
+  }
+  ap.Append(round_i64(st.realized_pnl));
+  ap.Append(st.event_count);
+  ap.Append(st.last_sort_key);
+}
+
 void StageSync::start(asio::io_context &ioc) {
   ioc_ = &ioc;
   stop_requested_ = false;
@@ -367,22 +403,11 @@ bool StageSync::process_chunk_locked() const {
       auto it = states.find(key);
       assert(it != states.end());
       CondState &st = it->second;
-      // Convert int64 from database to double for internal calculations
-      for (int j = 0; j < MAX_OUTCOMES; ++j) {
-        st.positions[j] = static_cast<double>(old->GetValue(2 + j, i).GetValue<int64_t>());
-        st.cost[j] = static_cast<double>(old->GetValue(10 + j, i).GetValue<int64_t>());
-        st.last_price[j] = static_cast<double>(old->GetValue(18 + j, i).GetValue<int64_t>());
-      }
-      st.realized_pnl = static_cast<double>(old->GetValue(26, i).GetValue<int64_t>());
-      st.event_count = old->GetValue(27, i).GetValue<int64_t>();
-      st.last_sort_key = old->GetValue(28, i).GetValue<int64_t>();
+      load_cond_state_values(st, *old, i, 2, 10, 18, 26, 27, 28);
       st.unrealized_pnl = compute_unrealized_pnl(st);
     }
   }
 
-  auto round_i64 = [](double v) -> int64_t {
-    return static_cast<int64_t>(std::llround(v));
-  };
   std::vector<FactRow> fact_rows;
   fact_rows.reserve(rows.size());
   for (const auto &row : rows) {
@@ -464,19 +489,7 @@ bool StageSync::process_chunk_locked() const {
               reinterpret_cast<duckdb::const_data_ptr_t>(user_blob.data()),
               user_blob.size()));
           ap.Append(key.cond_idx);
-          // Convert double to int64 for database storage (round to nearest)
-          for (int j = 0; j < MAX_OUTCOMES; ++j) {
-            ap.Append(round_i64(st.positions[j]));
-          }
-          for (int j = 0; j < MAX_OUTCOMES; ++j) {
-            ap.Append(round_i64(st.cost[j]));
-          }
-          for (int j = 0; j < MAX_OUTCOMES; ++j) {
-            ap.Append(round_i64(st.last_price[j]));
-          }
-          ap.Append(round_i64(st.realized_pnl));
-          ap.Append(st.event_count);
-          ap.Append(st.last_sort_key);
+          append_cond_state_values(ap, st);
           ap.EndRow();
         }
         ap.Close();
