@@ -248,34 +248,6 @@ private:
     auto is_known_mapping = [](const TokenInfo &info) {
       return info.cond_idx != UNKNOWN_COND_IDX && info.token_idx != UNKNOWN_TOKEN_IDX;
     };
-    auto token_source_tag = [](TokenSource s) -> const char * {
-      switch (s) {
-      case TokenSource::PolymarketTokenReg:
-        return "PolymarketTokenReg";
-      case TokenSource::PolymarketFPMM:
-        return "PolymarketFPMM";
-      case TokenSource::OtherFPMM:
-        return "OtherFPMM";
-      case TokenSource::SplitEvent:
-        return "SplitEvent";
-      case TokenSource::TransferInferred:
-        return "TransferInferred";
-      case TokenSource::MergeEvent:
-        return "MergeEvent";
-      case TokenSource::RedemptionEvent:
-        return "RedemptionEvent";
-      }
-      return "Unknown";
-    };
-    auto cond_id_for_idx = [&](uint32_t idx) -> std::string {
-      if (idx == UNKNOWN_COND_IDX) {
-        return "UNKNOWN_COND_IDX";
-      }
-      if (idx < cond_ids_.size()) {
-        return cond_ids_[idx];
-      }
-      return "OUT_OF_RANGE";
-    };
     auto note_known_visibility = [&](const std::string &token_lower, int64_t sort_key) {
       if (sort_key < 0) {
         return;
@@ -334,18 +306,7 @@ private:
 
       // Non-inferred sources must agree on condition mapping.
       if (!existing_is_inferred && !new_is_inferred) {
-        std::string detail = "token_id=" + lower +
-                             " existing={cond_idx=" + std::to_string(existing.cond_idx) +
-                             ",cond_id=" + cond_id_for_idx(existing.cond_idx) +
-                             ",token_idx=" + std::to_string(existing.token_idx) +
-                             ",source=" + token_source_tag(existing.source) + "}" +
-                             " new={cond_idx=" + std::to_string(cond_idx) +
-                             ",cond_id=" + cond_id_for_idx(cond_idx) +
-                             ",token_idx=" + std::to_string(token_idx) +
-                             ",source=" + token_source_tag(source) + "}" +
-                             " evidence_sort_key=" + std::to_string(evidence_sort_key);
-        stage2_assert(existing.cond_idx == cond_idx, AssertLevel::L1, "Mapping",
-                      "TokenCondIdxConsistent", detail.c_str());
+        stage2_assert(existing.cond_idx == cond_idx, AssertLevel::L1, "Mapping", "TokenCondIdxConsistent");
       }
 
       // If mapping already agrees, keep the best available source label.
@@ -369,18 +330,7 @@ private:
 
       // Strong semantic sources should never disagree on the same token.
       if (!same_assignment && existing_rank >= 3 && new_rank >= 3) {
-        std::string detail = "token_id=" + lower +
-                             " existing={cond_idx=" + std::to_string(existing.cond_idx) +
-                             ",cond_id=" + cond_id_for_idx(existing.cond_idx) +
-                             ",token_idx=" + std::to_string(existing.token_idx) +
-                             ",source=" + token_source_tag(existing.source) + "}" +
-                             " new={cond_idx=" + std::to_string(cond_idx) +
-                             ",cond_id=" + cond_id_for_idx(cond_idx) +
-                             ",token_idx=" + std::to_string(token_idx) +
-                             ",source=" + token_source_tag(source) + "}" +
-                             " evidence_sort_key=" + std::to_string(evidence_sort_key);
-        stage2_assert(false, AssertLevel::L1, "Mapping", "TokenStrongSourceConflict",
-                      detail.c_str());
+        stage2_assert(false, AssertLevel::L1, "Mapping", "TokenStrongSourceConflict");
       }
       if (!was_known && is_known_mapping(existing)) {
         note_known_visibility(lower, evidence_sort_key);
