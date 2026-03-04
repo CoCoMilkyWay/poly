@@ -135,6 +135,7 @@ private:
 
   // Tagger
   std::unique_ptr<Tagger> tagger_;
+  std::atomic<uint64_t> tag_reset_epoch_{0};
   int64_t tag_last_block_ = 0;
   int64_t tagged_count_ = 0;
   int64_t untagged_count_ = 0;

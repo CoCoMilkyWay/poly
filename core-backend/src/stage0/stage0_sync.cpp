@@ -280,21 +280,26 @@ void StageSync::reset_tag_progress() {
       "SET tag_name = NULL "
       "WHERE class IN ('poly_ctf', 'poly_negrisk')");
   assert(clear_tags && !clear_tags->HasError());
-  auto reset_cursor = conn->Query("UPDATE pm_tag_cursor SET last_rowid = 0 WHERE id = 0");
+  auto reset_cursor = conn->Query("UPDATE pm_tag_cursor SET last_rowid = -1 WHERE id = 0");
   assert(reset_cursor && !reset_cursor->HasError());
   auto commit = conn->Query("COMMIT");
   assert(commit && !commit->HasError());
 
+  // Increment epoch to invalidate any in-flight tag tasks
+  tag_reset_epoch_.fetch_add(1, std::memory_order_seq_cst);
+
   load_tag_counts();
+  // Force reset tag_last_block to 0 (load_tag_counts should return 0, but be explicit)
+  tag_last_block_ = 0;
+  tagged_count_ = 0;
   {
     std::lock_guard<std::mutex> lock(status_mutex_);
-    sync_.tag_last_block = tag_last_block_;
-    sync_.tagged_count = tagged_count_;
+    sync_.tag_last_block = 0;
+    sync_.tagged_count = 0;
     sync_.untagged_count = untagged_count_;
   }
   append_stage0_flow_log(stage0_db_.data_dir(),
-                         "tag_reset tagged=" + std::to_string(tagged_count_) +
-                             " untagged=" + std::to_string(untagged_count_));
+                         "tag_reset untagged=" + std::to_string(untagged_count_));
 }
 
 void StageSync::schedule_sync(int delay_seconds) {
@@ -956,6 +961,8 @@ int64_t StageSync::do_tag_sync() {
   if (!tagger_) {
     return 0;
   }
+  // Capture epoch at start to detect reset during execution
+  const uint64_t epoch_at_start = tag_reset_epoch_.load(std::memory_order_seq_cst);
   const int64_t tag_cursor = get_tag_cursor();
 
   // Fetch untagged poly conditions after current tag cursor.
@@ -1013,6 +1020,12 @@ int64_t StageSync::do_tag_sync() {
   // Batch tag
   auto tags = tagger_->tag_batch(model_inputs);
   assert(tags.size() == rowids.size());
+
+  // Check if reset happened during model inference - discard results if so
+  if (tag_reset_epoch_.load(std::memory_order_seq_cst) != epoch_at_start) {
+    append_stage0_flow_log(stage0_db_.data_dir(), "tag_batch discarded due to reset");
+    return 0;
+  }
 
   // Update database
   auto begin = conn->Query("BEGIN TRANSACTION");

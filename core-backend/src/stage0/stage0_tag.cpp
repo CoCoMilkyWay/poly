@@ -473,7 +473,7 @@ std::vector<TagResult> Tagger::tag_batch(const std::vector<std::string> &questio
   std::vector<WordPieceTokenizer::TokenIds> tokens;
   tokens.reserve(questions.size());
   for (const auto &q : questions) {
-    tokens.push_back(impl_->tokenizer.encode(q, 350));
+    tokens.push_back(impl_->tokenizer.encode(q, 400));
   }
 
   auto embeddings = impl_->embedder.embed(tokens);
