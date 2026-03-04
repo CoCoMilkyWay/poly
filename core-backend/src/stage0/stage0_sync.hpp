@@ -4,6 +4,7 @@
 #include <chrono>
 #include <deque>
 #include <map>
+#include <memory>
 #include <mutex>
 #include <string>
 #include <unordered_set>
@@ -14,6 +15,7 @@
 
 #include "../core/config.hpp"
 #include "../core/database.hpp"
+#include "stage0_tag.hpp"
 
 namespace asio = boost::asio;
 using json = nlohmann::json;
@@ -33,6 +35,10 @@ public:
     int64_t nonpoly_condition_count = 0;
     double blocks_per_second = 0.0;
     double eta_seconds = -1.0;
+    // Tag status
+    int64_t tag_last_block = 0;
+    int64_t tagged_count = 0;
+    int64_t untagged_count = 0;
   };
 
   StageSync(const Config &config, Database &stage1_db, Database &stage0_db, int base_interval_seconds);
@@ -40,6 +46,7 @@ public:
   void start(asio::io_context &ioc);
   void stop();
   Status status() const;
+  void reset_tag_progress();
 
 private:
   static constexpr int kWorkerCount = 50;
@@ -103,6 +110,13 @@ private:
   int64_t get_scan_cursor();
   void set_scan_cursor_in_txn(duckdb::Connection &conn, int64_t block);
 
+  // Tag methods
+  void init_tagger();
+  int64_t do_tag_sync();
+  int64_t get_tag_cursor();
+  void set_tag_cursor_in_txn(duckdb::Connection &conn, int64_t cursor);
+  void load_tag_counts();
+
   const Config &config_;
   Database &stage1_db_;
   Database &stage0_db_;
@@ -118,6 +132,12 @@ private:
   mutable std::mutex status_mutex_;
   Status sync_;
   std::deque<CommitRecord> commit_history_;
+
+  // Tagger
+  std::unique_ptr<Tagger> tagger_;
+  int64_t tag_last_block_ = 0;
+  int64_t tagged_count_ = 0;
+  int64_t untagged_count_ = 0;
 };
 
 } // namespace stage0

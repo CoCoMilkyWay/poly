@@ -1,0 +1,5 @@
+考虑本地替换其他准确性更高的embedding模型:
+models--BAAI--bge-small-en-v1.5
+models--BAAI--bge-base-en-v1.5   
+models--BAAI--bge-large-en-v1.5 (实测小模型(<1B)里最准)
+models--Qwen--Qwen3-Embedding-0.6B

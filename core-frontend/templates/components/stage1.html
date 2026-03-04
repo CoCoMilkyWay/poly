@@ -375,6 +375,9 @@
       <button class="btn" id="export-all-btn" onclick="exportAllCSV()">
         全部导出
       </button>
+      <button class="btn" id="retag-btn" onclick="reTagStage0()">
+        reTag
+      </button>
     </div>
   </div>
 
@@ -437,7 +440,8 @@
         {{
         "{:,}".format(stage1_state.head_block or 0) }}</span>
       <span id="stage0-condition-count" style="margin-left: 8px; color: #555">
-        Total: {{ "{:,}".format((stage0_state.ctf_condition_count or 0) + (stage0_state.negrisk_condition_count or 0) + (stage0_state.nonpoly_condition_count or 0)) }}
+        Total: {{ "{:,}".format((stage0_state.ctf_condition_count or 0) + (stage0_state.negrisk_condition_count or 0) +
+        (stage0_state.nonpoly_condition_count or 0)) }}
         CTF: {{ "{:,}".format(stage0_state.ctf_condition_count or 0) }}
         NegRisk: {{ "{:,}".format(stage0_state.negrisk_condition_count or 0) }}
         Non-Poly: {{ "{:,}".format(stage0_state.nonpoly_condition_count or 0) }}
@@ -449,6 +453,28 @@
     <div class="progress-info">
       <span id="stage0-progress-blocks">- / -</span>
       <span id="stage0-progress-pct">0%</span>
+    </div>
+  </div>
+
+  <div class="progress-container" style="border-top: 1px solid #333; padding-top: 10px">
+    <div class="sync-stat-label" style="margin-bottom: 6px">
+      标签分类
+      <span id="stage0-tag-meta" style="margin-left: 8px; color: #555">
+        {{ "{:,}".format(stage0_state.tag_last_block or 0) }} / {{ "{:,}".format(stage1_state.head_block or 0) }}
+      </span>
+      <span id="stage0-tag-count" style="margin-left: 8px; color: #555">
+        Total: {{ "{:,}".format((stage0_state.tagged_count or 0) + (stage0_state.untagged_count or 0)) }}
+        (Tagged: {{ "{:,}".format(stage0_state.tagged_count or 0) }},
+        UnTagged: {{ "{:,}".format(stage0_state.untagged_count or 0) }})
+      </span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="stage0-tag-progress-fill"
+        style="width: 0%; background: linear-gradient(90deg, #f59e0b, #d97706)"></div>
+    </div>
+    <div class="progress-info">
+      <span id="stage0-tag-progress-blocks">- / -</span>
+      <span id="stage0-tag-progress-pct">0%</span>
     </div>
   </div>
 
@@ -1062,6 +1088,26 @@
         " (CTF: " + formatNumber(ctfCount) +
         ", NegRisk: " + formatNumber(negRiskCount) +
         ", Non-Poly: " + formatNumber(nonPolyCount) + ")";
+
+      // Tag progress follows block cursor style, same as stage0 query progress.
+      const tagLast = sync0.tag_last_block || 0;
+      const taggedCount = sync0.tagged_count || 0;
+      const untaggedCount = sync0.untagged_count || 0;
+      const tagTotal = taggedCount + untaggedCount;
+      const tagPct =
+        head > 0 ? Math.min(100, Math.max(0, (tagLast / head) * 100)) : 0;
+      document.getElementById("stage0-tag-progress-fill").style.width =
+        tagPct.toFixed(1) + "%";
+      document.getElementById("stage0-tag-progress-pct").textContent =
+        tagPct.toFixed(2) + "%";
+      document.getElementById("stage0-tag-progress-blocks").textContent =
+        formatNumber(tagLast) + " / " + formatNumber(head);
+      document.getElementById("stage0-tag-meta").textContent =
+        formatNumber(tagLast) + " / " + formatNumber(head);
+      document.getElementById("stage0-tag-count").textContent =
+        "Total: " + formatNumber(tagTotal) +
+        " (Tagged: " + formatNumber(taggedCount) +
+        ", UnTagged: " + formatNumber(untaggedCount) + ")";
     }
 
     function updateTables(tables) {
@@ -1115,6 +1161,9 @@
       negrisk_condition_count: Number("{{ stage0_state.negrisk_condition_count or 0 }}"),
       nonpoly_condition_count: Number("{{ stage0_state.nonpoly_condition_count or 0 }}"),
       head_block: Number("{{ stage0_state.head_block or 0 }}"),
+      tag_last_block: Number("{{ stage0_state.tag_last_block or 0 }}"),
+      tagged_count: Number("{{ stage0_state.tagged_count or 0 }}"),
+      untagged_count: Number("{{ stage0_state.untagged_count or 0 }}"),
     }, Number(document.body.dataset.headBlock || "0"));
 
     window.updateStage0Status = updateStage0Status;

@@ -130,6 +130,22 @@
       }
     }
 
+    async function reTagStage0() {
+      const btn = document.getElementById("retag-btn");
+      btn.disabled = true;
+      btn.textContent = "reTag中...";
+      try {
+        await fetch("/api/stage0-retag", { method: "POST" });
+        await refresh();
+      } catch (e) {
+        console.error("reTag failed:", e);
+        alert("reTag失败: " + e.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "reTag";
+      }
+    }
+
     refresh();
     setInterval(refresh, 3000);
   </script>

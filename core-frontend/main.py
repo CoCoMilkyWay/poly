@@ -1,5 +1,5 @@
 import json
-from backend_api import backend_get
+from backend_api import backend_get, backend_post
 from fastapi import FastAPI, Query, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -46,6 +46,11 @@ async def api_tables():
 @app.get("/api/stage0-status")
 async def api_stage0_status():
     return await backend_get("/api/stage0-status")
+
+
+@app.post("/api/stage0-retag")
+async def api_stage0_retag():
+    return await backend_post("/api/stage0-retag")
 
 
 @app.get("/api/stage1-status")

@@ -28,6 +28,10 @@ struct Stage0Status {
   int64_t nonpoly_condition_count = 0;
   double blocks_per_second = 0.0;
   double eta_seconds = -1.0;
+  // Tag status
+  int64_t tag_last_block = 0;
+  int64_t tagged_count = 0;
+  int64_t untagged_count = 0;
 };
 
 struct Stage1Status {
@@ -64,12 +68,13 @@ struct Stage3Status {
 class ApiSession : public std::enable_shared_from_this<ApiSession> {
 public:
   using Stage0Getter = std::function<Stage0Status()>;
+  using Stage0Retagger = std::function<void()>;
   using Stage1Getter = std::function<Stage1Status()>;
   using Stage2Getter = std::function<Stage2Status()>;
   using Stage3Getter = std::function<Stage3Status()>;
 
   ApiSession(tcp::socket socket, Database &stage1_db, Database &stage2_db, stage3::StageSync &stage3,
-             Stage0Getter stage0_getter, Stage1Getter stage1_getter,
+             Stage0Getter stage0_getter, Stage0Retagger stage0_retagger, Stage1Getter stage1_getter,
              Stage2Getter stage2_getter, Stage3Getter stage3_getter);
 
   void run();
@@ -84,6 +89,7 @@ private:
   void handle_export_csv();
   void handle_table_sample();
   void handle_stage0_status();
+  void handle_stage0_retag();
   void handle_stage1_status();
   void handle_stage2_status();
   void handle_stage2_data();
@@ -99,6 +105,7 @@ private:
   Database &stage2_db_;
   stage3::StageSync &stage3_;
   Stage0Getter stage0_getter_;
+  Stage0Retagger stage0_retagger_;
   Stage1Getter stage1_getter_;
   Stage2Getter stage2_getter_;
   Stage3Getter stage3_getter_;

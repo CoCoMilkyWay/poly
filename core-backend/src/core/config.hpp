@@ -36,6 +36,10 @@ struct Config {
   int frontend_port;
   int64_t initial_block;
 
+  // Tag model config
+  std::string model_dir;
+  std::string tag_md_path;
+
   static Config load(const std::string &path) {
     std::ifstream f(path);
     assert(f.is_open() && "无法打开配置文件");
@@ -91,6 +95,10 @@ struct Config {
     assert(!config.rpc_url.empty() && "active_rpc 在 rpc_nodes 中未找到");
     config.proxy_url = j.value("proxy", "");
     config.rpc_transport = j.value("rpc_transport", "beast");
+
+    // Tag model config (optional)
+    config.model_dir = j.value("model_dir", "");
+    config.tag_md_path = j.value("tag_md_path", "");
 
     return config;
   }

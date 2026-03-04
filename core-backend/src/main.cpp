@@ -75,7 +75,10 @@ int main(int argc, char *argv[]) {
     const auto s = stage0.status();
     return {s.syncing, s.last_block, s.head_block, s.behind_blocks, s.condition_count,
             s.ctf_condition_count, s.negrisk_condition_count, s.nonpoly_condition_count,
-            s.blocks_per_second, s.eta_seconds};
+            s.blocks_per_second, s.eta_seconds, s.tag_last_block, s.tagged_count, s.untagged_count};
+  };
+  auto stage0_retagger = [&stage0]() {
+    stage0.reset_tag_progress();
   };
   auto stage1_getter = [&stage1]() -> Stage1Status {
     const auto s = stage1.status();
@@ -136,7 +139,7 @@ int main(int argc, char *argv[]) {
 
   boost::asio::io_context api_ioc;
   ApiServer api_server(api_ioc, stage1_db, stage2_db, stage3, config.backend_port,
-                       stage0_getter, stage1_getter, stage2_getter, stage3_getter);
+                       stage0_getter, stage0_retagger, stage1_getter, stage2_getter, stage3_getter);
 
   boost::asio::signal_set signals(api_ioc, SIGINT, SIGTERM);
   signals.async_wait([&](const boost::system::error_code &, int sig) {

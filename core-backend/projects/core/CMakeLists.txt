@@ -74,6 +74,17 @@ if(NOT EXISTS ${ARROW_LIBRARY})
     message(FATAL_ERROR "未找到 Arrow 库文件: ${ARROW_LIBRARY}")
 endif()
 
+# ONNX Runtime (vendored under packages/onnxruntime)
+set(ONNXRUNTIME_DIR ${PACKAGES_DIR}/onnxruntime)
+if(WIN32)
+    set(ONNXRUNTIME_LIBRARY ${ONNXRUNTIME_DIR}/onnxruntime.lib)
+else()
+    set(ONNXRUNTIME_LIBRARY ${ONNXRUNTIME_DIR}/libonnxruntime.so)
+endif()
+if(NOT EXISTS ${ONNXRUNTIME_LIBRARY})
+    message(FATAL_ERROR "未找到 ONNX Runtime 库文件: ${ONNXRUNTIME_LIBRARY}")
+endif()
+
 # 源文件
 set(SOURCES
     ${SRC_DIR}/main.cpp
@@ -85,6 +96,7 @@ set(SOURCES
     ${SRC_DIR}/stage0/stage0_sync.cpp
     ${SRC_DIR}/stage0/stage0_sync_http.cpp
     ${SRC_DIR}/stage0/stage0_sync_persist.cpp
+    ${SRC_DIR}/stage0/stage0_tag.cpp
     ${SRC_DIR}/stage1/stage1_sync.cpp
     ${SRC_DIR}/stage1/event_decode.cpp
     ${SRC_DIR}/stage2/stage2_utils.cpp
@@ -117,8 +129,8 @@ target_include_directories(core PRIVATE
 # clangd: copy compile_commands.json to project dir after each build
 add_custom_command(TARGET core POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${CMAKE_BINARY_DIR}/compile_commands.json"
-        "${CMAKE_CURRENT_SOURCE_DIR}/compile_commands.json"
+    "${CMAKE_BINARY_DIR}/compile_commands.json"
+    "${CMAKE_CURRENT_SOURCE_DIR}/compile_commands.json"
     VERBATIM
 )
 
@@ -130,6 +142,7 @@ if(WIN32)
         OpenSSL::Crypto
         CURL::libcurl
         ${ARROW_LIBRARY}
+        ${ONNXRUNTIME_LIBRARY}
     )
     if(PROFILE_MODE)
         target_link_libraries(core PRIVATE ws2_32 dbghelp)
@@ -141,11 +154,12 @@ else()
         OpenSSL::Crypto
         CURL::libcurl
         ${ARROW_LIBRARY}
+        ${ONNXRUNTIME_LIBRARY}
         pthread
         dl
     )
     set_target_properties(core PROPERTIES
-        BUILD_RPATH "${PACKAGES_DIR}/duckdb;${ARROW_DIR}/lib"
-        INSTALL_RPATH "${PACKAGES_DIR}/duckdb;${ARROW_DIR}/lib"
+        BUILD_RPATH "${PACKAGES_DIR}/duckdb;${ARROW_DIR}/lib;${ONNXRUNTIME_DIR}"
+        INSTALL_RPATH "${PACKAGES_DIR}/duckdb;${ARROW_DIR}/lib;${ONNXRUNTIME_DIR}"
     )
 endif()

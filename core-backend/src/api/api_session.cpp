@@ -142,6 +142,9 @@ json to_stage0_status_json(const Stage0Status &status) {
       {"nonpoly_condition_count", status.nonpoly_condition_count},
       {"blocks_per_second", status.blocks_per_second},
       {"eta_seconds", status.eta_seconds},
+      {"tag_last_block", status.tag_last_block},
+      {"tagged_count", status.tagged_count},
+      {"untagged_count", status.untagged_count},
   };
 }
 
@@ -179,10 +182,11 @@ void write_ok_json_response(http::response<http::string_body> &res, const json &
 } // namespace
 
 ApiSession::ApiSession(tcp::socket socket, Database &stage1_db, Database &stage2_db, stage3::StageSync &stage3,
-                       Stage0Getter stage0_getter, Stage1Getter stage1_getter,
+                       Stage0Getter stage0_getter, Stage0Retagger stage0_retagger, Stage1Getter stage1_getter,
                        Stage2Getter stage2_getter, Stage3Getter stage3_getter)
     : socket_(std::move(socket)), stage1_db_(stage1_db), stage2_db_(stage2_db), stage3_(stage3),
-      stage0_getter_(std::move(stage0_getter)), stage1_getter_(std::move(stage1_getter)),
+      stage0_getter_(std::move(stage0_getter)), stage0_retagger_(std::move(stage0_retagger)),
+      stage1_getter_(std::move(stage1_getter)),
       stage2_getter_(std::move(stage2_getter)),
       stage3_getter_(std::move(stage3_getter)) {}
 
@@ -232,6 +236,8 @@ void ApiSession::handle_request() {
       handle_table_sample();
     } else if (target.starts_with("/api/stage0-status")) {
       handle_stage0_status();
+    } else if (target.starts_with("/api/stage0-retag")) {
+      handle_stage0_retag();
     } else if (target.starts_with("/api/stage1-status")) {
       handle_stage1_status();
     } else if (target.starts_with("/api/stage2-status")) {
@@ -376,6 +382,18 @@ void ApiSession::handle_stage0_status() {
 
   const Stage0Status status = stage0_getter_();
   write_ok_json_response(res_, to_stage0_status_json(status));
+}
+
+void ApiSession::handle_stage0_retag() {
+  TraceN("api/s0_retag");
+  res_.set(http::field::content_type, "application/json");
+  if (req_.method() != http::verb::post) {
+    res_.result(http::status::bad_request);
+    res_.body() = R"({"error":"POST required"})";
+    return;
+  }
+  stage0_retagger_();
+  write_ok_json_response(res_, json{{"ok", true}});
 }
 
 void ApiSession::handle_stage1_status() {
