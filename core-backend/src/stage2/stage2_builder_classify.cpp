@@ -1,5 +1,6 @@
 #include "stage2_builder.hpp"
 #include <algorithm>
+#include <limits>
 #include <type_traits>
 
 namespace stage2 {
@@ -185,7 +186,15 @@ TransferClass EventBuilder::classify_and_emit(
       push_event(addr, evt);
   };
   auto calc_price_if_usdc_collateral = [&](int64_t collateral_amount, int64_t token_amount) -> int64_t {
-    return is_usdc_collateral(collateral) ? (collateral_amount * 1000000 / token_amount) : 0;
+    if (!is_usdc_collateral(collateral)) {
+      return 0;
+    }
+    stage2_assert(collateral_amount >= 0, AssertLevel::L0, "Input", "CollateralAmountNonNegativeForPrice");
+    stage2_assert(token_amount > 0, AssertLevel::L0, "Input", "TokenAmountPositiveForPrice");
+    __int128 scaled = static_cast<__int128>(collateral_amount) * static_cast<__int128>(1000000);
+    __int128 px = scaled / static_cast<__int128>(token_amount);
+    stage2_assert(px <= std::numeric_limits<int64_t>::max(), AssertLevel::L0, "Input", "PriceFitsI64");
+    return static_cast<int64_t>(px);
   };
   auto patch_collateral_from_semantic = [&](const std::string &semantic_collateral_addr) {
     if (coll != static_cast<uint8_t>(Collateral::Unknown)) {
@@ -944,7 +953,9 @@ TransferClass EventBuilder::classify_and_emit(
           auto &payouts = conditions_[cond_idx].payout_numerators;
           int64_t payout_price = is_usdc_collateral(collateral)
                                      ? ((token_idx < payouts.size() && payouts[token_idx] >= 0)
-                                            ? payouts[token_idx]
+                                            ? static_cast<int64_t>(
+                                                  static_cast<__int128>(payouts[token_idx]) /
+                                                  static_cast<__int128>(1000000000000LL))
                                             : 1000000)
                                      : 0;
           emit_if_user(from, RawEvent{sort_key, cond_idx, EventType::Redemption, token_idx, coll, 0, -amount, payout_price});

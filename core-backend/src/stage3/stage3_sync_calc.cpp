@@ -10,8 +10,21 @@ std::string StageSync::normalize_addr(const std::string &addr) {
 }
 
 int64_t StageSync::mul_div_1e6(int64_t amount, int64_t price) {
+  assert(price >= 0);
   __int128 v = static_cast<__int128>(amount) * static_cast<__int128>(price);
   v /= 1000000;
+  assert(v >= std::numeric_limits<int64_t>::min() && v <= std::numeric_limits<int64_t>::max());
+  return static_cast<int64_t>(v);
+}
+
+int64_t StageSync::add_i64_checked(int64_t a, int64_t b) {
+  __int128 v = static_cast<__int128>(a) + static_cast<__int128>(b);
+  assert(v >= std::numeric_limits<int64_t>::min() && v <= std::numeric_limits<int64_t>::max());
+  return static_cast<int64_t>(v);
+}
+
+int64_t StageSync::sub_i64_checked(int64_t a, int64_t b) {
+  __int128 v = static_cast<__int128>(a) - static_cast<__int128>(b);
   assert(v >= std::numeric_limits<int64_t>::min() && v <= std::numeric_limits<int64_t>::max());
   return static_cast<int64_t>(v);
 }
@@ -55,7 +68,7 @@ int64_t StageSync::compute_unrealized_pnl(const CondState &st) {
   return static_cast<int64_t>(sum);
 }
 
-int64_t StageSync::apply_event_to_state(const EventRow &row, CondState &st) const {
+int64_t StageSync::apply_event_to_state(const InputEvent &row, CondState &st) const {
   assert(row.cond_idx >= 0);
   assert(static_cast<size_t>(row.cond_idx) < conditions_.size());
   const auto &cond = conditions_[static_cast<size_t>(row.cond_idx)];
@@ -64,7 +77,6 @@ int64_t StageSync::apply_event_to_state(const EventRow &row, CondState &st) cons
   int i = row.token_idx;
   EventType ty = static_cast<EventType>(row.event_type);
   bool has_usd = is_usd_collateral(row.collateral);
-
   if (is_trade_event(ty) && row.price > 0 && has_usd) {
     st.last_price[i] = row.price;
   }
@@ -84,10 +96,13 @@ int64_t StageSync::apply_event_to_state(const EventRow &row, CondState &st) cons
     assert(pos > 0 && pos >= qty);
     int64_t cost_removed = 0;
     if (has_usd) {
-      cost_removed = st.cost[i] * qty / pos;
-      st.cost[i] -= cost_removed;
+      __int128 removed = static_cast<__int128>(st.cost[i]) * static_cast<__int128>(qty);
+      removed /= pos;
+      assert(removed >= std::numeric_limits<int64_t>::min() && removed <= std::numeric_limits<int64_t>::max());
+      cost_removed = static_cast<int64_t>(removed);
+      st.cost[i] = sub_i64_checked(st.cost[i], cost_removed);
     }
-    st.positions[i] -= qty;
+    st.positions[i] = sub_i64_checked(st.positions[i], qty);
     return cost_removed;
   };
   // Sell with price -> realized PnL (only for USD collateral).
@@ -98,8 +113,8 @@ int64_t StageSync::apply_event_to_state(const EventRow &row, CondState &st) cons
       return static_cast<int64_t>(0);
     }
     int64_t proceeds = mul_div_1e6(qty, row.price);
-    int64_t realized_delta = proceeds - cost_removed;
-    st.realized_pnl += realized_delta;
+    int64_t realized_delta = sub_i64_checked(proceeds, cost_removed);
+    st.realized_pnl = add_i64_checked(st.realized_pnl, realized_delta);
     return realized_delta;
   };
 
@@ -110,9 +125,9 @@ int64_t StageSync::apply_event_to_state(const EventRow &row, CondState &st) cons
   case EventType::SplitNegRisk:
   case EventType::SplitNonPoly: {
     int64_t qty = buy_qty();
-    st.positions[i] += qty;
+    st.positions[i] = add_i64_checked(st.positions[i], qty);
     if (has_usd) {
-      st.cost[i] += mul_div_1e6(qty, row.price);
+      st.cost[i] = add_i64_checked(st.cost[i], mul_div_1e6(qty, row.price));
     }
     return 0;
   }
@@ -124,14 +139,14 @@ int64_t StageSync::apply_event_to_state(const EventRow &row, CondState &st) cons
   case EventType::FPMMLPReturn: {
     // LP 移除/返还：FPMM->用户，用户取回 token，计入持仓但不增加 cost
     int64_t qty = buy_qty();
-    st.positions[i] += qty;
+    st.positions[i] = add_i64_checked(st.positions[i], qty);
     return 0;
   }
   case EventType::TransferInNegRisk:
   case EventType::TransferInOther:
   case EventType::TransferInNonPoly: {
     int64_t qty = buy_qty();
-    st.positions[i] += qty;
+    st.positions[i] = add_i64_checked(st.positions[i], qty);
     return 0;
   }
   case EventType::OrderSell:
@@ -152,8 +167,8 @@ int64_t StageSync::apply_event_to_state(const EventRow &row, CondState &st) cons
       return 0;
     }
     int64_t proceeds = convert_payout_amount(cond, qty);
-    int64_t realized_delta = proceeds - cost_removed;
-    st.realized_pnl += realized_delta;
+    int64_t realized_delta = sub_i64_checked(proceeds, cost_removed);
+    st.realized_pnl = add_i64_checked(st.realized_pnl, realized_delta);
     return realized_delta;
   }
   case EventType::TransferOutNegRisk:

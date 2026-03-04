@@ -133,7 +133,7 @@ private:
     int64_t processed_events = 0;
   };
 
-  struct EventRow {
+  struct InputEvent {
     std::string user_hex;
     int64_t sort_key = 0;
     int32_t cond_idx = 0;
@@ -142,6 +142,13 @@ private:
     int32_t collateral = 0;
     int64_t amount = 0;
     int64_t price = 0;
+  };
+
+  struct TimelineEvent {
+    int64_t sort_key = 0;
+    int32_t cond_idx = 0;
+    int32_t event_type = 0;
+    int32_t token_idx = 0;
     int64_t realized_cum = 0;
     int64_t unrealized_pnl = 0;
     int32_t token_count = 0;
@@ -211,6 +218,8 @@ private:
 
   static std::string normalize_addr(const std::string &addr);
   static int64_t mul_div_1e6(int64_t amount, int64_t price);
+  static int64_t add_i64_checked(int64_t a, int64_t b);
+  static int64_t sub_i64_checked(int64_t a, int64_t b);
   static bool is_usd_collateral(int32_t collateral);
 
   void init_schema() const;
@@ -225,10 +234,10 @@ private:
   int64_t convert_payout_amount(const ConditionInfo &cond, int64_t qty) const;
   static bool is_trade_event(EventType ty);
   static int64_t compute_unrealized_pnl(const CondState &st);
-  int64_t apply_event_to_state(const EventRow &row, CondState &st) const;
+  int64_t apply_event_to_state(const InputEvent &row, CondState &st) const;
 
-  std::vector<EventRow> load_user_events(const std::string &addr_lower, int64_t max_sort_key) const;
-  std::vector<TimelineEntry> build_timeline(const std::vector<EventRow> &events) const;
+  std::vector<TimelineEvent> load_timeline_events(const std::string &addr_lower, int64_t max_sort_key) const;
+  std::vector<TimelineEntry> build_timeline(const std::vector<TimelineEvent> &events) const;
   std::unordered_map<int32_t, CondState> build_state_until(const std::string &addr_lower,
                                                            int64_t target_sort_key) const;
 };

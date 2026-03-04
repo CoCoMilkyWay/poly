@@ -32,7 +32,7 @@ std::vector<StageSync::TimelineEntry> StageSync::get_user_timeline(const std::st
   if (lower.empty()) {
     return {};
   }
-  auto events = load_user_events(lower, max_sort_key);
+  auto events = load_timeline_events(lower, max_sort_key);
   if (events.empty()) {
     return {};
   }
@@ -71,7 +71,8 @@ std::vector<StageSync::PositionRow> StageSync::get_positions_at(const std::strin
   return out;
 }
 
-std::vector<StageSync::EventRow> StageSync::load_user_events(const std::string &addr_lower, int64_t max_sort_key) const {
+std::vector<StageSync::TimelineEvent> StageSync::load_timeline_events(const std::string &addr_lower,
+                                                                      int64_t max_sort_key) const {
   auto conn = stage3_db_.create_connection();
   std::string hex40 = addr_lower.substr(2);
   auto q = conn->Query(
@@ -83,24 +84,23 @@ std::vector<StageSync::EventRow> StageSync::load_user_events(const std::string &
       std::to_string(max_sort_key) + " "
                                      "ORDER BY sort_key, cond_idx, event_type, token_idx");
   assert(q && !q->HasError());
-  std::vector<EventRow> out;
+  std::vector<TimelineEvent> out;
   out.reserve(static_cast<size_t>(q->RowCount()));
   for (idx_t i = 0; i < q->RowCount(); ++i) {
-    out.push_back({"",
-                   q->GetValue(0, i).GetValue<int64_t>(),
-                   q->GetValue(1, i).GetValue<int32_t>(),
-                   q->GetValue(2, i).GetValue<int32_t>(),
-                   q->GetValue(3, i).GetValue<int32_t>(),
-                   0,
-                   0,
-                   q->GetValue(4, i).GetValue<int64_t>(),
-                   q->GetValue(5, i).GetValue<int64_t>(),
-                   q->GetValue(6, i).GetValue<int32_t>()});
+    out.push_back({
+        q->GetValue(0, i).GetValue<int64_t>(),
+        q->GetValue(1, i).GetValue<int32_t>(),
+        q->GetValue(2, i).GetValue<int32_t>(),
+        q->GetValue(3, i).GetValue<int32_t>(),
+        q->GetValue(4, i).GetValue<int64_t>(),
+        q->GetValue(5, i).GetValue<int64_t>(),
+        q->GetValue(6, i).GetValue<int32_t>(),
+    });
   }
   return out;
 }
 
-std::vector<StageSync::TimelineEntry> StageSync::build_timeline(const std::vector<EventRow> &events) const {
+std::vector<StageSync::TimelineEntry> StageSync::build_timeline(const std::vector<TimelineEvent> &events) const {
   std::vector<TimelineEntry> timeline;
   timeline.reserve(events.size());
   for (const auto &row : events) {
@@ -161,7 +161,7 @@ std::unordered_map<int32_t, StageSync::CondState> StageSync::build_state_until(c
 
   auto src_conn = stage2_db_.create_connection();
   auto delta = src_conn->Query(
-      "SELECT sort_key, cond_idx, event_type, token_idx, amount, price "
+      "SELECT sort_key, cond_idx, event_type, token_idx, collateral, amount, price "
       "FROM user_event "
       "WHERE user_addr = from_hex('" +
       hex40 + "') "
@@ -171,19 +171,46 @@ std::unordered_map<int32_t, StageSync::CondState> StageSync::build_state_until(c
       std::to_string(target_sort_key) + " "
                                         "ORDER BY sort_key, cond_idx, event_type, token_idx");
   assert(delta && !delta->HasError());
+  int32_t max_cond_idx = -1;
   for (idx_t i = 0; i < delta->RowCount(); ++i) {
-    EventRow row{
+    int32_t cond_idx = delta->GetValue(1, i).GetValue<int32_t>();
+    if (cond_idx > max_cond_idx) {
+      max_cond_idx = cond_idx;
+    }
+  }
+  if (max_cond_idx >= 0 && static_cast<size_t>(max_cond_idx) >= conditions_.size()) {
+    const_cast<StageSync *>(this)->load_conditions();
+  }
+  bool has_prev_key = false;
+  int64_t prev_sort_key = 0;
+  int32_t prev_cond_idx = kCursorSentinel;
+  int32_t prev_event_type = kCursorSentinel;
+  int32_t prev_token_idx = kCursorSentinel;
+  for (idx_t i = 0; i < delta->RowCount(); ++i) {
+    InputEvent row{
         "",
-        delta->GetValue(0, i).GetValue<int64_t>(),
-        delta->GetValue(1, i).GetValue<int32_t>(),
-        delta->GetValue(2, i).GetValue<int32_t>(),
-        delta->GetValue(3, i).GetValue<int32_t>(),
-        delta->GetValue(4, i).GetValue<int64_t>(),
-        delta->GetValue(5, i).GetValue<int64_t>(),
-        0,
-        0,
-        0,
+        delta->GetValue(0, i).GetValue<int64_t>(), // sort_key
+        delta->GetValue(1, i).GetValue<int32_t>(), // cond_idx
+        delta->GetValue(2, i).GetValue<int32_t>(), // event_type
+        delta->GetValue(3, i).GetValue<int32_t>(), // token_idx
+        delta->GetValue(4, i).GetValue<int32_t>(), // collateral
+        delta->GetValue(5, i).GetValue<int64_t>(), // amount
+        delta->GetValue(6, i).GetValue<int64_t>(), // price
     };
+    if (has_prev_key) {
+      assert(
+          row.sort_key > prev_sort_key ||
+          (row.sort_key == prev_sort_key &&
+           (row.cond_idx > prev_cond_idx ||
+            (row.cond_idx == prev_cond_idx &&
+             (row.event_type > prev_event_type ||
+              (row.event_type == prev_event_type && row.token_idx > prev_token_idx))))));
+    }
+    has_prev_key = true;
+    prev_sort_key = row.sort_key;
+    prev_cond_idx = row.cond_idx;
+    prev_event_type = row.event_type;
+    prev_token_idx = row.token_idx;
     if (row.cond_idx < 0) {
       continue;
     }

@@ -193,7 +193,7 @@ bool StageSync::process_chunk_locked() const {
     return true;
   }
 
-  std::vector<EventRow> rows;
+  std::vector<InputEvent> rows;
   rows.reserve(static_cast<size_t>(qr->RowCount()));
   std::unordered_set<std::string> touched_users;
   touched_users.reserve(static_cast<size_t>(qr->RowCount() / 10 + 1));
@@ -204,9 +204,15 @@ bool StageSync::process_chunk_locked() const {
   user_event_inc.reserve(static_cast<size_t>(qr->RowCount() / 10 + 1));
   std::unordered_map<std::string, int64_t> user_last_sk;
   user_last_sk.reserve(static_cast<size_t>(qr->RowCount() / 10 + 1));
+  bool has_prev_key = false;
+  int64_t prev_sort_key = 0;
+  std::string prev_user_hex;
+  int32_t prev_cond_idx = kCursorSentinel;
+  int32_t prev_event_type = kCursorSentinel;
+  int32_t prev_token_idx = kCursorSentinel;
 
   for (idx_t i = 0; i < qr->RowCount(); ++i) {
-    EventRow row;
+    InputEvent row;
     row.user_hex = qr->GetValue(0, i).GetValueUnsafe<std::string>();
     row.sort_key = qr->GetValue(1, i).GetValue<int64_t>();
     row.cond_idx = qr->GetValue(2, i).GetValue<int32_t>();
@@ -215,6 +221,23 @@ bool StageSync::process_chunk_locked() const {
     row.collateral = qr->GetValue(5, i).GetValue<int32_t>();
     row.amount = qr->GetValue(6, i).GetValue<int64_t>();
     row.price = qr->GetValue(7, i).GetValue<int64_t>();
+    if (has_prev_key) {
+      assert(
+          row.sort_key > prev_sort_key ||
+          (row.sort_key == prev_sort_key &&
+           (row.user_hex > prev_user_hex ||
+            (row.user_hex == prev_user_hex &&
+             (row.cond_idx > prev_cond_idx ||
+              (row.cond_idx == prev_cond_idx &&
+               (row.event_type > prev_event_type ||
+                (row.event_type == prev_event_type && row.token_idx > prev_token_idx))))))));
+    }
+    has_prev_key = true;
+    prev_sort_key = row.sort_key;
+    prev_user_hex = row.user_hex;
+    prev_cond_idx = row.cond_idx;
+    prev_event_type = row.event_type;
+    prev_token_idx = row.token_idx;
     rows.push_back(row);
     touched_users.insert(row.user_hex);
     user_event_inc[row.user_hex]++;

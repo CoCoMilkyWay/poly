@@ -122,7 +122,7 @@ stage3_sync_tick
 ```text
 type Address20 = bytes20
 
-// Stage2 输入事件
+// Stage2 输入事件 (数据库原始行)
 struct UserEvent {
   Address20 user_addr;
   int64   sort_key;
@@ -131,7 +131,30 @@ struct UserEvent {
   int32   token_idx;     // unknown=-1
   int32   collateral;
   int64   amount;        // 带符号,6 decimals
-  int64   price_1e6;     // 1e6 = $1
+  int64   price_1e6;     // 1e6 = $1, invariant: price_1e6 >= 0
+}
+
+// Stage3 内部统一输入结构 (用于回放/状态机)
+struct InputEvent {
+  string user_hex;        // 查询路径可为空，批处理路径必填
+  int64  sort_key;
+  int32  cond_idx;
+  int32  event_type;
+  int32  token_idx;
+  int32  collateral;
+  int64  amount;          // signed, 1e6
+  int64  price_1e6;
+}
+
+// Stage3 timeline 构建结构 (只承载事实表字段)
+struct TimelineEvent {
+  int64  sort_key;
+  int32  cond_idx;
+  int32  event_type;
+  int32  token_idx;
+  int64  realized_cum;
+  int64  unrealized_pnl;
+  int32  token_count;
 }
 
 // Condition 元数据
@@ -144,7 +167,7 @@ struct ConditionMeta {
 struct TokenCondState {
   int64 pos[8];          // 各 outcome 持仓
   int64 cost[8];         // 各 outcome 成本
-  int64 last_price[8];   // 各 outcome 最近成交价 (新增)
+  int64 last_price[8];   // 各 outcome 最近成交价
   int64 realized_pnl;    // 该 condition 已实现 pnl
   int64 event_count;
   int64 last_sort_key;
@@ -167,7 +190,7 @@ struct EventFactRow {
   int32   event_type;
   int64   realized_delta;     // 本事件 realized 增量
   int64   realized_cum;       // 累计 realized pnl
-  int64   unrealized_pnl;     // 本事件后的 unrealized pnl (新增)
+  int64   unrealized_pnl;     // 本事件后的 unrealized pnl
   int32   token_count;        // 持仓 token 种数
 }
 
@@ -308,7 +331,7 @@ CREATE TABLE s3_user_cond_state (
   pos_4 BIGINT, pos_5 BIGINT, pos_6 BIGINT, pos_7 BIGINT,
   cost_0 BIGINT, cost_1 BIGINT, cost_2 BIGINT, cost_3 BIGINT,
   cost_4 BIGINT, cost_5 BIGINT, cost_6 BIGINT, cost_7 BIGINT,
-  lp_0 BIGINT, lp_1 BIGINT, lp_2 BIGINT, lp_3 BIGINT,       -- last_price (新增)
+  lp_0 BIGINT, lp_1 BIGINT, lp_2 BIGINT, lp_3 BIGINT,       -- last_price
   lp_4 BIGINT, lp_5 BIGINT, lp_6 BIGINT, lp_7 BIGINT,
   realized_pnl BIGINT,
   event_count BIGINT,
@@ -325,7 +348,7 @@ CREATE TABLE s3_user_event_fact (
   event_type INTEGER NOT NULL,
   realized_delta BIGINT NOT NULL,
   realized_cum BIGINT NOT NULL,
-  unrealized_pnl BIGINT NOT NULL,   -- 新增
+  unrealized_pnl BIGINT NOT NULL,
   token_count INTEGER NOT NULL,
   PRIMARY KEY (user_addr, sort_key, cond_idx, event_type, token_idx)
 );
