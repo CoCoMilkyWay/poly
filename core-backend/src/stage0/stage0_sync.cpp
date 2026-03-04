@@ -969,7 +969,7 @@ int64_t StageSync::do_tag_sync() {
                                    "  AND c.tag_name IS NULL "
                                    "  AND c.class IN ('poly_ctf', 'poly_negrisk') "
                                    "ORDER BY c.rowid ASC "
-                                   "LIMIT 128"); // model batch size
+                                   "LIMIT 512"); // model batch size
   assert(result && !result->HasError());
 
   if (result->RowCount() == 0) {
