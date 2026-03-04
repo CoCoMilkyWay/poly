@@ -11,6 +11,7 @@ namespace stage2 {
 
 StageSync::StageSync(Database &stage1_db, Database &stage2_db, int base_interval)
     : stage1_db_(stage1_db),
+      stage2_db_(stage2_db),
       builder_(stage1_db, stage2_db), base_interval_(base_interval) {
   builder_.init_schema();
   builder_.load_from_rb();
@@ -82,8 +83,6 @@ void StageSync::schedule_sync(int delay_seconds) {
   timer->async_wait([this, timer](const boost::system::error_code &ec) {
     if (ec || stop_requested_)
       return;
-    // Wait for pending commit outside of do_sync trace zone so tracy shows main thread as idle.
-    builder_.wait_for_pending_commit();
     do_sync();
   });
 }
@@ -144,6 +143,8 @@ void StageSync::do_sync() {
   assert(target > last_block);
   assert(target <= head_block);
   builder_.build_chunk(target);
+  builder_.wait_for_pending_commit();
+  stage2_db_.checkpoint();
   int64_t new_cursor = builder_.cursor();
   if (new_cursor > last_block) {
     commit_history_.push_back({std::chrono::steady_clock::now(), new_cursor});

@@ -56,6 +56,7 @@ private:
                                          int64_t cursor, int64_t head_block);
 
   Database &stage1_db_;
+  Database &stage2_db_;
   EventBuilder builder_;
   asio::io_context *ioc_ = nullptr;
   int base_interval_;

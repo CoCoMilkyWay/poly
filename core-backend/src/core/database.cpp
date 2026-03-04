@@ -59,8 +59,9 @@ Database::Database(const std::string &path) : db_path_(path) {
   data_dir_ = parent.empty() ? "." : parent.string();
   fs::create_directories(data_dir_);
   duckdb::DBConfig config;
-  config.SetOption("checkpoint_threshold", duckdb::Value("256MB"));
-  config.SetOption("wal_autocheckpoint", duckdb::Value("256MB"));
+  // Disable auto checkpoint; we checkpoint manually after each chunk.
+  config.SetOption("checkpoint_threshold", duckdb::Value("10GB"));
+  config.SetOption("wal_autocheckpoint", duckdb::Value("10GB"));
   db_ = std::make_unique<duckdb::DuckDB>(path, &config);
   read_conn_ = std::make_unique<duckdb::Connection>(*db_);
   write_conn_ = std::make_unique<duckdb::Connection>(*db_);
