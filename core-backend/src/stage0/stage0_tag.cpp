@@ -301,12 +301,9 @@ public:
       opts.SetExecutionMode(ExecutionMode::ORT_SEQUENTIAL);
       opts.EnableCpuMemArena();
       device_name_ = "CPU";
-      std::cout << "[OnnxEmbedder] Running on CPU" << std::endl;
+      std::cout << "[OnnxEmbedder] To enable GPU acceleration" << std::endl;
       std::cout << "========================================" << std::endl;
-      std::cout << "  To enable GPU acceleration:" << std::endl;
-      std::cout << "  This backend is C++ and links vendored ONNX Runtime." << std::endl;
-      std::cout << "  Replace core-backend/packages/onnxruntime with a CUDA-enabled C++ build" << std::endl;
-      std::cout << "  and ensure CUDA/cuDNN runtime libraries are available." << std::endl;
+      std::cout << "  Links C++ to vendored ONNX Runtime (with CUDA/cuDNN)." << std::endl;
       std::cout << "========================================" << std::endl;
     }
 

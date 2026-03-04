@@ -11,6 +11,7 @@ from typing import Optional
 ROOT = Path(__file__).parent
 BACKEND_DIR = ROOT / "core-backend"
 BACKEND_BUILD = BACKEND_DIR / "projects" / "core" / "build"
+ONNXRUNTIME_LIB_DIR = BACKEND_DIR / "packages" / "onnxruntime"
 FRONTEND_DIR = ROOT / "core-frontend"
 CONFIG_FILE = ROOT / "config.json"
 
@@ -173,9 +174,16 @@ def main():
         time.sleep(1.0)
 
     print("[run.py] 启动 backend...")
+    backend_env = os.environ.copy()
+    ld_library_path = backend_env.get("LD_LIBRARY_PATH", "")
+    ort_path = str(ONNXRUNTIME_LIB_DIR)
+    backend_env["LD_LIBRARY_PATH"] = (
+        f"{ort_path}:{ld_library_path}" if ld_library_path else ort_path
+    )
     backend = subprocess.Popen(
         [str(BACKEND_EXE), "--config", str(CONFIG_FILE)],
         cwd=ROOT,
+        env=backend_env,
     )
     frontend = None
 
