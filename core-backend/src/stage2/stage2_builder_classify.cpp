@@ -1192,7 +1192,8 @@ TransferClass EventBuilder::classify_and_emit(
       }
       return emit_and_classify_generic_out(from, TransferClass::InternalTransferFPMM);
     }
-    return TransferClass::InternalTransferFPMM;
+    // FPMM as operator but neither from nor to is FPMM: emit to both parties
+    return emit_and_classify_generic_in_out(TransferClass::InternalTransferFPMM);
   }
 
   // ========== 普通用户转账 ==========

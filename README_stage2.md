@@ -453,5 +453,25 @@ Phase3输出结构
 └─ xfer_stats_delta + event_by_collateral_delta (提交时写入 stage2_cursor 快照)
    ├─ TransferStats: user/internal/unclassified 与 33类固定节点计数
    └─ event_by_collateral: (EventType, Collateral) 维度增量
-```
 
+| EventType         | emit给   | amt | price              | 备注                 |
+| ----------------- | -------- | --- | ------------------ | -------------------- |
+| SplitNormal       | holder   | ±   | `1e6/oc`           | mint+/burn-          |
+| SplitNegRisk      | to       | +   | `1e6/oc`           | Adapter→用户         |
+| SplitNonPoly      | holder   | ±   | `1e6/oc`           | unknown              |
+| MergeNormal       | holder   | ±   | `1e6/oc`           | burn-/mint+          |
+| MergeNegRisk      | from     | -   | `1e6/oc`           | 用户→Adapter         |
+| MergeNonPoly      | holder   | ±   | `1e6/oc`           | unknown              |
+| Redemption        | redeemer | -   | `payout[ti]`       |                      |
+| RedemptionNonPoly | redeemer | -   | 0                  | unknown              |
+| Convert           | from     | -   | 0                  | burn NO              |
+| OrderBuy          | to       | +   | `quote*1e6/tokens` | **双emit**           |
+| OrderSell         | from     | -   | `quote*1e6/tokens` | **双emit**           |
+| FPMMBuy           | to       | +   | `coll*1e6/tokens`  |                      |
+| FPMMSell          | from     | -   | `coll*1e6/tokens`  |                      |
+| FPMMLPAdd         | funder   | +   | `1e6/oc`           | **LP**,s3不计pos     |
+| FPMMLPRemove      | to       | +   | `1e6/oc`           | **LP**,s3不计pos     |
+| FPMMLPReturn      | to       | +   | `1e6/oc`           | **LP**,s3不计pos     |
+| TransferIn*       | to       | +   | 0                  | **双emit**(普通转账) |
+| TransferOut*      | from     | -   | 0                  | **双emit**(普通转账) |
+```
