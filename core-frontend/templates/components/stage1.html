@@ -443,6 +443,11 @@
         NegRisk: {{ "{:,}".format(stage0_state.negrisk_condition_count or 0) }}
         Non-Poly: {{ "{:,}".format(stage0_state.nonpoly_condition_count or 0) }}
       </span>
+      <span id="stage0-api-info" style="margin-left: 8px; color: #555">
+        API: <a href="https://gamma-api.polymarket.com" target="_blank"
+          style="color: #6366f1; text-decoration: none;">gamma-api.polymarket.com</a>
+        (<code style="font-size: 0.9em; color: #888;">/markets?condition_ids=xxx</code>)
+      </span>
     </div>
     <div class="progress-bar">
       <div class="progress-fill" id="stage0-progress-fill" style="width: 0%"></div>
