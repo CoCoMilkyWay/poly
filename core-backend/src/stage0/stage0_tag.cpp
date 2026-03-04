@@ -3,6 +3,7 @@
 #include <cassert>
 #include <cctype>
 #include <cmath>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <unordered_map>
@@ -223,10 +224,45 @@ std::vector<TagLabel> parse_tag_md(const std::string &path) {
 // ONNX Inference
 // ============================================================================
 
+// 如果 model.onnx 不存在但有 .00 .01 ... 分片，自动合并
+void ensure_model_merged(const std::string &model_path) {
+  namespace fs = std::filesystem;
+  if (fs::exists(model_path)) {
+    return;
+  }
+  
+  // 查找分片文件: model.onnx.00, model.onnx.01, ...
+  std::vector<std::string> parts;
+  for (int i = 0; i < 100; ++i) {
+    char suffix[8];
+    snprintf(suffix, sizeof(suffix), ".%02d", i);
+    std::string part_path = model_path + suffix;
+    if (!fs::exists(part_path)) break;
+    parts.push_back(part_path);
+  }
+  
+  assert(!parts.empty() && "model.onnx missing and no .00 .01 ... files found");
+  
+  std::cout << "[OnnxEmbedder] Merging " << parts.size() << " parts into " << model_path << std::endl;
+  
+  std::ofstream out(model_path, std::ios::binary);
+  assert(out.is_open());
+  
+  for (const auto &part : parts) {
+    std::ifstream in(part, std::ios::binary);
+    assert(in.is_open());
+    out << in.rdbuf();
+  }
+  
+  std::cout << "[OnnxEmbedder] Merge complete" << std::endl;
+}
+
 class OnnxEmbedder {
 public:
   explicit OnnxEmbedder(const std::string &model_path)
       : env_(ORT_LOGGING_LEVEL_WARNING, "bge_tagger") {
+    ensure_model_merged(model_path);
+    
     Ort::SessionOptions opts;
     opts.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
     // 0 = 自动检测CPU核心数，比固定4更快
