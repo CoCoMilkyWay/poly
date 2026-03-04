@@ -1,5 +1,6 @@
 #include "misc/profiler.hpp"
 #include "stage3_sync.hpp"
+#include <cmath>
 
 namespace stage3 {
 
@@ -57,7 +58,7 @@ std::vector<StageSync::PositionRow> StageSync::get_positions_at(const std::strin
     assert(uidx < conditions_.size());
     const auto &cond = conditions_[uidx];
     for (int i = 0; i < cond.outcome_count; ++i) {
-      if (st.positions[i] <= kPosEpsilon) {
+      if (std::abs(st.positions[i]) <= kPosEpsilon) {
         continue;
       }
       out.push_back(PositionRow{

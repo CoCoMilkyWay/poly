@@ -421,7 +421,7 @@ bool StageSync::process_chunk_locked() const {
       int after_nonzero = 0;
       const auto &cond = conditions_[static_cast<size_t>(row.cond_idx)];
       for (int j = 0; j < cond.outcome_count; ++j) {
-        if (it->second.positions[j] > kPosEpsilon) {
+        if (std::abs(it->second.positions[j]) > kPosEpsilon) {
           before_nonzero++;
         }
       }
@@ -429,7 +429,7 @@ bool StageSync::process_chunk_locked() const {
       it->second.unrealized_pnl = compute_unrealized_pnl(it->second);
       user_unrealized_cum[row.user_hex] += (it->second.unrealized_pnl - before_cond_unrealized);
       for (int j = 0; j < cond.outcome_count; ++j) {
-        if (it->second.positions[j] > kPosEpsilon) {
+        if (std::abs(it->second.positions[j]) > kPosEpsilon) {
           after_nonzero++;
         }
       }
@@ -461,8 +461,8 @@ bool StageSync::process_chunk_locked() const {
     assert(static_cast<size_t>(key.cond_idx) < conditions_.size());
     const auto &cond = conditions_[static_cast<size_t>(key.cond_idx)];
     for (int j = 0; j < cond.outcome_count; ++j) {
-      assert(st.positions[j] >= -1e-6);
-      assert(st.cost[j] >= -1e-6);
+      assert(std::isfinite(st.positions[j]));
+      assert(std::isfinite(st.cost[j]));
     }
   }
 
@@ -596,14 +596,14 @@ bool StageSync::process_chunk_locked() const {
         "  SELECT st.user_addr AS user_addr, "
         "         COALESCE(SUM(st.realized_pnl), 0) AS rpnl, "
         "         COALESCE(SUM("
-        "           CASE WHEN st.pos_0 > 0 THEN (CAST(st.pos_0 AS HUGEINT) * CAST(st.lp_0 AS HUGEINT)) / 1000000 - CAST(st.cost_0 AS HUGEINT) ELSE 0 END + "
-        "           CASE WHEN st.pos_1 > 0 THEN (CAST(st.pos_1 AS HUGEINT) * CAST(st.lp_1 AS HUGEINT)) / 1000000 - CAST(st.cost_1 AS HUGEINT) ELSE 0 END + "
-        "           CASE WHEN st.pos_2 > 0 THEN (CAST(st.pos_2 AS HUGEINT) * CAST(st.lp_2 AS HUGEINT)) / 1000000 - CAST(st.cost_2 AS HUGEINT) ELSE 0 END + "
-        "           CASE WHEN st.pos_3 > 0 THEN (CAST(st.pos_3 AS HUGEINT) * CAST(st.lp_3 AS HUGEINT)) / 1000000 - CAST(st.cost_3 AS HUGEINT) ELSE 0 END + "
-        "           CASE WHEN st.pos_4 > 0 THEN (CAST(st.pos_4 AS HUGEINT) * CAST(st.lp_4 AS HUGEINT)) / 1000000 - CAST(st.cost_4 AS HUGEINT) ELSE 0 END + "
-        "           CASE WHEN st.pos_5 > 0 THEN (CAST(st.pos_5 AS HUGEINT) * CAST(st.lp_5 AS HUGEINT)) / 1000000 - CAST(st.cost_5 AS HUGEINT) ELSE 0 END + "
-        "           CASE WHEN st.pos_6 > 0 THEN (CAST(st.pos_6 AS HUGEINT) * CAST(st.lp_6 AS HUGEINT)) / 1000000 - CAST(st.cost_6 AS HUGEINT) ELSE 0 END + "
-        "           CASE WHEN st.pos_7 > 0 THEN (CAST(st.pos_7 AS HUGEINT) * CAST(st.lp_7 AS HUGEINT)) / 1000000 - CAST(st.cost_7 AS HUGEINT) ELSE 0 END"
+        "           CASE WHEN st.pos_0 != 0 AND st.lp_0 > 0 THEN (CAST(st.pos_0 AS HUGEINT) * CAST(st.lp_0 AS HUGEINT)) / 1000000 - CAST(st.cost_0 AS HUGEINT) ELSE 0 END + "
+        "           CASE WHEN st.pos_1 != 0 AND st.lp_1 > 0 THEN (CAST(st.pos_1 AS HUGEINT) * CAST(st.lp_1 AS HUGEINT)) / 1000000 - CAST(st.cost_1 AS HUGEINT) ELSE 0 END + "
+        "           CASE WHEN st.pos_2 != 0 AND st.lp_2 > 0 THEN (CAST(st.pos_2 AS HUGEINT) * CAST(st.lp_2 AS HUGEINT)) / 1000000 - CAST(st.cost_2 AS HUGEINT) ELSE 0 END + "
+        "           CASE WHEN st.pos_3 != 0 AND st.lp_3 > 0 THEN (CAST(st.pos_3 AS HUGEINT) * CAST(st.lp_3 AS HUGEINT)) / 1000000 - CAST(st.cost_3 AS HUGEINT) ELSE 0 END + "
+        "           CASE WHEN st.pos_4 != 0 AND st.lp_4 > 0 THEN (CAST(st.pos_4 AS HUGEINT) * CAST(st.lp_4 AS HUGEINT)) / 1000000 - CAST(st.cost_4 AS HUGEINT) ELSE 0 END + "
+        "           CASE WHEN st.pos_5 != 0 AND st.lp_5 > 0 THEN (CAST(st.pos_5 AS HUGEINT) * CAST(st.lp_5 AS HUGEINT)) / 1000000 - CAST(st.cost_5 AS HUGEINT) ELSE 0 END + "
+        "           CASE WHEN st.pos_6 != 0 AND st.lp_6 > 0 THEN (CAST(st.pos_6 AS HUGEINT) * CAST(st.lp_6 AS HUGEINT)) / 1000000 - CAST(st.cost_6 AS HUGEINT) ELSE 0 END + "
+        "           CASE WHEN st.pos_7 != 0 AND st.lp_7 > 0 THEN (CAST(st.pos_7 AS HUGEINT) * CAST(st.lp_7 AS HUGEINT)) / 1000000 - CAST(st.cost_7 AS HUGEINT) ELSE 0 END"
         "         ), 0) AS upnl, "
         "         SUM(CASE WHEN "
         "              st.pos_0 != 0 OR st.pos_1 != 0 OR st.pos_2 != 0 OR st.pos_3 != 0 OR "

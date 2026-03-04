@@ -1,32 +1,27 @@
-## 交易口径事件
+## 交易口径事件（符号驱动，支持做空）
 > `qty = abs(amount)`
+> `dir = sign(amount)`（`+1 / -1 / 0`）
 > `px = price_1e6 / 1e6`
-> `cost_before = cost[token_idx]`(本事件处理前的持仓成本)
-> `pos_before = pos[token_idx]`(本事件处理前的持仓数量)
+> `cost_before = cost[token_idx]`（本事件前）
+> `pos_before = pos[token_idx]`（本事件前）
 > `has_usd = collateral ∈ {USDC(1), USDCe(2), USDT(3), WrappedUSDCe(4)}`
 
-**Collateral 规则**: 只有 USD 类抵押物 (`has_usd=true`) 才计算 cost/realized_delta/last_price；非 USD 只更新 pos。
+**Collateral 规则**: 只有 USD 类抵押物 (`has_usd=true`) 才计算 `cost / realized_delta / last_price`；非 USD 仅更新 `pos`。  
+**方向规则**: `EventType` 决定“经济语义”，`amount` 符号决定“方向”；同一 `EventType` 可出现正负。
 
-| EventType                                                  | 是否计算   | 状态更新(pos/cost)                                   | realized_delta 公式                                                | 更新 last_price |
-| ---------------------------------------------------------- | ---------- | ---------------------------------------------------- | ------------------------------------------------------------------ | --------------- |
-| OrderBuy                                                   | 是         | `pos += qty; cost += qty * px`                       | `0`                                                                | 是              |
-| OrderSell                                                  | 是         | `cost -= cost_before * qty / pos_before; pos -= qty` | `qty * px - cost_before * qty / pos_before`                        | 是              |
-| SplitNormal / SplitNegRisk / SplitNonPoly                  | 是(重分类) | `pos += qty; cost += qty * px`                       | `0`                                                                | 否              |
-| MergeNormal / MergeNegRisk / MergeNonPoly                  | 是(重分类) | `cost -= cost_before * qty / pos_before; pos -= qty` | `qty * px - cost_before * qty / pos_before`                        | 否              |
-| Redemption / RedemptionNonPoly                             | 是         | `cost -= cost_before * qty / pos_before; pos -= qty` | `qty * px - cost_before * qty / pos_before`                        | 否              |
-| Convert                                                    | 是         | `cost -= cost_before * qty / pos_before; pos -= qty` | `qty * (popcount - 1) / popcount - cost_before * qty / pos_before` | 否              |
-| FPMMBuy                                                    | 是         | `pos += qty; cost += qty * px`                       | `0`                                                                | 是              |
-| FPMMSell                                                   | 是         | `cost -= cost_before * qty / pos_before; pos -= qty` | `qty * px - cost_before * qty / pos_before`                        | 是              |
-| FPMMLPAdd                                                  | 否(资金流) | 不改 token `pos/cost`(0->FPMM mint)                  | `0`                                                                | 否              |
-| FPMMLPRemove                                               | 是(LP取回) | `pos += qty; cost` 不变                              | `0`                                                                | 否              |
-| FPMMLPReturn                                               | 是(LP退回) | `pos += qty; cost` 不变                              | `0`                                                                | 否              |
-| TransferInNegRisk / TransferInOther / TransferInNonPoly    | 是(转入)   | `pos += qty; cost` 不变                              | `0`                                                                | 否              |
-| TransferOutNegRisk / TransferOutOther / TransferOutNonPoly | 是(转出)   | `cost -= cost_before * qty / pos_before; pos -= qty` | `0`                                                                | 否              |
+| 事件族                                                     | `amount > 0` (正向腿)                                        | `amount < 0` (反向腿)                                         | realized 规则                                                | last_price               |
+| ---------------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------- | ------------------------------------------------------------ | ------------------------ |
+| `Order* / FPMM* / Split* / Merge* / Redemption*`           | 先平空(`pos<0`)再开多；开多部分 `cost += open_long_qty * px` | 先平多(`pos>0`)再开空；开空部分 `cost -= open_short_qty * px` | 仅“平掉已有仓位”部分计 realized；开新仓部分不计当期 realized | 仅 `Order* / FPMM*` 更新 |
+| `Convert`                                                  | 先平空再开多；开多部分 `cost += open_long_qty * convert_px`  | 先平多再开空；开空部分 `cost -= open_short_qty * convert_px`  | `convert_px = (popcount-1)/popcount`，仅平仓部分计 realized  | 否                       |
+| `TransferIn* / TransferOut* / FPMMLPRemove / FPMMLPReturn` | 先平空再开多；`cost` 不增加                                  | 先平多再开空；`cost` 不增加（保持 transfer 语义）             | 始终 `0`                                                     | 否                       |
+| `FPMMLPAdd`                                                | 不改 `pos/cost`                                              | 不改 `pos/cost`                                               | `0`                                                          | 否                       |
+
+`amount == 0` 视为 no-op（仅事件计数推进，不改持仓/成本/PnL）。
 
 ## Unrealized PnL 计算
 ```
 last_price[(cond_idx, token_idx)] = 该token最近一次交易的成交价
-unrealized_pnl = Σ(pos[i] * last_price[i] / 1e6 - cost[i])  // 仅对 pos[i] > 0 的token
+unrealized_pnl = Σ(pos[i] * last_price[i] / 1e6 - cost[i])  // 对所有 pos[i] != 0 且 last_price[i] > 0
 ```
 - 只有 Order/FPMM 交易事件会更新 last_price
 - Split/Merge/Transfer 等不更新 last_price
@@ -63,37 +58,32 @@ stage3_sync_tick
 │  │  ├─ cond_idx < 0: 不进入状态机(仅事实行)
 │  │  ├─ cond_idx >= 0: condition_meta 必须存在
 │  │  ├─ token_idx ∈ [0, outcome_count)
-│  │  ├─ event_type 与 amount 方向匹配
+│  │  ├─ event_type 合法；amount 符号不做类型硬断言（允许同类型正负共存）
+│  │  ├─ amount==0 允许（no-op）
 │  │  └─ 内部使用 double 计算,写入 DB 时 round() 转 int64
 │  ├─ 3.2 路由
-│  │  ├─ Buy类: OrderBuy/FPMMBuy/Split*/FPMMLPRemove/FPMMLPReturn
-│  │  ├─ Sell类: OrderSell/FPMMSell/Merge*/Redemption*/Convert
-│  │  ├─ TransferIn类: TransferIn*
-│  │  ├─ TransferOut类: TransferOut*
-│  │  └─ LP添加: FPMMLPAdd(仅记录,不改pos)
+│  │  ├─ 方向由 amount 符号决定：正向腿(amount>0) / 反向腿(amount<0)
+│  │  ├─ 事件族决定经济语义：price类 / convert类 / transfer类 / lp_add类
+│  │  └─ LP添加: FPMMLPAdd(仅记录,不改pos/cost)
 │  ├─ 3.3 应用规则
 │  │  ├─ 公共计算
 │  │  │  ├─ qty = abs(amount), px = price_1e6/1e6
-│  │  │  └─ 卖出/转出前快照: cost_before=cost[token_idx], pos_before=pos[token_idx]
-│  │  ├─ Buy类: pos += qty; cost += qty*px; realized_delta = 0
-│  │  ├─ Sell类:
-│  │  │  ├─ assert pos_before > 0 && pos_before >= qty
-│  │  │  ├─ cost_removed = cost_before * qty / pos_before
-│  │  │  ├─ cost -= cost_removed; pos -= qty
-│  │  │  ├─ 非 Convert: realized_delta = qty*px - cost_removed
-│  │  │  └─ Convert: realized_delta = qty*(popcount-1)/popcount - cost_removed
-│  │  ├─ TransferIn类: pos += qty; cost 不变; realized_delta = 0
-│  │  ├─ TransferOut类:
-│  │  │  ├─ assert pos_before > 0 && pos_before >= qty
-│  │  │  ├─ cost_removed = cost_before * qty / pos_before
-│  │  │  └─ cost -= cost_removed; pos -= qty; realized_delta = 0
-│  │  ├─ FPMMLPRemove/Return: pos += qty; cost 不变; realized_delta = 0
-│  │  └─ FPMMLPAdd: 不改 token pos/cost; realized_delta = 0(仅记录事件)
+│  │  │  └─ amount==0: no-op
+│  │  ├─ 正向腿(amount>0): 先平空(pos<0)再开多
+│  │  │  ├─ price/convert 类: 开多部分增加 cost
+│  │  │  └─ transfer/LP-return 类: 开多部分不增加 cost
+│  │  ├─ 反向腿(amount<0): 先平多(pos>0)再开空
+│  │  │  ├─ price/convert 类: 开空部分记负 cost（入场信用）
+│  │  │  └─ transfer/LP-return 类: 开空部分不改 cost
+│  │  ├─ realized 仅在“平掉已有仓位”时产生
+│  │  │  ├─ price 类: realized = closed_qty * px - cost_removed
+│  │  │  └─ convert 类: realized = closed_qty * ((popcount-1)/popcount) - cost_removed
+│  │  └─ FPMMLPAdd: 不改 token pos/cost; realized_delta=0
 │  ├─ 3.4 更新 last_price (仅 Order/FPMM 交易)
 │  │  └─ 若 event_type ∈ {OrderBuy, OrderSell, FPMMBuy, FPMMSell} 且 price > 0:
 │  │       last_price[(cond_idx, token_idx)] = price
 │  ├─ 3.5 计算 unrealized_pnl
-│  │  └─ unrealized_pnl = Σ(pos[i] * last_price[(cond_idx,i)] / 1e6 - cost[i]) for all i where pos[i]>0
+│  │  └─ unrealized_pnl = Σ(pos[i] * last_price[(cond_idx,i)] / 1e6 - cost[i]) for all i where pos[i]!=0 && last_price[i]>0
 │  ├─ 3.6 更新 user_state_map[user_addr]
 │  │  ├─ total_events += 1
 │  │  ├─ total_realized_pnl += realized_delta
@@ -102,7 +92,7 @@ stage3_sync_tick
 │     └─ append EventFactRow(user_addr, sort_key, cond_idx, token_idx, event_type,
 │                            realized_delta, realized_cum, unrealized_pnl, token_count)
 ├─ 4) 批次收尾校验
-│  ├─ token 状态非负: pos>=0 且 cost>=0
+│  ├─ token 状态有限: pos/cost 必须是 finite（允许负数,表示短仓/负成本）
 │  ├─ fact_rows.size == batch_events.size
 │  └─ 任一失败 -> rollback,cursor 不推进
 ├─ 5) 单事务提交
@@ -166,8 +156,8 @@ struct ConditionMeta {
 // 用户在某 condition 下的状态
 // 内部计算使用 double，持久化时 round() 转 int64
 struct TokenCondState {
-  double pos[8];          // 各 outcome 持仓 (内部 double，DB int64)
-  double cost[8];         // 各 outcome 成本 (内部 double，DB int64)
+  double pos[8];          // 各 outcome 持仓 (内部 double，DB int64; 可负=短仓)
+  double cost[8];         // 各 outcome 成本 (内部 double，DB int64; 可负=短仓信用)
   double last_price[8];   // 各 outcome 最近成交价 (内部 double，DB int64)
   double realized_pnl;    // 该 condition 已实现 pnl (内部 double，DB int64)
   int64 event_count;
@@ -192,7 +182,7 @@ struct EventFactRow {
   int64   realized_delta;     // 本事件 realized 增量
   int64   realized_cum;       // 累计 realized pnl
   int64   unrealized_pnl;     // 本事件后的 unrealized pnl
-  int32   token_count;        // 持仓 token 种数
+  int32   token_count;        // 持仓 token 种数(|pos|>0)
 }
 
 // 游标
@@ -254,8 +244,8 @@ PnL数据（核心接口）
     {
       "ci": 123,           // cond_idx
       "ti": 0,             // token_idx
-      "qty": 1000000,      // 持仓数量 (1e6)
-      "cost": 500000,      // 成本 (1e6)
+      "qty": 1000000,      // 持仓数量 (1e6, 可负=短仓)
+      "cost": 500000,      // 成本 (1e6, 可负=短仓信用)
       "lp": 550000         // last_price (1e6)
     },
     ...
@@ -276,18 +266,18 @@ PnL数据（核心接口）
 
 **字段说明**：
 
-| 表        | 字段 | 类型 | 说明                         |
-| --------- | ---- | ---- | ---------------------------- |
-| positions | ci   | u32  | cond_idx                     |
-| positions | ti   | u8   | token_idx                    |
-| positions | qty  | i64  | 持仓数量 (1e6 = 1 token)     |
-| positions | cost | i64  | 成本基础 (1e6 = $1)          |
-| positions | lp   | i64  | 最近成交价 (1e6 = $1)        |
-| timeline  | sk   | i64  | sort_key (block*1e9+log_idx) |
-| timeline  | ty   | u8   | 事件类型                     |
-| timeline  | rpnl | i64  | 累计已实现 PnL               |
-| timeline  | upnl | i64  | 该时刻未实现 PnL             |
-| timeline  | tk   | i32  | 持仓 token 种数              |
+| 表        | 字段 | 类型 | 说明                           |
+| --------- | ---- | ---- | ------------------------------ |
+| positions | ci   | u32  | cond_idx                       |
+| positions | ti   | u8   | token_idx                      |
+| positions | qty  | i64  | 持仓数量 (1e6 = 1 token, 可负) |
+| positions | cost | i64  | 成本基础 (1e6 = $1, 可负)      |
+| positions | lp   | i64  | 最近成交价 (1e6 = $1)          |
+| timeline  | sk   | i64  | sort_key (block*1e9+log_idx)   |
+| timeline  | ty   | u8   | 事件类型                       |
+| timeline  | rpnl | i64  | 累计已实现 PnL                 |
+| timeline  | upnl | i64  | 该时刻未实现 PnL               |
+| timeline  | tk   | i32  | 持仓 token 种数                |
 
 `/api/stage3-users` 字段：
 
