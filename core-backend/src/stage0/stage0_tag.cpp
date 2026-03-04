@@ -229,7 +229,8 @@ public:
       : env_(ORT_LOGGING_LEVEL_WARNING, "bge_tagger") {
     Ort::SessionOptions opts;
     opts.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
-    opts.SetIntraOpNumThreads(4);
+    // 0 = 自动检测CPU核心数，比固定4更快
+    opts.SetIntraOpNumThreads(0);
     opts.SetInterOpNumThreads(1);
     opts.SetExecutionMode(ExecutionMode::ORT_SEQUENTIAL);
     opts.EnableCpuMemArena();
@@ -364,7 +365,10 @@ struct Tagger::Impl {
   WordPieceTokenizer tokenizer;
   OnnxEmbedder embedder;
   std::vector<TagLabel> labels;
-  std::vector<std::vector<float>> label_embeddings;
+  // 连续内存布局：[label0_dim0, label0_dim1, ..., label1_dim0, ...]
+  // 比 vector<vector<float>> 更快：缓存友好 + 编译器自动SIMD
+  std::vector<float> label_embeddings_flat;
+  size_t hidden_dim = 0;
 
   Impl(const std::string &model_dir, const std::string &tag_md_path)
       : tokenizer(model_dir + "/vocab.txt"),
@@ -376,9 +380,17 @@ struct Tagger::Impl {
     for (const auto &label : labels) {
       label_tokens.push_back(tokenizer.encode(label.embed_text, 64));
     }
-    label_embeddings = embedder.embed(label_tokens);
-    assert(label_embeddings.size() == labels.size());
-    std::cout << "[Tagger] Loaded " << labels.size() << " labels, dim=" << label_embeddings[0].size() << std::endl;
+    auto label_embs = embedder.embed(label_tokens);
+    assert(label_embs.size() == labels.size());
+    hidden_dim = label_embs[0].size();
+    // 展平为连续内存
+    label_embeddings_flat.reserve(labels.size() * hidden_dim);
+    for (const auto &emb : label_embs) {
+      for (float v : emb) {
+        label_embeddings_flat.push_back(v);
+      }
+    }
+    std::cout << "[Tagger] Loaded " << labels.size() << " labels, dim=" << hidden_dim << std::endl;
   }
 };
 
@@ -407,17 +419,24 @@ std::vector<TagResult> Tagger::tag_batch(const std::vector<std::string> &questio
   auto embeddings = impl_->embedder.embed(tokens);
   assert(embeddings.size() == questions.size());
 
+  const size_t num_labels = impl_->labels.size();
+  const size_t dim = impl_->hidden_dim;
+  const float *label_data = impl_->label_embeddings_flat.data();
+
   std::vector<TagResult> results;
   results.reserve(questions.size());
 
   for (const auto &emb : embeddings) {
     float best_score = -1.0f;
     size_t best_idx = 0;
+    const float *query = emb.data();
 
-    for (size_t i = 0; i < impl_->label_embeddings.size(); ++i) {
+    for (size_t i = 0; i < num_labels; ++i) {
+      const float *label = label_data + i * dim;
       float score = 0.0f;
-      for (size_t h = 0; h < emb.size(); ++h) {
-        score += emb[h] * impl_->label_embeddings[i][h];
+      // 连续内存 + 简单循环 -> 编译器自动SIMD向量化
+      for (size_t h = 0; h < dim; ++h) {
+        score += query[h] * label[h];
       }
       if (score > best_score) {
         best_score = score;

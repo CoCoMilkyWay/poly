@@ -436,9 +436,6 @@
   <div class="progress-container" style="border-top: 1px solid #333; padding-top: 10px">
     <div class="sync-stat-label" style="margin-bottom: 6px">
       条件市场信息
-      <span id="stage0-meta" style="margin-left: 8px; color: #555">{{ "{:,}".format(stage0_state.last_block or 0) }} /
-        {{
-        "{:,}".format(stage1_state.head_block or 0) }}</span>
       <span id="stage0-condition-count" style="margin-left: 8px; color: #555">
         Total: {{ "{:,}".format((stage0_state.ctf_condition_count or 0) + (stage0_state.negrisk_condition_count or 0) +
         (stage0_state.nonpoly_condition_count or 0)) }}
@@ -459,13 +456,13 @@
   <div class="progress-container" style="border-top: 1px solid #333; padding-top: 10px">
     <div class="sync-stat-label" style="margin-bottom: 6px">
       标签分类
-      <span id="stage0-tag-meta" style="margin-left: 8px; color: #555">
-        {{ "{:,}".format(stage0_state.tag_last_block or 0) }} / {{ "{:,}".format(stage1_state.head_block or 0) }}
-      </span>
       <span id="stage0-tag-count" style="margin-left: 8px; color: #555">
         Total: {{ "{:,}".format((stage0_state.tagged_count or 0) + (stage0_state.untagged_count or 0)) }}
         (Tagged: {{ "{:,}".format(stage0_state.tagged_count or 0) }},
         UnTagged: {{ "{:,}".format(stage0_state.untagged_count or 0) }})
+      </span>
+      <span id="stage0-tag-model" style="margin-left: 8px; color: #555">
+        Model: {{ tag_model_path }} ({{ tag_model_size_text }})
       </span>
     </div>
     <div class="progress-bar">
@@ -1081,8 +1078,6 @@
         pct.toFixed(2) + "%";
       document.getElementById("stage0-progress-blocks").textContent =
         formatNumber(last) + " / " + formatNumber(head);
-      document.getElementById("stage0-meta").textContent =
-        formatNumber(last) + " / " + formatNumber(head);
       document.getElementById("stage0-condition-count").textContent =
         "Total: " + formatNumber(conditionCount) +
         " (CTF: " + formatNumber(ctfCount) +
@@ -1101,8 +1096,6 @@
       document.getElementById("stage0-tag-progress-pct").textContent =
         tagPct.toFixed(2) + "%";
       document.getElementById("stage0-tag-progress-blocks").textContent =
-        formatNumber(tagLast) + " / " + formatNumber(head);
-      document.getElementById("stage0-tag-meta").textContent =
         formatNumber(tagLast) + " / " + formatNumber(head);
       document.getElementById("stage0-tag-count").textContent =
         "Total: " + formatNumber(tagTotal) +
