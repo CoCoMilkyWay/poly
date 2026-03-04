@@ -13,6 +13,7 @@ StageSync::StageSync(Database &stage1_db, Database &stage2_db, int base_interval
     : stage1_db_(stage1_db),
       stage2_db_(stage2_db),
       builder_(stage1_db, stage2_db), base_interval_(base_interval) {
+  assert(base_interval_ > 0);
   builder_.init_schema();
   builder_.load_from_rb();
   sync_.last_block = builder_.cursor();

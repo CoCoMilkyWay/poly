@@ -26,7 +26,7 @@ public:
     double eta_seconds = -1.0;
   };
 
-  StageSync(Database &stage1_db, Database &stage2_db, int base_interval = 30);
+  StageSync(Database &stage1_db, Database &stage2_db, int base_interval);
 
   void start(asio::io_context &ioc);
 

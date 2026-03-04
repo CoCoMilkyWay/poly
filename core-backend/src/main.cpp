@@ -51,6 +51,10 @@ int main(int argc, char *argv[]) {
   std::cout << "[Main] Stage3 Enable: " << config.stage3_enable << std::endl;
   std::cout << "[Main] Stage1 RPC Block Span: " << config.stage1_rpc_block_span << std::endl;
   std::cout << "[Main] Stage1 RPC Buffer Multiplier: " << config.stage1_rpc_buffer_multiplier << std::endl;
+  std::cout << "[Main] Stage0 Check Interval: " << config.stage0_check_interval_seconds << "s" << std::endl;
+  std::cout << "[Main] Stage1 Check Interval: " << config.stage1_check_interval_seconds << "s" << std::endl;
+  std::cout << "[Main] Stage2 Check Interval: " << config.stage2_check_interval_seconds << "s" << std::endl;
+  std::cout << "[Main] Stage3 Check Interval: " << config.stage3_check_interval_seconds << "s" << std::endl;
   std::cout << "[Main] API Port: " << config.backend_port << std::endl;
 
   Database stage0_db(config.db_path_stage0);
@@ -62,10 +66,10 @@ int main(int argc, char *argv[]) {
     stage1_db.init_schema();
   }
 
-  stage0::StageSync stage0(config, stage1_db, stage0_db);
-  stage1::StageSync stage1(config, stage1_db);
-  stage2::StageSync stage2(stage1_db, stage2_db);
-  stage3::StageSync stage3(stage2.builder(), stage2_db, stage3_db);
+  stage0::StageSync stage0(config, stage1_db, stage0_db, config.stage0_check_interval_seconds);
+  stage1::StageSync stage1(config, stage1_db, config.stage1_check_interval_seconds);
+  stage2::StageSync stage2(stage1_db, stage2_db, config.stage2_check_interval_seconds);
+  stage3::StageSync stage3(stage2.builder(), stage2_db, stage3_db, config.stage3_check_interval_seconds);
 
   auto stage0_getter = [&stage0]() -> Stage0Status {
     const auto s = stage0.status();

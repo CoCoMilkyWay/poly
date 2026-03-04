@@ -1,8 +1,10 @@
 #include "stage3_sync.hpp"
 namespace stage3 {
 
-StageSync::StageSync(EventBuilder &builder, Database &stage2_db, Database &stage3_db)
-    : builder_(builder), stage2_db_(stage2_db), stage3_db_(stage3_db) {
+StageSync::StageSync(EventBuilder &builder, Database &stage2_db, Database &stage3_db, int base_interval_seconds)
+    : builder_(builder), stage2_db_(stage2_db), stage3_db_(stage3_db),
+      base_interval_seconds_(base_interval_seconds) {
+  assert(base_interval_seconds_ > 0);
   init_schema();
   load_conditions();
   load_cursor();

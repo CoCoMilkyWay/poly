@@ -35,7 +35,7 @@ public:
     double eta_seconds = -1.0;
   };
 
-  StageSync(const Config &config, Database &stage1_db, Database &stage0_db, int base_interval_seconds = 30);
+  StageSync(const Config &config, Database &stage1_db, Database &stage0_db, int base_interval_seconds);
 
   void start(asio::io_context &ioc);
   void stop();
@@ -107,7 +107,7 @@ private:
   Database &stage1_db_;
   Database &stage0_db_;
   asio::io_context *ioc_ = nullptr;
-  int base_interval_seconds_ = 30;
+  int base_interval_seconds_ = 0;
   std::atomic<bool> stop_requested_{false};
   std::unordered_set<std::string> known_condition_ids_;
   int64_t known_ctf_condition_count_ = 0;

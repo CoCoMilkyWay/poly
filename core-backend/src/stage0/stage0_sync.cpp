@@ -119,6 +119,7 @@ StageSync::StageSync(const Config &config, Database &stage1_db, Database &stage0
                      int base_interval_seconds)
     : config_(config), stage1_db_(stage1_db), stage0_db_(stage0_db),
       base_interval_seconds_(base_interval_seconds) {
+  assert(base_interval_seconds_ > 0);
   init_schema();
   ensure_cursor_floor();
   load_known_conditions();

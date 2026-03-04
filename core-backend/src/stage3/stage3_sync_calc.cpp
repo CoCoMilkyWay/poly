@@ -61,8 +61,9 @@ int64_t StageSync::compute_unrealized_pnl(const CondState &st) {
     if (st.positions[j] <= 0 || st.last_price[j] <= 0) {
       continue;
     }
-    sum += static_cast<__int128>(st.positions[j]) * static_cast<__int128>(st.last_price[j]) -
-           static_cast<__int128>(st.cost[j]);
+    __int128 mtm = static_cast<__int128>(st.positions[j]) * static_cast<__int128>(st.last_price[j]);
+    mtm /= 1000000;
+    sum += mtm - static_cast<__int128>(st.cost[j]);
   }
   assert(sum >= std::numeric_limits<int64_t>::min() && sum <= std::numeric_limits<int64_t>::max());
   return static_cast<int64_t>(sum);

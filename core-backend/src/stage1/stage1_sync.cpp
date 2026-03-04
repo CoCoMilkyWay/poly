@@ -6,19 +6,21 @@
 
 namespace stage1 {
 
-StageSync::StageSync(const Config &config, Database &db)
+StageSync::StageSync(const Config &config, Database &db, int interval_seconds)
     : config_(config), db_(db),
       feather_writer_(db.data_dir()),
       rpc_head_(config.rpc_url, config.rpc_api_key, "RPC-Head", config.proxy_url, config.rpc_transport),
       num_rpc_threads_(config.stage1_rpc_threads),
       num_decode_threads_(config.stage1_rpc_threads),
       rpc_block_span_(config.stage1_rpc_block_span),
+      interval_seconds_(interval_seconds),
       buffer_high_water_transfers_(
           static_cast<int64_t>(static_cast<double>(kChunkTransferTarget) * config.stage1_rpc_buffer_multiplier)) {
   assert(num_rpc_threads_ > 0);
   assert(num_decode_threads_ > 0);
   assert(rpc_block_span_ > 0);
   assert(config.stage1_rpc_buffer_multiplier >= 1.0);
+  assert(interval_seconds_ > 0);
   assert(config_.initial_block % kCommitBlockGranularity == 0);
   assert(rpc_block_span_ % kCommitBlockGranularity == 0);
   if (buffer_high_water_transfers_ < kChunkTransferTarget) {

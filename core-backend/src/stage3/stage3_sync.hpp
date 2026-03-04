@@ -109,7 +109,7 @@ public:
     int64_t last_price = 0;
   };
 
-  StageSync(EventBuilder &builder, Database &stage2_db, Database &stage3_db);
+  StageSync(EventBuilder &builder, Database &stage2_db, Database &stage3_db, int base_interval_seconds);
 
   void start(asio::io_context &ioc);
   void stop();
@@ -213,7 +213,7 @@ private:
 
   static constexpr int64_t kStage3ChunkBlocks = 100000;
   static constexpr size_t kEtaWindowSize = 20;
-  static constexpr int kBaseIntervalSeconds = 30;
+  int base_interval_seconds_ = 0;
   static constexpr int64_t kCursorSentinel = std::numeric_limits<int32_t>::min();
 
   static std::string normalize_addr(const std::string &addr);

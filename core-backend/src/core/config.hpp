@@ -12,6 +12,10 @@ struct Config {
   int stage1_enable;
   int stage2_enable;
   int stage3_enable;
+  int stage0_check_interval_seconds;
+  int stage1_check_interval_seconds;
+  int stage2_check_interval_seconds;
+  int stage3_check_interval_seconds;
 
   std::string db_path_stage0;
   std::string db_path_stage1;
@@ -53,6 +57,14 @@ struct Config {
     assert((config.stage1_enable == 0 || config.stage1_enable == 1) && "stage1_enable 必须是 0/1");
     assert((config.stage2_enable == 0 || config.stage2_enable == 1) && "stage2_enable 必须是 0/1");
     assert((config.stage3_enable == 0 || config.stage3_enable == 1) && "stage3_enable 必须是 0/1");
+    config.stage0_check_interval_seconds = require("stage0_check_interval_seconds").get<int>();
+    config.stage1_check_interval_seconds = require("stage1_check_interval_seconds").get<int>();
+    config.stage2_check_interval_seconds = require("stage2_check_interval_seconds").get<int>();
+    config.stage3_check_interval_seconds = require("stage3_check_interval_seconds").get<int>();
+    assert(config.stage0_check_interval_seconds > 0);
+    assert(config.stage1_check_interval_seconds > 0);
+    assert(config.stage2_check_interval_seconds > 0);
+    assert(config.stage3_check_interval_seconds > 0);
 
     config.db_path_stage0 = require("db_path_stage0").get<std::string>();
     config.db_path_stage1 = require("db_path_stage1").get<std::string>();

@@ -39,7 +39,7 @@ struct Status {
 
 class StageSync {
 public:
-  StageSync(const Config &config, Database &db);
+  StageSync(const Config &config, Database &db, int interval_seconds);
   ~StageSync();
 
   void start(asio::io_context &ioc);
@@ -120,7 +120,7 @@ private:
   bool decode_running_ = false;
   asio::io_context *ioc_ = nullptr;
 
-  int interval_seconds_ = 30;
+  int interval_seconds_ = 0;
   std::atomic<bool> is_syncing_{false};
   std::atomic<bool> stop_requested_{false};
   std::atomic<bool> db_write_in_progress_{false};

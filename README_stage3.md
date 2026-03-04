@@ -26,7 +26,7 @@
 ## Unrealized PnL 计算
 ```
 last_price[(cond_idx, token_idx)] = 该token最近一次交易的成交价
-unrealized_pnl = Σ(pos[i] * last_price[i] - cost[i])  // 仅对 pos[i] > 0 的token
+unrealized_pnl = Σ(pos[i] * last_price[i] / 1e6 - cost[i])  // 仅对 pos[i] > 0 的token
 ```
 - 只有 Order/FPMM 交易事件会更新 last_price
 - Split/Merge/Transfer 等不更新 last_price
@@ -93,7 +93,7 @@ stage3_sync_tick
 │  │  └─ 若 event_type ∈ {OrderBuy, OrderSell, FPMMBuy, FPMMSell} 且 price > 0:
 │  │       last_price[(cond_idx, token_idx)] = price
 │  ├─ 3.5 计算 unrealized_pnl
-│  │  └─ unrealized_pnl = Σ(pos[i] * last_price[(cond_idx,i)] - cost[i]) for all i where pos[i]>0
+│  │  └─ unrealized_pnl = Σ(pos[i] * last_price[(cond_idx,i)] / 1e6 - cost[i]) for all i where pos[i]>0
 │  ├─ 3.6 更新 user_state_map[user_addr]
 │  │  ├─ total_events += 1
 │  │  ├─ total_realized_pnl += realized_delta
@@ -300,7 +300,7 @@ PnL数据（核心接口）
 **计算公式**：
 ```
 total_pnl = rpnl + upnl  // 前端绘制第三条线
-position_unrealized = (qty * lp - cost) / 1e6  // 单个持仓浮盈
+position_unrealized = (qty * lp / 1e6 - cost) / 1e6  // 单个持仓浮盈
 ```
 
 ## 前端使用

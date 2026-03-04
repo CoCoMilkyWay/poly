@@ -124,7 +124,7 @@ void StageSync::do_sync_tick() {
 
   bool advanced = process_chunk_locked();
 
-  int next_delay = kBaseIntervalSeconds;
+  int next_delay = base_interval_seconds_;
   {
     std::lock_guard<std::mutex> lock(sync_mu_);
     refresh_status_locked();
@@ -137,7 +137,7 @@ void StageSync::do_sync_tick() {
     }
     refresh_timing_metrics(sync_.behind_blocks);
     sync_.syncing = false;
-    next_delay = (sync_.behind_chunks > 1) ? 0 : kBaseIntervalSeconds;
+    next_delay = (sync_.behind_chunks > 1) ? 0 : base_interval_seconds_;
   }
   schedule_sync(next_delay);
 }
@@ -572,14 +572,14 @@ bool StageSync::process_chunk_locked() const {
         "  SELECT st.user_addr AS user_addr, "
         "         COALESCE(SUM(st.realized_pnl), 0) AS rpnl, "
         "         COALESCE(SUM("
-        "           CASE WHEN st.pos_0 > 0 THEN st.pos_0 * st.lp_0 - st.cost_0 ELSE 0 END + "
-        "           CASE WHEN st.pos_1 > 0 THEN st.pos_1 * st.lp_1 - st.cost_1 ELSE 0 END + "
-        "           CASE WHEN st.pos_2 > 0 THEN st.pos_2 * st.lp_2 - st.cost_2 ELSE 0 END + "
-        "           CASE WHEN st.pos_3 > 0 THEN st.pos_3 * st.lp_3 - st.cost_3 ELSE 0 END + "
-        "           CASE WHEN st.pos_4 > 0 THEN st.pos_4 * st.lp_4 - st.cost_4 ELSE 0 END + "
-        "           CASE WHEN st.pos_5 > 0 THEN st.pos_5 * st.lp_5 - st.cost_5 ELSE 0 END + "
-        "           CASE WHEN st.pos_6 > 0 THEN st.pos_6 * st.lp_6 - st.cost_6 ELSE 0 END + "
-        "           CASE WHEN st.pos_7 > 0 THEN st.pos_7 * st.lp_7 - st.cost_7 ELSE 0 END"
+        "           CASE WHEN st.pos_0 > 0 THEN (CAST(st.pos_0 AS HUGEINT) * CAST(st.lp_0 AS HUGEINT)) / 1000000 - CAST(st.cost_0 AS HUGEINT) ELSE 0 END + "
+        "           CASE WHEN st.pos_1 > 0 THEN (CAST(st.pos_1 AS HUGEINT) * CAST(st.lp_1 AS HUGEINT)) / 1000000 - CAST(st.cost_1 AS HUGEINT) ELSE 0 END + "
+        "           CASE WHEN st.pos_2 > 0 THEN (CAST(st.pos_2 AS HUGEINT) * CAST(st.lp_2 AS HUGEINT)) / 1000000 - CAST(st.cost_2 AS HUGEINT) ELSE 0 END + "
+        "           CASE WHEN st.pos_3 > 0 THEN (CAST(st.pos_3 AS HUGEINT) * CAST(st.lp_3 AS HUGEINT)) / 1000000 - CAST(st.cost_3 AS HUGEINT) ELSE 0 END + "
+        "           CASE WHEN st.pos_4 > 0 THEN (CAST(st.pos_4 AS HUGEINT) * CAST(st.lp_4 AS HUGEINT)) / 1000000 - CAST(st.cost_4 AS HUGEINT) ELSE 0 END + "
+        "           CASE WHEN st.pos_5 > 0 THEN (CAST(st.pos_5 AS HUGEINT) * CAST(st.lp_5 AS HUGEINT)) / 1000000 - CAST(st.cost_5 AS HUGEINT) ELSE 0 END + "
+        "           CASE WHEN st.pos_6 > 0 THEN (CAST(st.pos_6 AS HUGEINT) * CAST(st.lp_6 AS HUGEINT)) / 1000000 - CAST(st.cost_6 AS HUGEINT) ELSE 0 END + "
+        "           CASE WHEN st.pos_7 > 0 THEN (CAST(st.pos_7 AS HUGEINT) * CAST(st.lp_7 AS HUGEINT)) / 1000000 - CAST(st.cost_7 AS HUGEINT) ELSE 0 END"
         "         ), 0) AS upnl, "
         "         SUM(CASE WHEN "
         "              st.pos_0 != 0 OR st.pos_1 != 0 OR st.pos_2 != 0 OR st.pos_3 != 0 OR "
