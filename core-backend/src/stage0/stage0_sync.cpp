@@ -1,4 +1,5 @@
 #include "stage0_sync.hpp"
+#include "config.hpp"
 #include "stage0_sync_http.hpp"
 
 #include "../infra/rpc_transport.hpp"
@@ -261,7 +262,11 @@ void StageSync::stop() {
 
 StageSync::Status StageSync::status() const {
   std::lock_guard<std::mutex> lock(status_mutex_);
-  return sync_;
+  Status s = sync_;
+  if (tagger_) {
+    s.tag_device = tagger_->device_name();
+  }
+  return s;
 }
 
 void StageSync::reset_tag_progress() {
@@ -976,7 +981,8 @@ int64_t StageSync::do_tag_sync() {
                                    "  AND c.tag_name IS NULL "
                                    "  AND c.class IN ('poly_ctf', 'poly_negrisk') "
                                    "ORDER BY c.rowid ASC "
-                                   "LIMIT 512"); // model batch size
+                                   "LIMIT " +
+      std::to_string(config::kModelBatchSize));
   assert(result && !result->HasError());
 
   if (result->RowCount() == 0) {

@@ -32,6 +32,7 @@ struct Stage0Status {
   int64_t tag_last_block = 0;
   int64_t tagged_count = 0;
   int64_t untagged_count = 0;
+  std::string tag_device;
 };
 
 struct Stage1Status {

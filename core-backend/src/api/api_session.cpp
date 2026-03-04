@@ -145,6 +145,7 @@ json to_stage0_status_json(const Stage0Status &status) {
       {"tag_last_block", status.tag_last_block},
       {"tagged_count", status.tagged_count},
       {"untagged_count", status.untagged_count},
+      {"tag_device", status.tag_device},
   };
 }
 

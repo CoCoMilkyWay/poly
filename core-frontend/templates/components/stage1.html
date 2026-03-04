@@ -469,6 +469,14 @@
       <span id="stage0-tag-model" style="margin-left: 8px; color: #555">
         Model: {{ tag_model_path }} ({{ tag_model_size_text }})
       </span>
+      <span id="stage0-tag-device" style="margin-left: 8px; color: #555">
+        Device:
+        {% if stage0_state.tag_device == 'CUDA' %}
+        <span style="color: #4ade80">{{ stage0_state.tag_device or 'N/A' }}</span>
+        {% else %}
+        <span style="color: #f59e0b">{{ stage0_state.tag_device or 'N/A' }}</span>
+        {% endif %}
+      </span>
     </div>
     <div class="progress-bar">
       <div class="progress-fill" id="stage0-tag-progress-fill"
@@ -1106,6 +1114,14 @@
         "Total: " + formatNumber(tagTotal) +
         " (Tagged: " + formatNumber(taggedCount) +
         ", UnTagged: " + formatNumber(untaggedCount) + ")";
+
+      // Update device info
+      const tagDevice = sync0.tag_device || "N/A";
+      const deviceSpan = document.getElementById("stage0-tag-device");
+      if (deviceSpan) {
+        const deviceColor = tagDevice === "CUDA" ? "#4ade80" : "#f59e0b";
+        deviceSpan.innerHTML = `Device: <span style="color: ${deviceColor}">${tagDevice}</span>`;
+      }
     }
 
     function updateTables(tables) {
@@ -1162,6 +1178,7 @@
       tag_last_block: Number("{{ stage0_state.tag_last_block or 0 }}"),
       tagged_count: Number("{{ stage0_state.tagged_count or 0 }}"),
       untagged_count: Number("{{ stage0_state.untagged_count or 0 }}"),
+      tag_device: "{{ stage0_state.tag_device or '' }}",
     }, Number(document.body.dataset.headBlock || "0"));
 
     window.updateStage0Status = updateStage0Status;

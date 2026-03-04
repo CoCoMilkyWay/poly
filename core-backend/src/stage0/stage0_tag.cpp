@@ -1,5 +1,7 @@
 #include "stage0_tag.hpp"
+#include "config.hpp"
 
+#include <algorithm>
 #include <cassert>
 #include <cctype>
 #include <cmath>
@@ -24,7 +26,7 @@ public:
   static constexpr int kUnkId = 100;
   static constexpr int kClsId = 101;
   static constexpr int kSepId = 102;
-  static constexpr int kMaxSeqLen = 512;
+  static constexpr int kMaxSeqLen = config::kModelSeqLen;
 
   explicit WordPieceTokenizer(const std::string &vocab_path) {
     std::ifstream f(vocab_path);
@@ -43,7 +45,7 @@ public:
     std::vector<int64_t> token_type_ids;
   };
 
-  TokenIds encode(const std::string &text, int max_len = 128) const {
+  TokenIds encode(const std::string &text, int max_len = config::kModelSeqLen) const {
     std::vector<int> tokens = tokenize(text);
     // Truncate to max_len - 2 (for [CLS] and [SEP])
     if (static_cast<int>(tokens.size()) > max_len - 2) {
@@ -230,30 +232,31 @@ void ensure_model_merged(const std::string &model_path) {
   if (fs::exists(model_path)) {
     return;
   }
-  
+
   // 查找分片文件: model.onnx.00, model.onnx.01, ...
   std::vector<std::string> parts;
   for (int i = 0; i < 100; ++i) {
     char suffix[8];
     snprintf(suffix, sizeof(suffix), ".%02d", i);
     std::string part_path = model_path + suffix;
-    if (!fs::exists(part_path)) break;
+    if (!fs::exists(part_path))
+      break;
     parts.push_back(part_path);
   }
-  
+
   assert(!parts.empty() && "model.onnx missing and no .00 .01 ... files found");
-  
+
   std::cout << "[OnnxEmbedder] Merging " << parts.size() << " parts into " << model_path << std::endl;
-  
+
   std::ofstream out(model_path, std::ios::binary);
   assert(out.is_open());
-  
+
   for (const auto &part : parts) {
     std::ifstream in(part, std::ios::binary);
     assert(in.is_open());
     out << in.rdbuf();
   }
-  
+
   std::cout << "[OnnxEmbedder] Merge complete" << std::endl;
 }
 
@@ -262,14 +265,42 @@ public:
   explicit OnnxEmbedder(const std::string &model_path)
       : env_(ORT_LOGGING_LEVEL_WARNING, "bge_tagger") {
     ensure_model_merged(model_path);
-    
+
     Ort::SessionOptions opts;
     opts.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
-    // 0 = 自动检测CPU核心数，比固定4更快
-    opts.SetIntraOpNumThreads(0);
-    opts.SetInterOpNumThreads(1);
-    opts.SetExecutionMode(ExecutionMode::ORT_SEQUENTIAL);
-    opts.EnableCpuMemArena();
+
+    // 运行时检测可用的 providers
+    auto providers = Ort::GetAvailableProviders();
+    bool cuda_available = std::find(providers.begin(), providers.end(), "CUDAExecutionProvider") != providers.end();
+    bool cuda_enabled = false;
+
+    if (cuda_available) {
+      try {
+        OrtCUDAProviderOptions cuda_opts;
+        cuda_opts.device_id = 0;
+        opts.AppendExecutionProvider_CUDA(cuda_opts);
+        cuda_enabled = true;
+        device_name_ = "CUDA";
+        std::cout << "[OnnxEmbedder] CUDA provider enabled" << std::endl;
+      } catch (const Ort::Exception &e) {
+        std::cout << "[OnnxEmbedder] CUDA provider failed: " << e.what() << std::endl;
+        std::cout << "[OnnxEmbedder] Falling back to CPU" << std::endl;
+      }
+    }
+
+    if (!cuda_enabled) {
+      // CPU 配置
+      opts.SetIntraOpNumThreads(0); // 自动检测核心数
+      opts.SetInterOpNumThreads(1);
+      opts.SetExecutionMode(ExecutionMode::ORT_SEQUENTIAL);
+      opts.EnableCpuMemArena();
+      device_name_ = "CPU";
+      std::cout << "[OnnxEmbedder] Running on CPU" << std::endl;
+      std::cout << "========================================" << std::endl;
+      std::cout << "  To enable GPU acceleration:" << std::endl;
+      std::cout << "  pip install onnxruntime-gpu" << std::endl;
+      std::cout << "========================================" << std::endl;
+    }
 
     session_ = std::make_unique<Ort::Session>(env_, model_path.c_str(), opts);
     assert(session_->GetInputCount() == 3);
@@ -406,6 +437,8 @@ public:
     return result;
   }
 
+  const std::string &device_name() const { return device_name_; }
+
 private:
   Ort::Env env_;
   std::unique_ptr<Ort::Session> session_;
@@ -413,6 +446,7 @@ private:
   std::vector<Ort::AllocatedStringPtr> output_names_storage_;
   std::vector<const char *> input_names_;
   std::vector<const char *> output_names_;
+  std::string device_name_;
 };
 
 } // namespace
@@ -438,7 +472,7 @@ struct Tagger::Impl {
     std::vector<WordPieceTokenizer::TokenIds> label_tokens;
     label_tokens.reserve(labels.size());
     for (const auto &label : labels) {
-      label_tokens.push_back(tokenizer.encode(label.embed_text, 64));
+      label_tokens.push_back(tokenizer.encode(label.embed_text, config::kLabelSeqLen));
     }
     auto label_embs = embedder.embed(label_tokens);
     assert(label_embs.size() == labels.size());
@@ -473,7 +507,7 @@ std::vector<TagResult> Tagger::tag_batch(const std::vector<std::string> &questio
   std::vector<WordPieceTokenizer::TokenIds> tokens;
   tokens.reserve(questions.size());
   for (const auto &q : questions) {
-    tokens.push_back(impl_->tokenizer.encode(q, 400));
+    tokens.push_back(impl_->tokenizer.encode(q, config::kModelSeqLen));
   }
 
   auto embeddings = impl_->embedder.embed(tokens);
@@ -515,6 +549,10 @@ std::vector<TagResult> Tagger::tag_batch(const std::vector<std::string> &questio
 
 size_t Tagger::label_count() const {
   return impl_->labels.size();
+}
+
+const std::string &Tagger::device_name() const {
+  return impl_->embedder.device_name();
 }
 
 } // namespace stage0

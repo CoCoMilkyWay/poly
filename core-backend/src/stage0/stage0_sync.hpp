@@ -39,6 +39,7 @@ public:
     int64_t tag_last_block = 0;
     int64_t tagged_count = 0;
     int64_t untagged_count = 0;
+    std::string tag_device;
   };
 
   StageSync(const Config &config, Database &stage1_db, Database &stage0_db, int base_interval_seconds);

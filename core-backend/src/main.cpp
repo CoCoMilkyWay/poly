@@ -75,7 +75,8 @@ int main(int argc, char *argv[]) {
     const auto s = stage0.status();
     return {s.syncing, s.last_block, s.head_block, s.behind_blocks, s.condition_count,
             s.ctf_condition_count, s.negrisk_condition_count, s.nonpoly_condition_count,
-            s.blocks_per_second, s.eta_seconds, s.tag_last_block, s.tagged_count, s.untagged_count};
+            s.blocks_per_second, s.eta_seconds, s.tag_last_block, s.tagged_count, s.untagged_count,
+            s.tag_device};
   };
   auto stage0_retagger = [&stage0]() {
     stage0.reset_tag_progress();

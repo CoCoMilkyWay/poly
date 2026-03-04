@@ -29,6 +29,7 @@ public:
   std::vector<TagResult> tag_batch(const std::vector<std::string> &questions) const;
 
   size_t label_count() const;
+  const std::string &device_name() const;
 
 private:
   struct Impl;
