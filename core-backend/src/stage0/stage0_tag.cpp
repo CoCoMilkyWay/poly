@@ -271,6 +271,12 @@ public:
 
     // 运行时检测可用的 providers
     auto providers = Ort::GetAvailableProviders();
+    std::cout << "[OnnxEmbedder] Available providers:";
+    for (const auto &p : providers) {
+      std::cout << " " << p;
+    }
+    std::cout << std::endl;
+
     bool cuda_available = std::find(providers.begin(), providers.end(), "CUDAExecutionProvider") != providers.end();
     bool cuda_enabled = false;
 
@@ -298,7 +304,9 @@ public:
       std::cout << "[OnnxEmbedder] Running on CPU" << std::endl;
       std::cout << "========================================" << std::endl;
       std::cout << "  To enable GPU acceleration:" << std::endl;
-      std::cout << "  pip install onnxruntime-gpu" << std::endl;
+      std::cout << "  This backend is C++ and links vendored ONNX Runtime." << std::endl;
+      std::cout << "  Replace core-backend/packages/onnxruntime with a CUDA-enabled C++ build" << std::endl;
+      std::cout << "  and ensure CUDA/cuDNN runtime libraries are available." << std::endl;
       std::cout << "========================================" << std::endl;
     }
 

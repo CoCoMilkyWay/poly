@@ -270,6 +270,9 @@ StageSync::Status StageSync::status() const {
 }
 
 void StageSync::reset_tag_progress() {
+  // Increment epoch FIRST to invalidate any in-flight tag tasks
+  tag_reset_epoch_.fetch_add(1, std::memory_order_seq_cst);
+
   {
     const std::string log_dir = ensure_stage0_log_dir(stage0_db_.data_dir());
     std::ofstream f(log_dir + "/tag", std::ios::trunc);
@@ -289,9 +292,6 @@ void StageSync::reset_tag_progress() {
   assert(reset_cursor && !reset_cursor->HasError());
   auto commit = conn->Query("COMMIT");
   assert(commit && !commit->HasError());
-
-  // Increment epoch to invalidate any in-flight tag tasks
-  tag_reset_epoch_.fetch_add(1, std::memory_order_seq_cst);
 
   load_tag_counts();
   // Force reset tag_last_block to 0 (load_tag_counts should return 0, but be explicit)
@@ -1027,10 +1027,10 @@ int64_t StageSync::do_tag_sync() {
   auto tags = tagger_->tag_batch(model_inputs);
   assert(tags.size() == rowids.size());
 
-  // Check if reset happened during model inference - discard results if so
+  // Check if reset happened during model inference - discard results and retry immediately
   if (tag_reset_epoch_.load(std::memory_order_seq_cst) != epoch_at_start) {
     append_stage0_flow_log(stage0_db_.data_dir(), "tag_batch discarded due to reset");
-    return 0;
+    return 1; // Return non-zero to trigger immediate retry
   }
 
   // Update database
