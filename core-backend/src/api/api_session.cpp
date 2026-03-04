@@ -7,6 +7,7 @@
 #include <cctype>
 #include <filesystem>
 #include <future>
+#include <limits>
 #include <mutex>
 #include <sstream>
 #include <unordered_map>
@@ -241,8 +242,8 @@ void ApiSession::handle_request() {
       handle_stage3_status();
     } else if (target.starts_with("/api/stage3-users")) {
       handle_stage3_users();
-    } else if (target.starts_with("/api/stage3-data")) {
-      handle_stage3_data();
+    } else if (target.starts_with("/api/stage3-pnl")) {
+      handle_stage3_pnl();
     } else {
       res_.result(http::status::not_found);
       res_.set(http::field::content_type, "application/json");
@@ -806,9 +807,10 @@ void ApiSession::handle_stage3_users() {
   json result = json::array();
   for (const auto &u : users) {
     result.push_back({
-        {"user_addr", u.addr},
-        {"event_count", u.event_count},
-        {"realized_pnl", u.realized_pnl},
+        {"user", u.addr},
+        {"events", u.event_count},
+        {"rpnl", u.realized_pnl},
+        {"upnl", u.unrealized_pnl},
     });
   }
 
@@ -816,7 +818,7 @@ void ApiSession::handle_stage3_users() {
   res_.body() = result.dump();
 }
 
-void ApiSession::handle_stage3_data() {
+void ApiSession::handle_stage3_pnl() {
   TraceN("api/s3_data");
   res_.set(http::field::content_type, "application/json");
 
@@ -827,17 +829,26 @@ void ApiSession::handle_stage3_data() {
     return;
   }
 
-  auto timeline = stage3_.get_user_timeline(user);
+  std::string block_str = get_param("block");
+  int64_t target_sort_key = std::numeric_limits<int64_t>::max();
+  int64_t target_block = -1;
+  if (!block_str.empty()) {
+    target_block = std::stoll(block_str);
+    assert(target_block >= 0);
+    target_sort_key = target_block * stage2::SORT_KEY_SCALE + (stage2::SORT_KEY_SCALE - 1);
+  }
+
+  auto timeline = stage3_.get_user_timeline(user, target_sort_key);
   if (timeline.empty()) {
     res_.result(http::status::not_found);
     res_.body() = R"({"error":"User not found or no events"})";
     return;
   }
 
-  int64_t first_ts = timeline.front().sort_key / stage2::SORT_KEY_SCALE;
-  int64_t last_ts = timeline.back().sort_key / stage2::SORT_KEY_SCALE;
-  std::string sk_str = get_param("sk");
-  int64_t detail_sk = sk_str.empty() ? timeline.back().sort_key : std::stoll(sk_str);
+  if (target_block < 0) {
+    target_block = timeline.back().sort_key / stage2::SORT_KEY_SCALE;
+    target_sort_key = timeline.back().sort_key;
+  }
 
   json timeline_arr = json::array();
   for (const auto &e : timeline) {
@@ -845,63 +856,29 @@ void ApiSession::handle_stage3_data() {
         {"sk", e.sort_key},
         {"ty", e.event_type},
         {"rpnl", e.realized_pnl},
-        {"d", e.delta},
-        {"p", e.price},
-        {"ci", e.cond_idx},
-        {"ti", e.token_idx},
+        {"upnl", e.unrealized_pnl},
         {"tk", e.token_count},
     });
   }
 
-  auto positions = stage3_.get_positions_at(user, detail_sk);
+  auto positions = stage3_.get_positions_at(user, target_sort_key);
   json pos_arr = json::array();
   for (const auto &p : positions) {
-    json pos_obj = {
-        {"id", p.condition_id},
-        {"pos", json::array()},
-        {"cost", p.cost_basis},
-        {"rpnl", p.realized_pnl},
-    };
-    for (int i = 0; i < p.outcome_count; ++i) {
-      pos_obj["pos"].push_back(p.positions[i]);
-    }
-    pos_arr.push_back(pos_obj);
-  }
-
-  size_t center = 0;
-  if (!timeline.empty()) {
-    auto it = std::lower_bound(
-        timeline.begin(), timeline.end(), detail_sk,
-        [](const stage3::StageSync::TimelineEntry &e, int64_t sk) { return e.sort_key < sk; });
-    center = (it == timeline.end())
-                 ? timeline.size() - 1
-                 : static_cast<size_t>(it - timeline.begin());
-  }
-  size_t radius = 20;
-  size_t start = (center > radius) ? center - radius : 0;
-  size_t end = std::min(center + radius + 1, timeline.size());
-
-  json events_arr = json::array();
-  for (size_t i = start; i < end; ++i) {
-    const auto &t = timeline[i];
-    events_arr.push_back({
-        {"sk", t.sort_key},
-        {"ty", t.event_type},
-        {"d", t.delta},
-        {"p", t.price},
-        {"ci", t.cond_idx},
-        {"ti", t.token_idx},
+    pos_arr.push_back({
+        {"ci", p.cond_idx},
+        {"ti", p.token_idx},
+        {"qty", p.qty},
+        {"cost", p.cost},
+        {"lp", p.last_price},
     });
   }
 
   json result = {
-      {"total_events", timeline.size()},
-      {"first_ts", first_ts},
-      {"last_ts", last_ts},
+      {"user", user},
+      {"block", target_block},
+      {"total_events", static_cast<int64_t>(timeline.size())},
       {"timeline", timeline_arr},
       {"positions", pos_arr},
-      {"events", events_arr},
-      {"center", static_cast<int64_t>(center - start)},
   };
 
   res_.result(http::status::ok);

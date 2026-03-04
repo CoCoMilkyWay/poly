@@ -103,9 +103,9 @@ async def api_stage3_users(limit: int = Query(200)):
     return await backend_get("/api/stage3-users", {"limit": limit})
 
 
-@app.get("/api/stage3-data")
-async def api_stage3_data(user: str = Query(...), sk: int | None = Query(None)):
+@app.get("/api/stage3-pnl")
+async def api_stage3_pnl(user: str = Query(...), block: int | None = Query(None)):
     params = {"user": user}
-    if sk is not None:
-        params["sk"] = sk
-    return await backend_get("/api/stage3-data", params)
+    if block is not None:
+        params["block"] = block
+    return await backend_get("/api/stage3-pnl", params)

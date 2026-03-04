@@ -409,8 +409,6 @@ let _s3DragStartX = 0;
 let _s3DragStartVS = 0;
 let _s3DragStartVE = 0;
 let _s3DragMoved = false;
-let _s3Events = [];
-let _s3EventCenter = -1;
 let _s3PollingSync = false;
 let _s3UsersLoaded = false;
 let _s3LoadingUsers = false;
@@ -525,16 +523,16 @@ async function s3LoadUserList() {
 function s3RenderDropdown(users) {
   const dd = document.getElementById('s3-user-dropdown');
   dd.innerHTML = users.map(u =>
-    `<div class="s3-user-item" onclick="s3SelectUser('${u.user_addr}')">
-       <span>${u.user_addr}</span>
-       <span class="count">${u.event_count}</span>
+    `<div class="s3-user-item" onclick="s3SelectUser('${u.user}')">
+       <span>${u.user}</span>
+       <span class="count">${u.events}</span>
      </div>`
   ).join('');
 }
 
 function s3FilterUsers(q) {
   const lq = q.toLowerCase();
-  s3RenderDropdown(_s3Users.filter(u => u.user_addr.toLowerCase().includes(lq)));
+  s3RenderDropdown(_s3Users.filter(u => u.user.toLowerCase().includes(lq)));
   document.getElementById('s3-user-dropdown').classList.add('show');
 }
 
@@ -557,19 +555,17 @@ async function s3LoadUserBySk(sk, silent) {
   }
 
   try {
-    let url = `/api/stage3-data?user=${encodeURIComponent(user)}`;
+    let url = `/api/stage3-pnl?user=${encodeURIComponent(user)}`;
     if (sk !== null && sk !== undefined) {
-      url += `&sk=${encodeURIComponent(sk)}`;
+      url += `&block=${encodeURIComponent(Math.floor(Number(sk) / 1e9))}`;
     }
     const resp = await fetch(url);
     const data = await resp.json();
     _s3Meta = {
-      first_ts: Number(data.first_ts || 0),
-      last_ts: Number(data.last_ts || 0),
+      block: Number(data.block || 0),
+      positions: data.positions || [],
     };
     _s3Timeline = data.timeline || [];
-    _s3Events = data.events || [];
-    _s3EventCenter = data.center ?? -1;
 
     s3RenderMeta();
     if (!silent) {
@@ -597,11 +593,16 @@ async function s3LoadUserBySk(sk, silent) {
 function s3RenderMeta() {
   if (!_s3Meta) return;
   const d = _s3Meta;
-  const nCond = new Set(_s3Timeline.map(e => e.ci)).size;
-  const finalPnl = _s3Timeline.length ? _s3Timeline[_s3Timeline.length-1].rpnl / 1e6 : 0;
+  const nCond = new Set((d.positions || []).map(p => p.ci)).size;
+  const finalRpnl = _s3Timeline.length ? _s3Timeline[_s3Timeline.length-1].rpnl / 1e6 : 0;
+  const finalUpnl = _s3Timeline.length ? _s3Timeline[_s3Timeline.length-1].upnl / 1e6 : 0;
+  const finalTpnl = finalRpnl + finalUpnl;
 
   const c = { buy: 0, sell: 0, split: 0, merge: 0, redeem: 0, lp: 0, convert: 0, transfer: 0, other: 0 };
-  for (const e of _s3Timeline) c[s3EvtMeta(e.ty).cat] = (c[s3EvtMeta(e.ty).cat] || 0) + 1;
+  for (const e of _s3Timeline) {
+    const cat = s3EvtMeta(e.ty).cat;
+    c[cat] = (c[cat] || 0) + 1;
+  }
 
   document.getElementById('s3-meta').innerHTML = `
     <div class="s3-meta-item"><div class="label">事件</div><div class="value">${_s3Timeline.length}</div></div>
@@ -614,9 +615,10 @@ function s3RenderMeta() {
     <div class="s3-meta-item"><div class="label" style="color:#f472b6">Convert</div><div class="value">${c.convert}</div></div>
     <div class="s3-meta-item"><div class="label" style="color:#64748b">Transfer</div><div class="value">${c.transfer}</div></div>
     <div class="s3-meta-item"><div class="label">问题</div><div class="value">${nCond}</div></div>
-    <div class="s3-meta-item"><div class="label">最终 PnL</div><div class="value" style="color:${finalPnl>=0?'#10b981':'#ef4444'}">${s3FmtUSD(finalPnl)}</div></div>
-    <div class="s3-meta-item"><div class="label">首次</div><div class="value">${d.first_ts ? 'block ' + (d.first_ts / 1e9).toFixed(0) : '-'}</div></div>
-    <div class="s3-meta-item"><div class="label">末次</div><div class="value">${d.last_ts ? 'block ' + (d.last_ts / 1e9).toFixed(0) : '-'}</div></div>
+    <div class="s3-meta-item"><div class="label">已实现</div><div class="value" style="color:${finalRpnl>=0?'#10b981':'#ef4444'}">${s3FmtUSD(finalRpnl)}</div></div>
+    <div class="s3-meta-item"><div class="label">未实现</div><div class="value" style="color:${finalUpnl>=0?'#f59e0b':'#ef4444'}">${s3FmtUSD(finalUpnl)}</div></div>
+    <div class="s3-meta-item"><div class="label">总PnL</div><div class="value" style="color:${finalTpnl>=0?'#10b981':'#ef4444'}">${s3FmtUSD(finalTpnl)}</div></div>
+    <div class="s3-meta-item"><div class="label">查询区块</div><div class="value">${d.block ? d.block.toLocaleString() : '-'}</div></div>
   `;
 }
 
@@ -663,9 +665,15 @@ function s3Draw() {
 
   let minY = Infinity, maxY = -Infinity;
   for (let i = iStart; i <= iEnd; i++) {
-    const v = _s3Timeline[i].rpnl / 1e6;
-    if (v < minY) minY = v;
-    if (v > maxY) maxY = v;
+    const rp = (_s3Timeline[i].rpnl || 0) / 1e6;
+    const up = (_s3Timeline[i].upnl || 0) / 1e6;
+    const tp = rp + up;
+    if (rp < minY) minY = rp;
+    if (rp > maxY) maxY = rp;
+    if (up < minY) minY = up;
+    if (up > maxY) maxY = up;
+    if (tp < minY) minY = tp;
+    if (tp > maxY) maxY = tp;
   }
   if (minY === maxY) { minY -= 1; maxY += 1; }
   if (minY > 0) minY = 0;
@@ -739,7 +747,27 @@ function s3Draw() {
   let firstPoint = true;
   for (let i = iStart; i <= iEnd; i++) {
     const x = sk2x(_s3Timeline[i].sk);
-    const y = val2y(_s3Timeline[i].rpnl / 1e6);
+    const y = val2y((_s3Timeline[i].rpnl || 0) / 1e6);
+    if (firstPoint) { ctx.moveTo(x, y); firstPoint = false; }
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 1.2; ctx.beginPath();
+  firstPoint = true;
+  for (let i = iStart; i <= iEnd; i++) {
+    const x = sk2x(_s3Timeline[i].sk);
+    const y = val2y((_s3Timeline[i].upnl || 0) / 1e6);
+    if (firstPoint) { ctx.moveTo(x, y); firstPoint = false; }
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  ctx.strokeStyle = '#e5e7eb'; ctx.lineWidth = 1.2; ctx.beginPath();
+  firstPoint = true;
+  for (let i = iStart; i <= iEnd; i++) {
+    const x = sk2x(_s3Timeline[i].sk);
+    const y = val2y(((_s3Timeline[i].rpnl || 0) + (_s3Timeline[i].upnl || 0)) / 1e6);
     if (firstPoint) { ctx.moveTo(x, y); firstPoint = false; }
     else ctx.lineTo(x, y);
   }
@@ -763,7 +791,7 @@ function s3Draw() {
     const x = sk2x(e.sk);
     if (Math.abs(x - lastMx) < minPxGap) continue;
     lastMx = x;
-    const y = val2y(e.rpnl / 1e6);
+    const y = val2y(((e.rpnl || 0) + (e.upnl || 0)) / 1e6);
     const meta = s3EvtMeta(e.ty);
     const color = meta.color;
     const r = 3;
@@ -789,7 +817,7 @@ function s3Draw() {
   if (_s3CursorIdx >= 0 && _s3CursorIdx < _s3Timeline.length) {
     const ce = _s3Timeline[_s3CursorIdx];
     const cx = sk2x(ce.sk);
-    const cy = val2y(ce.rpnl / 1e6);
+    const cy = val2y(((ce.rpnl || 0) + (ce.upnl || 0)) / 1e6);
 
     if (cx >= p.left && cx <= cssW - p.right) {
       ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 1;
@@ -912,7 +940,9 @@ function s3UpdateTooltip(e) {
   const sk = _s3ViewStartSk + frac * (_s3ViewEndSk - _s3ViewStartSk);
   const idx = s3NearestIdx(sk);
   const ev = _s3Timeline[idx];
-  const pnl = ev.rpnl / 1e6;
+  const rpnl = (ev.rpnl || 0) / 1e6;
+  const upnl = (ev.upnl || 0) / 1e6;
+  const tpnl = rpnl + upnl;
   const meta = s3EvtMeta(ev.ty);
   const color = meta.color;
   const name = meta.name;
@@ -920,7 +950,9 @@ function s3UpdateTooltip(e) {
 
   tooltip.innerHTML = `
     <div style="color:#888">${s3FmtSk(ev.sk)}</div>
-    <div style="color:${pnl>=0?'#10b981':'#ef4444'};font-size:1.1em">${s3FmtUSD(pnl)}</div>
+    <div style="color:#10b981">R ${s3FmtUSD(rpnl)}</div>
+    <div style="color:#f59e0b">U ${s3FmtUSD(upnl)}</div>
+    <div style="color:${tpnl>=0?'#10b981':'#ef4444'};font-size:1.1em">T ${s3FmtUSD(tpnl)}</div>
     <div><span style="color:${color}">${name}</span></div>
     <div style="color:#818cf8">持仓 ${tkCount} 种</div>
   `;
@@ -941,7 +973,9 @@ function s3UpdateCursor() {
   bar.classList.add('show');
 
   const ev = _s3Timeline[_s3CursorIdx];
-  const pnl = ev.rpnl / 1e6;
+  const rpnl = (ev.rpnl || 0) / 1e6;
+  const upnl = (ev.upnl || 0) / 1e6;
+  const pnl = rpnl + upnl;
   const meta = s3EvtMeta(ev.ty);
   const color = meta.color;
 
@@ -955,11 +989,8 @@ function s3UpdateCursor() {
   badge.style.background = color;
   badge.style.color = '#fff';
 
-  document.getElementById('s3-cur-detail').textContent = '';
   document.getElementById('s3-cur-tokens').textContent = `持仓 ${ev.tk||0} 种`;
-  if (_s3EventCenter >= 0 && _s3EventCenter < _s3Events.length) {
-    document.getElementById('s3-cur-detail').textContent = s3EventDetail(_s3Events[_s3EventCenter]);
-  }
+  document.getElementById('s3-cur-detail').textContent = `R ${s3FmtUSD(rpnl)} / U ${s3FmtUSD(upnl)}`;
 }
 
 function s3RenderPositions(positions) {
@@ -971,13 +1002,14 @@ function s3RenderPositions(positions) {
     return;
   }
   el.innerHTML = positions.map(p => {
-    const pnl = p.rpnl / 1e6;
+    const qty = Number(p.qty || 0) / 1e6;
+    const cost = Number(p.cost || 0) / 1e6;
+    const lp = Number(p.lp || 0) / 1e6;
+    const pnl = qty * lp - cost;
     const pnlCls = pnl >= 0 ? 'pos' : 'neg';
-    const yes = (p.pos[0] || 0) / 1e6;
-    const no = (p.pos[1] || 0) / 1e6;
     return `<div class="s3-pos-item">
-      <span class="cond" title="${p.id}">${p.id.slice(0, 16)}...</span>
-      <div class="s3-pos-bars">${s3PosBar(yes, 'Y')}${s3PosBar(no, 'N')}</div>
+      <span class="cond" title="cond=${p.ci}, token=${p.ti}">c${p.ci}:t${p.ti}</span>
+      <div class="s3-pos-bars">${s3PosBar(qty, 'Q')}</div>
       <span class="s3-pnl ${pnlCls}">${s3FmtUSD(pnl)}</span>
     </div>`;
   }).join('');
@@ -986,12 +1018,12 @@ function s3RenderPositions(positions) {
 function s3RenderEvents() {
   const el = document.getElementById('s3-trades');
   const countEl = document.getElementById('s3-trade-count');
-  countEl.textContent = _s3Events.length;
+  countEl.textContent = _s3Timeline.length;
 
   const rows = [];
-  for (let i = _s3Events.length - 1; i >= 0; i--) {
-    const ev = _s3Events[i];
-    const isFocus = (i === _s3EventCenter);
+  for (let i = _s3Timeline.length - 1; i >= 0; i--) {
+    const ev = _s3Timeline[i];
+    const isFocus = (i === _s3CursorIdx);
     const meta = s3EvtMeta(ev.ty);
     const color = meta.color;
     const name = meta.name;
@@ -1012,21 +1044,9 @@ function s3RenderEvents() {
 }
 
 function s3EventDetail(ev) {
-  if (ev.ty === 0 || ev.ty === 1 || ev.ty === 11 || ev.ty === 12) {
-    return `${(ev.d/1e6).toFixed(2)} @ $${(ev.p/1e6).toFixed(4)}`;
-  }
-  if (ev.ty === 2 || ev.ty === 3 || ev.ty === 4 || ev.ty === 5 || ev.ty === 6 || ev.ty === 7 ||
-      ev.ty === 13 || ev.ty === 14 || ev.ty === 15 || ev.ty === 16 || ev.ty === 17 || ev.ty === 18 ||
-      ev.ty === 19 || ev.ty === 20 || ev.ty === 21) {
-    return `${(ev.d/1e6).toFixed(2)} tokens`;
-  }
-  if (ev.ty === 8 || ev.ty === 9) {
-    return `$${(ev.d/1e6).toFixed(2)} payout`;
-  }
-  if (ev.ty === 10) {
-    return `${(ev.d/1e6).toFixed(2)} convert`;
-  }
-  return `${(ev.d/1e6).toFixed(2)} tokens`;
+  const rp = Number(ev.rpnl || 0) / 1e6;
+  const up = Number(ev.upnl || 0) / 1e6;
+  return `R ${s3FmtUSD(rp)} / U ${s3FmtUSD(up)} / T ${s3FmtUSD(rp + up)}`;
 }
 
 function s3PosBar(val, label) {
