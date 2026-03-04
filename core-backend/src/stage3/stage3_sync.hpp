@@ -6,15 +6,15 @@
 #include "../stage2/stage2_types.hpp"
 
 #include <array>
+#include <atomic>
 #include <boost/asio.hpp>
 #include <chrono>
 #include <cstdlib>
 #include <cstring>
+#include <deque>
 #include <limits>
 #include <memory>
 #include <mutex>
-#include <deque>
-#include <atomic>
 #include <unordered_map>
 #include <vector>
 
@@ -139,6 +139,7 @@ private:
     int32_t cond_idx = 0;
     int32_t event_type = 0;
     int32_t token_idx = 0;
+    int32_t collateral = 0;
     int64_t amount = 0;
     int64_t price = 0;
     int64_t realized_cum = 0;
@@ -210,6 +211,7 @@ private:
 
   static std::string normalize_addr(const std::string &addr);
   static int64_t mul_div_1e6(int64_t amount, int64_t price);
+  static bool is_usd_collateral(int32_t collateral);
 
   void init_schema() const;
   void load_conditions();

@@ -3,6 +3,9 @@
 > `px = price_1e6 / 1e6`
 > `cost_before = cost[token_idx]`(本事件处理前的持仓成本)
 > `pos_before = pos[token_idx]`(本事件处理前的持仓数量)
+> `has_usd = collateral ∈ {USDC(1), USDCe(2), USDT(3), WrappedUSDCe(4)}`
+
+**Collateral 规则**: 只有 USD 类抵押物 (`has_usd=true`) 才计算 cost/realized_delta/last_price；非 USD 只更新 pos。
 
 | EventType                                                  | 是否计算   | 状态更新(pos/cost)                                   | realized_delta 公式                                                | 更新 last_price |
 | ---------------------------------------------------------- | ---------- | ---------------------------------------------------- | ------------------------------------------------------------------ | --------------- |
@@ -15,8 +18,8 @@
 | FPMMBuy                                                    | 是         | `pos += qty; cost += qty * px`                       | `0`                                                                | 是              |
 | FPMMSell                                                   | 是         | `cost -= cost_before * qty / pos_before; pos -= qty` | `qty * px - cost_before * qty / pos_before`                        | 是              |
 | FPMMLPAdd                                                  | 否(资金流) | 不改 token `pos/cost`(0->FPMM mint)                  | `0`                                                                | 否              |
-| FPMMLPRemove                                               | 是(LP取回) | `pos += qty; cost += qty * px`                       | `0`                                                                | 否              |
-| FPMMLPReturn                                               | 是(LP退回) | `pos += qty; cost += qty * px`                       | `0`                                                                | 否              |
+| FPMMLPRemove                                               | 是(LP取回) | `pos += qty; cost` 不变                              | `0`                                                                | 否              |
+| FPMMLPReturn                                               | 是(LP退回) | `pos += qty; cost` 不变                              | `0`                                                                | 否              |
 | TransferInNegRisk / TransferInOther / TransferInNonPoly    | 是(转入)   | `pos += qty; cost` 不变                              | `0`                                                                | 否              |
 | TransferOutNegRisk / TransferOutOther / TransferOutNonPoly | 是(转出)   | `cost -= cost_before * qty / pos_before; pos -= qty` | `0`                                                                | 否              |
 
@@ -84,7 +87,7 @@ stage3_sync_tick
 │  │  │  ├─ assert pos_before > 0 && pos_before >= qty
 │  │  │  ├─ cost_removed = cost_before * qty / pos_before
 │  │  │  └─ cost -= cost_removed; pos -= qty; realized_delta = 0
-│  │  ├─ FPMMLPRemove/Return: pos += qty; cost += qty*px; realized_delta = 0
+│  │  ├─ FPMMLPRemove/Return: pos += qty; cost 不变; realized_delta = 0
 │  │  └─ FPMMLPAdd: 不改 token pos/cost; realized_delta = 0(仅记录事件)
 │  ├─ 3.4 更新 last_price (仅 Order/FPMM 交易)
 │  │  └─ 若 event_type ∈ {OrderBuy, OrderSell, FPMMBuy, FPMMSell} 且 price > 0:
