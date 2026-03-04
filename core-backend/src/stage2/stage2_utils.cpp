@@ -1,9 +1,6 @@
 #include "stage2_utils.hpp"
 #include "stage2_assert.hpp"
 
-#include <algorithm>
-#include <cctype>
-
 namespace stage2 {
 namespace {
 
@@ -58,8 +55,12 @@ std::string blob_to_hex_literal(const std::string &blob) {
 }
 
 std::string to_lower(std::string s) {
-  std::transform(s.begin(), s.end(), s.begin(),
-                 [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+  // Fast path for ASCII: 'A'-'Z' differ from 'a'-'z' by bit 0x20.
+  for (char &c : s) {
+    if (c >= 'A' && c <= 'Z') {
+      c |= 0x20;
+    }
+  }
   return s;
 }
 
@@ -83,6 +84,26 @@ std::string hex_to_blob(const std::string &hex) {
     result.push_back(static_cast<char>(parse_hex_byte(h[i], h[i + 1])));
   }
   return result;
+}
+
+std::string actor_amount_index_key(const std::string &actor, int64_t amount) {
+  std::string key;
+  key.reserve(actor.size() + 1 + 24);
+  key.append(actor);
+  key.push_back('#');
+  key.append(std::to_string(amount));
+  return key;
+}
+
+std::string fpmm_trade_leg_index_key(int side, const std::string &trader, int64_t token_amount) {
+  std::string key;
+  key.reserve(trader.size() + 2 + 24);
+  key.push_back(static_cast<char>('0' + side));
+  key.push_back('#');
+  key.append(trader);
+  key.push_back('#');
+  key.append(std::to_string(token_amount));
+  return key;
 }
 
 } // namespace stage2

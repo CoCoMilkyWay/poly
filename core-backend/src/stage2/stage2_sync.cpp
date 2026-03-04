@@ -82,6 +82,8 @@ void StageSync::schedule_sync(int delay_seconds) {
   timer->async_wait([this, timer](const boost::system::error_code &ec) {
     if (ec || stop_requested_)
       return;
+    // Wait for pending commit outside of do_sync trace zone so tracy shows main thread as idle.
+    builder_.wait_for_pending_commit();
     do_sync();
   });
 }

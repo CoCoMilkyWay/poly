@@ -29,7 +29,7 @@ TransferClass EventBuilder::classify_and_emit(
   const std::string *cond_id = known_token ? &cond_ids_[cond_idx] : nullptr;
   TxKey tx_key{block, tx_hash};
   bool op_is_exchange = (op == CTF_EXCHANGE || op == NEG_RISK_CTF_EXCHANGE);
-  bool op_is_fpmm = is_known_fpmm(op);
+  bool op_is_fpmm = is_fpmm_visible_at(op, sort_key);
   int64_t transfer_log_index = sort_key - block * SORT_KEY_SCALE;
   stage2_assert(transfer_log_index >= 0, AssertLevel::L0, "Input", "TransferLogIndexNonNegative");
   int64_t sub_idx = transfer_log_index % TRANSFER_FLAT_LOG_SCALE;
@@ -101,40 +101,6 @@ TransferClass EventBuilder::classify_and_emit(
     stage2_assert(window_match_count <= 1, AssertLevel::L2, "Match", window_rule);
     return window_matched;
   };
-  auto select_window_or_nearest = [&](auto &rows, auto &&match_candidate,
-                                      const char *window_rule,
-                                      const char *nearest_rule) {
-    using Row = typename std::decay_t<decltype(rows)>::value_type;
-    Row *window_matched = nullptr;
-    int window_match_count = 0;
-    Row *nearest_matched = nullptr;
-    int64_t nearest_dist = (1LL << 62);
-    int nearest_count = 0;
-    for (auto &info : rows) {
-      if (!match_candidate(info)) {
-        continue;
-      }
-      if (semantic_log_matches(info.log_index)) {
-        window_matched = &info;
-        window_match_count++;
-        continue;
-      }
-      int64_t dist = semantic_log_distance(info.log_index);
-      if (nearest_matched == nullptr || dist < nearest_dist) {
-        nearest_matched = &info;
-        nearest_dist = dist;
-        nearest_count = 1;
-      } else if (dist == nearest_dist) {
-        nearest_count++;
-      }
-    }
-    Row *window_only = select_window_only(window_matched, window_match_count, window_rule);
-    if (window_only != nullptr) {
-      return window_only;
-    }
-    stage2_assert(nearest_count <= 1, AssertLevel::L2, "Match", nearest_rule);
-    return nearest_matched;
-  };
   auto select_window_or_forward = [&](auto &rows, auto &&match_candidate,
                                       const char *window_rule,
                                       const char *forward_rule) {
@@ -145,6 +111,41 @@ TransferClass EventBuilder::classify_and_emit(
     int64_t forward_log = -1;
     int forward_same_log_count = 0;
     for (auto &info : rows) {
+      if (!match_candidate(info)) {
+        continue;
+      }
+      if (semantic_log_matches(info.log_index)) {
+        window_matched = &info;
+        window_match_count++;
+        continue;
+      }
+      if (forward_matched == nullptr || info.log_index < forward_log) {
+        forward_matched = &info;
+        forward_log = info.log_index;
+        forward_same_log_count = 1;
+      } else if (info.log_index == forward_log) {
+        forward_same_log_count++;
+      }
+    }
+    Row *window_only = select_window_only(window_matched, window_match_count, window_rule);
+    if (window_only != nullptr) {
+      return window_only;
+    }
+    stage2_assert(forward_same_log_count <= 1, AssertLevel::L2, "Match", forward_rule);
+    return forward_matched;
+  };
+  auto select_window_or_forward_ptr = [&](const auto &rows, auto &&match_candidate,
+                                          const char *window_rule,
+                                          const char *forward_rule) {
+    using Ptr = typename std::decay_t<decltype(rows)>::value_type;
+    using Row = std::remove_pointer_t<Ptr>;
+    Row *window_matched = nullptr;
+    int window_match_count = 0;
+    Row *forward_matched = nullptr;
+    int64_t forward_log = -1;
+    int forward_same_log_count = 0;
+    for (Row *info_ptr : rows) {
+      Row &info = *info_ptr;
       if (!match_candidate(info)) {
         continue;
       }
@@ -284,13 +285,28 @@ TransferClass EventBuilder::classify_and_emit(
   if (auto split_it = tx_split_.find(tx_key); split_it != tx_split_.end()) {
     tx_split_rows = &split_it->second;
   }
+  std::unordered_map<std::string, std::vector<SplitInfo *>> *tx_split_actor_amount_rows = nullptr;
+  if (auto split_idx_it = tx_split_by_actor_amount_.find(tx_key);
+      split_idx_it != tx_split_by_actor_amount_.end()) {
+    tx_split_actor_amount_rows = &split_idx_it->second;
+  }
   std::vector<MergeInfo> *tx_merge_rows = nullptr;
   if (auto merge_it = tx_merge_.find(tx_key); merge_it != tx_merge_.end()) {
     tx_merge_rows = &merge_it->second;
   }
+  std::unordered_map<std::string, std::vector<MergeInfo *>> *tx_merge_actor_amount_rows = nullptr;
+  if (auto merge_idx_it = tx_merge_by_actor_amount_.find(tx_key);
+      merge_idx_it != tx_merge_by_actor_amount_.end()) {
+    tx_merge_actor_amount_rows = &merge_idx_it->second;
+  }
   std::vector<RedemptionInfo> *tx_redemption_rows = nullptr;
   if (auto redemption_it = tx_redemption_.find(tx_key); redemption_it != tx_redemption_.end()) {
     tx_redemption_rows = &redemption_it->second;
+  }
+  std::unordered_map<std::string, std::vector<RedemptionInfo *>> *tx_redemption_actor_rows = nullptr;
+  if (auto redemption_idx_it = tx_redemption_by_actor_.find(tx_key);
+      redemption_idx_it != tx_redemption_by_actor_.end()) {
+    tx_redemption_actor_rows = &redemption_idx_it->second;
   }
   std::unordered_map<int64_t, std::vector<OrderInfo *>> *tx_order_amount_rows = nullptr;
   if (op_is_exchange) {
@@ -301,6 +317,7 @@ TransferClass EventBuilder::classify_and_emit(
     }
   }
   auto find_conditional_info_with_amount = [&](auto *rows,
+                                               auto *actor_amount_rows,
                                                const std::string &stakeholder,
                                                int64_t amt,
                                                const char *window_rule,
@@ -309,84 +326,168 @@ TransferClass EventBuilder::classify_and_emit(
     if (rows == nullptr) {
       return static_cast<Row *>(nullptr);
     }
-    auto pick = [&](bool unconsumed_only, bool strict_collateral) -> Row * {
-      return select_window_or_nearest(
-          *rows,
-          [&](const Row &info) {
-            if (unconsumed_only && info.consumed_count > 0) {
-              return false;
-            }
-            if (strict_collateral && !collateral_matches(info.collateral_token))
-              return false;
-            return info.stakeholder == stakeholder && info.amount == amt &&
-                   cond_matches(info.cond_id);
-          },
-          window_rule,
-          nearest_rule);
+    const std::vector<Row *> *indexed_candidates = nullptr;
+    if (actor_amount_rows != nullptr) {
+      auto key = actor_amount_index_key(stakeholder, amt);
+      auto idx_it = actor_amount_rows->find(key);
+      if (idx_it != actor_amount_rows->end()) {
+        indexed_candidates = &idx_it->second;
+      }
+    }
+    // Single-pass scan: collect best match per priority tier.
+    // Priority: unconsumed+strict > unconsumed+relaxed > consumed+strict > consumed+relaxed
+    Row *best[4] = {nullptr, nullptr, nullptr, nullptr};
+    int64_t best_dist[4] = {1LL << 62, 1LL << 62, 1LL << 62, 1LL << 62};
+    int best_count[4] = {0, 0, 0, 0};
+    Row *window_best[4] = {nullptr, nullptr, nullptr, nullptr};
+    int window_count[4] = {0, 0, 0, 0};
+    auto scan_row = [&](Row &info) {
+      if (info.stakeholder != stakeholder || info.amount != amt || !cond_matches(info.cond_id))
+        return;
+      bool unconsumed = (info.consumed_count == 0);
+      bool strict_coll = collateral_matches(info.collateral_token);
+      int tier = (unconsumed ? 0 : 2) + (strict_coll ? 0 : 1);
+      if (semantic_log_matches(info.log_index)) {
+        window_best[tier] = &info;
+        window_count[tier]++;
+        return;
+      }
+      int64_t dist = semantic_log_distance(info.log_index);
+      if (best[tier] == nullptr || dist < best_dist[tier]) {
+        best[tier] = &info;
+        best_dist[tier] = dist;
+        best_count[tier] = 1;
+      } else if (dist == best_dist[tier]) {
+        best_count[tier]++;
+      }
     };
-    if (Row *fresh = pick(true, true); fresh != nullptr) {
-      return fresh;
+    if (indexed_candidates != nullptr) {
+      for (Row *ptr : *indexed_candidates)
+        scan_row(*ptr);
+    } else {
+      for (auto &info : *rows)
+        scan_row(info);
     }
-    if (Row *fresh = pick(true, false); fresh != nullptr) {
-      return fresh;
+    for (int t = 0; t < 4; ++t) {
+      if (window_count[t] > 0) {
+        stage2_assert(window_count[t] <= 1, AssertLevel::L2, "Match", window_rule);
+        return window_best[t];
+      }
     }
-    if (Row *fallback = pick(false, true); fallback != nullptr) {
-      return fallback;
+    for (int t = 0; t < 4; ++t) {
+      if (best[t] != nullptr) {
+        stage2_assert(best_count[t] <= 1, AssertLevel::L2, "Match", nearest_rule);
+        return best[t];
+      }
     }
-    return pick(false, false);
+    return static_cast<Row *>(nullptr);
   };
   auto find_split_info = [&](const std::string &stakeholder, int64_t amt) -> SplitInfo * {
     return find_conditional_info_with_amount(
-        tx_split_rows, stakeholder, amt,
+        tx_split_rows, tx_split_actor_amount_rows, stakeholder, amt,
         "SplitWindowUniqueCandidate",
         "SplitForwardUniqueCandidate");
   };
   auto find_split_info_window_fallback = [&](const std::string &stakeholder) -> SplitInfo * {
-    if (tx_split_rows == nullptr) {
+    // Window-only match ignoring amount. Iterate all amount buckets in the fast index.
+    if (tx_split_actor_amount_rows != nullptr) {
+      for (auto &[key, bucket] : *tx_split_actor_amount_rows) {
+        for (SplitInfo *info_ptr : bucket) {
+          SplitInfo &info = *info_ptr;
+          if (!semantic_log_matches(info.log_index))
+            continue;
+          if (!collateral_matches(info.collateral_token))
+            continue;
+          if (info.stakeholder == stakeholder && cond_matches(info.cond_id))
+            return &info;
+        }
+      }
       return nullptr;
     }
+    if (tx_split_rows == nullptr)
+      return nullptr;
     for (auto &info : *tx_split_rows) {
-      if (!semantic_log_matches(info.log_index)) {
+      if (!semantic_log_matches(info.log_index))
         continue;
-      }
-      if (!collateral_matches(info.collateral_token)) {
+      if (!collateral_matches(info.collateral_token))
         continue;
-      }
-      if (info.stakeholder == stakeholder && cond_matches(info.cond_id)) {
+      if (info.stakeholder == stakeholder && cond_matches(info.cond_id))
         return &info;
-      }
     }
     return nullptr;
   };
   auto find_merge_info = [&](const std::string &stakeholder, int64_t amt) -> MergeInfo * {
     return find_conditional_info_with_amount(
-        tx_merge_rows, stakeholder, amt,
+        tx_merge_rows, tx_merge_actor_amount_rows, stakeholder, amt,
         "MergeWindowUniqueCandidate",
         "MergeForwardUniqueCandidate");
   };
   auto find_redemption_info = [&](const std::string &redeemer) -> RedemptionInfo * {
     if (tx_redemption_rows == nullptr)
       return nullptr;
-    auto pick = [&](bool unconsumed_only) -> RedemptionInfo * {
-      return select_window_or_nearest(
-          *tx_redemption_rows,
-          [&](const RedemptionInfo &info) {
-            if (unconsumed_only && info.consumed_count > 0) {
-              return false;
-            }
-            return info.redeemer == redeemer && cond_matches(info.cond_id);
-          },
-          "RedeemWindowUniqueCandidate",
-          "RedeemForwardUniqueCandidate");
-    };
-    if (RedemptionInfo *fresh = pick(true); fresh != nullptr) {
-      return fresh;
+    const std::vector<RedemptionInfo *> *indexed_candidates = nullptr;
+    if (tx_redemption_actor_rows != nullptr) {
+      auto idx_it = tx_redemption_actor_rows->find(redeemer);
+      if (idx_it != tx_redemption_actor_rows->end()) {
+        indexed_candidates = &idx_it->second;
+      }
     }
-    return pick(false);
+    // Single-pass: unconsumed > consumed
+    RedemptionInfo *best[2] = {nullptr, nullptr};
+    int64_t best_dist[2] = {1LL << 62, 1LL << 62};
+    int best_count[2] = {0, 0};
+    RedemptionInfo *window_matched = nullptr;
+    int window_count = 0;
+    auto scan_row = [&](RedemptionInfo &info) {
+      if (info.redeemer != redeemer || !cond_matches(info.cond_id))
+        return;
+      int tier = (info.consumed_count == 0) ? 0 : 1;
+      if (semantic_log_matches(info.log_index)) {
+        if (tier == 0) {
+          window_matched = &info;
+          window_count++;
+        }
+        return;
+      }
+      int64_t dist = semantic_log_distance(info.log_index);
+      if (best[tier] == nullptr || dist < best_dist[tier]) {
+        best[tier] = &info;
+        best_dist[tier] = dist;
+        best_count[tier] = 1;
+      } else if (dist == best_dist[tier]) {
+        best_count[tier]++;
+      }
+    };
+    if (indexed_candidates != nullptr) {
+      for (RedemptionInfo *ptr : *indexed_candidates)
+        scan_row(*ptr);
+    } else {
+      for (auto &info : *tx_redemption_rows)
+        scan_row(info);
+    }
+    if (window_count > 0) {
+      stage2_assert(window_count <= 1, AssertLevel::L2, "Match", "RedeemWindowUniqueCandidate");
+      return window_matched;
+    }
+    for (int t = 0; t < 2; ++t) {
+      if (best[t] != nullptr) {
+        stage2_assert(best_count[t] <= 1, AssertLevel::L2, "Match", "RedeemForwardUniqueCandidate");
+        return best[t];
+      }
+    }
+    return nullptr;
   };
   auto fpmm_trade_rows = [&](const TxFPMMKey &key) -> std::vector<FPMMTradeInfo> * {
     auto it = tx_fpmm_trade_.find(key);
     if (it == tx_fpmm_trade_.end()) {
+      return nullptr;
+    }
+    return &it->second;
+  };
+  auto fpmm_trade_leg_rows = [&](const TxFPMMKey &key)
+      -> std::unordered_map<std::string, std::vector<FPMMTradeInfo *>> * {
+    auto it = tx_fpmm_trade_by_leg_.find(key);
+    if (it == tx_fpmm_trade_by_leg_.end()) {
       return nullptr;
     }
     return &it->second;
@@ -403,6 +504,29 @@ TransferClass EventBuilder::classify_and_emit(
     auto *rows = fpmm_trade_rows(key);
     if (rows == nullptr)
       return nullptr;
+    const std::vector<FPMMTradeInfo *> *indexed_candidates = nullptr;
+    auto *leg_map = fpmm_trade_leg_rows(key);
+    if (leg_map != nullptr) {
+      auto idx_it = leg_map->find(fpmm_trade_leg_index_key(side, trader, token_amount));
+      if (idx_it != leg_map->end()) {
+        indexed_candidates = &idx_it->second;
+      }
+    }
+    if (indexed_candidates != nullptr) {
+      return select_window_or_forward_ptr(
+          *indexed_candidates,
+          [&](const FPMMTradeInfo &info) {
+            if (!info.requires_erc1155_leg || info.consumed) {
+              return false;
+            }
+            if (info.log_index < base_log_index) {
+              return false;
+            }
+            return info.side == side && info.trader == trader && info.tokens == token_amount;
+          },
+          "FPMMTradeWindowUniqueCandidate",
+          "FPMMTradeUniqueCandidate");
+    }
     return select_window_or_forward(
         *rows,
         [&](const FPMMTradeInfo &info) {
@@ -935,7 +1059,7 @@ TransferClass EventBuilder::classify_and_emit(
     // Adapter may operate transfers on behalf of users/vaults in paths that are
     // not split/merge/convert legs. Only tag as NegRisk when token's condition
     // is explicitly in NegRisk set; otherwise use generic transfer classes.
-    bool is_negrisk_known = known_token && (negrisk_cond_idxs_.count(cond_idx) > 0);
+    bool is_negrisk_known = known_token && is_negrisk_cond_visible_at(cond_idx, sort_key);
     if (is_negrisk_known) {
       return emit_and_classify_negrisk_in_out(TransferClass::InternalTransferNegRisk);
     }

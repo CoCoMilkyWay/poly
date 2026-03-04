@@ -544,6 +544,20 @@ void EventBuilder::request_stop() { stop_requested_ = true; }
 
 void EventBuilder::clear_stop() { stop_requested_ = false; }
 
+void EventBuilder::wait_for_pending_commit() {
+  std::unique_lock<std::mutex> lock(commit_mu_);
+  while (commit_busy_) {
+    if (commit_result_.has_value()) {
+      reap_commit_result_locked();
+      continue;
+    }
+    commit_cv_.wait(lock);
+  }
+  if (commit_result_.has_value()) {
+    reap_commit_result_locked();
+  }
+}
+
 bool EventBuilder::build_chunk(int64_t target_block) {
   if (stop_requested_) {
     return false;
@@ -582,9 +596,16 @@ bool EventBuilder::build_chunk(int64_t target_block) {
   tx_order_.clear();
   tx_convert_by_tx_.clear();
   tx_order_by_amount_.clear();
+  tx_split_by_actor_amount_.clear();
+  tx_merge_by_actor_amount_.clear();
+  tx_redemption_by_actor_.clear();
+  tx_fpmm_trade_by_leg_.clear();
   tx_fpmm_trade_.clear();
   tx_fpmm_funding_.clear();
   tx_op_bounds_.clear();
+  chunk_token_known_visible_from_sort_.clear();
+  chunk_fpmm_visible_from_sort_.clear();
+  chunk_negrisk_visible_from_sort_.clear();
   chunk_xfer_stats_ = {};
   chunk_split_sem_tree_ = {};
   chunk_merge_sem_tree_ = {};
@@ -662,13 +683,9 @@ bool EventBuilder::build_chunk(int64_t target_block) {
   payload.new_events.swap(new_events_);
   {
     std::unique_lock<std::mutex> lock(commit_mu_);
-    while (commit_busy_) {
-      if (commit_result_.has_value()) {
-        reap_commit_result_locked();
-        continue;
-      }
-      commit_cv_.wait(lock);
-    }
+    // Note: wait_for_pending_commit() should be called before build_chunk() to ensure
+    // the previous commit is done. Here we just assert the slot is free.
+    stage2_assert(!commit_busy_, AssertLevel::L0, "State", "CommitSlotFreeBeforeSubmit");
     stage2_assert(!commit_payload_.has_value(), AssertLevel::L0, "State", "CommitQueueEmpty");
     commit_payload_ = std::move(payload);
     commit_busy_ = true;

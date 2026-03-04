@@ -32,6 +32,7 @@ public:
   int64_t cursor() const;
 
   bool build_chunk(int64_t target_block);
+  void wait_for_pending_commit();
   void request_stop();
   void clear_stop();
 
@@ -66,6 +67,10 @@ private:
   std::unordered_map<TxTokenKey, std::vector<OrderInfo>> tx_order_;
   std::unordered_map<TxKey, std::vector<ConvertInfo *>> tx_convert_by_tx_;
   std::unordered_map<TxTokenKey, std::unordered_map<int64_t, std::vector<OrderInfo *>>> tx_order_by_amount_;
+  std::unordered_map<TxKey, std::unordered_map<std::string, std::vector<SplitInfo *>>> tx_split_by_actor_amount_;
+  std::unordered_map<TxKey, std::unordered_map<std::string, std::vector<MergeInfo *>>> tx_merge_by_actor_amount_;
+  std::unordered_map<TxKey, std::unordered_map<std::string, std::vector<RedemptionInfo *>>> tx_redemption_by_actor_;
+  std::unordered_map<TxFPMMKey, std::unordered_map<std::string, std::vector<FPMMTradeInfo *>>> tx_fpmm_trade_by_leg_;
   std::unordered_map<TxFPMMKey, std::vector<FPMMTradeInfo>> tx_fpmm_trade_;
   std::unordered_map<TxFPMMKey, std::vector<FPMMFundingInfo>> tx_fpmm_funding_;
   // Tx-level semantic bounds built from ordered semantic log_index sequence.
@@ -121,6 +126,9 @@ private:
   std::vector<std::tuple<std::string, RawEvent>> new_events_;
   std::string current_transfer_context_;
   int64_t build_cursor_ = 0;
+  std::unordered_map<std::string, int64_t> chunk_token_known_visible_from_sort_;
+  std::unordered_map<std::string, int64_t> chunk_fpmm_visible_from_sort_;
+  std::unordered_map<uint32_t, int64_t> chunk_negrisk_visible_from_sort_;
 
   struct CommitPayload {
     int64_t new_cursor = 0;
@@ -234,11 +242,25 @@ private:
     }
   }
 
-  void intern_token(const std::string &token_id, uint32_t cond_idx, uint8_t token_idx, TokenSource source) {
+  void intern_token(const std::string &token_id, uint32_t cond_idx, uint8_t token_idx,
+                    TokenSource source, int64_t evidence_sort_key = -1) {
     std::string lower = to_lower(token_id);
+    auto is_known_mapping = [](const TokenInfo &info) {
+      return info.cond_idx != UNKNOWN_COND_IDX && info.token_idx != UNKNOWN_TOKEN_IDX;
+    };
+    auto note_known_visibility = [&](const std::string &token_lower, int64_t sort_key) {
+      if (sort_key < 0) {
+        return;
+      }
+      auto it_vis = chunk_token_known_visible_from_sort_.find(token_lower);
+      if (it_vis == chunk_token_known_visible_from_sort_.end() || sort_key < it_vis->second) {
+        chunk_token_known_visible_from_sort_[token_lower] = sort_key;
+      }
+    };
     auto it = token_map_.find(lower);
     if (it != token_map_.end()) {
       TokenInfo &existing = it->second;
+      bool was_known = is_known_mapping(existing);
       auto source_rank = [](TokenSource s) -> int {
         switch (s) {
         case TokenSource::TransferInferred:
@@ -300,6 +322,9 @@ private:
       if (!same_assignment && new_rank > existing_rank) {
         existing = {cond_idx, token_idx, source};
         patch_pending(cond_idx, token_idx, source);
+        if (!was_known && is_known_mapping(existing)) {
+          note_known_visibility(lower, evidence_sort_key);
+        }
         return;
       }
 
@@ -307,9 +332,15 @@ private:
       if (!same_assignment && existing_rank >= 3 && new_rank >= 3) {
         stage2_assert(false, AssertLevel::L1, "Mapping", "TokenStrongSourceConflict");
       }
+      if (!was_known && is_known_mapping(existing)) {
+        note_known_visibility(lower, evidence_sort_key);
+      }
       return;
     }
     token_map_[lower] = {cond_idx, token_idx, source};
+    if (is_known_mapping(token_map_[lower])) {
+      note_known_visibility(lower, evidence_sort_key);
+    }
     new_token_pos_[lower] = new_tokens_.size();
     new_tokens_.push_back({lower, cond_idx, token_idx, source});
     progress_.total_tokens = token_map_.size();
@@ -338,18 +369,26 @@ private:
     new_cond_collaterals_.push_back({cond_idx, coll_id});
   }
 
-  void intern_fpmm(const std::string &addr, uint32_t cond_idx, uint8_t collateral) {
+  void intern_fpmm(const std::string &addr, uint32_t cond_idx, uint8_t collateral,
+                   int64_t evidence_sort_key = -1) {
     std::string lower = to_lower(addr);
     if (fpmm_map_.count(lower))
       return;
     fpmm_map_[lower] = {cond_idx, collateral};
+    if (evidence_sort_key >= 0) {
+      auto it = chunk_fpmm_visible_from_sort_.find(lower);
+      if (it == chunk_fpmm_visible_from_sort_.end() || evidence_sort_key < it->second) {
+        chunk_fpmm_visible_from_sort_[lower] = evidence_sort_key;
+      }
+    }
     new_fpmms_.push_back({lower, cond_idx, collateral});
     fpmm_cond_idxs_.insert(cond_idx);
     set_cond_collateral(cond_idx, collateral);
   }
 
   void intern_condition_tokens(const std::string &lower_cid, const std::string &collateral_hex,
-                               uint32_t cond_idx, TokenSource source) {
+                               uint32_t cond_idx, TokenSource source,
+                               int64_t evidence_sort_key = -1) {
     auto cond_bytes = hex_to_blob(lower_cid);
     auto collateral_bytes = hex_to_blob(collateral_hex);
     stage2_assert(cond_idx < conditions_.size(), AssertLevel::L1, "Mapping", "CondIdxInRangeForTokenIntern");
@@ -362,13 +401,14 @@ private:
       auto collection_id = ctf::get_collection_id(cond_bytes, index_set);
       auto position_hash = ctf::get_position_id(collateral_bytes, collection_id);
       std::string token_id = crypto::Keccak256::to_hex(position_hash);
-      intern_token(token_id, cond_idx, outcome, source);
+      intern_token(token_id, cond_idx, outcome, source, evidence_sort_key);
     }
   }
 
   void intern_fpmm_tokens(const std::vector<std::string> &condition_ids,
                           const std::string &collateral_hex,
-                          uint32_t primary_cond_idx) {
+                          uint32_t primary_cond_idx,
+                          int64_t evidence_sort_key = -1) {
     stage2_assert(!condition_ids.empty(), AssertLevel::L1, "Mapping", "FPMMConditionIdsNonEmpty");
     auto collateral_bytes = hex_to_blob(collateral_hex);
 
@@ -397,7 +437,8 @@ private:
                               first_condition_outcome <= std::numeric_limits<uint8_t>::max(),
                           AssertLevel::L1, "Mapping", "FPMMFirstOutcomeFitsU8");
             uint8_t token_idx = static_cast<uint8_t>(first_condition_outcome);
-            intern_token(token_id, primary_cond_idx, token_idx, TokenSource::PolymarketFPMM);
+            intern_token(token_id, primary_cond_idx, token_idx, TokenSource::PolymarketFPMM,
+                        evidence_sort_key);
             return;
           }
 
@@ -727,6 +768,40 @@ private:
   }
   bool is_known_fpmm(const std::string &addr) const {
     return fpmm_map_.find(addr) != fpmm_map_.end();
+  }
+  bool is_fpmm_visible_at(const std::string &addr, int64_t sort_key) const {
+    if (!is_known_fpmm(addr)) {
+      return false;
+    }
+    auto it = chunk_fpmm_visible_from_sort_.find(addr);
+    if (it == chunk_fpmm_visible_from_sort_.end()) {
+      return true;
+    }
+    return sort_key >= it->second;
+  }
+  bool is_token_known_visible_at(const std::string &token_id, int64_t sort_key) const {
+    auto it = token_map_.find(token_id);
+    if (it == token_map_.end()) {
+      return false;
+    }
+    if (it->second.cond_idx == UNKNOWN_COND_IDX || it->second.token_idx == UNKNOWN_TOKEN_IDX) {
+      return false;
+    }
+    auto vis_it = chunk_token_known_visible_from_sort_.find(token_id);
+    if (vis_it == chunk_token_known_visible_from_sort_.end()) {
+      return true;
+    }
+    return sort_key >= vis_it->second;
+  }
+  bool is_negrisk_cond_visible_at(uint32_t cond_idx, int64_t sort_key) const {
+    if (negrisk_cond_idxs_.count(cond_idx) == 0) {
+      return false;
+    }
+    auto vis_it = chunk_negrisk_visible_from_sort_.find(cond_idx);
+    if (vis_it == chunk_negrisk_visible_from_sort_.end()) {
+      return true;
+    }
+    return sort_key >= vis_it->second;
   }
 
   TransferClass classify_and_emit(int64_t sort_key, const std::array<uint8_t, 32> &tx_hash,
