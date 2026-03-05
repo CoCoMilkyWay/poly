@@ -1,4 +1,4 @@
-#include "stage0_sync.hpp"
+#include "stage0_query_sync.hpp"
 
 #include <cstdlib>
 #include <iostream>
@@ -98,7 +98,7 @@ duckdb::Value make_blob_value(const std::string &blob) {
 
 } // namespace
 
-void StageSync::persist_results_in_txn(duckdb::Appender &ap, const std::vector<FetchResult> &rows) {
+void QuerySync::persist_results_in_txn(duckdb::Appender &ap, const std::vector<FetchResult> &rows) {
   for (const auto &row : rows) {
     const json &market = row.market;
     assert(market.is_object());

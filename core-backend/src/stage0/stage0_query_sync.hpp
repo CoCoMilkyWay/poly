@@ -4,7 +4,6 @@
 #include <chrono>
 #include <deque>
 #include <map>
-#include <memory>
 #include <mutex>
 #include <string>
 #include <unordered_set>
@@ -15,14 +14,13 @@
 
 #include "../core/config.hpp"
 #include "../core/database.hpp"
-#include "stage0_tag.hpp"
 
 namespace asio = boost::asio;
 using json = nlohmann::json;
 
 namespace stage0 {
 
-class StageSync {
+class QuerySync {
 public:
   struct Status {
     bool syncing = false;
@@ -35,22 +33,13 @@ public:
     int64_t nonpoly_condition_count = 0;
     double blocks_per_second = 0.0;
     double eta_seconds = -1.0;
-    // Tag status
-    int64_t tag_last_block = 0;
-    int64_t tagged_count = 0;
-    int64_t untagged_count = 0;
-    std::string tag_device;
-    std::string tag_model_path;
-    std::string tag_model_size_text;
   };
 
-  StageSync(const Config &config, Database &stage1_db, Database &stage0_db, int base_interval_seconds);
+  QuerySync(const Config &config, Database &stage1_db, Database &stage0_db, int base_interval_seconds);
 
-  void start_query(asio::io_context &ioc);
-  void start_tag(asio::io_context &ioc);
+  void start(asio::io_context &ioc);
   void stop();
   Status status() const;
-  void reset_tag_progress();
 
 private:
   static constexpr int kWorkerCount = 50;
@@ -100,10 +89,8 @@ private:
     bool done = false;
   };
 
-  void schedule_query_sync(int delay_seconds);
-  void schedule_tag_sync(int delay_seconds);
-  void do_query_sync();
-  void do_tag_tick();
+  void schedule_sync(int delay_seconds);
+  void do_sync();
   void refresh_status_locked(int64_t head_block, int64_t cursor, bool syncing);
   void record_commit_locked(int64_t cursor);
 
@@ -116,18 +103,10 @@ private:
   int64_t get_scan_cursor();
   void set_scan_cursor_in_txn(duckdb::Connection &conn, int64_t block);
 
-  // Tag methods
-  void init_tagger();
-  int64_t do_tag_sync();
-  int64_t get_tag_cursor();
-  void set_tag_cursor_in_txn(duckdb::Connection &conn, int64_t cursor);
-  void load_tag_counts();
-
   const Config &config_;
   Database &stage1_db_;
   Database &stage0_db_;
-  asio::io_context *query_ioc_ = nullptr;
-  asio::io_context *tag_ioc_ = nullptr;
+  asio::io_context *ioc_ = nullptr;
   int base_interval_seconds_ = 0;
   std::atomic<bool> stop_requested_{false};
   std::unordered_set<std::string> known_condition_ids_;
@@ -139,13 +118,6 @@ private:
   mutable std::mutex status_mutex_;
   Status sync_;
   std::deque<CommitRecord> commit_history_;
-
-  // Tagger
-  std::unique_ptr<Tagger> tagger_;
-  std::atomic<uint64_t> tag_reset_epoch_{0};
-  int64_t tag_last_block_ = 0;
-  int64_t tagged_count_ = 0;
-  int64_t untagged_count_ = 0;
 };
 
 } // namespace stage0

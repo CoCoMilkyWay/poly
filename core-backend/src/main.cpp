@@ -9,7 +9,8 @@
 #include "core/config.hpp"
 #include "core/database.hpp"
 #include "misc/profiler.hpp"
-#include "stage0/stage0_sync.hpp"
+#include "stage0/stage0_query_sync.hpp"
+#include "stage0/stage0_tag_sync.hpp"
 #include "stage1/stage1_sync.hpp"
 #include "stage2/stage2_sync.hpp"
 #include "stage3/stage3_sync.hpp"
@@ -66,20 +67,27 @@ int main(int argc, char *argv[]) {
     stage1_db.init_schema();
   }
 
-  stage0::StageSync stage0(config, stage1_db, stage0_db, config.stage0_check_interval_seconds);
+  stage0::QuerySync stage0_query(config, stage1_db, stage0_db, config.stage0_check_interval_seconds);
+  stage0::TagSync stage0_tag(config, stage0_db, config.stage0_check_interval_seconds);
   stage1::StageSync stage1(config, stage1_db, config.stage1_check_interval_seconds);
   stage2::StageSync stage2(stage1_db, stage2_db, config.stage2_check_interval_seconds);
   stage3::StageSync stage3(stage2.builder(), stage2_db, stage3_db, config.stage3_check_interval_seconds);
 
-  auto stage0_getter = [&stage0]() -> Stage0Status {
-    const auto s = stage0.status();
-    return {s.syncing, s.last_block, s.head_block, s.behind_blocks, s.condition_count,
-            s.ctf_condition_count, s.negrisk_condition_count, s.nonpoly_condition_count,
-            s.blocks_per_second, s.eta_seconds, s.tag_last_block, s.tagged_count, s.untagged_count,
-            s.tag_device, s.tag_model_path, s.tag_model_size_text};
+  auto stage0_query_getter = [&stage0_query]() {
+    return stage0_query.status();
   };
-  auto stage0_retagger = [&stage0]() {
-    stage0.reset_tag_progress();
+  auto stage0_tag_getter = [&stage0_tag]() {
+    return stage0_tag.status();
+  };
+  auto stage0_getter = [&stage0_query_getter, &stage0_tag_getter]() -> Stage0Status {
+    const auto query_status = stage0_query_getter();
+    const auto tag_status = stage0_tag_getter();
+    return {query_status.syncing, query_status.last_block, query_status.head_block,
+            query_status.behind_blocks, query_status.condition_count, query_status.ctf_condition_count,
+            query_status.negrisk_condition_count, query_status.nonpoly_condition_count,
+            query_status.blocks_per_second, query_status.eta_seconds, tag_status.tag_last_block,
+            tag_status.tagged_count, tag_status.untagged_count, tag_status.tag_device,
+            tag_status.tag_model_path, tag_status.tag_model_size_text};
   };
   auto stage1_getter = [&stage1]() -> Stage1Status {
     const auto s = stage1.status();
@@ -121,12 +129,12 @@ int main(int argc, char *argv[]) {
   };
   if (config.stage0_enable == 1) {
     {
-      stage0.start_query(stage0_query_ioc);
+      stage0_query.start(stage0_query_ioc);
       stage0_query_thread.emplace([&stage0_query_ioc]() {
         TraceThread("stage0_query");
         stage0_query_ioc.run();
       });
-      stage0.start_tag(stage0_tag_ioc);
+      stage0_tag.start(stage0_tag_ioc);
       stage0_tag_thread.emplace([&stage0_tag_ioc]() {
         TraceThread("stage0_tag");
         stage0_tag_ioc.run();
@@ -150,7 +158,8 @@ int main(int argc, char *argv[]) {
 
   boost::asio::io_context api_ioc;
   ApiServer api_server(api_ioc, stage1_db, stage2_db, stage3, config.backend_port,
-                       stage0_getter, stage0_retagger, stage1_getter, stage2_getter, stage3_getter);
+                       stage0_getter, [&stage0_tag]() { stage0_tag.reset_progress(); },
+                       stage1_getter, stage2_getter, stage3_getter);
 
   boost::asio::signal_set signals(api_ioc, SIGINT, SIGTERM);
   signals.async_wait([&](const boost::system::error_code &, int sig) {
@@ -165,7 +174,8 @@ int main(int argc, char *argv[]) {
       }
       std::cout << "[Main] 跳过 " << name << " (未启用)" << std::endl;
     };
-    stop_stage("Stage0", config.stage0_enable, stage0);
+    stop_stage("Stage0-query", config.stage0_enable, stage0_query);
+    stop_stage("Stage0-tag", config.stage0_enable, stage0_tag);
     stop_stage("Stage1", config.stage1_enable, stage1);
     stop_stage("Stage2", config.stage2_enable, stage2);
     stop_stage("Stage3", config.stage3_enable, stage3);
