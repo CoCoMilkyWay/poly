@@ -247,8 +247,7 @@ double StageSync::apply_event_to_state(const InputEvent &row, CondState &st) con
       if (p > 0)
         ++popcount;
     }
-    if (popcount <= 0)
-      popcount = 1; // Safety fallback
+    assert(popcount > 0);
 
     // Proceeds from convert: qty * (popcount-1) / popcount
     const double convert_px =

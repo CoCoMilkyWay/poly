@@ -246,8 +246,6 @@ bool StageSync::process_chunk_locked() const {
   rows.reserve(static_cast<size_t>(qr->RowCount()));
   std::unordered_set<std::string> touched_users;
   touched_users.reserve(static_cast<size_t>(qr->RowCount() / 10 + 1));
-  std::unordered_set<std::string> state_touched_users;
-  state_touched_users.reserve(static_cast<size_t>(qr->RowCount() / 10 + 1));
 
   std::unordered_map<PairKey, CondState, PairKeyHash> states;
   states.reserve(static_cast<size_t>(qr->RowCount() / 2 + 1));
@@ -298,7 +296,6 @@ bool StageSync::process_chunk_locked() const {
         if (states.find(key) == states.end()) {
           states.emplace(key, CondState{});
         }
-        state_touched_users.insert(row.user_hex);
       }
       cursor_.sort_key = row.sort_key;
       cursor_.user_hex = row.user_hex;
@@ -615,55 +612,14 @@ bool StageSync::process_chunk_locked() const {
         "last_sort_key=GREATEST(s3_user_summary.last_sort_key, excluded.last_sort_key)");
     assert(su && !su->HasError());
 
-    if (!states.empty() && !state_touched_users.empty()) {
-      sink_conn->Query("CREATE TEMP TABLE IF NOT EXISTS tmp_s3_state_touched_users (user_addr BLOB)");
-      sink_conn->Query("DELETE FROM tmp_s3_state_touched_users");
-      {
-        duckdb::Appender ap(*sink_conn, "tmp_s3_state_touched_users");
-        for (const auto &uhex : state_touched_users) {
-          std::string user_blob = hex_to_blob("0x" + uhex);
-          ap.BeginRow();
-          ap.Append(duckdb::Value::BLOB(
-              reinterpret_cast<duckdb::const_data_ptr_t>(user_blob.data()),
-              user_blob.size()));
-          ap.EndRow();
-        }
-        ap.Close();
-      }
-      auto ckpt = sink_conn->Query(
-          "INSERT INTO s3_user_cond_checkpoint ("
-          "user_addr, checkpoint_sort_key, cond_idx, "
-          "pos_0,pos_1,pos_2,pos_3,pos_4,pos_5,pos_6,pos_7, "
-          "cost_0,cost_1,cost_2,cost_3,cost_4,cost_5,cost_6,cost_7, "
-          "lp_0,lp_1,lp_2,lp_3,lp_4,lp_5,lp_6,lp_7, "
-          "realized_pnl,event_count,last_sort_key"
-          ") "
-          "SELECT st.user_addr, " +
-          std::to_string(cursor_.sort_key) + " AS checkpoint_sort_key, st.cond_idx, "
-                                             "st.pos_0,st.pos_1,st.pos_2,st.pos_3,st.pos_4,st.pos_5,st.pos_6,st.pos_7, "
-                                             "st.cost_0,st.cost_1,st.cost_2,st.cost_3,st.cost_4,st.cost_5,st.cost_6,st.cost_7, "
-                                             "st.lp_0,st.lp_1,st.lp_2,st.lp_3,st.lp_4,st.lp_5,st.lp_6,st.lp_7, "
-                                             "st.realized_pnl,st.event_count,st.last_sort_key "
-                                             "FROM s3_user_cond_state st "
-                                             "JOIN tmp_s3_state_touched_users tu ON st.user_addr = tu.user_addr "
-                                             "WHERE ("
-                                             "st.pos_0 != 0 OR st.pos_1 != 0 OR st.pos_2 != 0 OR st.pos_3 != 0 OR "
-                                             "st.pos_4 != 0 OR st.pos_5 != 0 OR st.pos_6 != 0 OR st.pos_7 != 0"
-                                             ") "
-                                             "ON CONFLICT(user_addr, checkpoint_sort_key, cond_idx) DO UPDATE SET "
-                                             "pos_0=excluded.pos_0, pos_1=excluded.pos_1, pos_2=excluded.pos_2, pos_3=excluded.pos_3, "
-                                             "pos_4=excluded.pos_4, pos_5=excluded.pos_5, pos_6=excluded.pos_6, pos_7=excluded.pos_7, "
-                                             "cost_0=excluded.cost_0, cost_1=excluded.cost_1, cost_2=excluded.cost_2, cost_3=excluded.cost_3, "
-                                             "cost_4=excluded.cost_4, cost_5=excluded.cost_5, cost_6=excluded.cost_6, cost_7=excluded.cost_7, "
-                                             "lp_0=excluded.lp_0, lp_1=excluded.lp_1, lp_2=excluded.lp_2, lp_3=excluded.lp_3, "
-                                             "lp_4=excluded.lp_4, lp_5=excluded.lp_5, lp_6=excluded.lp_6, lp_7=excluded.lp_7, "
-                                             "realized_pnl=excluded.realized_pnl, event_count=excluded.event_count, last_sort_key=excluded.last_sort_key");
-      assert(ckpt && !ckpt->HasError());
-    }
-
     save_cursor_locked(*sink_conn);
     auto cm = sink_conn->Query("COMMIT");
     assert(cm && !cm->HasError());
+  }
+
+  {
+    std::lock_guard<std::mutex> cache_lock(user_cache_mu_);
+    user_cache_ = UserQueryCache{};
   }
 
   return true;

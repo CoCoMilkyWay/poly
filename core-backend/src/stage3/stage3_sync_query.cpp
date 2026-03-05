@@ -1,8 +1,7 @@
 #include "misc/profiler.hpp"
 #include "stage3_sync.hpp"
+#include <algorithm>
 #include <cmath>
-#include <cstdlib>
-#include <tuple>
 
 namespace stage3 {
 namespace {
@@ -42,11 +41,9 @@ std::vector<StageSync::TimelineEntry> StageSync::get_user_timeline(const std::st
   if (lower.empty()) {
     return {};
   }
-  auto events = load_timeline_events(lower);
-  if (events.empty()) {
-    return {};
-  }
-  return build_timeline(events);
+  ensure_user_query_cache(lower);
+  std::lock_guard<std::mutex> lock(user_cache_mu_);
+  return user_cache_.timeline;
 }
 
 std::vector<StageSync::PositionRow> StageSync::get_positions_at(const std::string &addr, int64_t sort_key) const {
@@ -55,10 +52,27 @@ std::vector<StageSync::PositionRow> StageSync::get_positions_at(const std::strin
   if (lower.empty()) {
     return {};
   }
-  auto state = build_state_until(lower, sort_key);
+  ensure_user_query_cache(lower);
+  std::lock_guard<std::mutex> lock(user_cache_mu_);
+  if (user_cache_.snapshots.empty()) {
+    return {};
+  }
+  auto it = std::upper_bound(
+      user_cache_.snapshots.begin(),
+      user_cache_.snapshots.end(),
+      sort_key,
+      [](int64_t sk, const UserQueryCache::Snapshot &snap) { return sk < snap.sort_key; });
+  if (it == user_cache_.snapshots.begin()) {
+    return {};
+  }
+  return std::prev(it)->positions;
+}
+
+std::vector<StageSync::PositionRow>
+StageSync::build_positions_from_states(const std::unordered_map<int32_t, CondState> &states) const {
   std::vector<PositionRow> out;
-  out.reserve(state.size() * 2);
-  for (const auto &[cond_idx, st] : state) {
+  out.reserve(states.size() * 2);
+  for (const auto &[cond_idx, st] : states) {
     if (cond_idx < 0) {
       continue;
     }
@@ -83,194 +97,120 @@ std::vector<StageSync::PositionRow> StageSync::get_positions_at(const std::strin
       });
     }
   }
+  std::sort(out.begin(), out.end(), [](const PositionRow &a, const PositionRow &b) {
+    if (a.cond_idx != b.cond_idx) {
+      return a.cond_idx < b.cond_idx;
+    }
+    return a.token_idx < b.token_idx;
+  });
   return out;
 }
 
-std::vector<StageSync::TimelineEvent> StageSync::load_timeline_events(const std::string &addr_lower) const {
-  auto conn = stage3_db_.create_connection();
+StageSync::UserQueryCache StageSync::build_user_query_cache(const std::string &addr_lower) const {
+  UserQueryCache cache;
+  cache.addr_lower = addr_lower;
   const std::string user_addr = user_addr_sql(addr_lower);
-  auto q = conn->Query(
+  auto fact_conn = stage3_db_.create_connection();
+  auto fact = fact_conn->Query(
       "SELECT sort_key, cond_idx, event_type, token_idx, realized_cum, unrealized_pnl, token_count "
       "FROM s3_user_event_fact "
       "WHERE user_addr = " +
       user_addr + " "
-              "ORDER BY sort_key, cond_idx, event_type, token_idx");
-  assert(q && !q->HasError());
-  std::vector<TimelineEvent> out;
-  out.reserve(static_cast<size_t>(q->RowCount()));
-  struct TimelineKey {
-    int64_t sort_key = 0;
-    int32_t cond_idx = 0;
-    int32_t event_type = 0;
-    int32_t token_idx = 0;
-    bool operator==(const TimelineKey &o) const {
-      return sort_key == o.sort_key && cond_idx == o.cond_idx && event_type == o.event_type && token_idx == o.token_idx;
-    }
-  };
-  struct TimelineKeyHash {
-    size_t operator()(const TimelineKey &k) const {
-      size_t h = std::hash<int64_t>()(k.sort_key);
-      h ^= std::hash<int32_t>()(k.cond_idx) + 0x9e3779b97f4a7c15ULL + (h << 6) + (h >> 2);
-      h ^= std::hash<int32_t>()(k.event_type) + 0x9e3779b97f4a7c15ULL + (h << 6) + (h >> 2);
-      h ^= std::hash<int32_t>()(k.token_idx) + 0x9e3779b97f4a7c15ULL + (h << 6) + (h >> 2);
-      return h;
-    }
-  };
-  std::unordered_map<TimelineKey, size_t, TimelineKeyHash> idx_by_key;
-  idx_by_key.reserve(static_cast<size_t>(q->RowCount()) * 2 + 1);
-  for (idx_t i = 0; i < q->RowCount(); ++i) {
-    TimelineEvent ev{
-        q->GetValue(0, i).GetValue<int64_t>(), // sort_key
-        q->GetValue(1, i).GetValue<int32_t>(), // cond_idx
-        q->GetValue(2, i).GetValue<int32_t>(), // event_type
-        q->GetValue(3, i).GetValue<int32_t>(), // token_idx
-        0,                                      // amount
-        0,                                      // price
-        q->GetValue(4, i).GetValue<int64_t>(), // realized_cum
-        q->GetValue(5, i).GetValue<int64_t>(), // unrealized_pnl
-        q->GetValue(6, i).GetValue<int32_t>(), // token_count
-    };
-    out.push_back(ev);
-    idx_by_key[TimelineKey{ev.sort_key, ev.cond_idx, ev.event_type, ev.token_idx}] = out.size() - 1;
+                  "ORDER BY sort_key, cond_idx, event_type, token_idx");
+  assert(fact && !fact->HasError());
+  if (fact->RowCount() == 0) {
+    return cache;
   }
-
-  if (!out.empty()) {
-    auto src_conn = stage2_db_.create_connection();
-    auto ue = src_conn->Query(
-        "SELECT sort_key, cond_idx, event_type, token_idx, amount, price "
-        "FROM user_event "
-        "WHERE user_addr = " +
-        user_addr + " "
-                    "ORDER BY sort_key, cond_idx, event_type, token_idx");
-    assert(ue && !ue->HasError());
-    for (idx_t i = 0; i < ue->RowCount(); ++i) {
-      TimelineKey key{
-          ue->GetValue(0, i).GetValue<int64_t>(),
-          ue->GetValue(1, i).GetValue<int32_t>(),
-          ue->GetValue(2, i).GetValue<int32_t>(),
-          ue->GetValue(3, i).GetValue<int32_t>(),
-      };
-      auto it = idx_by_key.find(key);
-      if (it == idx_by_key.end()) {
-        continue;
-      }
-      out[it->second].amount = ue->GetValue(4, i).GetValue<int64_t>();
-      out[it->second].price = ue->GetValue(5, i).GetValue<int64_t>();
-    }
-  }
-  return out;
-}
-
-std::vector<StageSync::TimelineEntry> StageSync::build_timeline(const std::vector<TimelineEvent> &events) const {
-  std::vector<TimelineEntry> timeline;
-  timeline.reserve(events.size());
-  for (const auto &row : events) {
-    timeline.push_back({
-        row.sort_key,
-        row.cond_idx,
-        row.token_idx,
-        static_cast<uint8_t>(row.event_type),
-        row.amount,
-        row.price,
-        row.realized_cum,
-        row.unrealized_pnl,
-        row.token_count,
-    });
-  }
-  return timeline;
-}
-
-std::unordered_map<int32_t, StageSync::CondState> StageSync::build_state_until(const std::string &addr_lower,
-                                                                               int64_t target_sort_key) const {
-  auto conn = stage3_db_.create_connection();
-  const std::string user_addr = user_addr_sql(addr_lower);
-  std::unordered_map<int32_t, CondState> states;
-  int64_t checkpoint_sort_key = -1;
-
-  auto ck = conn->Query(
-      "SELECT MAX(checkpoint_sort_key) "
-      "FROM s3_user_cond_checkpoint "
-      "WHERE user_addr = " +
-      user_addr + " "
-              "AND checkpoint_sort_key <= " +
-      std::to_string(target_sort_key));
-  assert(ck && !ck->HasError() && ck->RowCount() == 1);
-  if (!ck->GetValue(0, 0).IsNull()) {
-    checkpoint_sort_key = ck->GetValue(0, 0).GetValue<int64_t>();
-  }
-
-  if (checkpoint_sort_key >= 0) {
-    auto base = conn->Query(
-        "SELECT cond_idx, "
-        "pos_0,pos_1,pos_2,pos_3,pos_4,pos_5,pos_6,pos_7, "
-        "cost_0,cost_1,cost_2,cost_3,cost_4,cost_5,cost_6,cost_7, "
-        "lp_0,lp_1,lp_2,lp_3,lp_4,lp_5,lp_6,lp_7, "
-        "realized_pnl,event_count,last_sort_key "
-        "FROM s3_user_cond_checkpoint "
-        "WHERE user_addr = " +
-        user_addr + " "
-                "AND checkpoint_sort_key = " +
-        std::to_string(checkpoint_sort_key));
-    assert(base && !base->HasError());
-    states.reserve(static_cast<size_t>(base->RowCount()));
-    for (idx_t i = 0; i < base->RowCount(); ++i) {
-      int32_t cond_idx = base->GetValue(0, i).GetValue<int32_t>();
-      CondState st;
-      load_cond_state_values(st, *base, i, 1, 9, 17, 25, 26, 27);
-      st.unrealized_pnl = compute_unrealized_pnl(st);
-      states.emplace(cond_idx, st);
-    }
-  }
-
   auto src_conn = stage2_db_.create_connection();
-  auto delta = src_conn->Query(
+  auto ue = src_conn->Query(
       "SELECT sort_key, cond_idx, event_type, token_idx, collateral, amount, price "
       "FROM user_event "
       "WHERE user_addr = " +
       user_addr + " "
-              "AND sort_key > " +
-      std::to_string(checkpoint_sort_key) + " "
-                                            "AND sort_key <= " +
-      std::to_string(target_sort_key) + " "
-                                        "ORDER BY sort_key, cond_idx, event_type, token_idx");
-  assert(delta && !delta->HasError());
-  int32_t max_cond_idx = -1;
-  for (idx_t i = 0; i < delta->RowCount(); ++i) {
-    int32_t cond_idx = delta->GetValue(1, i).GetValue<int32_t>();
-    if (cond_idx > max_cond_idx) {
-      max_cond_idx = cond_idx;
+                  "ORDER BY sort_key, cond_idx, event_type, token_idx");
+  assert(ue && !ue->HasError());
+  assert(ue->RowCount() == fact->RowCount());
+
+  cache.timeline.reserve(static_cast<size_t>(fact->RowCount()));
+
+  std::unordered_map<int32_t, CondState> states;
+  states.reserve(cache.timeline.size() / 2 + 1);
+  bool loaded_conditions_for_query = false;
+  for (idx_t i = 0; i < fact->RowCount(); ++i) {
+    int64_t sk = fact->GetValue(0, i).GetValue<int64_t>();
+    int32_t ci = fact->GetValue(1, i).GetValue<int32_t>();
+    int32_t ty = fact->GetValue(2, i).GetValue<int32_t>();
+    int32_t ti = fact->GetValue(3, i).GetValue<int32_t>();
+    int64_t rpnl_cum = fact->GetValue(4, i).GetValue<int64_t>();
+    int64_t upnl = fact->GetValue(5, i).GetValue<int64_t>();
+    int32_t tk = fact->GetValue(6, i).GetValue<int32_t>();
+
+    int64_t ue_sk = ue->GetValue(0, i).GetValue<int64_t>();
+    int32_t ue_ci = ue->GetValue(1, i).GetValue<int32_t>();
+    int32_t ue_ty = ue->GetValue(2, i).GetValue<int32_t>();
+    int32_t ue_ti = ue->GetValue(3, i).GetValue<int32_t>();
+    assert(sk == ue_sk && ci == ue_ci && ty == ue_ty && ti == ue_ti);
+    int32_t coll = ue->GetValue(4, i).GetValue<int32_t>();
+    int64_t amt = ue->GetValue(5, i).GetValue<int64_t>();
+    int64_t px = ue->GetValue(6, i).GetValue<int64_t>();
+
+    cache.timeline.push_back({
+        sk,
+        ci,
+        ti,
+        static_cast<uint8_t>(ty),
+        amt,
+        px,
+        rpnl_cum,
+        upnl,
+        tk,
+    });
+
+    if (ci >= 0) {
+      if (static_cast<size_t>(ci) >= conditions_.size() && !loaded_conditions_for_query) {
+        const_cast<StageSync *>(this)->load_conditions();
+        loaded_conditions_for_query = true;
+      }
+      assert(static_cast<size_t>(ci) < conditions_.size());
+      InputEvent row{
+          "",
+          sk,
+          ci,
+          ty,
+          ti,
+          coll,
+          amt,
+          px,
+      };
+      auto &st = states[row.cond_idx];
+      (void)apply_event_to_state(row, st);
+      st.unrealized_pnl = compute_unrealized_pnl(st);
     }
-  }
-  if (max_cond_idx >= 0 && static_cast<size_t>(max_cond_idx) >= conditions_.size()) {
-    const_cast<StageSync *>(this)->load_conditions();
-  }
-  bool has_prev_key = false;
-  std::tuple<int64_t, int32_t, int32_t, int32_t> prev_key{};
-  for (idx_t i = 0; i < delta->RowCount(); ++i) {
-    InputEvent row{
-        "",
-        delta->GetValue(0, i).GetValue<int64_t>(), // sort_key
-        delta->GetValue(1, i).GetValue<int32_t>(), // cond_idx
-        delta->GetValue(2, i).GetValue<int32_t>(), // event_type
-        delta->GetValue(3, i).GetValue<int32_t>(), // token_idx
-        delta->GetValue(4, i).GetValue<int32_t>(), // collateral
-        delta->GetValue(5, i).GetValue<int64_t>(), // amount
-        delta->GetValue(6, i).GetValue<int64_t>(), // price
-    };
-    auto key = std::make_tuple(row.sort_key, row.cond_idx, row.event_type, row.token_idx);
-    if (has_prev_key) {
-      assert(key > prev_key);
-    }
-    has_prev_key = true;
-    prev_key = key;
-    if (row.cond_idx < 0) {
+    const bool end_of_group =
+        (i + 1 == fact->RowCount()) || (fact->GetValue(0, i + 1).GetValue<int64_t>() != sk);
+    if (!end_of_group) {
       continue;
     }
-    auto &st = states[row.cond_idx];
-    (void)apply_event_to_state(row, st);
-    st.unrealized_pnl = compute_unrealized_pnl(st);
+    UserQueryCache::Snapshot snap;
+    snap.sort_key = sk;
+    snap.positions = build_positions_from_states(states);
+    cache.snapshots.push_back(std::move(snap));
   }
-  return states;
+  return cache;
+}
+
+void StageSync::ensure_user_query_cache(const std::string &addr_lower) const {
+  {
+    std::lock_guard<std::mutex> lock(user_cache_mu_);
+    if (user_cache_.addr_lower == addr_lower) {
+      return;
+    }
+  }
+
+  UserQueryCache built = build_user_query_cache(addr_lower);
+
+  std::lock_guard<std::mutex> lock(user_cache_mu_);
+  user_cache_ = std::move(built);
 }
 
 } // namespace stage3

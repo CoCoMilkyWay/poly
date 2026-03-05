@@ -2,6 +2,7 @@
 
 #include <functional>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <unordered_map>
 
@@ -112,7 +113,11 @@ private:
     std::string description = "";
   };
   std::unordered_map<uint32_t, Stage3CondMeta>
-  load_stage3_cond_meta(const std::vector<stage3::StageSync::PositionRow> &positions);
+  load_stage3_cond_meta(const std::vector<uint32_t> &cond_idxs);
+  static std::string normalize_stage3_user(const std::string &addr);
+  static std::unordered_map<uint32_t, Stage3CondMeta> stage3_cond_meta_from_cache(const std::string &user);
+  static void stage3_store_cond_meta_cache(const std::string &user,
+                                           std::unordered_map<uint32_t, Stage3CondMeta> cond_meta);
 
   tcp::socket socket_;
   Database &stage0_db_;
@@ -127,4 +132,8 @@ private:
   beast::flat_buffer buffer_;
   http::request<http::string_body> req_;
   http::response<http::string_body> res_;
+
+  static std::mutex s3_meta_cache_mu_;
+  static std::string s3_meta_cache_user_lower_;
+  static std::unordered_map<uint32_t, Stage3CondMeta> s3_meta_cache_cond_meta_;
 };

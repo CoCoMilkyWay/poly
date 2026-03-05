@@ -43,14 +43,14 @@ void StageSync::init_schema() const {
         cost_5 BIGINT NOT NULL,
         cost_6 BIGINT NOT NULL,
         cost_7 BIGINT NOT NULL,
-        lp_0 BIGINT NOT NULL DEFAULT 0,
-        lp_1 BIGINT NOT NULL DEFAULT 0,
-        lp_2 BIGINT NOT NULL DEFAULT 0,
-        lp_3 BIGINT NOT NULL DEFAULT 0,
-        lp_4 BIGINT NOT NULL DEFAULT 0,
-        lp_5 BIGINT NOT NULL DEFAULT 0,
-        lp_6 BIGINT NOT NULL DEFAULT 0,
-        lp_7 BIGINT NOT NULL DEFAULT 0,
+        lp_0 BIGINT NOT NULL,
+        lp_1 BIGINT NOT NULL,
+        lp_2 BIGINT NOT NULL,
+        lp_3 BIGINT NOT NULL,
+        lp_4 BIGINT NOT NULL,
+        lp_5 BIGINT NOT NULL,
+        lp_6 BIGINT NOT NULL,
+        lp_7 BIGINT NOT NULL,
         realized_pnl BIGINT NOT NULL,
         event_count BIGINT NOT NULL,
         last_sort_key BIGINT NOT NULL,
@@ -62,7 +62,7 @@ void StageSync::init_schema() const {
         user_addr BLOB PRIMARY KEY,
         total_events BIGINT NOT NULL,
         total_realized_pnl BIGINT NOT NULL,
-        total_unrealized_pnl BIGINT NOT NULL DEFAULT 0,
+        total_unrealized_pnl BIGINT NOT NULL,
         active_conditions BIGINT NOT NULL,
         last_sort_key BIGINT NOT NULL
       )
@@ -76,52 +76,14 @@ void StageSync::init_schema() const {
         event_type INTEGER NOT NULL,
         realized_delta BIGINT NOT NULL,
         realized_cum BIGINT NOT NULL,
-        unrealized_pnl BIGINT NOT NULL DEFAULT 0,
-        token_count INTEGER NOT NULL DEFAULT 0,
+        unrealized_pnl BIGINT NOT NULL,
+        token_count INTEGER NOT NULL,
         PRIMARY KEY (user_addr, sort_key, cond_idx, event_type, token_idx)
-      )
-    )");
-  stage3_db_.execute(R"(
-      CREATE TABLE IF NOT EXISTS s3_user_cond_checkpoint (
-        user_addr BLOB NOT NULL,
-        checkpoint_sort_key BIGINT NOT NULL,
-        cond_idx INTEGER NOT NULL,
-        pos_0 BIGINT NOT NULL,
-        pos_1 BIGINT NOT NULL,
-        pos_2 BIGINT NOT NULL,
-        pos_3 BIGINT NOT NULL,
-        pos_4 BIGINT NOT NULL,
-        pos_5 BIGINT NOT NULL,
-        pos_6 BIGINT NOT NULL,
-        pos_7 BIGINT NOT NULL,
-        cost_0 BIGINT NOT NULL,
-        cost_1 BIGINT NOT NULL,
-        cost_2 BIGINT NOT NULL,
-        cost_3 BIGINT NOT NULL,
-        cost_4 BIGINT NOT NULL,
-        cost_5 BIGINT NOT NULL,
-        cost_6 BIGINT NOT NULL,
-        cost_7 BIGINT NOT NULL,
-        lp_0 BIGINT NOT NULL DEFAULT 0,
-        lp_1 BIGINT NOT NULL DEFAULT 0,
-        lp_2 BIGINT NOT NULL DEFAULT 0,
-        lp_3 BIGINT NOT NULL DEFAULT 0,
-        lp_4 BIGINT NOT NULL DEFAULT 0,
-        lp_5 BIGINT NOT NULL DEFAULT 0,
-        lp_6 BIGINT NOT NULL DEFAULT 0,
-        lp_7 BIGINT NOT NULL DEFAULT 0,
-        realized_pnl BIGINT NOT NULL,
-        event_count BIGINT NOT NULL,
-        last_sort_key BIGINT NOT NULL,
-        PRIMARY KEY (user_addr, checkpoint_sort_key, cond_idx)
       )
     )");
   stage3_db_.execute(
       "CREATE INDEX IF NOT EXISTS idx_s3_fact_user_sk "
       "ON s3_user_event_fact(user_addr, sort_key)");
-  stage3_db_.execute(
-      "CREATE INDEX IF NOT EXISTS idx_s3_ckpt_user_sk "
-      "ON s3_user_cond_checkpoint(user_addr, checkpoint_sort_key)");
   stage3_db_.execute(
       "CREATE INDEX IF NOT EXISTS idx_s3_summary_events "
       "ON s3_user_summary(total_events)");
@@ -180,9 +142,6 @@ void StageSync::load_cursor() {
   cursor_.event_type = r->GetValue(3, 0).GetValue<int32_t>();
   cursor_.token_idx = r->GetValue(4, 0).GetValue<int32_t>();
   cursor_.processed_events = r->GetValue(5, 0).GetValue<int64_t>();
-  if (cursor_.user_hex.empty()) {
-    cursor_.user_hex = "";
-  }
 }
 
 void StageSync::save_cursor_locked(duckdb::Connection &conn) const {

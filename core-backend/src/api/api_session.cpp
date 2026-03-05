@@ -193,6 +193,10 @@ bool ensure_required_param(const std::string &value, const char *name, http::res
 
 } // namespace
 
+std::mutex ApiSession::s3_meta_cache_mu_;
+std::string ApiSession::s3_meta_cache_user_lower_;
+std::unordered_map<uint32_t, ApiSession::Stage3CondMeta> ApiSession::s3_meta_cache_cond_meta_;
+
 ApiSession::ApiSession(tcp::socket socket, Database &stage0_db, Database &stage1_db, Database &stage2_db,
                        stage3::StageSync &stage3,
                        Stage0Getter stage0_getter, Stage0Retagger stage0_retagger, Stage1Getter stage1_getter,
@@ -869,17 +873,16 @@ void ApiSession::handle_stage3_pnl() {
 
   const int64_t latest_sort_key = timeline.back().sort_key;
   const int64_t latest_block = latest_sort_key / stage2::SORT_KEY_SCALE;
-  std::vector<stage3::StageSync::PositionRow> cond_rows;
-  cond_rows.reserve(timeline.size());
+  std::vector<uint32_t> cond_idxs;
+  cond_idxs.reserve(timeline.size());
   for (const auto &e : timeline) {
     if (e.cond_idx < 0) {
       continue;
     }
-    stage3::StageSync::PositionRow row{};
-    row.cond_idx = static_cast<uint32_t>(e.cond_idx);
-    cond_rows.push_back(row);
+    cond_idxs.push_back(static_cast<uint32_t>(e.cond_idx));
   }
-  auto cond_meta = load_stage3_cond_meta(cond_rows);
+  auto cond_meta = load_stage3_cond_meta(cond_idxs);
+  stage3_store_cond_meta_cache(user, cond_meta);
 
   json timeline_arr = json::array();
   for (const auto &e : timeline) {
@@ -915,18 +918,52 @@ void ApiSession::handle_stage3_pnl() {
   res_.body() = result.dump();
 }
 
+std::string ApiSession::normalize_stage3_user(const std::string &addr) {
+  std::string lower;
+  lower.reserve(addr.size());
+  for (char c : addr) {
+    lower.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(c))));
+  }
+  if (lower.size() != 42 || !lower.starts_with("0x")) {
+    return {};
+  }
+  return lower;
+}
+
 std::unordered_map<uint32_t, ApiSession::Stage3CondMeta>
-ApiSession::load_stage3_cond_meta(const std::vector<stage3::StageSync::PositionRow> &positions) {
+ApiSession::stage3_cond_meta_from_cache(const std::string &user) {
+  std::string lower = normalize_stage3_user(user);
+  if (lower.empty()) {
+    return {};
+  }
+  std::lock_guard<std::mutex> lock(s3_meta_cache_mu_);
+  if (s3_meta_cache_user_lower_ != lower) {
+    return {};
+  }
+  return s3_meta_cache_cond_meta_;
+}
+
+void ApiSession::stage3_store_cond_meta_cache(const std::string &user,
+                                              std::unordered_map<uint32_t, Stage3CondMeta> cond_meta) {
+  std::string lower = normalize_stage3_user(user);
+  if (lower.empty()) {
+    return;
+  }
+  std::lock_guard<std::mutex> lock(s3_meta_cache_mu_);
+  s3_meta_cache_user_lower_ = std::move(lower);
+  s3_meta_cache_cond_meta_ = std::move(cond_meta);
+}
+
+std::unordered_map<uint32_t, ApiSession::Stage3CondMeta>
+ApiSession::load_stage3_cond_meta(const std::vector<uint32_t> &cond_idxs) {
   std::unordered_map<uint32_t, Stage3CondMeta> out;
-  if (positions.empty()) {
+  if (cond_idxs.empty()) {
     return out;
   }
 
   std::vector<uint32_t> conds;
-  conds.reserve(positions.size());
-  for (const auto &p : positions) {
-    conds.push_back(p.cond_idx);
-  }
+  conds.reserve(cond_idxs.size());
+  conds.assign(cond_idxs.begin(), cond_idxs.end());
   std::sort(conds.begin(), conds.end());
   conds.erase(std::unique(conds.begin(), conds.end()), conds.end());
 
@@ -1040,7 +1077,20 @@ void ApiSession::handle_stage3_positions() {
   assert(target_sort_key >= 0);
 
   auto positions = stage3_.get_positions_at(user, target_sort_key);
-  auto cond_meta = load_stage3_cond_meta(positions);
+  if (positions.empty()) {
+    json result = {
+        {"user", user},
+        {"sort_key", target_sort_key},
+        {"block", target_sort_key / stage2::SORT_KEY_SCALE},
+        {"positions", json::array()},
+    };
+    res_.result(http::status::ok);
+    res_.body() = result.dump();
+    return;
+  }
+
+  auto cond_meta = stage3_cond_meta_from_cache(user);
+  assert(!cond_meta.empty());
   json pos_arr = json::array();
   for (const auto &p : positions) {
     const auto it = cond_meta.find(p.cond_idx);

@@ -9,8 +9,6 @@
 #include <atomic>
 #include <boost/asio.hpp>
 #include <chrono>
-#include <cstdlib>
-#include <cstring>
 #include <deque>
 #include <limits>
 #include <memory>
@@ -147,18 +145,6 @@ private:
     int64_t price = 0;
   };
 
-  struct TimelineEvent {
-    int64_t sort_key = 0;
-    int32_t cond_idx = 0;
-    int32_t event_type = 0;
-    int32_t token_idx = 0;
-    int64_t amount = 0;
-    int64_t price = 0;
-    int64_t realized_cum = 0;
-    int64_t unrealized_pnl = 0;
-    int32_t token_count = 0;
-  };
-
   struct FactRow {
     std::string user_hex;
     int64_t sort_key = 0;
@@ -219,6 +205,18 @@ private:
 
   std::vector<ConditionInfo> conditions_;
 
+  struct UserQueryCache {
+    struct Snapshot {
+      int64_t sort_key = 0;
+      std::vector<PositionRow> positions;
+    };
+    std::string addr_lower;
+    std::vector<TimelineEntry> timeline;
+    std::vector<Snapshot> snapshots;
+  };
+  mutable std::mutex user_cache_mu_;
+  mutable UserQueryCache user_cache_;
+
   static constexpr int64_t kStage3BatchEvents = 5000000;
   static constexpr double kPosEpsilon = 1e-9;
   static constexpr int64_t kMinHoldingQty = 100LL * 1000000LL;
@@ -256,10 +254,9 @@ private:
 
   double apply_event_to_state(const InputEvent &row, CondState &st) const;
 
-  std::vector<TimelineEvent> load_timeline_events(const std::string &addr_lower) const;
-  std::vector<TimelineEntry> build_timeline(const std::vector<TimelineEvent> &events) const;
-  std::unordered_map<int32_t, CondState> build_state_until(const std::string &addr_lower,
-                                                           int64_t target_sort_key) const;
+  std::vector<PositionRow> build_positions_from_states(const std::unordered_map<int32_t, CondState> &states) const;
+  UserQueryCache build_user_query_cache(const std::string &addr_lower) const;
+  void ensure_user_query_cache(const std::string &addr_lower) const;
 };
 
 } // namespace stage3
