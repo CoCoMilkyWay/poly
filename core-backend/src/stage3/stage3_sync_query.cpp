@@ -129,13 +129,21 @@ StageSync::UserQueryCache StageSync::build_user_query_cache(const std::string &a
       user_addr + " "
                   "ORDER BY sort_key, cond_idx, event_type, token_idx");
   assert(ue && !ue->HasError());
-  assert(ue->RowCount() == fact->RowCount());
 
   cache.timeline.reserve(static_cast<size_t>(fact->RowCount()));
 
   std::unordered_map<int32_t, CondState> states;
   states.reserve(cache.timeline.size() / 2 + 1);
   bool loaded_conditions_for_query = false;
+  idx_t ue_i = 0;
+  auto key_cmp = [](int64_t ask, int32_t aci, int32_t aty, int32_t ati,
+                    int64_t bsk, int32_t bci, int32_t bty, int32_t bti) {
+    if (ask != bsk) return (ask < bsk) ? -1 : 1;
+    if (aci != bci) return (aci < bci) ? -1 : 1;
+    if (aty != bty) return (aty < bty) ? -1 : 1;
+    if (ati != bti) return (ati < bti) ? -1 : 1;
+    return 0;
+  };
   for (idx_t i = 0; i < fact->RowCount(); ++i) {
     int64_t sk = fact->GetValue(0, i).GetValue<int64_t>();
     int32_t ci = fact->GetValue(1, i).GetValue<int32_t>();
@@ -145,14 +153,27 @@ StageSync::UserQueryCache StageSync::build_user_query_cache(const std::string &a
     int64_t upnl = fact->GetValue(5, i).GetValue<int64_t>();
     int32_t tk = fact->GetValue(6, i).GetValue<int32_t>();
 
-    int64_t ue_sk = ue->GetValue(0, i).GetValue<int64_t>();
-    int32_t ue_ci = ue->GetValue(1, i).GetValue<int32_t>();
-    int32_t ue_ty = ue->GetValue(2, i).GetValue<int32_t>();
-    int32_t ue_ti = ue->GetValue(3, i).GetValue<int32_t>();
-    assert(sk == ue_sk && ci == ue_ci && ty == ue_ty && ti == ue_ti);
-    int32_t coll = ue->GetValue(4, i).GetValue<int32_t>();
-    int64_t amt = ue->GetValue(5, i).GetValue<int64_t>();
-    int64_t px = ue->GetValue(6, i).GetValue<int64_t>();
+    int32_t coll = 0;
+    int64_t amt = 0;
+    int64_t px = 0;
+    while (ue_i < ue->RowCount()) {
+      int64_t ue_sk = ue->GetValue(0, ue_i).GetValue<int64_t>();
+      int32_t ue_ci = ue->GetValue(1, ue_i).GetValue<int32_t>();
+      int32_t ue_ty = ue->GetValue(2, ue_i).GetValue<int32_t>();
+      int32_t ue_ti = ue->GetValue(3, ue_i).GetValue<int32_t>();
+      int cmp = key_cmp(ue_sk, ue_ci, ue_ty, ue_ti, sk, ci, ty, ti);
+      if (cmp < 0) {
+        ue_i++;
+        continue;
+      }
+      if (cmp == 0) {
+        coll = ue->GetValue(4, ue_i).GetValue<int32_t>();
+        amt = ue->GetValue(5, ue_i).GetValue<int64_t>();
+        px = ue->GetValue(6, ue_i).GetValue<int64_t>();
+        ue_i++;
+      }
+      break;
+    }
 
     cache.timeline.push_back({
         sk,
