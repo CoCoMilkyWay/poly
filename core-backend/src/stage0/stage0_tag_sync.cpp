@@ -249,7 +249,6 @@ void TagSync::schedule_sync(int delay_seconds) {
 }
 
 void TagSync::do_sync_tick() {
-  Trace;
   if (stop_requested_) {
     return;
   }
@@ -341,7 +340,7 @@ int64_t TagSync::do_tag_sync() {
   }
   const uint64_t epoch_at_start = tag_reset_epoch_.load(std::memory_order_seq_cst);
   const int64_t tag_cursor = get_tag_cursor();
-  std::string tag_trace_name = "s0/tag rowid>" + std::to_string(tag_cursor);
+  std::string tag_trace_name = "s0/sync >" + std::to_string(tag_cursor);
   TraceName(tag_trace_name.c_str(), tag_trace_name.size());
 
   auto conn = stage0_db_.create_connection();
