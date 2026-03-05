@@ -303,7 +303,8 @@ public:
       device_name_ = "CPU";
       std::cout << "[OnnxEmbedder] To enable GPU acceleration" << std::endl;
       std::cout << "========================================" << std::endl;
-      std::cout << "  Links C++ to vendored ONNX Runtime (with CUDA/cuDNN)." << std::endl;
+      std::cout << "  Links C++ to ONNX Runtime (CUDA 12.x/13) https://github.com/microsoft/onnxruntime/releases/" << std::endl;
+      std::cout << "      with: NVIDIA Driver, CUDA, cuDNN, TensorRT" << std::endl;
       std::cout << "========================================" << std::endl;
     }
 

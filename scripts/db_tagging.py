@@ -85,14 +85,16 @@ def _extract_question_and_desc(market: dict) -> tuple[str, str]:
     description = str(market.get("description", ""))
     return question, description
 
-MODEL_NAME = "BAAI/bge-large-en-v1.5"
+# MODEL_NAME = "BAAI/bge-large-en-v1.5"
 # MODEL_NAME = "BAAI/bge-base-en-v1.5"
-# MODEL_NAME = "BAAI/bge-small-en-v1.5"
+MODEL_NAME = "BAAI/bge-small-en-v1.5"
 
 # MODEL_NAME = "Qwen/Qwen3-Embedding-0.6B"
 # MODEL_NAME = "sentence-transformers/all-mpnet-base-v2"
 # MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
-BATCH_SIZE = 16
+MODEL_BATCH_SIZE = 32
+MODEL_SEQ_LEN = 400
+LABEL_SEQ_LEN = 64
 
 
 def demo_tagging(db_path: str = "", include_description: bool = INCLUDE_DESCRIPTION) -> None:
@@ -108,10 +110,11 @@ def demo_tagging(db_path: str = "", include_description: bool = INCLUDE_DESCRIPT
     model = SentenceTransformer(MODEL_NAME)
     print(f"model.device: {model.device}")
 
+    model.max_seq_length = LABEL_SEQ_LEN
     # encode category labels (用标签名+注释做embedding)
     print(f"Encoding category labels from TAG.md ... total={len(label_names)}")
     label_embeddings = model.encode(
-        label_texts, normalize_embeddings=True, convert_to_numpy=True)
+        label_texts, normalize_embeddings=True, convert_to_numpy=True, batch_size=MODEL_BATCH_SIZE)
     torch.cuda.empty_cache()
 
     # load questions from database
@@ -163,11 +166,12 @@ def demo_tagging(db_path: str = "", include_description: bool = INCLUDE_DESCRIPT
         texts.append(text_for_embedding)
         questions.append(question)
 
+    model.max_seq_length = MODEL_SEQ_LEN
     # batch encode (no instruction needed for embedding models)
-    print(f"Batch encoding {len(texts)} texts (batch_size={BATCH_SIZE})...")
+    print(f"Batch encoding {len(texts)} texts (batch_size={MODEL_BATCH_SIZE})...")
     t_start = time.perf_counter()
     query_embeddings = model.encode(texts, normalize_embeddings=True,
-                                    convert_to_numpy=True, batch_size=BATCH_SIZE, show_progress_bar=True)
+                                    convert_to_numpy=True, batch_size=MODEL_BATCH_SIZE, show_progress_bar=True)
 
     # compute similarities: dot product since normalized (query_embeddings @ label_embeddings.T)
     print("Computing similarities...")
