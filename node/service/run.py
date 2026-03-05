@@ -13,7 +13,7 @@ Dashboard: http://localhost:8800
 
 # ═══════════════════════ Erigon Snapshot 存储结构 ═══════════════════════
 #
-# snapshots/ 目录总计 ~11000 个文件,~4.5TB,分布在 5 个位置：
+# snapshots/ 目录总计 ~11000 个文件,~4.5TB,分布在 5 个位置:
 #
 # 1. snapshots/ (根目录) — 区块链段数据 (~1.7TB)
 #    文件命名: v1.1-{start}-{end}-{type}.seg  +  对应 .idx 索引

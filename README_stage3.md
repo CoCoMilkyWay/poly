@@ -62,8 +62,8 @@ stage3_sync_tick
 │  │  ├─ amount==0 允许（no-op）
 │  │  └─ 内部使用 double 计算,写入 DB 时 round() 转 int64
 │  ├─ 3.2 路由
-│  │  ├─ 方向由 amount 符号决定：正向腿(amount>0) / 反向腿(amount<0)
-│  │  ├─ 事件族决定经济语义：price类 / convert类 / transfer类 / lp_add类
+│  │  ├─ 方向由 amount 符号决定:正向腿(amount>0) / 反向腿(amount<0)
+│  │  ├─ 事件族决定经济语义:price类 / convert类 / transfer类 / lp_add类
 │  │  └─ LP添加: FPMMLPAdd(仅记录,不改pos/cost)
 │  ├─ 3.3 应用规则
 │  │  ├─ 公共计算

@@ -927,7 +927,7 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
       auto tit = token_map_.find(token_id);
 
       if (tit == token_map_.end()) {
-        // 未知token：加入 token_map_,使用特殊值表示未知 condition
+        // 未知token:加入 token_map_,使用特殊值表示未知 condition
         intern_token(token_id, UNKNOWN_COND_IDX, UNKNOWN_TOKEN_IDX, TokenSource::TransferInferred);
         tit = token_map_.find(token_id); // 重新获取迭代器
       }

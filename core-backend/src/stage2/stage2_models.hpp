@@ -11,8 +11,8 @@
 
 namespace stage2 {
 
-// Chunk 日志系统：只记录有问题的 chunk
-// 文件名格式：chunk_{startblock}_{NP数量}NP_{NU数量}NU.log
+// Chunk 日志系统:只记录有问题的 chunk
+// 文件名格式:chunk_{startblock}_{NP数量}NP_{NU数量}NU.log
 class ChunkLog {
 public:
   void begin(const std::string &log_dir, int64_t start, int64_t end);

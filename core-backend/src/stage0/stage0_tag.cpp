@@ -414,7 +414,7 @@ public:
     const float *data = outputs[0].GetTensorData<float>();
     std::vector<std::vector<float>> result(static_cast<size_t>(batch_size));
 
-    // 兼容两种输出格式：
+    // 兼容两种输出格式:
     // [B, S, H] - 需要 mean pooling
     // [B, H]    - 已经 pooled（某些导出模型）
     if (out_shape.size() == 2) {
@@ -513,8 +513,8 @@ struct Tagger::Impl {
   WordPieceTokenizer tokenizer;
   OnnxEmbedder embedder;
   std::vector<TagLabel> labels;
-  // 连续内存布局：[label0_dim0, label0_dim1, ..., label1_dim0, ...]
-  // 比 vector<vector<float>> 更快：缓存友好 + 编译器自动SIMD
+  // 连续内存布局:[label0_dim0, label0_dim1, ..., label1_dim0, ...]
+  // 比 vector<vector<float>> 更快:缓存友好 + 编译器自动SIMD
   std::vector<float> label_embeddings_flat;
   size_t hidden_dim = 0;
 

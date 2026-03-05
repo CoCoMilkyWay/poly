@@ -387,8 +387,8 @@ NegRisk转换: M 个 NO tokens burn → (M-1) Wrapped Collateral (利用互斥�
 
 **FixedProductMarketMakerCreation** (FPMMFactory发出)
 
-数据结构(正式定义)：
-- `topic0` 一致：`FixedProductMarketMakerCreation`
+数据结构(正式定义):
+- `topic0` 一致:`FixedProductMarketMakerCreation`
 - 不同 factory 存在两套 ABI
 
 **结构 A: `FixedProductMarketMakerFactory`**

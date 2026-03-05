@@ -518,7 +518,7 @@ void EventDecoder::parse_fpmm_create(const json &log, const std::string &factory
   int64_t block_number = hex_to_int64(log["blockNumber"].get<std::string>());
   int64_t log_index = hex_to_int64(log["logIndex"].get<std::string>());
 
-  // 两种工厂都发同名事件(topic0 相同),但 indexed 布局不同：
+  // 两种工厂都发同名事件(topic0 相同),但 indexed 布局不同:
   // 1) FixedProductMarketMakerFactory:
   //    topics: [sig, creator, conditionalTokens, collateralToken]
   //    data  : [fixedProductMarketMaker, conditionIds(offset), fee]

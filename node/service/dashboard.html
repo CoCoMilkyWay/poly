@@ -253,14 +253,14 @@ function updateBlockSync(d) {
 function updateCards(d) {
   const sync = d.sync || {};
   
-  // 当前区块：优先显示 execution 的实时进度
+  // 当前区块:优先显示 execution 的实时进度
   let current = d.current;
   if (sync.phase === 'execution' && sync.exec_block) {
     current = sync.exec_block;
   }
   $('cur').textContent = N(current);
   
-  // 当前区块副标题：显示阶段信息
+  // 当前区块副标题:显示阶段信息
   let curSub = '';
   if (sync.phase === 'execution') {
     curSub = 'Execution 阶段';
@@ -290,7 +290,7 @@ function updateCards(d) {
   }
   $('eta-sub').textContent = etaSub;
   
-  // 速度：优先显示 execution 日志中的速度
+  // 速度:优先显示 execution 日志中的速度
   let speed = d.speed;
   if (sync.phase === 'execution' && sync.exec_blk_per_sec > 0) {
     speed = sync.exec_blk_per_sec;

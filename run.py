@@ -196,7 +196,7 @@ def main():
         pass
     finally:
         print("[run.py] 正在关闭...")
-        # 停机顺序很关键：先停 frontend，避免其在 backend 已退出后继续转发请求。
+        # 停机顺序很关键:先停 frontend，避免其在 backend 已退出后继续转发请求。
         shutdown_order = [p for p in [
             frontend, backend, tracy_proc] if p is not None]
         for proc in shutdown_order:

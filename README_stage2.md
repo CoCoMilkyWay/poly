@@ -1,7 +1,7 @@
 ### 原理 1: Transfer 是持仓变化的唯一来源 ✅
-ERC1155 规范强制要求：**任何 `_balances` 修改都必须 emit Transfer**
+ERC1155 规范强制要求:**任何 `_balances` 修改都必须 emit Transfer**
 ```
-ERC1155.sol 中所有修改余额的地方：
+ERC1155.sol 中所有修改余额的地方:
   safeTransferFrom   → emit TransferSingle
   safeBatchTransferFrom → emit TransferBatch
   _mint / _batchMint → emit TransferSingle / TransferBatch (from=0x0)
@@ -9,17 +9,17 @@ ERC1155.sol 中所有修改余额的地方：
 ```
 
 ### 原理 2: 语义事件和 Transfer 在同一个 tx ✅
-协议操作是原子的,但**同一语义可能包含多条 Transfer 组合**,不能只看单一方向：
+协议操作是原子的,但**同一语义可能包含多条 Transfer 组合**,不能只看单一方向:
 | 操作                     | Transfer 真实形态                                                                                                        | 语义事件                 | 来源     |
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------------ | ------------------------ | -------- |
-| CTF.splitPosition        | 可能是 `burn + mint` 组合：`stakeholder->0x0`(当 `parentCollectionId != 0` 或子集拆分)+ `0x0->stakeholder`               | PositionSplit            | 同一函数 |
+| CTF.splitPosition        | 可能是 `burn + mint` 组合:`stakeholder->0x0`(当 `parentCollectionId != 0` 或子集拆分)+ `0x0->stakeholder`                | PositionSplit            | 同一函数 |
 | CTF.mergePositions       | `stakeholder` 按 partition 批量 burn；然后要么发 collateral(ERC20,不在 ERC1155 transfer 表),要么 mint 回 parent position | PositionsMerge           | 同一函数 |
 | CTF.redeemPositions      | 对 indexSets 对应持仓逐个 burn(可能多条/可能部分为0)；再发 payout(ERC20 或 parent position mint)                         | PayoutRedemption         | 同一函数 |
 | Exchange.fillOrder       | `safeTransferFrom` × 2(token 对手盘互换)                                                                                 | OrderFilled              | 同一函数 |
 | FPMM.buy/sell            | 交易转账 + 内部 split/merge 触发的 mint/burn                                                                             | FPMMBuy / FPMMSell       | 同一函数 |
 | FPMM.add/removeFunding   | 资金进出 + 条件仓位转移(remove 不是 burn)                                                                                | FPMMFundingAdded/Removed | 同一函数 |
 | NegRisk.convertPositions | Adapter 内部 split 产生仓位,再把 NO 批量转到 `NO_TOKEN_BURN_ADDRESS`,并把 YES/费用转给用户或 vault                       | PositionsConverted       | 同一函数 |
-**边界情况**：用户直接 `safeTransferFrom` 只有 Transfer、无语义事件 → TransferIn/Out
+**边界情况**:用户直接 `safeTransferFrom` 只有 Transfer、无语义事件 → TransferIn/Out
 
 
 ```
@@ -230,7 +230,7 @@ abbr(all)
 ⑥ 回放暂存 `fpmm` 行并严格落盘              → 仅处理 `conditional_tokens == CONDITIONAL_TOKENS` 的域内行；域内要求 `condition_ids` 全已知,再写 `fpmm_info_map` + `token_info_map` + `coll_map` + `pm_cond_set`
 ⑦ `neg_risk_question`                       → `mid_map` + `nr_cond_set`
 ⑧ `token_info_map` 升级规则                 → 按证据强度单向升级(`TransferInferred < FPMM < token_map < split/merge/redemption`)；同映射可仅升级source；`token_map` 同condition反向重复注册可忽略；非推断来源要求 `cond_idx` 一致；`TokenTree` 分区时 `TokenReg` 以 `cond_info_map.source` 为准(不直接用 token.source)
-⑨ `cond_info_map.source` 升级规则           → 按证据强度单向升级(`ConditionPrep < split/merge/redemption < OtherFPMM < PolymarketFPMM < PolymarketTokenReg`)；`TokenReg` 一旦命中即保持粘性；chunk内断言：被 `token_map` 命中的 condition 其 source 必须为 `PolymarketTokenReg`
+⑨ `cond_info_map.source` 升级规则           → 按证据强度单向升级(`ConditionPrep < split/merge/redemption < OtherFPMM < PolymarketFPMM < PolymarketTokenReg`)；`TokenReg` 一旦命中即保持粘性；chunk内断言:被 `token_map` 命中的 condition 其 source 必须为 `PolymarketTokenReg`
 ⑩ 前缀一致门控                             → 记录 chunk 内证据首次可见 sort_key(`token_known_visible_from_sort`/`fpmm_visible_from_sort`/`nr_cond_visible_from_sort`),Phase3 仅在 `evidence_sort_key <= transfer.sort_key` 时允许映射生效
 → `update_cond_type_stats()`                → `ConditionTree` / `TokenTree`
 ```
@@ -248,16 +248,16 @@ abbr(all)
 | `tx_fpmm_funding_idx[tx_fpmm_key:{block, tx_hash, fpmm_addr}] -> [{log_index, fpmm_addr, funder, side, amounts[]}]`                            | `fpmm_funding`                                                        |
 | `tx_op_bounds_idx[tx_key:{block, tx_hash}] -> [{left_exclusive, right_inclusive}]`                                                             | `split/merge/redemption/convert/order_filled/fpmm_trade/fpmm_funding` |
 
-索引构建规则：
+索引构建规则:
 ```
 1) 先按事件类型入各自索引 (split/merge/redeem/convert/order/trade/funding)
    - `order_filled` 全量入索引；是否可绑定由 Phase3 的 order 地址腿硬约束决定(不在 Phase2 预过滤)
    - FPMM trade/funding 仅对 `fpmm_info_map` 已知的域内 FPMM 建索引(与 Phase1 的 `conditional_tokens` 域过滤一致)
 2) 每个 tx 汇总全部语义 log_index,升序去重
-3) 基于相邻 op_log_index 生成 tx_op_bounds_idx：
+3) 基于相邻 op_log_index 生成 tx_op_bounds_idx:
    left_exclusive = prev_op_log_index
    right_inclusive = curr_op_log_index
-4) 覆盖率断言(Phase2结束时)：
+4) 覆盖率断言(Phase2结束时):
    - `idx_split == src_split`
    - `idx_merge == src_merge`
    - `idx_redeem == src_redeem`
@@ -309,7 +309,7 @@ phase3_process_transfers(chunk)
 │  │  │  └─ unknown token 仅在通过结构约束时可绑定,不以“地址像不像”放宽
 │  │  ├─ split/merge/redeem 匹配策略: 窗口内唯一命中优先；窗口无命中时在同tx内按最近语义log兜底(未来优先,历史仅兜底)；同距离并列 -> assert(false)
 │  │  │  ├─ mint/burn 发生多语义候选时按语义log距离择优(窗口命中优先)；同距离并列 -> assert(false)
-│  │  │  └─ split/merge 的 collateral 约束为“严格优先、结构兜底”：先按 collateral 命中；未命中再按同window结构条件匹配
+│  │  │  └─ split/merge 的 collateral 约束为“严格优先、结构兜底”:先按 collateral 命中；未命中再按同window结构条件匹配
 │  │  ├─ FPMM trade/funding/remove 多候选决策: 先按结构约束筛选并优先命中当前语义window；窗口无命中再取最近未来语义log；同log并列 -> assert(false)
 │  │  ├─ order 匹配策略: 先按地址腿硬约束筛选,再取窗口内唯一命中；若窗口无命中,取同tx内“未消费且地址腿满足”的最近未来语义log；同log并列 -> assert(false)
 │  │  ├─ 多候选同时命中 -> assert(false)
@@ -389,12 +389,12 @@ phase3_process_transfers(chunk)
    └─ FPMMFunding*       -> m(lp_add/lp_refund/lp_remove)
 
 断言层级(Assertion Hierarchy)
-├─ L0 输入/结构层：schema/type/range/u256解析合法
-├─ L1 映射不变量层：cond/token/collateral/fpmm 映射一致；outcome_count 合法且仅扩展不回退；cond_source 单向升级且 TokenReg 粘性成立；coll_map 对多来源冲突做确定性规范化；Phase2索引覆盖率守恒；可见性门控满足前缀一致
-├─ L2 匹配唯一性层：窗口候选命中数 <= 1；同层并列歧义直接 assert
-├─ L3 语义约束层：命中后必须满足 actor/cond/collateral/amount/direction/window 等硬约束
-├─ L4 语义消费闭环层：chunk 收尾每类语义 op 必须“已消费或显式例外(含 split/merge amount==0、redeem payout==0、order/convert 无可消费腿、trade !must_consume_or_explain 零腿)”；并校验 convert-burn 覆盖守恒
-└─ L5 结果守恒层：total 守恒、unclassified==0、树统计恒等式成立
+├─ L0 输入/结构层:schema/type/range/u256解析合法
+├─ L1 映射不变量层:cond/token/collateral/fpmm 映射一致；outcome_count 合法且仅扩展不回退；cond_source 单向升级且 TokenReg 粘性成立；coll_map 对多来源冲突做确定性规范化；Phase2索引覆盖率守恒；可见性门控满足前缀一致
+├─ L2 匹配唯一性层:窗口候选命中数 <= 1；同层并列歧义直接 assert
+├─ L3 语义约束层:命中后必须满足 actor/cond/collateral/amount/direction/window 等硬约束
+├─ L4 语义消费闭环层:chunk 收尾每类语义 op 必须“已消费或显式例外(含 split/merge amount==0、redeem payout==0、order/convert 无可消费腿、trade !must_consume_or_explain 零腿)”；并校验 convert-burn 覆盖守恒
+└─ L5 结果守恒层:total 守恒、unclassified==0、树统计恒等式成立
 
 TransferClass输出事件(33类, 唯一落类)
 ├─ 用户操作(22类)
