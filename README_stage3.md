@@ -99,13 +99,11 @@ stage3_sync_tick
 │  ├─ upsert s3_user_cond_state(dirty_cond_keys) (含 last_price)
 │  ├─ upsert s3_user_summary(dirty_users)
 │  ├─ insert s3_user_event_fact(fact_rows)
-│  ├─ checkpoint 规则(每个 chunk 触发)
-│  │  └─ 对 touched_users,将其当前 s3_user_cond_state 中“持仓非零或 realized 非零”的 condition 快照写入 s3_user_cond_checkpoint
 │  └─ update s3_sync_cursor(...)
 └─ 6) 查询路径(只读)
    ├─ users_sorted(limit)           -> s3_user_summary(用户列表)
-   ├─ user_pnl_timeline(user)       -> 返回全量 timeline（cursor 无关）
-   └─ user_positions_at(user, sk)   -> 返回该 cursor 的 positions
+   ├─ user_pnl_timeline(user)       -> 预热并缓存该用户 timeline + snapshots
+   └─ user_positions_at(user, sk)   -> 命中内存 snapshots 返回 positions
 ```
 
 ## 数据结构
@@ -135,17 +133,6 @@ struct InputEvent {
   int32  collateral;
   int64  amount;          // signed, 1e6
   int64  price_1e6;
-}
-
-// Stage3 timeline 构建结构 (只承载事实表字段)
-struct TimelineEvent {
-  int64  sort_key;
-  int32  cond_idx;
-  int32  event_type;
-  int32  token_idx;
-  int64  realized_cum;
-  int64  unrealized_pnl;
-  int32  token_count;
 }
 
 // Condition 元数据
@@ -194,6 +181,13 @@ struct SyncCursor {
   int32 last_event_type;
   int32 last_token_idx;
   int64 processed_events;
+}
+
+// 查询缓存（单用户）
+struct UserQueryCache {
+  string user_addr_lower;
+  vector<TimelineRow> timeline;
+  vector<{int64 sort_key; vector<PositionRow> positions;}> snapshots;
 }
 ```
 
@@ -357,15 +351,6 @@ CREATE TABLE s3_user_event_fact (
   PRIMARY KEY (user_addr, sort_key, cond_idx, event_type, token_idx)
 );
 
--- Checkpoint (用于加速历史回溯)
-CREATE TABLE s3_user_cond_checkpoint (
-  user_addr BLOB NOT NULL,
-  checkpoint_sort_key BIGINT NOT NULL,
-  cond_idx INTEGER NOT NULL,
-  -- 同 s3_user_cond_state 的所有字段
-  PRIMARY KEY (user_addr, checkpoint_sort_key, cond_idx)
-);
-
 -- 用户摘要
 CREATE TABLE s3_user_summary (
   user_addr BLOB PRIMARY KEY,
@@ -417,39 +402,9 @@ struct PositionsResponse {
 };
 
 PositionsResponse get_user_positions_at(const std::string& user, int64_t target_sk) {
-  auto positions = build_positions_at(user, target_sk);
+  // 依赖同用户已完成 pnl 预热
+  auto cache = user_query_cache[user];
+  auto positions = cache.snapshots.find_le(target_sk).positions;
   return {user, target_sk, target_sk / SORT_KEY_SCALE, positions};
-}
-
-std::vector<PositionRow> build_positions_at(const std::string& user, int64_t target_sk) {
-  // 找最近 checkpoint
-  auto ckpt_sk = db.query_one<int64_t>(
-    "SELECT MAX(checkpoint_sort_key) FROM s3_user_cond_checkpoint "
-    "WHERE user_addr = ? AND checkpoint_sort_key <= ?", user, target_sk);
-  
-  // 加载 checkpoint 状态
-  std::map<std::pair<int32_t,int32_t>, PositionState> states;  // (cond_idx, token_idx) -> state
-  if (ckpt_sk) {
-    for (auto& row : db.query("SELECT * FROM s3_user_cond_checkpoint WHERE ...")) {
-  // 解析 pos, cost, lp 到 states
-    }
-  }
-  
-  // 回放 checkpoint 之后的事件
-  for (auto& evt : db.query(
-    "SELECT * FROM stage2.user_event "
-    "WHERE user_addr = ? AND sort_key > ? AND sort_key <= ? "
-    "ORDER BY sort_key", user, ckpt_sk.value_or(-1), target_sk)) {
-    apply_event(states, evt);
-  }
-  
-  // 转换为输出格式
-  std::vector<PositionRow> result;
-  for (auto& [key, st] : states) {
-    if (st.qty != 0) {
-      result.push_back({key.first, key.second, st.qty, st.cost, st.lp});
-    }
-  }
-  return result;
 }
 ```

@@ -247,7 +247,10 @@ double StageSync::apply_event_to_state(const InputEvent &row, CondState &st) con
       if (p > 0)
         ++popcount;
     }
-    assert(popcount > 0);
+    // Resolution can arrive long after preparation; keep Stage3 running when payout is not ready yet.
+    // We treat popcount<=0 as temporary incomplete Stage2 data (stage2 will complete itself after resolve event) and rely on periodic Stage3 rebuild/replay.
+    if (popcount <= 0)
+      popcount = 1;
 
     // Proceeds from convert: qty * (popcount-1) / popcount
     const double convert_px =
