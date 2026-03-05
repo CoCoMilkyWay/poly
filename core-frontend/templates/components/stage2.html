@@ -244,7 +244,7 @@
         font-size: 0.7em;
         cursor: pointer;
       ">
-      全部折叠
+      全部展开
     </button>
   </div>
 
@@ -278,83 +278,11 @@
       TRANSFER_OUT_NON_POLY: 21,
     });
 
-    function s2DefaultExpandedNodeIds() {
-      return [
-        "cond",
-        "cond_poly",
-        "cond_tr",
-        "cond_tr_nr",
-        "cond_tr_nr_stats",
-        "cond_tr_nr_qpm",
-        "cond_other",
-        "cond_split",
-        "cond_merge",
-        "cond_redemption",
-        "cond_resolve",
-        "cond_collateral",
-        "cond_tokenized",
-        "cond_coverage",
-        "cond_cov_outcome",
-        "cond_cov_question",
-        "token",
-        "token_poly",
-        "token_tr",
-        "token_fpmm",
-        "token_fpmm_by_collateral",
-        "token_other",
-        "token_split",
-        "token_merge",
-        "token_redemption",
-        "token_transfer",
-        "token_transfer_by_collateral",
-        "xfer",
-        "user_events",
-        "internal",
-        "split",
-        "split_poly",
-        "split_non_poly",
-        "split_non_poly_coll",
-        "merge",
-        "merge_poly",
-        "merge_non_poly",
-        "merge_non_poly_coll",
-        "redemption",
-        "redemption_non_poly",
-        "redemption_non_poly_coll",
-        "order",
-        "order_coll",
-        "fpmm_trade",
-        "fpmm_trade_coll",
-        "fpmm_lp",
-        "fpmm_lp_coll",
-        "transfer",
-        "transfer_coll",
-        "transfer_in",
-        "transfer_in_poly",
-        "transfer_out",
-        "transfer_out_poly",
-        "internal_mint",
-        "internal_burn",
-        "internal_transfer",
-        "split_sem",
-        "split_sem_amount",
-        "split_sem_parent",
-        "split_sem_partition",
-        "split_sem_consume",
-        "merge_sem",
-        "merge_sem_amount",
-        "merge_sem_parent",
-        "merge_sem_partition",
-        "merge_sem_consume",
-        "convert_sem",
-        "convert_sem_amount",
-        "convert_sem_questions",
-        "convert_sem_consume",
-        "order_sem",
-        "order_sem_side",
-        "order_sem_amount",
-        "order_sem_consume",
-      ];
+    function s2CollectExpandableNodeIds(node, out) {
+      const children = node?.children || [];
+      if (children.length === 0) return;
+      out.add(node.id);
+      for (const child of children) s2CollectExpandableNodeIds(child, out);
     }
 
     function s2FmtSig(n, sig = 5) {
@@ -378,8 +306,8 @@
       return s2FmtSig(v, 5);
     }
 
-    let s2ExpandedNodes = new Set(s2DefaultExpandedNodeIds());
-    let s2AllExpanded = true;
+    let s2ExpandedNodes = new Set();
+    let s2AllExpanded = false;
 
     function s2UpdateStats(stage2Data) {
       const sync = stage2Data.stage2_status || {};
@@ -1929,7 +1857,19 @@
     }
 
     function s2ExpandAll() {
-      s2ExpandedNodes = new Set(s2DefaultExpandedNodeIds());
+      const stage2Data = window._stage2Data || {};
+      const roots = [
+        s2BuildCondTree(stage2Data),
+        s2BuildTokenTree(stage2Data),
+        s2BuildXferTree(stage2Data),
+        s2BuildSplitSemTree(stage2Data),
+        s2BuildMergeSemTree(stage2Data),
+        s2BuildConvertSemTree(stage2Data),
+        s2BuildOrderSemTree(stage2Data),
+      ];
+      const expanded = new Set();
+      for (const root of roots) s2CollectExpandableNodeIds(root, expanded);
+      s2ExpandedNodes = expanded;
       s2AllExpanded = true;
       s2RenderAllTrees(window._stage2Data || {});
       document.getElementById("s2-collapse-all").textContent = "全部折叠";
@@ -1965,15 +1905,15 @@
     }
 
     async function s2Poll() {
-      try {
-        const [stage2DataResp, stage2StatusResp] = await Promise.all([
-          fetch("/api/stage2-data"),
-          fetch("/api/stage2-status"),
-        ]);
-        const stage2Data = await stage2DataResp.json();
-        stage2Data.stage2_status = await stage2StatusResp.json();
-        s2UpdateProgress(stage2Data);
-      } catch (e) { }
+      const [stage2DataResp, stage2StatusResp] = await Promise.all([
+        fetch("/api/stage2-data"),
+        fetch("/api/stage2-status"),
+      ]);
+      console.assert(stage2DataResp.ok, "stage2-data 请求失败");
+      console.assert(stage2StatusResp.ok, "stage2-status 请求失败");
+      const stage2Data = await stage2DataResp.json();
+      stage2Data.stage2_status = await stage2StatusResp.json();
+      s2UpdateProgress(stage2Data);
     }
 
     document.addEventListener("DOMContentLoaded", () => {
