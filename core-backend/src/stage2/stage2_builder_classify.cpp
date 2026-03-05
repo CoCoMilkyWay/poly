@@ -711,17 +711,20 @@ TransferClass EventBuilder::classify_and_emit(
         "FPMMRemoveWindowUniqueCandidate",
         "FPMMRemoveUniqueCandidate");
   };
+  auto is_exchange_addr = [](const std::string &addr) {
+    return addr == CTF_EXCHANGE || addr == NEG_RISK_CTF_EXCHANGE;
+  };
   auto order_leg_matches = [&](const OrderInfo &info) {
     if (info.maker_side == 1) {
       // BUY maker leg can be either:
       // - direct taker -> maker (fillOrder/fillOrders)
       // - exchange -> maker (matchOrders via _fillFacingExchange)
-      return to == info.maker && (from == info.taker || from == op);
+      return to == info.maker && (from == info.taker || is_exchange_addr(from));
     }
     // SELL maker leg can be either:
     // - direct maker -> taker (fillOrder/fillOrders)
     // - maker -> exchange (matchOrders via _fillFacingExchange)
-    return from == info.maker && (to == info.taker || to == op);
+    return from == info.maker && (to == info.taker || is_exchange_addr(to));
   };
   bool order_window_conflict = false;
   auto find_order_info = [&]() -> OrderInfo * {

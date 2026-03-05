@@ -11,12 +11,10 @@ from typing import Optional
 ROOT = Path(__file__).parent
 BACKEND_DIR = ROOT / "core-backend"
 BACKEND_BUILD = BACKEND_DIR / "projects" / "core" / "build"
-ONNXRUNTIME_LIB_DIR = BACKEND_DIR / "packages" / "onnxruntime"
 FRONTEND_DIR = ROOT / "core-frontend"
 CONFIG_FILE = ROOT / "config.json"
 
-BACKEND_EXE = BACKEND_BUILD / \
-    ("core.exe" if sys.platform == "win32" else "core")
+BACKEND_EXE = BACKEND_BUILD / "core"
 BACKEND_PORT = 8001
 FRONTEND_PORT = 8000
 BACKEND_STARTUP_TIMEOUT = 60
@@ -52,7 +50,6 @@ def find_tracy_profiler() -> Optional[Path]:
             return p
 
     candidates = [
-        BACKEND_DIR / "packages" / "tracy" / "tracy-profiler.exe",
         BACKEND_DIR / "packages" / "tracy" / "tracy-profiler",
         Path.home() / ".local" / "bin" / "tracy-profiler",
     ]
@@ -68,17 +65,11 @@ def launch_tracy_ui() -> Optional[subprocess.Popen]:
         print("[Tracy] tracy-profiler not found (skipping UI auto-launch)")
         return None
 
-    creationflags = 0
-    if sys.platform == "win32":
-        creationflags |= getattr(subprocess, "DETACHED_PROCESS", 0)
-        creationflags |= getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
-
     try:
         proc = subprocess.Popen(
             [str(tracy_exe), "-a", "localhost"],
             cwd=tracy_exe.parent,
-            creationflags=creationflags,
-            start_new_session=(sys.platform != "win32"),
+            start_new_session=True,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
@@ -104,8 +95,7 @@ def dpkg_package_installed(pkg: str) -> bool:
 
 
 def assert_linux_dependencies():
-    if sys.platform != "linux":
-        return
+    assert sys.platform == "linux", "[run.py] 仅支持 Linux"
 
     missing_tools = any(shutil.which(t) is None for t in LINUX_REQUIRED_TOOLS)
     missing_packages = any(not dpkg_package_installed(p)
@@ -174,16 +164,9 @@ def main():
         time.sleep(1.0)
 
     print("[run.py] 启动 backend...")
-    backend_env = os.environ.copy()
-    ld_library_path = backend_env.get("LD_LIBRARY_PATH", "")
-    ort_path = str(ONNXRUNTIME_LIB_DIR)
-    backend_env["LD_LIBRARY_PATH"] = (
-        f"{ort_path}:{ld_library_path}" if ld_library_path else ort_path
-    )
     backend = subprocess.Popen(
         [str(BACKEND_EXE), "--config", str(CONFIG_FILE)],
         cwd=ROOT,
-        env=backend_env,
     )
     frontend = None
 

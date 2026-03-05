@@ -192,7 +192,7 @@ Order语义表树 (`s2-order-sem-tree`)
   │  ├─ QuoteZero  // desc: quote==0; scene: 无quote数量
   │  └─ QuotePositive  // desc: quote>0; scene: 有quote数量
   └─ 消费状态  // desc: 与L4覆盖断言同口径; scene: observed/must_consume vs consumed
-     ├─ ObservedLeg  // desc: must_consume=true; scene: 观测到地址腿硬约束可消费leg
+     ├─ ObservedLeg  // desc: must_consume=true; scene: 在该order语义window内观测到地址腿硬约束可消费leg
      ├─ UnobservedLeg  // desc: must_consume=false; scene: 未观测到可消费leg
      └─ Consumed  // desc: consumed=true; scene: 该order行被成功绑定消费
 
@@ -298,7 +298,7 @@ phase3_process_transfers(chunk)
 │  │  │  ├─ split/merge: stakeholder + cond_id + collateral + parent + partition + direction + amount
 │  │  │  ├─ redemption: redeemer + cond_id + collateral + parent + index_sets + direction
 │  │  │  ├─ convert: market_id + stakeholder + index_set + operator路径(NEG_RISK_ADAPTER)
-│  │  │  ├─ order: token_id + maker/taker + maker_side + quote_amount/tokens(地址腿硬约束；BUY: taker->maker 或 exchange->maker；SELL: maker->taker 或 maker->exchange)
+│  │  │  ├─ order: token_id + maker/taker + maker_side + quote_amount/tokens(地址腿硬约束；BUY: taker->maker 或 {CTF_EXCHANGE|NEG_RISK_CTF_EXCHANGE}->maker；SELL: maker->taker 或 maker->{CTF_EXCHANGE|NEG_RISK_CTF_EXCHANGE})
 │  │  │  ├─ trade/lp: fpmm_addr + side + actor(trader/funder) + token_amount/transfer_amount
 │  │  │  │  ├─ trade_leg_required = (tokens > 0 && trader != fpmm_addr)
 │  │  │  │  ├─ observed_trade_leg(side1)=存在 {from=fpmm 或 0->fpmm} 的 amount>0 transfer
@@ -354,10 +354,10 @@ phase3_process_transfers(chunk)
 │  ├─ assert(n_unclass == 0)
 │  ├─ assert(每条transfer消费次数 <= 1)
 │  ├─ assert(op消费闭环: 每个语义 op 都满足“已消费或可解释例外”)
-│  │  ├─ order: 若观察到可消费的 order 腿则 consumed=true；无可观察腿允许零消费
+│  │  ├─ order: 若在该 order 语义window内观测到地址腿硬约束可消费腿则 consumed=true；无可观察腿允许零消费
 │  │  ├─ trade: !must_consume_or_explain 或 consumed=true 或 explained_without_direct_leg=true
 │  │  │        其中 must_consume_or_explain = trade_leg_required && observed_trade_leg(side)
-│  │  ├─ convert: consumed_count>0
+│  │  ├─ convert: 若在该 convert 语义window内观测到可消费用户burn腿(`op=Adapter && to=BurnAddr && from=stakeholder && amount匹配`)则 consumed_count>0；否则允许零消费
 │  │  ├─ funding: consumed_count>0；FundingRemoved amounts 全零允许零腿
 │  │  ├─ split: 若在该 split 语义window内观测到可消费CTF mint腿(0->stakeholder)则 consumed_count>0 或 covered_by_parent=true；amount==0 允许零腿
 │  │  ├─ merge: 若在该 merge 语义window内观测到可消费CTF burn腿(stakeholder->0)则 consumed_count>0 或 covered_by_parent=true；amount==0 允许零腿
@@ -393,7 +393,7 @@ phase3_process_transfers(chunk)
 ├─ L1 映射不变量层：cond/token/collateral/fpmm 映射一致；outcome_count 合法且仅扩展不回退；cond_source 单向升级且 TokenReg 粘性成立；coll_map 对多来源冲突做确定性规范化；Phase2索引覆盖率守恒；可见性门控满足前缀一致
 ├─ L2 匹配唯一性层：窗口候选命中数 <= 1；同层并列歧义直接 assert
 ├─ L3 语义约束层：命中后必须满足 actor/cond/collateral/amount/direction/window 等硬约束
-├─ L4 语义消费闭环层：chunk 收尾每类语义 op 必须“已消费或显式例外(含 split/merge amount==0、redeem payout==0、trade !must_consume_or_explain 零腿)”；并校验 convert-burn 覆盖守恒
+├─ L4 语义消费闭环层：chunk 收尾每类语义 op 必须“已消费或显式例外(含 split/merge amount==0、redeem payout==0、order/convert 无可消费腿、trade !must_consume_or_explain 零腿)”；并校验 convert-burn 覆盖守恒
 └─ L5 结果守恒层：total 守恒、unclassified==0、树统计恒等式成立
 
 TransferClass输出事件(33类, 唯一落类)

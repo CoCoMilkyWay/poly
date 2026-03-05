@@ -8,8 +8,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # 平台检查
-if(NOT (WIN32 OR (UNIX AND NOT APPLE)))
-    message(FATAL_ERROR "仅支持 Linux 和 Windows")
+if(NOT (UNIX AND NOT APPLE))
+    message(FATAL_ERROR "仅支持 Linux")
 endif()
 
 # ============================================================================
@@ -21,19 +21,11 @@ option(PROFILE_MODE "Profile mode: enable Tracy profiling" OFF)
 if(PROFILE_MODE)
     message(STATUS "Build mode: PROFILE (tracy instrumentation)")
     add_compile_definitions(PROFILE_MODE TRACY_ENABLE TRACY_NO_SYSTEM_TRACING TRACY_NO_SAMPLING TRACY_TIMER_FALLBACK)
-    if(WIN32)
-        add_compile_options(/O2 /Zi -march=native)
-    else()
-        add_compile_options(-O2 -g -march=native)
-    endif()
+    add_compile_options(-O2 -g -march=native)
 else()
     message(STATUS "Build mode: PRODUCTION")
     add_compile_definitions(NDEBUG)
-    if(WIN32)
-        add_compile_options(/O2 -march=native)
-    else()
-        add_compile_options(-O2 -march=native)
-    endif()
+    add_compile_options(-O2 -march=native)
 endif()
 
 # 本地路径
@@ -44,15 +36,9 @@ set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../src)
 # OpenSSL (for boost::asio::ssl)
 find_package(OpenSSL QUIET)
 if(NOT OpenSSL_FOUND)
-    if(WIN32)
-        message(FATAL_ERROR "未找到 OpenSSL\n"
-            "  Windows: 下载安装 https://slproweb.com/products/Win32OpenSSL.html\n"
-            "  或设置 OPENSSL_ROOT_DIR 环境变量")
-    else()
-        message(FATAL_ERROR "未找到 OpenSSL\n"
-            "  Ubuntu/Debian: sudo apt install libssl-dev\n"
-            "  Fedora/RHEL:   sudo dnf install openssl-devel")
-    endif()
+    message(FATAL_ERROR "未找到 OpenSSL\n"
+        "  Ubuntu/Debian: sudo apt install libssl-dev\n"
+        "  Fedora/RHEL:   sudo dnf install openssl-devel")
 endif()
 
 # libcurl (for curl rpc transport)
@@ -61,11 +47,7 @@ find_package(CURL REQUIRED)
 # Arrow (vendored under packages/arrow)
 set(ARROW_DIR ${PACKAGES_DIR}/arrow)
 set(ARROW_INCLUDE_DIR ${ARROW_DIR}/include)
-if(WIN32)
-    set(ARROW_LIBRARY ${ARROW_DIR}/lib/arrow.lib)
-else()
-    set(ARROW_LIBRARY ${ARROW_DIR}/lib/libarrow.so)
-endif()
+set(ARROW_LIBRARY ${ARROW_DIR}/lib/libarrow.so)
 
 if(NOT EXISTS ${ARROW_INCLUDE_DIR}/arrow/api.h)
     message(FATAL_ERROR "未找到 Arrow 头文件: ${ARROW_INCLUDE_DIR}/arrow/api.h")
@@ -74,16 +56,27 @@ if(NOT EXISTS ${ARROW_LIBRARY})
     message(FATAL_ERROR "未找到 Arrow 库文件: ${ARROW_LIBRARY}")
 endif()
 
-# ONNX Runtime (vendored under packages/onnxruntime)
-set(ONNXRUNTIME_DIR ${PACKAGES_DIR}/onnxruntime)
-if(WIN32)
-    set(ONNXRUNTIME_LIBRARY ${ONNXRUNTIME_DIR}/onnxruntime.lib)
+# ONNX Runtime: CMake 配置阶段自动选择，优先 GPU，其次 CPU
+set(ONNXRUNTIME_GPU_DIR ${PACKAGES_DIR}/onnxruntime-gpu)
+set(ONNXRUNTIME_CPU_DIR ${PACKAGES_DIR}/onnxruntime-cpu)
+
+if(EXISTS ${ONNXRUNTIME_GPU_DIR}/libonnxruntime.so)
+    set(ONNXRUNTIME_DIR ${ONNXRUNTIME_GPU_DIR})
+    set(ONNXRUNTIME_MODE "gpu")
+elseif(EXISTS ${ONNXRUNTIME_CPU_DIR}/libonnxruntime.so)
+    set(ONNXRUNTIME_DIR ${ONNXRUNTIME_CPU_DIR})
+    set(ONNXRUNTIME_MODE "cpu")
+    message(WARNING
+        "ONNX Runtime 当前为 CPU 模式。\n"
+        "如需启用 GPU, 请准备: ${ONNXRUNTIME_GPU_DIR}/libonnxruntime.so")
 else()
-    set(ONNXRUNTIME_LIBRARY ${ONNXRUNTIME_DIR}/libonnxruntime.so)
+    message(FATAL_ERROR
+        "未找到 ONNX Runtime 库文件，请提供以下任一目录:\n"
+        "  - ${ONNXRUNTIME_GPU_DIR}/libonnxruntime.so\n"
+        "  - ${ONNXRUNTIME_CPU_DIR}/libonnxruntime.so")
 endif()
-if(NOT EXISTS ${ONNXRUNTIME_LIBRARY})
-    message(FATAL_ERROR "未找到 ONNX Runtime 库文件: ${ONNXRUNTIME_LIBRARY}")
-endif()
+set(ONNXRUNTIME_LIBRARY ${ONNXRUNTIME_DIR}/libonnxruntime.so)
+message(STATUS "ONNX Runtime mode: ${ONNXRUNTIME_MODE} (${ONNXRUNTIME_LIBRARY})")
 
 # 源文件
 set(SOURCES
@@ -118,6 +111,12 @@ endif()
 
 add_executable(core ${SOURCES})
 
+if(ONNXRUNTIME_MODE STREQUAL "gpu")
+    target_compile_definitions(core PRIVATE POLY_ORT_LIB_GPU=1)
+else()
+    target_compile_definitions(core PRIVATE POLY_ORT_LIB_CPU=1)
+endif()
+
 target_include_directories(core PRIVATE
     ${SRC_DIR}
     ${PACKAGES_DIR}/duckdb
@@ -136,31 +135,17 @@ add_custom_command(TARGET core POST_BUILD
 )
 
 # 链接库
-if(WIN32)
-    target_link_libraries(core PRIVATE
-        ${PACKAGES_DIR}/duckdb/duckdb.lib
-        OpenSSL::SSL
-        OpenSSL::Crypto
-        CURL::libcurl
-        ${ARROW_LIBRARY}
-        ${ONNXRUNTIME_LIBRARY}
-    )
-    if(PROFILE_MODE)
-        target_link_libraries(core PRIVATE ws2_32 dbghelp)
-    endif()
-else()
-    target_link_libraries(core PRIVATE
-        ${PACKAGES_DIR}/duckdb/libduckdb.so
-        OpenSSL::SSL
-        OpenSSL::Crypto
-        CURL::libcurl
-        ${ARROW_LIBRARY}
-        ${ONNXRUNTIME_LIBRARY}
-        pthread
-        dl
-    )
-    set_target_properties(core PROPERTIES
-        BUILD_RPATH "${PACKAGES_DIR}/duckdb;${ARROW_DIR}/lib;${ONNXRUNTIME_DIR}"
-        INSTALL_RPATH "${PACKAGES_DIR}/duckdb;${ARROW_DIR}/lib;${ONNXRUNTIME_DIR}"
-    )
-endif()
+target_link_libraries(core PRIVATE
+    ${PACKAGES_DIR}/duckdb/libduckdb.so
+    OpenSSL::SSL
+    OpenSSL::Crypto
+    CURL::libcurl
+    ${ARROW_LIBRARY}
+    ${ONNXRUNTIME_LIBRARY}
+    pthread
+    dl
+)
+set_target_properties(core PROPERTIES
+    BUILD_RPATH "${PACKAGES_DIR}/duckdb;${ARROW_DIR}/lib;${ONNXRUNTIME_DIR}"
+    INSTALL_RPATH "${PACKAGES_DIR}/duckdb;${ARROW_DIR}/lib;${ONNXRUNTIME_DIR}"
+)

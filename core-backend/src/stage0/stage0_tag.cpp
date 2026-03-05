@@ -1,7 +1,6 @@
 #include "stage0_tag.hpp"
 #include "config.hpp"
 
-#include <algorithm>
 #include <cassert>
 #include <cctype>
 #include <cmath>
@@ -303,6 +302,13 @@ void ensure_model_merged(const std::string &model_path) {
   std::cout << "[OnnxEmbedder] Merge complete" << std::endl;
 }
 
+void apply_cpu_session_options(Ort::SessionOptions &opts) {
+  opts.SetIntraOpNumThreads(0); // 自动检测核心数
+  opts.SetInterOpNumThreads(1);
+  opts.SetExecutionMode(ExecutionMode::ORT_SEQUENTIAL);
+  opts.EnableCpuMemArena();
+}
+
 class OnnxEmbedder {
 public:
   explicit OnnxEmbedder(const std::string &model_path)
@@ -311,46 +317,33 @@ public:
 
     Ort::SessionOptions opts;
     opts.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
-
-    // 运行时检测可用的 providers
-    auto providers = Ort::GetAvailableProviders();
-    std::cout << "[OnnxEmbedder] Available providers:";
-    for (const auto &p : providers) {
-      std::cout << " " << p;
-    }
-    std::cout << std::endl;
-
-    bool cuda_available = std::find(providers.begin(), providers.end(), "CUDAExecutionProvider") != providers.end();
+#if defined(POLY_ORT_LIB_GPU)
+    std::cout << "[OnnxEmbedder] ONNX Runtime package: GPU" << std::endl;
     bool cuda_enabled = false;
-
-    if (cuda_available) {
-      try {
-        OrtCUDAProviderOptions cuda_opts;
-        cuda_opts.device_id = 0;
-        opts.AppendExecutionProvider_CUDA(cuda_opts);
-        cuda_enabled = true;
-        device_name_ = "CUDA";
-        std::cout << "[OnnxEmbedder] CUDA provider enabled" << std::endl;
-      } catch (const Ort::Exception &e) {
-        std::cout << "[OnnxEmbedder] CUDA provider failed: " << e.what() << std::endl;
-        std::cout << "[OnnxEmbedder] Falling back to CPU" << std::endl;
-      }
+    try {
+      OrtCUDAProviderOptions cuda_opts;
+      cuda_opts.device_id = 0;
+      opts.AppendExecutionProvider_CUDA(cuda_opts);
+      cuda_enabled = true;
+      device_name_ = "CUDA";
+      std::cout << "[OnnxEmbedder] CUDA provider enabled" << std::endl;
+    } catch (const Ort::Exception &e) {
+      std::cout << "[OnnxEmbedder] CUDA provider failed: " << e.what() << std::endl;
+      std::cout << "[OnnxEmbedder] Falling back to CPU" << std::endl;
     }
-
     if (!cuda_enabled) {
-      // CPU 配置
-      opts.SetIntraOpNumThreads(0); // 自动检测核心数
-      opts.SetInterOpNumThreads(1);
-      opts.SetExecutionMode(ExecutionMode::ORT_SEQUENTIAL);
-      opts.EnableCpuMemArena();
+      apply_cpu_session_options(opts);
       device_name_ = "CPU";
-      std::cout << "[OnnxEmbedder] To enable GPU acceleration" << std::endl;
-      std::cout << "========================================" << std::endl;
-      std::cout << "  Links C++ to ONNX Runtime (CUDA 12.x/13)" << std::endl;
-      std::cout << "      https://github.com/microsoft/onnxruntime/releases/" << std::endl;
-      std::cout << "      with: NVIDIA Driver, CUDA, cuDNN, TensorRT" << std::endl;
-      std::cout << "========================================" << std::endl;
     }
+#elif defined(POLY_ORT_LIB_CPU)
+    std::cout << "[OnnxEmbedder] ONNX Runtime package: CPU" << std::endl;
+    apply_cpu_session_options(opts);
+    device_name_ = "CPU";
+#else
+    assert(false && "CMake must define POLY_ORT_LIB_GPU or POLY_ORT_LIB_CPU");
+    apply_cpu_session_options(opts);
+    device_name_ = "CPU";
+#endif
 
     session_ = std::make_unique<Ort::Session>(env_, model_path.c_str(), opts);
     assert(session_->GetInputCount() == 3);

@@ -815,6 +815,7 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
     std::string from;
     std::string to;
     int64_t amount = 0;
+    int64_t base_log_index = -1;
   };
   std::unordered_map<TxTokenKey, std::unordered_map<int64_t, std::vector<ObservedOrderLeg>>> observed_order_legs_by_amount;
   struct ObservedCondLeg {
@@ -823,7 +824,13 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
     int64_t amount = 0;
     int64_t base_log_index = -1;
   };
+  struct ObservedConvertLeg {
+    std::string stakeholder;
+    int64_t amount = 0;
+    int64_t base_log_index = -1;
+  };
   std::unordered_map<TxKey, std::unordered_map<uint32_t, std::vector<ObservedCondLeg>>> observed_cond_legs_by_cond;
+  std::unordered_map<TxKey, std::vector<ObservedConvertLeg>> observed_convert_user_legs_by_tx;
   int64_t observed_convert_user_burn_rows = 0;
   int64_t observed_convert_adapter_burn_rows = 0;
   int64_t classified_convert_rows = 0;
@@ -856,6 +863,7 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
   observed_fpmm_trade_leg_mask.reserve(transfer_rows);
   observed_order_legs_by_amount.reserve(transfer_rows);
   observed_cond_legs_by_cond.reserve(transfer_rows);
+  observed_convert_user_legs_by_tx.reserve(transfer_rows);
   new_events_.reserve(new_events_.size() + transfer_rows);
 
   {
@@ -875,18 +883,22 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
       std::string from = q_get_hex_lower(transfers, 4, i);
       std::string to = q_get_hex_lower(transfers, 5, i);
       std::string token_id = q_get_hex_lower(transfers, 6, i);
+      int64_t base_log_index = log_idx / TRANSFER_FLAT_LOG_SCALE;
       if (op == NEG_RISK_ADAPTER && to == NO_TOKEN_BURN_ADDRESS && amount > 0) {
         if (from == NEG_RISK_ADAPTER) {
           observed_convert_adapter_burn_rows++;
         } else {
           observed_convert_user_burn_rows++;
+          TxKey tx_key{block, tx_hash};
+          observed_convert_user_legs_by_tx[tx_key].push_back(
+              ObservedConvertLeg{from, amount, base_log_index});
         }
       }
 
       int64_t sort_key = block * SORT_KEY_SCALE + log_idx;
       if (op == CTF_EXCHANGE || op == NEG_RISK_CTF_EXCHANGE) {
         TxTokenKey order_key{block, tx_hash, token_id};
-        ObservedOrderLeg leg{from, to, amount};
+        ObservedOrderLeg leg{from, to, amount, base_log_index};
         observed_order_legs_by_amount[order_key][amount].push_back(std::move(leg));
       }
       bool op_is_fpmm_visible = is_fpmm_visible_at(op, sort_key);
@@ -926,7 +938,7 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
       if (amount > 0 && cond_idx != UNKNOWN_COND_IDX) {
         TxKey tx_key{block, tx_hash};
         observed_cond_legs_by_cond[tx_key][cond_idx].push_back(
-            ObservedCondLeg{from, to, amount, log_idx / TRANSFER_FLAT_LOG_SCALE});
+            ObservedCondLeg{from, to, amount, base_log_index});
       }
 
       // 获取抵押品类型
@@ -1108,6 +1120,23 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
       int64_t key = (qcnt <= 0) ? -1 : qcnt;
       chunk_convert_sem_tree_.by_question_count[key]++;
     };
+    auto convert_leg_observed = [&](const TxKey &tx_key,
+                                   const ConvertInfo &row) {
+      int64_t left = semantic_window_left(tx_key, row.log_index);
+      auto tx_it = observed_convert_user_legs_by_tx.find(tx_key);
+      if (tx_it == observed_convert_user_legs_by_tx.end()) {
+        return false;
+      }
+      for (const auto &leg : tx_it->second) {
+        if (leg.base_log_index <= left || leg.base_log_index > row.log_index) {
+          continue;
+        }
+        if (leg.stakeholder == row.stakeholder && leg.amount == row.amount) {
+          return true;
+        }
+      }
+      return false;
+    };
     for (const auto &[tx_key, rows] : tx_split_) {
       for (const auto &row : rows) {
         bool must_consume = split_leg_observed(tx_key, row.cond_id, row.stakeholder,
@@ -1141,7 +1170,12 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
     }
 
     for (const auto &[key, rows] : tx_order_) {
+      TxKey tx_key{key.block, key.tx_hash};
+      auto is_exchange_addr = [](const std::string &addr) {
+        return addr == CTF_EXCHANGE || addr == NEG_RISK_CTF_EXCHANGE;
+      };
       auto order_leg_observed = [&](const OrderInfo &row) {
+        int64_t left = semantic_window_left(tx_key, row.log_index);
         auto tx_it = observed_order_legs_by_amount.find(key);
         if (tx_it == observed_order_legs_by_amount.end()) {
           return false;
@@ -1151,15 +1185,18 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
           return false;
         }
         for (const auto &leg : amt_it->second) {
+          if (leg.base_log_index <= left || leg.base_log_index > row.log_index) {
+            continue;
+          }
           if (row.maker_side == 1) {
             if (leg.to == row.maker &&
-                (leg.from == row.taker || leg.from == CTF_EXCHANGE || leg.from == NEG_RISK_CTF_EXCHANGE)) {
+                (leg.from == row.taker || is_exchange_addr(leg.from))) {
               return true;
             }
             continue;
           }
           if (leg.from == row.maker &&
-              (leg.to == row.taker || leg.to == CTF_EXCHANGE || leg.to == NEG_RISK_CTF_EXCHANGE)) {
+              (leg.to == row.taker || is_exchange_addr(leg.to))) {
             return true;
           }
         }
@@ -1215,7 +1252,8 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
       }
     }
 
-    for (const auto &[_, rows] : tx_convert_) {
+    for (const auto &[key, rows] : tx_convert_) {
+      TxKey tx_key{key.block, key.tx_hash};
       for (const auto &row : rows) {
         chunk_convert_sem_tree_.total++;
         if (row.amount == 0) {
@@ -1226,10 +1264,13 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
         auto mit = market_question_count.find(row.market_id);
         int64_t qcnt = (mit == market_question_count.end()) ? 0 : mit->second;
         bump_convert_question_bucket(qcnt);
-        if (row.consumed_count > 0) {
+        bool consumed = row.consumed_count > 0;
+        if (consumed) {
           chunk_convert_sem_tree_.consumed++;
         }
-        stage2_assert(row.consumed_count > 0, AssertLevel::L4, "Consume", "ConvertConsumed");
+        bool must_consume = convert_leg_observed(tx_key, row);
+        stage2_assert(consumed || !must_consume,
+                      AssertLevel::L4, "Consume", "ConvertConsumedIfLegObserved");
       }
     }
 
