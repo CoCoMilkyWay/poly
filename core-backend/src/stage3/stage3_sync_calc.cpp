@@ -33,6 +33,16 @@ bool StageSync::is_effective_holding_i64(int64_t qty_1e6) {
   return std::llabs(qty_1e6) >= kMinHoldingQty;
 }
 
+bool StageSync::has_any_position(const CondState &st, int outcome_count) {
+  assert(outcome_count >= 0 && outcome_count <= MAX_OUTCOMES);
+  for (int j = 0; j < outcome_count; ++j) {
+    if (round_i64(st.positions[j]) != 0) {
+      return true;
+    }
+  }
+  return false;
+}
+
 int StageSync::count_effective_holdings(const CondState &st, int outcome_count) {
   assert(outcome_count >= 0 && outcome_count <= MAX_OUTCOMES);
   int count = 0;

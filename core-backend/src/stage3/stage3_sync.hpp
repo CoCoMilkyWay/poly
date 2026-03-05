@@ -95,7 +95,11 @@ public:
 
   struct TimelineEntry {
     int64_t sort_key = 0;
+    int32_t cond_idx = 0;
+    int32_t token_idx = 0;
     uint8_t event_type = 0;
+    int64_t amount = 0;
+    int64_t price = 0;
     int64_t realized_pnl = 0;
     int64_t unrealized_pnl = 0;
     int32_t token_count = 0;
@@ -148,6 +152,8 @@ private:
     int32_t cond_idx = 0;
     int32_t event_type = 0;
     int32_t token_idx = 0;
+    int64_t amount = 0;
+    int64_t price = 0;
     int64_t realized_cum = 0;
     int64_t unrealized_pnl = 0;
     int32_t token_count = 0;
@@ -213,8 +219,7 @@ private:
 
   std::vector<ConditionInfo> conditions_;
 
-  static constexpr int64_t kStage3ChunkBlocks = 100000;
-  static constexpr size_t kEtaWindowSize = 20;
+  static constexpr int64_t kStage3BatchEvents = 5000000;
   static constexpr double kPosEpsilon = 1e-9;
   static constexpr int64_t kMinHoldingQty = 100LL * 1000000LL;
   int base_interval_seconds_ = 0;
@@ -224,6 +229,7 @@ private:
   static int64_t round_i64(double v);
   static bool is_effective_holding(double qty_1e6);
   static bool is_effective_holding_i64(int64_t qty_1e6);
+  static bool has_any_position(const CondState &st, int outcome_count);
   static int count_effective_holdings(const CondState &st, int outcome_count);
   static void load_cond_state_values(CondState &st,
                                      duckdb::MaterializedQueryResult &src,

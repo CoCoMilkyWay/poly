@@ -240,6 +240,13 @@
     border-radius: 50%;
   }
 
+  .s3-legend-line {
+    width: 14px;
+    height: 0;
+    border-top: 2px solid currentColor;
+    border-radius: 2px;
+  }
+
   .s3-tooltip {
     position: absolute;
     background: rgba(0, 0, 0, 0.9);
@@ -399,82 +406,6 @@
     border-right: none;
   }
 
-  .s3-pos-item .cond {
-    color: #aaa;
-    min-width: 110px;
-    max-width: 110px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
-
-  .s3-pos-bars {
-    display: flex;
-    gap: 2px;
-    flex: 1;
-    min-width: 0;
-  }
-
-  .s3-pos-half {
-    flex: 1;
-    position: relative;
-    height: 18px;
-    background: #111;
-    border-radius: 2px;
-    overflow: hidden;
-  }
-
-  .s3-pos-bar {
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100%;
-    border-radius: 2px;
-    min-width: 1px;
-  }
-
-  .s3-pos-bar.long {
-    background: rgba(16, 185, 129, 0.45);
-  }
-
-  .s3-pos-bar.short {
-    background: rgba(239, 68, 68, 0.45);
-  }
-
-  .s3-pos-val {
-    position: relative;
-    z-index: 1;
-    display: block;
-    line-height: 18px;
-    padding: 0 4px;
-    font-size: 0.85em;
-    white-space: nowrap;
-    color: #ccc;
-  }
-
-  .s3-pos-val.long {
-    color: #10b981;
-  }
-
-  .s3-pos-val.short {
-    color: #ef4444;
-  }
-
-  .s3-pos-item .s3-pnl {
-    min-width: 72px;
-    text-align: right;
-    flex-shrink: 0;
-  }
-
-  .s3-pos-item .s3-pnl.pos {
-    color: #10b981;
-  }
-
-  .s3-pos-item .s3-pnl.neg {
-    color: #ef4444;
-  }
-
   .s3-trade-item {
     display: flex;
     gap: 8px;
@@ -485,6 +416,7 @@
     font-size: 0.74em;
     font-family: monospace;
     transition: background 0.15s;
+    cursor: pointer;
   }
 
   .s3-trade-item.focus {
@@ -508,6 +440,30 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .s3-trade-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 8px;
+  }
+
+  .s3-trade-filter-btn {
+    border: 1px solid #333;
+    border-radius: 999px;
+    background: #1a1a1a;
+    color: #999;
+    font-size: 0.72em;
+    padding: 2px 8px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .s3-trade-filter-btn.active {
+    color: #fff;
+    border-color: currentColor;
+    background: rgba(255, 255, 255, 0.06);
   }
 </style>
 
@@ -556,38 +512,7 @@
 
     <div class="s3-chart-container" id="s3-chart-container">
       <canvas class="s3-chart" id="s3-chart"></canvas>
-      <div class="s3-legend" id="s3-legend">
-        <div class="s3-legend-item">
-          <div class="s3-legend-dot" style="background:#6366f1"></div>Buy
-        </div>
-        <div class="s3-legend-item">
-          <div class="s3-legend-dot" style="background:#ef4444"></div>Sell
-        </div>
-        <div class="s3-legend-item">
-          <div class="s3-legend-dot" style="background:#eab308"></div>Split
-        </div>
-        <div class="s3-legend-item">
-          <div class="s3-legend-dot" style="background:#f97316"></div>Merge
-        </div>
-        <div class="s3-legend-item">
-          <div class="s3-legend-dot" style="background:#22d3ee"></div>Redeem
-        </div>
-        <div class="s3-legend-item">
-          <div class="s3-legend-dot" style="background:#a855f7"></div>FPMM
-        </div>
-        <div class="s3-legend-item">
-          <div class="s3-legend-dot" style="background:#14b8a6"></div>LP
-        </div>
-        <div class="s3-legend-item">
-          <div class="s3-legend-dot" style="background:#f472b6"></div>Convert
-        </div>
-        <div class="s3-legend-item">
-          <div class="s3-legend-dot" style="background:#64748b"></div>Transfer
-        </div>
-        <div class="s3-legend-item">
-          <div class="s3-legend-dot" style="background:#818cf8"></div>Tokens
-        </div>
-      </div>
+      <div class="s3-legend" id="s3-legend"></div>
       <div class="s3-chart-controls">
         <button class="s3-chart-btn" onclick="s3ResetZoom()">Reset</button>
       </div>
@@ -609,6 +534,7 @@
       </div>
       <div class="s3-panel">
         <div class="s3-panel-title">交易记录 (<span id="s3-trade-count">0</span>)</div>
+        <div class="s3-trade-filters" id="s3-trade-filters"></div>
         <div class="s3-trades" id="s3-trades"></div>
       </div>
     </div>
@@ -633,31 +559,66 @@
   let _s3PollingSync = false;
   let _s3UsersLoaded = false;
   let _s3LoadingUsers = false;
+  let _s3TradeFilterKeys = new Set(['order_buy', 'order_sell', 'fpmm_buy', 'fpmm_sell']);
 
   const _s3Pad = { top: 30, right: 70, bottom: 32, left: 50 };
+  function s3Assert(cond, msg) {
+    if (!cond) throw new Error(msg || 's3 assert failed');
+  }
+  const _s3LegendEventGroups = [
+    { key: 'order_buy', label: '买入', color: '#6366f1', types: [0] },
+    { key: 'order_sell', label: '卖出', color: '#ef4444', types: [1] },
+    { key: 'split', label: '铸造', color: '#eab308', types: [2, 3, 4] },
+    { key: 'merge', label: '合并', color: '#f97316', types: [5, 6, 7] },
+    { key: 'redeem', label: '赎回', color: '#22d3ee', types: [8, 9] },
+    { key: 'convert', label: '转换', color: '#f472b6', types: [10] },
+    { key: 'fpmm_buy', label: '池买入', color: '#a855f7', types: [11] },
+    { key: 'fpmm_sell', label: '池卖出', color: '#a855f7', types: [12] },
+    { key: 'lp_add', label: 'LP添加', color: '#14b8a6', types: [13] },
+    { key: 'lp_remove', label: 'LP移除', color: '#14b8a6', types: [14] },
+    { key: 'lp_return', label: 'LP返还', color: '#14b8a6', types: [15] },
+    { key: 'transfer_in', label: '转入', color: '#64748b', types: [16, 17, 18] },
+    { key: 'transfer_out', label: '转出', color: '#64748b', types: [19, 20, 21] },
+  ];
+  const _s3LineLegendItems = [
+    { label: '已实现PnL', color: '#10b981' },
+    { label: '未实现PnL', color: '#f59e0b' },
+    { label: '总PnL', color: '#e5e7eb' },
+    { label: '持仓数', color: '#818cf8' },
+  ];
+  const _s3TypeToLegendGroup = {};
+  for (const g of _s3LegendEventGroups) {
+    for (const ty of g.types) {
+      s3Assert(_s3TypeToLegendGroup[ty] === undefined, `duplicate legend event type: ${ty}`);
+      _s3TypeToLegendGroup[ty] = g.key;
+    }
+  }
+  for (let ty = 0; ty <= 21; ty++) {
+    s3Assert(_s3TypeToLegendGroup[ty] !== undefined, `missing legend event type: ${ty}`);
+  }
   const _s3EventMeta = {
-    0: { name: '买入', color: '#6366f1', cat: 'buy', marker: 'up' },
-    1: { name: '卖出', color: '#ef4444', cat: 'sell', marker: 'down' },
-    2: { name: 'Split', color: '#eab308', cat: 'split', marker: 'up' },
-    3: { name: 'Split', color: '#eab308', cat: 'split', marker: 'up' },
-    4: { name: 'Split', color: '#eab308', cat: 'split', marker: 'up' },
-    5: { name: 'Merge', color: '#f97316', cat: 'merge', marker: 'down' },
-    6: { name: 'Merge', color: '#f97316', cat: 'merge', marker: 'down' },
-    7: { name: 'Merge', color: '#f97316', cat: 'merge', marker: 'down' },
+    0: { name: '买入', color: '#6366f1', cat: 'order_buy', marker: 'up' },
+    1: { name: '卖出', color: '#ef4444', cat: 'order_sell', marker: 'down' },
+    2: { name: '铸造', color: '#eab308', cat: 'split', marker: 'up' },
+    3: { name: '铸造', color: '#eab308', cat: 'split', marker: 'up' },
+    4: { name: '铸造', color: '#eab308', cat: 'split', marker: 'up' },
+    5: { name: '合并', color: '#f97316', cat: 'merge', marker: 'down' },
+    6: { name: '合并', color: '#f97316', cat: 'merge', marker: 'down' },
+    7: { name: '合并', color: '#f97316', cat: 'merge', marker: 'down' },
     8: { name: '赎回', color: '#22d3ee', cat: 'redeem', marker: 'dot' },
     9: { name: '赎回', color: '#22d3ee', cat: 'redeem', marker: 'dot' },
     10: { name: '转换', color: '#f472b6', cat: 'convert', marker: 'dot' },
-    11: { name: 'AMM买', color: '#a855f7', cat: 'buy', marker: 'up' },
-    12: { name: 'AMM卖', color: '#a855f7', cat: 'sell', marker: 'down' },
-    13: { name: 'LP添加', color: '#14b8a6', cat: 'lp', marker: 'up' },
-    14: { name: 'LP移除', color: '#14b8a6', cat: 'lp', marker: 'down' },
-    15: { name: 'LP返还', color: '#14b8a6', cat: 'lp', marker: 'up' },
-    16: { name: '转入', color: '#64748b', cat: 'transfer', marker: 'up' },
-    17: { name: '转入', color: '#64748b', cat: 'transfer', marker: 'up' },
-    18: { name: '转入', color: '#64748b', cat: 'transfer', marker: 'up' },
-    19: { name: '转出', color: '#64748b', cat: 'transfer', marker: 'down' },
-    20: { name: '转出', color: '#64748b', cat: 'transfer', marker: 'down' },
-    21: { name: '转出', color: '#64748b', cat: 'transfer', marker: 'down' },
+    11: { name: '池买入', color: '#a855f7', cat: 'fpmm_buy', marker: 'up' },
+    12: { name: '池卖出', color: '#a855f7', cat: 'fpmm_sell', marker: 'down' },
+    13: { name: 'LP添加', color: '#14b8a6', cat: 'lp_add', marker: 'up' },
+    14: { name: 'LP移除', color: '#14b8a6', cat: 'lp_remove', marker: 'down' },
+    15: { name: 'LP返还', color: '#14b8a6', cat: 'lp_return', marker: 'up' },
+    16: { name: '转入', color: '#64748b', cat: 'transfer_in', marker: 'up' },
+    17: { name: '转入', color: '#64748b', cat: 'transfer_in', marker: 'up' },
+    18: { name: '转入', color: '#64748b', cat: 'transfer_in', marker: 'up' },
+    19: { name: '转出', color: '#64748b', cat: 'transfer_out', marker: 'down' },
+    20: { name: '转出', color: '#64748b', cat: 'transfer_out', marker: 'down' },
+    21: { name: '转出', color: '#64748b', cat: 'transfer_out', marker: 'down' },
   };
 
   function s3EvtMeta(ty) {
@@ -666,6 +627,7 @@
 
   async function s3FetchJson(url) {
     const resp = await fetch(url);
+    s3Assert(resp.ok, `request failed: ${url}`);
     return await resp.json();
   }
 
@@ -689,6 +651,9 @@
     });
 
     s3SetupInteraction();
+    s3SetupTradePanelInteraction();
+    s3RenderLegend();
+    s3RenderTradeFilters();
     window.addEventListener('resize', () => { if (_s3Timeline.length) s3Draw(); });
   });
 
@@ -840,22 +805,28 @@
     const finalUpnl = _s3Timeline.length ? _s3Timeline[_s3Timeline.length - 1].upnl / 1e6 : 0;
     const finalTpnl = finalRpnl + finalUpnl;
 
-    const c = { buy: 0, sell: 0, split: 0, merge: 0, redeem: 0, lp: 0, convert: 0, transfer: 0, other: 0 };
+    const c = {};
+    for (const g of _s3LegendEventGroups) c[g.key] = 0;
+    c.other = 0;
     for (const e of _s3Timeline) {
-      const cat = s3EvtMeta(e.ty).cat;
-      c[cat] = (c[cat] || 0) + 1;
+      const key = _s3TypeToLegendGroup[e.ty];
+      if (!key) {
+        c.other += 1;
+        continue;
+      }
+      c[key] = (c[key] || 0) + 1;
     }
+    const metaRows = _s3LegendEventGroups.map(g =>
+      `<div class="s3-meta-item"><div class="label" style="color:${g.color}">${g.label}</div><div class="value">${c[g.key] || 0}</div></div>`
+    ).join('');
+    const otherRow = c.other > 0
+      ? `<div class="s3-meta-item"><div class="label" style="color:#888">其他</div><div class="value">${c.other}</div></div>`
+      : '';
 
     document.getElementById('s3-meta').innerHTML = `
     <div class="s3-meta-item"><div class="label">事件</div><div class="value">${_s3Timeline.length}</div></div>
-    <div class="s3-meta-item"><div class="label" style="color:#6366f1">Buy</div><div class="value">${c.buy}</div></div>
-    <div class="s3-meta-item"><div class="label" style="color:#ef4444">Sell</div><div class="value">${c.sell}</div></div>
-    <div class="s3-meta-item"><div class="label" style="color:#eab308">Split</div><div class="value">${c.split}</div></div>
-    <div class="s3-meta-item"><div class="label" style="color:#f97316">Merge</div><div class="value">${c.merge}</div></div>
-    <div class="s3-meta-item"><div class="label" style="color:#22d3ee">Redeem</div><div class="value">${c.redeem}</div></div>
-    <div class="s3-meta-item"><div class="label" style="color:#14b8a6">LP</div><div class="value">${c.lp}</div></div>
-    <div class="s3-meta-item"><div class="label" style="color:#f472b6">Convert</div><div class="value">${c.convert}</div></div>
-    <div class="s3-meta-item"><div class="label" style="color:#64748b">Transfer</div><div class="value">${c.transfer}</div></div>
+    ${metaRows}
+    ${otherRow}
     <div class="s3-meta-item"><div class="label">问题</div><div class="value">${nCond}</div></div>
     <div class="s3-meta-item"><div class="label">已实现</div><div class="value" style="color:${finalRpnl >= 0 ? '#10b981' : '#ef4444'}">${s3FmtUSD(finalRpnl)}</div></div>
     <div class="s3-meta-item"><div class="label">未实现</div><div class="value" style="color:${finalUpnl >= 0 ? '#f59e0b' : '#ef4444'}">${s3FmtUSD(finalUpnl)}</div></div>
@@ -959,11 +930,12 @@
 
     const xStep = s3NiceSkStep(skRange);
     let xTick = Math.ceil(_s3ViewStartSk / xStep) * xStep;
-    ctx.textAlign = 'center'; ctx.fillStyle = '#555';
+    ctx.textAlign = 'center'; ctx.font = '11px monospace'; ctx.fillStyle = '#b5b5b5';
     while (xTick <= _s3ViewEndSk) {
       const xx = sk2x(xTick);
+      ctx.strokeStyle = '#2f2f2f'; ctx.lineWidth = 0.6;
       ctx.beginPath(); ctx.moveTo(xx, p.top); ctx.lineTo(xx, cssH - p.bottom); ctx.stroke();
-      ctx.fillText(s3FmtSk(xTick), xx, cssH - p.bottom + 14);
+      ctx.fillText(s3FmtAxisBlock(xTick), xx, cssH - p.bottom + 14);
       xTick += xStep;
     }
 
@@ -1192,12 +1164,12 @@
     const tkCount = ev.tk || 0;
 
     tooltip.innerHTML = `
-    <div style="color:#888">${s3FmtSk(ev.sk)}</div>
-    <div style="color:#10b981">R ${s3FmtUSD(rpnl)}</div>
-    <div style="color:#f59e0b">U ${s3FmtUSD(upnl)}</div>
-    <div style="color:${tpnl >= 0 ? '#10b981' : '#ef4444'};font-size:1.1em">T ${s3FmtUSD(tpnl)}</div>
-    <div><span style="color:${color}">${name}</span></div>
-    <div style="color:#818cf8">持仓 ${tkCount} 种</div>
+    <div style="color:#888">区块 ${s3FmtAxisBlock(ev.sk)} (${s3FmtSk(ev.sk)})</div>
+    <div style="color:#10b981">已实现PnL ${s3FmtUSD(rpnl)}</div>
+    <div style="color:#f59e0b">未实现PnL ${s3FmtUSD(upnl)}</div>
+    <div style="color:${tpnl >= 0 ? '#10b981' : '#ef4444'};font-size:1.1em">总PnL ${s3FmtUSD(tpnl)}</div>
+    <div><span style="color:${color}">事件 ${name}</span></div>
+    <div style="color:#818cf8">持仓数 ${tkCount} 种</div>
   `;
     tooltip.style.display = 'block';
 
@@ -1284,7 +1256,10 @@
       .sort((a, b) => b.total - a.total);
     countEl.textContent = rows.length;
     el.innerHTML = rows.map(r => {
-      const title = `Q: ${r.q}${r.desc ? `\nD: ${r.desc}` : ''}`;
+      const title = [
+        `问题: ${r.q || '-'}`,
+        r.desc ? `描述: ${r.desc}` : '',
+      ].filter(Boolean).join('\n');
       const titleEsc = s3EscAttr(title);
       const tagLine = s3EscHtml(`${r.tag}`);
       return `<div class="s3-pos-item" title="${titleEsc}">
@@ -1300,7 +1275,7 @@
   function s3RenderEvents() {
     const el = document.getElementById('s3-trades');
     const countEl = document.getElementById('s3-trade-count');
-    countEl.textContent = _s3Timeline.length;
+    const selected = _s3TradeFilterKeys;
 
     const rows = [];
     for (let i = _s3Timeline.length - 1; i >= 0; i--) {
@@ -1309,15 +1284,17 @@
       const meta = s3EvtMeta(ev.ty);
       const color = meta.color;
       const name = meta.name;
+      if (!selected.has(meta.cat)) continue;
 
       const detail = s3EventDetail(ev);
 
-      rows.push(`<div class="s3-trade-item${isFocus ? ' focus' : ''}">
+      rows.push(`<div class="s3-trade-item${isFocus ? ' focus' : ''}" data-idx="${i}">
       <span class="blk">${s3FmtSkShort(ev.sk)}</span>
       <span class="type" style="color:${color}">${name}</span>
       <span class="detail">${detail}</span>
     </div>`);
     }
+    countEl.textContent = rows.length;
 
     el.innerHTML = rows.length ? rows.join('') : '<div style="color:#888;padding:10px">无交易</div>';
 
@@ -1325,9 +1302,87 @@
     if (focusEl) focusEl.scrollIntoView({ block: 'nearest' });
   }
 
+  function s3RenderTradeFilters() {
+    const el = document.getElementById('s3-trade-filters');
+    el.innerHTML = _s3LegendEventGroups.map(g => {
+      const active = _s3TradeFilterKeys.has(g.key) ? ' active' : '';
+      return `<button class="s3-trade-filter-btn${active}" data-key="${g.key}" style="color:${g.color}">${g.label}</button>`;
+    }).join('');
+  }
+
+  function s3RenderLegend() {
+    const el = document.getElementById('s3-legend');
+    const lineItems = _s3LineLegendItems.map(item => (
+      `<div class="s3-legend-item" style="color:${item.color}"><div class="s3-legend-line"></div>${item.label}</div>`
+    )).join('');
+    const eventItems = _s3LegendEventGroups.map(g => (
+      `<div class="s3-legend-item"><div class="s3-legend-dot" style="background:${g.color}"></div>${g.label}</div>`
+    )).join('');
+    el.innerHTML = lineItems + eventItems;
+  }
+
+  function s3SetupTradePanelInteraction() {
+    const filtersEl = document.getElementById('s3-trade-filters');
+    filtersEl.addEventListener('click', (e) => {
+      const btn = e.target.closest('.s3-trade-filter-btn');
+      if (!btn) return;
+      const key = btn.dataset.key || '';
+      if (!_s3LegendEventGroups.find(g => g.key === key)) return;
+      if (_s3TradeFilterKeys.has(key)) _s3TradeFilterKeys.delete(key);
+      else _s3TradeFilterKeys.add(key);
+      s3RenderTradeFilters();
+      s3RenderEvents();
+    });
+
+    const tradesEl = document.getElementById('s3-trades');
+    tradesEl.addEventListener('click', (e) => {
+      const item = e.target.closest('.s3-trade-item');
+      if (!item) return;
+      const idx = Number(item.dataset.idx);
+      if (!Number.isInteger(idx)) return;
+      s3ApplyCursorIdx(idx, true);
+    });
+  }
+
   function s3EventDetail(ev) {
-    const { rpnl, upnl, tpnl } = s3EventPnl(ev);
-    return `R ${s3FmtUSD(rpnl)} / U ${s3FmtUSD(upnl)} / T ${s3FmtUSD(tpnl)}`;
+    const action = s3EscHtml(s3EventAction(ev));
+    const tag = s3EscHtml(String(ev.tag || 'unknown'));
+    const price = s3FmtTradePrice(ev.px);
+    const amount = s3FmtTradeAmount(ev.amt);
+    return `动作 ${action} | tag ${tag} | price ${price} | amount ${amount}`;
+  }
+
+  function s3EventAction(ev) {
+    const meta = s3EvtMeta(ev.ty);
+    const ci = Number(ev.ci ?? -1);
+    const ti = Number(ev.ti ?? -1);
+    const suffix = [];
+    if (Number.isInteger(ci) && ci >= 0) suffix.push(`c${ci}`);
+    if (Number.isInteger(ti) && ti >= 0) suffix.push(`t${ti}`);
+    return suffix.length ? `${meta.name}(${suffix.join(',')})` : meta.name;
+  }
+
+  function s3FmtTradePrice(v) {
+    const px = Number(v || 0) / 1e6;
+    if (!Number.isFinite(px) || px <= 0) return '-';
+    const digits = px >= 1 ? 4 : 6;
+    return s3TrimFixed(px, digits);
+  }
+
+  function s3FmtTradeAmount(v) {
+    const amt = Number(v || 0) / 1e6;
+    if (!Number.isFinite(amt)) return '-';
+    const abs = Math.abs(amt);
+    if (abs === 0) return '0';
+    const sign = amt > 0 ? '+' : '-';
+    if (abs >= 1e6) return sign + s3TrimFixed(abs / 1e6, 2) + 'M';
+    if (abs >= 1e3) return sign + s3TrimFixed(abs / 1e3, 2) + 'K';
+    const digits = abs >= 100 ? 2 : (abs >= 1 ? 4 : 6);
+    return sign + s3TrimFixed(abs, digits);
+  }
+
+  function s3TrimFixed(v, digits) {
+    return Number(v).toFixed(digits).replace(/\.?0+$/, '');
   }
 
   function s3NiceTkStep(max) {
@@ -1358,7 +1413,7 @@
   }
 
   function s3EscAttr(s) {
-    return s3EscHtml(String(s).replaceAll('\n', ' | '));
+    return s3EscHtml(String(s));
   }
 
   function s3TokenColor(ti, nTokens, qty, maxQty) {
@@ -1402,6 +1457,14 @@
   function s3FmtSkShort(sk) {
     const block = Math.floor(sk / 1e9);
     return block.toLocaleString();
+  }
+
+  function s3FmtAxisBlock(sk) {
+    const block = Math.floor(Number(sk) / 1e9);
+    if (!Number.isFinite(block) || block < 0) return '-';
+    if (block >= 1e6) return s3TrimFixed(block / 1e6, 1) + 'M';
+    if (block >= 1e3) return s3TrimFixed(block / 1e3, 1) + 'K';
+    return String(block);
   }
 
   function s3FmtEta(seconds) {

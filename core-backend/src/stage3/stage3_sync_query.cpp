@@ -98,16 +98,65 @@ std::vector<StageSync::TimelineEvent> StageSync::load_timeline_events(const std:
   assert(q && !q->HasError());
   std::vector<TimelineEvent> out;
   out.reserve(static_cast<size_t>(q->RowCount()));
+  struct TimelineKey {
+    int64_t sort_key = 0;
+    int32_t cond_idx = 0;
+    int32_t event_type = 0;
+    int32_t token_idx = 0;
+    bool operator==(const TimelineKey &o) const {
+      return sort_key == o.sort_key && cond_idx == o.cond_idx && event_type == o.event_type && token_idx == o.token_idx;
+    }
+  };
+  struct TimelineKeyHash {
+    size_t operator()(const TimelineKey &k) const {
+      size_t h = std::hash<int64_t>()(k.sort_key);
+      h ^= std::hash<int32_t>()(k.cond_idx) + 0x9e3779b97f4a7c15ULL + (h << 6) + (h >> 2);
+      h ^= std::hash<int32_t>()(k.event_type) + 0x9e3779b97f4a7c15ULL + (h << 6) + (h >> 2);
+      h ^= std::hash<int32_t>()(k.token_idx) + 0x9e3779b97f4a7c15ULL + (h << 6) + (h >> 2);
+      return h;
+    }
+  };
+  std::unordered_map<TimelineKey, size_t, TimelineKeyHash> idx_by_key;
+  idx_by_key.reserve(static_cast<size_t>(q->RowCount()) * 2 + 1);
   for (idx_t i = 0; i < q->RowCount(); ++i) {
-    out.push_back({
-        q->GetValue(0, i).GetValue<int64_t>(),
-        q->GetValue(1, i).GetValue<int32_t>(),
-        q->GetValue(2, i).GetValue<int32_t>(),
-        q->GetValue(3, i).GetValue<int32_t>(),
-        q->GetValue(4, i).GetValue<int64_t>(),
-        q->GetValue(5, i).GetValue<int64_t>(),
-        q->GetValue(6, i).GetValue<int32_t>(),
-    });
+    TimelineEvent ev{
+        q->GetValue(0, i).GetValue<int64_t>(), // sort_key
+        q->GetValue(1, i).GetValue<int32_t>(), // cond_idx
+        q->GetValue(2, i).GetValue<int32_t>(), // event_type
+        q->GetValue(3, i).GetValue<int32_t>(), // token_idx
+        0,                                      // amount
+        0,                                      // price
+        q->GetValue(4, i).GetValue<int64_t>(), // realized_cum
+        q->GetValue(5, i).GetValue<int64_t>(), // unrealized_pnl
+        q->GetValue(6, i).GetValue<int32_t>(), // token_count
+    };
+    out.push_back(ev);
+    idx_by_key[TimelineKey{ev.sort_key, ev.cond_idx, ev.event_type, ev.token_idx}] = out.size() - 1;
+  }
+
+  if (!out.empty()) {
+    auto src_conn = stage2_db_.create_connection();
+    auto ue = src_conn->Query(
+        "SELECT sort_key, cond_idx, event_type, token_idx, amount, price "
+        "FROM user_event "
+        "WHERE user_addr = " +
+        user_addr + " "
+                    "ORDER BY sort_key, cond_idx, event_type, token_idx");
+    assert(ue && !ue->HasError());
+    for (idx_t i = 0; i < ue->RowCount(); ++i) {
+      TimelineKey key{
+          ue->GetValue(0, i).GetValue<int64_t>(),
+          ue->GetValue(1, i).GetValue<int32_t>(),
+          ue->GetValue(2, i).GetValue<int32_t>(),
+          ue->GetValue(3, i).GetValue<int32_t>(),
+      };
+      auto it = idx_by_key.find(key);
+      if (it == idx_by_key.end()) {
+        continue;
+      }
+      out[it->second].amount = ue->GetValue(4, i).GetValue<int64_t>();
+      out[it->second].price = ue->GetValue(5, i).GetValue<int64_t>();
+    }
   }
   return out;
 }
@@ -116,8 +165,17 @@ std::vector<StageSync::TimelineEntry> StageSync::build_timeline(const std::vecto
   std::vector<TimelineEntry> timeline;
   timeline.reserve(events.size());
   for (const auto &row : events) {
-    timeline.push_back({row.sort_key, static_cast<uint8_t>(row.event_type), row.realized_cum,
-                        row.unrealized_pnl, row.token_count});
+    timeline.push_back({
+        row.sort_key,
+        row.cond_idx,
+        row.token_idx,
+        static_cast<uint8_t>(row.event_type),
+        row.amount,
+        row.price,
+        row.realized_cum,
+        row.unrealized_pnl,
+        row.token_count,
+    });
   }
   return timeline;
 }

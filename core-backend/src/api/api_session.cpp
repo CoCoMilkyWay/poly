@@ -869,12 +869,35 @@ void ApiSession::handle_stage3_pnl() {
 
   const int64_t latest_sort_key = timeline.back().sort_key;
   const int64_t latest_block = latest_sort_key / stage2::SORT_KEY_SCALE;
+  std::vector<stage3::StageSync::PositionRow> cond_rows;
+  cond_rows.reserve(timeline.size());
+  for (const auto &e : timeline) {
+    if (e.cond_idx < 0) {
+      continue;
+    }
+    stage3::StageSync::PositionRow row{};
+    row.cond_idx = static_cast<uint32_t>(e.cond_idx);
+    cond_rows.push_back(row);
+  }
+  auto cond_meta = load_stage3_cond_meta(cond_rows);
 
   json timeline_arr = json::array();
   for (const auto &e : timeline) {
+    Stage3CondMeta meta;
+    if (e.cond_idx >= 0) {
+      auto it = cond_meta.find(static_cast<uint32_t>(e.cond_idx));
+      if (it != cond_meta.end()) {
+        meta = it->second;
+      }
+    }
     timeline_arr.push_back({
         {"sk", e.sort_key},
+        {"ci", e.cond_idx},
+        {"ti", e.token_idx},
         {"ty", e.event_type},
+        {"tag", meta.tag},
+        {"amt", e.amount},
+        {"px", e.price},
         {"rpnl", e.realized_pnl},
         {"upnl", e.unrealized_pnl},
         {"tk", e.token_count},

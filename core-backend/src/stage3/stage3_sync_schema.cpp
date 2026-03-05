@@ -204,7 +204,7 @@ void StageSync::refresh_status_locked() const {
   sync_.head_block = builder_.cursor();
   sync_.last_block = (cursor_.sort_key < 0) ? 0 : cursor_.sort_key / SORT_KEY_SCALE;
   sync_.behind_blocks = std::max<int64_t>(0, sync_.head_block - sync_.last_block);
-  sync_.behind_chunks = (sync_.behind_blocks + kStage3ChunkBlocks - 1) / kStage3ChunkBlocks;
+  sync_.behind_chunks = (sync_.behind_blocks == 0) ? 0 : 1;
 }
 
 } // namespace stage3
