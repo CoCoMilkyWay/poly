@@ -167,6 +167,7 @@ def main():
     backend = subprocess.Popen(
         [str(BACKEND_EXE), "--config", str(CONFIG_FILE)],
         cwd=ROOT,
+        start_new_session=True,
     )
     frontend = None
 
@@ -180,6 +181,7 @@ def main():
             [sys.executable, "-m", "uvicorn", "main:app", "--host",
              "0.0.0.0", "--port", str(FRONTEND_PORT), "--log-level", "warning"],
             cwd=FRONTEND_DIR,
+            start_new_session=True,
         )
         assert wait_for_port(FRONTEND_PORT, timeout=FRONTEND_STARTUP_TIMEOUT, proc=frontend), (
             f"frontend 启动失败 (timeout={FRONTEND_STARTUP_TIMEOUT}s, exit={frontend.poll()})"
@@ -194,17 +196,19 @@ def main():
         pass
     finally:
         print("[run.py] 正在关闭...")
-        procs = [p for p in [backend, frontend, tracy_proc] if p is not None]
-        for proc in procs:
+        # 停机顺序很关键：先停 frontend，避免其在 backend 已退出后继续转发请求。
+        shutdown_order = [p for p in [
+            frontend, backend, tracy_proc] if p is not None]
+        for proc in shutdown_order:
             if proc.poll() is None:
                 proc.terminate()
         deadline = time.time() + GRACEFUL_SHUTDOWN_TIMEOUT
-        while time.time() < deadline and any(p.poll() is None for p in procs):
+        while time.time() < deadline and any(p.poll() is None for p in shutdown_order):
             time.sleep(0.2)
-        for proc in procs:
+        for proc in shutdown_order:
             if proc.poll() is None:
                 proc.kill()
-        for proc in procs:
+        for proc in shutdown_order:
             if proc.poll() is None:
                 proc.wait()
         print("[run.py] 已退出")
