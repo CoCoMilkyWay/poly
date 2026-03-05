@@ -1090,7 +1090,15 @@ void ApiSession::handle_stage3_positions() {
   }
 
   auto cond_meta = stage3_cond_meta_from_cache(user);
-  assert(!cond_meta.empty());
+  if (cond_meta.empty()) {
+    std::vector<uint32_t> cond_idxs;
+    cond_idxs.reserve(positions.size());
+    for (const auto &p : positions) {
+      cond_idxs.push_back(p.cond_idx);
+    }
+    cond_meta = load_stage3_cond_meta(cond_idxs);
+    stage3_store_cond_meta_cache(user, cond_meta);
+  }
   json pos_arr = json::array();
   for (const auto &p : positions) {
     const auto it = cond_meta.find(p.cond_idx);

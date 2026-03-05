@@ -2,7 +2,7 @@
   "stage0_enable": 1,
   "stage1_enable": 1,
   "stage2_enable": 1,
-  "stage3_enable": 1,
+  "stage3_enable": 0,
   "stage0_check_interval_seconds": 3600,
   "stage1_check_interval_seconds": 3600,
   "stage2_check_interval_seconds": 30,
@@ -15,7 +15,7 @@
   "stage1_rpc_block_span": 100,
   "stage1_rpc_buffer_multiplier": 2,
 
-  "model_dir": "core-backend/models/bge-small-en-v1.5",
+  "model_dir": "core-backend/models/bge-large-en-v1.5",
   "tag_md_path": "core-backend/src/stage0/TAG.md",
 
   "initial_block": 0,

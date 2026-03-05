@@ -840,6 +840,7 @@
     const margin = Math.max(1, (_s3Timeline[_s3Timeline.length - 1].sk - _s3Timeline[0].sk) * 0.02);
     _s3ViewStartSk = _s3Timeline[0].sk - margin;
     _s3ViewEndSk = _s3Timeline[_s3Timeline.length - 1].sk + margin;
+    s3Draw();
   }
 
   function s3Draw() {

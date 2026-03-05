@@ -50,6 +50,7 @@ private:
   int base_interval_seconds_ = 0;
   std::atomic<bool> stop_requested_{false};
   mutable std::mutex status_mutex_;
+  mutable std::mutex tagger_mutex_;
   Status sync_;
 
   std::unique_ptr<Tagger> tagger_;

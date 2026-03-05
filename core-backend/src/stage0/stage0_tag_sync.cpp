@@ -193,8 +193,11 @@ void TagSync::stop() {
 TagSync::Status TagSync::status() const {
   std::lock_guard<std::mutex> lock(status_mutex_);
   Status s = sync_;
-  if (tagger_) {
-    s.tag_device = tagger_->device_name();
+  {
+    std::lock_guard<std::mutex> tagger_lock(tagger_mutex_);
+    if (tagger_) {
+      s.tag_device = tagger_->device_name();
+    }
   }
   return s;
 }
@@ -293,7 +296,9 @@ void TagSync::init_tagger() {
     return;
   }
   try {
-    tagger_ = std::make_unique<Tagger>(model_dir, tag_md);
+    auto new_tagger = std::make_unique<Tagger>(model_dir, tag_md);
+    std::lock_guard<std::mutex> tagger_lock(tagger_mutex_);
+    tagger_ = std::move(new_tagger);
   } catch (const std::exception &e) {
     std::cerr << "[Tagger] Failed to initialize tagger: " << e.what() << std::endl;
   }
@@ -335,9 +340,6 @@ void TagSync::set_tag_cursor_in_txn(duckdb::Connection &conn, int64_t cursor) {
 
 int64_t TagSync::do_tag_sync() {
   Trace;
-  if (!tagger_) {
-    return 0;
-  }
   const uint64_t epoch_at_start = tag_reset_epoch_.load(std::memory_order_seq_cst);
   const int64_t tag_cursor = get_tag_cursor();
   std::string tag_trace_name = "s0/sync >" + std::to_string(tag_cursor);
@@ -358,6 +360,8 @@ int64_t TagSync::do_tag_sync() {
   assert(result && !result->HasError());
 
   if (result->RowCount() == 0) {
+    std::lock_guard<std::mutex> tagger_lock(tagger_mutex_);
+    tagger_.reset();
     return 0;
   }
 
@@ -395,7 +399,24 @@ int64_t TagSync::do_tag_sync() {
     model_inputs.push_back(std::move(model_input));
   }
 
-  auto tags = tagger_->tag_batch(model_inputs);
+  bool need_init = false;
+  {
+    std::lock_guard<std::mutex> tagger_lock(tagger_mutex_);
+    need_init = (tagger_ == nullptr);
+  }
+  if (need_init) {
+    init_tagger();
+  }
+  Tagger *tagger_ptr = nullptr;
+  {
+    std::lock_guard<std::mutex> tagger_lock(tagger_mutex_);
+    if (!tagger_) {
+      return 0;
+    }
+    tagger_ptr = tagger_.get();
+  }
+  assert(tagger_ptr != nullptr);
+  auto tags = tagger_ptr->tag_batch(model_inputs);
   assert(tags.size() == rowids.size());
 
   if (tag_reset_epoch_.load(std::memory_order_seq_cst) != epoch_at_start) {
