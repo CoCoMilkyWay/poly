@@ -3,6 +3,7 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <unordered_map>
 
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
@@ -76,7 +77,8 @@ public:
   using Stage2Getter = std::function<Stage2Status()>;
   using Stage3Getter = std::function<Stage3Status()>;
 
-  ApiSession(tcp::socket socket, Database &stage1_db, Database &stage2_db, stage3::StageSync &stage3,
+  ApiSession(tcp::socket socket, Database &stage0_db, Database &stage1_db, Database &stage2_db,
+             stage3::StageSync &stage3,
              Stage0Getter stage0_getter, Stage0Retagger stage0_retagger, Stage1Getter stage1_getter,
              Stage2Getter stage2_getter, Stage3Getter stage3_getter);
 
@@ -104,7 +106,16 @@ private:
   static std::string url_decode(const std::string &str);
   void do_write();
 
+  struct Stage3CondMeta {
+    std::string tag = "unknown";
+    std::string question = "unknown";
+    std::string description = "";
+  };
+  std::unordered_map<uint32_t, Stage3CondMeta>
+  load_stage3_cond_meta(const std::vector<stage3::StageSync::PositionRow> &positions);
+
   tcp::socket socket_;
+  Database &stage0_db_;
   Database &stage1_db_;
   Database &stage2_db_;
   stage3::StageSync &stage3_;

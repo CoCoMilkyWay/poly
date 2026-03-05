@@ -104,6 +104,7 @@ public:
   struct PositionRow {
     uint32_t cond_idx = 0;
     uint8_t token_idx = 0;
+    uint8_t outcome_count = 0;
     int64_t qty = 0;
     int64_t cost = 0;
     int64_t last_price = 0;
@@ -215,11 +216,15 @@ private:
   static constexpr int64_t kStage3ChunkBlocks = 100000;
   static constexpr size_t kEtaWindowSize = 20;
   static constexpr double kPosEpsilon = 1e-9;
+  static constexpr int64_t kMinHoldingQty = 100LL * 1000000LL;
   int base_interval_seconds_ = 0;
   static constexpr int64_t kCursorSentinel = std::numeric_limits<int32_t>::min();
 
   static std::string normalize_addr(const std::string &addr);
   static int64_t round_i64(double v);
+  static bool is_effective_holding(double qty_1e6);
+  static bool is_effective_holding_i64(int64_t qty_1e6);
+  static int count_effective_holdings(const CondState &st, int outcome_count);
   static void load_cond_state_values(CondState &st,
                                      duckdb::MaterializedQueryResult &src,
                                      idx_t row_idx,

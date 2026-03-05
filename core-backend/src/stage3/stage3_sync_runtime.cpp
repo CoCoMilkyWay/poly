@@ -348,14 +348,14 @@ bool StageSync::process_chunk_locked() const {
 
     auto tk_r = sink_conn->Query(
         "SELECT lower(hex(st.user_addr)) AS uh, "
-        "SUM(CASE WHEN st.pos_0 != 0 THEN 1 ELSE 0 END + "
-        "    CASE WHEN st.pos_1 != 0 THEN 1 ELSE 0 END + "
-        "    CASE WHEN st.pos_2 != 0 THEN 1 ELSE 0 END + "
-        "    CASE WHEN st.pos_3 != 0 THEN 1 ELSE 0 END + "
-        "    CASE WHEN st.pos_4 != 0 THEN 1 ELSE 0 END + "
-        "    CASE WHEN st.pos_5 != 0 THEN 1 ELSE 0 END + "
-        "    CASE WHEN st.pos_6 != 0 THEN 1 ELSE 0 END + "
-        "    CASE WHEN st.pos_7 != 0 THEN 1 ELSE 0 END) AS tk "
+        "SUM(CASE WHEN abs(st.pos_0) >= " + std::to_string(kMinHoldingQty) + " THEN 1 ELSE 0 END + "
+        "    CASE WHEN abs(st.pos_1) >= " + std::to_string(kMinHoldingQty) + " THEN 1 ELSE 0 END + "
+        "    CASE WHEN abs(st.pos_2) >= " + std::to_string(kMinHoldingQty) + " THEN 1 ELSE 0 END + "
+        "    CASE WHEN abs(st.pos_3) >= " + std::to_string(kMinHoldingQty) + " THEN 1 ELSE 0 END + "
+        "    CASE WHEN abs(st.pos_4) >= " + std::to_string(kMinHoldingQty) + " THEN 1 ELSE 0 END + "
+        "    CASE WHEN abs(st.pos_5) >= " + std::to_string(kMinHoldingQty) + " THEN 1 ELSE 0 END + "
+        "    CASE WHEN abs(st.pos_6) >= " + std::to_string(kMinHoldingQty) + " THEN 1 ELSE 0 END + "
+        "    CASE WHEN abs(st.pos_7) >= " + std::to_string(kMinHoldingQty) + " THEN 1 ELSE 0 END) AS tk "
         "FROM s3_user_cond_state st "
         "JOIN tmp_s3_touched_users t ON st.user_addr = t.user_addr "
         "GROUP BY st.user_addr");
@@ -417,22 +417,12 @@ bool StageSync::process_chunk_locked() const {
       auto it = states.find(key);
       assert(it != states.end());
       double before_cond_unrealized = it->second.unrealized_pnl;
-      int before_nonzero = 0;
-      int after_nonzero = 0;
       const auto &cond = conditions_[static_cast<size_t>(row.cond_idx)];
-      for (int j = 0; j < cond.outcome_count; ++j) {
-        if (std::abs(it->second.positions[j]) > kPosEpsilon) {
-          before_nonzero++;
-        }
-      }
+      int before_nonzero = count_effective_holdings(it->second, cond.outcome_count);
       realized_delta = apply_event_to_state(row, it->second);
       it->second.unrealized_pnl = compute_unrealized_pnl(it->second);
       user_unrealized_cum[row.user_hex] += (it->second.unrealized_pnl - before_cond_unrealized);
-      for (int j = 0; j < cond.outcome_count; ++j) {
-        if (std::abs(it->second.positions[j]) > kPosEpsilon) {
-          after_nonzero++;
-        }
-      }
+      int after_nonzero = count_effective_holdings(it->second, cond.outcome_count);
       user_token_count[row.user_hex] += (after_nonzero - before_nonzero);
       it->second.event_count++;
       it->second.last_sort_key = row.sort_key;

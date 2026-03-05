@@ -1,11 +1,11 @@
 #include "misc/profiler.hpp"
 #include "stage3_sync.hpp"
 #include <cmath>
+#include <cstdlib>
 #include <tuple>
 
 namespace stage3 {
 namespace {
-
 std::string user_addr_sql(const std::string &addr_lower) {
   assert(addr_lower.size() == 42);
   return "from_hex('" + addr_lower.substr(2) + "')";
@@ -69,10 +69,15 @@ std::vector<StageSync::PositionRow> StageSync::get_positions_at(const std::strin
       if (std::abs(st.positions[i]) <= kPosEpsilon) {
         continue;
       }
+      const int64_t qty_i64 = round_i64(st.positions[i]);
+      if (!StageSync::is_effective_holding_i64(qty_i64)) {
+        continue;
+      }
       out.push_back(PositionRow{
           static_cast<uint32_t>(cond_idx),
           static_cast<uint8_t>(i),
-          round_i64(st.positions[i]),
+          static_cast<uint8_t>(cond.outcome_count),
+          qty_i64,
           round_i64(st.cost[i]),
           round_i64(st.last_price[i]),
       });

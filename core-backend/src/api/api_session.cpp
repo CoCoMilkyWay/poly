@@ -3,11 +3,11 @@
 #include <arrow/io/file.h>
 #include <arrow/ipc/reader.h>
 
+#include <algorithm>
 #include <atomic>
 #include <cctype>
 #include <filesystem>
 #include <future>
-#include <limits>
 #include <mutex>
 #include <sstream>
 #include <unordered_map>
@@ -193,10 +193,11 @@ bool ensure_required_param(const std::string &value, const char *name, http::res
 
 } // namespace
 
-ApiSession::ApiSession(tcp::socket socket, Database &stage1_db, Database &stage2_db, stage3::StageSync &stage3,
+ApiSession::ApiSession(tcp::socket socket, Database &stage0_db, Database &stage1_db, Database &stage2_db,
+                       stage3::StageSync &stage3,
                        Stage0Getter stage0_getter, Stage0Retagger stage0_retagger, Stage1Getter stage1_getter,
                        Stage2Getter stage2_getter, Stage3Getter stage3_getter)
-    : socket_(std::move(socket)), stage1_db_(stage1_db), stage2_db_(stage2_db), stage3_(stage3),
+    : socket_(std::move(socket)), stage0_db_(stage0_db), stage1_db_(stage1_db), stage2_db_(stage2_db), stage3_(stage3),
       stage0_getter_(std::move(stage0_getter)), stage0_retagger_(std::move(stage0_retagger)),
       stage1_getter_(std::move(stage1_getter)),
       stage2_getter_(std::move(stage2_getter)),
@@ -891,6 +892,115 @@ void ApiSession::handle_stage3_pnl() {
   res_.body() = result.dump();
 }
 
+std::unordered_map<uint32_t, ApiSession::Stage3CondMeta>
+ApiSession::load_stage3_cond_meta(const std::vector<stage3::StageSync::PositionRow> &positions) {
+  std::unordered_map<uint32_t, Stage3CondMeta> out;
+  if (positions.empty()) {
+    return out;
+  }
+
+  std::vector<uint32_t> conds;
+  conds.reserve(positions.size());
+  for (const auto &p : positions) {
+    conds.push_back(p.cond_idx);
+  }
+  std::sort(conds.begin(), conds.end());
+  conds.erase(std::unique(conds.begin(), conds.end()), conds.end());
+
+  std::string cond_idx_list;
+  cond_idx_list.reserve(conds.size() * 12);
+  for (size_t i = 0; i < conds.size(); ++i) {
+    if (i > 0) {
+      cond_idx_list += ",";
+    }
+    cond_idx_list += std::to_string(conds[i]);
+  }
+  assert(!cond_idx_list.empty());
+
+  std::unordered_map<uint32_t, std::string> cond_idx_to_hex;
+  {
+    auto conn = stage2_db_.create_connection();
+    auto q = conn->Query(
+        "SELECT cond_idx, lower(hex(cond_id)) AS cid "
+        "FROM rb_condition "
+        "WHERE cond_idx IN (" +
+        cond_idx_list + ")");
+    assert(q && !q->HasError());
+    cond_idx_to_hex.reserve(static_cast<size_t>(q->RowCount()));
+    for (idx_t i = 0; i < q->RowCount(); ++i) {
+      uint32_t cond_idx = q->GetValue(0, i).GetValue<uint32_t>();
+      cond_idx_to_hex[cond_idx] = q->GetValue(1, i).GetValueUnsafe<std::string>();
+    }
+  }
+
+  std::unordered_map<std::string, Stage3CondMeta> cond_hex_to_meta;
+  if (!cond_idx_to_hex.empty()) {
+    std::string cond_hex_list;
+    cond_hex_list.reserve(cond_idx_to_hex.size() * 72);
+    bool first = true;
+    for (const auto &[_, cid_hex] : cond_idx_to_hex) {
+      if (!first) {
+        cond_hex_list += ",";
+      }
+      first = false;
+      cond_hex_list += "from_hex('" + cid_hex + "')";
+    }
+    assert(!cond_hex_list.empty());
+
+    auto conn = stage0_db_.create_connection();
+    auto q = conn->Query(
+        "SELECT "
+        "  lower(hex(ps.condition_id)) AS cid, "
+        "  coalesce(pc.tag_name, 'unknown') AS tag_name, "
+        "  coalesce("
+        "    json_extract_string(ps.market_json, '$.question'), "
+        "    json_extract_string(ps.market_json, '$.events[0].title'), "
+        "    'unknown'"
+        "  ) AS question, "
+        "  coalesce("
+        "    json_extract_string(ps.market_json, '$.description'), "
+        "    json_extract_string(ps.market_json, '$.events[0].description'), "
+        "    ''"
+        "  ) AS description "
+        "FROM pm_condition_static ps "
+        "LEFT JOIN pm_condition_scan_class pc ON pc.condition_id = ps.condition_id "
+        "WHERE ps.condition_id IN (" +
+        cond_hex_list + ")");
+    assert(q && !q->HasError());
+    cond_hex_to_meta.reserve(static_cast<size_t>(q->RowCount()));
+    for (idx_t i = 0; i < q->RowCount(); ++i) {
+      std::string cid_hex = q->GetValue(0, i).GetValueUnsafe<std::string>();
+      Stage3CondMeta meta;
+      meta.tag = q->GetValue(1, i).GetValueUnsafe<std::string>();
+      meta.question = q->GetValue(2, i).GetValueUnsafe<std::string>();
+      meta.description = q->GetValue(3, i).GetValueUnsafe<std::string>();
+      if (meta.tag.empty()) {
+        meta.tag = "unknown";
+      }
+      if (meta.question.empty()) {
+        meta.question = "unknown";
+      }
+      cond_hex_to_meta.emplace(std::move(cid_hex), std::move(meta));
+    }
+  }
+
+  for (uint32_t cond_idx : conds) {
+    auto cid_it = cond_idx_to_hex.find(cond_idx);
+    if (cid_it == cond_idx_to_hex.end()) {
+      out.emplace(cond_idx, Stage3CondMeta{});
+      continue;
+    }
+    auto meta_it = cond_hex_to_meta.find(cid_it->second);
+    if (meta_it == cond_hex_to_meta.end()) {
+      out.emplace(cond_idx, Stage3CondMeta{});
+      continue;
+    }
+    out.emplace(cond_idx, meta_it->second);
+  }
+
+  return out;
+}
+
 void ApiSession::handle_stage3_positions() {
   TraceN("api/s3_positions");
   res_.set(http::field::content_type, "application/json");
@@ -907,14 +1017,21 @@ void ApiSession::handle_stage3_positions() {
   assert(target_sort_key >= 0);
 
   auto positions = stage3_.get_positions_at(user, target_sort_key);
+  auto cond_meta = load_stage3_cond_meta(positions);
   json pos_arr = json::array();
   for (const auto &p : positions) {
+    const auto it = cond_meta.find(p.cond_idx);
+    Stage3CondMeta meta = (it == cond_meta.end()) ? Stage3CondMeta{} : it->second;
     pos_arr.push_back({
         {"ci", p.cond_idx},
         {"ti", p.token_idx},
+        {"oc", p.outcome_count},
         {"qty", p.qty},
         {"cost", p.cost},
         {"lp", p.last_price},
+        {"tag", meta.tag},
+        {"q", meta.question},
+        {"desc", meta.description},
     });
   }
 

@@ -350,15 +350,53 @@
   }
 
   .s3-pos-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 8px;
+    display: grid;
+    grid-template-columns: minmax(240px, 1.2fr) minmax(320px, 1.8fr);
+    gap: 8px;
+    align-items: start;
+    padding: 6px 8px;
     background: #1a1a1a;
     border-radius: 4px;
     margin-bottom: 3px;
-    font-size: 0.78em;
+    font-size: 0.76em;
     font-family: monospace;
+  }
+
+  .s3-pos-item:hover {
+    background: #242434;
+  }
+
+  .s3-pos-tag {
+    color: #ddd;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .s3-pos-ratio {
+    position: relative;
+    display: flex;
+    height: 18px;
+    background: #111;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .s3-pos-ratio .seg {
+    height: 100%;
+    flex: 1 1 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 0.86em;
+    line-height: 1;
+    white-space: nowrap;
+    border-right: 1px solid rgba(0, 0, 0, 0.22);
+  }
+
+  .s3-pos-ratio .seg:last-child {
+    border-right: none;
   }
 
   .s3-pos-item .cond {
@@ -1124,6 +1162,12 @@
     return lo;
   }
 
+  function s3EventPnl(ev) {
+    const rpnl = Number(ev.rpnl || 0) / 1e6;
+    const upnl = Number(ev.upnl || 0) / 1e6;
+    return { rpnl, upnl, tpnl: rpnl + upnl };
+  }
+
   function s3UpdateTooltip(e) {
     const tooltip = document.getElementById('s3-tooltip');
     if (!_s3Timeline.length || _s3Dragging) { tooltip.style.display = 'none'; return; }
@@ -1141,9 +1185,7 @@
     const sk = _s3ViewStartSk + frac * (_s3ViewEndSk - _s3ViewStartSk);
     const idx = s3NearestIdx(sk);
     const ev = _s3Timeline[idx];
-    const rpnl = (ev.rpnl || 0) / 1e6;
-    const upnl = (ev.upnl || 0) / 1e6;
-    const tpnl = rpnl + upnl;
+    const { rpnl, upnl, tpnl } = s3EventPnl(ev);
     const meta = s3EvtMeta(ev.ty);
     const color = meta.color;
     const name = meta.name;
@@ -1174,16 +1216,14 @@
     bar.classList.add('show');
 
     const ev = _s3Timeline[_s3CursorIdx];
-    const rpnl = (ev.rpnl || 0) / 1e6;
-    const upnl = (ev.upnl || 0) / 1e6;
-    const pnl = rpnl + upnl;
+    const { rpnl, upnl, tpnl } = s3EventPnl(ev);
     const meta = s3EvtMeta(ev.ty);
     const color = meta.color;
 
     document.getElementById('s3-cur-sk').textContent = s3FmtSk(ev.sk);
     const pnlEl = document.getElementById('s3-cur-pnl');
-    pnlEl.textContent = s3FmtUSD(pnl);
-    pnlEl.className = 'pnl ' + (pnl >= 0 ? 'pos' : 'neg');
+    pnlEl.textContent = s3FmtUSD(tpnl);
+    pnlEl.className = 'pnl ' + (tpnl >= 0 ? 'pos' : 'neg');
 
     const badge = document.getElementById('s3-cur-badge');
     badge.textContent = meta.name;
@@ -1197,21 +1237,62 @@
   function s3RenderPositions(positions) {
     const el = document.getElementById('s3-positions');
     const countEl = document.getElementById('s3-pos-count');
-    countEl.textContent = positions.length;
     if (!positions.length) {
+      countEl.textContent = '0';
       el.innerHTML = '<div style="color:#888;padding:10px">无持仓</div>';
       return;
     }
-    el.innerHTML = positions.map(p => {
-      const qty = Number(p.qty || 0) / 1e6;
-      const cost = Number(p.cost || 0) / 1e6;
-      const lp = Number(p.lp || 0) / 1e6;
-      const pnl = qty * lp - cost;
-      const pnlCls = pnl >= 0 ? 'pos' : 'neg';
-      return `<div class="s3-pos-item">
-      <span class="cond" title="cond=${p.ci}, token=${p.ti}">c${p.ci}:t${p.ti}</span>
-      <div class="s3-pos-bars">${s3PosBar(qty, 'Q')}</div>
-      <span class="s3-pnl ${pnlCls}">${s3FmtUSD(pnl)}</span>
+    const grouped = new Map();
+    for (const p of positions) {
+      const ci = Number(p.ci ?? -1);
+      const ti = Number(p.ti ?? -1);
+      const oc = Math.max(2, Number(p.oc ?? 2));
+      const qtyAbs = Math.abs(Number(p.qty ?? 0) / 1e6);
+      if (!Number.isFinite(ci) || !Number.isFinite(ti) || !Number.isFinite(oc) || !Number.isFinite(qtyAbs)) continue;
+      if (ti < 0) continue;
+      const key = String(ci);
+      if (!grouped.has(key)) {
+        grouped.set(key, {
+          ci,
+          oc,
+          tokenQty: new Map(),
+          tag: String(p.tag || 'unknown'),
+          q: String(p.q || 'unknown'),
+          desc: String(p.desc || ''),
+        });
+      }
+      const row = grouped.get(key);
+      row.oc = Math.max(Number(row.oc || 2), oc);
+      row.tokenQty.set(ti, (row.tokenQty.get(ti) || 0) + qtyAbs);
+    }
+
+    const rows = Array.from(grouped.values())
+      .map(r => {
+        const items = [];
+        const oc = Math.max(2, Number(r.oc || 2));
+        for (let ti = 0; ti < oc; ti++) {
+          items.push([ti, Number(r.tokenQty.get(ti) || 0)]);
+        }
+        if (oc === 2) {
+          items.reverse(); // 2-outcome: render YES(t1) first, then NO(t0)
+        }
+        const total = items.reduce((s, [_, qty]) => s + qty, 0);
+        const maxQty = items.reduce((m, [_, qty]) => Math.max(m, qty), 0);
+        return { ...r, items, total, maxQty };
+      })
+      .filter(r => r.items.length > 0)
+      .sort((a, b) => b.total - a.total);
+    countEl.textContent = rows.length;
+    el.innerHTML = rows.map(r => {
+      const title = `Q: ${r.q}${r.desc ? `\nD: ${r.desc}` : ''}`;
+      const titleEsc = s3EscAttr(title);
+      const tagLine = s3EscHtml(`${r.tag}`);
+      return `<div class="s3-pos-item" title="${titleEsc}">
+      <span class="s3-pos-tag">c${r.ci} | ${tagLine}</span>
+      <div class="s3-pos-ratio">${r.items.map(([ti, qty]) => {
+        const color = s3TokenColor(ti, r.items.length, qty, r.maxQty);
+        return `<span class="seg" style="background:${color}" title="${s3FmtQtyCompact(qty)}">${s3FmtQtyCompact(qty)}</span>`;
+      }).join('')}</div>
     </div>`;
     }).join('');
   }
@@ -1245,18 +1326,8 @@
   }
 
   function s3EventDetail(ev) {
-    const rp = Number(ev.rpnl || 0) / 1e6;
-    const up = Number(ev.upnl || 0) / 1e6;
-    return `R ${s3FmtUSD(rp)} / U ${s3FmtUSD(up)} / T ${s3FmtUSD(rp + up)}`;
-  }
-
-  function s3PosBar(val, label) {
-    if (val === 0) return `<div class="s3-pos-half"></div>`;
-    const abs = Math.abs(val);
-    const pct = Math.min(abs / 5000, 1) * 100;
-    const cls = label === 'Y' ? 'long' : 'short';
-    const txt = `${label} ${val > 0 ? '+' : ''}${val.toFixed(0)}`;
-    return `<div class="s3-pos-half"><div class="s3-pos-bar ${cls}" style="width:${pct.toFixed(1)}%"></div><span class="s3-pos-val ${cls}">${txt}</span></div>`;
+    const { rpnl, upnl, tpnl } = s3EventPnl(ev);
+    return `R ${s3FmtUSD(rpnl)} / U ${s3FmtUSD(upnl)} / T ${s3FmtUSD(tpnl)}`;
   }
 
   function s3NiceTkStep(max) {
@@ -1268,6 +1339,50 @@
 
   function s3FmtUSD(v) {
     return (v >= 0 ? '+$' : '-$') + Math.abs(v).toFixed(2);
+  }
+
+  function s3FmtQtyCompact(v) {
+    const abs = Math.abs(Number(v) || 0);
+    if (abs >= 1e6) return (abs / 1e6).toFixed(1) + 'M';
+    if (abs >= 1e3) return (abs / 1e3).toFixed(1) + 'K';
+    return abs.toFixed(1);
+  }
+
+  function s3EscHtml(s) {
+    return String(s)
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#39;');
+  }
+
+  function s3EscAttr(s) {
+    return s3EscHtml(String(s).replaceAll('\n', ' | '));
+  }
+
+  function s3TokenColor(ti, nTokens, qty, maxQty) {
+    const q = Math.max(0, Number(qty) || 0);
+    const m = Math.max(0, Number(maxQty) || 0);
+    const strength = m > 0 ? (q / m) : 0;
+    const alpha = 0.10 + 0.65 * strength;
+    if (nTokens === 2) {
+      if (ti === 1) return `rgba(16,185,129,${alpha.toFixed(3)})`; // YES
+      if (ti === 0) return `rgba(239,68,68,${alpha.toFixed(3)})`;  // NO
+    }
+    const palette = [
+      [99, 102, 241],
+      [16, 185, 129],
+      [239, 68, 68],
+      [245, 158, 11],
+      [34, 211, 238],
+      [168, 85, 247],
+      [20, 184, 166],
+      [244, 114, 182],
+    ];
+    const idx = Math.abs(Number(ti) || 0) % palette.length;
+    const c = palette[idx];
+    return `rgba(${c[0]},${c[1]},${c[2]},${alpha.toFixed(3)})`;
   }
 
   function s3FmtUSDShort(v) {

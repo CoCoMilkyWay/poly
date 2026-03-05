@@ -1,6 +1,7 @@
 #include "stage3_sync.hpp"
 #include <algorithm>
 #include <cmath>
+#include <cstdlib>
 
 namespace stage3 {
 
@@ -22,6 +23,25 @@ bool StageSync::is_usd_collateral(int32_t collateral) {
          collateral == static_cast<int32_t>(Collateral::USDCe) ||
          collateral == static_cast<int32_t>(Collateral::USDT) ||
          collateral == static_cast<int32_t>(Collateral::WrappedUSDCe);
+}
+
+bool StageSync::is_effective_holding(double qty_1e6) {
+  return is_effective_holding_i64(round_i64(qty_1e6));
+}
+
+bool StageSync::is_effective_holding_i64(int64_t qty_1e6) {
+  return std::llabs(qty_1e6) >= kMinHoldingQty;
+}
+
+int StageSync::count_effective_holdings(const CondState &st, int outcome_count) {
+  assert(outcome_count >= 0 && outcome_count <= MAX_OUTCOMES);
+  int count = 0;
+  for (int j = 0; j < outcome_count; ++j) {
+    if (is_effective_holding(st.positions[j])) {
+      count++;
+    }
+  }
+  return count;
 }
 
 // Compute unrealized PnL using double arithmetic
