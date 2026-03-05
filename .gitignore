@@ -8,7 +8,7 @@ core-backend/models/bge-small-en-v1.5/model.onnx
 data/
 
 # 配置文件(包含敏感信息)
-# config.json
+config.json
 
 # Python
 __pycache__/
