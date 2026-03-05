@@ -109,20 +109,18 @@ stage3_sync_tick
 ## 数据结构
 
 ```text
-type Address20 = bytes20
+符号: E=事件总数, U=有事件用户数, C=condition数, K=活跃(user,cond)对数
 
-// Stage2 输入事件 (数据库原始行)
-struct UserEvent {
-  Address20 user_addr;
-  int64   sort_key;
-  int32   cond_idx;      // unknown=-1
-  int32   event_type;    // EventType
-  int32   token_idx;     // unknown=-1
-  int32   collateral;
-  int64   amount;        // 带符号,6 decimals
-  int64   price_1e6;     // 1e6 = $1, invariant: price_1e6 >= 0
-}
+InputEvent (实例数=E)
+ConditionMeta (实例数=C)
+  -> TokenCondState (实例数=K, K=|{(u,c) | 对应状态存在}|, 且 K<=U*C)
+      -> EventFactRow (实例数=E, 每个InputEvent对应1行)
+      -> UserSummaryState (实例数=U)
+      -> SyncCursor (实例数=1)
+      -> UserQueryCache (实例数<=U, 命中后按用户懒加载)
+```
 
+```text
 // Stage3 内部统一输入结构 (用于回放/状态机)
 struct InputEvent {
   string user_hex;        // 查询路径可为空，批处理路径必填
@@ -194,217 +192,54 @@ struct UserQueryCache {
 ## API 设计
 
 ### GET /api/stage3-status
-同步状态
-```json
-{
-  "syncing": true,
-  "last_block": 12345678,
-  "head_block": 12350000,
-  "behind_blocks": 4322,
-  "behind_chunks": 1,
-  "blocks_per_second": 1234.5,
-  "eta_seconds": 3.5,
-  "ready": false
-}
-```
+| entry                  | type   | required | description          |
+| ---------------------- | ------ | -------- | -------------------- |
+| query                  | object | 否       | 无参数               |
+| resp.syncing           | bool   | 是       | 是否正在同步         |
+| resp.last_block        | i64    | 是       | 已同步到的最新 block |
+| resp.head_block        | i64    | 是       | 链上当前 head block  |
+| resp.behind_blocks     | i64    | 是       | 落后 block 数        |
+| resp.behind_chunks     | i64    | 是       | 预估剩余 chunk 数    |
+| resp.blocks_per_second | f64    | 是       | 同步速度             |
+| resp.eta_seconds       | f64    | 是       | 预计剩余秒数         |
+| resp.ready             | bool   | 是       | 是否可用于查询       |
 
 ### GET /api/stage3-users?limit=1000
-用户列表（按事件数降序）
-```json
-[
-  {"user": "0x1234...", "events": 12345, "rpnl": 1234567890, "upnl": 234567890},
-  ...
-]
-```
+| entry         | type   | required | description                  |
+| ------------- | ------ | -------- | ---------------------------- |
+| query.limit   | i32    | 否       | 返回条数上限，默认 `1000`    |
+| resp[]        | array  | 是       | 用户列表（按 `events` 降序） |
+| resp[].user   | string | 是       | 用户地址（lowercase）        |
+| resp[].events | i64    | 是       | 用户事件总数                 |
+| resp[].rpnl   | i64    | 是       | 累计已实现 PnL               |
+| resp[].upnl   | i64    | 是       | 当前未实现 PnL               |
 
 ### GET /api/stage3-pnl?user=0x...
-PnL时间线（全量，cursor无关）
+| entry                | type   | required | description                      |
+| -------------------- | ------ | -------- | -------------------------------- |
+| query.user           | string | 是       | 用户地址                         |
+| resp.user            | string | 是       | 用户地址                         |
+| resp.block           | i64    | 是       | 该用户最新事件所在 block         |
+| resp.total_events    | i64    | 是       | 该用户总事件数                   |
+| resp.timeline[]      | array  | 是       | 全量事件序列（不因 cursor 截断） |
+| resp.timeline[].sk   | i64    | 是       | sort_key（`block*1e9+log_idx`）  |
+| resp.timeline[].ty   | u8     | 是       | 事件类型                         |
+| resp.timeline[].rpnl | i64    | 是       | 累计已实现 PnL                   |
+| resp.timeline[].upnl | i64    | 是       | 该时刻未实现 PnL                 |
+| resp.timeline[].tk   | i32    | 是       | 持仓 token 种数                  |
+| error.404            | object | 条件     | 用户不存在或无事件时返回         |
 
-**输入参数**：
-- `user`: 用户地址 (必填)
-
-**返回语义**：
-- 返回该用户全量事件序列（不因 cursor 截断）
-- 若用户不存在或无事件，返回 `404`，body 为 `{"error":"User not found or no events"}`
-
-```json
-{
-  "user": "0x1234...",
-  "block": 12345678,         // 该用户最新事件所在 block
-  "total_events": 12345,
-  "timeline": [
-    {
-      "sk": 12340000000001,  // sort_key
-      "ty": 0,               // event_type
-      "rpnl": 100000,        // realized_pnl_cum
-      "upnl": 50000,         // unrealized_pnl
-      "tk": 5                // token_count
-    },
-    ...
-  ]
-}
-```
-
-### GET /api/stage3-positions?user=0x...&sort_key=12340000000001
-指定 cursor 的持仓快照（仅 positions）
-
-**输入参数**：
-- `user`: 用户地址 (必填)
-- `sort_key`: 目标 cursor (必填)
-
-```json
-{
-  "user": "0x1234...",
-  "sort_key": 12340000000001,
-  "block": 12340000,
-  "positions": [
-    {
-      "ci": 123,           // cond_idx
-      "ti": 0,             // token_idx
-      "qty": 1000000,      // 持仓数量 (1e6, 可负=短仓)
-      "cost": 500000,      // 成本 (1e6, 可负=短仓信用)
-      "lp": 550000         // last_price (1e6)
-    },
-    ...
-  ]
-}
-```
-
-**字段说明**：
-
-| 表        | 字段 | 类型 | 说明                           |
-| --------- | ---- | ---- | ------------------------------ |
-| timeline  | sk   | i64  | sort_key (block*1e9+log_idx)   |
-| timeline  | ty   | u8   | 事件类型                       |
-| timeline  | rpnl | i64  | 累计已实现 PnL                 |
-| timeline  | upnl | i64  | 该时刻未实现 PnL               |
-| timeline  | tk   | i32  | 持仓 token 种数                |
-| positions | ci   | u32  | cond_idx                       |
-| positions | ti   | u8   | token_idx                      |
-| positions | qty  | i64  | 持仓数量 (1e6 = 1 token, 可负) |
-| positions | cost | i64  | 成本基础 (1e6 = $1, 可负)      |
-| positions | lp   | i64  | 最近成交价 (1e6 = $1)          |
-
-`/api/stage3-users` 字段：
-
-| 字段   | 类型 | 说明               |
-| ------ | ---- | ------------------ |
-| user   | str  | 用户地址           |
-| events | i64  | 事件数             |
-| rpnl   | i64  | 用户累计已实现 PnL |
-| upnl   | i64  | 用户当前未实现 PnL |
-
-**计算公式**：
-```
-total_pnl = rpnl + upnl  // 前端绘制第三条线
-position_unrealized = (qty * lp / 1e6 - cost) / 1e6  // 单个持仓浮盈
-```
-
-## 前端使用
-
-1. **PnL曲线图**：
-   - X轴: `timeline[i].sk` 转换为区块号
-   - Y轴: 三条线
-     - 绿线: `rpnl` (累计已实现)
-     - 橙线: `upnl` (未实现)
-     - 白线: `rpnl + upnl` (总PnL)
-
-2. **持仓表格**：
-   - 仅在用户请求特定时间点时显示
-   - 计算列: unrealized = qty * lp / 1e6 - cost / 1e6
-
-3. **交互**：
-   - 切换 user: 调用 `/api/stage3-pnl` 一次，缓存全量 timeline
-   - 点击图表某点(改变 cursor): 仅调用 `/api/stage3-positions?sort_key=...` 获取持仓明细
-   - 默认加载最新时刻的 positions
-
-## 持久化表结构
-
-```sql
--- 用户-condition 状态 (含 last_price)
-CREATE TABLE s3_user_cond_state (
-  user_addr BLOB NOT NULL,
-  cond_idx INTEGER NOT NULL,
-  pos_0 BIGINT, pos_1 BIGINT, pos_2 BIGINT, pos_3 BIGINT,
-  pos_4 BIGINT, pos_5 BIGINT, pos_6 BIGINT, pos_7 BIGINT,
-  cost_0 BIGINT, cost_1 BIGINT, cost_2 BIGINT, cost_3 BIGINT,
-  cost_4 BIGINT, cost_5 BIGINT, cost_6 BIGINT, cost_7 BIGINT,
-  lp_0 BIGINT, lp_1 BIGINT, lp_2 BIGINT, lp_3 BIGINT,       -- last_price
-  lp_4 BIGINT, lp_5 BIGINT, lp_6 BIGINT, lp_7 BIGINT,
-  realized_pnl BIGINT,
-  event_count BIGINT,
-  last_sort_key BIGINT,
-  PRIMARY KEY (user_addr, cond_idx)
-);
-
--- 事件事实表 (用于构建 timeline)
-CREATE TABLE s3_user_event_fact (
-  user_addr BLOB NOT NULL,
-  sort_key BIGINT NOT NULL,
-  cond_idx INTEGER NOT NULL,
-  token_idx INTEGER NOT NULL,
-  event_type INTEGER NOT NULL,
-  realized_delta BIGINT NOT NULL,
-  realized_cum BIGINT NOT NULL,
-  unrealized_pnl BIGINT NOT NULL,
-  token_count INTEGER NOT NULL,
-  PRIMARY KEY (user_addr, sort_key, cond_idx, event_type, token_idx)
-);
-
--- 用户摘要
-CREATE TABLE s3_user_summary (
-  user_addr BLOB PRIMARY KEY,
-  total_events BIGINT NOT NULL,
-  total_realized_pnl BIGINT NOT NULL,
-  total_unrealized_pnl BIGINT NOT NULL,
-  active_conditions BIGINT NOT NULL,
-  last_sort_key BIGINT NOT NULL
-);
-
--- 同步游标
-CREATE TABLE s3_sync_cursor (
-  id INTEGER PRIMARY KEY,
-  sort_key BIGINT,
-  user_addr BLOB,
-  cond_idx INTEGER,
-  event_type INTEGER,
-  token_idx INTEGER,
-  processed_events BIGINT
-);
-```
-
-## 查询实现伪代码
-
-```cpp
-struct TimelineResponse {
-  std::string user;
-  int64_t latest_block;
-  int64_t total_events;
-  std::vector<TimelineRow> timeline;
-};
-
-TimelineResponse get_user_pnl_timeline(const std::string& user) {
-  // 全量 timeline：不受 cursor 影响
-  auto timeline = db.query(
-    "SELECT sort_key, event_type, realized_cum, unrealized_pnl, token_count "
-    "FROM s3_user_event_fact "
-    "WHERE user_addr = ? "
-    "ORDER BY sort_key", user);
-  int64_t latest_block = timeline.back().sort_key / SORT_KEY_SCALE;
-  return {user, latest_block, timeline.size(), timeline};
-}
-
-struct PositionsResponse {
-  std::string user;
-  int64_t sort_key;
-  int64_t block;
-  std::vector<PositionRow> positions;
-};
-
-PositionsResponse get_user_positions_at(const std::string& user, int64_t target_sk) {
-  // 依赖同用户已完成 pnl 预热
-  auto cache = user_query_cache[user];
-  auto positions = cache.snapshots.find_le(target_sk).positions;
-  return {user, target_sk, target_sk / SORT_KEY_SCALE, positions};
-}
-```
+### GET /api/stage3-positions?user=0x...&sort_key=...
+| entry                 | type   | required | description                            |
+| --------------------- | ------ | -------- | -------------------------------------- |
+| query.user            | string | 是       | 用户地址                               |
+| query.sort_key        | i64    | 是       | 目标 cursor                            |
+| resp.user             | string | 是       | 用户地址                               |
+| resp.sort_key         | i64    | 是       | 回显请求的 cursor                      |
+| resp.block            | i64    | 是       | 快照所在 block                         |
+| resp.positions[]      | array  | 是       | 指定 cursor 的持仓快照（仅 positions） |
+| resp.positions[].ci   | u32    | 是       | cond_idx                               |
+| resp.positions[].ti   | u8     | 是       | token_idx                              |
+| resp.positions[].qty  | i64    | 是       | 持仓数量（`1e6=1 token`，可负）        |
+| resp.positions[].cost | i64    | 是       | 成本基础（`1e6=$1`，可负）             |
+| resp.positions[].lp   | i64    | 是       | 最近成交价（`1e6=$1`）                 |
