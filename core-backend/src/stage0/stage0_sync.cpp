@@ -1,6 +1,7 @@
 #include "stage0_sync.hpp"
 #include "config.hpp"
 #include "stage0_sync_http.hpp"
+#include "stage0_tag.hpp"
 
 #include "../infra/rpc_transport.hpp"
 #include "misc/profiler.hpp"
@@ -250,10 +251,16 @@ StageSync::StageSync(const Config &config, Database &stage1_db, Database &stage0
   sync_.syncing = false;
 }
 
-void StageSync::start(asio::io_context &ioc) {
-  ioc_ = &ioc;
+void StageSync::start_query(asio::io_context &ioc) {
+  query_ioc_ = &ioc;
   stop_requested_ = false;
-  schedule_sync(0);
+  schedule_query_sync(0);
+}
+
+void StageSync::start_tag(asio::io_context &ioc) {
+  tag_ioc_ = &ioc;
+  stop_requested_ = false;
+  schedule_tag_sync(0);
 }
 
 void StageSync::stop() {
@@ -307,14 +314,28 @@ void StageSync::reset_tag_progress() {
                          "tag_reset untagged=" + std::to_string(untagged_count_));
 }
 
-void StageSync::schedule_sync(int delay_seconds) {
+void StageSync::schedule_query_sync(int delay_seconds) {
   if (stop_requested_) {
     return;
   }
-  auto timer = std::make_shared<asio::steady_timer>(*ioc_, std::chrono::seconds(delay_seconds));
+  assert(query_ioc_ != nullptr);
+  auto timer = std::make_shared<asio::steady_timer>(*query_ioc_, std::chrono::seconds(delay_seconds));
   timer->async_wait([this, timer](const boost::system::error_code &ec) {
     if (!ec && !stop_requested_) {
-      do_sync();
+      do_query_sync();
+    }
+  });
+}
+
+void StageSync::schedule_tag_sync(int delay_seconds) {
+  if (stop_requested_) {
+    return;
+  }
+  assert(tag_ioc_ != nullptr);
+  auto timer = std::make_shared<asio::steady_timer>(*tag_ioc_, std::chrono::seconds(delay_seconds));
+  timer->async_wait([this, timer](const boost::system::error_code &ec) {
+    if (!ec && !stop_requested_) {
+      do_tag_tick();
     }
   });
 }
@@ -362,7 +383,7 @@ void StageSync::record_commit_locked(int64_t cursor) {
   }
 }
 
-void StageSync::do_sync() {
+void StageSync::do_query_sync() {
   Trace;
   if (stop_requested_) {
     return;
@@ -385,8 +406,7 @@ void StageSync::do_sync() {
       std::lock_guard<std::mutex> lock(status_mutex_);
       refresh_status_locked(stage1_head, cursor, false);
     }
-    const int64_t tagged_now = do_tag_sync();
-    schedule_sync(tagged_now > 0 ? 0 : base_interval_seconds_);
+    schedule_query_sync(base_interval_seconds_);
     return;
   }
 
@@ -733,9 +753,16 @@ void StageSync::do_sync() {
     return;
   }
 
-  // Tag sync - process untagged conditions
+  schedule_query_sync(applied_block < stage1_head ? 0 : base_interval_seconds_);
+}
+
+void StageSync::do_tag_tick() {
+  Trace;
+  if (stop_requested_) {
+    return;
+  }
   const int64_t tagged_now = do_tag_sync();
-  schedule_sync((applied_block < stage1_head || tagged_now > 0) ? 0 : base_interval_seconds_);
+  schedule_tag_sync(tagged_now > 0 ? 0 : base_interval_seconds_);
 }
 
 void StageSync::init_schema() {
@@ -916,15 +943,20 @@ void StageSync::set_scan_cursor_in_txn(duckdb::Connection &conn, int64_t block) 
 void StageSync::init_tagger() {
   const std::string model_dir = config_.model_dir;
   const std::string tag_md = config_.tag_md_path;
+  const TaggerModelInfo model_info = detect_tagger_model_info(model_dir);
+  {
+    std::lock_guard<std::mutex> lock(status_mutex_);
+    sync_.tag_model_path = model_info.model_path;
+    sync_.tag_model_size_text = model_info.model_size_text;
+  }
   if (model_dir.empty() || tag_md.empty()) {
-    std::cout << "[Stage0] Tagger disabled (model_dir or tag_md not configured)" << std::endl;
+    std::cout << "[Tagger] Tagger disabled (model_dir or tag_md not configured)" << std::endl;
     return;
   }
   try {
     tagger_ = std::make_unique<Tagger>(model_dir, tag_md);
-    std::cout << "[Stage0] Tagger initialized with " << tagger_->label_count() << " labels" << std::endl;
   } catch (const std::exception &e) {
-    std::cerr << "[Stage0] Failed to initialize tagger: " << e.what() << std::endl;
+    std::cerr << "[Tagger] Failed to initialize tagger: " << e.what() << std::endl;
   }
 }
 
@@ -963,12 +995,15 @@ void StageSync::set_tag_cursor_in_txn(duckdb::Connection &conn, int64_t cursor) 
 }
 
 int64_t StageSync::do_tag_sync() {
+  Trace;
   if (!tagger_) {
     return 0;
   }
   // Capture epoch at start to detect reset during execution
   const uint64_t epoch_at_start = tag_reset_epoch_.load(std::memory_order_seq_cst);
   const int64_t tag_cursor = get_tag_cursor();
+  std::string tag_trace_name = "s0/tag rowid>" + std::to_string(tag_cursor);
+  TraceName(tag_trace_name.c_str(), tag_trace_name.size());
 
   // Fetch untagged poly conditions after current tag cursor.
   auto conn = stage0_db_.create_connection();

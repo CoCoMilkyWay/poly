@@ -222,6 +222,49 @@ std::vector<TagLabel> parse_tag_md(const std::string &path) {
   return labels;
 }
 
+std::string format_file_size(uintmax_t num_bytes) {
+  static constexpr const char *kUnits[] = {"B", "KB", "MB", "GB", "TB"};
+  double size = static_cast<double>(num_bytes);
+  size_t unit_idx = 0;
+  while (size >= 1024.0 && unit_idx + 1 < std::size(kUnits)) {
+    size /= 1024.0;
+    unit_idx += 1;
+  }
+  if (unit_idx == 0) {
+    return std::to_string(static_cast<uint64_t>(size)) + " " + kUnits[unit_idx];
+  }
+  char buf[64];
+  snprintf(buf, sizeof(buf), "%.2f %s", size, kUnits[unit_idx]);
+  return std::string(buf);
+}
+
+std::string detect_model_size_text(const std::string &model_path) {
+  namespace fs = std::filesystem;
+  if (model_path.empty()) {
+    return "N/A";
+  }
+  if (fs::exists(model_path) && fs::is_regular_file(model_path)) {
+    return format_file_size(fs::file_size(model_path));
+  }
+  uintmax_t parts_total_size = 0;
+  bool found_parts = false;
+  for (int i = 0; i < 100; ++i) {
+    char suffix[8];
+    snprintf(suffix, sizeof(suffix), ".%02d", i);
+    std::string part_path = model_path + suffix;
+    if (!fs::exists(part_path)) {
+      break;
+    }
+    assert(fs::is_regular_file(part_path));
+    parts_total_size += fs::file_size(part_path);
+    found_parts = true;
+  }
+  if (found_parts) {
+    return format_file_size(parts_total_size);
+  }
+  return "N/A";
+}
+
 // ============================================================================
 // ONNX Inference
 // ============================================================================
@@ -457,6 +500,17 @@ private:
 
 } // namespace
 
+TaggerModelInfo detect_tagger_model_info(const std::string &model_dir) {
+  TaggerModelInfo info;
+  if (model_dir.empty()) {
+    info.model_size_text = "N/A";
+    return info;
+  }
+  info.model_path = model_dir + "/model.onnx";
+  info.model_size_text = detect_model_size_text(info.model_path);
+  return info;
+}
+
 // ============================================================================
 // Tagger Implementation
 // ============================================================================
@@ -490,7 +544,10 @@ struct Tagger::Impl {
         label_embeddings_flat.push_back(v);
       }
     }
-    std::cout << "[Tagger] Loaded " << labels.size() << " labels, dim=" << hidden_dim << std::endl;
+    const TaggerModelInfo model_info = detect_tagger_model_info(model_dir);
+    std::cout << "[Tagger] Loaded " << labels.size() << " labels, dim=" << hidden_dim
+              << ", model=" << model_info.model_path << ", size=" << model_info.model_size_text
+              << std::endl;
   }
 };
 

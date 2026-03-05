@@ -104,7 +104,8 @@ stage3_sync_tick
 │  └─ update s3_sync_cursor(...)
 └─ 6) 查询路径(只读)
    ├─ users_sorted(limit)           -> s3_user_summary(用户列表)
-   └─ user_pnl_data(user, block)    -> 返回 {positions, timeline} 两个紧凑表
+   ├─ user_pnl_timeline(user)       -> 返回全量 timeline（cursor 无关）
+   └─ user_positions_at(user, sk)   -> 返回该 cursor 的 positions
 ```
 
 ## 数据结构
@@ -222,24 +223,46 @@ struct SyncCursor {
 ]
 ```
 
-### GET /api/stage3-pnl?user=0x...&block=12345678
-PnL数据（核心接口）
+### GET /api/stage3-pnl?user=0x...
+PnL时间线（全量，cursor无关）
 
 **输入参数**：
 - `user`: 用户地址 (必填)
-- `block`: 目标区块号 (可选, 默认=最新)
 
 **返回语义**：
+- 返回该用户全量事件序列（不因 cursor 截断）
 - 若用户不存在或无事件，返回 `404`，body 为 `{"error":"User not found or no events"}`
-
-**输出**：两个紧凑表
 
 ```json
 {
   "user": "0x1234...",
-  "block": 12345678,
+  "block": 12345678,         // 该用户最新事件所在 block
   "total_events": 12345,
+  "timeline": [
+    {
+      "sk": 12340000000001,  // sort_key
+      "ty": 0,               // event_type
+      "rpnl": 100000,        // realized_pnl_cum
+      "upnl": 50000,         // unrealized_pnl
+      "tk": 5                // token_count
+    },
+    ...
+  ]
+}
+```
 
+### GET /api/stage3-positions?user=0x...&sort_key=12340000000001
+指定 cursor 的持仓快照（仅 positions）
+
+**输入参数**：
+- `user`: 用户地址 (必填)
+- `sort_key`: 目标 cursor (必填)
+
+```json
+{
+  "user": "0x1234...",
+  "sort_key": 12340000000001,
+  "block": 12340000,
   "positions": [
     {
       "ci": 123,           // cond_idx
@@ -247,17 +270,6 @@ PnL数据（核心接口）
       "qty": 1000000,      // 持仓数量 (1e6, 可负=短仓)
       "cost": 500000,      // 成本 (1e6, 可负=短仓信用)
       "lp": 550000         // last_price (1e6)
-    },
-    ...
-  ],
-
-  "timeline": [
-    {
-      "sk": 12340000000001,  // sort_key
-      "ty": 0,              // event_type
-      "rpnl": 100000,       // realized_pnl_cum
-      "upnl": 50000,        // unrealized_pnl
-      "tk": 5               // token_count
     },
     ...
   ]
@@ -268,16 +280,16 @@ PnL数据（核心接口）
 
 | 表        | 字段 | 类型 | 说明                           |
 | --------- | ---- | ---- | ------------------------------ |
-| positions | ci   | u32  | cond_idx                       |
-| positions | ti   | u8   | token_idx                      |
-| positions | qty  | i64  | 持仓数量 (1e6 = 1 token, 可负) |
-| positions | cost | i64  | 成本基础 (1e6 = $1, 可负)      |
-| positions | lp   | i64  | 最近成交价 (1e6 = $1)          |
 | timeline  | sk   | i64  | sort_key (block*1e9+log_idx)   |
 | timeline  | ty   | u8   | 事件类型                       |
 | timeline  | rpnl | i64  | 累计已实现 PnL                 |
 | timeline  | upnl | i64  | 该时刻未实现 PnL               |
 | timeline  | tk   | i32  | 持仓 token 种数                |
+| positions | ci   | u32  | cond_idx                       |
+| positions | ti   | u8   | token_idx                      |
+| positions | qty  | i64  | 持仓数量 (1e6 = 1 token, 可负) |
+| positions | cost | i64  | 成本基础 (1e6 = $1, 可负)      |
+| positions | lp   | i64  | 最近成交价 (1e6 = $1)          |
 
 `/api/stage3-users` 字段：
 
@@ -308,8 +320,9 @@ position_unrealized = (qty * lp / 1e6 - cost) / 1e6  // 单个持仓浮盈
    - 计算列: unrealized = qty * lp / 1e6 - cost / 1e6
 
 3. **交互**：
-   - 点击图表某点: 前端带 `block` 参数重新请求, 获取该时刻持仓明细
-   - 默认加载最新时刻
+   - 切换 user: 调用 `/api/stage3-pnl` 一次，缓存全量 timeline
+   - 点击图表某点(改变 cursor): 仅调用 `/api/stage3-positions?sort_key=...` 获取持仓明细
+   - 默认加载最新时刻的 positions
 
 ## 持久化表结构
 
@@ -378,28 +391,34 @@ CREATE TABLE s3_sync_cursor (
 ## 查询实现伪代码
 
 ```cpp
-struct PnlResponse {
+struct TimelineResponse {
   std::string user;
-  int64_t block;
+  int64_t latest_block;
   int64_t total_events;
-  std::vector<PositionRow> positions;
   std::vector<TimelineRow> timeline;
 };
 
-PnlResponse get_user_pnl_data(const std::string& user, int64_t target_block) {
-  int64_t target_sk = (target_block + 1) * SORT_KEY_SCALE - 1;  // 该block末尾
-  
-  // 1. 加载 timeline (直接从 fact 表读取)
+TimelineResponse get_user_pnl_timeline(const std::string& user) {
+  // 全量 timeline：不受 cursor 影响
   auto timeline = db.query(
     "SELECT sort_key, event_type, realized_cum, unrealized_pnl, token_count "
     "FROM s3_user_event_fact "
-    "WHERE user_addr = ? AND sort_key <= ? "
-    "ORDER BY sort_key", user, target_sk);
-  
-  // 2. 计算 positions (从 checkpoint 回放)
+    "WHERE user_addr = ? "
+    "ORDER BY sort_key", user);
+  int64_t latest_block = timeline.back().sort_key / SORT_KEY_SCALE;
+  return {user, latest_block, timeline.size(), timeline};
+}
+
+struct PositionsResponse {
+  std::string user;
+  int64_t sort_key;
+  int64_t block;
+  std::vector<PositionRow> positions;
+};
+
+PositionsResponse get_user_positions_at(const std::string& user, int64_t target_sk) {
   auto positions = build_positions_at(user, target_sk);
-  
-  return {user, target_block, timeline.size(), positions, timeline};
+  return {user, target_sk, target_sk / SORT_KEY_SCALE, positions};
 }
 
 std::vector<PositionRow> build_positions_at(const std::string& user, int64_t target_sk) {

@@ -118,9 +118,7 @@ public:
   Stage2Data stage2_data() const;
 
   std::vector<UserSummary> get_users_sorted(int64_t limit = 200) const;
-  std::vector<TimelineEntry> get_user_timeline(
-      const std::string &addr,
-      int64_t max_sort_key = std::numeric_limits<int64_t>::max()) const;
+  std::vector<TimelineEntry> get_user_timeline(const std::string &addr) const;
   std::vector<PositionRow> get_positions_at(const std::string &addr, int64_t sort_key) const;
 
 private:
@@ -247,7 +245,7 @@ private:
 
   double apply_event_to_state(const InputEvent &row, CondState &st) const;
 
-  std::vector<TimelineEvent> load_timeline_events(const std::string &addr_lower, int64_t max_sort_key) const;
+  std::vector<TimelineEvent> load_timeline_events(const std::string &addr_lower) const;
   std::vector<TimelineEntry> build_timeline(const std::vector<TimelineEvent> &events) const;
   std::unordered_map<int32_t, CondState> build_state_until(const std::string &addr_lower,
                                                            int64_t target_sort_key) const;

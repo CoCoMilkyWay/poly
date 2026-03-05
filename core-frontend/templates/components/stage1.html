@@ -467,7 +467,7 @@
         UnTagged: {{ "{:,}".format(stage0_state.untagged_count or 0) }})
       </span>
       <span id="stage0-tag-model" style="margin-left: 8px; color: #555">
-        Model: {{ tag_model_path }} ({{ tag_model_size_text }})
+        Model: {{ stage0_state.tag_model_path or "N/A" }} ({{ stage0_state.tag_model_size_text or "N/A" }})
       </span>
       <span id="stage0-tag-device" style="margin-left: 8px; color: #555">
         Device:
@@ -1122,6 +1122,13 @@
         const deviceColor = tagDevice === "CUDA" ? "#4ade80" : "#f59e0b";
         deviceSpan.innerHTML = `Device: <span style="color: ${deviceColor}">${tagDevice}</span>`;
       }
+
+      const modelPath = sync0.tag_model_path || "N/A";
+      const modelSizeText = sync0.tag_model_size_text || "N/A";
+      const modelSpan = document.getElementById("stage0-tag-model");
+      if (modelSpan) {
+        modelSpan.textContent = `Model: ${modelPath} (${modelSizeText})`;
+      }
     }
 
     function updateTables(tables) {
@@ -1179,6 +1186,8 @@
       tagged_count: Number("{{ stage0_state.tagged_count or 0 }}"),
       untagged_count: Number("{{ stage0_state.untagged_count or 0 }}"),
       tag_device: "{{ stage0_state.tag_device or '' }}",
+      tag_model_path: "{{ stage0_state.tag_model_path or '' }}",
+      tag_model_size_text: "{{ stage0_state.tag_model_size_text or '' }}",
     }, Number(document.body.dataset.headBlock || "0"));
 
     window.updateStage0Status = updateStage0Status;

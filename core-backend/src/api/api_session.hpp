@@ -33,6 +33,8 @@ struct Stage0Status {
   int64_t tagged_count = 0;
   int64_t untagged_count = 0;
   std::string tag_device;
+  std::string tag_model_path;
+  std::string tag_model_size_text;
 };
 
 struct Stage1Status {
@@ -97,6 +99,7 @@ private:
   void handle_stage3_status();
   void handle_stage3_users();
   void handle_stage3_pnl();
+  void handle_stage3_positions();
   std::string get_param(const char *name);
   static std::string url_decode(const std::string &str);
   void do_write();

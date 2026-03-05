@@ -6,6 +6,13 @@
 
 namespace stage0 {
 
+struct TaggerModelInfo {
+  std::string model_path;
+  std::string model_size_text;
+};
+
+TaggerModelInfo detect_tagger_model_info(const std::string &model_dir);
+
 struct TagLabel {
   std::string full_name;  // "Crypto_Price - Crypto_Price_Bitcoin"
   std::string short_name; // "Crypto_Price_Bitcoin"

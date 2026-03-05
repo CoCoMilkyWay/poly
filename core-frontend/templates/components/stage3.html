@@ -6,6 +6,7 @@
     border: 1px solid #333;
     margin-bottom: 15px;
   }
+
   .s3-header {
     display: flex;
     justify-content: space-between;
@@ -14,6 +15,7 @@
     padding-bottom: 8px;
     border-bottom: 1px solid #333;
   }
+
   .s3-header h2 {
     font-size: 1.1em;
     color: #fff;
@@ -22,6 +24,7 @@
     gap: 8px;
     margin: 0;
   }
+
   .s3-header h2::before {
     content: "";
     width: 3px;
@@ -29,7 +32,11 @@
     background: #6366f1;
     border-radius: 2px;
   }
-  .s3-query-row { margin-bottom: 12px; }
+
+  .s3-query-row {
+    margin-bottom: 12px;
+  }
+
   .s3-progress {
     height: 4px;
     background: #333;
@@ -37,35 +44,49 @@
     margin-bottom: 10px;
     overflow: hidden;
   }
+
   .s3-progress-bar {
     height: 100%;
     background: linear-gradient(90deg, #6366f1, #818cf8);
     border-radius: 2px;
     transition: width 0.3s;
   }
+
   .s3-sync-stats {
     display: flex;
     gap: 8px;
     margin-bottom: 12px;
     flex-wrap: wrap;
   }
+
   .s3-sync-stat {
     background: #252525;
     border-radius: 4px;
     padding: 4px 10px;
   }
+
   .s3-sync-stat-label {
     font-size: 0.65em;
     color: #666;
   }
+
   .s3-sync-stat-value {
     font-size: 0.9em;
     font-weight: 500;
     font-family: monospace;
     color: #fff;
   }
-  .s3-user-select { display: flex; gap: 8px; align-items: center; }
-  .s3-input-wrapper { position: relative; }
+
+  .s3-user-select {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .s3-input-wrapper {
+    position: relative;
+  }
+
   .s3-user-input {
     width: 380px;
     padding: 6px 10px;
@@ -76,7 +97,12 @@
     border-radius: 4px;
     font-family: monospace;
   }
-  .s3-user-input:focus { outline: none; border-color: #6366f1; }
+
+  .s3-user-input:focus {
+    outline: none;
+    border-color: #6366f1;
+  }
+
   .s3-user-dropdown {
     position: absolute;
     top: 100%;
@@ -90,7 +116,11 @@
     z-index: 100;
     display: none;
   }
-  .s3-user-dropdown.show { display: block; }
+
+  .s3-user-dropdown.show {
+    display: block;
+  }
+
   .s3-user-item {
     padding: 6px 10px;
     cursor: pointer;
@@ -99,8 +129,15 @@
     display: flex;
     justify-content: space-between;
   }
-  .s3-user-item:hover { background: #333; }
-  .s3-user-item .count { color: #888; }
+
+  .s3-user-item:hover {
+    background: #333;
+  }
+
+  .s3-user-item .count {
+    color: #888;
+  }
+
   .s3-btn {
     padding: 6px 12px;
     font-size: 0.85em;
@@ -111,26 +148,58 @@
     cursor: pointer;
     transition: background 0.2s;
   }
-  .s3-btn:hover { background: #444; }
-  .s3-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-  .s3-btn-primary { background: #6366f1; }
-  .s3-btn-primary:hover { background: #4f46e5; }
-  .s3-query-hint { color: #666; font-size: 0.8em; margin-left: 8px; }
-  .s3-body { display: block; }
+
+  .s3-btn:hover {
+    background: #444;
+  }
+
+  .s3-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .s3-btn-primary {
+    background: #6366f1;
+  }
+
+  .s3-btn-primary:hover {
+    background: #4f46e5;
+  }
+
+  .s3-query-hint {
+    color: #666;
+    font-size: 0.8em;
+    margin-left: 8px;
+  }
+
+  .s3-body {
+    display: block;
+  }
+
   .s3-meta {
     display: flex;
     gap: 15px;
     margin-bottom: 15px;
     flex-wrap: wrap;
   }
+
   .s3-meta-item {
     background: #252525;
     padding: 8px 12px;
     border-radius: 4px;
     font-size: 0.85em;
   }
-  .s3-meta-item .label { color: #888; font-size: 0.8em; }
-  .s3-meta-item .value { color: #fff; font-family: monospace; }
+
+  .s3-meta-item .label {
+    color: #888;
+    font-size: 0.8em;
+  }
+
+  .s3-meta-item .value {
+    color: #fff;
+    font-family: monospace;
+  }
+
   .s3-chart-container {
     position: relative;
     height: 420px;
@@ -139,11 +208,13 @@
     margin-bottom: 12px;
     overflow: hidden;
   }
+
   .s3-chart {
     width: 100%;
     height: 100%;
     cursor: crosshair;
   }
+
   .s3-legend {
     position: absolute;
     top: 8px;
@@ -155,20 +226,23 @@
     pointer-events: none;
     flex-wrap: wrap;
   }
+
   .s3-legend-item {
     display: flex;
     align-items: center;
     gap: 4px;
     color: #aaa;
   }
+
   .s3-legend-dot {
     width: 8px;
     height: 8px;
     border-radius: 50%;
   }
+
   .s3-tooltip {
     position: absolute;
-    background: rgba(0,0,0,0.9);
+    background: rgba(0, 0, 0, 0.9);
     border: 1px solid #444;
     padding: 8px 12px;
     border-radius: 6px;
@@ -180,6 +254,7 @@
     white-space: nowrap;
     line-height: 1.6;
   }
+
   .s3-chart-controls {
     position: absolute;
     top: 8px;
@@ -187,16 +262,22 @@
     display: flex;
     gap: 4px;
   }
+
   .s3-chart-btn {
     padding: 3px 8px;
     font-size: 0.72em;
-    background: rgba(255,255,255,0.1);
+    background: rgba(255, 255, 255, 0.1);
     color: #aaa;
     border: 1px solid #444;
     border-radius: 3px;
     cursor: pointer;
   }
-  .s3-chart-btn:hover { background: rgba(255,255,255,0.2); color: #fff; }
+
+  .s3-chart-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+  }
+
   .s3-cursor-bar {
     background: #252525;
     border-radius: 8px;
@@ -207,27 +288,53 @@
     font-size: 0.82em;
     line-height: 1.8;
   }
-  .s3-cursor-bar.show { display: flex; gap: 20px; flex-wrap: wrap; align-items: baseline; }
-  .s3-cursor-bar .sk { color: #888; }
-  .s3-cursor-bar .pnl { font-size: 1.1em; font-weight: 600; }
-  .s3-cursor-bar .pnl.pos { color: #10b981; }
-  .s3-cursor-bar .pnl.neg { color: #ef4444; }
+
+  .s3-cursor-bar.show {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    align-items: baseline;
+  }
+
+  .s3-cursor-bar .sk {
+    color: #888;
+  }
+
+  .s3-cursor-bar .pnl {
+    font-size: 1.1em;
+    font-weight: 600;
+  }
+
+  .s3-cursor-bar .pnl.pos {
+    color: #10b981;
+  }
+
+  .s3-cursor-bar .pnl.neg {
+    color: #ef4444;
+  }
+
   .s3-cursor-bar .evt-badge {
     padding: 1px 6px;
     border-radius: 3px;
     font-size: 0.9em;
   }
-  .s3-cursor-bar .evt-detail { color: #bbb; }
+
+  .s3-cursor-bar .evt-detail {
+    color: #bbb;
+  }
+
   .s3-details {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 12px;
   }
+
   .s3-panel {
     background: #252525;
     border-radius: 8px;
     padding: 12px;
   }
+
   .s3-panel-title {
     font-size: 0.9em;
     color: #fff;
@@ -235,7 +342,13 @@
     padding-bottom: 6px;
     border-bottom: 1px solid #333;
   }
-  .s3-positions, .s3-trades { height: 300px; overflow-y: auto; }
+
+  .s3-positions,
+  .s3-trades {
+    height: 300px;
+    overflow-y: auto;
+  }
+
   .s3-pos-item {
     display: flex;
     align-items: center;
@@ -247,6 +360,7 @@
     font-size: 0.78em;
     font-family: monospace;
   }
+
   .s3-pos-item .cond {
     color: #aaa;
     min-width: 110px;
@@ -256,12 +370,14 @@
     white-space: nowrap;
     flex-shrink: 0;
   }
+
   .s3-pos-bars {
     display: flex;
     gap: 2px;
     flex: 1;
     min-width: 0;
   }
+
   .s3-pos-half {
     flex: 1;
     position: relative;
@@ -270,6 +386,7 @@
     border-radius: 2px;
     overflow: hidden;
   }
+
   .s3-pos-bar {
     position: absolute;
     top: 0;
@@ -278,8 +395,15 @@
     border-radius: 2px;
     min-width: 1px;
   }
-  .s3-pos-bar.long { background: rgba(16,185,129,0.45); }
-  .s3-pos-bar.short { background: rgba(239,68,68,0.45); }
+
+  .s3-pos-bar.long {
+    background: rgba(16, 185, 129, 0.45);
+  }
+
+  .s3-pos-bar.short {
+    background: rgba(239, 68, 68, 0.45);
+  }
+
   .s3-pos-val {
     position: relative;
     z-index: 1;
@@ -290,11 +414,29 @@
     white-space: nowrap;
     color: #ccc;
   }
-  .s3-pos-val.long { color: #10b981; }
-  .s3-pos-val.short { color: #ef4444; }
-  .s3-pos-item .s3-pnl { min-width: 72px; text-align: right; flex-shrink: 0; }
-  .s3-pos-item .s3-pnl.pos { color: #10b981; }
-  .s3-pos-item .s3-pnl.neg { color: #ef4444; }
+
+  .s3-pos-val.long {
+    color: #10b981;
+  }
+
+  .s3-pos-val.short {
+    color: #ef4444;
+  }
+
+  .s3-pos-item .s3-pnl {
+    min-width: 72px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .s3-pos-item .s3-pnl.pos {
+    color: #10b981;
+  }
+
+  .s3-pos-item .s3-pnl.neg {
+    color: #ef4444;
+  }
+
   .s3-trade-item {
     display: flex;
     gap: 8px;
@@ -306,10 +448,29 @@
     font-family: monospace;
     transition: background 0.15s;
   }
-  .s3-trade-item.focus { background: #2a2a3a; border-left: 2px solid #6366f1; }
-  .s3-trade-item .blk { color: #666; min-width: 72px; }
-  .s3-trade-item .type { min-width: 56px; font-weight: 500; }
-  .s3-trade-item .detail { color: #aaa; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .s3-trade-item.focus {
+    background: #2a2a3a;
+    border-left: 2px solid #6366f1;
+  }
+
+  .s3-trade-item .blk {
+    color: #666;
+    min-width: 72px;
+  }
+
+  .s3-trade-item .type {
+    min-width: 56px;
+    font-weight: 500;
+  }
+
+  .s3-trade-item .detail {
+    color: #aaa;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 </style>
 
 <div class="s3-card" id="s3-card">
@@ -345,8 +506,7 @@
   <div class="s3-query-row">
     <div class="s3-user-select">
       <div class="s3-input-wrapper">
-        <input type="text" class="s3-user-input" id="s3-user-input"
-               placeholder="输入用户地址 (0x...) 或点击选择" />
+        <input type="text" class="s3-user-input" id="s3-user-input" placeholder="输入用户地址 (0x...) 或点击选择" />
         <div class="s3-user-dropdown" id="s3-user-dropdown"></div>
       </div>
       <button class="s3-btn s3-btn-primary" onclick="s3LoadUser()" id="s3-load-btn">查询</button>
@@ -359,16 +519,36 @@
     <div class="s3-chart-container" id="s3-chart-container">
       <canvas class="s3-chart" id="s3-chart"></canvas>
       <div class="s3-legend" id="s3-legend">
-        <div class="s3-legend-item"><div class="s3-legend-dot" style="background:#6366f1"></div>Buy</div>
-        <div class="s3-legend-item"><div class="s3-legend-dot" style="background:#ef4444"></div>Sell</div>
-        <div class="s3-legend-item"><div class="s3-legend-dot" style="background:#eab308"></div>Split</div>
-        <div class="s3-legend-item"><div class="s3-legend-dot" style="background:#f97316"></div>Merge</div>
-        <div class="s3-legend-item"><div class="s3-legend-dot" style="background:#22d3ee"></div>Redeem</div>
-        <div class="s3-legend-item"><div class="s3-legend-dot" style="background:#a855f7"></div>FPMM</div>
-        <div class="s3-legend-item"><div class="s3-legend-dot" style="background:#14b8a6"></div>LP</div>
-        <div class="s3-legend-item"><div class="s3-legend-dot" style="background:#f472b6"></div>Convert</div>
-        <div class="s3-legend-item"><div class="s3-legend-dot" style="background:#64748b"></div>Transfer</div>
-        <div class="s3-legend-item"><div class="s3-legend-dot" style="background:#818cf8"></div>Tokens</div>
+        <div class="s3-legend-item">
+          <div class="s3-legend-dot" style="background:#6366f1"></div>Buy
+        </div>
+        <div class="s3-legend-item">
+          <div class="s3-legend-dot" style="background:#ef4444"></div>Sell
+        </div>
+        <div class="s3-legend-item">
+          <div class="s3-legend-dot" style="background:#eab308"></div>Split
+        </div>
+        <div class="s3-legend-item">
+          <div class="s3-legend-dot" style="background:#f97316"></div>Merge
+        </div>
+        <div class="s3-legend-item">
+          <div class="s3-legend-dot" style="background:#22d3ee"></div>Redeem
+        </div>
+        <div class="s3-legend-item">
+          <div class="s3-legend-dot" style="background:#a855f7"></div>FPMM
+        </div>
+        <div class="s3-legend-item">
+          <div class="s3-legend-dot" style="background:#14b8a6"></div>LP
+        </div>
+        <div class="s3-legend-item">
+          <div class="s3-legend-dot" style="background:#f472b6"></div>Convert
+        </div>
+        <div class="s3-legend-item">
+          <div class="s3-legend-dot" style="background:#64748b"></div>Transfer
+        </div>
+        <div class="s3-legend-item">
+          <div class="s3-legend-dot" style="background:#818cf8"></div>Tokens
+        </div>
       </div>
       <div class="s3-chart-controls">
         <button class="s3-chart-btn" onclick="s3ResetZoom()">Reset</button>
@@ -398,213 +578,237 @@
 </div>
 
 <script>
-let _s3Meta = null;
-let _s3Timeline = [];
-let _s3Users = [];
-let _s3ViewStartSk = 0;
-let _s3ViewEndSk = 0;
-let _s3CursorIdx = -1;
-let _s3Dragging = false;
-let _s3DragStartX = 0;
-let _s3DragStartVS = 0;
-let _s3DragStartVE = 0;
-let _s3DragMoved = false;
-let _s3PollingSync = false;
-let _s3UsersLoaded = false;
-let _s3LoadingUsers = false;
+  let _s3LatestBlock = 0;
+  let _s3Timeline = [];
+  let _s3Positions = [];
+  let _s3CurrentUser = '';
+  let _s3PosReqSeq = 0;
+  let _s3Users = [];
+  let _s3ViewStartSk = 0;
+  let _s3ViewEndSk = 0;
+  let _s3CursorIdx = -1;
+  let _s3Dragging = false;
+  let _s3DragStartX = 0;
+  let _s3DragStartVS = 0;
+  let _s3DragStartVE = 0;
+  let _s3DragMoved = false;
+  let _s3PollingSync = false;
+  let _s3UsersLoaded = false;
+  let _s3LoadingUsers = false;
 
-const _s3Pad = { top: 30, right: 70, bottom: 32, left: 50 };
-const _s3EventMeta = {
-  0:  { name: '买入', color: '#6366f1', cat: 'buy', marker: 'up' },
-  1:  { name: '卖出', color: '#ef4444', cat: 'sell', marker: 'down' },
-  2:  { name: 'Split', color: '#eab308', cat: 'split', marker: 'up' },
-  3:  { name: 'Split', color: '#eab308', cat: 'split', marker: 'up' },
-  4:  { name: 'Split', color: '#eab308', cat: 'split', marker: 'up' },
-  5:  { name: 'Merge', color: '#f97316', cat: 'merge', marker: 'down' },
-  6:  { name: 'Merge', color: '#f97316', cat: 'merge', marker: 'down' },
-  7:  { name: 'Merge', color: '#f97316', cat: 'merge', marker: 'down' },
-  8:  { name: '赎回', color: '#22d3ee', cat: 'redeem', marker: 'dot' },
-  9:  { name: '赎回', color: '#22d3ee', cat: 'redeem', marker: 'dot' },
-  10: { name: '转换', color: '#f472b6', cat: 'convert', marker: 'dot' },
-  11: { name: 'AMM买', color: '#a855f7', cat: 'buy', marker: 'up' },
-  12: { name: 'AMM卖', color: '#a855f7', cat: 'sell', marker: 'down' },
-  13: { name: 'LP添加', color: '#14b8a6', cat: 'lp', marker: 'up' },
-  14: { name: 'LP移除', color: '#14b8a6', cat: 'lp', marker: 'down' },
-  15: { name: 'LP返还', color: '#14b8a6', cat: 'lp', marker: 'up' },
-  16: { name: '转入', color: '#64748b', cat: 'transfer', marker: 'up' },
-  17: { name: '转入', color: '#64748b', cat: 'transfer', marker: 'up' },
-  18: { name: '转入', color: '#64748b', cat: 'transfer', marker: 'up' },
-  19: { name: '转出', color: '#64748b', cat: 'transfer', marker: 'down' },
-  20: { name: '转出', color: '#64748b', cat: 'transfer', marker: 'down' },
-  21: { name: '转出', color: '#64748b', cat: 'transfer', marker: 'down' },
-};
+  const _s3Pad = { top: 30, right: 70, bottom: 32, left: 50 };
+  const _s3EventMeta = {
+    0: { name: '买入', color: '#6366f1', cat: 'buy', marker: 'up' },
+    1: { name: '卖出', color: '#ef4444', cat: 'sell', marker: 'down' },
+    2: { name: 'Split', color: '#eab308', cat: 'split', marker: 'up' },
+    3: { name: 'Split', color: '#eab308', cat: 'split', marker: 'up' },
+    4: { name: 'Split', color: '#eab308', cat: 'split', marker: 'up' },
+    5: { name: 'Merge', color: '#f97316', cat: 'merge', marker: 'down' },
+    6: { name: 'Merge', color: '#f97316', cat: 'merge', marker: 'down' },
+    7: { name: 'Merge', color: '#f97316', cat: 'merge', marker: 'down' },
+    8: { name: '赎回', color: '#22d3ee', cat: 'redeem', marker: 'dot' },
+    9: { name: '赎回', color: '#22d3ee', cat: 'redeem', marker: 'dot' },
+    10: { name: '转换', color: '#f472b6', cat: 'convert', marker: 'dot' },
+    11: { name: 'AMM买', color: '#a855f7', cat: 'buy', marker: 'up' },
+    12: { name: 'AMM卖', color: '#a855f7', cat: 'sell', marker: 'down' },
+    13: { name: 'LP添加', color: '#14b8a6', cat: 'lp', marker: 'up' },
+    14: { name: 'LP移除', color: '#14b8a6', cat: 'lp', marker: 'down' },
+    15: { name: 'LP返还', color: '#14b8a6', cat: 'lp', marker: 'up' },
+    16: { name: '转入', color: '#64748b', cat: 'transfer', marker: 'up' },
+    17: { name: '转入', color: '#64748b', cat: 'transfer', marker: 'up' },
+    18: { name: '转入', color: '#64748b', cat: 'transfer', marker: 'up' },
+    19: { name: '转出', color: '#64748b', cat: 'transfer', marker: 'down' },
+    20: { name: '转出', color: '#64748b', cat: 'transfer', marker: 'down' },
+    21: { name: '转出', color: '#64748b', cat: 'transfer', marker: 'down' },
+  };
 
-function s3EvtMeta(ty) {
-  return _s3EventMeta[ty] || { name: `E${ty}`, color: '#888', cat: 'other', marker: 'dot' };
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  s3PollSync();
-  setInterval(s3PollSync, 2000);
-
-  const input = document.getElementById('s3-user-input');
-  const dropdown = document.getElementById('s3-user-dropdown');
-
-  input.addEventListener('focus', async () => {
-    await s3LoadUserList();
-    if (_s3Users.length) dropdown.classList.add('show');
-  });
-  input.addEventListener('input', () => s3FilterUsers(input.value));
-  input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') { dropdown.classList.remove('show'); s3LoadUser(); }
-  });
-  document.addEventListener('click', (e) => {
-    if (!e.target.closest('.s3-input-wrapper')) dropdown.classList.remove('show');
-  });
-
-  s3SetupInteraction();
-  window.addEventListener('resize', () => { if (_s3Timeline.length) s3Draw(); });
-});
-
-async function s3PollSync() {
-  if (_s3PollingSync) return;
-  _s3PollingSync = true;
-  try {
-    const resp = await fetch('/api/stage3-status');
-    const s = await resp.json();
-    s3UpdateSyncStats(s || {});
-  } catch(e) {
-  } finally {
-    _s3PollingSync = false;
+  function s3EvtMeta(ty) {
+    return _s3EventMeta[ty] || { name: `E${ty}`, color: '#888', cat: 'other', marker: 'dot' };
   }
-}
 
-function s3UpdateSyncStats(sync) {
-  const last = Number(sync.last_block || 0);
-  const head = Number(sync.head_block || 0);
-  const behind = Math.max(0, Number(sync.behind_blocks || 0));
-  const syncing = !!sync.syncing;
-  const bps = Number(sync.blocks_per_second || 0);
-  const eta = Number(sync.eta_seconds ?? -1);
-
-  document.getElementById('s3-last-block').textContent = last.toLocaleString();
-  document.getElementById('s3-head-block').textContent = head.toLocaleString();
-  document.getElementById('s3-behind').textContent = behind.toLocaleString();
-  document.getElementById('s3-speed').textContent = bps > 0 ? `${Math.round(bps).toLocaleString()}/s` : '-';
-  document.getElementById('s3-eta').textContent = s3FmtEta(eta);
-  const progress = head > 0 ? (last / head) * 100 : 0;
-  document.getElementById('s3-progress-bar').style.width = `${Math.max(0, Math.min(100, progress)).toFixed(2)}%`;
-
-  const badge = document.getElementById('s3-sync-badge');
-  if (syncing) {
-    badge.className = 'badge badge-warning';
-    badge.textContent = '同步中';
-  } else if (behind === 0 && head > 0) {
-    badge.className = 'badge badge-success';
-    badge.textContent = '已同步';
-  } else {
-    badge.className = 'badge badge-warning';
-    badge.textContent = '等待中';
+  async function s3FetchJson(url) {
+    const resp = await fetch(url);
+    return await resp.json();
   }
-}
 
-async function s3LoadUserList() {
-  if (_s3UsersLoaded || _s3LoadingUsers) return;
-  _s3LoadingUsers = true;
-  try {
-    const resp = await fetch('/api/stage3-users?limit=1000');
-    _s3Users = await resp.json();
-    s3RenderDropdown(_s3Users);
-    _s3UsersLoaded = true;
-  } catch(e) {}
-  _s3LoadingUsers = false;
-}
+  document.addEventListener('DOMContentLoaded', () => {
+    s3PollSync();
+    setInterval(s3PollSync, 2000);
 
-function s3RenderDropdown(users) {
-  const dd = document.getElementById('s3-user-dropdown');
-  dd.innerHTML = users.map(u =>
-    `<div class="s3-user-item" onclick="s3SelectUser('${u.user}')">
+    const input = document.getElementById('s3-user-input');
+    const dropdown = document.getElementById('s3-user-dropdown');
+
+    input.addEventListener('focus', async () => {
+      await s3LoadUserList();
+      if (_s3Users.length) dropdown.classList.add('show');
+    });
+    input.addEventListener('input', () => s3FilterUsers(input.value));
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { dropdown.classList.remove('show'); s3LoadUser(); }
+    });
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.s3-input-wrapper')) dropdown.classList.remove('show');
+    });
+
+    s3SetupInteraction();
+    window.addEventListener('resize', () => { if (_s3Timeline.length) s3Draw(); });
+  });
+
+  async function s3PollSync() {
+    if (_s3PollingSync) return;
+    _s3PollingSync = true;
+    try {
+      const s = await s3FetchJson('/api/stage3-status');
+      s3UpdateSyncStats(s || {});
+    } catch (e) {
+    } finally {
+      _s3PollingSync = false;
+    }
+  }
+
+  function s3UpdateSyncStats(sync) {
+    const last = Number(sync.last_block || 0);
+    const head = Number(sync.head_block || 0);
+    const behind = Math.max(0, Number(sync.behind_blocks || 0));
+    const syncing = !!sync.syncing;
+    const bps = Number(sync.blocks_per_second || 0);
+    const eta = Number(sync.eta_seconds ?? -1);
+
+    document.getElementById('s3-last-block').textContent = last.toLocaleString();
+    document.getElementById('s3-head-block').textContent = head.toLocaleString();
+    document.getElementById('s3-behind').textContent = behind.toLocaleString();
+    document.getElementById('s3-speed').textContent = bps > 0 ? `${Math.round(bps).toLocaleString()}/s` : '-';
+    document.getElementById('s3-eta').textContent = s3FmtEta(eta);
+    const progress = head > 0 ? (last / head) * 100 : 0;
+    document.getElementById('s3-progress-bar').style.width = `${Math.max(0, Math.min(100, progress)).toFixed(2)}%`;
+
+    const badge = document.getElementById('s3-sync-badge');
+    if (syncing) {
+      badge.className = 'badge badge-warning';
+      badge.textContent = '同步中';
+    } else if (behind === 0 && head > 0) {
+      badge.className = 'badge badge-success';
+      badge.textContent = '已同步';
+    } else {
+      badge.className = 'badge badge-warning';
+      badge.textContent = '等待中';
+    }
+  }
+
+  async function s3LoadUserList() {
+    if (_s3UsersLoaded || _s3LoadingUsers) return;
+    _s3LoadingUsers = true;
+    try {
+      _s3Users = await s3FetchJson('/api/stage3-users?limit=1000');
+      s3RenderDropdown(_s3Users);
+      _s3UsersLoaded = true;
+    } catch (e) { }
+    _s3LoadingUsers = false;
+  }
+
+  function s3RenderDropdown(users) {
+    const dd = document.getElementById('s3-user-dropdown');
+    dd.innerHTML = users.map(u =>
+      `<div class="s3-user-item" onclick="s3SelectUser('${u.user}')">
        <span>${u.user}</span>
        <span class="count">${u.events}</span>
      </div>`
-  ).join('');
-}
-
-function s3FilterUsers(q) {
-  const lq = q.toLowerCase();
-  s3RenderDropdown(_s3Users.filter(u => u.user.toLowerCase().includes(lq)));
-  document.getElementById('s3-user-dropdown').classList.add('show');
-}
-
-function s3SelectUser(addr) {
-  document.getElementById('s3-user-input').value = addr;
-  document.getElementById('s3-user-dropdown').classList.remove('show');
-}
-
-async function s3LoadUser() {
-  await s3LoadUserBySk(null, false);
-}
-
-async function s3LoadUserBySk(sk, silent) {
-  const user = document.getElementById('s3-user-input').value.trim();
-  if (!user) return;
-
-  const btn = document.getElementById('s3-load-btn');
-  if (!silent) {
-    btn.disabled = true; btn.textContent = '...';
+    ).join('');
   }
 
-  try {
-    let url = `/api/stage3-pnl?user=${encodeURIComponent(user)}`;
-    if (sk !== null && sk !== undefined) {
-      url += `&block=${encodeURIComponent(Math.floor(Number(sk) / 1e9))}`;
-    }
-    const resp = await fetch(url);
-    const data = await resp.json();
-    _s3Meta = {
-      block: Number(data.block || 0),
-      positions: data.positions || [],
-    };
-    _s3Timeline = data.timeline || [];
+  function s3FilterUsers(q) {
+    const lq = q.toLowerCase();
+    s3RenderDropdown(_s3Users.filter(u => u.user.toLowerCase().includes(lq)));
+    document.getElementById('s3-user-dropdown').classList.add('show');
+  }
 
-    s3RenderMeta();
-    if (!silent) {
-      s3ResetZoom();
+  function s3SelectUser(addr) {
+    document.getElementById('s3-user-input').value = addr;
+    document.getElementById('s3-user-dropdown').classList.remove('show');
+  }
+
+  async function s3LoadUser() {
+    const user = document.getElementById('s3-user-input').value.trim();
+    if (!user) return;
+
+    const btn = document.getElementById('s3-load-btn');
+    btn.disabled = true;
+    btn.textContent = '...';
+
+    try {
+      const sameUser = _s3CurrentUser &&
+        _s3CurrentUser.toLowerCase() === user.toLowerCase() &&
+        _s3Timeline.length > 0;
+      if (!sameUser) {
+        const data = await s3FetchJson(`/api/stage3-pnl?user=${encodeURIComponent(user)}`);
+        _s3CurrentUser = String(data.user || user);
+        _s3LatestBlock = Number(data.block || 0);
+        _s3Timeline = data.timeline || [];
+        _s3Positions = [];
+        s3RenderMeta();
+        s3ResetZoom();
+      }
+
+      if (_s3Timeline.length) {
+        await s3ApplyCursorIdx(_s3Timeline.length - 1, true);
+      } else {
+        _s3CursorIdx = -1;
+        _s3Positions = [];
+        s3Draw();
+        s3UpdateCursor();
+        s3RenderPositions([]);
+        s3RenderEvents();
+      }
+    } catch (e) {
+      console.error('s3LoadUser', e);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '查询';
     }
-    if (_s3Timeline.length) {
-      const targetSk = Number((sk !== null && sk !== undefined) ? sk : _s3Timeline[_s3Timeline.length - 1].sk);
-      _s3CursorIdx = s3NearestIdx(targetSk);
-    } else {
-      _s3CursorIdx = -1;
+  }
+
+  async function s3LoadPositionsBySk(sk) {
+    if (!_s3CurrentUser) return;
+    const targetSk = Math.floor(Number(sk));
+    if (!Number.isFinite(targetSk) || targetSk < 0) return;
+    const reqSeq = ++_s3PosReqSeq;
+    try {
+      const data = await s3FetchJson(
+        `/api/stage3-positions?user=${encodeURIComponent(_s3CurrentUser)}&sort_key=${encodeURIComponent(targetSk)}`
+      );
+      if (reqSeq !== _s3PosReqSeq) return;
+      _s3Positions = data.positions || [];
+      s3RenderPositions(_s3Positions);
+      s3RenderMeta();
+    } catch (e) {
+      console.error('s3LoadPositionsBySk', e);
     }
+  }
+
+  async function s3ApplyCursorIdx(idx, fetchPositions) {
+    _s3CursorIdx = idx;
     s3Draw();
     s3UpdateCursor();
-    s3RenderPositions(data.positions || []);
     s3RenderEvents();
-  } catch(e) {
-    console.error('s3LoadUser', e);
-  } finally {
-    if (!silent) {
-      btn.disabled = false; btn.textContent = '查询';
+    if (fetchPositions && idx >= 0 && idx < _s3Timeline.length) {
+      await s3LoadPositionsBySk(_s3Timeline[idx].sk);
     }
   }
-}
 
-function s3RenderMeta() {
-  if (!_s3Meta) return;
-  const d = _s3Meta;
-  const nCond = new Set((d.positions || []).map(p => p.ci)).size;
-  const finalRpnl = _s3Timeline.length ? _s3Timeline[_s3Timeline.length-1].rpnl / 1e6 : 0;
-  const finalUpnl = _s3Timeline.length ? _s3Timeline[_s3Timeline.length-1].upnl / 1e6 : 0;
-  const finalTpnl = finalRpnl + finalUpnl;
+  function s3RenderMeta() {
+    if (!_s3CurrentUser) return;
+    const nCond = new Set((_s3Positions || []).map(p => p.ci)).size;
+    const finalRpnl = _s3Timeline.length ? _s3Timeline[_s3Timeline.length - 1].rpnl / 1e6 : 0;
+    const finalUpnl = _s3Timeline.length ? _s3Timeline[_s3Timeline.length - 1].upnl / 1e6 : 0;
+    const finalTpnl = finalRpnl + finalUpnl;
 
-  const c = { buy: 0, sell: 0, split: 0, merge: 0, redeem: 0, lp: 0, convert: 0, transfer: 0, other: 0 };
-  for (const e of _s3Timeline) {
-    const cat = s3EvtMeta(e.ty).cat;
-    c[cat] = (c[cat] || 0) + 1;
-  }
+    const c = { buy: 0, sell: 0, split: 0, merge: 0, redeem: 0, lp: 0, convert: 0, transfer: 0, other: 0 };
+    for (const e of _s3Timeline) {
+      const cat = s3EvtMeta(e.ty).cat;
+      c[cat] = (c[cat] || 0) + 1;
+    }
 
-  document.getElementById('s3-meta').innerHTML = `
+    document.getElementById('s3-meta').innerHTML = `
     <div class="s3-meta-item"><div class="label">事件</div><div class="value">${_s3Timeline.length}</div></div>
     <div class="s3-meta-item"><div class="label" style="color:#6366f1">Buy</div><div class="value">${c.buy}</div></div>
     <div class="s3-meta-item"><div class="label" style="color:#ef4444">Sell</div><div class="value">${c.sell}</div></div>
@@ -615,514 +819,511 @@ function s3RenderMeta() {
     <div class="s3-meta-item"><div class="label" style="color:#f472b6">Convert</div><div class="value">${c.convert}</div></div>
     <div class="s3-meta-item"><div class="label" style="color:#64748b">Transfer</div><div class="value">${c.transfer}</div></div>
     <div class="s3-meta-item"><div class="label">问题</div><div class="value">${nCond}</div></div>
-    <div class="s3-meta-item"><div class="label">已实现</div><div class="value" style="color:${finalRpnl>=0?'#10b981':'#ef4444'}">${s3FmtUSD(finalRpnl)}</div></div>
-    <div class="s3-meta-item"><div class="label">未实现</div><div class="value" style="color:${finalUpnl>=0?'#f59e0b':'#ef4444'}">${s3FmtUSD(finalUpnl)}</div></div>
-    <div class="s3-meta-item"><div class="label">总PnL</div><div class="value" style="color:${finalTpnl>=0?'#10b981':'#ef4444'}">${s3FmtUSD(finalTpnl)}</div></div>
-    <div class="s3-meta-item"><div class="label">查询区块</div><div class="value">${d.block ? d.block.toLocaleString() : '-'}</div></div>
+    <div class="s3-meta-item"><div class="label">已实现</div><div class="value" style="color:${finalRpnl >= 0 ? '#10b981' : '#ef4444'}">${s3FmtUSD(finalRpnl)}</div></div>
+    <div class="s3-meta-item"><div class="label">未实现</div><div class="value" style="color:${finalUpnl >= 0 ? '#f59e0b' : '#ef4444'}">${s3FmtUSD(finalUpnl)}</div></div>
+    <div class="s3-meta-item"><div class="label">总PnL</div><div class="value" style="color:${finalTpnl >= 0 ? '#10b981' : '#ef4444'}">${s3FmtUSD(finalTpnl)}</div></div>
+    <div class="s3-meta-item"><div class="label">查询区块</div><div class="value">${_s3LatestBlock ? _s3LatestBlock.toLocaleString() : '-'}</div></div>
   `;
-}
-
-function s3ResetZoom() {
-  if (!_s3Timeline.length) return;
-  const margin = Math.max(1, (_s3Timeline[_s3Timeline.length-1].sk - _s3Timeline[0].sk) * 0.02);
-  _s3ViewStartSk = _s3Timeline[0].sk - margin;
-  _s3ViewEndSk = _s3Timeline[_s3Timeline.length-1].sk + margin;
-}
-
-function s3Draw() {
-  const canvas = document.getElementById('s3-chart');
-  const container = document.getElementById('s3-chart-container');
-  const rect = container.getBoundingClientRect();
-  const dpr = window.devicePixelRatio || 1;
-
-  const cssW = rect.width;
-  const cssH = rect.height;
-  canvas.width = cssW * dpr;
-  canvas.height = cssH * dpr;
-  canvas.style.width = cssW + 'px';
-  canvas.style.height = cssH + 'px';
-
-  const ctx = canvas.getContext('2d');
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.clearRect(0, 0, cssW, cssH);
-
-  if (_s3Timeline.length < 1) {
-    ctx.fillStyle = '#888'; ctx.font = '14px sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText('无数据', cssW/2, cssH/2);
-    return;
   }
 
-  const p = _s3Pad;
-  const cW = cssW - p.left - p.right;
-  const cH = cssH - p.top - p.bottom;
-  const skRange = _s3ViewEndSk - _s3ViewStartSk;
-  if (skRange <= 0) return;
-
-  let iStart = s3Bsearch(_s3Timeline, _s3ViewStartSk) - 1;
-  let iEnd = s3Bsearch(_s3Timeline, _s3ViewEndSk) + 1;
-  iStart = Math.max(0, iStart);
-  iEnd = Math.min(_s3Timeline.length - 1, iEnd);
-
-  let minY = Infinity, maxY = -Infinity;
-  for (let i = iStart; i <= iEnd; i++) {
-    const rp = (_s3Timeline[i].rpnl || 0) / 1e6;
-    const up = (_s3Timeline[i].upnl || 0) / 1e6;
-    const tp = rp + up;
-    if (rp < minY) minY = rp;
-    if (rp > maxY) maxY = rp;
-    if (up < minY) minY = up;
-    if (up > maxY) maxY = up;
-    if (tp < minY) minY = tp;
-    if (tp > maxY) maxY = tp;
-  }
-  if (minY === maxY) { minY -= 1; maxY += 1; }
-  if (minY > 0) minY = 0;
-  if (maxY < 0) maxY = 0;
-  const yPad = (maxY - minY) * 0.08;
-  minY -= yPad; maxY += yPad;
-  const yRange = maxY - minY;
-
-  let maxTk = 0;
-  for (let i = iStart; i <= iEnd; i++) {
-    const tk = _s3Timeline[i].tk || 0;
-    if (tk > maxTk) maxTk = tk;
-  }
-  maxTk = Math.max(50, Math.ceil(maxTk / 50) * 50);
-
-  const sk2x = (sk) => p.left + (sk - _s3ViewStartSk) / skRange * cW;
-  const val2y = (v) => p.top + (1 - (v - minY) / yRange) * cH;
-  const tk2y = (tk) => p.top + (1 - tk / maxTk) * cH;
-
-  const tkStep = s3NiceTkStep(maxTk);
-  ctx.font = '10px monospace'; ctx.textAlign = 'right'; ctx.fillStyle = '#6366f1';
-  for (let t = tkStep; t <= maxTk; t += tkStep) {
-    const yy = tk2y(t);
-    ctx.strokeStyle = '#1a1a2a'; ctx.lineWidth = 0.5;
-    ctx.setLineDash([2,4]); ctx.beginPath();
-    ctx.moveTo(p.left, yy); ctx.lineTo(cssW - p.right, yy); ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillText(t, p.left - 4, yy + 3);
-  }
-
-  ctx.strokeStyle = '#222'; ctx.lineWidth = 0.5;
-  const yStep = s3NiceStep(yRange, 6);
-  let yTick = Math.ceil(minY / yStep) * yStep;
-  ctx.textAlign = 'right'; ctx.fillStyle = '#555';
-  while (yTick <= maxY) {
-    const yy = val2y(yTick);
-    ctx.beginPath(); ctx.moveTo(p.left, yy); ctx.lineTo(cssW - p.right, yy); ctx.stroke();
-    ctx.fillText(s3FmtUSDShort(yTick), cssW - p.right + 4, yy + 3);
-    yTick += yStep;
-  }
-
-  const xStep = s3NiceSkStep(skRange);
-  let xTick = Math.ceil(_s3ViewStartSk / xStep) * xStep;
-  ctx.textAlign = 'center'; ctx.fillStyle = '#555';
-  while (xTick <= _s3ViewEndSk) {
-    const xx = sk2x(xTick);
-    ctx.beginPath(); ctx.moveTo(xx, p.top); ctx.lineTo(xx, cssH - p.bottom); ctx.stroke();
-    ctx.fillText(s3FmtSk(xTick), xx, cssH - p.bottom + 14);
-    xTick += xStep;
-  }
-
-  if (minY < 0 && maxY > 0) {
-    const zy = val2y(0);
-    ctx.strokeStyle = '#444'; ctx.lineWidth = 1;
-    ctx.setLineDash([4,4]); ctx.beginPath();
-    ctx.moveTo(p.left, zy); ctx.lineTo(cssW - p.right, zy); ctx.stroke();
-    ctx.setLineDash([]);
-  }
-
-  ctx.strokeStyle = 'rgba(129,140,248,0.5)'; ctx.lineWidth = 1; ctx.beginPath();
-  let firstTk = true;
-  for (let i = iStart; i <= iEnd; i++) {
-    const x = sk2x(_s3Timeline[i].sk);
-    const y = tk2y(_s3Timeline[i].tk || 0);
-    if (firstTk) { ctx.moveTo(x, y); firstTk = false; }
-    else ctx.lineTo(x, y);
-  }
-  ctx.stroke();
-
-  ctx.strokeStyle = '#10b981'; ctx.lineWidth = 1.5; ctx.beginPath();
-  let firstPoint = true;
-  for (let i = iStart; i <= iEnd; i++) {
-    const x = sk2x(_s3Timeline[i].sk);
-    const y = val2y((_s3Timeline[i].rpnl || 0) / 1e6);
-    if (firstPoint) { ctx.moveTo(x, y); firstPoint = false; }
-    else ctx.lineTo(x, y);
-  }
-  ctx.stroke();
-
-  ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 1.2; ctx.beginPath();
-  firstPoint = true;
-  for (let i = iStart; i <= iEnd; i++) {
-    const x = sk2x(_s3Timeline[i].sk);
-    const y = val2y((_s3Timeline[i].upnl || 0) / 1e6);
-    if (firstPoint) { ctx.moveTo(x, y); firstPoint = false; }
-    else ctx.lineTo(x, y);
-  }
-  ctx.stroke();
-
-  ctx.strokeStyle = '#e5e7eb'; ctx.lineWidth = 1.2; ctx.beginPath();
-  firstPoint = true;
-  for (let i = iStart; i <= iEnd; i++) {
-    const x = sk2x(_s3Timeline[i].sk);
-    const y = val2y(((_s3Timeline[i].rpnl || 0) + (_s3Timeline[i].upnl || 0)) / 1e6);
-    if (firstPoint) { ctx.moveTo(x, y); firstPoint = false; }
-    else ctx.lineTo(x, y);
-  }
-  ctx.stroke();
-
-  if (!firstPoint) {
-    const baseY = val2y(Math.max(minY, 0));
-    ctx.lineTo(sk2x(_s3Timeline[iEnd].sk), baseY);
-    ctx.lineTo(sk2x(_s3Timeline[iStart].sk), baseY);
-    ctx.closePath();
-    const grad = ctx.createLinearGradient(0, p.top, 0, cssH - p.bottom);
-    grad.addColorStop(0, 'rgba(16,185,129,0.18)');
-    grad.addColorStop(1, 'rgba(16,185,129,0)');
-    ctx.fillStyle = grad; ctx.fill();
-  }
-
-  const minPxGap = 3;
-  let lastMx = -999;
-  for (let i = iStart; i <= iEnd; i++) {
-    const e = _s3Timeline[i];
-    const x = sk2x(e.sk);
-    if (Math.abs(x - lastMx) < minPxGap) continue;
-    lastMx = x;
-    const y = val2y(((e.rpnl || 0) + (e.upnl || 0)) / 1e6);
-    const meta = s3EvtMeta(e.ty);
-    const color = meta.color;
-    const r = 3;
-
-    ctx.fillStyle = color;
-    if (meta.marker === 'up') {
-      ctx.beginPath();
-      ctx.moveTo(x, y - r - 1);
-      ctx.lineTo(x - r, y + r - 1);
-      ctx.lineTo(x + r, y + r - 1);
-      ctx.closePath(); ctx.fill();
-    } else if (meta.marker === 'down') {
-      ctx.beginPath();
-      ctx.moveTo(x, y + r + 1);
-      ctx.lineTo(x - r, y - r + 1);
-      ctx.lineTo(x + r, y - r + 1);
-      ctx.closePath(); ctx.fill();
-    } else {
-      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill();
-    }
-  }
-
-  if (_s3CursorIdx >= 0 && _s3CursorIdx < _s3Timeline.length) {
-    const ce = _s3Timeline[_s3CursorIdx];
-    const cx = sk2x(ce.sk);
-    const cy = val2y(((ce.rpnl || 0) + (ce.upnl || 0)) / 1e6);
-
-    if (cx >= p.left && cx <= cssW - p.right) {
-      ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 1;
-      ctx.setLineDash([3,3]); ctx.beginPath();
-      ctx.moveTo(cx, p.top); ctx.lineTo(cx, cssH - p.bottom); ctx.stroke();
-      ctx.setLineDash([]);
-
-      ctx.fillStyle = '#fff'; ctx.beginPath();
-      ctx.arc(cx, cy, 5, 0, Math.PI*2); ctx.fill();
-      ctx.strokeStyle = s3EvtMeta(ce.ty).color; ctx.lineWidth = 2; ctx.stroke();
-    }
-  }
-
-}
-
-function s3SetupInteraction() {
-  const canvas = document.getElementById('s3-chart');
-
-  canvas.addEventListener('wheel', (e) => {
-    e.preventDefault();
+  function s3ResetZoom() {
     if (!_s3Timeline.length) return;
+    const margin = Math.max(1, (_s3Timeline[_s3Timeline.length - 1].sk - _s3Timeline[0].sk) * 0.02);
+    _s3ViewStartSk = _s3Timeline[0].sk - margin;
+    _s3ViewEndSk = _s3Timeline[_s3Timeline.length - 1].sk + margin;
+  }
+
+  function s3Draw() {
+    const canvas = document.getElementById('s3-chart');
+    const container = document.getElementById('s3-chart-container');
+    const rect = container.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+
+    const cssW = rect.width;
+    const cssH = rect.height;
+    canvas.width = cssW * dpr;
+    canvas.height = cssH * dpr;
+    canvas.style.width = cssW + 'px';
+    canvas.style.height = cssH + 'px';
+
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, cssW, cssH);
+
+    if (_s3Timeline.length < 1) {
+      ctx.fillStyle = '#888'; ctx.font = '14px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('无数据', cssW / 2, cssH / 2);
+      return;
+    }
+
+    const p = _s3Pad;
+    const cW = cssW - p.left - p.right;
+    const cH = cssH - p.top - p.bottom;
+    const skRange = _s3ViewEndSk - _s3ViewStartSk;
+    if (skRange <= 0) return;
+
+    let iStart = s3Bsearch(_s3Timeline, _s3ViewStartSk) - 1;
+    let iEnd = s3Bsearch(_s3Timeline, _s3ViewEndSk) + 1;
+    iStart = Math.max(0, iStart);
+    iEnd = Math.min(_s3Timeline.length - 1, iEnd);
+
+    let minY = Infinity, maxY = -Infinity;
+    for (let i = iStart; i <= iEnd; i++) {
+      const rp = (_s3Timeline[i].rpnl || 0) / 1e6;
+      const up = (_s3Timeline[i].upnl || 0) / 1e6;
+      const tp = rp + up;
+      if (rp < minY) minY = rp;
+      if (rp > maxY) maxY = rp;
+      if (up < minY) minY = up;
+      if (up > maxY) maxY = up;
+      if (tp < minY) minY = tp;
+      if (tp > maxY) maxY = tp;
+    }
+    if (minY === maxY) { minY -= 1; maxY += 1; }
+    if (minY > 0) minY = 0;
+    if (maxY < 0) maxY = 0;
+    const yPad = (maxY - minY) * 0.08;
+    minY -= yPad; maxY += yPad;
+    const yRange = maxY - minY;
+
+    let maxTk = 0;
+    for (let i = iStart; i <= iEnd; i++) {
+      const tk = _s3Timeline[i].tk || 0;
+      if (tk > maxTk) maxTk = tk;
+    }
+    maxTk = Math.max(50, Math.ceil(maxTk / 50) * 50);
+
+    const sk2x = (sk) => p.left + (sk - _s3ViewStartSk) / skRange * cW;
+    const val2y = (v) => p.top + (1 - (v - minY) / yRange) * cH;
+    const tk2y = (tk) => p.top + (1 - tk / maxTk) * cH;
+
+    const tkStep = s3NiceTkStep(maxTk);
+    ctx.font = '10px monospace'; ctx.textAlign = 'right'; ctx.fillStyle = '#6366f1';
+    for (let t = tkStep; t <= maxTk; t += tkStep) {
+      const yy = tk2y(t);
+      ctx.strokeStyle = '#1a1a2a'; ctx.lineWidth = 0.5;
+      ctx.setLineDash([2, 4]); ctx.beginPath();
+      ctx.moveTo(p.left, yy); ctx.lineTo(cssW - p.right, yy); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillText(t, p.left - 4, yy + 3);
+    }
+
+    ctx.strokeStyle = '#222'; ctx.lineWidth = 0.5;
+    const yStep = s3NiceStep(yRange, 6);
+    let yTick = Math.ceil(minY / yStep) * yStep;
+    ctx.textAlign = 'right'; ctx.fillStyle = '#555';
+    while (yTick <= maxY) {
+      const yy = val2y(yTick);
+      ctx.beginPath(); ctx.moveTo(p.left, yy); ctx.lineTo(cssW - p.right, yy); ctx.stroke();
+      ctx.fillText(s3FmtUSDShort(yTick), cssW - p.right + 4, yy + 3);
+      yTick += yStep;
+    }
+
+    const xStep = s3NiceSkStep(skRange);
+    let xTick = Math.ceil(_s3ViewStartSk / xStep) * xStep;
+    ctx.textAlign = 'center'; ctx.fillStyle = '#555';
+    while (xTick <= _s3ViewEndSk) {
+      const xx = sk2x(xTick);
+      ctx.beginPath(); ctx.moveTo(xx, p.top); ctx.lineTo(xx, cssH - p.bottom); ctx.stroke();
+      ctx.fillText(s3FmtSk(xTick), xx, cssH - p.bottom + 14);
+      xTick += xStep;
+    }
+
+    if (minY < 0 && maxY > 0) {
+      const zy = val2y(0);
+      ctx.strokeStyle = '#444'; ctx.lineWidth = 1;
+      ctx.setLineDash([4, 4]); ctx.beginPath();
+      ctx.moveTo(p.left, zy); ctx.lineTo(cssW - p.right, zy); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    ctx.strokeStyle = 'rgba(129,140,248,0.5)'; ctx.lineWidth = 1; ctx.beginPath();
+    let firstTk = true;
+    for (let i = iStart; i <= iEnd; i++) {
+      const x = sk2x(_s3Timeline[i].sk);
+      const y = tk2y(_s3Timeline[i].tk || 0);
+      if (firstTk) { ctx.moveTo(x, y); firstTk = false; }
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    ctx.strokeStyle = '#10b981'; ctx.lineWidth = 1.5; ctx.beginPath();
+    let firstPoint = true;
+    for (let i = iStart; i <= iEnd; i++) {
+      const x = sk2x(_s3Timeline[i].sk);
+      const y = val2y((_s3Timeline[i].rpnl || 0) / 1e6);
+      if (firstPoint) { ctx.moveTo(x, y); firstPoint = false; }
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 1.2; ctx.beginPath();
+    firstPoint = true;
+    for (let i = iStart; i <= iEnd; i++) {
+      const x = sk2x(_s3Timeline[i].sk);
+      const y = val2y((_s3Timeline[i].upnl || 0) / 1e6);
+      if (firstPoint) { ctx.moveTo(x, y); firstPoint = false; }
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    ctx.strokeStyle = '#e5e7eb'; ctx.lineWidth = 1.2; ctx.beginPath();
+    firstPoint = true;
+    for (let i = iStart; i <= iEnd; i++) {
+      const x = sk2x(_s3Timeline[i].sk);
+      const y = val2y(((_s3Timeline[i].rpnl || 0) + (_s3Timeline[i].upnl || 0)) / 1e6);
+      if (firstPoint) { ctx.moveTo(x, y); firstPoint = false; }
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    if (!firstPoint) {
+      const baseY = val2y(Math.max(minY, 0));
+      ctx.lineTo(sk2x(_s3Timeline[iEnd].sk), baseY);
+      ctx.lineTo(sk2x(_s3Timeline[iStart].sk), baseY);
+      ctx.closePath();
+      const grad = ctx.createLinearGradient(0, p.top, 0, cssH - p.bottom);
+      grad.addColorStop(0, 'rgba(16,185,129,0.18)');
+      grad.addColorStop(1, 'rgba(16,185,129,0)');
+      ctx.fillStyle = grad; ctx.fill();
+    }
+
+    const minPxGap = 3;
+    let lastMx = -999;
+    for (let i = iStart; i <= iEnd; i++) {
+      const e = _s3Timeline[i];
+      const x = sk2x(e.sk);
+      if (Math.abs(x - lastMx) < minPxGap) continue;
+      lastMx = x;
+      const y = val2y(((e.rpnl || 0) + (e.upnl || 0)) / 1e6);
+      const meta = s3EvtMeta(e.ty);
+      const color = meta.color;
+      const r = 3;
+
+      ctx.fillStyle = color;
+      if (meta.marker === 'up') {
+        ctx.beginPath();
+        ctx.moveTo(x, y - r - 1);
+        ctx.lineTo(x - r, y + r - 1);
+        ctx.lineTo(x + r, y + r - 1);
+        ctx.closePath(); ctx.fill();
+      } else if (meta.marker === 'down') {
+        ctx.beginPath();
+        ctx.moveTo(x, y + r + 1);
+        ctx.lineTo(x - r, y - r + 1);
+        ctx.lineTo(x + r, y - r + 1);
+        ctx.closePath(); ctx.fill();
+      } else {
+        ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+
+    if (_s3CursorIdx >= 0 && _s3CursorIdx < _s3Timeline.length) {
+      const ce = _s3Timeline[_s3CursorIdx];
+      const cx = sk2x(ce.sk);
+      const cy = val2y(((ce.rpnl || 0) + (ce.upnl || 0)) / 1e6);
+
+      if (cx >= p.left && cx <= cssW - p.right) {
+        ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 1;
+        ctx.setLineDash([3, 3]); ctx.beginPath();
+        ctx.moveTo(cx, p.top); ctx.lineTo(cx, cssH - p.bottom); ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.fillStyle = '#fff'; ctx.beginPath();
+        ctx.arc(cx, cy, 5, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = s3EvtMeta(ce.ty).color; ctx.lineWidth = 2; ctx.stroke();
+      }
+    }
+
+  }
+
+  function s3SetupInteraction() {
+    const canvas = document.getElementById('s3-chart');
+
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      if (!_s3Timeline.length) return;
+      const rect = canvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const p = _s3Pad;
+      const frac = Math.max(0, Math.min(1, (mx - p.left) / (rect.width - p.left - p.right)));
+      const mouseSk = _s3ViewStartSk + frac * (_s3ViewEndSk - _s3ViewStartSk);
+      const factor = e.deltaY > 0 ? 1.25 : 0.8;
+      const newRange = (_s3ViewEndSk - _s3ViewStartSk) * factor;
+      if (newRange < 1e6 && factor < 1) return;
+      _s3ViewStartSk = mouseSk - frac * newRange;
+      _s3ViewEndSk = mouseSk + (1 - frac) * newRange;
+      s3Draw();
+    }, { passive: false });
+
+    canvas.addEventListener('mousedown', (e) => {
+      if (e.button !== 0) return;
+      _s3Dragging = true;
+      _s3DragMoved = false;
+      _s3DragStartX = e.clientX;
+      _s3DragStartVS = _s3ViewStartSk;
+      _s3DragStartVE = _s3ViewEndSk;
+      canvas.style.cursor = 'grabbing';
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (_s3Dragging) {
+        const dx = e.clientX - _s3DragStartX;
+        if (Math.abs(dx) > 3) _s3DragMoved = true;
+        const rect = document.getElementById('s3-chart').getBoundingClientRect();
+        const skPerPx = (_s3DragStartVE - _s3DragStartVS) / (rect.width - _s3Pad.left - _s3Pad.right);
+        const shift = -dx * skPerPx;
+        _s3ViewStartSk = _s3DragStartVS + shift;
+        _s3ViewEndSk = _s3DragStartVE + shift;
+        s3Draw();
+      }
+      s3UpdateTooltip(e);
+    });
+
+    window.addEventListener('mouseup', (e) => {
+      if (_s3Dragging) {
+        _s3Dragging = false;
+        const canvas = document.getElementById('s3-chart');
+        canvas.style.cursor = 'crosshair';
+        if (!_s3DragMoved) {
+          s3SetCursorFromMouse(e);
+        }
+      }
+    });
+
+    canvas.addEventListener('mouseleave', () => {
+      document.getElementById('s3-tooltip').style.display = 'none';
+    });
+  }
+
+  function s3SetCursorFromMouse(e) {
+    const idx = s3MouseToIdx(e);
+    if (idx < 0) return;
+    s3ApplyCursorIdx(idx, true);
+  }
+
+  function s3MouseToIdx(e) {
+    if (!_s3Timeline.length) return -1;
+    const canvas = document.getElementById('s3-chart');
     const rect = canvas.getBoundingClientRect();
     const mx = e.clientX - rect.left;
     const p = _s3Pad;
-    const frac = Math.max(0, Math.min(1, (mx - p.left) / (rect.width - p.left - p.right)));
-    const mouseSk = _s3ViewStartSk + frac * (_s3ViewEndSk - _s3ViewStartSk);
-    const factor = e.deltaY > 0 ? 1.25 : 0.8;
-    const newRange = (_s3ViewEndSk - _s3ViewStartSk) * factor;
-    if (newRange < 1e6 && factor < 1) return;
-    _s3ViewStartSk = mouseSk - frac * newRange;
-    _s3ViewEndSk = mouseSk + (1 - frac) * newRange;
-    s3Draw();
-  }, { passive: false });
-
-  canvas.addEventListener('mousedown', (e) => {
-    if (e.button !== 0) return;
-    _s3Dragging = true;
-    _s3DragMoved = false;
-    _s3DragStartX = e.clientX;
-    _s3DragStartVS = _s3ViewStartSk;
-    _s3DragStartVE = _s3ViewEndSk;
-    canvas.style.cursor = 'grabbing';
-  });
-
-  window.addEventListener('mousemove', (e) => {
-    if (_s3Dragging) {
-      const dx = e.clientX - _s3DragStartX;
-      if (Math.abs(dx) > 3) _s3DragMoved = true;
-      const rect = document.getElementById('s3-chart').getBoundingClientRect();
-      const skPerPx = (_s3DragStartVE - _s3DragStartVS) / (rect.width - _s3Pad.left - _s3Pad.right);
-      const shift = -dx * skPerPx;
-      _s3ViewStartSk = _s3DragStartVS + shift;
-      _s3ViewEndSk = _s3DragStartVE + shift;
-      s3Draw();
-    }
-    s3UpdateTooltip(e);
-  });
-
-  window.addEventListener('mouseup', (e) => {
-    if (_s3Dragging) {
-      _s3Dragging = false;
-      const canvas = document.getElementById('s3-chart');
-      canvas.style.cursor = 'crosshair';
-      if (!_s3DragMoved) {
-        s3SetCursorFromMouse(e);
-      }
-    }
-  });
-
-  canvas.addEventListener('mouseleave', () => {
-    document.getElementById('s3-tooltip').style.display = 'none';
-  });
-}
-
-function s3SetCursorFromMouse(e) {
-  const idx = s3MouseToIdx(e);
-  if (idx < 0) return;
-  _s3CursorIdx = idx;
-  s3Draw();
-  s3UpdateCursor();
-  s3LoadUserBySk(_s3Timeline[idx].sk, true);
-}
-
-function s3MouseToIdx(e) {
-  if (!_s3Timeline.length) return -1;
-  const canvas = document.getElementById('s3-chart');
-  const rect = canvas.getBoundingClientRect();
-  const mx = e.clientX - rect.left;
-  const p = _s3Pad;
-  const frac = (mx - p.left) / (rect.width - p.left - p.right);
-  const sk = _s3ViewStartSk + frac * (_s3ViewEndSk - _s3ViewStartSk);
-  return s3NearestIdx(sk);
-}
-
-function s3NearestIdx(sk) {
-  let lo = 0, hi = _s3Timeline.length - 1;
-  while (lo < hi) {
-    const mid = (lo + hi) >> 1;
-    if (_s3Timeline[mid].sk < sk) lo = mid + 1;
-    else hi = mid;
-  }
-  if (lo > 0 && Math.abs(_s3Timeline[lo-1].sk - sk) < Math.abs(_s3Timeline[lo].sk - sk)) return lo - 1;
-  return lo;
-}
-
-function s3UpdateTooltip(e) {
-  const tooltip = document.getElementById('s3-tooltip');
-  if (!_s3Timeline.length || _s3Dragging) { tooltip.style.display = 'none'; return; }
-
-  const canvas = document.getElementById('s3-chart');
-  const rect = canvas.getBoundingClientRect();
-  const mx = e.clientX - rect.left;
-  const my = e.clientY - rect.top;
-
-  if (mx < _s3Pad.left || mx > rect.width - _s3Pad.right || my < _s3Pad.top || my > rect.height - _s3Pad.bottom) {
-    tooltip.style.display = 'none'; return;
+    const frac = (mx - p.left) / (rect.width - p.left - p.right);
+    const sk = _s3ViewStartSk + frac * (_s3ViewEndSk - _s3ViewStartSk);
+    return s3NearestIdx(sk);
   }
 
-  const frac = (mx - _s3Pad.left) / (rect.width - _s3Pad.left - _s3Pad.right);
-  const sk = _s3ViewStartSk + frac * (_s3ViewEndSk - _s3ViewStartSk);
-  const idx = s3NearestIdx(sk);
-  const ev = _s3Timeline[idx];
-  const rpnl = (ev.rpnl || 0) / 1e6;
-  const upnl = (ev.upnl || 0) / 1e6;
-  const tpnl = rpnl + upnl;
-  const meta = s3EvtMeta(ev.ty);
-  const color = meta.color;
-  const name = meta.name;
-  const tkCount = ev.tk || 0;
+  function s3NearestIdx(sk) {
+    let lo = 0, hi = _s3Timeline.length - 1;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (_s3Timeline[mid].sk < sk) lo = mid + 1;
+      else hi = mid;
+    }
+    if (lo > 0 && Math.abs(_s3Timeline[lo - 1].sk - sk) < Math.abs(_s3Timeline[lo].sk - sk)) return lo - 1;
+    return lo;
+  }
 
-  tooltip.innerHTML = `
+  function s3UpdateTooltip(e) {
+    const tooltip = document.getElementById('s3-tooltip');
+    if (!_s3Timeline.length || _s3Dragging) { tooltip.style.display = 'none'; return; }
+
+    const canvas = document.getElementById('s3-chart');
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+
+    if (mx < _s3Pad.left || mx > rect.width - _s3Pad.right || my < _s3Pad.top || my > rect.height - _s3Pad.bottom) {
+      tooltip.style.display = 'none'; return;
+    }
+
+    const frac = (mx - _s3Pad.left) / (rect.width - _s3Pad.left - _s3Pad.right);
+    const sk = _s3ViewStartSk + frac * (_s3ViewEndSk - _s3ViewStartSk);
+    const idx = s3NearestIdx(sk);
+    const ev = _s3Timeline[idx];
+    const rpnl = (ev.rpnl || 0) / 1e6;
+    const upnl = (ev.upnl || 0) / 1e6;
+    const tpnl = rpnl + upnl;
+    const meta = s3EvtMeta(ev.ty);
+    const color = meta.color;
+    const name = meta.name;
+    const tkCount = ev.tk || 0;
+
+    tooltip.innerHTML = `
     <div style="color:#888">${s3FmtSk(ev.sk)}</div>
     <div style="color:#10b981">R ${s3FmtUSD(rpnl)}</div>
     <div style="color:#f59e0b">U ${s3FmtUSD(upnl)}</div>
-    <div style="color:${tpnl>=0?'#10b981':'#ef4444'};font-size:1.1em">T ${s3FmtUSD(tpnl)}</div>
+    <div style="color:${tpnl >= 0 ? '#10b981' : '#ef4444'};font-size:1.1em">T ${s3FmtUSD(tpnl)}</div>
     <div><span style="color:${color}">${name}</span></div>
     <div style="color:#818cf8">持仓 ${tkCount} 种</div>
   `;
-  tooltip.style.display = 'block';
+    tooltip.style.display = 'block';
 
-  let tx = mx + 14, ty = my - 10;
-  if (tx + 200 > rect.width) tx = mx - 200;
-  if (ty < 0) ty = 10;
-  tooltip.style.left = tx + 'px';
-  tooltip.style.top = ty + 'px';
-}
-
-function s3UpdateCursor() {
-  const bar = document.getElementById('s3-cursor-bar');
-  if (_s3CursorIdx < 0 || _s3CursorIdx >= _s3Timeline.length) {
-    bar.classList.remove('show'); return;
+    let tx = mx + 14, ty = my - 10;
+    if (tx + 200 > rect.width) tx = mx - 200;
+    if (ty < 0) ty = 10;
+    tooltip.style.left = tx + 'px';
+    tooltip.style.top = ty + 'px';
   }
-  bar.classList.add('show');
 
-  const ev = _s3Timeline[_s3CursorIdx];
-  const rpnl = (ev.rpnl || 0) / 1e6;
-  const upnl = (ev.upnl || 0) / 1e6;
-  const pnl = rpnl + upnl;
-  const meta = s3EvtMeta(ev.ty);
-  const color = meta.color;
+  function s3UpdateCursor() {
+    const bar = document.getElementById('s3-cursor-bar');
+    if (_s3CursorIdx < 0 || _s3CursorIdx >= _s3Timeline.length) {
+      bar.classList.remove('show'); return;
+    }
+    bar.classList.add('show');
 
-  document.getElementById('s3-cur-sk').textContent = s3FmtSk(ev.sk);
-  const pnlEl = document.getElementById('s3-cur-pnl');
-  pnlEl.textContent = s3FmtUSD(pnl);
-  pnlEl.className = 'pnl ' + (pnl >= 0 ? 'pos' : 'neg');
+    const ev = _s3Timeline[_s3CursorIdx];
+    const rpnl = (ev.rpnl || 0) / 1e6;
+    const upnl = (ev.upnl || 0) / 1e6;
+    const pnl = rpnl + upnl;
+    const meta = s3EvtMeta(ev.ty);
+    const color = meta.color;
 
-  const badge = document.getElementById('s3-cur-badge');
-  badge.textContent = meta.name;
-  badge.style.background = color;
-  badge.style.color = '#fff';
+    document.getElementById('s3-cur-sk').textContent = s3FmtSk(ev.sk);
+    const pnlEl = document.getElementById('s3-cur-pnl');
+    pnlEl.textContent = s3FmtUSD(pnl);
+    pnlEl.className = 'pnl ' + (pnl >= 0 ? 'pos' : 'neg');
 
-  document.getElementById('s3-cur-tokens').textContent = `持仓 ${ev.tk||0} 种`;
-  document.getElementById('s3-cur-detail').textContent = `R ${s3FmtUSD(rpnl)} / U ${s3FmtUSD(upnl)}`;
-}
+    const badge = document.getElementById('s3-cur-badge');
+    badge.textContent = meta.name;
+    badge.style.background = color;
+    badge.style.color = '#fff';
 
-function s3RenderPositions(positions) {
-  const el = document.getElementById('s3-positions');
-  const countEl = document.getElementById('s3-pos-count');
-  countEl.textContent = positions.length;
-  if (!positions.length) {
-    el.innerHTML = '<div style="color:#888;padding:10px">无持仓</div>';
-    return;
+    document.getElementById('s3-cur-tokens').textContent = `持仓 ${ev.tk || 0} 种`;
+    document.getElementById('s3-cur-detail').textContent = `R ${s3FmtUSD(rpnl)} / U ${s3FmtUSD(upnl)}`;
   }
-  el.innerHTML = positions.map(p => {
-    const qty = Number(p.qty || 0) / 1e6;
-    const cost = Number(p.cost || 0) / 1e6;
-    const lp = Number(p.lp || 0) / 1e6;
-    const pnl = qty * lp - cost;
-    const pnlCls = pnl >= 0 ? 'pos' : 'neg';
-    return `<div class="s3-pos-item">
+
+  function s3RenderPositions(positions) {
+    const el = document.getElementById('s3-positions');
+    const countEl = document.getElementById('s3-pos-count');
+    countEl.textContent = positions.length;
+    if (!positions.length) {
+      el.innerHTML = '<div style="color:#888;padding:10px">无持仓</div>';
+      return;
+    }
+    el.innerHTML = positions.map(p => {
+      const qty = Number(p.qty || 0) / 1e6;
+      const cost = Number(p.cost || 0) / 1e6;
+      const lp = Number(p.lp || 0) / 1e6;
+      const pnl = qty * lp - cost;
+      const pnlCls = pnl >= 0 ? 'pos' : 'neg';
+      return `<div class="s3-pos-item">
       <span class="cond" title="cond=${p.ci}, token=${p.ti}">c${p.ci}:t${p.ti}</span>
       <div class="s3-pos-bars">${s3PosBar(qty, 'Q')}</div>
       <span class="s3-pnl ${pnlCls}">${s3FmtUSD(pnl)}</span>
     </div>`;
-  }).join('');
-}
+    }).join('');
+  }
 
-function s3RenderEvents() {
-  const el = document.getElementById('s3-trades');
-  const countEl = document.getElementById('s3-trade-count');
-  countEl.textContent = _s3Timeline.length;
+  function s3RenderEvents() {
+    const el = document.getElementById('s3-trades');
+    const countEl = document.getElementById('s3-trade-count');
+    countEl.textContent = _s3Timeline.length;
 
-  const rows = [];
-  for (let i = _s3Timeline.length - 1; i >= 0; i--) {
-    const ev = _s3Timeline[i];
-    const isFocus = (i === _s3CursorIdx);
-    const meta = s3EvtMeta(ev.ty);
-    const color = meta.color;
-    const name = meta.name;
+    const rows = [];
+    for (let i = _s3Timeline.length - 1; i >= 0; i--) {
+      const ev = _s3Timeline[i];
+      const isFocus = (i === _s3CursorIdx);
+      const meta = s3EvtMeta(ev.ty);
+      const color = meta.color;
+      const name = meta.name;
 
-    const detail = s3EventDetail(ev);
+      const detail = s3EventDetail(ev);
 
-    rows.push(`<div class="s3-trade-item${isFocus?' focus':''}">
+      rows.push(`<div class="s3-trade-item${isFocus ? ' focus' : ''}">
       <span class="blk">${s3FmtSkShort(ev.sk)}</span>
       <span class="type" style="color:${color}">${name}</span>
       <span class="detail">${detail}</span>
     </div>`);
+    }
+
+    el.innerHTML = rows.length ? rows.join('') : '<div style="color:#888;padding:10px">无交易</div>';
+
+    const focusEl = el.querySelector('.focus');
+    if (focusEl) focusEl.scrollIntoView({ block: 'nearest' });
   }
 
-  el.innerHTML = rows.length ? rows.join('') : '<div style="color:#888;padding:10px">无交易</div>';
-
-  const focusEl = el.querySelector('.focus');
-  if (focusEl) focusEl.scrollIntoView({ block: 'nearest' });
-}
-
-function s3EventDetail(ev) {
-  const rp = Number(ev.rpnl || 0) / 1e6;
-  const up = Number(ev.upnl || 0) / 1e6;
-  return `R ${s3FmtUSD(rp)} / U ${s3FmtUSD(up)} / T ${s3FmtUSD(rp + up)}`;
-}
-
-function s3PosBar(val, label) {
-  if (val === 0) return `<div class="s3-pos-half"></div>`;
-  const abs = Math.abs(val);
-  const pct = Math.min(abs / 5000, 1) * 100;
-  const cls = label === 'Y' ? 'long' : 'short';
-  const txt = `${label} ${val > 0 ? '+' : ''}${val.toFixed(0)}`;
-  return `<div class="s3-pos-half"><div class="s3-pos-bar ${cls}" style="width:${pct.toFixed(1)}%"></div><span class="s3-pos-val ${cls}">${txt}</span></div>`;
-}
-
-function s3NiceTkStep(max) {
-  const nice = [50,100,150,200,250,500,1000,2500,5000,10000,25000,50000,100000,250000,500000];
-  const target = max / 8;
-  for (const n of nice) { if (n >= target) return n; }
-  return Math.ceil(target / 100000) * 100000;
-}
-
-function s3FmtUSD(v) {
-  return (v >= 0 ? '+$' : '-$') + Math.abs(v).toFixed(2);
-}
-
-function s3FmtUSDShort(v) {
-  const abs = Math.abs(v);
-  const sign = v < 0 ? '-' : '';
-  if (abs >= 1e6) return sign + '$' + (abs/1e6).toFixed(1) + 'M';
-  if (abs >= 1e3) return sign + '$' + (abs/1e3).toFixed(1) + 'K';
-  return sign + '$' + abs.toFixed(abs < 1 ? 2 : 0);
-}
-
-function s3FmtSk(sk) {
-  const block = Math.floor(sk / 1e9);
-  const logIdx = sk % 1e9;
-  return `block ${block.toLocaleString()} #${logIdx}`;
-}
-
-function s3FmtSkShort(sk) {
-  const block = Math.floor(sk / 1e9);
-  return block.toLocaleString();
-}
-
-function s3FmtEta(seconds) {
-  if (!Number.isFinite(seconds) || seconds < 0) return '-';
-  if (seconds < 60) return `${Math.max(1, Math.round(seconds))}s`;
-  if (seconds < 3600) return `${(seconds / 60).toFixed(1)}m`;
-  if (seconds < 86400) return `${(seconds / 3600).toFixed(1)}h`;
-  return `${(seconds / 86400).toFixed(1)}d`;
-}
-
-function s3NiceStep(range, ticks) {
-  const rough = range / ticks;
-  const mag = Math.pow(10, Math.floor(Math.log10(rough)));
-  const res = rough / mag;
-  let nice;
-  if (res <= 1.5) nice = 1;
-  else if (res <= 3) nice = 2;
-  else if (res <= 7) nice = 5;
-  else nice = 10;
-  return nice * mag;
-}
-
-function s3NiceSkStep(rangeSk) {
-  const rangeBlocks = rangeSk / 1e9;
-  const targets = [100, 500, 1000, 5000, 10000, 50000, 100000, 500000, 1000000, 5000000, 10000000];
-  const ideal = rangeBlocks / 8;
-  for (const t of targets) { if (t >= ideal) return t * 1e9; }
-  return targets[targets.length-1] * 1e9;
-}
-
-function s3Bsearch(arr, sk) {
-  let lo = 0, hi = arr.length;
-  while (lo < hi) {
-    const mid = (lo + hi) >> 1;
-    if (arr[mid].sk < sk) lo = mid + 1;
-    else hi = mid;
+  function s3EventDetail(ev) {
+    const rp = Number(ev.rpnl || 0) / 1e6;
+    const up = Number(ev.upnl || 0) / 1e6;
+    return `R ${s3FmtUSD(rp)} / U ${s3FmtUSD(up)} / T ${s3FmtUSD(rp + up)}`;
   }
-  return lo;
-}
+
+  function s3PosBar(val, label) {
+    if (val === 0) return `<div class="s3-pos-half"></div>`;
+    const abs = Math.abs(val);
+    const pct = Math.min(abs / 5000, 1) * 100;
+    const cls = label === 'Y' ? 'long' : 'short';
+    const txt = `${label} ${val > 0 ? '+' : ''}${val.toFixed(0)}`;
+    return `<div class="s3-pos-half"><div class="s3-pos-bar ${cls}" style="width:${pct.toFixed(1)}%"></div><span class="s3-pos-val ${cls}">${txt}</span></div>`;
+  }
+
+  function s3NiceTkStep(max) {
+    const nice = [50, 100, 150, 200, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000, 250000, 500000];
+    const target = max / 8;
+    for (const n of nice) { if (n >= target) return n; }
+    return Math.ceil(target / 100000) * 100000;
+  }
+
+  function s3FmtUSD(v) {
+    return (v >= 0 ? '+$' : '-$') + Math.abs(v).toFixed(2);
+  }
+
+  function s3FmtUSDShort(v) {
+    const abs = Math.abs(v);
+    const sign = v < 0 ? '-' : '';
+    if (abs >= 1e6) return sign + '$' + (abs / 1e6).toFixed(1) + 'M';
+    if (abs >= 1e3) return sign + '$' + (abs / 1e3).toFixed(1) + 'K';
+    return sign + '$' + abs.toFixed(abs < 1 ? 2 : 0);
+  }
+
+  function s3FmtSk(sk) {
+    const block = Math.floor(sk / 1e9);
+    const logIdx = sk % 1e9;
+    return `block ${block.toLocaleString()} #${logIdx}`;
+  }
+
+  function s3FmtSkShort(sk) {
+    const block = Math.floor(sk / 1e9);
+    return block.toLocaleString();
+  }
+
+  function s3FmtEta(seconds) {
+    if (!Number.isFinite(seconds) || seconds < 0) return '-';
+    if (seconds < 60) return `${Math.max(1, Math.round(seconds))}s`;
+    if (seconds < 3600) return `${(seconds / 60).toFixed(1)}m`;
+    if (seconds < 86400) return `${(seconds / 3600).toFixed(1)}h`;
+    return `${(seconds / 86400).toFixed(1)}d`;
+  }
+
+  function s3NiceStep(range, ticks) {
+    const rough = range / ticks;
+    const mag = Math.pow(10, Math.floor(Math.log10(rough)));
+    const res = rough / mag;
+    let nice;
+    if (res <= 1.5) nice = 1;
+    else if (res <= 3) nice = 2;
+    else if (res <= 7) nice = 5;
+    else nice = 10;
+    return nice * mag;
+  }
+
+  function s3NiceSkStep(rangeSk) {
+    const rangeBlocks = rangeSk / 1e9;
+    const targets = [100, 500, 1000, 5000, 10000, 50000, 100000, 500000, 1000000, 5000000, 10000000];
+    const ideal = rangeBlocks / 8;
+    for (const t of targets) { if (t >= ideal) return t * 1e9; }
+    return targets[targets.length - 1] * 1e9;
+  }
+
+  function s3Bsearch(arr, sk) {
+    let lo = 0, hi = arr.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (arr[mid].sk < sk) lo = mid + 1;
+      else hi = mid;
+    }
+    return lo;
+  }
 </script>

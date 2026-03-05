@@ -146,6 +146,8 @@ json to_stage0_status_json(const Stage0Status &status) {
       {"tagged_count", status.tagged_count},
       {"untagged_count", status.untagged_count},
       {"tag_device", status.tag_device},
+      {"tag_model_path", status.tag_model_path},
+      {"tag_model_size_text", status.tag_model_size_text},
   };
 }
 
@@ -178,6 +180,15 @@ json to_stage3_status_json(const Stage3Status &status) {
 void write_ok_json_response(http::response<http::string_body> &res, const json &payload) {
   res.result(http::status::ok);
   res.body() = payload.dump();
+}
+
+bool ensure_required_param(const std::string &value, const char *name, http::response<http::string_body> &res) {
+  if (!value.empty()) {
+    return true;
+  }
+  res.result(http::status::bad_request);
+  res.body() = json{{"error", std::string("Missing ") + name + " parameter"}}.dump();
+  return false;
 }
 
 } // namespace
@@ -249,6 +260,8 @@ void ApiSession::handle_request() {
       handle_stage3_status();
     } else if (target.starts_with("/api/stage3-users")) {
       handle_stage3_users();
+    } else if (target.starts_with("/api/stage3-positions")) {
+      handle_stage3_positions();
     } else if (target.starts_with("/api/stage3-pnl")) {
       handle_stage3_pnl();
     } else {
@@ -838,36 +851,23 @@ void ApiSession::handle_stage3_users() {
 }
 
 void ApiSession::handle_stage3_pnl() {
-  TraceN("api/s3_data");
+  TraceN("api/s3_timeline");
   res_.set(http::field::content_type, "application/json");
 
   std::string user = get_param("user");
-  if (user.empty()) {
-    res_.result(http::status::bad_request);
-    res_.body() = R"({"error":"Missing user parameter"})";
+  if (!ensure_required_param(user, "user", res_)) {
     return;
   }
 
-  std::string block_str = get_param("block");
-  int64_t target_sort_key = std::numeric_limits<int64_t>::max();
-  int64_t target_block = -1;
-  if (!block_str.empty()) {
-    target_block = std::stoll(block_str);
-    assert(target_block >= 0);
-    target_sort_key = target_block * stage2::SORT_KEY_SCALE + (stage2::SORT_KEY_SCALE - 1);
-  }
-
-  auto timeline = stage3_.get_user_timeline(user, target_sort_key);
+  auto timeline = stage3_.get_user_timeline(user);
   if (timeline.empty()) {
     res_.result(http::status::not_found);
     res_.body() = R"({"error":"User not found or no events"})";
     return;
   }
 
-  if (target_block < 0) {
-    target_block = timeline.back().sort_key / stage2::SORT_KEY_SCALE;
-    target_sort_key = timeline.back().sort_key;
-  }
+  const int64_t latest_sort_key = timeline.back().sort_key;
+  const int64_t latest_block = latest_sort_key / stage2::SORT_KEY_SCALE;
 
   json timeline_arr = json::array();
   for (const auto &e : timeline) {
@@ -879,6 +879,32 @@ void ApiSession::handle_stage3_pnl() {
         {"tk", e.token_count},
     });
   }
+
+  json result = {
+      {"user", user},
+      {"block", latest_block},
+      {"total_events", static_cast<int64_t>(timeline.size())},
+      {"timeline", timeline_arr},
+  };
+
+  res_.result(http::status::ok);
+  res_.body() = result.dump();
+}
+
+void ApiSession::handle_stage3_positions() {
+  TraceN("api/s3_positions");
+  res_.set(http::field::content_type, "application/json");
+
+  std::string user = get_param("user");
+  if (!ensure_required_param(user, "user", res_)) {
+    return;
+  }
+  std::string sort_key_str = get_param("sort_key");
+  if (!ensure_required_param(sort_key_str, "sort_key", res_)) {
+    return;
+  }
+  int64_t target_sort_key = std::stoll(sort_key_str);
+  assert(target_sort_key >= 0);
 
   auto positions = stage3_.get_positions_at(user, target_sort_key);
   json pos_arr = json::array();
@@ -894,12 +920,10 @@ void ApiSession::handle_stage3_pnl() {
 
   json result = {
       {"user", user},
-      {"block", target_block},
-      {"total_events", static_cast<int64_t>(timeline.size())},
-      {"timeline", timeline_arr},
+      {"sort_key", target_sort_key},
+      {"block", target_sort_key / stage2::SORT_KEY_SCALE},
       {"positions", pos_arr},
   };
-
   res_.result(http::status::ok);
   res_.body() = result.dump();
 }

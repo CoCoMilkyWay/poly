@@ -1,8 +1,17 @@
 #include "misc/profiler.hpp"
 #include "stage3_sync.hpp"
 #include <cmath>
+#include <tuple>
 
 namespace stage3 {
+namespace {
+
+std::string user_addr_sql(const std::string &addr_lower) {
+  assert(addr_lower.size() == 42);
+  return "from_hex('" + addr_lower.substr(2) + "')";
+}
+
+} // namespace
 
 std::vector<StageSync::UserSummary> StageSync::get_users_sorted(int64_t limit) const {
   TraceN("s3/users");
@@ -27,14 +36,13 @@ std::vector<StageSync::UserSummary> StageSync::get_users_sorted(int64_t limit) c
   return out;
 }
 
-std::vector<StageSync::TimelineEntry> StageSync::get_user_timeline(const std::string &addr,
-                                                                   int64_t max_sort_key) const {
+std::vector<StageSync::TimelineEntry> StageSync::get_user_timeline(const std::string &addr) const {
   TraceN("s3/timeline");
   std::string lower = normalize_addr(addr);
   if (lower.empty()) {
     return {};
   }
-  auto events = load_timeline_events(lower, max_sort_key);
+  auto events = load_timeline_events(lower);
   if (events.empty()) {
     return {};
   }
@@ -73,18 +81,15 @@ std::vector<StageSync::PositionRow> StageSync::get_positions_at(const std::strin
   return out;
 }
 
-std::vector<StageSync::TimelineEvent> StageSync::load_timeline_events(const std::string &addr_lower,
-                                                                      int64_t max_sort_key) const {
+std::vector<StageSync::TimelineEvent> StageSync::load_timeline_events(const std::string &addr_lower) const {
   auto conn = stage3_db_.create_connection();
-  std::string hex40 = addr_lower.substr(2);
+  const std::string user_addr = user_addr_sql(addr_lower);
   auto q = conn->Query(
       "SELECT sort_key, cond_idx, event_type, token_idx, realized_cum, unrealized_pnl, token_count "
       "FROM s3_user_event_fact "
-      "WHERE user_addr = from_hex('" +
-      hex40 + "') "
-              "AND sort_key <= " +
-      std::to_string(max_sort_key) + " "
-                                     "ORDER BY sort_key, cond_idx, event_type, token_idx");
+      "WHERE user_addr = " +
+      user_addr + " "
+              "ORDER BY sort_key, cond_idx, event_type, token_idx");
   assert(q && !q->HasError());
   std::vector<TimelineEvent> out;
   out.reserve(static_cast<size_t>(q->RowCount()));
@@ -115,15 +120,15 @@ std::vector<StageSync::TimelineEntry> StageSync::build_timeline(const std::vecto
 std::unordered_map<int32_t, StageSync::CondState> StageSync::build_state_until(const std::string &addr_lower,
                                                                                int64_t target_sort_key) const {
   auto conn = stage3_db_.create_connection();
-  std::string hex40 = addr_lower.substr(2);
+  const std::string user_addr = user_addr_sql(addr_lower);
   std::unordered_map<int32_t, CondState> states;
   int64_t checkpoint_sort_key = -1;
 
   auto ck = conn->Query(
       "SELECT MAX(checkpoint_sort_key) "
       "FROM s3_user_cond_checkpoint "
-      "WHERE user_addr = from_hex('" +
-      hex40 + "') "
+      "WHERE user_addr = " +
+      user_addr + " "
               "AND checkpoint_sort_key <= " +
       std::to_string(target_sort_key));
   assert(ck && !ck->HasError() && ck->RowCount() == 1);
@@ -139,8 +144,8 @@ std::unordered_map<int32_t, StageSync::CondState> StageSync::build_state_until(c
         "lp_0,lp_1,lp_2,lp_3,lp_4,lp_5,lp_6,lp_7, "
         "realized_pnl,event_count,last_sort_key "
         "FROM s3_user_cond_checkpoint "
-        "WHERE user_addr = from_hex('" +
-        hex40 + "') "
+        "WHERE user_addr = " +
+        user_addr + " "
                 "AND checkpoint_sort_key = " +
         std::to_string(checkpoint_sort_key));
     assert(base && !base->HasError());
@@ -158,8 +163,8 @@ std::unordered_map<int32_t, StageSync::CondState> StageSync::build_state_until(c
   auto delta = src_conn->Query(
       "SELECT sort_key, cond_idx, event_type, token_idx, collateral, amount, price "
       "FROM user_event "
-      "WHERE user_addr = from_hex('" +
-      hex40 + "') "
+      "WHERE user_addr = " +
+      user_addr + " "
               "AND sort_key > " +
       std::to_string(checkpoint_sort_key) + " "
                                             "AND sort_key <= " +
@@ -177,10 +182,7 @@ std::unordered_map<int32_t, StageSync::CondState> StageSync::build_state_until(c
     const_cast<StageSync *>(this)->load_conditions();
   }
   bool has_prev_key = false;
-  int64_t prev_sort_key = 0;
-  int32_t prev_cond_idx = kCursorSentinel;
-  int32_t prev_event_type = kCursorSentinel;
-  int32_t prev_token_idx = kCursorSentinel;
+  std::tuple<int64_t, int32_t, int32_t, int32_t> prev_key{};
   for (idx_t i = 0; i < delta->RowCount(); ++i) {
     InputEvent row{
         "",
@@ -192,20 +194,12 @@ std::unordered_map<int32_t, StageSync::CondState> StageSync::build_state_until(c
         delta->GetValue(5, i).GetValue<int64_t>(), // amount
         delta->GetValue(6, i).GetValue<int64_t>(), // price
     };
+    auto key = std::make_tuple(row.sort_key, row.cond_idx, row.event_type, row.token_idx);
     if (has_prev_key) {
-      assert(
-          row.sort_key > prev_sort_key ||
-          (row.sort_key == prev_sort_key &&
-           (row.cond_idx > prev_cond_idx ||
-            (row.cond_idx == prev_cond_idx &&
-             (row.event_type > prev_event_type ||
-              (row.event_type == prev_event_type && row.token_idx > prev_token_idx))))));
+      assert(key > prev_key);
     }
     has_prev_key = true;
-    prev_sort_key = row.sort_key;
-    prev_cond_idx = row.cond_idx;
-    prev_event_type = row.event_type;
-    prev_token_idx = row.token_idx;
+    prev_key = key;
     if (row.cond_idx < 0) {
       continue;
     }

@@ -40,11 +40,14 @@ public:
     int64_t tagged_count = 0;
     int64_t untagged_count = 0;
     std::string tag_device;
+    std::string tag_model_path;
+    std::string tag_model_size_text;
   };
 
   StageSync(const Config &config, Database &stage1_db, Database &stage0_db, int base_interval_seconds);
 
-  void start(asio::io_context &ioc);
+  void start_query(asio::io_context &ioc);
+  void start_tag(asio::io_context &ioc);
   void stop();
   Status status() const;
   void reset_tag_progress();
@@ -97,8 +100,10 @@ private:
     bool done = false;
   };
 
-  void schedule_sync(int delay_seconds);
-  void do_sync();
+  void schedule_query_sync(int delay_seconds);
+  void schedule_tag_sync(int delay_seconds);
+  void do_query_sync();
+  void do_tag_tick();
   void refresh_status_locked(int64_t head_block, int64_t cursor, bool syncing);
   void record_commit_locked(int64_t cursor);
 
@@ -121,7 +126,8 @@ private:
   const Config &config_;
   Database &stage1_db_;
   Database &stage0_db_;
-  asio::io_context *ioc_ = nullptr;
+  asio::io_context *query_ioc_ = nullptr;
+  asio::io_context *tag_ioc_ = nullptr;
   int base_interval_seconds_ = 0;
   std::atomic<bool> stop_requested_{false};
   std::unordered_set<std::string> known_condition_ids_;

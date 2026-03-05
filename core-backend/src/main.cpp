@@ -76,7 +76,7 @@ int main(int argc, char *argv[]) {
     return {s.syncing, s.last_block, s.head_block, s.behind_blocks, s.condition_count,
             s.ctf_condition_count, s.negrisk_condition_count, s.nonpoly_condition_count,
             s.blocks_per_second, s.eta_seconds, s.tag_last_block, s.tagged_count, s.untagged_count,
-            s.tag_device};
+            s.tag_device, s.tag_model_path, s.tag_model_size_text};
   };
   auto stage0_retagger = [&stage0]() {
     stage0.reset_tag_progress();
@@ -97,11 +97,13 @@ int main(int argc, char *argv[]) {
             s.blocks_per_second, s.eta_seconds};
   };
 
-  boost::asio::io_context stage0_ioc;
+  boost::asio::io_context stage0_query_ioc;
+  boost::asio::io_context stage0_tag_ioc;
   boost::asio::io_context stage1_ioc;
   boost::asio::io_context stage2_ioc;
   boost::asio::io_context stage3_ioc;
-  std::optional<std::thread> stage0_thread;
+  std::optional<std::thread> stage0_query_thread;
+  std::optional<std::thread> stage0_tag_thread;
   std::optional<std::thread> stage1_thread;
   std::optional<std::thread> stage2_thread;
   std::optional<std::thread> stage3_thread;
@@ -119,8 +121,16 @@ int main(int argc, char *argv[]) {
   };
   if (config.stage0_enable == 1) {
     {
-      TraceN("start/stage0");
-      start_stage(config.stage0_enable, "Stage0", stage0, stage0_ioc, stage0_thread);
+      stage0.start_query(stage0_query_ioc);
+      stage0_query_thread.emplace([&stage0_query_ioc]() {
+        TraceThread("stage0_query");
+        stage0_query_ioc.run();
+      });
+      stage0.start_tag(stage0_tag_ioc);
+      stage0_tag_thread.emplace([&stage0_tag_ioc]() {
+        TraceThread("stage0_tag");
+        stage0_tag_ioc.run();
+      });
     }
   }
   if (config.stage1_enable == 1) {
@@ -159,8 +169,10 @@ int main(int argc, char *argv[]) {
     stop_stage("Stage1", config.stage1_enable, stage1);
     stop_stage("Stage2", config.stage2_enable, stage2);
     stop_stage("Stage3", config.stage3_enable, stage3);
-    std::cout << "[Main] 停止 Stage0 io_context..." << std::endl;
-    stage0_ioc.stop();
+    std::cout << "[Main] 停止 Stage0 query io_context..." << std::endl;
+    stage0_query_ioc.stop();
+    std::cout << "[Main] 停止 Stage0 tag io_context..." << std::endl;
+    stage0_tag_ioc.stop();
     std::cout << "[Main] 停止 Stage1 io_context..." << std::endl;
     stage1_ioc.stop();
     std::cout << "[Main] 停止 Stage2 io_context..." << std::endl;
@@ -184,7 +196,8 @@ int main(int argc, char *argv[]) {
     thread->join();
     std::cout << "[Main] " << name << " 线程已 join" << std::endl;
   };
-  join_stage("Stage0", stage0_thread);
+  join_stage("Stage0-query", stage0_query_thread);
+  join_stage("Stage0-tag", stage0_tag_thread);
   join_stage("Stage1", stage1_thread);
   join_stage("Stage2", stage2_thread);
   join_stage("Stage3", stage3_thread);

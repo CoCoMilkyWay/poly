@@ -10,28 +10,6 @@ _nodes = {n["name"]: n for n in _cfg["rpc_nodes"]}
 _stage1_rpc_block_span = int(_cfg["stage1_rpc_block_span"])
 assert _stage1_rpc_block_span > 0
 
-
-def _format_file_size(num_bytes: int) -> str:
-    units = ["B", "KB", "MB", "GB", "TB"]
-    size = float(num_bytes)
-    unit_idx = 0
-    while size >= 1024.0 and unit_idx < len(units) - 1:
-        size /= 1024.0
-        unit_idx += 1
-    if unit_idx == 0:
-        return f"{int(size)} {units[unit_idx]}"
-    return f"{size:.2f} {units[unit_idx]}"
-
-
-_model_dir = _cfg.get("model_dir", "")
-_model_path = (_model_dir.rstrip("/") + "/model.onnx") if _model_dir else ""
-_model_file = Path(__file__).parent.parent / \
-    _model_path if _model_path else None
-if _model_file and _model_file.exists():
-    _model_file_size_text = _format_file_size(_model_file.stat().st_size)
-else:
-    _model_file_size_text = "N/A"
-
 ACTIVE_RPC_NODE = {
     **_nodes[_cfg["active_rpc"]],
     "chunk": _stage1_rpc_block_span,
@@ -53,8 +31,6 @@ async def index(request: Request):
         "stage0_state": stage0_state,
         "stage1_state": stage1_state,
         "rpc_node": ACTIVE_RPC_NODE,
-        "tag_model_path": _model_path,
-        "tag_model_size_text": _model_file_size_text,
     })
 
 
@@ -134,8 +110,10 @@ async def api_stage3_users(limit: int = Query(200)):
 
 
 @app.get("/api/stage3-pnl")
-async def api_stage3_pnl(user: str = Query(...), block: int | None = Query(None)):
-    params = {"user": user}
-    if block is not None:
-        params["block"] = block
-    return await backend_get("/api/stage3-pnl", params)
+async def api_stage3_pnl(user: str = Query(...)):
+    return await backend_get("/api/stage3-pnl", {"user": user})
+
+
+@app.get("/api/stage3-positions")
+async def api_stage3_positions(user: str = Query(...), sort_key: int = Query(...)):
+    return await backend_get("/api/stage3-positions", {"user": user, "sort_key": sort_key})
