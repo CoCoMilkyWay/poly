@@ -60,7 +60,7 @@
 - Tech_Space                         # SpaceX NASA rocket launch satellite space mission Starship
 
 ## Entertainment
-- Entertainment_Movies               # Movies film box office gross opening weekend Rotten Tomatoes score Oscars Academy Awards Golden Globe BAFTA SAG Award Critics Choice best actor actress director cinema
+- Entertainment_Movies               # Movies film box office opening weekend Rotten Tomatoes Oscars Academy Golden Globe BAFTA SAG Award Critics actor actress director cinema
 - Entertainment_Music                # Music Grammy Billboard chart album artist concert award Mercury Prize songwriter
 - Entertainment_TV_Streaming         # TV streaming Netflix Emmy show series reality television podcast Joe Rogan talk show Dancing with the Stars DWTS Love Is Blind
 - Entertainment_Awards_Stage         # Tony Award Broadway theater musical drama stage play performance

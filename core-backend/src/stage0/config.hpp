@@ -2,8 +2,8 @@
 
 namespace stage0::config {
 
-inline constexpr int kModelBatchSize = 32; // model batch size (large model on CUDA can OOM with 128)
-inline constexpr int kModelSeqLen = 400;    // model sequence length
-inline constexpr int kLabelSeqLen = 64;     // label sequence length
+inline constexpr int kModelBatchSize = 512; // model batch size
+inline constexpr int kModelSeqLen = 50;     // model sequence length (TODO: input is truncated for performance, set too 400 when have GPU)
+inline constexpr int kLabelSeqLen = 32;     // label sequence length
 
 } // namespace stage0::config
