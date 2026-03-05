@@ -8,15 +8,16 @@ polygon链上polymarket协议合约节点本身的实现: /home/chuyin/work/poly
 新架构:直接query RPC节点获得历史信息(本地Erigon/远程Alchemy节点, 行为一致)
 
 老架构:
-    思路: doc/indexer/README.md
-    官方推荐的the Graph实现: /home/chuyin/work/poly/doc/indexer/the graph/official (但真正的实现和他其实差异很大)
-    商业graph indexer实现:
-        IPFS manifest: /home/chuyin/work/poly/doc/indexer/the graph/implemented/IPFS
-        graphql schema: /home/chuyin/work/poly/doc/indexer/the graph/implemented/schema
-
+   思路: doc/indexer/README.md
+   官方推荐的the Graph实现: /home/chuyin/work/poly/doc/indexer/the graph/official (但真正的实现和他其实差异很大)
+   商业graph indexer实现:
+      IPFS manifest: /home/chuyin/work/poly/doc/indexer/the graph/implemented/IPFS
+      graphql schema: /home/chuyin/work/poly/doc/indexer/the graph/implemented/schema
+新架构:
+   如下
 ```
 
-## 新架构
+## 架构
 
 | 事件                 |               历史Token持仓                |                  历史Token交易                   |                   历史Token净值/PnL                   | 辅助映射表 |
 | -------------------- | :----------------------------------------: | :----------------------------------------------: | :---------------------------------------------------: | :--------: |
