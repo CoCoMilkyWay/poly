@@ -19,15 +19,6 @@ bool StageSync::is_trade_event(EventType ty) {
          ty == EventType::FPMMBuy || ty == EventType::FPMMSell;
 }
 
-bool StageSync::is_volume_event(EventType ty) {
-  return ty == EventType::OrderBuy || ty == EventType::OrderSell ||
-         ty == EventType::FPMMBuy || ty == EventType::FPMMSell ||
-         ty == EventType::TransferInNegRisk || ty == EventType::TransferInOther ||
-         ty == EventType::TransferInNonPoly || ty == EventType::TransferOutNegRisk ||
-         ty == EventType::TransferOutOther || ty == EventType::TransferOutNonPoly ||
-         ty == EventType::Redemption || ty == EventType::RedemptionNonPoly;
-}
-
 bool StageSync::is_usd_collateral(int32_t collateral) {
   return collateral == static_cast<int32_t>(Collateral::USDC) ||
          collateral == static_cast<int32_t>(Collateral::USDCe) ||
@@ -82,17 +73,15 @@ int8_t StageSync::tag_name_to_id(const std::string &tag_name) const {
 }
 
 int64_t StageSync::sort_key_to_block(int64_t sort_key) {
-  assert(sort_key >= 0);
-  return sort_key / SORT_KEY_SCALE;
+  return feature_comp::sort_key_to_block(sort_key, SORT_KEY_SCALE);
 }
 
 int64_t StageSync::sort_key_to_block_bucket(int64_t sort_key) {
-  return sort_key_to_block(sort_key) / kBlockBucketSize;
+  return feature_comp::sort_key_to_block_bucket(sort_key, SORT_KEY_SCALE, kBlockBucketSize);
 }
 
 int64_t StageSync::bucket_end_block(int64_t block_bucket) {
-  assert(block_bucket >= 0);
-  return (block_bucket + 1) * kBlockBucketSize;
+  return feature_comp::bucket_end_block(block_bucket, kBlockBucketSize);
 }
 
 bool StageSync::is_effective_holding(double qty_1e6) {
@@ -104,36 +93,22 @@ bool StageSync::is_effective_holding_i64(int64_t qty_1e6) {
 }
 
 double StageSync::calc_unrealized_pnl(const TokenState &st) {
-  if (std::abs(st.pos) <= kPosEpsilon || st.lp <= 0.0) {
-    return 0.0;
-  }
-  const double mtm = st.pos * st.lp / 1e6;
-  return mtm - st.cost;
+  return feature_comp::calc_unrealized_pnl(
+      feature_comp::TokenSnapshot{st.pos, st.cost, st.lp, st.entry_block}, kPosEpsilon);
 }
 
 int64_t StageSync::calc_exposure_1e6(const TokenState &st) {
-  if (std::abs(st.pos) <= kPosEpsilon || st.lp <= 0.0) {
-    return 0;
-  }
-  return round_i64(std::abs(st.pos) * st.lp / 1e6);
+  return feature_comp::calc_exposure_1e6(
+      feature_comp::TokenSnapshot{st.pos, st.cost, st.lp, st.entry_block}, kPosEpsilon);
 }
 
 int64_t StageSync::calc_holding_period_blocks(int64_t current_block, const TokenState &st) {
-  if (std::abs(st.pos) <= kPosEpsilon || st.entry_block <= 0.0) {
-    return 0;
-  }
-  const double hp = std::max(0.0, static_cast<double>(current_block) - st.entry_block);
-  return round_i64(hp);
+  return feature_comp::calc_holding_period_blocks(
+      current_block, feature_comp::TokenSnapshot{st.pos, st.cost, st.lp, st.entry_block}, kPosEpsilon);
 }
 
 int64_t StageSync::calc_volume_1e6(const EventInput &row) {
-  const EventType ty = static_cast<EventType>(row.event_type);
-  if (!is_volume_event(ty)) {
-    return 0;
-  }
-  const double qty = std::abs(static_cast<double>(row.amount));
-  const double px = std::abs(static_cast<double>(row.price)) / 1e6;
-  return round_i64(qty * px);
+  return feature_comp::calc_volume_1e6(static_cast<EventType>(row.event_type), row.amount, row.price);
 }
 
 uint64_t StageSync::pack_cond_token_key(int32_t cond_idx, int32_t token_idx) {
@@ -149,39 +124,8 @@ void StageSync::adjust_tail_window(AggRuntime &agg,
                                    int64_t current_exposure,
                                    int64_t current_holding_period,
                                    int64_t current_token_count) {
-  assert(block_bucket >= 0);
-  assert(current_block >= block_bucket * kBlockBucketSize);
-  assert(current_block <= bucket_end_block(block_bucket));
-  const int64_t end_block = bucket_end_block(block_bucket);
-  if (agg.has_tail) {
-    assert(agg.last_block >= block_bucket * kBlockBucketSize);
-    assert(agg.last_block <= end_block);
-
-    const int64_t old_tail = std::max<int64_t>(0, end_block - agg.last_block);
-    agg.exposure_tw_sum -= agg.last_exposure * old_tail;
-    agg.holding_period_tw_sum -= agg.last_holding_period * old_tail;
-    agg.token_count_tw_sum -= agg.last_token_count * old_tail;
-    agg.time_weight_sum -= old_tail;
-
-    const int64_t delta_blocks = current_block - agg.last_block;
-    assert(delta_blocks >= 0);
-    agg.exposure_tw_sum += agg.last_exposure * delta_blocks;
-    agg.holding_period_tw_sum += agg.last_holding_period * delta_blocks;
-    agg.token_count_tw_sum += agg.last_token_count * delta_blocks;
-    agg.time_weight_sum += delta_blocks;
-  }
-
-  const int64_t new_tail = std::max<int64_t>(0, end_block - current_block);
-  agg.exposure_tw_sum += current_exposure * new_tail;
-  agg.holding_period_tw_sum += current_holding_period * new_tail;
-  agg.token_count_tw_sum += current_token_count * new_tail;
-  agg.time_weight_sum += new_tail;
-
-  agg.last_block = current_block;
-  agg.last_exposure = current_exposure;
-  agg.last_holding_period = current_holding_period;
-  agg.last_token_count = current_token_count;
-  agg.has_tail = true;
+  feature_comp::adjust_tail_window(
+      agg, block_bucket, current_block, current_exposure, current_holding_period, current_token_count, kBlockBucketSize);
 }
 
 double StageSync::apply_event_input(const EventInput &row, TokenState &st) const {

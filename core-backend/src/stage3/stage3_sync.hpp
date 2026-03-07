@@ -4,7 +4,7 @@
 #include "../stage2/stage2_builder.hpp"
 #include "../stage2/stage2_models.hpp"
 #include "../stage2/stage2_types.hpp"
-#include "math/KLLcache.hpp"
+#include "stage3_comp_feat.hpp"
 
 #include <atomic>
 #include <boost/asio.hpp>
@@ -206,22 +206,7 @@ private:
     }
   };
 
-  struct AggRuntime {
-    int64_t realized_sum = 0;
-    KLLcache realized_kll{200, 1024};
-    int64_t event_count = 0;
-    int64_t exposure_tw_sum = 0;
-    int64_t volume_sum = 0;
-    int64_t holding_period_tw_sum = 0;
-    int64_t token_count_tw_sum = 0;
-    int64_t time_weight_sum = 0;
-    int64_t last_sort_key = 0;
-    int64_t last_block = 0;
-    int64_t last_exposure = 0;
-    int64_t last_holding_period = 0;
-    int64_t last_token_count = 0;
-    bool has_tail = false;
-  };
+  using AggRuntime = feature_comp::AggRuntime;
 
   EventBuilder &builder_;
   Database &stage0_db_;
@@ -289,7 +274,6 @@ private:
 
   // Event / metadata predicates
   static bool is_trade_event(EventType ty);
-  static bool is_volume_event(EventType ty);
   static bool is_usd_collateral(int32_t collateral);
   static bool is_effective_holding(double qty_1e6);
   static bool is_effective_holding_i64(int64_t qty_1e6);

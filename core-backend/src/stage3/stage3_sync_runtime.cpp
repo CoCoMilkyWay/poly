@@ -571,7 +571,6 @@ bool StageSync::process_chunk_locked() const {
 
   std::vector<EventFact> event_facts;
   event_facts.reserve(event_inputs.size());
-  std::vector<float> kll_one(1, 0.0f);
   for (const auto &row : event_inputs) {
     double realized_delta = 0.0;
     int8_t tag_id = 13;
@@ -606,13 +605,7 @@ bool StageSync::process_chunk_locked() const {
       assert(agg_it != agg_states.end());
       AggRuntime &agg = agg_it->second;
       adjust_tail_window(agg, agg_key.block_bucket, row_block, exposure, holding_period, user_token_count[row.user_hex]);
-      const int64_t realized_i64 = round_i64(realized_delta);
-      agg.realized_sum += realized_i64;
-      kll_one[0] = static_cast<float>(realized_delta);
-      agg.realized_kll.addBatch(kll_one);
-      agg.event_count += 1;
-      agg.volume_sum += volume;
-      agg.last_sort_key = row.sort_key;
+      feature_comp::apply_event_delta(agg, realized_delta, volume, row.sort_key);
     }
     double &realized_cum = user_realized_cum[row.user_hex];
     double &unrealized_cum = user_unrealized_cum[row.user_hex];
