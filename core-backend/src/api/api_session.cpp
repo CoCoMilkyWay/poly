@@ -1110,6 +1110,7 @@ void ApiSession::handle_stage3_positions() {
         {"qty", p.qty},
         {"cost", p.cost},
         {"lp", p.last_price},
+        {"eb", p.entry_block},
         {"tag", meta.tag},
         {"q", meta.question},
         {"desc", meta.description},

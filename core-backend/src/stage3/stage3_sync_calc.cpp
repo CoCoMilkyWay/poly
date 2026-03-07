@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
+#include <vector>
 
 namespace stage3 {
 
@@ -18,11 +19,79 @@ bool StageSync::is_trade_event(EventType ty) {
          ty == EventType::FPMMBuy || ty == EventType::FPMMSell;
 }
 
+bool StageSync::is_volume_event(EventType ty) {
+  return ty == EventType::OrderBuy || ty == EventType::OrderSell ||
+         ty == EventType::FPMMBuy || ty == EventType::FPMMSell ||
+         ty == EventType::TransferInNegRisk || ty == EventType::TransferInOther ||
+         ty == EventType::TransferInNonPoly || ty == EventType::TransferOutNegRisk ||
+         ty == EventType::TransferOutOther || ty == EventType::TransferOutNonPoly ||
+         ty == EventType::Redemption || ty == EventType::RedemptionNonPoly;
+}
+
 bool StageSync::is_usd_collateral(int32_t collateral) {
   return collateral == static_cast<int32_t>(Collateral::USDC) ||
          collateral == static_cast<int32_t>(Collateral::USDCe) ||
          collateral == static_cast<int32_t>(Collateral::USDT) ||
          collateral == static_cast<int32_t>(Collateral::WrappedUSDCe);
+}
+
+int8_t StageSync::tag_name_to_id(const std::string &tag_name) {
+  const std::string lower = to_lower(tag_name);
+  auto has = [&](const std::string &s) { return lower.find(s) != std::string::npos; };
+  if (has("crypto_price")) {
+    return 0;
+  }
+  if (has("crypto_market")) {
+    return 1;
+  }
+  if (has("sports_basketball")) {
+    return 2;
+  }
+  if (has("sports_football")) {
+    return 3;
+  }
+  if (has("sports_soccer")) {
+    return 4;
+  }
+  if (has("sports_individual")) {
+    return 5;
+  }
+  if (has("politics_us")) {
+    return 6;
+  }
+  if (has("politics_world")) {
+    return 7;
+  }
+  if (has("economy_finance")) {
+    return 8;
+  }
+  if (has("tech")) {
+    return 9;
+  }
+  if (has("entertainment")) {
+    return 10;
+  }
+  if (has("weather")) {
+    return 11;
+  }
+  if (has("society")) {
+    return 12;
+  }
+  return 13;
+}
+
+int64_t StageSync::sort_key_to_block(int64_t sort_key) {
+  assert(sort_key >= 0);
+  return sort_key / SORT_KEY_SCALE;
+}
+
+int64_t StageSync::sort_key_to_block_bucket(int64_t sort_key) {
+  return sort_key_to_block(sort_key) / kBlockBucketSize;
+}
+
+int64_t StageSync::bucket_end_block(int64_t block_bucket) {
+  assert(block_bucket >= 0);
+  return (block_bucket + 1) * kBlockBucketSize;
 }
 
 bool StageSync::is_effective_holding(double qty_1e6) {
@@ -33,195 +102,232 @@ bool StageSync::is_effective_holding_i64(int64_t qty_1e6) {
   return std::llabs(qty_1e6) >= kMinHoldingQty;
 }
 
-bool StageSync::has_any_position(const CondState &st, int outcome_count) {
-  assert(outcome_count >= 0 && outcome_count <= MAX_OUTCOMES);
-  for (int j = 0; j < outcome_count; ++j) {
-    if (round_i64(st.positions[j]) != 0) {
-      return true;
-    }
+double StageSync::calc_unrealized_pnl(const TokenState &st) {
+  if (std::abs(st.pos) <= kPosEpsilon || st.lp <= 0.0) {
+    return 0.0;
   }
-  return false;
+  const double mtm = st.pos * st.lp / 1e6;
+  return mtm - st.cost;
 }
 
-int StageSync::count_effective_holdings(const CondState &st, int outcome_count) {
-  assert(outcome_count >= 0 && outcome_count <= MAX_OUTCOMES);
-  int count = 0;
-  for (int j = 0; j < outcome_count; ++j) {
-    if (is_effective_holding(st.positions[j])) {
-      count++;
-    }
+int64_t StageSync::calc_exposure_1e6(const TokenState &st) {
+  if (std::abs(st.pos) <= kPosEpsilon || st.lp <= 0.0) {
+    return 0;
   }
-  return count;
+  return round_i64(std::abs(st.pos) * st.lp / 1e6);
 }
 
-// Compute unrealized PnL using double arithmetic
-// unrealized = Σ(pos * last_price / 1e6 - cost) for all outcomes with known last_price.
-// This naturally supports long(pos>0) and short(pos<0) exposure.
-double StageSync::compute_unrealized_pnl(const CondState &st) {
-  double sum = 0.0;
-  for (int j = 0; j < MAX_OUTCOMES; ++j) {
-    if (std::abs(st.positions[j]) <= kPosEpsilon || st.last_price[j] <= 0.0) {
-      continue;
-    }
-    double mtm = st.positions[j] * st.last_price[j] / 1e6;
-    sum += mtm - st.cost[j];
+int64_t StageSync::calc_holding_period_blocks(int64_t current_block, const TokenState &st) {
+  if (std::abs(st.pos) <= kPosEpsilon || st.entry_block <= 0.0) {
+    return 0;
   }
-  return sum;
+  const double hp = std::max(0.0, static_cast<double>(current_block) - st.entry_block);
+  return round_i64(hp);
 }
 
-// Apply event to state using double arithmetic
-// Returns realized_delta for this event
-double StageSync::apply_event_to_state(const InputEvent &row, CondState &st) const {
+int64_t StageSync::calc_volume_1e6(const EventInput &row) {
+  const EventType ty = static_cast<EventType>(row.event_type);
+  if (!is_volume_event(ty)) {
+    return 0;
+  }
+  const double qty = std::abs(static_cast<double>(row.amount));
+  const double px = std::abs(static_cast<double>(row.price)) / 1e6;
+  return round_i64(qty * px);
+}
+
+uint64_t StageSync::pack_cond_token_key(int32_t cond_idx, int32_t token_idx) {
+  assert(cond_idx >= 0);
+  assert(token_idx >= 0);
+  return (static_cast<uint64_t>(static_cast<uint32_t>(cond_idx)) << 32) |
+         static_cast<uint32_t>(token_idx);
+}
+
+void StageSync::adjust_tail_window(AggRuntime &agg,
+                                   int64_t block_bucket,
+                                   int64_t current_block,
+                                   int64_t current_exposure,
+                                   int64_t current_holding_period,
+                                   int64_t current_token_count) {
+  assert(block_bucket >= 0);
+  assert(current_block >= block_bucket * kBlockBucketSize);
+  assert(current_block <= bucket_end_block(block_bucket));
+  const int64_t end_block = bucket_end_block(block_bucket);
+  if (agg.has_tail) {
+    assert(agg.last_block >= block_bucket * kBlockBucketSize);
+    assert(agg.last_block <= end_block);
+
+    const int64_t old_tail = std::max<int64_t>(0, end_block - agg.last_block);
+    agg.exposure_tw_sum -= agg.last_exposure * old_tail;
+    agg.holding_period_tw_sum -= agg.last_holding_period * old_tail;
+    agg.token_count_tw_sum -= agg.last_token_count * old_tail;
+    agg.time_weight_sum -= old_tail;
+
+    const int64_t delta_blocks = current_block - agg.last_block;
+    assert(delta_blocks >= 0);
+    agg.exposure_tw_sum += agg.last_exposure * delta_blocks;
+    agg.holding_period_tw_sum += agg.last_holding_period * delta_blocks;
+    agg.token_count_tw_sum += agg.last_token_count * delta_blocks;
+    agg.time_weight_sum += delta_blocks;
+  }
+
+  const int64_t new_tail = std::max<int64_t>(0, end_block - current_block);
+  agg.exposure_tw_sum += current_exposure * new_tail;
+  agg.holding_period_tw_sum += current_holding_period * new_tail;
+  agg.token_count_tw_sum += current_token_count * new_tail;
+  agg.time_weight_sum += new_tail;
+
+  agg.last_block = current_block;
+  agg.last_exposure = current_exposure;
+  agg.last_holding_period = current_holding_period;
+  agg.last_token_count = current_token_count;
+  agg.has_tail = true;
+}
+
+double StageSync::apply_event_input(const EventInput &row, TokenState &st) const {
   assert(row.cond_idx >= 0);
   assert(static_cast<size_t>(row.cond_idx) < conditions_.size());
   const auto &cond = conditions_[static_cast<size_t>(row.cond_idx)];
-  assert(cond.outcome_count > 0 && cond.outcome_count <= MAX_OUTCOMES);
+  assert(cond.outcome_count > 0);
   assert(row.token_idx >= 0 && row.token_idx < cond.outcome_count);
 
-  int i = row.token_idx;
-  EventType ty = static_cast<EventType>(row.event_type);
-  bool has_usd = is_usd_collateral(row.collateral);
-  double qty = std::abs(static_cast<double>(row.amount));
-
-  // Zero-size rows are semantic no-ops for position/cost/replay accounting.
+  const EventType ty = static_cast<EventType>(row.event_type);
+  const bool has_usd = is_usd_collateral(row.collateral);
+  const double qty = std::abs(static_cast<double>(row.amount));
   if (qty <= kPosEpsilon) {
     return 0.0;
   }
 
-  // Update last_price for trade events
   if (is_trade_event(ty) && row.price > 0 && has_usd) {
-    st.last_price[i] = static_cast<double>(row.price);
+    st.lp = static_cast<double>(row.price);
   }
 
-  double px = static_cast<double>(row.price) / 1e6; // Convert from 1e6 to actual price
+  const double pos_before = st.pos;
+  const double entry_before = st.entry_block;
+  const double px = static_cast<double>(row.price) / 1e6;
+  const int64_t current_block = sort_key_to_block(row.sort_key);
 
   auto normalize_small_residue = [&]() {
-    if (std::abs(st.positions[i]) <= kPosEpsilon) {
-      st.positions[i] = 0.0;
+    if (std::abs(st.pos) <= kPosEpsilon) {
+      st.pos = 0.0;
     }
-    if (std::abs(st.cost[i]) <= kPosEpsilon) {
-      st.cost[i] = 0.0;
+    if (std::abs(st.cost) <= kPosEpsilon) {
+      st.cost = 0.0;
     }
   };
 
-  // Positive delta (buy/inbound): may cover existing short first, then open/increase long.
   auto apply_positive_delta = [&](bool add_cost_for_open_long, bool realize_when_cover_short) -> double {
     assert(qty > 0.0);
     if (!has_usd) {
-      st.positions[i] += qty;
+      st.pos += qty;
       normalize_small_residue();
       return 0.0;
     }
 
-    const double pos_before = st.positions[i];
-    const double short_qty = std::max(0.0, -pos_before);
+    const double short_qty = std::max(0.0, -st.pos);
     const double cover_qty = std::min(qty, short_qty);
     const double open_long_qty = qty - cover_qty;
 
     double realized_delta = 0.0;
     if (cover_qty > 0.0 && short_qty > 0.0) {
-      // cost_closed is negative (short book value removed from inventory)
-      const double cost_closed = st.cost[i] * (cover_qty / short_qty);
-      st.cost[i] -= cost_closed;
+      const double cost_closed = st.cost * (cover_qty / short_qty);
+      st.cost -= cost_closed;
       if (realize_when_cover_short) {
         const double entry_credit = -cost_closed;
         const double buy_cost = cover_qty * px;
         realized_delta = entry_credit - buy_cost;
-        st.realized_pnl += realized_delta;
       }
     }
 
-    st.positions[i] += qty;
+    st.pos += qty;
     if (add_cost_for_open_long && open_long_qty > 0.0) {
-      st.cost[i] += open_long_qty * px;
+      st.cost += open_long_qty * px;
     }
     normalize_small_residue();
     return realized_delta;
   };
 
-  // Negative delta (sell/outbound): may close existing long first, then open/increase short.
   auto apply_negative_delta = [&](double proceeds_per_unit,
                                   bool accrue_realized,
                                   bool add_short_entry_cost) -> double {
     assert(qty > 0.0);
     if (!has_usd) {
-      st.positions[i] -= qty;
+      st.pos -= qty;
       normalize_small_residue();
       return 0.0;
     }
 
-    const double pos_before = st.positions[i];
-    const double long_qty = std::max(0.0, pos_before);
+    const double long_qty = std::max(0.0, st.pos);
     const double close_qty = std::min(qty, long_qty);
     const double open_short_qty = qty - close_qty;
 
     double cost_removed = 0.0;
     if (close_qty > 0.0 && long_qty > 0.0) {
-      cost_removed = st.cost[i] * (close_qty / long_qty);
-      st.cost[i] -= cost_removed;
+      cost_removed = st.cost * (close_qty / long_qty);
+      st.cost -= cost_removed;
     }
 
-    st.positions[i] -= qty;
+    st.pos -= qty;
     if (add_short_entry_cost && open_short_qty > 0.0) {
-      // Short exposure carries negative cost (entry credit).
-      st.cost[i] -= open_short_qty * proceeds_per_unit;
+      st.cost -= open_short_qty * proceeds_per_unit;
     }
 
     double realized_delta = 0.0;
     if (accrue_realized) {
       const double proceeds = close_qty * proceeds_per_unit;
       realized_delta = proceeds - cost_removed;
-      st.realized_pnl += realized_delta;
     }
 
     normalize_small_residue();
     return realized_delta;
   };
 
+  double realized_delta = 0.0;
   switch (ty) {
-  // Buy operations: increase position and cost
   case EventType::OrderBuy:
   case EventType::FPMMBuy:
   case EventType::SplitNormal:
   case EventType::SplitNegRisk:
   case EventType::SplitNonPoly: {
     if (row.amount >= 0) {
-      return apply_positive_delta(/*add_cost_for_open_long=*/true,
-                                  /*realize_when_cover_short=*/true);
+      realized_delta = apply_positive_delta(/*add_cost_for_open_long=*/true,
+                                            /*realize_when_cover_short=*/true);
+      break;
     }
-    return apply_negative_delta(/*proceeds_per_unit=*/px,
-                                /*accrue_realized=*/true,
-                                /*add_short_entry_cost=*/true);
+    realized_delta = apply_negative_delta(/*proceeds_per_unit=*/px,
+                                          /*accrue_realized=*/true,
+                                          /*add_short_entry_cost=*/true);
+    break;
   }
 
-  // LP Add: user doesn't receive tokens (0->FPMM mint)
   case EventType::FPMMLPAdd:
-    return 0.0;
+    realized_delta = 0.0;
+    break;
 
-  // LP Remove/Return: user gets tokens but cost unchanged
   case EventType::FPMMLPRemove:
   case EventType::FPMMLPReturn:
     if (row.amount >= 0) {
-      return apply_positive_delta(/*add_cost_for_open_long=*/false,
-                                  /*realize_when_cover_short=*/false);
+      realized_delta = apply_positive_delta(/*add_cost_for_open_long=*/false,
+                                            /*realize_when_cover_short=*/false);
+      break;
     }
-    return apply_negative_delta(/*proceeds_per_unit=*/0.0,
-                                /*accrue_realized=*/false,
-                                /*add_short_entry_cost=*/false);
+    realized_delta = apply_negative_delta(/*proceeds_per_unit=*/0.0,
+                                          /*accrue_realized=*/false,
+                                          /*add_short_entry_cost=*/false);
+    break;
 
-  // Transfer In: position increases, cost unchanged
   case EventType::TransferInNegRisk:
   case EventType::TransferInOther:
   case EventType::TransferInNonPoly:
     if (row.amount >= 0) {
-      return apply_positive_delta(/*add_cost_for_open_long=*/false,
-                                  /*realize_when_cover_short=*/false);
+      realized_delta = apply_positive_delta(/*add_cost_for_open_long=*/false,
+                                            /*realize_when_cover_short=*/false);
+      break;
     }
-    return apply_negative_delta(/*proceeds_per_unit=*/0.0,
-                                /*accrue_realized=*/false,
-                                /*add_short_entry_cost=*/false);
+    realized_delta = apply_negative_delta(/*proceeds_per_unit=*/0.0,
+                                          /*accrue_realized=*/false,
+                                          /*add_short_entry_cost=*/false);
+    break;
 
-  // Sell operations: realize PnL = proceeds - cost_removed
   case EventType::OrderSell:
   case EventType::FPMMSell:
   case EventType::MergeNormal:
@@ -230,57 +336,88 @@ double StageSync::apply_event_to_state(const InputEvent &row, CondState &st) con
   case EventType::Redemption:
   case EventType::RedemptionNonPoly: {
     if (row.amount <= 0) {
-      return apply_negative_delta(/*proceeds_per_unit=*/px,
-                                  /*accrue_realized=*/true,
-                                  /*add_short_entry_cost=*/true);
+      realized_delta = apply_negative_delta(/*proceeds_per_unit=*/px,
+                                            /*accrue_realized=*/true,
+                                            /*add_short_entry_cost=*/true);
+      break;
     }
-    return apply_positive_delta(/*add_cost_for_open_long=*/true,
-                                /*realize_when_cover_short=*/true);
+    realized_delta = apply_positive_delta(/*add_cost_for_open_long=*/true,
+                                          /*realize_when_cover_short=*/true);
+    break;
   }
 
-  // Convert: special payout calculation
-  // NegRisk convert burns NO tokens and returns (popcount-1)/popcount of collateral
   case EventType::Convert: {
-    // Count winning outcomes (non-zero payout numerators)
     int popcount = 0;
     for (int64_t p : cond.payout_numerators) {
-      if (p > 0)
+      if (p > 0) {
         ++popcount;
+      }
     }
-    // Resolution can arrive long after preparation; keep Stage3 running when payout is not ready yet.
-    // We treat popcount<=0 as temporary incomplete Stage2 data (stage2 will complete itself after resolve event) and rely on periodic Stage3 rebuild/replay.
-    if (popcount <= 0)
+    if (popcount <= 0) { // this is allowed
       popcount = 1;
-
-    // Proceeds from convert: qty * (popcount-1) / popcount
-    const double convert_px =
-        static_cast<double>(popcount - 1) / static_cast<double>(popcount);
-    if (row.amount <= 0) {
-      return apply_negative_delta(/*proceeds_per_unit=*/convert_px,
-                                  /*accrue_realized=*/true,
-                                  /*add_short_entry_cost=*/true);
     }
-    return apply_positive_delta(/*add_cost_for_open_long=*/true,
-                                /*realize_when_cover_short=*/true);
+    const double convert_px = static_cast<double>(popcount - 1) / static_cast<double>(popcount);
+    if (row.amount <= 0) {
+      realized_delta = apply_negative_delta(/*proceeds_per_unit=*/convert_px,
+                                            /*accrue_realized=*/true,
+                                            /*add_short_entry_cost=*/true);
+      break;
+    }
+    realized_delta = apply_positive_delta(/*add_cost_for_open_long=*/true,
+                                          /*realize_when_cover_short=*/true);
+    break;
   }
 
-  // Transfer Out: reduce position/cost, no realized PnL
   case EventType::TransferOutNegRisk:
   case EventType::TransferOutOther:
   case EventType::TransferOutNonPoly: {
     if (row.amount <= 0) {
-      return apply_negative_delta(/*proceeds_per_unit=*/0.0,
-                                  /*accrue_realized=*/false,
-                                  /*add_short_entry_cost=*/false);
+      realized_delta = apply_negative_delta(/*proceeds_per_unit=*/0.0,
+                                            /*accrue_realized=*/false,
+                                            /*add_short_entry_cost=*/false);
+      break;
     }
-    return apply_positive_delta(/*add_cost_for_open_long=*/false,
-                                /*realize_when_cover_short=*/false);
+    realized_delta = apply_positive_delta(/*add_cost_for_open_long=*/false,
+                                          /*realize_when_cover_short=*/false);
+    break;
   }
 
   default:
     assert(false);
-    return 0.0;
+    realized_delta = 0.0;
+    break;
   }
+
+  normalize_small_residue();
+  const double pos_after = st.pos;
+  if (std::abs(pos_after) <= kPosEpsilon) {
+    st.pos = 0.0;
+    st.cost = 0.0;
+    st.entry_block = 0.0;
+    return realized_delta;
+  }
+
+  const double abs_before = std::abs(pos_before);
+  const double abs_after = std::abs(pos_after);
+  if (abs_before <= kPosEpsilon) {
+    st.entry_block = static_cast<double>(current_block);
+    return realized_delta;
+  }
+
+  if (pos_before * pos_after < 0.0) {
+    st.entry_block = static_cast<double>(current_block);
+    return realized_delta;
+  }
+
+  if (abs_after > abs_before + kPosEpsilon) {
+    const double delta_abs = abs_after - abs_before;
+    if (entry_before > 0.0) {
+      st.entry_block = (abs_before * entry_before + delta_abs * static_cast<double>(current_block)) / abs_after;
+    } else {
+      st.entry_block = static_cast<double>(current_block);
+    }
+  }
+  return realized_delta;
 }
 
 } // namespace stage3

@@ -4,8 +4,8 @@
 #include "../stage2/stage2_builder.hpp"
 #include "../stage2/stage2_models.hpp"
 #include "../stage2/stage2_types.hpp"
+#include "math/KLLcache.hpp"
 
-#include <array>
 #include <atomic>
 #include <boost/asio.hpp>
 #include <chrono>
@@ -84,14 +84,14 @@ public:
     std::unordered_map<uint16_t, int64_t> event_by_collateral;
   };
 
-  struct UserSummary {
+  struct UserSummaryRow {
     std::string addr;
     int64_t event_count = 0;
     int64_t realized_pnl = 0;
     int64_t unrealized_pnl = 0;
   };
 
-  struct TimelineEntry {
+  struct TimelineRow {
     int64_t sort_key = 0;
     int32_t cond_idx = 0;
     int32_t token_idx = 0;
@@ -110,9 +110,11 @@ public:
     int64_t qty = 0;
     int64_t cost = 0;
     int64_t last_price = 0;
+    int64_t entry_block = 0;
   };
 
-  StageSync(EventBuilder &builder, Database &stage2_db, Database &stage3_db, int base_interval_seconds);
+  StageSync(EventBuilder &builder, Database &stage0_db, Database &stage2_db, Database &stage3_db,
+            int base_interval_seconds);
 
   void start(asio::io_context &ioc);
   void stop();
@@ -120,12 +122,12 @@ public:
   Status status() const;
   Stage2Data stage2_data() const;
 
-  std::vector<UserSummary> get_users_sorted(int64_t limit = 200) const;
-  std::vector<TimelineEntry> get_user_timeline(const std::string &addr) const;
+  std::vector<UserSummaryRow> get_users_sorted(int64_t limit = 200) const;
+  std::vector<TimelineRow> get_user_timeline(const std::string &addr) const;
   std::vector<PositionRow> get_positions_at(const std::string &addr, int64_t sort_key) const;
 
 private:
-  struct CursorKey {
+  struct SyncCursorState {
     int64_t sort_key = -1;
     std::string user_hex;
     int32_t cond_idx = std::numeric_limits<int32_t>::min();
@@ -134,7 +136,7 @@ private:
     int64_t processed_events = 0;
   };
 
-  struct InputEvent {
+  struct EventInput {
     std::string user_hex;
     int64_t sort_key = 0;
     int32_t cond_idx = 0;
@@ -145,7 +147,7 @@ private:
     int64_t price = 0;
   };
 
-  struct FactRow {
+  struct EventFact {
     std::string user_hex;
     int64_t sort_key = 0;
     int32_t cond_idx = 0;
@@ -155,44 +157,80 @@ private:
     int64_t realized_cum = 0;
     int64_t unrealized_pnl = 0;
     int32_t token_count = 0;
+    int8_t tag_id = 13;
+    int64_t exposure = 0;
+    int64_t volume = 0;
+    int64_t holding_period = 0;
   };
 
-  // Internal state uses double for precision in intermediate calculations.
-  // Values are converted to int64_t only when writing to database.
-  // Double has 52-bit mantissa (~15 decimal digits), sufficient for all Polymarket amounts.
-  struct CondState {
-    std::array<double, MAX_OUTCOMES> positions{};
-    std::array<double, MAX_OUTCOMES> cost{};
-    std::array<double, MAX_OUTCOMES> last_price{};
-    double realized_pnl = 0.0;
-    double unrealized_pnl = 0.0;
-    int64_t event_count = 0;
-    int64_t last_sort_key = 0;
+  struct TokenState {
+    double pos = 0.0;
+    double cost = 0.0;
+    double lp = 0.0;
+    double entry_block = 0.0;
   };
 
-  struct PairKey {
+  struct TokenKey {
     std::string user_hex;
     int32_t cond_idx = 0;
-    bool operator==(const PairKey &o) const {
-      return cond_idx == o.cond_idx && user_hex == o.user_hex;
+    int32_t token_idx = 0;
+    bool operator==(const TokenKey &o) const {
+      return cond_idx == o.cond_idx && token_idx == o.token_idx && user_hex == o.user_hex;
     }
   };
 
-  struct PairKeyHash {
-    size_t operator()(const PairKey &k) const {
+  struct TokenKeyHash {
+    size_t operator()(const TokenKey &k) const {
       size_t h = std::hash<std::string>()(k.user_hex);
       h ^= std::hash<int32_t>()(k.cond_idx) + 0x9e3779b97f4a7c15ULL + (h << 6) + (h >> 2);
+      h ^= std::hash<int32_t>()(k.token_idx) + 0x9e3779b97f4a7c15ULL + (h << 6) + (h >> 2);
       return h;
     }
   };
 
+  struct AggKey {
+    std::string user_hex;
+    int64_t block_bucket = 0;
+    int8_t tag_id = 13;
+    bool operator==(const AggKey &o) const {
+      return block_bucket == o.block_bucket && tag_id == o.tag_id && user_hex == o.user_hex;
+    }
+  };
+
+  struct AggKeyHash {
+    size_t operator()(const AggKey &k) const {
+      size_t h = std::hash<std::string>()(k.user_hex);
+      h ^= std::hash<int64_t>()(k.block_bucket) + 0x9e3779b97f4a7c15ULL + (h << 6) + (h >> 2);
+      h ^= std::hash<int8_t>()(k.tag_id) + 0x9e3779b97f4a7c15ULL + (h << 6) + (h >> 2);
+      return h;
+    }
+  };
+
+  struct AggRuntime {
+    int64_t realized_sum = 0;
+    KLLcache realized_kll{200, 1024};
+    int64_t event_count = 0;
+    int64_t exposure_tw_sum = 0;
+    int64_t volume_sum = 0;
+    int64_t holding_period_tw_sum = 0;
+    int64_t token_count_tw_sum = 0;
+    int64_t time_weight_sum = 0;
+    int64_t last_sort_key = 0;
+    int64_t last_block = 0;
+    int64_t last_exposure = 0;
+    int64_t last_holding_period = 0;
+    int64_t last_token_count = 0;
+    bool has_tail = false;
+  };
+
   EventBuilder &builder_;
+  Database &stage0_db_;
   Database &stage2_db_;
   Database &stage3_db_;
 
   mutable std::mutex sync_mu_;
   mutable Status sync_;
-  mutable CursorKey cursor_;
+  mutable SyncCursorState sync_cursor_;
   struct CommitRecord {
     std::chrono::steady_clock::time_point committed_at;
     int64_t block = 0;
@@ -204,6 +242,7 @@ private:
   std::atomic<bool> stop_requested_{false};
 
   std::vector<ConditionInfo> conditions_;
+  std::vector<int8_t> cond_tag_ids_;
 
   struct UserQueryCache {
     struct Snapshot {
@@ -211,38 +250,65 @@ private:
       std::vector<PositionRow> positions;
     };
     std::string addr_lower;
-    std::vector<TimelineEntry> timeline;
+    std::vector<TimelineRow> timeline;
     std::vector<Snapshot> snapshots;
   };
   mutable std::mutex user_cache_mu_;
   mutable UserQueryCache user_cache_;
 
+  // Execution config
   static constexpr int64_t kStage3BatchEvents = 5000000;
+  static constexpr int64_t kBlockBucketSize = 100000;
   static constexpr double kPosEpsilon = 1e-9;
-  static constexpr int64_t kMinHoldingQty = 100LL * 1000000LL;
+  static constexpr int64_t kMinHoldingQty = 10LL * 1000000LL;
+  static constexpr int64_t kSyncCursorSentinel = std::numeric_limits<int32_t>::min();
   int base_interval_seconds_ = 0;
-  static constexpr int64_t kCursorSentinel = std::numeric_limits<int32_t>::min();
 
+  // SQL identifiers (persistent tables)
+  static constexpr const char *kSqlTableSyncCursorState = "sync_cursor_state";
+  static constexpr const char *kSqlTableTokenState = "token_state";
+  static constexpr const char *kSqlTableUserSummaryState = "user_summary_state";
+  static constexpr const char *kSqlTableEventFact = "event_fact";
+  static constexpr const char *kSqlTableBlockAggState = "block_agg_state";
+
+  // SQL identifiers (indexes)
+  static constexpr const char *kSqlIndexEventFactUserSk = "idx_stage3_event_fact_user_sk";
+  static constexpr const char *kSqlIndexEventFactUserTagSk = "idx_stage3_event_fact_user_tag_sk";
+  static constexpr const char *kSqlIndexUserSummaryEvents = "idx_stage3_user_summary_events";
+  static constexpr const char *kSqlIndexTokenStateUser = "idx_stage3_token_state_user";
+  static constexpr const char *kSqlIndexBlockAggStateUserBucket = "idx_stage3_block_agg_state_user_bucket";
+
+  // Normalization / key conversion helpers
   static std::string normalize_addr(const std::string &addr);
   static int64_t round_i64(double v);
+  static int64_t sort_key_to_block(int64_t sort_key);
+  static int64_t sort_key_to_block_bucket(int64_t sort_key);
+  static int64_t bucket_end_block(int64_t block_bucket);
+  static uint64_t pack_cond_token_key(int32_t cond_idx, int32_t token_idx);
+
+  // Event / metadata predicates
+  static bool is_trade_event(EventType ty);
+  static bool is_volume_event(EventType ty);
+  static bool is_usd_collateral(int32_t collateral);
   static bool is_effective_holding(double qty_1e6);
   static bool is_effective_holding_i64(int64_t qty_1e6);
-  static bool has_any_position(const CondState &st, int outcome_count);
-  static int count_effective_holdings(const CondState &st, int outcome_count);
-  static void load_cond_state_values(CondState &st,
-                                     duckdb::MaterializedQueryResult &src,
-                                     idx_t row_idx,
-                                     int pos_col_begin,
-                                     int cost_col_begin,
-                                     int lp_col_begin,
-                                     int realized_col,
-                                     int event_count_col,
-                                     int last_sort_key_col);
-  static void append_cond_state_values(duckdb::Appender &ap, const CondState &st);
-  static bool is_usd_collateral(int32_t collateral);
-  static bool is_trade_event(EventType ty);
-  static double compute_unrealized_pnl(const CondState &st);
+  static int8_t tag_name_to_id(const std::string &tag_name);
 
+  // Feature calculators
+  static double calc_unrealized_pnl(const TokenState &st);
+  static int64_t calc_exposure_1e6(const TokenState &st);
+  static int64_t calc_holding_period_blocks(int64_t current_block, const TokenState &st);
+  static int64_t calc_volume_1e6(const EventInput &row);
+
+  // Aggregation update helper
+  static void adjust_tail_window(AggRuntime &agg,
+                                 int64_t block_bucket,
+                                 int64_t current_block,
+                                 int64_t current_exposure,
+                                 int64_t current_holding_period,
+                                 int64_t current_token_count);
+
+  // Lifecycle / sync pipeline
   void init_schema() const;
   void load_conditions();
   void load_cursor();
@@ -252,9 +318,11 @@ private:
   void do_sync_tick();
   bool process_chunk_locked() const;
 
-  double apply_event_to_state(const InputEvent &row, CondState &st) const;
+  // Event state transition
+  double apply_event_input(const EventInput &row, TokenState &st) const;
 
-  std::vector<PositionRow> build_positions_from_states(const std::unordered_map<int32_t, CondState> &states) const;
+  // Query cache build path
+  std::vector<PositionRow> build_position_rows_from_states(const std::unordered_map<uint64_t, TokenState> &states) const;
   UserQueryCache build_user_query_cache(const std::string &addr_lower) const;
   void ensure_user_query_cache(const std::string &addr_lower) const;
 };

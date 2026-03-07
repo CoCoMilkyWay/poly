@@ -3,6 +3,7 @@
 #include <cassert>
 #include <cmath>
 #include <cstdint>
+#include <cstring>
 #include <limits>
 #include <numeric>
 #include <random>
@@ -186,6 +187,13 @@ public:
    *   最后合并得到全局分位数估计,通信开销仅 O(k)。
    */
   void mergeWith(const KLLcache &other);
+
+  // ----------------
+  // 序列化 / 反序列化
+  // ----------------
+  std::vector<uint8_t> serialize() const;
+  static KLLcache deserialize(const uint8_t *data, size_t len);
+  static KLLcache deserialize(const std::vector<uint8_t> &data);
 
   // ═══════════════════════════════════════════════════════════════════════════
   // 四大导出接口(CDF / PDF / ICDF / QDF)
@@ -707,6 +715,128 @@ inline void KLLcache::mergeWith(const KLLcache &other) {
   // 从 level 0 向上触发 compaction,直到所有层满足容量约束
   for (size_t i = 0; i < levels_.size(); i++)
     compactIfNeeded(i);
+}
+
+inline std::vector<uint8_t> KLLcache::serialize() const {
+  static constexpr uint32_t kMagic = 0x4B4C4C31U; // KLL1
+  assert(capacity_ <= static_cast<size_t>(std::numeric_limits<uint16_t>::max()));
+  assert(levels_.size() <= static_cast<size_t>(std::numeric_limits<uint16_t>::max()));
+  size_t total_size = 24;
+  for (const auto &lv : levels_) {
+    assert(lv.buffer.size() <= static_cast<size_t>(std::numeric_limits<uint16_t>::max()));
+    total_size += 2 + lv.buffer.size() * sizeof(float);
+  }
+
+  std::vector<uint8_t> out(total_size);
+  size_t off = 0;
+  auto put_u16 = [&](uint16_t v) {
+    std::memcpy(out.data() + off, &v, sizeof(v));
+    off += sizeof(v);
+  };
+  auto put_u32 = [&](uint32_t v) {
+    std::memcpy(out.data() + off, &v, sizeof(v));
+    off += sizeof(v);
+  };
+  auto put_u64 = [&](uint64_t v) {
+    std::memcpy(out.data() + off, &v, sizeof(v));
+    off += sizeof(v);
+  };
+  auto put_f32 = [&](float v) {
+    std::memcpy(out.data() + off, &v, sizeof(v));
+    off += sizeof(v);
+  };
+
+  put_u32(kMagic);
+  put_u16(static_cast<uint16_t>(capacity_));
+  put_u16(static_cast<uint16_t>(levels_.size()));
+  put_u64(count_);
+  put_f32(min_);
+  put_f32(max_);
+  for (const auto &lv : levels_) {
+    const uint16_t sz = static_cast<uint16_t>(lv.buffer.size());
+    put_u16(sz);
+    if (sz > 0) {
+      const size_t bytes = static_cast<size_t>(sz) * sizeof(float);
+      std::memcpy(out.data() + off, lv.buffer.data(), bytes);
+      off += bytes;
+    }
+  }
+  assert(off == out.size());
+  return out;
+}
+
+inline KLLcache KLLcache::deserialize(const uint8_t *data, size_t len) {
+  static constexpr uint32_t kMagic = 0x4B4C4C31U; // KLL1
+  assert(data != nullptr);
+  assert(len >= 24);
+  size_t off = 0;
+  auto read_u16 = [&]() -> uint16_t {
+    assert(off + sizeof(uint16_t) <= len);
+    uint16_t v = 0;
+    std::memcpy(&v, data + off, sizeof(v));
+    off += sizeof(v);
+    return v;
+  };
+  auto read_u32 = [&]() -> uint32_t {
+    assert(off + sizeof(uint32_t) <= len);
+    uint32_t v = 0;
+    std::memcpy(&v, data + off, sizeof(v));
+    off += sizeof(v);
+    return v;
+  };
+  auto read_u64 = [&]() -> uint64_t {
+    assert(off + sizeof(uint64_t) <= len);
+    uint64_t v = 0;
+    std::memcpy(&v, data + off, sizeof(v));
+    off += sizeof(v);
+    return v;
+  };
+  auto read_f32 = [&]() -> float {
+    assert(off + sizeof(float) <= len);
+    float v = 0.0f;
+    std::memcpy(&v, data + off, sizeof(v));
+    off += sizeof(v);
+    return v;
+  };
+
+  const uint32_t magic = read_u32();
+  assert(magic == kMagic);
+  const uint16_t k = read_u16();
+  const uint16_t level_count = read_u16();
+  const uint64_t total_count = read_u64();
+  const float min_v = read_f32();
+  const float max_v = read_f32();
+
+  KLLcache out(static_cast<size_t>(k), 1024);
+  out.count_ = total_count;
+  out.min_ = min_v;
+  out.max_ = max_v;
+  out.levels_.clear();
+  if (level_count == 0) {
+    out.growLevels(0);
+  } else {
+    for (uint16_t i = 0; i < level_count; ++i) {
+      out.growLevels(i);
+      const uint16_t sz = read_u16();
+      auto &buf = out.levels_[i].buffer;
+      buf.resize(sz);
+      if (sz > 0) {
+        const size_t bytes = static_cast<size_t>(sz) * sizeof(float);
+        assert(off + bytes <= len);
+        std::memcpy(buf.data(), data + off, bytes);
+        off += bytes;
+      }
+      out.levels_[i].capacity = out.capacity_;
+    }
+  }
+  assert(off == len);
+  out.invalidateCache();
+  return out;
+}
+
+inline KLLcache KLLcache::deserialize(const std::vector<uint8_t> &data) {
+  assert(!data.empty());
+  return deserialize(data.data(), data.size());
 }
 
 inline std::pair<std::vector<float>, std::vector<uint64_t>>

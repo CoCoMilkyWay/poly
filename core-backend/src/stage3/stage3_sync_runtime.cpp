@@ -4,42 +4,18 @@
 #include <unordered_set>
 
 namespace stage3 {
+namespace {
+constexpr const char *kSqlTmpTouchedUsers = "tmp_touched_users";
+constexpr const char *kSqlTmpTokenKeys = "tmp_token_keys";
+constexpr const char *kSqlTmpBlockAggKeys = "tmp_block_agg_keys";
+constexpr const char *kSqlTmpBlockAggLast = "tmp_block_agg_last";
+constexpr const char *kSqlTmpTokenDirty = "tmp_token_dirty";
+constexpr const char *kSqlTmpTokenNew = "tmp_token_new";
+constexpr const char *kSqlTmpBlockAggState = "tmp_block_agg_state";
+constexpr const char *kSqlTmpUserSummaryDelta = "tmp_user_summary_delta";
+} // namespace
 
 int64_t StageSync::round_i64(double v) { return static_cast<int64_t>(std::llround(v)); }
-
-void StageSync::load_cond_state_values(CondState &st,
-                                       duckdb::MaterializedQueryResult &src,
-                                       idx_t row_idx,
-                                       int pos_col_begin,
-                                       int cost_col_begin,
-                                       int lp_col_begin,
-                                       int realized_col,
-                                       int event_count_col,
-                                       int last_sort_key_col) {
-  for (int j = 0; j < MAX_OUTCOMES; ++j) {
-    st.positions[j] = static_cast<double>(src.GetValue(pos_col_begin + j, row_idx).GetValue<int64_t>());
-    st.cost[j] = static_cast<double>(src.GetValue(cost_col_begin + j, row_idx).GetValue<int64_t>());
-    st.last_price[j] = static_cast<double>(src.GetValue(lp_col_begin + j, row_idx).GetValue<int64_t>());
-  }
-  st.realized_pnl = static_cast<double>(src.GetValue(realized_col, row_idx).GetValue<int64_t>());
-  st.event_count = src.GetValue(event_count_col, row_idx).GetValue<int64_t>();
-  st.last_sort_key = src.GetValue(last_sort_key_col, row_idx).GetValue<int64_t>();
-}
-
-void StageSync::append_cond_state_values(duckdb::Appender &ap, const CondState &st) {
-  for (int j = 0; j < MAX_OUTCOMES; ++j) {
-    ap.Append(round_i64(st.positions[j]));
-  }
-  for (int j = 0; j < MAX_OUTCOMES; ++j) {
-    ap.Append(round_i64(st.cost[j]));
-  }
-  for (int j = 0; j < MAX_OUTCOMES; ++j) {
-    ap.Append(round_i64(st.last_price[j]));
-  }
-  ap.Append(round_i64(st.realized_pnl));
-  ap.Append(st.event_count);
-  ap.Append(st.last_sort_key);
-}
 
 void StageSync::start(asio::io_context &ioc) {
   ioc_ = &ioc;
@@ -155,7 +131,7 @@ void StageSync::do_sync_tick() {
     // 只在更新状态时持锁,避免 API 读取 status 被整段同步阻塞。
     std::lock_guard<std::mutex> lock(sync_mu_);
     sync_.syncing = true;
-    before_block = (cursor_.sort_key < 0) ? 0 : cursor_.sort_key / SORT_KEY_SCALE;
+    before_block = (sync_cursor_.sort_key < 0) ? 0 : sync_cursor_.sort_key / SORT_KEY_SCALE;
   }
   int64_t tick_head_block = builder_.cursor();
   std::string sync_trace_name =
@@ -168,7 +144,7 @@ void StageSync::do_sync_tick() {
   {
     std::lock_guard<std::mutex> lock(sync_mu_);
     refresh_status_locked();
-    int64_t after_block = (cursor_.sort_key < 0) ? 0 : cursor_.sort_key / SORT_KEY_SCALE;
+    int64_t after_block = (sync_cursor_.sort_key < 0) ? 0 : sync_cursor_.sort_key / SORT_KEY_SCALE;
     if (advanced && after_block > before_block) {
       commit_history_.push_back({std::chrono::steady_clock::now(), after_block});
       if (commit_history_.size() > kCommitHistoryWindow) {
@@ -184,7 +160,7 @@ void StageSync::do_sync_tick() {
 
 bool StageSync::process_chunk_locked() const {
   TraceN("s3/sync_chunk");
-  int64_t current_block = (cursor_.sort_key < 0) ? 0 : cursor_.sort_key / SORT_KEY_SCALE;
+  int64_t current_block = (sync_cursor_.sort_key < 0) ? 0 : sync_cursor_.sort_key / SORT_KEY_SCALE;
   int64_t head_block = builder_.cursor();
   if (current_block >= head_block) {
     return false;
@@ -193,12 +169,12 @@ bool StageSync::process_chunk_locked() const {
 
   auto source_conn = stage2_db_.create_connection();
   auto sink_conn = stage3_db_.create_connection();
-  std::string user_hex = cursor_.user_hex;
-  auto build_after_key_filter = [](int64_t sort_key,
-                                   const std::string &user_hex_key,
-                                   int32_t cond_idx,
-                                   int32_t event_type,
-                                   int32_t token_idx) {
+  std::string user_hex = sync_cursor_.user_hex;
+  auto build_after_cursor_filter_sql = [](int64_t sort_key,
+                                          const std::string &user_hex_key,
+                                          int32_t cond_idx,
+                                          int32_t event_type,
+                                          int32_t token_idx) {
     return "(sort_key > " + std::to_string(sort_key) + ") OR "
                                                        "(sort_key = " +
            std::to_string(sort_key) + " AND user_addr > from_hex('" + user_hex_key + "')) OR "
@@ -216,24 +192,24 @@ bool StageSync::process_chunk_locked() const {
            std::to_string(cond_idx) + " AND event_type = " + std::to_string(event_type) +
            " AND token_idx > " + std::to_string(token_idx) + ")";
   };
-  const std::string event_query_prefix =
+  const std::string event_query_select_sql =
       "SELECT lower(hex(user_addr)) AS user_hex, sort_key, cond_idx, event_type, token_idx, collateral, amount, price "
       "FROM user_event WHERE (";
-  const std::string event_query_order =
+  const std::string event_query_order_sql =
       " ORDER BY sort_key, user_addr, cond_idx, event_type, token_idx";
-  std::string after_cursor_filter =
-      build_after_key_filter(cursor_.sort_key, user_hex, cursor_.cond_idx, cursor_.event_type, cursor_.token_idx);
-  auto qr = source_conn->Query(event_query_prefix + after_cursor_filter + ") "
-                                                                          "AND sort_key <= " +
-                               std::to_string(head_sort_key) + event_query_order + " LIMIT " +
+  std::string after_cursor_filter_sql =
+      build_after_cursor_filter_sql(sync_cursor_.sort_key, user_hex, sync_cursor_.cond_idx, sync_cursor_.event_type, sync_cursor_.token_idx);
+  auto qr = source_conn->Query(event_query_select_sql + after_cursor_filter_sql + ") "
+                                                                                  "AND sort_key <= " +
+                               std::to_string(head_sort_key) + event_query_order_sql + " LIMIT " +
                                std::to_string(kStage3BatchEvents));
   assert(qr && !qr->HasError());
   if (qr->RowCount() == 0) {
-    cursor_.sort_key = head_sort_key;
-    cursor_.user_hex.clear();
-    cursor_.cond_idx = kCursorSentinel;
-    cursor_.event_type = kCursorSentinel;
-    cursor_.token_idx = kCursorSentinel;
+    sync_cursor_.sort_key = head_sort_key;
+    sync_cursor_.user_hex.clear();
+    sync_cursor_.cond_idx = kSyncCursorSentinel;
+    sync_cursor_.event_type = kSyncCursorSentinel;
+    sync_cursor_.token_idx = kSyncCursorSentinel;
     auto tx = sink_conn->Query("BEGIN");
     assert(tx && !tx->HasError());
     save_cursor_locked(*sink_conn);
@@ -242,26 +218,28 @@ bool StageSync::process_chunk_locked() const {
     return true;
   }
 
-  std::vector<InputEvent> rows;
-  rows.reserve(static_cast<size_t>(qr->RowCount()));
+  std::vector<EventInput> event_inputs;
+  event_inputs.reserve(static_cast<size_t>(qr->RowCount()));
   std::unordered_set<std::string> touched_users;
   touched_users.reserve(static_cast<size_t>(qr->RowCount() / 10 + 1));
+  std::unordered_set<TokenKey, TokenKeyHash> touched_token_keys;
+  touched_token_keys.reserve(static_cast<size_t>(qr->RowCount() / 2 + 1));
+  std::unordered_map<TokenKey, TokenState, TokenKeyHash> token_states;
+  token_states.reserve(static_cast<size_t>(qr->RowCount() / 2 + 1));
 
-  std::unordered_map<PairKey, CondState, PairKeyHash> states;
-  states.reserve(static_cast<size_t>(qr->RowCount() / 2 + 1));
-  std::unordered_map<std::string, int64_t> user_event_inc;
-  user_event_inc.reserve(static_cast<size_t>(qr->RowCount() / 10 + 1));
-  std::unordered_map<std::string, int64_t> user_last_sk;
-  user_last_sk.reserve(static_cast<size_t>(qr->RowCount() / 10 + 1));
+  std::unordered_map<std::string, int64_t> user_event_delta;
+  user_event_delta.reserve(static_cast<size_t>(qr->RowCount() / 10 + 1));
+  std::unordered_map<std::string, int64_t> user_last_sort_key;
+  user_last_sort_key.reserve(static_cast<size_t>(qr->RowCount() / 10 + 1));
   bool has_prev_key = false;
   int64_t prev_sort_key = 0;
   std::string prev_user_hex;
-  int32_t prev_cond_idx = kCursorSentinel;
-  int32_t prev_event_type = kCursorSentinel;
-  int32_t prev_token_idx = kCursorSentinel;
-  auto consume_rows = [&](duckdb::MaterializedQueryResult &result) {
+  int32_t prev_cond_idx = kSyncCursorSentinel;
+  int32_t prev_event_type = kSyncCursorSentinel;
+  int32_t prev_token_idx = kSyncCursorSentinel;
+  auto consume_event_inputs = [&](duckdb::MaterializedQueryResult &result) {
     for (idx_t i = 0; i < result.RowCount(); ++i) {
-      InputEvent row;
+      EventInput row;
       row.user_hex = result.GetValue(0, i).GetValueUnsafe<std::string>();
       row.sort_key = result.GetValue(1, i).GetValue<int64_t>();
       row.cond_idx = result.GetValue(2, i).GetValue<int32_t>();
@@ -287,43 +265,42 @@ bool StageSync::process_chunk_locked() const {
       prev_cond_idx = row.cond_idx;
       prev_event_type = row.event_type;
       prev_token_idx = row.token_idx;
-      rows.push_back(row);
+      event_inputs.push_back(row);
       touched_users.insert(row.user_hex);
-      user_event_inc[row.user_hex]++;
-      user_last_sk[row.user_hex] = row.sort_key;
+      user_event_delta[row.user_hex]++;
+      user_last_sort_key[row.user_hex] = row.sort_key;
       if (row.cond_idx >= 0) {
-        PairKey key{row.user_hex, row.cond_idx};
-        if (states.find(key) == states.end()) {
-          states.emplace(key, CondState{});
-        }
+        TokenKey key{row.user_hex, row.cond_idx, row.token_idx};
+        touched_token_keys.insert(key);
+        token_states.emplace(key, TokenState{});
       }
-      cursor_.sort_key = row.sort_key;
-      cursor_.user_hex = row.user_hex;
-      cursor_.cond_idx = row.cond_idx;
-      cursor_.event_type = row.event_type;
-      cursor_.token_idx = row.token_idx;
-      cursor_.processed_events++;
+      sync_cursor_.sort_key = row.sort_key;
+      sync_cursor_.user_hex = row.user_hex;
+      sync_cursor_.cond_idx = row.cond_idx;
+      sync_cursor_.event_type = row.event_type;
+      sync_cursor_.token_idx = row.token_idx;
+      sync_cursor_.processed_events++;
     }
   };
-  consume_rows(*qr);
+  consume_event_inputs(*qr);
   if (qr->RowCount() == static_cast<idx_t>(kStage3BatchEvents)) {
-    assert(!rows.empty());
-    const InputEvent &last_row = rows.back();
+    assert(!event_inputs.empty());
+    const EventInput &last_row = event_inputs.back();
     int64_t tail_upper_sort_key = (last_row.sort_key / SORT_KEY_SCALE) * SORT_KEY_SCALE + (SORT_KEY_SCALE - 1);
-    std::string after_last_filter = build_after_key_filter(last_row.sort_key,
-                                                           last_row.user_hex,
-                                                           last_row.cond_idx,
-                                                           last_row.event_type,
-                                                           last_row.token_idx);
-    auto tail_qr = source_conn->Query(event_query_prefix + after_last_filter + ") "
-                                                                               "AND sort_key <= " +
-                                      std::to_string(tail_upper_sort_key) + event_query_order);
+    std::string after_last_filter_sql = build_after_cursor_filter_sql(last_row.sort_key,
+                                                                      last_row.user_hex,
+                                                                      last_row.cond_idx,
+                                                                      last_row.event_type,
+                                                                      last_row.token_idx);
+    auto tail_qr = source_conn->Query(event_query_select_sql + after_last_filter_sql + ") "
+                                                                                       "AND sort_key <= " +
+                                      std::to_string(tail_upper_sort_key) + event_query_order_sql);
     assert(tail_qr && !tail_qr->HasError());
-    consume_rows(*tail_qr);
+    consume_event_inputs(*tail_qr);
   }
 
   int32_t max_cond_idx = -1;
-  for (const auto &row : rows) {
+  for (const auto &row : event_inputs) {
     if (row.cond_idx > max_cond_idx) {
       max_cond_idx = row.cond_idx;
     }
@@ -335,17 +312,15 @@ bool StageSync::process_chunk_locked() const {
   // Use double for cumulative PnL tracking to match internal state
   std::unordered_map<std::string, double> user_realized_cum;
   std::unordered_map<std::string, double> user_unrealized_cum;
-  std::unordered_map<std::string, int64_t> user_active_cond_count;
   std::unordered_map<std::string, int32_t> user_token_count;
   user_realized_cum.reserve(touched_users.size() + 1);
   user_unrealized_cum.reserve(touched_users.size() + 1);
-  user_active_cond_count.reserve(touched_users.size() + 1);
   user_token_count.reserve(touched_users.size() + 1);
   if (!touched_users.empty()) {
-    sink_conn->Query("CREATE TEMP TABLE IF NOT EXISTS tmp_s3_touched_users (user_addr BLOB)");
-    sink_conn->Query("DELETE FROM tmp_s3_touched_users");
+    sink_conn->Query("CREATE TEMP TABLE IF NOT EXISTS " + std::string(kSqlTmpTouchedUsers) + " (user_addr BLOB)");
+    sink_conn->Query("DELETE FROM " + std::string(kSqlTmpTouchedUsers));
     {
-      duckdb::Appender ap(*sink_conn, "tmp_s3_touched_users");
+      duckdb::Appender ap(*sink_conn, kSqlTmpTouchedUsers);
       for (const auto &uhex : touched_users) {
         std::string user_blob = hex_to_blob("0x" + uhex);
         ap.BeginRow();
@@ -357,16 +332,17 @@ bool StageSync::process_chunk_locked() const {
       ap.Close();
     }
     auto sum_r = sink_conn->Query(
-        "SELECT lower(hex(s.user_addr)) AS uh, s.total_realized_pnl, s.total_unrealized_pnl, s.active_conditions "
-        "FROM s3_user_summary s "
-        "JOIN tmp_s3_touched_users t ON s.user_addr = t.user_addr");
+        "SELECT lower(hex(s.user_addr)) AS uh, s.total_realized_pnl, s.total_unrealized_pnl, s.active_tokens "
+        "FROM " +
+        std::string(kSqlTableUserSummaryState) + " s "
+                                                 "JOIN " +
+        std::string(kSqlTmpTouchedUsers) + " t ON s.user_addr = t.user_addr");
     assert(sum_r && !sum_r->HasError());
     for (idx_t i = 0; i < sum_r->RowCount(); ++i) {
       const std::string uh = sum_r->GetValue(0, i).GetValueUnsafe<std::string>();
-      // Convert int64 from database to double
       user_realized_cum.emplace(uh, static_cast<double>(sum_r->GetValue(1, i).GetValue<int64_t>()));
       user_unrealized_cum.emplace(uh, static_cast<double>(sum_r->GetValue(2, i).GetValue<int64_t>()));
-      user_active_cond_count.emplace(uh, sum_r->GetValue(3, i).GetValue<int64_t>());
+      user_token_count.emplace(uh, sum_r->GetValue(3, i).GetValue<int32_t>());
     }
     for (const auto &uhex : touched_users) {
       if (!user_realized_cum.count(uhex)) {
@@ -375,109 +351,232 @@ bool StageSync::process_chunk_locked() const {
       if (!user_unrealized_cum.count(uhex)) {
         user_unrealized_cum.emplace(uhex, 0.0);
       }
-      if (!user_active_cond_count.count(uhex)) {
-        user_active_cond_count.emplace(uhex, 0);
-      }
-    }
-
-    auto tk_r = sink_conn->Query(
-        "SELECT lower(hex(st.user_addr)) AS uh, "
-        "SUM(CASE WHEN abs(st.pos_0) >= " +
-        std::to_string(kMinHoldingQty) + " THEN 1 ELSE 0 END + "
-                                         "    CASE WHEN abs(st.pos_1) >= " +
-        std::to_string(kMinHoldingQty) + " THEN 1 ELSE 0 END + "
-                                         "    CASE WHEN abs(st.pos_2) >= " +
-        std::to_string(kMinHoldingQty) + " THEN 1 ELSE 0 END + "
-                                         "    CASE WHEN abs(st.pos_3) >= " +
-        std::to_string(kMinHoldingQty) + " THEN 1 ELSE 0 END + "
-                                         "    CASE WHEN abs(st.pos_4) >= " +
-        std::to_string(kMinHoldingQty) + " THEN 1 ELSE 0 END + "
-                                         "    CASE WHEN abs(st.pos_5) >= " +
-        std::to_string(kMinHoldingQty) + " THEN 1 ELSE 0 END + "
-                                         "    CASE WHEN abs(st.pos_6) >= " +
-        std::to_string(kMinHoldingQty) + " THEN 1 ELSE 0 END + "
-                                         "    CASE WHEN abs(st.pos_7) >= " +
-        std::to_string(kMinHoldingQty) + " THEN 1 ELSE 0 END) AS tk "
-                                         "FROM s3_user_cond_state st "
-                                         "JOIN tmp_s3_touched_users t ON st.user_addr = t.user_addr "
-                                         "GROUP BY st.user_addr");
-    assert(tk_r && !tk_r->HasError());
-    for (idx_t i = 0; i < tk_r->RowCount(); ++i) {
-      user_token_count.emplace(tk_r->GetValue(0, i).GetValueUnsafe<std::string>(),
-                               tk_r->GetValue(1, i).GetValue<int32_t>());
-    }
-    for (const auto &uhex : touched_users) {
       if (!user_token_count.count(uhex)) {
         user_token_count.emplace(uhex, 0);
       }
     }
   }
 
-  if (!states.empty()) {
-    sink_conn->Query("CREATE TEMP TABLE IF NOT EXISTS tmp_s3_keys (user_addr BLOB, cond_idx INTEGER)");
-    sink_conn->Query("DELETE FROM tmp_s3_keys");
+  if (!touched_token_keys.empty()) {
+    sink_conn->Query("CREATE TEMP TABLE IF NOT EXISTS " + std::string(kSqlTmpTokenKeys) +
+                     " (user_addr BLOB, cond_idx INTEGER, token_idx INTEGER)");
+    sink_conn->Query("DELETE FROM " + std::string(kSqlTmpTokenKeys));
     {
-      duckdb::Appender ap(*sink_conn, "tmp_s3_keys");
-      for (const auto &[key, _] : states) {
+      duckdb::Appender ap(*sink_conn, kSqlTmpTokenKeys);
+      for (const auto &key : touched_token_keys) {
         std::string user_blob = hex_to_blob("0x" + key.user_hex);
         ap.BeginRow();
         ap.Append(duckdb::Value::BLOB(
             reinterpret_cast<duckdb::const_data_ptr_t>(user_blob.data()),
             user_blob.size()));
         ap.Append(key.cond_idx);
+        ap.Append(key.token_idx);
         ap.EndRow();
       }
       ap.Close();
     }
     auto old = sink_conn->Query(
-        "SELECT lower(hex(s.user_addr)) AS uh, s.cond_idx, "
-        "s.pos_0,s.pos_1,s.pos_2,s.pos_3,s.pos_4,s.pos_5,s.pos_6,s.pos_7, "
-        "s.cost_0,s.cost_1,s.cost_2,s.cost_3,s.cost_4,s.cost_5,s.cost_6,s.cost_7, "
-        "s.lp_0,s.lp_1,s.lp_2,s.lp_3,s.lp_4,s.lp_5,s.lp_6,s.lp_7, "
-        "s.realized_pnl, s.event_count, s.last_sort_key "
-        "FROM s3_user_cond_state s "
-        "JOIN tmp_s3_keys k "
-        "ON s.user_addr = k.user_addr AND s.cond_idx = k.cond_idx");
+        "SELECT lower(hex(s.user_addr)) AS uh, s.cond_idx, s.token_idx, s.pos, s.cost, s.lp, s.entry_block "
+        "FROM " +
+        std::string(kSqlTableTokenState) + " s "
+                                           "JOIN " +
+        std::string(kSqlTmpTokenKeys) + " k "
+                                        "ON s.user_addr = k.user_addr AND s.cond_idx = k.cond_idx AND s.token_idx = k.token_idx");
     assert(old && !old->HasError());
     for (idx_t i = 0; i < old->RowCount(); ++i) {
-      PairKey key{old->GetValue(0, i).GetValueUnsafe<std::string>(),
-                  old->GetValue(1, i).GetValue<int32_t>()};
-      auto it = states.find(key);
-      assert(it != states.end());
-      CondState &st = it->second;
-      load_cond_state_values(st, *old, i, 2, 10, 18, 26, 27, 28);
-      st.unrealized_pnl = compute_unrealized_pnl(st);
+      TokenKey key{old->GetValue(0, i).GetValueUnsafe<std::string>(),
+                   old->GetValue(1, i).GetValue<int32_t>(),
+                   old->GetValue(2, i).GetValue<int32_t>()};
+      auto it = token_states.find(key);
+      assert(it != token_states.end());
+      TokenState &st = it->second;
+      st.pos = static_cast<double>(old->GetValue(3, i).GetValue<int64_t>());
+      st.cost = static_cast<double>(old->GetValue(4, i).GetValue<int64_t>());
+      st.lp = static_cast<double>(old->GetValue(5, i).GetValue<int64_t>());
+      st.entry_block = static_cast<double>(old->GetValue(6, i).GetValue<int64_t>());
     }
   }
 
-  std::vector<FactRow> fact_rows;
-  fact_rows.reserve(rows.size());
-  for (const auto &row : rows) {
+  std::unordered_set<AggKey, AggKeyHash> touched_agg_keys;
+  touched_agg_keys.reserve(static_cast<size_t>(event_inputs.size() / 4 + 1));
+  for (const auto &row : event_inputs) {
+    if (row.cond_idx < 0) {
+      continue;
+    }
+    assert(static_cast<size_t>(row.cond_idx) < cond_tag_ids_.size());
+    const int8_t tag_id = cond_tag_ids_[static_cast<size_t>(row.cond_idx)];
+    touched_agg_keys.insert(AggKey{row.user_hex, sort_key_to_block_bucket(row.sort_key), tag_id});
+  }
+
+  std::unordered_map<AggKey, AggRuntime, AggKeyHash> agg_states;
+  agg_states.reserve(touched_agg_keys.size() + 1);
+  for (const auto &key : touched_agg_keys) {
+    agg_states.emplace(key, AggRuntime{});
+  }
+  if (!touched_agg_keys.empty()) {
+    sink_conn->Query("CREATE TEMP TABLE IF NOT EXISTS " + std::string(kSqlTmpBlockAggKeys) +
+                     " (user_addr BLOB, block_bucket BIGINT, tag_id INTEGER)");
+    sink_conn->Query("DELETE FROM " + std::string(kSqlTmpBlockAggKeys));
+    {
+      duckdb::Appender ap(*sink_conn, kSqlTmpBlockAggKeys);
+      for (const auto &key : touched_agg_keys) {
+        std::string user_blob = hex_to_blob("0x" + key.user_hex);
+        ap.BeginRow();
+        ap.Append(duckdb::Value::BLOB(
+            reinterpret_cast<duckdb::const_data_ptr_t>(user_blob.data()),
+            user_blob.size()));
+        ap.Append(key.block_bucket);
+        ap.Append(static_cast<int32_t>(key.tag_id));
+        ap.EndRow();
+      }
+      ap.Close();
+    }
+
+    auto old_agg = sink_conn->Query(
+        "SELECT lower(hex(a.user_addr)) AS uh, a.block_bucket, a.tag_id, "
+        "a.realized_sum, a.realized_kll, a.event_count, "
+        "a.exposure_tw_sum, a.volume_sum, a.holding_period_tw_sum, "
+        "a.token_count_tw_sum, a.time_weight_sum, a.last_sort_key "
+        "FROM " +
+        std::string(kSqlTableBlockAggState) + " a "
+                                              "JOIN " +
+        std::string(kSqlTmpBlockAggKeys) + " k "
+                                           "ON a.user_addr = k.user_addr AND a.block_bucket = k.block_bucket AND a.tag_id = k.tag_id");
+    assert(old_agg && !old_agg->HasError());
+    for (idx_t i = 0; i < old_agg->RowCount(); ++i) {
+      AggKey key{
+          old_agg->GetValue(0, i).GetValueUnsafe<std::string>(),
+          old_agg->GetValue(1, i).GetValue<int64_t>(),
+          static_cast<int8_t>(old_agg->GetValue(2, i).GetValue<int32_t>()),
+      };
+      auto it = agg_states.find(key);
+      assert(it != agg_states.end());
+      AggRuntime &agg = it->second;
+      agg.realized_sum = old_agg->GetValue(3, i).GetValue<int64_t>();
+      if (!old_agg->GetValue(4, i).IsNull()) {
+        const std::string blob = old_agg->GetValue(4, i).GetValueUnsafe<std::string>();
+        if (!blob.empty()) {
+          agg.realized_kll = KLLcache::deserialize(reinterpret_cast<const uint8_t *>(blob.data()), blob.size());
+        }
+      }
+      agg.event_count = old_agg->GetValue(5, i).GetValue<int64_t>();
+      agg.exposure_tw_sum = old_agg->GetValue(6, i).GetValue<int64_t>();
+      agg.volume_sum = old_agg->GetValue(7, i).GetValue<int64_t>();
+      agg.holding_period_tw_sum = old_agg->GetValue(8, i).GetValue<int64_t>();
+      agg.token_count_tw_sum = old_agg->GetValue(9, i).GetValue<int64_t>();
+      agg.time_weight_sum = old_agg->GetValue(10, i).GetValue<int64_t>();
+      agg.last_sort_key = old_agg->GetValue(11, i).GetValue<int64_t>();
+    }
+
+    sink_conn->Query(
+        "CREATE TEMP TABLE IF NOT EXISTS " + std::string(kSqlTmpBlockAggLast) + " ("
+                                                                                "user_addr BLOB, block_bucket BIGINT, tag_id INTEGER, last_sort_key BIGINT)");
+    sink_conn->Query("DELETE FROM " + std::string(kSqlTmpBlockAggLast));
+    {
+      duckdb::Appender ap(*sink_conn, kSqlTmpBlockAggLast);
+      for (const auto &[key, agg] : agg_states) {
+        if (agg.event_count <= 0) {
+          continue;
+        }
+        std::string user_blob = hex_to_blob("0x" + key.user_hex);
+        ap.BeginRow();
+        ap.Append(duckdb::Value::BLOB(
+            reinterpret_cast<duckdb::const_data_ptr_t>(user_blob.data()),
+            user_blob.size()));
+        ap.Append(key.block_bucket);
+        ap.Append(static_cast<int32_t>(key.tag_id));
+        ap.Append(agg.last_sort_key);
+        ap.EndRow();
+      }
+      ap.Close();
+    }
+
+    auto last_fact = sink_conn->Query(
+        "SELECT lower(hex(f.user_addr)) AS uh, k.block_bucket, k.tag_id, "
+        "f.sort_key, f.exposure, f.holding_period, f.token_count "
+        "FROM " +
+        std::string(kSqlTableEventFact) + " f "
+                                          "JOIN " +
+        std::string(kSqlTmpBlockAggLast) + " k "
+                                           "ON f.user_addr = k.user_addr AND f.sort_key = k.last_sort_key AND f.tag_id = k.tag_id "
+                                           "QUALIFY row_number() OVER ("
+                                           "PARTITION BY f.user_addr, k.block_bucket, k.tag_id "
+                                           "ORDER BY f.cond_idx DESC, f.event_type DESC, f.token_idx DESC"
+                                           ") = 1");
+    assert(last_fact && !last_fact->HasError());
+    for (idx_t i = 0; i < last_fact->RowCount(); ++i) {
+      AggKey key{
+          last_fact->GetValue(0, i).GetValueUnsafe<std::string>(),
+          last_fact->GetValue(1, i).GetValue<int64_t>(),
+          static_cast<int8_t>(last_fact->GetValue(2, i).GetValue<int32_t>()),
+      };
+      auto it = agg_states.find(key);
+      assert(it != agg_states.end());
+      AggRuntime &agg = it->second;
+      agg.last_sort_key = last_fact->GetValue(3, i).GetValue<int64_t>();
+      agg.last_exposure = last_fact->GetValue(4, i).GetValue<int64_t>();
+      agg.last_holding_period = last_fact->GetValue(5, i).GetValue<int64_t>();
+      agg.last_token_count = last_fact->GetValue(6, i).GetValue<int64_t>();
+      agg.last_block = sort_key_to_block(agg.last_sort_key);
+      agg.has_tail = true;
+    }
+    for (const auto &[_, agg] : agg_states) {
+      if (agg.event_count > 0) {
+        assert(agg.has_tail);
+      }
+    }
+  }
+
+  std::vector<EventFact> event_facts;
+  event_facts.reserve(event_inputs.size());
+  std::vector<float> kll_one(1, 0.0f);
+  for (const auto &row : event_inputs) {
     double realized_delta = 0.0;
+    int8_t tag_id = 13;
+    int64_t exposure = 0;
+    int64_t holding_period = 0;
+    int64_t volume = calc_volume_1e6(row);
     if (row.cond_idx >= 0) {
-      PairKey key{row.user_hex, row.cond_idx};
-      auto it = states.find(key);
-      assert(it != states.end());
-      double before_cond_unrealized = it->second.unrealized_pnl;
+      assert(static_cast<size_t>(row.cond_idx) < conditions_.size());
       const auto &cond = conditions_[static_cast<size_t>(row.cond_idx)];
-      int before_active = has_any_position(it->second, cond.outcome_count) ? 1 : 0;
-      int before_nonzero = count_effective_holdings(it->second, cond.outcome_count);
-      realized_delta = apply_event_to_state(row, it->second);
-      it->second.unrealized_pnl = compute_unrealized_pnl(it->second);
-      user_unrealized_cum[row.user_hex] += (it->second.unrealized_pnl - before_cond_unrealized);
-      int after_active = has_any_position(it->second, cond.outcome_count) ? 1 : 0;
-      user_active_cond_count[row.user_hex] += (after_active - before_active);
-      int after_nonzero = count_effective_holdings(it->second, cond.outcome_count);
-      user_token_count[row.user_hex] += (after_nonzero - before_nonzero);
-      it->second.event_count++;
-      it->second.last_sort_key = row.sort_key;
+      assert(row.token_idx >= 0 && row.token_idx < cond.outcome_count);
+      tag_id = cond_tag_ids_[static_cast<size_t>(row.cond_idx)];
+
+      TokenKey key{row.user_hex, row.cond_idx, row.token_idx};
+      auto it = token_states.find(key);
+      assert(it != token_states.end());
+      TokenState &st = it->second;
+      const double before_unrealized = calc_unrealized_pnl(st);
+      const int before_holding = is_effective_holding(st.pos) ? 1 : 0;
+      realized_delta = apply_event_input(row, st);
+      const double after_unrealized = calc_unrealized_pnl(st);
+      const int after_holding = is_effective_holding(st.pos) ? 1 : 0;
+      user_unrealized_cum[row.user_hex] += (after_unrealized - before_unrealized);
+      user_token_count[row.user_hex] += (after_holding - before_holding);
+      assert(user_token_count[row.user_hex] >= 0);
+
+      const int64_t row_block = sort_key_to_block(row.sort_key);
+      exposure = calc_exposure_1e6(st);
+      holding_period = calc_holding_period_blocks(row_block, st);
+
+      AggKey agg_key{row.user_hex, sort_key_to_block_bucket(row.sort_key), tag_id};
+      auto agg_it = agg_states.find(agg_key);
+      assert(agg_it != agg_states.end());
+      AggRuntime &agg = agg_it->second;
+      adjust_tail_window(agg, agg_key.block_bucket, row_block, exposure, holding_period, user_token_count[row.user_hex]);
+      const int64_t realized_i64 = round_i64(realized_delta);
+      agg.realized_sum += realized_i64;
+      kll_one[0] = static_cast<float>(realized_delta);
+      agg.realized_kll.addBatch(kll_one);
+      agg.event_count += 1;
+      agg.volume_sum += volume;
+      agg.last_sort_key = row.sort_key;
     }
     double &realized_cum = user_realized_cum[row.user_hex];
     double &unrealized_cum = user_unrealized_cum[row.user_hex];
     realized_cum += realized_delta;
     int32_t token_count = user_token_count[row.user_hex];
-    // Convert double to int64 for storage (round to nearest)
-    fact_rows.push_back({
+    event_facts.push_back({
         row.user_hex,
         row.sort_key,
         row.cond_idx,
@@ -487,18 +586,21 @@ bool StageSync::process_chunk_locked() const {
         round_i64(realized_cum),
         round_i64(unrealized_cum),
         token_count,
+        tag_id,
+        exposure,
+        volume,
+        holding_period,
     });
   }
-  assert(fact_rows.size() == rows.size());
-  // Validate state after processing (allow small negative due to floating point)
-  for (const auto &[key, st] : states) {
+  assert(event_facts.size() == event_inputs.size());
+
+  for (const auto &[key, st] : token_states) {
     assert(key.cond_idx >= 0);
     assert(static_cast<size_t>(key.cond_idx) < conditions_.size());
-    const auto &cond = conditions_[static_cast<size_t>(key.cond_idx)];
-    for (int j = 0; j < cond.outcome_count; ++j) {
-      assert(std::isfinite(st.positions[j]));
-      assert(std::isfinite(st.cost[j]));
-    }
+    assert(std::isfinite(st.pos));
+    assert(std::isfinite(st.cost));
+    assert(std::isfinite(st.lp));
+    assert(std::isfinite(st.entry_block));
   }
 
   {
@@ -506,58 +608,70 @@ bool StageSync::process_chunk_locked() const {
     auto tx = sink_conn->Query("BEGIN");
     assert(tx && !tx->HasError());
 
-    if (!states.empty()) {
+    if (!touched_token_keys.empty()) {
       sink_conn->Query(
-          "CREATE TEMP TABLE IF NOT EXISTS tmp_s3_state ("
-          "user_addr BLOB, cond_idx INTEGER, "
-          "pos_0 BIGINT, pos_1 BIGINT, pos_2 BIGINT, pos_3 BIGINT, pos_4 BIGINT, pos_5 BIGINT, pos_6 BIGINT, pos_7 BIGINT, "
-          "cost_0 BIGINT, cost_1 BIGINT, cost_2 BIGINT, cost_3 BIGINT, cost_4 BIGINT, cost_5 BIGINT, cost_6 BIGINT, cost_7 BIGINT, "
-          "lp_0 BIGINT, lp_1 BIGINT, lp_2 BIGINT, lp_3 BIGINT, lp_4 BIGINT, lp_5 BIGINT, lp_6 BIGINT, lp_7 BIGINT, "
-          "realized_pnl BIGINT, event_count BIGINT, last_sort_key BIGINT)");
-      sink_conn->Query("DELETE FROM tmp_s3_state");
+          "CREATE TEMP TABLE IF NOT EXISTS " + std::string(kSqlTmpTokenDirty) + " ("
+                                                                                "user_addr BLOB, cond_idx INTEGER, token_idx INTEGER)");
+      sink_conn->Query("DELETE FROM " + std::string(kSqlTmpTokenDirty));
       {
-        duckdb::Appender ap(*sink_conn, "tmp_s3_state");
-        for (const auto &[key, st] : states) {
+        duckdb::Appender ap(*sink_conn, kSqlTmpTokenDirty);
+        for (const auto &key : touched_token_keys) {
           std::string user_blob = hex_to_blob("0x" + key.user_hex);
           ap.BeginRow();
           ap.Append(duckdb::Value::BLOB(
               reinterpret_cast<duckdb::const_data_ptr_t>(user_blob.data()),
               user_blob.size()));
           ap.Append(key.cond_idx);
-          append_cond_state_values(ap, st);
+          ap.Append(key.token_idx);
           ap.EndRow();
         }
         ap.Close();
       }
+
+      sink_conn->Query(
+          "CREATE TEMP TABLE IF NOT EXISTS " + std::string(kSqlTmpTokenNew) + " ("
+                                                                              "user_addr BLOB, cond_idx INTEGER, token_idx INTEGER, "
+                                                                              "pos BIGINT, cost BIGINT, lp BIGINT, entry_block BIGINT)");
+      sink_conn->Query("DELETE FROM " + std::string(kSqlTmpTokenNew));
+      {
+        duckdb::Appender ap(*sink_conn, kSqlTmpTokenNew);
+        for (const auto &[key, st] : token_states) {
+          if (std::abs(st.pos) <= kPosEpsilon) {
+            continue;
+          }
+          std::string user_blob = hex_to_blob("0x" + key.user_hex);
+          ap.BeginRow();
+          ap.Append(duckdb::Value::BLOB(
+              reinterpret_cast<duckdb::const_data_ptr_t>(user_blob.data()),
+              user_blob.size()));
+          ap.Append(key.cond_idx);
+          ap.Append(key.token_idx);
+          ap.Append(round_i64(st.pos));
+          ap.Append(round_i64(st.cost));
+          ap.Append(round_i64(st.lp));
+          ap.Append(round_i64(st.entry_block));
+          ap.EndRow();
+        }
+        ap.Close();
+      }
+      auto del = sink_conn->Query(
+          "DELETE FROM " + std::string(kSqlTableTokenState) + " s "
+                                                              "WHERE EXISTS ("
+                                                              "  SELECT 1 FROM " +
+          std::string(kSqlTmpTokenDirty) + " d "
+                                           "  WHERE s.user_addr = d.user_addr AND s.cond_idx = d.cond_idx AND s.token_idx = d.token_idx"
+                                           ")");
+      assert(del && !del->HasError());
       auto up = sink_conn->Query(
-          "INSERT INTO s3_user_cond_state ("
-          "user_addr, cond_idx, "
-          "pos_0,pos_1,pos_2,pos_3,pos_4,pos_5,pos_6,pos_7, "
-          "cost_0,cost_1,cost_2,cost_3,cost_4,cost_5,cost_6,cost_7, "
-          "lp_0,lp_1,lp_2,lp_3,lp_4,lp_5,lp_6,lp_7, "
-          "realized_pnl,event_count,last_sort_key"
-          ") "
-          "SELECT "
-          "user_addr, cond_idx, "
-          "pos_0,pos_1,pos_2,pos_3,pos_4,pos_5,pos_6,pos_7, "
-          "cost_0,cost_1,cost_2,cost_3,cost_4,cost_5,cost_6,cost_7, "
-          "lp_0,lp_1,lp_2,lp_3,lp_4,lp_5,lp_6,lp_7, "
-          "realized_pnl,event_count,last_sort_key "
-          "FROM tmp_s3_state "
-          "ON CONFLICT(user_addr, cond_idx) DO UPDATE SET "
-          "pos_0=excluded.pos_0, pos_1=excluded.pos_1, pos_2=excluded.pos_2, pos_3=excluded.pos_3, "
-          "pos_4=excluded.pos_4, pos_5=excluded.pos_5, pos_6=excluded.pos_6, pos_7=excluded.pos_7, "
-          "cost_0=excluded.cost_0, cost_1=excluded.cost_1, cost_2=excluded.cost_2, cost_3=excluded.cost_3, "
-          "cost_4=excluded.cost_4, cost_5=excluded.cost_5, cost_6=excluded.cost_6, cost_7=excluded.cost_7, "
-          "lp_0=excluded.lp_0, lp_1=excluded.lp_1, lp_2=excluded.lp_2, lp_3=excluded.lp_3, "
-          "lp_4=excluded.lp_4, lp_5=excluded.lp_5, lp_6=excluded.lp_6, lp_7=excluded.lp_7, "
-          "realized_pnl=excluded.realized_pnl, event_count=excluded.event_count, last_sort_key=excluded.last_sort_key");
+          "INSERT INTO " + std::string(kSqlTableTokenState) + " (user_addr, cond_idx, token_idx, pos, cost, lp, entry_block) "
+                                                              "SELECT user_addr, cond_idx, token_idx, pos, cost, lp, entry_block FROM " +
+          std::string(kSqlTmpTokenNew));
       assert(up && !up->HasError());
     }
 
-    if (!fact_rows.empty()) {
-      duckdb::Appender ap(*sink_conn, "s3_user_event_fact");
-      for (const auto &fr : fact_rows) {
+    if (!event_facts.empty()) {
+      duckdb::Appender ap(*sink_conn, kSqlTableEventFact);
+      for (const auto &fr : event_facts) {
         std::string user_blob = hex_to_blob("0x" + fr.user_hex);
         ap.BeginRow();
         ap.Append(duckdb::Value::BLOB(
@@ -571,45 +685,113 @@ bool StageSync::process_chunk_locked() const {
         ap.Append(fr.realized_cum);
         ap.Append(fr.unrealized_pnl);
         ap.Append(fr.token_count);
+        ap.Append(static_cast<int32_t>(fr.tag_id));
+        ap.Append(fr.exposure);
+        ap.Append(fr.volume);
+        ap.Append(fr.holding_period);
         ap.EndRow();
       }
       ap.Close();
     }
 
+    if (!agg_states.empty()) {
+      sink_conn->Query(
+          "CREATE TEMP TABLE IF NOT EXISTS " + std::string(kSqlTmpBlockAggState) + " ("
+                                                                                   "user_addr BLOB, block_bucket BIGINT, tag_id INTEGER, "
+                                                                                   "realized_sum BIGINT, realized_kll BLOB, event_count BIGINT, "
+                                                                                   "exposure_tw_sum BIGINT, volume_sum BIGINT, holding_period_tw_sum BIGINT, "
+                                                                                   "token_count_tw_sum BIGINT, time_weight_sum BIGINT, last_sort_key BIGINT)");
+      sink_conn->Query("DELETE FROM " + std::string(kSqlTmpBlockAggState));
+      {
+        duckdb::Appender ap(*sink_conn, kSqlTmpBlockAggState);
+        for (const auto &[key, agg] : agg_states) {
+          std::string user_blob = hex_to_blob("0x" + key.user_hex);
+          const std::vector<uint8_t> kll_blob = agg.realized_kll.serialize();
+          ap.BeginRow();
+          ap.Append(duckdb::Value::BLOB(
+              reinterpret_cast<duckdb::const_data_ptr_t>(user_blob.data()),
+              user_blob.size()));
+          ap.Append(key.block_bucket);
+          ap.Append(static_cast<int32_t>(key.tag_id));
+          ap.Append(agg.realized_sum);
+          ap.Append(duckdb::Value::BLOB(
+              reinterpret_cast<duckdb::const_data_ptr_t>(kll_blob.data()),
+              kll_blob.size()));
+          ap.Append(agg.event_count);
+          ap.Append(agg.exposure_tw_sum);
+          ap.Append(agg.volume_sum);
+          ap.Append(agg.holding_period_tw_sum);
+          ap.Append(agg.token_count_tw_sum);
+          ap.Append(agg.time_weight_sum);
+          ap.Append(agg.last_sort_key);
+          ap.EndRow();
+        }
+        ap.Close();
+      }
+      auto au = sink_conn->Query(
+          "INSERT INTO " + std::string(kSqlTableBlockAggState) + " ("
+                                                                 "user_addr, block_bucket, tag_id, "
+                                                                 "realized_sum, realized_kll, event_count, "
+                                                                 "exposure_tw_sum, volume_sum, holding_period_tw_sum, "
+                                                                 "token_count_tw_sum, time_weight_sum, last_sort_key"
+                                                                 ") "
+                                                                 "SELECT "
+                                                                 "user_addr, block_bucket, tag_id, "
+                                                                 "realized_sum, realized_kll, event_count, "
+                                                                 "exposure_tw_sum, volume_sum, holding_period_tw_sum, "
+                                                                 "token_count_tw_sum, time_weight_sum, last_sort_key "
+                                                                 "FROM " +
+          std::string(kSqlTmpBlockAggState) + " "
+                                              "ON CONFLICT(user_addr, block_bucket, tag_id) DO UPDATE SET "
+                                              "realized_sum=excluded.realized_sum, "
+                                              "realized_kll=excluded.realized_kll, "
+                                              "event_count=excluded.event_count, "
+                                              "exposure_tw_sum=excluded.exposure_tw_sum, "
+                                              "volume_sum=excluded.volume_sum, "
+                                              "holding_period_tw_sum=excluded.holding_period_tw_sum, "
+                                              "token_count_tw_sum=excluded.token_count_tw_sum, "
+                                              "time_weight_sum=excluded.time_weight_sum, "
+                                              "last_sort_key=excluded.last_sort_key");
+      assert(au && !au->HasError());
+    }
+
     sink_conn->Query(
-        "CREATE TEMP TABLE IF NOT EXISTS tmp_s3_users ("
-        "user_addr BLOB, event_inc BIGINT, last_sort_key BIGINT, "
-        "rpnl BIGINT, upnl BIGINT, active_cnt BIGINT)");
-    sink_conn->Query("DELETE FROM tmp_s3_users");
+        "CREATE TEMP TABLE IF NOT EXISTS " + std::string(kSqlTmpUserSummaryDelta) + " ("
+                                                                                    "user_addr BLOB, event_inc BIGINT, last_sort_key BIGINT, "
+                                                                                    "rpnl BIGINT, upnl BIGINT, active_tokens BIGINT)");
+    sink_conn->Query("DELETE FROM " + std::string(kSqlTmpUserSummaryDelta));
     {
-      duckdb::Appender ap(*sink_conn, "tmp_s3_users");
-      for (const auto &[uhex, inc] : user_event_inc) {
+      duckdb::Appender ap(*sink_conn, kSqlTmpUserSummaryDelta);
+      for (const auto &[uhex, inc] : user_event_delta) {
         std::string user_blob = hex_to_blob("0x" + uhex);
         ap.BeginRow();
         ap.Append(duckdb::Value::BLOB(
             reinterpret_cast<duckdb::const_data_ptr_t>(user_blob.data()),
             user_blob.size()));
         ap.Append(inc);
-        ap.Append(user_last_sk[uhex]);
+        ap.Append(user_last_sort_key[uhex]);
         ap.Append(round_i64(user_realized_cum[uhex]));
         ap.Append(round_i64(user_unrealized_cum[uhex]));
-        assert(user_active_cond_count[uhex] >= 0);
-        ap.Append(user_active_cond_count[uhex]);
+        assert(user_token_count[uhex] >= 0);
+        ap.Append(user_token_count[uhex]);
         ap.EndRow();
       }
       ap.Close();
     }
     auto su = sink_conn->Query(
-        "INSERT INTO s3_user_summary ("
-        "user_addr, total_events, total_realized_pnl, total_unrealized_pnl, active_conditions, last_sort_key"
-        ") "
-        "SELECT user_addr, event_inc, rpnl, upnl, active_cnt, last_sort_key FROM tmp_s3_users "
-        "ON CONFLICT(user_addr) DO UPDATE SET "
-        "total_events=s3_user_summary.total_events + excluded.total_events, "
-        "total_realized_pnl=excluded.total_realized_pnl, "
-        "total_unrealized_pnl=excluded.total_unrealized_pnl, "
-        "active_conditions=excluded.active_conditions, "
-        "last_sort_key=GREATEST(s3_user_summary.last_sort_key, excluded.last_sort_key)");
+        "INSERT INTO " + std::string(kSqlTableUserSummaryState) + " ("
+                                                                  "user_addr, total_events, total_realized_pnl, total_unrealized_pnl, active_tokens, last_sort_key"
+                                                                  ") "
+                                                                  "SELECT user_addr, event_inc, rpnl, upnl, active_tokens, last_sort_key FROM " +
+        std::string(kSqlTmpUserSummaryDelta) + " "
+                                               "ON CONFLICT(user_addr) DO UPDATE SET "
+                                               "total_events=" +
+        std::string(kSqlTableUserSummaryState) + ".total_events + excluded.total_events, "
+                                                 "total_realized_pnl=excluded.total_realized_pnl, "
+                                                 "total_unrealized_pnl=excluded.total_unrealized_pnl, "
+                                                 "active_tokens=excluded.active_tokens, "
+                                                 "last_sort_key=GREATEST(" +
+        std::string(kSqlTableUserSummaryState) + ".last_sort_key, excluded.last_sort_key)");
     assert(su && !su->HasError());
 
     save_cursor_locked(*sink_conn);

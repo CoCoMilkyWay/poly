@@ -71,7 +71,7 @@ int main(int argc, char *argv[]) {
   stage0::TagSync stage0_tag(config, stage0_db, config.stage0_check_interval_seconds);
   stage1::StageSync stage1(config, stage1_db, config.stage1_check_interval_seconds);
   stage2::StageSync stage2(stage1_db, stage2_db, config.stage2_check_interval_seconds);
-  stage3::StageSync stage3(stage2.builder(), stage2_db, stage3_db, config.stage3_check_interval_seconds);
+  stage3::StageSync stage3(stage2.builder(), stage0_db, stage2_db, stage3_db, config.stage3_check_interval_seconds);
 
   auto stage0_query_getter = [&stage0_query]() {
     return stage0_query.status();
@@ -157,9 +157,7 @@ int main(int argc, char *argv[]) {
   start_stage(config.stage3_enable, "Stage3", stage3, stage3_ioc, stage3_thread);
 
   boost::asio::io_context api_ioc;
-  ApiServer api_server(api_ioc, stage0_db, stage1_db, stage2_db, stage3, config.backend_port,
-                       stage0_getter, [&stage0_tag]() { stage0_tag.reset_progress(); },
-                       stage1_getter, stage2_getter, stage3_getter);
+  ApiServer api_server(api_ioc, stage0_db, stage1_db, stage2_db, stage3, config.backend_port, stage0_getter, [&stage0_tag]() { stage0_tag.reset_progress(); }, stage1_getter, stage2_getter, stage3_getter);
 
   boost::asio::signal_set signals(api_ioc, SIGINT, SIGTERM);
   signals.async_wait([&](const boost::system::error_code &, int sig) {

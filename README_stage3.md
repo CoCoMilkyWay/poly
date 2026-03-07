@@ -2,16 +2,16 @@
 > `qty = abs(amount)`
 > `dir = sign(amount)`（`+1 / -1 / 0`）
 > `px = price_1e6 / 1e6`
-> `cost_before = cost[token_idx]`（本事件前）
-> `pos_before = pos[token_idx]`（本事件前）
+> `cost_before = cost`（本事件前该token的cost）
+> `pos_before = pos`（本事件前该token的pos）
 > `has_usd = collateral ∈ {USDC(1), USDCe(2), USDT(3), WrappedUSDCe(4)}`
 
-**Collateral 规则**: 只有 USD 类抵押物 (`has_usd=true`) 才计算 `cost / realized_delta / last_price`；非 USD 仅更新 `pos`。  
+**Collateral 规则**: 只有 USD 类抵押物 (`has_usd=true`) 才计算 `cost / realized_delta / lp`；非 USD 仅更新 `pos`。  
 **方向规则**: `EventType` 决定“经济语义”, `amount` 符号决定“方向”；同一 `EventType` 可出现正负。
 
-| 事件族                                                     | `amount > 0` (正向腿)                                        | `amount < 0` (反向腿)                                         | realized 规则                                                | last_price               |
+| 事件族                                                     | `amount > 0` (正向腿)                                        | `amount < 0` (反向腿)                                         | realized 规则                                                | lp更新                   |
 | ---------------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------- | ------------------------------------------------------------ | ------------------------ |
-| `Order* / FPMM* / Split* / Merge* / Redemption*`           | 先平空(`pos<0`)再开多；开多部分 `cost += open_long_qty * px` | 先平多(`pos>0`)再开空；开空部分 `cost -= open_short_qty * px` | 仅“平掉已有仓位”部分计 realized；开新仓部分不计当期 realized | 仅 `Order* / FPMM*` 更新 |
+| `Order* / FPMM* / Split* / Merge* / Redemption*`           | 先平空(`pos<0`)再开多；开多部分 `cost += open_long_qty * px` | 先平多(`pos>0`)再开空；开空部分 `cost -= open_short_qty * px` | 仅"平掉已有仓位"部分计 realized；开新仓部分不计当期 realized | 仅 `Order* / FPMM*` 更新 |
 | `Convert`                                                  | 先平空再开多；开多部分 `cost += open_long_qty * convert_px`  | 先平多再开空；开空部分 `cost -= open_short_qty * convert_px`  | `convert_px = (popcount-1)/popcount`, 仅平仓部分计 realized  | 否                       |
 | `TransferIn* / TransferOut* / FPMMLPRemove / FPMMLPReturn` | 先平空再开多；`cost` 不增加                                  | 先平多再开空；`cost` 不增加（保持 transfer 语义）             | 始终 `0`                                                     | 否                       |
 | `FPMMLPAdd`                                                | 不改 `pos/cost`                                              | 不改 `pos/cost`                                               | `0`                                                          | 否                       |
@@ -20,12 +20,12 @@
 
 ## Unrealized PnL 计算
 ```
-last_price[(cond_idx, token_idx)] = 该token最近一次交易的成交价
-unrealized_pnl = Σ(pos[i] * last_price[i] / 1e6 - cost[i])  // 对所有 pos[i] != 0 且 last_price[i] > 0
+// 对该用户所有有持仓的token求和
+unrealized_pnl = Σ(pos * lp / 1e6 - cost)  // 对所有 token_state 中 pos != 0 且 lp > 0 的token
 ```
-- 只有 Order/FPMM 交易事件会更新 last_price
-- Split/Merge/Transfer 等不更新 last_price
-- 若某token从未交易过（如TransferIn获得）,该token不计入unrealized（last_price=0）
+- 只有 Order/FPMM 交易事件会更新 lp
+- Split/Merge/Transfer 等不更新 lp
+- 若某token从未交易过（如TransferIn获得）,该token不计入unrealized（lp=0）
 
 ## Flow 图
 
@@ -35,7 +35,7 @@ stage3_bootstrap
 
 stage3_sync_tick
 ├─ 0) 读取游标与元数据
-│  ├─ 读 s3_sync_cursor(id=1) -> SyncCursor
+│  ├─ 读 sync_cursor_state(id=1) -> SyncCursorState
 │  ├─ 刷新 condition_meta(只读缓存)
 │  └─ 计算批次游标起点 (last_sort_key + last_pk_tiebreak)
 ├─ 1) 拉取输入事件(Stage2 输出)
@@ -45,13 +45,13 @@ stage3_sync_tick
 │  └─ 若无事件 -> 结束本 tick
 ├─ 2) 预加载状态
 │  ├─ 扫描 batch_events,提取 touched keys
-│  │  ├─ touched_cond_keys = {(user_addr, cond_idx) | cond_idx >= 0}
-│  │  └─ touched_users     = {user_addr}
-│  ├─ 读 s3_user_cond_state -> token_state_map (含 last_price)
-│  ├─ 读 s3_user_summary    -> user_state_map
+│  │  ├─ touched_token_keys = {(user_addr, cond_idx, token_idx)}
+│  │  └─ touched_users      = {user_addr}
+│  ├─ 读 token_state  -> token_state_map
+│  ├─ 读 user_summary_state -> user_state_map
 │  └─ 初始化临时结构
 │     ├─ fact_rows
-│     └─ dirty_cond_keys / dirty_users
+│     └─ dirty_token_keys / dirty_users
 ├─ 3) 回放循环(for evt in batch_events, 按 sort_key + PK 升序)
 │  ├─ 3.1 输入断言
 │  │  ├─ (sort_key, user_addr, cond_idx, event_type, token_idx) 严格递增
@@ -79,50 +79,61 @@ stage3_sync_tick
 │  │  │  ├─ price 类: realized = closed_qty * px - cost_removed
 │  │  │  └─ convert 类: realized = closed_qty * ((popcount-1)/popcount) - cost_removed
 │  │  └─ FPMMLPAdd: 不改 token pos/cost; realized_delta=0
-│  ├─ 3.4 更新 last_price (仅 Order/FPMM 交易)
-│  │  └─ 若 event_type ∈ {OrderBuy, OrderSell, FPMMBuy, FPMMSell} 且 price > 0:
-│  │       last_price[(cond_idx, token_idx)] = price
-│  ├─ 3.5 计算 unrealized_pnl
-│  │  └─ unrealized_pnl = Σ(pos[i] * last_price[(cond_idx,i)] / 1e6 - cost[i]) for all i where pos[i]!=0 && last_price[i]>0
+│  ├─ 3.4 更新 token state
+│  │  ├─ 更新 pos, cost, lp (若Order/FPMM且price>0)
+│  │  └─ 更新 entry_block:
+│  │       建仓 (pos: 0 → 非0):    entry_block = current_block
+│  │       加仓 (|pos| 增加):      entry_block = (|old_pos| * old_entry + delta * current_block) / |new_pos|
+│  │       减仓 (|pos| 减少):      entry_block 不变
+│  │       平仓 (pos → 0):         删除该行
+│  ├─ 3.5 计算 user 级别聚合
+│  │  ├─ unrealized_pnl = Σ(pos * lp / 1e6 - cost) for all tokens
+│  │  ├─ token_count = 有效持仓token数（过滤dust, |qty| >= 10 token）
+│  │  └─ 计算 exposure, holding_period (token级别)
 │  ├─ 3.6 更新 user_state_map[user_addr]
 │  │  ├─ total_events += 1
 │  │  ├─ total_realized_pnl += realized_delta
 │  │  └─ last_sort_key = evt.sort_key
-│  └─ 3.7 产出事实行
-│     └─ append EventFactRow(user_addr, sort_key, cond_idx, token_idx, event_type,
-│                            realized_delta, realized_cum, unrealized_pnl, token_count)
+│  ├─ 3.7 产出事实行
+│  │  └─ append EventFact(user_addr, sort_key, cond_idx, token_idx, event_type,
+│  │                         realized_delta, realized_cum, unrealized_pnl, token_count,
+│  │                         tag_id, exposure, volume, holding_period)
+│  └─ 3.8 更新 block_agg (增量)
+│     └─ 根据当前事件 block_bucket 和 tag_id 更新聚合统计
 ├─ 4) 批次收尾校验
 │  ├─ token 状态有限: pos/cost 必须是 finite（允许负数,表示短仓/负成本）
 │  ├─ fact_rows.size == batch_events.size
 │  └─ 任一失败 -> rollback,cursor 不推进
 ├─ 5) 单事务提交
-│  ├─ upsert s3_user_cond_state(dirty_cond_keys) (含 last_price)
-│  ├─ upsert s3_user_summary(dirty_users)
-│  ├─ insert s3_user_event_fact(fact_rows)
-│  └─ update s3_sync_cursor(...)
+│  ├─ upsert token_state(dirty_token_keys)
+│  ├─ upsert user_summary_state(dirty_users)
+│  ├─ insert event_fact(fact_rows)
+│  ├─ upsert block_agg_state(dirty_buckets)
+│  └─ update sync_cursor_state(...)
 └─ 6) 查询路径(只读)
-   ├─ users_sorted(limit)           -> s3_user_summary(用户列表)
+   ├─ users_sorted(limit)           -> user_summary_state(用户列表)
    ├─ user_pnl_timeline(user)       -> 预热并缓存该用户 timeline + snapshots
    └─ user_positions_at(user, sk)   -> 命中内存 snapshots 返回 positions
 ```
 
 ## 数据结构
 
-```text
-符号: E=事件总数, U=有事件用户数, C=condition数, K=活跃(user,cond)对数
+符号: `E=事件总数`, `U=有事件用户数`, `T=活跃token数(user,cond,token_idx)`
 
-InputEvent (实例数=E)
-ConditionMeta (实例数=C)
-  -> TokenCondState (实例数=K, K=|{(u,c) | 对应状态存在}|, 且 K<=U*C)
-      -> EventFactRow (实例数=E, 每个InputEvent对应1行)
-      -> UserSummaryState (实例数=U)
-      -> SyncCursor (实例数=1)
-      -> UserQueryCache (实例数<=U, 命中后按用户懒加载)
-```
+| 数据结构                                  | 层级/实例数       | 主要用途                           | Persist      |
+| ----------------------------------------- | ----------------- | ---------------------------------- | ------------ |
+| `EventInput`                              | 输入流 / `E`      | 回放状态机输入                     | 否（临时）   |
+| `ConditionMeta`                           | 只读缓存 / `C`    | `outcome_count` 与 `tag_id` 元信息 | 否（可重载） |
+| `TokenState` (`token_state`)              | Token级 / `T`     | 当前持仓 `pos/cost/lp/entry_block` | 是           |
+| `EventFact` (`event_fact`)                | Token级 / `E`     | 事件事实、timeline、特征原料       | 是           |
+| `UserSummaryState` (`user_summary_state`) | User级 / `U`      | 用户总览查询加速                   | 是           |
+| `BlockAggState` (`block_agg_state`)       | User*Bucket*Tag级 | 10w桶聚合特征加速                  | 是           |
+| `SyncCursorState` (`sync_cursor_state`)   | 全局 / `1`        | 增量同步断点                       | 是           |
+| `UserQueryCache`                          | 进程内 / `<=U`    | 查询缓存（timeline/snapshot）      | 否（内存）   |
 
 ```text
 // Stage3 内部统一输入结构 (用于回放/状态机)
-struct InputEvent {
+struct EventInput {
   string user_hex;        // 查询路径可为空, 批处理路径必填
   int64  sort_key;
   int32  cond_idx;
@@ -133,46 +144,65 @@ struct InputEvent {
   int64  price_1e6;
 }
 
-// Condition 元数据
+// Condition 元数据 (只读缓存)
 struct ConditionMeta {
   uint8 outcome_count;
-  int64 payout_numerators[8];
+  int64 payout_numerators[256];  // 支持任意outcome数
+  int8 tag_id;                   // 行业分类
 }
 
-// 用户在某 condition 下的状态
-// 内部计算使用 double, 持久化时 round() 转 int64
-struct TokenCondState {
-  double pos[8];          // 各 outcome 持仓 (内部 double, DB int64; 可负=短仓)
-  double cost[8];         // 各 outcome 成本 (内部 double, DB int64; 可负=短仓信用)
-  double last_price[8];   // 各 outcome 最近成交价 (内部 double, DB int64)
-  double realized_pnl;    // 该 condition 已实现 pnl (内部 double, DB int64)
-  int64 event_count;
-  int64 last_sort_key;
+// Token 状态 (稀疏存储, 只存有持仓的token)
+// PK: (user_addr, cond_idx, token_idx)
+struct TokenState {
+  double pos;           // 持仓量 (可负=空头)
+  double cost;          // 成本基础 (可负=空头信用)
+  double lp;            // 最近成交价
+  double entry_block;   // 加权平均建仓block
 }
 
 // 用户摘要 (持久化)
 struct UserSummaryState {
   int64  total_events;
   int64  total_realized_pnl;
-  int32  active_conditions;
+  int64  total_unrealized_pnl;
+  int32  active_tokens;       // 有持仓的token数
   int64  last_sort_key;
 }
 
 // 事件事实行 (持久化, 用于构建 timeline)
-struct EventFactRow {
+struct EventFact {
   Address20 user_addr;
   int64   sort_key;
   int32   cond_idx;
   int32   token_idx;
   int32   event_type;
   int64   realized_delta;     // 本事件 realized 增量
-  int64   realized_cum;       // 累计 realized pnl
-  int64   unrealized_pnl;     // 本事件后的 unrealized pnl
-  int32   token_count;        // 持仓 token 种数(|pos|>0)
+  int64   realized_cum;       // user级别累计 realized pnl
+  int64   unrealized_pnl;     // user级别 unrealized pnl
+  int32   token_count;        // user级别有效持仓 token 种数（|qty| >= 10 token）
+  // 新增字段
+  int8    tag_id;             // 行业分类 (0-13)
+  int64   exposure;           // 该token暴露额 |pos*lp|
+  int64   volume;             // 交易额 |amount*price|
+  int64   holding_period;     // 该token持仓周期 (blocks)
+}
+
+// Block聚合状态 (持久化, 用于特征计算)
+// PK: (user_addr, block_bucket, tag_id)
+struct BlockAggState {
+  int64   realized_sum;           // Σrealized_delta
+  blob    realized_kll;           // KLL sketch (k=200)
+  int64   event_count;
+  int64   exposure_tw_sum;        // Σ(exposure * time_weight)
+  int64   volume_sum;             // Σvolume
+  int64   holding_period_tw_sum;  // Σ(holding_period * time_weight)
+  int64   token_count_tw_sum;     // Σ(token_count * time_weight)
+  int64   time_weight_sum;        // Σtime_weight
+  int64   last_sort_key;
 }
 
 // 游标
-struct SyncCursor {
+struct SyncCursorState {
   int64 last_sort_key;
   Address20 last_user_addr;
   int32 last_cond_idx;
@@ -226,7 +256,7 @@ struct UserQueryCache {
 | resp.timeline[].ty   | u8     | 是       | 事件类型                         |
 | resp.timeline[].rpnl | i64    | 是       | 累计已实现 PnL                   |
 | resp.timeline[].upnl | i64    | 是       | 该时刻未实现 PnL                 |
-| resp.timeline[].tk   | i32    | 是       | 持仓 token 种数                  |
+| resp.timeline[].tk   | i32    | 是       | 有效持仓 token 种数（过滤dust）  |
 | error.404            | object | 条件     | 用户不存在或无事件时返回         |
 
 ### GET /api/stage3-positions?user=0x...&sort_key=...
@@ -243,6 +273,7 @@ struct UserQueryCache {
 | resp.positions[].qty  | i64    | 是       | 持仓数量（`1e6=1 token`, 可负）        |
 | resp.positions[].cost | i64    | 是       | 成本基础（`1e6=$1`, 可负）             |
 | resp.positions[].lp   | i64    | 是       | 最近成交价（`1e6=$1`）                 |
+| resp.positions[].eb   | i64    | 是       | 建仓block                              |
 
 ## 建立动态高玩池(特征工程)
 
