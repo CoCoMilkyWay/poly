@@ -243,6 +243,7 @@ private:
 
   std::vector<ConditionInfo> conditions_;
   std::vector<int8_t> cond_tag_ids_;
+  std::unordered_map<std::string, int8_t> tag_to_industry_id_;
 
   struct UserQueryCache {
     struct Snapshot {
@@ -292,7 +293,7 @@ private:
   static bool is_usd_collateral(int32_t collateral);
   static bool is_effective_holding(double qty_1e6);
   static bool is_effective_holding_i64(int64_t qty_1e6);
-  static int8_t tag_name_to_id(const std::string &tag_name);
+  int8_t tag_name_to_id(const std::string &tag_name) const;
 
   // Feature calculators
   static double calc_unrealized_pnl(const TokenState &st);
@@ -310,6 +311,7 @@ private:
 
   // Lifecycle / sync pipeline
   void init_schema() const;
+  void load_tag_mapping_from_md();
   void load_conditions();
   void load_cursor();
   void save_cursor_locked(duckdb::Connection &conn) const;

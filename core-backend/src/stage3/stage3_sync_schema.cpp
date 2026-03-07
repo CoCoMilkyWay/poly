@@ -1,4 +1,5 @@
 #include "stage3_sync.hpp"
+#include <fstream>
 namespace stage3 {
 
 StageSync::StageSync(EventBuilder &builder, Database &stage0_db, Database &stage2_db, Database &stage3_db,
@@ -7,9 +8,82 @@ StageSync::StageSync(EventBuilder &builder, Database &stage0_db, Database &stage
       base_interval_seconds_(base_interval_seconds) {
   assert(base_interval_seconds_ > 0);
   init_schema();
+  load_tag_mapping_from_md();
   load_conditions();
   load_cursor();
   refresh_status_locked();
+}
+
+void StageSync::load_tag_mapping_from_md() {
+  auto trim = [](const std::string &s) {
+    size_t b = s.find_first_not_of(" \t\r\n");
+    if (b == std::string::npos) {
+      return std::string();
+    }
+    size_t e = s.find_last_not_of(" \t\r\n");
+    return s.substr(b, e - b + 1);
+  };
+  auto normalize = [](const std::string &raw) {
+    std::string out;
+    out.reserve(raw.size());
+    bool prev_sep = false;
+    for (char c : to_lower(raw)) {
+      const bool keep = (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9');
+      if (keep) {
+        out.push_back(c);
+        prev_sep = false;
+        continue;
+      }
+      if (!prev_sep && !out.empty()) {
+        out.push_back('_');
+        prev_sep = true;
+      }
+    }
+    while (!out.empty() && out.back() == '_') {
+      out.pop_back();
+    }
+    return out;
+  };
+
+  std::ifstream f("core-backend/src/stage0/TAG.md");
+  assert(f.is_open());
+
+  tag_to_industry_id_.clear();
+  int8_t current_id = -1;
+  int8_t next_id = 0;
+  std::string line;
+  while (std::getline(f, line)) {
+    line = trim(line);
+    if (line.empty()) {
+      continue;
+    }
+    if (line.rfind("## ", 0) == 0) {
+      const std::string level1 = trim(line.substr(3));
+      assert(!level1.empty());
+      assert(next_id <= 12);
+      current_id = next_id;
+      ++next_id;
+      const std::string key = normalize(level1);
+      assert(!key.empty());
+      tag_to_industry_id_[key] = current_id;
+      continue;
+    }
+    if (line.rfind("- ", 0) == 0) {
+      assert(current_id >= 0);
+      std::string rest = line.substr(2);
+      size_t hash_pos = rest.find('#');
+      if (hash_pos != std::string::npos) {
+        rest = rest.substr(0, hash_pos);
+      }
+      const std::string level2 = trim(rest);
+      assert(!level2.empty());
+      const std::string key = normalize(level2);
+      assert(!key.empty());
+      tag_to_industry_id_[key] = current_id;
+    }
+  }
+  assert(next_id == 13);
+  assert(!tag_to_industry_id_.empty());
 }
 
 void StageSync::init_schema() const {

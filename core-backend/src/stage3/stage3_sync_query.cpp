@@ -5,7 +5,20 @@
 
 namespace stage3 {
 namespace {
+constexpr const char *kSqlSelectUserSummaryRows =
+    "SELECT lower(hex(user_addr)) AS user_hex, total_events, total_realized_pnl, total_unrealized_pnl ";
+constexpr const char *kSqlSelectEventFactTimelineRows =
+    "SELECT sort_key, cond_idx, event_type, token_idx, realized_cum, unrealized_pnl, token_count ";
+constexpr const char *kSqlSelectUserEventRows =
+    "SELECT sort_key, cond_idx, event_type, token_idx, collateral, amount, price ";
 constexpr const char *kSqlOrderByEventKey = " ORDER BY sort_key, cond_idx, event_type, token_idx";
+constexpr const char *kSqlOrderBySummaryEventsDesc = " ORDER BY total_events DESC ";
+
+std::string build_user_event_ordered_query(const std::string &select_cols,
+                                           const std::string &from_table,
+                                           const std::string &user_addr_expr) {
+  return select_cols + "FROM " + from_table + " WHERE user_addr = " + user_addr_expr + kSqlOrderByEventKey;
+}
 
 std::string user_addr_sql(const std::string &addr_lower) {
   assert(addr_lower.size() == 42);
@@ -19,10 +32,9 @@ std::vector<StageSync::UserSummaryRow> StageSync::get_users_sorted(int64_t limit
   auto conn = stage3_db_.create_connection();
   int64_t safe_limit = std::max<int64_t>(1, limit);
   auto r = conn->Query(
-      "SELECT lower(hex(user_addr)) AS user_hex, total_events, total_realized_pnl, total_unrealized_pnl "
-      "FROM " +
+      std::string(kSqlSelectUserSummaryRows) + "FROM " +
       std::string(kSqlTableUserSummaryState) + " "
-                                               "ORDER BY total_events DESC "
+                                               + std::string(kSqlOrderBySummaryEventsDesc) +
                                                "LIMIT " +
       std::to_string(safe_limit));
   assert(r && !r->HasError());
@@ -115,22 +127,15 @@ StageSync::UserQueryCache StageSync::build_user_query_cache(const std::string &a
   cache.addr_lower = addr_lower;
   const std::string user_addr = user_addr_sql(addr_lower);
   auto fact_conn = stage3_db_.create_connection();
-  auto fact = fact_conn->Query(
-      "SELECT sort_key, cond_idx, event_type, token_idx, realized_cum, unrealized_pnl, token_count "
-      "FROM " +
-      std::string(kSqlTableEventFact) + " "
-                                        "WHERE user_addr = " +
-      user_addr + " " + std::string(kSqlOrderByEventKey));
+  auto fact = fact_conn->Query(build_user_event_ordered_query(
+      kSqlSelectEventFactTimelineRows, kSqlTableEventFact, user_addr));
   assert(fact && !fact->HasError());
   if (fact->RowCount() == 0) {
     return cache;
   }
   auto src_conn = stage2_db_.create_connection();
-  auto ue = src_conn->Query(
-      "SELECT sort_key, cond_idx, event_type, token_idx, collateral, amount, price "
-      "FROM user_event "
-      "WHERE user_addr = " +
-      user_addr + " " + std::string(kSqlOrderByEventKey));
+  auto ue = src_conn->Query(build_user_event_ordered_query(
+      kSqlSelectUserEventRows, "user_event", user_addr));
   assert(ue && !ue->HasError());
 
   cache.timeline.reserve(static_cast<size_t>(fact->RowCount()));

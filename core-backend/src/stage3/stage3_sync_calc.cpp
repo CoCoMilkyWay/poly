@@ -35,47 +35,48 @@ bool StageSync::is_usd_collateral(int32_t collateral) {
          collateral == static_cast<int32_t>(Collateral::WrappedUSDCe);
 }
 
-int8_t StageSync::tag_name_to_id(const std::string &tag_name) {
-  const std::string lower = to_lower(tag_name);
-  auto has = [&](const std::string &s) { return lower.find(s) != std::string::npos; };
-  if (has("crypto_price")) {
-    return 0;
+int8_t StageSync::tag_name_to_id(const std::string &tag_name) const {
+  auto normalize = [](const std::string &raw) {
+    std::string out;
+    out.reserve(raw.size());
+    bool prev_sep = false;
+    for (char c : to_lower(raw)) {
+      const bool keep = (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9');
+      if (keep) {
+        out.push_back(c);
+        prev_sep = false;
+        continue;
+      }
+      if (!prev_sep && !out.empty()) {
+        out.push_back('_');
+        prev_sep = true;
+      }
+    }
+    while (!out.empty() && out.back() == '_') {
+      out.pop_back();
+    }
+    return out;
+  };
+
+  assert(!tag_to_industry_id_.empty());
+  const std::string whole = normalize(tag_name);
+  auto it = tag_to_industry_id_.find(whole);
+  if (it != tag_to_industry_id_.end()) {
+    return it->second;
   }
-  if (has("crypto_market")) {
-    return 1;
-  }
-  if (has("sports_basketball")) {
-    return 2;
-  }
-  if (has("sports_football")) {
-    return 3;
-  }
-  if (has("sports_soccer")) {
-    return 4;
-  }
-  if (has("sports_individual")) {
-    return 5;
-  }
-  if (has("politics_us")) {
-    return 6;
-  }
-  if (has("politics_world")) {
-    return 7;
-  }
-  if (has("economy_finance")) {
-    return 8;
-  }
-  if (has("tech")) {
-    return 9;
-  }
-  if (has("entertainment")) {
-    return 10;
-  }
-  if (has("weather")) {
-    return 11;
-  }
-  if (has("society")) {
-    return 12;
+
+  size_t sep = tag_name.find(" - ");
+  if (sep != std::string::npos) {
+    const std::string left = normalize(tag_name.substr(0, sep));
+    const std::string right = normalize(tag_name.substr(sep + 3));
+    auto it_right = tag_to_industry_id_.find(right);
+    if (it_right != tag_to_industry_id_.end()) {
+      return it_right->second;
+    }
+    auto it_left = tag_to_industry_id_.find(left);
+    if (it_left != tag_to_industry_id_.end()) {
+      return it_left->second;
+    }
   }
   return 13;
 }
