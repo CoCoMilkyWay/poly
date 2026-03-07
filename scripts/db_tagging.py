@@ -66,7 +66,7 @@ def load_labels_with_comments(repo_root: Path) -> tuple[list[str], list[str]]:
 
             full_name = f"{level1} - {level2}"
             label_names.append(full_name)
-            # 用标签名+注释做embedding，增强匹配
+            # 用标签名+注释做embedding, 增强匹配
             embed_text = f"{level2} {comment}".strip()
             label_texts.append(embed_text)
 

@@ -1291,7 +1291,7 @@ void EventBuilder::phase3_process_transfers(int64_t start, int64_t end) {
       }
     }
   }
-  // 显式释放 DuckDB 资源，避免自动析构时的潜在阻塞问题
+  // 显式释放 DuckDB 资源, 避免自动析构时的潜在阻塞问题
   transfers.reset();
   conn.reset();
 }

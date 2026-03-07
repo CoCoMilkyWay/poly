@@ -56,7 +56,7 @@ if(NOT EXISTS ${ARROW_LIBRARY})
     message(FATAL_ERROR "未找到 Arrow 库文件: ${ARROW_LIBRARY}")
 endif()
 
-# ONNX Runtime: CMake 配置阶段自动选择，优先 GPU，其次 CPU
+# ONNX Runtime: CMake 配置阶段自动选择, 优先 GPU, 其次 CPU
 set(ONNXRUNTIME_GPU_DIR ${PACKAGES_DIR}/onnxruntime-gpu)
 set(ONNXRUNTIME_CPU_DIR ${PACKAGES_DIR}/onnxruntime-cpu)
 
@@ -71,7 +71,7 @@ elseif(EXISTS ${ONNXRUNTIME_CPU_DIR}/libonnxruntime.so)
         "如需启用 GPU, 请准备: ${ONNXRUNTIME_GPU_DIR}/libonnxruntime.so")
 else()
     message(FATAL_ERROR
-        "未找到 ONNX Runtime 库文件，请提供以下任一目录:\n"
+        "未找到 ONNX Runtime 库文件, 请提供以下任一目录:\n"
         "  - ${ONNXRUNTIME_GPU_DIR}/libonnxruntime.so\n"
         "  - ${ONNXRUNTIME_CPU_DIR}/libonnxruntime.so")
 endif()

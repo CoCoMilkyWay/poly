@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-从 tag/tags/*.txt 读取分类结果，按 start_block 画滑动窗口时序图。
+从 tag/tags/*.txt 读取分类结果, 按 start_block 画滑动窗口时序图。
 """
 
 import json

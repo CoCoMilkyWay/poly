@@ -268,7 +268,7 @@ std::string detect_model_size_text(const std::string &model_path) {
 // ONNX Inference
 // ============================================================================
 
-// 如果 model.onnx 不存在但有 .00 .01 ... 分片，自动合并
+// 如果 model.onnx 不存在但有 .00 .01 ... 分片, 自动合并
 void ensure_model_merged(const std::string &model_path) {
   namespace fs = std::filesystem;
   if (fs::exists(model_path)) {
@@ -418,7 +418,7 @@ public:
     // [B, S, H] - 需要 mean pooling
     // [B, H]    - 已经 pooled（某些导出模型）
     if (out_shape.size() == 2) {
-      // [B, H] - 已经pooled，只需L2 normalize
+      // [B, H] - 已经pooled, 只需L2 normalize
       int64_t hidden_dim = out_shape[1];
       for (size_t b = 0; b < static_cast<size_t>(batch_size); ++b) {
         std::vector<float> emb(static_cast<size_t>(hidden_dim));
@@ -450,7 +450,7 @@ public:
         for (size_t s = 0; s < seq_len_sz; ++s) {
           float mask = static_cast<float>(batch[b].attention_mask[s]);
           mask_sum += mask;
-          // offset提出来，避免内循环重复计算
+          // offset提出来, 避免内循环重复计算
           const float *row = data + (b * seq_len_sz + s) * hidden_dim_sz;
 #pragma GCC ivdep
           for (size_t h = 0; h < hidden_dim_sz; ++h) {

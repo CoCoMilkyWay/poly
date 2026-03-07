@@ -47,7 +47,7 @@ BATCH_SIZE = 128
 TAG_MD_REL_PATH = "core-backend/src/stage0/TAG.md"
 
 SAMPLE_SIZE = 170000         # 随机采样数量
-RANDOM_SEED = None           # None则每次不同，设置整数则固定
+RANDOM_SEED = None           # None则每次不同, 设置整数则固定
 INCLUDE_DESCRIPTION = False  # 是否包括description做embedding
 BOTTOM_TAGS = 10             # 导出平均置信度最低的N个标签
 SAMPLES_PER_TAG = 10         # 每个标签导出的低置信度样本数
@@ -89,7 +89,7 @@ def load_labels_with_comments(repo_root: Path) -> tuple[list[str], list[str]]:
 
             full_name = f"{level1} - {level2}"
             label_names.append(full_name)
-            # 用标签名+注释做embedding，增强匹配
+            # 用标签名+注释做embedding, 增强匹配
             embed_text = f"{level2} {comment}".strip()
             label_texts.append(embed_text)
 

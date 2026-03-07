@@ -1,4 +1,4 @@
-## 交易口径事件（符号驱动，支持做空）
+## 交易口径事件（符号驱动, 支持做空）
 > `qty = abs(amount)`
 > `dir = sign(amount)`（`+1 / -1 / 0`）
 > `px = price_1e6 / 1e6`
@@ -7,16 +7,16 @@
 > `has_usd = collateral ∈ {USDC(1), USDCe(2), USDT(3), WrappedUSDCe(4)}`
 
 **Collateral 规则**: 只有 USD 类抵押物 (`has_usd=true`) 才计算 `cost / realized_delta / last_price`；非 USD 仅更新 `pos`。  
-**方向规则**: `EventType` 决定“经济语义”，`amount` 符号决定“方向”；同一 `EventType` 可出现正负。
+**方向规则**: `EventType` 决定“经济语义”, `amount` 符号决定“方向”；同一 `EventType` 可出现正负。
 
 | 事件族                                                     | `amount > 0` (正向腿)                                        | `amount < 0` (反向腿)                                         | realized 规则                                                | last_price               |
 | ---------------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------- | ------------------------------------------------------------ | ------------------------ |
 | `Order* / FPMM* / Split* / Merge* / Redemption*`           | 先平空(`pos<0`)再开多；开多部分 `cost += open_long_qty * px` | 先平多(`pos>0`)再开空；开空部分 `cost -= open_short_qty * px` | 仅“平掉已有仓位”部分计 realized；开新仓部分不计当期 realized | 仅 `Order* / FPMM*` 更新 |
-| `Convert`                                                  | 先平空再开多；开多部分 `cost += open_long_qty * convert_px`  | 先平多再开空；开空部分 `cost -= open_short_qty * convert_px`  | `convert_px = (popcount-1)/popcount`，仅平仓部分计 realized  | 否                       |
+| `Convert`                                                  | 先平空再开多；开多部分 `cost += open_long_qty * convert_px`  | 先平多再开空；开空部分 `cost -= open_short_qty * convert_px`  | `convert_px = (popcount-1)/popcount`, 仅平仓部分计 realized  | 否                       |
 | `TransferIn* / TransferOut* / FPMMLPRemove / FPMMLPReturn` | 先平空再开多；`cost` 不增加                                  | 先平多再开空；`cost` 不增加（保持 transfer 语义）             | 始终 `0`                                                     | 否                       |
 | `FPMMLPAdd`                                                | 不改 `pos/cost`                                              | 不改 `pos/cost`                                               | `0`                                                          | 否                       |
 
-`amount == 0` 视为 no-op（仅事件计数推进，不改持仓/成本/PnL）。
+`amount == 0` 视为 no-op（仅事件计数推进, 不改持仓/成本/PnL）。
 
 ## Unrealized PnL 计算
 ```
@@ -123,7 +123,7 @@ ConditionMeta (实例数=C)
 ```text
 // Stage3 内部统一输入结构 (用于回放/状态机)
 struct InputEvent {
-  string user_hex;        // 查询路径可为空，批处理路径必填
+  string user_hex;        // 查询路径可为空, 批处理路径必填
   int64  sort_key;
   int32  cond_idx;
   int32  event_type;
@@ -140,12 +140,12 @@ struct ConditionMeta {
 }
 
 // 用户在某 condition 下的状态
-// 内部计算使用 double，持久化时 round() 转 int64
+// 内部计算使用 double, 持久化时 round() 转 int64
 struct TokenCondState {
-  double pos[8];          // 各 outcome 持仓 (内部 double，DB int64; 可负=短仓)
-  double cost[8];         // 各 outcome 成本 (内部 double，DB int64; 可负=短仓信用)
-  double last_price[8];   // 各 outcome 最近成交价 (内部 double，DB int64)
-  double realized_pnl;    // 该 condition 已实现 pnl (内部 double，DB int64)
+  double pos[8];          // 各 outcome 持仓 (内部 double, DB int64; 可负=短仓)
+  double cost[8];         // 各 outcome 成本 (内部 double, DB int64; 可负=短仓信用)
+  double last_price[8];   // 各 outcome 最近成交价 (内部 double, DB int64)
+  double realized_pnl;    // 该 condition 已实现 pnl (内部 double, DB int64)
   int64 event_count;
   int64 last_sort_key;
 }
@@ -207,7 +207,7 @@ struct UserQueryCache {
 ### GET /api/stage3-users?limit=1000
 | entry         | type   | required | description                  |
 | ------------- | ------ | -------- | ---------------------------- |
-| query.limit   | i32    | 否       | 返回条数上限，默认 `1000`    |
+| query.limit   | i32    | 否       | 返回条数上限, 默认 `1000`    |
 | resp[]        | array  | 是       | 用户列表（按 `events` 降序） |
 | resp[].user   | string | 是       | 用户地址（lowercase）        |
 | resp[].events | i64    | 是       | 用户事件总数                 |
@@ -240,8 +240,8 @@ struct UserQueryCache {
 | resp.positions[]      | array  | 是       | 指定 cursor 的持仓快照（仅 positions） |
 | resp.positions[].ci   | u32    | 是       | cond_idx                               |
 | resp.positions[].ti   | u8     | 是       | token_idx                              |
-| resp.positions[].qty  | i64    | 是       | 持仓数量（`1e6=1 token`，可负）        |
-| resp.positions[].cost | i64    | 是       | 成本基础（`1e6=$1`，可负）             |
+| resp.positions[].qty  | i64    | 是       | 持仓数量（`1e6=1 token`, 可负）        |
+| resp.positions[].cost | i64    | 是       | 成本基础（`1e6=$1`, 可负）             |
 | resp.positions[].lp   | i64    | 是       | 最近成交价（`1e6=$1`）                 |
 
 ## 建立动态高玩池(特征工程)
@@ -252,7 +252,7 @@ struct UserQueryCache {
 
 特征张量: User * Time(per 10w blk) * Feature
 
-行业(N): 
+行业(N):
 Crypto_Price
 Crypto_Market
 Sports_Basketball
@@ -268,22 +268,27 @@ Weather
 Society
 Unknown
 
-时序特征(名称,数量,描述):
-    近期行业平均持仓token数  N   近10w块移动平均持仓token数(分行业)   
-    近月行业平均持仓token数  N   近100w块移动平均持仓token数(分行业)  
-    近年行业平均持仓token数  N   近1000w块移动平均持仓token数(分行业) 
-    近期行业平均持仓暴露额   N   近10w块移动平均持仓暴露额(分行业)   
-    近月行业平均持仓暴露额   N   近100w块移动平均持仓暴露额(分行业)  
-    近年行业平均持仓暴露额   N   近1000w块移动平均持仓暴露额(分行业) 
-    近期行业平均持仓周期     N   近10w块移动平均持仓周期(分行业)   
-    近月行业平均持仓周期     N   近100w块移动平均持仓周期(分行业)  
-    近年行业平均持仓周期     N   近1000w块移动平均持仓周期(分行业) 
-    近期行业平均夏普         N   近10w块移动平均夏普(分行业)   
-    近月行业平均夏普         N   近100w块移动平均夏普(分行业)  
-    近年行业平均夏普         N   近1000w块移动平均夏普(分行业) 
-    近期总夏普               1   近10w块夏普(分行业)   
-    近月总夏普               1   近100w块夏普(分行业)  
-    近年总夏普               1   近1000w块夏普(分行业) 
+时序特征(名称,数量,统计方式,描述):
+    近期行业平均持仓token数    N    时间加权           近10w块移动平均持仓token数(分行业)    
+    近月行业平均持仓token数    N    等权               近100w块移动平均持仓token数(分行业)   
+    近年行业平均持仓token数    N    等权               近1000w块移动平均持仓token数(分行业)  
+    近期行业平均持仓暴露额     N    时间加权           近10w块移动平均持仓暴露额(分行业)     
+    近月行业平均持仓暴露额     N    等权               近100w块移动平均持仓暴露额(分行业)    
+    近年行业平均持仓暴露额     N    等权               近1000w块移动平均持仓暴露额(分行业)   
+    近期行业总和交易额         N    加总               近10w块总和交易额(分行业)             
+    近月行业平均总和交易额     N    等权               近100w块总和交易额(分行业)            
+    近年行业平均总和交易额     N    等权               近1000w块总和交易额(分行业)           
+    近期行业平均持仓周期       N    时间,金额加权      近10w块移动平均持仓周期(分行业)       
+    近月行业平均持仓周期       N    等权               近100w块移动平均持仓周期(分行业)      
+    近年行业平均持仓周期       N    等权               近1000w块移动平均持仓周期(分行业)     
+    近期总夏普                 1    记录波动性分布     近10w块夏普                           
+    近月总夏普                 1    merge波动性分布    近100w块夏普                          
+    近年总夏普                 1    merge波动性分布    近1000w块夏普                         
 
 截面特征:
     无
+
+注:
+  1. 交易额里: 只记录会直接创造头寸暴露的操作(比如铸币, 合币就不应该记入), 暴露方向不重要
+  2. 平均持仓: 需要统计周期内多个事件(非均匀)的持仓快照(记录不同token的平均持仓周期), 再按照token金额, 事件时间加权
+  3. 夏普: 无风险=0, 基于事件驱动计算, 准确的夏普计算, 需要用KLL算法完整保留区间分布信息, 对于更长的周期, 我们应该先merge小周期的KLL cache, 注意, 这里不需要做时间加权
