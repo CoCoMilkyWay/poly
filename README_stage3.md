@@ -243,3 +243,47 @@ struct UserQueryCache {
 | resp.positions[].qty  | i64    | 是       | 持仓数量（`1e6=1 token`，可负）        |
 | resp.positions[].cost | i64    | 是       | 成本基础（`1e6=$1`，可负）             |
 | resp.positions[].lp   | i64    | 是       | 最近成交价（`1e6=$1`）                 |
+
+## 建立动态高玩池(特征工程)
+
+10w blk ~ 2.3day ~ 日线
+100w blk ~ 23day ~ 月线
+1000w blk ~ 230day ~年线
+
+特征张量: User * Time(per 10w blk) * Feature
+
+行业(N): 
+Crypto_Price
+Crypto_Market
+Sports_Basketball
+Sports_Football
+Sports_Soccer
+Sports_Individual
+Politics_US
+Politics_World
+Economy_Finance
+Tech
+Entertainment
+Weather
+Society
+Unknown
+
+时序特征(名称,数量,描述):
+    近期行业平均持仓token数  N   近10w块移动平均持仓token数(分行业)   
+    近月行业平均持仓token数  N   近100w块移动平均持仓token数(分行业)  
+    近年行业平均持仓token数  N   近1000w块移动平均持仓token数(分行业) 
+    近期行业平均持仓暴露额   N   近10w块移动平均持仓暴露额(分行业)   
+    近月行业平均持仓暴露额   N   近100w块移动平均持仓暴露额(分行业)  
+    近年行业平均持仓暴露额   N   近1000w块移动平均持仓暴露额(分行业) 
+    近期行业平均持仓周期     N   近10w块移动平均持仓周期(分行业)   
+    近月行业平均持仓周期     N   近100w块移动平均持仓周期(分行业)  
+    近年行业平均持仓周期     N   近1000w块移动平均持仓周期(分行业) 
+    近期行业平均夏普         N   近10w块移动平均夏普(分行业)   
+    近月行业平均夏普         N   近100w块移动平均夏普(分行业)  
+    近年行业平均夏普         N   近1000w块移动平均夏普(分行业) 
+    近期总夏普               1   近10w块夏普(分行业)   
+    近月总夏普               1   近100w块夏普(分行业)  
+    近年总夏普               1   近1000w块夏普(分行业) 
+
+截面特征:
+    无
