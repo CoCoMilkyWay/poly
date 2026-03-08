@@ -59,11 +59,12 @@ Database::Database(const std::string &path) : db_path_(path) {
   data_dir_ = parent.empty() ? "." : parent.string();
   fs::create_directories(data_dir_);
   duckdb::DBConfig config;
-  // Disable auto checkpoint; we checkpoint manually after each chunk.
-  config.SetOption("checkpoint_threshold", duckdb::Value("10GB"));
-  config.SetOption("wal_autocheckpoint", duckdb::Value("10GB"));
   // 限制单个DuckDB实例内存，避免多实例合计占用过多
-  config.SetOption("memory_limit", duckdb::Value("16GB"));
+  config.SetOption("memory_limit", duckdb::Value("64GB"));
+  // 启用 spill to disk，避免大查询 OOM
+  std::string temp_dir = data_dir_ + "/duckdb_tmp";
+  fs::create_directories(temp_dir);
+  config.SetOption("temp_directory", duckdb::Value(temp_dir));
   db_ = std::make_unique<duckdb::DuckDB>(path, &config);
   read_conn_ = std::make_unique<duckdb::Connection>(*db_);
   write_conn_ = std::make_unique<duckdb::Connection>(*db_);
