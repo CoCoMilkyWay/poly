@@ -107,6 +107,12 @@ void EventBuilder::init_schema() {
     )
   )");
 
+  // Stage3 查询按 sort_key 排序，需要此索引避免全表扫描
+  stage2_db_.execute(R"(
+    CREATE INDEX IF NOT EXISTS idx_user_event_sort
+    ON user_event(sort_key, user_addr, cond_idx, event_type, token_idx)
+  )");
+
   auto conn = stage2_db_.create_connection();
   auto assert_table_columns = [&](const char *table_name, std::initializer_list<const char *> expected_cols) {
     auto cols = conn->Query("PRAGMA table_info(" + std::string(table_name) + ")");

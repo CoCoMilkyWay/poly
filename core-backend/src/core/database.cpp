@@ -62,6 +62,8 @@ Database::Database(const std::string &path) : db_path_(path) {
   // Disable auto checkpoint; we checkpoint manually after each chunk.
   config.SetOption("checkpoint_threshold", duckdb::Value("10GB"));
   config.SetOption("wal_autocheckpoint", duckdb::Value("10GB"));
+  // 限制单个DuckDB实例内存，避免多实例合计占用过多
+  config.SetOption("memory_limit", duckdb::Value("16GB"));
   db_ = std::make_unique<duckdb::DuckDB>(path, &config);
   read_conn_ = std::make_unique<duckdb::Connection>(*db_);
   write_conn_ = std::make_unique<duckdb::Connection>(*db_);

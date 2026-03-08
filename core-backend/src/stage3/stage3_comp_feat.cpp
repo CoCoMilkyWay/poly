@@ -4,6 +4,7 @@
 #include <cassert>
 #include <cmath>
 #include <cstdlib>
+#include <limits>
 #include <vector>
 
 namespace stage3::feature_comp {
@@ -68,7 +69,7 @@ int64_t calc_volume_1e6(stage2::EventType ty, int64_t amount, int64_t price_1e6)
   return round_i64(qty * px);
 }
 
-void adjust_tail_window(AggRuntime &agg,
+void update_tail_window(BucketAggState &agg,
                         int64_t block_bucket,
                         int64_t current_block,
                         int64_t current_exposure,
@@ -111,8 +112,19 @@ void adjust_tail_window(AggRuntime &agg,
   agg.has_tail = true;
 }
 
-void apply_event_delta(AggRuntime &agg, double realized_delta, int64_t volume, int64_t sort_key) {
+void accumulate_event_delta(BucketAggState &agg, double realized_delta, int64_t volume, int64_t sort_key) {
   agg.realized_sum += round_i64(realized_delta);
+  {
+    const long double sq = static_cast<long double>(realized_delta) * static_cast<long double>(realized_delta);
+    const long double max_i64 = static_cast<long double>(std::numeric_limits<int64_t>::max());
+    const int64_t sq_i64 = (sq >= max_i64) ? std::numeric_limits<int64_t>::max()
+                                           : static_cast<int64_t>(std::llround(sq));
+    if (sq_i64 > 0 && agg.realized_sq_sum > std::numeric_limits<int64_t>::max() - sq_i64) {
+      agg.realized_sq_sum = std::numeric_limits<int64_t>::max();
+    } else {
+      agg.realized_sq_sum += sq_i64;
+    }
+  }
   static thread_local std::vector<float> kll_one(1, 0.0f);
   kll_one[0] = static_cast<float>(realized_delta);
   agg.realized_kll.addBatch(kll_one);

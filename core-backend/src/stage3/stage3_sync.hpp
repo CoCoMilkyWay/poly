@@ -210,7 +210,7 @@ private:
     }
   };
 
-  using AggRuntime = feature_comp::AggRuntime;
+  using BucketAggState = feature_comp::BucketAggState;
 
   EventBuilder &builder_;
   Database &stage0_db_;
@@ -259,15 +259,11 @@ private:
   static constexpr const char *kSqlTableTokenState = "token_state";
   static constexpr const char *kSqlTableUserSummaryState = "user_summary_state";
   static constexpr const char *kSqlTableEventFact = "event_fact";
-  static constexpr const char *kSqlTableBlockAggState = "block_agg_state";
   static constexpr const char *kSqlTableFeatureTensorState = "feature_tensor_state";
 
-  // SQL identifiers (indexes)
-  static constexpr const char *kSqlIndexEventFactUserSk = "idx_stage3_event_fact_user_sk";
+  // SQL identifiers (indexes) - 仅保留非PK前缀的有用索引
   static constexpr const char *kSqlIndexEventFactUserTagSk = "idx_stage3_event_fact_user_tag_sk";
   static constexpr const char *kSqlIndexUserSummaryEvents = "idx_stage3_user_summary_events";
-  static constexpr const char *kSqlIndexTokenStateUser = "idx_stage3_token_state_user";
-  static constexpr const char *kSqlIndexBlockAggStateUserBucket = "idx_stage3_block_agg_state_user_bucket";
   static constexpr const char *kSqlIndexFeatureTensorBucketTagUser = "idx_stage3_feature_tensor_bucket_tag_user";
 
   // Normalization / key conversion helpers
@@ -292,7 +288,7 @@ private:
   static int64_t calc_volume_1e6(const EventInput &row);
 
   // Aggregation update helper
-  static void adjust_tail_window(AggRuntime &agg,
+  static void update_tail_window(BucketAggState &agg,
                                  int64_t block_bucket,
                                  int64_t current_block,
                                  int64_t current_exposure,

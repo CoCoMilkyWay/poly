@@ -91,7 +91,6 @@ void StageSync::init_schema() const {
   const std::string table_token_state = kSqlTableTokenState;
   const std::string table_user_summary = kSqlTableUserSummaryState;
   const std::string table_event_fact = kSqlTableEventFact;
-  const std::string table_block_agg = kSqlTableBlockAggState;
   const std::string table_feature_tensor = kSqlTableFeatureTensorState;
 
   stage3_db_.execute("CREATE TABLE IF NOT EXISTS " + table_sync_cursor + R"( (
@@ -141,26 +140,15 @@ void StageSync::init_schema() const {
         PRIMARY KEY (user_addr, sort_key, cond_idx, event_type, token_idx)
       )
     )");
-  stage3_db_.execute("CREATE TABLE IF NOT EXISTS " + table_block_agg + R"( (
-        user_addr BLOB NOT NULL,
-        block_bucket BIGINT NOT NULL,
-        tag_id INTEGER NOT NULL,
-        realized_sum BIGINT NOT NULL,
-        realized_kll BLOB,
-        event_count BIGINT NOT NULL,
-        exposure_tw_sum BIGINT NOT NULL,
-        volume_sum BIGINT NOT NULL,
-        holding_period_tw_sum BIGINT NOT NULL,
-        token_count_tw_sum BIGINT NOT NULL,
-        time_weight_sum BIGINT NOT NULL,
-        last_sort_key BIGINT NOT NULL,
-        PRIMARY KEY (user_addr, block_bucket, tag_id)
-      )
-    )");
   stage3_db_.execute("CREATE TABLE IF NOT EXISTS " + table_feature_tensor + R"( (
         user_addr BLOB NOT NULL,
         block_bucket BIGINT NOT NULL,
         tag_id INTEGER NOT NULL,
+        last_sort_key_10w BIGINT NOT NULL DEFAULT 0,
+        last_block_10w BIGINT NOT NULL DEFAULT 0,
+        last_exposure_10w BIGINT NOT NULL DEFAULT 0,
+        last_holding_period_10w BIGINT NOT NULL DEFAULT 0,
+        last_token_count_10w BIGINT NOT NULL DEFAULT 0,
         time_weight_sum_10w BIGINT NOT NULL DEFAULT 0,
         token_count_tw_sum_10w BIGINT NOT NULL DEFAULT 0,
         exposure_tw_sum_10w BIGINT NOT NULL DEFAULT 0,
@@ -196,21 +184,13 @@ void StageSync::init_schema() const {
         PRIMARY KEY (user_addr, block_bucket, tag_id)
       )
     )");
-  stage3_db_.execute(
-      "CREATE INDEX IF NOT EXISTS " + std::string(kSqlIndexEventFactUserSk) +
-      " ON " + table_event_fact + "(user_addr, sort_key)");
+  // 仅创建非PK前缀的有用索引 (PK自带B-tree可覆盖前缀查询)
   stage3_db_.execute(
       "CREATE INDEX IF NOT EXISTS " + std::string(kSqlIndexEventFactUserTagSk) +
       " ON " + table_event_fact + "(user_addr, tag_id, sort_key, cond_idx, event_type, token_idx)");
   stage3_db_.execute(
       "CREATE INDEX IF NOT EXISTS " + std::string(kSqlIndexUserSummaryEvents) +
       " ON " + table_user_summary + "(total_events)");
-  stage3_db_.execute(
-      "CREATE INDEX IF NOT EXISTS " + std::string(kSqlIndexTokenStateUser) +
-      " ON " + table_token_state + "(user_addr)");
-  stage3_db_.execute(
-      "CREATE INDEX IF NOT EXISTS " + std::string(kSqlIndexBlockAggStateUserBucket) +
-      " ON " + table_block_agg + "(user_addr, block_bucket, tag_id)");
   stage3_db_.execute(
       "CREATE INDEX IF NOT EXISTS " + std::string(kSqlIndexFeatureTensorBucketTagUser) +
       " ON " + table_feature_tensor + "(block_bucket, tag_id, user_addr)");

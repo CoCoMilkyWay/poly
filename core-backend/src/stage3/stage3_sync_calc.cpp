@@ -118,13 +118,13 @@ uint64_t StageSync::pack_cond_token_key(int32_t cond_idx, int32_t token_idx) {
          static_cast<uint32_t>(token_idx);
 }
 
-void StageSync::adjust_tail_window(AggRuntime &agg,
+void StageSync::update_tail_window(BucketAggState &agg,
                                    int64_t block_bucket,
                                    int64_t current_block,
                                    int64_t current_exposure,
                                    int64_t current_holding_period,
                                    int64_t current_token_count) {
-  feature_comp::adjust_tail_window(
+  feature_comp::update_tail_window(
       agg, block_bucket, current_block, current_exposure, current_holding_period, current_token_count, kBlockBucketSize);
 }
 

@@ -449,7 +449,8 @@ Phase3输出结构
 │     └─ price:      i64   (price*1e6, 按价格规则计算; 非可定价场景=0)
 ├─ user_event_row (落库)
 │  ├─ cond_idx_i32: int32 (unknown写-1)
-│  └─ PK: (user_addr, sort_key, cond_idx_i32, event_type, token_idx)
+│  ├─ PK: (user_addr, sort_key, cond_idx_i32, event_type, token_idx)
+│  └─ IDX: idx_user_event_sort(sort_key, user_addr, cond_idx, event_type, token_idx)  // Stage3查询优化
 └─ xfer_stats_delta + event_by_collateral_delta (提交时写入 stage2_cursor 快照)
    ├─ TransferStats: user/internal/unclassified 与 33类固定节点计数
    └─ event_by_collateral: (EventType, Collateral) 维度增量

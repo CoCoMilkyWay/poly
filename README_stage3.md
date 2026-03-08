@@ -100,7 +100,7 @@ stage3_sync_tick
 │  │                         tag_id, exposure, volume, holding_period)
 │  └─ 3.8 统一特征图更新 (按 bucket 增量)
 │     ├─ 将事件映射为 (user_addr, tag_id, block_bucket) dirty key
-│     ├─ 更新该 bucket 的 10w 原子统计节点
+│     ├─ 更新该 bucket 的 Node-A0 续算锚点 + Node-A 原子统计节点
 │     ├─ 依赖前序 bucket 前缀节点, 计算 100w/1000w 窗口节点
 │     └─ 产出并覆盖 feature_tensor_state 对应行
 ├─ 4) 批次收尾校验
@@ -111,7 +111,7 @@ stage3_sync_tick
 │  ├─ upsert token_state(dirty_token_keys)
 │  ├─ upsert user_summary_state(dirty_users)
 │  ├─ insert event_fact(fact_rows)
-│  ├─ upsert feature_tensor_state(dirty_user_bucket_tag)
+│  ├─ upsert feature_tensor_state(dirty_user_bucket_tag, 含 Node-A0/A/B/C/D)
 │  └─ update sync_cursor_state(...)
 └─ 6) 查询路径(只读)
    ├─ users_sorted(limit)                 -> user_summary_state(用户列表)
@@ -124,17 +124,17 @@ stage3_sync_tick
 
 符号: `E=事件总数`, `U=有事件用户数`, `T=活跃token数(user,cond,token_idx)`
 
-| 数据结构                                      | 层级/实例数       | 主要用途                           | Persist      |
-| --------------------------------------------- | ----------------- | ---------------------------------- | ------------ |
-| `EventInput`                                  | 输入流 / `E`      | 回放状态机输入                     | 否（临时）   |
-| `ConditionMeta`                               | 只读缓存 / `C`    | `outcome_count` 与 `tag_id` 元信息 | 否（可重载） |
-| `TokenState` (`token_state`)                  | Token级 / `T`     | 当前持仓 `pos/cost/lp/entry_block` | 是           |
-| `EventFact` (`event_fact`)                    | Token级 / `E`     | 事件事实、timeline、特征原料       | 是           |
-| `UserSummaryState` (`user_summary_state`)     | User级 / `U`      | 用户总览查询加速                   | 是           |
-| `FeatureTensorState` (`feature_tensor_state`) | User*Bucket*Tag级 | 统一特征张量（含原子/窗口/缓存）   | 是           |
-| `FeatureGraphRuntime`                         | 进程内 / dirty集  | 计算图执行缓存（ring/prefix/KLL）  | 否（内存）   |
-| `SyncCursorState` (`sync_cursor_state`)       | 全局 / `1`        | 增量同步断点                       | 是           |
-| `UserQueryCache`                              | 进程内 / `<=U`    | 查询缓存（timeline/snapshot）      | 否（内存）   |
+| 数据结构                                      | 层级/实例数       | 主要用途                                          | Persist      |
+| --------------------------------------------- | ----------------- | ------------------------------------------------- | ------------ |
+| `EventInput`                                  | 输入流 / `E`      | 回放状态机输入                                    | 否（临时）   |
+| `ConditionMeta`                               | 只读缓存 / `C`    | `outcome_count` 与 `tag_id` 元信息                | 否（可重载） |
+| `TokenState` (`token_state`)                  | Token级 / `T`     | 当前持仓 `pos/cost/lp/entry_block`                | 是           |
+| `EventFact` (`event_fact`)                    | Token级 / `E`     | 事件事实、timeline、特征原料                      | 是           |
+| `UserSummaryState` (`user_summary_state`)     | User级 / `U`      | 用户总览查询加速                                  | 是           |
+| `FeatureTensorState` (`feature_tensor_state`) | User*Bucket*Tag级 | 统一特征张量（含原子/窗口/前缀缓存/增量续算锚点） | 是           |
+| `FeatureGraphRuntime`                         | 进程内 / dirty集  | 计算图执行缓存（ring/prefix/KLL）                 | 否（内存）   |
+| `SyncCursorState` (`sync_cursor_state`)       | 全局 / `1`        | 增量同步断点                                      | 是           |
+| `UserQueryCache`                              | 进程内 / `<=U`    | 查询缓存（timeline/snapshot）                     | 否（内存）   |
 
 ```text
 // Stage3 内部统一输入结构 (用于回放/状态机)
@@ -199,6 +199,14 @@ struct FeatureTensorState {
   Address20 user_addr;
   int64  block_bucket;
   int32  tag_id;
+
+  // Node-A0: 增量续算锚点
+  // 跨 chunk / 重启后继续做 tail 修正, 无需回扫 event_fact
+  int64  last_sort_key_10w;
+  int64  last_block_10w;
+  int64  last_exposure_10w;
+  int64  last_holding_period_10w;
+  int64  last_token_count_10w;
 
   // Node-A: 10w 原子统计（事件增量累加）
   int64  time_weight_sum_10w;

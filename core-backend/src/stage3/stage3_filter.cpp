@@ -1,5 +1,6 @@
 #include "stage3_sync.hpp"
 
+#include <algorithm>
 #include <cassert>
 #include <cctype>
 #include <functional>
@@ -331,14 +332,33 @@ filter::Result StageSync::filter_users_by_features(const filter::Request &req) c
     where_parts.push_back(translator.translate(filter_expr));
   }
 
+  std::vector<int32_t> used_tag_ids;
+  used_tag_ids.reserve(bindings.size());
+  for (const auto &binding : bindings) {
+    used_tag_ids.push_back(binding.tag_id);
+  }
+  std::sort(used_tag_ids.begin(), used_tag_ids.end());
+  used_tag_ids.erase(std::unique(used_tag_ids.begin(), used_tag_ids.end()), used_tag_ids.end());
+
   std::string sql = "WITH user_features AS (SELECT user_addr";
   for (const auto &binding : bindings) {
     sql += ", MAX(CASE WHEN tag_id = " + std::to_string(binding.tag_id) +
            " THEN " + binding.column + " END) AS " + binding.alias;
   }
   sql += " FROM " + std::string(kSqlTableFeatureTensorState) +
-         " WHERE block_bucket = " + std::to_string(anchor_bucket) +
-         " GROUP BY user_addr)";
+         " WHERE block_bucket = " + std::to_string(anchor_bucket);
+  if (!used_tag_ids.empty()) {
+    sql += " AND tag_id IN (";
+    for (size_t i = 0; i < used_tag_ids.size(); ++i) {
+      if (i > 0) {
+        sql += ",";
+      }
+      sql += std::to_string(used_tag_ids[i]);
+    }
+    sql += ")";
+  }
+  sql +=
+      " GROUP BY user_addr)";
   sql += " SELECT lower(hex(user_addr)) AS addr, CAST((" + sort_sql +
          ") AS DOUBLE) AS sort_value FROM user_features";
   if (!where_parts.empty()) {
