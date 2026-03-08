@@ -1,0 +1,515 @@
+<style>
+    .s3f-card {
+        background: #1a1a1a;
+        border-radius: 10px;
+        padding: 15px;
+        border: 1px solid #333;
+        margin-bottom: 15px;
+    }
+
+    .s3f-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #333;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .s3f-header h2 {
+        font-size: 1.05em;
+        color: #fff;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .s3f-header h2::before {
+        content: "";
+        width: 3px;
+        height: 16px;
+        background: #0ea5e9;
+        border-radius: 2px;
+    }
+
+    .s3f-sub {
+        color: #888;
+        font-size: 0.8em;
+    }
+
+    .s3f-row {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-bottom: 10px;
+    }
+
+    .s3f-label {
+        color: #888;
+        font-size: 0.8em;
+        min-width: 76px;
+    }
+
+    .s3f-select {
+        background: #252525;
+        color: #fff;
+        border: 1px solid #333;
+        border-radius: 4px;
+        font-family: monospace;
+        font-size: 0.84em;
+        padding: 6px 8px;
+    }
+
+    .s3f-input-num {
+        background: #252525;
+        color: #fff;
+        border: 1px solid #333;
+        border-radius: 4px;
+        font-family: monospace;
+        font-size: 0.84em;
+        padding: 6px 8px;
+        width: 100px;
+    }
+
+    .s3f-select:focus,
+    .s3f-input-num:focus {
+        outline: none;
+        border-color: #0ea5e9;
+    }
+
+    .s3f-btn {
+        padding: 6px 12px;
+        font-size: 0.84em;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        background: #0369a1;
+    }
+
+    .s3f-btn:hover {
+        background: #0284c7;
+    }
+
+    .s3f-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .s3f-btn-small {
+        padding: 4px 8px;
+        font-size: 0.78em;
+        background: #334155;
+    }
+
+    .s3f-btn-small:hover {
+        background: #475569;
+    }
+
+    .s3f-btn-add {
+        background: #065f46;
+    }
+
+    .s3f-btn-add:hover {
+        background: #047857;
+    }
+
+    .s3f-btn-del {
+        background: #7f1d1d;
+    }
+
+    .s3f-btn-del:hover {
+        background: #991b1b;
+    }
+
+    .s3f-filters-box {
+        border: 1px solid #333;
+        border-radius: 6px;
+        padding: 10px;
+        background: #151515;
+        margin-bottom: 10px;
+    }
+
+    .s3f-filter-row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-bottom: 8px;
+    }
+
+    .s3f-filter-row:last-child {
+        margin-bottom: 0;
+    }
+
+    .s3f-result-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 10px;
+        margin-bottom: 8px;
+        color: #aaa;
+        font-size: 0.82em;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .s3f-table-wrap {
+        border: 1px solid #333;
+        border-radius: 6px;
+        overflow: auto;
+        max-height: 360px;
+        background: #151515;
+    }
+
+    .s3f-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.83em;
+    }
+
+    .s3f-table th,
+    .s3f-table td {
+        padding: 8px 10px;
+        border-bottom: 1px solid #2a2a2a;
+        white-space: nowrap;
+        text-align: left;
+    }
+
+    .s3f-table th {
+        color: #999;
+        font-weight: 500;
+        position: sticky;
+        top: 0;
+        background: #1f1f1f;
+        z-index: 1;
+    }
+
+    .s3f-addr-btn {
+        border: none;
+        background: transparent;
+        color: #60a5fa;
+        font-family: monospace;
+        cursor: pointer;
+        padding: 0;
+    }
+
+    .s3f-addr-btn:hover {
+        color: #93c5fd;
+        text-decoration: underline;
+    }
+
+    .s3f-empty {
+        padding: 12px;
+        color: #777;
+        font-size: 0.84em;
+    }
+
+    .s3f-section-title {
+        color: #666;
+        font-size: 0.78em;
+        margin-bottom: 6px;
+    }
+</style>
+
+<div class="s3f-card">
+    <div class="s3f-header">
+        <h2>Stage3 截面过滤器</h2>
+        <span class="s3f-sub">输出过滤后的 Top100 用户地址</span>
+    </div>
+
+    <div class="s3f-section-title">过滤条件（AND 关系）</div>
+    <div id="s3f-filters-box" class="s3f-filters-box">
+        <div class="s3f-filter-row" data-idx="0">
+            <select class="s3f-select s3f-industry">
+                <option value="Crypto_Price">Crypto_Price</option>
+                <option value="Crypto_Market">Crypto_Market</option>
+                <option value="Sports_Basketball">Sports_Basketball</option>
+                <option value="Sports_Football">Sports_Football</option>
+                <option value="Sports_Soccer">Sports_Soccer</option>
+                <option value="Sports_Individual">Sports_Individual</option>
+                <option value="Politics_US">Politics_US</option>
+                <option value="Politics_World">Politics_World</option>
+                <option value="Economy_Finance">Economy_Finance</option>
+                <option value="Tech">Tech</option>
+                <option value="Entertainment">Entertainment</option>
+                <option value="Weather">Weather</option>
+                <option value="Society">Society</option>
+                <option value="Unknown">Unknown</option>
+                <option value="ALL">ALL (全部)</option>
+            </select>
+            <select class="s3f-select s3f-feature">
+                <option value="exp">暴露额 exp</option>
+                <option value="tok">持仓数 tok</option>
+                <option value="vol">交易额 vol</option>
+                <option value="hp">持仓周期 hp</option>
+                <option value="shp">夏普 shp</option>
+            </select>
+            <select class="s3f-select s3f-window">
+                <option value="100">月线 100</option>
+                <option value="10">日线 10</option>
+                <option value="1k">年线 1k</option>
+            </select>
+            <select class="s3f-select s3f-op">
+                <option value=">">&gt;</option>
+                <option value=">=">&gt;=</option>
+                <option value="<">&lt;</option>
+                <option value="<=">&lt;=</option>
+            </select>
+            <input type="number" class="s3f-input-num s3f-value" value="0" step="any" />
+            <button class="s3f-btn s3f-btn-small s3f-btn-del" onclick="s3fRemoveFilter(this)">删除</button>
+        </div>
+    </div>
+    <button class="s3f-btn s3f-btn-small s3f-btn-add" onclick="s3fAddFilter()">+ 添加条件</button>
+
+    <div class="s3f-section-title" style="margin-top:12px">排序条件</div>
+    <div class="s3f-row">
+        <select id="s3f-sort-industry" class="s3f-select">
+            <option value="ALL">ALL (全部)</option>
+            <option value="Crypto_Price">Crypto_Price</option>
+            <option value="Crypto_Market">Crypto_Market</option>
+            <option value="Sports_Basketball">Sports_Basketball</option>
+            <option value="Sports_Football">Sports_Football</option>
+            <option value="Sports_Soccer">Sports_Soccer</option>
+            <option value="Sports_Individual">Sports_Individual</option>
+            <option value="Politics_US">Politics_US</option>
+            <option value="Politics_World">Politics_World</option>
+            <option value="Economy_Finance">Economy_Finance</option>
+            <option value="Tech">Tech</option>
+            <option value="Entertainment">Entertainment</option>
+            <option value="Weather">Weather</option>
+            <option value="Society">Society</option>
+            <option value="Unknown">Unknown</option>
+        </select>
+        <select id="s3f-sort-feature" class="s3f-select">
+            <option value="shp">夏普 shp</option>
+            <option value="exp">暴露额 exp</option>
+            <option value="tok">持仓数 tok</option>
+            <option value="vol">交易额 vol</option>
+            <option value="hp">持仓周期 hp</option>
+        </select>
+        <select id="s3f-sort-window" class="s3f-select">
+            <option value="1k">年线 1k</option>
+            <option value="100">月线 100</option>
+            <option value="10">日线 10</option>
+        </select>
+        <select id="s3f-sort-dir" class="s3f-select">
+            <option value="desc">DESC ↓</option>
+            <option value="asc">ASC ↑</option>
+        </select>
+        <button id="s3f-run-btn" class="s3f-btn" onclick="s3fRunFilter()">执行过滤</button>
+    </div>
+
+    <div class="s3f-result-head">
+        <span id="s3f-summary">尚未执行</span>
+        <span id="s3f-error" style="color:#ef4444"></span>
+    </div>
+
+    <div class="s3f-table-wrap">
+        <table class="s3f-table">
+            <thead>
+                <tr>
+                    <th style="width:72px">#</th>
+                    <th>Address</th>
+                    <th>SortValue</th>
+                    <th style="width:86px">动作</th>
+                </tr>
+            </thead>
+            <tbody id="s3f-body">
+                <tr>
+                    <td colspan="4" class="s3f-empty">等待执行过滤</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    let _s3fReqSeq = 0;
+    let _s3fMaxBucket = -1;
+
+    async function s3fInit() {
+        try {
+            const resp = await fetch('/api/stage3-status');
+            const data = await resp.json();
+            _s3fMaxBucket = data.max_bucket;
+        } catch (e) {
+            console.error('s3fInit error:', e);
+        }
+    }
+
+    function s3fMakeFilterRowHtml() {
+        return `
+            <select class="s3f-select s3f-industry">
+                <option value="Crypto_Price">Crypto_Price</option>
+                <option value="Crypto_Market">Crypto_Market</option>
+                <option value="Sports_Basketball">Sports_Basketball</option>
+                <option value="Sports_Football">Sports_Football</option>
+                <option value="Sports_Soccer">Sports_Soccer</option>
+                <option value="Sports_Individual">Sports_Individual</option>
+                <option value="Politics_US">Politics_US</option>
+                <option value="Politics_World">Politics_World</option>
+                <option value="Economy_Finance">Economy_Finance</option>
+                <option value="Tech">Tech</option>
+                <option value="Entertainment">Entertainment</option>
+                <option value="Weather">Weather</option>
+                <option value="Society">Society</option>
+                <option value="Unknown">Unknown</option>
+                <option value="ALL">ALL (全部)</option>
+            </select>
+            <select class="s3f-select s3f-feature">
+                <option value="exp">暴露额 exp</option>
+                <option value="tok">持仓数 tok</option>
+                <option value="vol">交易额 vol</option>
+                <option value="hp">持仓周期 hp</option>
+                <option value="shp">夏普 shp</option>
+            </select>
+            <select class="s3f-select s3f-window">
+                <option value="100">月线 100</option>
+                <option value="10">日线 10</option>
+                <option value="1k">年线 1k</option>
+            </select>
+            <select class="s3f-select s3f-op">
+                <option value=">">&gt;</option>
+                <option value=">=">&gt;=</option>
+                <option value="<">&lt;</option>
+                <option value="<=">&lt;=</option>
+            </select>
+            <input type="number" class="s3f-input-num s3f-value" value="0" step="any" />
+            <button class="s3f-btn s3f-btn-small s3f-btn-del" onclick="s3fRemoveFilter(this)">删除</button>
+        `;
+    }
+
+    function s3fAddFilter() {
+        const box = document.getElementById('s3f-filters-box');
+        const row = document.createElement('div');
+        row.className = 's3f-filter-row';
+        row.innerHTML = s3fMakeFilterRowHtml();
+        box.appendChild(row);
+    }
+
+    function s3fRemoveFilter(btn) {
+        const row = btn.closest('.s3f-filter-row');
+        const box = document.getElementById('s3f-filters-box');
+        if (box.querySelectorAll('.s3f-filter-row').length > 1) {
+            row.remove();
+        }
+    }
+
+    function s3fBuildExpr(industry, feature, window) {
+        return `${industry}.${feature}${window}`;
+    }
+
+    function s3fBuildPayload() {
+        assert(_s3fMaxBucket >= 0, 'bucket 未初始化，请稍后重试');
+
+        const filters = [];
+        const rows = document.querySelectorAll('#s3f-filters-box .s3f-filter-row');
+        for (const row of rows) {
+            const industry = row.querySelector('.s3f-industry').value;
+            const feature = row.querySelector('.s3f-feature').value;
+            const window = row.querySelector('.s3f-window').value;
+            const op = row.querySelector('.s3f-op').value;
+            const value = row.querySelector('.s3f-value').value.trim();
+            if (value === '') continue;
+            const expr = `${s3fBuildExpr(industry, feature, window)} ${op} ${value}`;
+            filters.push(expr);
+        }
+
+        const sortIndustry = document.getElementById('s3f-sort-industry').value;
+        const sortFeature = document.getElementById('s3f-sort-feature').value;
+        const sortWindow = document.getElementById('s3f-sort-window').value;
+        const sortDir = document.getElementById('s3f-sort-dir').value;
+        const sortExpr = s3fBuildExpr(sortIndustry, sortFeature, sortWindow);
+
+        return {
+            anchor_bucket: _s3fMaxBucket,
+            filters,
+            sort_expr: sortExpr,
+            sort_asc: sortDir === 'asc',
+            limit: 100,
+        };
+    }
+
+    function s3fRenderRows(users) {
+        const body = document.getElementById('s3f-body');
+        if (!users.length) {
+            body.innerHTML = '<tr><td colspan="4" class="s3f-empty">没有匹配结果</td></tr>';
+            return;
+        }
+        body.innerHTML = users.map((u, idx) => `
+      <tr>
+        <td>${idx + 1}</td>
+        <td><button class="s3f-addr-btn" onclick="s3fOpenUser('${String(u.addr || '').replace(/'/g, "\\'")}')">${u.addr || '-'}</button></td>
+        <td>${Number(u.sort_value || 0).toFixed(6)}</td>
+        <td><button class="s3f-btn s3f-btn-small" onclick="s3fOpenUser('${String(u.addr || '').replace(/'/g, "\\'")}')">查看</button></td>
+      </tr>
+    `).join('');
+    }
+
+    function s3fOpenUser(addr) {
+        const user = String(addr || '').trim();
+        if (!user) return;
+        const input = document.getElementById('s3-user-input');
+        if (input) {
+            input.value = user;
+        }
+        if (typeof s3LoadUser === 'function') {
+            s3LoadUser();
+        }
+    }
+
+    async function s3fRunFilter() {
+        const runBtn = document.getElementById('s3f-run-btn');
+        const summary = document.getElementById('s3f-summary');
+        const errorEl = document.getElementById('s3f-error');
+        const reqSeq = ++_s3fReqSeq;
+
+        errorEl.textContent = '';
+        let payload;
+        try {
+            payload = s3fBuildPayload();
+        } catch (e) {
+            errorEl.textContent = e.message || String(e);
+            return;
+        }
+
+        runBtn.disabled = true;
+        runBtn.textContent = '过滤中...';
+
+        try {
+            const resp = await fetch('/api/stage3-filter', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+            const data = await resp.json();
+            if (reqSeq !== _s3fReqSeq) return;
+            if (!resp.ok) {
+                throw new Error(data.error || '请求失败');
+            }
+            const users = Array.isArray(data.users) ? data.users : [];
+            s3fRenderRows(users);
+            summary.textContent = `bucket=${data.anchor_bucket} | 返回 ${users.length} 地址`;
+        } catch (e) {
+            if (reqSeq !== _s3fReqSeq) return;
+            errorEl.textContent = e.message || String(e);
+        } finally {
+            if (reqSeq === _s3fReqSeq) {
+                runBtn.disabled = false;
+                runBtn.textContent = '执行过滤';
+            }
+        }
+    }
+
+    function assert(cond, msg) {
+        if (!cond) throw new Error(msg || 'Assertion failed');
+    }
+
+    // 页面加载时初始化
+    s3fInit();
+</script>

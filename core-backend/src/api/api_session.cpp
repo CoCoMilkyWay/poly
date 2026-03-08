@@ -174,6 +174,7 @@ json to_stage3_status_json(const Stage3Status &status) {
       {"blocks_per_second", status.blocks_per_second},
       {"eta_seconds", status.eta_seconds},
       {"ready", status.behind_blocks == 0},
+      {"max_bucket", status.max_bucket},
   };
 }
 
@@ -263,8 +264,8 @@ void ApiSession::handle_request() {
       handle_stage2_data();
     } else if (target.starts_with("/api/stage3-status")) {
       handle_stage3_status();
-    } else if (target.starts_with("/api/stage3-users")) {
-      handle_stage3_users();
+    } else if (target.starts_with("/api/stage3-filter")) {
+      handle_stage3_filter();
     } else if (target.starts_with("/api/stage3-positions")) {
       handle_stage3_positions();
     } else if (target.starts_with("/api/stage3-pnl")) {
@@ -833,26 +834,83 @@ void ApiSession::handle_stage2_data() {
   res_.body() = result.dump();
 }
 
-void ApiSession::handle_stage3_users() {
-  TraceN("api/s3_users");
+void ApiSession::handle_stage3_filter() {
+  TraceN("api/s3_filter");
   res_.set(http::field::content_type, "application/json");
-
-  std::string limit_str = get_param("limit");
-  int64_t limit = limit_str.empty() ? 200 : std::stoll(limit_str);
-
-  auto users = stage3_.get_users_sorted(limit);
-  json result = json::array();
-  for (const auto &u : users) {
-    result.push_back({
-        {"user", u.addr},
-        {"events", u.event_count},
-        {"rpnl", u.realized_pnl},
-        {"upnl", u.unrealized_pnl},
-    });
+  if (req_.method() != http::verb::post) {
+    res_.result(http::status::bad_request);
+    res_.body() = R"({"error":"POST required"})";
+    return;
   }
 
-  res_.result(http::status::ok);
-  res_.body() = result.dump();
+  const json body = req_.body().empty() ? json::object() : json::parse(req_.body(), nullptr, false);
+  if (body.is_discarded() || !body.is_object()) {
+    res_.result(http::status::bad_request);
+    res_.body() = R"({"error":"Invalid JSON body"})";
+    return;
+  }
+
+  stage3::filter::Request filter_req;
+  if (!body.contains("anchor_bucket") || !body["anchor_bucket"].is_number_integer()) {
+    res_.result(http::status::bad_request);
+    res_.body() = R"({"error":"anchor_bucket is required and must be integer"})";
+    return;
+  }
+  filter_req.anchor_bucket = body["anchor_bucket"].get<int64_t>();
+
+  if (!body.contains("limit") || !body["limit"].is_number_integer()) {
+    res_.result(http::status::bad_request);
+    res_.body() = R"({"error":"limit is required and must be integer"})";
+    return;
+  }
+  filter_req.limit = body["limit"].get<int32_t>();
+
+  if (!body.contains("sort_asc") || !body["sort_asc"].is_boolean()) {
+    res_.result(http::status::bad_request);
+    res_.body() = R"({"error":"sort_asc is required and must be boolean"})";
+    return;
+  }
+  filter_req.sort_asc = body["sort_asc"].get<bool>();
+  if (!body.contains("sort_expr") || !body["sort_expr"].is_string()) {
+    res_.result(http::status::bad_request);
+    res_.body() = R"({"error":"sort_expr is required"})";
+    return;
+  }
+  filter_req.sort_expr = body["sort_expr"].get<std::string>();
+
+  if (body.contains("filters") && !body["filters"].is_null()) {
+    if (!body["filters"].is_array()) {
+      res_.result(http::status::bad_request);
+      res_.body() = R"({"error":"filters must be string array"})";
+      return;
+    }
+    for (const auto &it : body["filters"]) {
+      if (!it.is_string()) {
+        res_.result(http::status::bad_request);
+        res_.body() = R"({"error":"filters must be string array"})";
+        return;
+      }
+      filter_req.filters.push_back(it.get<std::string>());
+    }
+  }
+
+  try {
+    stage3::filter::Result filter_result = stage3_.filter_users_by_features(filter_req);
+    json users = json::array();
+    for (const auto &u : filter_result.users) {
+      users.push_back({
+          {"addr", u.addr},
+          {"sort_value", u.sort_value},
+      });
+    }
+    write_ok_json_response(res_, {
+                                     {"anchor_bucket", filter_result.anchor_bucket},
+                                     {"users", users},
+                                 });
+  } catch (const std::invalid_argument &e) {
+    res_.result(http::status::bad_request);
+    res_.body() = json{{"error", e.what()}}.dump();
+  }
 }
 
 void ApiSession::handle_stage3_pnl() {

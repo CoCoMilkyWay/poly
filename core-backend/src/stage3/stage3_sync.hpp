@@ -5,10 +5,12 @@
 #include "../stage2/stage2_models.hpp"
 #include "../stage2/stage2_types.hpp"
 #include "stage3_comp_feat.hpp"
+#include "stage3_filter.hpp"
 
 #include <atomic>
 #include <boost/asio.hpp>
 #include <chrono>
+#include <cstdint>
 #include <deque>
 #include <limits>
 #include <memory>
@@ -120,11 +122,13 @@ public:
   void stop();
 
   Status status() const;
+  int64_t get_max_bucket() const;
   Stage2Data stage2_data() const;
 
   std::vector<UserSummaryRow> get_users_sorted(int64_t limit = 200) const;
   std::vector<TimelineRow> get_user_timeline(const std::string &addr) const;
   std::vector<PositionRow> get_positions_at(const std::string &addr, int64_t sort_key) const;
+  filter::Result filter_users_by_features(const filter::Request &req) const;
 
 private:
   struct SyncCursorState {
@@ -137,7 +141,7 @@ private:
   };
 
   struct EventInput {
-    std::string user_hex;
+    uint32_t user_id = 0;
     int64_t sort_key = 0;
     int32_t cond_idx = 0;
     int32_t event_type = 0;
@@ -148,7 +152,7 @@ private:
   };
 
   struct EventFact {
-    std::string user_hex;
+    uint32_t user_id = 0;
     int64_t sort_key = 0;
     int32_t cond_idx = 0;
     int32_t token_idx = 0;
@@ -171,17 +175,17 @@ private:
   };
 
   struct TokenKey {
-    std::string user_hex;
+    uint32_t user_id = 0;
     int32_t cond_idx = 0;
     int32_t token_idx = 0;
     bool operator==(const TokenKey &o) const {
-      return cond_idx == o.cond_idx && token_idx == o.token_idx && user_hex == o.user_hex;
+      return cond_idx == o.cond_idx && token_idx == o.token_idx && user_id == o.user_id;
     }
   };
 
   struct TokenKeyHash {
     size_t operator()(const TokenKey &k) const {
-      size_t h = std::hash<std::string>()(k.user_hex);
+      size_t h = std::hash<uint32_t>()(k.user_id);
       h ^= std::hash<int32_t>()(k.cond_idx) + 0x9e3779b97f4a7c15ULL + (h << 6) + (h >> 2);
       h ^= std::hash<int32_t>()(k.token_idx) + 0x9e3779b97f4a7c15ULL + (h << 6) + (h >> 2);
       return h;
@@ -189,17 +193,17 @@ private:
   };
 
   struct AggKey {
-    std::string user_hex;
+    uint32_t user_id = 0;
     int64_t block_bucket = 0;
     int8_t tag_id = 13;
     bool operator==(const AggKey &o) const {
-      return block_bucket == o.block_bucket && tag_id == o.tag_id && user_hex == o.user_hex;
+      return block_bucket == o.block_bucket && tag_id == o.tag_id && user_id == o.user_id;
     }
   };
 
   struct AggKeyHash {
     size_t operator()(const AggKey &k) const {
-      size_t h = std::hash<std::string>()(k.user_hex);
+      size_t h = std::hash<uint32_t>()(k.user_id);
       h ^= std::hash<int64_t>()(k.block_bucket) + 0x9e3779b97f4a7c15ULL + (h << 6) + (h >> 2);
       h ^= std::hash<int8_t>()(k.tag_id) + 0x9e3779b97f4a7c15ULL + (h << 6) + (h >> 2);
       return h;
@@ -243,7 +247,7 @@ private:
   mutable UserQueryCache user_cache_;
 
   // Execution config
-  static constexpr int64_t kStage3BatchEvents = 5000000;
+  static constexpr int64_t kStage3BatchEvents = 500000;
   static constexpr int64_t kBlockBucketSize = 100000;
   static constexpr double kPosEpsilon = 1e-9;
   static constexpr int64_t kMinHoldingQty = 10LL * 1000000LL;
@@ -256,6 +260,7 @@ private:
   static constexpr const char *kSqlTableUserSummaryState = "user_summary_state";
   static constexpr const char *kSqlTableEventFact = "event_fact";
   static constexpr const char *kSqlTableBlockAggState = "block_agg_state";
+  static constexpr const char *kSqlTableFeatureTensorState = "feature_tensor_state";
 
   // SQL identifiers (indexes)
   static constexpr const char *kSqlIndexEventFactUserSk = "idx_stage3_event_fact_user_sk";
@@ -263,6 +268,7 @@ private:
   static constexpr const char *kSqlIndexUserSummaryEvents = "idx_stage3_user_summary_events";
   static constexpr const char *kSqlIndexTokenStateUser = "idx_stage3_token_state_user";
   static constexpr const char *kSqlIndexBlockAggStateUserBucket = "idx_stage3_block_agg_state_user_bucket";
+  static constexpr const char *kSqlIndexFeatureTensorBucketTagUser = "idx_stage3_feature_tensor_bucket_tag_user";
 
   // Normalization / key conversion helpers
   static std::string normalize_addr(const std::string &addr);

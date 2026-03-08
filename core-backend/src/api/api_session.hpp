@@ -68,6 +68,7 @@ struct Stage3Status {
   int64_t behind_chunks = 0;
   double blocks_per_second = 0.0;
   double eta_seconds = -1.0;
+  int64_t max_bucket = -1;
 };
 
 class ApiSession : public std::enable_shared_from_this<ApiSession> {
@@ -100,7 +101,7 @@ private:
   void handle_stage2_status();
   void handle_stage2_data();
   void handle_stage3_status();
-  void handle_stage3_users();
+  void handle_stage3_filter();
   void handle_stage3_pnl();
   void handle_stage3_positions();
   std::string get_param(const char *name);

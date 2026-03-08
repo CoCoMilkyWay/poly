@@ -206,7 +206,7 @@ StageSync::UserQueryCache StageSync::build_user_query_cache(const std::string &a
       }
       assert(static_cast<size_t>(ci) < conditions_.size());
       EventInput row{
-          "",
+          0u,
           sk,
           ci,
           ty,

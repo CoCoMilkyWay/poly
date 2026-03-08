@@ -81,10 +81,7 @@
     display: flex;
     gap: 8px;
     align-items: center;
-  }
-
-  .s3-input-wrapper {
-    position: relative;
+    flex-wrap: wrap;
   }
 
   .s3-user-input {
@@ -101,41 +98,6 @@
   .s3-user-input:focus {
     outline: none;
     border-color: #6366f1;
-  }
-
-  .s3-user-dropdown {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: #252525;
-    border: 1px solid #333;
-    border-radius: 4px;
-    max-height: 360px;
-    overflow-y: auto;
-    z-index: 100;
-    display: none;
-  }
-
-  .s3-user-dropdown.show {
-    display: block;
-  }
-
-  .s3-user-item {
-    padding: 6px 10px;
-    cursor: pointer;
-    font-family: monospace;
-    font-size: 0.8em;
-    display: flex;
-    justify-content: space-between;
-  }
-
-  .s3-user-item:hover {
-    background: #333;
-  }
-
-  .s3-user-item .count {
-    color: #888;
   }
 
   .s3-btn {
@@ -499,11 +461,9 @@
   </div>
   <div class="s3-query-row">
     <div class="s3-user-select">
-      <div class="s3-input-wrapper">
-        <input type="text" class="s3-user-input" id="s3-user-input" placeholder="输入用户地址 (0x...) 或点击选择" />
-        <div class="s3-user-dropdown" id="s3-user-dropdown"></div>
-      </div>
+      <input type="text" class="s3-user-input" id="s3-user-input" placeholder="输入用户地址 (0x...)" />
       <button class="s3-btn s3-btn-primary" onclick="s3LoadUser()" id="s3-load-btn">查询</button>
+      <span class="s3-query-hint">直接输入用户地址</span>
     </div>
   </div>
 
@@ -547,7 +507,6 @@
   let _s3Positions = [];
   let _s3CurrentUser = '';
   let _s3PosReqSeq = 0;
-  let _s3Users = [];
   let _s3ViewStartSk = 0;
   let _s3ViewEndSk = 0;
   let _s3CursorIdx = -1;
@@ -557,8 +516,6 @@
   let _s3DragStartVE = 0;
   let _s3DragMoved = false;
   let _s3PollingSync = false;
-  let _s3UsersLoaded = false;
-  let _s3LoadingUsers = false;
   let _s3TradeFilterKeys = new Set(['order_buy', 'order_sell', 'fpmm_buy', 'fpmm_sell']);
 
   const _s3Pad = { top: 30, right: 70, bottom: 32, left: 50 };
@@ -636,18 +593,10 @@
     setInterval(s3PollSync, 2000);
 
     const input = document.getElementById('s3-user-input');
-    const dropdown = document.getElementById('s3-user-dropdown');
-
-    input.addEventListener('focus', async () => {
-      await s3LoadUserList();
-      if (_s3Users.length) dropdown.classList.add('show');
-    });
-    input.addEventListener('input', () => s3FilterUsers(input.value));
     input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') { dropdown.classList.remove('show'); s3LoadUser(); }
-    });
-    document.addEventListener('click', (e) => {
-      if (!e.target.closest('.s3-input-wrapper')) dropdown.classList.remove('show');
+      if (e.key === 'Enter') {
+        s3LoadUser();
+      }
     });
 
     s3SetupInteraction();
@@ -698,36 +647,14 @@
     }
   }
 
-  async function s3LoadUserList() {
-    if (_s3UsersLoaded || _s3LoadingUsers) return;
-    _s3LoadingUsers = true;
-    try {
-      _s3Users = await s3FetchJson('/api/stage3-users?limit=1000');
-      s3RenderDropdown(_s3Users);
-      _s3UsersLoaded = true;
-    } catch (e) { }
-    _s3LoadingUsers = false;
-  }
-
-  function s3RenderDropdown(users) {
-    const dd = document.getElementById('s3-user-dropdown');
-    dd.innerHTML = users.map(u =>
-      `<div class="s3-user-item" onclick="s3SelectUser('${u.user}')">
-       <span>${u.user}</span>
-       <span class="count">${u.events}</span>
-     </div>`
-    ).join('');
-  }
-
-  function s3FilterUsers(q) {
-    const lq = q.toLowerCase();
-    s3RenderDropdown(_s3Users.filter(u => u.user.toLowerCase().includes(lq)));
-    document.getElementById('s3-user-dropdown').classList.add('show');
-  }
-
-  function s3SelectUser(addr) {
-    document.getElementById('s3-user-input').value = addr;
-    document.getElementById('s3-user-dropdown').classList.remove('show');
+  function s3SetFullWindow() {
+    if (!_s3Timeline.length) return;
+    const startSk = Number(_s3Timeline[0].sk || 0);
+    const endSk = Number(_s3Timeline[_s3Timeline.length - 1].sk || 0);
+    const margin = Math.max(1, Math.floor((endSk - startSk) * 0.02));
+    _s3ViewStartSk = startSk - margin;
+    _s3ViewEndSk = endSk + margin;
+    s3Draw();
   }
 
   async function s3LoadUser() {
@@ -749,10 +676,15 @@
         _s3Timeline = data.timeline || [];
         _s3Positions = [];
         s3RenderMeta();
-        s3ResetZoom();
+        if (_s3Timeline.length) {
+          s3SetFullWindow();
+        }
       }
 
       if (_s3Timeline.length) {
+        if (sameUser) {
+          s3SetFullWindow();
+        }
         await s3ApplyCursorIdx(_s3Timeline.length - 1, true);
       } else {
         _s3CursorIdx = -1;
@@ -837,10 +769,7 @@
 
   function s3ResetZoom() {
     if (!_s3Timeline.length) return;
-    const margin = Math.max(1, (_s3Timeline[_s3Timeline.length - 1].sk - _s3Timeline[0].sk) * 0.02);
-    _s3ViewStartSk = _s3Timeline[0].sk - margin;
-    _s3ViewEndSk = _s3Timeline[_s3Timeline.length - 1].sk + margin;
-    s3Draw();
+    s3SetFullWindow();
   }
 
   function s3Draw() {
@@ -876,6 +805,13 @@
     let iEnd = s3Bsearch(_s3Timeline, _s3ViewEndSk) + 1;
     iStart = Math.max(0, iStart);
     iEnd = Math.min(_s3Timeline.length - 1, iEnd);
+    if (iStart > iEnd) {
+      ctx.fillStyle = '#888';
+      ctx.font = '14px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('当前窗口无数据', cssW / 2, cssH / 2);
+      return;
+    }
 
     let minY = Infinity, maxY = -Infinity;
     for (let i = iStart; i <= iEnd; i++) {

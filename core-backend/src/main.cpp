@@ -102,7 +102,7 @@ int main(int argc, char *argv[]) {
   auto stage3_getter = [&stage3]() -> Stage3Status {
     const auto s = stage3.status();
     return {s.syncing, s.last_block, s.head_block, s.behind_blocks, s.behind_chunks,
-            s.blocks_per_second, s.eta_seconds};
+            s.blocks_per_second, s.eta_seconds, stage3.get_max_bucket()};
   };
 
   boost::asio::io_context stage0_query_ioc;

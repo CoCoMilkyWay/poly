@@ -92,6 +92,7 @@ void StageSync::init_schema() const {
   const std::string table_user_summary = kSqlTableUserSummaryState;
   const std::string table_event_fact = kSqlTableEventFact;
   const std::string table_block_agg = kSqlTableBlockAggState;
+  const std::string table_feature_tensor = kSqlTableFeatureTensorState;
 
   stage3_db_.execute("CREATE TABLE IF NOT EXISTS " + table_sync_cursor + R"( (
         id INTEGER PRIMARY KEY,
@@ -102,7 +103,7 @@ void StageSync::init_schema() const {
         token_idx INTEGER NOT NULL,
         processed_events BIGINT NOT NULL
       )
-    ))");
+    )");
   stage3_db_.execute("CREATE TABLE IF NOT EXISTS " + table_token_state + R"( (
         user_addr BLOB NOT NULL,
         cond_idx INTEGER NOT NULL,
@@ -113,7 +114,7 @@ void StageSync::init_schema() const {
         entry_block BIGINT NOT NULL,
         PRIMARY KEY (user_addr, cond_idx, token_idx)
       )
-    ))");
+    )");
   stage3_db_.execute("CREATE TABLE IF NOT EXISTS " + table_user_summary + R"( (
         user_addr BLOB PRIMARY KEY,
         total_events BIGINT NOT NULL,
@@ -122,7 +123,7 @@ void StageSync::init_schema() const {
         active_tokens BIGINT NOT NULL,
         last_sort_key BIGINT NOT NULL
       )
-    ))");
+    )");
   stage3_db_.execute("CREATE TABLE IF NOT EXISTS " + table_event_fact + R"( (
         user_addr BLOB NOT NULL,
         sort_key BIGINT NOT NULL,
@@ -139,7 +140,7 @@ void StageSync::init_schema() const {
         holding_period BIGINT NOT NULL,
         PRIMARY KEY (user_addr, sort_key, cond_idx, event_type, token_idx)
       )
-    ))");
+    )");
   stage3_db_.execute("CREATE TABLE IF NOT EXISTS " + table_block_agg + R"( (
         user_addr BLOB NOT NULL,
         block_bucket BIGINT NOT NULL,
@@ -155,7 +156,46 @@ void StageSync::init_schema() const {
         last_sort_key BIGINT NOT NULL,
         PRIMARY KEY (user_addr, block_bucket, tag_id)
       )
-    ))");
+    )");
+  stage3_db_.execute("CREATE TABLE IF NOT EXISTS " + table_feature_tensor + R"( (
+        user_addr BLOB NOT NULL,
+        block_bucket BIGINT NOT NULL,
+        tag_id INTEGER NOT NULL,
+        time_weight_sum_10w BIGINT NOT NULL DEFAULT 0,
+        token_count_tw_sum_10w BIGINT NOT NULL DEFAULT 0,
+        exposure_tw_sum_10w BIGINT NOT NULL DEFAULT 0,
+        volume_sum_10w BIGINT NOT NULL DEFAULT 0,
+        holding_period_exp_tw_sum_10w BIGINT NOT NULL DEFAULT 0,
+        realized_sum_10w BIGINT NOT NULL DEFAULT 0,
+        realized_sq_sum_10w BIGINT NOT NULL DEFAULT 0,
+        realized_count_10w BIGINT NOT NULL DEFAULT 0,
+        realized_kll_10w BLOB,
+        token_avg_10w BIGINT NOT NULL DEFAULT 0,
+        exposure_avg_10w BIGINT NOT NULL DEFAULT 0,
+        volume_10w BIGINT NOT NULL DEFAULT 0,
+        holding_period_avg_10w BIGINT NOT NULL DEFAULT 0,
+        sharpe_10w DOUBLE NOT NULL DEFAULT 0,
+        ps_token_avg_10w BIGINT NOT NULL DEFAULT 0,
+        ps_exposure_avg_10w BIGINT NOT NULL DEFAULT 0,
+        ps_volume_10w BIGINT NOT NULL DEFAULT 0,
+        ps_holding_period_avg_10w BIGINT NOT NULL DEFAULT 0,
+        ps_realized_sum_10w BIGINT NOT NULL DEFAULT 0,
+        ps_realized_sq_sum_10w BIGINT NOT NULL DEFAULT 0,
+        ps_realized_count_10w BIGINT NOT NULL DEFAULT 0,
+        token_avg_100w BIGINT NOT NULL DEFAULT 0,
+        token_avg_1000w BIGINT NOT NULL DEFAULT 0,
+        exposure_avg_100w BIGINT NOT NULL DEFAULT 0,
+        exposure_avg_1000w BIGINT NOT NULL DEFAULT 0,
+        volume_avg_100w BIGINT NOT NULL DEFAULT 0,
+        volume_avg_1000w BIGINT NOT NULL DEFAULT 0,
+        holding_period_avg_100w BIGINT NOT NULL DEFAULT 0,
+        holding_period_avg_1000w BIGINT NOT NULL DEFAULT 0,
+        sharpe_100w DOUBLE NOT NULL DEFAULT 0,
+        sharpe_1000w DOUBLE NOT NULL DEFAULT 0,
+        updated_sort_key BIGINT NOT NULL DEFAULT 0,
+        PRIMARY KEY (user_addr, block_bucket, tag_id)
+      )
+    )");
   stage3_db_.execute(
       "CREATE INDEX IF NOT EXISTS " + std::string(kSqlIndexEventFactUserSk) +
       " ON " + table_event_fact + "(user_addr, sort_key)");
@@ -171,6 +211,9 @@ void StageSync::init_schema() const {
   stage3_db_.execute(
       "CREATE INDEX IF NOT EXISTS " + std::string(kSqlIndexBlockAggStateUserBucket) +
       " ON " + table_block_agg + "(user_addr, block_bucket, tag_id)");
+  stage3_db_.execute(
+      "CREATE INDEX IF NOT EXISTS " + std::string(kSqlIndexFeatureTensorBucketTagUser) +
+      " ON " + table_feature_tensor + "(block_bucket, tag_id, user_addr)");
   auto conn = stage3_db_.create_connection();
   auto r = conn->Query("SELECT COUNT(*) FROM " + table_sync_cursor + " WHERE id=1");
   assert(r && !r->HasError());

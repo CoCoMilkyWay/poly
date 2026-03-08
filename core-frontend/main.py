@@ -104,11 +104,6 @@ async def api_stage2_data():
     return await backend_get("/api/stage2-data")
 
 
-@app.get("/api/stage3-users")
-async def api_stage3_users(limit: int = Query(200)):
-    return await backend_get("/api/stage3-users", {"limit": limit})
-
-
 @app.get("/api/stage3-pnl")
 async def api_stage3_pnl(user: str = Query(...)):
     return await backend_get("/api/stage3-pnl", {"user": user})
@@ -117,3 +112,14 @@ async def api_stage3_pnl(user: str = Query(...)):
 @app.get("/api/stage3-positions")
 async def api_stage3_positions(user: str = Query(...), sort_key: int = Query(...)):
     return await backend_get("/api/stage3-positions", {"user": user, "sort_key": sort_key})
+
+
+@app.post("/api/stage3-filter")
+async def api_stage3_filter(request: Request):
+    try:
+        payload = await request.json()
+    except Exception:
+        payload = {}
+    if not isinstance(payload, dict):
+        payload = {}
+    return await backend_post("/api/stage3-filter", payload)

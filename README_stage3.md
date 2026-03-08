@@ -114,10 +114,10 @@ stage3_sync_tick
 │  ├─ upsert feature_tensor_state(dirty_user_bucket_tag)
 │  └─ update sync_cursor_state(...)
 └─ 6) 查询路径(只读)
-   ├─ users_sorted(limit)           -> user_summary_state(用户列表)
-   ├─ user_pnl_timeline(user)       -> 预热并缓存该用户 timeline + snapshots
-   ├─ user_positions_at(user, sk)   -> 命中内存 snapshots 返回 positions
-   └─ user_features(user, window)   -> feature_tensor_state
+   ├─ users_sorted(limit)                 -> user_summary_state(用户列表)
+   ├─ user_pnl_timeline(user)             -> 预热并缓存该用户 timeline + snapshots
+   ├─ user_positions_at(user, sk)         -> 命中内存 snapshots 返回 positions
+   └─ user_feature_filter(anchor, exprs)  -> feature_tensor_state(截面 top users)
 ```
 
 ## 数据结构
@@ -275,16 +275,6 @@ struct UserQueryCache {
 | resp.eta_seconds       | f64    | 是       | 预计剩余秒数         |
 | resp.ready             | bool   | 是       | 是否可用于查询       |
 
-### GET /api/stage3-users?limit=1000
-| entry         | type   | required | description                  |
-| ------------- | ------ | -------- | ---------------------------- |
-| query.limit   | i32    | 否       | 返回条数上限, 默认 `1000`    |
-| resp[]        | array  | 是       | 用户列表（按 `events` 降序） |
-| resp[].user   | string | 是       | 用户地址（lowercase）        |
-| resp[].events | i64    | 是       | 用户事件总数                 |
-| resp[].rpnl   | i64    | 是       | 累计已实现 PnL               |
-| resp[].upnl   | i64    | 是       | 当前未实现 PnL               |
-
 ### GET /api/stage3-pnl?user=0x...
 | entry                | type   | required | description                      |
 | -------------------- | ------ | -------- | -------------------------------- |
@@ -316,22 +306,18 @@ struct UserQueryCache {
 | resp.positions[].lp   | i64    | 是       | 最近成交价（`1e6=$1`）                 |
 | resp.positions[].eb   | i64    | 是       | 建仓block                              |
 
-### GET /api/stage3-features?user=0x...&from_bucket=...&to_bucket=...&tag_id=...
-| entry                        | type   | required | description                                   |
-| ---------------------------- | ------ | -------- | --------------------------------------------- |
-| query.user                   | string | 是       | 用户地址                                      |
-| query.from_bucket            | i64    | 否       | 起始 bucket，默认最近 `100` 个                |
-| query.to_bucket              | i64    | 否       | 结束 bucket，默认用户最新 bucket              |
-| query.tag_id                 | i32    | 否       | 行业ID，缺省返回全部行业；`-1` 为全行业聚合行 |
-| resp.user                    | string | 是       | 用户地址                                      |
-| resp.rows[]                  | array  | 是       | 特征时序行                                    |
-| resp.rows[].bucket           | i64    | 是       | 10w bucket id                                 |
-| resp.rows[].tag_id           | i32    | 是       | 行业ID                                        |
-| resp.rows[].tok10 / 100 / 1k | i64    | 是       | 持仓token数均值（10w 时间加权，100w/1k 等权） |
-| resp.rows[].exp10 / 100 / 1k | i64    | 是       | 持仓暴露额均值（10w 时间加权，100w/1k 等权）  |
-| resp.rows[].vol10 / 100 / 1k | i64    | 是       | 交易额（10w 总和，100w/1k 为等权均值）        |
-| resp.rows[].hp10 / 100 / 1k  | i64    | 是       | 持仓周期（10w 时间+金额加权，100w/1k 等权）   |
-| resp.rows[].shp10 / 100 / 1k | f64    | 是       | 夏普（risk-free=0，不年化）                   |
+### POST /api/stage3-filter
+| entry                   | type     | required | description                                    |
+| ----------------------- | -------- | -------- | ---------------------------------------------- |
+| req.anchor_bucket       | i64      | 是       | 锚定 bucket（必须显式传入）                    |
+| req.filters[]           | string[] | 否       | 过滤表达式列表（按 `AND` 连接）                |
+| req.sort_expr           | string   | 是       | 排序表达式                                     |
+| req.sort_asc            | bool     | 是       | 排序方向（必须显式传入）                       |
+| req.limit               | i32      | 是       | 返回条数（必须显式传入，当前实现固定传 `100`） |
+| resp.anchor_bucket      | i64      | 是       | 实际执行使用的 anchor bucket                   |
+| resp.users[]            | array    | 是       | 过滤 + 排序后的用户列表                        |
+| resp.users[].addr       | string   | 是       | 用户地址                                       |
+| resp.users[].sort_value | f64      | 是       | 排序表达式值                                   |
 
 ## 建立动态高玩池(特征工程, 统一表 + Compute Graph)
 
@@ -373,108 +359,10 @@ Unknown
     近期总夏普                 1    记录波动性分布     近10w块夏普                           
     近月总夏普                 1    merge波动性分布    近100w块夏普                          
     近年总夏普                 1    merge波动性分布    近1000w块夏普                         
-### 窗口定义
-设 `B = floor(block / 100000)`：
-
-```text
-W10(B)   = [B, B]
-W100(B)  = [B-9, B]     // 10 个 10w-bucket
-W1000(B) = [B-99, B]    // 100 个 10w-bucket
-```
-
-- 左边界小于 `0` 时按可用 bucket 截断。
-- 所有输出都挂在当前 bucket `B` 上。
-
-### 高效 Compute Graph（按 bucket 增量）
-```text
-N0 EventInput(stream)
-  -> N1 BucketAtomAgg(10w 原子统计)
-  -> N2 Normalize10w(归一化 10w 特征)
-  -> N3 PrefixCache(前缀缓存)
-  -> N4 WindowProject(100w/1000w 投影)
-  -> N5 FeatureRowWriter(upsert feature_tensor_state)
-```
-
-#### N1: BucketAtomAgg（原子统计节点）
-按 `(user_addr, tag_id, block_bucket)` 聚合：
-
-```text
-tw_sum_10w                    = Σ(time_weight)
-token_count_tw_sum_10w        = Σ(token_count * time_weight)
-exposure_tw_sum_10w           = Σ(exposure * time_weight)
-volume_sum_10w                = Σ(volume)
-holding_period_exp_tw_sum_10w = Σ(holding_period * exposure * time_weight)
-realized_sum_10w              = Σ(realized_delta)
-realized_sq_sum_10w           = Σ(realized_delta^2)
-realized_count_10w            = count(realized_delta)
-realized_kll_10w              = KLL(realized_delta)
-```
-
-#### N2: Normalize10w（10w输出节点）
-```text
-tok10 = token_count_tw_sum_10w / max(tw_sum_10w, 1)
-exp10 = exposure_tw_sum_10w / max(tw_sum_10w, 1)
-vol10 = volume_sum_10w
-hp10  = holding_period_exp_tw_sum_10w / max(exposure_tw_sum_10w, 1)
-
-mu10  = realized_sum_10w / max(realized_count_10w, 1)
-var10 = realized_sq_sum_10w / max(realized_count_10w, 1) - mu10 * mu10
-shp10 = (realized_count_10w < 2) ? 0 : mu10 / sqrt(max(var10, 1e-12))
-```
-
-#### N3: PrefixCache（前缀节点）
-沿 bucket 递推，`O(1)` 更新：
-
-```text
-ps_x(B) = ps_x(B-1) + x10(B)
-```
-
-`x` 包括：`tok10/exp10/vol10/hp10` 与 `realized_sum/sq_sum/count`。
-
-#### N4: WindowProject（长窗投影节点）
-窗口均值使用前缀差分，`O(1)`：
-
-```text
-meanW(B, W, ps_x) = (ps_x(B) - ps_x(B-W)) / min(W, B+1)
-```
-
-于是：
-
-```text
-tok100/tok1000, exp100/exp1000, vol100/vol1000, hp100/hp1000
-```
-
-同理由前缀 `realized_sum/sq_sum/count` 得到 `shp100/shp1000`。  
-`realized_kll_10w` 保留分布信息（分位数/尾部风险特征），不阻塞 Sharpe 主路径。
-
-#### N5: FeatureRowWriter（落表节点）
-upsert 主键 `(user_addr, block_bucket, tag_id)`，单行同时写入：
-- 原子统计列（N1）
-- 10w 输出列（N2）
-- 前缀缓存列（N3）
-- 100w/1000w 输出列（N4）
-
-`tag_id = -1` 行表示全行业聚合（可用于总夏普与整体暴露特征）。
-
-### 增量执行计划
-每个 sync tick：
-
-1. 收集 dirty key：`(user_addr, tag_id, block_bucket)`。  
-2. 合并成 dirty span：`(user_addr, tag_id, [Bmin, Bmax])`。  
-3. 依赖回看起点设为 `max(0, Bmin-100)`（覆盖 1000w 窗口）。  
-4. 对每个 span 按 bucket 顺序执行 `N1->N2->N3->N4->N5`。  
-5. 单事务提交，确保 cursor 与特征张量原子一致。  
-
-### 复杂度目标
-- 回放状态机：`O(E)`  
-- 特征图执行：`O(K * R)`  
-
-其中：
-- `K`: dirty `(user,tag)` 数  
-- `R`: 每个 dirty key 需要刷新的 bucket 长度  
-
 截面特征:
-    无
+    输入: anchor bucket + 多条自由表达式(filters) + 排序表达式(sort_expr)
+    输出: 过滤 + 排序后的 top 100 用户地址
+    目标: 支持“分行业 nested 特征”的横截面对比与选人
 
 注:
   1. 交易额里: 只记录会直接创造头寸暴露的操作(比如铸币, 合币就不应该记入), 暴露方向不重要

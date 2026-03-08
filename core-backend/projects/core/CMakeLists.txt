@@ -101,6 +101,7 @@ set(SOURCES
     ${SRC_DIR}/stage2/stage2_sync.cpp
     ${SRC_DIR}/stage3/stage3_sync_schema.cpp
     ${SRC_DIR}/stage3/stage3_comp_feat.cpp
+    ${SRC_DIR}/stage3/stage3_filter.cpp
     ${SRC_DIR}/stage3/stage3_sync_runtime.cpp
     ${SRC_DIR}/stage3/stage3_sync_calc.cpp
     ${SRC_DIR}/stage3/stage3_sync_query.cpp
