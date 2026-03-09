@@ -104,7 +104,7 @@ void EventBuilder::init_schema() {
       amount      BIGINT NOT NULL,
       price       BIGINT NOT NULL,
       PRIMARY KEY (user_addr, sort_key, cond_idx, event_type, token_idx)
-    )
+    ) ORDER BY (sort_key)
   )");
 
   auto conn = stage2_db_.create_connection();
