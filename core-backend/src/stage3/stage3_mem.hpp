@@ -33,36 +33,44 @@ inline json StageSync::memory_breakdown() const {
     std::lock_guard<std::mutex> lock(sync_mu_);
     probe_copy = runtime_mem_probe_;
   }
+  const int64_t stage3_persistent_total = conditions_bytes + cond_tag_ids_bytes + tag_to_industry_bytes + cache_addr_bytes +
+                                          cache_timeline_bytes + cache_snapshots_bytes;
 
-  json stage3_persistent = {
-      {"conditions_bytes", conditions_bytes},
-      {"cond_tag_ids_bytes", cond_tag_ids_bytes},
-      {"tag_to_industry_bytes", tag_to_industry_bytes},
-      {"user_cache_addr_bytes", cache_addr_bytes},
-      {"user_cache_timeline_bytes", cache_timeline_bytes},
-      {"user_cache_snapshots_bytes", cache_snapshots_bytes},
-      {"total_bytes", conditions_bytes + cond_tag_ids_bytes + tag_to_industry_bytes + cache_addr_bytes +
-                          cache_timeline_bytes + cache_snapshots_bytes},
+  std::vector<std::pair<std::string, int64_t>> stage3_rows = {
+      {"event_inputs", probe_copy.event_inputs_bytes},
+      {"user_blob_pool", probe_copy.user_blob_pool_bytes},
+      {"user_index_maps", probe_copy.user_index_bytes},
+      {"token_states", probe_copy.token_states_bytes},
+      {"bucket_agg", probe_copy.bucket_agg_bytes},
+      {"event_facts", probe_copy.event_facts_bytes},
+      {"conditions", conditions_bytes},
+      {"cond_tag_ids", cond_tag_ids_bytes},
+      {"tag_to_industry", tag_to_industry_bytes},
+      {"user_cache_addr", cache_addr_bytes},
+      {"user_cache_timeline", cache_timeline_bytes},
+      {"user_cache_snapshots", cache_snapshots_bytes},
   };
+  std::sort(stage3_rows.begin(), stage3_rows.end(), [](const auto &a, const auto &b) { return a.second > b.second; });
+
+  json stage3_top = json::array();
+  const size_t top_n = std::min<size_t>(stage3_rows.size(), 20);
+  for (size_t i = 0; i < top_n; ++i) {
+    stage3_top.push_back({{"name", stage3_rows[i].first}, {"estimated_bytes", stage3_rows[i].second}});
+  }
 
   json stage3_runtime = {
-      {"event_inputs_bytes", probe_copy.event_inputs_bytes},
-      {"user_blob_pool_bytes", probe_copy.user_blob_pool_bytes},
-      {"user_index_bytes", probe_copy.user_index_bytes},
-      {"token_states_bytes", probe_copy.token_states_bytes},
-      {"bucket_agg_bytes", probe_copy.bucket_agg_bytes},
-      {"event_facts_bytes", probe_copy.event_facts_bytes},
-      {"total_working_set_bytes", probe_copy.total_working_set_bytes},
+      {"estimated_total_bytes", probe_copy.total_working_set_bytes + stage3_persistent_total},
+      {"working_set_bytes", probe_copy.total_working_set_bytes},
+      {"persistent_bytes", stage3_persistent_total},
       {"peak_working_set_bytes", probe_copy.peak_working_set_bytes},
       {"row_count", probe_copy.row_count},
       {"max_cond_idx", probe_copy.max_cond_idx},
+      {"top_containers", stage3_top},
   };
 
   json result = {
       {"stage2_builder", builder_.memory_breakdown()},
-      {"stage3_persistent", stage3_persistent},
-      {"stage3_runtime_last_chunk", stage3_runtime},
-      {"hint", "Estimated from container capacities for hotspot ranking; use heap profiler for exact callsite attribution."},
+      {"stage3_runtime", stage3_runtime},
   };
   return result;
 }
