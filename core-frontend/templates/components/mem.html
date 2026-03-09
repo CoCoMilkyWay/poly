@@ -1,0 +1,216 @@
+<style>
+  .mem-card {
+    background: #1a1a1a;
+    border-radius: 10px;
+    padding: 15px;
+    border: 1px solid #333;
+    margin-bottom: 15px;
+  }
+
+  .mem-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #333;
+  }
+
+  .mem-header h2 {
+    font-size: 1.1em;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+  }
+
+  .mem-header h2::before {
+    content: "";
+    width: 3px;
+    height: 16px;
+    background: #ef4444;
+    border-radius: 2px;
+  }
+
+  .mem-total {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.85em;
+  }
+
+  .mem-total-value {
+    font-family: monospace;
+    font-weight: 600;
+    color: #fff;
+  }
+
+  .mem-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+  }
+
+  .mem-item {
+    background: #252525;
+    border-radius: 6px;
+    padding: 12px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .mem-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .mem-item-name {
+    font-weight: 600;
+    color: #fff;
+    font-size: 0.9em;
+  }
+
+  .mem-item-pct {
+    font-family: monospace;
+    font-size: 0.85em;
+    padding: 2px 6px;
+    border-radius: 3px;
+  }
+
+  .mem-item-pct.low {
+    background: #166534;
+    color: #4ade80;
+  }
+
+  .mem-item-pct.medium {
+    background: #854d0e;
+    color: #fde047;
+  }
+
+  .mem-item-pct.high {
+    background: #991b1b;
+    color: #fca5a5;
+  }
+
+  .mem-item-bar {
+    height: 4px;
+    background: #333;
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 6px;
+  }
+
+  .mem-item-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.5s ease;
+  }
+
+  .mem-item-fill.low {
+    background: linear-gradient(90deg, #22c55e, #16a34a);
+  }
+
+  .mem-item-fill.medium {
+    background: linear-gradient(90deg, #eab308, #ca8a04);
+  }
+
+  .mem-item-fill.high {
+    background: linear-gradient(90deg, #ef4444, #dc2626);
+  }
+
+  .mem-item-stats {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75em;
+    color: #666;
+    font-family: monospace;
+  }
+
+  .mem-item-usage {
+    color: #888;
+  }
+
+  .mem-item-limit {
+    color: #555;
+  }
+</style>
+
+<div class="mem-card">
+  <div class="mem-header">
+    <h2>内存使用</h2>
+    <div class="mem-total">
+      <span style="color: #666">Total:</span>
+      <span class="mem-total-value" id="mem-total-usage">-</span>
+      <span style="color: #555">/</span>
+      <span class="mem-total-value" id="mem-total-limit">-</span>
+    </div>
+  </div>
+
+  <div class="mem-grid" id="mem-grid">
+    <div class="mem-item">
+      <div class="mem-item-header">
+        <span class="mem-item-name">加载中...</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    function formatMB(mb) {
+      if (mb < 1) return mb.toFixed(2) + " MB";
+      if (mb < 1024) return mb.toFixed(1) + " MB";
+      return (mb / 1024).toFixed(2) + " GB";
+    }
+
+    function getPctClass(pct) {
+      if (pct < 50) return "low";
+      if (pct < 80) return "medium";
+      return "high";
+    }
+
+    async function refreshMemory() {
+      try {
+        const resp = await fetch("/api/memory");
+        const data = await resp.json();
+
+        document.getElementById("mem-total-usage").textContent = formatMB(data.total_usage_mb || 0);
+        document.getElementById("mem-total-limit").textContent = formatMB(data.total_limit_mb || 0);
+
+        const grid = document.getElementById("mem-grid");
+        let html = "";
+
+        for (const db of data.databases || []) {
+          const pct = db.usage_pct || 0;
+          const pctClass = getPctClass(pct);
+
+          html += `
+            <div class="mem-item">
+              <div class="mem-item-header">
+                <span class="mem-item-name">${db.name}</span>
+                <span class="mem-item-pct ${pctClass}">${pct.toFixed(1)}%</span>
+              </div>
+              <div class="mem-item-bar">
+                <div class="mem-item-fill ${pctClass}" style="width: ${Math.min(100, pct)}%"></div>
+              </div>
+              <div class="mem-item-stats">
+                <span class="mem-item-usage">${formatMB(db.usage_mb || 0)}</span>
+                <span class="mem-item-limit">/ ${formatMB(db.limit_mb || 0)}</span>
+              </div>
+            </div>
+          `;
+        }
+
+        grid.innerHTML = html;
+      } catch (e) {
+        console.error("Memory refresh failed:", e);
+      }
+    }
+
+    refreshMemory();
+    setInterval(refreshMemory, 3000);
+  })();
+</script>

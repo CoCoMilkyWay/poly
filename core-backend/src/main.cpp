@@ -157,7 +157,7 @@ int main(int argc, char *argv[]) {
   start_stage(config.stage3_enable, "Stage3", stage3, stage3_ioc, stage3_thread);
 
   boost::asio::io_context api_ioc;
-  ApiServer api_server(api_ioc, stage0_db, stage1_db, stage2_db, stage3, config.backend_port, stage0_getter, [&stage0_tag]() { stage0_tag.reset_progress(); }, stage1_getter, stage2_getter, stage3_getter);
+  ApiServer api_server(api_ioc, stage0_db, stage1_db, stage2_db, stage3_db, stage3, config.backend_port, stage0_getter, [&stage0_tag]() { stage0_tag.reset_progress(); }, stage1_getter, stage2_getter, stage3_getter);
 
   boost::asio::signal_set signals(api_ioc, SIGINT, SIGTERM);
   signals.async_wait([&](const boost::system::error_code &, int sig) {

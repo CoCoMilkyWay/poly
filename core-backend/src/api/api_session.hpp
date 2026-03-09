@@ -79,7 +79,7 @@ public:
   using Stage2Getter = std::function<Stage2Status()>;
   using Stage3Getter = std::function<Stage3Status()>;
 
-  ApiSession(tcp::socket socket, Database &stage0_db, Database &stage1_db, Database &stage2_db,
+  ApiSession(tcp::socket socket, Database &stage0_db, Database &stage1_db, Database &stage2_db, Database &stage3_db,
              stage3::StageSync &stage3,
              Stage0Getter stage0_getter, Stage0Retagger stage0_retagger, Stage1Getter stage1_getter,
              Stage2Getter stage2_getter, Stage3Getter stage3_getter);
@@ -104,6 +104,7 @@ private:
   void handle_stage3_filter();
   void handle_stage3_pnl();
   void handle_stage3_positions();
+  void handle_memory();
   std::string get_param(const char *name);
   static std::string url_decode(const std::string &str);
   void do_write();
@@ -124,6 +125,7 @@ private:
   Database &stage0_db_;
   Database &stage1_db_;
   Database &stage2_db_;
+  Database &stage3_db_;
   stage3::StageSync &stage3_;
   Stage0Getter stage0_getter_;
   Stage0Retagger stage0_retagger_;

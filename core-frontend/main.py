@@ -69,6 +69,11 @@ async def api_stage3_status():
     return await backend_get("/api/stage3-status")
 
 
+@app.get("/api/memory")
+async def api_memory():
+    return await backend_get("/api/memory")
+
+
 @app.get("/api/query")
 async def api_query(q: str = Query(...)):
     return await backend_get("/api/query", {"q": q})

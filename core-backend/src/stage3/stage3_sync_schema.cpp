@@ -108,7 +108,7 @@ void StageSync::init_schema() const {
         lp BIGINT NOT NULL,
         entry_block BIGINT NOT NULL,
         PRIMARY KEY (user_addr, cond_idx, token_idx)
-      ) ORDER BY (user_addr, cond_idx, token_idx)
+      )
     )");
   stage3_db_.execute("CREATE TABLE IF NOT EXISTS " + table_user_summary + R"( (
         user_addr BLOB PRIMARY KEY,
@@ -117,7 +117,7 @@ void StageSync::init_schema() const {
         total_unrealized_pnl BIGINT NOT NULL,
         active_tokens BIGINT NOT NULL,
         last_sort_key BIGINT NOT NULL
-      ) ORDER BY (user_addr)
+      )
     )");
   stage3_db_.execute("CREATE TABLE IF NOT EXISTS " + table_event_fact + R"( (
         user_addr BLOB NOT NULL,
@@ -134,7 +134,7 @@ void StageSync::init_schema() const {
         volume BIGINT NOT NULL,
         holding_period BIGINT NOT NULL,
         PRIMARY KEY (user_addr, sort_key, cond_idx, event_type, token_idx)
-      ) ORDER BY (sort_key)
+      )
     )");
   stage3_db_.execute("CREATE TABLE IF NOT EXISTS " + table_feature_tensor + R"( (
         user_addr BLOB NOT NULL,
@@ -178,7 +178,7 @@ void StageSync::init_schema() const {
         sharpe_1000w DOUBLE NOT NULL DEFAULT 0,
         updated_sort_key BIGINT NOT NULL DEFAULT 0,
         PRIMARY KEY (user_addr, block_bucket, tag_id)
-      ) ORDER BY (block_bucket, tag_id, user_addr)
+      )
     )");
   // 仅创建非PK前缀的有用索引 (PK自带B-tree可覆盖前缀查询)
   stage3_db_.execute(

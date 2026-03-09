@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <filesystem>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <sys/file.h>
 #include <unistd.h>
@@ -60,7 +61,8 @@ Database::Database(const std::string &path) : db_path_(path) {
   fs::create_directories(data_dir_);
   duckdb::DBConfig config;
   // 限制单个DuckDB实例内存，避免多实例合计占用过多
-  config.SetOption("memory_limit", duckdb::Value("8GB"));
+  // 4 instances × 2GB = 8GB total
+  config.SetOption("memory_limit", duckdb::Value("2GB"));
   db_ = std::make_unique<duckdb::DuckDB>(path, &config);
   read_conn_ = std::make_unique<duckdb::Connection>(*db_);
   write_conn_ = std::make_unique<duckdb::Connection>(*db_);
@@ -428,4 +430,51 @@ void Database::write_state_unlocked(const json &state) const {
   assert(ret == 0);
   close_ret = close(dir_fd);
   assert(close_ret == 0);
+}
+
+Database::MemoryInfo Database::get_memory_info() {
+  std::lock_guard<std::mutex> lock(read_mutex_);
+  MemoryInfo info;
+  // query duckdb_memory() for buffer pool stats
+  auto result = read_conn_->Query(
+      "SELECT tag, size FROM duckdb_memory() "
+      "WHERE tag IN ('BASE_TABLE', 'HASH_TABLE', 'ART_INDEX', 'COLUMN_DATA', 'ORDER_BY', "
+      "'AGGREGATE_HASH_TABLE', 'WINDOW', 'CROSS_PRODUCT', 'EXTERNAL', 'OPERATOR', 'IN_MEMORY_TABLE')");
+  if (!result->HasError()) {
+    for (size_t row = 0; row < result->RowCount(); ++row) {
+      auto size_val = result->GetValue(1, row);
+      if (!size_val.IsNull()) {
+        info.memory_usage_bytes += size_val.GetValue<int64_t>();
+      }
+    }
+  }
+  // get memory limit
+  auto limit_result = read_conn_->Query("SELECT current_setting('memory_limit')");
+  if (!limit_result->HasError() && limit_result->RowCount() > 0) {
+    auto val = limit_result->GetValue(0, 0);
+    std::string limit_str = val.ToString();
+    // parse "8GB" etc
+    size_t len = limit_str.size();
+    if (len > 2) {
+      std::string unit = limit_str.substr(len - 2);
+      double num = std::stod(limit_str.substr(0, len - 2));
+      if (unit == "GB" || unit == "gb") {
+        info.memory_limit_bytes = static_cast<int64_t>(num * 1024 * 1024 * 1024);
+      } else if (unit == "MB" || unit == "mb") {
+        info.memory_limit_bytes = static_cast<int64_t>(num * 1024 * 1024);
+      } else if (unit == "KB" || unit == "kb") {
+        info.memory_limit_bytes = static_cast<int64_t>(num * 1024);
+      }
+    }
+  }
+  return info;
+}
+
+void Database::print_memory_info(const std::string &label) {
+  auto info = get_memory_info();
+  double usage_mb = static_cast<double>(info.memory_usage_bytes) / (1024.0 * 1024.0);
+  double limit_mb = static_cast<double>(info.memory_limit_bytes) / (1024.0 * 1024.0);
+  double pct = info.memory_limit_bytes > 0 ? (100.0 * info.memory_usage_bytes / info.memory_limit_bytes) : 0;
+  std::cout << "[MEM] " << label << ": " << std::fixed << std::setprecision(1)
+            << usage_mb << " MB / " << limit_mb << " MB (" << pct << "%)" << std::endl;
 }

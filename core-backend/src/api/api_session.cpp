@@ -198,11 +198,11 @@ std::mutex ApiSession::s3_meta_cache_mu_;
 std::string ApiSession::s3_meta_cache_user_lower_;
 std::unordered_map<uint32_t, ApiSession::Stage3CondMeta> ApiSession::s3_meta_cache_cond_meta_;
 
-ApiSession::ApiSession(tcp::socket socket, Database &stage0_db, Database &stage1_db, Database &stage2_db,
+ApiSession::ApiSession(tcp::socket socket, Database &stage0_db, Database &stage1_db, Database &stage2_db, Database &stage3_db,
                        stage3::StageSync &stage3,
                        Stage0Getter stage0_getter, Stage0Retagger stage0_retagger, Stage1Getter stage1_getter,
                        Stage2Getter stage2_getter, Stage3Getter stage3_getter)
-    : socket_(std::move(socket)), stage0_db_(stage0_db), stage1_db_(stage1_db), stage2_db_(stage2_db), stage3_(stage3),
+    : socket_(std::move(socket)), stage0_db_(stage0_db), stage1_db_(stage1_db), stage2_db_(stage2_db), stage3_db_(stage3_db), stage3_(stage3),
       stage0_getter_(std::move(stage0_getter)), stage0_retagger_(std::move(stage0_retagger)),
       stage1_getter_(std::move(stage1_getter)),
       stage2_getter_(std::move(stage2_getter)),
@@ -270,6 +270,8 @@ void ApiSession::handle_request() {
       handle_stage3_positions();
     } else if (target.starts_with("/api/stage3-pnl")) {
       handle_stage3_pnl();
+    } else if (target.starts_with("/api/memory")) {
+      handle_memory();
     } else {
       res_.result(http::status::not_found);
       res_.set(http::field::content_type, "application/json");
@@ -1211,6 +1213,43 @@ std::string ApiSession::url_decode(const std::string &str) {
     }
   }
   return result;
+}
+
+void ApiSession::handle_memory() {
+  TraceN("api/memory");
+  res_.set(http::field::content_type, "application/json");
+
+  auto make_mem_obj = [](const std::string &name, Database &db) {
+    auto info = db.get_memory_info();
+    return json{
+        {"name", name},
+        {"usage_bytes", info.memory_usage_bytes},
+        {"limit_bytes", info.memory_limit_bytes},
+        {"usage_mb", static_cast<double>(info.memory_usage_bytes) / (1024.0 * 1024.0)},
+        {"limit_mb", static_cast<double>(info.memory_limit_bytes) / (1024.0 * 1024.0)},
+        {"usage_pct", info.memory_limit_bytes > 0 ? (100.0 * info.memory_usage_bytes / info.memory_limit_bytes) : 0.0}};
+  };
+
+  json result = json::object();
+  result["databases"] = json::array({
+      make_mem_obj("stage0", stage0_db_),
+      make_mem_obj("stage1", stage1_db_),
+      make_mem_obj("stage2", stage2_db_),
+      make_mem_obj("stage3", stage3_db_),
+  });
+
+  // total
+  int64_t total_usage = 0;
+  int64_t total_limit = 0;
+  for (const auto &db_info : result["databases"]) {
+    total_usage += db_info["usage_bytes"].get<int64_t>();
+    total_limit += db_info["limit_bytes"].get<int64_t>();
+  }
+  result["total_usage_mb"] = static_cast<double>(total_usage) / (1024.0 * 1024.0);
+  result["total_limit_mb"] = static_cast<double>(total_limit) / (1024.0 * 1024.0);
+
+  res_.result(http::status::ok);
+  res_.body() = result.dump(2);
 }
 
 void ApiSession::do_write() {

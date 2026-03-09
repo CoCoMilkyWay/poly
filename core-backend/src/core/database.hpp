@@ -57,6 +57,15 @@ public:
   json load_counts_cache();
   void save_counts_cache(const json &cache);
 
+  // memory monitoring
+  struct MemoryInfo {
+    int64_t memory_usage_bytes = 0;       // current buffer pool usage
+    int64_t memory_limit_bytes = 0;       // configured limit
+    int64_t temp_directory_bytes = 0;     // spilled to disk
+  };
+  MemoryInfo get_memory_info();
+  void print_memory_info(const std::string &label);
+
 private:
   std::vector<FeatherChunk> list_chunks(const std::string &table) const;
   std::string state_path() const;
