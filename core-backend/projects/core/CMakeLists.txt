@@ -122,6 +122,7 @@ endif()
 target_include_directories(core PRIVATE
     ${SRC_DIR}
     ${PACKAGES_DIR}/duckdb
+    ${PACKAGES_DIR}/rocksdb/include
     ${ARROW_INCLUDE_DIR}
     ${PACKAGES_DIR}/tracy/public/tracy
     ${INCLUDE_DIR}
@@ -139,6 +140,8 @@ add_custom_command(TARGET core POST_BUILD
 # 链接库
 target_link_libraries(core PRIVATE
     ${PACKAGES_DIR}/duckdb/libduckdb.so
+    ${PACKAGES_DIR}/rocksdb/lib/librocksdb.a
+    ${PACKAGES_DIR}/rocksdb/lib/libz.a
     OpenSSL::SSL
     OpenSSL::Crypto
     CURL::libcurl
