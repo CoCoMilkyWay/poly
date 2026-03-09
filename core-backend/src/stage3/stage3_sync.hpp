@@ -12,7 +12,6 @@
 #include <chrono>
 #include <cstdint>
 #include <deque>
-#include <limits>
 #include <memory>
 #include <mutex>
 #include <unordered_map>
@@ -133,10 +132,6 @@ public:
 private:
   struct SyncCursorState {
     int64_t sort_key = -1;
-    std::string user_hex;
-    int32_t cond_idx = std::numeric_limits<int32_t>::min();
-    int32_t event_type = std::numeric_limits<int32_t>::min();
-    int32_t token_idx = std::numeric_limits<int32_t>::min();
     int64_t processed_events = 0;
   };
 
@@ -251,7 +246,6 @@ private:
   static constexpr int64_t kBlockBucketSize = 100000;
   static constexpr double kPosEpsilon = 1e-9;
   static constexpr int64_t kMinHoldingQty = 10LL * 1000000LL;
-  static constexpr int64_t kSyncCursorSentinel = std::numeric_limits<int32_t>::min();
   int base_interval_seconds_ = 0;
 
   // SQL identifiers (persistent tables)

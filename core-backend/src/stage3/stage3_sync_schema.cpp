@@ -96,10 +96,6 @@ void StageSync::init_schema() const {
   stage3_db_.execute("CREATE TABLE IF NOT EXISTS " + table_sync_cursor + R"( (
         id INTEGER PRIMARY KEY,
         sort_key BIGINT NOT NULL,
-        user_addr BLOB NOT NULL,
-        cond_idx INTEGER NOT NULL,
-        event_type INTEGER NOT NULL,
-        token_idx INTEGER NOT NULL,
         processed_events BIGINT NOT NULL
       )
     )");
@@ -199,10 +195,7 @@ void StageSync::init_schema() const {
   assert(r && !r->HasError());
   if (r->GetValue(0, 0).GetValue<int64_t>() == 0) {
     auto ins = conn->Query(
-        "INSERT INTO " + table_sync_cursor + " VALUES (1, -1, from_hex(''), " +
-        std::to_string(kSyncCursorSentinel) + ", " +
-        std::to_string(kSyncCursorSentinel) + ", " +
-        std::to_string(kSyncCursorSentinel) + ", 0)");
+        "INSERT INTO " + table_sync_cursor + " VALUES (1, -1, 0)");
     assert(ins && !ins->HasError());
   }
 }
@@ -261,28 +254,18 @@ void StageSync::load_conditions() {
 void StageSync::load_cursor() {
   auto conn = stage3_db_.create_connection();
   auto r = conn->Query(
-      "SELECT sort_key, lower(hex(user_addr)), cond_idx, event_type, token_idx, processed_events "
-      "FROM " +
+      "SELECT sort_key, processed_events FROM " +
       std::string(kSqlTableSyncCursorState) + " WHERE id=1");
   assert(r && !r->HasError() && r->RowCount() == 1);
   sync_cursor_.sort_key = r->GetValue(0, 0).GetValue<int64_t>();
-  sync_cursor_.user_hex = r->GetValue(1, 0).GetValueUnsafe<std::string>();
-  sync_cursor_.cond_idx = r->GetValue(2, 0).GetValue<int32_t>();
-  sync_cursor_.event_type = r->GetValue(3, 0).GetValue<int32_t>();
-  sync_cursor_.token_idx = r->GetValue(4, 0).GetValue<int32_t>();
-  sync_cursor_.processed_events = r->GetValue(5, 0).GetValue<int64_t>();
+  sync_cursor_.processed_events = r->GetValue(1, 0).GetValue<int64_t>();
 }
 
 void StageSync::save_cursor_locked(duckdb::Connection &conn) const {
-  std::string user_hex = sync_cursor_.user_hex;
   auto q = conn.Query(
       "UPDATE " + std::string(kSqlTableSyncCursorState) + " SET "
                                                           "sort_key=" +
       std::to_string(sync_cursor_.sort_key) +
-      ", user_addr=from_hex('" + user_hex + "')" +
-      ", cond_idx=" + std::to_string(sync_cursor_.cond_idx) +
-      ", event_type=" + std::to_string(sync_cursor_.event_type) +
-      ", token_idx=" + std::to_string(sync_cursor_.token_idx) +
       ", processed_events=" + std::to_string(sync_cursor_.processed_events) +
       " WHERE id=1");
   assert(q && !q->HasError());

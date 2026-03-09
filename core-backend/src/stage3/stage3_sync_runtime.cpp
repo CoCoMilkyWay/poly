@@ -263,44 +263,15 @@ bool StageSync::process_chunk_locked() const {
         reinterpret_cast<duckdb::const_data_ptr_t>(blob.data()),
         blob.size()));
   };
-  std::string user_hex = sync_cursor_.user_hex;
-  auto build_after_cursor_filter_sql = [](int64_t sort_key,
-                                          const std::string &user_hex_key,
-                                          int32_t cond_idx,
-                                          int32_t event_type,
-                                          int32_t token_idx) {
-    return "(sort_key > " + std::to_string(sort_key) + ") OR "
-                                                       "(sort_key = " +
-           std::to_string(sort_key) + " AND user_addr > from_hex('" + user_hex_key + "')) OR "
-                                                                                     "(sort_key = " +
-           std::to_string(sort_key) + " AND user_addr = from_hex('" + user_hex_key + "') "
-                                                                                     "AND cond_idx > " +
-           std::to_string(cond_idx) + ") OR "
-                                      "(sort_key = " +
-           std::to_string(sort_key) + " AND user_addr = from_hex('" + user_hex_key + "') "
-                                                                                     "AND cond_idx = " +
-           std::to_string(cond_idx) + " AND event_type > " + std::to_string(event_type) + ") OR "
-                                                                                          "(sort_key = " +
-           std::to_string(sort_key) + " AND user_addr = from_hex('" + user_hex_key + "') "
-                                                                                     "AND cond_idx = " +
-           std::to_string(cond_idx) + " AND event_type = " + std::to_string(event_type) +
-           " AND token_idx > " + std::to_string(token_idx) + ")";
-  };
-  const std::string event_query_select_sql = std::string(kSqlSelectEventInputCols) + "FROM user_event WHERE (";
   const std::string event_query_order_sql = kSqlOrderByEventSourceKey;
-  std::string after_cursor_filter_sql =
-      build_after_cursor_filter_sql(sync_cursor_.sort_key, user_hex, sync_cursor_.cond_idx, sync_cursor_.event_type, sync_cursor_.token_idx);
-  auto qr = source_conn->Query(event_query_select_sql + after_cursor_filter_sql + ") "
-                                                                                  "AND sort_key <= " +
-                               std::to_string(head_sort_key) + event_query_order_sql + " LIMIT " +
-                               std::to_string(kStage3BatchEvents));
+  auto qr = source_conn->Query(
+      std::string(kSqlSelectEventInputCols) + "FROM user_event WHERE sort_key > " +
+      std::to_string(sync_cursor_.sort_key) + " AND sort_key <= " +
+      std::to_string(head_sort_key) + event_query_order_sql + " LIMIT " +
+      std::to_string(kStage3BatchEvents));
   assert(qr && !qr->HasError());
   if (qr->RowCount() == 0) {
     sync_cursor_.sort_key = head_sort_key;
-    sync_cursor_.user_hex.clear();
-    sync_cursor_.cond_idx = kSyncCursorSentinel;
-    sync_cursor_.event_type = kSyncCursorSentinel;
-    sync_cursor_.token_idx = kSyncCursorSentinel;
     (void)checked_query("BEGIN");
     save_cursor_locked(*sink_conn);
     (void)checked_query("COMMIT");
@@ -340,9 +311,9 @@ bool StageSync::process_chunk_locked() const {
   bool has_prev_key = false;
   int64_t prev_sort_key = 0;
   std::string prev_user_blob;
-  int32_t prev_cond_idx = kSyncCursorSentinel;
-  int32_t prev_event_type = kSyncCursorSentinel;
-  int32_t prev_token_idx = kSyncCursorSentinel;
+  int32_t prev_cond_idx = std::numeric_limits<int32_t>::min();
+  int32_t prev_event_type = std::numeric_limits<int32_t>::min();
+  int32_t prev_token_idx = std::numeric_limits<int32_t>::min();
   auto consume_event_inputs = [&](duckdb::MaterializedQueryResult &result) {
     for (idx_t i = 0; i < result.RowCount(); ++i) {
       const std::string user_blob = result.GetValue(0, i).GetValueUnsafe<std::string>();
@@ -409,11 +380,6 @@ bool StageSync::process_chunk_locked() const {
   }
   const EventInput &last_row = event_inputs.back();
   sync_cursor_.sort_key = last_row.sort_key;
-  const std::string cursor_user_hex = blob_to_hex(user_blob_pool[last_row.user_id]);
-  sync_cursor_.user_hex = cursor_user_hex.substr(2);
-  sync_cursor_.cond_idx = last_row.cond_idx;
-  sync_cursor_.event_type = last_row.event_type;
-  sync_cursor_.token_idx = last_row.token_idx;
   sync_cursor_.processed_events += static_cast<int64_t>(event_inputs.size());
 
   int32_t max_cond_idx = -1;
