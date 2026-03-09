@@ -57,9 +57,6 @@ public:
   json load_counts_cache();
   void save_counts_cache(const json &cache);
 
-  // process-level memory (RSS from /proc/self/status)
-  static int64_t get_process_rss_bytes();
-
 private:
   std::vector<FeatherChunk> list_chunks(const std::string &table) const;
   std::string state_path() const;

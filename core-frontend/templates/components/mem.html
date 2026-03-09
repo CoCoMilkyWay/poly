@@ -135,12 +135,6 @@
     top: 0;
   }
 
-  .mem-table td.path {
-    max-width: 520px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
   .mem-empty {
     color: #666;
     font-size: 0.8em;
@@ -238,8 +232,7 @@
         for (const col of cols) {
           const val = row[col.key];
           const text = col.type === "bytes" ? formatBytes(val || 0) : (val ?? "");
-          const cls = col.key === "path" ? "path" : "";
-          html += `<td class="${cls}" title="${col.key === "path" ? (val || "") : ""}">${text}</td>`;
+          html += `<td>${text}</td>`;
         }
         html += "</tr>";
       }

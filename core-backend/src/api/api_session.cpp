@@ -12,6 +12,7 @@
 #include <sstream>
 #include <unordered_map>
 
+#include "../core/mem.hpp"
 #include "misc/profiler.hpp"
 
 namespace {
@@ -1219,7 +1220,7 @@ void ApiSession::handle_memory() {
   TraceN("api/memory");
   res_.set(http::field::content_type, "application/json");
   json result = json::object();
-  result["process_rss_bytes"] = Database::get_process_rss_bytes();
+  result["process_rss_bytes"] = core::mem::get_process_rss_bytes();
   result["object_breakdown"] = stage3_.memory_breakdown();
   res_.result(http::status::ok);
   res_.body() = result.dump(2);

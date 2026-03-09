@@ -1,5 +1,4 @@
 #include "database.hpp"
-#include "mem.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -432,6 +431,3 @@ void Database::write_state_unlocked(const json &state) const {
   assert(close_ret == 0);
 }
 
-int64_t Database::get_process_rss_bytes() {
-  return core::mem::get_process_rss_bytes();
-}
