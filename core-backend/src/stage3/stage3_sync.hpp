@@ -123,6 +123,7 @@ public:
   Status status() const;
   int64_t get_max_bucket() const;
   Stage2Data stage2_data() const;
+  json memory_breakdown() const;
 
   std::vector<UserSummaryRow> get_users_sorted(int64_t limit = 200) const;
   std::vector<TimelineRow> get_user_timeline(const std::string &addr) const;
@@ -240,6 +241,19 @@ private:
   };
   mutable std::mutex user_cache_mu_;
   mutable UserQueryCache user_cache_;
+  struct RuntimeMemProbe {
+    int64_t event_inputs_bytes = 0;
+    int64_t user_blob_pool_bytes = 0;
+    int64_t user_index_bytes = 0;
+    int64_t token_states_bytes = 0;
+    int64_t bucket_agg_bytes = 0;
+    int64_t event_facts_bytes = 0;
+    int64_t total_working_set_bytes = 0;
+    int64_t peak_working_set_bytes = 0;
+    int64_t row_count = 0;
+    int64_t max_cond_idx = -1;
+  };
+  mutable RuntimeMemProbe runtime_mem_probe_;
 
   // Execution config
   static constexpr int64_t kStage3BatchEvents = 500000;
@@ -310,3 +324,5 @@ private:
 };
 
 } // namespace stage3
+
+#include "stage3_mem.hpp" // IWYU pragma: keep

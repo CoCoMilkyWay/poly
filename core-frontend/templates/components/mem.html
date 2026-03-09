@@ -33,228 +33,253 @@
     border-radius: 2px;
   }
 
-  .mem-total {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-size: 0.85em;
-  }
-
-  .mem-total-value {
+  .mem-updated {
+    color: #666;
+    font-size: 0.75em;
     font-family: monospace;
-    font-weight: 600;
-    color: #fff;
   }
 
-  .mem-grid {
+  .mem-kpi-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 10px;
+    margin-bottom: 12px;
   }
 
-  .mem-item {
+  .mem-kpi {
     background: #252525;
+    border: 1px solid #333;
     border-radius: 6px;
-    padding: 12px;
-    position: relative;
-    overflow: hidden;
+    padding: 10px 12px;
   }
 
-  .mem-item-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-    cursor: pointer;
-  }
-
-  .mem-item-name {
-    font-weight: 600;
-    color: #fff;
-    font-size: 0.9em;
-  }
-
-  .mem-item-pct {
-    font-family: monospace;
-    font-size: 0.85em;
-    padding: 2px 6px;
-    border-radius: 3px;
-  }
-
-  .mem-item-pct.low {
-    background: #166534;
-    color: #4ade80;
-  }
-
-  .mem-item-pct.medium {
-    background: #854d0e;
-    color: #fde047;
-  }
-
-  .mem-item-pct.high {
-    background: #991b1b;
-    color: #fca5a5;
-  }
-
-  .mem-item-bar {
-    height: 4px;
-    background: #333;
-    border-radius: 2px;
-    overflow: hidden;
-    margin-bottom: 6px;
-  }
-
-  .mem-item-fill {
-    height: 100%;
-    border-radius: 2px;
-    transition: width 0.5s ease;
-  }
-
-  .mem-item-fill.low {
-    background: linear-gradient(90deg, #22c55e, #16a34a);
-  }
-
-  .mem-item-fill.medium {
-    background: linear-gradient(90deg, #eab308, #ca8a04);
-  }
-
-  .mem-item-fill.high {
-    background: linear-gradient(90deg, #ef4444, #dc2626);
-  }
-
-  .mem-item-stats {
-    display: flex;
-    justify-content: space-between;
+  .mem-kpi-label {
     font-size: 0.75em;
     color: #666;
+    margin-bottom: 2px;
+  }
+
+  .mem-kpi-value {
     font-family: monospace;
+    font-size: 1em;
+    color: #fff;
+    font-weight: 600;
   }
 
-  .mem-item-usage {
-    color: #888;
+  .mem-kpi-value.rss {
+    color: #f87171;
   }
 
-  .mem-item-limit {
-    color: #555;
+  .mem-section {
+    margin-top: 10px;
+    background: #202020;
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 10px;
   }
 
-  .mem-detail {
-    margin-top: 8px;
-    padding-top: 8px;
-    border-top: 1px solid #333;
-    display: none;
-    max-height: 150px;
-    overflow-y: auto;
+  .mem-section-title {
+    font-size: 0.85em;
+    color: #ddd;
+    margin-bottom: 8px;
+    font-weight: 600;
   }
 
-  .mem-detail.show {
-    display: block;
+  .mem-rollup-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 8px;
   }
 
-  .mem-detail-row {
-    display: flex;
-    justify-content: space-between;
+  .mem-rollup-item {
+    background: #252525;
+    border-radius: 4px;
+    padding: 6px 8px;
+  }
+
+  .mem-rollup-key {
     font-size: 0.7em;
+    color: #777;
+  }
+
+  .mem-rollup-val {
     font-family: monospace;
-    padding: 2px 0;
-    color: #888;
+    font-size: 0.8em;
+    color: #e5e7eb;
   }
 
-  .mem-detail-row .tag {
-    color: #6366f1;
+  .mem-table-wrap {
+    overflow-x: auto;
   }
 
-  .mem-detail-row .size {
-    color: #888;
+  .mem-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.75em;
+    font-family: monospace;
+  }
+
+  .mem-table th,
+  .mem-table td {
+    text-align: left;
+    padding: 6px 8px;
+    border-bottom: 1px solid #333;
+    white-space: nowrap;
+  }
+
+  .mem-table th {
+    color: #9ca3af;
+    font-weight: 600;
+    background: #252525;
+    position: sticky;
+    top: 0;
+  }
+
+  .mem-table td.path {
+    max-width: 520px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .mem-empty {
+    color: #666;
+    font-size: 0.8em;
+    padding: 6px 0;
   }
 </style>
 
 <div class="mem-card">
   <div class="mem-header">
-    <h2>内存使用</h2>
-    <div class="mem-total">
-      <span style="color: #ef4444; font-weight: 600">进程 RSS:</span>
-      <span class="mem-total-value" id="mem-process-rss" style="color: #ef4444">-</span>
-      <span style="color: #555; margin-left: 16px">线程数:</span>
-      <span class="mem-total-value" id="mem-thread-count">-</span>
+    <h2>进程内存分解</h2>
+    <div class="mem-updated" id="mem-updated-at">-</div>
+  </div>
+
+  <div class="mem-kpi-grid">
+    <div class="mem-kpi">
+      <div class="mem-kpi-label">Process RSS</div>
+      <div class="mem-kpi-value rss" id="mem-kpi-rss">-</div>
+    </div>
+    <div class="mem-kpi">
+      <div class="mem-kpi-label">Stage2 estimated total</div>
+      <div class="mem-kpi-value" id="mem-kpi-s2-total">-</div>
+    </div>
+    <div class="mem-kpi">
+      <div class="mem-kpi-label">Stage2 peak chunk+commit</div>
+      <div class="mem-kpi-value" id="mem-kpi-s2-peak">-</div>
+    </div>
+    <div class="mem-kpi">
+      <div class="mem-kpi-label">Stage3 chunk working set</div>
+      <div class="mem-kpi-value" id="mem-kpi-s3-work">-</div>
+    </div>
+    <div class="mem-kpi">
+      <div class="mem-kpi-label">Stage3 chunk rows</div>
+      <div class="mem-kpi-value" id="mem-kpi-s3-rows">-</div>
     </div>
   </div>
 
-  <div class="mem-grid" id="mem-grid">
-    <div class="mem-item">
-      <div class="mem-item-header">
-        <span class="mem-item-name">线程信息加载中...</span>
-      </div>
+  <div class="mem-section">
+    <div class="mem-section-title">对象级估算（Stage2 Builder Top）</div>
+    <div class="mem-table-wrap">
+      <table class="mem-table">
+        <thead>
+          <tr>
+            <th>Estimated</th>
+            <th>Container</th>
+          </tr>
+        </thead>
+        <tbody id="mem-obj-top-body"></tbody>
+      </table>
     </div>
+    <div class="mem-empty" id="mem-obj-empty" style="display: none">暂时没有对象级数据</div>
+  </div>
+
+  <div class="mem-section">
+    <div class="mem-section-title">Stage3 运行时工作集估算</div>
+    <div class="mem-rollup-grid" id="mem-stage3-runtime"></div>
   </div>
 </div>
 
 <script>
   (function () {
-    let expandedRows = new Set();
-
     function formatBytes(bytes) {
-      if (bytes < 1024) return bytes + " B";
-      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
-      if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + " MB";
-      return (bytes / (1024 * 1024 * 1024)).toFixed(2) + " GB";
+      if (!bytes) return "0 B";
+      if (bytes < 1024) return `${bytes} B`;
+      if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+      if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+      return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
     }
 
-    function toggleDetail(name) {
-      if (expandedRows.has(name)) {
-        expandedRows.delete(name);
-      } else {
-        expandedRows.add(name);
-      }
-      const el = document.getElementById("mem-detail-" + name);
-      if (el) {
-        el.classList.toggle("show", expandedRows.has(name));
-      }
+    function setText(id, text) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = text;
     }
 
-    window._toggleMemDetail = toggleDetail;
+    function renderRollupGrid(id, rows) {
+      const box = document.getElementById(id);
+      if (!box) return;
+      let html = "";
+      for (const row of rows) {
+        html += `
+          <div class="mem-rollup-item">
+            <div class="mem-rollup-key">${row.key}</div>
+            <div class="mem-rollup-val">${formatBytes(row.value || 0)}</div>
+          </div>
+        `;
+      }
+      box.innerHTML = html;
+    }
+
+    function renderTableBody(id, rows, cols) {
+      const body = document.getElementById(id);
+      if (!body) return;
+      let html = "";
+      for (const row of rows) {
+        html += "<tr>";
+        for (const col of cols) {
+          const val = row[col.key];
+          const text = col.type === "bytes" ? formatBytes(val || 0) : (val ?? "");
+          const cls = col.key === "path" ? "path" : "";
+          html += `<td class="${cls}" title="${col.key === "path" ? (val || "") : ""}">${text}</td>`;
+        }
+        html += "</tr>";
+      }
+      body.innerHTML = html;
+    }
 
     async function refreshMemory() {
       try {
         const resp = await fetch("/api/memory");
         const data = await resp.json();
 
-        document.getElementById("mem-process-rss").textContent = formatBytes(data.process_rss_bytes || 0);
-        document.getElementById("mem-thread-count").textContent = String((data.threads || []).length);
+        setText("mem-updated-at", new Date().toLocaleTimeString());
+        setText("mem-kpi-rss", formatBytes(data.process_rss_bytes || 0));
 
-        const grid = document.getElementById("mem-grid");
-        let html = "";
+        const obj = data.object_breakdown || {};
+        const s2 = obj.stage2_builder || {};
+        const s3Run = obj.stage3_runtime_last_chunk || {};
+        setText("mem-kpi-s2-total", formatBytes(s2.estimated_total_bytes || 0));
+        setText("mem-kpi-s2-peak", formatBytes(s2.peak_chunk_plus_commit_bytes || 0));
+        setText("mem-kpi-s3-work", formatBytes(s3Run.total_working_set_bytes || 0));
+        setText("mem-kpi-s3-rows", String(s3Run.row_count || 0));
 
-        for (const t of data.threads || []) {
-          const rowKey = String(t.tid);
-          const stackBytes = t.stack_bytes || 0;
-          const isExpanded = expandedRows.has(rowKey);
-          const pctClass = stackBytes >= 8 * 1024 * 1024 ? "high" : stackBytes >= 2 * 1024 * 1024 ? "medium" : "low";
-          const barPct = Math.min(100, (stackBytes / (8 * 1024 * 1024)) * 100);
+        renderRollupGrid("mem-stage3-runtime", [
+          { key: "event_inputs", value: s3Run.event_inputs_bytes || 0 },
+          { key: "user_blob_pool", value: s3Run.user_blob_pool_bytes || 0 },
+          { key: "user_index_maps", value: s3Run.user_index_bytes || 0 },
+          { key: "token_states", value: s3Run.token_states_bytes || 0 },
+          { key: "bucket_agg", value: s3Run.bucket_agg_bytes || 0 },
+          { key: "event_facts", value: s3Run.event_facts_bytes || 0 },
+          { key: "working_set_total", value: s3Run.total_working_set_bytes || 0 },
+          { key: "working_set_peak", value: s3Run.peak_working_set_bytes || 0 },
+        ]);
 
-          html += `
-            <div class="mem-item">
-              <div class="mem-item-header" onclick="window._toggleMemDetail('${rowKey}')">
-                <span class="mem-item-name">tid=${t.tid} ${t.name || "unknown"} <span style="color:#555;font-size:0.8em">▼</span></span>
-                <span class="mem-item-pct ${pctClass}">${formatBytes(stackBytes)}</span>
-              </div>
-              <div class="mem-item-bar">
-                <div class="mem-item-fill ${pctClass}" style="width: ${barPct}%"></div>
-              </div>
-              <div class="mem-item-stats">
-                <span class="mem-item-usage">stack: ${formatBytes(stackBytes)}</span>
-                <span class="mem-item-limit">基准: 8MB</span>
-              </div>
-              <div class="mem-detail ${isExpanded ? 'show' : ''}" id="mem-detail-${rowKey}">
-                <div class="mem-detail-row"><span class="tag">tid</span><span class="size">${t.tid}</span></div>
-                <div class="mem-detail-row"><span class="tag">name</span><span class="size">${t.name || "unknown"}</span></div>
-                <div class="mem-detail-row"><span class="tag">stack_bytes</span><span class="size">${stackBytes}</span></div>
-              </div>
-            </div>
-          `;
-        }
-
-        grid.innerHTML = html;
+        const objRows = s2.top_containers || [];
+        renderTableBody("mem-obj-top-body", objRows, [
+          { key: "estimated_bytes", type: "bytes" },
+          { key: "name" },
+        ]);
+        const objEmpty = document.getElementById("mem-obj-empty");
+        if (objEmpty) objEmpty.style.display = objRows.length ? "none" : "block";
       } catch (e) {
         console.error("Memory refresh failed:", e);
       }

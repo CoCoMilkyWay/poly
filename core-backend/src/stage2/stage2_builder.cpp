@@ -9,6 +9,7 @@ namespace stage2 {
 EventBuilder::EventBuilder(Database &stage1_db, Database &stage2_db)
     : stage1_db_(stage1_db), stage2_db_(stage2_db) {
   commit_thread_ = std::thread([this] { commit_worker_loop(); });
+  refresh_memory_snapshot("constructed");
 }
 
 EventBuilder::~EventBuilder() {
@@ -500,6 +501,7 @@ void EventBuilder::load_from_rb() {
   stage2_log_info("Restored: " + std::to_string(conditions_.size()) + " conditions, " +
                   std::to_string(token_map_.size()) + " tokens, " +
                   std::to_string(fpmm_map_.size()) + " FPMMs");
+  refresh_memory_snapshot("load_from_rb_done");
 }
 
 void EventBuilder::reap_commit_result_locked() {
@@ -611,6 +613,7 @@ bool EventBuilder::build_chunk(int64_t target_block) {
   chunk_merge_sem_tree_ = {};
   chunk_convert_sem_tree_ = {};
   chunk_order_sem_tree_ = {};
+  refresh_memory_snapshot("chunk_start_cleared");
 
   // 开始 chunk log
   chunk_log_.begin(log_dir_, chunk_start, chunk_end);
@@ -632,17 +635,21 @@ bool EventBuilder::build_chunk(int64_t target_block) {
 
   progress_.phase = 2;
   phase2_build_semantic_index(chunk_start, chunk_end);
+  refresh_memory_snapshot("phase2_semantic_done");
   if (stop_requested_) {
     progress_.running = false;
     chunk_log_.finish();
+    refresh_memory_snapshot("stopped_after_phase2");
     return false;
   }
 
   progress_.phase = 3;
   phase3_process_transfers(chunk_start, chunk_end);
+  refresh_memory_snapshot("phase3_transfer_done");
   if (stop_requested_) {
     progress_.running = false;
     chunk_log_.finish();
+    refresh_memory_snapshot("stopped_after_phase3");
     return false;
   }
 
@@ -695,6 +702,7 @@ bool EventBuilder::build_chunk(int64_t target_block) {
   // 记录统计信息并结束 chunk log
   chunk_log_.set_xfer_stats(TransferStats::format_log(chunk_xfer_stats_, progress_.xfer_stats));
   chunk_log_.finish();
+  refresh_memory_snapshot("chunk_committed");
   return true;
 }
 

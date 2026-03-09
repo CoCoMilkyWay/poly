@@ -1219,12 +1219,8 @@ void ApiSession::handle_memory() {
   TraceN("api/memory");
   res_.set(http::field::content_type, "application/json");
   json result = json::object();
-  const int64_t rss = Database::get_process_rss_bytes();
-  result["process_rss_bytes"] = rss;
-  result["process_rss_mb"] = static_cast<double>(rss) / (1024.0 * 1024.0);
-  result["threads"] = Database::get_thread_stack_usage();
-  result["note"] = "Thread-level heap memory is not available from /proc; stack_bytes is VmStk only.";
-
+  result["process_rss_bytes"] = Database::get_process_rss_bytes();
+  result["object_breakdown"] = stage3_.memory_breakdown();
   res_.result(http::status::ok);
   res_.body() = result.dump(2);
 }

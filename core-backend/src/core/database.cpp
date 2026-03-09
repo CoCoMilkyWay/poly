@@ -1,4 +1,5 @@
 #include "database.hpp"
+#include "mem.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -7,7 +8,6 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <sstream>
 #include <sys/file.h>
 #include <unistd.h>
 
@@ -433,66 +433,5 @@ void Database::write_state_unlocked(const json &state) const {
 }
 
 int64_t Database::get_process_rss_bytes() {
-  std::ifstream status("/proc/self/status");
-  if (!status.is_open())
-    return 0;
-  std::string line;
-  while (std::getline(status, line)) {
-    if (line.rfind("VmRSS:", 0) == 0) {
-      // format: "VmRSS:    123456 kB"
-      std::istringstream iss(line.substr(6));
-      int64_t val = 0;
-      std::string unit;
-      iss >> val >> unit;
-      if (unit == "kB" || unit == "KB") {
-        return val * 1024;
-      }
-      return val;
-    }
-  }
-  return 0;
-}
-
-json Database::get_thread_stack_usage() {
-  json rows = json::array();
-  const fs::path task_dir = "/proc/self/task";
-  if (!fs::exists(task_dir) || !fs::is_directory(task_dir)) {
-    return rows;
-  }
-  for (const auto &entry : fs::directory_iterator(task_dir)) {
-    if (!entry.is_directory()) {
-      continue;
-    }
-    const std::string tid_text = entry.path().filename().string();
-    if (!std::all_of(tid_text.begin(), tid_text.end(), [](unsigned char ch) { return std::isdigit(ch) != 0; })) {
-      continue;
-    }
-    const int64_t tid = std::stoll(tid_text);
-    std::ifstream status(entry.path() / "status");
-    assert(status.is_open());
-    std::string name = "unknown";
-    int64_t stack_kb = 0;
-    std::string line;
-    while (std::getline(status, line)) {
-      if (line.rfind("Name:", 0) == 0) {
-        name = line.substr(5);
-        while (!name.empty() && std::isspace(static_cast<unsigned char>(name.front()))) {
-          name.erase(name.begin());
-        }
-      } else if (line.rfind("VmStk:", 0) == 0) {
-        std::istringstream iss(line.substr(6));
-        int64_t val = 0;
-        std::string unit;
-        iss >> val >> unit;
-        if (unit == "kB" || unit == "KB") {
-          stack_kb = val;
-        }
-      }
-    }
-    rows.push_back({{"tid", tid}, {"name", name}, {"stack_bytes", stack_kb * 1024}});
-  }
-  std::sort(rows.begin(), rows.end(), [](const json &a, const json &b) {
-    return a.value("stack_bytes", int64_t{0}) > b.value("stack_bytes", int64_t{0});
-  });
-  return rows;
+  return core::mem::get_process_rss_bytes();
 }

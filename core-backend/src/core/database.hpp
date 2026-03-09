@@ -59,7 +59,6 @@ public:
 
   // process-level memory (RSS from /proc/self/status)
   static int64_t get_process_rss_bytes();
-  static json get_thread_stack_usage();
 
 private:
   std::vector<FeatherChunk> list_chunks(const std::string &table) const;

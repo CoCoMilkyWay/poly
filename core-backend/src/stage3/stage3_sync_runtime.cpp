@@ -603,6 +603,39 @@ bool StageSync::process_chunk_locked() const {
   }
   assert(event_facts.size() == event_inputs.size());
 
+  {
+    const auto no_extra = [](const auto &) { return int64_t{0}; };
+    const int64_t event_inputs_bytes = core::mem::estimate_vector_plain(event_inputs);
+    const int64_t user_blob_pool_bytes =
+        core::mem::estimate_vector(user_blob_pool, [](const std::string &s) { return core::mem::estimate_string_extra(s); });
+    const int64_t user_index_bytes =
+        core::mem::estimate_unordered_map(user_blob_to_id, [](const std::string &k) { return core::mem::estimate_string_extra(k); }, no_extra) +
+        core::mem::estimate_unordered_map(user_event_increments, no_extra, no_extra) +
+        core::mem::estimate_unordered_map(user_last_sort_keys, no_extra, no_extra) +
+        core::mem::estimate_unordered_map(user_realized_totals, no_extra, no_extra) +
+        core::mem::estimate_unordered_map(user_unrealized_totals, no_extra, no_extra) +
+        core::mem::estimate_unordered_map(user_active_token_counts, no_extra, no_extra);
+    const int64_t token_states_bytes = core::mem::estimate_unordered_map(token_states, no_extra, no_extra);
+    const int64_t bucket_agg_bytes = core::mem::estimate_unordered_map(bucket_agg_states, no_extra, no_extra);
+    const int64_t event_facts_bytes = core::mem::estimate_vector_plain(event_facts);
+    const int64_t total_working_set_bytes =
+        event_inputs_bytes + user_blob_pool_bytes + user_index_bytes + token_states_bytes + bucket_agg_bytes + event_facts_bytes;
+    {
+      std::lock_guard<std::mutex> lock(sync_mu_);
+      runtime_mem_probe_.event_inputs_bytes = event_inputs_bytes;
+      runtime_mem_probe_.user_blob_pool_bytes = user_blob_pool_bytes;
+      runtime_mem_probe_.user_index_bytes = user_index_bytes;
+      runtime_mem_probe_.token_states_bytes = token_states_bytes;
+      runtime_mem_probe_.bucket_agg_bytes = bucket_agg_bytes;
+      runtime_mem_probe_.event_facts_bytes = event_facts_bytes;
+      runtime_mem_probe_.total_working_set_bytes = total_working_set_bytes;
+      runtime_mem_probe_.peak_working_set_bytes =
+          std::max(runtime_mem_probe_.peak_working_set_bytes, total_working_set_bytes);
+      runtime_mem_probe_.row_count = static_cast<int64_t>(event_inputs.size());
+      runtime_mem_probe_.max_cond_idx = max_cond_idx;
+    }
+  }
+
   for (const auto &[key, st] : token_states) {
     assert(key.cond_idx >= 0);
     assert(static_cast<size_t>(key.cond_idx) < conditions_.size());

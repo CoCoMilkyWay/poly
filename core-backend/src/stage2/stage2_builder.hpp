@@ -38,6 +38,7 @@ public:
 
   const BuildProgress &progress() const;
   const BuildProgress &committed_progress() const;
+  json memory_breakdown() const;
 
 private:
   Database &stage1_db_;
@@ -150,6 +151,10 @@ private:
   std::optional<BuildProgress> commit_result_;
   std::optional<CommitPayload> commit_reusable_payload_;
   std::atomic<bool> stop_requested_{false};
+  mutable std::mutex mem_mu_;
+  json mem_snapshot_ = json::object();
+  int64_t mem_peak_chunk_bytes_ = 0;
+  void refresh_memory_snapshot(const char *phase);
 
   void update_xfer_tree(TransferClass cls) {
     chunk_xfer_stats_.add(cls);
@@ -812,3 +817,5 @@ private:
 };
 
 } // namespace stage2
+
+#include "stage2_mem.hpp" // IWYU pragma: keep
