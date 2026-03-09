@@ -3,6 +3,7 @@
 #include "../core/ctf_helpers.hpp"
 #include "../core/database.hpp"
 #include "../core/keccak256.hpp"
+#include "../core/rocks_store.hpp"
 #include "stage2_assert.hpp"
 #include "stage2_models.hpp"
 #include "stage2_types.hpp"
@@ -11,6 +12,7 @@
 #include <condition_variable>
 #include <functional>
 #include <limits>
+#include <memory>
 #include <mutex>
 #include <nlohmann/json.hpp>
 #include <optional>
@@ -30,6 +32,7 @@ public:
   void load_from_rb();
 
   int64_t cursor() const;
+  const core::rocks::Stage2UserEventStore &user_event_store() const;
 
   bool build_chunk(int64_t target_block);
   void wait_for_pending_commit();
@@ -43,6 +46,7 @@ public:
 private:
   Database &stage1_db_;
   Database &stage2_db_;
+  std::unique_ptr<core::rocks::Stage2UserEventStore> user_event_store_;
   BuildProgress progress_;
   BuildProgress committed_progress_;
 

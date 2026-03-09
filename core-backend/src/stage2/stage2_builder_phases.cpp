@@ -1465,38 +1465,29 @@ BuildProgress EventBuilder::commit_chunk(CommitPayload payload) {
   }
 
   if (!new_events_.empty()) {
-    exec_sql("CREATE TEMP TABLE IF NOT EXISTS tmp_user_event ("
-             "user_addr BLOB, sort_key BIGINT, cond_idx INTEGER, "
-             "event_type INTEGER, token_idx INTEGER, collateral INTEGER, amount BIGINT, price BIGINT)");
-    exec_sql("DELETE FROM tmp_user_event");
-
-    {
-      duckdb::Appender appender(*conn, "tmp_user_event");
-      std::unordered_map<std::string, std::string> user_blob_cache;
-      user_blob_cache.reserve(std::min<size_t>(new_events_.size(), 4096));
-      for (auto &[user, evt] : new_events_) {
-        auto user_blob_it = user_blob_cache.find(user);
-        if (user_blob_it == user_blob_cache.end()) {
-          user_blob_it = user_blob_cache.emplace(user, hex_to_blob(user)).first;
-        }
-        const std::string &user_blob = user_blob_it->second;
-        int32_t db_cond_idx = (evt.cond_idx == UNKNOWN_COND_IDX) ? -1 : static_cast<int32_t>(evt.cond_idx);
-        appender.BeginRow();
-        appender.Append(duckdb::Value::BLOB(reinterpret_cast<duckdb::const_data_ptr_t>(user_blob.data()), user_blob.size()));
-        appender.Append(evt.sort_key);
-        appender.Append(db_cond_idx);
-        appender.Append(static_cast<int32_t>(evt.type));
-        appender.Append(static_cast<int32_t>(evt.token_idx));
-        appender.Append(static_cast<int32_t>(evt.collateral));
-        appender.Append(evt.amount);
-        appender.Append(evt.price);
-        appender.EndRow();
+    std::vector<core::rocks::Stage2UserEventRecord> rows;
+    rows.reserve(new_events_.size());
+    std::unordered_map<std::string, std::string> user_blob_cache;
+    user_blob_cache.reserve(std::min<size_t>(new_events_.size(), 4096));
+    for (auto &[user, evt] : new_events_) {
+      auto user_blob_it = user_blob_cache.find(user);
+      if (user_blob_it == user_blob_cache.end()) {
+        user_blob_it = user_blob_cache.emplace(user, hex_to_blob(user)).first;
       }
-      appender.Close();
+      const std::string &user_blob = user_blob_it->second;
+      int32_t db_cond_idx = (evt.cond_idx == UNKNOWN_COND_IDX) ? -1 : static_cast<int32_t>(evt.cond_idx);
+      rows.push_back({
+          user_blob,
+          evt.sort_key,
+          db_cond_idx,
+          static_cast<int32_t>(evt.type),
+          static_cast<int32_t>(evt.token_idx),
+          static_cast<int32_t>(evt.collateral),
+          evt.amount,
+          evt.price,
+      });
     }
-
-    exec_sql("INSERT OR IGNORE INTO user_event "
-             "SELECT * FROM tmp_user_event");
+    user_event_store_->write_events(rows);
   }
 
   exec_sql("CREATE TEMP TABLE IF NOT EXISTS tmp_stage2_cursor (key TEXT, value BIGINT)");

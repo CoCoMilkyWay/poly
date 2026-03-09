@@ -58,19 +58,28 @@ inline json StageSync::memory_breakdown() const {
     stage3_top.push_back({{"name", stage3_rows[i].first}, {"estimated_bytes", stage3_rows[i].second}});
   }
 
-  json stage3_runtime = {
+  const json stage2_raw = builder_.memory_breakdown();
+  int64_t stage2_total_bytes = 0;
+  if (stage2_raw.contains("estimated_total_bytes")) {
+    stage2_total_bytes = stage2_raw["estimated_total_bytes"].get<int64_t>();
+  }
+  json stage2_items = json::array();
+  if (stage2_raw.contains("top_containers") && stage2_raw["top_containers"].is_array()) {
+    stage2_items = stage2_raw["top_containers"];
+  }
+
+  json stage2 = {
+      {"estimated_total_bytes", stage2_total_bytes},
+      {"items", stage2_items},
+  };
+  json stage3 = {
       {"estimated_total_bytes", probe_copy.total_working_set_bytes + stage3_persistent_total},
-      {"working_set_bytes", probe_copy.total_working_set_bytes},
-      {"persistent_bytes", stage3_persistent_total},
-      {"peak_working_set_bytes", probe_copy.peak_working_set_bytes},
-      {"row_count", probe_copy.row_count},
-      {"max_cond_idx", probe_copy.max_cond_idx},
-      {"top_containers", stage3_top},
+      {"items", stage3_top},
   };
 
   json result = {
-      {"stage2_builder", builder_.memory_breakdown()},
-      {"stage3_runtime", stage3_runtime},
+      {"stage2", stage2},
+      {"stage3", stage3},
   };
   return result;
 }

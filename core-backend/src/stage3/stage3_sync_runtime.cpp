@@ -61,9 +61,6 @@ constexpr const char *kSqlSetFeatureTensorStateUpsert =
     "updated_sort_key=excluded.updated_sort_key";
 constexpr const char *kSqlOnConflictFeatureTensorState = "ON CONFLICT(user_addr, block_bucket, tag_id) DO UPDATE SET ";
 constexpr const char *kSqlOnConflictUserSummaryState = "ON CONFLICT(user_addr) DO UPDATE SET ";
-constexpr const char *kSqlOrderByEventSourceKey = " ORDER BY sort_key, user_addr, cond_idx, event_type, token_idx";
-constexpr const char *kSqlSelectEventInputCols =
-    "SELECT user_addr, sort_key, cond_idx, event_type, token_idx, collateral, amount, price ";
 constexpr const char *kSqlSelectSummarySeedCols =
     "SELECT s.user_addr, s.total_realized_pnl, s.total_unrealized_pnl, s.active_tokens ";
 constexpr const char *kSqlSelectTokenStateCols =
@@ -236,11 +233,9 @@ bool StageSync::process_chunk_locked() const {
   }
   int64_t head_sort_key = head_block * SORT_KEY_SCALE + (SORT_KEY_SCALE - 1);
 
-  auto source_conn = stage2_db_.create_connection();
   auto sink_conn = stage3_db_.create_connection();
   const std::string table_token_state = kSqlTableTokenState;
   const std::string table_user_summary = kSqlTableUserSummaryState;
-  const std::string table_event_fact = kSqlTableEventFact;
   const std::string table_feature_tensor = kSqlTableFeatureTensorState;
   const std::string sql_set_user_summary_upsert =
       "total_events=" + table_user_summary + ".total_events + excluded.total_events, "
@@ -263,14 +258,9 @@ bool StageSync::process_chunk_locked() const {
         reinterpret_cast<duckdb::const_data_ptr_t>(blob.data()),
         blob.size()));
   };
-  const std::string event_query_order_sql = kSqlOrderByEventSourceKey;
-  auto qr = source_conn->Query(
-      std::string(kSqlSelectEventInputCols) + "FROM user_event WHERE sort_key > " +
-      std::to_string(sync_cursor_.sort_key) + " AND sort_key <= " +
-      std::to_string(head_sort_key) + event_query_order_sql + " LIMIT " +
-      std::to_string(kStage3BatchEvents));
-  assert(qr && !qr->HasError());
-  if (qr->RowCount() == 0) {
+  std::vector<core::rocks::Stage2UserEventRecord> source_rows = builder_.user_event_store().scan_by_sort_key(
+      sync_cursor_.sort_key, head_sort_key, static_cast<size_t>(kStage3BatchEvents));
+  if (source_rows.empty()) {
     sync_cursor_.sort_key = head_sort_key;
     (void)checked_query("BEGIN");
     save_cursor_locked(*sink_conn);
@@ -279,11 +269,11 @@ bool StageSync::process_chunk_locked() const {
   }
 
   std::vector<EventInput> event_inputs;
-  event_inputs.reserve(static_cast<size_t>(qr->RowCount()));
+  event_inputs.reserve(source_rows.size());
   std::vector<std::string> user_blob_pool;
-  user_blob_pool.reserve(static_cast<size_t>(qr->RowCount() / 10 + 1));
+  user_blob_pool.reserve(source_rows.size() / 10 + 1);
   std::unordered_map<std::string, uint32_t> user_blob_to_id;
-  user_blob_to_id.reserve(static_cast<size_t>(qr->RowCount() / 10 + 1));
+  user_blob_to_id.reserve(source_rows.size() / 10 + 1);
   auto intern_user_id = [&](const std::string &user_blob) {
     auto it = user_blob_to_id.find(user_blob);
     if (it != user_blob_to_id.end()) {
@@ -314,42 +304,40 @@ bool StageSync::process_chunk_locked() const {
   int32_t prev_cond_idx = std::numeric_limits<int32_t>::min();
   int32_t prev_event_type = std::numeric_limits<int32_t>::min();
   int32_t prev_token_idx = std::numeric_limits<int32_t>::min();
-  auto consume_event_inputs = [&](duckdb::MaterializedQueryResult &result) {
-    for (idx_t i = 0; i < result.RowCount(); ++i) {
-      const std::string user_blob = result.GetValue(0, i).GetValueUnsafe<std::string>();
-      EventInput row;
-      row.user_id = intern_user_id(user_blob);
-      row.sort_key = result.GetValue(1, i).GetValue<int64_t>();
-      row.cond_idx = result.GetValue(2, i).GetValue<int32_t>();
-      row.event_type = result.GetValue(3, i).GetValue<int32_t>();
-      row.token_idx = result.GetValue(4, i).GetValue<int32_t>();
-      row.collateral = result.GetValue(5, i).GetValue<int32_t>();
-      row.amount = result.GetValue(6, i).GetValue<int64_t>();
-      row.price = result.GetValue(7, i).GetValue<int64_t>();
-      if (has_prev_key) {
-        const int user_cmp = compare_blob_unsigned(user_blob, prev_user_blob);
-        assert(
-            row.sort_key > prev_sort_key ||
-            (row.sort_key == prev_sort_key &&
-             (user_cmp > 0 ||
-              (user_cmp == 0 &&
-               (row.cond_idx > prev_cond_idx ||
-                (row.cond_idx == prev_cond_idx &&
-                 (row.event_type > prev_event_type ||
-                  (row.event_type == prev_event_type && row.token_idx > prev_token_idx))))))));
-      }
-      has_prev_key = true;
-      prev_sort_key = row.sort_key;
-      prev_user_blob = user_blob;
-      prev_cond_idx = row.cond_idx;
-      prev_event_type = row.event_type;
-      prev_token_idx = row.token_idx;
-      event_inputs.push_back(row);
+  for (const auto &src : source_rows) {
+    const std::string &user_blob = src.user_addr;
+    stage2_assert(user_blob.size() == 20, AssertLevel::L0, "Data", "Stage2UserAddrLen20");
+    EventInput row;
+    row.user_id = intern_user_id(user_blob);
+    row.sort_key = src.sort_key;
+    row.cond_idx = src.cond_idx;
+    row.event_type = src.event_type;
+    row.token_idx = src.token_idx;
+    row.collateral = src.collateral;
+    row.amount = src.amount;
+    row.price = src.price;
+    if (has_prev_key) {
+      const int user_cmp = compare_blob_unsigned(user_blob, prev_user_blob);
+      assert(
+          row.sort_key > prev_sort_key ||
+          (row.sort_key == prev_sort_key &&
+           (user_cmp > 0 ||
+            (user_cmp == 0 &&
+             (row.cond_idx > prev_cond_idx ||
+              (row.cond_idx == prev_cond_idx &&
+               (row.event_type > prev_event_type ||
+                (row.event_type == prev_event_type && row.token_idx > prev_token_idx))))))));
     }
-  };
-  consume_event_inputs(*qr);
+    has_prev_key = true;
+    prev_sort_key = row.sort_key;
+    prev_user_blob = user_blob;
+    prev_cond_idx = row.cond_idx;
+    prev_event_type = row.event_type;
+    prev_token_idx = row.token_idx;
+    event_inputs.push_back(row);
+  }
 
-  if (qr->RowCount() == static_cast<idx_t>(kStage3BatchEvents)) {
+  if (source_rows.size() == static_cast<size_t>(kStage3BatchEvents)) {
     assert(!event_inputs.empty());
     const EventInput &last_row = event_inputs.back();
     const int64_t last_block = sort_key_to_block(last_row.sort_key);
@@ -701,26 +689,27 @@ bool StageSync::process_chunk_locked() const {
     }
 
     if (!event_facts.empty()) {
-      duckdb::Appender ap(*sink_conn, kSqlTableEventFact);
+      std::vector<core::rocks::Stage3EventFactRecord> rows;
+      rows.reserve(event_facts.size());
       for (const auto &fr : event_facts) {
         const std::string &user_blob = user_blob_pool[fr.user_id];
-        ap.BeginRow();
-        append_blob(ap, user_blob);
-        ap.Append(fr.sort_key);
-        ap.Append(fr.cond_idx);
-        ap.Append(fr.token_idx);
-        ap.Append(fr.event_type);
-        ap.Append(fr.realized_delta);
-        ap.Append(fr.realized_cum);
-        ap.Append(fr.unrealized_pnl);
-        ap.Append(fr.token_count);
-        ap.Append(static_cast<int32_t>(fr.tag_id));
-        ap.Append(fr.exposure);
-        ap.Append(fr.volume);
-        ap.Append(fr.holding_period);
-        ap.EndRow();
+        rows.push_back({
+            user_blob,
+            fr.sort_key,
+            fr.cond_idx,
+            fr.event_type,
+            fr.token_idx,
+            fr.realized_delta,
+            fr.realized_cum,
+            fr.unrealized_pnl,
+            fr.token_count,
+            static_cast<int32_t>(fr.tag_id),
+            fr.exposure,
+            fr.volume,
+            fr.holding_period,
+        });
       }
-      ap.Close();
+      event_fact_store_->write_events(rows);
     }
 
     if (!bucket_agg_states.empty()) {

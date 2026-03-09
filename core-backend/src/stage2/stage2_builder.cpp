@@ -7,7 +7,9 @@
 namespace stage2 {
 
 EventBuilder::EventBuilder(Database &stage1_db, Database &stage2_db)
-    : stage1_db_(stage1_db), stage2_db_(stage2_db) {
+    : stage1_db_(stage1_db), stage2_db_(stage2_db),
+      user_event_store_(std::make_unique<core::rocks::Stage2UserEventStore>(
+          stage2_db_.data_dir() + "/user_event.rocks")) {
   commit_thread_ = std::thread([this] { commit_worker_loop(); });
   refresh_memory_snapshot("constructed");
 }
@@ -91,20 +93,6 @@ void EventBuilder::init_schema() {
     CREATE TABLE IF NOT EXISTS rb_neg_risk_market (
       question_id BLOB PRIMARY KEY,
       market_id   BLOB NOT NULL
-    )
-  )");
-
-  stage2_db_.execute(R"(
-    CREATE TABLE IF NOT EXISTS user_event (
-      user_addr   BLOB NOT NULL,
-      sort_key    BIGINT NOT NULL,
-      cond_idx    INTEGER NOT NULL,
-      event_type  INTEGER NOT NULL,
-      token_idx   INTEGER NOT NULL,
-      collateral  INTEGER NOT NULL DEFAULT 1,
-      amount      BIGINT NOT NULL,
-      price       BIGINT NOT NULL,
-      PRIMARY KEY (user_addr, sort_key, cond_idx, event_type, token_idx)
     )
   )");
 
@@ -193,18 +181,6 @@ void EventBuilder::load_from_rb() {
   auto cur = conn->Query("SELECT value FROM stage2_cursor WHERE key='last_block'");
   stage2_assert(cur && !cur->HasError(), AssertLevel::L0, "DB", "CursorLoadSuccess");
   progress_.cursor = cur->RowCount() > 0 ? cur->GetValue(0, 0).GetValue<int64_t>() : 0;
-
-  // 从 user_event 表重新计算事件计数(保证数据一致性)
-  auto cnt_r = conn->Query(R"(
-    SELECT event_type, COUNT(*) as cnt FROM user_event GROUP BY event_type
-  )");
-  stage2_assert(cnt_r && !cnt_r->HasError(), AssertLevel::L0, "DB", "LoadEventTypeCountSuccess");
-  for (idx_t i = 0; i < cnt_r->RowCount(); ++i) {
-    int type = cnt_r->GetValue(0, i).GetValue<int>();
-    int64_t cnt = cnt_r->GetValue(1, i).GetValue<int64_t>();
-    bump_event_counter(static_cast<EventType>(type), cnt);
-    progress_.total_events += cnt;
-  }
 
   auto cond_r = conn->Query("SELECT cond_idx, cond_id, outcome_cnt, "
                             "payout_0, payout_1, payout_2, payout_3, "
@@ -302,45 +278,42 @@ void EventBuilder::load_from_rb() {
   progress_.total_tokens = token_map_.size();
   update_cond_type_stats();
 
-  // 加载已知用户(恢复时从数据库)
-  auto user_r = conn->Query("SELECT DISTINCT user_addr FROM user_event");
-  stage2_assert(user_r && !user_r->HasError(), AssertLevel::L0, "DB", "LoadDistinctUsersSuccess");
-  seen_users_.reserve(static_cast<size_t>(user_r->RowCount()));
-  for (idx_t i = 0; i < user_r->RowCount(); ++i) {
-    seen_users_.insert(blob_hex_lower(user_r->GetValue(0, i)));
+  // 恢复已知用户与 user_event 统计(来自 RocksDB)
+  auto user_blobs = user_event_store_->collect_distinct_users();
+  seen_users_.reserve(user_blobs.size());
+  for (const auto &user_blob : user_blobs) {
+    seen_users_.insert(to_lower(blob_to_hex(user_blob)));
   }
   progress_.total_users = seen_users_.size();
 
   progress_.event_by_collateral.clear();
+  user_event_store_->for_each_event([&](const core::rocks::Stage2UserEventRecord &row) {
+    stage2_assert(row.event_type >= static_cast<int32_t>(EventType::OrderBuy) &&
+                      row.event_type <= static_cast<int32_t>(EventType::TransferOutNonPoly),
+                  AssertLevel::L0, "DB", "LoadEventTypeInRange");
+    stage2_assert(row.collateral >= 0 &&
+                      row.collateral <= static_cast<int32_t>(std::numeric_limits<uint8_t>::max()),
+                  AssertLevel::L0, "DB", "LoadCollateralInRange");
+    bump_event_counter(static_cast<EventType>(row.event_type), 1);
+    progress_.total_events++;
 
-  // 恢复 event_by_collateral 统计
-  auto evt_stats = conn->Query(
-      "SELECT ue.event_type, "
-      "CASE "
-      "  WHEN ue.collateral = 0 AND cc.coll_id IS NOT NULL THEN cc.coll_id "
-      "  WHEN ue.collateral = 0 AND nrm.question_id IS NOT NULL THEN " +
-      std::to_string(static_cast<int>(Collateral::WrappedUSDCe)) + " "
-                                                                   "  ELSE ue.collateral "
-                                                                   "END AS effective_collateral, "
-                                                                   "COUNT(*) "
-                                                                   "FROM user_event ue "
-                                                                   "LEFT JOIN rb_cond_collateral cc ON ue.cond_idx = cc.cond_idx "
-                                                                   "LEFT JOIN rb_condition rc ON ue.cond_idx = rc.cond_idx "
-                                                                   "LEFT JOIN rb_neg_risk_market nrm ON rc.question_id = nrm.question_id "
-                                                                   "GROUP BY ue.event_type, effective_collateral");
-  stage2_assert(evt_stats && !evt_stats->HasError(), AssertLevel::L0, "DB", "LoadEventByCollateralSuccess");
-  progress_.event_by_collateral.reserve(static_cast<size_t>(evt_stats->RowCount()));
-  for (idx_t i = 0; i < evt_stats->RowCount(); ++i) {
-    uint8_t event_type = evt_stats->GetValue(0, i).GetValue<uint8_t>();
-    uint8_t collateral = evt_stats->GetValue(1, i).GetValue<uint8_t>();
-    int64_t count = evt_stats->GetValue(2, i).GetValue<int64_t>();
-    uint16_t key = static_cast<uint16_t>(event_type) * 256 + collateral;
-    progress_.event_by_collateral[key] = count;
-  }
+    uint8_t effective_collateral = static_cast<uint8_t>(row.collateral);
+    if (effective_collateral == static_cast<uint8_t>(Collateral::Unknown) && row.cond_idx >= 0) {
+      uint32_t cond_idx = static_cast<uint32_t>(row.cond_idx);
+      auto coll_it = cond_collateral_.find(cond_idx);
+      if (coll_it != cond_collateral_.end()) {
+        effective_collateral = coll_it->second;
+      } else if (cond_idx < conditions_.size()) {
+        const std::string &qid = conditions_[cond_idx].question_id;
+        if (!qid.empty() && cond_to_market_.count(qid) > 0) {
+          effective_collateral = static_cast<uint8_t>(Collateral::WrappedUSDCe);
+        }
+      }
+    }
 
-  auto evt_total = conn->Query("SELECT COUNT(*) FROM user_event");
-  stage2_assert(evt_total && !evt_total->HasError(), AssertLevel::L0, "DB", "LoadEventTotalSuccess");
-  progress_.total_events = evt_total->RowCount() > 0 ? evt_total->GetValue(0, 0).GetValue<int64_t>() : 0;
+    uint16_t key = static_cast<uint16_t>(row.event_type) * 256 + effective_collateral;
+    progress_.event_by_collateral[key]++;
+  });
 
   // 恢复 TransferStats(包含 internal 类,无法从 user_event 反推)
   auto xfer_kv = conn->Query("SELECT key, value FROM stage2_cursor WHERE key LIKE 'xfer_%'");
@@ -541,6 +514,10 @@ void EventBuilder::commit_worker_loop() {
 }
 
 int64_t EventBuilder::cursor() const { return committed_progress_.cursor; }
+
+const core::rocks::Stage2UserEventStore &EventBuilder::user_event_store() const {
+  return *user_event_store_;
+}
 
 void EventBuilder::request_stop() { stop_requested_ = true; }
 

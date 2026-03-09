@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../core/database.hpp"
+#include "../core/rocks_store.hpp"
 #include "../stage2/stage2_builder.hpp"
 #include "../stage2/stage2_models.hpp"
 #include "../stage2/stage2_types.hpp"
@@ -212,6 +213,7 @@ private:
   Database &stage0_db_;
   Database &stage2_db_;
   Database &stage3_db_;
+  std::unique_ptr<core::rocks::Stage3EventFactStore> event_fact_store_;
 
   mutable std::mutex sync_mu_;
   mutable Status sync_;
@@ -266,11 +268,9 @@ private:
   static constexpr const char *kSqlTableSyncCursorState = "sync_cursor_state";
   static constexpr const char *kSqlTableTokenState = "token_state";
   static constexpr const char *kSqlTableUserSummaryState = "user_summary_state";
-  static constexpr const char *kSqlTableEventFact = "event_fact";
   static constexpr const char *kSqlTableFeatureTensorState = "feature_tensor_state";
 
   // SQL identifiers (indexes) - 仅保留非PK前缀的有用索引
-  static constexpr const char *kSqlIndexEventFactUserTagSk = "idx_stage3_event_fact_user_tag_sk";
   static constexpr const char *kSqlIndexUserSummaryEvents = "idx_stage3_user_summary_events";
   static constexpr const char *kSqlIndexFeatureTensorBucketTagUser = "idx_stage3_feature_tensor_bucket_tag_user";
 

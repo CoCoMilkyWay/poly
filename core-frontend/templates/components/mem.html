@@ -141,8 +141,8 @@
   </div>
 
   <div class="mem-section">
-    <div class="mem-section-title">Stage 内存占用（对仗展示）</div>
-    <details open>
+    <div class="mem-section-title">Stage 内存占用</div>
+    <details>
       <summary id="mem-stage2-summary">Stage2</summary>
       <div class="mem-table-wrap">
         <table class="mem-table">
@@ -206,8 +206,8 @@
       body.innerHTML = html;
     }
 
-    function renderStage(prefix, stage, extra) {
-      const rows = stage.top_containers || [];
+    function renderStage(prefix, stage) {
+      const rows = stage.items || [];
       renderTableBody(`mem-${prefix}-body`, rows, [
         { key: "estimated_bytes", type: "bytes" },
         { key: "name" },
@@ -217,7 +217,7 @@
 
       const total = formatBytes(stage.estimated_total_bytes || 0);
       const summary = document.getElementById(`mem-${prefix}-summary`);
-      if (summary) summary.textContent = `${prefix.toUpperCase()} (${total}${extra ? `, ${extra}` : ""})`;
+      if (summary) summary.textContent = `${prefix.toUpperCase()} (${total})`;
     }
 
     async function refreshMemory() {
@@ -229,12 +229,12 @@
         setText("mem-kpi-rss", formatBytes(data.process_rss_bytes || 0));
 
         const obj = data.object_breakdown || {};
-        const s2 = obj.stage2_builder || {};
-        const s3 = obj.stage3_runtime || {};
+        const s2 = obj.stage2 || {};
+        const s3 = obj.stage3 || {};
         setText("mem-kpi-s2-total", formatBytes(s2.estimated_total_bytes || 0));
         setText("mem-kpi-s3-total", formatBytes(s3.estimated_total_bytes || 0));
-        renderStage("stage2", s2, `peak ${formatBytes(s2.peak_chunk_plus_commit_bytes || 0)}`);
-        renderStage("stage3", s3, `rows ${s3.row_count || 0}`);
+        renderStage("stage2", s2);
+        renderStage("stage3", s3);
       } catch (e) {
         console.error("Memory refresh failed:", e);
       }

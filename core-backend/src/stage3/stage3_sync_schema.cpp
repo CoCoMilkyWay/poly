@@ -5,6 +5,8 @@ namespace stage3 {
 StageSync::StageSync(EventBuilder &builder, Database &stage0_db, Database &stage2_db, Database &stage3_db,
                      int base_interval_seconds)
     : builder_(builder), stage0_db_(stage0_db), stage2_db_(stage2_db), stage3_db_(stage3_db),
+      event_fact_store_(std::make_unique<core::rocks::Stage3EventFactStore>(
+          stage3_db_.data_dir() + "/event_fact.rocks")),
       base_interval_seconds_(base_interval_seconds) {
   assert(base_interval_seconds_ > 0);
   init_schema();
@@ -90,7 +92,6 @@ void StageSync::init_schema() const {
   const std::string table_sync_cursor = kSqlTableSyncCursorState;
   const std::string table_token_state = kSqlTableTokenState;
   const std::string table_user_summary = kSqlTableUserSummaryState;
-  const std::string table_event_fact = kSqlTableEventFact;
   const std::string table_feature_tensor = kSqlTableFeatureTensorState;
 
   stage3_db_.execute("CREATE TABLE IF NOT EXISTS " + table_sync_cursor + R"( (
@@ -117,23 +118,6 @@ void StageSync::init_schema() const {
         total_unrealized_pnl BIGINT NOT NULL,
         active_tokens BIGINT NOT NULL,
         last_sort_key BIGINT NOT NULL
-      )
-    )");
-  stage3_db_.execute("CREATE TABLE IF NOT EXISTS " + table_event_fact + R"( (
-        user_addr BLOB NOT NULL,
-        sort_key BIGINT NOT NULL,
-        cond_idx INTEGER NOT NULL,
-        token_idx INTEGER NOT NULL,
-        event_type INTEGER NOT NULL,
-        realized_delta BIGINT NOT NULL,
-        realized_cum BIGINT NOT NULL,
-        unrealized_pnl BIGINT NOT NULL,
-        token_count INTEGER NOT NULL,
-        tag_id INTEGER NOT NULL,
-        exposure BIGINT NOT NULL,
-        volume BIGINT NOT NULL,
-        holding_period BIGINT NOT NULL,
-        PRIMARY KEY (user_addr, sort_key, cond_idx, event_type, token_idx)
       )
     )");
   stage3_db_.execute("CREATE TABLE IF NOT EXISTS " + table_feature_tensor + R"( (
@@ -181,9 +165,6 @@ void StageSync::init_schema() const {
       )
     )");
   // 仅创建非PK前缀的有用索引 (PK自带B-tree可覆盖前缀查询)
-  stage3_db_.execute(
-      "CREATE INDEX IF NOT EXISTS " + std::string(kSqlIndexEventFactUserTagSk) +
-      " ON " + table_event_fact + "(user_addr, tag_id, sort_key, cond_idx, event_type, token_idx)");
   stage3_db_.execute(
       "CREATE INDEX IF NOT EXISTS " + std::string(kSqlIndexUserSummaryEvents) +
       " ON " + table_user_summary + "(total_events)");
