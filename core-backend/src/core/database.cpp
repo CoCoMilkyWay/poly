@@ -6,8 +6,8 @@
 #include <fcntl.h>
 #include <filesystem>
 #include <fstream>
-#include <iomanip>
 #include <iostream>
+#include <sstream>
 #include <sys/file.h>
 #include <unistd.h>
 
@@ -62,7 +62,7 @@ Database::Database(const std::string &path) : db_path_(path) {
   duckdb::DBConfig config;
   // 限制单个DuckDB实例内存，避免多实例合计占用过多
   // 4 instances × 2GB = 8GB total
-  config.SetOption("memory_limit", duckdb::Value("2GB"));
+  // config.SetOption("memory_limit", duckdb::Value("2GB"));
   db_ = std::make_unique<duckdb::DuckDB>(path, &config);
   read_conn_ = std::make_unique<duckdb::Connection>(*db_);
   write_conn_ = std::make_unique<duckdb::Connection>(*db_);
@@ -432,49 +432,67 @@ void Database::write_state_unlocked(const json &state) const {
   assert(close_ret == 0);
 }
 
-Database::MemoryInfo Database::get_memory_info() {
-  std::lock_guard<std::mutex> lock(read_mutex_);
-  MemoryInfo info;
-  // query duckdb_memory() for buffer pool stats
-  auto result = read_conn_->Query(
-      "SELECT tag, size FROM duckdb_memory() "
-      "WHERE tag IN ('BASE_TABLE', 'HASH_TABLE', 'ART_INDEX', 'COLUMN_DATA', 'ORDER_BY', "
-      "'AGGREGATE_HASH_TABLE', 'WINDOW', 'CROSS_PRODUCT', 'EXTERNAL', 'OPERATOR', 'IN_MEMORY_TABLE')");
-  if (!result->HasError()) {
-    for (size_t row = 0; row < result->RowCount(); ++row) {
-      auto size_val = result->GetValue(1, row);
-      if (!size_val.IsNull()) {
-        info.memory_usage_bytes += size_val.GetValue<int64_t>();
+int64_t Database::get_process_rss_bytes() {
+  std::ifstream status("/proc/self/status");
+  if (!status.is_open())
+    return 0;
+  std::string line;
+  while (std::getline(status, line)) {
+    if (line.rfind("VmRSS:", 0) == 0) {
+      // format: "VmRSS:    123456 kB"
+      std::istringstream iss(line.substr(6));
+      int64_t val = 0;
+      std::string unit;
+      iss >> val >> unit;
+      if (unit == "kB" || unit == "KB") {
+        return val * 1024;
       }
+      return val;
     }
   }
-  // get memory limit
-  auto limit_result = read_conn_->Query("SELECT current_setting('memory_limit')");
-  if (!limit_result->HasError() && limit_result->RowCount() > 0) {
-    auto val = limit_result->GetValue(0, 0);
-    std::string limit_str = val.ToString();
-    // parse "8GB" etc
-    size_t len = limit_str.size();
-    if (len > 2) {
-      std::string unit = limit_str.substr(len - 2);
-      double num = std::stod(limit_str.substr(0, len - 2));
-      if (unit == "GB" || unit == "gb") {
-        info.memory_limit_bytes = static_cast<int64_t>(num * 1024 * 1024 * 1024);
-      } else if (unit == "MB" || unit == "mb") {
-        info.memory_limit_bytes = static_cast<int64_t>(num * 1024 * 1024);
-      } else if (unit == "KB" || unit == "kb") {
-        info.memory_limit_bytes = static_cast<int64_t>(num * 1024);
-      }
-    }
-  }
-  return info;
+  return 0;
 }
 
-void Database::print_memory_info(const std::string &label) {
-  auto info = get_memory_info();
-  double usage_mb = static_cast<double>(info.memory_usage_bytes) / (1024.0 * 1024.0);
-  double limit_mb = static_cast<double>(info.memory_limit_bytes) / (1024.0 * 1024.0);
-  double pct = info.memory_limit_bytes > 0 ? (100.0 * info.memory_usage_bytes / info.memory_limit_bytes) : 0;
-  std::cout << "[MEM] " << label << ": " << std::fixed << std::setprecision(1)
-            << usage_mb << " MB / " << limit_mb << " MB (" << pct << "%)" << std::endl;
+json Database::get_thread_stack_usage() {
+  json rows = json::array();
+  const fs::path task_dir = "/proc/self/task";
+  if (!fs::exists(task_dir) || !fs::is_directory(task_dir)) {
+    return rows;
+  }
+  for (const auto &entry : fs::directory_iterator(task_dir)) {
+    if (!entry.is_directory()) {
+      continue;
+    }
+    const std::string tid_text = entry.path().filename().string();
+    if (!std::all_of(tid_text.begin(), tid_text.end(), [](unsigned char ch) { return std::isdigit(ch) != 0; })) {
+      continue;
+    }
+    const int64_t tid = std::stoll(tid_text);
+    std::ifstream status(entry.path() / "status");
+    assert(status.is_open());
+    std::string name = "unknown";
+    int64_t stack_kb = 0;
+    std::string line;
+    while (std::getline(status, line)) {
+      if (line.rfind("Name:", 0) == 0) {
+        name = line.substr(5);
+        while (!name.empty() && std::isspace(static_cast<unsigned char>(name.front()))) {
+          name.erase(name.begin());
+        }
+      } else if (line.rfind("VmStk:", 0) == 0) {
+        std::istringstream iss(line.substr(6));
+        int64_t val = 0;
+        std::string unit;
+        iss >> val >> unit;
+        if (unit == "kB" || unit == "KB") {
+          stack_kb = val;
+        }
+      }
+    }
+    rows.push_back({{"tid", tid}, {"name", name}, {"stack_bytes", stack_kb * 1024}});
+  }
+  std::sort(rows.begin(), rows.end(), [](const json &a, const json &b) {
+    return a.value("stack_bytes", int64_t{0}) > b.value("stack_bytes", int64_t{0});
+  });
+  return rows;
 }

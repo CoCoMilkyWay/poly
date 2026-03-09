@@ -1218,35 +1218,12 @@ std::string ApiSession::url_decode(const std::string &str) {
 void ApiSession::handle_memory() {
   TraceN("api/memory");
   res_.set(http::field::content_type, "application/json");
-
-  auto make_mem_obj = [](const std::string &name, Database &db) {
-    auto info = db.get_memory_info();
-    return json{
-        {"name", name},
-        {"usage_bytes", info.memory_usage_bytes},
-        {"limit_bytes", info.memory_limit_bytes},
-        {"usage_mb", static_cast<double>(info.memory_usage_bytes) / (1024.0 * 1024.0)},
-        {"limit_mb", static_cast<double>(info.memory_limit_bytes) / (1024.0 * 1024.0)},
-        {"usage_pct", info.memory_limit_bytes > 0 ? (100.0 * info.memory_usage_bytes / info.memory_limit_bytes) : 0.0}};
-  };
-
   json result = json::object();
-  result["databases"] = json::array({
-      make_mem_obj("stage0", stage0_db_),
-      make_mem_obj("stage1", stage1_db_),
-      make_mem_obj("stage2", stage2_db_),
-      make_mem_obj("stage3", stage3_db_),
-  });
-
-  // total
-  int64_t total_usage = 0;
-  int64_t total_limit = 0;
-  for (const auto &db_info : result["databases"]) {
-    total_usage += db_info["usage_bytes"].get<int64_t>();
-    total_limit += db_info["limit_bytes"].get<int64_t>();
-  }
-  result["total_usage_mb"] = static_cast<double>(total_usage) / (1024.0 * 1024.0);
-  result["total_limit_mb"] = static_cast<double>(total_limit) / (1024.0 * 1024.0);
+  const int64_t rss = Database::get_process_rss_bytes();
+  result["process_rss_bytes"] = rss;
+  result["process_rss_mb"] = static_cast<double>(rss) / (1024.0 * 1024.0);
+  result["threads"] = Database::get_thread_stack_usage();
+  result["note"] = "Thread-level heap memory is not available from /proc; stack_bytes is VmStk only.";
 
   res_.result(http::status::ok);
   res_.body() = result.dump(2);

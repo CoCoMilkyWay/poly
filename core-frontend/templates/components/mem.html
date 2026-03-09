@@ -48,7 +48,7 @@
 
   .mem-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 12px;
   }
 
@@ -65,6 +65,7 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 8px;
+    cursor: pointer;
   }
 
   .mem-item-name {
@@ -136,23 +137,53 @@
   .mem-item-limit {
     color: #555;
   }
+
+  .mem-detail {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #333;
+    display: none;
+    max-height: 150px;
+    overflow-y: auto;
+  }
+
+  .mem-detail.show {
+    display: block;
+  }
+
+  .mem-detail-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7em;
+    font-family: monospace;
+    padding: 2px 0;
+    color: #888;
+  }
+
+  .mem-detail-row .tag {
+    color: #6366f1;
+  }
+
+  .mem-detail-row .size {
+    color: #888;
+  }
 </style>
 
 <div class="mem-card">
   <div class="mem-header">
     <h2>内存使用</h2>
     <div class="mem-total">
-      <span style="color: #666">Total:</span>
-      <span class="mem-total-value" id="mem-total-usage">-</span>
-      <span style="color: #555">/</span>
-      <span class="mem-total-value" id="mem-total-limit">-</span>
+      <span style="color: #ef4444; font-weight: 600">进程 RSS:</span>
+      <span class="mem-total-value" id="mem-process-rss" style="color: #ef4444">-</span>
+      <span style="color: #555; margin-left: 16px">线程数:</span>
+      <span class="mem-total-value" id="mem-thread-count">-</span>
     </div>
   </div>
 
   <div class="mem-grid" id="mem-grid">
     <div class="mem-item">
       <div class="mem-item-header">
-        <span class="mem-item-name">加载中...</span>
+        <span class="mem-item-name">线程信息加载中...</span>
       </div>
     </div>
   </div>
@@ -160,45 +191,64 @@
 
 <script>
   (function () {
-    function formatMB(mb) {
-      if (mb < 1) return mb.toFixed(2) + " MB";
-      if (mb < 1024) return mb.toFixed(1) + " MB";
-      return (mb / 1024).toFixed(2) + " GB";
+    let expandedRows = new Set();
+
+    function formatBytes(bytes) {
+      if (bytes < 1024) return bytes + " B";
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+      if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+      return (bytes / (1024 * 1024 * 1024)).toFixed(2) + " GB";
     }
 
-    function getPctClass(pct) {
-      if (pct < 50) return "low";
-      if (pct < 80) return "medium";
-      return "high";
+    function toggleDetail(name) {
+      if (expandedRows.has(name)) {
+        expandedRows.delete(name);
+      } else {
+        expandedRows.add(name);
+      }
+      const el = document.getElementById("mem-detail-" + name);
+      if (el) {
+        el.classList.toggle("show", expandedRows.has(name));
+      }
     }
+
+    window._toggleMemDetail = toggleDetail;
 
     async function refreshMemory() {
       try {
         const resp = await fetch("/api/memory");
         const data = await resp.json();
 
-        document.getElementById("mem-total-usage").textContent = formatMB(data.total_usage_mb || 0);
-        document.getElementById("mem-total-limit").textContent = formatMB(data.total_limit_mb || 0);
+        document.getElementById("mem-process-rss").textContent = formatBytes(data.process_rss_bytes || 0);
+        document.getElementById("mem-thread-count").textContent = String((data.threads || []).length);
 
         const grid = document.getElementById("mem-grid");
         let html = "";
 
-        for (const db of data.databases || []) {
-          const pct = db.usage_pct || 0;
-          const pctClass = getPctClass(pct);
+        for (const t of data.threads || []) {
+          const rowKey = String(t.tid);
+          const stackBytes = t.stack_bytes || 0;
+          const isExpanded = expandedRows.has(rowKey);
+          const pctClass = stackBytes >= 8 * 1024 * 1024 ? "high" : stackBytes >= 2 * 1024 * 1024 ? "medium" : "low";
+          const barPct = Math.min(100, (stackBytes / (8 * 1024 * 1024)) * 100);
 
           html += `
             <div class="mem-item">
-              <div class="mem-item-header">
-                <span class="mem-item-name">${db.name}</span>
-                <span class="mem-item-pct ${pctClass}">${pct.toFixed(1)}%</span>
+              <div class="mem-item-header" onclick="window._toggleMemDetail('${rowKey}')">
+                <span class="mem-item-name">tid=${t.tid} ${t.name || "unknown"} <span style="color:#555;font-size:0.8em">▼</span></span>
+                <span class="mem-item-pct ${pctClass}">${formatBytes(stackBytes)}</span>
               </div>
               <div class="mem-item-bar">
-                <div class="mem-item-fill ${pctClass}" style="width: ${Math.min(100, pct)}%"></div>
+                <div class="mem-item-fill ${pctClass}" style="width: ${barPct}%"></div>
               </div>
               <div class="mem-item-stats">
-                <span class="mem-item-usage">${formatMB(db.usage_mb || 0)}</span>
-                <span class="mem-item-limit">/ ${formatMB(db.limit_mb || 0)}</span>
+                <span class="mem-item-usage">stack: ${formatBytes(stackBytes)}</span>
+                <span class="mem-item-limit">基准: 8MB</span>
+              </div>
+              <div class="mem-detail ${isExpanded ? 'show' : ''}" id="mem-detail-${rowKey}">
+                <div class="mem-detail-row"><span class="tag">tid</span><span class="size">${t.tid}</span></div>
+                <div class="mem-detail-row"><span class="tag">name</span><span class="size">${t.name || "unknown"}</span></div>
+                <div class="mem-detail-row"><span class="tag">stack_bytes</span><span class="size">${stackBytes}</span></div>
               </div>
             </div>
           `;
