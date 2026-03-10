@@ -66,6 +66,11 @@
     font-weight: 600;
   }
 
+  .mem-kpi-value .muted {
+    color: #666;
+    font-weight: 500;
+  }
+
   .mem-kpi-value.rss {
     color: #f87171;
   }
@@ -142,20 +147,12 @@
       <div class="mem-kpi-value" style="color: #f59e0b;" id="mem-kpi-free-chunks">-</div>
     </div>
     <div class="mem-kpi">
-      <div class="mem-kpi-label">Real Usage (RSS - free)</div>
+      <div class="mem-kpi-label">Real Usage (cur / peak)</div>
       <div class="mem-kpi-value rss" id="mem-kpi-real-usage">-</div>
     </div>
     <div class="mem-kpi">
-      <div class="mem-kpi-label">Real Usage (peak)</div>
-      <div class="mem-kpi-value rss" id="mem-kpi-real-usage-peak">-</div>
-    </div>
-    <div class="mem-kpi">
-      <div class="mem-kpi-label">DB + Struct (current)</div>
+      <div class="mem-kpi-label">DB + Struct (cur / peak)</div>
       <div class="mem-kpi-value" id="mem-kpi-db-struct-total">-</div>
-    </div>
-    <div class="mem-kpi">
-      <div class="mem-kpi-label">DB + Struct (peak)</div>
-      <div class="mem-kpi-value" id="mem-kpi-db-struct-peak">-</div>
     </div>
   </div>
 
@@ -264,6 +261,12 @@
     function setText(id, text) {
       const el = document.getElementById(id);
       if (el) el.textContent = text;
+    }
+
+    function setCurPeakHtml(id, current, peak) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.innerHTML = `${formatBytes(current)} <span class="muted">/ ${formatBytes(peak)}</span>`;
     }
 
     function renderTableBody(id, rows, cols) {
@@ -391,13 +394,11 @@
         const realUsageBytes = toBytes(data.real_usage_bytes);
         const realUsagePeakBytes = toBytes(data.real_usage_peak_bytes || realUsageBytes);
         setText("mem-kpi-free-chunks", formatBytes(freeChunksBytes));
-        setText("mem-kpi-real-usage", formatBytes(realUsageBytes));
-        setText("mem-kpi-real-usage-peak", formatBytes(realUsagePeakBytes));
+        setCurPeakHtml("mem-kpi-real-usage", realUsageBytes, realUsagePeakBytes);
 
         const dbStructTotalBytes = toBytes(data.db_plus_struct_bytes);
         const dbStructPeakBytes = toBytes(data.db_plus_struct_peak_bytes || dbStructTotalBytes);
-        setText("mem-kpi-db-struct-total", formatBytes(dbStructTotalBytes));
-        setText("mem-kpi-db-struct-peak", formatBytes(dbStructPeakBytes));
+        setCurPeakHtml("mem-kpi-db-struct-total", dbStructTotalBytes, dbStructPeakBytes);
 
         const obj = data.object_breakdown || {};
         const s0 = obj.stage0 || {};
