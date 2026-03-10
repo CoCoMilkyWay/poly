@@ -6,10 +6,12 @@
 #include <algorithm>
 #include <atomic>
 #include <cctype>
+#include <chrono>
 #include <filesystem>
 #include <future>
 #include <mutex>
 #include <sstream>
+#include <thread>
 #include <unordered_map>
 
 #include "../core/mem.hpp"
@@ -122,6 +124,276 @@ int64_t update_peak_bytes(std::atomic<int64_t> &peak, int64_t current) {
          !peak.compare_exchange_weak(observed, current, std::memory_order_relaxed, std::memory_order_relaxed)) {
   }
   return peak.load(std::memory_order_relaxed);
+}
+
+json collect_memory_snapshot(Database &stage0_db, Database &stage1_db, Database &stage2_db, Database &stage3_db,
+                             stage3::StageSync &stage3,
+                             const ApiSession::Stage0MemGetter &stage0_mem_getter,
+                             const ApiSession::Stage1MemGetter &stage1_mem_getter,
+                             const ApiSession::Stage2MemGetter &stage2_mem_getter,
+                             const ApiSession::Stage3MemGetter &stage3_mem_getter) {
+  static std::atomic<int64_t> stage0_peak_bytes{0};
+  static std::atomic<int64_t> stage1_peak_bytes{0};
+  static std::atomic<int64_t> stage2_peak_bytes{0};
+  static std::atomic<int64_t> stage3_peak_bytes{0};
+  static std::atomic<int64_t> duckdb_stage0_usage_peak_bytes{0};
+  static std::atomic<int64_t> duckdb_stage1_usage_peak_bytes{0};
+  static std::atomic<int64_t> duckdb_stage2_usage_peak_bytes{0};
+  static std::atomic<int64_t> duckdb_stage3_usage_peak_bytes{0};
+  static std::atomic<int64_t> duckdb_stage0_wal_peak_bytes{0};
+  static std::atomic<int64_t> duckdb_stage1_wal_peak_bytes{0};
+  static std::atomic<int64_t> duckdb_stage2_wal_peak_bytes{0};
+  static std::atomic<int64_t> duckdb_stage3_wal_peak_bytes{0};
+  static std::atomic<int64_t> rocksdb_stage2_estimated_peak_bytes{0};
+  static std::atomic<int64_t> rocksdb_stage3_estimated_peak_bytes{0};
+  static std::atomic<int64_t> rocksdb_stage2_memtables_peak_bytes{0};
+  static std::atomic<int64_t> rocksdb_stage3_memtables_peak_bytes{0};
+  static std::atomic<int64_t> rocksdb_stage2_table_readers_peak_bytes{0};
+  static std::atomic<int64_t> rocksdb_stage3_table_readers_peak_bytes{0};
+  static std::atomic<int64_t> rocksdb_stage2_block_cache_peak_bytes{0};
+  static std::atomic<int64_t> rocksdb_stage3_block_cache_peak_bytes{0};
+  static std::atomic<int64_t> rocksdb_stage2_block_cache_pinned_peak_bytes{0};
+  static std::atomic<int64_t> rocksdb_stage3_block_cache_pinned_peak_bytes{0};
+  static std::atomic<int64_t> database_total_peak_bytes{0};
+  static std::atomic<int64_t> db_plus_struct_peak_bytes{0};
+  static std::atomic<int64_t> real_usage_peak_bytes{0};
+
+  json result = json::object();
+  int64_t rss_bytes = 0;
+  core::mem::MallocStats malloc_stats{};
+  int64_t real_usage_bytes = 0;
+  int64_t real_usage_peak = 0;
+  json stage0_duckdb = json::object();
+  json stage1_duckdb = json::object();
+  json stage2_duckdb = json::object();
+  json stage3_duckdb = json::object();
+  json stage2_rocksdb = json::object();
+  json stage3_rocksdb = json::object();
+
+  {
+    TraceN("api/memory/process_malloc");
+    rss_bytes = core::mem::get_process_rss_bytes();
+    result["process_rss_bytes"] = rss_bytes;
+
+    malloc_stats = core::mem::get_malloc_stats();
+    result["malloc_breakdown"] = {
+        {"arena_bytes", malloc_stats.arena_bytes},
+        {"mmap_bytes", malloc_stats.mmap_bytes},
+        {"in_use_bytes", malloc_stats.in_use_bytes},
+        {"free_chunks_bytes", malloc_stats.free_chunks_bytes},
+        {"total_from_os_bytes", malloc_stats.arena_bytes + malloc_stats.mmap_bytes},
+    };
+
+    real_usage_bytes = rss_bytes - malloc_stats.free_chunks_bytes;
+    real_usage_peak = update_peak_bytes(real_usage_peak_bytes, real_usage_bytes);
+    result["real_usage_bytes"] = real_usage_bytes;
+    result["real_usage_peak_bytes"] = real_usage_peak;
+  }
+
+  {
+    TraceN("api/memory/duckdb_stage0");
+    stage0_duckdb = stage0_db.memory_breakdown();
+    stage0_duckdb["name"] = "stage0";
+  }
+  {
+    TraceN("api/memory/duckdb_stage1");
+    stage1_duckdb = stage1_db.memory_breakdown();
+    stage1_duckdb["name"] = "stage1";
+  }
+  {
+    TraceN("api/memory/duckdb_stage2");
+    stage2_duckdb = stage2_db.memory_breakdown();
+    stage2_duckdb["name"] = "stage2";
+  }
+  {
+    TraceN("api/memory/duckdb_stage3");
+    stage3_duckdb = stage3_db.memory_breakdown();
+    stage3_duckdb["name"] = "stage3";
+  }
+  {
+    TraceN("api/memory/duckdb_peak_enrich");
+    stage0_duckdb["memory_usage_peak_bytes"] =
+        update_peak_bytes(duckdb_stage0_usage_peak_bytes, stage0_duckdb.value("memory_usage_bytes", int64_t{0}));
+    stage1_duckdb["memory_usage_peak_bytes"] =
+        update_peak_bytes(duckdb_stage1_usage_peak_bytes, stage1_duckdb.value("memory_usage_bytes", int64_t{0}));
+    stage2_duckdb["memory_usage_peak_bytes"] =
+        update_peak_bytes(duckdb_stage2_usage_peak_bytes, stage2_duckdb.value("memory_usage_bytes", int64_t{0}));
+    stage3_duckdb["memory_usage_peak_bytes"] =
+        update_peak_bytes(duckdb_stage3_usage_peak_bytes, stage3_duckdb.value("memory_usage_bytes", int64_t{0}));
+    stage0_duckdb["wal_size_peak_bytes"] =
+        update_peak_bytes(duckdb_stage0_wal_peak_bytes, stage0_duckdb.value("wal_size_bytes", int64_t{0}));
+    stage1_duckdb["wal_size_peak_bytes"] =
+        update_peak_bytes(duckdb_stage1_wal_peak_bytes, stage1_duckdb.value("wal_size_bytes", int64_t{0}));
+    stage2_duckdb["wal_size_peak_bytes"] =
+        update_peak_bytes(duckdb_stage2_wal_peak_bytes, stage2_duckdb.value("wal_size_bytes", int64_t{0}));
+    stage3_duckdb["wal_size_peak_bytes"] =
+        update_peak_bytes(duckdb_stage3_wal_peak_bytes, stage3_duckdb.value("wal_size_bytes", int64_t{0}));
+  }
+
+  {
+    TraceN("api/memory/rocksdb_breakdown");
+    stage2_rocksdb = stage3.stage2_rocksdb_memory_breakdown();
+    stage3_rocksdb = stage3.stage3_rocksdb_memory_breakdown();
+    stage2_rocksdb["estimated_peak_bytes"] =
+        update_peak_bytes(rocksdb_stage2_estimated_peak_bytes, stage2_rocksdb.value("estimated_total_bytes", int64_t{0}));
+    stage3_rocksdb["estimated_peak_bytes"] =
+        update_peak_bytes(rocksdb_stage3_estimated_peak_bytes, stage3_rocksdb.value("estimated_total_bytes", int64_t{0}));
+    stage2_rocksdb["memtables_peak_bytes"] =
+        update_peak_bytes(rocksdb_stage2_memtables_peak_bytes, stage2_rocksdb.value("memtables_bytes", int64_t{0}));
+    stage3_rocksdb["memtables_peak_bytes"] =
+        update_peak_bytes(rocksdb_stage3_memtables_peak_bytes, stage3_rocksdb.value("memtables_bytes", int64_t{0}));
+    stage2_rocksdb["table_readers_peak_bytes"] = update_peak_bytes(rocksdb_stage2_table_readers_peak_bytes,
+                                                                   stage2_rocksdb.value("table_readers_bytes", int64_t{0}));
+    stage3_rocksdb["table_readers_peak_bytes"] = update_peak_bytes(rocksdb_stage3_table_readers_peak_bytes,
+                                                                   stage3_rocksdb.value("table_readers_bytes", int64_t{0}));
+    stage2_rocksdb["block_cache_peak_bytes"] =
+        update_peak_bytes(rocksdb_stage2_block_cache_peak_bytes, stage2_rocksdb.value("block_cache_bytes", int64_t{0}));
+    stage3_rocksdb["block_cache_peak_bytes"] =
+        update_peak_bytes(rocksdb_stage3_block_cache_peak_bytes, stage3_rocksdb.value("block_cache_bytes", int64_t{0}));
+    stage2_rocksdb["block_cache_pinned_peak_bytes"] =
+        update_peak_bytes(rocksdb_stage2_block_cache_pinned_peak_bytes, stage2_rocksdb.value("block_cache_pinned_bytes", int64_t{0}));
+    stage3_rocksdb["block_cache_pinned_peak_bytes"] =
+        update_peak_bytes(rocksdb_stage3_block_cache_pinned_peak_bytes, stage3_rocksdb.value("block_cache_pinned_bytes", int64_t{0}));
+  }
+
+  int64_t database_total_bytes = 0;
+  {
+    TraceN("api/memory/database_aggregate");
+    json db_breakdown = json::object();
+    db_breakdown["duckdb"] = json::array({stage0_duckdb, stage1_duckdb, stage2_duckdb, stage3_duckdb});
+    db_breakdown["rocksdb"] = json::array({stage2_rocksdb, stage3_rocksdb});
+
+    int64_t duckdb_memory_usage_bytes = 0;
+    for (const auto &item : db_breakdown["duckdb"]) {
+      duckdb_memory_usage_bytes += item.value("memory_usage_bytes", int64_t{0});
+    }
+    int64_t rocksdb_estimated_total_bytes = 0;
+    for (const auto &item : db_breakdown["rocksdb"]) {
+      rocksdb_estimated_total_bytes += item.value("estimated_total_bytes", int64_t{0});
+    }
+    database_total_bytes = duckdb_memory_usage_bytes + rocksdb_estimated_total_bytes;
+    const int64_t database_peak_bytes = update_peak_bytes(database_total_peak_bytes, database_total_bytes);
+    db_breakdown["duckdb_memory_usage_bytes"] = duckdb_memory_usage_bytes;
+    db_breakdown["rocksdb_estimated_total_bytes"] = rocksdb_estimated_total_bytes;
+    db_breakdown["estimated_total_bytes"] = database_total_bytes;
+    db_breakdown["estimated_peak_bytes"] = database_peak_bytes;
+    result["database_breakdown"] = std::move(db_breakdown);
+  }
+
+  {
+    TraceN("api/memory/object_aggregate");
+    json breakdown = {
+        {"stage0", stage0_mem_getter()},
+        {"stage1", stage1_mem_getter()},
+        {"stage2", stage2_mem_getter()},
+        {"stage3", stage3_mem_getter()},
+    };
+
+    const int64_t stage0_bytes = breakdown["stage0"].value("estimated_total_bytes", int64_t{0});
+    const int64_t stage1_bytes = breakdown["stage1"].value("estimated_total_bytes", int64_t{0});
+    const int64_t stage2_bytes = breakdown["stage2"].value("estimated_total_bytes", int64_t{0});
+    const int64_t stage3_bytes = breakdown["stage3"].value("estimated_total_bytes", int64_t{0});
+    const int64_t stage2_peak_candidate =
+        breakdown["stage2"].value("persistent_bytes", int64_t{0}) +
+        breakdown["stage2"].value("peak_chunk_plus_commit_bytes", int64_t{0});
+    const int64_t stage3_peak_candidate = breakdown["stage3"].value("estimated_peak_candidate_bytes", int64_t{0});
+    const int64_t stage0_peak = update_peak_bytes(stage0_peak_bytes, stage0_bytes);
+    const int64_t stage1_peak = update_peak_bytes(stage1_peak_bytes, stage1_bytes);
+    const int64_t stage2_peak = update_peak_bytes(stage2_peak_bytes, std::max(stage2_bytes, stage2_peak_candidate));
+    const int64_t stage3_peak = update_peak_bytes(stage3_peak_bytes, std::max(stage3_bytes, stage3_peak_candidate));
+
+    breakdown["stage0"]["estimated_peak_bytes"] = stage0_peak;
+    breakdown["stage1"]["estimated_peak_bytes"] = stage1_peak;
+    breakdown["stage2"]["estimated_peak_bytes"] = stage2_peak;
+    breakdown["stage3"]["estimated_peak_bytes"] = stage3_peak;
+
+    const int64_t estimated_sum_bytes = stage0_bytes + stage1_bytes + stage2_bytes + stage3_bytes;
+    const int64_t estimated_peak_sum_bytes = stage0_peak + stage1_peak + stage2_peak + stage3_peak;
+    result["estimated_sum_bytes"] = estimated_sum_bytes;
+    result["estimated_peak_sum_bytes"] = estimated_peak_sum_bytes;
+    const int64_t db_plus_struct_bytes = database_total_bytes + estimated_sum_bytes;
+    const int64_t db_plus_struct_peak = update_peak_bytes(db_plus_struct_peak_bytes, db_plus_struct_bytes);
+    result["db_plus_struct_bytes"] = db_plus_struct_bytes;
+    result["db_plus_struct_peak_bytes"] = db_plus_struct_peak;
+    result["object_breakdown"] = std::move(breakdown);
+  }
+
+  return result;
+}
+
+constexpr int64_t kMemoryRefreshIntervalMs = 5000;
+
+struct MemoryRefreshCache {
+  std::mutex mu;
+  std::once_flag started_once;
+  bool initialized = false;
+  Database *stage0_db = nullptr;
+  Database *stage1_db = nullptr;
+  Database *stage2_db = nullptr;
+  Database *stage3_db = nullptr;
+  stage3::StageSync *stage3 = nullptr;
+  ApiSession::Stage0MemGetter stage0_mem_getter;
+  ApiSession::Stage1MemGetter stage1_mem_getter;
+  ApiSession::Stage2MemGetter stage2_mem_getter;
+  ApiSession::Stage3MemGetter stage3_mem_getter;
+  json latest = json{{"warming_up", true}};
+};
+
+MemoryRefreshCache g_memory_refresh_cache;
+
+void memory_refresh_background_loop() {
+  for (;;) {
+    TraceN("api/memory_async_refresh");
+    json snapshot = collect_memory_snapshot(*g_memory_refresh_cache.stage0_db, *g_memory_refresh_cache.stage1_db,
+                                            *g_memory_refresh_cache.stage2_db, *g_memory_refresh_cache.stage3_db,
+                                            *g_memory_refresh_cache.stage3,
+                                            g_memory_refresh_cache.stage0_mem_getter,
+                                            g_memory_refresh_cache.stage1_mem_getter,
+                                            g_memory_refresh_cache.stage2_mem_getter,
+                                            g_memory_refresh_cache.stage3_mem_getter);
+    snapshot["refresh_interval_ms"] = kMemoryRefreshIntervalMs;
+    snapshot["snapshot_unix_ms"] = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                       std::chrono::system_clock::now().time_since_epoch())
+                                       .count();
+    {
+      std::lock_guard<std::mutex> lock(g_memory_refresh_cache.mu);
+      g_memory_refresh_cache.latest = std::move(snapshot);
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(kMemoryRefreshIntervalMs));
+  }
+}
+
+void ensure_memory_refresh_started(Database &stage0_db, Database &stage1_db, Database &stage2_db, Database &stage3_db,
+                                   stage3::StageSync &stage3,
+                                   const ApiSession::Stage0MemGetter &stage0_mem_getter,
+                                   const ApiSession::Stage1MemGetter &stage1_mem_getter,
+                                   const ApiSession::Stage2MemGetter &stage2_mem_getter,
+                                   const ApiSession::Stage3MemGetter &stage3_mem_getter) {
+  {
+    std::lock_guard<std::mutex> lock(g_memory_refresh_cache.mu);
+    if (!g_memory_refresh_cache.initialized) {
+      g_memory_refresh_cache.stage0_db = &stage0_db;
+      g_memory_refresh_cache.stage1_db = &stage1_db;
+      g_memory_refresh_cache.stage2_db = &stage2_db;
+      g_memory_refresh_cache.stage3_db = &stage3_db;
+      g_memory_refresh_cache.stage3 = &stage3;
+      g_memory_refresh_cache.stage0_mem_getter = stage0_mem_getter;
+      g_memory_refresh_cache.stage1_mem_getter = stage1_mem_getter;
+      g_memory_refresh_cache.stage2_mem_getter = stage2_mem_getter;
+      g_memory_refresh_cache.stage3_mem_getter = stage3_mem_getter;
+      g_memory_refresh_cache.initialized = true;
+    } else {
+      assert(g_memory_refresh_cache.stage0_db == &stage0_db);
+      assert(g_memory_refresh_cache.stage1_db == &stage1_db);
+      assert(g_memory_refresh_cache.stage2_db == &stage2_db);
+      assert(g_memory_refresh_cache.stage3_db == &stage3_db);
+      assert(g_memory_refresh_cache.stage3 == &stage3);
+    }
+  }
+  std::call_once(g_memory_refresh_cache.started_once, []() {
+    std::thread t(memory_refresh_background_loop);
+    t.detach();
+  });
 }
 
 json to_stage1_status_json(const Stage1Status &status) {
@@ -1233,154 +1505,14 @@ std::string ApiSession::url_decode(const std::string &str) {
 void ApiSession::handle_memory() {
   TraceN("api/memory");
   res_.set(http::field::content_type, "application/json");
-  static std::atomic<int64_t> stage0_peak_bytes{0};
-  static std::atomic<int64_t> stage1_peak_bytes{0};
-  static std::atomic<int64_t> stage2_peak_bytes{0};
-  static std::atomic<int64_t> stage3_peak_bytes{0};
-  static std::atomic<int64_t> duckdb_stage0_usage_peak_bytes{0};
-  static std::atomic<int64_t> duckdb_stage1_usage_peak_bytes{0};
-  static std::atomic<int64_t> duckdb_stage2_usage_peak_bytes{0};
-  static std::atomic<int64_t> duckdb_stage3_usage_peak_bytes{0};
-  static std::atomic<int64_t> duckdb_stage0_wal_peak_bytes{0};
-  static std::atomic<int64_t> duckdb_stage1_wal_peak_bytes{0};
-  static std::atomic<int64_t> duckdb_stage2_wal_peak_bytes{0};
-  static std::atomic<int64_t> duckdb_stage3_wal_peak_bytes{0};
-  static std::atomic<int64_t> rocksdb_stage2_estimated_peak_bytes{0};
-  static std::atomic<int64_t> rocksdb_stage3_estimated_peak_bytes{0};
-  static std::atomic<int64_t> rocksdb_stage2_memtables_peak_bytes{0};
-  static std::atomic<int64_t> rocksdb_stage3_memtables_peak_bytes{0};
-  static std::atomic<int64_t> rocksdb_stage2_table_readers_peak_bytes{0};
-  static std::atomic<int64_t> rocksdb_stage3_table_readers_peak_bytes{0};
-  static std::atomic<int64_t> rocksdb_stage2_block_cache_peak_bytes{0};
-  static std::atomic<int64_t> rocksdb_stage3_block_cache_peak_bytes{0};
-  static std::atomic<int64_t> rocksdb_stage2_block_cache_pinned_peak_bytes{0};
-  static std::atomic<int64_t> rocksdb_stage3_block_cache_pinned_peak_bytes{0};
-  static std::atomic<int64_t> database_total_peak_bytes{0};
-  static std::atomic<int64_t> db_plus_struct_peak_bytes{0};
-  static std::atomic<int64_t> real_usage_peak_bytes{0};
+  ensure_memory_refresh_started(stage0_db_, stage1_db_, stage2_db_, stage3_db_, stage3_,
+                                stage0_mem_getter_, stage1_mem_getter_, stage2_mem_getter_, stage3_mem_getter_);
   json result = json::object();
-  const int64_t rss_bytes = core::mem::get_process_rss_bytes();
-  result["process_rss_bytes"] = rss_bytes;
-
-  // malloc stats
-  const auto malloc_stats = core::mem::get_malloc_stats();
-  result["malloc_breakdown"] = {
-      {"arena_bytes", malloc_stats.arena_bytes},
-      {"mmap_bytes", malloc_stats.mmap_bytes},
-      {"in_use_bytes", malloc_stats.in_use_bytes},
-      {"free_chunks_bytes", malloc_stats.free_chunks_bytes},
-      {"total_from_os_bytes", malloc_stats.arena_bytes + malloc_stats.mmap_bytes},
-  };
-
-  // real usage = RSS - free_chunks (memory actually in use)
-  const int64_t real_usage_bytes = rss_bytes - malloc_stats.free_chunks_bytes;
-  const int64_t real_usage_peak = update_peak_bytes(real_usage_peak_bytes, real_usage_bytes);
-  result["real_usage_bytes"] = real_usage_bytes;
-  result["real_usage_peak_bytes"] = real_usage_peak;
-
-  json stage0_duckdb = stage0_db_.memory_breakdown();
-  json stage1_duckdb = stage1_db_.memory_breakdown();
-  json stage2_duckdb = stage2_db_.memory_breakdown();
-  json stage3_duckdb = stage3_db_.memory_breakdown();
-  stage0_duckdb["name"] = "stage0";
-  stage1_duckdb["name"] = "stage1";
-  stage2_duckdb["name"] = "stage2";
-  stage3_duckdb["name"] = "stage3";
-  stage0_duckdb["memory_usage_peak_bytes"] =
-      update_peak_bytes(duckdb_stage0_usage_peak_bytes, stage0_duckdb.value("memory_usage_bytes", int64_t{0}));
-  stage1_duckdb["memory_usage_peak_bytes"] =
-      update_peak_bytes(duckdb_stage1_usage_peak_bytes, stage1_duckdb.value("memory_usage_bytes", int64_t{0}));
-  stage2_duckdb["memory_usage_peak_bytes"] =
-      update_peak_bytes(duckdb_stage2_usage_peak_bytes, stage2_duckdb.value("memory_usage_bytes", int64_t{0}));
-  stage3_duckdb["memory_usage_peak_bytes"] =
-      update_peak_bytes(duckdb_stage3_usage_peak_bytes, stage3_duckdb.value("memory_usage_bytes", int64_t{0}));
-  stage0_duckdb["wal_size_peak_bytes"] =
-      update_peak_bytes(duckdb_stage0_wal_peak_bytes, stage0_duckdb.value("wal_size_bytes", int64_t{0}));
-  stage1_duckdb["wal_size_peak_bytes"] =
-      update_peak_bytes(duckdb_stage1_wal_peak_bytes, stage1_duckdb.value("wal_size_bytes", int64_t{0}));
-  stage2_duckdb["wal_size_peak_bytes"] =
-      update_peak_bytes(duckdb_stage2_wal_peak_bytes, stage2_duckdb.value("wal_size_bytes", int64_t{0}));
-  stage3_duckdb["wal_size_peak_bytes"] =
-      update_peak_bytes(duckdb_stage3_wal_peak_bytes, stage3_duckdb.value("wal_size_bytes", int64_t{0}));
-
-  json stage2_rocksdb = stage3_.stage2_rocksdb_memory_breakdown();
-  json stage3_rocksdb = stage3_.stage3_rocksdb_memory_breakdown();
-  stage2_rocksdb["estimated_peak_bytes"] =
-      update_peak_bytes(rocksdb_stage2_estimated_peak_bytes, stage2_rocksdb.value("estimated_total_bytes", int64_t{0}));
-  stage3_rocksdb["estimated_peak_bytes"] =
-      update_peak_bytes(rocksdb_stage3_estimated_peak_bytes, stage3_rocksdb.value("estimated_total_bytes", int64_t{0}));
-  stage2_rocksdb["memtables_peak_bytes"] =
-      update_peak_bytes(rocksdb_stage2_memtables_peak_bytes, stage2_rocksdb.value("memtables_bytes", int64_t{0}));
-  stage3_rocksdb["memtables_peak_bytes"] =
-      update_peak_bytes(rocksdb_stage3_memtables_peak_bytes, stage3_rocksdb.value("memtables_bytes", int64_t{0}));
-  stage2_rocksdb["table_readers_peak_bytes"] = update_peak_bytes(rocksdb_stage2_table_readers_peak_bytes,
-                                                                 stage2_rocksdb.value("table_readers_bytes", int64_t{0}));
-  stage3_rocksdb["table_readers_peak_bytes"] = update_peak_bytes(rocksdb_stage3_table_readers_peak_bytes,
-                                                                 stage3_rocksdb.value("table_readers_bytes", int64_t{0}));
-  stage2_rocksdb["block_cache_peak_bytes"] =
-      update_peak_bytes(rocksdb_stage2_block_cache_peak_bytes, stage2_rocksdb.value("block_cache_bytes", int64_t{0}));
-  stage3_rocksdb["block_cache_peak_bytes"] =
-      update_peak_bytes(rocksdb_stage3_block_cache_peak_bytes, stage3_rocksdb.value("block_cache_bytes", int64_t{0}));
-  stage2_rocksdb["block_cache_pinned_peak_bytes"] =
-      update_peak_bytes(rocksdb_stage2_block_cache_pinned_peak_bytes, stage2_rocksdb.value("block_cache_pinned_bytes", int64_t{0}));
-  stage3_rocksdb["block_cache_pinned_peak_bytes"] =
-      update_peak_bytes(rocksdb_stage3_block_cache_pinned_peak_bytes, stage3_rocksdb.value("block_cache_pinned_bytes", int64_t{0}));
-
-  json db_breakdown = json::object();
-  db_breakdown["duckdb"] = json::array({stage0_duckdb, stage1_duckdb, stage2_duckdb, stage3_duckdb});
-  db_breakdown["rocksdb"] = json::array({stage2_rocksdb, stage3_rocksdb});
-
-  int64_t duckdb_memory_usage_bytes = 0;
-  for (const auto &item : db_breakdown["duckdb"]) {
-    duckdb_memory_usage_bytes += item.value("memory_usage_bytes", int64_t{0});
+  {
+    TraceN("api/memory/cache_read");
+    std::lock_guard<std::mutex> lock(g_memory_refresh_cache.mu);
+    result = g_memory_refresh_cache.latest;
   }
-  int64_t rocksdb_estimated_total_bytes = 0;
-  for (const auto &item : db_breakdown["rocksdb"]) {
-    rocksdb_estimated_total_bytes += item.value("estimated_total_bytes", int64_t{0});
-  }
-  const int64_t database_total_bytes = duckdb_memory_usage_bytes + rocksdb_estimated_total_bytes;
-  const int64_t database_peak_bytes = update_peak_bytes(database_total_peak_bytes, database_total_bytes);
-  db_breakdown["duckdb_memory_usage_bytes"] = duckdb_memory_usage_bytes;
-  db_breakdown["rocksdb_estimated_total_bytes"] = rocksdb_estimated_total_bytes;
-  db_breakdown["estimated_total_bytes"] = database_total_bytes;
-  db_breakdown["estimated_peak_bytes"] = database_peak_bytes;
-  result["database_breakdown"] = std::move(db_breakdown);
-
-  json breakdown = {
-      {"stage0", stage0_mem_getter_()},
-      {"stage1", stage1_mem_getter_()},
-      {"stage2", stage2_mem_getter_()},
-      {"stage3", stage3_mem_getter_()},
-  };
-
-  const int64_t stage0_bytes = breakdown["stage0"].value("estimated_total_bytes", int64_t{0});
-  const int64_t stage1_bytes = breakdown["stage1"].value("estimated_total_bytes", int64_t{0});
-  const int64_t stage2_bytes = breakdown["stage2"].value("estimated_total_bytes", int64_t{0});
-  const int64_t stage3_bytes = breakdown["stage3"].value("estimated_total_bytes", int64_t{0});
-  const int64_t stage2_peak_candidate =
-      breakdown["stage2"].value("persistent_bytes", int64_t{0}) +
-      breakdown["stage2"].value("peak_chunk_plus_commit_bytes", int64_t{0});
-  const int64_t stage3_peak_candidate = breakdown["stage3"].value("estimated_peak_candidate_bytes", int64_t{0});
-  const int64_t stage0_peak = update_peak_bytes(stage0_peak_bytes, stage0_bytes);
-  const int64_t stage1_peak = update_peak_bytes(stage1_peak_bytes, stage1_bytes);
-  const int64_t stage2_peak = update_peak_bytes(stage2_peak_bytes, std::max(stage2_bytes, stage2_peak_candidate));
-  const int64_t stage3_peak = update_peak_bytes(stage3_peak_bytes, std::max(stage3_bytes, stage3_peak_candidate));
-
-  breakdown["stage0"]["estimated_peak_bytes"] = stage0_peak;
-  breakdown["stage1"]["estimated_peak_bytes"] = stage1_peak;
-  breakdown["stage2"]["estimated_peak_bytes"] = stage2_peak;
-  breakdown["stage3"]["estimated_peak_bytes"] = stage3_peak;
-
-  const int64_t estimated_sum_bytes = stage0_bytes + stage1_bytes + stage2_bytes + stage3_bytes;
-  const int64_t estimated_peak_sum_bytes = stage0_peak + stage1_peak + stage2_peak + stage3_peak;
-  result["estimated_sum_bytes"] = estimated_sum_bytes;
-  result["estimated_peak_sum_bytes"] = estimated_peak_sum_bytes;
-  const int64_t db_plus_struct_bytes = database_total_bytes + estimated_sum_bytes;
-  const int64_t db_plus_struct_peak = update_peak_bytes(db_plus_struct_peak_bytes, db_plus_struct_bytes);
-  result["db_plus_struct_bytes"] = db_plus_struct_bytes;
-  result["db_plus_struct_peak_bytes"] = db_plus_struct_peak;
-
-  result["object_breakdown"] = std::move(breakdown);
   res_.result(http::status::ok);
   res_.body() = result.dump(2);
 }

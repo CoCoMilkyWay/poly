@@ -1,6 +1,6 @@
+#include "../core/mem.hpp"
 #include "misc/profiler.hpp"
 #include "stage3_sync.hpp"
-#include "../core/mem.hpp"
 #include <algorithm>
 #include <cmath>
 
@@ -598,12 +598,7 @@ bool StageSync::process_chunk_locked() const {
     const int64_t user_blob_pool_bytes =
         core::mem::estimate_vector(user_blob_pool, [](const std::string &s) { return core::mem::estimate_string_extra(s); });
     const int64_t user_index_bytes =
-        core::mem::estimate_unordered_map(user_blob_to_id, [](const std::string &k) { return core::mem::estimate_string_extra(k); }, no_extra) +
-        core::mem::estimate_unordered_map(user_event_increments, no_extra, no_extra) +
-        core::mem::estimate_unordered_map(user_last_sort_keys, no_extra, no_extra) +
-        core::mem::estimate_unordered_map(user_realized_totals, no_extra, no_extra) +
-        core::mem::estimate_unordered_map(user_unrealized_totals, no_extra, no_extra) +
-        core::mem::estimate_unordered_map(user_active_token_counts, no_extra, no_extra);
+        core::mem::estimate_unordered_map(user_blob_to_id, [](const std::string &k) { return core::mem::estimate_string_extra(k); }, no_extra) + core::mem::estimate_unordered_map(user_event_increments, no_extra, no_extra) + core::mem::estimate_unordered_map(user_last_sort_keys, no_extra, no_extra) + core::mem::estimate_unordered_map(user_realized_totals, no_extra, no_extra) + core::mem::estimate_unordered_map(user_unrealized_totals, no_extra, no_extra) + core::mem::estimate_unordered_map(user_active_token_counts, no_extra, no_extra);
     const int64_t token_states_bytes = core::mem::estimate_unordered_map(token_states, no_extra, no_extra);
     const int64_t bucket_agg_bytes = core::mem::estimate_unordered_map(bucket_agg_states, no_extra, no_extra);
     const int64_t event_facts_bytes = core::mem::estimate_vector_plain(event_facts);
@@ -635,146 +630,151 @@ bool StageSync::process_chunk_locked() const {
   }
 
   {
-    TraceN("s3/write");
+    TraceN("s3/wr_open");
     (void)checked_query("BEGIN");
+  }
 
-    if (!token_states.empty()) {
-      prepare_tmp_table(kSqlTmpTokenDirty, kSqlTmpSchemaTokenDirty);
-      {
-        duckdb::Appender ap(*sink_conn, kSqlTmpTokenDirty);
-        for (const auto &[key, _] : token_states) {
-          const std::string &user_blob = user_blob_pool[key.user_id];
-          ap.BeginRow();
-          append_blob(ap, user_blob);
-          ap.Append(key.cond_idx);
-          ap.Append(key.token_idx);
-          ap.EndRow();
-        }
-        ap.Close();
+  if (!token_states.empty()) {
+    TraceN("s3/wr_duck_tok");
+    prepare_tmp_table(kSqlTmpTokenDirty, kSqlTmpSchemaTokenDirty);
+    {
+      duckdb::Appender ap(*sink_conn, kSqlTmpTokenDirty);
+      for (const auto &[key, _] : token_states) {
+        const std::string &user_blob = user_blob_pool[key.user_id];
+        ap.BeginRow();
+        append_blob(ap, user_blob);
+        ap.Append(key.cond_idx);
+        ap.Append(key.token_idx);
+        ap.EndRow();
       }
+      ap.Close();
+    }
+    prepare_tmp_table(kSqlTmpTokenNew, kSqlTmpSchemaTokenNew);
+    {
+      duckdb::Appender ap(*sink_conn, kSqlTmpTokenNew);
+      for (const auto &[key, st] : token_states) {
+        if (std::abs(st.pos) <= kPosEpsilon) {
+          continue;
+        }
+        const std::string &user_blob = user_blob_pool[key.user_id];
+        ap.BeginRow();
+        ap.Append(duckdb::Value::BLOB(
+            reinterpret_cast<duckdb::const_data_ptr_t>(user_blob.data()),
+            user_blob.size()));
+        ap.Append(key.cond_idx);
+        ap.Append(key.token_idx);
+        ap.Append(round_i64(st.pos));
+        ap.Append(round_i64(st.cost));
+        ap.Append(round_i64(st.lp));
+        ap.Append(round_i64(st.entry_block));
+        ap.EndRow();
+      }
+      ap.Close();
+    }
+    (void)checked_query(
+        "DELETE FROM " + table_token_state + " s "
+                                             "WHERE EXISTS ("
+                                             "  SELECT 1 FROM " +
+        std::string(kSqlTmpTokenDirty) + " d "
+                                         "  WHERE s.user_addr = d.user_addr AND s.cond_idx = d.cond_idx AND s.token_idx = d.token_idx"
+                                         ")");
+    (void)checked_query(
+        "INSERT INTO " + table_token_state + " (" + kSqlColsTokenState + ") "
+                                                                         "SELECT " +
+        kSqlColsTokenState + " FROM " +
+        std::string(kSqlTmpTokenNew));
+  }
 
-      prepare_tmp_table(kSqlTmpTokenNew, kSqlTmpSchemaTokenNew);
-      {
-        duckdb::Appender ap(*sink_conn, kSqlTmpTokenNew);
-        for (const auto &[key, st] : token_states) {
-          if (std::abs(st.pos) <= kPosEpsilon) {
-            continue;
+  if (!event_facts.empty()) {
+    TraceN("s3/wr_rock_evt");
+    std::vector<core::rocks::Stage3EventFactRecord> rows;
+    rows.reserve(event_facts.size());
+    for (const auto &fr : event_facts) {
+      const std::string &user_blob = user_blob_pool[fr.user_id];
+      rows.push_back({
+          user_blob,
+          fr.sort_key,
+          fr.cond_idx,
+          fr.event_type,
+          fr.token_idx,
+          fr.realized_delta,
+          fr.realized_cum,
+          fr.unrealized_pnl,
+          fr.token_count,
+          static_cast<int32_t>(fr.tag_id),
+          fr.exposure,
+          fr.volume,
+          fr.holding_period,
+      });
+    }
+    event_fact_store_->write_events(rows);
+  }
+
+  if (!bucket_agg_states.empty()) {
+    TraceN("s3/wr_duck_feat");
+    prepare_tmp_table(kSqlTmpFeatureTensorState, kSqlTmpSchemaFeatureTensorState);
+    {
+      duckdb::Appender ap(*sink_conn, kSqlTmpFeatureTensorState);
+      for (const auto &[key, agg] : bucket_agg_states) {
+        const std::string &user_blob = user_blob_pool[key.user_id];
+        const std::vector<uint8_t> realized_kll_blob = agg.realized_kll.serialize();
+        const int64_t tw = agg.time_weight_sum;
+        const int64_t token_avg_10w =
+            (tw > 0) ? round_i64(static_cast<double>(agg.token_count_tw_sum) / static_cast<double>(tw)) : 0;
+        const int64_t exposure_avg_10w =
+            (tw > 0) ? round_i64(static_cast<double>(agg.exposure_tw_sum) / static_cast<double>(tw)) : 0;
+        const int64_t holding_period_avg_10w =
+            (tw > 0) ? round_i64(static_cast<double>(agg.holding_period_tw_sum) / static_cast<double>(tw)) : 0;
+        const int64_t volume_10w = agg.volume_sum;
+        double sharpe_10w = 0.0;
+        if (agg.event_count > 1) {
+          const double n = static_cast<double>(agg.event_count);
+          const double mean = static_cast<double>(agg.realized_sum) / n;
+          const double mean_sq = static_cast<double>(agg.realized_sq_sum) / n;
+          const double variance = mean_sq - mean * mean;
+          if (variance > 0.0) {
+            sharpe_10w = mean / std::sqrt(variance);
           }
-          const std::string &user_blob = user_blob_pool[key.user_id];
-          ap.BeginRow();
-          ap.Append(duckdb::Value::BLOB(
-              reinterpret_cast<duckdb::const_data_ptr_t>(user_blob.data()),
-              user_blob.size()));
-          ap.Append(key.cond_idx);
-          ap.Append(key.token_idx);
-          ap.Append(round_i64(st.pos));
-          ap.Append(round_i64(st.cost));
-          ap.Append(round_i64(st.lp));
-          ap.Append(round_i64(st.entry_block));
-          ap.EndRow();
         }
-        ap.Close();
+        ap.BeginRow();
+        append_blob(ap, user_blob);
+        ap.Append(key.block_bucket);
+        ap.Append(static_cast<int32_t>(key.tag_id));
+        ap.Append(agg.last_sort_key);
+        ap.Append(agg.last_block);
+        ap.Append(agg.last_exposure);
+        ap.Append(agg.last_holding_period);
+        ap.Append(agg.last_token_count);
+        ap.Append(agg.time_weight_sum);
+        ap.Append(agg.token_count_tw_sum);
+        ap.Append(agg.exposure_tw_sum);
+        ap.Append(agg.volume_sum);
+        ap.Append(agg.holding_period_tw_sum);
+        ap.Append(agg.realized_sum);
+        ap.Append(agg.realized_sq_sum);
+        ap.Append(agg.event_count);
+        ap.Append(duckdb::Value::BLOB(
+            reinterpret_cast<duckdb::const_data_ptr_t>(realized_kll_blob.data()),
+            realized_kll_blob.size()));
+        ap.Append(token_avg_10w);
+        ap.Append(exposure_avg_10w);
+        ap.Append(volume_10w);
+        ap.Append(holding_period_avg_10w);
+        ap.Append(sharpe_10w);
+        ap.Append(agg.last_sort_key);
+        ap.EndRow();
       }
-      (void)checked_query(
-          "DELETE FROM " + table_token_state + " s "
-                                               "WHERE EXISTS ("
-                                               "  SELECT 1 FROM " +
-          std::string(kSqlTmpTokenDirty) + " d "
-                                           "  WHERE s.user_addr = d.user_addr AND s.cond_idx = d.cond_idx AND s.token_idx = d.token_idx"
-                                           ")");
-      (void)checked_query(
-          "INSERT INTO " + table_token_state + " (" + kSqlColsTokenState + ") "
-                                                                           "SELECT " +
-          kSqlColsTokenState + " FROM " +
-          std::string(kSqlTmpTokenNew));
+      ap.Close();
     }
+    (void)checked_query(
+        "INSERT INTO " + table_feature_tensor + " (" + kSqlColsFeatureTensorState + ") "
+                                                                                    "SELECT " +
+        kSqlColsFeatureTensorState + " FROM " +
+        std::string(kSqlTmpFeatureTensorState) + " " + std::string(kSqlOnConflictFeatureTensorState) + std::string(kSqlSetFeatureTensorStateUpsert));
+  }
 
-    if (!event_facts.empty()) {
-      std::vector<core::rocks::Stage3EventFactRecord> rows;
-      rows.reserve(event_facts.size());
-      for (const auto &fr : event_facts) {
-        const std::string &user_blob = user_blob_pool[fr.user_id];
-        rows.push_back({
-            user_blob,
-            fr.sort_key,
-            fr.cond_idx,
-            fr.event_type,
-            fr.token_idx,
-            fr.realized_delta,
-            fr.realized_cum,
-            fr.unrealized_pnl,
-            fr.token_count,
-            static_cast<int32_t>(fr.tag_id),
-            fr.exposure,
-            fr.volume,
-            fr.holding_period,
-        });
-      }
-      event_fact_store_->write_events(rows);
-    }
-
-    if (!bucket_agg_states.empty()) {
-      prepare_tmp_table(kSqlTmpFeatureTensorState, kSqlTmpSchemaFeatureTensorState);
-      {
-        duckdb::Appender ap(*sink_conn, kSqlTmpFeatureTensorState);
-        for (const auto &[key, agg] : bucket_agg_states) {
-          const std::string &user_blob = user_blob_pool[key.user_id];
-          const std::vector<uint8_t> realized_kll_blob = agg.realized_kll.serialize();
-          const int64_t tw = agg.time_weight_sum;
-          const int64_t token_avg_10w =
-              (tw > 0) ? round_i64(static_cast<double>(agg.token_count_tw_sum) / static_cast<double>(tw)) : 0;
-          const int64_t exposure_avg_10w =
-              (tw > 0) ? round_i64(static_cast<double>(agg.exposure_tw_sum) / static_cast<double>(tw)) : 0;
-          const int64_t holding_period_avg_10w =
-              (tw > 0) ? round_i64(static_cast<double>(agg.holding_period_tw_sum) / static_cast<double>(tw)) : 0;
-          const int64_t volume_10w = agg.volume_sum;
-          double sharpe_10w = 0.0;
-          if (agg.event_count > 1) {
-            const double n = static_cast<double>(agg.event_count);
-            const double mean = static_cast<double>(agg.realized_sum) / n;
-            const double mean_sq = static_cast<double>(agg.realized_sq_sum) / n;
-            const double variance = mean_sq - mean * mean;
-            if (variance > 0.0) {
-              sharpe_10w = mean / std::sqrt(variance);
-            }
-          }
-          ap.BeginRow();
-          append_blob(ap, user_blob);
-          ap.Append(key.block_bucket);
-          ap.Append(static_cast<int32_t>(key.tag_id));
-          ap.Append(agg.last_sort_key);
-          ap.Append(agg.last_block);
-          ap.Append(agg.last_exposure);
-          ap.Append(agg.last_holding_period);
-          ap.Append(agg.last_token_count);
-          ap.Append(agg.time_weight_sum);
-          ap.Append(agg.token_count_tw_sum);
-          ap.Append(agg.exposure_tw_sum);
-          ap.Append(agg.volume_sum);
-          ap.Append(agg.holding_period_tw_sum);
-          ap.Append(agg.realized_sum);
-          ap.Append(agg.realized_sq_sum);
-          ap.Append(agg.event_count);
-          ap.Append(duckdb::Value::BLOB(
-              reinterpret_cast<duckdb::const_data_ptr_t>(realized_kll_blob.data()),
-              realized_kll_blob.size()));
-          ap.Append(token_avg_10w);
-          ap.Append(exposure_avg_10w);
-          ap.Append(volume_10w);
-          ap.Append(holding_period_avg_10w);
-          ap.Append(sharpe_10w);
-          ap.Append(agg.last_sort_key);
-          ap.EndRow();
-        }
-        ap.Close();
-      }
-      (void)checked_query(
-          "INSERT INTO " + table_feature_tensor + " (" + kSqlColsFeatureTensorState + ") "
-                                                                                      "SELECT " +
-          kSqlColsFeatureTensorState + " FROM " +
-          std::string(kSqlTmpFeatureTensorState) + " " + std::string(kSqlOnConflictFeatureTensorState) + std::string(kSqlSetFeatureTensorStateUpsert));
-    }
-
+  {
+    TraceN("s3/wr_duck_user");
     prepare_tmp_table(kSqlTmpUserSummaryDelta, kSqlTmpSchemaUserSummaryDelta);
     {
       duckdb::Appender ap(*sink_conn, kSqlTmpUserSummaryDelta);
@@ -796,7 +796,10 @@ bool StageSync::process_chunk_locked() const {
         "INSERT INTO " + table_user_summary + " (" + kSqlColsUserSummaryState + ") "
                                                                                 "SELECT user_addr, event_inc, rpnl, upnl, active_tokens, last_sort_key FROM " +
         std::string(kSqlTmpUserSummaryDelta) + " " + std::string(kSqlOnConflictUserSummaryState) + sql_set_user_summary_upsert);
+  }
 
+  {
+    TraceN("s3/wr_duck_commit");
     save_cursor_locked(*sink_conn);
     (void)checked_query("COMMIT");
   }
