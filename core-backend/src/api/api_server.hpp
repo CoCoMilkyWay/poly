@@ -21,12 +21,16 @@ public:
             stage3::StageSync &stage3,
             unsigned short port, ApiSession::Stage0Getter stage0_getter, ApiSession::Stage0Retagger stage0_retagger,
             ApiSession::Stage1Getter stage1_getter,
-            ApiSession::Stage2Getter stage2_getter, ApiSession::Stage3Getter stage3_getter)
+            ApiSession::Stage2Getter stage2_getter, ApiSession::Stage3Getter stage3_getter,
+            ApiSession::Stage0MemGetter stage0_mem_getter, ApiSession::Stage1MemGetter stage1_mem_getter,
+            ApiSession::Stage2MemGetter stage2_mem_getter, ApiSession::Stage3MemGetter stage3_mem_getter)
       : ioc_(ioc), acceptor_(ioc, tcp::endpoint(tcp::v4(), port)), stage0_db_(stage0_db), stage1_db_(stage1_db),
         stage2_db_(stage2_db), stage3_db_(stage3_db), stage3_(stage3), stage0_getter_(std::move(stage0_getter)),
         stage0_retagger_(std::move(stage0_retagger)),
         stage1_getter_(std::move(stage1_getter)),
-        stage2_getter_(std::move(stage2_getter)), stage3_getter_(std::move(stage3_getter)) {
+        stage2_getter_(std::move(stage2_getter)), stage3_getter_(std::move(stage3_getter)),
+        stage0_mem_getter_(std::move(stage0_mem_getter)), stage1_mem_getter_(std::move(stage1_mem_getter)),
+        stage2_mem_getter_(std::move(stage2_mem_getter)), stage3_mem_getter_(std::move(stage3_mem_getter)) {
     std::cout << "[API] 监听端口 " << port << std::endl;
     do_accept();
   }
@@ -38,7 +42,8 @@ private:
       if (!ec) {
         std::make_shared<ApiSession>(std::move(socket), stage0_db_, stage1_db_, stage2_db_, stage3_db_, stage3_,
                                      stage0_getter_, stage0_retagger_, stage1_getter_, stage2_getter_,
-                                     stage3_getter_)
+                                     stage3_getter_, stage0_mem_getter_, stage1_mem_getter_,
+                                     stage2_mem_getter_, stage3_mem_getter_)
             ->run();
       }
       do_accept();
@@ -57,4 +62,8 @@ private:
   ApiSession::Stage1Getter stage1_getter_;
   ApiSession::Stage2Getter stage2_getter_;
   ApiSession::Stage3Getter stage3_getter_;
+  ApiSession::Stage0MemGetter stage0_mem_getter_;
+  ApiSession::Stage1MemGetter stage1_mem_getter_;
+  ApiSession::Stage2MemGetter stage2_mem_getter_;
+  ApiSession::Stage3MemGetter stage3_mem_getter_;
 };

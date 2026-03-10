@@ -11,6 +11,7 @@
 #include "misc/profiler.hpp"
 #include "stage0/stage0_query_sync.hpp"
 #include "stage0/stage0_tag_sync.hpp"
+#include "stage0/stage0_mem.hpp"
 #include "stage1/stage1_sync.hpp"
 #include "stage2/stage2_sync.hpp"
 #include "stage3/stage3_sync.hpp"
@@ -94,6 +95,18 @@ int main(int argc, char *argv[]) {
     return {s.syncing, s.last_block, s.head_block, s.behind_blocks, s.behind_chunks,
             s.blocks_per_second, s.eta_seconds, s.bytes_per_block};
   };
+  auto stage0_mem_getter = [&stage0_query, &stage0_tag]() -> json {
+    return stage0::memory_breakdown(stage0_query, stage0_tag);
+  };
+  auto stage1_mem_getter = [&stage1]() -> json {
+    return stage1.memory_breakdown();
+  };
+  auto stage2_mem_getter = [&stage2]() -> json {
+    return stage2.memory_breakdown();
+  };
+  auto stage3_mem_getter = [&stage3]() -> json {
+    return stage3.memory_breakdown();
+  };
   auto stage2_getter = [&stage2]() -> Stage2Status {
     const auto &s = stage2.status();
     return {s.syncing, s.last_block, s.head_block, s.behind_blocks,
@@ -157,7 +170,7 @@ int main(int argc, char *argv[]) {
   start_stage(config.stage3_enable, "Stage3", stage3, stage3_ioc, stage3_thread);
 
   boost::asio::io_context api_ioc;
-  ApiServer api_server(api_ioc, stage0_db, stage1_db, stage2_db, stage3_db, stage3, config.backend_port, stage0_getter, [&stage0_tag]() { stage0_tag.reset_progress(); }, stage1_getter, stage2_getter, stage3_getter);
+  ApiServer api_server(api_ioc, stage0_db, stage1_db, stage2_db, stage3_db, stage3, config.backend_port, stage0_getter, [&stage0_tag]() { stage0_tag.reset_progress(); }, stage1_getter, stage2_getter, stage3_getter, stage0_mem_getter, stage1_mem_getter, stage2_mem_getter, stage3_mem_getter);
 
   boost::asio::signal_set signals(api_ioc, SIGINT, SIGTERM);
   signals.async_wait([&](const boost::system::error_code &, int sig) {

@@ -324,5 +324,3 @@ private:
 };
 
 } // namespace stage3
-
-#include "stage3_mem.hpp" // IWYU pragma: keep

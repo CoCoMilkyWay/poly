@@ -81,11 +81,25 @@ inline void assert_no_err(char *err) {
 
 inline rocksdb_options_t *make_db_options() {
   rocksdb_options_t *opts = rocksdb_options_create();
+  // Keep SST/WAL at sane granularity. Passing 0 to optimize_level_style_compaction
+  // shrinks write_buffer_size to 64KB and explodes file count on large sync.
+  constexpr size_t kWriteBufferSize = 128ull * 1024ull * 1024ull;
+  constexpr uint64_t kTargetFileSizeBase = 128ull * 1024ull * 1024ull;
+  constexpr uint64_t kMaxBytesForLevelBase = 1024ull * 1024ull * 1024ull;
+  constexpr uint64_t kMaxTotalWalSize = 1024ull * 1024ull * 1024ull;
   rocksdb_options_set_create_if_missing(opts, 1);
   rocksdb_options_set_create_missing_column_families(opts, 1);
   rocksdb_options_increase_parallelism(opts, 4);
-  rocksdb_options_optimize_level_style_compaction(opts, 0);
   rocksdb_options_set_max_open_files(opts, 4096);
+  rocksdb_options_set_write_buffer_size(opts, kWriteBufferSize);
+  rocksdb_options_set_max_write_buffer_number(opts, 6);
+  rocksdb_options_set_min_write_buffer_number_to_merge(opts, 2);
+  rocksdb_options_set_level0_file_num_compaction_trigger(opts, 4);
+  rocksdb_options_set_target_file_size_base(opts, kTargetFileSizeBase);
+  rocksdb_options_set_max_bytes_for_level_base(opts, kMaxBytesForLevelBase);
+  rocksdb_options_set_max_total_wal_size(opts, kMaxTotalWalSize);
+  rocksdb_options_set_keep_log_file_num(opts, 8);
+  rocksdb_options_set_recycle_log_file_num(opts, 4);
   return opts;
 }
 

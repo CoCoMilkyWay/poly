@@ -1,5 +1,4 @@
 #include "stage0_query_sync.hpp"
-#include "config.hpp"
 #include "stage0_query_sync_http.hpp"
 
 #include "../infra/rpc_transport.hpp"
@@ -13,20 +12,17 @@
 #include <filesystem>
 #include <fstream>
 #include <functional>
-#include <iomanip>
 #include <map>
 #include <memory>
 #include <mutex>
-#include <sstream>
 #include <string_view>
 #include <thread>
 #include <unordered_set>
 #include <vector>
 
-#define STAGE0_DEBUG_DUMP_JSON 0
-
 namespace stage0 {
 namespace {
+constexpr bool kStage0DebugDumpJson = false;
 
 constexpr std::string_view kEmptyRangeSql = "(SELECT 1 WHERE 1=0)";
 constexpr const char *kGammaApiBase = "https://gamma-api.polymarket.com";
@@ -65,9 +61,7 @@ bool is_poly_neg_risk(const json &market) {
 
 std::string ensure_stage0_log_dir(const std::string &data_dir) {
   const std::string log_dir = data_dir + "/log";
-  if (std::filesystem::exists(log_dir) && std::filesystem::is_regular_file(log_dir)) {
-    std::filesystem::rename(log_dir, log_dir + ".legacy_file");
-  }
+  assert(!(std::filesystem::exists(log_dir) && std::filesystem::is_regular_file(log_dir)));
   std::filesystem::create_directories(log_dir);
   assert(std::filesystem::exists(log_dir));
   assert(std::filesystem::is_directory(log_dir));
@@ -539,9 +533,9 @@ void QuerySync::do_sync() {
         } else {
           known_ctf_condition_count_ += 1;
         }
-#if STAGE0_DEBUG_DUMP_JSON
-        persist_stage0_parsed_market(stage0_db_.data_dir(), row.seed.condition_hex_lower, row.market);
-#endif
+        if constexpr (kStage0DebugDumpJson) {
+          persist_stage0_parsed_market(stage0_db_.data_dir(), row.seed.condition_hex_lower, row.market);
+        }
       }
       for (const auto &seed : empty_rows_to_persist) {
         known_condition_ids_.insert(seed.condition_hex_lower);

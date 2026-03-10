@@ -821,5 +821,3 @@ private:
 };
 
 } // namespace stage2
-
-#include "stage2_mem.hpp" // IWYU pragma: keep

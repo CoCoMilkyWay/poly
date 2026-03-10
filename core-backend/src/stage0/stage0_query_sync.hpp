@@ -40,6 +40,7 @@ public:
   void start(asio::io_context &ioc);
   void stop();
   Status status() const;
+  json memory_breakdown() const;
 
 private:
   static constexpr int kWorkerCount = 50;

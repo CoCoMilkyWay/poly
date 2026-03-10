@@ -46,6 +46,7 @@ public:
   void stop();
 
   Status status() const;
+  json memory_breakdown() const;
 
 private:
   static constexpr int64_t kFinalityDepthBlocks = 100000;  // 远离区块链顶端(数据完整性)

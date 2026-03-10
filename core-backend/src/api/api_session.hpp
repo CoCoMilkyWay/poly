@@ -78,11 +78,17 @@ public:
   using Stage1Getter = std::function<Stage1Status()>;
   using Stage2Getter = std::function<Stage2Status()>;
   using Stage3Getter = std::function<Stage3Status()>;
+  using Stage0MemGetter = std::function<json()>;
+  using Stage1MemGetter = std::function<json()>;
+  using Stage2MemGetter = std::function<json()>;
+  using Stage3MemGetter = std::function<json()>;
 
   ApiSession(tcp::socket socket, Database &stage0_db, Database &stage1_db, Database &stage2_db, Database &stage3_db,
              stage3::StageSync &stage3,
              Stage0Getter stage0_getter, Stage0Retagger stage0_retagger, Stage1Getter stage1_getter,
-             Stage2Getter stage2_getter, Stage3Getter stage3_getter);
+             Stage2Getter stage2_getter, Stage3Getter stage3_getter,
+             Stage0MemGetter stage0_mem_getter, Stage1MemGetter stage1_mem_getter,
+             Stage2MemGetter stage2_mem_getter, Stage3MemGetter stage3_mem_getter);
 
   void run();
 
@@ -132,6 +138,10 @@ private:
   Stage1Getter stage1_getter_;
   Stage2Getter stage2_getter_;
   Stage3Getter stage3_getter_;
+  Stage0MemGetter stage0_mem_getter_;
+  Stage1MemGetter stage1_mem_getter_;
+  Stage2MemGetter stage2_mem_getter_;
+  Stage3MemGetter stage3_mem_getter_;
   beast::flat_buffer buffer_;
   http::request<http::string_body> req_;
   http::response<http::string_body> res_;

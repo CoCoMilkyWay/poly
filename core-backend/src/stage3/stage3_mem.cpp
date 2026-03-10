@@ -1,11 +1,11 @@
-#pragma once
+#include "stage3_sync.hpp"
 
 #include "../core/mem.hpp"
-#include "stage3_sync.hpp"
+#include "../core/mem_json.hpp"
 
 namespace stage3 {
 
-inline json StageSync::memory_breakdown() const {
+json StageSync::memory_breakdown() const {
   auto cond_extra = [](const ConditionInfo &info) {
     return static_cast<int64_t>(info.question_id.capacity()) +
            static_cast<int64_t>(info.payout_numerators.capacity()) * static_cast<int64_t>(sizeof(int64_t));
@@ -36,7 +36,7 @@ inline json StageSync::memory_breakdown() const {
   const int64_t stage3_persistent_total = conditions_bytes + cond_tag_ids_bytes + tag_to_industry_bytes + cache_addr_bytes +
                                           cache_timeline_bytes + cache_snapshots_bytes;
 
-  std::vector<std::pair<std::string, int64_t>> stage3_rows = {
+  core::mem::MemRows stage3_rows = {
       {"event_inputs", probe_copy.event_inputs_bytes},
       {"user_blob_pool", probe_copy.user_blob_pool_bytes},
       {"user_index_maps", probe_copy.user_index_bytes},
@@ -50,38 +50,8 @@ inline json StageSync::memory_breakdown() const {
       {"user_cache_timeline", cache_timeline_bytes},
       {"user_cache_snapshots", cache_snapshots_bytes},
   };
-  std::sort(stage3_rows.begin(), stage3_rows.end(), [](const auto &a, const auto &b) { return a.second > b.second; });
-
-  json stage3_top = json::array();
-  const size_t top_n = std::min<size_t>(stage3_rows.size(), 20);
-  for (size_t i = 0; i < top_n; ++i) {
-    stage3_top.push_back({{"name", stage3_rows[i].first}, {"estimated_bytes", stage3_rows[i].second}});
-  }
-
-  const json stage2_raw = builder_.memory_breakdown();
-  int64_t stage2_total_bytes = 0;
-  if (stage2_raw.contains("estimated_total_bytes")) {
-    stage2_total_bytes = stage2_raw["estimated_total_bytes"].get<int64_t>();
-  }
-  json stage2_items = json::array();
-  if (stage2_raw.contains("top_containers") && stage2_raw["top_containers"].is_array()) {
-    stage2_items = stage2_raw["top_containers"];
-  }
-
-  json stage2 = {
-      {"estimated_total_bytes", stage2_total_bytes},
-      {"items", stage2_items},
-  };
-  json stage3 = {
-      {"estimated_total_bytes", probe_copy.total_working_set_bytes + stage3_persistent_total},
-      {"items", stage3_top},
-  };
-
-  json result = {
-      {"stage2", stage2},
-      {"stage3", stage3},
-  };
-  return result;
+  core::mem::sort_mem_rows_desc(stage3_rows);
+  return core::mem::build_memory_breakdown_json(stage3_rows, probe_copy.total_working_set_bytes + stage3_persistent_total, 20);
 }
 
 } // namespace stage3

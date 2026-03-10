@@ -202,12 +202,18 @@ std::unordered_map<uint32_t, ApiSession::Stage3CondMeta> ApiSession::s3_meta_cac
 ApiSession::ApiSession(tcp::socket socket, Database &stage0_db, Database &stage1_db, Database &stage2_db, Database &stage3_db,
                        stage3::StageSync &stage3,
                        Stage0Getter stage0_getter, Stage0Retagger stage0_retagger, Stage1Getter stage1_getter,
-                       Stage2Getter stage2_getter, Stage3Getter stage3_getter)
+                       Stage2Getter stage2_getter, Stage3Getter stage3_getter,
+                       Stage0MemGetter stage0_mem_getter, Stage1MemGetter stage1_mem_getter,
+                       Stage2MemGetter stage2_mem_getter, Stage3MemGetter stage3_mem_getter)
     : socket_(std::move(socket)), stage0_db_(stage0_db), stage1_db_(stage1_db), stage2_db_(stage2_db), stage3_db_(stage3_db), stage3_(stage3),
       stage0_getter_(std::move(stage0_getter)), stage0_retagger_(std::move(stage0_retagger)),
       stage1_getter_(std::move(stage1_getter)),
       stage2_getter_(std::move(stage2_getter)),
-      stage3_getter_(std::move(stage3_getter)) {}
+      stage3_getter_(std::move(stage3_getter)),
+      stage0_mem_getter_(std::move(stage0_mem_getter)),
+      stage1_mem_getter_(std::move(stage1_mem_getter)),
+      stage2_mem_getter_(std::move(stage2_mem_getter)),
+      stage3_mem_getter_(std::move(stage3_mem_getter)) {}
 
 void ApiSession::run() {
   do_read();
@@ -1220,8 +1226,23 @@ void ApiSession::handle_memory() {
   TraceN("api/memory");
   res_.set(http::field::content_type, "application/json");
   json result = json::object();
-  result["process_rss_bytes"] = core::mem::get_process_rss_bytes();
-  result["object_breakdown"] = stage3_.memory_breakdown();
+  const int64_t rss_bytes = core::mem::get_process_rss_bytes();
+  result["process_rss_bytes"] = rss_bytes;
+  json breakdown = {
+      {"stage0", stage0_mem_getter_()},
+      {"stage1", stage1_mem_getter_()},
+      {"stage2", stage2_mem_getter_()},
+      {"stage3", stage3_mem_getter_()},
+  };
+
+  const int64_t stage0_bytes = breakdown["stage0"].value("estimated_total_bytes", int64_t{0});
+  const int64_t stage1_bytes = breakdown["stage1"].value("estimated_total_bytes", int64_t{0});
+  const int64_t stage2_bytes = breakdown["stage2"].value("estimated_total_bytes", int64_t{0});
+  const int64_t stage3_bytes = breakdown["stage3"].value("estimated_total_bytes", int64_t{0});
+  result["estimated_sum_bytes"] = stage0_bytes + stage1_bytes + stage2_bytes + stage3_bytes;
+  result["rss_gap_bytes"] = rss_bytes - result["estimated_sum_bytes"].get<int64_t>();
+
+  result["object_breakdown"] = std::move(breakdown);
   res_.result(http::status::ok);
   res_.body() = result.dump(2);
 }

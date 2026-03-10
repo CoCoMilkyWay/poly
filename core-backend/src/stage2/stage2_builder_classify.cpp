@@ -397,34 +397,6 @@ TransferClass EventBuilder::classify_and_emit(
         "SplitWindowUniqueCandidate",
         "SplitForwardUniqueCandidate");
   };
-  auto find_split_info_window_fallback = [&](const std::string &stakeholder) -> SplitInfo * {
-    // Window-only match ignoring amount. Iterate all amount buckets in the fast index.
-    if (tx_split_actor_amount_rows != nullptr) {
-      for (auto &[key, bucket] : *tx_split_actor_amount_rows) {
-        for (SplitInfo *info_ptr : bucket) {
-          SplitInfo &info = *info_ptr;
-          if (!semantic_log_matches(info.log_index))
-            continue;
-          if (!collateral_matches(info.collateral_token))
-            continue;
-          if (info.stakeholder == stakeholder && cond_matches(info.cond_id))
-            return &info;
-        }
-      }
-      return nullptr;
-    }
-    if (tx_split_rows == nullptr)
-      return nullptr;
-    for (auto &info : *tx_split_rows) {
-      if (!semantic_log_matches(info.log_index))
-        continue;
-      if (!collateral_matches(info.collateral_token))
-        continue;
-      if (info.stakeholder == stakeholder && cond_matches(info.cond_id))
-        return &info;
-    }
-    return nullptr;
-  };
   auto find_merge_info = [&](const std::string &stakeholder, int64_t amt) -> MergeInfo * {
     return find_conditional_info_with_amount(
         tx_merge_rows, tx_merge_actor_amount_rows, stakeholder, amt,
@@ -1046,9 +1018,6 @@ TransferClass EventBuilder::classify_and_emit(
 
     if (from == NEG_RISK_ADAPTER) {
       SplitInfo *split_info = find_split_info(NEG_RISK_ADAPTER, amount);
-      if (split_info == nullptr) {
-        split_info = find_split_info_window_fallback(NEG_RISK_ADAPTER);
-      }
       if (split_info != nullptr) {
         bind_root(RootOpType::Split, "adapter_out_split_child");
         consume_split(split_info);

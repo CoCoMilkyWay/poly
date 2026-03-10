@@ -6,11 +6,13 @@
 #include <optional>
 
 #include <boost/asio.hpp>
+#include <nlohmann/json.hpp>
 
 #include "../core/database.hpp"
 #include "stage2_builder.hpp"
 
 namespace asio = boost::asio;
+using json = nlohmann::json;
 
 namespace stage2 {
 
@@ -33,6 +35,7 @@ public:
   void stop();
 
   const Status &status() const;
+  json memory_breakdown() const;
 
   EventBuilder &builder();
 

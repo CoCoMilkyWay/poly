@@ -59,19 +59,15 @@ endif()
 # ONNX Runtime: CMake 配置阶段自动选择, 优先 GPU, 其次 CPU
 set(ONNXRUNTIME_GPU_DIR ${PACKAGES_DIR}/onnxruntime-gpu)
 set(ONNXRUNTIME_CPU_DIR ${PACKAGES_DIR}/onnxruntime-cpu)
-
 if(EXISTS ${ONNXRUNTIME_GPU_DIR}/libonnxruntime.so)
     set(ONNXRUNTIME_DIR ${ONNXRUNTIME_GPU_DIR})
     set(ONNXRUNTIME_MODE "gpu")
 elseif(EXISTS ${ONNXRUNTIME_CPU_DIR}/libonnxruntime.so)
     set(ONNXRUNTIME_DIR ${ONNXRUNTIME_CPU_DIR})
     set(ONNXRUNTIME_MODE "cpu")
-    message(WARNING
-        "ONNX Runtime 当前为 CPU 模式。\n"
-        "如需启用 GPU, 请准备: ${ONNXRUNTIME_GPU_DIR}/libonnxruntime.so")
 else()
     message(FATAL_ERROR
-        "未找到 ONNX Runtime 库文件, 请提供以下任一目录:\n"
+        "未找到 ONNX Runtime 库文件，请提供以下任一目录:\n"
         "  - ${ONNXRUNTIME_GPU_DIR}/libonnxruntime.so\n"
         "  - ${ONNXRUNTIME_CPU_DIR}/libonnxruntime.so")
 endif()
@@ -89,22 +85,30 @@ set(SOURCES
     ${SRC_DIR}/stage0/stage0_query_sync.cpp
     ${SRC_DIR}/stage0/stage0_query_sync_http.cpp
     ${SRC_DIR}/stage0/stage0_query_sync_persist.cpp
+    ${SRC_DIR}/stage0/stage0_query_mem.cpp
+    ${SRC_DIR}/stage0/stage0_mem.cpp
     ${SRC_DIR}/stage0/stage0_tag_sync.cpp
+    ${SRC_DIR}/stage0/stage0_tag_mem.cpp
     ${SRC_DIR}/stage0/stage0_tag.cpp
+    ${SRC_DIR}/stage0/stage0_tagger_mem.cpp
     ${SRC_DIR}/stage1/stage1_sync.cpp
+    ${SRC_DIR}/stage1/stage1_mem.cpp
     ${SRC_DIR}/stage1/event_decode.cpp
     ${SRC_DIR}/stage2/stage2_utils.cpp
     ${SRC_DIR}/stage2/stage2_models.cpp
     ${SRC_DIR}/stage2/stage2_builder.cpp
+    ${SRC_DIR}/stage2/stage2_mem.cpp
     ${SRC_DIR}/stage2/stage2_builder_classify.cpp
     ${SRC_DIR}/stage2/stage2_builder_phases.cpp
     ${SRC_DIR}/stage2/stage2_sync.cpp
+    ${SRC_DIR}/stage2/stage2_sync_mem.cpp
     ${SRC_DIR}/stage3/stage3_sync_schema.cpp
     ${SRC_DIR}/stage3/stage3_comp_feat.cpp
     ${SRC_DIR}/stage3/stage3_filter.cpp
     ${SRC_DIR}/stage3/stage3_sync_runtime.cpp
     ${SRC_DIR}/stage3/stage3_sync_calc.cpp
     ${SRC_DIR}/stage3/stage3_sync_query.cpp
+    ${SRC_DIR}/stage3/stage3_mem.cpp
 )
 
 if(PROFILE_MODE)

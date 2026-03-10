@@ -131,6 +131,14 @@
       <div class="mem-kpi-value rss" id="mem-kpi-rss">-</div>
     </div>
     <div class="mem-kpi">
+      <div class="mem-kpi-label">Stage0 total</div>
+      <div class="mem-kpi-value" id="mem-kpi-s0-total">-</div>
+    </div>
+    <div class="mem-kpi">
+      <div class="mem-kpi-label">Stage1 total</div>
+      <div class="mem-kpi-value" id="mem-kpi-s1-total">-</div>
+    </div>
+    <div class="mem-kpi">
       <div class="mem-kpi-label">Stage2 total</div>
       <div class="mem-kpi-value" id="mem-kpi-s2-total">-</div>
     </div>
@@ -143,6 +151,36 @@
   <div class="mem-section">
     <div class="mem-section-title">Stage 内存占用</div>
     <details>
+      <summary id="mem-stage0-summary">Stage0</summary>
+      <div class="mem-table-wrap">
+        <table class="mem-table">
+          <thead>
+            <tr>
+              <th>占用</th>
+              <th>对象</th>
+            </tr>
+          </thead>
+          <tbody id="mem-stage0-body"></tbody>
+        </table>
+      </div>
+      <div class="mem-empty" id="mem-stage0-empty" style="display: none">暂无数据</div>
+    </details>
+    <details style="margin-top: 8px">
+      <summary id="mem-stage1-summary">Stage1</summary>
+      <div class="mem-table-wrap">
+        <table class="mem-table">
+          <thead>
+            <tr>
+              <th>占用</th>
+              <th>对象</th>
+            </tr>
+          </thead>
+          <tbody id="mem-stage1-body"></tbody>
+        </table>
+      </div>
+      <div class="mem-empty" id="mem-stage1-empty" style="display: none">暂无数据</div>
+    </details>
+    <details style="margin-top: 8px">
       <summary id="mem-stage2-summary">Stage2</summary>
       <div class="mem-table-wrap">
         <table class="mem-table">
@@ -157,7 +195,7 @@
       </div>
       <div class="mem-empty" id="mem-stage2-empty" style="display: none">暂无数据</div>
     </details>
-    <details style="margin-top: 8px">
+    <details>
       <summary id="mem-stage3-summary">Stage3</summary>
       <div class="mem-table-wrap">
         <table class="mem-table">
@@ -229,10 +267,16 @@
         setText("mem-kpi-rss", formatBytes(data.process_rss_bytes || 0));
 
         const obj = data.object_breakdown || {};
+        const s0 = obj.stage0 || {};
+        const s1 = obj.stage1 || {};
         const s2 = obj.stage2 || {};
         const s3 = obj.stage3 || {};
+        setText("mem-kpi-s0-total", formatBytes(s0.estimated_total_bytes || 0));
+        setText("mem-kpi-s1-total", formatBytes(s1.estimated_total_bytes || 0));
         setText("mem-kpi-s2-total", formatBytes(s2.estimated_total_bytes || 0));
         setText("mem-kpi-s3-total", formatBytes(s3.estimated_total_bytes || 0));
+        renderStage("stage0", s0);
+        renderStage("stage1", s1);
         renderStage("stage2", s2);
         renderStage("stage3", s3);
       } catch (e) {

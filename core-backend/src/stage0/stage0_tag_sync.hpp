@@ -6,12 +6,14 @@
 #include <string>
 
 #include <boost/asio.hpp>
+#include <nlohmann/json.hpp>
 
 #include "../core/config.hpp"
 #include "../core/database.hpp"
 #include "stage0_tag.hpp"
 
 namespace asio = boost::asio;
+using json = nlohmann::json;
 
 namespace stage0 {
 
@@ -32,6 +34,7 @@ public:
   void stop();
   Status status() const;
   void reset_progress();
+  json memory_breakdown() const;
 
 private:
   void schedule_sync(int delay_seconds);

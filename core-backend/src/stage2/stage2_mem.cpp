@@ -1,20 +1,23 @@
-#pragma once
+#include "stage2_builder.hpp"
 
 #include "../core/mem.hpp"
+#include "../core/mem_json.hpp"
+
+#include <algorithm>
 
 namespace stage2::mem {
 
-inline int64_t estimate_string_vector_extra(const std::vector<std::string> &v) {
+int64_t estimate_string_vector_extra(const std::vector<std::string> &v) {
   return core::mem::estimate_vector(v, [](const std::string &s) { return core::mem::estimate_string_extra(s); });
 }
 
-inline int64_t estimate_condition_info_extra(const ConditionInfo &info) {
+int64_t estimate_condition_info_extra(const ConditionInfo &info) {
   int64_t bytes = core::mem::estimate_string_extra(info.question_id);
   bytes += static_cast<int64_t>(info.payout_numerators.capacity()) * static_cast<int64_t>(sizeof(int64_t));
   return bytes;
 }
 
-inline int64_t estimate_split_info_extra(const SplitInfo &x) {
+int64_t estimate_split_info_extra(const SplitInfo &x) {
   int64_t bytes = 0;
   bytes += core::mem::estimate_string_extra(x.stakeholder);
   bytes += core::mem::estimate_string_extra(x.collateral_token);
@@ -24,7 +27,7 @@ inline int64_t estimate_split_info_extra(const SplitInfo &x) {
   return bytes;
 }
 
-inline int64_t estimate_merge_info_extra(const MergeInfo &x) {
+int64_t estimate_merge_info_extra(const MergeInfo &x) {
   int64_t bytes = 0;
   bytes += core::mem::estimate_string_extra(x.stakeholder);
   bytes += core::mem::estimate_string_extra(x.collateral_token);
@@ -34,7 +37,7 @@ inline int64_t estimate_merge_info_extra(const MergeInfo &x) {
   return bytes;
 }
 
-inline int64_t estimate_redemption_info_extra(const RedemptionInfo &x) {
+int64_t estimate_redemption_info_extra(const RedemptionInfo &x) {
   int64_t bytes = 0;
   bytes += core::mem::estimate_string_extra(x.redeemer);
   bytes += core::mem::estimate_string_extra(x.collateral_token);
@@ -44,7 +47,7 @@ inline int64_t estimate_redemption_info_extra(const RedemptionInfo &x) {
   return bytes;
 }
 
-inline int64_t estimate_convert_info_extra(const ConvertInfo &x) {
+int64_t estimate_convert_info_extra(const ConvertInfo &x) {
   int64_t bytes = 0;
   bytes += core::mem::estimate_string_extra(x.market_id);
   bytes += core::mem::estimate_string_extra(x.index_set);
@@ -52,7 +55,7 @@ inline int64_t estimate_convert_info_extra(const ConvertInfo &x) {
   return bytes;
 }
 
-inline int64_t estimate_order_info_extra(const OrderInfo &x) {
+int64_t estimate_order_info_extra(const OrderInfo &x) {
   int64_t bytes = 0;
   bytes += core::mem::estimate_string_extra(x.token_id);
   bytes += core::mem::estimate_string_extra(x.maker);
@@ -60,14 +63,14 @@ inline int64_t estimate_order_info_extra(const OrderInfo &x) {
   return bytes;
 }
 
-inline int64_t estimate_fpmm_trade_info_extra(const FPMMTradeInfo &x) {
+int64_t estimate_fpmm_trade_info_extra(const FPMMTradeInfo &x) {
   int64_t bytes = 0;
   bytes += core::mem::estimate_string_extra(x.fpmm_addr);
   bytes += core::mem::estimate_string_extra(x.trader);
   return bytes;
 }
 
-inline int64_t estimate_fpmm_funding_info_extra(const FPMMFundingInfo &x) {
+int64_t estimate_fpmm_funding_info_extra(const FPMMFundingInfo &x) {
   int64_t bytes = 0;
   bytes += core::mem::estimate_string_extra(x.fpmm_addr);
   bytes += core::mem::estimate_string_extra(x.funder);
@@ -79,12 +82,12 @@ inline int64_t estimate_fpmm_funding_info_extra(const FPMMFundingInfo &x) {
 
 namespace stage2 {
 
-inline json EventBuilder::memory_breakdown() const {
+json EventBuilder::memory_breakdown() const {
   std::lock_guard<std::mutex> lock(mem_mu_);
   return mem_snapshot_;
 }
 
-inline void EventBuilder::refresh_memory_snapshot(const char *phase) {
+void EventBuilder::refresh_memory_snapshot(const char *phase) {
   auto no_extra = [](const auto &) -> int64_t { return 0; };
 
   const int64_t conditions_bytes =
@@ -290,13 +293,7 @@ inline void EventBuilder::refresh_memory_snapshot(const char *phase) {
       {"commit_payload_", commit_payload_bytes},
       {"commit_reusable_payload_", commit_reusable_payload_bytes},
   };
-  std::sort(rows.begin(), rows.end(), [](const auto &a, const auto &b) { return a.second > b.second; });
-
-  json top = json::array();
-  const size_t top_n = std::min<size_t>(rows.size(), 20);
-  for (size_t i = 0; i < top_n; ++i) {
-    top.push_back({{"name", rows[i].first}, {"estimated_bytes", rows[i].second}});
-  }
+  core::mem::sort_mem_rows_desc(rows);
 
   json snapshot = {
       {"phase", phase},
@@ -305,7 +302,7 @@ inline void EventBuilder::refresh_memory_snapshot(const char *phase) {
       {"pending_commit_bytes", pending_commit_bytes},
       {"peak_chunk_plus_commit_bytes", mem_peak_chunk_bytes_},
       {"estimated_total_bytes", persistent_bytes + chunk_working_set_bytes + pending_commit_bytes},
-      {"top_containers", top},
+      {"items", core::mem::build_items_json(rows, 20)},
       {"hint", "Estimated from container capacities and string capacities; good for trend/ranking, not exact allocator bytes."},
   };
 

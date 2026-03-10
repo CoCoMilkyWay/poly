@@ -26,9 +26,7 @@ int64_t unix_ms_now() {
 
 std::string ensure_stage0_log_dir(const std::string &data_dir) {
   const std::string log_dir = data_dir + "/log";
-  if (std::filesystem::exists(log_dir) && std::filesystem::is_regular_file(log_dir)) {
-    std::filesystem::rename(log_dir, log_dir + ".legacy_file");
-  }
+  assert(!(std::filesystem::exists(log_dir) && std::filesystem::is_regular_file(log_dir)));
   std::filesystem::create_directories(log_dir);
   assert(std::filesystem::exists(log_dir));
   assert(std::filesystem::is_directory(log_dir));

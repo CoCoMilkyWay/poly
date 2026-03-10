@@ -1,10 +1,12 @@
 #pragma once
 
 #include <memory>
+#include <nlohmann/json.hpp>
 #include <string>
 #include <vector>
 
 namespace stage0 {
+using json = nlohmann::json;
 
 struct TaggerModelInfo {
   std::string model_path;
@@ -37,6 +39,7 @@ public:
 
   size_t label_count() const;
   const std::string &device_name() const;
+  json memory_breakdown() const;
 
 private:
   struct Impl;
