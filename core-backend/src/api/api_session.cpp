@@ -116,6 +116,14 @@ std::string latest_feather_file_path(const std::string &dir) {
   return latest;
 }
 
+int64_t update_peak_bytes(std::atomic<int64_t> &peak, int64_t current) {
+  int64_t observed = peak.load(std::memory_order_relaxed);
+  while (observed < current &&
+         !peak.compare_exchange_weak(observed, current, std::memory_order_relaxed, std::memory_order_relaxed)) {
+  }
+  return peak.load(std::memory_order_relaxed);
+}
+
 json to_stage1_status_json(const Stage1Status &status) {
   return {
       {"syncing", status.syncing},
@@ -1225,6 +1233,10 @@ std::string ApiSession::url_decode(const std::string &str) {
 void ApiSession::handle_memory() {
   TraceN("api/memory");
   res_.set(http::field::content_type, "application/json");
+  static std::atomic<int64_t> stage0_peak_bytes{0};
+  static std::atomic<int64_t> stage1_peak_bytes{0};
+  static std::atomic<int64_t> stage2_peak_bytes{0};
+  static std::atomic<int64_t> stage3_peak_bytes{0};
   json result = json::object();
   const int64_t rss_bytes = core::mem::get_process_rss_bytes();
   result["process_rss_bytes"] = rss_bytes;
@@ -1239,8 +1251,20 @@ void ApiSession::handle_memory() {
   const int64_t stage1_bytes = breakdown["stage1"].value("estimated_total_bytes", int64_t{0});
   const int64_t stage2_bytes = breakdown["stage2"].value("estimated_total_bytes", int64_t{0});
   const int64_t stage3_bytes = breakdown["stage3"].value("estimated_total_bytes", int64_t{0});
+  const int64_t stage0_peak = update_peak_bytes(stage0_peak_bytes, stage0_bytes);
+  const int64_t stage1_peak = update_peak_bytes(stage1_peak_bytes, stage1_bytes);
+  const int64_t stage2_peak = update_peak_bytes(stage2_peak_bytes, stage2_bytes);
+  const int64_t stage3_peak = update_peak_bytes(stage3_peak_bytes, stage3_bytes);
+
+  breakdown["stage0"]["estimated_peak_bytes"] = stage0_peak;
+  breakdown["stage1"]["estimated_peak_bytes"] = stage1_peak;
+  breakdown["stage2"]["estimated_peak_bytes"] = stage2_peak;
+  breakdown["stage3"]["estimated_peak_bytes"] = stage3_peak;
+
   result["estimated_sum_bytes"] = stage0_bytes + stage1_bytes + stage2_bytes + stage3_bytes;
+  result["estimated_peak_sum_bytes"] = stage0_peak + stage1_peak + stage2_peak + stage3_peak;
   result["rss_gap_bytes"] = rss_bytes - result["estimated_sum_bytes"].get<int64_t>();
+  result["rss_gap_vs_peak_sum_bytes"] = rss_bytes - result["estimated_peak_sum_bytes"].get<int64_t>();
 
   result["object_breakdown"] = std::move(breakdown);
   res_.result(http::status::ok);

@@ -248,9 +248,12 @@
       const empty = document.getElementById(`mem-${prefix}-empty`);
       if (empty) empty.style.display = rows.length ? "none" : "block";
 
-      const total = formatBytes(stage.estimated_total_bytes || 0);
+      const totalBytes = stage.estimated_total_bytes || 0;
+      const peakBytes = stage.estimated_peak_bytes || totalBytes;
+      const total = formatBytes(totalBytes);
+      const peak = formatBytes(peakBytes);
       const summary = document.getElementById(`mem-${prefix}-summary`);
-      if (summary) summary.textContent = `${prefix.toUpperCase()} (${total})`;
+      if (summary) summary.textContent = `${prefix.toUpperCase()} (cur ${total}, peak ${peak})`;
     }
 
     async function refreshMemory() {
