@@ -1233,7 +1233,6 @@ std::string ApiSession::url_decode(const std::string &str) {
 void ApiSession::handle_memory() {
   TraceN("api/memory");
   res_.set(http::field::content_type, "application/json");
-  static std::atomic<int64_t> process_rss_peak_bytes{0};
   static std::atomic<int64_t> stage0_peak_bytes{0};
   static std::atomic<int64_t> stage1_peak_bytes{0};
   static std::atomic<int64_t> stage2_peak_bytes{0};
@@ -1258,11 +1257,26 @@ void ApiSession::handle_memory() {
   static std::atomic<int64_t> rocksdb_stage3_block_cache_pinned_peak_bytes{0};
   static std::atomic<int64_t> database_total_peak_bytes{0};
   static std::atomic<int64_t> db_plus_struct_peak_bytes{0};
+  static std::atomic<int64_t> real_usage_peak_bytes{0};
   json result = json::object();
   const int64_t rss_bytes = core::mem::get_process_rss_bytes();
-  const int64_t rss_peak_bytes = update_peak_bytes(process_rss_peak_bytes, rss_bytes);
   result["process_rss_bytes"] = rss_bytes;
-  result["process_rss_peak_bytes"] = rss_peak_bytes;
+
+  // malloc stats
+  const auto malloc_stats = core::mem::get_malloc_stats();
+  result["malloc_breakdown"] = {
+      {"arena_bytes", malloc_stats.arena_bytes},
+      {"mmap_bytes", malloc_stats.mmap_bytes},
+      {"in_use_bytes", malloc_stats.in_use_bytes},
+      {"free_chunks_bytes", malloc_stats.free_chunks_bytes},
+      {"total_from_os_bytes", malloc_stats.arena_bytes + malloc_stats.mmap_bytes},
+  };
+
+  // real usage = RSS - free_chunks (memory actually in use)
+  const int64_t real_usage_bytes = rss_bytes - malloc_stats.free_chunks_bytes;
+  const int64_t real_usage_peak = update_peak_bytes(real_usage_peak_bytes, real_usage_bytes);
+  result["real_usage_bytes"] = real_usage_bytes;
+  result["real_usage_peak_bytes"] = real_usage_peak;
 
   json stage0_duckdb = stage0_db_.memory_breakdown();
   json stage1_duckdb = stage1_db_.memory_breakdown();
@@ -1361,8 +1375,6 @@ void ApiSession::handle_memory() {
   const int64_t db_plus_struct_peak = update_peak_bytes(db_plus_struct_peak_bytes, db_plus_struct_bytes);
   result["db_plus_struct_bytes"] = db_plus_struct_bytes;
   result["db_plus_struct_peak_bytes"] = db_plus_struct_peak;
-  result["rss_gap_bytes"] = rss_bytes - estimated_sum_bytes;
-  result["rss_gap_vs_peak_sum_bytes"] = rss_bytes - estimated_peak_sum_bytes;
 
   result["object_breakdown"] = std::move(breakdown);
   res_.result(http::status::ok);

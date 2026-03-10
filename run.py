@@ -18,8 +18,8 @@ BACKEND_EXE = BACKEND_BUILD / "core"
 BACKEND_PORT = 8001
 FRONTEND_PORT = 8000
 BACKEND_STARTUP_TIMEOUT = 600
-FRONTEND_STARTUP_TIMEOUT = 30
-GRACEFUL_SHUTDOWN_TIMEOUT = 30
+FRONTEND_STARTUP_TIMEOUT = 600
+GRACEFUL_SHUTDOWN_TIMEOUT = 600
 
 # Build modes (set ONLY ONE to True)
 ENABLE_PROFILE = True
@@ -149,6 +149,24 @@ def wait_for_port(port: int, timeout: int = 10, proc: Optional[subprocess.Popen]
     return False
 
 
+def terminate_then_wait(proc: Optional[subprocess.Popen], name: str, timeout: int):
+    if proc is None:
+        return
+    if proc.poll() is not None:
+        return
+
+    print(f"[run.py] 停止 {name}...")
+    proc.terminate()
+    deadline = time.time() + timeout
+    while time.time() < deadline and proc.poll() is None:
+        time.sleep(0.2)
+    if proc.poll() is None:
+        print(f"[run.py] {name} 超时，强制 kill")
+        proc.kill()
+    proc.wait()
+    print(f"[run.py] {name} 已退出")
+
+
 def main():
     assert CONFIG_FILE.exists(), f"配置文件 {CONFIG_FILE} 不存在"
     assert_linux_dependencies()
@@ -196,21 +214,10 @@ def main():
         pass
     finally:
         print("[run.py] 正在关闭...")
-        # 停机顺序很关键:先停 frontend, 避免其在 backend 已退出后继续转发请求。
-        shutdown_order = [p for p in [
-            frontend, backend, tracy_proc] if p is not None]
-        for proc in shutdown_order:
-            if proc.poll() is None:
-                proc.terminate()
-        deadline = time.time() + GRACEFUL_SHUTDOWN_TIMEOUT
-        while time.time() < deadline and any(p.poll() is None for p in shutdown_order):
-            time.sleep(0.2)
-        for proc in shutdown_order:
-            if proc.poll() is None:
-                proc.kill()
-        for proc in shutdown_order:
-            if proc.poll() is None:
-                proc.wait()
+        # Shutdown is strictly ordered to avoid frontend->backend requests during teardown.
+        terminate_then_wait(frontend, "frontend", GRACEFUL_SHUTDOWN_TIMEOUT)
+        terminate_then_wait(backend, "backend", GRACEFUL_SHUTDOWN_TIMEOUT)
+        terminate_then_wait(tracy_proc, "tracy-ui", 5)
         print("[run.py] 已退出")
 
 

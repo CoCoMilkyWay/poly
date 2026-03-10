@@ -138,12 +138,16 @@
 
   <div class="mem-kpi-grid">
     <div class="mem-kpi">
-      <div class="mem-kpi-label">Process RSS</div>
-      <div class="mem-kpi-value rss" id="mem-kpi-rss">-</div>
+      <div class="mem-kpi-label">Free Chunks (unreturned)</div>
+      <div class="mem-kpi-value" style="color: #f59e0b;" id="mem-kpi-free-chunks">-</div>
     </div>
     <div class="mem-kpi">
-      <div class="mem-kpi-label">Process RSS (peak)</div>
-      <div class="mem-kpi-value rss" id="mem-kpi-rss-peak">-</div>
+      <div class="mem-kpi-label">Real Usage (RSS - free)</div>
+      <div class="mem-kpi-value rss" id="mem-kpi-real-usage">-</div>
+    </div>
+    <div class="mem-kpi">
+      <div class="mem-kpi-label">Real Usage (peak)</div>
+      <div class="mem-kpi-value rss" id="mem-kpi-real-usage-peak">-</div>
     </div>
     <div class="mem-kpi">
       <div class="mem-kpi-label">DB + Struct (current)</div>
@@ -317,6 +321,7 @@
         const peakUsedBytes = toBytes(item.memory_usage_peak_bytes || usedBytes);
         const walBytes = toBytes(item.wal_size_bytes);
         const walPeakBytes = toBytes(item.wal_size_peak_bytes || walBytes);
+        const bufferBytes = toBytes(item.buffer_manager_bytes);
         rows.push({
           used_bytes: usedBytes,
           peak_used_bytes: peakUsedBytes,
@@ -325,6 +330,7 @@
           order_key: itemKey,
           detail:
             `limit ${formatBytes(toBytes(item.memory_limit_bytes))}, ` +
+            `buf ${formatBytes(bufferBytes)}, ` +
             `wal ${formatCurPeak(walBytes, walPeakBytes)}, ` +
             `path ${item.path || "-"}`,
         });
@@ -380,10 +386,14 @@
         const data = await resp.json();
 
         setText("mem-updated-at", new Date().toLocaleTimeString());
-        const rssBytes = toBytes(data.process_rss_bytes);
-        const rssPeakBytes = toBytes(data.process_rss_peak_bytes || rssBytes);
-        setText("mem-kpi-rss", formatBytes(rssBytes));
-        setText("mem-kpi-rss-peak", formatBytes(rssPeakBytes));
+        const malloc = data.malloc_breakdown || {};
+        const freeChunksBytes = toBytes(malloc.free_chunks_bytes);
+        const realUsageBytes = toBytes(data.real_usage_bytes);
+        const realUsagePeakBytes = toBytes(data.real_usage_peak_bytes || realUsageBytes);
+        setText("mem-kpi-free-chunks", formatBytes(freeChunksBytes));
+        setText("mem-kpi-real-usage", formatBytes(realUsageBytes));
+        setText("mem-kpi-real-usage-peak", formatBytes(realUsagePeakBytes));
+
         const dbStructTotalBytes = toBytes(data.db_plus_struct_bytes);
         const dbStructPeakBytes = toBytes(data.db_plus_struct_peak_bytes || dbStructTotalBytes);
         setText("mem-kpi-db-struct-total", formatBytes(dbStructTotalBytes));

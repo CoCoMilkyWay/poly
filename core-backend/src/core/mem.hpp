@@ -3,6 +3,7 @@
 #include <cassert>
 #include <cstdint>
 #include <fstream>
+#include <malloc.h>
 #include <sstream>
 #include <string>
 #include <unordered_map>
@@ -10,6 +11,23 @@
 #include <vector>
 
 namespace core::mem {
+
+struct MallocStats {
+  int64_t arena_bytes;       // non-mmap heap from OS (brk/sbrk)
+  int64_t mmap_bytes;        // mmap allocated from OS
+  int64_t in_use_bytes;      // currently in use by app
+  int64_t free_chunks_bytes; // freed but not returned to OS
+};
+
+inline MallocStats get_malloc_stats() {
+  struct mallinfo2 mi = mallinfo2();
+  return MallocStats{
+      .arena_bytes = static_cast<int64_t>(mi.arena),
+      .mmap_bytes = static_cast<int64_t>(mi.hblkhd),
+      .in_use_bytes = static_cast<int64_t>(mi.uordblks),
+      .free_chunks_bytes = static_cast<int64_t>(mi.fordblks),
+  };
+}
 
 constexpr int64_t kNodeOverheadBytes = 32;
 

@@ -438,6 +438,21 @@ json Database::memory_breakdown() {
   const std::string memory_limit_text = result->GetValue(2, target_row).GetValueUnsafe<std::string>();
   const std::string wal_size_text = result->GetValue(3, target_row).GetValueUnsafe<std::string>();
 
+  // BufferManager detailed breakdown
+  auto &bm = db_->instance->GetBufferManager();
+  auto mem_info = bm.GetMemoryUsageInfo();
+  json buffer_tags = json::array();
+  int64_t buffer_total_bytes = 0;
+  for (const auto &info : mem_info) {
+    int64_t size = static_cast<int64_t>(info.size);
+    buffer_total_bytes += size;
+    buffer_tags.push_back({
+        {"tag", static_cast<int>(info.tag)},
+        {"size_bytes", size},
+        {"evicted_bytes", static_cast<int64_t>(info.evicted_data)},
+    });
+  }
+
   return {
       {"engine", "duckdb"},
       {"database_name", database_name},
@@ -448,6 +463,8 @@ json Database::memory_breakdown() {
       {"memory_usage_bytes", parse_size_text_to_bytes(memory_usage_text)},
       {"memory_limit_bytes", parse_size_text_to_bytes(memory_limit_text)},
       {"wal_size_bytes", parse_size_text_to_bytes(wal_size_text)},
+      {"buffer_manager_bytes", buffer_total_bytes},
+      {"buffer_tags", buffer_tags},
   };
 }
 
