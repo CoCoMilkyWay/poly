@@ -1233,13 +1233,36 @@ std::string ApiSession::url_decode(const std::string &str) {
 void ApiSession::handle_memory() {
   TraceN("api/memory");
   res_.set(http::field::content_type, "application/json");
+  static std::atomic<int64_t> process_rss_peak_bytes{0};
   static std::atomic<int64_t> stage0_peak_bytes{0};
   static std::atomic<int64_t> stage1_peak_bytes{0};
   static std::atomic<int64_t> stage2_peak_bytes{0};
   static std::atomic<int64_t> stage3_peak_bytes{0};
+  static std::atomic<int64_t> duckdb_stage0_usage_peak_bytes{0};
+  static std::atomic<int64_t> duckdb_stage1_usage_peak_bytes{0};
+  static std::atomic<int64_t> duckdb_stage2_usage_peak_bytes{0};
+  static std::atomic<int64_t> duckdb_stage3_usage_peak_bytes{0};
+  static std::atomic<int64_t> duckdb_stage0_wal_peak_bytes{0};
+  static std::atomic<int64_t> duckdb_stage1_wal_peak_bytes{0};
+  static std::atomic<int64_t> duckdb_stage2_wal_peak_bytes{0};
+  static std::atomic<int64_t> duckdb_stage3_wal_peak_bytes{0};
+  static std::atomic<int64_t> rocksdb_stage2_estimated_peak_bytes{0};
+  static std::atomic<int64_t> rocksdb_stage3_estimated_peak_bytes{0};
+  static std::atomic<int64_t> rocksdb_stage2_memtables_peak_bytes{0};
+  static std::atomic<int64_t> rocksdb_stage3_memtables_peak_bytes{0};
+  static std::atomic<int64_t> rocksdb_stage2_table_readers_peak_bytes{0};
+  static std::atomic<int64_t> rocksdb_stage3_table_readers_peak_bytes{0};
+  static std::atomic<int64_t> rocksdb_stage2_block_cache_peak_bytes{0};
+  static std::atomic<int64_t> rocksdb_stage3_block_cache_peak_bytes{0};
+  static std::atomic<int64_t> rocksdb_stage2_block_cache_pinned_peak_bytes{0};
+  static std::atomic<int64_t> rocksdb_stage3_block_cache_pinned_peak_bytes{0};
+  static std::atomic<int64_t> database_total_peak_bytes{0};
+  static std::atomic<int64_t> db_plus_struct_peak_bytes{0};
   json result = json::object();
   const int64_t rss_bytes = core::mem::get_process_rss_bytes();
+  const int64_t rss_peak_bytes = update_peak_bytes(process_rss_peak_bytes, rss_bytes);
   result["process_rss_bytes"] = rss_bytes;
+  result["process_rss_peak_bytes"] = rss_peak_bytes;
 
   json stage0_duckdb = stage0_db_.memory_breakdown();
   json stage1_duckdb = stage1_db_.memory_breakdown();
@@ -1249,11 +1272,49 @@ void ApiSession::handle_memory() {
   stage1_duckdb["name"] = "stage1";
   stage2_duckdb["name"] = "stage2";
   stage3_duckdb["name"] = "stage3";
+  stage0_duckdb["memory_usage_peak_bytes"] =
+      update_peak_bytes(duckdb_stage0_usage_peak_bytes, stage0_duckdb.value("memory_usage_bytes", int64_t{0}));
+  stage1_duckdb["memory_usage_peak_bytes"] =
+      update_peak_bytes(duckdb_stage1_usage_peak_bytes, stage1_duckdb.value("memory_usage_bytes", int64_t{0}));
+  stage2_duckdb["memory_usage_peak_bytes"] =
+      update_peak_bytes(duckdb_stage2_usage_peak_bytes, stage2_duckdb.value("memory_usage_bytes", int64_t{0}));
+  stage3_duckdb["memory_usage_peak_bytes"] =
+      update_peak_bytes(duckdb_stage3_usage_peak_bytes, stage3_duckdb.value("memory_usage_bytes", int64_t{0}));
+  stage0_duckdb["wal_size_peak_bytes"] =
+      update_peak_bytes(duckdb_stage0_wal_peak_bytes, stage0_duckdb.value("wal_size_bytes", int64_t{0}));
+  stage1_duckdb["wal_size_peak_bytes"] =
+      update_peak_bytes(duckdb_stage1_wal_peak_bytes, stage1_duckdb.value("wal_size_bytes", int64_t{0}));
+  stage2_duckdb["wal_size_peak_bytes"] =
+      update_peak_bytes(duckdb_stage2_wal_peak_bytes, stage2_duckdb.value("wal_size_bytes", int64_t{0}));
+  stage3_duckdb["wal_size_peak_bytes"] =
+      update_peak_bytes(duckdb_stage3_wal_peak_bytes, stage3_duckdb.value("wal_size_bytes", int64_t{0}));
+
+  json stage2_rocksdb = stage3_.stage2_rocksdb_memory_breakdown();
+  json stage3_rocksdb = stage3_.stage3_rocksdb_memory_breakdown();
+  stage2_rocksdb["estimated_peak_bytes"] =
+      update_peak_bytes(rocksdb_stage2_estimated_peak_bytes, stage2_rocksdb.value("estimated_total_bytes", int64_t{0}));
+  stage3_rocksdb["estimated_peak_bytes"] =
+      update_peak_bytes(rocksdb_stage3_estimated_peak_bytes, stage3_rocksdb.value("estimated_total_bytes", int64_t{0}));
+  stage2_rocksdb["memtables_peak_bytes"] =
+      update_peak_bytes(rocksdb_stage2_memtables_peak_bytes, stage2_rocksdb.value("memtables_bytes", int64_t{0}));
+  stage3_rocksdb["memtables_peak_bytes"] =
+      update_peak_bytes(rocksdb_stage3_memtables_peak_bytes, stage3_rocksdb.value("memtables_bytes", int64_t{0}));
+  stage2_rocksdb["table_readers_peak_bytes"] = update_peak_bytes(rocksdb_stage2_table_readers_peak_bytes,
+                                                                 stage2_rocksdb.value("table_readers_bytes", int64_t{0}));
+  stage3_rocksdb["table_readers_peak_bytes"] = update_peak_bytes(rocksdb_stage3_table_readers_peak_bytes,
+                                                                 stage3_rocksdb.value("table_readers_bytes", int64_t{0}));
+  stage2_rocksdb["block_cache_peak_bytes"] =
+      update_peak_bytes(rocksdb_stage2_block_cache_peak_bytes, stage2_rocksdb.value("block_cache_bytes", int64_t{0}));
+  stage3_rocksdb["block_cache_peak_bytes"] =
+      update_peak_bytes(rocksdb_stage3_block_cache_peak_bytes, stage3_rocksdb.value("block_cache_bytes", int64_t{0}));
+  stage2_rocksdb["block_cache_pinned_peak_bytes"] =
+      update_peak_bytes(rocksdb_stage2_block_cache_pinned_peak_bytes, stage2_rocksdb.value("block_cache_pinned_bytes", int64_t{0}));
+  stage3_rocksdb["block_cache_pinned_peak_bytes"] =
+      update_peak_bytes(rocksdb_stage3_block_cache_pinned_peak_bytes, stage3_rocksdb.value("block_cache_pinned_bytes", int64_t{0}));
 
   json db_breakdown = json::object();
   db_breakdown["duckdb"] = json::array({stage0_duckdb, stage1_duckdb, stage2_duckdb, stage3_duckdb});
-  db_breakdown["rocksdb"] = json::array(
-      {stage3_.stage2_rocksdb_memory_breakdown(), stage3_.stage3_rocksdb_memory_breakdown()});
+  db_breakdown["rocksdb"] = json::array({stage2_rocksdb, stage3_rocksdb});
 
   int64_t duckdb_memory_usage_bytes = 0;
   for (const auto &item : db_breakdown["duckdb"]) {
@@ -1263,9 +1324,12 @@ void ApiSession::handle_memory() {
   for (const auto &item : db_breakdown["rocksdb"]) {
     rocksdb_estimated_total_bytes += item.value("estimated_total_bytes", int64_t{0});
   }
+  const int64_t database_total_bytes = duckdb_memory_usage_bytes + rocksdb_estimated_total_bytes;
+  const int64_t database_peak_bytes = update_peak_bytes(database_total_peak_bytes, database_total_bytes);
   db_breakdown["duckdb_memory_usage_bytes"] = duckdb_memory_usage_bytes;
   db_breakdown["rocksdb_estimated_total_bytes"] = rocksdb_estimated_total_bytes;
-  db_breakdown["estimated_total_bytes"] = duckdb_memory_usage_bytes + rocksdb_estimated_total_bytes;
+  db_breakdown["estimated_total_bytes"] = database_total_bytes;
+  db_breakdown["estimated_peak_bytes"] = database_peak_bytes;
   result["database_breakdown"] = std::move(db_breakdown);
 
   json breakdown = {
@@ -1289,10 +1353,16 @@ void ApiSession::handle_memory() {
   breakdown["stage2"]["estimated_peak_bytes"] = stage2_peak;
   breakdown["stage3"]["estimated_peak_bytes"] = stage3_peak;
 
-  result["estimated_sum_bytes"] = stage0_bytes + stage1_bytes + stage2_bytes + stage3_bytes;
-  result["estimated_peak_sum_bytes"] = stage0_peak + stage1_peak + stage2_peak + stage3_peak;
-  result["rss_gap_bytes"] = rss_bytes - result["estimated_sum_bytes"].get<int64_t>();
-  result["rss_gap_vs_peak_sum_bytes"] = rss_bytes - result["estimated_peak_sum_bytes"].get<int64_t>();
+  const int64_t estimated_sum_bytes = stage0_bytes + stage1_bytes + stage2_bytes + stage3_bytes;
+  const int64_t estimated_peak_sum_bytes = stage0_peak + stage1_peak + stage2_peak + stage3_peak;
+  result["estimated_sum_bytes"] = estimated_sum_bytes;
+  result["estimated_peak_sum_bytes"] = estimated_peak_sum_bytes;
+  const int64_t db_plus_struct_bytes = database_total_bytes + estimated_sum_bytes;
+  const int64_t db_plus_struct_peak = update_peak_bytes(db_plus_struct_peak_bytes, db_plus_struct_bytes);
+  result["db_plus_struct_bytes"] = db_plus_struct_bytes;
+  result["db_plus_struct_peak_bytes"] = db_plus_struct_peak;
+  result["rss_gap_bytes"] = rss_bytes - estimated_sum_bytes;
+  result["rss_gap_vs_peak_sum_bytes"] = rss_bytes - estimated_peak_sum_bytes;
 
   result["object_breakdown"] = std::move(breakdown);
   res_.result(http::status::ok);

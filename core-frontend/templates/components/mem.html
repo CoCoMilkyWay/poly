@@ -141,6 +141,18 @@
       <div class="mem-kpi-label">Process RSS</div>
       <div class="mem-kpi-value rss" id="mem-kpi-rss">-</div>
     </div>
+    <div class="mem-kpi">
+      <div class="mem-kpi-label">Process RSS (peak)</div>
+      <div class="mem-kpi-value rss" id="mem-kpi-rss-peak">-</div>
+    </div>
+    <div class="mem-kpi">
+      <div class="mem-kpi-label">DB + Struct (current)</div>
+      <div class="mem-kpi-value" id="mem-kpi-db-struct-total">-</div>
+    </div>
+    <div class="mem-kpi">
+      <div class="mem-kpi-label">DB + Struct (peak)</div>
+      <div class="mem-kpi-value" id="mem-kpi-db-struct-peak">-</div>
+    </div>
   </div>
 
   <div class="mem-section">
@@ -213,7 +225,8 @@
       <table class="mem-table">
         <thead>
           <tr>
-            <th>占用</th>
+            <th>当前占用</th>
+            <th>峰值占用</th>
             <th>库</th>
             <th>引擎</th>
             <th>细项</th>
@@ -234,6 +247,14 @@
       if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
       if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
       return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+    }
+
+    function toBytes(value) {
+      return Number.isFinite(value) ? value : 0;
+    }
+
+    function formatCurPeak(current, peak) {
+      return `${formatBytes(current)} / ${formatBytes(peak)}`;
     }
 
     function setText(id, text) {
@@ -276,32 +297,75 @@
 
     function renderDatabaseBreakdown(db) {
       const rows = [];
+      const fixedOrder = [
+        "DuckDB:stage0",
+        "DuckDB:stage1",
+        "DuckDB:stage2",
+        "DuckDB:stage3",
+        "RocksDB:stage2_user_event",
+        "RocksDB:stage3_event_fact",
+      ];
+      const orderRank = {};
+      for (let i = 0; i < fixedOrder.length; i += 1) {
+        orderRank[fixedOrder[i]] = i;
+      }
+
       for (const item of db.duckdb || []) {
+        const name = item.name || item.database_name || "unknown";
+        const itemKey = `DuckDB:${name}`;
+        const usedBytes = toBytes(item.memory_usage_bytes);
+        const peakUsedBytes = toBytes(item.memory_usage_peak_bytes || usedBytes);
+        const walBytes = toBytes(item.wal_size_bytes);
+        const walPeakBytes = toBytes(item.wal_size_peak_bytes || walBytes);
         rows.push({
-          used_bytes: item.memory_usage_bytes || 0,
-          name: item.name || item.database_name || "unknown",
+          used_bytes: usedBytes,
+          peak_used_bytes: peakUsedBytes,
+          name,
           engine: "DuckDB",
+          order_key: itemKey,
           detail:
-            `limit ${formatBytes(item.memory_limit_bytes || 0)}, ` +
-            `wal ${formatBytes(item.wal_size_bytes || 0)}, ` +
+            `limit ${formatBytes(toBytes(item.memory_limit_bytes))}, ` +
+            `wal ${formatCurPeak(walBytes, walPeakBytes)}, ` +
             `path ${item.path || "-"}`,
         });
       }
       for (const item of db.rocksdb || []) {
+        const name = item.name || "unknown";
+        const itemKey = `RocksDB:${name}`;
+        const usedBytes = toBytes(item.estimated_total_bytes);
+        const peakUsedBytes = toBytes(item.estimated_peak_bytes || usedBytes);
+        const memtablesBytes = toBytes(item.memtables_bytes);
+        const tableReadersBytes = toBytes(item.table_readers_bytes);
+        const blockCacheBytes = toBytes(item.block_cache_bytes);
+        const pinnedBytes = toBytes(item.block_cache_pinned_bytes);
+        const memtablesPeak = toBytes(item.memtables_peak_bytes || memtablesBytes);
+        const readersPeak = toBytes(item.table_readers_peak_bytes || tableReadersBytes);
+        const blockPeak = toBytes(item.block_cache_peak_bytes || blockCacheBytes);
+        const pinnedPeak = toBytes(item.block_cache_pinned_peak_bytes || pinnedBytes);
         rows.push({
-          used_bytes: item.estimated_total_bytes || 0,
-          name: item.name || "unknown",
+          used_bytes: usedBytes,
+          peak_used_bytes: peakUsedBytes,
+          name,
           engine: "RocksDB",
+          order_key: itemKey,
           detail:
-            `memtable ${formatBytes(item.memtables_bytes || 0)}, ` +
-            `readers ${formatBytes(item.table_readers_bytes || 0)}, ` +
-            `block ${formatBytes(item.block_cache_bytes || 0)}, ` +
+            `memtable ${formatCurPeak(memtablesBytes, memtablesPeak)}, ` +
+            `readers ${formatCurPeak(tableReadersBytes, readersPeak)}, ` +
+            `block ${formatCurPeak(blockCacheBytes, blockPeak)}, ` +
+            `pinned ${formatCurPeak(pinnedBytes, pinnedPeak)}, ` +
             `path ${item.path || "-"}`,
         });
       }
-      rows.sort((a, b) => (b.used_bytes || 0) - (a.used_bytes || 0));
+      rows.sort((a, b) => {
+        const ra = orderRank[a.order_key] ?? Number.MAX_SAFE_INTEGER;
+        const rb = orderRank[b.order_key] ?? Number.MAX_SAFE_INTEGER;
+        if (ra !== rb) return ra - rb;
+        if (a.engine !== b.engine) return a.engine.localeCompare(b.engine);
+        return a.name.localeCompare(b.name);
+      });
       renderTableBody("mem-db-body", rows, [
         { key: "used_bytes", type: "bytes" },
+        { key: "peak_used_bytes", type: "bytes" },
         { key: "name" },
         { key: "engine" },
         { key: "detail" },
@@ -316,7 +380,14 @@
         const data = await resp.json();
 
         setText("mem-updated-at", new Date().toLocaleTimeString());
-        setText("mem-kpi-rss", formatBytes(data.process_rss_bytes || 0));
+        const rssBytes = toBytes(data.process_rss_bytes);
+        const rssPeakBytes = toBytes(data.process_rss_peak_bytes || rssBytes);
+        setText("mem-kpi-rss", formatBytes(rssBytes));
+        setText("mem-kpi-rss-peak", formatBytes(rssPeakBytes));
+        const dbStructTotalBytes = toBytes(data.db_plus_struct_bytes);
+        const dbStructPeakBytes = toBytes(data.db_plus_struct_peak_bytes || dbStructTotalBytes);
+        setText("mem-kpi-db-struct-total", formatBytes(dbStructTotalBytes));
+        setText("mem-kpi-db-struct-peak", formatBytes(dbStructPeakBytes));
 
         const obj = data.object_breakdown || {};
         const s0 = obj.stage0 || {};

@@ -1,6 +1,6 @@
 {
   "stage0_enable": 1,
-  "stage1_enable": 1,
+  "stage1_enable": 0,
   "stage2_enable": 1,
   "stage3_enable": 1,
   "stage0_check_interval_seconds": 3600,
