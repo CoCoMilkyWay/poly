@@ -52,6 +52,8 @@ public:
   std::string feather_table_range(const std::string &table, int64_t start_block, int64_t end_block);
   std::vector<FeatherChunk> feather_chunks(const std::string &table) const;
   const std::string &data_dir() const;
+  const std::string &db_path() const;
+  json memory_breakdown();
   int64_t get_last_block();
   void set_last_block(int64_t block);
   json load_counts_cache();

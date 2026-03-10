@@ -16,6 +16,24 @@ StageSync::StageSync(EventBuilder &builder, Database &stage0_db, Database &stage
   refresh_status_locked();
 }
 
+json StageSync::stage2_rocksdb_memory_breakdown() const {
+  return builder_.rocksdb_memory_breakdown();
+}
+
+json StageSync::stage3_rocksdb_memory_breakdown() const {
+  const core::rocks::MemoryStats stats = event_fact_store_->memory_stats();
+  return {
+      {"name", "stage3_event_fact"},
+      {"engine", "rocksdb"},
+      {"path", event_fact_store_->db_path()},
+      {"memtables_bytes", stats.memtables_bytes},
+      {"table_readers_bytes", stats.table_readers_bytes},
+      {"block_cache_bytes", stats.block_cache_bytes},
+      {"block_cache_pinned_bytes", stats.block_cache_pinned_bytes},
+      {"estimated_total_bytes", stats.estimated_total_bytes()},
+  };
+}
+
 void StageSync::load_tag_mapping_from_md() {
   auto trim = [](const std::string &s) {
     size_t b = s.find_first_not_of(" \t\r\n");

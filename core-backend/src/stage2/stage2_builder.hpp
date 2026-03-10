@@ -42,6 +42,7 @@ public:
   const BuildProgress &progress() const;
   const BuildProgress &committed_progress() const;
   json memory_breakdown() const;
+  json rocksdb_memory_breakdown() const;
 
 private:
   Database &stage1_db_;

@@ -1240,6 +1240,34 @@ void ApiSession::handle_memory() {
   json result = json::object();
   const int64_t rss_bytes = core::mem::get_process_rss_bytes();
   result["process_rss_bytes"] = rss_bytes;
+
+  json stage0_duckdb = stage0_db_.memory_breakdown();
+  json stage1_duckdb = stage1_db_.memory_breakdown();
+  json stage2_duckdb = stage2_db_.memory_breakdown();
+  json stage3_duckdb = stage3_db_.memory_breakdown();
+  stage0_duckdb["name"] = "stage0";
+  stage1_duckdb["name"] = "stage1";
+  stage2_duckdb["name"] = "stage2";
+  stage3_duckdb["name"] = "stage3";
+
+  json db_breakdown = json::object();
+  db_breakdown["duckdb"] = json::array({stage0_duckdb, stage1_duckdb, stage2_duckdb, stage3_duckdb});
+  db_breakdown["rocksdb"] = json::array(
+      {stage3_.stage2_rocksdb_memory_breakdown(), stage3_.stage3_rocksdb_memory_breakdown()});
+
+  int64_t duckdb_memory_usage_bytes = 0;
+  for (const auto &item : db_breakdown["duckdb"]) {
+    duckdb_memory_usage_bytes += item.value("memory_usage_bytes", int64_t{0});
+  }
+  int64_t rocksdb_estimated_total_bytes = 0;
+  for (const auto &item : db_breakdown["rocksdb"]) {
+    rocksdb_estimated_total_bytes += item.value("estimated_total_bytes", int64_t{0});
+  }
+  db_breakdown["duckdb_memory_usage_bytes"] = duckdb_memory_usage_bytes;
+  db_breakdown["rocksdb_estimated_total_bytes"] = rocksdb_estimated_total_bytes;
+  db_breakdown["estimated_total_bytes"] = duckdb_memory_usage_bytes + rocksdb_estimated_total_bytes;
+  result["database_breakdown"] = std::move(db_breakdown);
+
   json breakdown = {
       {"stage0", stage0_mem_getter_()},
       {"stage1", stage1_mem_getter_()},

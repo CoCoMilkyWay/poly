@@ -519,6 +519,20 @@ const core::rocks::Stage2UserEventStore &EventBuilder::user_event_store() const 
   return *user_event_store_;
 }
 
+json EventBuilder::rocksdb_memory_breakdown() const {
+  const core::rocks::MemoryStats stats = user_event_store_->memory_stats();
+  return {
+      {"name", "stage2_user_event"},
+      {"engine", "rocksdb"},
+      {"path", user_event_store_->db_path()},
+      {"memtables_bytes", stats.memtables_bytes},
+      {"table_readers_bytes", stats.table_readers_bytes},
+      {"block_cache_bytes", stats.block_cache_bytes},
+      {"block_cache_pinned_bytes", stats.block_cache_pinned_bytes},
+      {"estimated_total_bytes", stats.estimated_total_bytes()},
+  };
+}
+
 void EventBuilder::request_stop() { stop_requested_ = true; }
 
 void EventBuilder::clear_stop() { stop_requested_ = false; }

@@ -206,6 +206,24 @@
       <div class="mem-empty" id="mem-stage3-empty" style="display: none">暂无数据</div>
     </details>
   </div>
+
+  <div class="mem-section">
+    <div class="mem-section-title">数据库内存占用（按库）</div>
+    <div class="mem-table-wrap">
+      <table class="mem-table">
+        <thead>
+          <tr>
+            <th>占用</th>
+            <th>库</th>
+            <th>引擎</th>
+            <th>细项</th>
+          </tr>
+        </thead>
+        <tbody id="mem-db-body"></tbody>
+      </table>
+    </div>
+    <div class="mem-empty" id="mem-db-empty" style="display: none">暂无数据</div>
+  </div>
 </div>
 
 <script>
@@ -256,6 +274,42 @@
       if (summary) summary.textContent = `${prefix.toUpperCase()} (cur ${total}, peak ${peak})`;
     }
 
+    function renderDatabaseBreakdown(db) {
+      const rows = [];
+      for (const item of db.duckdb || []) {
+        rows.push({
+          used_bytes: item.memory_usage_bytes || 0,
+          name: item.name || item.database_name || "unknown",
+          engine: "DuckDB",
+          detail:
+            `limit ${formatBytes(item.memory_limit_bytes || 0)}, ` +
+            `wal ${formatBytes(item.wal_size_bytes || 0)}, ` +
+            `path ${item.path || "-"}`,
+        });
+      }
+      for (const item of db.rocksdb || []) {
+        rows.push({
+          used_bytes: item.estimated_total_bytes || 0,
+          name: item.name || "unknown",
+          engine: "RocksDB",
+          detail:
+            `memtable ${formatBytes(item.memtables_bytes || 0)}, ` +
+            `readers ${formatBytes(item.table_readers_bytes || 0)}, ` +
+            `block ${formatBytes(item.block_cache_bytes || 0)}, ` +
+            `path ${item.path || "-"}`,
+        });
+      }
+      rows.sort((a, b) => (b.used_bytes || 0) - (a.used_bytes || 0));
+      renderTableBody("mem-db-body", rows, [
+        { key: "used_bytes", type: "bytes" },
+        { key: "name" },
+        { key: "engine" },
+        { key: "detail" },
+      ]);
+      const empty = document.getElementById("mem-db-empty");
+      if (empty) empty.style.display = rows.length ? "none" : "block";
+    }
+
     async function refreshMemory() {
       try {
         const resp = await fetch("/api/memory");
@@ -273,6 +327,7 @@
         renderStage("stage1", s1);
         renderStage("stage2", s2);
         renderStage("stage3", s3);
+        renderDatabaseBreakdown(data.database_breakdown || {});
       } catch (e) {
         console.error("Memory refresh failed:", e);
       }

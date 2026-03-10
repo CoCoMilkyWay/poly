@@ -125,6 +125,8 @@ public:
   int64_t get_max_bucket() const;
   Stage2Data stage2_data() const;
   json memory_breakdown() const;
+  json stage2_rocksdb_memory_breakdown() const;
+  json stage3_rocksdb_memory_breakdown() const;
 
   std::vector<UserSummaryRow> get_users_sorted(int64_t limit = 200) const;
   std::vector<TimelineRow> get_user_timeline(const std::string &addr) const;

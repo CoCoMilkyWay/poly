@@ -2,11 +2,13 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cmath>
 #include <cstdio>
 #include <fcntl.h>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <string_view>
 #include <sys/file.h>
 #include <unistd.h>
 
@@ -51,6 +53,61 @@ bool has_any_feather_partition(const std::string &data_dir) {
     }
   }
   return false;
+}
+
+std::string trim_ascii(std::string_view input) {
+  size_t begin = 0;
+  while (begin < input.size() && std::isspace(static_cast<unsigned char>(input[begin])) != 0) {
+    begin++;
+  }
+  size_t end = input.size();
+  while (end > begin && std::isspace(static_cast<unsigned char>(input[end - 1])) != 0) {
+    end--;
+  }
+  return std::string(input.substr(begin, end - begin));
+}
+
+int64_t parse_size_text_to_bytes(const std::string &text) {
+  const std::string trimmed = trim_ascii(text);
+  assert(!trimmed.empty());
+
+  size_t value_end = 0;
+  while (value_end < trimmed.size() &&
+         (std::isdigit(static_cast<unsigned char>(trimmed[value_end])) != 0 || trimmed[value_end] == '.')) {
+    value_end++;
+  }
+  assert(value_end > 0);
+
+  const double value = std::stod(trimmed.substr(0, value_end));
+  std::string unit = trim_ascii(trimmed.substr(value_end));
+  std::transform(unit.begin(), unit.end(), unit.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+  if (unit.empty()) {
+    unit = "b";
+  }
+
+  double multiplier = 1.0;
+  if (unit == "b" || unit == "byte" || unit == "bytes") {
+    multiplier = 1.0;
+  } else if (unit == "kb") {
+    multiplier = 1000.0;
+  } else if (unit == "mb") {
+    multiplier = 1000.0 * 1000.0;
+  } else if (unit == "gb") {
+    multiplier = 1000.0 * 1000.0 * 1000.0;
+  } else if (unit == "tb") {
+    multiplier = 1000.0 * 1000.0 * 1000.0 * 1000.0;
+  } else if (unit == "kib") {
+    multiplier = 1024.0;
+  } else if (unit == "mib") {
+    multiplier = 1024.0 * 1024.0;
+  } else if (unit == "gib") {
+    multiplier = 1024.0 * 1024.0 * 1024.0;
+  } else if (unit == "tib") {
+    multiplier = 1024.0 * 1024.0 * 1024.0 * 1024.0;
+  } else {
+    assert(false && "unknown size unit");
+  }
+  return static_cast<int64_t>(std::llround(value * multiplier));
 }
 } // namespace
 
@@ -353,6 +410,45 @@ std::vector<Database::FeatherChunk> Database::feather_chunks(const std::string &
 
 const std::string &Database::data_dir() const {
   return data_dir_;
+}
+
+const std::string &Database::db_path() const {
+  return db_path_;
+}
+
+json Database::memory_breakdown() {
+  std::lock_guard<std::mutex> lock(read_mutex_);
+  auto result = read_conn_->Query(
+      "SELECT database_name, memory_usage, memory_limit, wal_size "
+      "FROM pragma_database_size()");
+  assert(result && !result->HasError());
+  assert(result->RowCount() > 0);
+
+  idx_t target_row = 0;
+  for (idx_t i = 0; i < result->RowCount(); ++i) {
+    const std::string db_name = result->GetValue(0, i).GetValueUnsafe<std::string>();
+    if (db_name == "main") {
+      target_row = i;
+      break;
+    }
+  }
+
+  const std::string database_name = result->GetValue(0, target_row).GetValueUnsafe<std::string>();
+  const std::string memory_usage_text = result->GetValue(1, target_row).GetValueUnsafe<std::string>();
+  const std::string memory_limit_text = result->GetValue(2, target_row).GetValueUnsafe<std::string>();
+  const std::string wal_size_text = result->GetValue(3, target_row).GetValueUnsafe<std::string>();
+
+  return {
+      {"engine", "duckdb"},
+      {"database_name", database_name},
+      {"path", db_path_},
+      {"memory_usage_text", memory_usage_text},
+      {"memory_limit_text", memory_limit_text},
+      {"wal_size_text", wal_size_text},
+      {"memory_usage_bytes", parse_size_text_to_bytes(memory_usage_text)},
+      {"memory_limit_bytes", parse_size_text_to_bytes(memory_limit_text)},
+      {"wal_size_bytes", parse_size_text_to_bytes(wal_size_text)},
+  };
 }
 
 int64_t Database::get_last_block() {

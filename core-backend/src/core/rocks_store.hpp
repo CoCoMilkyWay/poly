@@ -79,6 +79,13 @@ inline void assert_no_err(char *err) {
   }
 }
 
+inline int64_t property_int64(rocksdb_t *db, const char *prop_name) {
+  uint64_t value = 0;
+  const int ret = rocksdb_property_int(db, prop_name, &value);
+  assert(ret == 0);
+  return static_cast<int64_t>(value);
+}
+
 inline rocksdb_options_t *make_db_options() {
   rocksdb_options_t *opts = rocksdb_options_create();
   // Keep SST/WAL at sane granularity. Passing 0 to optimize_level_style_compaction
@@ -104,6 +111,17 @@ inline rocksdb_options_t *make_db_options() {
 }
 
 } // namespace detail
+
+struct MemoryStats {
+  int64_t memtables_bytes = 0;
+  int64_t table_readers_bytes = 0;
+  int64_t block_cache_bytes = 0;
+  int64_t block_cache_pinned_bytes = 0;
+
+  int64_t estimated_total_bytes() const {
+    return memtables_bytes + table_readers_bytes + block_cache_bytes + block_cache_pinned_bytes;
+  }
+};
 
 struct Stage2UserEventRecord {
   std::string user_addr;
@@ -213,6 +231,19 @@ public:
     rocksdb_iter_destroy(it);
     detail::assert_no_err(err);
     return out;
+  }
+
+  MemoryStats memory_stats() const {
+    MemoryStats stats;
+    stats.memtables_bytes = detail::property_int64(db_, "rocksdb.cur-size-all-mem-tables");
+    stats.table_readers_bytes = detail::property_int64(db_, "rocksdb.estimate-table-readers-mem");
+    stats.block_cache_bytes = detail::property_int64(db_, "rocksdb.block-cache-usage");
+    stats.block_cache_pinned_bytes = detail::property_int64(db_, "rocksdb.block-cache-pinned-usage");
+    return stats;
+  }
+
+  const std::string &db_path() const {
+    return db_path_;
   }
 
   template <typename Fn>
@@ -476,6 +507,19 @@ public:
     rocksdb_iter_destroy(it);
     detail::assert_no_err(err);
     return out;
+  }
+
+  MemoryStats memory_stats() const {
+    MemoryStats stats;
+    stats.memtables_bytes = detail::property_int64(db_, "rocksdb.cur-size-all-mem-tables");
+    stats.table_readers_bytes = detail::property_int64(db_, "rocksdb.estimate-table-readers-mem");
+    stats.block_cache_bytes = detail::property_int64(db_, "rocksdb.block-cache-usage");
+    stats.block_cache_pinned_bytes = detail::property_int64(db_, "rocksdb.block-cache-pinned-usage");
+    return stats;
+  }
+
+  const std::string &db_path() const {
+    return db_path_;
   }
 
 private:
