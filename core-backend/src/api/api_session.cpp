@@ -1357,10 +1357,14 @@ void ApiSession::handle_memory() {
   const int64_t stage1_bytes = breakdown["stage1"].value("estimated_total_bytes", int64_t{0});
   const int64_t stage2_bytes = breakdown["stage2"].value("estimated_total_bytes", int64_t{0});
   const int64_t stage3_bytes = breakdown["stage3"].value("estimated_total_bytes", int64_t{0});
+  const int64_t stage2_peak_candidate =
+      breakdown["stage2"].value("persistent_bytes", int64_t{0}) +
+      breakdown["stage2"].value("peak_chunk_plus_commit_bytes", int64_t{0});
+  const int64_t stage3_peak_candidate = breakdown["stage3"].value("estimated_peak_candidate_bytes", int64_t{0});
   const int64_t stage0_peak = update_peak_bytes(stage0_peak_bytes, stage0_bytes);
   const int64_t stage1_peak = update_peak_bytes(stage1_peak_bytes, stage1_bytes);
-  const int64_t stage2_peak = update_peak_bytes(stage2_peak_bytes, stage2_bytes);
-  const int64_t stage3_peak = update_peak_bytes(stage3_peak_bytes, stage3_bytes);
+  const int64_t stage2_peak = update_peak_bytes(stage2_peak_bytes, std::max(stage2_bytes, stage2_peak_candidate));
+  const int64_t stage3_peak = update_peak_bytes(stage3_peak_bytes, std::max(stage3_bytes, stage3_peak_candidate));
 
   breakdown["stage0"]["estimated_peak_bytes"] = stage0_peak;
   breakdown["stage1"]["estimated_peak_bytes"] = stage1_peak;

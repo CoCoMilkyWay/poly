@@ -35,6 +35,7 @@ json StageSync::memory_breakdown() const {
   }
   const int64_t stage3_persistent_total = conditions_bytes + cond_tag_ids_bytes + tag_to_industry_bytes + cache_addr_bytes +
                                           cache_timeline_bytes + cache_snapshots_bytes;
+  const int64_t stage3_peak_candidate_bytes = stage3_persistent_total + probe_copy.peak_working_set_bytes;
 
   core::mem::MemRows stage3_rows = {
       {"event_inputs", probe_copy.event_inputs_bytes},
@@ -51,7 +52,11 @@ json StageSync::memory_breakdown() const {
       {"user_cache_snapshots", cache_snapshots_bytes},
   };
   core::mem::sort_mem_rows_desc(stage3_rows);
-  return core::mem::build_memory_breakdown_json(stage3_rows, probe_copy.total_working_set_bytes + stage3_persistent_total, 20);
+  json out = core::mem::build_memory_breakdown_json(stage3_rows, probe_copy.total_working_set_bytes + stage3_persistent_total, 20);
+  out["persistent_bytes"] = stage3_persistent_total;
+  out["peak_working_set_bytes"] = probe_copy.peak_working_set_bytes;
+  out["estimated_peak_candidate_bytes"] = stage3_peak_candidate_bytes;
+  return out;
 }
 
 } // namespace stage3

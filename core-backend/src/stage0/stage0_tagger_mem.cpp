@@ -17,7 +17,18 @@ int64_t detail::OnnxEmbedder::estimated_bytes() const {
   bytes += core::mem::estimate_vector_plain(input_names_);
   bytes += core::mem::estimate_vector_plain(output_names_);
   bytes += core::mem::estimate_string_extra(device_name_);
+  bytes += allocator_in_use_bytes();
   return bytes;
+}
+
+int64_t detail::OnnxEmbedder::allocator_in_use_bytes() const {
+  assert(session_ != nullptr);
+  const Ort::MemoryInfo mem_info = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
+  const Ort::Allocator alloc(*session_, mem_info);
+  const auto stats = alloc.GetStats().GetKeyValuePairs();
+  const auto it = stats.find("InUse");
+  assert(it != stats.end());
+  return std::stoll(it->second);
 }
 
 json Tagger::memory_breakdown() const {

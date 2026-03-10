@@ -2,6 +2,7 @@
 #include "misc/profiler.hpp"
 
 #include <algorithm>
+#include <chrono>
 #include <cstring>
 
 namespace stage2 {
@@ -126,6 +127,7 @@ void EventBuilder::init_schema() {
 }
 
 void EventBuilder::load_from_rb() {
+  const auto restore_started_at = std::chrono::steady_clock::now();
   auto conn = stage2_db_.create_connection();
   auto blob_hex = [](const duckdb::Value &v) {
     return blob_to_hex(v.GetValueUnsafe<std::string>());
@@ -470,10 +472,16 @@ void EventBuilder::load_from_rb() {
 
   committed_progress_ = progress_;
   build_cursor_ = committed_progress_.cursor;
+  const auto restore_ms =
+      std::chrono::duration_cast<std::chrono::milliseconds>(
+          std::chrono::steady_clock::now() - restore_started_at)
+          .count() *
+      0.001 / 60;
 
   stage2_log_info("Restored: " + std::to_string(conditions_.size()) + " conditions, " +
                   std::to_string(token_map_.size()) + " tokens, " +
-                  std::to_string(fpmm_map_.size()) + " FPMMs");
+                  std::to_string(fpmm_map_.size()) + " FPMMs, " +
+                  std::to_string(restore_ms) + " min");
   refresh_memory_snapshot("load_from_rb_done");
 }
 

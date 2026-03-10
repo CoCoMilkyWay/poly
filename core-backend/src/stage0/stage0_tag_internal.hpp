@@ -47,6 +47,7 @@ public:
   int64_t estimated_bytes() const;
 
 private:
+  int64_t allocator_in_use_bytes() const;
   Ort::Env env_;
   std::unique_ptr<Ort::Session> session_;
   std::vector<Ort::AllocatedStringPtr> input_names_storage_;
