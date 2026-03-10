@@ -1,5 +1,6 @@
 #include "misc/profiler.hpp"
 #include "stage3_sync.hpp"
+#include "../core/mem.hpp"
 #include <algorithm>
 #include <cmath>
 
