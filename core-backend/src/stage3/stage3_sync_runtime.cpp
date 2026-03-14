@@ -24,9 +24,12 @@ constexpr const char *kSqlTmpSchemaFeatureTensorState =
     "last_holding_period_10w BIGINT, last_token_count_10w BIGINT, "
     "time_weight_sum_10w BIGINT, token_count_tw_sum_10w BIGINT, exposure_tw_sum_10w BIGINT, "
     "volume_sum_10w BIGINT, holding_period_exp_tw_sum_10w BIGINT, "
-    "realized_sum_10w BIGINT, realized_sq_sum_10w BIGINT, realized_count_10w BIGINT, realized_kll_10w BLOB, "
+    "realized_sum_10w BIGINT, realized_sq_sum_10w BIGINT, realized_count_10w BIGINT, "
     "token_avg_10w BIGINT, exposure_avg_10w BIGINT, volume_10w BIGINT, holding_period_avg_10w BIGINT, "
     "sharpe_10w DOUBLE, "
+    "ps_token_avg_10w BIGINT, ps_exposure_avg_10w BIGINT, ps_volume_10w BIGINT, "
+    "ps_holding_period_avg_10w BIGINT, ps_realized_sum_10w BIGINT, "
+    "ps_realized_sq_sum_10w BIGINT, ps_realized_count_10w BIGINT, "
     "token_avg_100w BIGINT, token_avg_1000w BIGINT, "
     "exposure_avg_100w BIGINT, exposure_avg_1000w BIGINT, "
     "volume_avg_100w BIGINT, volume_avg_1000w BIGINT, "
@@ -40,8 +43,10 @@ constexpr const char *kSqlColsFeatureTensorState =
     "user_addr, block_bucket, tag_id, "
     "last_sort_key_10w, last_block_10w, last_exposure_10w, last_holding_period_10w, last_token_count_10w, "
     "time_weight_sum_10w, token_count_tw_sum_10w, exposure_tw_sum_10w, volume_sum_10w, holding_period_exp_tw_sum_10w, "
-    "realized_sum_10w, realized_sq_sum_10w, realized_count_10w, realized_kll_10w, "
+    "realized_sum_10w, realized_sq_sum_10w, realized_count_10w, "
     "token_avg_10w, exposure_avg_10w, volume_10w, holding_period_avg_10w, sharpe_10w, "
+    "ps_token_avg_10w, ps_exposure_avg_10w, ps_volume_10w, ps_holding_period_avg_10w, "
+    "ps_realized_sum_10w, ps_realized_sq_sum_10w, ps_realized_count_10w, "
     "token_avg_100w, token_avg_1000w, "
     "exposure_avg_100w, exposure_avg_1000w, "
     "volume_avg_100w, volume_avg_1000w, "
@@ -64,12 +69,18 @@ constexpr const char *kSqlSetFeatureTensorStateUpsert =
     "realized_sum_10w=excluded.realized_sum_10w, "
     "realized_sq_sum_10w=excluded.realized_sq_sum_10w, "
     "realized_count_10w=excluded.realized_count_10w, "
-    "realized_kll_10w=excluded.realized_kll_10w, "
     "token_avg_10w=excluded.token_avg_10w, "
     "exposure_avg_10w=excluded.exposure_avg_10w, "
     "volume_10w=excluded.volume_10w, "
     "holding_period_avg_10w=excluded.holding_period_avg_10w, "
     "sharpe_10w=excluded.sharpe_10w, "
+    "ps_token_avg_10w=excluded.ps_token_avg_10w, "
+    "ps_exposure_avg_10w=excluded.ps_exposure_avg_10w, "
+    "ps_volume_10w=excluded.ps_volume_10w, "
+    "ps_holding_period_avg_10w=excluded.ps_holding_period_avg_10w, "
+    "ps_realized_sum_10w=excluded.ps_realized_sum_10w, "
+    "ps_realized_sq_sum_10w=excluded.ps_realized_sq_sum_10w, "
+    "ps_realized_count_10w=excluded.ps_realized_count_10w, "
     "token_avg_100w=excluded.token_avg_100w, "
     "token_avg_1000w=excluded.token_avg_1000w, "
     "exposure_avg_100w=excluded.exposure_avg_100w, "
@@ -91,8 +102,7 @@ constexpr const char *kSqlSelectFeatureTensorStateCols =
     "SELECT f.user_addr, f.block_bucket, f.tag_id, "
     "f.last_sort_key_10w, f.last_block_10w, f.last_exposure_10w, f.last_holding_period_10w, f.last_token_count_10w, "
     "f.time_weight_sum_10w, f.token_count_tw_sum_10w, f.exposure_tw_sum_10w, f.volume_sum_10w, "
-    "f.holding_period_exp_tw_sum_10w, f.realized_sum_10w, f.realized_sq_sum_10w, f.realized_count_10w, "
-    "f.realized_kll_10w ";
+    "f.holding_period_exp_tw_sum_10w, f.realized_sum_10w, f.realized_sq_sum_10w, f.realized_count_10w ";
 
 int64_t narrow_i64(__int128 v) {
   assert(v >= static_cast<__int128>(std::numeric_limits<int64_t>::min()));
@@ -642,12 +652,6 @@ bool StageSync::process_chunk_locked() const {
       agg.realized_sum = feature_state_result->GetValue(13, i).GetValue<int64_t>();
       agg.realized_sq_sum = feature_state_result->GetValue(14, i).GetValue<int64_t>();
       agg.event_count = feature_state_result->GetValue(15, i).GetValue<int64_t>();
-      if (!feature_state_result->GetValue(16, i).IsNull()) {
-        const std::string blob = feature_state_result->GetValue(16, i).GetValueUnsafe<std::string>();
-        if (!blob.empty()) {
-          agg.realized_kll = KLLcache::deserialize(reinterpret_cast<const uint8_t *>(blob.data()), blob.size());
-        }
-      }
       agg.has_tail = (agg.time_weight_sum > 0);
     }
   }
@@ -748,86 +752,74 @@ bool StageSync::process_chunk_locked() const {
   }
   assert(event_facts.size() == event_inputs.size());
 
-  struct WindowHistorySums {
-    int64_t token_sum_100 = 0;
-    int64_t exposure_sum_100 = 0;
-    int64_t volume_sum_100 = 0;
-    int64_t holding_period_sum_100 = 0;
-    int64_t realized_sum_100 = 0;
-    int64_t realized_sq_sum_100 = 0;
-    int64_t realized_count_100 = 0;
-    int64_t token_sum_1000 = 0;
-    int64_t exposure_sum_1000 = 0;
-    int64_t volume_sum_1000 = 0;
-    int64_t holding_period_sum_1000 = 0;
-    int64_t realized_sum_1000 = 0;
-    int64_t realized_sq_sum_1000 = 0;
-    int64_t realized_count_1000 = 0;
+  // Node-C: 前缀和历史记录（用于 O(1) 窗口计算）
+  struct PrefixSumRecord {
+    int64_t block_bucket = 0;
+    int64_t ps_token_avg = 0;
+    int64_t ps_exposure_avg = 0;
+    int64_t ps_volume = 0;
+    int64_t ps_holding_period_avg = 0;
+    int64_t ps_realized_sum = 0;
+    int64_t ps_realized_sq_sum = 0;
+    int64_t ps_realized_count = 0;
   };
-  std::unordered_map<AggKey, WindowHistorySums, AggKeyHash> window_history_sums;
-  window_history_sums.reserve(bucket_agg_states.size());
+  // 按 (user_id, tag_id) 索引，每个 pair 存储按 bucket 降序排列的前缀和记录
+  std::unordered_map<UserTagRuntimeKey, std::vector<PrefixSumRecord>, UserTagRuntimeKeyHash> prefix_sum_history;
+  prefix_sum_history.reserve(bucket_agg_states.size());
   if (!bucket_agg_states.empty()) {
-    const std::string sql_window_history =
-        "SELECT k.user_addr, k.block_bucket, k.tag_id, "
-        "f.block_bucket, f.token_avg_10w, f.exposure_avg_10w, f.volume_10w, f.holding_period_avg_10w, "
-        "f.realized_sum_10w, f.realized_sq_sum_10w, f.realized_count_10w "
-        "FROM " +
-        std::string(kSqlTmpFeatureTensorKeys) + " k "
+    // 查询每个 (user, tag) 对的历史前缀和（不在当前 batch 中的 bucket）
+    // 只查询 bucket >= min_dirty_bucket - 100 的数据（更早的不需要）
+    const std::string sql_prefix_sum_history =
+        "SELECT f.user_addr, f.tag_id, f.block_bucket, "
+        "f.ps_token_avg_10w, f.ps_exposure_avg_10w, f.ps_volume_10w, "
+        "f.ps_holding_period_avg_10w, f.ps_realized_sum_10w, "
+        "f.ps_realized_sq_sum_10w, f.ps_realized_count_10w "
+        "FROM (SELECT user_addr, tag_id, MIN(block_bucket) - 100 AS min_boundary "
+        "      FROM " +
+        std::string(kSqlTmpFeatureTensorKeys) + " GROUP BY user_addr, tag_id) k "
                                                 "JOIN " +
         table_feature_tensor + " f "
                                "ON f.user_addr = k.user_addr AND f.tag_id = k.tag_id "
-                               "AND f.block_bucket < k.block_bucket "
-                               "AND f.block_bucket >= k.block_bucket - 99 "
+                               "AND f.block_bucket >= k.min_boundary "
                                "AND NOT EXISTS ("
                                "  SELECT 1 FROM " +
         std::string(kSqlTmpFeatureTensorKeys) + " cur "
-                                                "  WHERE cur.user_addr = k.user_addr AND cur.tag_id = k.tag_id AND cur.block_bucket = f.block_bucket"
-                                                ")";
-    auto window_history_result = sink_conn->Query(sql_window_history);
-    assert(window_history_result && !window_history_result->HasError());
-    for (idx_t i = 0; i < window_history_result->RowCount(); ++i) {
-      const std::string user_blob = window_history_result->GetValue(0, i).GetValueUnsafe<std::string>();
+                                                "  WHERE cur.user_addr = f.user_addr AND cur.tag_id = f.tag_id "
+                                                "  AND cur.block_bucket = f.block_bucket"
+                                                ") "
+                                                "ORDER BY f.user_addr, f.tag_id, f.block_bucket DESC";
+    auto prefix_sum_result = sink_conn->Query(sql_prefix_sum_history);
+    assert(prefix_sum_result && !prefix_sum_result->HasError());
+    for (idx_t i = 0; i < prefix_sum_result->RowCount(); ++i) {
+      const std::string user_blob = prefix_sum_result->GetValue(0, i).GetValueUnsafe<std::string>();
       auto user_id_it = user_blob_to_id.find(user_blob);
       assert(user_id_it != user_blob_to_id.end());
-      const int64_t target_bucket = window_history_result->GetValue(1, i).GetValue<int64_t>();
-      const int8_t tag_id = static_cast<int8_t>(window_history_result->GetValue(2, i).GetValue<int32_t>());
-      const int64_t hist_bucket = window_history_result->GetValue(3, i).GetValue<int64_t>();
-      const int64_t distance = target_bucket - hist_bucket;
-      assert(distance >= 1 && distance <= 99);
-
-      AggKey key{user_id_it->second, target_bucket, tag_id};
-      auto [window_history_it, _] = window_history_sums.try_emplace(key, WindowHistorySums{});
-      WindowHistorySums &hist = window_history_it->second;
-
-      const int64_t token_avg_10w = window_history_result->GetValue(4, i).GetValue<int64_t>();
-      const int64_t exposure_avg_10w = window_history_result->GetValue(5, i).GetValue<int64_t>();
-      const int64_t volume_10w = window_history_result->GetValue(6, i).GetValue<int64_t>();
-      const int64_t holding_period_avg_10w = window_history_result->GetValue(7, i).GetValue<int64_t>();
-      const int64_t realized_sum_10w = window_history_result->GetValue(8, i).GetValue<int64_t>();
-      const int64_t realized_sq_sum_10w = window_history_result->GetValue(9, i).GetValue<int64_t>();
-      const int64_t realized_count_10w = window_history_result->GetValue(10, i).GetValue<int64_t>();
-
-      hist.token_sum_1000 = narrow_i64(static_cast<__int128>(hist.token_sum_1000) + token_avg_10w);
-      hist.exposure_sum_1000 = narrow_i64(static_cast<__int128>(hist.exposure_sum_1000) + exposure_avg_10w);
-      hist.volume_sum_1000 = narrow_i64(static_cast<__int128>(hist.volume_sum_1000) + volume_10w);
-      hist.holding_period_sum_1000 =
-          narrow_i64(static_cast<__int128>(hist.holding_period_sum_1000) + holding_period_avg_10w);
-      hist.realized_sum_1000 = narrow_i64(static_cast<__int128>(hist.realized_sum_1000) + realized_sum_10w);
-      hist.realized_sq_sum_1000 = narrow_i64(static_cast<__int128>(hist.realized_sq_sum_1000) + realized_sq_sum_10w);
-      hist.realized_count_1000 = narrow_i64(static_cast<__int128>(hist.realized_count_1000) + realized_count_10w);
-
-      if (distance <= 9) {
-        hist.token_sum_100 = narrow_i64(static_cast<__int128>(hist.token_sum_100) + token_avg_10w);
-        hist.exposure_sum_100 = narrow_i64(static_cast<__int128>(hist.exposure_sum_100) + exposure_avg_10w);
-        hist.volume_sum_100 = narrow_i64(static_cast<__int128>(hist.volume_sum_100) + volume_10w);
-        hist.holding_period_sum_100 =
-            narrow_i64(static_cast<__int128>(hist.holding_period_sum_100) + holding_period_avg_10w);
-        hist.realized_sum_100 = narrow_i64(static_cast<__int128>(hist.realized_sum_100) + realized_sum_10w);
-        hist.realized_sq_sum_100 = narrow_i64(static_cast<__int128>(hist.realized_sq_sum_100) + realized_sq_sum_10w);
-        hist.realized_count_100 = narrow_i64(static_cast<__int128>(hist.realized_count_100) + realized_count_10w);
-      }
+      const int8_t tag_id = static_cast<int8_t>(prefix_sum_result->GetValue(1, i).GetValue<int32_t>());
+      UserTagRuntimeKey pair_key{user_id_it->second, tag_id};
+      auto [ps_it, _] = prefix_sum_history.try_emplace(pair_key, std::vector<PrefixSumRecord>{});
+      ps_it->second.push_back({
+          prefix_sum_result->GetValue(2, i).GetValue<int64_t>(),
+          prefix_sum_result->GetValue(3, i).GetValue<int64_t>(),
+          prefix_sum_result->GetValue(4, i).GetValue<int64_t>(),
+          prefix_sum_result->GetValue(5, i).GetValue<int64_t>(),
+          prefix_sum_result->GetValue(6, i).GetValue<int64_t>(),
+          prefix_sum_result->GetValue(7, i).GetValue<int64_t>(),
+          prefix_sum_result->GetValue(8, i).GetValue<int64_t>(),
+          prefix_sum_result->GetValue(9, i).GetValue<int64_t>(),
+      });
     }
   }
+
+  // 辅助函数：在降序排列的前缀和历史中查找 bucket <= target 的最大记录
+  auto find_prefix_sum_le = [](const std::vector<PrefixSumRecord> &records, int64_t target_bucket) -> const PrefixSumRecord * {
+    // records 按 bucket 降序排列，找第一个 bucket <= target 的记录
+    for (const auto &rec : records) {
+      if (rec.block_bucket <= target_bucket) {
+        return &rec;
+      }
+    }
+    return nullptr;
+  };
 
   {
     const auto no_extra = [](const auto &) { return int64_t{0}; };
@@ -843,7 +835,9 @@ bool StageSync::process_chunk_locked() const {
         core::mem::estimate_unordered_map(user_unrealized_totals, no_extra, no_extra) +
         core::mem::estimate_unordered_map(user_active_token_counts, no_extra, no_extra) +
         core::mem::estimate_unordered_map(user_tag_runtime, no_extra, no_extra) +
-        core::mem::estimate_unordered_map(window_history_sums, no_extra, no_extra);
+        core::mem::estimate_unordered_map(prefix_sum_history, no_extra, [](const std::vector<PrefixSumRecord> &v) {
+          return static_cast<int64_t>(v.capacity() * sizeof(PrefixSumRecord));
+        });
     const int64_t token_states_bytes = core::mem::estimate_unordered_map(token_states, no_extra, no_extra);
     const int64_t bucket_agg_bytes = core::mem::estimate_unordered_map(bucket_agg_states, no_extra, no_extra);
     const int64_t event_facts_bytes = core::mem::estimate_vector_plain(event_facts);
@@ -959,6 +953,7 @@ bool StageSync::process_chunk_locked() const {
     TraceN("s3/wr_duck_feat");
     prepare_tmp_table(kSqlTmpFeatureTensorState, kSqlTmpSchemaFeatureTensorState);
     {
+      // 当前 bucket 输出（包含前缀和，用于 batch 内依赖传递）
       struct CurrentBucketOutput {
         int64_t block_bucket = 0;
         int64_t token_avg_10w = 0;
@@ -968,6 +963,14 @@ bool StageSync::process_chunk_locked() const {
         int64_t realized_sum_10w = 0;
         int64_t realized_sq_sum_10w = 0;
         int64_t realized_count_10w = 0;
+        // 前缀和（累计到当前 bucket）
+        int64_t ps_token_avg = 0;
+        int64_t ps_exposure_avg = 0;
+        int64_t ps_volume = 0;
+        int64_t ps_holding_period_avg = 0;
+        int64_t ps_realized_sum = 0;
+        int64_t ps_realized_sq_sum = 0;
+        int64_t ps_realized_count = 0;
       };
       std::vector<AggKey> sorted_feature_keys;
       sorted_feature_keys.reserve(bucket_agg_states.size());
@@ -993,7 +996,6 @@ bool StageSync::process_chunk_locked() const {
         assert(agg_it_raw != bucket_agg_states.end());
         const BucketAggState &agg = agg_it_raw->second;
         const std::string &user_blob = user_blob_pool[key.user_id];
-        const std::vector<uint8_t> realized_kll_blob = agg.realized_kll.serialize();
         const int64_t tw = agg.time_weight_sum;
         const int64_t token_avg_10w =
             (tw > 0) ? round_i64(static_cast<double>(agg.token_count_tw_sum) / static_cast<double>(tw)) : 0;
@@ -1006,73 +1008,112 @@ bool StageSync::process_chunk_locked() const {
         const int64_t volume_10w = agg.volume_sum;
         const double sharpe_10w = calc_sharpe_from_moments(agg.realized_sum, agg.realized_sq_sum, agg.event_count);
 
-        const WindowHistorySums empty_hist{};
-        const auto history_it = window_history_sums.find(key);
-        const WindowHistorySums &hist = (history_it != window_history_sums.end()) ? history_it->second : empty_hist;
         UserTagRuntimeKey pair_key{key.user_id, key.tag_id};
         auto [pair_outputs_it, _] = current_outputs_by_pair.try_emplace(pair_key, std::vector<CurrentBucketOutput>{});
         std::vector<CurrentBucketOutput> &pair_outputs = pair_outputs_it->second;
 
-        int64_t token_sum_100_hist = hist.token_sum_100;
-        int64_t exposure_sum_100_hist = hist.exposure_sum_100;
-        int64_t volume_sum_100_hist = hist.volume_sum_100;
-        int64_t holding_sum_100_hist = hist.holding_period_sum_100;
-        int64_t realized_sum_100_hist = hist.realized_sum_100;
-        int64_t realized_sq_sum_100_hist = hist.realized_sq_sum_100;
-        int64_t realized_count_100_hist = hist.realized_count_100;
-        int64_t token_sum_1000_hist = hist.token_sum_1000;
-        int64_t exposure_sum_1000_hist = hist.exposure_sum_1000;
-        int64_t volume_sum_1000_hist = hist.volume_sum_1000;
-        int64_t holding_sum_1000_hist = hist.holding_period_sum_1000;
-        int64_t realized_sum_1000_hist = hist.realized_sum_1000;
-        int64_t realized_sq_sum_1000_hist = hist.realized_sq_sum_1000;
-        int64_t realized_count_1000_hist = hist.realized_count_1000;
-        for (const CurrentBucketOutput &prev_out : pair_outputs) {
-          const int64_t distance = key.block_bucket - prev_out.block_bucket;
-          assert(distance >= 1);
-          if (distance <= 9) {
-            token_sum_100_hist = narrow_i64(static_cast<__int128>(token_sum_100_hist) + prev_out.token_avg_10w);
-            exposure_sum_100_hist = narrow_i64(static_cast<__int128>(exposure_sum_100_hist) + prev_out.exposure_avg_10w);
-            volume_sum_100_hist = narrow_i64(static_cast<__int128>(volume_sum_100_hist) + prev_out.volume_10w);
-            holding_sum_100_hist =
-                narrow_i64(static_cast<__int128>(holding_sum_100_hist) + prev_out.holding_period_avg_10w);
-            realized_sum_100_hist =
-                narrow_i64(static_cast<__int128>(realized_sum_100_hist) + prev_out.realized_sum_10w);
-            realized_sq_sum_100_hist =
-                narrow_i64(static_cast<__int128>(realized_sq_sum_100_hist) + prev_out.realized_sq_sum_10w);
-            realized_count_100_hist =
-                narrow_i64(static_cast<__int128>(realized_count_100_hist) + prev_out.realized_count_10w);
-          }
-          if (distance <= 99) {
-            token_sum_1000_hist = narrow_i64(static_cast<__int128>(token_sum_1000_hist) + prev_out.token_avg_10w);
-            exposure_sum_1000_hist =
-                narrow_i64(static_cast<__int128>(exposure_sum_1000_hist) + prev_out.exposure_avg_10w);
-            volume_sum_1000_hist = narrow_i64(static_cast<__int128>(volume_sum_1000_hist) + prev_out.volume_10w);
-            holding_sum_1000_hist =
-                narrow_i64(static_cast<__int128>(holding_sum_1000_hist) + prev_out.holding_period_avg_10w);
-            realized_sum_1000_hist =
-                narrow_i64(static_cast<__int128>(realized_sum_1000_hist) + prev_out.realized_sum_10w);
-            realized_sq_sum_1000_hist =
-                narrow_i64(static_cast<__int128>(realized_sq_sum_1000_hist) + prev_out.realized_sq_sum_10w);
-            realized_count_1000_hist =
-                narrow_i64(static_cast<__int128>(realized_count_1000_hist) + prev_out.realized_count_10w);
+        // 获取 DB 中该 (user, tag) 的前缀和历史
+        const std::vector<PrefixSumRecord> empty_ps_history;
+        auto ps_history_it = prefix_sum_history.find(pair_key);
+        const std::vector<PrefixSumRecord> &ps_history =
+            (ps_history_it != prefix_sum_history.end()) ? ps_history_it->second : empty_ps_history;
+
+        // Step 1: 计算当前 bucket 的前缀和
+        // 起点：前一个 bucket 的前缀和（优先从 batch 内获取，否则从 DB 历史获取）
+        int64_t prev_ps_token = 0, prev_ps_exposure = 0, prev_ps_volume = 0, prev_ps_holding = 0;
+        int64_t prev_ps_realized_sum = 0, prev_ps_realized_sq_sum = 0, prev_ps_realized_count = 0;
+        if (!pair_outputs.empty()) {
+          // batch 内有更早的 bucket，使用最后一个（按 bucket 升序排列）
+          const CurrentBucketOutput &prev = pair_outputs.back();
+          prev_ps_token = prev.ps_token_avg;
+          prev_ps_exposure = prev.ps_exposure_avg;
+          prev_ps_volume = prev.ps_volume;
+          prev_ps_holding = prev.ps_holding_period_avg;
+          prev_ps_realized_sum = prev.ps_realized_sum;
+          prev_ps_realized_sq_sum = prev.ps_realized_sq_sum;
+          prev_ps_realized_count = prev.ps_realized_count;
+        } else {
+          // 从 DB 历史获取前一个 bucket 的前缀和
+          const PrefixSumRecord *prev_rec = find_prefix_sum_le(ps_history, key.block_bucket - 1);
+          if (prev_rec) {
+            prev_ps_token = prev_rec->ps_token_avg;
+            prev_ps_exposure = prev_rec->ps_exposure_avg;
+            prev_ps_volume = prev_rec->ps_volume;
+            prev_ps_holding = prev_rec->ps_holding_period_avg;
+            prev_ps_realized_sum = prev_rec->ps_realized_sum;
+            prev_ps_realized_sq_sum = prev_rec->ps_realized_sq_sum;
+            prev_ps_realized_count = prev_rec->ps_realized_count;
           }
         }
 
+        // 当前 bucket 的前缀和 = 前一个 bucket 的前缀和 + 当前 bucket 的值
+        const int64_t ps_token_avg = narrow_i64(static_cast<__int128>(prev_ps_token) + token_avg_10w);
+        const int64_t ps_exposure_avg = narrow_i64(static_cast<__int128>(prev_ps_exposure) + exposure_avg_10w);
+        const int64_t ps_volume = narrow_i64(static_cast<__int128>(prev_ps_volume) + volume_10w);
+        const int64_t ps_holding_period_avg = narrow_i64(static_cast<__int128>(prev_ps_holding) + holding_period_avg_10w);
+        const int64_t ps_realized_sum = narrow_i64(static_cast<__int128>(prev_ps_realized_sum) + agg.realized_sum);
+        const int64_t ps_realized_sq_sum = narrow_i64(static_cast<__int128>(prev_ps_realized_sq_sum) + agg.realized_sq_sum);
+        const int64_t ps_realized_count = narrow_i64(static_cast<__int128>(prev_ps_realized_count) + agg.event_count);
+
+        // Step 2: 用前缀和差分计算窗口和
+        // 辅助函数：获取 bucket <= target 的前缀和（优先从 batch 内获取，否则从 DB 历史获取）
+        auto get_boundary_ps = [&](int64_t target_bucket) {
+          struct BoundaryPS {
+            int64_t token = 0, exposure = 0, volume = 0, holding = 0;
+            int64_t realized_sum = 0, realized_sq_sum = 0, realized_count = 0;
+          };
+          BoundaryPS result{};
+          // 先从 batch 内找
+          for (auto it = pair_outputs.rbegin(); it != pair_outputs.rend(); ++it) {
+            if (it->block_bucket <= target_bucket) {
+              result.token = it->ps_token_avg;
+              result.exposure = it->ps_exposure_avg;
+              result.volume = it->ps_volume;
+              result.holding = it->ps_holding_period_avg;
+              result.realized_sum = it->ps_realized_sum;
+              result.realized_sq_sum = it->ps_realized_sq_sum;
+              result.realized_count = it->ps_realized_count;
+              return result;
+            }
+          }
+          // 从 DB 历史找
+          const PrefixSumRecord *rec = find_prefix_sum_le(ps_history, target_bucket);
+          if (rec) {
+            result.token = rec->ps_token_avg;
+            result.exposure = rec->ps_exposure_avg;
+            result.volume = rec->ps_volume;
+            result.holding = rec->ps_holding_period_avg;
+            result.realized_sum = rec->ps_realized_sum;
+            result.realized_sq_sum = rec->ps_realized_sq_sum;
+            result.realized_count = rec->ps_realized_count;
+          }
+          return result;
+        };
+
+        // 100w 窗口边界：bucket - 10（窗口是 [bucket-9, bucket]）
+        const auto boundary_100 = get_boundary_ps(key.block_bucket - 10);
+        // 1000w 窗口边界：bucket - 100（窗口是 [bucket-99, bucket]）
+        const auto boundary_1000 = get_boundary_ps(key.block_bucket - 100);
+
+        // 窗口和 = 当前前缀和 - 边界前缀和
+        const int64_t token_sum_100 = narrow_i64(static_cast<__int128>(ps_token_avg) - boundary_100.token);
+        const int64_t token_sum_1000 = narrow_i64(static_cast<__int128>(ps_token_avg) - boundary_1000.token);
+        const int64_t exposure_sum_100 = narrow_i64(static_cast<__int128>(ps_exposure_avg) - boundary_100.exposure);
+        const int64_t exposure_sum_1000 = narrow_i64(static_cast<__int128>(ps_exposure_avg) - boundary_1000.exposure);
+        const int64_t volume_sum_100 = narrow_i64(static_cast<__int128>(ps_volume) - boundary_100.volume);
+        const int64_t volume_sum_1000 = narrow_i64(static_cast<__int128>(ps_volume) - boundary_1000.volume);
+        const int64_t holding_period_sum_100 = narrow_i64(static_cast<__int128>(ps_holding_period_avg) - boundary_100.holding);
+        const int64_t holding_period_sum_1000 = narrow_i64(static_cast<__int128>(ps_holding_period_avg) - boundary_1000.holding);
+        const int64_t realized_sum_100 = narrow_i64(static_cast<__int128>(ps_realized_sum) - boundary_100.realized_sum);
+        const int64_t realized_sum_1000 = narrow_i64(static_cast<__int128>(ps_realized_sum) - boundary_1000.realized_sum);
+        const int64_t realized_sq_sum_100 = narrow_i64(static_cast<__int128>(ps_realized_sq_sum) - boundary_100.realized_sq_sum);
+        const int64_t realized_sq_sum_1000 = narrow_i64(static_cast<__int128>(ps_realized_sq_sum) - boundary_1000.realized_sq_sum);
+        const int64_t realized_count_100 = narrow_i64(static_cast<__int128>(ps_realized_count) - boundary_100.realized_count);
+        const int64_t realized_count_1000 = narrow_i64(static_cast<__int128>(ps_realized_count) - boundary_1000.realized_count);
+
+        // Step 3: 计算窗口平均值
         const int64_t denom_100 = std::min<int64_t>(10, key.block_bucket + 1);
         const int64_t denom_1000 = std::min<int64_t>(100, key.block_bucket + 1);
-
-        const int64_t token_sum_100 = narrow_i64(static_cast<__int128>(token_sum_100_hist) + token_avg_10w);
-        const int64_t token_sum_1000 = narrow_i64(static_cast<__int128>(token_sum_1000_hist) + token_avg_10w);
-        const int64_t exposure_sum_100 = narrow_i64(static_cast<__int128>(exposure_sum_100_hist) + exposure_avg_10w);
-        const int64_t exposure_sum_1000 =
-            narrow_i64(static_cast<__int128>(exposure_sum_1000_hist) + exposure_avg_10w);
-        const int64_t volume_sum_100 = narrow_i64(static_cast<__int128>(volume_sum_100_hist) + volume_10w);
-        const int64_t volume_sum_1000 = narrow_i64(static_cast<__int128>(volume_sum_1000_hist) + volume_10w);
-        const int64_t holding_period_sum_100 =
-            narrow_i64(static_cast<__int128>(holding_sum_100_hist) + holding_period_avg_10w);
-        const int64_t holding_period_sum_1000 =
-            narrow_i64(static_cast<__int128>(holding_sum_1000_hist) + holding_period_avg_10w);
 
         const int64_t token_avg_100w =
             (denom_100 > 0) ? round_i64(static_cast<double>(token_sum_100) / static_cast<double>(denom_100)) : 0;
@@ -1081,36 +1122,19 @@ bool StageSync::process_chunk_locked() const {
         const int64_t exposure_avg_100w =
             (denom_100 > 0) ? round_i64(static_cast<double>(exposure_sum_100) / static_cast<double>(denom_100)) : 0;
         const int64_t exposure_avg_1000w =
-            (denom_1000 > 0) ? round_i64(static_cast<double>(exposure_sum_1000) / static_cast<double>(denom_1000))
-                             : 0;
+            (denom_1000 > 0) ? round_i64(static_cast<double>(exposure_sum_1000) / static_cast<double>(denom_1000)) : 0;
         const int64_t volume_avg_100w =
             (denom_100 > 0) ? round_i64(static_cast<double>(volume_sum_100) / static_cast<double>(denom_100)) : 0;
         const int64_t volume_avg_1000w =
             (denom_1000 > 0) ? round_i64(static_cast<double>(volume_sum_1000) / static_cast<double>(denom_1000)) : 0;
         const int64_t holding_period_avg_100w =
-            (denom_100 > 0)
-                ? round_i64(static_cast<double>(holding_period_sum_100) / static_cast<double>(denom_100))
-                : 0;
+            (denom_100 > 0) ? round_i64(static_cast<double>(holding_period_sum_100) / static_cast<double>(denom_100)) : 0;
         const int64_t holding_period_avg_1000w =
-            (denom_1000 > 0)
-                ? round_i64(static_cast<double>(holding_period_sum_1000) / static_cast<double>(denom_1000))
-                : 0;
-
-        const int64_t realized_sum_100 = narrow_i64(static_cast<__int128>(realized_sum_100_hist) + agg.realized_sum);
-        const int64_t realized_sq_sum_100 =
-            narrow_i64(static_cast<__int128>(realized_sq_sum_100_hist) + agg.realized_sq_sum);
-        const int64_t realized_count_100 =
-            narrow_i64(static_cast<__int128>(realized_count_100_hist) + agg.event_count);
-        const int64_t realized_sum_1000 =
-            narrow_i64(static_cast<__int128>(realized_sum_1000_hist) + agg.realized_sum);
-        const int64_t realized_sq_sum_1000 =
-            narrow_i64(static_cast<__int128>(realized_sq_sum_1000_hist) + agg.realized_sq_sum);
-        const int64_t realized_count_1000 =
-            narrow_i64(static_cast<__int128>(realized_count_1000_hist) + agg.event_count);
+            (denom_1000 > 0) ? round_i64(static_cast<double>(holding_period_sum_1000) / static_cast<double>(denom_1000)) : 0;
 
         const double sharpe_100w = calc_sharpe_from_moments(realized_sum_100, realized_sq_sum_100, realized_count_100);
-        const double sharpe_1000w =
-            calc_sharpe_from_moments(realized_sum_1000, realized_sq_sum_1000, realized_count_1000);
+        const double sharpe_1000w = calc_sharpe_from_moments(realized_sum_1000, realized_sq_sum_1000, realized_count_1000);
+
         ap.BeginRow();
         append_blob(ap, user_blob);
         ap.Append(key.block_bucket);
@@ -1128,14 +1152,20 @@ bool StageSync::process_chunk_locked() const {
         ap.Append(agg.realized_sum);
         ap.Append(agg.realized_sq_sum);
         ap.Append(agg.event_count);
-        ap.Append(duckdb::Value::BLOB(
-            reinterpret_cast<duckdb::const_data_ptr_t>(realized_kll_blob.data()),
-            realized_kll_blob.size()));
         ap.Append(token_avg_10w);
         ap.Append(exposure_avg_10w);
         ap.Append(volume_10w);
         ap.Append(holding_period_avg_10w);
         ap.Append(sharpe_10w);
+        // Node-C: 前缀和
+        ap.Append(ps_token_avg);
+        ap.Append(ps_exposure_avg);
+        ap.Append(ps_volume);
+        ap.Append(ps_holding_period_avg);
+        ap.Append(ps_realized_sum);
+        ap.Append(ps_realized_sq_sum);
+        ap.Append(ps_realized_count);
+        // Node-D: 窗口投影
         ap.Append(token_avg_100w);
         ap.Append(token_avg_1000w);
         ap.Append(exposure_avg_100w);
@@ -1149,6 +1179,7 @@ bool StageSync::process_chunk_locked() const {
         ap.Append(agg.last_sort_key);
         ap.EndRow();
 
+        // 保存当前 bucket 的输出（包含前缀和，用于 batch 内后续 bucket）
         pair_outputs.push_back(CurrentBucketOutput{
             key.block_bucket,
             token_avg_10w,
@@ -1158,6 +1189,13 @@ bool StageSync::process_chunk_locked() const {
             agg.realized_sum,
             agg.realized_sq_sum,
             agg.event_count,
+            ps_token_avg,
+            ps_exposure_avg,
+            ps_volume,
+            ps_holding_period_avg,
+            ps_realized_sum,
+            ps_realized_sq_sum,
+            ps_realized_count,
         });
       }
       ap.Close();

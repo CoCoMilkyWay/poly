@@ -134,12 +134,18 @@ void StageSync::init_schema() const {
         realized_sum_10w BIGINT NOT NULL DEFAULT 0,
         realized_sq_sum_10w BIGINT NOT NULL DEFAULT 0,
         realized_count_10w BIGINT NOT NULL DEFAULT 0,
-        realized_kll_10w BLOB,
         token_avg_10w BIGINT NOT NULL DEFAULT 0,
         exposure_avg_10w BIGINT NOT NULL DEFAULT 0,
         volume_10w BIGINT NOT NULL DEFAULT 0,
         holding_period_avg_10w BIGINT NOT NULL DEFAULT 0,
         sharpe_10w DOUBLE NOT NULL DEFAULT 0,
+        ps_token_avg_10w BIGINT NOT NULL DEFAULT 0,
+        ps_exposure_avg_10w BIGINT NOT NULL DEFAULT 0,
+        ps_volume_10w BIGINT NOT NULL DEFAULT 0,
+        ps_holding_period_avg_10w BIGINT NOT NULL DEFAULT 0,
+        ps_realized_sum_10w BIGINT NOT NULL DEFAULT 0,
+        ps_realized_sq_sum_10w BIGINT NOT NULL DEFAULT 0,
+        ps_realized_count_10w BIGINT NOT NULL DEFAULT 0,
         token_avg_100w BIGINT NOT NULL DEFAULT 0,
         token_avg_1000w BIGINT NOT NULL DEFAULT 0,
         exposure_avg_100w BIGINT NOT NULL DEFAULT 0,
@@ -270,7 +276,7 @@ void StageSync::load_cursor() {
 void StageSync::save_cursor_locked(duckdb::Connection &conn) const {
   auto q = conn.Query(
       "UPDATE " + std::string(kSqlTableCursorState) + " SET "
-                                                          "sort_key=" +
+                                                      "sort_key=" +
       std::to_string(sync_cursor_.sort_key) +
       ", processed_events=" + std::to_string(sync_cursor_.processed_events) +
       " WHERE id=1");

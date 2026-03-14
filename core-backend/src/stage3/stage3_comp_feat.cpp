@@ -5,7 +5,6 @@
 #include <cmath>
 #include <cstdlib>
 #include <limits>
-#include <vector>
 
 namespace stage3::feature_comp {
 namespace {
@@ -163,9 +162,6 @@ void accumulate_event_delta(BucketAggState &agg, double realized_delta, int64_t 
       agg.realized_sq_sum += sq_i64;
     }
   }
-  static thread_local std::vector<float> kll_one(1, 0.0f);
-  kll_one[0] = static_cast<float>(realized_delta);
-  agg.realized_kll.addBatch(kll_one);
   agg.event_count += 1;
   agg.volume_sum += volume;
   agg.last_sort_key = sort_key;

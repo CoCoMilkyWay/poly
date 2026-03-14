@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../stage2/stage2_types.hpp"
-#include "math/KLLcache.hpp"
 
 #include <cstdint>
 
@@ -17,7 +16,6 @@ struct TokenSnapshot {
 struct BucketAggState {
   int64_t realized_sum = 0;
   int64_t realized_sq_sum = 0;
-  KLLcache realized_kll{200, 1024};
   int64_t event_count = 0;
   int64_t exposure_tw_sum = 0;
   int64_t volume_sum = 0;
