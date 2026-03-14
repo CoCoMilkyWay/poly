@@ -37,12 +37,13 @@ stage3_sync_tick
 ├─ 0) 读取游标与元数据
 │  ├─ 读 sync_cursor_state(id=1) -> SyncCursorState
 │  ├─ 刷新 condition_meta(只读缓存)
-│  └─ 计算批次游标起点 (last_sort_key + last_pk_tiebreak)
-├─ 1) 拉取输入事件(Stage2 输出)
-│  ├─ SELECT * FROM stage2.user_event
-│  │    WHERE (sort_key, user_addr, cond_idx, event_type, token_idx) > cursor
-│  │    ORDER BY sort_key, user_addr, cond_idx, event_type, token_idx
-│  └─ 若无事件 -> 结束本 tick
+│  └─ 计算批次游标起点 (sort_key_exclusive = cursor.sort_key)
+├─ 1) 拉取输入事件(Stage2 输出, RocksDB sort 索引)
+│  ├─ scan_by_sort_key(sort_key_exclusive=cursor.sort_key,
+│  │                  sort_key_inclusive=head_block*1e9+(1e9-1),
+│  │                  limit=batch_events)
+│  ├─ 返回顺序按 key: (sort_key, user_addr, cond_idx, event_type, token_idx)
+│  └─ 若无事件 -> 将 cursor.sort_key 推进到 head_sort_key 后结束本 tick
 ├─ 2) 预加载状态
 │  ├─ 扫描 batch_events,提取 touched keys
 │  │  ├─ touched_token_keys = {(user_addr, cond_idx, token_idx)}
@@ -110,9 +111,9 @@ stage3_sync_tick
 ├─ 5) 单事务提交
 │  ├─ upsert token_state(dirty_token_keys)
 │  ├─ upsert user_summary_state(dirty_users)
-│  ├─ insert event_fact(fact_rows)
+│  ├─ write event_fact.rocks/timeline(fact_rows)
 │  ├─ upsert feature_tensor_state(dirty_user_bucket_tag, 含 Node-A0/A/B/C/D)
-│  └─ update sync_cursor_state(...)
+│  └─ update sync_cursor_state(sort_key, processed_events)
 └─ 6) 查询路径(只读)
    ├─ users_sorted(limit)                 -> user_summary_state(用户列表)
    ├─ user_pnl_timeline(user)             -> 预热并缓存该用户 timeline + snapshots
@@ -130,7 +131,7 @@ Size估算基准: E=2B, U=2M, T=1M, F=100M
 | `EventInput`                                  | 输入流 / `E`      | -      | -      | 回放状态机输入                                    | 否（临时）   | -                                 |
 | `ConditionMeta`                               | 只读缓存 / `C`    | -      | -      | `outcome_count` 与 `tag_id` 元信息                | 否（可重载） | -                                 |
 | `TokenState` (`token_state`)                  | Token级 / `T`     | 60B    | ~60MB  | 当前持仓 `pos/cost/lp/entry_block`                | 是           | `(user_addr,cond_idx,token_idx)`  |
-| `EventFact` (`event_fact`)                    | Token级 / `E`     | 96B    | ~190GB | 事件事实、timeline、特征原料                      | 是           | `(sort_key)`                      |
+| `EventFact` (`event_fact.rocks/timeline`)     | Token级 / `E`     | 96B    | ~190GB | 事件事实、timeline、特征原料                      | 是           | `(user_addr,sort_key,cond_idx,event_type,token_idx)` |
 | `UserSummaryState` (`user_summary_state`)     | User级 / `U`      | 60B    | ~120MB | 用户总览查询加速                                  | 是           | `(user_addr)`                     |
 | `FeatureTensorState` (`feature_tensor_state`) | User*Bucket*Tag级 | 536B   | ~50GB  | 统一特征张量（含原子/窗口/前缀缓存/增量续算锚点） | 是           | `(block_bucket,tag_id,user_addr)` |
 | `SyncCursorState` (`sync_cursor_state`)       | 全局 / `1`        | <1KB   | <1KB   | 增量同步断点                                      | 是           | -                                 |
@@ -251,11 +252,7 @@ struct FeatureTensorState {
 
 // 游标
 struct SyncCursorState {
-  int64 last_sort_key;
-  Address20 last_user_addr;
-  int32 last_cond_idx;
-  int32 last_event_type;
-  int32 last_token_idx;
+  int64 sort_key;
   int64 processed_events;
 }
 
