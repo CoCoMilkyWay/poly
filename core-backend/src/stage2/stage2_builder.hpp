@@ -38,6 +38,7 @@ public:
   void wait_for_pending_commit();
   void request_stop();
   void clear_stop();
+  void persist_restore_cache_snapshot();
 
   const BuildProgress &progress() const;
   const BuildProgress &committed_progress() const;
@@ -47,6 +48,7 @@ public:
 private:
   Database &stage1_db_;
   Database &stage2_db_;
+  std::unique_ptr<Database> restore_cache_db_;
   std::unique_ptr<core::rocks::Stage2UserEventStore> user_event_store_;
   BuildProgress progress_;
   BuildProgress committed_progress_;
@@ -160,6 +162,10 @@ private:
   json mem_snapshot_ = json::object();
   int64_t mem_peak_chunk_bytes_ = 0;
   void refresh_memory_snapshot(const char *phase);
+  void init_restore_cache_schema();
+  void clear_restore_cache_locked(duckdb::Connection &conn) const;
+  void purge_restore_cache_db_files();
+  bool load_users_and_event_stats_from_cache_if_cursor_match(int64_t expected_cursor);
 
   void update_xfer_tree(TransferClass cls) {
     chunk_xfer_stats_.add(cls);
@@ -721,6 +727,7 @@ private:
   void phase1_update_mappings(int64_t start, int64_t end);
   void phase2_build_semantic_index(int64_t start, int64_t end);
   void phase3_process_transfers(int64_t start, int64_t end);
+  void restore_users_and_event_stats_parallel();
   BuildProgress commit_chunk(CommitPayload payload);
   void commit_worker_loop();
   void reap_commit_result_locked();

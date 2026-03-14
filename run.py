@@ -216,8 +216,9 @@ def main():
         print("[run.py] 正在关闭...")
         # Shutdown is strictly ordered to avoid frontend->backend requests during teardown.
         terminate_then_wait(frontend, "frontend", GRACEFUL_SHUTDOWN_TIMEOUT)
-        terminate_then_wait(backend, "backend", GRACEFUL_SHUTDOWN_TIMEOUT)
+        # Close tracy-ui before backend to avoid profiler UI reporting disconnect errors.
         terminate_then_wait(tracy_proc, "tracy-ui", 5)
+        terminate_then_wait(backend, "backend", GRACEFUL_SHUTDOWN_TIMEOUT)
         print("[run.py] 已退出")
 
 

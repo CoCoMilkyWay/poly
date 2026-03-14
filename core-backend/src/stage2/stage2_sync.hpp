@@ -29,6 +29,7 @@ public:
   };
 
   StageSync(Database &stage1_db, Database &stage2_db, int base_interval);
+  void flush_restore_cache_snapshot();
 
   void start(asio::io_context &ioc);
 

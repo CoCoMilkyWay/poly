@@ -9,9 +9,9 @@
 #include "core/config.hpp"
 #include "core/database.hpp"
 #include "misc/profiler.hpp"
+#include "stage0/stage0_mem.hpp"
 #include "stage0/stage0_query_sync.hpp"
 #include "stage0/stage0_tag_sync.hpp"
-#include "stage0/stage0_mem.hpp"
 #include "stage1/stage1_sync.hpp"
 #include "stage2/stage2_sync.hpp"
 #include "stage3/stage3_sync.hpp"
@@ -222,6 +222,11 @@ int main(int argc, char *argv[]) {
   join_stage("Stage1", stage1_thread);
   join_stage("Stage2", stage2_thread);
   join_stage("Stage3", stage3_thread);
+  if (config.stage2_enable == 1) {
+    std::cout << "[Main] 刷新 Stage2 restore cache 快照..." << std::endl;
+    stage2.flush_restore_cache_snapshot();
+    std::cout << "[Main] Stage2 restore cache 快照完成" << std::endl;
+  }
 
   std::cout << "[Main] 已退出" << std::endl;
   return 0;

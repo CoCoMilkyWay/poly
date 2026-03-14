@@ -19,6 +19,12 @@ StageSync::StageSync(Database &stage1_db, Database &stage2_db, int base_interval
   sync_.last_block = builder_.cursor();
 }
 
+void StageSync::flush_restore_cache_snapshot() {
+  builder_.wait_for_pending_commit();
+  stage2_db_.checkpoint();
+  builder_.persist_restore_cache_snapshot();
+}
+
 void StageSync::start(asio::io_context &ioc) {
   ioc_ = &ioc;
   stop_requested_ = false;
@@ -28,7 +34,8 @@ void StageSync::start(asio::io_context &ioc) {
 
 void StageSync::stop() {
   stop_requested_ = true;
-  builder_.request_stop();
+  // Graceful stop: do not interrupt current chunk, let it finish and commit.
+  // This guarantees restore-cache snapshot aligns with committed stage2 cursor.
 }
 
 auto StageSync::status() const -> const StageSync::Status & { return sync_; }
