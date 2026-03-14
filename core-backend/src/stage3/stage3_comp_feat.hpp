@@ -15,17 +15,17 @@ struct TokenSnapshot {
 
 struct BucketAggState {
   int64_t realized_sum = 0;
-  int64_t realized_sq_sum = 0;
+  __int128 realized_sq_sum = 0;
   int64_t event_count = 0;
-  int64_t exposure_tw_sum = 0;
+  __int128 exposure_tw_sum = 0;
   int64_t volume_sum = 0;
-  int64_t holding_period_exp_tw_sum = 0;
+  __int128 holding_period_exp_tw_sum = 0;
   int64_t token_count_tw_sum = 0;
   int64_t time_weight_sum = 0;
   int64_t last_sort_key = 0;
   int64_t last_block = 0;
   int64_t last_exposure = 0;
-  int64_t last_holding_exp = 0;
+  __int128 last_holding_exp = 0;
   int64_t last_token_count = 0;
   bool has_tail = false;
 };
@@ -45,7 +45,7 @@ void update_tail_window(BucketAggState &agg,
                         int64_t block_bucket,
                         int64_t current_block,
                         int64_t current_exposure,
-                        int64_t current_holding_exp,
+                        __int128 current_holding_exp,
                         int64_t current_token_count,
                         int64_t block_bucket_size);
 

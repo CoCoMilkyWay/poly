@@ -116,7 +116,7 @@ void StageSync::update_tail_window(BucketAggState &agg,
                                    int64_t block_bucket,
                                    int64_t current_block,
                                    int64_t current_exposure,
-                                   int64_t current_holding_exp,
+                                   __int128 current_holding_exp,
                                    int64_t current_token_count) {
   feature_comp::update_tail_window(
       agg, block_bucket, current_block, current_exposure, current_holding_exp, current_token_count, kBlockBucketSize);

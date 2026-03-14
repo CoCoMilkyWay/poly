@@ -15,7 +15,7 @@ int64_t narrow_i64(__int128 v) {
   return static_cast<int64_t>(v);
 }
 
-__int128 linear_series_i128(int64_t base, int64_t slope, int64_t len) {
+__int128 linear_series_i128(__int128 base, int64_t slope, int64_t len) {
   assert(base >= 0);
   assert(slope >= 0);
   assert(len >= 0);
@@ -89,7 +89,7 @@ void update_tail_window(BucketAggState &agg,
                         int64_t block_bucket,
                         int64_t current_block,
                         int64_t current_exposure,
-                        int64_t current_holding_exp,
+                        __int128 current_holding_exp,
                         int64_t current_token_count,
                         int64_t block_bucket_size) {
   assert(block_bucket >= 0);
@@ -114,30 +114,24 @@ void update_tail_window(BucketAggState &agg,
     }
 
     const int64_t old_tail = std::max<int64_t>(0, end_block - agg.last_block);
-    agg.exposure_tw_sum = narrow_i64(
-        static_cast<__int128>(agg.exposure_tw_sum) - static_cast<__int128>(agg.last_exposure) * old_tail);
-    agg.holding_period_exp_tw_sum = narrow_i64(
-        static_cast<__int128>(agg.holding_period_exp_tw_sum) - linear_series_i128(agg.last_holding_exp, agg.last_exposure, old_tail));
+    agg.exposure_tw_sum -= static_cast<__int128>(agg.last_exposure) * old_tail;
+    agg.holding_period_exp_tw_sum -= linear_series_i128(agg.last_holding_exp, agg.last_exposure, old_tail);
     agg.token_count_tw_sum = narrow_i64(
         static_cast<__int128>(agg.token_count_tw_sum) - static_cast<__int128>(agg.last_token_count) * old_tail);
     agg.time_weight_sum = narrow_i64(static_cast<__int128>(agg.time_weight_sum) - old_tail);
 
     const int64_t delta_blocks = current_block - agg.last_block;
     assert(delta_blocks >= 0);
-    agg.exposure_tw_sum = narrow_i64(
-        static_cast<__int128>(agg.exposure_tw_sum) + static_cast<__int128>(agg.last_exposure) * delta_blocks);
-    agg.holding_period_exp_tw_sum = narrow_i64(
-        static_cast<__int128>(agg.holding_period_exp_tw_sum) + linear_series_i128(agg.last_holding_exp, agg.last_exposure, delta_blocks));
+    agg.exposure_tw_sum += static_cast<__int128>(agg.last_exposure) * delta_blocks;
+    agg.holding_period_exp_tw_sum += linear_series_i128(agg.last_holding_exp, agg.last_exposure, delta_blocks);
     agg.token_count_tw_sum = narrow_i64(
         static_cast<__int128>(agg.token_count_tw_sum) + static_cast<__int128>(agg.last_token_count) * delta_blocks);
     agg.time_weight_sum = narrow_i64(static_cast<__int128>(agg.time_weight_sum) + delta_blocks);
   }
 
   const int64_t new_tail = std::max<int64_t>(0, end_block - current_block);
-  agg.exposure_tw_sum = narrow_i64(
-      static_cast<__int128>(agg.exposure_tw_sum) + static_cast<__int128>(current_exposure) * new_tail);
-  agg.holding_period_exp_tw_sum = narrow_i64(
-      static_cast<__int128>(agg.holding_period_exp_tw_sum) + linear_series_i128(current_holding_exp, current_exposure, new_tail));
+  agg.exposure_tw_sum += static_cast<__int128>(current_exposure) * new_tail;
+  agg.holding_period_exp_tw_sum += linear_series_i128(current_holding_exp, current_exposure, new_tail);
   agg.token_count_tw_sum = narrow_i64(
       static_cast<__int128>(agg.token_count_tw_sum) + static_cast<__int128>(current_token_count) * new_tail);
   agg.time_weight_sum = narrow_i64(static_cast<__int128>(agg.time_weight_sum) + new_tail);
@@ -153,14 +147,9 @@ void accumulate_event_delta(BucketAggState &agg, double realized_delta, int64_t 
   agg.realized_sum += round_i64(realized_delta);
   {
     const long double sq = static_cast<long double>(realized_delta) * static_cast<long double>(realized_delta);
-    const long double max_i64 = static_cast<long double>(std::numeric_limits<int64_t>::max());
-    const int64_t sq_i64 = (sq >= max_i64) ? std::numeric_limits<int64_t>::max()
-                                           : static_cast<int64_t>(std::llround(sq));
-    if (sq_i64 > 0 && agg.realized_sq_sum > std::numeric_limits<int64_t>::max() - sq_i64) {
-      agg.realized_sq_sum = std::numeric_limits<int64_t>::max();
-    } else {
-      agg.realized_sq_sum += sq_i64;
-    }
+    assert(sq >= 0.0L);
+    const __int128 sq_i128 = static_cast<__int128>(sq + 0.5L);
+    agg.realized_sq_sum += sq_i128;
   }
   agg.event_count += 1;
   agg.volume_sum += volume;

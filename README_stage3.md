@@ -60,7 +60,7 @@ stage3_sync_tick
 │  │  ├─ token_idx ∈ [0, outcome_count)
 │  │  ├─ event_type 合法；amount 符号不做类型硬断言（允许同类型正负共存）
 │  │  ├─ amount==0 允许（no-op）
-│  │  └─ 内部使用 double 计算,写入 DB 时 round() 转 int64
+│  │  └─ 常规指标使用 double 计算并 round() 写入 int64；大数累计项直接写 HUGEINT
 │  ├─ 3.2 路由
 │  │  ├─ 方向由 amount 符号决定:正向腿(amount>0) / 反向腿(amount<0)
 │  │  ├─ 事件族决定经济语义:price类 / convert类 / transfer类 / lp_add类
@@ -205,17 +205,17 @@ struct FeatureTensorState {
   int64  last_sort_key_10w;
   int64  last_block_10w;
   int64  last_exposure_10w;
-  int64  last_holding_period_10w;
+  int128 last_holding_period_10w;        // DuckDB: HUGEINT
   int64  last_token_count_10w;
 
   // Node-A: 10w 原子统计（事件增量累加）
   int64  time_weight_sum_10w;
   int64  token_count_tw_sum_10w;
-  int64  exposure_tw_sum_10w;
+  int128 exposure_tw_sum_10w;            // DuckDB: HUGEINT
   int64  volume_sum_10w;
-  int64  holding_period_exp_tw_sum_10w;
+  int128 holding_period_exp_tw_sum_10w;  // DuckDB: HUGEINT
   int64  realized_sum_10w;
-  int64  realized_sq_sum_10w;
+  int128 realized_sq_sum_10w;            // DuckDB: HUGEINT
   int64  realized_count_10w;
 
   // Node-B: 10w 归一化输出
@@ -231,7 +231,7 @@ struct FeatureTensorState {
   int64  ps_volume_10w;
   int64  ps_holding_period_avg_10w;
   int64  ps_realized_sum_10w;
-  int64  ps_realized_sq_sum_10w;
+  int128 ps_realized_sq_sum_10w;         // DuckDB: HUGEINT
   int64  ps_realized_count_10w;
 
   // Node-D: 窗口投影输出（由 Node-C O(1) 计算）

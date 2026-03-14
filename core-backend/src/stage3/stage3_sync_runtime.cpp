@@ -26,15 +26,15 @@ constexpr const char *kSqlTmpSchemaTokenNew =
 constexpr const char *kSqlTmpSchemaFeatureTensorState =
     "user_addr BLOB, block_bucket BIGINT, tag_id INTEGER, "
     "last_sort_key_10w BIGINT, last_block_10w BIGINT, last_exposure_10w BIGINT, "
-    "last_holding_period_10w BIGINT, last_token_count_10w BIGINT, "
-    "time_weight_sum_10w BIGINT, token_count_tw_sum_10w BIGINT, exposure_tw_sum_10w BIGINT, "
-    "volume_sum_10w BIGINT, holding_period_exp_tw_sum_10w BIGINT, "
-    "realized_sum_10w BIGINT, realized_sq_sum_10w BIGINT, realized_count_10w BIGINT, "
+    "last_holding_period_10w HUGEINT, last_token_count_10w BIGINT, "
+    "time_weight_sum_10w BIGINT, token_count_tw_sum_10w BIGINT, exposure_tw_sum_10w HUGEINT, "
+    "volume_sum_10w BIGINT, holding_period_exp_tw_sum_10w HUGEINT, "
+    "realized_sum_10w BIGINT, realized_sq_sum_10w HUGEINT, realized_count_10w BIGINT, "
     "token_avg_10w BIGINT, exposure_avg_10w BIGINT, volume_10w BIGINT, holding_period_avg_10w BIGINT, "
     "sharpe_10w DOUBLE, "
     "ps_token_avg_10w BIGINT, ps_exposure_avg_10w BIGINT, ps_volume_10w BIGINT, "
     "ps_holding_period_avg_10w BIGINT, ps_realized_sum_10w BIGINT, "
-    "ps_realized_sq_sum_10w BIGINT, ps_realized_count_10w BIGINT, "
+    "ps_realized_sq_sum_10w HUGEINT, ps_realized_count_10w BIGINT, "
     "token_avg_100w BIGINT, token_avg_1000w BIGINT, "
     "exposure_avg_100w BIGINT, exposure_avg_1000w BIGINT, "
     "volume_avg_100w BIGINT, volume_avg_1000w BIGINT, "
@@ -115,18 +115,36 @@ int64_t i64_narrow_checked(__int128 v) {
   return static_cast<int64_t>(v);
 }
 
-double calc_sharpe_from_moments(int64_t realized_sum, int64_t realized_sq_sum, int64_t realized_count) {
+duckdb::hugeint_t i128_to_hugeint(__int128 v) {
+  duckdb::hugeint_t out;
+  out.lower = static_cast<uint64_t>(v);
+  out.upper = static_cast<int64_t>(v >> 64);
+  return out;
+}
+
+__int128 hugeint_to_i128(const duckdb::hugeint_t &v) {
+  return (static_cast<__int128>(v.upper) << 64) + static_cast<__int128>(v.lower);
+}
+
+long double i128_to_long_double(__int128 v) {
+  constexpr long double kTwoPow64 = 18446744073709551616.0L;
+  const int64_t hi = static_cast<int64_t>(v >> 64);
+  const uint64_t lo = static_cast<uint64_t>(v);
+  return static_cast<long double>(hi) * kTwoPow64 + static_cast<long double>(lo);
+}
+
+double calc_sharpe_from_moments(int64_t realized_sum, __int128 realized_sq_sum, int64_t realized_count) {
   if (realized_count <= 1) {
     return 0.0;
   }
-  const double n = static_cast<double>(realized_count);
-  const double mean = static_cast<double>(realized_sum) / n;
-  const double mean_sq = static_cast<double>(realized_sq_sum) / n;
-  const double variance = mean_sq - mean * mean;
-  if (variance <= 0.0) {
+  const long double n = static_cast<long double>(realized_count);
+  const long double mean = static_cast<long double>(realized_sum) / n;
+  const long double mean_sq = i128_to_long_double(realized_sq_sum) / n;
+  const long double variance = mean_sq - mean * mean;
+  if (variance <= 0.0L) {
     return 0.0;
   }
-  return mean / std::sqrt(variance);
+  return static_cast<double>(mean / std::sqrt(static_cast<double>(variance)));
 }
 
 int blob_unsigned_compare(const std::string &lhs, const std::string &rhs) {
@@ -157,7 +175,7 @@ struct PrefixSumHistoryRecord {
   int64_t ps_volume = 0;
   int64_t ps_holding_period_avg = 0;
   int64_t ps_realized_sum = 0;
-  int64_t ps_realized_sq_sum = 0;
+  __int128 ps_realized_sq_sum = 0;
   int64_t ps_realized_count = 0;
 };
 
@@ -563,7 +581,7 @@ bool StageSync::process_chunk_locked() const {
   struct UserTagRuntimePairState {
     int64_t token_count = 0;
     int64_t exposure = 0;
-    int64_t exposure_entry_sum = 0;
+    __int128 exposure_entry_sum = 0;
   };
   std::unordered_map<UserTagRuntimePairKey, UserTagRuntimePairState, UserTagRuntimePairKeyHasher> runtime_pair_state_by_pair_key;
   runtime_pair_state_by_pair_key.reserve(static_cast<size_t>(event_input_rows.size() / 2 + 1));
@@ -572,24 +590,24 @@ bool StageSync::process_chunk_locked() const {
     struct TokenFeatureContrib {
       int64_t token_count = 0;
       int64_t exposure = 0;
-      int64_t exposure_entry = 0;
+      __int128 exposure_entry = 0;
     };
     TokenFeatureContrib c;
     c.token_count = is_effective_holding(st.pos) ? 1 : 0;
     c.exposure = calc_exposure_1e6(st);
     const int64_t entry_block = round_i64(st.entry_block);
-    c.exposure_entry = (c.exposure > 0) ? i64_narrow_checked(static_cast<__int128>(c.exposure) * entry_block) : 0;
+    c.exposure_entry = (c.exposure > 0) ? static_cast<__int128>(c.exposure) * entry_block : 0;
     return c;
   };
 
   auto apply_runtime_contrib_delta = [&](uint32_t user_id, int8_t tag_id, int64_t token_delta,
-                                         int64_t exposure_delta, int64_t exposure_entry_delta) {
+                                         int64_t exposure_delta, __int128 exposure_entry_delta) {
     UserTagRuntimePairKey key{user_id, tag_id};
     auto [runtime_state_it, _] = runtime_pair_state_by_pair_key.try_emplace(key, UserTagRuntimePairState{});
     UserTagRuntimePairState &state = runtime_state_it->second;
     state.token_count = i64_narrow_checked(static_cast<__int128>(state.token_count) + token_delta);
     state.exposure = i64_narrow_checked(static_cast<__int128>(state.exposure) + exposure_delta);
-    state.exposure_entry_sum = i64_narrow_checked(static_cast<__int128>(state.exposure_entry_sum) + exposure_entry_delta);
+    state.exposure_entry_sum += exposure_entry_delta;
     assert(state.token_count >= 0);
     assert(state.exposure >= 0);
     if (state.exposure == 0) {
@@ -686,15 +704,15 @@ bool StageSync::process_chunk_locked() const {
       seeded_runtime_pair_key_set.insert(UserTagRuntimePairKey{user_id, tag_id});
       const int64_t last_block = runtime_seed_result->GetValue(2, i).GetValue<int64_t>();
       const int64_t last_exposure = runtime_seed_result->GetValue(3, i).GetValue<int64_t>();
-      const int64_t last_holding_exp = runtime_seed_result->GetValue(4, i).GetValue<int64_t>();
+      const __int128 last_holding_exp = hugeint_to_i128(runtime_seed_result->GetValue(4, i).GetValue<duckdb::hugeint_t>());
       const int64_t last_token_count = runtime_seed_result->GetValue(5, i).GetValue<int64_t>();
       assert(last_exposure >= 0);
       assert(last_token_count >= 0);
-      int64_t exposure_entry_sum = 0;
+      __int128 exposure_entry_sum = 0;
       if (last_exposure > 0) {
         const __int128 computed = static_cast<__int128>(last_block) * last_exposure - last_holding_exp;
         assert(computed >= 0);
-        exposure_entry_sum = i64_narrow_checked(computed);
+        exposure_entry_sum = computed;
       } else {
         assert(last_holding_exp == 0);
       }
@@ -788,15 +806,15 @@ bool StageSync::process_chunk_locked() const {
       agg.last_sort_key = feature_state_result->GetValue(3, i).GetValue<int64_t>();
       agg.last_block = feature_state_result->GetValue(4, i).GetValue<int64_t>();
       agg.last_exposure = feature_state_result->GetValue(5, i).GetValue<int64_t>();
-      agg.last_holding_exp = feature_state_result->GetValue(6, i).GetValue<int64_t>();
+      agg.last_holding_exp = hugeint_to_i128(feature_state_result->GetValue(6, i).GetValue<duckdb::hugeint_t>());
       agg.last_token_count = feature_state_result->GetValue(7, i).GetValue<int64_t>();
       agg.time_weight_sum = feature_state_result->GetValue(8, i).GetValue<int64_t>();
       agg.token_count_tw_sum = feature_state_result->GetValue(9, i).GetValue<int64_t>();
-      agg.exposure_tw_sum = feature_state_result->GetValue(10, i).GetValue<int64_t>();
+      agg.exposure_tw_sum = hugeint_to_i128(feature_state_result->GetValue(10, i).GetValue<duckdb::hugeint_t>());
       agg.volume_sum = feature_state_result->GetValue(11, i).GetValue<int64_t>();
-      agg.holding_period_exp_tw_sum = feature_state_result->GetValue(12, i).GetValue<int64_t>();
+      agg.holding_period_exp_tw_sum = hugeint_to_i128(feature_state_result->GetValue(12, i).GetValue<duckdb::hugeint_t>());
       agg.realized_sum = feature_state_result->GetValue(13, i).GetValue<int64_t>();
-      agg.realized_sq_sum = feature_state_result->GetValue(14, i).GetValue<int64_t>();
+      agg.realized_sq_sum = hugeint_to_i128(feature_state_result->GetValue(14, i).GetValue<duckdb::hugeint_t>());
       agg.event_count = feature_state_result->GetValue(15, i).GetValue<int64_t>();
       agg.has_tail = (agg.time_weight_sum > 0);
     }
@@ -850,8 +868,7 @@ bool StageSync::process_chunk_locked() const {
 
       const int64_t token_count_delta = after_contrib.token_count - before_contrib.token_count;
       const int64_t exposure_delta = after_contrib.exposure - before_contrib.exposure;
-      const int64_t exposure_entry_delta =
-          i64_narrow_checked(static_cast<__int128>(after_contrib.exposure_entry) - before_contrib.exposure_entry);
+      const __int128 exposure_entry_delta = after_contrib.exposure_entry - before_contrib.exposure_entry;
       apply_runtime_contrib_delta(row.user_id, tag_id, token_count_delta, exposure_delta, exposure_entry_delta);
       apply_runtime_contrib_delta(row.user_id, -1, token_count_delta, exposure_delta, exposure_entry_delta);
       if (!token_state_rounded_equal(before_state, st)) {
@@ -869,11 +886,11 @@ bool StageSync::process_chunk_locked() const {
         const UserTagRuntimePairState &rt = runtime_it->second;
         assert(rt.token_count >= 0);
         assert(rt.exposure >= 0);
-        int64_t holding_exp = 0;
+        __int128 holding_exp = 0;
         if (rt.exposure > 0) {
           const __int128 computed = static_cast<__int128>(row_block) * rt.exposure - rt.exposure_entry_sum;
           assert(computed >= 0);
-          holding_exp = i64_narrow_checked(computed);
+          holding_exp = computed;
         } else {
           assert(rt.exposure_entry_sum == 0);
         }
@@ -953,7 +970,7 @@ bool StageSync::process_chunk_locked() const {
           prefix_sum_result->GetValue(5, i).GetValue<int64_t>(),
           prefix_sum_result->GetValue(6, i).GetValue<int64_t>(),
           prefix_sum_result->GetValue(7, i).GetValue<int64_t>(),
-          prefix_sum_result->GetValue(8, i).GetValue<int64_t>(),
+          hugeint_to_i128(prefix_sum_result->GetValue(8, i).GetValue<duckdb::hugeint_t>()),
           prefix_sum_result->GetValue(9, i).GetValue<int64_t>(),
       });
     }
@@ -1107,7 +1124,7 @@ bool StageSync::process_chunk_locked() const {
         int64_t volume_10w = 0;
         int64_t holding_period_avg_10w = 0;
         int64_t realized_sum_10w = 0;
-        int64_t realized_sq_sum_10w = 0;
+        __int128 realized_sq_sum_10w = 0;
         int64_t realized_count_10w = 0;
         // 前缀和（累计到当前 bucket）
         int64_t ps_token_avg = 0;
@@ -1115,7 +1132,7 @@ bool StageSync::process_chunk_locked() const {
         int64_t ps_volume = 0;
         int64_t ps_holding_period_avg = 0;
         int64_t ps_realized_sum = 0;
-        int64_t ps_realized_sq_sum = 0;
+        __int128 ps_realized_sq_sum = 0;
         int64_t ps_realized_count = 0;
       };
       std::vector<AggKey> sorted_feature_keys;
@@ -1146,10 +1163,14 @@ bool StageSync::process_chunk_locked() const {
         const int64_t token_avg_10w =
             (tw > 0) ? round_i64(static_cast<double>(agg.token_count_tw_sum) / static_cast<double>(tw)) : 0;
         const int64_t exposure_avg_10w =
-            (tw > 0) ? round_i64(static_cast<double>(agg.exposure_tw_sum) / static_cast<double>(tw)) : 0;
+            (tw > 0)
+                ? round_i64(static_cast<double>(i128_to_long_double(agg.exposure_tw_sum) /
+                                                static_cast<long double>(tw)))
+                : 0;
         const int64_t holding_period_avg_10w =
             (agg.exposure_tw_sum > 0)
-                ? round_i64(static_cast<double>(agg.holding_period_exp_tw_sum) / static_cast<double>(agg.exposure_tw_sum))
+                ? round_i64(static_cast<double>(i128_to_long_double(agg.holding_period_exp_tw_sum) /
+                                                i128_to_long_double(agg.exposure_tw_sum)))
                 : 0;
         const int64_t volume_10w = agg.volume_sum;
         const double sharpe_10w = calc_sharpe_from_moments(agg.realized_sum, agg.realized_sq_sum, agg.event_count);
@@ -1167,7 +1188,8 @@ bool StageSync::process_chunk_locked() const {
         // Step 1: 计算当前 bucket 的前缀和
         // 起点：前一个 bucket 的前缀和（优先从 batch 内获取，否则从 DB 历史获取）
         int64_t prev_ps_token = 0, prev_ps_exposure = 0, prev_ps_volume = 0, prev_ps_holding = 0;
-        int64_t prev_ps_realized_sum = 0, prev_ps_realized_sq_sum = 0, prev_ps_realized_count = 0;
+        int64_t prev_ps_realized_sum = 0, prev_ps_realized_count = 0;
+        __int128 prev_ps_realized_sq_sum = 0;
         if (!prefix_outputs.empty()) {
           // batch 内有更早的 bucket，使用最后一个（按 bucket 升序排列）
           const BucketPrefixOutput &prev = prefix_outputs.back();
@@ -1198,7 +1220,7 @@ bool StageSync::process_chunk_locked() const {
         const int64_t ps_volume = i64_narrow_checked(static_cast<__int128>(prev_ps_volume) + volume_10w);
         const int64_t ps_holding_period_avg = i64_narrow_checked(static_cast<__int128>(prev_ps_holding) + holding_period_avg_10w);
         const int64_t ps_realized_sum = i64_narrow_checked(static_cast<__int128>(prev_ps_realized_sum) + agg.realized_sum);
-        const int64_t ps_realized_sq_sum = i64_narrow_checked(static_cast<__int128>(prev_ps_realized_sq_sum) + agg.realized_sq_sum);
+        const __int128 ps_realized_sq_sum = prev_ps_realized_sq_sum + agg.realized_sq_sum;
         const int64_t ps_realized_count = i64_narrow_checked(static_cast<__int128>(prev_ps_realized_count) + agg.event_count);
 
         // Step 2: 用前缀和差分计算窗口和
@@ -1206,7 +1228,8 @@ bool StageSync::process_chunk_locked() const {
         auto get_boundary_ps = [&](int64_t target_bucket) {
           struct BoundaryPrefixSum {
             int64_t token = 0, exposure = 0, volume = 0, holding = 0;
-            int64_t realized_sum = 0, realized_sq_sum = 0, realized_count = 0;
+            int64_t realized_sum = 0, realized_count = 0;
+            __int128 realized_sq_sum = 0;
           };
           BoundaryPrefixSum result{};
           // 先从 batch 内找（prefix_outputs 按 block_bucket 升序）
@@ -1258,8 +1281,8 @@ bool StageSync::process_chunk_locked() const {
         const int64_t holding_period_sum_1000 = i64_narrow_checked(static_cast<__int128>(ps_holding_period_avg) - boundary_1000.holding);
         const int64_t realized_sum_100 = i64_narrow_checked(static_cast<__int128>(ps_realized_sum) - boundary_100.realized_sum);
         const int64_t realized_sum_1000 = i64_narrow_checked(static_cast<__int128>(ps_realized_sum) - boundary_1000.realized_sum);
-        const int64_t realized_sq_sum_100 = i64_narrow_checked(static_cast<__int128>(ps_realized_sq_sum) - boundary_100.realized_sq_sum);
-        const int64_t realized_sq_sum_1000 = i64_narrow_checked(static_cast<__int128>(ps_realized_sq_sum) - boundary_1000.realized_sq_sum);
+        const __int128 realized_sq_sum_100 = ps_realized_sq_sum - boundary_100.realized_sq_sum;
+        const __int128 realized_sq_sum_1000 = ps_realized_sq_sum - boundary_1000.realized_sq_sum;
         const int64_t realized_count_100 = i64_narrow_checked(static_cast<__int128>(ps_realized_count) - boundary_100.realized_count);
         const int64_t realized_count_1000 = i64_narrow_checked(static_cast<__int128>(ps_realized_count) - boundary_1000.realized_count);
 
@@ -1294,15 +1317,15 @@ bool StageSync::process_chunk_locked() const {
         ap.Append(agg.last_sort_key);
         ap.Append(agg.last_block);
         ap.Append(agg.last_exposure);
-        ap.Append(agg.last_holding_exp);
+        ap.Append(duckdb::Value::HUGEINT(i128_to_hugeint(agg.last_holding_exp)));
         ap.Append(agg.last_token_count);
         ap.Append(agg.time_weight_sum);
         ap.Append(agg.token_count_tw_sum);
-        ap.Append(agg.exposure_tw_sum);
+        ap.Append(duckdb::Value::HUGEINT(i128_to_hugeint(agg.exposure_tw_sum)));
         ap.Append(agg.volume_sum);
-        ap.Append(agg.holding_period_exp_tw_sum);
+        ap.Append(duckdb::Value::HUGEINT(i128_to_hugeint(agg.holding_period_exp_tw_sum)));
         ap.Append(agg.realized_sum);
-        ap.Append(agg.realized_sq_sum);
+        ap.Append(duckdb::Value::HUGEINT(i128_to_hugeint(agg.realized_sq_sum)));
         ap.Append(agg.event_count);
         ap.Append(token_avg_10w);
         ap.Append(exposure_avg_10w);
@@ -1315,7 +1338,7 @@ bool StageSync::process_chunk_locked() const {
         ap.Append(ps_volume);
         ap.Append(ps_holding_period_avg);
         ap.Append(ps_realized_sum);
-        ap.Append(ps_realized_sq_sum);
+        ap.Append(duckdb::Value::HUGEINT(i128_to_hugeint(ps_realized_sq_sum)));
         ap.Append(ps_realized_count);
         // Node-D: 窗口投影
         ap.Append(token_avg_100w);

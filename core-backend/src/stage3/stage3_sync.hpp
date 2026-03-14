@@ -213,7 +213,7 @@ private:
 
   // Execution config
   static constexpr int64_t kStage3BatchEvents = 1000000;
-  static constexpr int64_t kBlockBucketSize = 100000;
+  static constexpr int64_t kBlockBucketSize = 100000; // DO NOT CHANGE
   static constexpr double kPosEpsilon = 1e-9;
   static constexpr int64_t kMinHoldingQty = 10LL * 1000000LL;
 
@@ -312,7 +312,7 @@ private:
                                  int64_t block_bucket,
                                  int64_t current_block,
                                  int64_t current_exposure,
-                                 int64_t current_holding_exp,
+                                 __int128 current_holding_exp,
                                  int64_t current_token_count);
 
   // Lifecycle / sync pipeline
