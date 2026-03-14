@@ -246,9 +246,36 @@ public:
     return db_path_;
   }
 
+  bool sort_key_bounds(int64_t &min_sort_key, int64_t &max_sort_key) const {
+    rocksdb_iterator_t *it = rocksdb_create_iterator_cf(db_, scan_read_options_, sort_cf_);
+    rocksdb_iter_seek_to_first(it);
+    if (rocksdb_iter_valid(it) == 0) {
+      char *err = nullptr;
+      rocksdb_iter_get_error(it, &err);
+      rocksdb_iter_destroy(it);
+      detail::assert_no_err(err);
+      return false;
+    }
+    size_t first_klen = 0;
+    const char *first_kptr = rocksdb_iter_key(it, &first_klen);
+    min_sort_key = decode_sort_entry_sort_key(std::string_view(first_kptr, first_klen));
+
+    rocksdb_iter_seek_to_last(it);
+    assert(rocksdb_iter_valid(it) != 0);
+    size_t last_klen = 0;
+    const char *last_kptr = rocksdb_iter_key(it, &last_klen);
+    max_sort_key = decode_sort_entry_sort_key(std::string_view(last_kptr, last_klen));
+
+    char *err = nullptr;
+    rocksdb_iter_get_error(it, &err);
+    rocksdb_iter_destroy(it);
+    detail::assert_no_err(err);
+    return true;
+  }
+
   template <typename Fn>
   void for_each_event(Fn &&fn) const {
-    rocksdb_iterator_t *it = rocksdb_create_iterator_cf(db_, read_options_, sort_cf_);
+    rocksdb_iterator_t *it = rocksdb_create_iterator_cf(db_, scan_read_options_, sort_cf_);
     rocksdb_iter_seek_to_first(it);
     while (rocksdb_iter_valid(it) != 0) {
       size_t klen = 0;
@@ -264,9 +291,65 @@ public:
     detail::assert_no_err(err);
   }
 
+  template <typename Fn>
+  void for_each_event_brief(Fn &&fn) const {
+    rocksdb_iterator_t *it = rocksdb_create_iterator_cf(db_, scan_read_options_, sort_cf_);
+    rocksdb_iter_seek_to_first(it);
+    while (rocksdb_iter_valid(it) != 0) {
+      size_t klen = 0;
+      size_t vlen = 0;
+      const char *k = rocksdb_iter_key(it, &klen);
+      const char *v = rocksdb_iter_value(it, &vlen);
+      const std::string_view key(k, klen);
+      const std::string_view value(v, vlen);
+      fn(sort_entry_user_addr(key),
+         decode_sort_entry_cond_idx(key),
+         decode_sort_entry_event_type(key),
+         decode_value_collateral(value));
+      rocksdb_iter_next(it);
+    }
+    char *err = nullptr;
+    rocksdb_iter_get_error(it, &err);
+    rocksdb_iter_destroy(it);
+    detail::assert_no_err(err);
+  }
+
+  template <typename Fn>
+  void for_each_event_brief_in_sort_key_range(int64_t sort_key_begin_inclusive,
+                                              int64_t sort_key_end_inclusive,
+                                              Fn &&fn) const {
+    if (sort_key_begin_inclusive > sort_key_end_inclusive) {
+      return;
+    }
+    const std::string seek_key = build_sort_seek_key(sort_key_begin_inclusive);
+    rocksdb_iterator_t *it = rocksdb_create_iterator_cf(db_, scan_read_options_, sort_cf_);
+    rocksdb_iter_seek(it, seek_key.data(), seek_key.size());
+    while (rocksdb_iter_valid(it) != 0) {
+      size_t klen = 0;
+      size_t vlen = 0;
+      const char *k = rocksdb_iter_key(it, &klen);
+      const char *v = rocksdb_iter_value(it, &vlen);
+      const std::string_view key(k, klen);
+      const int64_t sort_key = decode_sort_entry_sort_key(key);
+      if (sort_key > sort_key_end_inclusive) {
+        break;
+      }
+      const std::string_view value(v, vlen);
+      fn(sort_entry_user_addr(key),
+         decode_sort_entry_cond_idx(key),
+         decode_sort_entry_event_type(key),
+         decode_value_collateral(value));
+      rocksdb_iter_next(it);
+    }
+    char *err = nullptr;
+    rocksdb_iter_get_error(it, &err);
+    rocksdb_iter_destroy(it);
+    detail::assert_no_err(err);
+  }
+
   std::unordered_set<std::string> collect_distinct_users() const {
     std::unordered_set<std::string> out;
-    rocksdb_iterator_t *it = rocksdb_create_iterator_cf(db_, read_options_, user_cf_);
+    rocksdb_iterator_t *it = rocksdb_create_iterator_cf(db_, scan_read_options_, user_cf_);
     std::string last_user;
     rocksdb_iter_seek_to_first(it);
     while (rocksdb_iter_valid(it) != 0) {
@@ -300,8 +383,11 @@ private:
   void open() {
     options_ = detail::make_db_options();
     read_options_ = rocksdb_readoptions_create();
+    scan_read_options_ = rocksdb_readoptions_create();
     write_options_ = rocksdb_writeoptions_create();
     rocksdb_writeoptions_set_sync(write_options_, 1);
+    rocksdb_readoptions_set_fill_cache(scan_read_options_, 0);
+    rocksdb_readoptions_set_verify_checksums(scan_read_options_, 0);
 
     constexpr int kCfCount = 3;
     const char *names[kCfCount] = {"default", kCfSortData, kCfUserIndex};
@@ -343,6 +429,10 @@ private:
     if (read_options_ != nullptr) {
       rocksdb_readoptions_destroy(read_options_);
       read_options_ = nullptr;
+    }
+    if (scan_read_options_ != nullptr) {
+      rocksdb_readoptions_destroy(scan_read_options_);
+      scan_read_options_ = nullptr;
     }
     if (options_ != nullptr) {
       rocksdb_options_destroy(options_);
@@ -402,6 +492,11 @@ private:
     row.price = detail::decode_i64_lex(detail::read_u64_be(v, 12));
   }
 
+  static int32_t decode_value_collateral(std::string_view v) {
+    assert(v.size() == 20);
+    return detail::decode_i32_lex(detail::read_u32_be(v, 0));
+  }
+
   static Stage2UserEventRecord decode_user_key_only(std::string_view k) {
     assert(k.size() == 40);
     Stage2UserEventRecord row;
@@ -426,10 +521,31 @@ private:
     return row;
   }
 
+  static int64_t decode_sort_entry_sort_key(std::string_view k) {
+    assert(k.size() == 40);
+    return detail::decode_i64_lex(detail::read_u64_be(k, 0));
+  }
+
+  static std::string_view sort_entry_user_addr(std::string_view k) {
+    assert(k.size() == 40);
+    return k.substr(8, kUserAddrBytes);
+  }
+
+  static int32_t decode_sort_entry_cond_idx(std::string_view k) {
+    assert(k.size() == 40);
+    return detail::decode_i32_lex(detail::read_u32_be(k, 28));
+  }
+
+  static int32_t decode_sort_entry_event_type(std::string_view k) {
+    assert(k.size() == 40);
+    return detail::decode_i32_lex(detail::read_u32_be(k, 32));
+  }
+
   std::string db_path_;
   rocksdb_t *db_ = nullptr;
   rocksdb_options_t *options_ = nullptr;
   rocksdb_readoptions_t *read_options_ = nullptr;
+  rocksdb_readoptions_t *scan_read_options_ = nullptr;
   rocksdb_writeoptions_t *write_options_ = nullptr;
   rocksdb_column_family_handle_t *default_cf_ = nullptr;
   rocksdb_column_family_handle_t *sort_cf_ = nullptr;

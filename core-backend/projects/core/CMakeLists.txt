@@ -97,6 +97,7 @@ set(SOURCES
     ${SRC_DIR}/stage2/stage2_utils.cpp
     ${SRC_DIR}/stage2/stage2_models.cpp
     ${SRC_DIR}/stage2/stage2_builder.cpp
+    ${SRC_DIR}/stage2/stage2_builder_restore.cpp
     ${SRC_DIR}/stage2/stage2_mem.cpp
     ${SRC_DIR}/stage2/stage2_builder_classify.cpp
     ${SRC_DIR}/stage2/stage2_builder_phases.cpp
