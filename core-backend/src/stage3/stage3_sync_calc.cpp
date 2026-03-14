@@ -111,6 +111,14 @@ int64_t StageSync::calc_volume_1e6(const EventInput &row) {
   return feature_comp::calc_volume_1e6(static_cast<EventType>(row.event_type), row.amount, row.price);
 }
 
+double StageSync::calc_convert_price_for_cond(int32_t cond_idx) const {
+  assert(cond_idx >= 0);
+  assert(static_cast<size_t>(cond_idx) < cond_market_question_counts_.size());
+  const uint16_t q_count = cond_market_question_counts_[static_cast<size_t>(cond_idx)];
+  assert(q_count >= 2);
+  return static_cast<double>(q_count - 1) / static_cast<double>(q_count);
+}
+
 uint64_t StageSync::pack_cond_token_key(int32_t cond_idx, int32_t token_idx) {
   assert(cond_idx >= 0);
   assert(token_idx >= 0);
@@ -160,7 +168,9 @@ double StageSync::apply_event_input(const EventInput &row, TokenState &st) const
     }
   };
 
-  auto apply_positive_delta = [&](bool add_cost_for_open_long, bool realize_when_cover_short) -> double {
+  auto apply_positive_delta = [&](double price_per_unit,
+                                  bool add_cost_for_open_long,
+                                  bool realize_when_cover_short) -> double {
     assert(qty > 0.0);
     if (!has_usd) {
       st.pos += qty;
@@ -178,14 +188,14 @@ double StageSync::apply_event_input(const EventInput &row, TokenState &st) const
       st.cost -= cost_closed;
       if (realize_when_cover_short) {
         const double entry_credit = -cost_closed;
-        const double buy_cost = cover_qty * px;
+        const double buy_cost = cover_qty * price_per_unit;
         realized_delta = entry_credit - buy_cost;
       }
     }
 
     st.pos += qty;
     if (add_cost_for_open_long && open_long_qty > 0.0) {
-      st.cost += open_long_qty * px;
+      st.cost += open_long_qty * price_per_unit;
     }
     normalize_small_residue();
     return realized_delta;
@@ -234,7 +244,8 @@ double StageSync::apply_event_input(const EventInput &row, TokenState &st) const
   case EventType::SplitNegRisk:
   case EventType::SplitNonPoly: {
     if (row.amount >= 0) {
-      realized_delta = apply_positive_delta(/*add_cost_for_open_long=*/true,
+      realized_delta = apply_positive_delta(/*price_per_unit=*/px,
+                                            /*add_cost_for_open_long=*/true,
                                             /*realize_when_cover_short=*/true);
       break;
     }
@@ -245,26 +256,18 @@ double StageSync::apply_event_input(const EventInput &row, TokenState &st) const
   }
 
   case EventType::FPMMLPAdd:
-    realized_delta = 0.0;
-    break;
-
   case EventType::FPMMLPRemove:
   case EventType::FPMMLPReturn:
-    if (row.amount >= 0) {
-      realized_delta = apply_positive_delta(/*add_cost_for_open_long=*/false,
-                                            /*realize_when_cover_short=*/false);
-      break;
-    }
-    realized_delta = apply_negative_delta(/*proceeds_per_unit=*/0.0,
-                                          /*accrue_realized=*/false,
-                                          /*add_short_entry_cost=*/false);
+    // LP 事件仅记录行为，不进入 token 持仓/成本/PnL 状态机。
+    realized_delta = 0.0;
     break;
 
   case EventType::TransferInNegRisk:
   case EventType::TransferInOther:
   case EventType::TransferInNonPoly:
     if (row.amount >= 0) {
-      realized_delta = apply_positive_delta(/*add_cost_for_open_long=*/false,
+      realized_delta = apply_positive_delta(/*price_per_unit=*/0.0,
+                                            /*add_cost_for_open_long=*/false,
                                             /*realize_when_cover_short=*/false);
       break;
     }
@@ -286,29 +289,22 @@ double StageSync::apply_event_input(const EventInput &row, TokenState &st) const
                                             /*add_short_entry_cost=*/true);
       break;
     }
-    realized_delta = apply_positive_delta(/*add_cost_for_open_long=*/true,
+    realized_delta = apply_positive_delta(/*price_per_unit=*/px,
+                                          /*add_cost_for_open_long=*/true,
                                           /*realize_when_cover_short=*/true);
     break;
   }
 
   case EventType::Convert: {
-    int popcount = 0;
-    for (int64_t p : cond.payout_numerators) {
-      if (p > 0) {
-        ++popcount;
-      }
-    }
-    if (popcount <= 0) { // this is allowed
-      popcount = 1;
-    }
-    const double convert_px = static_cast<double>(popcount - 1) / static_cast<double>(popcount);
+    const double convert_px = calc_convert_price_for_cond(row.cond_idx);
     if (row.amount <= 0) {
       realized_delta = apply_negative_delta(/*proceeds_per_unit=*/convert_px,
                                             /*accrue_realized=*/true,
                                             /*add_short_entry_cost=*/true);
       break;
     }
-    realized_delta = apply_positive_delta(/*add_cost_for_open_long=*/true,
+    realized_delta = apply_positive_delta(/*price_per_unit=*/convert_px,
+                                          /*add_cost_for_open_long=*/true,
                                           /*realize_when_cover_short=*/true);
     break;
   }
@@ -322,7 +318,8 @@ double StageSync::apply_event_input(const EventInput &row, TokenState &st) const
                                             /*add_short_entry_cost=*/false);
       break;
     }
-    realized_delta = apply_positive_delta(/*add_cost_for_open_long=*/false,
+    realized_delta = apply_positive_delta(/*price_per_unit=*/0.0,
+                                          /*add_cost_for_open_long=*/false,
                                           /*realize_when_cover_short=*/false);
     break;
   }

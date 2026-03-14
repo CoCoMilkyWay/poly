@@ -202,6 +202,7 @@ void StageSync::init_schema() const {
 void StageSync::load_conditions() {
   conditions_.clear();
   cond_tag_ids_.clear();
+  cond_market_question_counts_.clear();
 
   auto conn = stage2_db_.create_connection();
   auto rc = conn->Query(
@@ -212,6 +213,7 @@ void StageSync::load_conditions() {
   assert(rc && !rc->HasError());
   conditions_.resize(static_cast<size_t>(rc->RowCount()));
   cond_tag_ids_.assign(static_cast<size_t>(rc->RowCount()), 13);
+  cond_market_question_counts_.assign(static_cast<size_t>(rc->RowCount()), 0);
   std::unordered_map<std::string, uint32_t> cond_hex_to_idx;
   cond_hex_to_idx.reserve(static_cast<size_t>(rc->RowCount()) + 1);
   for (idx_t i = 0; i < rc->RowCount(); ++i) {
@@ -234,6 +236,22 @@ void StageSync::load_conditions() {
     conditions_[idx] = std::move(info);
   }
 
+  std::unordered_map<std::string, std::string> question_to_market;
+  std::unordered_map<std::string, int32_t> market_question_counts;
+  auto nrm = conn->Query(
+      "SELECT lower(hex(question_id)) AS qid_hex, lower(hex(market_id)) AS market_hex "
+      "FROM rb_neg_risk_market");
+  assert(nrm && !nrm->HasError());
+  question_to_market.reserve(static_cast<size_t>(nrm->RowCount()) + 1);
+  market_question_counts.reserve(static_cast<size_t>(nrm->RowCount()) + 1);
+  for (idx_t i = 0; i < nrm->RowCount(); ++i) {
+    const std::string qid_hex = nrm->GetValue(0, i).GetValueUnsafe<std::string>();
+    const std::string market_hex = nrm->GetValue(1, i).GetValueUnsafe<std::string>();
+    auto [it, inserted] = question_to_market.emplace(qid_hex, market_hex);
+    assert(inserted || it->second == market_hex);
+    market_question_counts[market_hex]++;
+  }
+
   auto stage0_conn = stage0_db_.create_connection();
   auto tags = stage0_conn->Query(
       "SELECT lower(hex(condition_id)) AS cond_hex, coalesce(tag_name, 'Unknown') AS tag_name "
@@ -247,6 +265,23 @@ void StageSync::load_conditions() {
     }
     std::string tag_name = tags->GetValue(1, i).GetValueUnsafe<std::string>();
     cond_tag_ids_[it->second] = tag_name_to_id(tag_name);
+  }
+
+  for (size_t i = 0; i < conditions_.size(); ++i) {
+    const auto &info = conditions_[i];
+    if (info.question_id.empty()) {
+      continue;
+    }
+    assert(info.question_id.rfind("0x", 0) == 0);
+    const std::string qid_hex = info.question_id.substr(2);
+    auto qit = question_to_market.find(qid_hex);
+    if (qit == question_to_market.end()) {
+      continue;
+    }
+    auto mit = market_question_counts.find(qit->second);
+    assert(mit != market_question_counts.end());
+    assert(mit->second > 0);
+    cond_market_question_counts_[i] = static_cast<uint16_t>(mit->second);
   }
 }
 

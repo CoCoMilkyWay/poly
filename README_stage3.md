@@ -165,15 +165,6 @@ struct TokenState {
   double entry_block;   // 加权平均建仓block
 }
 
-// 用户摘要 (持久化)
-struct UserSummaryState {
-  int64  total_events;
-  int64  total_realized_pnl;
-  int64  total_unrealized_pnl;
-  int32  active_tokens;       // 有持仓的token数
-  int64  last_sort_key;
-}
-
 // 事件事实行 (持久化, 用于构建 timeline)
 struct EventFact {
   Address20 user_addr;
@@ -190,6 +181,15 @@ struct EventFact {
   int64   exposure;           // 该token暴露额 |pos*lp|
   int64   volume;             // 交易额 |amount*price|
   int64   holding_period;     // 该token持仓周期 (blocks)
+}
+
+// 用户摘要 (持久化)
+struct UserSummaryState {
+  int64  total_events;
+  int64  total_realized_pnl;
+  int64  total_unrealized_pnl;
+  int32  active_tokens;       // 有持仓的token数
+  int64  last_sort_key;
 }
 
 // 统一特征张量状态 (持久化)

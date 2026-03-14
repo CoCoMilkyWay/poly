@@ -372,13 +372,40 @@ bool StageSync::process_chunk_locked() const {
   sync_cursor_.processed_events += static_cast<int64_t>(event_inputs.size());
 
   int32_t max_cond_idx = -1;
+  bool has_convert_event = false;
   for (const auto &row : event_inputs) {
     if (row.cond_idx > max_cond_idx) {
       max_cond_idx = row.cond_idx;
     }
+    if (row.event_type == static_cast<int32_t>(EventType::Convert) && row.cond_idx >= 0) {
+      has_convert_event = true;
+    }
   }
   if (max_cond_idx >= 0 && static_cast<size_t>(max_cond_idx) >= conditions_.size()) {
     const_cast<StageSync *>(this)->load_conditions();
+  }
+  if (has_convert_event) {
+    bool needs_refresh = false;
+    for (const auto &row : event_inputs) {
+      if (row.event_type != static_cast<int32_t>(EventType::Convert) || row.cond_idx < 0) {
+        continue;
+      }
+      if (static_cast<size_t>(row.cond_idx) >= cond_market_question_counts_.size() ||
+          cond_market_question_counts_[static_cast<size_t>(row.cond_idx)] < 2) {
+        needs_refresh = true;
+        break;
+      }
+    }
+    if (needs_refresh) {
+      const_cast<StageSync *>(this)->load_conditions();
+    }
+    for (const auto &row : event_inputs) {
+      if (row.event_type != static_cast<int32_t>(EventType::Convert) || row.cond_idx < 0) {
+        continue;
+      }
+      assert(static_cast<size_t>(row.cond_idx) < cond_market_question_counts_.size());
+      assert(cond_market_question_counts_[static_cast<size_t>(row.cond_idx)] >= 2);
+    }
   }
 
   // Use double for cumulative PnL tracking to match internal state
@@ -535,6 +562,13 @@ bool StageSync::process_chunk_locked() const {
   std::vector<EventFact> event_facts;
   event_facts.reserve(event_inputs.size());
   for (const auto &row : event_inputs) {
+    auto realized_it = user_realized_totals.find(row.user_id);
+    auto unrealized_it = user_unrealized_totals.find(row.user_id);
+    auto active_it = user_active_token_counts.find(row.user_id);
+    assert(realized_it != user_realized_totals.end());
+    assert(unrealized_it != user_unrealized_totals.end());
+    assert(active_it != user_active_token_counts.end());
+
     double realized_delta = 0.0;
     int8_t tag_id = 13;
     int64_t exposure = 0;
@@ -555,9 +589,9 @@ bool StageSync::process_chunk_locked() const {
       realized_delta = apply_event_input(row, st);
       const double after_unrealized = calc_unrealized_pnl(st);
       const int after_holding = is_effective_holding(st.pos) ? 1 : 0;
-      user_unrealized_totals[row.user_id] += (after_unrealized - before_unrealized);
-      user_active_token_counts[row.user_id] += (after_holding - before_holding);
-      assert(user_active_token_counts[row.user_id] >= 0);
+      unrealized_it->second += (after_unrealized - before_unrealized);
+      active_it->second += (after_holding - before_holding);
+      assert(active_it->second >= 0);
 
       const int64_t row_block = sort_key_to_block(row.sort_key);
       exposure = calc_exposure_1e6(st);
@@ -567,13 +601,13 @@ bool StageSync::process_chunk_locked() const {
       auto agg_it = bucket_agg_states.find(agg_key);
       assert(agg_it != bucket_agg_states.end());
       BucketAggState &agg = agg_it->second;
-      update_tail_window(agg, agg_key.block_bucket, row_block, exposure, holding_period, user_active_token_counts[row.user_id]);
+      update_tail_window(agg, agg_key.block_bucket, row_block, exposure, holding_period, active_it->second);
       feature_comp::accumulate_event_delta(agg, realized_delta, volume, row.sort_key);
     }
-    double &realized_total = user_realized_totals[row.user_id];
-    double &unrealized_total = user_unrealized_totals[row.user_id];
+    double &realized_total = realized_it->second;
+    double &unrealized_total = unrealized_it->second;
     realized_total += realized_delta;
-    int32_t token_count = user_active_token_counts[row.user_id];
+    int32_t token_count = active_it->second;
     event_facts.push_back({
         row.user_id,
         row.sort_key,
@@ -779,15 +813,23 @@ bool StageSync::process_chunk_locked() const {
     {
       duckdb::Appender ap(*sink_conn, kSqlTmpUserSummaryDelta);
       for (const auto &[user_id, inc] : user_event_increments) {
+        auto sort_it = user_last_sort_keys.find(user_id);
+        auto realized_it = user_realized_totals.find(user_id);
+        auto unrealized_it = user_unrealized_totals.find(user_id);
+        auto active_it = user_active_token_counts.find(user_id);
+        assert(sort_it != user_last_sort_keys.end());
+        assert(realized_it != user_realized_totals.end());
+        assert(unrealized_it != user_unrealized_totals.end());
+        assert(active_it != user_active_token_counts.end());
         const std::string &user_blob = user_blob_pool[user_id];
         ap.BeginRow();
         append_blob(ap, user_blob);
         ap.Append(inc);
-        ap.Append(user_last_sort_keys[user_id]);
-        ap.Append(round_i64(user_realized_totals[user_id]));
-        ap.Append(round_i64(user_unrealized_totals[user_id]));
-        assert(user_active_token_counts[user_id] >= 0);
-        ap.Append(user_active_token_counts[user_id]);
+        ap.Append(sort_it->second);
+        ap.Append(round_i64(realized_it->second));
+        ap.Append(round_i64(unrealized_it->second));
+        assert(active_it->second >= 0);
+        ap.Append(active_it->second);
         ap.EndRow();
       }
       ap.Close();

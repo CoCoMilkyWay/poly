@@ -232,6 +232,7 @@ private:
 
   std::vector<ConditionInfo> conditions_;
   std::vector<int8_t> cond_tag_ids_;
+  std::vector<uint16_t> cond_market_question_counts_;
   std::unordered_map<std::string, int8_t> tag_to_industry_id_;
 
   struct UserQueryCache {
@@ -296,6 +297,7 @@ private:
   static int64_t calc_exposure_1e6(const TokenState &st);
   static int64_t calc_holding_period_blocks(int64_t current_block, const TokenState &st);
   static int64_t calc_volume_1e6(const EventInput &row);
+  double calc_convert_price_for_cond(int32_t cond_idx) const;
 
   // Aggregation update helper
   static void update_tail_window(BucketAggState &agg,
