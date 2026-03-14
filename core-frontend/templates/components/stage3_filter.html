@@ -332,13 +332,29 @@
     let _s3fReqSeq = 0;
     let _s3fMaxBucket = -1;
 
+    async function s3fRefreshMaxBucket() {
+        const resp = await fetch('/api/stage3-status');
+        assert(resp.ok, '获取 stage3 状态失败');
+        const data = await resp.json();
+        const maxBucket = Number(data.max_bucket);
+        assert(Number.isFinite(maxBucket) && maxBucket >= 0, 'max_bucket 非法');
+        _s3fMaxBucket = Math.floor(maxBucket);
+    }
+
     async function s3fInit() {
+        const runBtn = document.getElementById('s3f-run-btn');
+        const errorEl = document.getElementById('s3f-error');
+        runBtn.disabled = true;
+        runBtn.textContent = '初始化中...';
+        errorEl.textContent = '';
         try {
-            const resp = await fetch('/api/stage3-status');
-            const data = await resp.json();
-            _s3fMaxBucket = data.max_bucket;
+            await s3fRefreshMaxBucket();
         } catch (e) {
             console.error('s3fInit error:', e);
+            errorEl.textContent = e.message || String(e);
+        } finally {
+            runBtn.disabled = false;
+            runBtn.textContent = '执行过滤';
         }
     }
 
@@ -470,15 +486,21 @@
         const reqSeq = ++_s3fReqSeq;
 
         errorEl.textContent = '';
+        runBtn.disabled = true;
+        runBtn.textContent = '准备中...';
         let payload;
         try {
+            await s3fRefreshMaxBucket();
             payload = s3fBuildPayload();
         } catch (e) {
             errorEl.textContent = e.message || String(e);
+            if (reqSeq === _s3fReqSeq) {
+                runBtn.disabled = false;
+                runBtn.textContent = '执行过滤';
+            }
             return;
         }
 
-        runBtn.disabled = true;
         runBtn.textContent = '过滤中...';
 
         try {

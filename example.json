@@ -11,7 +11,7 @@
   "db_path_stage1": "data/stage1/polymarket.duckdb",
   "db_path_stage2": "data/stage2/users.duckdb",
   "db_path_stage3": "data/stage3/replay.duckdb",
-  "stage1_rpc_threads": 5,
+  "stage1_rpc_threads": 10,
   "stage1_rpc_block_span": 2000,
   "stage1_rpc_buffer_multiplier": 2,
 
@@ -22,7 +22,7 @@
   "frontend_port": 8000,
   "backend_port": 8001,
 
-  "proxy": "socks5://127.0.0.1:10808",
+  "proxy": "",
   "rpc_transport": "curl",
   "active_rpc": "Alchemy",
   "rpc_nodes": [
