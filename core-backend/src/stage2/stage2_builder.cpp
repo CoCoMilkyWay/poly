@@ -640,6 +640,7 @@ void EventBuilder::reap_commit_result_locked() {
   committed_progress_ = *commit_result_;
   commit_result_.reset();
   commit_busy_ = false;
+  commit_pending_.store(false, std::memory_order_release);
 }
 
 void EventBuilder::commit_worker_loop() {
@@ -675,6 +676,14 @@ int64_t EventBuilder::cursor() const { return committed_progress_.cursor; }
 
 const core::rocks::Stage2UserEventStore &EventBuilder::user_event_store() const {
   return *user_event_store_;
+}
+
+bool EventBuilder::is_building() const {
+  return build_running_.load(std::memory_order_acquire);
+}
+
+bool EventBuilder::has_pending_commit() const {
+  return commit_pending_.load(std::memory_order_acquire);
 }
 
 json EventBuilder::rocksdb_memory_breakdown() const {
@@ -798,6 +807,7 @@ bool EventBuilder::build_chunk(int64_t target_block) {
   if (build_cursor_ >= target_block) {
     return false;
   }
+  build_running_.store(true, std::memory_order_release);
 
   int64_t chunk_start = build_cursor_;
   int64_t chunk_end = target_block;
@@ -847,6 +857,7 @@ bool EventBuilder::build_chunk(int64_t target_block) {
   phase1_update_mappings(chunk_start, chunk_end);
   if (stop_requested_) {
     progress_.running = false;
+    build_running_.store(false, std::memory_order_release);
     chunk_log_.finish();
     return false;
   }
@@ -863,6 +874,7 @@ bool EventBuilder::build_chunk(int64_t target_block) {
   refresh_memory_snapshot("phase2_semantic_done");
   if (stop_requested_) {
     progress_.running = false;
+    build_running_.store(false, std::memory_order_release);
     chunk_log_.finish();
     refresh_memory_snapshot("stopped_after_phase2");
     return false;
@@ -873,6 +885,7 @@ bool EventBuilder::build_chunk(int64_t target_block) {
   refresh_memory_snapshot("phase3_transfer_done");
   if (stop_requested_) {
     progress_.running = false;
+    build_running_.store(false, std::memory_order_release);
     chunk_log_.finish();
     refresh_memory_snapshot("stopped_after_phase3");
     return false;
@@ -921,7 +934,9 @@ bool EventBuilder::build_chunk(int64_t target_block) {
     stage2_assert(!commit_payload_.has_value(), AssertLevel::L0, "State", "CommitQueueEmpty");
     commit_payload_ = std::move(payload);
     commit_busy_ = true;
+    commit_pending_.store(true, std::memory_order_release);
   }
+  build_running_.store(false, std::memory_order_release);
   commit_cv_.notify_all();
 
   // 记录统计信息并结束 chunk log

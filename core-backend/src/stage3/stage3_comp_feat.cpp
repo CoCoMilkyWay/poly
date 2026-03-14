@@ -143,15 +143,20 @@ void update_tail_window(BucketAggState &agg,
   agg.has_tail = true;
 }
 
-void accumulate_event_delta(BucketAggState &agg, double realized_delta, int64_t volume, int64_t sort_key) {
-  agg.realized_sum += round_i64(realized_delta);
-  {
-    const long double sq = static_cast<long double>(realized_delta) * static_cast<long double>(realized_delta);
-    assert(sq >= 0.0L);
-    const __int128 sq_i128 = static_cast<__int128>(sq + 0.5L);
-    agg.realized_sq_sum += sq_i128;
+void accumulate_event_delta(BucketAggState &agg, double realized_delta, int64_t exposure_before, int64_t volume, int64_t sort_key) {
+  // 计算收益率：return_rate = realized_delta / exposure_before
+  // 以 1e6 为单位存储，避免浮点精度问题
+  constexpr int64_t kMinExposure = 1000; // 最小暴露额 0.001 USD，避免除零
+  if (exposure_before >= kMinExposure) {
+    // return_rate_1e6 = (realized_delta / exposure_before) * 1e6
+    const long double return_rate = static_cast<long double>(realized_delta) / static_cast<long double>(exposure_before);
+    const int64_t return_rate_1e6 = round_i64(return_rate * 1e6);
+    agg.return_sum += return_rate_1e6;
+    const long double sq = static_cast<long double>(return_rate_1e6) * static_cast<long double>(return_rate_1e6);
+    agg.return_sq_sum += static_cast<__int128>(sq + 0.5L);
+    agg.return_count += 1;
   }
-  agg.event_count += 1;
+
   agg.volume_sum += volume;
   agg.last_sort_key = sort_key;
 }

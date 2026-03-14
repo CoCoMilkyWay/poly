@@ -14,9 +14,11 @@ struct TokenSnapshot {
 };
 
 struct BucketAggState {
-  int64_t realized_sum = 0;
-  __int128 realized_sq_sum = 0;
-  int64_t event_count = 0;
+  // 收益率统计：return_rate = realized_pnl / exposure_before
+  // return_sum 以 1e6 为单位存储（即实际 return_rate * 1e6）
+  int64_t return_sum = 0;
+  __int128 return_sq_sum = 0;
+  int64_t return_count = 0;
   __int128 exposure_tw_sum = 0;
   int64_t volume_sum = 0;
   __int128 holding_period_exp_tw_sum = 0;
@@ -49,6 +51,6 @@ void update_tail_window(BucketAggState &agg,
                         int64_t current_token_count,
                         int64_t block_bucket_size);
 
-void accumulate_event_delta(BucketAggState &agg, double realized_delta, int64_t volume, int64_t sort_key);
+void accumulate_event_delta(BucketAggState &agg, double realized_delta, int64_t exposure_before, int64_t volume, int64_t sort_key);
 
 } // namespace stage3::feature_comp

@@ -33,6 +33,8 @@ public:
 
   int64_t cursor() const;
   const core::rocks::Stage2UserEventStore &user_event_store() const;
+  bool is_building() const;
+  bool has_pending_commit() const;
 
   bool build_chunk(int64_t target_block);
   void wait_for_pending_commit();
@@ -158,6 +160,8 @@ private:
   std::optional<BuildProgress> commit_result_;
   std::optional<CommitPayload> commit_reusable_payload_;
   std::atomic<bool> stop_requested_{false};
+  std::atomic<bool> build_running_{false};
+  std::atomic<bool> commit_pending_{false};
   mutable std::mutex mem_mu_;
   json mem_snapshot_ = json::object();
   int64_t mem_peak_chunk_bytes_ = 0;

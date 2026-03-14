@@ -243,9 +243,9 @@
                 <option value="ALL">ALL (全部)</option>
             </select>
             <select class="s3f-select s3f-feature">
-                <option value="exp">暴露额 exp</option>
+                <option value="exp">暴露额 exp (USD)</option>
                 <option value="tok">持仓数 tok</option>
-                <option value="vol">交易额 vol</option>
+                <option value="vol">交易额 vol (USD)</option>
                 <option value="hp">持仓周期 hp</option>
                 <option value="shp">夏普 shp</option>
             </select>
@@ -287,9 +287,9 @@
         </select>
         <select id="s3f-sort-feature" class="s3f-select">
             <option value="shp">夏普 shp</option>
-            <option value="exp">暴露额 exp</option>
+            <option value="exp">暴露额 exp (USD)</option>
             <option value="tok">持仓数 tok</option>
-            <option value="vol">交易额 vol</option>
+            <option value="vol">交易额 vol (USD)</option>
             <option value="hp">持仓周期 hp</option>
         </select>
         <select id="s3f-sort-window" class="s3f-select">
@@ -331,6 +331,10 @@
 <script>
     let _s3fReqSeq = 0;
     let _s3fMaxBucket = -1;
+    let _s3fLastSortFeature = 'shp'; // 记录上次排序的特征，用于单位转换
+
+    // 金钱相关特征需要除以 1e6 转换为 USD
+    const _s3fMoneyFeatures = new Set(['exp', 'vol']);
 
     async function s3fRefreshMaxBucket() {
         const resp = await fetch('/api/stage3-status');
@@ -378,9 +382,9 @@
                 <option value="ALL">ALL (全部)</option>
             </select>
             <select class="s3f-select s3f-feature">
-                <option value="exp">暴露额 exp</option>
+                <option value="exp">暴露额 exp (USD)</option>
                 <option value="tok">持仓数 tok</option>
-                <option value="vol">交易额 vol</option>
+                <option value="vol">交易额 vol (USD)</option>
                 <option value="hp">持仓周期 hp</option>
                 <option value="shp">夏普 shp</option>
             </select>
@@ -430,8 +434,12 @@
             const feature = row.querySelector('.s3f-feature').value;
             const window = row.querySelector('.s3f-window').value;
             const op = row.querySelector('.s3f-op').value;
-            const value = row.querySelector('.s3f-value').value.trim();
+            let value = row.querySelector('.s3f-value').value.trim();
             if (value === '') continue;
+            // 金钱特征用户输入 USD，需要转换为 microUSD (乘以 1e6)
+            if (_s3fMoneyFeatures.has(feature)) {
+                value = String(Number(value) * 1e6);
+            }
             const expr = `${s3fBuildExpr(industry, feature, window)} ${op} ${value}`;
             filters.push(expr);
         }
@@ -442,6 +450,9 @@
         const sortDir = document.getElementById('s3f-sort-dir').value;
         const sortExpr = s3fBuildExpr(sortIndustry, sortFeature, sortWindow);
 
+        // 记录排序特征，用于展示时单位转换
+        _s3fLastSortFeature = sortFeature;
+
         return {
             anchor_bucket: _s3fMaxBucket,
             filters,
@@ -449,6 +460,16 @@
             sort_asc: sortDir === 'asc',
             limit: 100,
         };
+    }
+
+    function s3fFormatSortValue(rawValue) {
+        // 金钱相关特征 (exp, vol) 需要除以 1e6 转换为 USD
+        const val = Number(rawValue || 0);
+        if (_s3fMoneyFeatures.has(_s3fLastSortFeature)) {
+            const usd = val / 1e6;
+            return usd.toFixed(2) + ' USD';
+        }
+        return val.toFixed(6);
     }
 
     function s3fRenderRows(users) {
@@ -461,7 +482,7 @@
       <tr>
         <td>${idx + 1}</td>
         <td><button class="s3f-addr-btn" onclick="s3fOpenUser('${String(u.addr || '').replace(/'/g, "\\'")}')">${u.addr || '-'}</button></td>
-        <td>${Number(u.sort_value || 0).toFixed(6)}</td>
+        <td>${s3fFormatSortValue(u.sort_value)}</td>
         <td><button class="s3f-btn s3f-btn-small" onclick="s3fOpenUser('${String(u.addr || '').replace(/'/g, "\\'")}')">查看</button></td>
       </tr>
     `).join('');
