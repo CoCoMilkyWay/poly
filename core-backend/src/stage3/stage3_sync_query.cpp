@@ -2,6 +2,7 @@
 #include "stage3_sync.hpp"
 #include <algorithm>
 #include <cmath>
+#include <map>
 
 namespace stage3 {
 namespace {
@@ -67,45 +68,6 @@ std::vector<StageSync::PositionRow> StageSync::get_positions_at(const std::strin
   return std::prev(snapshot_it)->positions;
 }
 
-std::vector<StageSync::PositionRow>
-StageSync::build_position_rows_from_states(const std::unordered_map<uint64_t, StageSync::TokenState> &states) const {
-  std::vector<PositionRow> out;
-  out.reserve(states.size());
-  for (const auto &[packed_key, st] : states) {
-    const int32_t cond_idx = static_cast<int32_t>(packed_key >> 32);
-    const int32_t token_idx = static_cast<int32_t>(packed_key & 0xffffffffU);
-    if (cond_idx < 0) {
-      continue;
-    }
-    uint32_t uidx = static_cast<uint32_t>(cond_idx);
-    assert(uidx < conditions_.size());
-    const auto &cond = conditions_[uidx];
-    if (std::abs(st.pos) <= kPosEpsilon) {
-      continue;
-    }
-    const int64_t qty_i64 = round_i64(st.pos);
-    if (!StageSync::is_effective_holding_i64(qty_i64)) {
-      continue;
-    }
-    out.push_back(PositionRow{
-        static_cast<uint32_t>(cond_idx),
-        static_cast<uint8_t>(token_idx),
-        static_cast<uint8_t>(cond.outcome_count),
-        qty_i64,
-        round_i64(st.cost),
-        round_i64(st.lp),
-        round_i64(st.entry_block),
-    });
-  }
-  std::sort(out.begin(), out.end(), [](const PositionRow &a, const PositionRow &b) {
-    if (a.cond_idx != b.cond_idx) {
-      return a.cond_idx < b.cond_idx;
-    }
-    return a.token_idx < b.token_idx;
-  });
-  return out;
-}
-
 StageSync::UserQueryCacheState StageSync::build_user_query_cache_state(const std::string &addr_lower) const {
   UserQueryCacheState cache_state;
   cache_state.addr_lower = addr_lower;
@@ -128,7 +90,8 @@ StageSync::UserQueryCacheState StageSync::build_user_query_cache_state(const std
   cache_state.timeline.reserve(fact_rows.size());
 
   std::unordered_map<uint64_t, TokenState> token_states;
-  token_states.reserve(cache_state.timeline.size() / 2 + 1);
+  token_states.reserve(fact_rows.size() / 2 + 1);
+  std::map<uint64_t, PositionRow> active_positions;
   bool loaded_conditions_for_query = false;
   size_t event_idx = 0;
   auto compare_event_key = [](int64_t a_sort_key, int32_t a_cond_idx, int32_t a_event_type, int32_t a_token_idx,
@@ -200,6 +163,7 @@ StageSync::UserQueryCacheState StageSync::build_user_query_cache_state(const std
         loaded_conditions_for_query = true;
       }
       assert(static_cast<size_t>(fact_cond_idx) < conditions_.size());
+      const auto &cond = conditions_[static_cast<size_t>(fact_cond_idx)];
       EventInput row{
           0u,
           fact_sort_key,
@@ -213,6 +177,20 @@ StageSync::UserQueryCacheState StageSync::build_user_query_cache_state(const std
       const uint64_t packed_token_key = pack_cond_token_key(row.cond_idx, row.token_idx);
       auto &st = token_states[packed_token_key];
       (void)apply_event_input(row, st);
+      const int64_t qty_i64 = round_i64(st.pos);
+      if (std::abs(st.pos) <= kPosEpsilon || !StageSync::is_effective_holding_i64(qty_i64)) {
+        active_positions.erase(packed_token_key);
+      } else {
+        active_positions[packed_token_key] = PositionRow{
+            static_cast<uint32_t>(fact_cond_idx),
+            static_cast<uint8_t>(fact_token_idx),
+            static_cast<uint8_t>(cond.outcome_count),
+            qty_i64,
+            round_i64(st.cost),
+            round_i64(st.lp),
+            round_i64(st.entry_block),
+        };
+      }
     }
     const bool end_of_group =
         (i + 1 == fact_rows.size()) || (fact_rows[i + 1].sort_key != fact_sort_key);
@@ -221,7 +199,10 @@ StageSync::UserQueryCacheState StageSync::build_user_query_cache_state(const std
     }
     UserQueryCacheState::PositionSnapshot snap;
     snap.sort_key = fact_sort_key;
-    snap.positions = build_position_rows_from_states(token_states);
+    snap.positions.reserve(active_positions.size());
+    for (const auto &[_, pos] : active_positions) {
+      snap.positions.push_back(pos);
+    }
     cache_state.snapshots.push_back(std::move(snap));
   }
   return cache_state;

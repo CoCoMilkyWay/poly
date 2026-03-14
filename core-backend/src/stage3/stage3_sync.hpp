@@ -330,7 +330,6 @@ private:
   double apply_event_input(const EventInput &row, TokenState &st) const;
 
   // Query cache build path
-  std::vector<PositionRow> build_position_rows_from_states(const std::unordered_map<uint64_t, TokenState> &states) const;
   UserQueryCacheState build_user_query_cache_state(const std::string &addr_lower) const;
   void ensure_user_query_cache_state(const std::string &addr_lower) const;
 };

@@ -4,16 +4,21 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <unordered_set>
 
 namespace stage3 {
 namespace {
 constexpr const char *kSqlTmpTouchedUsers = "tmp_touched_users";
+constexpr const char *kSqlTmpTouchedUserTags = "tmp_touched_user_tags";
+constexpr const char *kSqlTmpTouchedTokenKeys = "tmp_touched_token_keys";
 constexpr const char *kSqlTmpFeatureTensorKeys = "tmp_feature_tensor_keys";
 constexpr const char *kSqlTmpTokenDirty = "tmp_token_dirty";
 constexpr const char *kSqlTmpTokenNew = "tmp_token_new";
 constexpr const char *kSqlTmpFeatureTensorState = "tmp_feature_tensor_state";
 constexpr const char *kSqlTmpUserSummaryDelta = "tmp_user_summary_delta";
 constexpr const char *kSqlTmpSchemaTouchedUsers = "user_addr BLOB";
+constexpr const char *kSqlTmpSchemaTouchedUserTags = "user_addr BLOB, tag_id INTEGER";
+constexpr const char *kSqlTmpSchemaTouchedTokenKeys = "user_addr BLOB, cond_idx INTEGER, token_idx INTEGER";
 constexpr const char *kSqlTmpSchemaFeatureTensorKeys = "user_addr BLOB, block_bucket BIGINT, tag_id INTEGER";
 constexpr const char *kSqlTmpSchemaTokenDirty = "user_addr BLOB, cond_idx INTEGER, token_idx INTEGER";
 constexpr const char *kSqlTmpSchemaTokenNew =
@@ -556,11 +561,26 @@ bool StageSync::process_chunk_locked() const {
     }
   };
 
-  if (!user_event_increments.empty()) {
-    const std::string sql_from_token_state_with_touched_users =
+  if (!token_states.empty()) {
+    prepare_tmp_table(kSqlTmpTouchedTokenKeys, kSqlTmpSchemaTouchedTokenKeys);
+    {
+      duckdb::Appender ap(*sink_conn, kSqlTmpTouchedTokenKeys);
+      for (const auto &[key, _] : token_states) {
+        const std::string &user_blob = user_blob_pool[key.user_id];
+        ap.BeginRow();
+        append_blob(ap, user_blob);
+        ap.Append(key.cond_idx);
+        ap.Append(key.token_idx);
+        ap.EndRow();
+      }
+      ap.Close();
+    }
+
+    const std::string sql_from_token_state_with_touched_tokens =
         "FROM " + table_token_state + " s " +
-        "JOIN " + std::string(kSqlTmpTouchedUsers) + " t ON s.user_addr = t.user_addr";
-    auto token_state_result = sink_conn->Query(std::string(kSqlSelectTokenStateCols) + sql_from_token_state_with_touched_users);
+        "JOIN " + std::string(kSqlTmpTouchedTokenKeys) +
+        " t ON s.user_addr = t.user_addr AND s.cond_idx = t.cond_idx AND s.token_idx = t.token_idx";
+    auto token_state_result = sink_conn->Query(std::string(kSqlSelectTokenStateCols) + sql_from_token_state_with_touched_tokens);
     assert(token_state_result && !token_state_result->HasError());
     for (idx_t i = 0; i < token_state_result->RowCount(); ++i) {
       const std::string user_blob = token_state_result->GetValue(0, i).GetValueUnsafe<std::string>();
@@ -569,30 +589,20 @@ bool StageSync::process_chunk_locked() const {
       const uint32_t user_id = user_id_it->second;
       const int32_t cond_idx = token_state_result->GetValue(1, i).GetValue<int32_t>();
       const int32_t token_idx = token_state_result->GetValue(2, i).GetValue<int32_t>();
-      assert(cond_idx >= 0);
-      assert(static_cast<size_t>(cond_idx) < cond_tag_ids_.size());
-      const int8_t tag_id = cond_tag_ids_[static_cast<size_t>(cond_idx)];
-
+      TokenKey key{user_id, cond_idx, token_idx};
+      auto token_state_it = token_states.find(key);
+      assert(token_state_it != token_states.end());
       TokenState loaded_state;
       loaded_state.pos = static_cast<double>(token_state_result->GetValue(3, i).GetValue<int64_t>());
       loaded_state.cost = static_cast<double>(token_state_result->GetValue(4, i).GetValue<int64_t>());
       loaded_state.lp = static_cast<double>(token_state_result->GetValue(5, i).GetValue<int64_t>());
       loaded_state.entry_block = static_cast<double>(token_state_result->GetValue(6, i).GetValue<int64_t>());
-
-      const auto contrib = token_feature_contrib(loaded_state);
-      apply_runtime_contrib_delta(user_id, tag_id, contrib.token_count, contrib.exposure, contrib.exposure_entry);
-      apply_runtime_contrib_delta(user_id, -1, contrib.token_count, contrib.exposure, contrib.exposure_entry);
-
-      TokenKey key{user_id, cond_idx, token_idx};
-      auto token_state_it = token_states.find(key);
-      if (token_state_it == token_states.end()) {
-        continue;
-      }
-      TokenState &st = token_state_it->second;
-      st = loaded_state;
+      token_state_it->second = loaded_state;
     }
   }
 
+  std::unordered_set<UserTagRuntimeKey, UserTagRuntimeKeyHash> touched_user_tag_keys;
+  touched_user_tag_keys.reserve(static_cast<size_t>(event_inputs.size() / 2 + 1));
   std::unordered_map<AggKey, BucketAggState, AggKeyHash> bucket_agg_states;
   bucket_agg_states.reserve(static_cast<size_t>(event_inputs.size() / 2 + 1));
   for (const auto &row : event_inputs) {
@@ -604,6 +614,110 @@ bool StageSync::process_chunk_locked() const {
     const int64_t block_bucket = sort_key_to_block_bucket(row.sort_key);
     bucket_agg_states.try_emplace(AggKey{row.user_id, block_bucket, tag_id}, BucketAggState{});
     bucket_agg_states.try_emplace(AggKey{row.user_id, block_bucket, -1}, BucketAggState{});
+    touched_user_tag_keys.insert(UserTagRuntimeKey{row.user_id, tag_id});
+    touched_user_tag_keys.insert(UserTagRuntimeKey{row.user_id, -1});
+  }
+
+  if (!touched_user_tag_keys.empty()) {
+    prepare_tmp_table(kSqlTmpTouchedUserTags, kSqlTmpSchemaTouchedUserTags);
+    {
+      duckdb::Appender ap(*sink_conn, kSqlTmpTouchedUserTags);
+      for (const auto &key : touched_user_tag_keys) {
+        const std::string &user_blob = user_blob_pool[key.user_id];
+        ap.BeginRow();
+        append_blob(ap, user_blob);
+        ap.Append(static_cast<int32_t>(key.tag_id));
+        ap.EndRow();
+      }
+      ap.Close();
+    }
+    const std::string sql_runtime_seed =
+        "SELECT x.user_addr, x.tag_id, x.last_block_10w, x.last_exposure_10w, "
+        "x.last_holding_period_10w, x.last_token_count_10w "
+        "FROM ("
+        "  SELECT f.user_addr, f.tag_id, f.last_block_10w, f.last_exposure_10w, "
+        "         f.last_holding_period_10w, f.last_token_count_10w, "
+        "         ROW_NUMBER() OVER (PARTITION BY f.user_addr, f.tag_id ORDER BY f.block_bucket DESC) AS rn "
+        "  FROM " +
+        table_feature_tensor + " f "
+                               "  JOIN " +
+        std::string(kSqlTmpTouchedUserTags) +
+        " t ON f.user_addr = t.user_addr AND f.tag_id = t.tag_id"
+        ") x WHERE x.rn = 1";
+    auto runtime_seed_result = sink_conn->Query(sql_runtime_seed);
+    assert(runtime_seed_result && !runtime_seed_result->HasError());
+    std::unordered_set<uint32_t> seeded_runtime_users;
+    seeded_runtime_users.reserve(user_event_increments.size() + 1);
+    for (idx_t i = 0; i < runtime_seed_result->RowCount(); ++i) {
+      const std::string user_blob = runtime_seed_result->GetValue(0, i).GetValueUnsafe<std::string>();
+      auto user_id_it = user_blob_to_id.find(user_blob);
+      assert(user_id_it != user_blob_to_id.end());
+      const uint32_t user_id = user_id_it->second;
+      seeded_runtime_users.insert(user_id);
+      const int8_t tag_id = static_cast<int8_t>(runtime_seed_result->GetValue(1, i).GetValue<int32_t>());
+      const int64_t last_block = runtime_seed_result->GetValue(2, i).GetValue<int64_t>();
+      const int64_t last_exposure = runtime_seed_result->GetValue(3, i).GetValue<int64_t>();
+      const int64_t last_holding_exp = runtime_seed_result->GetValue(4, i).GetValue<int64_t>();
+      const int64_t last_token_count = runtime_seed_result->GetValue(5, i).GetValue<int64_t>();
+      assert(last_exposure >= 0);
+      assert(last_token_count >= 0);
+      int64_t exposure_entry_sum = 0;
+      if (last_exposure > 0) {
+        const __int128 computed = static_cast<__int128>(last_block) * last_exposure - last_holding_exp;
+        assert(computed >= 0);
+        exposure_entry_sum = narrow_i64(computed);
+      } else {
+        assert(last_holding_exp == 0);
+      }
+      user_tag_runtime[UserTagRuntimeKey{user_id, tag_id}] =
+          UserTagRuntimeState{last_token_count, last_exposure, exposure_entry_sum};
+    }
+
+    std::vector<uint32_t> runtime_seed_missing_users;
+    runtime_seed_missing_users.reserve(user_event_increments.size());
+    for (const auto &[user_id, _] : user_event_increments) {
+      if (!seeded_runtime_users.count(user_id)) {
+        runtime_seed_missing_users.push_back(user_id);
+      }
+    }
+    if (!runtime_seed_missing_users.empty()) {
+      prepare_tmp_table(kSqlTmpTouchedUsers, kSqlTmpSchemaTouchedUsers);
+      {
+        duckdb::Appender ap(*sink_conn, kSqlTmpTouchedUsers);
+        for (uint32_t user_id : runtime_seed_missing_users) {
+          const std::string &user_blob = user_blob_pool[user_id];
+          ap.BeginRow();
+          append_blob(ap, user_blob);
+          ap.EndRow();
+        }
+        ap.Close();
+      }
+      const std::string sql_from_token_state_with_touched_users =
+          "FROM " + table_token_state + " s " +
+          "JOIN " + std::string(kSqlTmpTouchedUsers) + " t ON s.user_addr = t.user_addr";
+      auto token_state_result = sink_conn->Query(std::string(kSqlSelectTokenStateCols) + sql_from_token_state_with_touched_users);
+      assert(token_state_result && !token_state_result->HasError());
+      for (idx_t i = 0; i < token_state_result->RowCount(); ++i) {
+        const std::string user_blob = token_state_result->GetValue(0, i).GetValueUnsafe<std::string>();
+        auto user_id_it = user_blob_to_id.find(user_blob);
+        if (user_id_it == user_blob_to_id.end()) {
+          continue;
+        }
+        const uint32_t user_id = user_id_it->second;
+        const int32_t cond_idx = token_state_result->GetValue(1, i).GetValue<int32_t>();
+        assert(cond_idx >= 0);
+        assert(static_cast<size_t>(cond_idx) < cond_tag_ids_.size());
+        const int8_t tag_id = cond_tag_ids_[static_cast<size_t>(cond_idx)];
+        TokenState loaded_state;
+        loaded_state.pos = static_cast<double>(token_state_result->GetValue(3, i).GetValue<int64_t>());
+        loaded_state.cost = static_cast<double>(token_state_result->GetValue(4, i).GetValue<int64_t>());
+        loaded_state.lp = static_cast<double>(token_state_result->GetValue(5, i).GetValue<int64_t>());
+        loaded_state.entry_block = static_cast<double>(token_state_result->GetValue(6, i).GetValue<int64_t>());
+        const auto contrib = token_feature_contrib(loaded_state);
+        apply_runtime_contrib_delta(user_id, tag_id, contrib.token_count, contrib.exposure, contrib.exposure_entry);
+        apply_runtime_contrib_delta(user_id, -1, contrib.token_count, contrib.exposure, contrib.exposure_entry);
+      }
+    }
   }
 
   if (!bucket_agg_states.empty()) {
@@ -658,6 +772,14 @@ bool StageSync::process_chunk_locked() const {
 
   std::vector<EventFact> event_facts;
   event_facts.reserve(event_inputs.size());
+  std::unordered_set<TokenKey, TokenKeyHash> dirty_token_keys;
+  dirty_token_keys.reserve(token_states.size());
+  auto token_state_rounded_equal = [&](const TokenState &lhs, const TokenState &rhs) {
+    return round_i64(lhs.pos) == round_i64(rhs.pos) &&
+           round_i64(lhs.cost) == round_i64(rhs.cost) &&
+           round_i64(lhs.lp) == round_i64(rhs.lp) &&
+           round_i64(lhs.entry_block) == round_i64(rhs.entry_block);
+  };
   for (const auto &row : event_inputs) {
     auto realized_total_it = user_realized_totals.find(row.user_id);
     auto unrealized_total_it = user_unrealized_totals.find(row.user_id);
@@ -681,6 +803,7 @@ bool StageSync::process_chunk_locked() const {
       auto token_state_it = token_states.find(key);
       assert(token_state_it != token_states.end());
       TokenState &st = token_state_it->second;
+      const TokenState before_state = st;
       const auto before_contrib = token_feature_contrib(st);
       const double before_unrealized = calc_unrealized_pnl(st);
       const int before_holding = static_cast<int>(before_contrib.token_count);
@@ -698,6 +821,9 @@ bool StageSync::process_chunk_locked() const {
           narrow_i64(static_cast<__int128>(after_contrib.exposure_entry) - before_contrib.exposure_entry);
       apply_runtime_contrib_delta(row.user_id, tag_id, token_count_delta, exposure_delta, exposure_entry_delta);
       apply_runtime_contrib_delta(row.user_id, -1, token_count_delta, exposure_delta, exposure_entry_delta);
+      if (!token_state_rounded_equal(before_state, st)) {
+        dirty_token_keys.insert(key);
+      }
 
       const int64_t row_block = sort_key_to_block(row.sort_key);
       exposure = calc_exposure_1e6(st);
@@ -812,38 +938,40 @@ bool StageSync::process_chunk_locked() const {
 
   // 辅助函数：在降序排列的前缀和历史中查找 bucket <= target 的最大记录
   auto find_prefix_sum_le = [](const std::vector<PrefixSumRecord> &records, int64_t target_bucket) -> const PrefixSumRecord * {
-    // records 按 bucket 降序排列，找第一个 bucket <= target 的记录
-    for (const auto &rec : records) {
-      if (rec.block_bucket <= target_bucket) {
-        return &rec;
-      }
-    }
-    return nullptr;
+    // records 按 bucket 降序排列，二分查找第一个 bucket <= target 的记录
+    const auto it = std::lower_bound(
+        records.begin(), records.end(), target_bucket, [](const PrefixSumRecord &rec, int64_t target) {
+          return rec.block_bucket > target;
+        });
+    return (it == records.end()) ? nullptr : &(*it);
   };
 
   {
-    const auto no_extra = [](const auto &) { return int64_t{0}; };
-    const int64_t event_inputs_bytes = core::mem::estimate_vector_plain(event_inputs);
-    const int64_t user_blob_pool_bytes =
-        core::mem::estimate_vector(user_blob_pool, [](const std::string &s) { return core::mem::estimate_string_extra(s); });
-    const int64_t user_index_bytes =
-        core::mem::estimate_unordered_map(
-            user_blob_to_id, [](const std::string &k) { return core::mem::estimate_string_extra(k); }, no_extra) +
-        core::mem::estimate_unordered_map(user_event_increments, no_extra, no_extra) +
-        core::mem::estimate_unordered_map(user_last_sort_keys, no_extra, no_extra) +
-        core::mem::estimate_unordered_map(user_realized_totals, no_extra, no_extra) +
-        core::mem::estimate_unordered_map(user_unrealized_totals, no_extra, no_extra) +
-        core::mem::estimate_unordered_map(user_active_token_counts, no_extra, no_extra) +
-        core::mem::estimate_unordered_map(user_tag_runtime, no_extra, no_extra) +
-        core::mem::estimate_unordered_map(prefix_sum_history, no_extra, [](const std::vector<PrefixSumRecord> &v) {
-          return static_cast<int64_t>(v.capacity() * sizeof(PrefixSumRecord));
-        });
-    const int64_t token_states_bytes = core::mem::estimate_unordered_map(token_states, no_extra, no_extra);
-    const int64_t bucket_agg_bytes = core::mem::estimate_unordered_map(bucket_agg_states, no_extra, no_extra);
-    const int64_t event_facts_bytes = core::mem::estimate_vector_plain(event_facts);
-    const int64_t total_working_set_bytes =
-        event_inputs_bytes + user_blob_pool_bytes + user_index_bytes + token_states_bytes + bucket_agg_bytes + event_facts_bytes;
-    {
+    static uint64_t memory_probe_counter = 0;
+    ++memory_probe_counter;
+    const bool should_sample_memory = (memory_probe_counter % 16 == 1);
+    if (should_sample_memory) {
+      const auto no_extra = [](const auto &) { return int64_t{0}; };
+      const int64_t event_inputs_bytes = core::mem::estimate_vector_plain(event_inputs);
+      const int64_t user_blob_pool_bytes =
+          core::mem::estimate_vector(user_blob_pool, [](const std::string &s) { return core::mem::estimate_string_extra(s); });
+      const int64_t user_index_bytes =
+          core::mem::estimate_unordered_map(
+              user_blob_to_id, [](const std::string &k) { return core::mem::estimate_string_extra(k); }, no_extra) +
+          core::mem::estimate_unordered_map(user_event_increments, no_extra, no_extra) +
+          core::mem::estimate_unordered_map(user_last_sort_keys, no_extra, no_extra) +
+          core::mem::estimate_unordered_map(user_realized_totals, no_extra, no_extra) +
+          core::mem::estimate_unordered_map(user_unrealized_totals, no_extra, no_extra) +
+          core::mem::estimate_unordered_map(user_active_token_counts, no_extra, no_extra) +
+          core::mem::estimate_unordered_map(user_tag_runtime, no_extra, no_extra) +
+          core::mem::estimate_unordered_map(prefix_sum_history, no_extra, [](const std::vector<PrefixSumRecord> &v) {
+            return static_cast<int64_t>(v.capacity() * sizeof(PrefixSumRecord));
+          });
+      const int64_t token_states_bytes = core::mem::estimate_unordered_map(token_states, no_extra, no_extra);
+      const int64_t bucket_agg_bytes = core::mem::estimate_unordered_map(bucket_agg_states, no_extra, no_extra);
+      const int64_t event_facts_bytes = core::mem::estimate_vector_plain(event_facts);
+      const int64_t total_working_set_bytes =
+          event_inputs_bytes + user_blob_pool_bytes + user_index_bytes + token_states_bytes + bucket_agg_bytes + event_facts_bytes;
       std::lock_guard<std::mutex> lock(sync_mu_);
       runtime_memory_probe_.event_inputs_bytes = event_inputs_bytes;
       runtime_memory_probe_.user_blob_pool_bytes = user_blob_pool_bytes;
@@ -854,6 +982,10 @@ bool StageSync::process_chunk_locked() const {
       runtime_memory_probe_.total_working_set_bytes = total_working_set_bytes;
       runtime_memory_probe_.peak_working_set_bytes =
           std::max(runtime_memory_probe_.peak_working_set_bytes, total_working_set_bytes);
+      runtime_memory_probe_.row_count = static_cast<int64_t>(event_inputs.size());
+      runtime_memory_probe_.max_cond_idx = max_cond_idx;
+    } else {
+      std::lock_guard<std::mutex> lock(sync_mu_);
       runtime_memory_probe_.row_count = static_cast<int64_t>(event_inputs.size());
       runtime_memory_probe_.max_cond_idx = max_cond_idx;
     }
@@ -873,12 +1005,12 @@ bool StageSync::process_chunk_locked() const {
     (void)checked_query("BEGIN");
   }
 
-  if (!token_states.empty()) {
+  if (!dirty_token_keys.empty()) {
     TraceN("s3/wr_duck_tok");
     prepare_tmp_table(kSqlTmpTokenDirty, kSqlTmpSchemaTokenDirty);
     {
       duckdb::Appender ap(*sink_conn, kSqlTmpTokenDirty);
-      for (const auto &[key, _] : token_states) {
+      for (const auto &key : dirty_token_keys) {
         const std::string &user_blob = user_blob_pool[key.user_id];
         ap.BeginRow();
         append_blob(ap, user_blob);
@@ -891,7 +1023,10 @@ bool StageSync::process_chunk_locked() const {
     prepare_tmp_table(kSqlTmpTokenNew, kSqlTmpSchemaTokenNew);
     {
       duckdb::Appender ap(*sink_conn, kSqlTmpTokenNew);
-      for (const auto &[key, st] : token_states) {
+      for (const auto &key : dirty_token_keys) {
+        auto token_state_it = token_states.find(key);
+        assert(token_state_it != token_states.end());
+        const TokenState &st = token_state_it->second;
         if (std::abs(st.pos) <= kPosEpsilon) {
           continue;
         }
@@ -1063,18 +1198,21 @@ bool StageSync::process_chunk_locked() const {
             int64_t realized_sum = 0, realized_sq_sum = 0, realized_count = 0;
           };
           BoundaryPS result{};
-          // 先从 batch 内找
-          for (auto it = pair_outputs.rbegin(); it != pair_outputs.rend(); ++it) {
-            if (it->block_bucket <= target_bucket) {
-              result.token = it->ps_token_avg;
-              result.exposure = it->ps_exposure_avg;
-              result.volume = it->ps_volume;
-              result.holding = it->ps_holding_period_avg;
-              result.realized_sum = it->ps_realized_sum;
-              result.realized_sq_sum = it->ps_realized_sq_sum;
-              result.realized_count = it->ps_realized_count;
-              return result;
-            }
+          // 先从 batch 内找（pair_outputs 按 block_bucket 升序）
+          const auto batch_it = std::upper_bound(
+              pair_outputs.begin(), pair_outputs.end(), target_bucket, [](int64_t target, const CurrentBucketOutput &row) {
+                return target < row.block_bucket;
+              });
+          if (batch_it != pair_outputs.begin()) {
+            const auto &row = *std::prev(batch_it);
+            result.token = row.ps_token_avg;
+            result.exposure = row.ps_exposure_avg;
+            result.volume = row.ps_volume;
+            result.holding = row.ps_holding_period_avg;
+            result.realized_sum = row.ps_realized_sum;
+            result.realized_sq_sum = row.ps_realized_sq_sum;
+            result.realized_count = row.ps_realized_count;
+            return result;
           }
           // 从 DB 历史找
           const PrefixSumRecord *rec = find_prefix_sum_le(ps_history, target_bucket);
