@@ -304,7 +304,7 @@ private:
                                  int64_t block_bucket,
                                  int64_t current_block,
                                  int64_t current_exposure,
-                                 int64_t current_holding_period,
+                                 int64_t current_holding_exp,
                                  int64_t current_token_count);
 
   // Lifecycle / sync pipeline

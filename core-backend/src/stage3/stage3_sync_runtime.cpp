@@ -3,18 +3,17 @@
 #include "stage3_sync.hpp"
 #include <algorithm>
 #include <cmath>
+#include <limits>
 
 namespace stage3 {
 namespace {
 constexpr const char *kSqlTmpTouchedUsers = "tmp_touched_users";
-constexpr const char *kSqlTmpTokenKeys = "tmp_token_keys";
 constexpr const char *kSqlTmpFeatureTensorKeys = "tmp_feature_tensor_keys";
 constexpr const char *kSqlTmpTokenDirty = "tmp_token_dirty";
 constexpr const char *kSqlTmpTokenNew = "tmp_token_new";
 constexpr const char *kSqlTmpFeatureTensorState = "tmp_feature_tensor_state";
 constexpr const char *kSqlTmpUserSummaryDelta = "tmp_user_summary_delta";
 constexpr const char *kSqlTmpSchemaTouchedUsers = "user_addr BLOB";
-constexpr const char *kSqlTmpSchemaTokenKeys = "user_addr BLOB, cond_idx INTEGER, token_idx INTEGER";
 constexpr const char *kSqlTmpSchemaFeatureTensorKeys = "user_addr BLOB, block_bucket BIGINT, tag_id INTEGER";
 constexpr const char *kSqlTmpSchemaTokenDirty = "user_addr BLOB, cond_idx INTEGER, token_idx INTEGER";
 constexpr const char *kSqlTmpSchemaTokenNew =
@@ -27,7 +26,13 @@ constexpr const char *kSqlTmpSchemaFeatureTensorState =
     "volume_sum_10w BIGINT, holding_period_exp_tw_sum_10w BIGINT, "
     "realized_sum_10w BIGINT, realized_sq_sum_10w BIGINT, realized_count_10w BIGINT, realized_kll_10w BLOB, "
     "token_avg_10w BIGINT, exposure_avg_10w BIGINT, volume_10w BIGINT, holding_period_avg_10w BIGINT, "
-    "sharpe_10w DOUBLE, updated_sort_key BIGINT";
+    "sharpe_10w DOUBLE, "
+    "token_avg_100w BIGINT, token_avg_1000w BIGINT, "
+    "exposure_avg_100w BIGINT, exposure_avg_1000w BIGINT, "
+    "volume_avg_100w BIGINT, volume_avg_1000w BIGINT, "
+    "holding_period_avg_100w BIGINT, holding_period_avg_1000w BIGINT, "
+    "sharpe_100w DOUBLE, sharpe_1000w DOUBLE, "
+    "updated_sort_key BIGINT";
 constexpr const char *kSqlTmpSchemaUserSummaryDelta =
     "user_addr BLOB, event_inc BIGINT, last_sort_key BIGINT, rpnl BIGINT, upnl BIGINT, active_tokens BIGINT";
 constexpr const char *kSqlColsTokenState = "user_addr, cond_idx, token_idx, pos, cost, lp, entry_block";
@@ -36,7 +41,13 @@ constexpr const char *kSqlColsFeatureTensorState =
     "last_sort_key_10w, last_block_10w, last_exposure_10w, last_holding_period_10w, last_token_count_10w, "
     "time_weight_sum_10w, token_count_tw_sum_10w, exposure_tw_sum_10w, volume_sum_10w, holding_period_exp_tw_sum_10w, "
     "realized_sum_10w, realized_sq_sum_10w, realized_count_10w, realized_kll_10w, "
-    "token_avg_10w, exposure_avg_10w, volume_10w, holding_period_avg_10w, sharpe_10w, updated_sort_key";
+    "token_avg_10w, exposure_avg_10w, volume_10w, holding_period_avg_10w, sharpe_10w, "
+    "token_avg_100w, token_avg_1000w, "
+    "exposure_avg_100w, exposure_avg_1000w, "
+    "volume_avg_100w, volume_avg_1000w, "
+    "holding_period_avg_100w, holding_period_avg_1000w, "
+    "sharpe_100w, sharpe_1000w, "
+    "updated_sort_key";
 constexpr const char *kSqlColsUserSummaryState =
     "user_addr, total_events, total_realized_pnl, total_unrealized_pnl, active_tokens, last_sort_key";
 constexpr const char *kSqlSetFeatureTensorStateUpsert =
@@ -59,6 +70,16 @@ constexpr const char *kSqlSetFeatureTensorStateUpsert =
     "volume_10w=excluded.volume_10w, "
     "holding_period_avg_10w=excluded.holding_period_avg_10w, "
     "sharpe_10w=excluded.sharpe_10w, "
+    "token_avg_100w=excluded.token_avg_100w, "
+    "token_avg_1000w=excluded.token_avg_1000w, "
+    "exposure_avg_100w=excluded.exposure_avg_100w, "
+    "exposure_avg_1000w=excluded.exposure_avg_1000w, "
+    "volume_avg_100w=excluded.volume_avg_100w, "
+    "volume_avg_1000w=excluded.volume_avg_1000w, "
+    "holding_period_avg_100w=excluded.holding_period_avg_100w, "
+    "holding_period_avg_1000w=excluded.holding_period_avg_1000w, "
+    "sharpe_100w=excluded.sharpe_100w, "
+    "sharpe_1000w=excluded.sharpe_1000w, "
     "updated_sort_key=excluded.updated_sort_key";
 constexpr const char *kSqlOnConflictFeatureTensorState = "ON CONFLICT(user_addr, block_bucket, tag_id) DO UPDATE SET ";
 constexpr const char *kSqlOnConflictUserSummaryState = "ON CONFLICT(user_addr) DO UPDATE SET ";
@@ -72,6 +93,26 @@ constexpr const char *kSqlSelectFeatureTensorStateCols =
     "f.time_weight_sum_10w, f.token_count_tw_sum_10w, f.exposure_tw_sum_10w, f.volume_sum_10w, "
     "f.holding_period_exp_tw_sum_10w, f.realized_sum_10w, f.realized_sq_sum_10w, f.realized_count_10w, "
     "f.realized_kll_10w ";
+
+int64_t narrow_i64(__int128 v) {
+  assert(v >= static_cast<__int128>(std::numeric_limits<int64_t>::min()));
+  assert(v <= static_cast<__int128>(std::numeric_limits<int64_t>::max()));
+  return static_cast<int64_t>(v);
+}
+
+double calc_sharpe_from_moments(int64_t realized_sum, int64_t realized_sq_sum, int64_t realized_count) {
+  if (realized_count <= 1) {
+    return 0.0;
+  }
+  const double n = static_cast<double>(realized_count);
+  const double mean = static_cast<double>(realized_sum) / n;
+  const double mean_sq = static_cast<double>(realized_sq_sum) / n;
+  const double variance = mean_sq - mean * mean;
+  if (variance <= 0.0) {
+    return 0.0;
+  }
+  return mean / std::sqrt(variance);
+}
 } // namespace
 
 int64_t StageSync::round_i64(double v) { return static_cast<int64_t>(std::llround(v)); }
@@ -454,53 +495,105 @@ bool StageSync::process_chunk_locked() const {
     }
   }
 
-  if (!token_states.empty()) {
-    prepare_tmp_table(kSqlTmpTokenKeys, kSqlTmpSchemaTokenKeys);
-    {
-      duckdb::Appender ap(*sink_conn, kSqlTmpTokenKeys);
-      for (const auto &[key, _] : token_states) {
-        const std::string &user_blob = user_blob_pool[key.user_id];
-        ap.BeginRow();
-        append_blob(ap, user_blob);
-        ap.Append(key.cond_idx);
-        ap.Append(key.token_idx);
-        ap.EndRow();
-      }
-      ap.Close();
+  struct UserTagRuntimeKey {
+    uint32_t user_id = 0;
+    int8_t tag_id = 13;
+    bool operator==(const UserTagRuntimeKey &o) const {
+      return user_id == o.user_id && tag_id == o.tag_id;
     }
-    const std::string sql_from_token_state_with_token_keys =
+  };
+  struct UserTagRuntimeKeyHash {
+    size_t operator()(const UserTagRuntimeKey &k) const {
+      size_t h = std::hash<uint32_t>()(k.user_id);
+      h ^= std::hash<int32_t>()(static_cast<int32_t>(k.tag_id)) + 0x9e3779b97f4a7c15ULL + (h << 6) + (h >> 2);
+      return h;
+    }
+  };
+  struct UserTagRuntimeState {
+    int64_t token_count = 0;
+    int64_t exposure = 0;
+    int64_t exposure_entry_sum = 0;
+  };
+  std::unordered_map<UserTagRuntimeKey, UserTagRuntimeState, UserTagRuntimeKeyHash> user_tag_runtime;
+  user_tag_runtime.reserve(static_cast<size_t>(event_inputs.size() / 2 + 1));
+
+  auto token_feature_contrib = [&](const TokenState &st) {
+    struct Contrib {
+      int64_t token_count = 0;
+      int64_t exposure = 0;
+      int64_t exposure_entry = 0;
+    };
+    Contrib c;
+    c.token_count = is_effective_holding(st.pos) ? 1 : 0;
+    c.exposure = calc_exposure_1e6(st);
+    const int64_t entry_block = round_i64(st.entry_block);
+    c.exposure_entry = (c.exposure > 0) ? narrow_i64(static_cast<__int128>(c.exposure) * entry_block) : 0;
+    return c;
+  };
+
+  auto apply_runtime_contrib_delta = [&](uint32_t user_id, int8_t tag_id, int64_t token_delta,
+                                         int64_t exposure_delta, int64_t exposure_entry_delta) {
+    UserTagRuntimeKey key{user_id, tag_id};
+    auto [it, _] = user_tag_runtime.try_emplace(key, UserTagRuntimeState{});
+    UserTagRuntimeState &state = it->second;
+    state.token_count = narrow_i64(static_cast<__int128>(state.token_count) + token_delta);
+    state.exposure = narrow_i64(static_cast<__int128>(state.exposure) + exposure_delta);
+    state.exposure_entry_sum = narrow_i64(static_cast<__int128>(state.exposure_entry_sum) + exposure_entry_delta);
+    assert(state.token_count >= 0);
+    assert(state.exposure >= 0);
+    if (state.exposure == 0) {
+      assert(state.exposure_entry_sum == 0);
+    }
+  };
+
+  if (!user_event_increments.empty()) {
+    const std::string sql_from_token_state_with_touched_users =
         "FROM " + table_token_state + " s " +
-        "JOIN " + std::string(kSqlTmpTokenKeys) +
-        " k ON s.user_addr = k.user_addr AND s.cond_idx = k.cond_idx AND s.token_idx = k.token_idx";
-    auto token_state_result = sink_conn->Query(std::string(kSqlSelectTokenStateCols) + sql_from_token_state_with_token_keys);
+        "JOIN " + std::string(kSqlTmpTouchedUsers) + " t ON s.user_addr = t.user_addr";
+    auto token_state_result = sink_conn->Query(std::string(kSqlSelectTokenStateCols) + sql_from_token_state_with_touched_users);
     assert(token_state_result && !token_state_result->HasError());
     for (idx_t i = 0; i < token_state_result->RowCount(); ++i) {
       const std::string user_blob = token_state_result->GetValue(0, i).GetValueUnsafe<std::string>();
       auto uid_it = user_blob_to_id.find(user_blob);
       assert(uid_it != user_blob_to_id.end());
-      TokenKey key{uid_it->second,
-                   token_state_result->GetValue(1, i).GetValue<int32_t>(),
-                   token_state_result->GetValue(2, i).GetValue<int32_t>()};
+      const uint32_t user_id = uid_it->second;
+      const int32_t cond_idx = token_state_result->GetValue(1, i).GetValue<int32_t>();
+      const int32_t token_idx = token_state_result->GetValue(2, i).GetValue<int32_t>();
+      assert(cond_idx >= 0);
+      assert(static_cast<size_t>(cond_idx) < cond_tag_ids_.size());
+      const int8_t tag_id = cond_tag_ids_[static_cast<size_t>(cond_idx)];
+
+      TokenState loaded_state;
+      loaded_state.pos = static_cast<double>(token_state_result->GetValue(3, i).GetValue<int64_t>());
+      loaded_state.cost = static_cast<double>(token_state_result->GetValue(4, i).GetValue<int64_t>());
+      loaded_state.lp = static_cast<double>(token_state_result->GetValue(5, i).GetValue<int64_t>());
+      loaded_state.entry_block = static_cast<double>(token_state_result->GetValue(6, i).GetValue<int64_t>());
+
+      const auto contrib = token_feature_contrib(loaded_state);
+      apply_runtime_contrib_delta(user_id, tag_id, contrib.token_count, contrib.exposure, contrib.exposure_entry);
+      apply_runtime_contrib_delta(user_id, -1, contrib.token_count, contrib.exposure, contrib.exposure_entry);
+
+      TokenKey key{user_id, cond_idx, token_idx};
       auto it = token_states.find(key);
-      assert(it != token_states.end());
+      if (it == token_states.end()) {
+        continue;
+      }
       TokenState &st = it->second;
-      st.pos = static_cast<double>(token_state_result->GetValue(3, i).GetValue<int64_t>());
-      st.cost = static_cast<double>(token_state_result->GetValue(4, i).GetValue<int64_t>());
-      st.lp = static_cast<double>(token_state_result->GetValue(5, i).GetValue<int64_t>());
-      st.entry_block = static_cast<double>(token_state_result->GetValue(6, i).GetValue<int64_t>());
+      st = loaded_state;
     }
   }
 
   std::unordered_map<AggKey, BucketAggState, AggKeyHash> bucket_agg_states;
-  bucket_agg_states.reserve(static_cast<size_t>(event_inputs.size() / 4 + 1));
+  bucket_agg_states.reserve(static_cast<size_t>(event_inputs.size() / 2 + 1));
   for (const auto &row : event_inputs) {
     if (row.cond_idx < 0) {
       continue;
     }
     assert(static_cast<size_t>(row.cond_idx) < cond_tag_ids_.size());
     const int8_t tag_id = cond_tag_ids_[static_cast<size_t>(row.cond_idx)];
-    AggKey key{row.user_id, sort_key_to_block_bucket(row.sort_key), tag_id};
-    bucket_agg_states.try_emplace(key, BucketAggState{});
+    const int64_t block_bucket = sort_key_to_block_bucket(row.sort_key);
+    bucket_agg_states.try_emplace(AggKey{row.user_id, block_bucket, tag_id}, BucketAggState{});
+    bucket_agg_states.try_emplace(AggKey{row.user_id, block_bucket, -1}, BucketAggState{});
   }
 
   if (!bucket_agg_states.empty()) {
@@ -539,13 +632,13 @@ bool StageSync::process_chunk_locked() const {
       agg.last_sort_key = feature_state_result->GetValue(3, i).GetValue<int64_t>();
       agg.last_block = feature_state_result->GetValue(4, i).GetValue<int64_t>();
       agg.last_exposure = feature_state_result->GetValue(5, i).GetValue<int64_t>();
-      agg.last_holding_period = feature_state_result->GetValue(6, i).GetValue<int64_t>();
+      agg.last_holding_exp = feature_state_result->GetValue(6, i).GetValue<int64_t>();
       agg.last_token_count = feature_state_result->GetValue(7, i).GetValue<int64_t>();
       agg.time_weight_sum = feature_state_result->GetValue(8, i).GetValue<int64_t>();
       agg.token_count_tw_sum = feature_state_result->GetValue(9, i).GetValue<int64_t>();
       agg.exposure_tw_sum = feature_state_result->GetValue(10, i).GetValue<int64_t>();
       agg.volume_sum = feature_state_result->GetValue(11, i).GetValue<int64_t>();
-      agg.holding_period_tw_sum = feature_state_result->GetValue(12, i).GetValue<int64_t>();
+      agg.holding_period_exp_tw_sum = feature_state_result->GetValue(12, i).GetValue<int64_t>();
       agg.realized_sum = feature_state_result->GetValue(13, i).GetValue<int64_t>();
       agg.realized_sq_sum = feature_state_result->GetValue(14, i).GetValue<int64_t>();
       agg.event_count = feature_state_result->GetValue(15, i).GetValue<int64_t>();
@@ -555,7 +648,7 @@ bool StageSync::process_chunk_locked() const {
           agg.realized_kll = KLLcache::deserialize(reinterpret_cast<const uint8_t *>(blob.data()), blob.size());
         }
       }
-      agg.has_tail = (agg.event_count > 0);
+      agg.has_tail = (agg.time_weight_sum > 0);
     }
   }
 
@@ -584,25 +677,54 @@ bool StageSync::process_chunk_locked() const {
       auto it = token_states.find(key);
       assert(it != token_states.end());
       TokenState &st = it->second;
+      const auto before_contrib = token_feature_contrib(st);
       const double before_unrealized = calc_unrealized_pnl(st);
-      const int before_holding = is_effective_holding(st.pos) ? 1 : 0;
+      const int before_holding = static_cast<int>(before_contrib.token_count);
       realized_delta = apply_event_input(row, st);
+      const auto after_contrib = token_feature_contrib(st);
       const double after_unrealized = calc_unrealized_pnl(st);
-      const int after_holding = is_effective_holding(st.pos) ? 1 : 0;
+      const int after_holding = static_cast<int>(after_contrib.token_count);
       unrealized_it->second += (after_unrealized - before_unrealized);
       active_it->second += (after_holding - before_holding);
       assert(active_it->second >= 0);
 
+      const int64_t token_count_delta = after_contrib.token_count - before_contrib.token_count;
+      const int64_t exposure_delta = after_contrib.exposure - before_contrib.exposure;
+      const int64_t exposure_entry_delta =
+          narrow_i64(static_cast<__int128>(after_contrib.exposure_entry) - before_contrib.exposure_entry);
+      apply_runtime_contrib_delta(row.user_id, tag_id, token_count_delta, exposure_delta, exposure_entry_delta);
+      apply_runtime_contrib_delta(row.user_id, -1, token_count_delta, exposure_delta, exposure_entry_delta);
+
       const int64_t row_block = sort_key_to_block(row.sort_key);
       exposure = calc_exposure_1e6(st);
       holding_period = calc_holding_period_blocks(row_block, st);
+      const int64_t block_bucket = sort_key_to_block_bucket(row.sort_key);
 
-      AggKey agg_key{row.user_id, sort_key_to_block_bucket(row.sort_key), tag_id};
-      auto agg_it = bucket_agg_states.find(agg_key);
-      assert(agg_it != bucket_agg_states.end());
-      BucketAggState &agg = agg_it->second;
-      update_tail_window(agg, agg_key.block_bucket, row_block, exposure, holding_period, active_it->second);
-      feature_comp::accumulate_event_delta(agg, realized_delta, volume, row.sort_key);
+      auto apply_feature_bucket = [&](int8_t agg_tag_id) {
+        UserTagRuntimeKey rt_key{row.user_id, agg_tag_id};
+        auto [rt_it, _] = user_tag_runtime.try_emplace(rt_key, UserTagRuntimeState{});
+        const UserTagRuntimeState &rt = rt_it->second;
+        assert(rt.token_count >= 0);
+        assert(rt.exposure >= 0);
+        int64_t holding_exp = 0;
+        if (rt.exposure > 0) {
+          const __int128 computed = static_cast<__int128>(row_block) * rt.exposure - rt.exposure_entry_sum;
+          assert(computed >= 0);
+          holding_exp = narrow_i64(computed);
+        } else {
+          assert(rt.exposure_entry_sum == 0);
+        }
+
+        AggKey agg_key{row.user_id, block_bucket, agg_tag_id};
+        auto agg_it = bucket_agg_states.find(agg_key);
+        assert(agg_it != bucket_agg_states.end());
+        BucketAggState &agg = agg_it->second;
+        update_tail_window(agg, agg_key.block_bucket, row_block, rt.exposure, holding_exp, rt.token_count);
+        feature_comp::accumulate_event_delta(agg, realized_delta, volume, row.sort_key);
+      };
+
+      apply_feature_bucket(tag_id);
+      apply_feature_bucket(-1);
     }
     double &realized_total = realized_it->second;
     double &unrealized_total = unrealized_it->second;
@@ -626,13 +748,102 @@ bool StageSync::process_chunk_locked() const {
   }
   assert(event_facts.size() == event_inputs.size());
 
+  struct WindowHistorySums {
+    int64_t token_sum_100 = 0;
+    int64_t exposure_sum_100 = 0;
+    int64_t volume_sum_100 = 0;
+    int64_t holding_period_sum_100 = 0;
+    int64_t realized_sum_100 = 0;
+    int64_t realized_sq_sum_100 = 0;
+    int64_t realized_count_100 = 0;
+    int64_t token_sum_1000 = 0;
+    int64_t exposure_sum_1000 = 0;
+    int64_t volume_sum_1000 = 0;
+    int64_t holding_period_sum_1000 = 0;
+    int64_t realized_sum_1000 = 0;
+    int64_t realized_sq_sum_1000 = 0;
+    int64_t realized_count_1000 = 0;
+  };
+  std::unordered_map<AggKey, WindowHistorySums, AggKeyHash> window_history_sums;
+  window_history_sums.reserve(bucket_agg_states.size());
+  if (!bucket_agg_states.empty()) {
+    const std::string sql_window_history =
+        "SELECT k.user_addr, k.block_bucket, k.tag_id, "
+        "f.block_bucket, f.token_avg_10w, f.exposure_avg_10w, f.volume_10w, f.holding_period_avg_10w, "
+        "f.realized_sum_10w, f.realized_sq_sum_10w, f.realized_count_10w "
+        "FROM " +
+        std::string(kSqlTmpFeatureTensorKeys) + " k "
+                                                "JOIN " +
+        table_feature_tensor + " f "
+                               "ON f.user_addr = k.user_addr AND f.tag_id = k.tag_id "
+                               "AND f.block_bucket < k.block_bucket "
+                               "AND f.block_bucket >= k.block_bucket - 99 "
+                               "AND NOT EXISTS ("
+                               "  SELECT 1 FROM " +
+        std::string(kSqlTmpFeatureTensorKeys) + " cur "
+                                                "  WHERE cur.user_addr = k.user_addr AND cur.tag_id = k.tag_id AND cur.block_bucket = f.block_bucket"
+                                                ")";
+    auto window_history_result = sink_conn->Query(sql_window_history);
+    assert(window_history_result && !window_history_result->HasError());
+    for (idx_t i = 0; i < window_history_result->RowCount(); ++i) {
+      const std::string user_blob = window_history_result->GetValue(0, i).GetValueUnsafe<std::string>();
+      auto uid_it = user_blob_to_id.find(user_blob);
+      assert(uid_it != user_blob_to_id.end());
+      const int64_t target_bucket = window_history_result->GetValue(1, i).GetValue<int64_t>();
+      const int8_t tag_id = static_cast<int8_t>(window_history_result->GetValue(2, i).GetValue<int32_t>());
+      const int64_t hist_bucket = window_history_result->GetValue(3, i).GetValue<int64_t>();
+      const int64_t distance = target_bucket - hist_bucket;
+      assert(distance >= 1 && distance <= 99);
+
+      AggKey key{uid_it->second, target_bucket, tag_id};
+      auto [it, _] = window_history_sums.try_emplace(key, WindowHistorySums{});
+      WindowHistorySums &hist = it->second;
+
+      const int64_t token_avg_10w = window_history_result->GetValue(4, i).GetValue<int64_t>();
+      const int64_t exposure_avg_10w = window_history_result->GetValue(5, i).GetValue<int64_t>();
+      const int64_t volume_10w = window_history_result->GetValue(6, i).GetValue<int64_t>();
+      const int64_t holding_period_avg_10w = window_history_result->GetValue(7, i).GetValue<int64_t>();
+      const int64_t realized_sum_10w = window_history_result->GetValue(8, i).GetValue<int64_t>();
+      const int64_t realized_sq_sum_10w = window_history_result->GetValue(9, i).GetValue<int64_t>();
+      const int64_t realized_count_10w = window_history_result->GetValue(10, i).GetValue<int64_t>();
+
+      hist.token_sum_1000 = narrow_i64(static_cast<__int128>(hist.token_sum_1000) + token_avg_10w);
+      hist.exposure_sum_1000 = narrow_i64(static_cast<__int128>(hist.exposure_sum_1000) + exposure_avg_10w);
+      hist.volume_sum_1000 = narrow_i64(static_cast<__int128>(hist.volume_sum_1000) + volume_10w);
+      hist.holding_period_sum_1000 =
+          narrow_i64(static_cast<__int128>(hist.holding_period_sum_1000) + holding_period_avg_10w);
+      hist.realized_sum_1000 = narrow_i64(static_cast<__int128>(hist.realized_sum_1000) + realized_sum_10w);
+      hist.realized_sq_sum_1000 = narrow_i64(static_cast<__int128>(hist.realized_sq_sum_1000) + realized_sq_sum_10w);
+      hist.realized_count_1000 = narrow_i64(static_cast<__int128>(hist.realized_count_1000) + realized_count_10w);
+
+      if (distance <= 9) {
+        hist.token_sum_100 = narrow_i64(static_cast<__int128>(hist.token_sum_100) + token_avg_10w);
+        hist.exposure_sum_100 = narrow_i64(static_cast<__int128>(hist.exposure_sum_100) + exposure_avg_10w);
+        hist.volume_sum_100 = narrow_i64(static_cast<__int128>(hist.volume_sum_100) + volume_10w);
+        hist.holding_period_sum_100 =
+            narrow_i64(static_cast<__int128>(hist.holding_period_sum_100) + holding_period_avg_10w);
+        hist.realized_sum_100 = narrow_i64(static_cast<__int128>(hist.realized_sum_100) + realized_sum_10w);
+        hist.realized_sq_sum_100 = narrow_i64(static_cast<__int128>(hist.realized_sq_sum_100) + realized_sq_sum_10w);
+        hist.realized_count_100 = narrow_i64(static_cast<__int128>(hist.realized_count_100) + realized_count_10w);
+      }
+    }
+  }
+
   {
     const auto no_extra = [](const auto &) { return int64_t{0}; };
     const int64_t event_inputs_bytes = core::mem::estimate_vector_plain(event_inputs);
     const int64_t user_blob_pool_bytes =
         core::mem::estimate_vector(user_blob_pool, [](const std::string &s) { return core::mem::estimate_string_extra(s); });
     const int64_t user_index_bytes =
-        core::mem::estimate_unordered_map(user_blob_to_id, [](const std::string &k) { return core::mem::estimate_string_extra(k); }, no_extra) + core::mem::estimate_unordered_map(user_event_increments, no_extra, no_extra) + core::mem::estimate_unordered_map(user_last_sort_keys, no_extra, no_extra) + core::mem::estimate_unordered_map(user_realized_totals, no_extra, no_extra) + core::mem::estimate_unordered_map(user_unrealized_totals, no_extra, no_extra) + core::mem::estimate_unordered_map(user_active_token_counts, no_extra, no_extra);
+        core::mem::estimate_unordered_map(
+            user_blob_to_id, [](const std::string &k) { return core::mem::estimate_string_extra(k); }, no_extra) +
+        core::mem::estimate_unordered_map(user_event_increments, no_extra, no_extra) +
+        core::mem::estimate_unordered_map(user_last_sort_keys, no_extra, no_extra) +
+        core::mem::estimate_unordered_map(user_realized_totals, no_extra, no_extra) +
+        core::mem::estimate_unordered_map(user_unrealized_totals, no_extra, no_extra) +
+        core::mem::estimate_unordered_map(user_active_token_counts, no_extra, no_extra) +
+        core::mem::estimate_unordered_map(user_tag_runtime, no_extra, no_extra) +
+        core::mem::estimate_unordered_map(window_history_sums, no_extra, no_extra);
     const int64_t token_states_bytes = core::mem::estimate_unordered_map(token_states, no_extra, no_extra);
     const int64_t bucket_agg_bytes = core::mem::estimate_unordered_map(bucket_agg_states, no_extra, no_extra);
     const int64_t event_facts_bytes = core::mem::estimate_vector_plain(event_facts);
@@ -748,8 +959,39 @@ bool StageSync::process_chunk_locked() const {
     TraceN("s3/wr_duck_feat");
     prepare_tmp_table(kSqlTmpFeatureTensorState, kSqlTmpSchemaFeatureTensorState);
     {
+      struct CurrentBucketOutput {
+        int64_t block_bucket = 0;
+        int64_t token_avg_10w = 0;
+        int64_t exposure_avg_10w = 0;
+        int64_t volume_10w = 0;
+        int64_t holding_period_avg_10w = 0;
+        int64_t realized_sum_10w = 0;
+        int64_t realized_sq_sum_10w = 0;
+        int64_t realized_count_10w = 0;
+      };
+      std::vector<AggKey> sorted_feature_keys;
+      sorted_feature_keys.reserve(bucket_agg_states.size());
+      for (const auto &[key, _] : bucket_agg_states) {
+        sorted_feature_keys.push_back(key);
+      }
+      std::sort(sorted_feature_keys.begin(), sorted_feature_keys.end(), [](const AggKey &a, const AggKey &b) {
+        if (a.user_id != b.user_id) {
+          return a.user_id < b.user_id;
+        }
+        if (a.tag_id != b.tag_id) {
+          return a.tag_id < b.tag_id;
+        }
+        return a.block_bucket < b.block_bucket;
+      });
+      std::unordered_map<UserTagRuntimeKey, std::vector<CurrentBucketOutput>, UserTagRuntimeKeyHash>
+          current_outputs_by_pair;
+      current_outputs_by_pair.reserve(sorted_feature_keys.size());
+
       duckdb::Appender ap(*sink_conn, kSqlTmpFeatureTensorState);
-      for (const auto &[key, agg] : bucket_agg_states) {
+      for (const AggKey &key : sorted_feature_keys) {
+        auto agg_it_raw = bucket_agg_states.find(key);
+        assert(agg_it_raw != bucket_agg_states.end());
+        const BucketAggState &agg = agg_it_raw->second;
         const std::string &user_blob = user_blob_pool[key.user_id];
         const std::vector<uint8_t> realized_kll_blob = agg.realized_kll.serialize();
         const int64_t tw = agg.time_weight_sum;
@@ -758,18 +1000,117 @@ bool StageSync::process_chunk_locked() const {
         const int64_t exposure_avg_10w =
             (tw > 0) ? round_i64(static_cast<double>(agg.exposure_tw_sum) / static_cast<double>(tw)) : 0;
         const int64_t holding_period_avg_10w =
-            (tw > 0) ? round_i64(static_cast<double>(agg.holding_period_tw_sum) / static_cast<double>(tw)) : 0;
+            (agg.exposure_tw_sum > 0)
+                ? round_i64(static_cast<double>(agg.holding_period_exp_tw_sum) / static_cast<double>(agg.exposure_tw_sum))
+                : 0;
         const int64_t volume_10w = agg.volume_sum;
-        double sharpe_10w = 0.0;
-        if (agg.event_count > 1) {
-          const double n = static_cast<double>(agg.event_count);
-          const double mean = static_cast<double>(agg.realized_sum) / n;
-          const double mean_sq = static_cast<double>(agg.realized_sq_sum) / n;
-          const double variance = mean_sq - mean * mean;
-          if (variance > 0.0) {
-            sharpe_10w = mean / std::sqrt(variance);
+        const double sharpe_10w = calc_sharpe_from_moments(agg.realized_sum, agg.realized_sq_sum, agg.event_count);
+
+        const WindowHistorySums empty_hist{};
+        const auto hist_it = window_history_sums.find(key);
+        const WindowHistorySums &hist = (hist_it != window_history_sums.end()) ? hist_it->second : empty_hist;
+        UserTagRuntimeKey pair_key{key.user_id, key.tag_id};
+        auto [pair_it, _] = current_outputs_by_pair.try_emplace(pair_key, std::vector<CurrentBucketOutput>{});
+        std::vector<CurrentBucketOutput> &pair_outputs = pair_it->second;
+
+        int64_t token_sum_100_hist = hist.token_sum_100;
+        int64_t exposure_sum_100_hist = hist.exposure_sum_100;
+        int64_t volume_sum_100_hist = hist.volume_sum_100;
+        int64_t holding_sum_100_hist = hist.holding_period_sum_100;
+        int64_t realized_sum_100_hist = hist.realized_sum_100;
+        int64_t realized_sq_sum_100_hist = hist.realized_sq_sum_100;
+        int64_t realized_count_100_hist = hist.realized_count_100;
+        int64_t token_sum_1000_hist = hist.token_sum_1000;
+        int64_t exposure_sum_1000_hist = hist.exposure_sum_1000;
+        int64_t volume_sum_1000_hist = hist.volume_sum_1000;
+        int64_t holding_sum_1000_hist = hist.holding_period_sum_1000;
+        int64_t realized_sum_1000_hist = hist.realized_sum_1000;
+        int64_t realized_sq_sum_1000_hist = hist.realized_sq_sum_1000;
+        int64_t realized_count_1000_hist = hist.realized_count_1000;
+        for (const CurrentBucketOutput &prev_out : pair_outputs) {
+          const int64_t distance = key.block_bucket - prev_out.block_bucket;
+          assert(distance >= 1);
+          if (distance <= 9) {
+            token_sum_100_hist = narrow_i64(static_cast<__int128>(token_sum_100_hist) + prev_out.token_avg_10w);
+            exposure_sum_100_hist = narrow_i64(static_cast<__int128>(exposure_sum_100_hist) + prev_out.exposure_avg_10w);
+            volume_sum_100_hist = narrow_i64(static_cast<__int128>(volume_sum_100_hist) + prev_out.volume_10w);
+            holding_sum_100_hist =
+                narrow_i64(static_cast<__int128>(holding_sum_100_hist) + prev_out.holding_period_avg_10w);
+            realized_sum_100_hist =
+                narrow_i64(static_cast<__int128>(realized_sum_100_hist) + prev_out.realized_sum_10w);
+            realized_sq_sum_100_hist =
+                narrow_i64(static_cast<__int128>(realized_sq_sum_100_hist) + prev_out.realized_sq_sum_10w);
+            realized_count_100_hist =
+                narrow_i64(static_cast<__int128>(realized_count_100_hist) + prev_out.realized_count_10w);
+          }
+          if (distance <= 99) {
+            token_sum_1000_hist = narrow_i64(static_cast<__int128>(token_sum_1000_hist) + prev_out.token_avg_10w);
+            exposure_sum_1000_hist =
+                narrow_i64(static_cast<__int128>(exposure_sum_1000_hist) + prev_out.exposure_avg_10w);
+            volume_sum_1000_hist = narrow_i64(static_cast<__int128>(volume_sum_1000_hist) + prev_out.volume_10w);
+            holding_sum_1000_hist =
+                narrow_i64(static_cast<__int128>(holding_sum_1000_hist) + prev_out.holding_period_avg_10w);
+            realized_sum_1000_hist =
+                narrow_i64(static_cast<__int128>(realized_sum_1000_hist) + prev_out.realized_sum_10w);
+            realized_sq_sum_1000_hist =
+                narrow_i64(static_cast<__int128>(realized_sq_sum_1000_hist) + prev_out.realized_sq_sum_10w);
+            realized_count_1000_hist =
+                narrow_i64(static_cast<__int128>(realized_count_1000_hist) + prev_out.realized_count_10w);
           }
         }
+
+        const int64_t denom_100 = std::min<int64_t>(10, key.block_bucket + 1);
+        const int64_t denom_1000 = std::min<int64_t>(100, key.block_bucket + 1);
+
+        const int64_t token_sum_100 = narrow_i64(static_cast<__int128>(token_sum_100_hist) + token_avg_10w);
+        const int64_t token_sum_1000 = narrow_i64(static_cast<__int128>(token_sum_1000_hist) + token_avg_10w);
+        const int64_t exposure_sum_100 = narrow_i64(static_cast<__int128>(exposure_sum_100_hist) + exposure_avg_10w);
+        const int64_t exposure_sum_1000 =
+            narrow_i64(static_cast<__int128>(exposure_sum_1000_hist) + exposure_avg_10w);
+        const int64_t volume_sum_100 = narrow_i64(static_cast<__int128>(volume_sum_100_hist) + volume_10w);
+        const int64_t volume_sum_1000 = narrow_i64(static_cast<__int128>(volume_sum_1000_hist) + volume_10w);
+        const int64_t holding_period_sum_100 =
+            narrow_i64(static_cast<__int128>(holding_sum_100_hist) + holding_period_avg_10w);
+        const int64_t holding_period_sum_1000 =
+            narrow_i64(static_cast<__int128>(holding_sum_1000_hist) + holding_period_avg_10w);
+
+        const int64_t token_avg_100w =
+            (denom_100 > 0) ? round_i64(static_cast<double>(token_sum_100) / static_cast<double>(denom_100)) : 0;
+        const int64_t token_avg_1000w =
+            (denom_1000 > 0) ? round_i64(static_cast<double>(token_sum_1000) / static_cast<double>(denom_1000)) : 0;
+        const int64_t exposure_avg_100w =
+            (denom_100 > 0) ? round_i64(static_cast<double>(exposure_sum_100) / static_cast<double>(denom_100)) : 0;
+        const int64_t exposure_avg_1000w =
+            (denom_1000 > 0) ? round_i64(static_cast<double>(exposure_sum_1000) / static_cast<double>(denom_1000))
+                             : 0;
+        const int64_t volume_avg_100w =
+            (denom_100 > 0) ? round_i64(static_cast<double>(volume_sum_100) / static_cast<double>(denom_100)) : 0;
+        const int64_t volume_avg_1000w =
+            (denom_1000 > 0) ? round_i64(static_cast<double>(volume_sum_1000) / static_cast<double>(denom_1000)) : 0;
+        const int64_t holding_period_avg_100w =
+            (denom_100 > 0)
+                ? round_i64(static_cast<double>(holding_period_sum_100) / static_cast<double>(denom_100))
+                : 0;
+        const int64_t holding_period_avg_1000w =
+            (denom_1000 > 0)
+                ? round_i64(static_cast<double>(holding_period_sum_1000) / static_cast<double>(denom_1000))
+                : 0;
+
+        const int64_t realized_sum_100 = narrow_i64(static_cast<__int128>(realized_sum_100_hist) + agg.realized_sum);
+        const int64_t realized_sq_sum_100 =
+            narrow_i64(static_cast<__int128>(realized_sq_sum_100_hist) + agg.realized_sq_sum);
+        const int64_t realized_count_100 =
+            narrow_i64(static_cast<__int128>(realized_count_100_hist) + agg.event_count);
+        const int64_t realized_sum_1000 =
+            narrow_i64(static_cast<__int128>(realized_sum_1000_hist) + agg.realized_sum);
+        const int64_t realized_sq_sum_1000 =
+            narrow_i64(static_cast<__int128>(realized_sq_sum_1000_hist) + agg.realized_sq_sum);
+        const int64_t realized_count_1000 =
+            narrow_i64(static_cast<__int128>(realized_count_1000_hist) + agg.event_count);
+
+        const double sharpe_100w = calc_sharpe_from_moments(realized_sum_100, realized_sq_sum_100, realized_count_100);
+        const double sharpe_1000w =
+            calc_sharpe_from_moments(realized_sum_1000, realized_sq_sum_1000, realized_count_1000);
         ap.BeginRow();
         append_blob(ap, user_blob);
         ap.Append(key.block_bucket);
@@ -777,13 +1118,13 @@ bool StageSync::process_chunk_locked() const {
         ap.Append(agg.last_sort_key);
         ap.Append(agg.last_block);
         ap.Append(agg.last_exposure);
-        ap.Append(agg.last_holding_period);
+        ap.Append(agg.last_holding_exp);
         ap.Append(agg.last_token_count);
         ap.Append(agg.time_weight_sum);
         ap.Append(agg.token_count_tw_sum);
         ap.Append(agg.exposure_tw_sum);
         ap.Append(agg.volume_sum);
-        ap.Append(agg.holding_period_tw_sum);
+        ap.Append(agg.holding_period_exp_tw_sum);
         ap.Append(agg.realized_sum);
         ap.Append(agg.realized_sq_sum);
         ap.Append(agg.event_count);
@@ -795,8 +1136,29 @@ bool StageSync::process_chunk_locked() const {
         ap.Append(volume_10w);
         ap.Append(holding_period_avg_10w);
         ap.Append(sharpe_10w);
+        ap.Append(token_avg_100w);
+        ap.Append(token_avg_1000w);
+        ap.Append(exposure_avg_100w);
+        ap.Append(exposure_avg_1000w);
+        ap.Append(volume_avg_100w);
+        ap.Append(volume_avg_1000w);
+        ap.Append(holding_period_avg_100w);
+        ap.Append(holding_period_avg_1000w);
+        ap.Append(sharpe_100w);
+        ap.Append(sharpe_1000w);
         ap.Append(agg.last_sort_key);
         ap.EndRow();
+
+        pair_outputs.push_back(CurrentBucketOutput{
+            key.block_bucket,
+            token_avg_10w,
+            exposure_avg_10w,
+            volume_10w,
+            holding_period_avg_10w,
+            agg.realized_sum,
+            agg.realized_sq_sum,
+            agg.event_count,
+        });
       }
       ap.Close();
     }

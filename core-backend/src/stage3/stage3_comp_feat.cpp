@@ -8,6 +8,23 @@
 #include <vector>
 
 namespace stage3::feature_comp {
+namespace {
+
+int64_t narrow_i64(__int128 v) {
+  assert(v >= static_cast<__int128>(std::numeric_limits<int64_t>::min()));
+  assert(v <= static_cast<__int128>(std::numeric_limits<int64_t>::max()));
+  return static_cast<int64_t>(v);
+}
+
+__int128 linear_series_i128(int64_t base, int64_t slope, int64_t len) {
+  assert(base >= 0);
+  assert(slope >= 0);
+  assert(len >= 0);
+  const __int128 L = static_cast<__int128>(len);
+  return static_cast<__int128>(base) * L + static_cast<__int128>(slope) * L * (L - 1) / 2;
+}
+
+} // namespace
 
 int64_t round_i64(double v) { return static_cast<int64_t>(std::llround(v)); }
 
@@ -73,41 +90,62 @@ void update_tail_window(BucketAggState &agg,
                         int64_t block_bucket,
                         int64_t current_block,
                         int64_t current_exposure,
-                        int64_t current_holding_period,
+                        int64_t current_holding_exp,
                         int64_t current_token_count,
                         int64_t block_bucket_size) {
   assert(block_bucket >= 0);
   assert(block_bucket_size > 0);
+  assert(current_exposure >= 0);
+  assert(current_holding_exp >= 0);
+  assert(current_token_count >= 0);
+  if (current_exposure == 0) {
+    assert(current_holding_exp == 0);
+  }
   assert(current_block >= block_bucket * block_bucket_size);
   assert(current_block <= bucket_end_block(block_bucket, block_bucket_size));
   const int64_t end_block = bucket_end_block(block_bucket, block_bucket_size);
   if (agg.has_tail) {
     assert(agg.last_block >= block_bucket * block_bucket_size);
     assert(agg.last_block <= end_block);
+    assert(agg.last_exposure >= 0);
+    assert(agg.last_holding_exp >= 0);
+    assert(agg.last_token_count >= 0);
+    if (agg.last_exposure == 0) {
+      assert(agg.last_holding_exp == 0);
+    }
 
     const int64_t old_tail = std::max<int64_t>(0, end_block - agg.last_block);
-    agg.exposure_tw_sum -= agg.last_exposure * old_tail;
-    agg.holding_period_tw_sum -= agg.last_holding_period * old_tail;
-    agg.token_count_tw_sum -= agg.last_token_count * old_tail;
-    agg.time_weight_sum -= old_tail;
+    agg.exposure_tw_sum = narrow_i64(
+        static_cast<__int128>(agg.exposure_tw_sum) - static_cast<__int128>(agg.last_exposure) * old_tail);
+    agg.holding_period_exp_tw_sum = narrow_i64(
+        static_cast<__int128>(agg.holding_period_exp_tw_sum) - linear_series_i128(agg.last_holding_exp, agg.last_exposure, old_tail));
+    agg.token_count_tw_sum = narrow_i64(
+        static_cast<__int128>(agg.token_count_tw_sum) - static_cast<__int128>(agg.last_token_count) * old_tail);
+    agg.time_weight_sum = narrow_i64(static_cast<__int128>(agg.time_weight_sum) - old_tail);
 
     const int64_t delta_blocks = current_block - agg.last_block;
     assert(delta_blocks >= 0);
-    agg.exposure_tw_sum += agg.last_exposure * delta_blocks;
-    agg.holding_period_tw_sum += agg.last_holding_period * delta_blocks;
-    agg.token_count_tw_sum += agg.last_token_count * delta_blocks;
-    agg.time_weight_sum += delta_blocks;
+    agg.exposure_tw_sum = narrow_i64(
+        static_cast<__int128>(agg.exposure_tw_sum) + static_cast<__int128>(agg.last_exposure) * delta_blocks);
+    agg.holding_period_exp_tw_sum = narrow_i64(
+        static_cast<__int128>(agg.holding_period_exp_tw_sum) + linear_series_i128(agg.last_holding_exp, agg.last_exposure, delta_blocks));
+    agg.token_count_tw_sum = narrow_i64(
+        static_cast<__int128>(agg.token_count_tw_sum) + static_cast<__int128>(agg.last_token_count) * delta_blocks);
+    agg.time_weight_sum = narrow_i64(static_cast<__int128>(agg.time_weight_sum) + delta_blocks);
   }
 
   const int64_t new_tail = std::max<int64_t>(0, end_block - current_block);
-  agg.exposure_tw_sum += current_exposure * new_tail;
-  agg.holding_period_tw_sum += current_holding_period * new_tail;
-  agg.token_count_tw_sum += current_token_count * new_tail;
-  agg.time_weight_sum += new_tail;
+  agg.exposure_tw_sum = narrow_i64(
+      static_cast<__int128>(agg.exposure_tw_sum) + static_cast<__int128>(current_exposure) * new_tail);
+  agg.holding_period_exp_tw_sum = narrow_i64(
+      static_cast<__int128>(agg.holding_period_exp_tw_sum) + linear_series_i128(current_holding_exp, current_exposure, new_tail));
+  agg.token_count_tw_sum = narrow_i64(
+      static_cast<__int128>(agg.token_count_tw_sum) + static_cast<__int128>(current_token_count) * new_tail);
+  agg.time_weight_sum = narrow_i64(static_cast<__int128>(agg.time_weight_sum) + new_tail);
 
   agg.last_block = current_block;
   agg.last_exposure = current_exposure;
-  agg.last_holding_period = current_holding_period;
+  agg.last_holding_exp = current_holding_exp;
   agg.last_token_count = current_token_count;
   agg.has_tail = true;
 }
