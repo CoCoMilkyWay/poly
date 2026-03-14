@@ -139,58 +139,58 @@ int64_t StageSync::get_max_bucket() const {
 }
 
 StageSync::Stage2Data StageSync::stage2_data() const {
-  const auto &wp = builder_.progress();
-  const auto &bp = builder_.committed_progress();
-  Stage2Data p;
-  p.phase = wp.phase;
-  p.running = wp.running;
-  p.total_users = bp.total_users;
-  p.total_events = bp.total_events;
-  p.cond_tree = bp.cond_tree;
-  p.token_tree = bp.token_tree;
-  p.xfer_total = bp.xfer_stats.total;
-  p.xfer_split_normal = bp.xfer_stats.split_normal;
-  p.xfer_split_negrisk = bp.xfer_stats.split_negrisk;
-  p.xfer_split_non_poly = bp.xfer_stats.split_non_poly;
-  p.xfer_merge_normal = bp.xfer_stats.merge_normal;
-  p.xfer_merge_negrisk = bp.xfer_stats.merge_negrisk;
-  p.xfer_merge_non_poly = bp.xfer_stats.merge_non_poly;
-  p.xfer_redemption = bp.xfer_stats.redemption;
-  p.xfer_redemption_non_poly = bp.xfer_stats.redemption_non_poly;
-  p.xfer_convert = bp.xfer_stats.convert;
-  p.xfer_order_buy = bp.xfer_stats.order_buy;
-  p.xfer_order_sell = bp.xfer_stats.order_sell;
-  p.xfer_fpmm_buy = bp.xfer_stats.fpmm_buy;
-  p.xfer_fpmm_sell = bp.xfer_stats.fpmm_sell;
-  p.xfer_lp_add = bp.xfer_stats.fpmm_lp_add;
-  p.xfer_lp_remove = bp.xfer_stats.fpmm_lp_remove;
-  p.xfer_lp_return = bp.xfer_stats.fpmm_lp_return;
-  p.xfer_transfer_in_negrisk = bp.xfer_stats.transfer_in_negrisk;
-  p.xfer_transfer_in_other = bp.xfer_stats.transfer_in_other;
-  p.xfer_transfer_in_non_poly = bp.xfer_stats.transfer_in_non_poly;
-  p.xfer_transfer_out_negrisk = bp.xfer_stats.transfer_out_negrisk;
-  p.xfer_transfer_out_other = bp.xfer_stats.transfer_out_other;
-  p.xfer_transfer_out_non_poly = bp.xfer_stats.transfer_out_non_poly;
-  p.xfer_internal_mint_negrisk = bp.xfer_stats.internal_mint_negrisk;
-  p.xfer_internal_mint_fpmm = bp.xfer_stats.internal_mint_fpmm;
-  p.xfer_internal_burn_negrisk = bp.xfer_stats.internal_burn_negrisk;
-  p.xfer_internal_burn_fpmm = bp.xfer_stats.internal_burn_fpmm;
-  p.xfer_internal_burn_convert = bp.xfer_stats.internal_burn_convert;
-  p.xfer_internal_transfer_zero = bp.xfer_stats.internal_transfer_zero;
-  p.xfer_internal_transfer_order = bp.xfer_stats.internal_transfer_order;
-  p.xfer_internal_transfer_negrisk = bp.xfer_stats.internal_transfer_negrisk;
-  p.xfer_internal_transfer_fpmm = bp.xfer_stats.internal_transfer_fpmm;
-  p.xfer_internal_transfer_other = bp.xfer_stats.internal_transfer_other;
-  p.split_sem_tree = bp.split_sem_tree;
-  p.merge_sem_tree = bp.merge_sem_tree;
-  p.convert_sem_tree = bp.convert_sem_tree;
-  p.order_sem_tree = bp.order_sem_tree;
-  p.event_by_collateral = bp.event_by_collateral;
-  const auto s = status();
-  if (s.behind_blocks == 0 && p.total_users > 0) {
-    p.phase = 7;
+  const auto &working_progress = builder_.progress();
+  const auto &committed_progress = builder_.committed_progress();
+  Stage2Data stage2_data;
+  stage2_data.phase = working_progress.phase;
+  stage2_data.running = working_progress.running;
+  stage2_data.total_users = committed_progress.total_users;
+  stage2_data.total_events = committed_progress.total_events;
+  stage2_data.cond_tree = committed_progress.cond_tree;
+  stage2_data.token_tree = committed_progress.token_tree;
+  stage2_data.xfer_total = committed_progress.xfer_stats.total;
+  stage2_data.xfer_split_normal = committed_progress.xfer_stats.split_normal;
+  stage2_data.xfer_split_negrisk = committed_progress.xfer_stats.split_negrisk;
+  stage2_data.xfer_split_non_poly = committed_progress.xfer_stats.split_non_poly;
+  stage2_data.xfer_merge_normal = committed_progress.xfer_stats.merge_normal;
+  stage2_data.xfer_merge_negrisk = committed_progress.xfer_stats.merge_negrisk;
+  stage2_data.xfer_merge_non_poly = committed_progress.xfer_stats.merge_non_poly;
+  stage2_data.xfer_redemption = committed_progress.xfer_stats.redemption;
+  stage2_data.xfer_redemption_non_poly = committed_progress.xfer_stats.redemption_non_poly;
+  stage2_data.xfer_convert = committed_progress.xfer_stats.convert;
+  stage2_data.xfer_order_buy = committed_progress.xfer_stats.order_buy;
+  stage2_data.xfer_order_sell = committed_progress.xfer_stats.order_sell;
+  stage2_data.xfer_fpmm_buy = committed_progress.xfer_stats.fpmm_buy;
+  stage2_data.xfer_fpmm_sell = committed_progress.xfer_stats.fpmm_sell;
+  stage2_data.xfer_lp_add = committed_progress.xfer_stats.fpmm_lp_add;
+  stage2_data.xfer_lp_remove = committed_progress.xfer_stats.fpmm_lp_remove;
+  stage2_data.xfer_lp_return = committed_progress.xfer_stats.fpmm_lp_return;
+  stage2_data.xfer_transfer_in_negrisk = committed_progress.xfer_stats.transfer_in_negrisk;
+  stage2_data.xfer_transfer_in_other = committed_progress.xfer_stats.transfer_in_other;
+  stage2_data.xfer_transfer_in_non_poly = committed_progress.xfer_stats.transfer_in_non_poly;
+  stage2_data.xfer_transfer_out_negrisk = committed_progress.xfer_stats.transfer_out_negrisk;
+  stage2_data.xfer_transfer_out_other = committed_progress.xfer_stats.transfer_out_other;
+  stage2_data.xfer_transfer_out_non_poly = committed_progress.xfer_stats.transfer_out_non_poly;
+  stage2_data.xfer_internal_mint_negrisk = committed_progress.xfer_stats.internal_mint_negrisk;
+  stage2_data.xfer_internal_mint_fpmm = committed_progress.xfer_stats.internal_mint_fpmm;
+  stage2_data.xfer_internal_burn_negrisk = committed_progress.xfer_stats.internal_burn_negrisk;
+  stage2_data.xfer_internal_burn_fpmm = committed_progress.xfer_stats.internal_burn_fpmm;
+  stage2_data.xfer_internal_burn_convert = committed_progress.xfer_stats.internal_burn_convert;
+  stage2_data.xfer_internal_transfer_zero = committed_progress.xfer_stats.internal_transfer_zero;
+  stage2_data.xfer_internal_transfer_order = committed_progress.xfer_stats.internal_transfer_order;
+  stage2_data.xfer_internal_transfer_negrisk = committed_progress.xfer_stats.internal_transfer_negrisk;
+  stage2_data.xfer_internal_transfer_fpmm = committed_progress.xfer_stats.internal_transfer_fpmm;
+  stage2_data.xfer_internal_transfer_other = committed_progress.xfer_stats.internal_transfer_other;
+  stage2_data.split_sem_tree = committed_progress.split_sem_tree;
+  stage2_data.merge_sem_tree = committed_progress.merge_sem_tree;
+  stage2_data.convert_sem_tree = committed_progress.convert_sem_tree;
+  stage2_data.order_sem_tree = committed_progress.order_sem_tree;
+  stage2_data.event_by_collateral = committed_progress.event_by_collateral;
+  const auto sync_status = status();
+  if (sync_status.behind_blocks == 0 && stage2_data.total_users > 0) {
+    stage2_data.phase = 7;
   }
-  return p;
+  return stage2_data;
 }
 
 void StageSync::schedule_sync(int delay_seconds) {
@@ -210,13 +210,13 @@ void StageSync::do_sync_tick() {
   Trace;
   static constexpr size_t kCommitHistoryWindow = 20;
   auto refresh_timing_metrics = [&](int64_t remaining_blocks) {
-    if (commit_history_.size() < 2) {
+    if (sync_commit_points_.size() < 2) {
       sync_.blocks_per_second = 0.0;
       sync_.eta_seconds = (remaining_blocks == 0) ? 0.0 : -1.0;
       return;
     }
-    const auto &first = commit_history_.front();
-    const auto &last = commit_history_.back();
+    const auto &first = sync_commit_points_.front();
+    const auto &last = sync_commit_points_.back();
     double elapsed_s = std::chrono::duration<double>(last.committed_at - first.committed_at).count();
     if (elapsed_s <= 0.0) {
       sync_.blocks_per_second = 0.0;
@@ -254,9 +254,9 @@ void StageSync::do_sync_tick() {
     refresh_status_locked();
     int64_t after_block = (sync_cursor_.sort_key < 0) ? 0 : sync_cursor_.sort_key / SORT_KEY_SCALE;
     if (advanced && after_block > before_block) {
-      commit_history_.push_back({std::chrono::steady_clock::now(), after_block});
-      if (commit_history_.size() > kCommitHistoryWindow) {
-        commit_history_.pop_front();
+      sync_commit_points_.push_back({std::chrono::steady_clock::now(), after_block});
+      if (sync_commit_points_.size() > kCommitHistoryWindow) {
+        sync_commit_points_.pop_front();
       }
     }
     refresh_timing_metrics(sync_.behind_blocks);
@@ -287,9 +287,9 @@ bool StageSync::process_chunk_locked() const {
                                              "last_sort_key=GREATEST(" +
       table_user_summary + ".last_sort_key, excluded.last_sort_key)";
   auto checked_query = [&](const std::string &sql) {
-    auto q = sink_conn->Query(sql);
-    assert(q && !q->HasError());
-    return q;
+    auto query_result = sink_conn->Query(sql);
+    assert(query_result && !query_result->HasError());
+    return query_result;
   };
   auto prepare_tmp_table = [&](const char *tmp_table, const char *schema_cols) {
     (void)checked_query("CREATE TEMP TABLE IF NOT EXISTS " + std::string(tmp_table) + " (" + schema_cols + ")");
@@ -317,9 +317,9 @@ bool StageSync::process_chunk_locked() const {
   std::unordered_map<std::string, uint32_t> user_blob_to_id;
   user_blob_to_id.reserve(source_rows.size() / 10 + 1);
   auto intern_user_id = [&](const std::string &user_blob) {
-    auto it = user_blob_to_id.find(user_blob);
-    if (it != user_blob_to_id.end()) {
-      return it->second;
+    auto user_id_it = user_blob_to_id.find(user_blob);
+    if (user_id_it != user_blob_to_id.end()) {
+      return user_id_it->second;
     }
     const uint32_t user_id = static_cast<uint32_t>(user_blob_pool.size());
     user_blob_pool.push_back(user_blob);
@@ -329,10 +329,10 @@ bool StageSync::process_chunk_locked() const {
   auto compare_blob_unsigned = [](const std::string &lhs, const std::string &rhs) {
     const size_t n = std::min(lhs.size(), rhs.size());
     for (size_t i = 0; i < n; ++i) {
-      const auto l = static_cast<uint8_t>(lhs[i]);
-      const auto r = static_cast<uint8_t>(rhs[i]);
-      if (l != r) {
-        return (l < r) ? -1 : 1;
+      const auto left_byte = static_cast<uint8_t>(lhs[i]);
+      const auto right_byte = static_cast<uint8_t>(rhs[i]);
+      if (left_byte != right_byte) {
+        return (left_byte < right_byte) ? -1 : 1;
       }
     }
     if (lhs.size() == rhs.size()) {
@@ -475,9 +475,9 @@ bool StageSync::process_chunk_locked() const {
     assert(summary_seed_result && !summary_seed_result->HasError());
     for (idx_t i = 0; i < summary_seed_result->RowCount(); ++i) {
       const std::string user_blob = summary_seed_result->GetValue(0, i).GetValueUnsafe<std::string>();
-      auto uid_it = user_blob_to_id.find(user_blob);
-      assert(uid_it != user_blob_to_id.end());
-      const uint32_t user_id = uid_it->second;
+      auto user_id_it = user_blob_to_id.find(user_blob);
+      assert(user_id_it != user_blob_to_id.end());
+      const uint32_t user_id = user_id_it->second;
       user_realized_totals.emplace(user_id, static_cast<double>(summary_seed_result->GetValue(1, i).GetValue<int64_t>()));
       user_unrealized_totals.emplace(user_id, static_cast<double>(summary_seed_result->GetValue(2, i).GetValue<int64_t>()));
       user_active_token_counts.emplace(user_id, summary_seed_result->GetValue(3, i).GetValue<int32_t>());
@@ -534,8 +534,8 @@ bool StageSync::process_chunk_locked() const {
   auto apply_runtime_contrib_delta = [&](uint32_t user_id, int8_t tag_id, int64_t token_delta,
                                          int64_t exposure_delta, int64_t exposure_entry_delta) {
     UserTagRuntimeKey key{user_id, tag_id};
-    auto [it, _] = user_tag_runtime.try_emplace(key, UserTagRuntimeState{});
-    UserTagRuntimeState &state = it->second;
+    auto [runtime_state_it, _] = user_tag_runtime.try_emplace(key, UserTagRuntimeState{});
+    UserTagRuntimeState &state = runtime_state_it->second;
     state.token_count = narrow_i64(static_cast<__int128>(state.token_count) + token_delta);
     state.exposure = narrow_i64(static_cast<__int128>(state.exposure) + exposure_delta);
     state.exposure_entry_sum = narrow_i64(static_cast<__int128>(state.exposure_entry_sum) + exposure_entry_delta);
@@ -554,9 +554,9 @@ bool StageSync::process_chunk_locked() const {
     assert(token_state_result && !token_state_result->HasError());
     for (idx_t i = 0; i < token_state_result->RowCount(); ++i) {
       const std::string user_blob = token_state_result->GetValue(0, i).GetValueUnsafe<std::string>();
-      auto uid_it = user_blob_to_id.find(user_blob);
-      assert(uid_it != user_blob_to_id.end());
-      const uint32_t user_id = uid_it->second;
+      auto user_id_it = user_blob_to_id.find(user_blob);
+      assert(user_id_it != user_blob_to_id.end());
+      const uint32_t user_id = user_id_it->second;
       const int32_t cond_idx = token_state_result->GetValue(1, i).GetValue<int32_t>();
       const int32_t token_idx = token_state_result->GetValue(2, i).GetValue<int32_t>();
       assert(cond_idx >= 0);
@@ -574,11 +574,11 @@ bool StageSync::process_chunk_locked() const {
       apply_runtime_contrib_delta(user_id, -1, contrib.token_count, contrib.exposure, contrib.exposure_entry);
 
       TokenKey key{user_id, cond_idx, token_idx};
-      auto it = token_states.find(key);
-      if (it == token_states.end()) {
+      auto token_state_it = token_states.find(key);
+      if (token_state_it == token_states.end()) {
         continue;
       }
-      TokenState &st = it->second;
+      TokenState &st = token_state_it->second;
       st = loaded_state;
     }
   }
@@ -619,16 +619,16 @@ bool StageSync::process_chunk_locked() const {
     assert(feature_state_result && !feature_state_result->HasError());
     for (idx_t i = 0; i < feature_state_result->RowCount(); ++i) {
       const std::string user_blob = feature_state_result->GetValue(0, i).GetValueUnsafe<std::string>();
-      auto uid_it = user_blob_to_id.find(user_blob);
-      assert(uid_it != user_blob_to_id.end());
+      auto user_id_it = user_blob_to_id.find(user_blob);
+      assert(user_id_it != user_blob_to_id.end());
       AggKey key{
-          uid_it->second,
+          user_id_it->second,
           feature_state_result->GetValue(1, i).GetValue<int64_t>(),
           static_cast<int8_t>(feature_state_result->GetValue(2, i).GetValue<int32_t>()),
       };
-      auto it = bucket_agg_states.find(key);
-      assert(it != bucket_agg_states.end());
-      BucketAggState &agg = it->second;
+      auto bucket_agg_it = bucket_agg_states.find(key);
+      assert(bucket_agg_it != bucket_agg_states.end());
+      BucketAggState &agg = bucket_agg_it->second;
       agg.last_sort_key = feature_state_result->GetValue(3, i).GetValue<int64_t>();
       agg.last_block = feature_state_result->GetValue(4, i).GetValue<int64_t>();
       agg.last_exposure = feature_state_result->GetValue(5, i).GetValue<int64_t>();
@@ -655,12 +655,12 @@ bool StageSync::process_chunk_locked() const {
   std::vector<EventFact> event_facts;
   event_facts.reserve(event_inputs.size());
   for (const auto &row : event_inputs) {
-    auto realized_it = user_realized_totals.find(row.user_id);
-    auto unrealized_it = user_unrealized_totals.find(row.user_id);
-    auto active_it = user_active_token_counts.find(row.user_id);
-    assert(realized_it != user_realized_totals.end());
-    assert(unrealized_it != user_unrealized_totals.end());
-    assert(active_it != user_active_token_counts.end());
+    auto realized_total_it = user_realized_totals.find(row.user_id);
+    auto unrealized_total_it = user_unrealized_totals.find(row.user_id);
+    auto active_token_count_it = user_active_token_counts.find(row.user_id);
+    assert(realized_total_it != user_realized_totals.end());
+    assert(unrealized_total_it != user_unrealized_totals.end());
+    assert(active_token_count_it != user_active_token_counts.end());
 
     double realized_delta = 0.0;
     int8_t tag_id = 13;
@@ -674,9 +674,9 @@ bool StageSync::process_chunk_locked() const {
       tag_id = cond_tag_ids_[static_cast<size_t>(row.cond_idx)];
 
       TokenKey key{row.user_id, row.cond_idx, row.token_idx};
-      auto it = token_states.find(key);
-      assert(it != token_states.end());
-      TokenState &st = it->second;
+      auto token_state_it = token_states.find(key);
+      assert(token_state_it != token_states.end());
+      TokenState &st = token_state_it->second;
       const auto before_contrib = token_feature_contrib(st);
       const double before_unrealized = calc_unrealized_pnl(st);
       const int before_holding = static_cast<int>(before_contrib.token_count);
@@ -684,9 +684,9 @@ bool StageSync::process_chunk_locked() const {
       const auto after_contrib = token_feature_contrib(st);
       const double after_unrealized = calc_unrealized_pnl(st);
       const int after_holding = static_cast<int>(after_contrib.token_count);
-      unrealized_it->second += (after_unrealized - before_unrealized);
-      active_it->second += (after_holding - before_holding);
-      assert(active_it->second >= 0);
+      unrealized_total_it->second += (after_unrealized - before_unrealized);
+      active_token_count_it->second += (after_holding - before_holding);
+      assert(active_token_count_it->second >= 0);
 
       const int64_t token_count_delta = after_contrib.token_count - before_contrib.token_count;
       const int64_t exposure_delta = after_contrib.exposure - before_contrib.exposure;
@@ -702,8 +702,8 @@ bool StageSync::process_chunk_locked() const {
 
       auto apply_feature_bucket = [&](int8_t agg_tag_id) {
         UserTagRuntimeKey rt_key{row.user_id, agg_tag_id};
-        auto [rt_it, _] = user_tag_runtime.try_emplace(rt_key, UserTagRuntimeState{});
-        const UserTagRuntimeState &rt = rt_it->second;
+        auto [runtime_it, _] = user_tag_runtime.try_emplace(rt_key, UserTagRuntimeState{});
+        const UserTagRuntimeState &rt = runtime_it->second;
         assert(rt.token_count >= 0);
         assert(rt.exposure >= 0);
         int64_t holding_exp = 0;
@@ -716,9 +716,9 @@ bool StageSync::process_chunk_locked() const {
         }
 
         AggKey agg_key{row.user_id, block_bucket, agg_tag_id};
-        auto agg_it = bucket_agg_states.find(agg_key);
-        assert(agg_it != bucket_agg_states.end());
-        BucketAggState &agg = agg_it->second;
+        auto bucket_agg_it = bucket_agg_states.find(agg_key);
+        assert(bucket_agg_it != bucket_agg_states.end());
+        BucketAggState &agg = bucket_agg_it->second;
         update_tail_window(agg, agg_key.block_bucket, row_block, rt.exposure, holding_exp, rt.token_count);
         feature_comp::accumulate_event_delta(agg, realized_delta, volume, row.sort_key);
       };
@@ -726,10 +726,10 @@ bool StageSync::process_chunk_locked() const {
       apply_feature_bucket(tag_id);
       apply_feature_bucket(-1);
     }
-    double &realized_total = realized_it->second;
-    double &unrealized_total = unrealized_it->second;
+    double &realized_total = realized_total_it->second;
+    double &unrealized_total = unrealized_total_it->second;
     realized_total += realized_delta;
-    int32_t token_count = active_it->second;
+    int32_t token_count = active_token_count_it->second;
     event_facts.push_back({
         row.user_id,
         row.sort_key,
@@ -787,17 +787,17 @@ bool StageSync::process_chunk_locked() const {
     assert(window_history_result && !window_history_result->HasError());
     for (idx_t i = 0; i < window_history_result->RowCount(); ++i) {
       const std::string user_blob = window_history_result->GetValue(0, i).GetValueUnsafe<std::string>();
-      auto uid_it = user_blob_to_id.find(user_blob);
-      assert(uid_it != user_blob_to_id.end());
+      auto user_id_it = user_blob_to_id.find(user_blob);
+      assert(user_id_it != user_blob_to_id.end());
       const int64_t target_bucket = window_history_result->GetValue(1, i).GetValue<int64_t>();
       const int8_t tag_id = static_cast<int8_t>(window_history_result->GetValue(2, i).GetValue<int32_t>());
       const int64_t hist_bucket = window_history_result->GetValue(3, i).GetValue<int64_t>();
       const int64_t distance = target_bucket - hist_bucket;
       assert(distance >= 1 && distance <= 99);
 
-      AggKey key{uid_it->second, target_bucket, tag_id};
-      auto [it, _] = window_history_sums.try_emplace(key, WindowHistorySums{});
-      WindowHistorySums &hist = it->second;
+      AggKey key{user_id_it->second, target_bucket, tag_id};
+      auto [window_history_it, _] = window_history_sums.try_emplace(key, WindowHistorySums{});
+      WindowHistorySums &hist = window_history_it->second;
 
       const int64_t token_avg_10w = window_history_result->GetValue(4, i).GetValue<int64_t>();
       const int64_t exposure_avg_10w = window_history_result->GetValue(5, i).GetValue<int64_t>();
@@ -851,17 +851,17 @@ bool StageSync::process_chunk_locked() const {
         event_inputs_bytes + user_blob_pool_bytes + user_index_bytes + token_states_bytes + bucket_agg_bytes + event_facts_bytes;
     {
       std::lock_guard<std::mutex> lock(sync_mu_);
-      runtime_mem_probe_.event_inputs_bytes = event_inputs_bytes;
-      runtime_mem_probe_.user_blob_pool_bytes = user_blob_pool_bytes;
-      runtime_mem_probe_.user_index_bytes = user_index_bytes;
-      runtime_mem_probe_.token_states_bytes = token_states_bytes;
-      runtime_mem_probe_.bucket_agg_bytes = bucket_agg_bytes;
-      runtime_mem_probe_.event_facts_bytes = event_facts_bytes;
-      runtime_mem_probe_.total_working_set_bytes = total_working_set_bytes;
-      runtime_mem_probe_.peak_working_set_bytes =
-          std::max(runtime_mem_probe_.peak_working_set_bytes, total_working_set_bytes);
-      runtime_mem_probe_.row_count = static_cast<int64_t>(event_inputs.size());
-      runtime_mem_probe_.max_cond_idx = max_cond_idx;
+      runtime_memory_probe_.event_inputs_bytes = event_inputs_bytes;
+      runtime_memory_probe_.user_blob_pool_bytes = user_blob_pool_bytes;
+      runtime_memory_probe_.user_index_bytes = user_index_bytes;
+      runtime_memory_probe_.token_states_bytes = token_states_bytes;
+      runtime_memory_probe_.bucket_agg_bytes = bucket_agg_bytes;
+      runtime_memory_probe_.event_facts_bytes = event_facts_bytes;
+      runtime_memory_probe_.total_working_set_bytes = total_working_set_bytes;
+      runtime_memory_probe_.peak_working_set_bytes =
+          std::max(runtime_memory_probe_.peak_working_set_bytes, total_working_set_bytes);
+      runtime_memory_probe_.row_count = static_cast<int64_t>(event_inputs.size());
+      runtime_memory_probe_.max_cond_idx = max_cond_idx;
     }
   }
 
@@ -1007,11 +1007,11 @@ bool StageSync::process_chunk_locked() const {
         const double sharpe_10w = calc_sharpe_from_moments(agg.realized_sum, agg.realized_sq_sum, agg.event_count);
 
         const WindowHistorySums empty_hist{};
-        const auto hist_it = window_history_sums.find(key);
-        const WindowHistorySums &hist = (hist_it != window_history_sums.end()) ? hist_it->second : empty_hist;
+        const auto history_it = window_history_sums.find(key);
+        const WindowHistorySums &hist = (history_it != window_history_sums.end()) ? history_it->second : empty_hist;
         UserTagRuntimeKey pair_key{key.user_id, key.tag_id};
-        auto [pair_it, _] = current_outputs_by_pair.try_emplace(pair_key, std::vector<CurrentBucketOutput>{});
-        std::vector<CurrentBucketOutput> &pair_outputs = pair_it->second;
+        auto [pair_outputs_it, _] = current_outputs_by_pair.try_emplace(pair_key, std::vector<CurrentBucketOutput>{});
+        std::vector<CurrentBucketOutput> &pair_outputs = pair_outputs_it->second;
 
         int64_t token_sum_100_hist = hist.token_sum_100;
         int64_t exposure_sum_100_hist = hist.exposure_sum_100;
@@ -1175,23 +1175,23 @@ bool StageSync::process_chunk_locked() const {
     {
       duckdb::Appender ap(*sink_conn, kSqlTmpUserSummaryDelta);
       for (const auto &[user_id, inc] : user_event_increments) {
-        auto sort_it = user_last_sort_keys.find(user_id);
-        auto realized_it = user_realized_totals.find(user_id);
-        auto unrealized_it = user_unrealized_totals.find(user_id);
-        auto active_it = user_active_token_counts.find(user_id);
-        assert(sort_it != user_last_sort_keys.end());
-        assert(realized_it != user_realized_totals.end());
-        assert(unrealized_it != user_unrealized_totals.end());
-        assert(active_it != user_active_token_counts.end());
+        auto sort_key_it = user_last_sort_keys.find(user_id);
+        auto realized_total_it = user_realized_totals.find(user_id);
+        auto unrealized_total_it = user_unrealized_totals.find(user_id);
+        auto active_token_count_it = user_active_token_counts.find(user_id);
+        assert(sort_key_it != user_last_sort_keys.end());
+        assert(realized_total_it != user_realized_totals.end());
+        assert(unrealized_total_it != user_unrealized_totals.end());
+        assert(active_token_count_it != user_active_token_counts.end());
         const std::string &user_blob = user_blob_pool[user_id];
         ap.BeginRow();
         append_blob(ap, user_blob);
         ap.Append(inc);
-        ap.Append(sort_it->second);
-        ap.Append(round_i64(realized_it->second));
-        ap.Append(round_i64(unrealized_it->second));
-        assert(active_it->second >= 0);
-        ap.Append(active_it->second);
+        ap.Append(sort_key_it->second);
+        ap.Append(round_i64(realized_total_it->second));
+        ap.Append(round_i64(unrealized_total_it->second));
+        assert(active_token_count_it->second >= 0);
+        ap.Append(active_token_count_it->second);
         ap.EndRow();
       }
       ap.Close();
@@ -1209,8 +1209,8 @@ bool StageSync::process_chunk_locked() const {
   }
 
   {
-    std::lock_guard<std::mutex> cache_lock(user_cache_mu_);
-    user_cache_ = UserQueryCache{};
+    std::lock_guard<std::mutex> cache_lock(user_query_cache_mu_);
+    user_query_cache_state_ = UserQueryCacheState{};
   }
 
   return true;

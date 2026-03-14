@@ -134,7 +134,7 @@ public:
   filter::Result filter_users_by_features(const filter::Request &req) const;
 
 private:
-  struct SyncCursorState {
+  struct CursorState {
     int64_t sort_key = -1;
     int64_t processed_events = 0;
   };
@@ -211,42 +211,66 @@ private:
 
   using BucketAggState = feature_comp::BucketAggState;
 
+  // Execution config
+  static constexpr int64_t kStage3BatchEvents = 500000;
+  static constexpr int64_t kBlockBucketSize = 100000;
+  static constexpr double kPosEpsilon = 1e-9;
+  static constexpr int64_t kMinHoldingQty = 10LL * 1000000LL;
+
+  // SQL identifiers (persistent tables)
+  static constexpr const char *kSqlTableCursorState = "sync_cursor_state";
+  static constexpr const char *kSqlTableTokenState = "token_state";
+  static constexpr const char *kSqlTableUserSummaryState = "user_summary_state";
+  static constexpr const char *kSqlTableFeatureTensorState = "feature_tensor_state";
+
+  // SQL identifiers (indexes) - 仅保留非PK前缀的有用索引
+  static constexpr const char *kSqlIndexUserSummaryEvents = "idx_stage3_user_summary_events";
+  static constexpr const char *kSqlIndexFeatureTensorBucketTagUser = "idx_stage3_feature_tensor_bucket_tag_user";
+
+  // Core dependencies
   EventBuilder &builder_;
   Database &stage0_db_;
   Database &stage2_db_;
   Database &stage3_db_;
   std::unique_ptr<core::rocks::Stage3EventFactStore> event_fact_store_;
 
-  mutable std::mutex sync_mu_;
-  mutable Status sync_;
-  mutable SyncCursorState sync_cursor_;
-  struct CommitRecord {
-    std::chrono::steady_clock::time_point committed_at;
-    int64_t block = 0;
-  };
-  mutable std::deque<CommitRecord> commit_history_;
-
+  // Runtime loop control
   asio::io_context *ioc_ = nullptr;
   std::shared_ptr<asio::steady_timer> timer_;
   std::atomic<bool> stop_requested_{false};
+  int base_interval_seconds_ = 0;
 
+  // Sync state
+  mutable std::mutex sync_mu_;
+  mutable Status sync_;
+  mutable CursorState sync_cursor_;
+  struct SyncCommitPoint {
+    std::chrono::steady_clock::time_point committed_at;
+    int64_t block = 0;
+  };
+  mutable std::deque<SyncCommitPoint> sync_commit_points_;
+
+  // Condition / tag metadata
   std::vector<ConditionInfo> conditions_;
   std::vector<int8_t> cond_tag_ids_;
   std::vector<uint16_t> cond_market_question_counts_;
   std::unordered_map<std::string, int8_t> tag_to_industry_id_;
 
-  struct UserQueryCache {
-    struct Snapshot {
+  // Query cache
+  struct UserQueryCacheState {
+    struct PositionSnapshot {
       int64_t sort_key = 0;
       std::vector<PositionRow> positions;
     };
     std::string addr_lower;
     std::vector<TimelineRow> timeline;
-    std::vector<Snapshot> snapshots;
+    std::vector<PositionSnapshot> snapshots;
   };
-  mutable std::mutex user_cache_mu_;
-  mutable UserQueryCache user_cache_;
-  struct RuntimeMemProbe {
+  mutable std::mutex user_query_cache_mu_;
+  mutable UserQueryCacheState user_query_cache_state_;
+
+  // Runtime memory probe
+  struct RuntimeMemoryProbe {
     int64_t event_inputs_bytes = 0;
     int64_t user_blob_pool_bytes = 0;
     int64_t user_index_bytes = 0;
@@ -258,27 +282,11 @@ private:
     int64_t row_count = 0;
     int64_t max_cond_idx = -1;
   };
-  mutable RuntimeMemProbe runtime_mem_probe_;
-
-  // Execution config
-  static constexpr int64_t kStage3BatchEvents = 500000;
-  static constexpr int64_t kBlockBucketSize = 100000;
-  static constexpr double kPosEpsilon = 1e-9;
-  static constexpr int64_t kMinHoldingQty = 10LL * 1000000LL;
-  int base_interval_seconds_ = 0;
-
-  // SQL identifiers (persistent tables)
-  static constexpr const char *kSqlTableSyncCursorState = "sync_cursor_state";
-  static constexpr const char *kSqlTableTokenState = "token_state";
-  static constexpr const char *kSqlTableUserSummaryState = "user_summary_state";
-  static constexpr const char *kSqlTableFeatureTensorState = "feature_tensor_state";
-
-  // SQL identifiers (indexes) - 仅保留非PK前缀的有用索引
-  static constexpr const char *kSqlIndexUserSummaryEvents = "idx_stage3_user_summary_events";
-  static constexpr const char *kSqlIndexFeatureTensorBucketTagUser = "idx_stage3_feature_tensor_bucket_tag_user";
+  mutable RuntimeMemoryProbe runtime_memory_probe_;
 
   // Normalization / key conversion helpers
   static std::string normalize_addr(const std::string &addr);
+  static std::string normalize_tag_key(const std::string &raw);
   static int64_t round_i64(double v);
   static int64_t sort_key_to_block(int64_t sort_key);
   static int64_t sort_key_to_block_bucket(int64_t sort_key);
@@ -286,7 +294,7 @@ private:
   static uint64_t pack_cond_token_key(int32_t cond_idx, int32_t token_idx);
 
   // Event / metadata predicates
-  static bool is_trade_event(EventType ty);
+  static bool is_trade_event(EventType event_type);
   static bool is_usd_collateral(int32_t collateral);
   static bool is_effective_holding(double qty_1e6);
   static bool is_effective_holding_i64(int64_t qty_1e6);
@@ -309,7 +317,7 @@ private:
 
   // Lifecycle / sync pipeline
   void init_schema() const;
-  void load_tag_mapping_from_md();
+  void load_tag_mapping();
   void load_conditions();
   void load_cursor();
   void save_cursor_locked(duckdb::Connection &conn) const;
@@ -323,8 +331,8 @@ private:
 
   // Query cache build path
   std::vector<PositionRow> build_position_rows_from_states(const std::unordered_map<uint64_t, TokenState> &states) const;
-  UserQueryCache build_user_query_cache(const std::string &addr_lower) const;
-  void ensure_user_query_cache(const std::string &addr_lower) const;
+  UserQueryCacheState build_user_query_cache_state(const std::string &addr_lower) const;
+  void ensure_user_query_cache_state(const std::string &addr_lower) const;
 };
 
 } // namespace stage3

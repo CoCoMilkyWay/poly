@@ -10,7 +10,7 @@ StageSync::StageSync(EventBuilder &builder, Database &stage0_db, Database &stage
       base_interval_seconds_(base_interval_seconds) {
   assert(base_interval_seconds_ > 0);
   init_schema();
-  load_tag_mapping_from_md();
+  load_tag_mapping();
   load_conditions();
   load_cursor();
   refresh_status_locked();
@@ -34,7 +34,7 @@ json StageSync::stage3_rocksdb_memory_breakdown() const {
   };
 }
 
-void StageSync::load_tag_mapping_from_md() {
+void StageSync::load_tag_mapping() {
   auto trim = [](const std::string &s) {
     size_t b = s.find_first_not_of(" \t\r\n");
     if (b == std::string::npos) {
@@ -42,27 +42,6 @@ void StageSync::load_tag_mapping_from_md() {
     }
     size_t e = s.find_last_not_of(" \t\r\n");
     return s.substr(b, e - b + 1);
-  };
-  auto normalize = [](const std::string &raw) {
-    std::string out;
-    out.reserve(raw.size());
-    bool prev_sep = false;
-    for (char c : to_lower(raw)) {
-      const bool keep = (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9');
-      if (keep) {
-        out.push_back(c);
-        prev_sep = false;
-        continue;
-      }
-      if (!prev_sep && !out.empty()) {
-        out.push_back('_');
-        prev_sep = true;
-      }
-    }
-    while (!out.empty() && out.back() == '_') {
-      out.pop_back();
-    }
-    return out;
   };
 
   std::ifstream f("core-backend/src/stage0/TAG.md");
@@ -83,7 +62,7 @@ void StageSync::load_tag_mapping_from_md() {
       assert(next_id <= 12);
       current_id = next_id;
       ++next_id;
-      const std::string key = normalize(level1);
+      const std::string key = normalize_tag_key(level1);
       assert(!key.empty());
       tag_to_industry_id_[key] = current_id;
       continue;
@@ -97,7 +76,7 @@ void StageSync::load_tag_mapping_from_md() {
       }
       const std::string level2 = trim(rest);
       assert(!level2.empty());
-      const std::string key = normalize(level2);
+      const std::string key = normalize_tag_key(level2);
       assert(!key.empty());
       tag_to_industry_id_[key] = current_id;
     }
@@ -107,12 +86,12 @@ void StageSync::load_tag_mapping_from_md() {
 }
 
 void StageSync::init_schema() const {
-  const std::string table_sync_cursor = kSqlTableSyncCursorState;
+  const std::string table_cursor_state = kSqlTableCursorState;
   const std::string table_token_state = kSqlTableTokenState;
   const std::string table_user_summary = kSqlTableUserSummaryState;
   const std::string table_feature_tensor = kSqlTableFeatureTensorState;
 
-  stage3_db_.execute("CREATE TABLE IF NOT EXISTS " + table_sync_cursor + R"( (
+  stage3_db_.execute("CREATE TABLE IF NOT EXISTS " + table_cursor_state + R"( (
         id INTEGER PRIMARY KEY,
         sort_key BIGINT NOT NULL,
         processed_events BIGINT NOT NULL
@@ -183,11 +162,11 @@ void StageSync::init_schema() const {
       "CREATE INDEX IF NOT EXISTS " + std::string(kSqlIndexFeatureTensorBucketTagUser) +
       " ON " + table_feature_tensor + "(block_bucket, tag_id, user_addr)");
   auto conn = stage3_db_.create_connection();
-  auto r = conn->Query("SELECT COUNT(*) FROM " + table_sync_cursor + " WHERE id=1");
-  assert(r && !r->HasError());
-  if (r->GetValue(0, 0).GetValue<int64_t>() == 0) {
+  auto cursor_count_result = conn->Query("SELECT COUNT(*) FROM " + table_cursor_state + " WHERE id=1");
+  assert(cursor_count_result && !cursor_count_result->HasError());
+  if (cursor_count_result->GetValue(0, 0).GetValue<int64_t>() == 0) {
     auto ins = conn->Query(
-        "INSERT INTO " + table_sync_cursor + " VALUES (1, -1, 0)");
+        "INSERT INTO " + table_cursor_state + " VALUES (1, -1, 0)");
     assert(ins && !ins->HasError());
   }
 }
@@ -197,51 +176,51 @@ void StageSync::load_conditions() {
   cond_tag_ids_.clear();
   cond_market_question_counts_.clear();
 
-  auto conn = stage2_db_.create_connection();
-  auto rc = conn->Query(
+  auto stage2_conn = stage2_db_.create_connection();
+  auto condition_result = stage2_conn->Query(
       "SELECT cond_idx, lower(hex(cond_id)) AS cond_hex, outcome_cnt, "
       "payout_0, payout_1, payout_2, payout_3, payout_4, payout_5, payout_6, payout_7, "
       "CASE WHEN question_id IS NULL THEN '' ELSE lower(hex(question_id)) END AS qid, source "
       "FROM rb_condition ORDER BY cond_idx");
-  assert(rc && !rc->HasError());
-  conditions_.resize(static_cast<size_t>(rc->RowCount()));
-  cond_tag_ids_.assign(static_cast<size_t>(rc->RowCount()), 13);
-  cond_market_question_counts_.assign(static_cast<size_t>(rc->RowCount()), 0);
-  std::unordered_map<std::string, uint32_t> cond_hex_to_idx;
-  cond_hex_to_idx.reserve(static_cast<size_t>(rc->RowCount()) + 1);
-  for (idx_t i = 0; i < rc->RowCount(); ++i) {
-    uint32_t idx = rc->GetValue(0, i).GetValue<uint32_t>();
+  assert(condition_result && !condition_result->HasError());
+  conditions_.resize(static_cast<size_t>(condition_result->RowCount()));
+  cond_tag_ids_.assign(static_cast<size_t>(condition_result->RowCount()), 13);
+  cond_market_question_counts_.assign(static_cast<size_t>(condition_result->RowCount()), 0);
+  std::unordered_map<std::string, uint32_t> cond_hex_to_index;
+  cond_hex_to_index.reserve(static_cast<size_t>(condition_result->RowCount()) + 1);
+  for (idx_t i = 0; i < condition_result->RowCount(); ++i) {
+    uint32_t idx = condition_result->GetValue(0, i).GetValue<uint32_t>();
     assert(idx == i);
-    std::string cond_hex = rc->GetValue(1, i).GetValueUnsafe<std::string>();
-    cond_hex_to_idx.emplace(cond_hex, idx);
+    std::string cond_hex = condition_result->GetValue(1, i).GetValueUnsafe<std::string>();
+    cond_hex_to_index.emplace(cond_hex, idx);
     ConditionInfo info;
-    info.outcome_count = rc->GetValue(2, i).GetValue<uint8_t>();
+    info.outcome_count = condition_result->GetValue(2, i).GetValue<uint8_t>();
     info.payout_numerators.reserve(info.outcome_count);
     for (int j = 0; j < info.outcome_count; ++j) {
-      auto v = rc->GetValue(3 + j, i);
-      info.payout_numerators.push_back(v.IsNull() ? -1 : v.GetValue<int64_t>());
+      auto payout_value = condition_result->GetValue(3 + j, i);
+      info.payout_numerators.push_back(payout_value.IsNull() ? -1 : payout_value.GetValue<int64_t>());
     }
-    std::string qid = rc->GetValue(11, i).GetValueUnsafe<std::string>();
-    if (!qid.empty()) {
-      info.question_id = "0x" + qid;
+    std::string question_hex = condition_result->GetValue(11, i).GetValueUnsafe<std::string>();
+    if (!question_hex.empty()) {
+      info.question_id = "0x" + question_hex;
     }
-    info.source = static_cast<ConditionSource>(rc->GetValue(12, i).GetValue<int32_t>());
+    info.source = static_cast<ConditionSource>(condition_result->GetValue(12, i).GetValue<int32_t>());
     conditions_[idx] = std::move(info);
   }
 
   std::unordered_map<std::string, std::string> question_to_market;
   std::unordered_map<std::string, int32_t> market_question_counts;
-  auto nrm = conn->Query(
+  auto neg_risk_market_result = stage2_conn->Query(
       "SELECT lower(hex(question_id)) AS qid_hex, lower(hex(market_id)) AS market_hex "
       "FROM rb_neg_risk_market");
-  assert(nrm && !nrm->HasError());
-  question_to_market.reserve(static_cast<size_t>(nrm->RowCount()) + 1);
-  market_question_counts.reserve(static_cast<size_t>(nrm->RowCount()) + 1);
-  for (idx_t i = 0; i < nrm->RowCount(); ++i) {
-    const std::string qid_hex = nrm->GetValue(0, i).GetValueUnsafe<std::string>();
-    const std::string market_hex = nrm->GetValue(1, i).GetValueUnsafe<std::string>();
-    auto [it, inserted] = question_to_market.emplace(qid_hex, market_hex);
-    assert(inserted || it->second == market_hex);
+  assert(neg_risk_market_result && !neg_risk_market_result->HasError());
+  question_to_market.reserve(static_cast<size_t>(neg_risk_market_result->RowCount()) + 1);
+  market_question_counts.reserve(static_cast<size_t>(neg_risk_market_result->RowCount()) + 1);
+  for (idx_t i = 0; i < neg_risk_market_result->RowCount(); ++i) {
+    const std::string question_hex = neg_risk_market_result->GetValue(0, i).GetValueUnsafe<std::string>();
+    const std::string market_hex = neg_risk_market_result->GetValue(1, i).GetValueUnsafe<std::string>();
+    auto [market_it, inserted] = question_to_market.emplace(question_hex, market_hex);
+    assert(inserted || market_it->second == market_hex);
     market_question_counts[market_hex]++;
   }
 
@@ -252,12 +231,12 @@ void StageSync::load_conditions() {
   assert(tags && !tags->HasError());
   for (idx_t i = 0; i < tags->RowCount(); ++i) {
     std::string cond_hex = tags->GetValue(0, i).GetValueUnsafe<std::string>();
-    auto it = cond_hex_to_idx.find(cond_hex);
-    if (it == cond_hex_to_idx.end()) {
+    auto cond_it = cond_hex_to_index.find(cond_hex);
+    if (cond_it == cond_hex_to_index.end()) {
       continue;
     }
     std::string tag_name = tags->GetValue(1, i).GetValueUnsafe<std::string>();
-    cond_tag_ids_[it->second] = tag_name_to_id(tag_name);
+    cond_tag_ids_[cond_it->second] = tag_name_to_id(tag_name);
   }
 
   for (size_t i = 0; i < conditions_.size(); ++i) {
@@ -266,15 +245,15 @@ void StageSync::load_conditions() {
       continue;
     }
     assert(info.question_id.rfind("0x", 0) == 0);
-    const std::string qid_hex = info.question_id.substr(2);
-    auto qit = question_to_market.find(qid_hex);
-    if (qit == question_to_market.end()) {
+    const std::string question_hex = info.question_id.substr(2);
+    auto question_market_it = question_to_market.find(question_hex);
+    if (question_market_it == question_to_market.end()) {
       continue;
     }
-    auto mit = market_question_counts.find(qit->second);
-    assert(mit != market_question_counts.end());
-    assert(mit->second > 0);
-    cond_market_question_counts_[i] = static_cast<uint16_t>(mit->second);
+    auto market_question_count_it = market_question_counts.find(question_market_it->second);
+    assert(market_question_count_it != market_question_counts.end());
+    assert(market_question_count_it->second > 0);
+    cond_market_question_counts_[i] = static_cast<uint16_t>(market_question_count_it->second);
   }
 }
 
@@ -282,7 +261,7 @@ void StageSync::load_cursor() {
   auto conn = stage3_db_.create_connection();
   auto r = conn->Query(
       "SELECT sort_key, processed_events FROM " +
-      std::string(kSqlTableSyncCursorState) + " WHERE id=1");
+      std::string(kSqlTableCursorState) + " WHERE id=1");
   assert(r && !r->HasError() && r->RowCount() == 1);
   sync_cursor_.sort_key = r->GetValue(0, 0).GetValue<int64_t>();
   sync_cursor_.processed_events = r->GetValue(1, 0).GetValue<int64_t>();
@@ -290,7 +269,7 @@ void StageSync::load_cursor() {
 
 void StageSync::save_cursor_locked(duckdb::Connection &conn) const {
   auto q = conn.Query(
-      "UPDATE " + std::string(kSqlTableSyncCursorState) + " SET "
+      "UPDATE " + std::string(kSqlTableCursorState) + " SET "
                                                           "sort_key=" +
       std::to_string(sync_cursor_.sort_key) +
       ", processed_events=" + std::to_string(sync_cursor_.processed_events) +

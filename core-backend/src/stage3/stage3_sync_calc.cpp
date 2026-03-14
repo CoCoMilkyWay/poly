@@ -7,16 +7,38 @@
 namespace stage3 {
 
 std::string StageSync::normalize_addr(const std::string &addr) {
-  std::string lower = to_lower(addr);
-  if (lower.rfind("0x", 0) != 0 || lower.size() != 42) {
+  std::string addr_lower = to_lower(addr);
+  if (addr_lower.rfind("0x", 0) != 0 || addr_lower.size() != 42) {
     return {};
   }
-  return lower;
+  return addr_lower;
 }
 
-bool StageSync::is_trade_event(EventType ty) {
-  return ty == EventType::OrderBuy || ty == EventType::OrderSell ||
-         ty == EventType::FPMMBuy || ty == EventType::FPMMSell;
+std::string StageSync::normalize_tag_key(const std::string &raw) {
+  std::string normalized_key;
+  normalized_key.reserve(raw.size());
+  bool previous_is_separator = false;
+  for (char c : to_lower(raw)) {
+    const bool keep = (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9');
+    if (keep) {
+      normalized_key.push_back(c);
+      previous_is_separator = false;
+      continue;
+    }
+    if (!previous_is_separator && !normalized_key.empty()) {
+      normalized_key.push_back('_');
+      previous_is_separator = true;
+    }
+  }
+  while (!normalized_key.empty() && normalized_key.back() == '_') {
+    normalized_key.pop_back();
+  }
+  return normalized_key;
+}
+
+bool StageSync::is_trade_event(EventType event_type) {
+  return event_type == EventType::OrderBuy || event_type == EventType::OrderSell ||
+         event_type == EventType::FPMMBuy || event_type == EventType::FPMMSell;
 }
 
 bool StageSync::is_usd_collateral(int32_t collateral) {
@@ -27,47 +49,11 @@ bool StageSync::is_usd_collateral(int32_t collateral) {
 }
 
 int8_t StageSync::tag_name_to_id(const std::string &tag_name) const {
-  auto normalize = [](const std::string &raw) {
-    std::string out;
-    out.reserve(raw.size());
-    bool prev_sep = false;
-    for (char c : to_lower(raw)) {
-      const bool keep = (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9');
-      if (keep) {
-        out.push_back(c);
-        prev_sep = false;
-        continue;
-      }
-      if (!prev_sep && !out.empty()) {
-        out.push_back('_');
-        prev_sep = true;
-      }
-    }
-    while (!out.empty() && out.back() == '_') {
-      out.pop_back();
-    }
-    return out;
-  };
-
   assert(!tag_to_industry_id_.empty());
-  const std::string whole = normalize(tag_name);
-  auto it = tag_to_industry_id_.find(whole);
-  if (it != tag_to_industry_id_.end()) {
-    return it->second;
-  }
-
-  size_t sep = tag_name.find(" - ");
-  if (sep != std::string::npos) {
-    const std::string left = normalize(tag_name.substr(0, sep));
-    const std::string right = normalize(tag_name.substr(sep + 3));
-    auto it_right = tag_to_industry_id_.find(right);
-    if (it_right != tag_to_industry_id_.end()) {
-      return it_right->second;
-    }
-    auto it_left = tag_to_industry_id_.find(left);
-    if (it_left != tag_to_industry_id_.end()) {
-      return it_left->second;
-    }
+  const std::string normalized_tag_key = normalize_tag_key(tag_name);
+  auto tag_id_it = tag_to_industry_id_.find(normalized_tag_key);
+  if (tag_id_it != tag_to_industry_id_.end()) {
+    return tag_id_it->second;
   }
   return 13;
 }
@@ -114,9 +100,9 @@ int64_t StageSync::calc_volume_1e6(const EventInput &row) {
 double StageSync::calc_convert_price_for_cond(int32_t cond_idx) const {
   assert(cond_idx >= 0);
   assert(static_cast<size_t>(cond_idx) < cond_market_question_counts_.size());
-  const uint16_t q_count = cond_market_question_counts_[static_cast<size_t>(cond_idx)];
-  assert(q_count >= 2);
-  return static_cast<double>(q_count - 1) / static_cast<double>(q_count);
+  const uint16_t question_count = cond_market_question_counts_[static_cast<size_t>(cond_idx)];
+  assert(question_count >= 2);
+  return static_cast<double>(question_count - 1) / static_cast<double>(question_count);
 }
 
 uint64_t StageSync::pack_cond_token_key(int32_t cond_idx, int32_t token_idx) {
@@ -143,20 +129,20 @@ double StageSync::apply_event_input(const EventInput &row, TokenState &st) const
   assert(cond.outcome_count > 0);
   assert(row.token_idx >= 0 && row.token_idx < cond.outcome_count);
 
-  const EventType ty = static_cast<EventType>(row.event_type);
-  const bool has_usd = is_usd_collateral(row.collateral);
-  const double qty = std::abs(static_cast<double>(row.amount));
-  if (qty <= kPosEpsilon) {
+  const EventType event_type = static_cast<EventType>(row.event_type);
+  const bool is_usd_collateral_event = is_usd_collateral(row.collateral);
+  const double quantity = std::abs(static_cast<double>(row.amount));
+  if (quantity <= kPosEpsilon) {
     return 0.0;
   }
 
-  if (is_trade_event(ty) && row.price > 0 && has_usd) {
+  if (is_trade_event(event_type) && row.price > 0 && is_usd_collateral_event) {
     st.lp = static_cast<double>(row.price);
   }
 
   const double pos_before = st.pos;
   const double entry_before = st.entry_block;
-  const double px = static_cast<double>(row.price) / 1e6;
+  const double event_price = static_cast<double>(row.price) / 1e6;
   const int64_t current_block = sort_key_to_block(row.sort_key);
 
   auto normalize_small_residue = [&]() {
@@ -171,16 +157,16 @@ double StageSync::apply_event_input(const EventInput &row, TokenState &st) const
   auto apply_positive_delta = [&](double price_per_unit,
                                   bool add_cost_for_open_long,
                                   bool realize_when_cover_short) -> double {
-    assert(qty > 0.0);
-    if (!has_usd) {
-      st.pos += qty;
+    assert(quantity > 0.0);
+    if (!is_usd_collateral_event) {
+      st.pos += quantity;
       normalize_small_residue();
       return 0.0;
     }
 
     const double short_qty = std::max(0.0, -st.pos);
-    const double cover_qty = std::min(qty, short_qty);
-    const double open_long_qty = qty - cover_qty;
+    const double cover_qty = std::min(quantity, short_qty);
+    const double open_long_qty = quantity - cover_qty;
 
     double realized_delta = 0.0;
     if (cover_qty > 0.0 && short_qty > 0.0) {
@@ -193,7 +179,7 @@ double StageSync::apply_event_input(const EventInput &row, TokenState &st) const
       }
     }
 
-    st.pos += qty;
+    st.pos += quantity;
     if (add_cost_for_open_long && open_long_qty > 0.0) {
       st.cost += open_long_qty * price_per_unit;
     }
@@ -204,16 +190,16 @@ double StageSync::apply_event_input(const EventInput &row, TokenState &st) const
   auto apply_negative_delta = [&](double proceeds_per_unit,
                                   bool accrue_realized,
                                   bool add_short_entry_cost) -> double {
-    assert(qty > 0.0);
-    if (!has_usd) {
-      st.pos -= qty;
+    assert(quantity > 0.0);
+    if (!is_usd_collateral_event) {
+      st.pos -= quantity;
       normalize_small_residue();
       return 0.0;
     }
 
     const double long_qty = std::max(0.0, st.pos);
-    const double close_qty = std::min(qty, long_qty);
-    const double open_short_qty = qty - close_qty;
+    const double close_qty = std::min(quantity, long_qty);
+    const double open_short_qty = quantity - close_qty;
 
     double cost_removed = 0.0;
     if (close_qty > 0.0 && long_qty > 0.0) {
@@ -221,7 +207,7 @@ double StageSync::apply_event_input(const EventInput &row, TokenState &st) const
       st.cost -= cost_removed;
     }
 
-    st.pos -= qty;
+    st.pos -= quantity;
     if (add_short_entry_cost && open_short_qty > 0.0) {
       st.cost -= open_short_qty * proceeds_per_unit;
     }
@@ -237,19 +223,19 @@ double StageSync::apply_event_input(const EventInput &row, TokenState &st) const
   };
 
   double realized_delta = 0.0;
-  switch (ty) {
+  switch (event_type) {
   case EventType::OrderBuy:
   case EventType::FPMMBuy:
   case EventType::SplitNormal:
   case EventType::SplitNegRisk:
   case EventType::SplitNonPoly: {
     if (row.amount >= 0) {
-      realized_delta = apply_positive_delta(/*price_per_unit=*/px,
+      realized_delta = apply_positive_delta(/*price_per_unit=*/event_price,
                                             /*add_cost_for_open_long=*/true,
                                             /*realize_when_cover_short=*/true);
       break;
     }
-    realized_delta = apply_negative_delta(/*proceeds_per_unit=*/px,
+    realized_delta = apply_negative_delta(/*proceeds_per_unit=*/event_price,
                                           /*accrue_realized=*/true,
                                           /*add_short_entry_cost=*/true);
     break;
@@ -284,12 +270,12 @@ double StageSync::apply_event_input(const EventInput &row, TokenState &st) const
   case EventType::Redemption:
   case EventType::RedemptionNonPoly: {
     if (row.amount <= 0) {
-      realized_delta = apply_negative_delta(/*proceeds_per_unit=*/px,
+      realized_delta = apply_negative_delta(/*proceeds_per_unit=*/event_price,
                                             /*accrue_realized=*/true,
                                             /*add_short_entry_cost=*/true);
       break;
     }
-    realized_delta = apply_positive_delta(/*price_per_unit=*/px,
+    realized_delta = apply_positive_delta(/*price_per_unit=*/event_price,
                                           /*add_cost_for_open_long=*/true,
                                           /*realize_when_cover_short=*/true);
     break;
