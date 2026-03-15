@@ -4,7 +4,6 @@
 #include <cassert>
 #include <cmath>
 #include <cstdlib>
-#include <limits>
 
 namespace stage3::feature_comp {
 namespace {
@@ -21,15 +20,6 @@ __int128 linear_series_i128(__int128 base, int64_t slope, int64_t len) {
   assert(len >= 0);
   const __int128 L = static_cast<__int128>(len);
   return static_cast<__int128>(base) * L + static_cast<__int128>(slope) * L * (L - 1) / 2;
-}
-
-int64_t calc_rms_cap_1e6(int64_t exposure_before, int64_t exposure_after) {
-  assert(exposure_before >= 0);
-  assert(exposure_after >= 0);
-  const long double before = static_cast<long double>(exposure_before);
-  const long double after = static_cast<long double>(exposure_after);
-  const long double rms = std::sqrt((before * before + after * after) / 2.0L);
-  return round_i64(static_cast<double>(rms));
 }
 
 } // namespace
@@ -150,31 +140,6 @@ void update_tail_window(BucketAggState &agg,
   agg.last_holding_exp = current_holding_exp;
   agg.last_token_count = current_token_count;
   agg.has_tail = true;
-}
-
-void accumulate_sharpe_interval(BucketAggState &agg,
-                                int64_t pnl_delta,
-                                int64_t exposure_before,
-                                int64_t exposure_after,
-                                int64_t delta_t) {
-  assert(delta_t > 0);
-  constexpr int64_t kMinCap = 1000; // 0.001 USD
-  const int64_t cap = calc_rms_cap_1e6(exposure_before, exposure_after);
-  if (cap < kMinCap) {
-    return;
-  }
-
-  const long double return_rate =
-      static_cast<long double>(pnl_delta) / static_cast<long double>(cap);
-  const int64_t return_rate_1e6 = round_i64(static_cast<double>(return_rate * 1e6L));
-  agg.sharpe_sum_r = narrow_i64(static_cast<__int128>(agg.sharpe_sum_r) + return_rate_1e6);
-
-  const long double sq_over_dt =
-      static_cast<long double>(return_rate_1e6) * static_cast<long double>(return_rate_1e6) /
-      static_cast<long double>(delta_t);
-  agg.sharpe_sum_r2_over_dt += static_cast<__int128>(sq_over_dt + 0.5L);
-  agg.sharpe_time_sum =
-      narrow_i64(static_cast<__int128>(agg.sharpe_time_sum) + static_cast<__int128>(delta_t));
 }
 
 } // namespace stage3::feature_comp

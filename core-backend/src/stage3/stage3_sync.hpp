@@ -165,7 +165,6 @@ private:
     int64_t exposure = 0;
     int64_t volume = 0;
     int64_t holding_period = 0;
-    int64_t account_exposure = 0;
   };
 
   struct TokenState {
@@ -214,7 +213,7 @@ private:
   using BucketAggState = feature_comp::BucketAggState;
 
   // Execution config
-  static constexpr int64_t kStage3BatchEvents = 10000000;
+  static constexpr int64_t kStage3BatchEvents = 5000000;
   static constexpr int64_t kBlockBucketSize = 100000; // DO NOT CHANGE
   static constexpr double kPosEpsilon = 1e-9;
   static constexpr int64_t kMinHoldingQty = 10LL * 1000000LL;
@@ -223,10 +222,12 @@ private:
   static constexpr const char *kSqlTableCursorState = "sync_cursor_state";
   static constexpr const char *kSqlTableTokenState = "token_state";
   static constexpr const char *kSqlTableUserSummaryState = "user_summary_state";
+  static constexpr const char *kSqlTableAccountBucketPnlState = "account_bucket_pnl_state";
   static constexpr const char *kSqlTableFeatureTensorState = "feature_tensor_state";
 
   // SQL identifiers (indexes) - 仅保留非PK前缀的有用索引
   static constexpr const char *kSqlIndexUserSummaryEvents = "idx_stage3_user_summary_events";
+  static constexpr const char *kSqlIndexAccountBucketPnlBlockBucket = "idx_stage3_account_bucket_pnl_block_bucket";
   static constexpr const char *kSqlIndexFeatureTensorBucketTagUser = "idx_stage3_feature_tensor_bucket_tag_user";
 
   // Core dependencies
@@ -271,6 +272,26 @@ private:
   mutable std::mutex user_query_cache_mu_;
   mutable UserQueryCacheState user_query_cache_state_;
 
+  struct AccountBucketPnlSample {
+    int32_t block_offset = 0;
+    int64_t pnl = 0;
+  };
+
+  struct AccountBucketPnlState {
+    int64_t block_bucket = 0;
+    std::vector<AccountBucketPnlSample> samples;
+    int64_t close_pnl = 0;
+    int64_t min_pnl = 0;
+    int64_t updated_sort_key = 0;
+  };
+
+  struct UserSharpeCacheState {
+    int64_t pnl_before_first_bucket = 0;
+    std::deque<AccountBucketPnlState> buckets;
+  };
+  mutable std::unordered_map<std::string, UserSharpeCacheState> sharpe_cache_by_user_blob_;
+  mutable int64_t last_pruned_account_bucket_before_ = -1;
+
   // Runtime memory probe
   struct RuntimeMemoryProbe {
     int64_t event_inputs_bytes = 0;
@@ -279,6 +300,10 @@ private:
     int64_t token_states_bytes = 0;
     int64_t bucket_agg_bytes = 0;
     int64_t event_facts_bytes = 0;
+    int64_t sharpe_cache_bytes = 0;
+    int64_t sharpe_cache_users = 0;
+    int64_t sharpe_cache_buckets = 0;
+    int64_t sharpe_cache_samples = 0;
     int64_t total_working_set_bytes = 0;
     int64_t peak_working_set_bytes = 0;
     int64_t row_count = 0;
@@ -295,7 +320,6 @@ private:
   // Event / metadata predicates
   static bool is_trade_event(EventType event_type);
   static bool is_usd_collateral(int32_t collateral);
-  static bool is_effective_holding(double qty_1e6);
   static bool is_effective_holding_i64(int64_t qty_1e6);
   int8_t tag_name_to_id(const std::string &tag_name) const;
 

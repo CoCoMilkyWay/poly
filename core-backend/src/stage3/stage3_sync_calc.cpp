@@ -62,10 +62,6 @@ int64_t StageSync::sort_key_to_block(int64_t sort_key) {
   return feature_comp::sort_key_to_block(sort_key, SORT_KEY_SCALE);
 }
 
-bool StageSync::is_effective_holding(double qty_1e6) {
-  return is_effective_holding_i64(feature_comp::round_i64(qty_1e6));
-}
-
 bool StageSync::is_effective_holding_i64(int64_t qty_1e6) { return std::llabs(qty_1e6) >= kMinHoldingQty; }
 
 int64_t StageSync::calc_volume_1e6(const EventInput &row) {

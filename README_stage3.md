@@ -112,6 +112,7 @@ stage3_sync_tick
 │  ├─ upsert token_state(dirty_token_keys)
 │  ├─ upsert user_summary_state(dirty_users)
 │  ├─ write event_fact.rocks/timeline(fact_rows)
+│  ├─ upsert account_bucket_pnl_state(dirty_user_bucket, 稀疏 `(block,pnl)` 样本)
 │  ├─ upsert feature_tensor_state(dirty_user_bucket_tag, 含 Node-A0/A/B/C/D)
 │  └─ update sync_cursor_state(sort_key, processed_events)
 └─ 6) 查询路径(只读)
@@ -131,11 +132,13 @@ Size估算基准: E=2B, U=2M, T=1M, F=100M
 | `EventInput`                                  | 输入流 / `E`      | -      | -      | 回放状态机输入                                    | 否（临时）   | -                                                    |
 | `ConditionMeta`                               | 只读缓存 / `C`    | -      | -      | `outcome_count` 与 `tag_id` 元信息                | 否（可重载） | -                                                    |
 | `TokenState` (`token_state`)                  | Token级 / `T`     | 60B    | ~60MB  | 当前持仓 `pos/cost/lp/entry_block`                | 是           | `(user_addr,cond_idx,token_idx)`                     |
-| `EventFact` (`event_fact.rocks/timeline`)     | Token级 / `E`     | 96B    | ~190GB | 事件事实、timeline、特征原料                      | 是           | `(user_addr,sort_key,cond_idx,event_type,token_idx)` |
+| `EventFact` (`event_fact.rocks/timeline`)     | Token级 / `E`     | 96B    | ~190GB | 事件事实、timeline、positions 回放                | 是           | `(user_addr,sort_key,cond_idx,event_type,token_idx)` |
 | `UserSummaryState` (`user_summary_state`)     | User级 / `U`      | 60B    | ~120MB | 用户总览查询加速                                  | 是           | `(user_addr)`                                        |
+| `AccountBucketPnlState` (`account_bucket_pnl_state`) | User*Bucket级 | 稀疏/变长 | 稀疏   | Sharpe 稀疏 `(block,pnl)` 样本持久化              | 是           | `(user_addr,block_bucket)`                           |
 | `FeatureTensorState` (`feature_tensor_state`) | User*Bucket*Tag级 | 536B   | ~50GB  | 统一特征张量（含原子/窗口/前缀缓存/增量续算锚点） | 是           | `(block_bucket,tag_id,user_addr)`                    |
 | `SyncCursorState` (`sync_cursor_state`)       | 全局 / `1`        | <1KB   | <1KB   | 增量同步断点                                      | 是           | -                                                    |
 | `UserQueryCache`                              | 进程内 / `<=U`    | -      | -      | 查询缓存（timeline/snapshot）                     | 否（内存）   | -                                                    |
+| `SharpeSparseCache`                           | 进程内 / 稀疏     | 稀疏/变长 | 稀疏 | 最近 100 bucket 的 Sharpe 样本缓存, 超窗即释放    | 否（内存）   | `(user_addr,block_bucket)`                           |
 
 ```text
 // Stage3 内部统一输入结构 (用于回放/状态机)
@@ -193,6 +196,18 @@ struct UserSummaryState {
   int64  last_sort_key;
 }
 
+// 账户级 bucket PnL 稀疏状态 (持久化)
+// PK: (user_addr, block_bucket)
+// 只保留该 bucket 内发生过变化的块末 pnl 样本
+struct AccountBucketPnlState {
+  Address20 user_addr;
+  int64  block_bucket;
+  blob   samples_blob;        // 稀疏编码的 {(block_offset, pnl)} 序列
+  int64  close_pnl;           // bucket 末尾 pnl
+  int64  min_pnl;             // bucket 内样本最小 pnl
+  int64  updated_sort_key;
+}
+
 // 统一特征张量状态 (持久化)
 // PK: (user_addr, block_bucket, tag_id)
 // 注: tag_id = -1 表示全行业聚合行（用于总夏普等 1 维特征）
@@ -202,16 +217,12 @@ struct FeatureTensorState {
   int32  tag_id;
 
   // Node-A0: 增量续算锚点
-  // 持仓 tail 修正 + Sharpe block-merge 续算, 无需回扫 event_fact
+  // 持仓 tail 修正, 无需回扫 event_fact
   int64  last_sort_key_10w;
   int64  last_block_10w;              // 当前 pending block
   int64  last_exposure_10w;           // 当前 pending exposure
   int128 last_holding_period_10w;        // DuckDB: HUGEINT
   int64  last_token_count_10w;
-  int64  sharpe_prev_block_10w;       // 上一个已完成采样点 block
-  int64  sharpe_prev_pnl_10w;         // 上一个已完成采样点 pnl
-  int64  sharpe_prev_exposure_10w;    // 上一个已完成采样点 exposure
-  int64  sharpe_pending_pnl_10w;      // 当前 pending block 的块末 pnl
 
   // Node-A: 10w 原子统计（事件增量累加）
   int64  time_weight_sum_10w;
@@ -219,9 +230,6 @@ struct FeatureTensorState {
   int128 exposure_tw_sum_10w;            // DuckDB: HUGEINT
   int64  volume_sum_10w;
   int128 holding_period_exp_tw_sum_10w;  // DuckDB: HUGEINT
-  int64  sharpe_sum_r_10w;               // Σr_i, r_i = Δpnl_i / RMS(exp_{i-1}, exp_i)
-  int128 sharpe_sum_r2_over_dt_10w;      // Σ(r_i² / Δt_i), DuckDB: HUGEINT
-  int64  sharpe_time_sum_10w;            // ΣΔt_i
 
   // Node-B: 10w 归一化输出
   int64  token_avg_10w;
@@ -235,9 +243,6 @@ struct FeatureTensorState {
   int64  ps_exposure_avg_10w;
   int64  ps_volume_10w;
   int64  ps_holding_period_avg_10w;
-  int64  ps_sharpe_sum_r_10w;
-  int128 ps_sharpe_sum_r2_over_dt_10w;   // DuckDB: HUGEINT
-  int64  ps_sharpe_time_sum_10w;
 
   // Node-D: 窗口投影输出（由 Node-C O(1) 计算）
   int64  token_avg_100w;
@@ -376,23 +381,29 @@ Unknown
 注:
   1. 交易额里: 只记录会直接创造头寸暴露的操作(比如铸币, 合币就不应该记入), 暴露方向不重要
   2. 平均持仓: 需要统计周期内多个事件(非均匀)的持仓快照(记录不同token的平均持仓周期), 再按照token金额, 事件时间加权
-  3. 夏普: 无风险=0, 基于账户级 `pnl/exposure` 的 block-merge 增量计算（与其他特征一致动态维护）
+  3. 夏普: 无风险=0, 基于账户级 `pnl` 的窗口级精确重算
      - 仅统计全账户 Sharpe（tag_id=-1），不支持分行业 Sharpe
      - `sharpe_10w / sharpe_100w / sharpe_1000w` 最终统一 normalize 到 `1000w block` 量纲
-     - 采样点: 同一 block 内多事件先合并，只取块末 `(block, pnl, account_exposure)`
+     - 数据源: `account_bucket_pnl_state` + 进程内 `SharpeSparseCache`
+     - 持久化只存有事件的 `(user_addr, block_bucket)`；空 bucket 不落库
+     - bucket 内只存 PnL 变化点；同一 block 多事件先合并，只取块末 `(block, pnl)`
+     - 运行时只保留最近 `100` 个 bucket；超窗 bucket 立即释放，空用户缓存立即擦除
      - 其中: `pnl = realized_cum + unrealized_pnl`
-     - 相邻采样点区间:
-       - `Δpnl_i = pnl_i - pnl_{i-1}`
+     - 对窗口 `W ∈ {10w, 100w, 1000w}`:
+       - `avg_exposure_W`:
+         - `10w`: 直接取当前 bucket 的 `exposure_avg_10w`
+         - `100w/1000w`: 先对窗口内 bucket 的 `exposure_avg_10w` 做等权平均
+       - `min_pnl_W = min(pnl_i)`，遍历窗口内全部 block 采样点以及左右边界锚点
+       - `nav_base_W = max(avg_exposure_W, abs(min_pnl_W)) + 1 USD`
+       - `nav_i = nav_base_W + pnl_i`
+       - 相邻采样点收益: `r_i = log(nav_i / nav_{i-1})`
        - `Δt_i = block_i - block_{i-1}`
-       - `cap_i = RMS(exp_{i-1}, exp_i) = sqrt((exp_{i-1}^2 + exp_i^2) / 2)`
-       - `r_i = Δpnl_i / cap_i`
-     - 增量累加:
-       - `sharpe_sum_r += r_i`
-       - `sharpe_sum_r2_over_dt += r_i^2 / Δt_i`
-       - `sharpe_time_sum += Δt_i`
-     - 时间加权平均收益率: `μ = sharpe_sum_r / T`
-     - 时间加权方差: `σ² = sharpe_sum_r2_over_dt / T - μ²`
+     - 边界规则:
+       - 左边界锚点使用窗口起点前最后一个已知 `pnl`；若不存在则记 `0`
+       - 右边界锚点使用窗口末 block；若末尾无新事件，则用最后一个 `pnl` 平推到窗口末尾
+     - 时间加权平均收益率: `μ = Σr_i / T`
+     - 时间加权方差: `σ² = Σ(r_i^2 / Δt_i) / T - μ²`
      - raw Sharpe = `μ / σ`
      - 输出 Sharpe = `raw_sharpe * sqrt(10000000)`，即统一归一到 `1000w block`
-     - `cap_i < 0.001 USD` 或 `Δt_i <= 0` 或 `T <= 0` 时，该区间/窗口 Sharpe 贡献记 0
+     - `nav_i <= 0`、`Δt_i <= 0`、`T <= 0` 或 `σ² <= 0` 时，该窗口 Sharpe 记 `0`
   4. 本次 Sharpe 口径变更不做兼容迁移；切换代码后必须重建 `data/stage3`

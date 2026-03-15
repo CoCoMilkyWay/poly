@@ -34,7 +34,7 @@ json StageSync::memory_breakdown() const {
     probe_copy = runtime_memory_probe_;
   }
   const int64_t stage3_persistent_total = conditions_bytes + cond_tag_ids_bytes + tag_to_industry_bytes + cache_addr_bytes +
-                                          cache_timeline_bytes + cache_snapshots_bytes;
+                                          cache_timeline_bytes + cache_snapshots_bytes + probe_copy.sharpe_cache_bytes;
   const int64_t stage3_peak_candidate_bytes = stage3_persistent_total + probe_copy.peak_working_set_bytes;
 
   core::mem::MemRows stage3_rows = {
@@ -47,6 +47,7 @@ json StageSync::memory_breakdown() const {
       {"conditions", conditions_bytes},
       {"cond_tag_ids", cond_tag_ids_bytes},
       {"tag_to_industry", tag_to_industry_bytes},
+      {"sharpe_sparse_cache", probe_copy.sharpe_cache_bytes},
       {"user_query_cache_state_addr", cache_addr_bytes},
       {"user_query_cache_state_timeline", cache_timeline_bytes},
       {"user_query_cache_state_snapshots", cache_snapshots_bytes},
@@ -56,6 +57,9 @@ json StageSync::memory_breakdown() const {
   out["persistent_bytes"] = stage3_persistent_total;
   out["peak_working_set_bytes"] = probe_copy.peak_working_set_bytes;
   out["estimated_peak_candidate_bytes"] = stage3_peak_candidate_bytes;
+  out["sharpe_cache_users"] = probe_copy.sharpe_cache_users;
+  out["sharpe_cache_buckets"] = probe_copy.sharpe_cache_buckets;
+  out["sharpe_cache_samples"] = probe_copy.sharpe_cache_samples;
   return out;
 }
 

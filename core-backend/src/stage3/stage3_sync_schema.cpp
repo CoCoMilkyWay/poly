@@ -89,6 +89,7 @@ void StageSync::init_schema() const {
   const std::string table_cursor_state = kSqlTableCursorState;
   const std::string table_token_state = kSqlTableTokenState;
   const std::string table_user_summary = kSqlTableUserSummaryState;
+  const std::string table_account_bucket_pnl = kSqlTableAccountBucketPnlState;
   const std::string table_feature_tensor = kSqlTableFeatureTensorState;
 
   stage3_db_.execute("CREATE TABLE IF NOT EXISTS " + table_cursor_state + R"( (
@@ -117,6 +118,16 @@ void StageSync::init_schema() const {
         last_sort_key BIGINT NOT NULL
       )
     )");
+  stage3_db_.execute("CREATE TABLE IF NOT EXISTS " + table_account_bucket_pnl + R"( (
+        user_addr BLOB NOT NULL,
+        block_bucket BIGINT NOT NULL,
+        samples_blob BLOB NOT NULL,
+        close_pnl BIGINT NOT NULL,
+        min_pnl BIGINT NOT NULL,
+        updated_sort_key BIGINT NOT NULL,
+        PRIMARY KEY (user_addr, block_bucket)
+      )
+    )");
   stage3_db_.execute("CREATE TABLE IF NOT EXISTS " + table_feature_tensor + R"( (
         user_addr BLOB NOT NULL,
         block_bucket BIGINT NOT NULL,
@@ -131,13 +142,6 @@ void StageSync::init_schema() const {
         exposure_tw_sum_10w HUGEINT NOT NULL DEFAULT 0,
         volume_sum_10w BIGINT NOT NULL DEFAULT 0,
         holding_period_exp_tw_sum_10w HUGEINT NOT NULL DEFAULT 0,
-        sharpe_sum_r_10w BIGINT NOT NULL DEFAULT 0,
-        sharpe_sum_r2_over_dt_10w HUGEINT NOT NULL DEFAULT 0,
-        sharpe_time_sum_10w BIGINT NOT NULL DEFAULT 0,
-        sharpe_prev_block_10w BIGINT NOT NULL DEFAULT 0,
-        sharpe_prev_pnl_10w BIGINT NOT NULL DEFAULT 0,
-        sharpe_prev_exposure_10w BIGINT NOT NULL DEFAULT 0,
-        sharpe_pending_pnl_10w BIGINT NOT NULL DEFAULT 0,
         token_avg_10w BIGINT NOT NULL DEFAULT 0,
         exposure_avg_10w BIGINT NOT NULL DEFAULT 0,
         volume_10w BIGINT NOT NULL DEFAULT 0,
@@ -147,9 +151,6 @@ void StageSync::init_schema() const {
         ps_exposure_avg_10w BIGINT NOT NULL DEFAULT 0,
         ps_volume_10w BIGINT NOT NULL DEFAULT 0,
         ps_holding_period_avg_10w BIGINT NOT NULL DEFAULT 0,
-        ps_sharpe_sum_r_10w BIGINT NOT NULL DEFAULT 0,
-        ps_sharpe_sum_r2_over_dt_10w HUGEINT NOT NULL DEFAULT 0,
-        ps_sharpe_time_sum_10w BIGINT NOT NULL DEFAULT 0,
         token_avg_100w BIGINT NOT NULL DEFAULT 0,
         token_avg_1000w BIGINT NOT NULL DEFAULT 0,
         exposure_avg_100w BIGINT NOT NULL DEFAULT 0,
@@ -168,6 +169,9 @@ void StageSync::init_schema() const {
   stage3_db_.execute(
       "CREATE INDEX IF NOT EXISTS " + std::string(kSqlIndexUserSummaryEvents) +
       " ON " + table_user_summary + "(total_events)");
+  stage3_db_.execute(
+      "CREATE INDEX IF NOT EXISTS " + std::string(kSqlIndexAccountBucketPnlBlockBucket) +
+      " ON " + table_account_bucket_pnl + "(block_bucket)");
   stage3_db_.execute(
       "CREATE INDEX IF NOT EXISTS " + std::string(kSqlIndexFeatureTensorBucketTagUser) +
       " ON " + table_feature_tensor + "(block_bucket, tag_id, user_addr)");
