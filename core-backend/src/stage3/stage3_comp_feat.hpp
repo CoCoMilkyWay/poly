@@ -55,6 +55,8 @@ void update_tail_window(BucketAggState &agg,
                         int64_t current_token_count,
                         int64_t block_bucket_size);
 
-void accumulate_event_delta(BucketAggState &agg, double realized_delta, int64_t exposure_before, int64_t volume, int64_t sort_key, int64_t current_block);
+// prev_block: 上一个事件的 block（用于计算 delta_t）
+// 必须在调用 update_tail_window 之前保存 agg.last_block
+void accumulate_event_delta(BucketAggState &agg, double realized_delta, int64_t exposure_before, int64_t volume, int64_t sort_key, int64_t current_block, int64_t prev_block);
 
 } // namespace stage3::feature_comp

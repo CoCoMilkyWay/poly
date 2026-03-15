@@ -936,8 +936,10 @@ bool StageSync::process_chunk_locked() const {
         auto bucket_agg_it = bucket_agg_state_by_agg_key.find(agg_key);
         assert(bucket_agg_it != bucket_agg_state_by_agg_key.end());
         BucketAggState &agg = bucket_agg_it->second;
+        // 保存 prev_block 用于 delta_t 计算（必须在 update_tail_window 之前）
+        const int64_t prev_block = agg.has_tail ? agg.last_block : 0;
         update_tail_window(agg, agg_key.block_bucket, row_block, rt.exposure, holding_exp, rt.token_count);
-        feature_comp::accumulate_event_delta(agg, realized_delta, exposure_before, volume, row.sort_key, row_block);
+        feature_comp::accumulate_event_delta(agg, realized_delta, exposure_before, volume, row.sort_key, row_block, prev_block);
       };
 
       apply_feature_bucket(tag_id);
@@ -1227,9 +1229,10 @@ bool StageSync::process_chunk_locked() const {
         const int64_t time_sum_10w = (agg.first_block > 0 && agg.last_block > agg.first_block)
                                          ? (agg.last_block - agg.first_block)
                                          : 0;
-        // NOTE: Old Sharpe calculation disabled. Sharpe is now computed exactly from full event sequences.
-        // Keeping return_sum/return_tw_sum/return_sq_tw_sum for backward compatibility but not using them for Sharpe.
-        const double sharpe_10w = 0.0;
+        // Sharpe = r̄ / σ，仅对 tag_id=-1（全账户）计算
+        const double sharpe_10w = (key.tag_id == -1)
+                                      ? calc_sharpe_from_returns(agg.return_sum, agg.return_tw_sum, agg.return_sq_tw_sum, time_sum_10w)
+                                      : 0.0;
 
         UserTagRuntimePairKey pair_key{key.user_id, key.tag_id};
         auto [prefix_outputs_it, _] = prefix_outputs_by_pair.try_emplace(pair_key, std::vector<BucketPrefixOutput>{});
@@ -1370,9 +1373,13 @@ bool StageSync::process_chunk_locked() const {
         const int64_t holding_period_avg_1000w =
             (denom_1000 > 0) ? round_i64(static_cast<double>(holding_period_sum_1000) / static_cast<double>(denom_1000)) : 0;
 
-        // NOTE: Old Sharpe calculation disabled. Sharpe is now computed exactly from full event sequences.
-        const double sharpe_100w = 0.0;
-        const double sharpe_1000w = 0.0;
+        // Sharpe 窗口投影，仅对 tag_id=-1（全账户）计算
+        const double sharpe_100w = (key.tag_id == -1)
+                                       ? calc_sharpe_from_returns(return_sum_100, return_tw_sum_100, return_sq_tw_sum_100, time_sum_100)
+                                       : 0.0;
+        const double sharpe_1000w = (key.tag_id == -1)
+                                        ? calc_sharpe_from_returns(return_sum_1000, return_tw_sum_1000, return_sq_tw_sum_1000, time_sum_1000)
+                                        : 0.0;
 
         ap.BeginRow();
         append_blob(ap, user_blob);

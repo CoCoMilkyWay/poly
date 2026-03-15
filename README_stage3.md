@@ -374,17 +374,16 @@ Unknown
 注:
   1. 交易额里: 只记录会直接创造头寸暴露的操作(比如铸币, 合币就不应该记入), 暴露方向不重要
   2. 平均持仓: 需要统计周期内多个事件(非均匀)的持仓快照(记录不同token的平均持仓周期), 再按照token金额, 事件时间加权
-  3. 夏普: 无风险=0, 基于全账户净值序列的对数收益率计算（连续时间近似）
-     - 仅统计全账户 Sharpe，不支持分行业 Sharpe
-     - 净值定义: V_t = max(eps, E_start + (P_t - P_start))
-       - P_t = realized_cum + unrealized_pnl (1e6 标度)
-       - E_t = 全账户 gross exposure (1e6 标度)
-       - E_start = 窗口起点全账户 exposure
-       - P_start = 窗口起点全账户 PnL
-     - 对数收益率: r_i = ln(V_i) - ln(V_{i-1})
-     - 时间间隔: Δt_i = block_i - block_{i-1}
-     - 时间加权平均收益率: r̄ = Σr_i / ΣΔt_i
-     - 时间加权方差: σ² = Σ(r_i - r̄)² * Δt_i / ΣΔt_i
+  3. 夏普: 无风险=0, 基于事件级收益率的增量计算（与其他特征一致动态维护）
+     - 仅统计全账户 Sharpe（tag_id=-1），不支持分行业 Sharpe
+     - 收益率定义: r_i = realized_delta / exposure_before（事件i的已实现收益/事件前暴露额）
+     - 时间间隔: Δt_i = block_i - block_{i-1}（首事件 Δt=0）
+     - 增量累加:
+       - return_sum += r_i
+       - return_tw_sum += r_i * Δt_i
+       - return_sq_tw_sum += r_i² * Δt_i
+       - time_sum = last_block - first_block
+     - 时间加权平均收益率: r̄ = return_sum / time_sum
+     - 时间加权方差: σ² = return_sq_tw_sum/T - 2*r̄*return_tw_sum/T + r̄²
      - Sharpe = r̄ / σ
-     - 计算方式: 必须先确定窗口(10w/100w/1000w)，然后从 event_fact 恢复完整 (block, V) 序列进行精算
-     - 数据不足或 V <= 0 时，Sharpe 记 0
+     - exposure_before < 0.001 USD 或 time_sum <= 0 时，Sharpe 记 0

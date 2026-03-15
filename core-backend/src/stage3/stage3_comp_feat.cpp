@@ -143,9 +143,9 @@ void update_tail_window(BucketAggState &agg,
   agg.has_tail = true;
 }
 
-void accumulate_event_delta(BucketAggState &agg, double realized_delta, int64_t exposure_before, int64_t volume, int64_t sort_key, int64_t current_block) {
+void accumulate_event_delta(BucketAggState &agg, double realized_delta, int64_t exposure_before, int64_t volume, int64_t sort_key, int64_t current_block, int64_t prev_block) {
   // 时间加权夏普统计：
-  // Δt = current_block - last_block（首事件时 Δt=0）
+  // Δt = current_block - prev_block（首事件时 Δt=0，prev_block=0）
   // return_sum += r_i
   // return_tw_sum += r_i * Δt
   // return_sq_tw_sum += r_i² * Δt
@@ -155,8 +155,8 @@ void accumulate_event_delta(BucketAggState &agg, double realized_delta, int64_t 
     const int64_t return_rate_1e6 = round_i64(return_rate * 1e6);
     agg.return_sum += return_rate_1e6;
 
-    // 计算时间间隔 Δt
-    const int64_t delta_t = (agg.first_block > 0) ? std::max<int64_t>(0, current_block - agg.last_block) : 0;
+    // 计算时间间隔 Δt（使用传入的 prev_block，而非 agg.last_block）
+    const int64_t delta_t = (prev_block > 0) ? std::max<int64_t>(0, current_block - prev_block) : 0;
     if (agg.first_block == 0) {
       agg.first_block = current_block;
     }
