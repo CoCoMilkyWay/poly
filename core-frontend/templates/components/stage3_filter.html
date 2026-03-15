@@ -330,6 +330,9 @@
         { industry: 'ALL', feature: 'tok', window: '100', arith: '', rhsIndustry: 'ALL', rhsFeature: 'exp', rhsWindow: '100', op: '>', value: '5' },
         { industry: 'ALL', feature: 'tok', window: '100', arith: '', rhsIndustry: 'ALL', rhsFeature: 'exp', rhsWindow: '100', op: '<', value: '50' },
         { industry: 'ALL', feature: 'vol', window: '100', arith: '', rhsIndustry: 'ALL', rhsFeature: 'exp', rhsWindow: '100', op: '>', value: '10000' },
+        { industry: 'ALL', feature: 'hp', window: '100', arith: '', rhsIndustry: 'ALL', rhsFeature: 'exp', rhsWindow: '100', op: '<', value: '500000' },
+        { industry: 'ALL', feature: 'hp', window: '100', arith: '', rhsIndustry: 'ALL', rhsFeature: 'exp', rhsWindow: '100', op: '>', value: '50000' },
+        { industry: 'Politics_World', feature: 'exp', window: '100', arith: '/', rhsIndustry: 'ALL', rhsFeature: 'exp', rhsWindow: '100', op: '>', value: '0.8' },
     ];
 
     // 金钱相关特征需要除以 1e6 转换为 USD
@@ -349,7 +352,7 @@
     }
 
     function s3fBindFeatureIndustryConstraint(featureClass, industryClass) {
-        document.addEventListener('change', function(e) {
+        document.addEventListener('change', function (e) {
             if (!e.target.classList.contains(featureClass)) {
                 return;
             }
@@ -394,7 +397,7 @@
         // 当选择 shp 时，强制行业为 ALL
         const sortFeature = document.getElementById('s3f-sort-feature');
         const sortIndustry = document.getElementById('s3f-sort-industry');
-        sortFeature.addEventListener('change', function() {
+        sortFeature.addEventListener('change', function () {
             s3fApplyFeatureIndustryConstraint(this, sortIndustry);
         });
         s3fApplyFeatureIndustryConstraint(sortFeature, sortIndustry);
@@ -402,7 +405,7 @@
         // 检查过滤条件中的 shp，强制行业为 ALL
         s3fBindFeatureIndustryConstraint('s3f-feature', 's3f-industry');
         s3fBindFeatureIndustryConstraint('s3f-rhs-feature', 's3f-rhs-industry');
-        document.addEventListener('change', function(e) {
+        document.addEventListener('change', function (e) {
             if (!e.target.classList.contains('s3f-arith')) {
                 return;
             }
@@ -600,6 +603,21 @@
         };
     }
 
+    function s3fMoneyPowerForFeature(feature) {
+        return _s3fMoneyFeatures.has(feature) ? 1 : 0;
+    }
+
+    function s3fScaleValueByMoneyPower(value, moneyPower) {
+        const num = Number(value);
+        assert(Number.isFinite(num), '阈值必须是有效数字');
+        if (moneyPower === 0) {
+            return String(num);
+        }
+        const scaled = num * Math.pow(1e6, moneyPower);
+        assert(Number.isFinite(scaled), '阈值换算后超出范围');
+        return String(scaled);
+    }
+
     function s3fBuildFilterExprForRow(row) {
         const industry = row.querySelector('.s3f-industry').value;
         const feature = row.querySelector('.s3f-feature').value;
@@ -613,16 +631,23 @@
 
         const lhs = s3fBuildExprFromSelectors(industry, feature, window);
         let lhsExpr = lhs.expr;
+        let moneyPower = s3fMoneyPowerForFeature(lhs.feature);
         if (arith) {
             const rhsIndustry = row.querySelector('.s3f-rhs-industry').value;
             const rhsFeature = row.querySelector('.s3f-rhs-feature').value;
             const rhsWindow = row.querySelector('.s3f-rhs-window').value;
             const rhs = s3fBuildExprFromSelectors(rhsIndustry, rhsFeature, rhsWindow);
             lhsExpr = `(${lhsExpr} ${arith} ${rhs.expr})`;
-        } else if (_s3fMoneyFeatures.has(lhs.feature)) {
-            // 金钱特征用户输入 USD，需要转换为 microUSD (乘以 1e6)
-            value = String(Number(value) * 1e6);
+            if (arith === '*') {
+                moneyPower += s3fMoneyPowerForFeature(rhs.feature);
+            } else if (arith === '/') {
+                moneyPower -= s3fMoneyPowerForFeature(rhs.feature);
+            } else {
+                assert(false, `不支持的算术运算符: ${arith}`);
+            }
         }
+        // 用户始终按 USD 量纲输入，前端按表达式中的 money 次幂换算成后端原始单位
+        value = s3fScaleValueByMoneyPower(value, moneyPower);
         return `${lhsExpr} ${op} ${value}`;
     }
 
