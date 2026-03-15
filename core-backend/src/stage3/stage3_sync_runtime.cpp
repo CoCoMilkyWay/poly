@@ -206,17 +206,23 @@ double calc_window_return_sharpe(const BucketDeque &buckets,
   };
 
   long double min_interval_pnl = 0.0L;
+  long double max_interval_pnl = 0.0L;
   int64_t tail_interval_pnl = 0;
   for (auto bucket_it = bucket_begin_it; bucket_it != bucket_end_it; ++bucket_it) {
     for (const auto &sample : bucket_it->samples) {
       const int64_t interval_pnl = to_interval_pnl(sample.pnl);
-      min_interval_pnl = std::min(min_interval_pnl, static_cast<long double>(interval_pnl));
+      const long double interval_pnl_ld = static_cast<long double>(interval_pnl);
+      min_interval_pnl = std::min(min_interval_pnl, interval_pnl_ld);
+      max_interval_pnl = std::max(max_interval_pnl, interval_pnl_ld);
       tail_interval_pnl = interval_pnl;
     }
   }
+  const long double interval_range = max_interval_pnl - min_interval_pnl;
+  assert(interval_range >= 0.0L);
+  assert(interval_range >= std::fabs(min_interval_pnl));
 
   const long double nav_base =
-      std::max(static_cast<long double>(avg_exposure_1e6), std::fabs(min_interval_pnl)) + 1000000.0L;
+      static_cast<long double>(avg_exposure_1e6) + std::fabs(min_interval_pnl) + 1000000.0L;
   long double sum_r = 0.0L;
   long double sum_r2_over_dt = 0.0L;
   int64_t prev_block = start_block - 1;

@@ -389,15 +389,26 @@ Unknown
      - bucket 内只存 PnL 变化点；同一 block 多事件先合并，只取块末 `(block, pnl)`
      - 运行时只保留最近 `100` 个 bucket；超窗 bucket 立即释放，空用户缓存立即擦除
      - 其中: `pnl = realized_cum + unrealized_pnl`
+     - 核心动机:
+       - 只关心“本窗口内”的 PnL 路径，不让窗口开始前的历史累计盈亏直接污染本窗口 return
+       - 同样的 `Δpnl`，在更小的账户尺度上应该体现为更大的 return
+       - 区间内出现大跳，不管是向上还是向下，都应该显著影响波动与 Sharpe
      - 对窗口 `W ∈ {10w, 100w, 1000w}`:
+       - 左边界锚点 `p0` 使用窗口起点前最后一个已知 `pnl`；若不存在则记 `0`
+       - 先做区间重标定: `x_i = pnl_i - p0`，因此左边界恒有 `x_0 = 0`
+       - `min_interval_pnl_W = min(x_i)`，`max_interval_pnl_W = max(x_i)`，遍历窗口内全部 block 采样点以及左右边界锚点
+       - `range_W = max_interval_pnl_W - min_interval_pnl_W`
+       - 因 `x_0 = 0`，必有 `range_W >= abs(min_interval_pnl_W)`；当前实现保留 `range_W` 主要是为了理解区间跨度与做校验，不直接进入 `nav_base_W`
        - `avg_exposure_W`:
          - `10w`: 直接取当前 bucket 的 `exposure_avg_10w`
          - `100w/1000w`: 先对窗口内 bucket 的 `exposure_avg_10w` 做等权平均
-       - 左边界锚点 `p0` 使用窗口起点前最后一个已知 `pnl`；若不存在则记 `0`
-       - 先做区间重标定: `x_i = pnl_i - p0`，因此左边界恒有 `x_0 = 0`
-       - `min_interval_pnl_W = min(x_i)`，遍历窗口内全部 block 采样点以及左右边界锚点
-       - `nav_base_W = max(avg_exposure_W, abs(min_interval_pnl_W)) + 1 USD`
+       - `nav` 的直觉:
+         - 若窗口内 `x_i` 从未跌到负数，则 `abs(min_interval_pnl_W) = 0`
+         - 若窗口内 `x_i` 跌到负数，则先用 `abs(min_interval_pnl_W)` 把整条区间 PnL 曲线抬到正区间
+         - 在此基础上，再叠加 `avg_exposure_W` 作为账户尺度的稳定底座；`+1 USD` 只是正数 floor
+       - `nav_base_W = avg_exposure_W + abs(min_interval_pnl_W) + 1 USD`
        - `nav_i = nav_base_W + x_i`
+       - 后续所有区间收益与单次跳变，统一都基于这条 `nav` 曲线计算
        - 相邻采样点收益: `r_i = (nav_i - nav_{i-1}) / nav_{i-1}`
        - `Δt_i = block_i - block_{i-1}`
      - 边界规则:
