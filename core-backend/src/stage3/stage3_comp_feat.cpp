@@ -23,6 +23,15 @@ __int128 linear_series_i128(__int128 base, int64_t slope, int64_t len) {
   return static_cast<__int128>(base) * L + static_cast<__int128>(slope) * L * (L - 1) / 2;
 }
 
+int64_t calc_rms_cap_1e6(int64_t exposure_before, int64_t exposure_after) {
+  assert(exposure_before >= 0);
+  assert(exposure_after >= 0);
+  const long double before = static_cast<long double>(exposure_before);
+  const long double after = static_cast<long double>(exposure_after);
+  const long double rms = std::sqrt((before * before + after * after) / 2.0L);
+  return round_i64(static_cast<double>(rms));
+}
+
 } // namespace
 
 int64_t round_i64(double v) { return static_cast<int64_t>(std::llround(v)); }
@@ -143,32 +152,29 @@ void update_tail_window(BucketAggState &agg,
   agg.has_tail = true;
 }
 
-void accumulate_event_delta(BucketAggState &agg, double realized_delta, int64_t exposure_before, int64_t volume, int64_t sort_key, int64_t current_block, int64_t prev_block) {
-  // 时间加权夏普统计：
-  // Δt = current_block - prev_block（首事件时 Δt=0，prev_block=0）
-  // return_sum += r_i
-  // return_tw_sum += r_i * Δt
-  // return_sq_tw_sum += r_i² * Δt
-  constexpr int64_t kMinExposure = 1000; // 最小暴露额 0.001 USD，避免除零
-  if (exposure_before >= kMinExposure) {
-    const long double return_rate = static_cast<long double>(realized_delta) / static_cast<long double>(exposure_before);
-    const int64_t return_rate_1e6 = round_i64(return_rate * 1e6);
-    agg.return_sum += return_rate_1e6;
-
-    // 计算时间间隔 Δt（使用传入的 prev_block，而非 agg.last_block）
-    const int64_t delta_t = (prev_block > 0) ? std::max<int64_t>(0, current_block - prev_block) : 0;
-    if (agg.first_block == 0) {
-      agg.first_block = current_block;
-    }
-
-    // 时间加权累加
-    agg.return_tw_sum += static_cast<__int128>(return_rate_1e6) * delta_t;
-    const long double sq = static_cast<long double>(return_rate_1e6) * static_cast<long double>(return_rate_1e6);
-    agg.return_sq_tw_sum += static_cast<__int128>(sq + 0.5L) * delta_t;
+void accumulate_sharpe_interval(BucketAggState &agg,
+                                int64_t pnl_delta,
+                                int64_t exposure_before,
+                                int64_t exposure_after,
+                                int64_t delta_t) {
+  assert(delta_t > 0);
+  constexpr int64_t kMinCap = 1000; // 0.001 USD
+  const int64_t cap = calc_rms_cap_1e6(exposure_before, exposure_after);
+  if (cap < kMinCap) {
+    return;
   }
 
-  agg.volume_sum += volume;
-  agg.last_sort_key = sort_key;
+  const long double return_rate =
+      static_cast<long double>(pnl_delta) / static_cast<long double>(cap);
+  const int64_t return_rate_1e6 = round_i64(static_cast<double>(return_rate * 1e6L));
+  agg.sharpe_sum_r = narrow_i64(static_cast<__int128>(agg.sharpe_sum_r) + return_rate_1e6);
+
+  const long double sq_over_dt =
+      static_cast<long double>(return_rate_1e6) * static_cast<long double>(return_rate_1e6) /
+      static_cast<long double>(delta_t);
+  agg.sharpe_sum_r2_over_dt += static_cast<__int128>(sq_over_dt + 0.5L);
+  agg.sharpe_time_sum =
+      narrow_i64(static_cast<__int128>(agg.sharpe_time_sum) + static_cast<__int128>(delta_t));
 }
 
 } // namespace stage3::feature_comp

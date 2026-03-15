@@ -319,6 +319,12 @@
     let _s3fTotalUsers = 0;
     let _s3fIsRunning = false; // 防止并发请求
     let _s3fLastSortFeature = 'shp'; // 记录上次排序的特征，用于单位转换
+    const _s3fDefaultFilters = [
+        { industry: 'ALL', feature: 'exp', window: '100', op: '>', value: '10000' },
+        { industry: 'ALL', feature: 'tok', window: '100', op: '>', value: '5' },
+        { industry: 'ALL', feature: 'tok', window: '100', op: '<', value: '50' },
+        { industry: 'ALL', feature: 'vol', window: '100', op: '>', value: '10000' },
+    ];
 
     // 金钱相关特征需要除以 1e6 转换为 USD
     const _s3fMoneyFeatures = new Set(['exp', 'vol']);
@@ -436,16 +442,39 @@
         emptyEl.style.display = hasRows ? 'none' : '';
     }
 
-    function s3fAddFilter() {
+    function s3fApplyFilterPreset(row, preset) {
+        assert(row && preset, 'filter preset 参数缺失');
+        row.querySelector('.s3f-industry').value = preset.industry;
+        row.querySelector('.s3f-feature').value = preset.feature;
+        row.querySelector('.s3f-window').value = preset.window;
+        row.querySelector('.s3f-op').value = preset.op;
+        row.querySelector('.s3f-value').value = preset.value;
+    }
+
+    function s3fAddFilter(preset = null) {
         const box = document.getElementById('s3f-filters-box');
         const row = document.createElement('div');
         row.className = 's3f-filter-row';
         row.innerHTML = s3fMakeFilterRowHtml();
         box.appendChild(row);
+        if (preset) {
+            s3fApplyFilterPreset(row, preset);
+        }
         const featureSelect = row.querySelector('.s3f-feature');
         const industrySelect = row.querySelector('.s3f-industry');
         s3fApplyFeatureIndustryConstraint(featureSelect, industrySelect);
         s3fSyncFilterEmptyState();
+    }
+
+    function s3fLoadDefaultFilters() {
+        const box = document.getElementById('s3f-filters-box');
+        assert(box, 'filters box 缺失');
+        if (box.querySelectorAll('.s3f-filter-row').length > 0) {
+            return;
+        }
+        for (const preset of _s3fDefaultFilters) {
+            s3fAddFilter(preset);
+        }
     }
 
     function s3fRemoveFilter(btn) {
@@ -646,6 +675,7 @@
     }
 
     // 页面加载时初始化
+    s3fLoadDefaultFilters();
     s3fSyncFilterEmptyState();
     s3fInit();
 </script>
