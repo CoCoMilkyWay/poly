@@ -156,13 +156,10 @@ json collect_memory_snapshot(Database &stage0_db, Database &stage1_db, Database 
   static std::atomic<int64_t> rocksdb_stage3_block_cache_pinned_peak_bytes{0};
   static std::atomic<int64_t> database_total_peak_bytes{0};
   static std::atomic<int64_t> db_plus_struct_peak_bytes{0};
-  static std::atomic<int64_t> real_usage_peak_bytes{0};
 
   json result = json::object();
   int64_t rss_bytes = 0;
   core::mem::MallocStats malloc_stats{};
-  int64_t real_usage_bytes = 0;
-  int64_t real_usage_peak = 0;
   json stage0_duckdb = json::object();
   json stage1_duckdb = json::object();
   json stage2_duckdb = json::object();
@@ -183,11 +180,6 @@ json collect_memory_snapshot(Database &stage0_db, Database &stage1_db, Database 
         {"free_chunks_bytes", malloc_stats.free_chunks_bytes},
         {"total_from_os_bytes", malloc_stats.arena_bytes + malloc_stats.mmap_bytes},
     };
-
-    real_usage_bytes = rss_bytes - malloc_stats.free_chunks_bytes;
-    real_usage_peak = update_peak_bytes(real_usage_peak_bytes, real_usage_bytes);
-    result["real_usage_bytes"] = real_usage_bytes;
-    result["real_usage_peak_bytes"] = real_usage_peak;
   }
 
   {
@@ -1190,6 +1182,10 @@ void ApiSession::handle_stage3_filter() {
       users.push_back({
           {"addr", u.addr},
           {"sort_value", u.sort_value},
+          {"month_avg_tok", u.month_avg_tok},
+          {"month_avg_exp", u.month_avg_exp},
+          {"month_avg_hp", u.month_avg_hp},
+          {"pnl", u.pnl},
       });
     }
     write_ok_json_response(res_, {

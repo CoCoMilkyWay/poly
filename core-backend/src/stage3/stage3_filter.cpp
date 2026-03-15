@@ -337,10 +337,14 @@ filter::Result StageSync::filter_users_by_features(const filter::Request &req) c
   for (const auto &binding : bindings) {
     used_tag_ids.push_back(binding.tag_id);
   }
+  used_tag_ids.push_back(-1);
   std::sort(used_tag_ids.begin(), used_tag_ids.end());
   used_tag_ids.erase(std::unique(used_tag_ids.begin(), used_tag_ids.end()), used_tag_ids.end());
 
   std::string sql = "WITH user_features AS (SELECT user_addr";
+  sql += ", MAX(CASE WHEN tag_id = -1 THEN token_avg_100w END) AS month_avg_tok";
+  sql += ", MAX(CASE WHEN tag_id = -1 THEN exposure_avg_100w END) AS month_avg_exp";
+  sql += ", MAX(CASE WHEN tag_id = -1 THEN holding_period_avg_100w END) AS month_avg_hp";
   for (const auto &binding : bindings) {
     sql += ", MAX(CASE WHEN tag_id = " + std::to_string(binding.tag_id) +
            " THEN " + binding.column + " END) AS " + binding.alias;
@@ -359,8 +363,14 @@ filter::Result StageSync::filter_users_by_features(const filter::Request &req) c
   }
   sql +=
       " GROUP BY user_addr)";
-  sql += " SELECT lower(hex(user_addr)) AS addr, CAST((" + sort_sql +
-         ") AS DOUBLE) AS sort_value FROM user_features";
+  sql += " SELECT lower(hex(f.user_addr)) AS addr, CAST((" + sort_sql +
+         ") AS DOUBLE) AS sort_value, "
+         "COALESCE(f.month_avg_tok, 0) AS month_avg_tok, "
+         "COALESCE(f.month_avg_exp, 0) AS month_avg_exp, "
+         "COALESCE(f.month_avg_hp, 0) AS month_avg_hp, "
+         "COALESCE(s.total_realized_pnl, 0) + COALESCE(s.total_unrealized_pnl, 0) AS pnl "
+         "FROM user_features f LEFT JOIN " + std::string(kSqlTableUserSummaryState) +
+         " s ON f.user_addr = s.user_addr";
   if (!where_parts.empty()) {
     sql += " WHERE ";
     for (size_t i = 0; i < where_parts.size(); ++i) {
@@ -386,6 +396,10 @@ filter::Result StageSync::filter_users_by_features(const filter::Request &req) c
     result.users.push_back({
         "0x" + addr_hex,
         sort_val.IsNull() ? 0.0 : sort_val.GetValue<double>(),
+        r->GetValue(2, i).GetValue<int64_t>(),
+        r->GetValue(3, i).GetValue<int64_t>(),
+        r->GetValue(4, i).GetValue<int64_t>(),
+        r->GetValue(5, i).GetValue<int64_t>(),
     });
   }
   return result;

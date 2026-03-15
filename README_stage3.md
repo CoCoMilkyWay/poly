@@ -215,9 +215,10 @@ struct FeatureTensorState {
   int128 exposure_tw_sum_10w;            // DuckDB: HUGEINT
   int64  volume_sum_10w;
   int128 holding_period_exp_tw_sum_10w;  // DuckDB: HUGEINT
-  int64  return_sum_10w;                 // return_rate_i 累计和(1e6标度)
-  int128 return_sq_sum_10w;              // DuckDB: HUGEINT
-  int64  return_count_10w;
+  int64  return_sum_10w;                 // Σr_i 收益率和(1e6标度)
+  int128 return_tw_sum_10w;              // Σ(r_i * Δt_i) 时间加权收益率和
+  int128 return_sq_tw_sum_10w;           // Σ(r_i² * Δt_i) 时间加权平方和
+  int64  first_block_10w;                // bucket 内首个事件 block
 
   // Node-B: 10w 归一化输出
   int64  token_avg_10w;
@@ -232,8 +233,9 @@ struct FeatureTensorState {
   int64  ps_volume_10w;
   int64  ps_holding_period_avg_10w;
   int64  ps_return_sum_10w;
-  int128 ps_return_sq_sum_10w;           // DuckDB: HUGEINT
-  int64  ps_return_count_10w;
+  int128 ps_return_tw_sum_10w;           // DuckDB: HUGEINT
+  int128 ps_return_sq_tw_sum_10w;        // DuckDB: HUGEINT
+  int64  ps_time_sum_10w;
 
   // Node-D: 窗口投影输出（由 Node-C O(1) 计算）
   int64  token_avg_100w;
@@ -348,21 +350,22 @@ Society
 Unknown
 
 时序特征(名称,数量,统计方式,描述):
-    近期行业平均持仓token数    N    时间加权           近10w块移动平均持仓token数(分行业)    
-    近月行业平均持仓token数    N    等权               近100w块移动平均持仓token数(分行业)   
-    近年行业平均持仓token数    N    等权               近1000w块移动平均持仓token数(分行业)  
-    近期行业平均持仓暴露额     N    时间加权           近10w块移动平均持仓暴露额(分行业)     
-    近月行业平均持仓暴露额     N    等权               近100w块移动平均持仓暴露额(分行业)    
-    近年行业平均持仓暴露额     N    等权               近1000w块移动平均持仓暴露额(分行业)   
-    近期行业总和交易额         N    加总               近10w块总和交易额(分行业)             
-    近月行业平均总和交易额     N    等权               近100w块总和交易额(分行业)            
-    近年行业平均总和交易额     N    等权               近1000w块总和交易额(分行业)           
-    近期行业平均持仓周期       N    时间,金额加权      近10w块移动平均持仓周期(分行业)       
-    近月行业平均持仓周期       N    等权               近100w块移动平均持仓周期(分行业)      
-    近年行业平均持仓周期       N    等权               近1000w块移动平均持仓周期(分行业)     
-    近期总夏普                 1    online std         近10w块夏普                           
-    近月总夏普                 1    前缀和差分         近100w块夏普                          
-    近年总夏普                 1    前缀和差分         近1000w块夏普                         
+注: 数量 N+1 表示 N 个行业 + 1 个综合(tag_id=-1)
+    近期平均持仓token数        N+1  时间加权           近10w块移动平均持仓token数(分行业+综合)
+    近月平均持仓token数        N+1  等权               近100w块移动平均持仓token数(分行业+综合)
+    近年平均持仓token数        N+1  等权               近1000w块移动平均持仓token数(分行业+综合)
+    近期平均持仓暴露额         N+1  时间加权           近10w块移动平均持仓暴露额(分行业+综合)
+    近月平均持仓暴露额         N+1  等权               近100w块移动平均持仓暴露额(分行业+综合)
+    近年平均持仓暴露额         N+1  等权               近1000w块移动平均持仓暴露额(分行业+综合)
+    近期总和交易额             N+1  加总               近10w块总和交易额(分行业+综合)
+    近月平均交易额             N+1  等权               近100w块平均交易额(分行业+综合)
+    近年平均交易额             N+1  等权               近1000w块平均交易额(分行业+综合)
+    近期平均持仓周期           N+1  时间,金额加权      近10w块移动平均持仓周期(分行业+综合)
+    近月平均持仓周期           N+1  等权               近100w块移动平均持仓周期(分行业+综合)
+    近年平均持仓周期           N+1  等权               近1000w块移动平均持仓周期(分行业+综合)
+    近期夏普                   N+1  时间加权           近10w块夏普(分行业+综合)
+    近月夏普                   N+1  时间加权+前缀差分  近100w块夏普(分行业+综合)
+    近年夏普                   N+1  时间加权+前缀差分  近1000w块夏普(分行业+综合)
 截面特征:
     输入: anchor bucket + 多条自由表达式(filters) + 排序表达式(sort_expr)
     输出: 过滤 + 排序后的 top 100 用户地址
@@ -371,8 +374,12 @@ Unknown
 注:
   1. 交易额里: 只记录会直接创造头寸暴露的操作(比如铸币, 合币就不应该记入), 暴露方向不重要
   2. 平均持仓: 需要统计周期内多个事件(非均匀)的持仓快照(记录不同token的平均持仓周期), 再按照token金额, 事件时间加权
-  3. 夏普: 无风险=0, 基于事件驱动的收益率序列计算
+  3. 夏普: 无风险=0, 基于事件驱动的收益率序列计算（时间加权）
      - 每事件收益率 r_i = realized_pnl_i / exposure_before_i (exposure >= 0.001 USD 时才计入)
+     - 时间间隔 Δt_i = block_i - block_{i-1}（首事件时 Δt=0）
      - 收益率以 1e6 为单位存储，避免浮点精度问题
-     - sharpe = Σ(r_i) / std(r_i) = 总收益率 / 收益率标准差
-     - 窗口聚合通过前缀和 O(1) 差分实现 (return_sum, return_sq_sum, return_count)
+     - 时间加权夏普公式:
+       - r̄ = Σr_i / T (单位时间收益率，T = last_block - first_block)
+       - σ² = Σ(r_i - r̄)² * Δt_i / T = Σ(r_i² * Δt_i)/T - 2*r̄*Σ(r_i * Δt_i)/T + r̄²
+       - sharpe = r̄ / σ
+     - 窗口聚合通过前缀和 O(1) 差分实现 (return_sum, return_tw_sum, return_sq_tw_sum, time_sum)

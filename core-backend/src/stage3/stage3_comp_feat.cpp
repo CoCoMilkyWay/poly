@@ -143,18 +143,28 @@ void update_tail_window(BucketAggState &agg,
   agg.has_tail = true;
 }
 
-void accumulate_event_delta(BucketAggState &agg, double realized_delta, int64_t exposure_before, int64_t volume, int64_t sort_key) {
-  // 计算收益率：return_rate = realized_delta / exposure_before
-  // 以 1e6 为单位存储，避免浮点精度问题
+void accumulate_event_delta(BucketAggState &agg, double realized_delta, int64_t exposure_before, int64_t volume, int64_t sort_key, int64_t current_block) {
+  // 时间加权夏普统计：
+  // Δt = current_block - last_block（首事件时 Δt=0）
+  // return_sum += r_i
+  // return_tw_sum += r_i * Δt
+  // return_sq_tw_sum += r_i² * Δt
   constexpr int64_t kMinExposure = 1000; // 最小暴露额 0.001 USD，避免除零
   if (exposure_before >= kMinExposure) {
-    // return_rate_1e6 = (realized_delta / exposure_before) * 1e6
     const long double return_rate = static_cast<long double>(realized_delta) / static_cast<long double>(exposure_before);
     const int64_t return_rate_1e6 = round_i64(return_rate * 1e6);
     agg.return_sum += return_rate_1e6;
+
+    // 计算时间间隔 Δt
+    const int64_t delta_t = (agg.first_block > 0) ? std::max<int64_t>(0, current_block - agg.last_block) : 0;
+    if (agg.first_block == 0) {
+      agg.first_block = current_block;
+    }
+
+    // 时间加权累加
+    agg.return_tw_sum += static_cast<__int128>(return_rate_1e6) * delta_t;
     const long double sq = static_cast<long double>(return_rate_1e6) * static_cast<long double>(return_rate_1e6);
-    agg.return_sq_sum += static_cast<__int128>(sq + 0.5L);
-    agg.return_count += 1;
+    agg.return_sq_tw_sum += static_cast<__int128>(sq + 0.5L) * delta_t;
   }
 
   agg.volume_sum += volume;

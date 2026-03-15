@@ -71,10 +71,6 @@
     font-weight: 500;
   }
 
-  .mem-kpi-value.rss {
-    color: #f87171;
-  }
-
   .mem-section {
     margin-top: 10px;
     background: #202020;
@@ -145,10 +141,6 @@
     <div class="mem-kpi">
       <div class="mem-kpi-label">Free Chunks (reserved by Malloc)</div>
       <div class="mem-kpi-value" style="color: #f59e0b;" id="mem-kpi-free-chunks">-</div>
-    </div>
-    <div class="mem-kpi">
-      <div class="mem-kpi-label">Real Usage (cur / peak)</div>
-      <div class="mem-kpi-value rss" id="mem-kpi-real-usage">-</div>
     </div>
     <div class="mem-kpi">
       <div class="mem-kpi-label">DB + Struct (cur / peak)</div>
@@ -391,10 +383,7 @@
         setText("mem-updated-at", new Date().toLocaleTimeString());
         const malloc = data.malloc_breakdown || {};
         const freeChunksBytes = toBytes(malloc.free_chunks_bytes);
-        const realUsageBytes = toBytes(data.real_usage_bytes);
-        const realUsagePeakBytes = toBytes(data.real_usage_peak_bytes || realUsageBytes);
         setText("mem-kpi-free-chunks", formatBytes(freeChunksBytes));
-        setCurPeakHtml("mem-kpi-real-usage", realUsageBytes, realUsagePeakBytes);
 
         const dbStructTotalBytes = toBytes(data.db_plus_struct_bytes);
         const dbStructPeakBytes = toBytes(data.db_plus_struct_peak_bytes || dbStructTotalBytes);

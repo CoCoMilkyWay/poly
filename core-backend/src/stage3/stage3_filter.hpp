@@ -17,6 +17,10 @@ struct Request {
 struct UserRow {
   std::string addr;
   double sort_value = 0.0;
+  int64_t month_avg_tok = 0;
+  int64_t month_avg_exp = 0;
+  int64_t month_avg_hp = 0;
+  int64_t pnl = 0;
 };
 
 struct Result {
