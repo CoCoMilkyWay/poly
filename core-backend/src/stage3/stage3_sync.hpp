@@ -213,7 +213,7 @@ private:
   using BucketAggState = feature_comp::BucketAggState;
 
   // Execution config
-  static constexpr int64_t kStage3BatchEvents = 5000000;
+  static constexpr int64_t kStage3BatchEvents = 10000000;
   static constexpr int64_t kBlockBucketSize = 100000; // DO NOT CHANGE
   static constexpr double kPosEpsilon = 1e-9;
   static constexpr int64_t kMinHoldingQty = 10LL * 1000000LL;

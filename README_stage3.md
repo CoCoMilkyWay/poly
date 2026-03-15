@@ -127,18 +127,18 @@ stage3_sync_tick
 符号: `E=事件总数`, `U=有事件用户数`, `T=活跃token数(user,cond,token_idx)`, `F≈E/20`  
 Size估算基准: E=2B, U=2M, T=1M, F=100M
 
-| 数据结构                                      | 层级/实例数       | 行大小 | Size   | 主要用途                                          | Persist      | ORDER BY                                             |
-| --------------------------------------------- | ----------------- | ------ | ------ | ------------------------------------------------- | ------------ | ---------------------------------------------------- |
-| `EventInput`                                  | 输入流 / `E`      | -      | -      | 回放状态机输入                                    | 否（临时）   | -                                                    |
-| `ConditionMeta`                               | 只读缓存 / `C`    | -      | -      | `outcome_count` 与 `tag_id` 元信息                | 否（可重载） | -                                                    |
-| `TokenState` (`token_state`)                  | Token级 / `T`     | 60B    | ~60MB  | 当前持仓 `pos/cost/lp/entry_block`                | 是           | `(user_addr,cond_idx,token_idx)`                     |
-| `EventFact` (`event_fact.rocks/timeline`)     | Token级 / `E`     | 96B    | ~190GB | 事件事实、timeline、positions 回放                | 是           | `(user_addr,sort_key,cond_idx,event_type,token_idx)` |
-| `UserSummaryState` (`user_summary_state`)     | User级 / `U`      | 60B    | ~120MB | 用户总览查询加速                                  | 是           | `(user_addr)`                                        |
-| `AccountBucketPnlState` (`account_bucket_pnl_state`) | User*Bucket级 | 稀疏/变长 | 稀疏   | Sharpe 稀疏 `(block,pnl)` 样本持久化              | 是           | `(user_addr,block_bucket)`                           |
-| `FeatureTensorState` (`feature_tensor_state`) | User*Bucket*Tag级 | 536B   | ~50GB  | 统一特征张量（含原子/窗口/前缀缓存/增量续算锚点） | 是           | `(block_bucket,tag_id,user_addr)`                    |
-| `SyncCursorState` (`sync_cursor_state`)       | 全局 / `1`        | <1KB   | <1KB   | 增量同步断点                                      | 是           | -                                                    |
-| `UserQueryCache`                              | 进程内 / `<=U`    | -      | -      | 查询缓存（timeline/snapshot）                     | 否（内存）   | -                                                    |
-| `SharpeSparseCache`                           | 进程内 / 稀疏     | 稀疏/变长 | 稀疏 | 最近 100 bucket 的 Sharpe 样本缓存, 超窗即释放    | 否（内存）   | `(user_addr,block_bucket)`                           |
+| 数据结构                                             | 层级/实例数       | 行大小    | Size   | 主要用途                                          | Persist      | ORDER BY                                             |
+| ---------------------------------------------------- | ----------------- | --------- | ------ | ------------------------------------------------- | ------------ | ---------------------------------------------------- |
+| `EventInput`                                         | 输入流 / `E`      | -         | -      | 回放状态机输入                                    | 否（临时）   | -                                                    |
+| `ConditionMeta`                                      | 只读缓存 / `C`    | -         | -      | `outcome_count` 与 `tag_id` 元信息                | 否（可重载） | -                                                    |
+| `TokenState` (`token_state`)                         | Token级 / `T`     | 60B       | ~60MB  | 当前持仓 `pos/cost/lp/entry_block`                | 是           | `(user_addr,cond_idx,token_idx)`                     |
+| `EventFact` (`event_fact.rocks/timeline`)            | Token级 / `E`     | 96B       | ~190GB | 事件事实、timeline、positions 回放                | 是           | `(user_addr,sort_key,cond_idx,event_type,token_idx)` |
+| `UserSummaryState` (`user_summary_state`)            | User级 / `U`      | 60B       | ~120MB | 用户总览查询加速                                  | 是           | `(user_addr)`                                        |
+| `AccountBucketPnlState` (`account_bucket_pnl_state`) | User*Bucket级     | 稀疏/变长 | 稀疏   | Sharpe 稀疏 `(block,pnl)` 样本持久化              | 是           | `(user_addr,block_bucket)`                           |
+| `FeatureTensorState` (`feature_tensor_state`)        | User*Bucket*Tag级 | 536B      | ~50GB  | 统一特征张量（含原子/窗口/前缀缓存/增量续算锚点） | 是           | `(block_bucket,tag_id,user_addr)`                    |
+| `SyncCursorState` (`sync_cursor_state`)              | 全局 / `1`        | <1KB      | <1KB   | 增量同步断点                                      | 是           | -                                                    |
+| `UserQueryCache`                                     | 进程内 / `<=U`    | -         | -      | 查询缓存（timeline/snapshot）                     | 否（内存）   | -                                                    |
+| `SharpeSparseCache`                                  | 进程内 / 稀疏     | 稀疏/变长 | 稀疏   | 最近 100 bucket 的 Sharpe 样本缓存, 超窗即释放    | 否（内存）   | `(user_addr,block_bucket)`                           |
 
 ```text
 // Stage3 内部统一输入结构 (用于回放/状态机)
@@ -393,13 +393,14 @@ Unknown
        - `avg_exposure_W`:
          - `10w`: 直接取当前 bucket 的 `exposure_avg_10w`
          - `100w/1000w`: 先对窗口内 bucket 的 `exposure_avg_10w` 做等权平均
-       - `min_pnl_W = min(pnl_i)`，遍历窗口内全部 block 采样点以及左右边界锚点
-       - `nav_base_W = max(avg_exposure_W, abs(min_pnl_W)) + 1 USD`
-       - `nav_i = nav_base_W + pnl_i`
-       - 相邻采样点收益: `r_i = log(nav_i / nav_{i-1})`
+       - 左边界锚点 `p0` 使用窗口起点前最后一个已知 `pnl`；若不存在则记 `0`
+       - 先做区间重标定: `x_i = pnl_i - p0`，因此左边界恒有 `x_0 = 0`
+       - `min_interval_pnl_W = min(x_i)`，遍历窗口内全部 block 采样点以及左右边界锚点
+       - `nav_base_W = max(avg_exposure_W, abs(min_interval_pnl_W)) + 1 USD`
+       - `nav_i = nav_base_W + x_i`
+       - 相邻采样点收益: `r_i = (nav_i - nav_{i-1}) / nav_{i-1}`
        - `Δt_i = block_i - block_{i-1}`
      - 边界规则:
-       - 左边界锚点使用窗口起点前最后一个已知 `pnl`；若不存在则记 `0`
        - 右边界锚点使用窗口末 block；若末尾无新事件，则用最后一个 `pnl` 平推到窗口末尾
      - 时间加权平均收益率: `μ = Σr_i / T`
      - 时间加权方差: `σ² = Σ(r_i^2 / Δt_i) / T - μ²`

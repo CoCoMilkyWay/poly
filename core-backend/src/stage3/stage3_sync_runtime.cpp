@@ -171,12 +171,12 @@ std::string encode_account_bucket_samples_blob(const SampleVec &samples) {
 }
 
 template <typename BucketDeque>
-double calc_window_log_sharpe(const BucketDeque &buckets,
-                              int64_t pnl_before_first_bucket,
-                              int64_t start_bucket,
-                              int64_t end_bucket,
-                              int64_t avg_exposure_1e6,
-                              int64_t block_bucket_size) {
+double calc_window_return_sharpe(const BucketDeque &buckets,
+                                 int64_t pnl_before_first_bucket,
+                                 int64_t start_bucket,
+                                 int64_t end_bucket,
+                                 int64_t avg_exposure_1e6,
+                                 int64_t block_bucket_size) {
   assert(start_bucket >= 0);
   assert(end_bucket >= start_bucket);
   assert(avg_exposure_1e6 >= 0);
@@ -200,52 +200,62 @@ double calc_window_log_sharpe(const BucketDeque &buckets,
     anchor_pnl = std::prev(bucket_begin_it)->close_pnl;
   }
 
-  long double min_pnl = static_cast<long double>(anchor_pnl);
-  int64_t tail_pnl = anchor_pnl;
+  // Rebase window PnL to the left boundary anchor so every interval starts from 0.
+  const auto to_interval_pnl = [&](int64_t absolute_pnl) {
+    return i64_narrow_checked(static_cast<__int128>(absolute_pnl) - static_cast<__int128>(anchor_pnl));
+  };
+
+  long double min_interval_pnl = 0.0L;
+  int64_t tail_interval_pnl = 0;
   for (auto bucket_it = bucket_begin_it; bucket_it != bucket_end_it; ++bucket_it) {
     for (const auto &sample : bucket_it->samples) {
-      min_pnl = std::min(min_pnl, static_cast<long double>(sample.pnl));
-      tail_pnl = sample.pnl;
+      const int64_t interval_pnl = to_interval_pnl(sample.pnl);
+      min_interval_pnl = std::min(min_interval_pnl, static_cast<long double>(interval_pnl));
+      tail_interval_pnl = interval_pnl;
     }
   }
 
   const long double nav_base =
-      std::max(static_cast<long double>(avg_exposure_1e6), std::fabs(min_pnl)) + 1.0L;
+      std::max(static_cast<long double>(avg_exposure_1e6), std::fabs(min_interval_pnl)) + 1000000.0L;
   long double sum_r = 0.0L;
   long double sum_r2_over_dt = 0.0L;
   int64_t prev_block = start_block - 1;
-  int64_t prev_pnl = anchor_pnl;
+  int64_t prev_interval_pnl = 0;
 
-  auto append_sample = [&](int64_t block, int64_t pnl) {
+  auto append_sample = [&](int64_t block, int64_t interval_pnl) {
     assert(block >= prev_block);
     if (block == prev_block) {
-      prev_pnl = pnl;
+      prev_interval_pnl = interval_pnl;
       return;
     }
     const int64_t delta_t = block - prev_block;
     assert(delta_t > 0);
-    const long double prev_nav = nav_base + static_cast<long double>(prev_pnl);
-    const long double curr_nav = nav_base + static_cast<long double>(pnl);
+    const long double prev_nav = nav_base + static_cast<long double>(prev_interval_pnl);
+    const long double curr_nav = nav_base + static_cast<long double>(interval_pnl);
     assert(prev_nav > 0.0L);
     assert(curr_nav > 0.0L);
-    const long double log_return = std::log(curr_nav / prev_nav);
-    sum_r += log_return;
-    sum_r2_over_dt += (log_return * log_return) / static_cast<long double>(delta_t);
+    const long double period_return = (curr_nav - prev_nav) / prev_nav;
+    sum_r += period_return;
+    sum_r2_over_dt += (period_return * period_return) / static_cast<long double>(delta_t);
     prev_block = block;
-    prev_pnl = pnl;
+    prev_interval_pnl = interval_pnl;
   };
 
   for (auto bucket_it = bucket_begin_it; bucket_it != bucket_end_it; ++bucket_it) {
     const int64_t bucket_block_base = bucket_it->block_bucket * block_bucket_size;
     for (const auto &sample : bucket_it->samples) {
       const int64_t block = bucket_block_base + sample.block_offset;
+      const int64_t interval_pnl = to_interval_pnl(sample.pnl);
       assert(block >= start_block);
       assert(block <= end_block);
-      append_sample(block, sample.pnl);
+      if (prev_block < block - 1) {
+        append_sample(block - 1, prev_interval_pnl);
+      }
+      append_sample(block, interval_pnl);
     }
   }
   if (prev_block < end_block) {
-    append_sample(end_block, tail_pnl);
+    append_sample(end_block, tail_interval_pnl);
   }
 
   const int64_t total_t = prev_block - (start_block - 1);
@@ -1703,16 +1713,16 @@ bool StageSync::process_chunk_locked() const {
           auto cache_it = sharpe_cache_by_user_blob_.find(user_blob);
           assert(cache_it != sharpe_cache_by_user_blob_.end());
           const UserSharpeCacheState &cache = cache_it->second;
-          sharpe_10w = calc_window_log_sharpe(
+          sharpe_10w = calc_window_return_sharpe(
               cache.buckets, cache.pnl_before_first_bucket, key.block_bucket, key.block_bucket, exposure_avg_10w, kBlockBucketSize);
-          sharpe_100w = calc_window_log_sharpe(
+          sharpe_100w = calc_window_return_sharpe(
               cache.buckets,
               cache.pnl_before_first_bucket,
               std::max<int64_t>(0, key.block_bucket - 9),
               key.block_bucket,
               exposure_avg_100w,
               kBlockBucketSize);
-          sharpe_1000w = calc_window_log_sharpe(
+          sharpe_1000w = calc_window_return_sharpe(
               cache.buckets,
               cache.pnl_before_first_bucket,
               std::max<int64_t>(0, key.block_bucket - 99),
