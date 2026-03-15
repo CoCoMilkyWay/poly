@@ -69,6 +69,7 @@ struct Stage3Status {
   double blocks_per_second = 0.0;
   double eta_seconds = -1.0;
   int64_t max_bucket = -1;
+  int64_t bucket_user_count = 0;
 };
 
 class ApiSession : public std::enable_shared_from_this<ApiSession> {

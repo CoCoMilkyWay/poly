@@ -62,36 +62,11 @@ int64_t StageSync::sort_key_to_block(int64_t sort_key) {
   return feature_comp::sort_key_to_block(sort_key, SORT_KEY_SCALE);
 }
 
-int64_t StageSync::sort_key_to_block_bucket(int64_t sort_key) {
-  return feature_comp::sort_key_to_block_bucket(sort_key, SORT_KEY_SCALE, kBlockBucketSize);
-}
-
-int64_t StageSync::bucket_end_block(int64_t block_bucket) {
-  return feature_comp::bucket_end_block(block_bucket, kBlockBucketSize);
-}
-
 bool StageSync::is_effective_holding(double qty_1e6) {
-  return is_effective_holding_i64(round_i64(qty_1e6));
+  return is_effective_holding_i64(feature_comp::round_i64(qty_1e6));
 }
 
-bool StageSync::is_effective_holding_i64(int64_t qty_1e6) {
-  return std::llabs(qty_1e6) >= kMinHoldingQty;
-}
-
-double StageSync::calc_unrealized_pnl(const TokenState &st) {
-  return feature_comp::calc_unrealized_pnl(
-      feature_comp::TokenSnapshot{st.pos, st.cost, st.lp, st.entry_block}, kPosEpsilon);
-}
-
-int64_t StageSync::calc_exposure_1e6(const TokenState &st) {
-  return feature_comp::calc_exposure_1e6(
-      feature_comp::TokenSnapshot{st.pos, st.cost, st.lp, st.entry_block}, kPosEpsilon);
-}
-
-int64_t StageSync::calc_holding_period_blocks(int64_t current_block, const TokenState &st) {
-  return feature_comp::calc_holding_period_blocks(
-      current_block, feature_comp::TokenSnapshot{st.pos, st.cost, st.lp, st.entry_block}, kPosEpsilon);
-}
+bool StageSync::is_effective_holding_i64(int64_t qty_1e6) { return std::llabs(qty_1e6) >= kMinHoldingQty; }
 
 int64_t StageSync::calc_volume_1e6(const EventInput &row) {
   return feature_comp::calc_volume_1e6(static_cast<EventType>(row.event_type), row.amount, row.price);
@@ -110,16 +85,6 @@ uint64_t StageSync::pack_cond_token_key(int32_t cond_idx, int32_t token_idx) {
   assert(token_idx >= 0);
   return (static_cast<uint64_t>(static_cast<uint32_t>(cond_idx)) << 32) |
          static_cast<uint32_t>(token_idx);
-}
-
-void StageSync::update_tail_window(BucketAggState &agg,
-                                   int64_t block_bucket,
-                                   int64_t current_block,
-                                   int64_t current_exposure,
-                                   __int128 current_holding_exp,
-                                   int64_t current_token_count) {
-  feature_comp::update_tail_window(
-      agg, block_bucket, current_block, current_exposure, current_holding_exp, current_token_count, kBlockBucketSize);
 }
 
 double StageSync::apply_event_input(const EventInput &row, TokenState &st) const {

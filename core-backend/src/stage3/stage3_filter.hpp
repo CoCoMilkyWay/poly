@@ -23,9 +23,15 @@ struct UserRow {
   int64_t pnl = 0;
 };
 
+struct FilterStat {
+  int64_t pass_count = 0;   // 满足该条件的用户数
+  int64_t reject_count = 0; // 被该条件过滤掉的用户数
+};
+
 struct Result {
   int64_t anchor_bucket = 0;
   std::vector<UserRow> users;
+  std::vector<FilterStat> filter_stats; // 每个过滤条件的统计
 };
 
 } // namespace stage3::filter

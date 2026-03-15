@@ -219,12 +219,27 @@
         font-size: 0.78em;
         margin-bottom: 6px;
     }
+
+    .s3f-filter-stat {
+        color: #888;
+        font-size: 0.78em;
+        font-family: monospace;
+        margin-left: 8px;
+    }
+
+    .s3f-filter-stat .s3f-pass {
+        color: #22c55e;
+    }
+
+    .s3f-filter-stat .s3f-reject {
+        color: #ef4444;
+    }
 </style>
 
 <div class="s3f-card">
     <div class="s3f-header">
         <h2>用户截面过滤器</h2>
-        <span class="s3f-sub">输出过滤后的 Top100 用户地址</span>
+        <span class="s3f-sub">当前截面用户数: <span id="s3f-total-users">-</span> | 输出过滤后的 Top100 用户地址</span>
     </div>
 
     <div class="s3f-section-title">过滤条件（AND 关系）</div>
@@ -300,8 +315,9 @@
 </div>
 
 <script>
-    let _s3fReqSeq = 0;
     let _s3fMaxBucket = -1;
+    let _s3fTotalUsers = 0;
+    let _s3fIsRunning = false; // 防止并发请求
     let _s3fLastSortFeature = 'shp'; // 记录上次排序的特征，用于单位转换
 
     // 金钱相关特征需要除以 1e6 转换为 USD
@@ -327,6 +343,8 @@
         const maxBucket = Number(data.max_bucket);
         assert(Number.isFinite(maxBucket) && maxBucket >= 0, 'max_bucket 非法');
         _s3fMaxBucket = Math.floor(maxBucket);
+        _s3fTotalUsers = Number(data.bucket_user_count) || 0;
+        document.getElementById('s3f-total-users').textContent = _s3fTotalUsers.toLocaleString();
     }
 
     async function s3fInit() {
@@ -407,6 +425,7 @@
             </select>
             <input type="number" class="s3f-input-num s3f-value" value="0" step="any" />
             <button class="s3f-btn s3f-btn-small s3f-btn-del" onclick="s3fRemoveFilter(this)">删除</button>
+            <span class="s3f-filter-stat"></span>
         `;
     }
 
@@ -434,6 +453,37 @@
         if (row) {
             row.remove();
             s3fSyncFilterEmptyState();
+        }
+    }
+
+    function s3fUpdateFilterStats(filterStats) {
+        const rows = document.querySelectorAll('#s3f-filters-box .s3f-filter-row');
+        let statIdx = 0;
+        for (const row of rows) {
+            const statEl = row.querySelector('.s3f-filter-stat');
+            if (!statEl) continue;
+            const valueInput = row.querySelector('.s3f-value');
+            if (!valueInput || valueInput.value.trim() === '') {
+                statEl.innerHTML = '';
+                continue;
+            }
+            if (statIdx < filterStats.length) {
+                const stat = filterStats[statIdx];
+                statEl.innerHTML = `<span class="s3f-pass">✓${stat.pass_count.toLocaleString()}</span> <span class="s3f-reject">✗${stat.reject_count.toLocaleString()}</span>`;
+                statIdx++;
+            } else {
+                statEl.innerHTML = '';
+            }
+        }
+    }
+
+    function s3fClearFilterStats() {
+        const rows = document.querySelectorAll('#s3f-filters-box .s3f-filter-row');
+        for (const row of rows) {
+            const statEl = row.querySelector('.s3f-filter-stat');
+            if (statEl) {
+                statEl.innerHTML = '';
+            }
         }
     }
 
@@ -539,10 +589,15 @@
     }
 
     async function s3fRunFilter() {
+        // 防止并发请求
+        if (_s3fIsRunning) {
+            return;
+        }
+        _s3fIsRunning = true;
+
         const runBtn = document.getElementById('s3f-run-btn');
         const summary = document.getElementById('s3f-summary');
         const errorEl = document.getElementById('s3f-error');
-        const reqSeq = ++_s3fReqSeq;
 
         errorEl.textContent = '';
         runBtn.disabled = true;
@@ -553,10 +608,9 @@
             payload = s3fBuildPayload();
         } catch (e) {
             errorEl.textContent = e.message || String(e);
-            if (reqSeq === _s3fReqSeq) {
-                runBtn.disabled = false;
-                runBtn.textContent = '执行过滤';
-            }
+            runBtn.disabled = false;
+            runBtn.textContent = '执行过滤';
+            _s3fIsRunning = false;
             return;
         }
 
@@ -569,21 +623,21 @@
                 body: JSON.stringify(payload),
             });
             const data = await resp.json();
-            if (reqSeq !== _s3fReqSeq) return;
             if (!resp.ok) {
                 throw new Error(data.error || '请求失败');
             }
             const users = Array.isArray(data.users) ? data.users : [];
             s3fRenderRows(users);
             summary.textContent = `bucket=${data.anchor_bucket} | 返回 ${users.length} 地址`;
+            const filterStats = Array.isArray(data.filter_stats) ? data.filter_stats : [];
+            s3fUpdateFilterStats(filterStats);
         } catch (e) {
-            if (reqSeq !== _s3fReqSeq) return;
             errorEl.textContent = e.message || String(e);
+            s3fClearFilterStats();
         } finally {
-            if (reqSeq === _s3fReqSeq) {
-                runBtn.disabled = false;
-                runBtn.textContent = '执行过滤';
-            }
+            runBtn.disabled = false;
+            runBtn.textContent = '执行过滤';
+            _s3fIsRunning = false;
         }
     }
 

@@ -413,6 +413,52 @@ filter::Result StageSync::filter_users_by_features(const filter::Request &req) c
         r->GetValue(5, i).GetValue<int64_t>(),
     });
   }
+
+  // 统计每个过滤条件的效果
+  if (!where_parts.empty()) {
+    std::string stats_sql = "WITH user_features AS (SELECT user_addr";
+    for (const auto &binding : bindings) {
+      stats_sql += ", MAX(CASE WHEN tag_id = " + std::to_string(binding.tag_id) +
+                   " THEN " + binding.column + " END) AS " + binding.alias;
+    }
+    stats_sql += " FROM " + std::string(kSqlTableFeatureTensorState) +
+                 " WHERE block_bucket = " + std::to_string(anchor_bucket);
+    if (!used_tag_ids.empty()) {
+      stats_sql += " AND tag_id IN (";
+      for (size_t i = 0; i < used_tag_ids.size(); ++i) {
+        if (i > 0) {
+          stats_sql += ",";
+        }
+        stats_sql += std::to_string(used_tag_ids[i]);
+      }
+      stats_sql += ")";
+    }
+    stats_sql += " GROUP BY user_addr) SELECT ";
+    for (size_t i = 0; i < where_parts.size(); ++i) {
+      if (i > 0) {
+        stats_sql += ", ";
+      }
+      stats_sql += "SUM(CASE WHEN (" + where_parts[i] + ") THEN 1 ELSE 0 END) AS pass_" +
+                   std::to_string(i);
+      stats_sql += ", SUM(CASE WHEN NOT (" + where_parts[i] + ") THEN 1 ELSE 0 END) AS reject_" +
+                   std::to_string(i);
+    }
+    stats_sql += " FROM user_features";
+
+    auto stats_r = conn->Query(stats_sql);
+    if (stats_r && !stats_r->HasError() && stats_r->RowCount() > 0) {
+      result.filter_stats.reserve(where_parts.size());
+      for (size_t i = 0; i < where_parts.size(); ++i) {
+        filter::FilterStat stat;
+        const auto pass_val = stats_r->GetValue(i * 2, 0);
+        const auto reject_val = stats_r->GetValue(i * 2 + 1, 0);
+        stat.pass_count = pass_val.IsNull() ? 0 : pass_val.GetValue<int64_t>();
+        stat.reject_count = reject_val.IsNull() ? 0 : reject_val.GetValue<int64_t>();
+        result.filter_stats.push_back(stat);
+      }
+    }
+  }
+
   return result;
 }
 

@@ -123,6 +123,7 @@ public:
 
   Status status() const;
   int64_t get_max_bucket() const;
+  int64_t get_bucket_user_count(int64_t bucket) const;
   Stage2Data stage2_data() const;
   json memory_breakdown() const;
   json stage2_rocksdb_memory_breakdown() const;
@@ -288,10 +289,7 @@ private:
   // Normalization / key conversion helpers
   static std::string normalize_addr(const std::string &addr);
   static std::string normalize_tag_key(const std::string &raw);
-  static int64_t round_i64(double v);
   static int64_t sort_key_to_block(int64_t sort_key);
-  static int64_t sort_key_to_block_bucket(int64_t sort_key);
-  static int64_t bucket_end_block(int64_t block_bucket);
   static uint64_t pack_cond_token_key(int32_t cond_idx, int32_t token_idx);
 
   // Event / metadata predicates
@@ -302,19 +300,8 @@ private:
   int8_t tag_name_to_id(const std::string &tag_name) const;
 
   // Feature calculators
-  static double calc_unrealized_pnl(const TokenState &st);
-  static int64_t calc_exposure_1e6(const TokenState &st);
-  static int64_t calc_holding_period_blocks(int64_t current_block, const TokenState &st);
   static int64_t calc_volume_1e6(const EventInput &row);
   double calc_convert_price_for_cond(int32_t cond_idx) const;
-
-  // Aggregation update helper
-  static void update_tail_window(BucketAggState &agg,
-                                 int64_t block_bucket,
-                                 int64_t current_block,
-                                 int64_t current_exposure,
-                                 __int128 current_holding_exp,
-                                 int64_t current_token_count);
 
   // Lifecycle / sync pipeline
   void init_schema() const;

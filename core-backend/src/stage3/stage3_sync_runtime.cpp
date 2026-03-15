@@ -211,8 +211,6 @@ const PrefixSumHistoryRecord *find_prefix_sum_history_by_pair_key_le(
 }
 } // namespace
 
-int64_t StageSync::round_i64(double v) { return static_cast<int64_t>(std::llround(v)); }
-
 void StageSync::start(asio::io_context &ioc) {
   ioc_ = &ioc;
   stop_requested_ = false;
@@ -227,11 +225,29 @@ StageSync::Status StageSync::status() const {
 }
 
 int64_t StageSync::get_max_bucket() const {
-  std::lock_guard<std::mutex> lock(sync_mu_);
-  if (sync_cursor_.sort_key < 0) {
+  // 从数据库查询实际已提交的最大 bucket，而不是内存中的 sync_cursor_
+  // 因为 sync_cursor_ 在处理开始时就更新了，但数据可能还没写入数据库
+  auto conn = stage3_db_.create_connection();
+  auto r = conn->Query("SELECT COALESCE(MAX(block_bucket), -1) FROM " +
+                       std::string(kSqlTableFeatureTensorState));
+  if (!r || r->HasError() || r->RowCount() == 0) {
     return -1;
   }
-  return sort_key_to_block_bucket(sync_cursor_.sort_key);
+  return r->GetValue(0, 0).GetValue<int64_t>();
+}
+
+int64_t StageSync::get_bucket_user_count(int64_t bucket) const {
+  if (bucket < 0) {
+    return 0;
+  }
+  auto conn = stage3_db_.create_connection();
+  auto r = conn->Query("SELECT COUNT(DISTINCT user_addr) FROM " +
+                       std::string(kSqlTableFeatureTensorState) +
+                       " WHERE block_bucket = " + std::to_string(bucket));
+  if (!r || r->HasError() || r->RowCount() == 0) {
+    return 0;
+  }
+  return r->GetValue(0, 0).GetValue<int64_t>();
 }
 
 StageSync::Stage2Data StageSync::stage2_data() const {
@@ -627,8 +643,9 @@ bool StageSync::process_chunk_locked() const {
     };
     TokenFeatureContrib c;
     c.token_count = is_effective_holding(st.pos) ? 1 : 0;
-    c.exposure = calc_exposure_1e6(st);
-    const int64_t entry_block = round_i64(st.entry_block);
+    c.exposure = feature_comp::calc_exposure_1e6(
+        feature_comp::TokenSnapshot{st.pos, st.cost, st.lp, st.entry_block}, kPosEpsilon);
+    const int64_t entry_block = feature_comp::round_i64(st.entry_block);
     c.exposure_entry = (c.exposure > 0) ? static_cast<__int128>(c.exposure) * entry_block : 0;
     return c;
   };
@@ -692,7 +709,8 @@ bool StageSync::process_chunk_locked() const {
     }
     assert(static_cast<size_t>(row.cond_idx) < cond_tag_ids_.size());
     const int8_t tag_id = cond_tag_ids_[static_cast<size_t>(row.cond_idx)];
-    const int64_t block_bucket = sort_key_to_block_bucket(row.sort_key);
+    const int64_t block_bucket =
+        feature_comp::sort_key_to_block_bucket(row.sort_key, SORT_KEY_SCALE, kBlockBucketSize);
     bucket_agg_state_by_agg_key.try_emplace(AggKey{row.user_id, block_bucket, tag_id}, BucketAggState{});
     bucket_agg_state_by_agg_key.try_emplace(AggKey{row.user_id, block_bucket, -1}, BucketAggState{});
     touched_runtime_pair_key_set.insert(UserTagRuntimePairKey{row.user_id, tag_id});
@@ -860,10 +878,10 @@ bool StageSync::process_chunk_locked() const {
   std::unordered_set<TokenKey, TokenKeyHash> dirty_token_key_set;
   dirty_token_key_set.reserve(token_state_by_token_key.size());
   auto token_state_rounded_equal = [&](const TokenState &lhs, const TokenState &rhs) {
-    return round_i64(lhs.pos) == round_i64(rhs.pos) &&
-           round_i64(lhs.cost) == round_i64(rhs.cost) &&
-           round_i64(lhs.lp) == round_i64(rhs.lp) &&
-           round_i64(lhs.entry_block) == round_i64(rhs.entry_block);
+    return feature_comp::round_i64(lhs.pos) == feature_comp::round_i64(rhs.pos) &&
+           feature_comp::round_i64(lhs.cost) == feature_comp::round_i64(rhs.cost) &&
+           feature_comp::round_i64(lhs.lp) == feature_comp::round_i64(rhs.lp) &&
+           feature_comp::round_i64(lhs.entry_block) == feature_comp::round_i64(rhs.entry_block);
   };
   for (const auto &row : event_input_rows) {
     auto realized_total_it = realized_total_by_user_id.find(row.user_id);
@@ -890,11 +908,13 @@ bool StageSync::process_chunk_locked() const {
       TokenState &st = token_state_it->second;
       const TokenState before_state = st;
       const auto before_contrib = token_feature_contrib(st);
-      const double before_unrealized = calc_unrealized_pnl(st);
+      const double before_unrealized = feature_comp::calc_unrealized_pnl(
+          feature_comp::TokenSnapshot{st.pos, st.cost, st.lp, st.entry_block}, kPosEpsilon);
       const int before_holding = static_cast<int>(before_contrib.token_count);
       realized_delta = apply_event_input(row, st);
       const auto after_contrib = token_feature_contrib(st);
-      const double after_unrealized = calc_unrealized_pnl(st);
+      const double after_unrealized = feature_comp::calc_unrealized_pnl(
+          feature_comp::TokenSnapshot{st.pos, st.cost, st.lp, st.entry_block}, kPosEpsilon);
       const int after_holding = static_cast<int>(after_contrib.token_count);
       unrealized_total_it->second += (after_unrealized - before_unrealized);
       active_token_count_it->second += (after_holding - before_holding);
@@ -911,8 +931,10 @@ bool StageSync::process_chunk_locked() const {
 
       const int64_t row_block = sort_key_to_block(row.sort_key);
       exposure = after_contrib.exposure;
-      holding_period = calc_holding_period_blocks(row_block, st);
-      const int64_t block_bucket = sort_key_to_block_bucket(row.sort_key);
+      holding_period = feature_comp::calc_holding_period_blocks(
+          row_block, feature_comp::TokenSnapshot{st.pos, st.cost, st.lp, st.entry_block}, kPosEpsilon);
+      const int64_t block_bucket =
+          feature_comp::sort_key_to_block_bucket(row.sort_key, SORT_KEY_SCALE, kBlockBucketSize);
 
       auto apply_feature_bucket = [&](int8_t agg_tag_id) {
         UserTagRuntimePairKey rt_key{row.user_id, agg_tag_id};
@@ -938,7 +960,8 @@ bool StageSync::process_chunk_locked() const {
         BucketAggState &agg = bucket_agg_it->second;
         // 保存 prev_block 用于 delta_t 计算（必须在 update_tail_window 之前）
         const int64_t prev_block = agg.has_tail ? agg.last_block : 0;
-        update_tail_window(agg, agg_key.block_bucket, row_block, rt.exposure, holding_exp, rt.token_count);
+        feature_comp::update_tail_window(
+            agg, agg_key.block_bucket, row_block, rt.exposure, holding_exp, rt.token_count, kBlockBucketSize);
         feature_comp::accumulate_event_delta(agg, realized_delta, exposure_before, volume, row.sort_key, row_block, prev_block);
       };
 
@@ -963,9 +986,9 @@ bool StageSync::process_chunk_locked() const {
         row.cond_idx,
         row.token_idx,
         row.event_type,
-        round_i64(realized_delta),
-        round_i64(realized_total),
-        round_i64(unrealized_total),
+        feature_comp::round_i64(realized_delta),
+        feature_comp::round_i64(realized_total),
+        feature_comp::round_i64(unrealized_total),
         token_count,
         tag_id,
         exposure,
@@ -1114,10 +1137,10 @@ bool StageSync::process_chunk_locked() const {
         append_blob(ap, user_blob);
         ap.Append(key.cond_idx);
         ap.Append(key.token_idx);
-        ap.Append(round_i64(st.pos));
-        ap.Append(round_i64(st.cost));
-        ap.Append(round_i64(st.lp));
-        ap.Append(round_i64(st.entry_block));
+        ap.Append(feature_comp::round_i64(st.pos));
+        ap.Append(feature_comp::round_i64(st.cost));
+        ap.Append(feature_comp::round_i64(st.lp));
+        ap.Append(feature_comp::round_i64(st.entry_block));
         ap.EndRow();
       }
       ap.Close();
@@ -1213,15 +1236,15 @@ bool StageSync::process_chunk_locked() const {
         const std::string &user_blob = user_blob_by_user_id[key.user_id];
         const int64_t tw = agg.time_weight_sum;
         const int64_t token_avg_10w =
-            (tw > 0) ? round_i64(static_cast<double>(agg.token_count_tw_sum) / static_cast<double>(tw)) : 0;
+            (tw > 0) ? feature_comp::round_i64(static_cast<double>(agg.token_count_tw_sum) / static_cast<double>(tw)) : 0;
         const int64_t exposure_avg_10w =
             (tw > 0)
-                ? round_i64(static_cast<double>(i128_to_long_double(agg.exposure_tw_sum) /
+                ? feature_comp::round_i64(static_cast<double>(i128_to_long_double(agg.exposure_tw_sum) /
                                                 static_cast<long double>(tw)))
                 : 0;
         const int64_t holding_period_avg_10w =
             (agg.exposure_tw_sum > 0)
-                ? round_i64(static_cast<double>(i128_to_long_double(agg.holding_period_exp_tw_sum) /
+                ? feature_comp::round_i64(static_cast<double>(i128_to_long_double(agg.holding_period_exp_tw_sum) /
                                                 i128_to_long_double(agg.exposure_tw_sum)))
                 : 0;
         const int64_t volume_10w = agg.volume_sum;
@@ -1357,21 +1380,21 @@ bool StageSync::process_chunk_locked() const {
         const int64_t denom_1000 = std::min<int64_t>(100, key.block_bucket + 1);
 
         const int64_t token_avg_100w =
-            (denom_100 > 0) ? round_i64(static_cast<double>(token_sum_100) / static_cast<double>(denom_100)) : 0;
+            (denom_100 > 0) ? feature_comp::round_i64(static_cast<double>(token_sum_100) / static_cast<double>(denom_100)) : 0;
         const int64_t token_avg_1000w =
-            (denom_1000 > 0) ? round_i64(static_cast<double>(token_sum_1000) / static_cast<double>(denom_1000)) : 0;
+            (denom_1000 > 0) ? feature_comp::round_i64(static_cast<double>(token_sum_1000) / static_cast<double>(denom_1000)) : 0;
         const int64_t exposure_avg_100w =
-            (denom_100 > 0) ? round_i64(static_cast<double>(exposure_sum_100) / static_cast<double>(denom_100)) : 0;
+            (denom_100 > 0) ? feature_comp::round_i64(static_cast<double>(exposure_sum_100) / static_cast<double>(denom_100)) : 0;
         const int64_t exposure_avg_1000w =
-            (denom_1000 > 0) ? round_i64(static_cast<double>(exposure_sum_1000) / static_cast<double>(denom_1000)) : 0;
+            (denom_1000 > 0) ? feature_comp::round_i64(static_cast<double>(exposure_sum_1000) / static_cast<double>(denom_1000)) : 0;
         const int64_t volume_avg_100w =
-            (denom_100 > 0) ? round_i64(static_cast<double>(volume_sum_100) / static_cast<double>(denom_100)) : 0;
+            (denom_100 > 0) ? feature_comp::round_i64(static_cast<double>(volume_sum_100) / static_cast<double>(denom_100)) : 0;
         const int64_t volume_avg_1000w =
-            (denom_1000 > 0) ? round_i64(static_cast<double>(volume_sum_1000) / static_cast<double>(denom_1000)) : 0;
+            (denom_1000 > 0) ? feature_comp::round_i64(static_cast<double>(volume_sum_1000) / static_cast<double>(denom_1000)) : 0;
         const int64_t holding_period_avg_100w =
-            (denom_100 > 0) ? round_i64(static_cast<double>(holding_period_sum_100) / static_cast<double>(denom_100)) : 0;
+            (denom_100 > 0) ? feature_comp::round_i64(static_cast<double>(holding_period_sum_100) / static_cast<double>(denom_100)) : 0;
         const int64_t holding_period_avg_1000w =
-            (denom_1000 > 0) ? round_i64(static_cast<double>(holding_period_sum_1000) / static_cast<double>(denom_1000)) : 0;
+            (denom_1000 > 0) ? feature_comp::round_i64(static_cast<double>(holding_period_sum_1000) / static_cast<double>(denom_1000)) : 0;
 
         // Sharpe 窗口投影，仅对 tag_id=-1（全账户）计算
         const double sharpe_100w = (key.tag_id == -1)
@@ -1476,8 +1499,8 @@ bool StageSync::process_chunk_locked() const {
         append_blob(ap, user_blob);
         ap.Append(inc);
         ap.Append(sort_key_it->second);
-        ap.Append(round_i64(realized_total_it->second));
-        ap.Append(round_i64(unrealized_total_it->second));
+        ap.Append(feature_comp::round_i64(realized_total_it->second));
+        ap.Append(feature_comp::round_i64(unrealized_total_it->second));
         assert(active_token_count_it->second >= 0);
         ap.Append(active_token_count_it->second);
         ap.EndRow();

@@ -448,6 +448,7 @@ json to_stage3_status_json(const Stage3Status &status) {
       {"eta_seconds", status.eta_seconds},
       {"ready", status.behind_blocks == 0},
       {"max_bucket", status.max_bucket},
+      {"bucket_user_count", status.bucket_user_count},
   };
 }
 
@@ -1188,9 +1189,17 @@ void ApiSession::handle_stage3_filter() {
           {"pnl", u.pnl},
       });
     }
+    json filter_stats = json::array();
+    for (const auto &fs : filter_result.filter_stats) {
+      filter_stats.push_back({
+          {"pass_count", fs.pass_count},
+          {"reject_count", fs.reject_count},
+      });
+    }
     write_ok_json_response(res_, {
                                      {"anchor_bucket", filter_result.anchor_bucket},
                                      {"users", users},
+                                     {"filter_stats", filter_stats},
                                  });
   } catch (const std::invalid_argument &e) {
     res_.result(http::status::bad_request);

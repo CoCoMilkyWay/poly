@@ -210,7 +210,7 @@ StageSync::UserQueryCacheState StageSync::build_user_query_cache_state(const std
       const uint64_t packed_token_key = pack_cond_token_key(row.cond_idx, row.token_idx);
       auto &st = token_state_by_token_key[packed_token_key];
       (void)apply_event_input(row, st);
-      const int64_t qty_i64 = round_i64(st.pos);
+      const int64_t qty_i64 = feature_comp::round_i64(st.pos);
       if (std::abs(st.pos) <= kPosEpsilon || !StageSync::is_effective_holding_i64(qty_i64)) {
         active_position_by_token_key.erase(packed_token_key);
       } else {
@@ -219,9 +219,9 @@ StageSync::UserQueryCacheState StageSync::build_user_query_cache_state(const std
             static_cast<uint8_t>(fact_token_idx),
             static_cast<uint8_t>(cond.outcome_count),
             qty_i64,
-            round_i64(st.cost),
-            round_i64(st.lp),
-            round_i64(st.entry_block),
+            feature_comp::round_i64(st.cost),
+            feature_comp::round_i64(st.lp),
+            feature_comp::round_i64(st.entry_block),
         };
       }
     }
