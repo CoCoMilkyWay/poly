@@ -947,6 +947,14 @@ bool StageSync::process_chunk_locked() const {
     double &unrealized_total = unrealized_total_it->second;
     realized_total += realized_delta;
     int32_t token_count = active_token_count_it->second;
+    int64_t account_exposure = 0;
+    {
+      UserTagRuntimePairKey account_key{row.user_id, -1};
+      auto account_it = runtime_pair_state_by_pair_key.find(account_key);
+      if (account_it != runtime_pair_state_by_pair_key.end()) {
+        account_exposure = account_it->second.exposure;
+      }
+    }
     event_fact_rows.push_back({
         row.user_id,
         row.sort_key,
@@ -961,6 +969,7 @@ bool StageSync::process_chunk_locked() const {
         exposure,
         volume,
         holding_period,
+        account_exposure,
     });
   }
   assert(event_fact_rows.size() == event_input_rows.size());
@@ -1145,6 +1154,7 @@ bool StageSync::process_chunk_locked() const {
           event_fact_row.exposure,
           event_fact_row.volume,
           event_fact_row.holding_period,
+          event_fact_row.account_exposure,
       });
     }
     event_fact_store_->write_events(event_fact_records);
@@ -1217,7 +1227,9 @@ bool StageSync::process_chunk_locked() const {
         const int64_t time_sum_10w = (agg.first_block > 0 && agg.last_block > agg.first_block)
                                          ? (agg.last_block - agg.first_block)
                                          : 0;
-        const double sharpe_10w = calc_sharpe_from_returns(agg.return_sum, agg.return_tw_sum, agg.return_sq_tw_sum, time_sum_10w);
+        // NOTE: Old Sharpe calculation disabled. Sharpe is now computed exactly from full event sequences.
+        // Keeping return_sum/return_tw_sum/return_sq_tw_sum for backward compatibility but not using them for Sharpe.
+        const double sharpe_10w = 0.0;
 
         UserTagRuntimePairKey pair_key{key.user_id, key.tag_id};
         auto [prefix_outputs_it, _] = prefix_outputs_by_pair.try_emplace(pair_key, std::vector<BucketPrefixOutput>{});
@@ -1358,8 +1370,9 @@ bool StageSync::process_chunk_locked() const {
         const int64_t holding_period_avg_1000w =
             (denom_1000 > 0) ? round_i64(static_cast<double>(holding_period_sum_1000) / static_cast<double>(denom_1000)) : 0;
 
-        const double sharpe_100w = calc_sharpe_from_returns(return_sum_100, return_tw_sum_100, return_sq_tw_sum_100, time_sum_100);
-        const double sharpe_1000w = calc_sharpe_from_returns(return_sum_1000, return_tw_sum_1000, return_sq_tw_sum_1000, time_sum_1000);
+        // NOTE: Old Sharpe calculation disabled. Sharpe is now computed exactly from full event sequences.
+        const double sharpe_100w = 0.0;
+        const double sharpe_1000w = 0.0;
 
         ap.BeginRow();
         append_blob(ap, user_blob);

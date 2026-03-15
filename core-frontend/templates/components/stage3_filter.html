@@ -307,6 +307,19 @@
     // 金钱相关特征需要除以 1e6 转换为 USD
     const _s3fMoneyFeatures = new Set(['exp', 'vol']);
 
+    function s3fNormalizeIndustryForFeature(industry, feature) {
+        return feature === 'shp' ? 'ALL' : industry;
+    }
+
+    function s3fApplyFeatureIndustryConstraint(featureSelect, industrySelect) {
+        assert(featureSelect && industrySelect, 'feature/industry selector 缺失');
+        const forceAll = featureSelect.value === 'shp';
+        if (forceAll) {
+            industrySelect.value = 'ALL';
+        }
+        industrySelect.disabled = forceAll;
+    }
+
     async function s3fRefreshMaxBucket() {
         const resp = await fetch('/api/stage3-status');
         assert(resp.ok, '获取 stage3 状态失败');
@@ -331,6 +344,28 @@
             runBtn.disabled = false;
             runBtn.textContent = '执行过滤';
         }
+
+        // 当选择 shp 时，强制行业为 ALL
+        const sortFeature = document.getElementById('s3f-sort-feature');
+        const sortIndustry = document.getElementById('s3f-sort-industry');
+        sortFeature.addEventListener('change', function() {
+            s3fApplyFeatureIndustryConstraint(this, sortIndustry);
+        });
+        s3fApplyFeatureIndustryConstraint(sortFeature, sortIndustry);
+
+        // 检查过滤条件中的 shp，强制行业为 ALL
+        document.addEventListener('change', function(e) {
+            if (!e.target.classList.contains('s3f-feature')) {
+                return;
+            }
+            const row = e.target.closest('.s3f-filter-row');
+            if (row) {
+                const industrySelect = row.querySelector('.s3f-industry');
+                if (industrySelect) {
+                    s3fApplyFeatureIndustryConstraint(e.target, industrySelect);
+                }
+            }
+        });
     }
 
     function s3fMakeFilterRowHtml() {
@@ -388,6 +423,9 @@
         row.className = 's3f-filter-row';
         row.innerHTML = s3fMakeFilterRowHtml();
         box.appendChild(row);
+        const featureSelect = row.querySelector('.s3f-feature');
+        const industrySelect = row.querySelector('.s3f-industry');
+        s3fApplyFeatureIndustryConstraint(featureSelect, industrySelect);
         s3fSyncFilterEmptyState();
     }
 
@@ -409,12 +447,13 @@
         const filters = [];
         const rows = document.querySelectorAll('#s3f-filters-box .s3f-filter-row');
         for (const row of rows) {
-            const industry = row.querySelector('.s3f-industry').value;
+            let industry = row.querySelector('.s3f-industry').value;
             const feature = row.querySelector('.s3f-feature').value;
             const window = row.querySelector('.s3f-window').value;
             const op = row.querySelector('.s3f-op').value;
             let value = row.querySelector('.s3f-value').value.trim();
             if (value === '') continue;
+            industry = s3fNormalizeIndustryForFeature(industry, feature);
             // 金钱特征用户输入 USD，需要转换为 microUSD (乘以 1e6)
             if (_s3fMoneyFeatures.has(feature)) {
                 value = String(Number(value) * 1e6);
@@ -423,10 +462,11 @@
             filters.push(expr);
         }
 
-        const sortIndustry = document.getElementById('s3f-sort-industry').value;
+        let sortIndustry = document.getElementById('s3f-sort-industry').value;
         const sortFeature = document.getElementById('s3f-sort-feature').value;
         const sortWindow = document.getElementById('s3f-sort-window').value;
         const sortDir = document.getElementById('s3f-sort-dir').value;
+        sortIndustry = s3fNormalizeIndustryForFeature(sortIndustry, sortFeature);
         const sortExpr = s3fBuildExpr(sortIndustry, sortFeature, sortWindow);
 
         // 记录排序特征，用于展示时单位转换

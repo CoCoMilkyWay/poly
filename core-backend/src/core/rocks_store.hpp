@@ -566,6 +566,7 @@ struct Stage3EventFactRecord {
   int64_t exposure = 0;
   int64_t volume = 0;
   int64_t holding_period = 0;
+  int64_t account_exposure = 0;
 };
 
 class Stage3EventFactStore {
@@ -616,6 +617,42 @@ public:
       }
       const char *vptr = rocksdb_iter_value(it, &vlen);
       out.push_back(decode_entry(std::string_view(kptr, klen), std::string_view(vptr, vlen)));
+      rocksdb_iter_next(it);
+    }
+    char *err = nullptr;
+    rocksdb_iter_get_error(it, &err);
+    rocksdb_iter_destroy(it);
+    detail::assert_no_err(err);
+    return out;
+  }
+
+  std::vector<Stage3EventFactRecord> scan_by_user_range(const std::string &user_addr, int64_t sort_key_start, int64_t sort_key_end) const {
+    assert(user_addr.size() == kUserAddrBytes);
+    assert(sort_key_start <= sort_key_end);
+    std::vector<Stage3EventFactRecord> out;
+    std::string start_key;
+    start_key.reserve(40);
+    start_key.append(user_addr);
+    detail::append_u64_be(start_key, detail::encode_i64_lex(sort_key_start));
+
+    rocksdb_iterator_t *it = rocksdb_create_iterator_cf(db_, read_options_, timeline_cf_);
+    rocksdb_iter_seek(it, start_key.data(), start_key.size());
+    while (rocksdb_iter_valid(it) != 0) {
+      size_t klen = 0;
+      size_t vlen = 0;
+      const char *kptr = rocksdb_iter_key(it, &klen);
+      std::string_view k(kptr, klen);
+      if (!detail::starts_with(k, user_addr)) {
+        break;
+      }
+      const char *vptr = rocksdb_iter_value(it, &vlen);
+      Stage3EventFactRecord rec = decode_entry(std::string_view(kptr, klen), std::string_view(vptr, vlen));
+      if (rec.sort_key > sort_key_end) {
+        break;
+      }
+      if (rec.sort_key >= sort_key_start && rec.sort_key <= sort_key_end) {
+        out.push_back(std::move(rec));
+      }
       rocksdb_iter_next(it);
     }
     char *err = nullptr;
@@ -701,7 +738,7 @@ private:
 
   static std::string build_value(const Stage3EventFactRecord &row) {
     std::string out;
-    out.reserve(56);
+    out.reserve(64);
     detail::append_u64_be(out, detail::encode_i64_lex(row.realized_delta));
     detail::append_u64_be(out, detail::encode_i64_lex(row.realized_cum));
     detail::append_u64_be(out, detail::encode_i64_lex(row.unrealized_pnl));
@@ -710,14 +747,14 @@ private:
     detail::append_u64_be(out, detail::encode_i64_lex(row.exposure));
     detail::append_u64_be(out, detail::encode_i64_lex(row.volume));
     detail::append_u64_be(out, detail::encode_i64_lex(row.holding_period));
-    assert(out.size() == 56);
+    detail::append_u64_be(out, detail::encode_i64_lex(row.account_exposure));
+    assert(out.size() == 64);
     return out;
   }
 
   static Stage3EventFactRecord decode_entry(std::string_view k,
                                             std::string_view v) {
     assert(k.size() == 40);
-    assert(v.size() == 56);
     Stage3EventFactRecord row;
     row.user_addr.assign(k.substr(0, kUserAddrBytes));
     row.sort_key = detail::decode_i64_lex(detail::read_u64_be(k, 20));
@@ -732,6 +769,11 @@ private:
     row.exposure = detail::decode_i64_lex(detail::read_u64_be(v, 32));
     row.volume = detail::decode_i64_lex(detail::read_u64_be(v, 40));
     row.holding_period = detail::decode_i64_lex(detail::read_u64_be(v, 48));
+    if (v.size() >= 64) {
+      row.account_exposure = detail::decode_i64_lex(detail::read_u64_be(v, 56));
+    } else {
+      row.account_exposure = 0;
+    }
     return row;
   }
 
