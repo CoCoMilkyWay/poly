@@ -234,6 +234,12 @@
     .s3f-filter-stat .s3f-reject {
         color: #ef4444;
     }
+
+    .s3f-rhs-group {
+        display: inline-flex;
+        gap: 8px;
+        align-items: center;
+    }
 </style>
 
 <div class="s3f-card">
@@ -242,7 +248,7 @@
         <span class="s3f-sub">当前截面用户数: <span id="s3f-total-users">-</span> | 输出过滤后的 Top100 用户地址</span>
     </div>
 
-    <div class="s3f-section-title">过滤条件（AND 关系）</div>
+    <div class="s3f-section-title">过滤条件（AND 关系，支持乘除）</div>
     <div id="s3f-filters-box" class="s3f-filters-box">
         <div id="s3f-filter-empty" class="s3f-filter-empty">当前无过滤条件，将仅按排序返回 Top100</div>
     </div>
@@ -320,10 +326,10 @@
     let _s3fIsRunning = false; // 防止并发请求
     let _s3fLastSortFeature = 'shp'; // 记录上次排序的特征，用于单位转换
     const _s3fDefaultFilters = [
-        { industry: 'ALL', feature: 'exp', window: '100', op: '>', value: '10000' },
-        { industry: 'ALL', feature: 'tok', window: '100', op: '>', value: '5' },
-        { industry: 'ALL', feature: 'tok', window: '100', op: '<', value: '50' },
-        { industry: 'ALL', feature: 'vol', window: '100', op: '>', value: '10000' },
+        { industry: 'ALL', feature: 'exp', window: '100', arith: '', rhsIndustry: 'ALL', rhsFeature: 'exp', rhsWindow: '100', op: '>', value: '10000' },
+        { industry: 'ALL', feature: 'tok', window: '100', arith: '', rhsIndustry: 'ALL', rhsFeature: 'exp', rhsWindow: '100', op: '>', value: '5' },
+        { industry: 'ALL', feature: 'tok', window: '100', arith: '', rhsIndustry: 'ALL', rhsFeature: 'exp', rhsWindow: '100', op: '<', value: '50' },
+        { industry: 'ALL', feature: 'vol', window: '100', arith: '', rhsIndustry: 'ALL', rhsFeature: 'exp', rhsWindow: '100', op: '>', value: '10000' },
     ];
 
     // 金钱相关特征需要除以 1e6 转换为 USD
@@ -340,6 +346,22 @@
             industrySelect.value = 'ALL';
         }
         industrySelect.disabled = forceAll;
+    }
+
+    function s3fBindFeatureIndustryConstraint(featureClass, industryClass) {
+        document.addEventListener('change', function(e) {
+            if (!e.target.classList.contains(featureClass)) {
+                return;
+            }
+            const row = e.target.closest('.s3f-filter-row');
+            if (!row) {
+                return;
+            }
+            const industrySelect = row.querySelector(`.${industryClass}`);
+            if (industrySelect) {
+                s3fApplyFeatureIndustryConstraint(e.target, industrySelect);
+            }
+        });
     }
 
     async function s3fRefreshMaxBucket() {
@@ -378,16 +400,15 @@
         s3fApplyFeatureIndustryConstraint(sortFeature, sortIndustry);
 
         // 检查过滤条件中的 shp，强制行业为 ALL
+        s3fBindFeatureIndustryConstraint('s3f-feature', 's3f-industry');
+        s3fBindFeatureIndustryConstraint('s3f-rhs-feature', 's3f-rhs-industry');
         document.addEventListener('change', function(e) {
-            if (!e.target.classList.contains('s3f-feature')) {
+            if (!e.target.classList.contains('s3f-arith')) {
                 return;
             }
             const row = e.target.closest('.s3f-filter-row');
             if (row) {
-                const industrySelect = row.querySelector('.s3f-industry');
-                if (industrySelect) {
-                    s3fApplyFeatureIndustryConstraint(e.target, industrySelect);
-                }
+                s3fApplyArithVisibility(row);
             }
         });
     }
@@ -423,6 +444,42 @@
                 <option value="10">日线 10</option>
                 <option value="1k">年线 1k</option>
             </select>
+            <select class="s3f-select s3f-arith">
+                <option value="">(无)</option>
+                <option value="/">/</option>
+                <option value="*">*</option>
+            </select>
+            <span class="s3f-rhs-group">
+                <select class="s3f-select s3f-rhs-industry">
+                    <option value="Crypto_Price">Crypto_Price</option>
+                    <option value="Crypto_Market">Crypto_Market</option>
+                    <option value="Sports_Basketball">Sports_Basketball</option>
+                    <option value="Sports_Football">Sports_Football</option>
+                    <option value="Sports_Soccer">Sports_Soccer</option>
+                    <option value="Sports_Individual">Sports_Individual</option>
+                    <option value="Politics_US">Politics_US</option>
+                    <option value="Politics_World">Politics_World</option>
+                    <option value="Economy_Finance">Economy_Finance</option>
+                    <option value="Tech">Tech</option>
+                    <option value="Entertainment">Entertainment</option>
+                    <option value="Weather">Weather</option>
+                    <option value="Society">Society</option>
+                    <option value="Unknown">Unknown</option>
+                    <option value="ALL">ALL (全部)</option>
+                </select>
+                <select class="s3f-select s3f-rhs-feature">
+                    <option value="exp">暴露额 exp (USD)</option>
+                    <option value="tok">持仓数 tok</option>
+                    <option value="vol">交易额 vol (USD)</option>
+                    <option value="hp">持仓周期 hp</option>
+                    <option value="shp">夏普 shp</option>
+                </select>
+                <select class="s3f-select s3f-rhs-window">
+                    <option value="100">月线 100</option>
+                    <option value="10">日线 10</option>
+                    <option value="1k">年线 1k</option>
+                </select>
+            </span>
             <select class="s3f-select s3f-op">
                 <option value=">">&gt;</option>
                 <option value=">=">&gt;=</option>
@@ -447,8 +504,19 @@
         row.querySelector('.s3f-industry').value = preset.industry;
         row.querySelector('.s3f-feature').value = preset.feature;
         row.querySelector('.s3f-window').value = preset.window;
+        row.querySelector('.s3f-arith').value = preset.arith || '';
+        row.querySelector('.s3f-rhs-industry').value = preset.rhsIndustry || 'ALL';
+        row.querySelector('.s3f-rhs-feature').value = preset.rhsFeature || 'exp';
+        row.querySelector('.s3f-rhs-window').value = preset.rhsWindow || '100';
         row.querySelector('.s3f-op').value = preset.op;
         row.querySelector('.s3f-value').value = preset.value;
+    }
+
+    function s3fApplyArithVisibility(row) {
+        const arith = row.querySelector('.s3f-arith').value;
+        const rhsGroup = row.querySelector('.s3f-rhs-group');
+        assert(rhsGroup, 'rhs group 缺失');
+        rhsGroup.style.display = arith ? '' : 'none';
     }
 
     function s3fAddFilter(preset = null) {
@@ -463,6 +531,10 @@
         const featureSelect = row.querySelector('.s3f-feature');
         const industrySelect = row.querySelector('.s3f-industry');
         s3fApplyFeatureIndustryConstraint(featureSelect, industrySelect);
+        const rhsFeatureSelect = row.querySelector('.s3f-rhs-feature');
+        const rhsIndustrySelect = row.querySelector('.s3f-rhs-industry');
+        s3fApplyFeatureIndustryConstraint(rhsFeatureSelect, rhsIndustrySelect);
+        s3fApplyArithVisibility(row);
         s3fSyncFilterEmptyState();
     }
 
@@ -520,25 +592,54 @@
         return `${industry}.${feature}${window}`;
     }
 
+    function s3fBuildExprFromSelectors(industry, feature, window) {
+        const normalizedIndustry = s3fNormalizeIndustryForFeature(industry, feature);
+        return {
+            feature,
+            expr: s3fBuildExpr(normalizedIndustry, feature, window),
+        };
+    }
+
+    function s3fBuildFilterExprForRow(row) {
+        const industry = row.querySelector('.s3f-industry').value;
+        const feature = row.querySelector('.s3f-feature').value;
+        const window = row.querySelector('.s3f-window').value;
+        const arith = row.querySelector('.s3f-arith').value;
+        const op = row.querySelector('.s3f-op').value;
+        let value = row.querySelector('.s3f-value').value.trim();
+        if (value === '') {
+            return '';
+        }
+
+        const lhs = s3fBuildExprFromSelectors(industry, feature, window);
+        let lhsExpr = lhs.expr;
+        if (arith) {
+            const rhsIndustry = row.querySelector('.s3f-rhs-industry').value;
+            const rhsFeature = row.querySelector('.s3f-rhs-feature').value;
+            const rhsWindow = row.querySelector('.s3f-rhs-window').value;
+            const rhs = s3fBuildExprFromSelectors(rhsIndustry, rhsFeature, rhsWindow);
+            lhsExpr = `(${lhsExpr} ${arith} ${rhs.expr})`;
+        } else if (_s3fMoneyFeatures.has(lhs.feature)) {
+            // 金钱特征用户输入 USD，需要转换为 microUSD (乘以 1e6)
+            value = String(Number(value) * 1e6);
+        }
+        return `${lhsExpr} ${op} ${value}`;
+    }
+
+    function s3fEscapeAddr(addr) {
+        return String(addr || '').replace(/'/g, "\\'");
+    }
+
     function s3fBuildPayload() {
         assert(_s3fMaxBucket >= 0, 'bucket 未初始化，请稍后重试');
 
         const filters = [];
         const rows = document.querySelectorAll('#s3f-filters-box .s3f-filter-row');
         for (const row of rows) {
-            let industry = row.querySelector('.s3f-industry').value;
-            const feature = row.querySelector('.s3f-feature').value;
-            const window = row.querySelector('.s3f-window').value;
-            const op = row.querySelector('.s3f-op').value;
-            let value = row.querySelector('.s3f-value').value.trim();
-            if (value === '') continue;
-            industry = s3fNormalizeIndustryForFeature(industry, feature);
-            // 金钱特征用户输入 USD，需要转换为 microUSD (乘以 1e6)
-            if (_s3fMoneyFeatures.has(feature)) {
-                value = String(Number(value) * 1e6);
+            const expr = s3fBuildFilterExprForRow(row);
+            if (expr) {
+                filters.push(expr);
             }
-            const expr = `${s3fBuildExpr(industry, feature, window)} ${op} ${value}`;
-            filters.push(expr);
         }
 
         let sortIndustry = document.getElementById('s3f-sort-industry').value;
@@ -594,13 +695,13 @@
         body.innerHTML = users.map((u, idx) => `
       <tr>
         <td>${idx + 1}</td>
-        <td><button class="s3f-addr-btn" onclick="s3fOpenUser('${String(u.addr || '').replace(/'/g, "\\'")}')">${u.addr || '-'}</button></td>
+        <td><button class="s3f-addr-btn" onclick="s3fOpenUser('${s3fEscapeAddr(u.addr)}')">${u.addr || '-'}</button></td>
         <td>${s3fFormatSortValue(u.sort_value)}</td>
         <td>${s3fFormatInt(u.month_avg_tok)}</td>
         <td>${s3fFormatUsd(u.month_avg_exp)}</td>
         <td>${s3fFormatBlocks(u.month_avg_hp)}</td>
         <td>${s3fFormatUsd(u.pnl)}</td>
-        <td><button class="s3f-btn s3f-btn-small" onclick="s3fOpenUser('${String(u.addr || '').replace(/'/g, "\\'")}')">查看</button></td>
+        <td><button class="s3f-btn s3f-btn-small" onclick="s3fOpenUser('${s3fEscapeAddr(u.addr)}')">查看</button></td>
       </tr>
     `).join('');
     }
