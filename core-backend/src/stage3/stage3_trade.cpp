@@ -9,30 +9,6 @@ namespace stage3 {
 
 namespace {
 
-// Event type constants (must match stage2::EventType)
-constexpr int32_t EVT_ORDER_BUY = 1;
-constexpr int32_t EVT_ORDER_SELL = 2;
-constexpr int32_t EVT_FPMM_BUY = 3;
-constexpr int32_t EVT_FPMM_SELL = 4;
-constexpr int32_t EVT_FPMM_LP_ADD = 5;
-constexpr int32_t EVT_FPMM_LP_REMOVE = 6;
-constexpr int32_t EVT_FPMM_LP_RETURN = 7;
-constexpr int32_t EVT_SPLIT_NORMAL = 8;
-constexpr int32_t EVT_SPLIT_NEGRISK = 9;
-constexpr int32_t EVT_SPLIT_NON_POLY = 10;
-constexpr int32_t EVT_MERGE_NORMAL = 11;
-constexpr int32_t EVT_MERGE_NEGRISK = 12;
-constexpr int32_t EVT_MERGE_NON_POLY = 13;
-constexpr int32_t EVT_REDEMPTION = 14;
-constexpr int32_t EVT_REDEMPTION_NON_POLY = 15;
-constexpr int32_t EVT_CONVERT = 16;
-constexpr int32_t EVT_TRANSFER_IN_NEGRISK = 17;
-constexpr int32_t EVT_TRANSFER_IN_OTHER = 18;
-constexpr int32_t EVT_TRANSFER_IN_NON_POLY = 19;
-constexpr int32_t EVT_TRANSFER_OUT_NEGRISK = 20;
-constexpr int32_t EVT_TRANSFER_OUT_OTHER = 21;
-constexpr int32_t EVT_TRANSFER_OUT_NON_POLY = 22;
-
 inline bool is_trade_event(int32_t event_type) {
   return event_type == EVT_ORDER_BUY || event_type == EVT_ORDER_SELL ||
          event_type == EVT_FPMM_BUY || event_type == EVT_FPMM_SELL;
@@ -89,14 +65,18 @@ inline bool is_negative_typical(int32_t event_type) {
          is_transfer_out_event(event_type);
 }
 
-double calc_convert_price(const ConditionMeta& cond) {
-  uint8_t outcome_count = cond.outcome_count;
-  assert(outcome_count >= 2);
-  return static_cast<double>(outcome_count - 1) / static_cast<double>(outcome_count);
+double calc_convert_price(const Stage3Runtime *rt, int32_t cond_idx, const ConditionMeta &cond) {
+  uint16_t question_count = 0;
+  if (cond_idx >= 0 && static_cast<size_t>(cond_idx) < rt->cond_market_question_counts.size()) {
+    question_count = rt->cond_market_question_counts[cond_idx];
+  }
+  const uint16_t denominator = (question_count >= 2) ? question_count : cond.outcome_count;
+  assert(denominator >= 2);
+  return static_cast<double>(denominator - 1) / static_cast<double>(denominator);
 }
 
 // 小残差归零
-inline void normalize_small_residue(TokenSlot* tok) {
+inline void normalize_small_residue(TokenSlot *tok) {
   constexpr int64_t EPSILON_1E6 = 1; // 1e-6 in 1e6 scale
   if (std::abs(tok->pos) <= EPSILON_1E6) {
     tok->pos = 0;
@@ -113,55 +93,55 @@ inline void normalize_small_residue(TokenSlot* tok) {
 // 返回 realized_delta (1e6 scale)
 // ============================================================================
 
-int64_t apply_trade_event(Stage3Runtime* rt, const EventInput& evt, TokenSlot* tok) {
+int64_t apply_trade_event(Stage3Runtime *rt, const EventInput &evt, TokenSlot *tok) {
   assert(evt.cond_idx >= 0);
   assert(static_cast<size_t>(evt.cond_idx) < MAX_CONDITIONS);
-  
-  const ConditionMeta& cond = rt->conditions[evt.cond_idx];
+
+  const ConditionMeta &cond = rt->conditions[evt.cond_idx];
   assert(cond.outcome_count > 0);
   assert(evt.token_idx >= 0 && evt.token_idx < cond.outcome_count);
-  
+
   const int32_t event_type = evt.event_type;
   const bool has_usd = is_usd_collateral(evt.collateral);
   const int64_t amount = evt.amount;
   const int64_t qty = std::abs(amount);
-  
+
   // No-op for zero amount
   if (qty == 0) {
     return 0;
   }
-  
+
   // FPMMLPAdd: 不改 pos/cost, realized = 0
   if (event_type == EVT_FPMM_LP_ADD) {
     return 0;
   }
-  
+
   // LP Remove/Return: 不改 pos/cost (按新架构规则)
   if (event_type == EVT_FPMM_LP_REMOVE || event_type == EVT_FPMM_LP_RETURN) {
     return 0;
   }
-  
+
   // 更新 lp (仅 Order/FPMM 交易且 price > 0)
   if (is_trade_event(event_type) && evt.price_1e6 > 0 && has_usd) {
     tok->lp = evt.price_1e6;
   }
-  
+
   const int64_t pos_before = tok->pos;
   const int64_t cost_before = tok->cost;
   const int64_t entry_before = tok->entry_block;
   const int64_t current_block = sort_key_to_block(evt.sort_key);
-  
+
   // 确定价格
   double price_per_unit = 0.0;
   if (event_type == EVT_CONVERT) {
-    price_per_unit = calc_convert_price(cond);
+    price_per_unit = calc_convert_price(rt, evt.cond_idx, cond);
   } else if (is_price_event(event_type)) {
     price_per_unit = static_cast<double>(evt.price_1e6) / 1e6;
   }
   // transfer 类 price = 0
-  
+
   int64_t realized_delta = 0;
-  
+
   if (amount > 0) {
     // 正向腿: 先平空再开多
     if (!has_usd) {
@@ -171,13 +151,13 @@ int64_t apply_trade_event(Stage3Runtime* rt, const EventInput& evt, TokenSlot* t
       const int64_t short_qty = std::max<int64_t>(0, -pos_before);
       const int64_t cover_qty = std::min(qty, short_qty);
       const int64_t open_long_qty = qty - cover_qty;
-      
+
       // 平空部分
       if (cover_qty > 0 && short_qty > 0) {
         const int64_t cost_removed = static_cast<int64_t>(
             static_cast<double>(cost_before) * static_cast<double>(cover_qty) / static_cast<double>(short_qty));
         tok->cost -= cost_removed;
-        
+
         // realized 计算 (仅 price/convert 类)
         if (!is_transfer_event(event_type)) {
           // 空头平仓: realized = entry_credit - buy_cost = (-cost_removed) - (cover_qty * price)
@@ -186,14 +166,14 @@ int64_t apply_trade_event(Stage3Runtime* rt, const EventInput& evt, TokenSlot* t
           realized_delta = entry_credit - buy_cost;
         }
       }
-      
+
       tok->pos += qty;
-      
+
       // 开多部分增加 cost (仅 price/convert 类)
       if (open_long_qty > 0 && !is_transfer_event(event_type)) {
         tok->cost += static_cast<int64_t>(static_cast<double>(open_long_qty) * price_per_unit);
       }
-      
+
       normalize_small_residue(tok);
     }
   } else {
@@ -205,14 +185,14 @@ int64_t apply_trade_event(Stage3Runtime* rt, const EventInput& evt, TokenSlot* t
       const int64_t long_qty = std::max<int64_t>(0, pos_before);
       const int64_t close_qty = std::min(qty, long_qty);
       const int64_t open_short_qty = qty - close_qty;
-      
+
       // 平多部分
       int64_t cost_removed = 0;
       if (close_qty > 0 && long_qty > 0) {
         cost_removed = static_cast<int64_t>(
             static_cast<double>(cost_before) * static_cast<double>(close_qty) / static_cast<double>(long_qty));
         tok->cost -= cost_removed;
-        
+
         // realized 计算 (仅 price/convert 类)
         if (!is_transfer_event(event_type)) {
           // 多头平仓: realized = proceeds - cost_removed
@@ -220,18 +200,18 @@ int64_t apply_trade_event(Stage3Runtime* rt, const EventInput& evt, TokenSlot* t
           realized_delta = proceeds - cost_removed;
         }
       }
-      
+
       tok->pos -= qty;
-      
+
       // 开空部分记负 cost (仅 price/convert 类)
       if (open_short_qty > 0 && !is_transfer_event(event_type)) {
         tok->cost -= static_cast<int64_t>(static_cast<double>(open_short_qty) * price_per_unit);
       }
-      
+
       normalize_small_residue(tok);
     }
   }
-  
+
   // 更新 entry_block
   const int64_t pos_after = tok->pos;
   if (pos_after == 0) {
@@ -256,7 +236,7 @@ int64_t apply_trade_event(Stage3Runtime* rt, const EventInput& evt, TokenSlot* t
     }
   }
   // 减仓: entry_block 不变
-  
+
   return realized_delta;
 }
 

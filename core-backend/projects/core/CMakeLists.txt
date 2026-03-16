@@ -103,13 +103,14 @@ set(SOURCES
     ${SRC_DIR}/stage2/stage2_builder_phases.cpp
     ${SRC_DIR}/stage2/stage2_sync.cpp
     ${SRC_DIR}/stage2/stage2_sync_mem.cpp
-    ${SRC_DIR}/stage3/stage3_sync_schema.cpp
-    ${SRC_DIR}/stage3/stage3_comp_feat.cpp
+    ${SRC_DIR}/stage3/stage3_store.cpp
+    ${SRC_DIR}/stage3/stage3_trade.cpp
+    ${SRC_DIR}/stage3/stage3_feature.cpp
+    ${SRC_DIR}/stage3/stage3_sharpe.cpp
+    ${SRC_DIR}/stage3/stage3_query.cpp
     ${SRC_DIR}/stage3/stage3_filter.cpp
-    ${SRC_DIR}/stage3/stage3_sync_runtime.cpp
-    ${SRC_DIR}/stage3/stage3_sync_calc.cpp
-    ${SRC_DIR}/stage3/stage3_sync_query.cpp
-    ${SRC_DIR}/stage3/stage3_mem.cpp
+    ${SRC_DIR}/stage3/stage3_sync.cpp
+    ${SRC_DIR}/stage3/stage3_sync_service.cpp
 )
 
 if(PROFILE_MODE)
