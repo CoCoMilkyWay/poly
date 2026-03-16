@@ -14,7 +14,6 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
-#include <unordered_set>
 #include <vector>
 
 // Forward declaration for Stage2 integration
@@ -39,11 +38,30 @@ constexpr size_t MAX_SHARPE_SAMPLES = 500'000'000; // 5亿 sharpe 样本点
 constexpr size_t OUTCOME_MAX = 256;                // 最大 outcome 数
 constexpr uint32_t NULL_IDX = UINT32_MAX;          // 空指针
 constexpr uint64_t NULL_LOG_OFFSET = UINT64_MAX;   // events.log 空指针
+constexpr uint32_t STAGE3_SYNC_SHARD_COUNT = 64;   // 并行 shard 数
+
+static_assert(MAX_TOKENS % STAGE3_SYNC_SHARD_COUNT == 0);
+static_assert(MAX_FEATURES % STAGE3_SYNC_SHARD_COUNT == 0);
+static_assert(MAX_SHARPE_AGGS % STAGE3_SYNC_SHARD_COUNT == 0);
+static_assert(MAX_SHARPE_SAMPLES % STAGE3_SYNC_SHARD_COUNT == 0);
 
 constexpr int64_t SORT_KEY_SCALE = 1'000'000'000LL; // sort_key = block * 1e9 + log_idx
 constexpr int64_t BLOCK_BUCKET_SIZE = 100'000;      // 10w blocks per bucket
 constexpr int64_t MIN_HOLDING_QTY = 10'000'000LL;   // 10 tokens (1e6 scale)
 constexpr double POS_EPSILON = 1e-9;
+
+constexpr uint32_t TOKENS_PER_SYNC_SHARD = static_cast<uint32_t>(MAX_TOKENS / STAGE3_SYNC_SHARD_COUNT);
+constexpr uint32_t FEATURES_PER_SYNC_SHARD = static_cast<uint32_t>(MAX_FEATURES / STAGE3_SYNC_SHARD_COUNT);
+constexpr uint32_t SHARPE_AGGS_PER_SYNC_SHARD = static_cast<uint32_t>(MAX_SHARPE_AGGS / STAGE3_SYNC_SHARD_COUNT);
+constexpr uint32_t SHARPE_SAMPLES_PER_SYNC_SHARD = static_cast<uint32_t>(MAX_SHARPE_SAMPLES / STAGE3_SYNC_SHARD_COUNT);
+
+constexpr uint32_t USER_FLAG_OCCUPIED = 1u;
+constexpr uint32_t USER_FLAG_SHARD_SHIFT = 8;
+constexpr uint32_t USER_FLAG_SHARD_MASK = 0xFFu << USER_FLAG_SHARD_SHIFT;
+
+constexpr size_t STORE_HEADER_FIXED_BYTES = 56;
+constexpr size_t STORE_HEADER_PER_SHARD_BYTES = 48;
+static_assert(STORE_HEADER_FIXED_BYTES + STORE_HEADER_PER_SHARD_BYTES * STAGE3_SYNC_SHARD_COUNT <= 4096);
 
 // Event type constants (must match stage2::EventType)
 constexpr int32_t EVT_ORDER_BUY = 0;
@@ -106,22 +124,20 @@ struct StoreHeader {
   uint64_t user_count; // 有效用户数
   int64_t head_bucket; // 当前最新 bucket
 
-  // Pool 使用情况
-  uint64_t token_pool_used;
-  uint64_t feature_pool_used;
-  uint64_t sharpe_agg_pool_used;
-  uint64_t sharpe_sample_pool_used;
-
-  // Free list heads
-  uint32_t token_free_head;
-  uint32_t feature_free_head;
-  uint32_t sharpe_agg_free_head;
-  uint32_t sharpe_sample_free_head;
+  // Per-shard pool usage / free lists
+  uint64_t token_pool_used[STAGE3_SYNC_SHARD_COUNT];
+  uint64_t feature_pool_used[STAGE3_SYNC_SHARD_COUNT];
+  uint64_t sharpe_agg_pool_used[STAGE3_SYNC_SHARD_COUNT];
+  uint64_t sharpe_sample_pool_used[STAGE3_SYNC_SHARD_COUNT];
+  uint32_t token_free_head[STAGE3_SYNC_SHARD_COUNT];
+  uint32_t feature_free_head[STAGE3_SYNC_SHARD_COUNT];
+  uint32_t sharpe_agg_free_head[STAGE3_SYNC_SHARD_COUNT];
+  uint32_t sharpe_sample_free_head[STAGE3_SYNC_SHARD_COUNT];
 
   // Events log
   uint64_t events_log_tail; // events.log 写入 byte offset
 
-  uint8_t _pad[4096 - 104];
+  uint8_t _pad[4096 - (STORE_HEADER_FIXED_BYTES + STORE_HEADER_PER_SHARD_BYTES * STAGE3_SYNC_SHARD_COUNT)];
 };
 
 static_assert(sizeof(StoreHeader) == 4096);
@@ -264,7 +280,7 @@ static_assert(sizeof(SharpeSample) == 32);
 struct UserBlock { // 128B
   // 基础信息
   Address20 addr; // 20B
-  uint32_t flags; // 4B, bit0=occupied
+  uint32_t flags; // 4B, bit0=occupied, bits[15:8]=sync shard
 
   // 统计
   int64_t total_events;         // 8B
@@ -383,12 +399,17 @@ struct SharpeAggIndex {
 // ============================================================================
 
 struct EventInput {
-  Address20 user_addr;
-  int64_t sort_key;
+  uint32_t user_idx;
   int32_t cond_idx;
   int32_t event_type;
   int32_t token_idx;
   int32_t collateral;
+  int32_t bucket;
+  int32_t block_offset;
+  int8_t tag_id;
+  uint8_t _pad0[3];
+  int64_t sort_key;
+  int64_t current_block;
   int64_t amount;
   int64_t price_1e6;
 };
@@ -454,7 +475,7 @@ struct SharpeSparseCache {
 };
 
 struct DirtyUserSet {
-  std::unordered_set<uint32_t> users;
+  std::vector<uint32_t> users;
   int32_t last_pruned_bucket = -1;
 };
 
@@ -497,9 +518,9 @@ struct Stage3Runtime {
   std::vector<uint16_t> cond_market_question_counts;
 
   // Runtime-only indices and caches (rebuilt on startup)
-  TokenIndex token_index;
-  FeatureIndex feature_index;
-  SharpeAggIndex sharpe_agg_index;
+  std::array<TokenIndex, STAGE3_SYNC_SHARD_COUNT> token_index;
+  std::array<FeatureIndex, STAGE3_SYNC_SHARD_COUNT> feature_index;
+  std::array<SharpeAggIndex, STAGE3_SYNC_SHARD_COUNT> sharpe_agg_index;
   QueryCacheManager query_cache;
   DirtyUserSet dirty_users;
   UserRankCache rank_cache;
@@ -546,13 +567,13 @@ uint32_t user_get_or_create(Stage3Runtime *rt, const Address20 &addr);
 // API declarations - Pool operations
 // ============================================================================
 
-uint32_t token_alloc(Stage3Runtime *rt);
+uint32_t token_alloc(Stage3Runtime *rt, uint32_t user_idx);
 void token_free(Stage3Runtime *rt, uint32_t idx);
-uint32_t feature_alloc(Stage3Runtime *rt);
+uint32_t feature_alloc(Stage3Runtime *rt, uint32_t user_idx);
 void feature_free(Stage3Runtime *rt, uint32_t idx);
-uint32_t sharpe_agg_alloc(Stage3Runtime *rt);
+uint32_t sharpe_agg_alloc(Stage3Runtime *rt, uint32_t user_idx);
 void sharpe_agg_free(Stage3Runtime *rt, uint32_t idx);
-uint32_t sharpe_sample_alloc(Stage3Runtime *rt);
+uint32_t sharpe_sample_alloc(Stage3Runtime *rt, uint32_t user_idx);
 void sharpe_sample_free(Stage3Runtime *rt, uint32_t idx);
 
 // ============================================================================
@@ -614,7 +635,8 @@ void update_sharpe_on_event(Stage3Runtime *rt, uint32_t user_idx, int64_t pnl, i
 // API declarations - Events log
 // ============================================================================
 
-uint64_t events_log_append(Stage3Runtime *rt, const EventRecord &rec, uint32_t user_idx);
+void events_log_ensure_capacity(Stage3Runtime *rt, uint64_t required_bytes);
+void events_log_write_at(Stage3Runtime *rt, const EventRecord &rec, uint32_t user_idx, uint64_t offset);
 
 // ============================================================================
 // API declarations - Sync
@@ -733,6 +755,94 @@ inline int64_t bucket_end_block(int32_t bucket) {
 
 inline int64_t bucket_last_block(int32_t bucket) {
   return bucket_end_block(bucket) - 1;
+}
+
+inline uint32_t user_shard_from_flags(uint32_t flags) {
+  return (flags & USER_FLAG_SHARD_MASK) >> USER_FLAG_SHARD_SHIFT;
+}
+
+inline uint32_t make_user_flags(uint32_t shard) {
+  return USER_FLAG_OCCUPIED | (shard << USER_FLAG_SHARD_SHIFT);
+}
+
+inline uint32_t user_shard(const Stage3Runtime *rt, uint32_t user_idx) {
+  return user_shard_from_flags(rt->users[user_idx].flags);
+}
+
+inline uint64_t sum_shard_used(const uint64_t (&values)[STAGE3_SYNC_SHARD_COUNT]) {
+  uint64_t total = 0;
+  for (uint32_t shard = 0; shard < STAGE3_SYNC_SHARD_COUNT; ++shard) {
+    total += values[shard];
+  }
+  return total;
+}
+
+inline uint64_t token_pool_used_total(const StoreHeader *header) {
+  return sum_shard_used(header->token_pool_used);
+}
+
+inline uint64_t feature_pool_used_total(const StoreHeader *header) {
+  return sum_shard_used(header->feature_pool_used);
+}
+
+inline uint64_t sharpe_agg_pool_used_total(const StoreHeader *header) {
+  return sum_shard_used(header->sharpe_agg_pool_used);
+}
+
+inline uint64_t sharpe_sample_pool_used_total(const StoreHeader *header) {
+  return sum_shard_used(header->sharpe_sample_pool_used);
+}
+
+inline uint32_t token_shard_from_index(uint32_t idx) {
+  return idx / TOKENS_PER_SYNC_SHARD;
+}
+
+inline uint32_t token_local_from_index(uint32_t idx) {
+  return idx % TOKENS_PER_SYNC_SHARD;
+}
+
+inline uint32_t token_global_from_local(uint32_t shard, uint32_t local_idx) {
+  return shard * TOKENS_PER_SYNC_SHARD + local_idx;
+}
+
+inline uint32_t feature_shard_from_index(uint32_t idx) {
+  return idx / FEATURES_PER_SYNC_SHARD;
+}
+
+inline uint32_t feature_local_from_index(uint32_t idx) {
+  return idx % FEATURES_PER_SYNC_SHARD;
+}
+
+inline uint32_t feature_global_from_local(uint32_t shard, uint32_t local_idx) {
+  return shard * FEATURES_PER_SYNC_SHARD + local_idx;
+}
+
+inline uint32_t sharpe_agg_shard_from_index(uint32_t idx) {
+  return idx / SHARPE_AGGS_PER_SYNC_SHARD;
+}
+
+inline uint32_t sharpe_agg_local_from_index(uint32_t idx) {
+  return idx % SHARPE_AGGS_PER_SYNC_SHARD;
+}
+
+inline uint32_t sharpe_agg_global_from_local(uint32_t shard, uint32_t local_idx) {
+  return shard * SHARPE_AGGS_PER_SYNC_SHARD + local_idx;
+}
+
+inline uint32_t sharpe_sample_shard_from_index(uint32_t idx) {
+  return idx / SHARPE_SAMPLES_PER_SYNC_SHARD;
+}
+
+inline uint32_t sharpe_sample_local_from_index(uint32_t idx) {
+  return idx % SHARPE_SAMPLES_PER_SYNC_SHARD;
+}
+
+inline uint32_t sharpe_sample_global_from_local(uint32_t shard, uint32_t local_idx) {
+  return shard * SHARPE_SAMPLES_PER_SYNC_SHARD + local_idx;
+}
+
+inline size_t tag_slot(int8_t tag_id) {
+  return static_cast<size_t>(static_cast<int16_t>(tag_id) + 1);
 }
 
 inline bool is_usd_collateral(int32_t collateral) {

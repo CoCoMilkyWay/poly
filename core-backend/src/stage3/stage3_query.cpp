@@ -63,12 +63,16 @@ void apply_event_to_replay_state(
   replay_tok.collateral = rec.collateral;
 
   EventInput evt{};
-  evt.user_addr.fill(0);
+  evt.user_idx = 0;
   evt.sort_key = rec.sort_key;
+  evt.current_block = sort_key_to_block(rec.sort_key);
   evt.cond_idx = rec.cond_idx;
   evt.event_type = rec.event_type;
   evt.token_idx = rec.token_idx;
   evt.collateral = rec.collateral;
+  evt.bucket = block_to_bucket(evt.current_block);
+  evt.block_offset = static_cast<int32_t>(evt.current_block % BLOCK_BUCKET_SIZE);
+  evt.tag_id = rec.tag_id;
   evt.amount = rec.amount;
   evt.price_1e6 = rec.price_1e6;
   (void)apply_trade_event(rt, evt, &replay_tok);

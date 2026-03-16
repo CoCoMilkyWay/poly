@@ -17,7 +17,7 @@ namespace stage3 {
 namespace {
 
 constexpr uint64_t STORE_MAGIC = 0x0000334547415453ULL; // "STAGE3\0\0"
-constexpr uint64_t STORE_VERSION = 1;
+constexpr uint64_t STORE_VERSION = 2;
 
 constexpr size_t STORE_HEADER_OFFSET = 0;
 constexpr size_t STORE_CONDITIONS_OFFSET = sizeof(StoreHeader);
@@ -130,25 +130,31 @@ void resize_events_log(Stage3Runtime *rt, size_t new_size) {
 }
 
 void rebuild_runtime_indices(Stage3Runtime *rt) {
-  rt->token_index.map.clear();
-  rt->feature_index.map.clear();
-  rt->sharpe_agg_index.map.clear();
+  for (uint32_t shard = 0; shard < STAGE3_SYNC_SHARD_COUNT; ++shard) {
+    rt->token_index[shard].map.clear();
+    rt->feature_index[shard].map.clear();
+    rt->sharpe_agg_index[shard].map.clear();
 
-  rt->token_index.map.reserve(std::max<size_t>(1, static_cast<size_t>(rt->header->token_pool_used)));
-  rt->feature_index.map.reserve(std::max<size_t>(1, static_cast<size_t>(rt->header->feature_pool_used)));
-  rt->sharpe_agg_index.map.reserve(std::max<size_t>(1, static_cast<size_t>(rt->header->sharpe_agg_pool_used)));
+    rt->token_index[shard].map.reserve(
+        std::max<size_t>(1, static_cast<size_t>(rt->header->token_pool_used[shard])));
+    rt->feature_index[shard].map.reserve(
+        std::max<size_t>(1, static_cast<size_t>(rt->header->feature_pool_used[shard])));
+    rt->sharpe_agg_index[shard].map.reserve(
+        std::max<size_t>(1, static_cast<size_t>(rt->header->sharpe_agg_pool_used[shard])));
+  }
 
   for (uint32_t user_idx = 0; user_idx < rt->header->user_count; ++user_idx) {
     const UserBlock &user = rt->users[user_idx];
-    if (!(user.flags & 1)) {
+    if (!(user.flags & USER_FLAG_OCCUPIED)) {
       continue;
     }
+    const uint32_t shard = user_shard_from_flags(user.flags);
 
     uint32_t tok_idx = user.token_head;
     while (tok_idx != NULL_IDX) {
       const TokenSlot &tok = rt->token_pool[tok_idx];
       if (tok.cond_idx >= 0) {
-        rt->token_index.map[TokenIndex::make_key(user_idx, tok.cond_idx, tok.token_idx)] = tok_idx;
+        rt->token_index[shard].map[TokenIndex::make_key(user_idx, tok.cond_idx, tok.token_idx)] = tok_idx;
       }
       tok_idx = tok.next;
     }
@@ -157,7 +163,7 @@ void rebuild_runtime_indices(Stage3Runtime *rt) {
     while (feat_idx != NULL_IDX) {
       const FeatureSlot &feat = rt->feature_pool[feat_idx];
       if (feat.flags & 1) {
-        rt->feature_index.map[FeatureIndex::make_key(user_idx, feat.bucket, feat.tag_id)] = feat_idx;
+        rt->feature_index[shard].map[FeatureIndex::make_key(user_idx, feat.bucket, feat.tag_id)] = feat_idx;
       }
       feat_idx = feat.next;
     }
@@ -165,7 +171,7 @@ void rebuild_runtime_indices(Stage3Runtime *rt) {
     uint32_t agg_idx = user.sharpe_agg_head;
     while (agg_idx != NULL_IDX) {
       const SharpeAgg &agg = rt->sharpe_agg_pool[agg_idx];
-      rt->sharpe_agg_index.map[SharpeAggIndex::make_key(user_idx, agg.bucket)] = agg_idx;
+      rt->sharpe_agg_index[shard].map[SharpeAggIndex::make_key(user_idx, agg.bucket)] = agg_idx;
       agg_idx = agg.next;
     }
   }
@@ -227,17 +233,20 @@ Stage3Runtime *stage3_open(const char *data_dir) {
     rt->header->cursor_processed_events = 0;
     rt->header->user_count = 0;
     rt->header->head_bucket = 0;
-    rt->header->token_pool_used = 0;
-    rt->header->feature_pool_used = 0;
-    rt->header->sharpe_agg_pool_used = 0;
-    rt->header->sharpe_sample_pool_used = 0;
-    rt->header->token_free_head = NULL_IDX;
-    rt->header->feature_free_head = NULL_IDX;
-    rt->header->sharpe_agg_free_head = NULL_IDX;
-    rt->header->sharpe_sample_free_head = NULL_IDX;
+    for (uint32_t shard = 0; shard < STAGE3_SYNC_SHARD_COUNT; ++shard) {
+      rt->header->token_pool_used[shard] = 0;
+      rt->header->feature_pool_used[shard] = 0;
+      rt->header->sharpe_agg_pool_used[shard] = 0;
+      rt->header->sharpe_sample_pool_used[shard] = 0;
+      rt->header->token_free_head[shard] = NULL_IDX;
+      rt->header->feature_free_head[shard] = NULL_IDX;
+      rt->header->sharpe_agg_free_head[shard] = NULL_IDX;
+      rt->header->sharpe_sample_free_head[shard] = NULL_IDX;
+    }
     rt->header->events_log_tail = 0;
   } else {
     assert(rt->header->magic == STORE_MAGIC);
+    assert(rt->header->version == STORE_VERSION);
   }
 
   // Initialize user index if newly created
@@ -356,8 +365,9 @@ uint32_t user_get_or_create(Stage3Runtime *rt, const Address20 &addr) {
 
   // Initialize UserBlock
   UserBlock *user = &rt->users[user_idx];
+  const uint32_t shard = static_cast<uint32_t>(address_hash(addr) % STAGE3_SYNC_SHARD_COUNT);
   user->addr = addr;
-  user->flags = 1; // occupied
+  user->flags = make_user_flags(shard);
   user->total_events = 0;
   user->total_realized_pnl = 0;
   user->total_unrealized_pnl = 0;
@@ -481,79 +491,87 @@ void UserRankCache::rebuild_if_needed(const Stage3Runtime *rt) {
 // Pool operations
 // ============================================================================
 
-uint32_t token_alloc(Stage3Runtime *rt) {
-  if (rt->header->token_free_head != NULL_IDX) {
-    uint32_t idx = rt->header->token_free_head;
-    rt->header->token_free_head = rt->token_pool[idx].next;
+uint32_t token_alloc(Stage3Runtime *rt, uint32_t user_idx) {
+  const uint32_t shard = user_shard(rt, user_idx);
+  if (rt->header->token_free_head[shard] != NULL_IDX) {
+    const uint32_t idx = rt->header->token_free_head[shard];
+    rt->header->token_free_head[shard] = rt->token_pool[idx].next;
     return idx;
   }
-  assert(rt->header->token_pool_used < MAX_TOKENS);
-  return static_cast<uint32_t>(rt->header->token_pool_used++);
+  assert(rt->header->token_pool_used[shard] < TOKENS_PER_SYNC_SHARD);
+  return token_global_from_local(shard, static_cast<uint32_t>(rt->header->token_pool_used[shard]++));
 }
 
 void token_free(Stage3Runtime *rt, uint32_t idx) {
   TokenSlot &tok = rt->token_pool[idx];
+  const uint32_t shard = token_shard_from_index(idx);
   if (tok.cond_idx >= 0) {
-    rt->token_index.map.erase(TokenIndex::make_key(tok.user_idx, tok.cond_idx, tok.token_idx));
+    rt->token_index[shard].map.erase(TokenIndex::make_key(tok.user_idx, tok.cond_idx, tok.token_idx));
   }
   tok.cond_idx = -1;
-  tok.next = rt->header->token_free_head;
-  rt->header->token_free_head = idx;
+  tok.next = rt->header->token_free_head[shard];
+  rt->header->token_free_head[shard] = idx;
 }
 
-uint32_t feature_alloc(Stage3Runtime *rt) {
-  if (rt->header->feature_free_head != NULL_IDX) {
-    uint32_t idx = rt->header->feature_free_head;
-    rt->header->feature_free_head = rt->feature_pool[idx].next;
+uint32_t feature_alloc(Stage3Runtime *rt, uint32_t user_idx) {
+  const uint32_t shard = user_shard(rt, user_idx);
+  if (rt->header->feature_free_head[shard] != NULL_IDX) {
+    const uint32_t idx = rt->header->feature_free_head[shard];
+    rt->header->feature_free_head[shard] = rt->feature_pool[idx].next;
     return idx;
   }
-  assert(rt->header->feature_pool_used < MAX_FEATURES);
-  return static_cast<uint32_t>(rt->header->feature_pool_used++);
+  assert(rt->header->feature_pool_used[shard] < FEATURES_PER_SYNC_SHARD);
+  return feature_global_from_local(shard, static_cast<uint32_t>(rt->header->feature_pool_used[shard]++));
 }
 
 void feature_free(Stage3Runtime *rt, uint32_t idx) {
   FeatureSlot &feat = rt->feature_pool[idx];
+  const uint32_t shard = feature_shard_from_index(idx);
   if (feat.flags & 1) {
-    rt->feature_index.map.erase(FeatureIndex::make_key(feat.user_idx, feat.bucket, feat.tag_id));
+    rt->feature_index[shard].map.erase(FeatureIndex::make_key(feat.user_idx, feat.bucket, feat.tag_id));
   }
   feat.flags = 0;
-  feat.next = rt->header->feature_free_head;
-  rt->header->feature_free_head = idx;
+  feat.next = rt->header->feature_free_head[shard];
+  rt->header->feature_free_head[shard] = idx;
 }
 
-uint32_t sharpe_agg_alloc(Stage3Runtime *rt) {
-  if (rt->header->sharpe_agg_free_head != NULL_IDX) {
-    uint32_t idx = rt->header->sharpe_agg_free_head;
-    rt->header->sharpe_agg_free_head = rt->sharpe_agg_pool[idx].next;
+uint32_t sharpe_agg_alloc(Stage3Runtime *rt, uint32_t user_idx) {
+  const uint32_t shard = user_shard(rt, user_idx);
+  if (rt->header->sharpe_agg_free_head[shard] != NULL_IDX) {
+    const uint32_t idx = rt->header->sharpe_agg_free_head[shard];
+    rt->header->sharpe_agg_free_head[shard] = rt->sharpe_agg_pool[idx].next;
     return idx;
   }
-  assert(rt->header->sharpe_agg_pool_used < MAX_SHARPE_AGGS);
-  return static_cast<uint32_t>(rt->header->sharpe_agg_pool_used++);
+  assert(rt->header->sharpe_agg_pool_used[shard] < SHARPE_AGGS_PER_SYNC_SHARD);
+  return sharpe_agg_global_from_local(shard, static_cast<uint32_t>(rt->header->sharpe_agg_pool_used[shard]++));
 }
 
 void sharpe_agg_free(Stage3Runtime *rt, uint32_t idx) {
   SharpeAgg &agg = rt->sharpe_agg_pool[idx];
+  const uint32_t shard = sharpe_agg_shard_from_index(idx);
   if (agg.bucket >= 0) {
-    rt->sharpe_agg_index.map.erase(SharpeAggIndex::make_key(agg.user_idx, agg.bucket));
+    rt->sharpe_agg_index[shard].map.erase(SharpeAggIndex::make_key(agg.user_idx, agg.bucket));
   }
   agg.bucket = -1;
-  agg.next = rt->header->sharpe_agg_free_head;
-  rt->header->sharpe_agg_free_head = idx;
+  agg.next = rt->header->sharpe_agg_free_head[shard];
+  rt->header->sharpe_agg_free_head[shard] = idx;
 }
 
-uint32_t sharpe_sample_alloc(Stage3Runtime *rt) {
-  if (rt->header->sharpe_sample_free_head != NULL_IDX) {
-    uint32_t idx = rt->header->sharpe_sample_free_head;
-    rt->header->sharpe_sample_free_head = rt->sharpe_sample_pool[idx].next;
+uint32_t sharpe_sample_alloc(Stage3Runtime *rt, uint32_t user_idx) {
+  const uint32_t shard = user_shard(rt, user_idx);
+  if (rt->header->sharpe_sample_free_head[shard] != NULL_IDX) {
+    const uint32_t idx = rt->header->sharpe_sample_free_head[shard];
+    rt->header->sharpe_sample_free_head[shard] = rt->sharpe_sample_pool[idx].next;
     return idx;
   }
-  assert(rt->header->sharpe_sample_pool_used < MAX_SHARPE_SAMPLES);
-  return static_cast<uint32_t>(rt->header->sharpe_sample_pool_used++);
+  assert(rt->header->sharpe_sample_pool_used[shard] < SHARPE_SAMPLES_PER_SYNC_SHARD);
+  return sharpe_sample_global_from_local(shard, static_cast<uint32_t>(rt->header->sharpe_sample_pool_used[shard]++));
 }
 
 void sharpe_sample_free(Stage3Runtime *rt, uint32_t idx) {
-  rt->sharpe_sample_pool[idx].next = rt->header->sharpe_sample_free_head;
-  rt->header->sharpe_sample_free_head = idx;
+  const uint32_t shard = sharpe_sample_shard_from_index(idx);
+  rt->sharpe_sample_pool[idx].next = rt->header->sharpe_sample_free_head[shard];
+  rt->header->sharpe_sample_free_head[shard] = idx;
 }
 
 // ============================================================================
@@ -562,8 +580,9 @@ void sharpe_sample_free(Stage3Runtime *rt, uint32_t idx) {
 
 TokenSlot *token_find(Stage3Runtime *rt, uint32_t user_idx, int32_t cond_idx, int16_t token_idx) {
   const uint64_t key = TokenIndex::make_key(user_idx, cond_idx, token_idx);
-  auto it = rt->token_index.map.find(key);
-  if (it == rt->token_index.map.end()) {
+  auto &map = rt->token_index[user_shard(rt, user_idx)].map;
+  auto it = map.find(key);
+  if (it == map.end()) {
     return nullptr;
   }
   return &rt->token_pool[it->second];
@@ -574,7 +593,7 @@ TokenSlot *token_get_or_create(Stage3Runtime *rt, uint32_t user_idx, int32_t con
   if (existing)
     return existing;
 
-  uint32_t idx = token_alloc(rt);
+  uint32_t idx = token_alloc(rt, user_idx);
   TokenSlot *tok = &rt->token_pool[idx];
   tok->user_idx = user_idx;
   tok->cond_idx = cond_idx;
@@ -587,7 +606,7 @@ TokenSlot *token_get_or_create(Stage3Runtime *rt, uint32_t user_idx, int32_t con
   tok->next = rt->users[user_idx].token_head;
 
   rt->users[user_idx].token_head = idx;
-  rt->token_index.map[TokenIndex::make_key(user_idx, cond_idx, token_idx)] = idx;
+  rt->token_index[user_shard(rt, user_idx)].map[TokenIndex::make_key(user_idx, cond_idx, token_idx)] = idx;
 
   return tok;
 }
@@ -619,8 +638,9 @@ void token_remove_if_empty(Stage3Runtime *rt, uint32_t user_idx, TokenSlot *tok)
 
 FeatureSlot *feature_find(Stage3Runtime *rt, uint32_t user_idx, int32_t bucket, int8_t tag_id) {
   const uint64_t key = FeatureIndex::make_key(user_idx, bucket, tag_id);
-  auto it = rt->feature_index.map.find(key);
-  if (it == rt->feature_index.map.end()) {
+  auto &map = rt->feature_index[user_shard(rt, user_idx)].map;
+  auto it = map.find(key);
+  if (it == map.end()) {
     return nullptr;
   }
   return &rt->feature_pool[it->second];
@@ -652,7 +672,7 @@ FeatureSlot *feature_get_or_create(Stage3Runtime *rt, uint32_t user_idx, int32_t
   if (existing)
     return existing;
 
-  uint32_t idx = feature_alloc(rt);
+  uint32_t idx = feature_alloc(rt, user_idx);
   FeatureSlot *feat = &rt->feature_pool[idx];
   std::memset(feat, 0, sizeof(FeatureSlot));
   feat->user_idx = user_idx;
@@ -663,7 +683,7 @@ FeatureSlot *feature_get_or_create(Stage3Runtime *rt, uint32_t user_idx, int32_t
 
   rt->users[user_idx].feature_head = idx;
   rt->users[user_idx].feature_count++;
-  rt->feature_index.map[FeatureIndex::make_key(user_idx, bucket, tag_id)] = idx;
+  rt->feature_index[user_shard(rt, user_idx)].map[FeatureIndex::make_key(user_idx, bucket, tag_id)] = idx;
 
   return feat;
 }
@@ -674,8 +694,9 @@ FeatureSlot *feature_get_or_create(Stage3Runtime *rt, uint32_t user_idx, int32_t
 
 SharpeAgg *sharpe_agg_find(Stage3Runtime *rt, uint32_t user_idx, int32_t bucket) {
   const uint64_t key = SharpeAggIndex::make_key(user_idx, bucket);
-  auto it = rt->sharpe_agg_index.map.find(key);
-  if (it == rt->sharpe_agg_index.map.end()) {
+  auto &map = rt->sharpe_agg_index[user_shard(rt, user_idx)].map;
+  auto it = map.find(key);
+  if (it == map.end()) {
     return nullptr;
   }
   return &rt->sharpe_agg_pool[it->second];
@@ -686,7 +707,7 @@ SharpeAgg *sharpe_agg_get_or_create(Stage3Runtime *rt, uint32_t user_idx, int32_
   if (existing)
     return existing;
 
-  uint32_t idx = sharpe_agg_alloc(rt);
+  uint32_t idx = sharpe_agg_alloc(rt, user_idx);
   SharpeAgg *agg = &rt->sharpe_agg_pool[idx];
   agg->user_idx = user_idx;
   agg->bucket = bucket;
@@ -700,7 +721,7 @@ SharpeAgg *sharpe_agg_get_or_create(Stage3Runtime *rt, uint32_t user_idx, int32_
 
   rt->users[user_idx].sharpe_agg_head = idx;
   rt->users[user_idx].sharpe_agg_count++;
-  rt->sharpe_agg_index.map[SharpeAggIndex::make_key(user_idx, bucket)] = idx;
+  rt->sharpe_agg_index[user_shard(rt, user_idx)].map[SharpeAggIndex::make_key(user_idx, bucket)] = idx;
 
   return agg;
 }
@@ -709,18 +730,18 @@ SharpeAgg *sharpe_agg_get_or_create(Stage3Runtime *rt, uint32_t user_idx, int32_
 // Events log operations
 // ============================================================================
 
-uint64_t events_log_append(Stage3Runtime *rt, const EventRecord &rec, uint32_t user_idx) {
-  // Ensure capacity
-  size_t required = rt->header->events_log_tail + sizeof(EventRecord);
-  if (required > rt->events_size) {
-    size_t new_size = rt->events_size * 2;
-    while (new_size < required) {
-      new_size *= 2;
-    }
-    resize_events_log(rt, new_size);
+void events_log_ensure_capacity(Stage3Runtime *rt, uint64_t required_bytes) {
+  if (required_bytes <= rt->events_size) {
+    return;
   }
+  size_t new_size = rt->events_size * 2;
+  while (new_size < required_bytes) {
+    new_size *= 2;
+  }
+  resize_events_log(rt, new_size);
+}
 
-  uint64_t offset = rt->header->events_log_tail;
+void events_log_write_at(Stage3Runtime *rt, const EventRecord &rec, uint32_t user_idx, uint64_t offset) {
   EventRecord *target = reinterpret_cast<EventRecord *>(
       reinterpret_cast<uint8_t *>(rt->events_log) + offset);
   *target = rec;
@@ -737,9 +758,6 @@ uint64_t events_log_append(Stage3Runtime *rt, const EventRecord &rec, uint32_t u
   }
   user->timeline_tail = offset;
   user->timeline_count++;
-
-  rt->header->events_log_tail += sizeof(EventRecord);
-  return offset;
 }
 
 // ============================================================================

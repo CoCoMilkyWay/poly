@@ -66,13 +66,15 @@ int64_t StageSync::get_bucket_user_count(int64_t bucket) const {
 
   const int32_t target_bucket = static_cast<int32_t>(bucket);
   int64_t count = 0;
-  for (const auto &[key, feat_idx] : rt_->feature_index.map) {
-    (void)feat_idx;
-    if (FeatureIndex::extract_bucket(key) != target_bucket) {
-      continue;
-    }
-    if (FeatureIndex::extract_tag(key) == -1) {
-      ++count;
+  for (uint32_t shard = 0; shard < STAGE3_SYNC_SHARD_COUNT; ++shard) {
+    for (const auto &[key, feat_idx] : rt_->feature_index[shard].map) {
+      (void)feat_idx;
+      if (FeatureIndex::extract_bucket(key) != target_bucket) {
+        continue;
+      }
+      if (FeatureIndex::extract_tag(key) == -1) {
+        ++count;
+      }
     }
   }
   return count;
@@ -136,10 +138,11 @@ StageSync::Stage2Data StageSync::stage2_data() const {
 }
 
 json StageSync::memory_breakdown() const {
-  const int64_t token_used = static_cast<int64_t>(rt_->header->token_pool_used * sizeof(TokenSlot));
-  const int64_t feature_used = static_cast<int64_t>(rt_->header->feature_pool_used * sizeof(FeatureSlot));
-  const int64_t sharpe_agg_used = static_cast<int64_t>(rt_->header->sharpe_agg_pool_used * sizeof(SharpeAgg));
-  const int64_t sharpe_sample_used = static_cast<int64_t>(rt_->header->sharpe_sample_pool_used * sizeof(SharpeSample));
+  const int64_t token_used = static_cast<int64_t>(token_pool_used_total(rt_->header) * sizeof(TokenSlot));
+  const int64_t feature_used = static_cast<int64_t>(feature_pool_used_total(rt_->header) * sizeof(FeatureSlot));
+  const int64_t sharpe_agg_used = static_cast<int64_t>(sharpe_agg_pool_used_total(rt_->header) * sizeof(SharpeAgg));
+  const int64_t sharpe_sample_used =
+      static_cast<int64_t>(sharpe_sample_pool_used_total(rt_->header) * sizeof(SharpeSample));
   const int64_t users_used = static_cast<int64_t>(rt_->header->user_count * sizeof(UserBlock));
   const int64_t events_used = static_cast<int64_t>(rt_->header->events_log_tail);
   const int64_t index_used = static_cast<int64_t>(rt_->header->user_count * sizeof(UserIndexEntry));

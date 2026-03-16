@@ -362,11 +362,6 @@ void update_feature_on_event(Stage3Runtime *rt,
 
   update_single_tag(tag_id, tag_state);
   update_single_tag(-1, global_state);
-
-  // Update head_bucket
-  if (bucket > rt->header->head_bucket) {
-    rt->header->head_bucket = bucket;
-  }
 }
 
 } // namespace stage3

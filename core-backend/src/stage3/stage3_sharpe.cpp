@@ -26,7 +26,7 @@ void update_sharpe_on_event(Stage3Runtime *rt, uint32_t user_idx, int64_t pnl, i
 
   if (current_block != agg->last_block) {
     // New block - add new sample
-    uint32_t sample_idx = sharpe_sample_alloc(rt);
+    uint32_t sample_idx = sharpe_sample_alloc(rt, user_idx);
     SharpeSample *sample = &rt->sharpe_sample_pool[sample_idx];
     sample->agg_idx = static_cast<uint32_t>(agg - rt->sharpe_agg_pool);
     sample->block_offset = block_offset;
@@ -313,7 +313,7 @@ void sharpe_prune_old_buckets(Stage3Runtime *rt, uint32_t user_idx, int32_t min_
       user->sharpe_agg_count--;
 
       // Keep runtime index consistent with list pruning.
-      rt->sharpe_agg_index.map.erase(SharpeAggIndex::make_key(user_idx, agg->bucket));
+      rt->sharpe_agg_index[user_shard(rt, user_idx)].map.erase(SharpeAggIndex::make_key(user_idx, agg->bucket));
 
       // Free the agg
       sharpe_agg_free(rt, idx);
