@@ -63,20 +63,23 @@
      - 对窗口 `W ∈ {10w, 100w, 1000w}`:
        - 左边界锚点 `p0` 取窗口起点前最后一个已知 `pnl`；若更早 bucket 已被 prune，则取 `user.pnl_before_first_sharpe_bucket`
        - 区间重标定: `x_i = pnl_i - p0`
-       - `min_interval_pnl_W = min(0, x_i)`，遍历窗口内全部 block 采样点以及右边界平推点
+       - 采样序列是按 `block_num` 排序的稀疏 `(block, pnl)` 点；缺失 block 表示该 block 的 `return = 0`
+       - 因而 Sharpe 统计对象是窗口内完整的 block 级 return 分布，而不是“按采样间隔摊薄后的 jump 序列”
+       - `min_interval_pnl_W = min(0, x_i)`，遍历窗口内全部采样点以及右边界平推点
        - `avg_exposure_W`:
          - `10w`: 取当前 bucket 的 `exposure_avg_10w`
          - `100w/1000w`: 取当前 `FeatureSlot` 上的 `exposure_avg_100w / exposure_avg_1000w`
        - `nav_base_W = avg_exposure_W + abs(min_interval_pnl_W) + 1 USD`
        - `nav_i = nav_base_W + x_i`
-       - 相邻采样点收益: `r_i = (nav_i - nav_{i-1}) / nav_{i-1}`
-       - `Δt_i = block_i - block_{i-1}`
+       - 对每个采样 block，跳变收益定义为 `r_i = (nav_i - nav_{i-1}) / nav_{i-1}`
+       - 未采样到的 block 对应 `0 return`
+       - `10w / 100w / 1000w` 的区别只有窗口范围；`100w / 1000w` 都是直接从各自窗口的完整 block return 分布重算，不能从更低级别 Sharpe 聚合
      - 右边界锚点使用窗口末 block；若末尾无新事件，则用最后一个 `pnl` 平推到窗口末尾
      - 时间加权平均收益率: `μ = Σr_i / T`
-     - 时间加权方差: `σ² = Σ(r_i^2 / Δt_i) / T - μ²`
+     - 时间加权方差: `σ² = Σ(r_i^2) / T - μ²`，其中 `T` 是窗口内 block 数，未采样 block 通过零收益自然计入分布
      - raw Sharpe = `μ / σ`
      - 输出 Sharpe = `raw_sharpe * sqrt(10000000)`，即统一归一到 `1000w block`
-     - `nav_i <= 0`、`Δt_i <= 0`、`T <= 0` 或 `σ² <= 0` 时，该窗口 Sharpe 记 `0`
+     - `nav_i <= 0`、`T <= 0` 或 `σ² <= 0` 时，该窗口 Sharpe 记 `0`
   4. `data/stage3` 按当前布局直接建库使用
 
 // ============================================================================
@@ -620,7 +623,7 @@ stage3_post_sync_prune(runtime) // 仅处理 dirty_users, 而非全用户扫描
 sharpe_prune_old_buckets(user_idx, min_bucket_to_keep)
 ├─ 遍历 `users[user_idx].sharpe_agg_head`
 ├─ if `agg->bucket < min_bucket_to_keep`:
-│  ├─ `users[user_idx].pnl_before_first_sharpe_bucket = agg->close_pnl`
+│  ├─ 用“被裁掉部分中离保留区最近的 `close_pnl`”更新 `users[user_idx].pnl_before_first_sharpe_bucket`
 │  ├─ 释放该 agg 下全部 sample
 │  ├─ 从 `sharpe_agg_index` 移除
 │  ├─ 从用户 agg 链表摘除
@@ -631,12 +634,12 @@ calc_sharpe_for_feature(user_idx, feat, first_bucket) // 仅在 batch 结束时�
 ├─ if `feat->tag_id != -1`: return  // Sharpe 仅全局
 ├─ if `first_bucket < 0 || first_bucket > feat->bucket`: 直接把 `sharpe_{10w,100w,1000w}` 置 0
 ├─ `get_p0(start_bucket)`
-│  ├─ 扫 `user->sharpe_agg_head` (按 bucket 从新到旧)
-│  ├─ 找到第一个 `agg->bucket < start_bucket` 的 `close_pnl`
+│  ├─ 扫 `user->sharpe_agg_head`
+│  ├─ 取所有 `agg->bucket < start_bucket` 中 bucket 最大者的 `close_pnl`
 │  └─ 若找不到: 用 `user->pnl_before_first_sharpe_bucket`
-├─ `10w`: 只收集当前 bucket 的 samples，用 `feat->exposure_avg_10w`
-├─ `100w`: 收集 `[max(first_bucket, bucket-9), bucket]` 的 samples，用 `feat->exposure_avg_100w`
-└─ `1000w`: 收集 `[max(first_bucket, bucket-99), bucket]` 的 samples，用 `feat->exposure_avg_1000w`
+├─ `10w`: 收集当前窗口的全部样本，构造完整 block return 分布，用 `feat->exposure_avg_10w`
+├─ `100w`: 收集 `[max(first_bucket, bucket-9), bucket]` 的全部样本，重新构造该窗口的完整 block return 分布，用 `feat->exposure_avg_100w`
+└─ `1000w`: 收集 `[max(first_bucket, bucket-99), bucket]` 的全部样本，重新构造该窗口的完整 block return 分布，用 `feat->exposure_avg_1000w`
 
 stage3_query_status() -> {syncing, last_block, head_block, behind_blocks, behind_chunks, blocks_per_second, eta_seconds, ready, user_count, processed_events, head_bucket}
 ├─ `last_block = (header.cursor_sort_key >= 0 ? header.cursor_sort_key / 1e9 : 0)`

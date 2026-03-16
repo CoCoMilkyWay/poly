@@ -74,7 +74,9 @@ SharpeWindow calc_sharpe_window(
   SharpeWindow result{};
   result.sharpe = 0.0f;
 
-  assert(end_block >= start_block);
+  if (end_block < start_block) {
+    return result;
+  }
 
   long double min_x = 0.0L;
   int64_t tail_pnl = p0;
@@ -91,23 +93,38 @@ SharpeWindow calc_sharpe_window(
   }
 
   long double sum_r = 0.0L;
-  long double sum_r2_dt = 0.0L;
+  long double sum_r2 = 0.0L;
   int64_t prev_block = start_block - 1;
   long double prev_x = 0.0L;
+  long double prev_x_before_last_block = 0.0L;
+  long double last_r = 0.0L;
+  bool has_last_r = false;
   bool invalid = false;
 
   auto append_sample = [&](int64_t block, int64_t pnl) {
-    assert(block >= prev_block);
-    if (block == prev_block) {
-      prev_x = static_cast<long double>(pnl - p0);
-      return;
-    }
-    const int64_t dt = block - prev_block;
-    if (dt <= 0) {
+    if (block < prev_block) {
       invalid = true;
       return;
     }
     const long double curr_x = static_cast<long double>(pnl - p0);
+    if (block == prev_block) {
+      if (!has_last_r) {
+        invalid = true;
+        return;
+      }
+      const long double nav_prev = nav_base + prev_x_before_last_block;
+      const long double nav_curr = nav_base + curr_x;
+      if (nav_prev <= 0.0L || nav_curr <= 0.0L) {
+        invalid = true;
+        return;
+      }
+      const long double r = (nav_curr - nav_prev) / nav_prev;
+      sum_r += r - last_r;
+      sum_r2 += r * r - last_r * last_r;
+      prev_x = curr_x;
+      last_r = r;
+      return;
+    }
     const long double nav_prev = nav_base + prev_x;
     const long double nav_curr = nav_base + curr_x;
     if (nav_prev <= 0.0L || nav_curr <= 0.0L) {
@@ -116,15 +133,25 @@ SharpeWindow calc_sharpe_window(
     }
     const long double r = (nav_curr - nav_prev) / nav_prev;
     sum_r += r;
-    sum_r2_dt += (r * r) / static_cast<long double>(dt);
+    sum_r2 += r * r;
+    prev_x_before_last_block = prev_x;
     prev_block = block;
     prev_x = curr_x;
+    last_r = r;
+    has_last_r = true;
   };
 
   for (const auto &sample : samples) {
-    assert(sample.first >= start_block);
-    assert(sample.first <= end_block);
+    if (sample.first < start_block) {
+      continue;
+    }
+    if (sample.first > end_block) {
+      break;
+    }
     append_sample(sample.first, sample.second);
+    if (invalid) {
+      return result;
+    }
   }
   if (prev_block < end_block) {
     append_sample(end_block, tail_pnl);
@@ -133,14 +160,16 @@ SharpeWindow calc_sharpe_window(
     return result;
   }
 
-  const int64_t total_time = prev_block - (start_block - 1);
+  const int64_t total_time = end_block - start_block + 1;
   if (total_time <= 0) {
     return result;
   }
 
   const long double T = static_cast<long double>(total_time);
   const long double mean_return = sum_r / T;
-  const long double var_return = sum_r2_dt / T - mean_return * mean_return;
+  // The window is a per-block return distribution: unsampled blocks contribute zero return,
+  // sampled blocks contribute one discrete jump return at that block.
+  const long double var_return = sum_r2 / T - mean_return * mean_return;
 
   if (var_return <= 0.0L || !std::isfinite(static_cast<double>(var_return))) {
     return result;
@@ -203,18 +232,18 @@ void calc_sharpe_for_feature(Stage3Runtime *rt, uint32_t user_idx, FeatureSlot *
 
   // Helper to get p0 (pnl before window start)
   auto get_p0 = [&](int32_t start_bucket) -> int64_t {
-    int32_t last_bucket = std::numeric_limits<int32_t>::max();
+    int32_t best_bucket = std::numeric_limits<int32_t>::min();
+    int64_t best_pnl = user->pnl_before_first_sharpe_bucket;
     uint32_t idx = user->sharpe_agg_head;
     while (idx != NULL_IDX) {
       SharpeAgg *agg = &rt->sharpe_agg_pool[idx];
-      assert(agg->bucket <= last_bucket);
-      last_bucket = agg->bucket;
-      if (agg->bucket < start_bucket) {
-        return agg->close_pnl;
+      if (agg->bucket < start_bucket && agg->bucket > best_bucket) {
+        best_bucket = agg->bucket;
+        best_pnl = agg->close_pnl;
       }
       idx = agg->next;
     }
-    return user->pnl_before_first_sharpe_bucket;
+    return best_pnl;
   };
 
   // ========== 10w Sharpe (current bucket) ==========
@@ -279,14 +308,18 @@ void sharpe_prune_old_buckets(Stage3Runtime *rt, uint32_t user_idx, int32_t min_
 
   uint32_t *prev_ptr = &user->sharpe_agg_head;
   uint32_t idx = user->sharpe_agg_head;
+  int32_t newest_pruned_bucket = std::numeric_limits<int32_t>::min();
+  int64_t newest_pruned_close_pnl = user->pnl_before_first_sharpe_bucket;
 
   while (idx != NULL_IDX) {
     SharpeAgg *agg = &rt->sharpe_agg_pool[idx];
     uint32_t next_idx = agg->next;
 
     if (agg->bucket < min_bucket_to_keep) {
-      // Before freeing, update the user's pnl anchor (matches old prune_user_sharpe_cache)
-      user->pnl_before_first_sharpe_bucket = agg->close_pnl;
+      if (agg->bucket > newest_pruned_bucket) {
+        newest_pruned_bucket = agg->bucket;
+        newest_pruned_close_pnl = agg->close_pnl;
+      }
 
       // Free all samples in this agg
       uint32_t sample_idx = agg->sample_head;
@@ -311,6 +344,10 @@ void sharpe_prune_old_buckets(Stage3Runtime *rt, uint32_t user_idx, int32_t min_
     }
 
     idx = next_idx;
+  }
+
+  if (newest_pruned_bucket != std::numeric_limits<int32_t>::min()) {
+    user->pnl_before_first_sharpe_bucket = newest_pruned_close_pnl;
   }
 }
 
