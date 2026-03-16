@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 
 '''
-刷新流程:
+刷新流程(选一):
     刷新持仓,刷新price
     刷新持仓,补全price(可能部分用stale数据)
     刷新price
-只要刷新price, 就需要重算用户/aggre持仓比例,重做阈值normalization
+刷新price后:
+    过滤掉已经结算的token
+    重算用户/aggre持仓比例
+    阈值过滤, 重算aggre持仓比例
 '''
 
 from __future__ import annotations
@@ -258,7 +261,6 @@ class FlowSpec:
     use_cached_positions: bool
     use_latest_price_data: bool
     refresh_all_prices: bool
-    set_price_refreshed_at: bool
 
 
 FLOW_SPECS = {
@@ -267,21 +269,18 @@ FLOW_SPECS = {
         use_cached_positions=False,
         use_latest_price_data=False,
         refresh_all_prices=False,
-        set_price_refreshed_at=False,
     ),
     FLOW_REFRESH_HOLDINGS_REFRESH_PRICE: FlowSpec(
         stages=FULL_REFRESH_STAGES,
         use_cached_positions=False,
         use_latest_price_data=False,
         refresh_all_prices=True,
-        set_price_refreshed_at=False,
     ),
     FLOW_REFRESH_PRICE: FlowSpec(
         stages=PRICE_REFRESH_STAGES,
         use_cached_positions=True,
         use_latest_price_data=True,
         refresh_all_prices=True,
-        set_price_refreshed_at=True,
     ),
 }
 
@@ -483,6 +482,12 @@ def parse_int(value: str | None) -> int | None:
     return int(value)
 
 
+def parse_int_value(value: Any) -> int | None:
+    if value is None:
+        return None
+    return int(value)
+
+
 def format_decimal(value: Decimal, places: int = 10) -> str:
     return format(value, f".{places}f")
 
@@ -505,41 +510,34 @@ def load_previous_output() -> dict[str, Any] | None:
     return payload
 
 
+def output_uses_normalized_schema(output: dict[str, Any] | None) -> bool:
+    if not isinstance(output, dict):
+        return False
+    return (
+        isinstance(output.get("summary"), dict)
+        and isinstance(output.get("conditions"), list)
+        and isinstance(output.get("tokens"), list)
+        and isinstance(output.get("aggregate"), list)
+        and isinstance(output.get("users"), list)
+    )
+
+
 def load_cached_user_positions(user: str, user_payload: dict[str, Any]) -> list[UserPosition]:
     positions_payload = user_payload.get("positions")
+    assert isinstance(positions_payload, list), user_payload
     result: list[UserPosition] = []
-    if isinstance(positions_payload, list):
-        for index, position_row in enumerate(positions_payload, start=1):
-            assert isinstance(position_row, dict), position_row
-            token_id = position_row.get("token_id")
-            amount_raw_value = position_row.get("amount_raw")
-            assert isinstance(token_id, str), position_row
-            assert isinstance(amount_raw_value, (str, int)), position_row
-            result.append(
-                UserPosition(
-                    entity_id=f"cached:{user}:{index}:{token_id}",
-                    user=user,
-                    token_id=token_id,
-                    amount_raw=int(amount_raw_value),
-                )
-            )
-        result.sort(key=lambda item: item.token_id)
-        return result
-
-    weights = user_payload.get("weights")
-    assert isinstance(weights, list), user_payload
-    for index, weight_row in enumerate(weights, start=1):
-        assert isinstance(weight_row, dict), weight_row
-        token_id = weight_row.get("token_id")
-        amount_text = weight_row.get("amount")
-        assert isinstance(token_id, str), weight_row
-        assert isinstance(amount_text, str), weight_row
+    for index, position_row in enumerate(positions_payload, start=1):
+        assert isinstance(position_row, dict), position_row
+        token_id = position_row.get("token_id")
+        amount_raw_value = position_row.get("amount_raw")
+        assert isinstance(token_id, str), position_row
+        assert isinstance(amount_raw_value, (str, int)), position_row
         result.append(
             UserPosition(
                 entity_id=f"cached:{user}:{index}:{token_id}",
                 user=user,
                 token_id=token_id,
-                amount_raw=int(Decimal(amount_text) * UNIT),
+                amount_raw=int(amount_raw_value),
             )
         )
     result.sort(key=lambda item: item.token_id)
@@ -561,46 +559,82 @@ def load_cached_positions(previous_output: dict[str, Any]) -> tuple[list[str], d
     return users, positions_by_user
 
 
+def build_cached_condition_index(previous_output: dict[str, Any] | None) -> dict[str, dict[str, Any]]:
+    if previous_output is None:
+        return {}
+    conditions = previous_output.get("conditions")
+    if not isinstance(conditions, list):
+        return {}
+
+    result: dict[str, dict[str, Any]] = {}
+    for row in conditions:
+        if not isinstance(row, dict):
+            continue
+        condition_id = row.get("condition_id")
+        if not isinstance(condition_id, str) or not condition_id:
+            continue
+        token_ids_value = row.get("token_ids")
+        payout_numerators_value = row.get("payout_numerators")
+        market_outcomes_value = row.get("market_outcomes")
+        result[condition_id] = {
+            "condition_id": condition_id,
+            "question_id": row.get("question_id") if isinstance(row.get("question_id"), str) else None,
+            "outcome_slot_count": parse_int_value(row.get("outcome_slot_count")),
+            "resolution_timestamp": parse_int_value(row.get("resolution_timestamp")),
+            "token_ids": [str(item) for item in token_ids_value] if isinstance(token_ids_value, list) else [],
+            "payout_numerators": [int(item) for item in payout_numerators_value] if isinstance(payout_numerators_value, list) else [],
+            "payout_denominator": parse_int_value(row.get("payout_denominator")),
+            "market_question": clean_text(row.get("market_question")),
+            "market_description": clean_text(row.get("market_description")),
+            "market_event_title": clean_text(row.get("market_event_title")),
+            "market_slug": clean_text(row.get("market_slug")),
+            "market_url": clean_text(row.get("market_url")),
+            "market_outcomes": [str(item) for item in market_outcomes_value] if isinstance(market_outcomes_value, list) else [],
+        }
+    return result
+
+
 def build_cached_token_data(previous_output: dict[str, Any] | None) -> tuple[dict[str, PricePoint], dict[str, MarketData]]:
     if previous_output is None:
         return {}, {}
-    users = previous_output.get("users")
-    if not isinstance(users, list):
+    tokens = previous_output.get("tokens")
+    if not isinstance(tokens, list):
         return {}, {}
 
+    condition_index = build_cached_condition_index(previous_output)
     price_map: dict[str, PricePoint] = {}
     market_map: dict[str, MarketData] = {}
-    for user in users:
-        if not isinstance(user, dict):
+    for row in tokens:
+        if not isinstance(row, dict):
             continue
-        weights = user.get("weights")
-        if not isinstance(weights, list):
+        token_id = row.get("token_id")
+        if not isinstance(token_id, str) or not token_id:
             continue
-        for row in weights:
-            if not isinstance(row, dict):
-                continue
-            token_id = row.get("token_id")
-            if not isinstance(token_id, str) or not token_id:
-                continue
-            price = parse_decimal(row.get("price"))
-            if price is not None and token_id not in price_map:
-                price_source = row.get("price_source")
-                price_map[token_id] = PricePoint(
-                    price,
-                    str(price_source) if isinstance(price_source, str) else "cached",
-                )
-            if token_id not in market_map:
-                market_map[token_id] = MarketData(
-                    token_id=token_id,
-                    condition_id=row.get("condition_id") if isinstance(row.get("condition_id"), str) else None,
-                    question_id=row.get("question_id") if isinstance(row.get("question_id"), str) else None,
-                    outcome_slot_count=None,
-                    resolution_timestamp=None,
-                    outcome_index=parse_int(str(row.get("outcome_index"))) if row.get("outcome_index") is not None else None,
-                    price_orderbook=None,
-                    payout_numerators=[],
-                    payout_denominator=None,
-                )
+        price = parse_decimal(row.get("price"))
+        if price is not None and token_id not in price_map:
+            price_map[token_id] = PricePoint(price, "cached")
+        condition_id = row.get("condition_id")
+        condition_row = (
+            condition_index[condition_id]
+            if isinstance(condition_id, str) and condition_id in condition_index
+            else None
+        )
+        outcome_index = (
+            condition_row["token_ids"].index(token_id)
+            if condition_row is not None and token_id in condition_row["token_ids"]
+            else None
+        )
+        market_map[token_id] = MarketData(
+            token_id=token_id,
+            condition_id=condition_id if isinstance(condition_id, str) else None,
+            question_id=condition_row["question_id"] if condition_row is not None else None,
+            outcome_slot_count=condition_row["outcome_slot_count"] if condition_row is not None else None,
+            resolution_timestamp=condition_row["resolution_timestamp"] if condition_row is not None else None,
+            outcome_index=outcome_index,
+            price_orderbook=None,
+            payout_numerators=list(condition_row["payout_numerators"]) if condition_row is not None else [],
+            payout_denominator=condition_row["payout_denominator"] if condition_row is not None else None,
+        )
     return price_map, market_map
 
 
@@ -665,47 +699,56 @@ def fetch_market_meta_by_condition(condition_id: str) -> dict[str, Any]:
     }
 
 
-def build_cached_market_meta(previous_output: dict[str, Any] | None) -> dict[str, dict[str, Any]]:
-    if previous_output is None:
-        return {}
-    aggregate = previous_output.get("aggregate")
-    if not isinstance(aggregate, list):
-        return {}
-
+def build_cached_condition_market_meta(previous_output: dict[str, Any] | None) -> dict[str, dict[str, Any]]:
+    condition_index = build_cached_condition_index(previous_output)
     result: dict[str, dict[str, Any]] = {}
-    for row in aggregate:
-        if not isinstance(row, dict):
-            continue
-        condition_id = row.get("condition_id")
-        if not isinstance(condition_id, str) or not condition_id:
-            continue
-        market_outcomes_value = row.get("market_outcomes")
-        market_outcomes = (
-            [str(item) for item in market_outcomes_value]
-            if isinstance(market_outcomes_value, list)
-            else []
-        )
+    for condition_id, row in condition_index.items():
         meta = {
             "condition_id": condition_id,
-            "market_question": clean_text(row.get("market_question")),
-            "market_description": clean_text(row.get("market_description")),
-            "market_event_title": clean_text(row.get("market_event_title")),
-            "market_slug": clean_text(row.get("market_slug")),
-            "market_url": clean_text(row.get("market_url")),
-            "market_outcomes": market_outcomes,
+            "market_question": row["market_question"],
+            "market_description": row["market_description"],
+            "market_event_title": row["market_event_title"],
+            "market_slug": row["market_slug"],
+            "market_url": row["market_url"],
+            "market_outcomes": row["market_outcomes"],
         }
-        if not any(
-            [
-                meta["market_question"],
-                meta["market_description"],
-                meta["market_event_title"],
-                meta["market_slug"],
-                meta["market_url"],
-                meta["market_outcomes"],
-            ]
-        ):
+        if not any([
+            meta["market_question"],
+            meta["market_description"],
+            meta["market_event_title"],
+            meta["market_slug"],
+            meta["market_url"],
+            meta["market_outcomes"],
+        ]):
             continue
         result[condition_id] = meta
+    return result
+
+
+def cached_condition_row_is_complete(row: dict[str, Any]) -> bool:
+    token_ids = row["token_ids"]
+    outcome_slot_count = row["outcome_slot_count"]
+    if outcome_slot_count is None:
+        return bool(token_ids)
+    return len(token_ids) == outcome_slot_count
+
+
+def build_cached_condition_metas(
+    previous_output: dict[str, Any] | None,
+    condition_ids: list[str],
+) -> dict[str, ConditionMeta]:
+    condition_index = build_cached_condition_index(previous_output)
+    result: dict[str, ConditionMeta] = {}
+    for condition_id in condition_ids:
+        row = condition_index.get(condition_id)
+        if row is None or not cached_condition_row_is_complete(row):
+            continue
+        result[condition_id] = ConditionMeta(
+            condition_id=condition_id,
+            position_ids=list(row["token_ids"]),
+            payout_numerators=list(row["payout_numerators"]),
+            payout_denominator=row["payout_denominator"],
+        )
     return result
 
 
@@ -951,23 +994,35 @@ def fetch_conditions(
     return result
 
 
+def resolved_price_from_payouts(
+    payout_numerators: list[int],
+    payout_denominator: int | None,
+    outcome_index: int | None,
+) -> Decimal | None:
+    if payout_denominator is None or payout_denominator == 0:
+        return None
+    if outcome_index is None:
+        return None
+    if outcome_index < 0 or outcome_index >= len(payout_numerators):
+        return None
+    return Decimal(payout_numerators[outcome_index]) / Decimal(payout_denominator)
+
+
+def market_has_resolved_price(market: MarketData) -> bool:
+    return (
+        resolved_price_from_payouts(
+            market.payout_numerators,
+            market.payout_denominator,
+            market.outcome_index,
+        )
+        is not None
+    )
+
+
 def build_direct_price_map(
     markets: dict[str, MarketData],
     conditions: dict[str, ConditionMeta],
 ) -> dict[str, PricePoint]:
-    def resolved_price_from_payouts(
-        payout_numerators: list[int],
-        payout_denominator: int | None,
-        outcome_index: int | None,
-    ) -> Decimal | None:
-        if payout_denominator is None or payout_denominator == 0:
-            return None
-        if outcome_index is None:
-            return None
-        if outcome_index < 0 or outcome_index >= len(payout_numerators):
-            return None
-        return Decimal(payout_numerators[outcome_index]) / Decimal(payout_denominator)
-
     prices: dict[str, PricePoint] = {}
     for token_id, market in markets.items():
         condition = conditions.get(market.condition_id or "")
@@ -1145,6 +1200,161 @@ def prepare_prices(
     return finalize(prices, merged_markets, condition_metas)
 
 
+def build_condition_output_rows(
+    markets: dict[str, MarketData],
+    condition_metas: dict[str, ConditionMeta],
+    previous_output: dict[str, Any] | None,
+) -> list[dict[str, Any]]:
+    cached_condition_index = build_cached_condition_index(previous_output)
+    markets_by_condition: dict[str, list[MarketData]] = defaultdict(list)
+    for market in markets.values():
+        if market.condition_id is None:
+            continue
+        markets_by_condition[market.condition_id].append(market)
+
+    rows: list[dict[str, Any]] = []
+    all_condition_ids = sorted(set(condition_metas) | set(markets_by_condition))
+    for condition_id in all_condition_ids:
+        cached_row = cached_condition_index.get(condition_id)
+        condition_meta = condition_metas.get(condition_id)
+        condition_markets = sorted(
+            markets_by_condition.get(condition_id, []),
+            key=lambda item: (
+                sys.maxsize if item.outcome_index is None else item.outcome_index,
+                item.token_id,
+            ),
+        )
+        question_id = cached_row["question_id"] if cached_row is not None else None
+        outcome_slot_count = cached_row["outcome_slot_count"] if cached_row is not None else None
+        resolution_timestamp = cached_row["resolution_timestamp"] if cached_row is not None else None
+        payout_numerators = list(cached_row["payout_numerators"]) if cached_row is not None else []
+        payout_denominator = cached_row["payout_denominator"] if cached_row is not None else None
+        for market in condition_markets:
+            if question_id is not None and market.question_id is not None:
+                assert question_id == market.question_id, (condition_id, question_id, market.question_id)
+            elif question_id is None:
+                question_id = market.question_id
+            if outcome_slot_count is not None and market.outcome_slot_count is not None:
+                assert outcome_slot_count == market.outcome_slot_count, (
+                    condition_id,
+                    outcome_slot_count,
+                    market.outcome_slot_count,
+                )
+            elif outcome_slot_count is None:
+                outcome_slot_count = market.outcome_slot_count
+            if resolution_timestamp is not None and market.resolution_timestamp is not None:
+                assert resolution_timestamp == market.resolution_timestamp, (
+                    condition_id,
+                    resolution_timestamp,
+                    market.resolution_timestamp,
+                )
+            elif resolution_timestamp is None:
+                resolution_timestamp = market.resolution_timestamp
+            if payout_numerators and market.payout_numerators:
+                assert payout_numerators == market.payout_numerators, (
+                    condition_id,
+                    payout_numerators,
+                    market.payout_numerators,
+                )
+            elif not payout_numerators:
+                payout_numerators = list(market.payout_numerators)
+            if payout_denominator is not None and market.payout_denominator is not None:
+                assert payout_denominator == market.payout_denominator, (
+                    condition_id,
+                    payout_denominator,
+                    market.payout_denominator,
+                )
+            elif payout_denominator is None:
+                payout_denominator = market.payout_denominator
+        if condition_meta is not None:
+            if payout_numerators and condition_meta.payout_numerators:
+                assert payout_numerators == condition_meta.payout_numerators, (
+                    condition_id,
+                    payout_numerators,
+                    condition_meta.payout_numerators,
+                )
+            elif not payout_numerators:
+                payout_numerators = list(condition_meta.payout_numerators)
+            if payout_denominator is not None and condition_meta.payout_denominator is not None:
+                assert payout_denominator == condition_meta.payout_denominator, (
+                    condition_id,
+                    payout_denominator,
+                    condition_meta.payout_denominator,
+                )
+            elif payout_denominator is None:
+                payout_denominator = condition_meta.payout_denominator
+        token_ids = (
+            list(condition_meta.position_ids)
+            if condition_meta is not None
+            else (
+                list(cached_row["token_ids"])
+                if cached_row is not None and cached_condition_row_is_complete(cached_row)
+                else []
+            )
+        )
+        if not token_ids:
+            token_ids = [market.token_id for market in condition_markets]
+        for market in condition_markets:
+            assert market.token_id in token_ids, (condition_id, market.token_id, token_ids)
+        if outcome_slot_count is not None:
+            assert len(token_ids) == outcome_slot_count, (
+                condition_id,
+                outcome_slot_count,
+                token_ids,
+            )
+
+        rows.append(
+            {
+                "condition_id": condition_id,
+                "question_id": question_id,
+                "outcome_slot_count": outcome_slot_count,
+                "resolution_timestamp": resolution_timestamp,
+                "payout_numerators": payout_numerators,
+                "payout_denominator": payout_denominator,
+                "token_ids": token_ids,
+                "market_question": cached_row["market_question"] if cached_row is not None else "",
+                "market_description": cached_row["market_description"] if cached_row is not None else "",
+                "market_event_title": cached_row["market_event_title"] if cached_row is not None else "",
+                "market_slug": cached_row["market_slug"] if cached_row is not None else "",
+                "market_url": cached_row["market_url"] if cached_row is not None else "",
+                "market_outcomes": list(cached_row["market_outcomes"]) if cached_row is not None else [],
+            }
+        )
+    return rows
+
+
+def build_token_output_rows(
+    price_map: dict[str, PricePoint],
+    markets: dict[str, MarketData],
+    condition_metas: dict[str, ConditionMeta],
+) -> list[dict[str, Any]]:
+    token_owner_map: dict[str, str] = {}
+    for condition_id, condition_meta in condition_metas.items():
+        for token_id in condition_meta.position_ids:
+            previous_owner = token_owner_map.get(token_id)
+            assert previous_owner in {None, condition_id}, (token_id, previous_owner, condition_id)
+            token_owner_map[token_id] = condition_id
+    token_ids = sorted(set(markets) | set(price_map) | set(token_owner_map))
+    rows: list[dict[str, Any]] = []
+    for token_id in token_ids:
+        market = markets.get(token_id)
+        price_point = price_map.get(token_id)
+        rows.append(
+            {
+                "token_id": token_id,
+                "condition_id": market.condition_id if market is not None else token_owner_map.get(token_id),
+                "price": format_decimal(price_point.value, 10) if price_point is not None else None,
+            }
+        )
+    rows.sort(
+        key=lambda item: (
+            item["condition_id"] or "",
+            item["token_id"],
+        )
+    )
+    return rows
+
+
 def filter_and_normalize_aggregate_rows(output: dict[str, Any]) -> dict[str, Any]:
     progress_step("filter_and_normalize", 0, 1)
     raw_rows = output["aggregate"]
@@ -1185,24 +1395,30 @@ def filter_and_normalize_aggregate_rows(output: dict[str, Any]) -> dict[str, Any
     return output
 
 
-def enrich_top_aggregate_rows(
+def enrich_top_conditions(
     output: dict[str, Any],
     previous_output: dict[str, Any] | None,
 ) -> dict[str, Any]:
-    def reset_market_meta_fields(row: dict[str, Any], rank: int) -> None:
-        row["rank"] = rank
-        row["market_question"] = ""
-        row["market_description"] = ""
-        row["market_event_title"] = ""
-        row["market_slug"] = ""
-        row["market_url"] = ""
-        row["market_outcomes"] = []
-
-    rows = output["aggregate"]
-    top_rows = rows[:20]
-    condition_ids = sorted({row["condition_id"]
-                           for row in top_rows if row["condition_id"]})
-    cached_market_meta = build_cached_market_meta(previous_output)
+    token_rows = output["tokens"]
+    condition_rows = output["conditions"]
+    token_condition_map = {
+        row["token_id"]: row.get("condition_id")
+        for row in token_rows
+        if isinstance(row, dict) and isinstance(row.get("token_id"), str)
+    }
+    condition_row_map = {
+        row["condition_id"]: row
+        for row in condition_rows
+        if isinstance(row, dict) and isinstance(row.get("condition_id"), str)
+    }
+    condition_ids = sorted(
+        {
+            token_condition_map[row["token_id"]]
+            for row in output["aggregate"][:20]
+            if row["token_id"] in token_condition_map and token_condition_map[row["token_id"]]
+        }
+    )
+    cached_market_meta = build_cached_condition_market_meta(previous_output)
     if not condition_ids:
         output["summary"]["top_market_meta_count"] = 0
         progress_step("fetch_gamma_market_meta", 0, 0)
@@ -1225,14 +1441,17 @@ def enrich_top_aggregate_rows(
     else:
         progress_step("fetch_gamma_market_meta", 0, 0)
 
-    for index, row in enumerate(rows, start=1):
-        reset_market_meta_fields(row, index)
-        condition_id = row["condition_id"]
+    for condition_id in condition_ids:
+        row = condition_row_map.get(condition_id)
+        if row is None:
+            continue
         if condition_id in condition_meta_map:
             row.update(condition_meta_map[condition_id])
 
     output["summary"]["top_market_meta_count"] = sum(
-        1 for condition_id in condition_ids if condition_id in condition_meta_map
+        1
+        for condition_id in condition_ids
+        if condition_id in condition_meta_map and condition_id in condition_row_map
     )
     return output
 
@@ -1242,64 +1461,29 @@ def compute_output(
     positions_by_user: dict[str, list[UserPosition]],
     price_map: dict[str, PricePoint],
     markets: dict[str, MarketData],
+    condition_metas: dict[str, ConditionMeta],
+    previous_output: dict[str, Any] | None,
 ) -> dict[str, Any]:
     def build_user_output(
         user: str,
-        position_count: int,
-        priced_position_count: int,
-        ignored_position_count: int,
-        portfolio_value: Decimal,
         positions: list[dict[str, Any]],
-        weights: list[dict[str, Any]],
     ) -> dict[str, Any]:
         return {
             "user": user,
-            "position_count": position_count,
-            "priced_position_count": priced_position_count,
-            "ignored_position_count": ignored_position_count,
-            "portfolio_value": format_decimal(portfolio_value, 6),
             "positions": positions,
-            "weights": weights,
-        }
-
-    def build_weight_row(
-        position: UserPosition,
-        market: MarketData,
-        amount: Decimal,
-        value: Decimal,
-        weight: Decimal,
-        price_point: PricePoint,
-    ) -> dict[str, Any]:
-        return {
-            "token_id": position.token_id,
-            "condition_id": market.condition_id,
-            "question_id": market.question_id,
-            "outcome_index": market.outcome_index,
-            "amount": format_decimal(amount, 6),
-            "price": format_decimal(price_point.value, 10),
-            "value": format_decimal(value, 6),
-            "weight": format_decimal(weight, 10),
-            "price_source": price_point.source,
         }
 
     def build_aggregate_row(
         token_id: str,
-        market: MarketData,
         weight_sum: Decimal,
         holder_count_value: int,
         user_count: Decimal,
-        price_point: PricePoint,
     ) -> dict[str, Any]:
         return {
             "token_id": token_id,
-            "condition_id": market.condition_id,
-            "question_id": market.question_id,
-            "outcome_index": market.outcome_index,
             "holder_count": holder_count_value,
             "holder_ratio": format_decimal(Decimal(holder_count_value) / user_count, 10),
             "aggregate_weight": format_decimal(weight_sum / user_count, 10),
-            "price": format_decimal(price_point.value, 10),
-            "price_source": price_point.source,
         }
 
     progress_step("compute_output", 0, 1)
@@ -1316,89 +1500,57 @@ def compute_output(
     for user in users:
         user_positions = positions_by_user[user]
         position_rows = [
-            {
-                "token_id": position.token_id,
-                "amount_raw": str(position.amount_raw),
-            }
+            {"token_id": position.token_id, "amount_raw": str(position.amount_raw)}
             for position in user_positions
         ]
-        token_entries: list[tuple[UserPosition, Decimal,
-                                  Decimal, PricePoint, MarketData]] = []
+        token_entries: list[tuple[UserPosition, Decimal]] = []
         total_value = ZERO
-        user_ignored_position_count = 0
         for position in user_positions:
             price_point = price_map.get(position.token_id)
             market = markets.get(position.token_id)
             if price_point is None or market is None:
                 ignored_token_ids.add(position.token_id)
                 ignored_position_count += 1
-                user_ignored_position_count += 1
                 continue
             amount = raw_amount_to_decimal(position.amount_raw)
             value = amount * price_point.value
-            token_entries.append(
-                (position, amount, value, price_point, market))
+            token_entries.append((position, value))
             total_value += value
             holder_count[position.token_id] += 1
             priced_position_count += 1
 
-        if total_value == ZERO:
-            zero_value_users.append(user)
-            user_outputs.append(
-                build_user_output(
-                    user=user,
-                    position_count=len(user_positions),
-                    priced_position_count=0,
-                    ignored_position_count=user_ignored_position_count,
-                    portfolio_value=ZERO,
-                    positions=position_rows,
-                    weights=[],
-                )
-            )
-            continue
-
-        weights: list[dict[str, Any]] = []
-        for position, amount, value, price_point, market in token_entries:
-            weight = value / total_value
-            aggregate_weight_sum[position.token_id] += weight
-            weights.append(
-                build_weight_row(
-                    position=position,
-                    market=market,
-                    amount=amount,
-                    value=value,
-                    weight=weight,
-                    price_point=price_point,
-                )
-            )
-        weights.sort(key=lambda item: Decimal(item["weight"]), reverse=True)
         user_outputs.append(
             build_user_output(
                 user=user,
-                position_count=len(user_positions),
-                priced_position_count=len(token_entries),
-                ignored_position_count=user_ignored_position_count,
-                portfolio_value=total_value,
                 positions=position_rows,
-                weights=weights,
             )
         )
+        if total_value == ZERO:
+            zero_value_users.append(user)
+            continue
+
+        for position, value in token_entries:
+            weight = value / total_value
+            aggregate_weight_sum[position.token_id] += weight
 
     aggregate_rows: list[dict[str, Any]] = []
     for token_id, weight_sum in aggregate_weight_sum.items():
-        market = markets[token_id]
         aggregate_rows.append(
             build_aggregate_row(
                 token_id=token_id,
-                market=market,
                 weight_sum=weight_sum,
                 holder_count_value=holder_count[token_id],
                 user_count=user_count_decimal,
-                price_point=price_map[token_id],
             )
         )
     aggregate_rows.sort(key=lambda item: Decimal(
         item["aggregate_weight"]), reverse=True)
+    token_rows = build_token_output_rows(price_map, markets, condition_metas)
+    condition_rows = build_condition_output_rows(
+        markets,
+        condition_metas,
+        previous_output,
+    )
 
     result = {
         "summary": {
@@ -1408,9 +1560,13 @@ def compute_output(
             "ignored_position_count": ignored_position_count,
             "ignored_token_count": len(ignored_token_ids),
             "token_count": len(aggregate_rows),
+            "token_record_count": len(token_rows),
+            "condition_count": len(condition_rows),
             "zero_value_user_count": len(zero_value_users),
             "zero_value_users": zero_value_users,
         },
+        "conditions": condition_rows,
+        "tokens": token_rows,
         "aggregate": aggregate_rows,
         "users": user_outputs,
     }
@@ -1429,6 +1585,7 @@ def portfolio_token_ids(positions_by_user: dict[str, list[UserPosition]]) -> lis
 
 
 def load_cached_portfolio_state(previous_output: dict[str, Any]) -> PortfolioState:
+    assert output_uses_normalized_schema(previous_output), str(OUTPUT_JSON_FILE)
     users, positions_by_user = load_cached_positions(previous_output)
     summary = previous_output.get("summary")
     assert isinstance(summary, dict), previous_output
@@ -1498,7 +1655,7 @@ def split_preserved_resolution_prices(
         for token_id in token_ids
         if token_id in cached_market_map
         and token_id in cached_price_map
-        and cached_price_map[token_id].source == "resolution"
+        and market_has_resolved_price(cached_market_map[token_id])
     }
     active_token_ids = [token_id for token_id in token_ids if token_id not in preserved_token_ids]
     preserved_price_map = {
@@ -1517,7 +1674,7 @@ def load_price_state(
     previous_output: dict[str, Any] | None,
     portfolio: PortfolioState,
     spec: FlowSpec,
-) -> tuple[dict[str, PricePoint], dict[str, MarketData]]:
+) -> tuple[dict[str, PricePoint], dict[str, MarketData], dict[str, ConditionMeta]]:
     cached_price_map, cached_market_map = filter_cached_token_data(
         previous_output,
         portfolio.token_ids,
@@ -1545,7 +1702,7 @@ def load_price_state(
         spec.refresh_all_prices,
     )
     price_snapshot_block = None if spec.use_latest_price_data else portfolio.snapshot_block
-    price_map, market_map, _ = prepare_prices(
+    price_map, market_map, condition_map = prepare_prices(
         held_token_ids=active_token_ids,
         market_token_ids_to_fetch=market_token_ids_to_fetch,
         fetch_market_rows=lambda token_ids, label_prefix: fetch_market_data(
@@ -1565,7 +1722,30 @@ def load_price_state(
     )
     price_map.update(preserved_price_map)
     market_map.update(preserved_market_map)
-    return price_map, market_map
+    condition_ids = sorted(
+        {
+            market.condition_id
+            for market in market_map.values()
+            if market.condition_id is not None
+        }
+    )
+    merged_condition_map = build_cached_condition_metas(previous_output, condition_ids)
+    merged_condition_map.update(condition_map)
+    missing_condition_ids = [
+        condition_id
+        for condition_id in condition_ids
+        if condition_id not in merged_condition_map
+    ]
+    if missing_condition_ids:
+        merged_condition_map.update(
+            fetch_conditions(
+                api_key,
+                missing_condition_ids,
+                price_snapshot_block,
+            )
+        )
+    assert all(condition_id in merged_condition_map for condition_id in condition_ids), condition_ids
+    return price_map, market_map, merged_condition_map
 
 
 def run_output_flow(
@@ -1585,7 +1765,7 @@ def run_output_flow(
         spec,
         requested_snapshot_block,
     )
-    price_map, market_map = load_price_state(
+    price_map, market_map, condition_metas = load_price_state(
         api_key,
         previous_output,
         portfolio,
@@ -1597,12 +1777,13 @@ def run_output_flow(
         portfolio.positions_by_user,
         price_map,
         market_map,
+        condition_metas,
+        previous_output,
     )
     output["summary"]["snapshot_block"] = portfolio.snapshot_block
-    if spec.set_price_refreshed_at:
-        output["summary"]["price_refreshed_at_unix_sec"] = int(time.time())
+    output["summary"]["price_updated_at_unix_sec"] = int(time.time())
     output = filter_and_normalize_aggregate_rows(output)
-    output = enrich_top_aggregate_rows(output, previous_output)
+    output = enrich_top_conditions(output, previous_output)
     write_output_json(output)
     return output
 
@@ -1674,6 +1855,7 @@ def build_http_handler(api_key: str) -> type[BaseHTTPRequestHandler]:
             if path == "/api/output":
                 output = load_previous_output()
                 assert output is not None, str(OUTPUT_JSON_FILE)
+                assert output_uses_normalized_schema(output), str(OUTPUT_JSON_FILE)
                 self._write_json(output)
                 return
             assert False, path
@@ -1714,7 +1896,8 @@ def main() -> None:
     api_key = os.environ.get("THE_GRAPH_API_KEY", DEFAULT_API_KEY).strip()
     assert api_key, api_key
 
-    if load_previous_output() is None:
+    previous_output = load_previous_output()
+    if previous_output is None or not output_uses_normalized_schema(previous_output):
         refresh_holdings_fill_missing_prices(api_key, None)
     print(
         json.dumps(

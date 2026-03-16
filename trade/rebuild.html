@@ -90,59 +90,97 @@
       if (!condition) throw new Error(message);
     }
 
-    function normalizeMarketOutcome(row) {
-      const outcomes = row.market_outcomes || [];
-      const outcomeIndex = row.outcome_index;
+    function buildLookups(output) {
+      const tokenMap = new Map();
+      const conditionMap = new Map();
+      for (const row of output.tokens || []) {
+        tokenMap.set(row.token_id, row);
+      }
+      for (const row of output.conditions || []) {
+        conditionMap.set(row.condition_id, row);
+      }
+      return { tokenMap, conditionMap };
+    }
+
+    function getTokenRow(row, lookups) {
+      const tokenRow = lookups.tokenMap.get(row.token_id);
+      assertCond(tokenRow, `missing token ${row.token_id}`);
+      return tokenRow;
+    }
+
+    function getConditionRow(tokenRow, lookups) {
+      if (!tokenRow.condition_id) return null;
+      const conditionRow = lookups.conditionMap.get(tokenRow.condition_id) || null;
+      assertCond(conditionRow, `missing condition ${tokenRow.condition_id}`);
+      return conditionRow;
+    }
+
+    function getOutcomeIndex(tokenRow, conditionRow) {
+      if (!conditionRow) return null;
+      const outcomeIndex = (conditionRow.token_ids || []).indexOf(tokenRow.token_id);
+      assertCond(outcomeIndex >= 0, `missing condition token ${tokenRow.token_id}`);
+      return outcomeIndex;
+    }
+
+    function normalizeMarketOutcome(tokenRow, conditionRow) {
+      const outcomes = conditionRow ? conditionRow.market_outcomes || [] : [];
+      const outcomeIndex = getOutcomeIndex(tokenRow, conditionRow);
       if (Number.isInteger(outcomeIndex) && outcomeIndex >= 0 && outcomeIndex < outcomes.length) {
         return String(outcomes[outcomeIndex]);
       }
       return "";
     }
 
-    function buildTokenLabel(row, index) {
-      if (row.market_question) {
-        const outcome = normalizeMarketOutcome(row);
-        const suffix = outcome ? ` [${outcome}]` : ` [o${row.outcome_index}]`;
-        let question = String(row.market_question).trim();
+    function buildTokenLabel(row, index, lookups) {
+      const tokenRow = getTokenRow(row, lookups);
+      const conditionRow = getConditionRow(tokenRow, lookups);
+      const outcomeIndex = getOutcomeIndex(tokenRow, conditionRow);
+      if (conditionRow && conditionRow.market_question) {
+        const outcome = normalizeMarketOutcome(tokenRow, conditionRow);
+        const suffix = outcome ? ` [${outcome}]` : ` [o${outcomeIndex}]`;
+        let question = String(conditionRow.market_question).trim();
         if (question.length > 60) question = question.slice(0, 57) + "...";
         return `#${index} ${question}${suffix}`;
       }
-      if (row.question_id) return `#${index} ${String(row.question_id).slice(2, 10)} o${row.outcome_index}`;
-      if (row.condition_id) return `#${index} ${String(row.condition_id).slice(2, 10)} o${row.outcome_index}`;
-      return `#${index} token ${String(row.token_id).slice(0, 10)}`;
+      if (conditionRow && conditionRow.question_id) return `#${index} ${String(conditionRow.question_id).slice(2, 10)} o${outcomeIndex}`;
+      if (tokenRow.condition_id) return `#${index} ${String(tokenRow.condition_id).slice(2, 10)} o${outcomeIndex}`;
+      return `#${index} token ${String(tokenRow.token_id).slice(0, 10)}`;
     }
 
     function buildChart(output) {
+      const lookups = buildLookups(output);
       const labels = [];
       const values = [];
       const customdata = [];
       for (let i = 0; i < output.aggregate.length; i += 1) {
         const row = output.aggregate[i];
+        const tokenRow = getTokenRow(row, lookups);
+        const conditionRow = getConditionRow(tokenRow, lookups);
+        const outcomeIndex = getOutcomeIndex(tokenRow, conditionRow);
         const weight = Number(row.aggregate_weight);
         assertCond(Number.isFinite(weight), "invalid aggregate_weight");
         if (weight <= 0) continue;
-        labels.push(buildTokenLabel(row, i + 1));
+        labels.push(buildTokenLabel(row, i + 1, lookups));
         values.push(weight);
         customdata.push([
           row.token_id,
-          row.question_id,
-          row.condition_id,
-          row.outcome_index,
+          conditionRow ? conditionRow.question_id : null,
+          tokenRow.condition_id,
+          outcomeIndex,
           row.holder_count,
           row.holder_ratio,
           row.aggregate_weight,
-          row.price,
-          row.price_source,
-          row.market_question || "",
-          row.market_description || "",
-          row.market_url || "",
-          normalizeMarketOutcome(row),
+          tokenRow.price,
+          conditionRow ? conditionRow.market_question || "" : "",
+          conditionRow ? conditionRow.market_description || "" : "",
+          conditionRow ? conditionRow.market_url || "" : "",
+          normalizeMarketOutcome(tokenRow, conditionRow),
         ]);
       }
       if (labels.length === 0) {
         labels.push("empty");
         values.push(1.0);
-        customdata.push([null, null, null, null, 0, "0.0000000000", "0.0000000000", null, "empty", "", "", "", ""]);
+        customdata.push([null, null, null, null, 0, "0.0000000000", "0.0000000000", null, "", "", "", ""]);
       }
       return {
         traces: [
@@ -162,14 +200,13 @@
               "<br>holder_ratio=%{customdata[5]}" +
               "<br>outcome_index=%{customdata[3]}" +
               "<br>price=%{customdata[7]}" +
-              "<br>price_source=%{customdata[8]}" +
               "<br>question_id=%{customdata[1]}" +
               "<br>condition_id=%{customdata[2]}" +
               "<br>token_id=%{customdata[0]}" +
-              "<br>question=%{customdata[9]}" +
-              "<br>description=%{customdata[10]}" +
-              "<br>url=%{customdata[11]}" +
-              "<br>outcome=%{customdata[12]}" +
+              "<br>question=%{customdata[8]}" +
+              "<br>description=%{customdata[9]}" +
+              "<br>url=%{customdata[10]}" +
+              "<br>outcome=%{customdata[11]}" +
               "<extra></extra>",
             customdata,
           },
