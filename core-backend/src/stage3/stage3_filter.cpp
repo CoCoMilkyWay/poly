@@ -481,7 +481,7 @@ FilterResult stage3_query_filter(Stage3Runtime *rt, const FilterRequest &req) {
 
     // Create feature getter for this user
     auto get_feature = [&](int8_t tag_id) -> const FeatureSlot * {
-      return feature_find(rt, user_idx, anchor_bucket, tag_id);
+      return feature_find_le(rt, user_idx, anchor_bucket, tag_id);
     };
 
     // Check if user has any feature at anchor_bucket

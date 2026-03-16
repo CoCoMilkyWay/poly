@@ -1,6 +1,8 @@
 #include "../core/rocks_store.hpp"
 #include "stage3.hpp"
 
+#include "misc/profiler.hpp"
+
 #include <algorithm>
 #include <cassert>
 #include <cmath>
@@ -32,8 +34,11 @@ size_t stage3_sync_tick(Stage3Runtime *rt,
   }
 
   // Fetch events from Stage2
-  std::vector<core::rocks::Stage2UserEventRecord> source_events =
-      event_store.scan_by_sort_key(cursor, head_sort_key, batch_limit);
+  std::vector<core::rocks::Stage2UserEventRecord> source_events;
+  {
+    TraceN("s3/sync_tick/scan_events");
+    source_events = event_store.scan_by_sort_key(cursor, head_sort_key, batch_limit);
+  }
 
   if (source_events.empty()) {
     // No events, advance cursor
@@ -42,34 +47,40 @@ size_t stage3_sync_tick(Stage3Runtime *rt,
   }
 
   // Cut at block boundary if we hit the limit
-  if (source_events.size() == batch_limit) {
-    const int64_t last_block = sort_key_to_block(source_events.back().sort_key);
-    size_t cut = source_events.size();
-    while (cut > 0 && sort_key_to_block(source_events[cut - 1].sort_key) == last_block) {
-      --cut;
+  {
+    TraceN("s3/sync_tick/cut_boundary");
+    if (source_events.size() == batch_limit) {
+      const int64_t last_block = sort_key_to_block(source_events.back().sort_key);
+      size_t cut = source_events.size();
+      while (cut > 0 && sort_key_to_block(source_events[cut - 1].sort_key) == last_block) {
+        --cut;
+      }
+      assert(cut > 0); // Single block should not exceed batch limit
+      source_events.resize(cut);
     }
-    assert(cut > 0); // Single block should not exceed batch limit
-    source_events.resize(cut);
   }
 
   // Convert to EventInput
   std::vector<EventInput> batch;
-  batch.reserve(source_events.size());
+  {
+    TraceN("s3/sync_tick/convert_events");
+    batch.reserve(source_events.size());
 
-  for (const auto &src : source_events) {
-    assert(src.user_addr.size() == 20);
+    for (const auto &src : source_events) {
+      assert(src.user_addr.size() == 20);
 
-    EventInput evt{};
-    std::memcpy(evt.user_addr.data(), src.user_addr.data(), 20);
-    evt.sort_key = src.sort_key;
-    evt.cond_idx = src.cond_idx;
-    evt.event_type = src.event_type;
-    evt.token_idx = src.token_idx;
-    evt.collateral = src.collateral;
-    evt.amount = src.amount;
-    evt.price_1e6 = src.price;
+      EventInput evt{};
+      std::memcpy(evt.user_addr.data(), src.user_addr.data(), 20);
+      evt.sort_key = src.sort_key;
+      evt.cond_idx = src.cond_idx;
+      evt.event_type = src.event_type;
+      evt.token_idx = src.token_idx;
+      evt.collateral = src.collateral;
+      evt.amount = src.amount;
+      evt.price_1e6 = src.price;
 
-    batch.push_back(evt);
+      batch.push_back(evt);
+    }
   }
 
   // Process the batch
@@ -89,10 +100,6 @@ void stage3_post_sync_prune(Stage3Runtime *rt) {
       sort_key_to_block(rt->header->cursor_sort_key));
   const int32_t min_bucket_to_keep = std::max(0, current_bucket - 99);
 
-  if (min_bucket_to_keep <= rt->dirty_users.last_pruned_bucket) {
-    return;
-  }
-
   for (uint32_t user_idx : rt->dirty_users.users) {
     sharpe_prune_old_buckets(rt, user_idx, min_bucket_to_keep);
   }
@@ -107,21 +114,25 @@ size_t process_event_batch(Stage3Runtime *rt, const std::vector<EventInput> &bat
   if (batch.empty())
     return 0;
 
+  const int64_t batch_start_sort_key = batch.front().sort_key;
+
   // ========== Step 1: Build user index cache ==========
   std::unordered_map<Address20, uint32_t, Address20Hash, Address20Equal> user_idx_cache;
-  user_idx_cache.reserve(batch.size());
-  rt->dirty_users.users.clear();
+  {
+    TraceN("s3/sync_tick/batch/user_index");
+    user_idx_cache.reserve(batch.size());
 
-  for (const auto &evt : batch) {
-    auto [it, inserted] = user_idx_cache.try_emplace(evt.user_addr, NULL_IDX);
-    if (!inserted) {
-      continue;
+    for (const auto &evt : batch) {
+      auto [it, inserted] = user_idx_cache.try_emplace(evt.user_addr, NULL_IDX);
+      if (!inserted) {
+        continue;
+      }
+      uint32_t user_idx = user_index_lookup(rt, evt.user_addr);
+      if (user_idx == NULL_IDX) {
+        user_idx = user_get_or_create(rt, evt.user_addr);
+      }
+      it->second = user_idx;
     }
-    uint32_t user_idx = user_index_lookup(rt, evt.user_addr);
-    if (user_idx == NULL_IDX) {
-      user_idx = user_get_or_create(rt, evt.user_addr);
-    }
-    it->second = user_idx;
   }
 
   // ========== Step 2: Build runtime feature state for touched user/tag ==========
@@ -157,58 +168,113 @@ size_t process_event_batch(Stage3Runtime *rt, const std::vector<EventInput> &bat
       assert(state.exposure_entry_sum == 0);
     }
   };
+  struct ResolvedEvent {
+    const EventInput *evt = nullptr;
+    uint32_t user_idx = NULL_IDX;
+    const ConditionMeta *cond = nullptr;
+    int8_t tag_id = -1;
+    int64_t current_block = 0;
+    int32_t bucket = 0;
+    int32_t block_offset = 0;
+    uint64_t tag_runtime_key = 0;
+    uint64_t global_runtime_key = 0;
+    FeatureRuntimeState *tag_runtime_state = nullptr;
+    FeatureRuntimeState *global_runtime_state = nullptr;
+  };
 
-  std::unordered_map<uint32_t, std::unordered_set<int8_t>> touched_tags_by_user;
-  touched_tags_by_user.reserve(user_idx_cache.size());
-  for (const auto &evt : batch) {
-    if (evt.cond_idx < 0) {
-      continue;
+  std::vector<ResolvedEvent> resolved_batch;
+  {
+    TraceN("s3/sync_tick/batch/resolve");
+    resolved_batch.reserve(batch.size());
+    rt->dirty_users.users.clear();
+    rt->dirty_users.users.reserve(user_idx_cache.size());
+    for (const auto &[_, user_idx] : user_idx_cache) {
+      rt->dirty_users.users.insert(user_idx);
     }
-    const ConditionMeta *cond = stage3_get_condition(rt, evt.cond_idx);
-    assert(cond != nullptr);
-    assert(evt.token_idx >= 0);
-    assert(evt.token_idx < cond->outcome_count);
-    auto user_it = user_idx_cache.find(evt.user_addr);
-    assert(user_it != user_idx_cache.end());
-    const uint32_t user_idx = user_it->second;
-    auto &touched_tags = touched_tags_by_user[user_idx];
-    touched_tags.insert(cond->tag_id);
-    touched_tags.insert(-1);
+
+    for (const auto &evt : batch) {
+      auto user_it = user_idx_cache.find(evt.user_addr);
+      assert(user_it != user_idx_cache.end());
+
+      ResolvedEvent resolved{};
+      resolved.evt = &evt;
+      resolved.user_idx = user_it->second;
+      resolved.current_block = sort_key_to_block(evt.sort_key);
+      resolved.bucket = block_to_bucket(resolved.current_block);
+      resolved.block_offset = static_cast<int32_t>(resolved.current_block % BLOCK_BUCKET_SIZE);
+      resolved.global_runtime_key = runtime_pair_key(resolved.user_idx, -1);
+
+      if (evt.cond_idx >= 0) {
+        const ConditionMeta *cond = stage3_get_condition(rt, evt.cond_idx);
+        assert(cond != nullptr);
+        assert(evt.token_idx >= 0);
+        assert(evt.token_idx < cond->outcome_count);
+        resolved.cond = cond;
+        resolved.tag_id = cond->tag_id;
+        resolved.tag_runtime_key = runtime_pair_key(resolved.user_idx, resolved.tag_id);
+      }
+
+      resolved_batch.push_back(resolved);
+    }
   }
 
+  std::unordered_map<uint32_t, std::unordered_set<int8_t>> touched_tags_by_user;
   std::unordered_map<uint64_t, FeatureRuntimeState> runtime_state_by_pair;
-  runtime_state_by_pair.reserve(touched_tags_by_user.size() * 4);
-  for (const auto &[user_idx, tags] : touched_tags_by_user) {
-    for (int8_t tag_id : tags) {
-      runtime_state_by_pair.try_emplace(runtime_pair_key(user_idx, tag_id), FeatureRuntimeState{});
-    }
-    uint32_t idx = rt->users[user_idx].token_head;
-    while (idx != NULL_IDX) {
-      TokenSlot *tok = &rt->token_pool[idx];
-      if (tok->cond_idx >= 0) {
-        const ConditionMeta *cond = stage3_get_condition(rt, tok->cond_idx);
-        assert(cond != nullptr);
-        const int8_t token_tag_id = cond->tag_id;
-        const TokenFeatureContrib contrib = token_feature_contrib(*tok);
-        if (tags.contains(token_tag_id)) {
-          FeatureRuntimeState &tag_state = runtime_state_by_pair[runtime_pair_key(user_idx, token_tag_id)];
-          apply_runtime_delta(tag_state, contrib.token_count, contrib.exposure, contrib.exposure_entry);
-        }
-        if (tags.contains(-1)) {
-          FeatureRuntimeState &global_state = runtime_state_by_pair[runtime_pair_key(user_idx, -1)];
-          apply_runtime_delta(global_state, contrib.token_count, contrib.exposure, contrib.exposure_entry);
-        }
+  {
+    TraceN("s3/sync_tick/batch/runtime_state");
+    touched_tags_by_user.reserve(user_idx_cache.size());
+    for (const auto &resolved_evt : resolved_batch) {
+      if (resolved_evt.cond == nullptr) {
+        continue;
       }
-      idx = tok->next;
+      auto &touched_tags = touched_tags_by_user[resolved_evt.user_idx];
+      touched_tags.insert(resolved_evt.tag_id);
+      touched_tags.insert(-1);
+    }
+
+    runtime_state_by_pair.reserve(touched_tags_by_user.size() * 4);
+    for (const auto &[user_idx, tags] : touched_tags_by_user) {
+      for (int8_t tag_id : tags) {
+        runtime_state_by_pair.try_emplace(runtime_pair_key(user_idx, tag_id), FeatureRuntimeState{});
+      }
+      uint32_t idx = rt->users[user_idx].token_head;
+      while (idx != NULL_IDX) {
+        TokenSlot *tok = &rt->token_pool[idx];
+        if (tok->cond_idx >= 0) {
+          const ConditionMeta *cond = stage3_get_condition(rt, tok->cond_idx);
+          assert(cond != nullptr);
+          const int8_t token_tag_id = cond->tag_id;
+          const TokenFeatureContrib contrib = token_feature_contrib(*tok);
+          if (tags.contains(token_tag_id)) {
+            FeatureRuntimeState &tag_state = runtime_state_by_pair[runtime_pair_key(user_idx, token_tag_id)];
+            apply_runtime_delta(tag_state, contrib.token_count, contrib.exposure, contrib.exposure_entry);
+          }
+          if (tags.contains(-1)) {
+            FeatureRuntimeState &global_state = runtime_state_by_pair[runtime_pair_key(user_idx, -1)];
+            apply_runtime_delta(global_state, contrib.token_count, contrib.exposure, contrib.exposure_entry);
+          }
+        }
+        idx = tok->next;
+      }
+    }
+
+    for (auto &resolved_evt : resolved_batch) {
+      if (resolved_evt.cond == nullptr) {
+        continue;
+      }
+      auto tag_it = runtime_state_by_pair.find(resolved_evt.tag_runtime_key);
+      auto global_it = runtime_state_by_pair.find(resolved_evt.global_runtime_key);
+      assert(tag_it != runtime_state_by_pair.end());
+      assert(global_it != runtime_state_by_pair.end());
+      resolved_evt.tag_runtime_state = &tag_it->second;
+      resolved_evt.global_runtime_state = &global_it->second;
     }
   }
 
   // ========== Step 3: Process each event ==========
-  for (const auto &evt : batch) {
-    auto user_it = user_idx_cache.find(evt.user_addr);
-    assert(user_it != user_idx_cache.end());
-    const uint32_t user_idx = user_it->second;
-    rt->dirty_users.users.insert(user_idx);
+  for (const auto &resolved_evt : resolved_batch) {
+    const EventInput &evt = *resolved_evt.evt;
+    const uint32_t user_idx = resolved_evt.user_idx;
 
     UserBlock *user = &rt->users[user_idx];
     const int64_t prev_pnl = user->total_realized_pnl + user->total_unrealized_pnl;
@@ -218,17 +284,12 @@ size_t process_event_batch(Stage3Runtime *rt, const std::vector<EventInput> &bat
     int64_t new_mtm = 0;
     int64_t pos_before = 0;
     TokenFeatureContrib after_contrib{};
-    int8_t event_tag_id = -1;
-    FeatureRuntimeState tag_runtime_state{};
-    FeatureRuntimeState global_runtime_state{};
+    int8_t event_tag_id = resolved_evt.tag_id;
 
     // Process token state for valid condition events
-    if (evt.cond_idx >= 0) {
-      const ConditionMeta *cond = stage3_get_condition(rt, evt.cond_idx);
-      assert(cond != nullptr);
-      assert(evt.token_idx >= 0);
-      assert(evt.token_idx < cond->outcome_count);
-      event_tag_id = cond->tag_id;
+    if (resolved_evt.cond != nullptr) {
+      TraceN("s3/sync_tick/evt/token_trade");
+      const ConditionMeta *cond = resolved_evt.cond;
 
       tok = token_get_or_create(rt, user_idx, evt.cond_idx,
                                 static_cast<int16_t>(evt.token_idx),
@@ -238,7 +299,8 @@ size_t process_event_batch(Stage3Runtime *rt, const std::vector<EventInput> &bat
       const int64_t lp_before = tok->lp;
       if (lp_before > 0) {
         old_mtm = static_cast<int64_t>(
-            static_cast<long double>(pos_before) * static_cast<long double>(lp_before) / 1e6L) - cost_before;
+                      static_cast<long double>(pos_before) * static_cast<long double>(lp_before) / 1e6L) -
+                  cost_before;
       }
 
       const TokenFeatureContrib before_contrib = token_feature_contrib(*tok);
@@ -246,19 +308,18 @@ size_t process_event_batch(Stage3Runtime *rt, const std::vector<EventInput> &bat
       after_contrib = token_feature_contrib(*tok);
       if (tok->lp > 0) {
         new_mtm = static_cast<int64_t>(
-            static_cast<long double>(tok->pos) * static_cast<long double>(tok->lp) / 1e6L) - tok->cost;
+                      static_cast<long double>(tok->pos) * static_cast<long double>(tok->lp) / 1e6L) -
+                  tok->cost;
       }
 
       const int64_t token_count_delta = after_contrib.token_count - before_contrib.token_count;
       const int64_t exposure_delta = after_contrib.exposure - before_contrib.exposure;
       const __int128 exposure_entry_delta = after_contrib.exposure_entry - before_contrib.exposure_entry;
 
-      FeatureRuntimeState &tag_state = runtime_state_by_pair[runtime_pair_key(user_idx, event_tag_id)];
-      FeatureRuntimeState &global_state = runtime_state_by_pair[runtime_pair_key(user_idx, -1)];
+      FeatureRuntimeState &tag_state = *resolved_evt.tag_runtime_state;
+      FeatureRuntimeState &global_state = *resolved_evt.global_runtime_state;
       apply_runtime_delta(tag_state, token_count_delta, exposure_delta, exposure_entry_delta);
       apply_runtime_delta(global_state, token_count_delta, exposure_delta, exposure_entry_delta);
-      tag_runtime_state = tag_state;
-      global_runtime_state = global_state;
     }
 
     // ========== Step 3.4: Update UserBlock ==========
@@ -266,7 +327,7 @@ size_t process_event_batch(Stage3Runtime *rt, const std::vector<EventInput> &bat
     user->total_realized_pnl += realized_delta;
 
     // Incremental update: only touched token changes unrealized / effective count.
-    if (evt.cond_idx >= 0) {
+    if (resolved_evt.cond != nullptr) {
       user->total_unrealized_pnl += (new_mtm - old_mtm);
       const bool was_effective = is_effective_holding(pos_before);
       const bool is_effective = is_effective_holding(tok->pos);
@@ -296,49 +357,66 @@ size_t process_event_batch(Stage3Runtime *rt, const std::vector<EventInput> &bat
     rec.token_count = static_cast<int32_t>(user->token_count);
 
     // Calculate exposure, volume, holding_period
-    if (evt.cond_idx >= 0 && tok) {
+    if (resolved_evt.cond != nullptr && tok) {
       rec.exposure = after_contrib.exposure;
       rec.volume = static_cast<int64_t>(
           std::abs(static_cast<double>(evt.amount) * static_cast<double>(evt.price_1e6) / 1e6));
-      int64_t current_block = sort_key_to_block(evt.sort_key);
-      rec.holding_period = (tok->entry_block > 0) ? (current_block - tok->entry_block) : 0;
+      rec.holding_period = (tok->entry_block > 0) ? (resolved_evt.current_block - tok->entry_block) : 0;
     }
 
-    events_log_append(rt, rec, user_idx);
+    {
+      TraceN("s3/sync_tick/evt/log_append");
+      events_log_append(rt, rec, user_idx);
+    }
 
     // ========== Step 3.6: Update Features ==========
-    if (evt.cond_idx >= 0) {
-      update_feature_on_event(rt, user_idx, evt, rec, tag_runtime_state, global_runtime_state);
+    if (resolved_evt.cond != nullptr) {
+      TraceN("s3/sync_tick/evt/feature");
+      update_feature_on_event(
+          rt,
+          user_idx,
+          resolved_evt.current_block,
+          resolved_evt.bucket,
+          evt,
+          rec,
+          *resolved_evt.tag_runtime_state,
+          *resolved_evt.global_runtime_state);
     }
 
     // ========== Step 3.7: Update Sharpe samples ==========
-    int64_t pnl = user->total_realized_pnl + user->total_unrealized_pnl;
-    int64_t current_block = sort_key_to_block(evt.sort_key);
-    int32_t bucket = block_to_bucket(current_block);
-    int32_t block_offset = static_cast<int32_t>(current_block % BLOCK_BUCKET_SIZE);
-    if (pnl != prev_pnl) {
-      update_sharpe_on_event(rt, user_idx, pnl, prev_pnl, bucket, block_offset);
+    {
+      TraceN("s3/sync_tick/evt/sharpe");
+      int64_t pnl = user->total_realized_pnl + user->total_unrealized_pnl;
+      if (pnl != prev_pnl) {
+        update_sharpe_on_event(rt, user_idx, pnl, prev_pnl, resolved_evt.bucket, resolved_evt.block_offset);
+      }
     }
 
     // ========== Step 3.8: Clean up empty token ==========
-    if (evt.cond_idx >= 0 && tok && tok->pos == 0) {
+    if (resolved_evt.cond != nullptr && tok && tok->pos == 0) {
       token_remove_if_empty(rt, user_idx, tok);
     }
   }
 
   // ========== Step 4: Batch finalization ==========
-  for (uint32_t user_idx : rt->dirty_users.users) {
-    const int32_t user_bucket = block_to_bucket(sort_key_to_block(rt->users[user_idx].last_sort_key));
-    FeatureSlot *global_feat = feature_find(rt, user_idx, user_bucket, -1);
-    if (global_feat != nullptr) {
-      calc_sharpe_for_feature(rt, user_idx, global_feat);
+  {
+    TraceN("s3/sync_tick/batch/finalize");
+    for (uint32_t user_idx : rt->dirty_users.users) {
+      uint32_t feat_idx = rt->users[user_idx].feature_head;
+      while (feat_idx != NULL_IDX) {
+        FeatureSlot *feat = &rt->feature_pool[feat_idx];
+        if ((feat->flags & 1) && feat->tag_id == -1 && feat->updated_sort_key >= batch_start_sort_key) {
+          calc_sharpe_for_feature(rt, user_idx, feat);
+        }
+        feat_idx = feat->next;
+      }
+      assert(std::isfinite(static_cast<double>(rt->users[user_idx].total_unrealized_pnl)));
+      rt->rank_cache.mark_dirty(user_idx);
     }
-    assert(std::isfinite(static_cast<double>(rt->users[user_idx].total_unrealized_pnl)));
-    rt->rank_cache.mark_dirty(user_idx);
-  }
 
-  rt->header->cursor_sort_key = batch.back().sort_key;
-  rt->header->cursor_processed_events += batch.size();
+    rt->header->cursor_sort_key = batch.back().sort_key;
+    rt->header->cursor_processed_events += batch.size();
+  }
 
   return batch.size();
 }

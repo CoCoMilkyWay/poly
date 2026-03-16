@@ -6,6 +6,7 @@
 #include <cstring>
 #include <fcntl.h>
 #include <filesystem>
+#include <limits>
 #include <queue>
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -623,6 +624,27 @@ FeatureSlot *feature_find(Stage3Runtime *rt, uint32_t user_idx, int32_t bucket, 
     return nullptr;
   }
   return &rt->feature_pool[it->second];
+}
+
+FeatureSlot *feature_find_le(Stage3Runtime *rt, uint32_t user_idx, int32_t bucket, int8_t tag_id) {
+  if (bucket < 0 || user_idx >= rt->header->user_count) {
+    return nullptr;
+  }
+
+  int32_t last_bucket = std::numeric_limits<int32_t>::max();
+  uint32_t idx = rt->users[user_idx].feature_head;
+  while (idx != NULL_IDX) {
+    FeatureSlot *feat = &rt->feature_pool[idx];
+    if (feat->flags & 1) {
+      assert(feat->bucket <= last_bucket);
+      last_bucket = feat->bucket;
+      if (feat->tag_id == tag_id && feat->bucket <= bucket) {
+        return feat;
+      }
+    }
+    idx = feat->next;
+  }
+  return nullptr;
 }
 
 FeatureSlot *feature_get_or_create(Stage3Runtime *rt, uint32_t user_idx, int32_t bucket, int8_t tag_id) {

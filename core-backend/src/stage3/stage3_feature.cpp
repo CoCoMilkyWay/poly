@@ -127,6 +127,195 @@ void update_tail_window(FeatureSlot *feat,
   feat->last_token_count_10w = current_token_count;
 }
 
+struct CarryState {
+  int64_t exposure = 0;
+  __int128 holding_exp = 0;
+  int64_t token_count = 0;
+};
+
+inline bool has_bucket_carry(const CarryState &carry) {
+  return carry.exposure > 0 || carry.token_count > 0;
+}
+
+CarryState carry_state_for_bucket_start(const FeatureSlot *prev_feat, int32_t bucket) {
+  CarryState carry{};
+  if (prev_feat == nullptr) {
+    return carry;
+  }
+
+  carry.exposure = prev_feat->last_exposure_10w;
+  carry.token_count = prev_feat->last_token_count_10w;
+  if (carry.exposure == 0) {
+    return carry;
+  }
+
+  const __int128 last_holding_exp =
+      i128_from_parts(prev_feat->last_holding_period_10w_lo, prev_feat->last_holding_period_10w_hi);
+  const int64_t bucket_start = static_cast<int64_t>(bucket) * BLOCK_BUCKET_SIZE;
+  assert(bucket_start >= prev_feat->last_block_10w);
+  carry.holding_exp =
+      last_holding_exp + static_cast<__int128>(carry.exposure) * (bucket_start - prev_feat->last_block_10w);
+  return carry;
+}
+
+CarryState advance_carry_one_bucket(const CarryState &carry) {
+  CarryState next = carry;
+  if (next.exposure > 0) {
+    next.holding_exp += static_cast<__int128>(next.exposure) * BLOCK_BUCKET_SIZE;
+  }
+  return next;
+}
+
+void seed_feature_full_bucket_from_carry(FeatureSlot *feat,
+                                         int32_t bucket,
+                                         const CarryState &carry,
+                                         int64_t updated_sort_key) {
+  const int64_t bucket_start = static_cast<int64_t>(bucket) * BLOCK_BUCKET_SIZE;
+  const int64_t bucket_len = BLOCK_BUCKET_SIZE;
+  feat->last_sort_key_10w = updated_sort_key;
+  feat->last_block_10w = bucket_start;
+  feat->last_exposure_10w = carry.exposure;
+  i128_to_parts(carry.holding_exp, feat->last_holding_period_10w_lo, feat->last_holding_period_10w_hi);
+  feat->last_token_count_10w = carry.token_count;
+  feat->time_weight_sum_10w = bucket_len;
+  feat->token_count_tw_sum_10w =
+      i64_narrow_checked(static_cast<__int128>(carry.token_count) * bucket_len);
+  i128_to_parts(static_cast<__int128>(carry.exposure) * bucket_len,
+                feat->exposure_tw_sum_10w_lo,
+                feat->exposure_tw_sum_10w_hi);
+  i128_to_parts(linear_series_i128(carry.holding_exp, carry.exposure, bucket_len),
+                feat->holding_period_exp_tw_sum_10w_lo,
+                feat->holding_period_exp_tw_sum_10w_hi);
+  feat->volume_sum_10w = 0;
+}
+
+void refresh_feature_outputs(Stage3Runtime *rt,
+                             uint32_t user_idx,
+                             int8_t tag,
+                             FeatureSlot *feat,
+                             int64_t updated_sort_key) {
+  if (feat->time_weight_sum_10w > 0) {
+    const long double tw = static_cast<long double>(feat->time_weight_sum_10w);
+    feat->token_avg_10w = round_i64(static_cast<long double>(feat->token_count_tw_sum_10w) / tw);
+
+    const __int128 exposure_tw_sum =
+        i128_from_parts(feat->exposure_tw_sum_10w_lo, feat->exposure_tw_sum_10w_hi);
+    feat->exposure_avg_10w = round_i64(i128_to_long_double(exposure_tw_sum) / tw);
+    feat->volume_10w = feat->volume_sum_10w;
+
+    if (exposure_tw_sum > 0) {
+      const __int128 holding_tw_sum =
+          i128_from_parts(feat->holding_period_exp_tw_sum_10w_lo, feat->holding_period_exp_tw_sum_10w_hi);
+      feat->holding_period_avg_10w =
+          round_i64(i128_to_long_double(holding_tw_sum) / i128_to_long_double(exposure_tw_sum));
+    } else {
+      feat->holding_period_avg_10w = 0;
+    }
+  } else {
+    feat->token_avg_10w = 0;
+    feat->exposure_avg_10w = 0;
+    feat->volume_10w = 0;
+    feat->holding_period_avg_10w = 0;
+  }
+
+  FeatureSlot *prev_feat = (feat->bucket > 0) ? feature_find_le(rt, user_idx, feat->bucket - 1, tag) : nullptr;
+  if (prev_feat) {
+    feat->ps_token_avg_10w =
+        i64_narrow_checked(static_cast<__int128>(prev_feat->ps_token_avg_10w) + feat->token_avg_10w);
+    feat->ps_exposure_avg_10w =
+        i64_narrow_checked(static_cast<__int128>(prev_feat->ps_exposure_avg_10w) + feat->exposure_avg_10w);
+    feat->ps_volume_10w =
+        i64_narrow_checked(static_cast<__int128>(prev_feat->ps_volume_10w) + feat->volume_10w);
+    feat->ps_holding_period_avg_10w =
+        i64_narrow_checked(static_cast<__int128>(prev_feat->ps_holding_period_avg_10w) + feat->holding_period_avg_10w);
+  } else {
+    feat->ps_token_avg_10w = feat->token_avg_10w;
+    feat->ps_exposure_avg_10w = feat->exposure_avg_10w;
+    feat->ps_volume_10w = feat->volume_10w;
+    feat->ps_holding_period_avg_10w = feat->holding_period_avg_10w;
+  }
+
+  const int32_t bucket_count = feat->bucket + 1;
+  const int32_t win_100 = std::min(10, bucket_count);
+  const int32_t win_1000 = std::min(100, bucket_count);
+
+  FeatureSlot *feat_10_back = (feat->bucket >= 10) ? feature_find_le(rt, user_idx, feat->bucket - 10, tag) : nullptr;
+  const int64_t ps_10_tok = feat_10_back ? feat_10_back->ps_token_avg_10w : 0;
+  const int64_t ps_10_exp = feat_10_back ? feat_10_back->ps_exposure_avg_10w : 0;
+  const int64_t ps_10_vol = feat_10_back ? feat_10_back->ps_volume_10w : 0;
+  const int64_t ps_10_hp = feat_10_back ? feat_10_back->ps_holding_period_avg_10w : 0;
+
+  if (win_100 > 0) {
+    feat->token_avg_100w = round_i64(static_cast<long double>(feat->ps_token_avg_10w - ps_10_tok) / win_100);
+    feat->exposure_avg_100w = round_i64(static_cast<long double>(feat->ps_exposure_avg_10w - ps_10_exp) / win_100);
+    feat->volume_avg_100w = round_i64(static_cast<long double>(feat->ps_volume_10w - ps_10_vol) / win_100);
+    feat->holding_period_avg_100w =
+        round_i64(static_cast<long double>(feat->ps_holding_period_avg_10w - ps_10_hp) / win_100);
+  } else {
+    feat->token_avg_100w = 0;
+    feat->exposure_avg_100w = 0;
+    feat->volume_avg_100w = 0;
+    feat->holding_period_avg_100w = 0;
+  }
+
+  FeatureSlot *feat_100_back =
+      (feat->bucket >= 100) ? feature_find_le(rt, user_idx, feat->bucket - 100, tag) : nullptr;
+  const int64_t ps_100_tok = feat_100_back ? feat_100_back->ps_token_avg_10w : 0;
+  const int64_t ps_100_exp = feat_100_back ? feat_100_back->ps_exposure_avg_10w : 0;
+  const int64_t ps_100_vol = feat_100_back ? feat_100_back->ps_volume_10w : 0;
+  const int64_t ps_100_hp = feat_100_back ? feat_100_back->ps_holding_period_avg_10w : 0;
+
+  if (win_1000 > 0) {
+    feat->token_avg_1000w = round_i64(static_cast<long double>(feat->ps_token_avg_10w - ps_100_tok) / win_1000);
+    feat->exposure_avg_1000w = round_i64(static_cast<long double>(feat->ps_exposure_avg_10w - ps_100_exp) / win_1000);
+    feat->volume_avg_1000w = round_i64(static_cast<long double>(feat->ps_volume_10w - ps_100_vol) / win_1000);
+    feat->holding_period_avg_1000w =
+        round_i64(static_cast<long double>(feat->ps_holding_period_avg_10w - ps_100_hp) / win_1000);
+  } else {
+    feat->token_avg_1000w = 0;
+    feat->exposure_avg_1000w = 0;
+    feat->volume_avg_1000w = 0;
+    feat->holding_period_avg_1000w = 0;
+  }
+
+  feat->updated_sort_key = updated_sort_key;
+}
+
+FeatureSlot *prepare_feature_bucket(Stage3Runtime *rt,
+                                    uint32_t user_idx,
+                                    int32_t bucket,
+                                    int8_t tag,
+                                    int64_t updated_sort_key) {
+  FeatureSlot *feat = feature_find(rt, user_idx, bucket, tag);
+  if (feat && feat->time_weight_sum_10w > 0) {
+    return feat;
+  }
+
+  FeatureSlot *prev_feat = (bucket > 0) ? feature_find_le(rt, user_idx, bucket - 1, tag) : nullptr;
+  if (prev_feat == nullptr) {
+    return feat ? feat : feature_get_or_create(rt, user_idx, bucket, tag);
+  }
+
+  CarryState carry = carry_state_for_bucket_start(prev_feat, prev_feat->bucket + 1);
+  for (int32_t gap_bucket = prev_feat->bucket + 1; gap_bucket < bucket; ++gap_bucket) {
+    if (!has_bucket_carry(carry)) {
+      break;
+    }
+    FeatureSlot *gap_feat = feature_get_or_create(rt, user_idx, gap_bucket, tag);
+    if (gap_feat->time_weight_sum_10w == 0) {
+      seed_feature_full_bucket_from_carry(gap_feat, gap_bucket, carry, updated_sort_key);
+      refresh_feature_outputs(rt, user_idx, tag, gap_feat, updated_sort_key);
+    }
+    carry = advance_carry_one_bucket(carry);
+  }
+
+  feat = feat ? feat : feature_get_or_create(rt, user_idx, bucket, tag);
+  if (feat->time_weight_sum_10w == 0 && has_bucket_carry(carry)) {
+    seed_feature_full_bucket_from_carry(feat, bucket, carry, updated_sort_key);
+  }
+  return feat;
+}
+
 } // namespace
 
 // ============================================================================
@@ -135,6 +324,8 @@ void update_tail_window(FeatureSlot *feat,
 
 void update_feature_on_event(Stage3Runtime *rt,
                              uint32_t user_idx,
+                             int64_t current_block,
+                             int32_t bucket,
                              const EventInput &evt,
                              const EventRecord &rec,
                              const FeatureRuntimeState &tag_state,
@@ -143,12 +334,10 @@ void update_feature_on_event(Stage3Runtime *rt,
   if (evt.cond_idx < 0)
     return;
 
-  const int64_t current_block = sort_key_to_block(evt.sort_key);
-  const int32_t bucket = block_to_bucket(current_block);
   const int8_t tag_id = rec.tag_id;
 
   const auto update_single_tag = [&](int8_t tag, const FeatureRuntimeState &state) {
-    FeatureSlot *feat = feature_get_or_create(rt, user_idx, bucket, tag);
+    FeatureSlot *feat = prepare_feature_bucket(rt, user_idx, bucket, tag, evt.sort_key);
     assert(state.exposure >= 0);
     assert(state.token_count >= 0);
 
@@ -168,86 +357,7 @@ void update_feature_on_event(Stage3Runtime *rt,
     if (is_volume_event(evt.event_type)) {
       feat->volume_sum_10w = i64_narrow_checked(static_cast<__int128>(feat->volume_sum_10w) + rec.volume);
     }
-
-    if (feat->time_weight_sum_10w > 0) {
-      const long double tw = static_cast<long double>(feat->time_weight_sum_10w);
-      feat->token_avg_10w = round_i64(static_cast<long double>(feat->token_count_tw_sum_10w) / tw);
-
-      const __int128 exposure_tw_sum = i128_from_parts(feat->exposure_tw_sum_10w_lo, feat->exposure_tw_sum_10w_hi);
-      feat->exposure_avg_10w = round_i64(i128_to_long_double(exposure_tw_sum) / tw);
-      feat->volume_10w = feat->volume_sum_10w;
-
-      if (exposure_tw_sum > 0) {
-        const __int128 holding_tw_sum =
-            i128_from_parts(feat->holding_period_exp_tw_sum_10w_lo, feat->holding_period_exp_tw_sum_10w_hi);
-        feat->holding_period_avg_10w = round_i64(i128_to_long_double(holding_tw_sum) / i128_to_long_double(exposure_tw_sum));
-      } else {
-        feat->holding_period_avg_10w = 0;
-      }
-    } else {
-      feat->token_avg_10w = 0;
-      feat->exposure_avg_10w = 0;
-      feat->volume_10w = 0;
-      feat->holding_period_avg_10w = 0;
-    }
-
-    FeatureSlot *prev_feat = (bucket > 0) ? feature_find(rt, user_idx, bucket - 1, tag) : nullptr;
-    if (prev_feat) {
-      feat->ps_token_avg_10w = i64_narrow_checked(static_cast<__int128>(prev_feat->ps_token_avg_10w) + feat->token_avg_10w);
-      feat->ps_exposure_avg_10w = i64_narrow_checked(static_cast<__int128>(prev_feat->ps_exposure_avg_10w) + feat->exposure_avg_10w);
-      feat->ps_volume_10w = i64_narrow_checked(static_cast<__int128>(prev_feat->ps_volume_10w) + feat->volume_10w);
-      feat->ps_holding_period_avg_10w =
-          i64_narrow_checked(static_cast<__int128>(prev_feat->ps_holding_period_avg_10w) + feat->holding_period_avg_10w);
-    } else {
-      feat->ps_token_avg_10w = feat->token_avg_10w;
-      feat->ps_exposure_avg_10w = feat->exposure_avg_10w;
-      feat->ps_volume_10w = feat->volume_10w;
-      feat->ps_holding_period_avg_10w = feat->holding_period_avg_10w;
-    }
-
-    const int32_t bucket_count = bucket + 1;
-    const int32_t win_100 = std::min(10, bucket_count);
-    const int32_t win_1000 = std::min(100, bucket_count);
-
-    FeatureSlot *feat_10_back = (bucket >= 10) ? feature_find(rt, user_idx, bucket - 10, tag) : nullptr;
-    const int64_t ps_10_tok = feat_10_back ? feat_10_back->ps_token_avg_10w : 0;
-    const int64_t ps_10_exp = feat_10_back ? feat_10_back->ps_exposure_avg_10w : 0;
-    const int64_t ps_10_vol = feat_10_back ? feat_10_back->ps_volume_10w : 0;
-    const int64_t ps_10_hp = feat_10_back ? feat_10_back->ps_holding_period_avg_10w : 0;
-
-    if (win_100 > 0) {
-      feat->token_avg_100w = round_i64(static_cast<long double>(feat->ps_token_avg_10w - ps_10_tok) / win_100);
-      feat->exposure_avg_100w = round_i64(static_cast<long double>(feat->ps_exposure_avg_10w - ps_10_exp) / win_100);
-      feat->volume_avg_100w = round_i64(static_cast<long double>(feat->ps_volume_10w - ps_10_vol) / win_100);
-      feat->holding_period_avg_100w =
-          round_i64(static_cast<long double>(feat->ps_holding_period_avg_10w - ps_10_hp) / win_100);
-    } else {
-      feat->token_avg_100w = 0;
-      feat->exposure_avg_100w = 0;
-      feat->volume_avg_100w = 0;
-      feat->holding_period_avg_100w = 0;
-    }
-
-    FeatureSlot *feat_100_back = (bucket >= 100) ? feature_find(rt, user_idx, bucket - 100, tag) : nullptr;
-    const int64_t ps_100_tok = feat_100_back ? feat_100_back->ps_token_avg_10w : 0;
-    const int64_t ps_100_exp = feat_100_back ? feat_100_back->ps_exposure_avg_10w : 0;
-    const int64_t ps_100_vol = feat_100_back ? feat_100_back->ps_volume_10w : 0;
-    const int64_t ps_100_hp = feat_100_back ? feat_100_back->ps_holding_period_avg_10w : 0;
-
-    if (win_1000 > 0) {
-      feat->token_avg_1000w = round_i64(static_cast<long double>(feat->ps_token_avg_10w - ps_100_tok) / win_1000);
-      feat->exposure_avg_1000w = round_i64(static_cast<long double>(feat->ps_exposure_avg_10w - ps_100_exp) / win_1000);
-      feat->volume_avg_1000w = round_i64(static_cast<long double>(feat->ps_volume_10w - ps_100_vol) / win_1000);
-      feat->holding_period_avg_1000w =
-          round_i64(static_cast<long double>(feat->ps_holding_period_avg_10w - ps_100_hp) / win_1000);
-    } else {
-      feat->token_avg_1000w = 0;
-      feat->exposure_avg_1000w = 0;
-      feat->volume_avg_1000w = 0;
-      feat->holding_period_avg_1000w = 0;
-    }
-
-    feat->updated_sort_key = evt.sort_key;
+    refresh_feature_outputs(rt, user_idx, tag, feat, evt.sort_key);
   };
 
   update_single_tag(tag_id, tag_state);

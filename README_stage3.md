@@ -23,10 +23,7 @@
 
 ## 建立动态高玩池(特征工程, 统一表 + Compute Graph)
 
-10w blk ~ 2.3day ~ 日线  
-100w blk ~ 23day ~ 月线  
-1000w blk ~ 230day ~ 年线
-
+10w块≈2.3天(日) | 100w块≈23天(月) | 1000w块≈230天(年)
 特征张量索引: `User * Time(per 10w bucket) * Feature`
 
 时序特征(名称,数量,统计方式,描述):

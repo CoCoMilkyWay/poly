@@ -1,0 +1,21 @@
+如果我只监听polymarket协议下几个地址的事件， 用RPC可以很省钱吗？
+
+好问题！这要看你监听的是什么：
+两种监听方式
+类型	方法	数据量	RPC 成本
+已确认的 Events	eth_subscribe("logs")	很少	便宜 ✓
+Pending Transactions	eth_subscribe("newPendingTransactions")	巨大	很贵 ✗
+如果只监听 Events（合约事件）
+Polymarket 的合约事件（如下单、成交等）一天可能只有几千到几万条，用 RPC 非常便宜：
+# 订阅特定地址的 events（非常省流量）sub = {    "jsonrpc": "2.0",    "id": 1,    "method": "eth_subscribe",    "params": [        "logs",        {            "address": [                "0x4bFb41d5B3570DeFd03C39a9A4D8dE6Bd8B8982E",  # Polymarket CTF Exchange                "0x..."  # 其他地址            ],            "topics": [...]  # 可选：过滤特定事件类型        }    ]}
+成本估算（Alchemy）
+Polymarket 日交易量：假设 10,000 笔每笔 event：~10 CU每天：100,000 CU每月：300万 CUAlchemy 免费额度：300M CU/月实际使用：3M CU/月 = 免费额度的 1%
+结论：免费额度完全够用！
+但是...
+如果你想抢先看到 pending tx（还没上链的），那必须用 newPendingTransactions，就很贵了。
+你的真实需求是？
+需求	推荐方案
+看 Polymarket 已成交的订单	RPC + logs 订阅（免费够用）
+抢先看到别人的下单（MEV）	自建节点（必须）
+监控价格变化	RPC + logs 订阅
+你是想做哪种？

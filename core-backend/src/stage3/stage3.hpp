@@ -568,6 +568,7 @@ void token_remove_if_empty(Stage3Runtime *rt, uint32_t user_idx, TokenSlot *tok)
 // ============================================================================
 
 FeatureSlot *feature_find(Stage3Runtime *rt, uint32_t user_idx, int32_t bucket, int8_t tag_id);
+FeatureSlot *feature_find_le(Stage3Runtime *rt, uint32_t user_idx, int32_t bucket, int8_t tag_id);
 FeatureSlot *feature_get_or_create(Stage3Runtime *rt, uint32_t user_idx, int32_t bucket, int8_t tag_id);
 
 // ============================================================================
@@ -596,6 +597,8 @@ struct FeatureRuntimeState {
 
 void update_feature_on_event(Stage3Runtime *rt,
                              uint32_t user_idx,
+                             int64_t current_block,
+                             int32_t bucket,
                              const EventInput &evt,
                              const EventRecord &rec,
                              const FeatureRuntimeState &tag_state,
@@ -726,6 +729,10 @@ inline int32_t block_to_bucket(int64_t block) {
 
 inline int64_t bucket_end_block(int32_t bucket) {
   return static_cast<int64_t>(bucket + 1) * BLOCK_BUCKET_SIZE;
+}
+
+inline int64_t bucket_last_block(int32_t bucket) {
+  return bucket_end_block(bucket) - 1;
 }
 
 inline bool is_usd_collateral(int32_t collateral) {

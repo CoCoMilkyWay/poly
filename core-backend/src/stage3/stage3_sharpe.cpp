@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <limits>
 
 namespace stage3 {
 
@@ -73,44 +74,51 @@ SharpeWindow calc_sharpe_window(
   SharpeWindow result{};
   result.sharpe = 0.0f;
 
-  if (samples.empty()) {
+  assert(end_block >= start_block);
+
+  long double min_x = 0.0L;
+  int64_t tail_pnl = p0;
+  for (const auto &sample : samples) {
+    min_x = std::min(min_x, static_cast<long double>(sample.second - p0));
+    tail_pnl = sample.second;
+  }
+  min_x = std::min(min_x, static_cast<long double>(tail_pnl - p0));
+
+  const long double nav_base =
+      static_cast<long double>(avg_exposure) + std::fabs(min_x) + 1.0L;
+  if (nav_base <= 0.0L) {
     return result;
   }
 
-  assert(end_block >= start_block);
-
-  long double min_pnl = static_cast<long double>(p0);
-  int64_t tail_pnl = p0;
-  for (const auto &sample : samples) {
-    min_pnl = std::min(min_pnl, static_cast<long double>(sample.second));
-    tail_pnl = sample.second;
-  }
-
-  const long double nav_base =
-      std::max(static_cast<long double>(avg_exposure), std::fabs(min_pnl)) + 1.0L;
-
-  double sum_r = 0.0;
-  double sum_r2_dt = 0.0;
+  long double sum_r = 0.0L;
+  long double sum_r2_dt = 0.0L;
   int64_t prev_block = start_block - 1;
-  int64_t prev_pnl = p0;
+  long double prev_x = 0.0L;
+  bool invalid = false;
 
   auto append_sample = [&](int64_t block, int64_t pnl) {
     assert(block >= prev_block);
     if (block == prev_block) {
-      prev_pnl = pnl;
+      prev_x = static_cast<long double>(pnl - p0);
       return;
     }
     const int64_t dt = block - prev_block;
-    assert(dt > 0);
-    const long double nav_prev = nav_base + static_cast<long double>(prev_pnl);
-    const long double nav_curr = nav_base + static_cast<long double>(pnl);
-    assert(nav_prev > 0.0L);
-    assert(nav_curr > 0.0L);
-    const double r = static_cast<double>((nav_curr - nav_prev) / nav_prev);
+    if (dt <= 0) {
+      invalid = true;
+      return;
+    }
+    const long double curr_x = static_cast<long double>(pnl - p0);
+    const long double nav_prev = nav_base + prev_x;
+    const long double nav_curr = nav_base + curr_x;
+    if (nav_prev <= 0.0L || nav_curr <= 0.0L) {
+      invalid = true;
+      return;
+    }
+    const long double r = (nav_curr - nav_prev) / nav_prev;
     sum_r += r;
-    sum_r2_dt += (r * r) / static_cast<double>(dt);
+    sum_r2_dt += (r * r) / static_cast<long double>(dt);
     prev_block = block;
-    prev_pnl = pnl;
+    prev_x = curr_x;
   };
 
   for (const auto &sample : samples) {
@@ -121,25 +129,34 @@ SharpeWindow calc_sharpe_window(
   if (prev_block < end_block) {
     append_sample(end_block, tail_pnl);
   }
+  if (invalid) {
+    return result;
+  }
 
   const int64_t total_time = prev_block - (start_block - 1);
   if (total_time <= 0) {
     return result;
   }
 
-  double T = static_cast<double>(total_time);
-  const double mean_return = sum_r / T;
-  const double var_return = sum_r2_dt / T - mean_return * mean_return;
+  const long double T = static_cast<long double>(total_time);
+  const long double mean_return = sum_r / T;
+  const long double var_return = sum_r2_dt / T - mean_return * mean_return;
 
-  if (var_return <= 0) {
+  if (var_return <= 0.0L || !std::isfinite(static_cast<double>(var_return))) {
     return result;
   }
 
-  double sigma = std::sqrt(var_return);
-  double raw_sharpe = mean_return / sigma;
+  const long double sigma = std::sqrt(var_return);
+  if (sigma <= 0.0L || !std::isfinite(static_cast<double>(sigma))) {
+    return result;
+  }
+  const long double raw_sharpe = mean_return / sigma;
+  if (!std::isfinite(static_cast<double>(raw_sharpe))) {
+    return result;
+  }
 
   // Normalize to 1000w block scale
-  result.sharpe = static_cast<float>(raw_sharpe * std::sqrt(10000000.0));
+  result.sharpe = static_cast<float>(raw_sharpe * std::sqrt(10000000.0L));
 
   return result;
 }
@@ -179,15 +196,18 @@ void calc_sharpe_for_feature(Stage3Runtime *rt, uint32_t user_idx, FeatureSlot *
   UserBlock *user = &rt->users[user_idx];
 
   // Helper to get p0 (pnl before window start)
-  // First try to find the closest bucket before start_bucket,
-  // then fall back to user's pnl_before_first_sharpe_bucket anchor
   auto get_p0 = [&](int32_t start_bucket) -> int64_t {
-    for (int32_t b = start_bucket - 1; b >= 0 && b >= start_bucket - 100; --b) {
-      SharpeAgg *agg = sharpe_agg_find(rt, user_idx, b);
-      if (agg)
+    int32_t last_bucket = std::numeric_limits<int32_t>::max();
+    uint32_t idx = user->sharpe_agg_head;
+    while (idx != NULL_IDX) {
+      SharpeAgg *agg = &rt->sharpe_agg_pool[idx];
+      assert(agg->bucket <= last_bucket);
+      last_bucket = agg->bucket;
+      if (agg->bucket < start_bucket) {
         return agg->close_pnl;
+      }
+      idx = agg->next;
     }
-    // Fall back to user-level anchor (matches old pnl_before_first_bucket)
     return user->pnl_before_first_sharpe_bucket;
   };
 
@@ -196,7 +216,7 @@ void calc_sharpe_for_feature(Stage3Runtime *rt, uint32_t user_idx, FeatureSlot *
     std::vector<std::pair<int32_t, int64_t>> samples = collect_bucket_samples(bucket);
     int64_t p0 = get_p0(bucket);
     int64_t start_block = static_cast<int64_t>(bucket) * BLOCK_BUCKET_SIZE;
-    int64_t end_block = bucket_end_block(bucket);
+    int64_t end_block = bucket_last_block(bucket);
 
     SharpeWindow win = calc_sharpe_window(p0, samples, start_block, end_block, feat->exposure_avg_10w);
     feat->sharpe_10w = win.sharpe;
@@ -222,7 +242,7 @@ void calc_sharpe_for_feature(Stage3Runtime *rt, uint32_t user_idx, FeatureSlot *
     std::sort(all_samples.begin(), all_samples.end());
     int64_t p0 = get_p0(start_bucket);
     int64_t start_block = static_cast<int64_t>(start_bucket) * BLOCK_BUCKET_SIZE;
-    int64_t end_block = bucket_end_block(bucket);
+    int64_t end_block = bucket_last_block(bucket);
     // Use fixed window denominator: min(10, bucket + 1)
     int32_t denom = std::min(10, bucket + 1);
     int64_t avg_exp = denom > 0 ? total_exp / denom : 0;
@@ -251,7 +271,7 @@ void calc_sharpe_for_feature(Stage3Runtime *rt, uint32_t user_idx, FeatureSlot *
     std::sort(all_samples.begin(), all_samples.end());
     int64_t p0 = get_p0(start_bucket);
     int64_t start_block = static_cast<int64_t>(start_bucket) * BLOCK_BUCKET_SIZE;
-    int64_t end_block = bucket_end_block(bucket);
+    int64_t end_block = bucket_last_block(bucket);
     // Use fixed window denominator: min(100, bucket + 1)
     int32_t denom = std::min(100, bucket + 1);
     int64_t avg_exp = denom > 0 ? total_exp / denom : 0;

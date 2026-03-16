@@ -279,7 +279,7 @@ filter::Result StageSync::filter_users_by_features(const filter::Request &req) c
     u.sort_value = row.sort_value;
     const uint32_t user_idx = user_index_lookup(rt_, row.addr);
     assert(user_idx != NULL_IDX);
-    const FeatureSlot *feat = feature_find(rt_, user_idx, static_cast<int32_t>(req.anchor_bucket), -1);
+    const FeatureSlot *feat = feature_find_le(rt_, user_idx, static_cast<int32_t>(req.anchor_bucket), -1);
     if (feat != nullptr) {
       u.month_avg_tok = feat->token_avg_100w;
       u.month_avg_exp = feat->exposure_avg_100w;
@@ -567,11 +567,7 @@ void StageSync::do_sync_tick() {
   }
 
   const int64_t head_block = builder_.cursor();
-  size_t processed = 0;
-  {
-    TraceN("s3/runloop/sync_tick");
-    processed = stage3_sync_tick(rt_, builder_.user_event_store(), head_block, kStage3BatchEvents);
-  }
+  const size_t processed = stage3_sync_tick(rt_, builder_.user_event_store(), head_block, kStage3BatchEvents);
   if (processed > 0) {
     TraceN("s3/runloop/prune");
     stage3_post_sync_prune(rt_);
