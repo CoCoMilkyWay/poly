@@ -96,15 +96,16 @@
 
 // ------------------------------ 常量 ------------------------------
 
-constexpr size_t MAX_CONDITIONS     = 1'000'000;      // 100万 conditions
-constexpr size_t MAX_USERS          = 10'000'000;     // 1000万用户
-constexpr size_t MAX_TOKENS         = 100'000'000;    // 1亿 token slots
-constexpr size_t MAX_FEATURES       = 500'000'000;    // 5亿 feature slots
-constexpr size_t MAX_SHARPE_AGGS    = 50'000'000;     // 5000万 sharpe bucket 聚合
-constexpr size_t MAX_SHARPE_SAMPLES = 500'000'000;    // 5亿 sharpe 样本点
-constexpr size_t OUTCOME_MAX        = 256;            // 最大 outcome 数
-constexpr uint32_t NULL_IDX         = UINT32_MAX;     // 空指针
-constexpr uint64_t NULL_LOG_OFFSET  = UINT64_MAX;     // events.log 空指针
+constexpr size_t MAX_CONDITIONS        = 1'000'000;      // 100万 conditions
+constexpr size_t MAX_USERS             = 10'000'000;     // 1000万用户
+constexpr size_t MAX_TOKENS            = 100'000'000;    // 1亿 token slots
+constexpr size_t MAX_FEATURES          = 500'000'000;    // 5亿 feature slots
+constexpr size_t MAX_SHARPE_AGGS       = 50'000'000;     // 5000万 sharpe bucket 聚合
+constexpr size_t MAX_SHARPE_SAMPLES    = 500'000'000;    // 5亿 sharpe 样本点
+constexpr size_t OUTCOME_MAX           = 256;            // 最大 outcome 数
+constexpr uint32_t NULL_IDX            = UINT32_MAX;     // 空指针
+constexpr uint64_t NULL_LOG_OFFSET     = UINT64_MAX;     // events.log 空指针
+constexpr uint32_t STAGE3_SYNC_SHARD_COUNT = 64;         // 并行 shard 数
 
 using Address20 = std::array<uint8_t, 20>;
 
@@ -125,22 +126,20 @@ struct Stage3Store {
     uint64_t user_count;                   // 有效用户数
     int64_t  head_bucket;                  // 当前最新 bucket
     
-    // Pool 使用情况
-    uint64_t token_pool_used;
-    uint64_t feature_pool_used;
-    uint64_t sharpe_agg_pool_used;
-    uint64_t sharpe_sample_pool_used;
-    
-    // Free list heads
-    uint32_t token_free_head;
-    uint32_t feature_free_head;
-    uint32_t sharpe_agg_free_head;
-    uint32_t sharpe_sample_free_head;
+    // Per-shard Pool 使用情况 / Free list heads
+    uint64_t token_pool_used[STAGE3_SYNC_SHARD_COUNT];
+    uint64_t feature_pool_used[STAGE3_SYNC_SHARD_COUNT];
+    uint64_t sharpe_agg_pool_used[STAGE3_SYNC_SHARD_COUNT];
+    uint64_t sharpe_sample_pool_used[STAGE3_SYNC_SHARD_COUNT];
+    uint32_t token_free_head[STAGE3_SYNC_SHARD_COUNT];
+    uint32_t feature_free_head[STAGE3_SYNC_SHARD_COUNT];
+    uint32_t sharpe_agg_free_head[STAGE3_SYNC_SHARD_COUNT];
+    uint32_t sharpe_sample_free_head[STAGE3_SYNC_SHARD_COUNT];
     
     // Events log
     uint64_t events_log_tail;              // events.log 写入 byte offset
     
-    uint8_t  _pad[4096 - 104];
+    uint8_t  _pad[...];                    // 填充到 4KB
   } header;
 
   // ==================== ConditionMeta[100万] (~2GB) ====================
@@ -154,8 +153,9 @@ struct Stage3Store {
 
   // ==================== TokenPool[1亿] (4.8GB) ====================
   struct TokenSlot {                       // 48B
-    // key
+    // key + chain (packed for alignment)
     uint32_t user_idx;                     // 所属用户 -> users[]
+    uint32_t next;                         // 同用户下一个 token / free list
     int32_t  cond_idx;                     // condition index, -1=free slot
     int16_t  token_idx;                    // outcome index
     int16_t  collateral;                   // 1=USDC, 2=USDCe, 3=USDT, 4=WrappedUSDCe
@@ -164,9 +164,6 @@ struct Stage3Store {
     int64_t  cost;                         // 成本基础 (1e6, 可负=空头信用)
     int64_t  lp;                           // 最近成交价 (1e6)
     int64_t  entry_block;                  // 加权平均建仓 block
-    // chain
-    uint32_t next;                         // 同用户下一个 token / free list
-    uint32_t _pad;
   } token_pool[MAX_TOKENS];                // 1亿 × 48B = 4.8GB
 
   // ==================== FeaturePool[5亿] (140GB) ====================
@@ -282,7 +279,7 @@ struct Stage3Store {
     int32_t   _pad0;                       // 4B padding for alignment
     int64_t   pnl_before_first_sharpe_bucket; // 8B, Sharpe 窗口左边界锚点
 
-    uint8_t   _reserved[128 - 20 - 4 - 8*4 - 4*6 - 8 - 8 - 4 - 4 - 8];
+    uint8_t   _reserved[16];               // 填充到 128B
   } users[MAX_USERS];                      // 1000万 × 128B = 1.28GB
 
 };
@@ -455,7 +452,7 @@ struct SharpeSparseCache {
 // ==================== DirtyUserSet ====================
 // 本批次有事件的用户集合, 用于增量 prune
 struct DirtyUserSet {
-  std::unordered_set<uint32_t> users;      // 本批次 dirty user_idx
+  std::vector<uint32_t> users;             // 本批次 dirty user_idx
   int32_t last_pruned_bucket = -1;         // 上次 prune 到的 bucket
 };
 
@@ -482,14 +479,19 @@ struct UserRankCache {
 // 输入结构 (临时, 不持久化)
 // ============================================================================
 
-// 对应原 EventInput
+// 对应原 EventInput (运行时预处理后)
 struct EventInput {
-  Address20 user_addr;                     // 用户地址
-  int64_t   sort_key;                      // block * 1e9 + log_idx
+  uint32_t  user_idx;                      // 用户索引 (预查找)
   int32_t   cond_idx;
   int32_t   event_type;
   int32_t   token_idx;
   int32_t   collateral;                    // 1=USDC, 2=USDCe, 3=USDT, 4=WrappedUSDCe
+  int32_t   bucket;                        // 预计算 bucket
+  int32_t   block_offset;                  // bucket 内 block 偏移
+  int8_t    tag_id;                        // 预填充 tag_id
+  uint8_t   _pad0[3];
+  int64_t   sort_key;                      // block * 1e9 + log_idx
+  int64_t   current_block;                 // 预计算 block
   int64_t   amount;                        // signed, 1e6
   int64_t   price_1e6;
 };
@@ -534,9 +536,9 @@ data/stage3/
 | 总存储                | ~327GB      |                             |
 | --------------------- | ----------- | --------------------------- |
 | 运行时索引 (估算)     |             |                             |
-| TokenIndex            | ~2GB        | 1亿 token × 20B/entry       |
-| FeatureIndex          | ~10GB       | 5亿 feature × 20B/entry     |
-| SharpeAggIndex        | ~1GB        | 5000万 agg × 20B/entry      |
+| TokenIndex[64]        | ~2GB        | 1亿 token × 20B/entry       |
+| FeatureIndex[64]      | ~10GB       | 5亿 feature × 20B/entry     |
+| SharpeAggIndex[64]    | ~1GB        | 5000万 agg × 20B/entry      |
 | QueryCacheManager     | ~500MB      | 1000 用户 × 500KB/user      |
 | DirtyUserSet          | ~1MB        | 本批次 dirty users          |
 | UserRankCache         | ~16KB       | 1000 entries × 16B          |
@@ -545,7 +547,7 @@ data/stage3/
 # Stage3 Flow (mmap + pool + runtime index)
 
 文件: `store.bin`(~167GB) + `events.log`(~160GB) + `users.idx`(512MB)
-运行时索引: `TokenIndex` + `FeatureIndex` + `SharpeAggIndex` (启动时重建)
+运行时索引: `TokenIndex[64]` + `FeatureIndex[64]` + `SharpeAggIndex[64]` (启动时重建, 按用户 shard 分片, 支持并行同步)
 
 ```
 stage3_bootstrap
@@ -555,11 +557,7 @@ stage3_bootstrap
 │  ├─ header.magic = "STAGE3\0\0", header.version = 1
 │  ├─ header.cursor_sort_key = -1, header.cursor_processed_events = 0
 │  ├─ header.user_count = 0, header.head_bucket = 0
-│  ├─ header.*_pool_used = 0
-│  ├─ header.token_free_head = NULL_IDX
-│  ├─ header.feature_free_head = NULL_IDX
-│  ├─ header.sharpe_agg_free_head = NULL_IDX
-│  ├─ header.sharpe_sample_free_head = NULL_IDX
+│  ├─ for shard in 0..64: header.*_pool_used[shard] = 0, header.*_free_head[shard] = NULL_IDX
 │  └─ header.events_log_tail = 0
 ├─ store.bin 存在?
 │  ├─ mmap store.bin MAP_SHARED
@@ -567,17 +565,14 @@ stage3_bootstrap
 ├─ mmap events.log MAP_SHARED (可扩展, 初始 1GB, 需要时 mremap)
 ├─ mmap users.idx MAP_SHARED (16M slots × 32B = 512MB)
 ├─ 从 stage2 加载 condition_meta 到 conditions[] (100万 × 2056B, outcome_count + tag_id + payout_numerators[256])
-├─ 重建运行时索引:
-│  ├─ token_index.clear()
-│  ├─ for i in 0..header.token_pool_used:
-│  │  └─ if token_pool[i].cond_idx >= 0: token_index[make_key(user_idx, cond_idx, token_idx)] = i
-│  ├─ feature_index.clear()
-│  ├─ for i in 0..header.feature_pool_used:
-│  │  └─ if feature_pool[i].flags & 1: feature_index[make_key(user_idx, bucket, tag_id)] = i
-│  ├─ sharpe_agg_index.clear()
-│  └─ for i in 0..header.sharpe_agg_pool_used:
-│     └─ sharpe_agg_index[make_key(user_idx, bucket)] = i
-└─ 返回 Stage3Runtime* {store, events_log, users_idx, token_index, feature_index, sharpe_agg_index, query_cache, dirty_users, rank_cache}
+├─ 重建运行时索引 (按用户链表遍历, 自动分 shard):
+│  ├─ for shard in 0..64: token_index[shard].clear(), feature_index[shard].clear(), sharpe_agg_index[shard].clear()
+│  ├─ for user_idx in 0..header.user_count:
+│  │  ├─ shard = user_shard_from_flags(users[user_idx].flags)
+│  │  ├─ 遍历 users[user_idx].token_head 链表, 插入 token_index[shard]
+│  │  ├─ 遍历 users[user_idx].feature_head 链表, 插入 feature_index[shard]
+│  │  └─ 遍历 users[user_idx].sharpe_agg_head 链表, 插入 sharpe_agg_index[shard]
+└─ 返回 Stage3Runtime* {store, events_log, users_idx, token_index[64], feature_index[64], sharpe_agg_index[64], query_cache, dirty_users, rank_cache}
 
 stage3_sync_tick(runtime, head_block, batch_limit)
 ├─ 0) cursor = header.cursor_sort_key
@@ -613,14 +608,15 @@ stage3_sync_tick(runtime, head_block, batch_limit)
 │  └─ dirty_users.clear()
 ├─ 3) 回放循环 for evt in batch (按 sort_key 升序)
 │  ├─ 3.1) user_idx = user_idx_cache[evt.user_addr]  // O(1) 查表
-│  │  └─ dirty_users.insert(user_idx)
-│  ├─ 3.2) if evt.cond_idx >= 0: 获取/创建 TokenSlot (使用 token_index O(1) 查找)
+│  │  └─ dirty_users.users.push_back(user_idx)  // 批量收集
+│  ├─ 3.2) if evt.cond_idx >= 0: 获取/创建 TokenSlot (使用 token_index[shard] O(1) 查找)
+│  │  ├─ shard = user_shard(user_idx)  // 用户固定分配到某 shard
 │  │  ├─ tok_key = TokenIndex::make_key(user_idx, evt.cond_idx, evt.token_idx)
-│  │  ├─ it = token_index.find(tok_key)
+│  │  ├─ it = token_index[shard].find(tok_key)
 │  │  ├─ if it != end: tok_idx = it->second
-│  │  └─ else (创建新 slot):
-│  │     ├─ if header.token_free_head != NULL_IDX: tok_idx = header.token_free_head, header.token_free_head = token_pool[tok_idx].next
-│  │     ├─ else: tok_idx = header.token_pool_used++
+│  │  └─ else (创建新 slot, 从 shard 本地 free list 分配):
+│  │     ├─ if header.token_free_head[shard] != NULL_IDX: tok_idx = header.token_free_head[shard], ...
+│  │     ├─ else: tok_idx = shard * TOKENS_PER_SHARD + header.token_pool_used[shard]++
 │  │     ├─ token_pool[tok_idx].user_idx = user_idx
 │  │     ├─ token_pool[tok_idx].cond_idx = evt.cond_idx
 │  │     ├─ token_pool[tok_idx].token_idx = evt.token_idx
@@ -628,7 +624,7 @@ stage3_sync_tick(runtime, head_block, batch_limit)
 │  │     ├─ token_pool[tok_idx].pos = 0, .cost = 0, .lp = 0, .entry_block = 0
 │  │     ├─ token_pool[tok_idx].next = users[user_idx].token_head
 │  │     ├─ users[user_idx].token_head = tok_idx
-│  │     └─ token_index[tok_key] = tok_idx  // 更新索引
+│  │     └─ token_index[shard][tok_key] = tok_idx  // 更新索引
 │  ├─ 3.3) if evt.cond_idx >= 0: 应用交易规则
 │  │  ├─ tok = &token_pool[tok_idx]
 │  │  ├─ qty = abs(evt.amount), px = evt.price_1e6 / 1e6
@@ -670,10 +666,9 @@ stage3_sync_tick(runtime, head_block, batch_limit)
 │  │  ├─ new_mtm = (tok->lp > 0) ? (tok->pos * tok->lp / 1e6 - tok->cost) : 0
 │  │  └─ if tok->pos == 0:
 │  │     ├─ 从 user.token_head 链表移除 tok_idx
-│  │     ├─ token_index.erase(tok_key)  // 从索引移除
+│  │     ├─ token_index[shard].erase(tok_key)  // 从索引移除
 │  │     ├─ tok->cond_idx = -1
-│  │     ├─ tok->next = header.token_free_head
-│  │     └─ header.token_free_head = tok_idx
+│  │     └─ 归还到 shard 本地 free list
 │  ├─ 3.4) 更新 UserBlock (增量更新 unrealized, 无需全量扫描)
 │  │  ├─ user = &users[user_idx]
 │  │  ├─ user->total_events++
@@ -708,23 +703,22 @@ stage3_sync_tick(runtime, head_block, batch_limit)
 │  │  ├─ user->timeline_tail = rec_off
 │  │  ├─ user->timeline_count++
 │  │  └─ header.events_log_tail += sizeof(EventRecord)
-│  ├─ 3.6) 更新 FeatureSlot (使用 feature_index O(1) 查找)
+│  ├─ 3.6) 更新 FeatureSlot (使用 feature_index[shard] O(1) 查找)
 │  │  ├─ if evt.cond_idx < 0: skip
 │  │  ├─ bucket = current_block / 100000
 │  │  ├─ tag_id = conditions[evt.cond_idx].tag_id
 │  │  ├─ for tag in {tag_id, -1}:
 │  │  │  ├─ feat_key = FeatureIndex::make_key(user_idx, bucket, tag)
-│  │  │  ├─ it = feature_index.find(feat_key)
+│  │  │  ├─ it = feature_index[shard].find(feat_key)
 │  │  │  ├─ if it != end: feat = &feature_pool[it->second]
-│  │  │  ├─ else (创建新 slot):
-│  │  │  │  ├─ if header.feature_free_head != NULL_IDX: feat_idx = header.feature_free_head, header.feature_free_head = feature_pool[feat_idx].next
-│  │  │  │  ├─ else: feat_idx = header.feature_pool_used++
+│  │  │  ├─ else (创建新 slot, 从 shard 本地分配):
+│  │  │  │  ├─ feat_idx = feature_alloc(shard)
 │  │  │  │  ├─ feat = &feature_pool[feat_idx]
 │  │  │  │  ├─ feat->user_idx = user_idx, feat->bucket = bucket, feat->tag_id = tag
 │  │  │  │  ├─ 初始化所有 Node-A0/A/B/C/D 字段为 0
 │  │  │  │  ├─ feat->next = users[user_idx].feature_head
 │  │  │  │  ├─ users[user_idx].feature_head = feat_idx, users[user_idx].feature_count++
-│  │  │  │  └─ feature_index[feat_key] = feat_idx  // 更新索引
+│  │  │  │  └─ feature_index[shard][feat_key] = feat_idx  // 更新索引
 │  │  │  ├─ // Node-A0 续算锚点更新
 │  │  │  ├─ delta_blocks = current_block - feat->last_block_10w
 │  │  │  ├─ if delta_blocks > 0:
@@ -745,31 +739,30 @@ stage3_sync_tick(runtime, head_block, batch_limit)
 │  │  │  │  ├─ feat->exposure_avg_10w = feat->exposure_tw_sum_10w / feat->time_weight_sum_10w
 │  │  │  │  ├─ feat->volume_10w = feat->volume_sum_10w
 │  │  │  │  └─ feat->holding_period_avg_10w = feat->holding_period_exp_tw_sum_10w / feat->exposure_tw_sum_10w (if > 0)
-│  │  │  ├─ // Node-C 前缀缓存 (使用 feature_index O(1) 查找 bucket-1)
+│  │  │  ├─ // Node-C 前缀缓存 (使用 feature_index[shard] O(1) 查找 bucket-1)
 │  │  │  ├─ prev_key = FeatureIndex::make_key(user_idx, bucket-1, tag)
-│  │  │  ├─ prev_it = feature_index.find(prev_key)
+│  │  │  ├─ prev_it = feature_index[shard].find(prev_key)
 │  │  │  ├─ if prev_it != end: prev_feat = &feature_pool[prev_it->second], feat->ps_* = prev_feat->ps_* + feat->*_avg_10w
 │  │  │  ├─ else: feat->ps_* = feat->*_avg_10w
-│  │  │  ├─ // Node-D 窗口投影 (使用 feature_index O(1) 查找 bucket-10, bucket-100)
-│  │  │  ├─ feat_100_it = feature_index.find(FeatureIndex::make_key(user_idx, bucket-10, tag))
-│  │  │  ├─ feat_1000_it = feature_index.find(FeatureIndex::make_key(user_idx, bucket-100, tag))
+│  │  │  ├─ // Node-D 窗口投影 (使用 feature_index[shard] O(1) 查找 bucket-10, bucket-100)
+│  │  │  ├─ feat_100_it = feature_index[shard].find(FeatureIndex::make_key(user_idx, bucket-10, tag))
+│  │  │  ├─ feat_1000_it = feature_index[shard].find(FeatureIndex::make_key(user_idx, bucket-100, tag))
 │  │  │  ├─ feat->*_avg_100w = (feat->ps_* - (feat_100_it != end ? feature_pool[feat_100_it->second].ps_* : 0)) / min(10, bucket+1)
 │  │  │  ├─ feat->*_avg_1000w = (feat->ps_* - (feat_1000_it != end ? feature_pool[feat_1000_it->second].ps_* : 0)) / min(100, bucket+1)
 │  │  │  └─ feat->updated_sort_key = evt.sort_key
-│  └─ 3.7) 更新 SharpeAgg + SharpeSample (使用 sharpe_agg_index O(1) 查找, 延迟 Sharpe 计算)
+│  └─ 3.7) 更新 SharpeAgg + SharpeSample (使用 sharpe_agg_index[shard] O(1) 查找, 延迟 Sharpe 计算)
 │     ├─ agg_key = SharpeAggIndex::make_key(user_idx, bucket)
-│     ├─ it = sharpe_agg_index.find(agg_key)
+│     ├─ it = sharpe_agg_index[shard].find(agg_key)
 │     ├─ if it != end: agg = &sharpe_agg_pool[it->second]
-│     ├─ else (创建新 agg):
-│     │  ├─ if header.sharpe_agg_free_head != NULL_IDX: agg_idx = header.sharpe_agg_free_head, ...
-│     │  ├─ else: agg_idx = header.sharpe_agg_pool_used++
+│     ├─ else (创建新 agg, 从 shard 本地分配):
+│     │  ├─ agg_idx = sharpe_agg_alloc(shard)
 │     │  ├─ agg = &sharpe_agg_pool[agg_idx]
 │     │  ├─ agg->user_idx = user_idx, agg->bucket = bucket
 │     │  ├─ agg->close_pnl = 0, agg->min_pnl = INT64_MAX, agg->max_pnl = INT64_MIN
 │     │  ├─ agg->sample_head = NULL_IDX, agg->sample_count = 0, agg->last_block = -1
 │     │  ├─ agg->next = users[user_idx].sharpe_agg_head
 │     │  ├─ users[user_idx].sharpe_agg_head = agg_idx, users[user_idx].sharpe_agg_count++
-│     │  ├─ sharpe_agg_index[agg_key] = agg_idx  // 更新索引
+│     │  ├─ sharpe_agg_index[shard][agg_key] = agg_idx  // 更新索引
 │     │  └─ // 初始化用户 Sharpe 锚点 (如果是第一个 agg)
 │     │     └─ if users[user_idx].sharpe_agg_count == 1: users[user_idx].pnl_before_first_sharpe_bucket = prev_pnl
 │     ├─ pnl = user->total_realized_pnl + user->total_unrealized_pnl
@@ -791,9 +784,10 @@ stage3_sync_tick(runtime, head_block, batch_limit)
 │     └─ agg->max_pnl = max(agg->max_pnl, pnl)
 ├─ 4) 批次收尾
 │  ├─ // 仅对 dirty users 计算 Sharpe (延迟到批次末尾, 而非每事件)
-│  ├─ for user_idx in dirty_users:
+│  ├─ for user_idx in dirty_users.users:
+│  │  ├─ shard = user_shard(user_idx)
 │  │  ├─ global_feat_key = FeatureIndex::make_key(user_idx, header.head_bucket, -1)
-│  │  ├─ feat_it = feature_index.find(global_feat_key)
+│  │  ├─ feat_it = feature_index[shard].find(global_feat_key)
 │  │  └─ if feat_it != end: calc_sharpe_for_feature(user_idx, &feature_pool[feat_it->second])
 │  ├─ for each user_idx in dirty_users: assert isfinite(users[user_idx].total_unrealized_pnl)
 │  ├─ rank_cache.mark_dirty(dirty_users)  // 标记榜单需要更新
@@ -819,7 +813,7 @@ stage3_post_sync_prune(runtime) // 仅处理 dirty_users, 而非全用户扫描
 │     │  ├─ sample_idx = agg->sample_head
 │     │  ├─ while sample_idx != NULL_IDX: next = sharpe_sample_pool[sample_idx].next, sharpe_sample_free(sample_idx), sample_idx = next
 │     │  ├─ // 从索引移除
-│     │  ├─ sharpe_agg_index.erase(SharpeAggIndex::make_key(user_idx, agg->bucket))
+│     │  ├─ sharpe_agg_index[shard].erase(SharpeAggIndex::make_key(user_idx, agg->bucket))
 │     │  ├─ // 从链表移除
 │     │  ├─ *prev_ptr = next_agg_idx
 │     │  ├─ users[user_idx].sharpe_agg_count--
@@ -832,7 +826,7 @@ calc_sharpe_for_feature(user_idx, feat) // 仅在 batch 结束时调用, 而非�
 ├─ if feat->tag_id != -1: return  // Sharpe 仅全局
 ├─ bucket = feat->bucket
 ├─ // 收集 10w 窗口样本 (当前 bucket)
-├─ samples_10w = collect_bucket_samples(user_idx, bucket)  // 使用 sharpe_agg_index O(1)
+├─ samples_10w = collect_bucket_samples(user_idx, bucket)  // 使用 sharpe_agg_index[shard] O(1)
 ├─ // 收集 100w 窗口样本 (10 buckets)
 ├─ samples_100w = []
 ├─ for b in max(0, bucket-9)..bucket: samples_100w += collect_bucket_samples(user_idx, b)
@@ -840,7 +834,7 @@ calc_sharpe_for_feature(user_idx, feat) // 仅在 batch 结束时调用, 而非�
 ├─ samples_1000w = []
 ├─ for b in max(0, bucket-99)..bucket: samples_1000w += collect_bucket_samples(user_idx, b)
 ├─ // 计算各窗口 Sharpe
-├─ p0_10w = get_p0(user_idx, bucket)  // 使用 sharpe_agg_index 找 bucket-1 的 close_pnl
+├─ p0_10w = get_p0(user_idx, bucket)  // 使用 sharpe_agg_index[shard] 找 bucket-1 的 close_pnl
 ├─ p0_100w = get_p0(user_idx, max(0, bucket-9))
 ├─ p0_1000w = get_p0(user_idx, max(0, bucket-99))
 ├─ feat->sharpe_10w = calc_sharpe_window(p0_10w, samples_10w, bucket*100000, (bucket+1)*100000-1, feat->exposure_avg_10w)
@@ -895,9 +889,9 @@ stage3_query_filter(anchor_bucket, filters[], sort_expr, sort_asc, limit) -> {an
 ├─ results = []
 ├─ for user_idx in 0..header.user_count:
 │  ├─ if !(users[user_idx].flags & 1): continue
-│  ├─ // 使用 feature_index O(1) 查找
+│  ├─ shard = user_shard(user_idx)
 │  ├─ feat_key = FeatureIndex::make_key(user_idx, anchor_bucket, filter_tag_id)
-│  ├─ feat_it = feature_index.find(feat_key)
+│  ├─ feat_it = feature_index[shard].find(feat_key)
 │  ├─ if feat_it == end: continue
 │  ├─ feat = &feature_pool[feat_it->second]
 │  ├─ if !eval_all_filters(feat, filters): continue
@@ -913,11 +907,12 @@ stage3_get_users_sorted(limit) -> {users[]}
 └─ return rank_cache.by_events[0..limit]
 
 stage3_get_bucket_user_count(bucket) -> count
-├─ // 遍历 feature_index 统计该 bucket 的用户数 (O(n) 但 n 是该 bucket 的 feature 数, 非全用户)
+├─ // 遍历所有 shard 的 feature_index 统计该 bucket 的用户数
 ├─ count = 0
-├─ for (key, idx) in feature_index:
-│  ├─ if extract_bucket(key) == bucket && extract_tag(key) == -1:
-│  │  └─ count++
+├─ for shard in 0..64:
+│  ├─ for (key, idx) in feature_index[shard]:
+│  │  ├─ if extract_bucket(key) == bucket && extract_tag(key) == -1:
+│  │  │  └─ count++
 └─ return count
 
 持久化: mmap MAP_SHARED, OS 自动 dirty page writeback; 关闭时 msync(MS_SYNC)
