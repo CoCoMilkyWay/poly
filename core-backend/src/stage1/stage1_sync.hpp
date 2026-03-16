@@ -135,6 +135,7 @@ private:
   size_t rr_worker_ = 0;
   int64_t buffered_transfer_rows_ = 0;
   int64_t ready_transfer_rows_ = 0;
+  int64_t rpc_retry_total_ = 0;
   std::deque<BufferedBatch> buffered_batches_;
   std::map<int64_t, BufferedBatch> ready_batches_;
 

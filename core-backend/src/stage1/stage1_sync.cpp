@@ -251,6 +251,7 @@ void StageSync::schedule_sync(int delay_seconds) {
 void StageSync::do_sync() {
   Trace;
   is_syncing_ = true;
+  rpc_retry_total_ = 0;
 
   head_block_ = rpc_head_.eth_blockNumber();
   int64_t safe_head = head_block_ - kFinalityDepthBlocks;
@@ -308,7 +309,8 @@ void StageSync::render_progress_inline(int64_t safe_head, size_t inflight_count)
       " (" + std::to_string(to_w(ordered_transfer_rows)) + "W/" +
       std::to_string(to_w(pending_transfer_rows)) + "W/" +
       std::to_string(to_w(kChunkTransferTarget)) + "W/" +
-      std::to_string(to_w(buffer_high_water_transfers_)) + "W)";
+      std::to_string(to_w(buffer_high_water_transfers_)) + "W) [" +
+      std::to_string(rpc_retry_total_) + " retries]";
   if (line.size() < progress_line_len_) {
     line += std::string(progress_line_len_ - line.size(), ' ');
   }
@@ -510,16 +512,13 @@ void StageSync::sync_loop(int64_t safe_head) {
           if (stopping) {
             task.done = true;
           } else {
-            clear_progress_inline();
             task.retry_count += 1;
+            rpc_retry_total_ += 1;
             int shift = std::max(0, task.retry_count - 1);
             shift = std::min(shift, 20);
             int64_t delay_ms = static_cast<int64_t>(kRetryDelayMs) << shift;
             delay_ms = std::min<int64_t>(delay_ms, kRetryDelayMaxMs);
             task.retry_at = now + std::chrono::milliseconds(delay_ms);
-            std::cerr << "[Stage1] rpc失败 from=" << task.from_block
-                      << " to=" << task.to_block << " err=" << result.error_msg
-                      << " -> retry_in=" << delay_ms << "ms" << std::endl;
           }
         }
         progressed = true;
