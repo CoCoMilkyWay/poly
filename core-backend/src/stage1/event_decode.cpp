@@ -69,12 +69,12 @@ const bool EventDecoder::crash_handler_installed_ = []() {
 DecodedEvents EventDecoder::decode_logs(std::vector<json> &&results) {
   [[maybe_unused]] bool installed = crash_handler_installed_;
   DecodedEvents events;
-  // 单趟解析所有事件,边解析边释放RPC原始日志,降低峰值内存。
+  // 单趟解析所有事件,边解析边释放RPC原始日志,降低峰值内存.
   for (auto &result : results) {
     for (const auto &log : result) {
       parse_log(log, events);
     }
-    // 逐批释放原始RPC日志,避免把整个basic的json长期留在内存里。
+    // 逐批释放原始RPC日志,避免把整个basic的json长期留在内存里.
     json().swap(result);
   }
   std::vector<json>().swap(results);
@@ -278,7 +278,7 @@ void EventDecoder::parse_log(const json &log, DecodedEvents &events) {
   } else if (address == contracts::NEG_RISK_ADAPTER) {
     parse_neg_risk_adapter_event(topic0, topics_arr, data, tx_hash, block_number, log_index, events);
   } else if (is_fpmm_topic(topic0)) {
-    // stage1 只按 topic 记录 FPMM 事件,不依赖当前批次是否出现 FPMM_CREATE。
+    // stage1 只按 topic 记录 FPMM 事件,不依赖当前批次是否出现 FPMM_CREATE.
     parse_fpmm_event(topic0, address_hex_to_bytes20(address), topics_arr, data, tx_hash, block_number, log_index, events);
   }
 }

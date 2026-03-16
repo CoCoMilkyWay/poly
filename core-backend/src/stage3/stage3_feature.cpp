@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
-#include <limits>
 
 namespace stage3 {
 
@@ -56,24 +55,6 @@ inline bool is_volume_event(int32_t event_type) {
          event_type == EVT_TRANSFER_OUT_NEGRISK ||
          event_type == EVT_TRANSFER_OUT_OTHER ||
          event_type == EVT_TRANSFER_OUT_NON_POLY;
-}
-
-FeatureSlot *feature_find_le(Stage3Runtime *rt, uint32_t user_idx, int32_t target_bucket, int8_t tag_id) {
-  if (target_bucket < 0) {
-    return nullptr;
-  }
-  FeatureSlot *best = nullptr;
-  uint32_t idx = rt->users[user_idx].feature_head;
-  while (idx != NULL_IDX) {
-    FeatureSlot *feat = &rt->feature_pool[idx];
-    if ((feat->flags & 1) && feat->tag_id == tag_id && feat->bucket <= target_bucket) {
-      if (!best || feat->bucket > best->bucket) {
-        best = feat;
-      }
-    }
-    idx = feat->next;
-  }
-  return best;
 }
 
 void update_tail_window(FeatureSlot *feat,
@@ -210,7 +191,7 @@ void update_feature_on_event(Stage3Runtime *rt,
       feat->holding_period_avg_10w = 0;
     }
 
-    FeatureSlot *prev_feat = feature_find_le(rt, user_idx, bucket - 1, tag);
+    FeatureSlot *prev_feat = (bucket > 0) ? feature_find(rt, user_idx, bucket - 1, tag) : nullptr;
     if (prev_feat) {
       feat->ps_token_avg_10w = i64_narrow_checked(static_cast<__int128>(prev_feat->ps_token_avg_10w) + feat->token_avg_10w);
       feat->ps_exposure_avg_10w = i64_narrow_checked(static_cast<__int128>(prev_feat->ps_exposure_avg_10w) + feat->exposure_avg_10w);
@@ -228,7 +209,7 @@ void update_feature_on_event(Stage3Runtime *rt,
     const int32_t win_100 = std::min(10, bucket_count);
     const int32_t win_1000 = std::min(100, bucket_count);
 
-    FeatureSlot *feat_10_back = feature_find_le(rt, user_idx, bucket - 10, tag);
+    FeatureSlot *feat_10_back = (bucket >= 10) ? feature_find(rt, user_idx, bucket - 10, tag) : nullptr;
     const int64_t ps_10_tok = feat_10_back ? feat_10_back->ps_token_avg_10w : 0;
     const int64_t ps_10_exp = feat_10_back ? feat_10_back->ps_exposure_avg_10w : 0;
     const int64_t ps_10_vol = feat_10_back ? feat_10_back->ps_volume_10w : 0;
@@ -247,7 +228,7 @@ void update_feature_on_event(Stage3Runtime *rt,
       feat->holding_period_avg_100w = 0;
     }
 
-    FeatureSlot *feat_100_back = feature_find_le(rt, user_idx, bucket - 100, tag);
+    FeatureSlot *feat_100_back = (bucket >= 100) ? feature_find(rt, user_idx, bucket - 100, tag) : nullptr;
     const int64_t ps_100_tok = feat_100_back ? feat_100_back->ps_token_avg_10w : 0;
     const int64_t ps_100_exp = feat_100_back ? feat_100_back->ps_exposure_avg_10w : 0;
     const int64_t ps_100_vol = feat_100_back ? feat_100_back->ps_volume_10w : 0;

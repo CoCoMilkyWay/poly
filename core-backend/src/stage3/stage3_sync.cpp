@@ -1,13 +1,10 @@
 #include "../core/rocks_store.hpp"
 #include "stage3.hpp"
 
-#include "misc/profiler.hpp"
-
 #include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <cstring>
-#include <set>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -84,11 +81,22 @@ size_t stage3_sync_tick(Stage3Runtime *rt,
 // ============================================================================
 
 void stage3_post_sync_prune(Stage3Runtime *rt) {
+  if (rt->header->cursor_sort_key < 0) {
+    return;
+  }
+
   const int32_t current_bucket = block_to_bucket(
       sort_key_to_block(rt->header->cursor_sort_key));
   const int32_t min_bucket_to_keep = std::max(0, current_bucket - 99);
 
-  sharpe_prune_all_users(rt, min_bucket_to_keep);
+  if (min_bucket_to_keep <= rt->dirty_users.last_pruned_bucket) {
+    return;
+  }
+
+  for (uint32_t user_idx : rt->dirty_users.users) {
+    sharpe_prune_old_buckets(rt, user_idx, min_bucket_to_keep);
+  }
+  rt->dirty_users.last_pruned_bucket = min_bucket_to_keep;
 }
 
 // ============================================================================
@@ -96,21 +104,27 @@ void stage3_post_sync_prune(Stage3Runtime *rt) {
 // ============================================================================
 
 size_t process_event_batch(Stage3Runtime *rt, const std::vector<EventInput> &batch) {
-  TraceN("s3/batch");
   if (batch.empty())
     return 0;
 
-  // ========== Step 1: Collect touched users ==========
-  std::set<Address20, std::less<>> touched_addrs;
+  // ========== Step 1: Build user index cache ==========
+  std::unordered_map<Address20, uint32_t, Address20Hash, Address20Equal> user_idx_cache;
+  user_idx_cache.reserve(batch.size());
+  rt->dirty_users.users.clear();
+
   for (const auto &evt : batch) {
-    touched_addrs.insert(evt.user_addr);
+    auto [it, inserted] = user_idx_cache.try_emplace(evt.user_addr, NULL_IDX);
+    if (!inserted) {
+      continue;
+    }
+    uint32_t user_idx = user_index_lookup(rt, evt.user_addr);
+    if (user_idx == NULL_IDX) {
+      user_idx = user_get_or_create(rt, evt.user_addr);
+    }
+    it->second = user_idx;
   }
 
-  // ========== Step 2: Ensure all users exist ==========
-  for (const auto &addr : touched_addrs) {
-    user_get_or_create(rt, addr);
-  }
-
+  // ========== Step 2: Build runtime feature state for touched user/tag ==========
   struct TokenFeatureContrib {
     int64_t token_count = 0;
     int64_t exposure = 0;
@@ -145,7 +159,7 @@ size_t process_event_batch(Stage3Runtime *rt, const std::vector<EventInput> &bat
   };
 
   std::unordered_map<uint32_t, std::unordered_set<int8_t>> touched_tags_by_user;
-  touched_tags_by_user.reserve(touched_addrs.size());
+  touched_tags_by_user.reserve(user_idx_cache.size());
   for (const auto &evt : batch) {
     if (evt.cond_idx < 0) {
       continue;
@@ -154,8 +168,9 @@ size_t process_event_batch(Stage3Runtime *rt, const std::vector<EventInput> &bat
     assert(cond != nullptr);
     assert(evt.token_idx >= 0);
     assert(evt.token_idx < cond->outcome_count);
-    const uint32_t user_idx = user_index_lookup(rt, evt.user_addr);
-    assert(user_idx != NULL_IDX);
+    auto user_it = user_idx_cache.find(evt.user_addr);
+    assert(user_it != user_idx_cache.end());
+    const uint32_t user_idx = user_it->second;
     auto &touched_tags = touched_tags_by_user[user_idx];
     touched_tags.insert(cond->tag_id);
     touched_tags.insert(-1);
@@ -190,13 +205,18 @@ size_t process_event_batch(Stage3Runtime *rt, const std::vector<EventInput> &bat
 
   // ========== Step 3: Process each event ==========
   for (const auto &evt : batch) {
-    uint32_t user_idx = user_index_lookup(rt, evt.user_addr);
-    assert(user_idx != NULL_IDX);
+    auto user_it = user_idx_cache.find(evt.user_addr);
+    assert(user_it != user_idx_cache.end());
+    const uint32_t user_idx = user_it->second;
+    rt->dirty_users.users.insert(user_idx);
 
     UserBlock *user = &rt->users[user_idx];
     const int64_t prev_pnl = user->total_realized_pnl + user->total_unrealized_pnl;
     int64_t realized_delta = 0;
     TokenSlot *tok = nullptr;
+    int64_t old_mtm = 0;
+    int64_t new_mtm = 0;
+    int64_t pos_before = 0;
     TokenFeatureContrib after_contrib{};
     int8_t event_tag_id = -1;
     FeatureRuntimeState tag_runtime_state{};
@@ -213,10 +233,21 @@ size_t process_event_batch(Stage3Runtime *rt, const std::vector<EventInput> &bat
       tok = token_get_or_create(rt, user_idx, evt.cond_idx,
                                 static_cast<int16_t>(evt.token_idx),
                                 static_cast<int16_t>(evt.collateral));
+      pos_before = tok->pos;
+      const int64_t cost_before = tok->cost;
+      const int64_t lp_before = tok->lp;
+      if (lp_before > 0) {
+        old_mtm = static_cast<int64_t>(
+            static_cast<long double>(pos_before) * static_cast<long double>(lp_before) / 1e6L) - cost_before;
+      }
 
       const TokenFeatureContrib before_contrib = token_feature_contrib(*tok);
       realized_delta = apply_trade_event(rt, evt, tok);
       after_contrib = token_feature_contrib(*tok);
+      if (tok->lp > 0) {
+        new_mtm = static_cast<int64_t>(
+            static_cast<long double>(tok->pos) * static_cast<long double>(tok->lp) / 1e6L) - tok->cost;
+      }
 
       const int64_t token_count_delta = after_contrib.token_count - before_contrib.token_count;
       const int64_t exposure_delta = after_contrib.exposure - before_contrib.exposure;
@@ -234,26 +265,17 @@ size_t process_event_batch(Stage3Runtime *rt, const std::vector<EventInput> &bat
     user->total_events++;
     user->total_realized_pnl += realized_delta;
 
-    // Recalculate unrealized PnL and token count
+    // Incremental update: only touched token changes unrealized / effective count.
     if (evt.cond_idx >= 0) {
-      user->total_unrealized_pnl = 0;
-      uint32_t effective_token_count = 0;
-
-      uint32_t idx = user->token_head;
-      while (idx != NULL_IDX) {
-        TokenSlot *t = &rt->token_pool[idx];
-        if (t->lp > 0) {
-          // unrealized = pos * lp / 1e6 - cost
-          int64_t mtm = static_cast<int64_t>(
-              static_cast<double>(t->pos) * static_cast<double>(t->lp) / 1e6);
-          user->total_unrealized_pnl += mtm - t->cost;
-        }
-        if (is_effective_holding(t->pos)) {
-          effective_token_count++;
-        }
-        idx = t->next;
+      user->total_unrealized_pnl += (new_mtm - old_mtm);
+      const bool was_effective = is_effective_holding(pos_before);
+      const bool is_effective = is_effective_holding(tok->pos);
+      if (was_effective && !is_effective) {
+        assert(user->token_count > 0);
+        user->token_count--;
+      } else if (!was_effective && is_effective) {
+        user->token_count++;
       }
-      user->token_count = effective_token_count;
     }
 
     user->last_sort_key = evt.sort_key;
@@ -297,12 +319,6 @@ size_t process_event_batch(Stage3Runtime *rt, const std::vector<EventInput> &bat
     if (pnl != prev_pnl) {
       update_sharpe_on_event(rt, user_idx, pnl, prev_pnl, bucket, block_offset);
     }
-    if (evt.cond_idx >= 0) {
-      FeatureSlot *global_feat = feature_find(rt, user_idx, bucket, -1);
-      if (global_feat) {
-        calc_sharpe_for_feature(rt, user_idx, global_feat);
-      }
-    }
 
     // ========== Step 3.8: Clean up empty token ==========
     if (evt.cond_idx >= 0 && tok && tok->pos == 0) {
@@ -310,36 +326,21 @@ size_t process_event_batch(Stage3Runtime *rt, const std::vector<EventInput> &bat
     }
   }
 
-  // ========== Step 4: Update cursor ==========
+  // ========== Step 4: Batch finalization ==========
+  for (uint32_t user_idx : rt->dirty_users.users) {
+    const int32_t user_bucket = block_to_bucket(sort_key_to_block(rt->users[user_idx].last_sort_key));
+    FeatureSlot *global_feat = feature_find(rt, user_idx, user_bucket, -1);
+    if (global_feat != nullptr) {
+      calc_sharpe_for_feature(rt, user_idx, global_feat);
+    }
+    assert(std::isfinite(static_cast<double>(rt->users[user_idx].total_unrealized_pnl)));
+    rt->rank_cache.mark_dirty(user_idx);
+  }
+
   rt->header->cursor_sort_key = batch.back().sort_key;
   rt->header->cursor_processed_events += batch.size();
 
   return batch.size();
-}
-
-// ============================================================================
-// Utility: Calculate user stats from scratch (for verification)
-// ============================================================================
-
-void recalc_user_unrealized(Stage3Runtime *rt, uint32_t user_idx) {
-  UserBlock *user = &rt->users[user_idx];
-
-  user->total_unrealized_pnl = 0;
-  user->token_count = 0;
-
-  uint32_t idx = user->token_head;
-  while (idx != NULL_IDX) {
-    TokenSlot *t = &rt->token_pool[idx];
-    if (t->lp > 0) {
-      int64_t mtm = static_cast<int64_t>(
-          static_cast<double>(t->pos) * static_cast<double>(t->lp) / 1e6);
-      user->total_unrealized_pnl += mtm - t->cost;
-    }
-    if (is_effective_holding(t->pos)) {
-      user->token_count++;
-    }
-    idx = t->next;
-  }
 }
 
 } // namespace stage3

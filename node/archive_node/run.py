@@ -25,7 +25,7 @@ Dashboard: http://localhost:8800
 #      - 中期:   100k blocks/seg (如 050000-050100)
 #      - 近期:    10k blocks/seg (如 076400-076410)
 #      - 链尖:     1k blocks/seg (如 076476-076477)
-#    borcheckpoints 始终是 100k 粒度,嵌套在 500k 大段内。
+#    borcheckpoints 始终是 100k 粒度,嵌套在 500k 大段内.
 #
 # 2. snapshots/domain/ — 状态数据 (~1.1TB)
 #    accounts, code, storage, commitment 的 KV 存储 (.kv, .bt, .kvei)
@@ -46,18 +46,18 @@ Dashboard: http://localhost:8800
 #    全部已下载完成
 #
 # ── 下载机制 ──
-# Erigon 通过 BitTorrent (OtterSync) 下载 snapshot 文件。
-# 每个预期文件都有对应的 .torrent 元数据文件。
-# 下载中的文件以 .part 后缀保存,完成后去掉后缀。
+# Erigon 通过 BitTorrent (OtterSync) 下载 snapshot 文件.
+# 每个预期文件都有对应的 .torrent 元数据文件.
+# 下载中的文件以 .part 后缀保存,完成后去掉后缀.
 #
 # .part 文件是**稀疏文件** (sparse file):
 #   - os.stat().st_size (apparent size) = 文件的期望总大小(预分配)
 #   - os.stat().st_blocks * 512        = 实际已写入磁盘的字节数
-#   因此 on_disk / apparent_size 即为该文件的真实下载进度。
+#   因此 on_disk / apparent_size 即为该文件的真实下载进度.
 #
 # 重启后 OtterSync 会重新 hash 所有已下载文件做完整性校验,
-# 日志中的 data="X% - A/B" 显示的是 **hashing 进度**而非下载进度。
-# hashing 速度约 2.5GB/s,1.7TB 数据大约需要 11 分钟才能跑完。
+# 日志中的 data="X% - A/B" 显示的是 **hashing 进度**而非下载进度.
+# hashing 速度约 2.5GB/s,1.7TB 数据大约需要 11 分钟才能跑完.
 #
 # ═════════════════════════════════════════════════════════════════════════
 
@@ -135,7 +135,7 @@ def parse_frac(s):
 
 
 def parse_log(line):
-    """解析 Erigon 日志行,提取同步状态信息。"""
+    """解析 Erigon 日志行,提取同步状态信息."""
     global sync_state
     # [1/1 OtterSync] Syncing  file-metadata=X/Y files=A/B data=... time-left=... ...
     if "OtterSync" in line:
@@ -188,7 +188,7 @@ def parse_log(line):
 
 # ═══════════════════════ 快照扫描 ═══════════════════════
 def scan_snapshot_dir(subdir):
-    """扫描单个 snapshot 子目录,统计文件大小和完成度。"""
+    """扫描单个 snapshot 子目录,统计文件大小和完成度."""
     path = str(SNAP_DIR / subdir) if subdir else str(SNAP_DIR)
     if not os.path.isdir(path):
         return None
@@ -218,7 +218,7 @@ def scan_snapshot_dir(subdir):
 
 
 def scan_snapshot_progress():
-    """扫描 snapshots 目录,利用稀疏文件的 apparent size vs on-disk blocks 计算真实下载进度。"""
+    """扫描 snapshots 目录,利用稀疏文件的 apparent size vs on-disk blocks 计算真实下载进度."""
     global snap_cache, snap_cache_time
     now = time.time()
     if now - snap_cache_time < 60 and snap_cache:
@@ -249,7 +249,7 @@ def scan_snapshot_progress():
 
 # ═══════════════════════ RPC 调用 ═══════════════════════
 def rpc_call(method, params=None):
-    """调用 Erigon JSON-RPC 接口。"""
+    """调用 Erigon JSON-RPC 接口."""
     body = json.dumps({"jsonrpc": "2.0", "method": method,
                       "params": params or [], "id": 1}).encode()
     req = urllib.request.Request(
@@ -265,7 +265,7 @@ def rpc_call(method, params=None):
 
 
 def get_rpc_status():
-    """获取区块同步状态。"""
+    """获取区块同步状态."""
     global highest_block_seen, block_history
 
     syncing = rpc_call("eth_syncing")
@@ -316,7 +316,7 @@ def get_rpc_status():
 
 
 def get_disk_status():
-    """获取磁盘使用情况。"""
+    """获取磁盘使用情况."""
     usage = shutil.disk_usage(str(DATADIR) if DATADIR.exists() else "/")
     return {
         "total": round(usage.total / 1e9, 1),
@@ -326,7 +326,7 @@ def get_disk_status():
 
 
 def get_status():
-    """获取完整的节点状态信息。"""
+    """获取完整的节点状态信息."""
     alive = proc is not None and proc.poll() is None
     rpc_status = get_rpc_status()
 
@@ -347,7 +347,7 @@ def get_status():
 
 # ═══════════════════════ 进程管理 ═══════════════════════
 def read_stream(stream):
-    """读取进程输出流,记录日志并解析状态。"""
+    """读取进程输出流,记录日志并解析状态."""
     for raw in iter(stream.readline, b""):
         line = raw.decode("utf-8", errors="replace").rstrip()
         if line:
@@ -386,7 +386,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
 
 # ═══════════════════════ 进程启动 ═══════════════════════
 def build_erigon_command():
-    """构建 Erigon 启动命令。"""
+    """构建 Erigon 启动命令."""
     return [
         str(ERIGON),
         f"--datadir={DATADIR}",              # 数据目录
@@ -416,7 +416,7 @@ def build_erigon_command():
 
 
 def build_clean_env():
-    """构建干净的环境变量(禁用代理,避免 torrent 流量走代理)。"""
+    """构建干净的环境变量(禁用代理,避免 torrent 流量走代理)."""
     env = os.environ.copy()
     for key in ['http_proxy', 'https_proxy', 'HTTP_PROXY', 'HTTPS_PROXY', 'all_proxy', 'ALL_PROXY']:
         env.pop(key, None)
@@ -424,7 +424,7 @@ def build_clean_env():
 
 
 def start_erigon_process():
-    """启动 Erigon 进程。"""
+    """启动 Erigon 进程."""
     global proc, proc_start_time
 
     cmd = build_erigon_command()
@@ -440,7 +440,7 @@ def start_erigon_process():
 
 
 def stop_erigon_process(sig=None, frame=None):
-    """停止 Erigon 进程。"""
+    """停止 Erigon 进程."""
     logging.info("收到停止信号,正在关闭 Erigon...")
     if proc and proc.poll() is None:
         proc.terminate()

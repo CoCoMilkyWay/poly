@@ -1,10 +1,12 @@
 #include "stage3.hpp"
 
+#include <algorithm>
 #include <cassert>
 #include <cerrno>
 #include <cstring>
 #include <fcntl.h>
 #include <filesystem>
+#include <queue>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -126,6 +128,48 @@ void resize_events_log(Stage3Runtime *rt, size_t new_size) {
   rt->events_log_capacity = new_size / sizeof(EventRecord);
 }
 
+void rebuild_runtime_indices(Stage3Runtime *rt) {
+  rt->token_index.map.clear();
+  rt->feature_index.map.clear();
+  rt->sharpe_agg_index.map.clear();
+
+  rt->token_index.map.reserve(std::max<size_t>(1, static_cast<size_t>(rt->header->token_pool_used)));
+  rt->feature_index.map.reserve(std::max<size_t>(1, static_cast<size_t>(rt->header->feature_pool_used)));
+  rt->sharpe_agg_index.map.reserve(std::max<size_t>(1, static_cast<size_t>(rt->header->sharpe_agg_pool_used)));
+
+  for (uint32_t user_idx = 0; user_idx < rt->header->user_count; ++user_idx) {
+    const UserBlock &user = rt->users[user_idx];
+    if (!(user.flags & 1)) {
+      continue;
+    }
+
+    uint32_t tok_idx = user.token_head;
+    while (tok_idx != NULL_IDX) {
+      const TokenSlot &tok = rt->token_pool[tok_idx];
+      if (tok.cond_idx >= 0) {
+        rt->token_index.map[TokenIndex::make_key(user_idx, tok.cond_idx, tok.token_idx)] = tok_idx;
+      }
+      tok_idx = tok.next;
+    }
+
+    uint32_t feat_idx = user.feature_head;
+    while (feat_idx != NULL_IDX) {
+      const FeatureSlot &feat = rt->feature_pool[feat_idx];
+      if (feat.flags & 1) {
+        rt->feature_index.map[FeatureIndex::make_key(user_idx, feat.bucket, feat.tag_id)] = feat_idx;
+      }
+      feat_idx = feat.next;
+    }
+
+    uint32_t agg_idx = user.sharpe_agg_head;
+    while (agg_idx != NULL_IDX) {
+      const SharpeAgg &agg = rt->sharpe_agg_pool[agg_idx];
+      rt->sharpe_agg_index.map[SharpeAggIndex::make_key(user_idx, agg.bucket)] = agg_idx;
+      agg_idx = agg.next;
+    }
+  }
+}
+
 } // namespace
 
 // ============================================================================
@@ -204,6 +248,15 @@ Stage3Runtime *stage3_open(const char *data_dir) {
   }
 
   rt->cond_market_question_counts.assign(MAX_CONDITIONS, 0);
+
+  rebuild_runtime_indices(rt);
+  rt->query_cache.cache.clear();
+  rt->query_cache.lru_order.clear();
+  rt->dirty_users.users.clear();
+  rt->dirty_users.last_pruned_bucket = -1;
+  rt->rank_cache.by_events.clear();
+  rt->rank_cache.needs_rebuild = true;
+  rt->rank_cache.last_updated_sort_key = -1;
 
   return rt;
 }
@@ -317,8 +370,110 @@ uint32_t user_get_or_create(Stage3Runtime *rt, const Address20 &addr) {
   user->timeline_head = NULL_LOG_OFFSET;
   user->timeline_tail = NULL_LOG_OFFSET;
   user->timeline_count = 0;
+  user->_pad0 = 0;
+  user->pnl_before_first_sharpe_bucket = 0;
 
+  rt->rank_cache.needs_rebuild = true;
   return user_idx;
+}
+
+// ============================================================================
+// Runtime query cache / rank cache
+// ============================================================================
+
+UserQueryCache *QueryCacheManager::get_or_create(const Address20 &addr) {
+  auto it = cache.find(addr);
+  if (it != cache.end()) {
+    touch(addr);
+    return it->second.value.get();
+  }
+
+  lru_order.push_front(addr);
+  Entry entry{};
+  entry.value = std::make_unique<UserQueryCache>();
+  entry.value->addr = addr;
+  entry.value->loaded_sort_key = -1;
+  entry.lru_it = lru_order.begin();
+
+  UserQueryCache *ptr = entry.value.get();
+  cache.emplace(addr, std::move(entry));
+  evict_if_needed();
+  return ptr;
+}
+
+void QueryCacheManager::touch(const Address20 &addr) {
+  auto it = cache.find(addr);
+  if (it == cache.end()) {
+    return;
+  }
+  lru_order.splice(lru_order.begin(), lru_order, it->second.lru_it);
+  it->second.lru_it = lru_order.begin();
+}
+
+void QueryCacheManager::evict_if_needed() {
+  while (cache.size() > MAX_CACHED_USERS && !lru_order.empty()) {
+    const Address20 victim = lru_order.back();
+    lru_order.pop_back();
+    cache.erase(victim);
+  }
+}
+
+void UserRankCache::mark_dirty(uint32_t) {
+  needs_rebuild = true;
+}
+
+void UserRankCache::rebuild_if_needed(const Stage3Runtime *rt) {
+  if (!needs_rebuild && last_updated_sort_key == rt->header->cursor_sort_key) {
+    return;
+  }
+
+  struct RankNode {
+    uint32_t user_idx;
+    int64_t total_events;
+  };
+
+  auto better = [](const RankNode &a, const RankNode &b) {
+    if (a.total_events != b.total_events) {
+      return a.total_events > b.total_events;
+    }
+    return a.user_idx < b.user_idx;
+  };
+
+  std::priority_queue<RankNode, std::vector<RankNode>, decltype(better)> topk(better);
+
+  for (uint32_t user_idx = 0; user_idx < rt->header->user_count; ++user_idx) {
+    const UserBlock &u = rt->users[user_idx];
+    if (!(u.flags & 1)) {
+      continue;
+    }
+
+    RankNode node{user_idx, u.total_events};
+    if (topk.size() < MAX_RANK_SIZE) {
+      topk.push(node);
+      continue;
+    }
+    if (better(node, topk.top())) {
+      topk.pop();
+      topk.push(node);
+    }
+  }
+
+  std::vector<RankNode> rows;
+  rows.reserve(topk.size());
+  while (!topk.empty()) {
+    rows.push_back(topk.top());
+    topk.pop();
+  }
+
+  std::sort(rows.begin(), rows.end(), better);
+  by_events.clear();
+  by_events.reserve(rows.size());
+  for (const RankNode &row : rows) {
+    by_events.push_back({row.user_idx, row.total_events});
+  }
+
+  needs_rebuild = false;
+  last_updated_sort_key = rt->header->cursor_sort_key;
 }
 
 // ============================================================================
@@ -336,8 +491,12 @@ uint32_t token_alloc(Stage3Runtime *rt) {
 }
 
 void token_free(Stage3Runtime *rt, uint32_t idx) {
-  rt->token_pool[idx].cond_idx = -1;
-  rt->token_pool[idx].next = rt->header->token_free_head;
+  TokenSlot &tok = rt->token_pool[idx];
+  if (tok.cond_idx >= 0) {
+    rt->token_index.map.erase(TokenIndex::make_key(tok.user_idx, tok.cond_idx, tok.token_idx));
+  }
+  tok.cond_idx = -1;
+  tok.next = rt->header->token_free_head;
   rt->header->token_free_head = idx;
 }
 
@@ -352,8 +511,12 @@ uint32_t feature_alloc(Stage3Runtime *rt) {
 }
 
 void feature_free(Stage3Runtime *rt, uint32_t idx) {
-  rt->feature_pool[idx].flags = 0;
-  rt->feature_pool[idx].next = rt->header->feature_free_head;
+  FeatureSlot &feat = rt->feature_pool[idx];
+  if (feat.flags & 1) {
+    rt->feature_index.map.erase(FeatureIndex::make_key(feat.user_idx, feat.bucket, feat.tag_id));
+  }
+  feat.flags = 0;
+  feat.next = rt->header->feature_free_head;
   rt->header->feature_free_head = idx;
 }
 
@@ -368,7 +531,12 @@ uint32_t sharpe_agg_alloc(Stage3Runtime *rt) {
 }
 
 void sharpe_agg_free(Stage3Runtime *rt, uint32_t idx) {
-  rt->sharpe_agg_pool[idx].next = rt->header->sharpe_agg_free_head;
+  SharpeAgg &agg = rt->sharpe_agg_pool[idx];
+  if (agg.bucket >= 0) {
+    rt->sharpe_agg_index.map.erase(SharpeAggIndex::make_key(agg.user_idx, agg.bucket));
+  }
+  agg.bucket = -1;
+  agg.next = rt->header->sharpe_agg_free_head;
   rt->header->sharpe_agg_free_head = idx;
 }
 
@@ -392,15 +560,12 @@ void sharpe_sample_free(Stage3Runtime *rt, uint32_t idx) {
 // ============================================================================
 
 TokenSlot *token_find(Stage3Runtime *rt, uint32_t user_idx, int32_t cond_idx, int16_t token_idx) {
-  uint32_t idx = rt->users[user_idx].token_head;
-  while (idx != NULL_IDX) {
-    TokenSlot *tok = &rt->token_pool[idx];
-    if (tok->cond_idx == cond_idx && tok->token_idx == token_idx) {
-      return tok;
-    }
-    idx = tok->next;
+  const uint64_t key = TokenIndex::make_key(user_idx, cond_idx, token_idx);
+  auto it = rt->token_index.map.find(key);
+  if (it == rt->token_index.map.end()) {
+    return nullptr;
   }
-  return nullptr;
+  return &rt->token_pool[it->second];
 }
 
 TokenSlot *token_get_or_create(Stage3Runtime *rt, uint32_t user_idx, int32_t cond_idx, int16_t token_idx, int16_t collateral) {
@@ -421,7 +586,7 @@ TokenSlot *token_get_or_create(Stage3Runtime *rt, uint32_t user_idx, int32_t con
   tok->next = rt->users[user_idx].token_head;
 
   rt->users[user_idx].token_head = idx;
-  rt->users[user_idx].token_count++;
+  rt->token_index.map[TokenIndex::make_key(user_idx, cond_idx, token_idx)] = idx;
 
   return tok;
 }
@@ -439,7 +604,6 @@ void token_remove_if_empty(Stage3Runtime *rt, uint32_t user_idx, TokenSlot *tok)
     TokenSlot *t = &rt->token_pool[idx];
     if (t == tok) {
       *prev_ptr = t->next;
-      user->token_count--;
       token_free(rt, idx);
       return;
     }
@@ -453,15 +617,12 @@ void token_remove_if_empty(Stage3Runtime *rt, uint32_t user_idx, TokenSlot *tok)
 // ============================================================================
 
 FeatureSlot *feature_find(Stage3Runtime *rt, uint32_t user_idx, int32_t bucket, int8_t tag_id) {
-  uint32_t idx = rt->users[user_idx].feature_head;
-  while (idx != NULL_IDX) {
-    FeatureSlot *feat = &rt->feature_pool[idx];
-    if (feat->bucket == bucket && feat->tag_id == tag_id && (feat->flags & 1)) {
-      return feat;
-    }
-    idx = feat->next;
+  const uint64_t key = FeatureIndex::make_key(user_idx, bucket, tag_id);
+  auto it = rt->feature_index.map.find(key);
+  if (it == rt->feature_index.map.end()) {
+    return nullptr;
   }
-  return nullptr;
+  return &rt->feature_pool[it->second];
 }
 
 FeatureSlot *feature_get_or_create(Stage3Runtime *rt, uint32_t user_idx, int32_t bucket, int8_t tag_id) {
@@ -480,6 +641,7 @@ FeatureSlot *feature_get_or_create(Stage3Runtime *rt, uint32_t user_idx, int32_t
 
   rt->users[user_idx].feature_head = idx;
   rt->users[user_idx].feature_count++;
+  rt->feature_index.map[FeatureIndex::make_key(user_idx, bucket, tag_id)] = idx;
 
   return feat;
 }
@@ -489,15 +651,12 @@ FeatureSlot *feature_get_or_create(Stage3Runtime *rt, uint32_t user_idx, int32_t
 // ============================================================================
 
 SharpeAgg *sharpe_agg_find(Stage3Runtime *rt, uint32_t user_idx, int32_t bucket) {
-  uint32_t idx = rt->users[user_idx].sharpe_agg_head;
-  while (idx != NULL_IDX) {
-    SharpeAgg *agg = &rt->sharpe_agg_pool[idx];
-    if (agg->bucket == bucket) {
-      return agg;
-    }
-    idx = agg->next;
+  const uint64_t key = SharpeAggIndex::make_key(user_idx, bucket);
+  auto it = rt->sharpe_agg_index.map.find(key);
+  if (it == rt->sharpe_agg_index.map.end()) {
+    return nullptr;
   }
-  return nullptr;
+  return &rt->sharpe_agg_pool[it->second];
 }
 
 SharpeAgg *sharpe_agg_get_or_create(Stage3Runtime *rt, uint32_t user_idx, int32_t bucket) {
@@ -519,6 +678,7 @@ SharpeAgg *sharpe_agg_get_or_create(Stage3Runtime *rt, uint32_t user_idx, int32_
 
   rt->users[user_idx].sharpe_agg_head = idx;
   rt->users[user_idx].sharpe_agg_count++;
+  rt->sharpe_agg_index.map[SharpeAggIndex::make_key(user_idx, bucket)] = idx;
 
   return agg;
 }

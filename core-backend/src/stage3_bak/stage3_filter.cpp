@@ -218,7 +218,7 @@ public:
           if (!column.has_value()) {
             throw std::invalid_argument("stage3-filter: unknown feature token '" + rhs + "'");
           }
-          // Sharpe 仅支持 ALL 行业（tag_id=-1）
+          // Sharpe 仅支持 ALL 行业(tag_id=-1)
           if (column->find("sharpe") != std::string::npos && *tag_id != -1) {
             throw std::invalid_argument("stage3-filter: Sharpe ratio (shp) is only supported for ALL industry, not for '" + lhs + "'");
           }

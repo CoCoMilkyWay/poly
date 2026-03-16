@@ -38,8 +38,10 @@ int main(int argc, char *argv[]) {
   std::cout << "========================================" << std::endl;
 
   Config config = Config::load(config_path);
-  assert(config.stage1_rpc_block_span > 0);
-  assert(config.stage1_rpc_buffer_multiplier >= 1.0);
+  if (config.stage1_enable == 1) {
+    assert(config.stage1_rpc_block_span > 0);
+    assert(config.stage1_rpc_buffer_multiplier >= 1.0);
+  }
 
   std::cout << "[Main] Stage0 DB: " << config.db_path_stage0 << std::endl;
   std::cout << "[Main] Stage1 DB: " << config.db_path_stage1 << std::endl;

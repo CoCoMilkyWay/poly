@@ -205,7 +205,7 @@ double StageSync::apply_event_input(const EventInput &row, TokenState &st) const
   case EventType::FPMMLPAdd:
   case EventType::FPMMLPRemove:
   case EventType::FPMMLPReturn:
-    // LP 事件仅记录行为，不进入 token 持仓/成本/PnL 状态机。
+    // LP 事件仅记录行为，不进入 token 持仓/成本/PnL 状态机.
     realized_delta = 0.0;
     break;
 

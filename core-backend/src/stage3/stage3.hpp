@@ -7,9 +7,14 @@
 
 #include <array>
 #include <cassert>
+#include <cctype>
 #include <cstdint>
+#include <list>
 #include <map>
+#include <memory>
 #include <string>
+#include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 // Forward declaration for Stage2 integration
@@ -67,6 +72,23 @@ constexpr int32_t EVT_TRANSFER_OUT_NON_POLY = 21;
 constexpr size_t USER_INDEX_SLOT_COUNT = 16 * 1024 * 1024; // 16M slots
 
 using Address20 = std::array<uint8_t, 20>;
+
+struct Address20Hash {
+  size_t operator()(const Address20 &addr) const noexcept {
+    uint64_t h = 14695981039346656037ULL;
+    for (uint8_t b : addr) {
+      h ^= b;
+      h *= 1099511628211ULL;
+    }
+    return static_cast<size_t>(h);
+  }
+};
+
+struct Address20Equal {
+  bool operator()(const Address20 &a, const Address20 &b) const noexcept {
+    return a == b;
+  }
+};
 
 // ============================================================================
 // Store Header (4KB)
@@ -312,6 +334,51 @@ struct UserIndexEntry { // 32B
 static_assert(sizeof(UserIndexEntry) == 32);
 
 // ============================================================================
+// Runtime indices (not persisted)
+// ============================================================================
+
+struct TokenIndex {
+  std::unordered_map<uint64_t, uint32_t> map;
+
+  static uint64_t make_key(uint32_t user_idx, int32_t cond_idx, int16_t token_idx) {
+    return (static_cast<uint64_t>(user_idx) << 32) |
+           (static_cast<uint64_t>(static_cast<uint16_t>(cond_idx)) << 16) |
+           static_cast<uint16_t>(token_idx);
+  }
+};
+
+struct FeatureIndex {
+  std::unordered_map<uint64_t, uint32_t> map;
+
+  static uint64_t make_key(uint32_t user_idx, int32_t bucket, int8_t tag_id) {
+    return (static_cast<uint64_t>(user_idx) << 24) |
+           (static_cast<uint64_t>(static_cast<uint16_t>(bucket)) << 8) |
+           static_cast<uint8_t>(static_cast<int16_t>(tag_id) + 128);
+  }
+
+  static uint32_t extract_user_idx(uint64_t key) {
+    return static_cast<uint32_t>(key >> 24);
+  }
+
+  static int32_t extract_bucket(uint64_t key) {
+    return static_cast<int32_t>(static_cast<uint16_t>((key >> 8) & 0xFFFF));
+  }
+
+  static int8_t extract_tag(uint64_t key) {
+    return static_cast<int8_t>(static_cast<int16_t>(static_cast<uint8_t>(key & 0xFF)) - 128);
+  }
+};
+
+struct SharpeAggIndex {
+  std::unordered_map<uint64_t, uint32_t> map;
+
+  static uint64_t make_key(uint32_t user_idx, int32_t bucket) {
+    return (static_cast<uint64_t>(user_idx) << 16) |
+           static_cast<uint16_t>(bucket);
+  }
+};
+
+// ============================================================================
 // Input structure (temporary, not persisted)
 // ============================================================================
 
@@ -352,6 +419,26 @@ struct UserQueryCache {
   int64_t loaded_sort_key;
 };
 
+struct QueryCacheManager {
+  static constexpr size_t MAX_CACHED_USERS = 1000;
+
+  struct Entry {
+    std::unique_ptr<UserQueryCache> value;
+    std::list<Address20>::iterator lru_it;
+  };
+
+  std::unordered_map<Address20,
+                     Entry,
+                     Address20Hash,
+                     Address20Equal>
+      cache;
+  std::list<Address20> lru_order; // front = most recently used
+
+  UserQueryCache *get_or_create(const Address20 &addr);
+  void touch(const Address20 &addr);
+  void evict_if_needed();
+};
+
 struct SharpeBucketCache {
   int32_t bucket;
   std::vector<std::pair<int32_t, int64_t>> samples; // (block_offset, pnl)
@@ -364,6 +451,29 @@ struct SharpeSparseCache {
   Address20 user_addr;
   std::map<int32_t, SharpeBucketCache> buckets;
   int32_t oldest_bucket;
+};
+
+struct DirtyUserSet {
+  std::unordered_set<uint32_t> users;
+  int32_t last_pruned_bucket = -1;
+};
+
+struct Stage3Runtime;
+
+struct UserRankCache {
+  struct RankEntry {
+    uint32_t user_idx;
+    int64_t total_events;
+  };
+
+  std::vector<RankEntry> by_events;
+  int64_t last_updated_sort_key = -1;
+  bool needs_rebuild = true;
+
+  static constexpr size_t MAX_RANK_SIZE = 1000;
+
+  void mark_dirty(uint32_t user_idx);
+  void rebuild_if_needed(const Stage3Runtime *rt);
 };
 
 // ============================================================================
@@ -385,6 +495,14 @@ struct Stage3Runtime {
 
   UserIndexEntry *user_index;
   std::vector<uint16_t> cond_market_question_counts;
+
+  // Runtime-only indices and caches (rebuilt on startup)
+  TokenIndex token_index;
+  FeatureIndex feature_index;
+  SharpeAggIndex sharpe_agg_index;
+  QueryCacheManager query_cache;
+  DirtyUserSet dirty_users;
+  UserRankCache rank_cache;
 
   // file descriptors
   int fd_store;
@@ -459,7 +577,6 @@ FeatureSlot *feature_get_or_create(Stage3Runtime *rt, uint32_t user_idx, int32_t
 SharpeAgg *sharpe_agg_find(Stage3Runtime *rt, uint32_t user_idx, int32_t bucket);
 SharpeAgg *sharpe_agg_get_or_create(Stage3Runtime *rt, uint32_t user_idx, int32_t bucket);
 void sharpe_prune_old_buckets(Stage3Runtime *rt, uint32_t user_idx, int32_t min_bucket_to_keep);
-void sharpe_prune_all_users(Stage3Runtime *rt, int32_t min_bucket_to_keep);
 
 // ============================================================================
 // API declarations - Trade

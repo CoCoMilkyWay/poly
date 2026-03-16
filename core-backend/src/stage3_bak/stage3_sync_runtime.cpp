@@ -442,7 +442,7 @@ void StageSync::do_sync_tick() {
 
   int64_t before_block = 0;
   {
-    // 只在更新状态时持锁,避免 API 读取 status 被整段同步阻塞。
+    // 只在更新状态时持锁,避免 API 读取 status 被整段同步阻塞.
     std::lock_guard<std::mutex> lock(sync_mu_);
     sync_.syncing = true;
     before_block = (sync_cursor_.sort_key < 0) ? 0 : sync_cursor_.sort_key / SORT_KEY_SCALE;
@@ -598,8 +598,8 @@ bool StageSync::process_chunk_locked() const {
     while (cut > 0 && sort_key_to_block(event_input_rows[cut - 1].sort_key) == last_block) {
       --cut;
     }
-    // 不探测尾部,命中 LIMIT 时直接丢弃末尾 block,下个 chunk 再补。
-    // 约束:单个 block 事件数必须小于 batch 上限,否则会一直丢空。
+    // 不探测尾部,命中 LIMIT 时直接丢弃末尾 block,下个 chunk 再补.
+    // 约束:单个 block 事件数必须小于 batch 上限,否则会一直丢空.
     assert(cut > 0);
     event_input_rows.resize(cut);
   }
@@ -1288,13 +1288,13 @@ bool StageSync::process_chunk_locked() const {
   assert(event_fact_rows.size() == event_input_rows.size());
 
   // L6: prefix-sum history + projection
-  // Node-C: 前缀和历史记录（用于 O(1) 窗口计算）
+  // Node-C: 前缀和历史记录(用于 O(1) 窗口计算)
   // 按 (user_id, tag_id) 索引，每个 pair 存储按 bucket 降序排列的前缀和记录
   std::unordered_map<UserTagRuntimePairKey, std::vector<PrefixSumHistoryRecord>, UserTagRuntimePairKeyHasher> prefix_sum_history_by_pair_key;
   prefix_sum_history_by_pair_key.reserve(bucket_agg_state_by_agg_key.size());
   if (!bucket_agg_state_by_agg_key.empty()) {
-    // 查询每个 (user, tag) 对的历史前缀和（不在当前 batch 中的 bucket）
-    // 只查询 bucket >= min_dirty_bucket - 100 的数据（更早的不需要）
+    // 查询每个 (user, tag) 对的历史前缀和(不在当前 batch 中的 bucket)
+    // 只查询 bucket >= min_dirty_bucket - 100 的数据(更早的不需要)
     const std::string sql_prefix_sum_history_by_pair_key =
         "SELECT f.user_addr, f.tag_id, f.block_bucket, "
         "f.ps_token_avg_10w, f.ps_exposure_avg_10w, f.ps_volume_10w, "
@@ -1537,14 +1537,14 @@ bool StageSync::process_chunk_locked() const {
     TraceN("s3/wr_duck_feat");
     tmp_table_reset(kSqlTmpFeatureTensorState, kSqlTmpSchemaFeatureTensorState);
     {
-      // 当前 bucket 输出（包含前缀和，用于 batch 内依赖传递）
+      // 当前 bucket 输出(包含前缀和，用于 batch 内依赖传递)
       struct BucketPrefixOutput {
         int64_t block_bucket = 0;
         int64_t token_avg_10w = 0;
         int64_t exposure_avg_10w = 0;
         int64_t volume_10w = 0;
         int64_t holding_period_avg_10w = 0;
-        // 前缀和（累计到当前 bucket）
+        // 前缀和(累计到当前 bucket)
         int64_t ps_token_avg = 0;
         int64_t ps_exposure_avg = 0;
         int64_t ps_volume = 0;
@@ -1600,10 +1600,10 @@ bool StageSync::process_chunk_locked() const {
             (ps_history_it != prefix_sum_history_by_pair_key.end()) ? ps_history_it->second : empty_ps_history;
 
         // Step 1: 计算当前 bucket 的前缀和
-        // 起点：前一个 bucket 的前缀和（优先从 batch 内获取，否则从 DB 历史获取）
+        // 起点：前一个 bucket 的前缀和(优先从 batch 内获取，否则从 DB 历史获取)
         int64_t prev_ps_token = 0, prev_ps_exposure = 0, prev_ps_volume = 0, prev_ps_holding = 0;
         if (!prefix_outputs.empty()) {
-          // batch 内有更早的 bucket，使用最后一个（按 bucket 升序排列）
+          // batch 内有更早的 bucket，使用最后一个(按 bucket 升序排列)
           const BucketPrefixOutput &prev = prefix_outputs.back();
           prev_ps_token = prev.ps_token_avg;
           prev_ps_exposure = prev.ps_exposure_avg;
@@ -1627,13 +1627,13 @@ bool StageSync::process_chunk_locked() const {
         const int64_t ps_holding_period_avg = i64_narrow_checked(static_cast<__int128>(prev_ps_holding) + holding_period_avg_10w);
 
         // Step 2: 用前缀和差分计算窗口和
-        // 辅助函数：获取 bucket <= target 的前缀和（优先从 batch 内获取，否则从 DB 历史获取）
+        // 辅助函数：获取 bucket <= target 的前缀和(优先从 batch 内获取，否则从 DB 历史获取)
         auto get_boundary_ps = [&](int64_t target_bucket) {
           struct BoundaryPrefixSum {
             int64_t token = 0, exposure = 0, volume = 0, holding = 0;
           };
           BoundaryPrefixSum result{};
-          // 先从 batch 内找（prefix_outputs 按 block_bucket 升序）
+          // 先从 batch 内找(prefix_outputs 按 block_bucket 升序)
           const auto batch_it = std::upper_bound(
               prefix_outputs.begin(),
               prefix_outputs.end(),
@@ -1660,9 +1660,9 @@ bool StageSync::process_chunk_locked() const {
           return result;
         };
 
-        // 100w 窗口边界：bucket - 10（窗口是 [bucket-9, bucket]）
+        // 100w 窗口边界：bucket - 10(窗口是 [bucket-9, bucket])
         const auto boundary_100 = get_boundary_ps(key.block_bucket - 10);
-        // 1000w 窗口边界：bucket - 100（窗口是 [bucket-99, bucket]）
+        // 1000w 窗口边界：bucket - 100(窗口是 [bucket-99, bucket])
         const auto boundary_1000 = get_boundary_ps(key.block_bucket - 100);
 
         // 窗口和 = 当前前缀和 - 边界前缀和
@@ -1759,7 +1759,7 @@ bool StageSync::process_chunk_locked() const {
         ap.Append(agg.last_sort_key);
         ap.EndRow();
 
-        // 保存当前 bucket 的输出（包含前缀和，用于 batch 内后续 bucket）
+        // 保存当前 bucket 的输出(包含前缀和，用于 batch 内后续 bucket)
         prefix_outputs.push_back(BucketPrefixOutput{
             key.block_bucket,
             token_avg_10w,

@@ -174,9 +174,9 @@ TransferSingle + TransferBatch 覆盖**所有**持仓变化, 不会重合:
 
 | 字段         | 类型    | indexed | 说明                                                                                                                                                        |
 | ------------ | ------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| operator     | address | yes     | 执行操作的地址。**合约**: CTFExchange(交易撮合)/NegRiskAdapter(Split/Merge/Convert)/NegRiskCTFExchange(NegRisk交易); **用户**: 直接调用safeTransferFrom转账 |
-| from         | address | yes     | 发送方。**0x0=mint**                                                                                                                                        |
-| to           | address | yes     | 接收方。**0x0=burn**                                                                                                                                        |
+| operator     | address | yes     | 执行操作的地址.**合约**: CTFExchange(交易撮合)/NegRiskAdapter(Split/Merge/Convert)/NegRiskCTFExchange(NegRisk交易); **用户**: 直接调用safeTransferFrom转账 |
+| from         | address | yes     | 发送方.**0x0=mint**                                                                                                                                        |
+| to           | address | yes     | 接收方.**0x0=burn**                                                                                                                                        |
 | id           | uint256 | no      | positionId (ERC1155 tokenId), 256位整数, 由 keccak256(collateralToken, collectionId) 计算                                                                   |
 | value        | uint256 | no      | token数量, 6 decimals (1 token = 1,000,000 units)                                                                                                           |
 | tx_hash      | bytes32 | meta    | log.transactionHash                                                                                                                                         |
@@ -188,8 +188,8 @@ TransferSingle + TransferBatch 覆盖**所有**持仓变化, 不会重合:
 | 字段         | 类型      | indexed | 说明                 |
 | ------------ | --------- | ------- | -------------------- |
 | operator     | address   | yes     | 同TransferSingle     |
-| from         | address   | yes     | 发送方。**0x0=mint** |
-| to           | address   | yes     | 接收方。**0x0=burn** |
+| from         | address   | yes     | 发送方.**0x0=mint** |
+| to           | address   | yes     | 接收方.**0x0=burn** |
 | ids          | uint256[] | no      | positionId 数组      |
 | values       | uint256[] | no      | 数量数组, 6 decimals |
 | tx_hash      | bytes32   | meta    | log.transactionHash  |
@@ -277,15 +277,15 @@ YES + NO → Collateral (销毁)
 
 **OrderFilled**
 
-买卖方向: makerAssetId=0 → maker出collateral换token → maker是买方。价格=makerAmountFilled/takerAmountFilled
+买卖方向: makerAssetId=0 → maker出collateral换token → maker是买方.价格=makerAmountFilled/takerAmountFilled
 
 | 字段              | 类型    | indexed | 说明                                           |
 | ----------------- | ------- | ------- | ---------------------------------------------- |
 | orderHash         | bytes32 | yes     | 订单哈希                                       |
 | maker             | address | yes     | 挂单方                                         |
 | taker             | address | yes     | 吃单方                                         |
-| makerAssetId      | uint256 | no      | maker给出的资产。**0=collateral**, 非0=tokenId |
-| takerAssetId      | uint256 | no      | taker给出的资产。**0=collateral**, 非0=tokenId |
+| makerAssetId      | uint256 | no      | maker给出的资产.**0=collateral**, 非0=tokenId |
+| takerAssetId      | uint256 | no      | taker给出的资产.**0=collateral**, 非0=tokenId |
 | makerAmountFilled | uint256 | no      | maker给出的数量 (6 decimals)                   |
 | takerAmountFilled | uint256 | no      | taker给出的数量 (6 decimals)                   |
 | fee               | uint256 | no      | 手续费 (collateral, 6 decimals)                |
@@ -300,8 +300,8 @@ YES + NO → Collateral (销毁)
 | ----------------- | ------- | ------- | ---------------------------------------------------- |
 | takerOrderHash    | bytes32 | yes     | taker 订单哈希                                       |
 | takerOrderMaker   | address | yes     | **名字易混淆**: "taker订单的maker", 即发起吃单的用户 |
-| makerAssetId      | uint256 | no      | maker给出的资产。**0=collateral**, 非0=tokenId       |
-| takerAssetId      | uint256 | no      | taker给出的资产。**0=collateral**, 非0=tokenId       |
+| makerAssetId      | uint256 | no      | maker给出的资产.**0=collateral**, 非0=tokenId       |
+| takerAssetId      | uint256 | no      | taker给出的资产.**0=collateral**, 非0=tokenId       |
 | makerAmountFilled | uint256 | no      | maker给出的数量 (6 decimals)                         |
 | takerAmountFilled | uint256 | no      | taker给出的数量 (6 decimals)                         |
 | tx_hash           | bytes32 | meta    | log.transactionHash                                  |
@@ -362,7 +362,7 @@ NegRisk转换: M 个 NO tokens burn → (M-1) Wrapped Collateral (利用互斥�
 | ------------ | ------- | ------- | --------------------------------------------------------------------- |
 | stakeholder  | address | yes     | 操作者                                                                |
 | marketId     | bytes32 | yes     | NegRisk市场ID, 一个市场包含多个互斥问题(如"谁会赢得选举": A/B/C/其他) |
-| indexSet     | uint256 | yes     | **bitmap**: 转换了哪些NO。如6=0b110表示第2和第3个NO token             |
+| indexSet     | uint256 | yes     | **bitmap**: 转换了哪些NO.如6=0b110表示第2和第3个NO token             |
 | amount       | uint256 | no      | 每个被转换position的数量 (6 decimals)                                 |
 | tx_hash      | bytes32 | meta    | log.transactionHash                                                   |
 | block_number | uint64  | meta    | log.blockNumber                                                       |
@@ -422,7 +422,7 @@ NegRisk转换: M 个 NO tokens burn → (M-1) Wrapped Collateral (利用互斥�
 | FPMMFundingAdded   | LP    | LP投入USDC,按池子比例添加YES+NO  | 双边 (按池子比例)     |
 | FPMMFundingRemoved | LP    | LP销毁shares,取回YES+NO + 手续费 | 双边 (按池子比例取回) |
 
-fpmm_trade (Taker) + fpmm_funding (LP Maker结算) = 订单簿时代的 order_filled。
+fpmm_trade (Taker) + fpmm_funding (LP Maker结算) = 订单簿时代的 order_filled.
 
 **FPMMBuy** (FPMM合约发出)
 

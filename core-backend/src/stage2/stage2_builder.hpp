@@ -447,7 +447,7 @@ private:
     }
 
     // 必须与 FPMMFactory._recordCollectionIDsForAllConditions 一致:
-    // 递归时按 conditionIds 的倒序处理(conditionsLeft-- 后取 conditionIds[conditionsLeft])。
+    // 递归时按 conditionIds 的倒序处理(conditionsLeft-- 后取 conditionIds[conditionsLeft]).
     std::function<void(int, const std::string &, int)> dfs =
         [&](int cond_pos, const std::string &parent_collection_id, int first_condition_outcome) {
           if (cond_pos < 0) {
@@ -477,8 +477,8 @@ private:
   }
 
   void update_cond_type_stats() {
-    // 条件主树:condition 是唯一主事实层。
-    // coverage.raw_* 在 phase1 中按 condition_preparation 行累积,需要跨轮次保留。
+    // 条件主树:condition 是唯一主事实层.
+    // coverage.raw_* 在 phase1 中按 condition_preparation 行累积,需要跨轮次保留.
     ConditionTree ct{};
     ct.coverage = progress_.cond_tree.coverage;
     ct.coverage.observed = 0;

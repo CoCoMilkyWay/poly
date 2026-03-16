@@ -16,25 +16,32 @@ StageSync::StageSync(const Config &config, Database &db, int interval_seconds)
       interval_seconds_(interval_seconds),
       buffer_high_water_transfers_(
           static_cast<int64_t>(static_cast<double>(kChunkTransferTarget) * config.stage1_rpc_buffer_multiplier)) {
-  assert(num_rpc_threads_ > 0);
-  assert(num_decode_threads_ > 0);
-  assert(rpc_block_span_ > 0);
-  assert(config.stage1_rpc_buffer_multiplier >= 1.0);
+  const bool stage1_enabled = (config_.stage1_enable == 1);
+  if (stage1_enabled) {
+    assert(num_rpc_threads_ > 0);
+    assert(num_decode_threads_ > 0);
+    assert(rpc_block_span_ > 0);
+    assert(config.stage1_rpc_buffer_multiplier >= 1.0);
+  }
   assert(interval_seconds_ > 0);
   assert(config_.initial_block % kCommitBlockGranularity == 0);
-  assert(rpc_block_span_ % kCommitBlockGranularity == 0);
+  if (stage1_enabled) {
+    assert(rpc_block_span_ % kCommitBlockGranularity == 0);
+  }
   if (buffer_high_water_transfers_ < kChunkTransferTarget) {
     buffer_high_water_transfers_ = kChunkTransferTarget;
   }
   buffer_low_water_transfers_ = std::max<int64_t>(kChunkTransferTarget, buffer_high_water_transfers_ - kChunkTransferTarget);
   assert(buffer_low_water_transfers_ <= buffer_high_water_transfers_);
 
-  rpc_workers_.reserve(static_cast<size_t>(num_rpc_threads_));
-  for (int i = 0; i < num_rpc_threads_; ++i) {
-    rpc_workers_.push_back(std::make_unique<RpcClient>(
-        config.rpc_url, config.rpc_api_key,
-        "RPC-Worker-" + std::to_string(i),
-        config.proxy_url, config.rpc_transport));
+  if (stage1_enabled) {
+    rpc_workers_.reserve(static_cast<size_t>(num_rpc_threads_));
+    for (int i = 0; i < num_rpc_threads_; ++i) {
+      rpc_workers_.push_back(std::make_unique<RpcClient>(
+          config.rpc_url, config.rpc_api_key,
+          "RPC-Worker-" + std::to_string(i),
+          config.proxy_url, config.rpc_transport));
+    }
   }
 
   int64_t committed = db_.get_last_block();
@@ -45,7 +52,9 @@ StageSync::StageSync(const Config &config, Database &db, int interval_seconds)
   rpc_paused_ = false;
   ready_transfer_rows_ = 0;
 
-  start_decode_pool();
+  if (stage1_enabled) {
+    start_decode_pool();
+  }
 }
 
 StageSync::~StageSync() {

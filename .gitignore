@@ -1,7 +1,7 @@
 # 编译产物
 core-backend/projects/core/build
 
-# 自动合并生成的模型文件（只提交 .part_ 分片）
+# 自动合并生成的模型文件(只提交 .part_ 分片)
 core-backend/models/bge-small-en-v1.5/model.onnx
 
 # 数据文件

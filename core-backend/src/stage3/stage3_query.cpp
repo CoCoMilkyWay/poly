@@ -1,5 +1,6 @@
 #include "stage3.hpp"
 
+#include <algorithm>
 #include <cassert>
 #include <unordered_map>
 
@@ -31,64 +32,20 @@ QueryStatus stage3_query_status(const Stage3Runtime *rt, int64_t head_block) {
   return status;
 }
 
-// ============================================================================
-// stage3_query_pnl
-// ============================================================================
-
-PnlResult stage3_query_pnl(Stage3Runtime *rt, const Address20 &user_addr) {
-  PnlResult result{};
-  result.user = user_addr;
-
-  uint32_t user_idx = user_index_lookup(rt, user_addr);
-  if (user_idx == NULL_IDX) {
-    // User not found
-    result.block = 0;
-    result.total_events = 0;
-    return result;
-  }
-
-  UserBlock *user = &rt->users[user_idx];
-  result.block = (user->last_sort_key > 0) ? sort_key_to_block(user->last_sort_key) : 0;
-  result.total_events = user->total_events;
-
-  // Build timeline by traversing user's event chain
-  result.timeline.reserve(user->timeline_count);
-
-  uint64_t offset = user->timeline_head;
-  while (offset != NULL_LOG_OFFSET) {
-    const EventRecord *rec = reinterpret_cast<const EventRecord *>(
-        reinterpret_cast<const uint8_t *>(rt->events_log) + offset);
-
-    TimelineRow row{};
-    row.sort_key = rec->sort_key;
-    row.event_type = rec->event_type;
-    row.realized_pnl = rec->realized_cum;
-    row.unrealized_pnl = rec->unrealized_pnl;
-    row.token_count = rec->token_count;
-
-    result.timeline.push_back(row);
-    offset = rec->next_user_event_offset;
-  }
-
-  return result;
-}
-
-// ============================================================================
-// stage3_query_positions
-// ============================================================================
-
 namespace {
 
-// Helper to apply event to replay state
+constexpr size_t kSnapshotStride = 256;
+
 void apply_event_to_replay_state(
     Stage3Runtime *rt,
     const EventRecord &rec,
     std::unordered_map<uint64_t, TokenSlot> &positions) {
-  if (rec.cond_idx < 0)
+  if (rec.cond_idx < 0) {
     return;
+  }
 
-  uint64_t key = (static_cast<uint64_t>(static_cast<uint32_t>(rec.cond_idx)) << 16) |
-                 static_cast<uint16_t>(rec.token_idx);
+  const uint64_t key = (static_cast<uint64_t>(static_cast<uint32_t>(rec.cond_idx)) << 16) |
+                       static_cast<uint16_t>(rec.token_idx);
 
   auto [it, inserted] = positions.try_emplace(key, TokenSlot{});
   TokenSlot &replay_tok = it->second;
@@ -121,7 +78,102 @@ void apply_event_to_replay_state(
   }
 }
 
+PosSnapshot build_snapshot(const std::unordered_map<uint64_t, TokenSlot> &positions,
+                           size_t timeline_idx) {
+  PosSnapshot snap{};
+  snap.timeline_idx = timeline_idx;
+  snap.positions.reserve(positions.size());
+  for (const auto &[key, tok] : positions) {
+    (void)key;
+    if (tok.pos == 0) {
+      continue;
+    }
+    snap.positions.push_back({
+        tok.cond_idx,
+        tok.token_idx,
+        tok.collateral,
+        tok.pos,
+        tok.cost,
+        tok.lp,
+        tok.entry_block,
+    });
+  }
+  return snap;
+}
+
+void load_user_query_cache(Stage3Runtime *rt, const UserBlock *user, UserQueryCache *cache) {
+  cache->timeline.clear();
+  cache->snapshots.clear();
+  cache->timeline.reserve(user->timeline_count);
+
+  std::unordered_map<uint64_t, TokenSlot> replay_positions;
+  replay_positions.reserve(256);
+
+  size_t timeline_idx = 0;
+  uint64_t offset = user->timeline_head;
+  while (offset != NULL_LOG_OFFSET) {
+    const EventRecord *rec = reinterpret_cast<const EventRecord *>(
+        reinterpret_cast<const uint8_t *>(rt->events_log) + offset);
+    cache->timeline.push_back(*rec);
+    apply_event_to_replay_state(rt, *rec, replay_positions);
+
+    timeline_idx++;
+    if (timeline_idx % kSnapshotStride == 0) {
+      cache->snapshots.push_back(build_snapshot(replay_positions, timeline_idx));
+    }
+    offset = rec->next_user_event_offset;
+  }
+
+  if (timeline_idx > 0 &&
+      (cache->snapshots.empty() || cache->snapshots.back().timeline_idx != timeline_idx)) {
+    cache->snapshots.push_back(build_snapshot(replay_positions, timeline_idx));
+  }
+
+  cache->loaded_sort_key = user->last_sort_key;
+}
+
 } // namespace
+
+// ============================================================================
+// stage3_query_pnl
+// ============================================================================
+
+PnlResult stage3_query_pnl(Stage3Runtime *rt, const Address20 &user_addr) {
+  PnlResult result{};
+  result.user = user_addr;
+
+  const uint32_t user_idx = user_index_lookup(rt, user_addr);
+  if (user_idx == NULL_IDX) {
+    result.block = 0;
+    result.total_events = 0;
+    return result;
+  }
+
+  UserBlock *user = &rt->users[user_idx];
+  result.block = (user->last_sort_key > 0) ? sort_key_to_block(user->last_sort_key) : 0;
+  result.total_events = user->total_events;
+
+  UserQueryCache *cache = rt->query_cache.get_or_create(user_addr);
+  if (cache->loaded_sort_key < user->last_sort_key) {
+    load_user_query_cache(rt, user, cache);
+  }
+
+  result.timeline.reserve(cache->timeline.size());
+  for (const EventRecord &rec : cache->timeline) {
+    TimelineRow row{};
+    row.sort_key = rec.sort_key;
+    row.event_type = rec.event_type;
+    row.realized_pnl = rec.realized_cum;
+    row.unrealized_pnl = rec.unrealized_pnl;
+    row.token_count = rec.token_count;
+    result.timeline.push_back(row);
+  }
+  return result;
+}
+
+// ============================================================================
+// stage3_query_positions
+// ============================================================================
 
 PositionsResult stage3_query_positions(Stage3Runtime *rt, const Address20 &user_addr, int64_t target_sort_key) {
   PositionsResult result{};
@@ -129,19 +181,21 @@ PositionsResult stage3_query_positions(Stage3Runtime *rt, const Address20 &user_
   result.sort_key = target_sort_key;
   result.block = sort_key_to_block(target_sort_key);
 
-  uint32_t user_idx = user_index_lookup(rt, user_addr);
+  const uint32_t user_idx = user_index_lookup(rt, user_addr);
   if (user_idx == NULL_IDX) {
     return result;
   }
 
   UserBlock *user = &rt->users[user_idx];
+  UserQueryCache *cache = rt->query_cache.get_or_create(user_addr);
+  if (cache->loaded_sort_key < user->last_sort_key) {
+    load_user_query_cache(rt, user, cache);
+  }
 
-  // If target_sort_key >= last_sort_key, return current positions
   if (target_sort_key >= user->last_sort_key) {
     uint32_t idx = user->token_head;
     while (idx != NULL_IDX) {
       TokenSlot *t = &rt->token_pool[idx];
-      // Only return effective holdings (faithful to old architecture: is_effective_holding_i64)
       if (is_effective_holding(t->pos)) {
         PositionRow row{};
         row.cond_idx = t->cond_idx;
@@ -157,33 +211,66 @@ PositionsResult stage3_query_positions(Stage3Runtime *rt, const Address20 &user_
     return result;
   }
 
-  // Historical query: replay events from scratch up to target_sort_key
   std::unordered_map<uint64_t, TokenSlot> positions;
+  const auto &timeline = cache->timeline;
+  const size_t target_idx = static_cast<size_t>(std::upper_bound(
+      timeline.begin(),
+      timeline.end(),
+      target_sort_key,
+      [](int64_t sort_key, const EventRecord &rec) {
+        return sort_key < rec.sort_key;
+      }) -
+      timeline.begin());
 
-  uint64_t offset = user->timeline_head;
-  while (offset != NULL_LOG_OFFSET) {
-    const EventRecord *rec = reinterpret_cast<const EventRecord *>(
-        reinterpret_cast<const uint8_t *>(rt->events_log) + offset);
-
-    if (rec->sort_key > target_sort_key)
+  size_t replay_start_idx = 0;
+  const PosSnapshot *best_snapshot = nullptr;
+  for (const PosSnapshot &snap : cache->snapshots) {
+    if (snap.timeline_idx > target_idx) {
       break;
-
-    apply_event_to_replay_state(rt, *rec, positions);
-    offset = rec->next_user_event_offset;
+    }
+    best_snapshot = &snap;
   }
 
-  // Build result - only return effective holdings (faithful to old architecture)
-  for (const auto &[key, pos] : positions) {
-    if (is_effective_holding(pos.pos)) {
-      PositionRow row{};
-      row.cond_idx = pos.cond_idx;
-      row.token_idx = pos.token_idx;
-      row.qty = pos.pos;
-      row.cost = pos.cost;
-      row.lp = pos.lp;
-      row.entry_block = pos.entry_block;
-      result.positions.push_back(row);
+  if (best_snapshot != nullptr) {
+    replay_start_idx = best_snapshot->timeline_idx;
+    positions.reserve(best_snapshot->positions.size() * 2 + 1);
+    for (const TokenPos &tp : best_snapshot->positions) {
+      if (tp.pos == 0) {
+        continue;
+      }
+      const uint64_t key = (static_cast<uint64_t>(static_cast<uint32_t>(tp.cond_idx)) << 16) |
+                           static_cast<uint16_t>(tp.token_idx);
+      TokenSlot tok{};
+      tok.user_idx = 0;
+      tok.next = NULL_IDX;
+      tok.cond_idx = tp.cond_idx;
+      tok.token_idx = tp.token_idx;
+      tok.collateral = tp.collateral;
+      tok.pos = tp.pos;
+      tok.cost = tp.cost;
+      tok.lp = tp.lp;
+      tok.entry_block = tp.entry_block;
+      positions.emplace(key, tok);
     }
+  }
+
+  for (size_t i = replay_start_idx; i < target_idx; ++i) {
+    apply_event_to_replay_state(rt, timeline[i], positions);
+  }
+
+  for (const auto &[key, pos] : positions) {
+    (void)key;
+    if (!is_effective_holding(pos.pos)) {
+      continue;
+    }
+    PositionRow row{};
+    row.cond_idx = pos.cond_idx;
+    row.token_idx = pos.token_idx;
+    row.qty = pos.pos;
+    row.cost = pos.cost;
+    row.lp = pos.lp;
+    row.entry_block = pos.entry_block;
+    result.positions.push_back(row);
   }
 
   return result;

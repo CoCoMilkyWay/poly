@@ -1,16 +1,16 @@
 ## Stage 1: eth_getLogs → 结构化表
 
-Stage 1 保留原始事件的全部字段,不做过滤、不做计算字段。
+Stage 1 保留原始事件的全部字段,不做过滤、不做计算字段.
 
 **不入库的事件**: OrdersMatched (与OrderFilled冗余), OutcomeReported (与ConditionResolution冗余)
 
 数值字段约定:
-- 所有链上 `uint256` 字段一律用 `BLOB(32)` 存储(大端,无损)。
-- 所有链上 `uint256[]` / `bytes32[]` 字段一律用 `LIST<BLOB(32)>` 存储(无损),不再用 JSON 文本。
+- 所有链上 `uint256` 字段一律用 `BLOB(32)` 存储(大端,无损).
+- 所有链上 `uint256[]` / `bytes32[]` 字段一律用 `LIST<BLOB(32)>` 存储(无损),不再用 JSON 文本.
 
 ### transfer (TransferSingle / TransferBatch)
 
-TransferBatch 拆分为多行,每个 token 一行,通过 sub_index 区分。
+TransferBatch 拆分为多行,每个 token 一行,通过 sub_index 区分.
 
 | column       | 类型      | 来源     | 说明                                        |
 | ------------ | --------- | -------- | ------------------------------------------- |
@@ -109,7 +109,7 @@ TransferBatch 拆分为多行,每个 token 一行,通过 sub_index 区分。
 
 ### fpmm_trade (FPMMBuy / FPMMSell)
 
-AMM Taker 交易,单边操作。
+AMM Taker 交易,单边操作.
 
 | column            | 类型       | 来源         | 说明                |
 | ----------------- | ---------- | ------------ | ------------------- |
@@ -126,7 +126,7 @@ AMM Taker 交易,单边操作。
 
 ### fpmm_funding (FPMMFundingAdded / FPMMFundingRemoved)
 
-AMM LP 操作。LP 按池子比例添加/取回 YES+NO。
+AMM LP 操作.LP 按池子比例添加/取回 YES+NO.
 
 | column                   | 类型           | 来源                 | 说明               |
 | ------------------------ | -------------- | -------------------- | ------------------ |

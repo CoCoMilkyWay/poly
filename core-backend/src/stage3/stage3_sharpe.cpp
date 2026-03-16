@@ -292,6 +292,9 @@ void sharpe_prune_old_buckets(Stage3Runtime *rt, uint32_t user_idx, int32_t min_
       *prev_ptr = next_idx;
       user->sharpe_agg_count--;
 
+      // Keep runtime index consistent with list pruning.
+      rt->sharpe_agg_index.map.erase(SharpeAggIndex::make_key(user_idx, agg->bucket));
+
       // Free the agg
       sharpe_agg_free(rt, idx);
     } else {
@@ -300,19 +303,6 @@ void sharpe_prune_old_buckets(Stage3Runtime *rt, uint32_t user_idx, int32_t min_
     }
 
     idx = next_idx;
-  }
-}
-
-// ============================================================================
-// sharpe_prune_all_users - 淘汰所有用户的旧 bucket
-// ============================================================================
-
-void sharpe_prune_all_users(Stage3Runtime *rt, int32_t min_bucket_to_keep) {
-  for (uint64_t i = 0; i < rt->header->user_count; ++i) {
-    uint32_t user_idx = static_cast<uint32_t>(i);
-    if (rt->users[user_idx].flags & 1) {
-      sharpe_prune_old_buckets(rt, user_idx, min_bucket_to_keep);
-    }
   }
 }
 

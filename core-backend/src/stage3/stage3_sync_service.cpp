@@ -63,15 +63,16 @@ int64_t StageSync::get_bucket_user_count(int64_t bucket) const {
   if (bucket < 0) {
     return 0;
   }
-  int64_t count = 0;
+
   const int32_t target_bucket = static_cast<int32_t>(bucket);
-  for (uint64_t i = 0; i < rt_->header->user_count; ++i) {
-    const uint32_t user_idx = static_cast<uint32_t>(i);
-    if (!(rt_->users[user_idx].flags & 1)) {
+  int64_t count = 0;
+  for (const auto &[key, feat_idx] : rt_->feature_index.map) {
+    (void)feat_idx;
+    if (FeatureIndex::extract_bucket(key) != target_bucket) {
       continue;
     }
-    if (feature_find(rt_, user_idx, target_bucket, -1) != nullptr) {
-      count++;
+    if (FeatureIndex::extract_tag(key) == -1) {
+      ++count;
     }
   }
   return count;
@@ -178,32 +179,13 @@ json StageSync::stage3_rocksdb_memory_breakdown() const {
 std::vector<StageSync::UserSummaryRow> StageSync::get_users_sorted(int64_t limit) const {
   TraceN("s3/users");
   const int64_t actual_limit = std::max<int64_t>(1, limit);
-  struct RankRow {
-    uint32_t user_idx = 0;
-    int64_t events = 0;
-  };
-  std::vector<RankRow> rows;
-  rows.reserve(rt_->header->user_count);
-  for (uint64_t i = 0; i < rt_->header->user_count; ++i) {
-    const uint32_t user_idx = static_cast<uint32_t>(i);
-    const UserBlock &u = rt_->users[user_idx];
-    if (!(u.flags & 1)) {
-      continue;
-    }
-    rows.push_back({user_idx, u.total_events});
-  }
-  std::sort(rows.begin(), rows.end(), [](const RankRow &a, const RankRow &b) {
-    if (a.events != b.events) {
-      return a.events > b.events;
-    }
-    return a.user_idx < b.user_idx;
-  });
-
-  const size_t n = std::min(rows.size(), static_cast<size_t>(actual_limit));
+  rt_->rank_cache.rebuild_if_needed(rt_);
+  const size_t n = std::min(rt_->rank_cache.by_events.size(), static_cast<size_t>(actual_limit));
   std::vector<UserSummaryRow> out;
   out.reserve(n);
   for (size_t i = 0; i < n; ++i) {
-    const UserBlock &u = rt_->users[rows[i].user_idx];
+    const uint32_t user_idx = rt_->rank_cache.by_events[i].user_idx;
+    const UserBlock &u = rt_->users[user_idx];
     out.push_back({
         format_address(u.addr),
         u.total_events,
@@ -531,7 +513,7 @@ void StageSync::schedule_sync(int delay_seconds) {
 }
 
 void StageSync::do_sync_tick() {
-  Trace;
+  TraceN("s3/runloop_tick");
   auto refresh_timing_metrics = [&](int64_t remaining_blocks) {
     if (sync_commit_points_.size() < 2) {
       sync_.blocks_per_second = 0.0;
@@ -559,6 +541,7 @@ void StageSync::do_sync_tick() {
 
   int64_t before_block = 0;
   {
+    TraceN("s3/runloop/enter");
     std::lock_guard<std::mutex> lock(sync_mu_);
     sync_.syncing = true;
     refresh_status_locked();
@@ -566,31 +549,40 @@ void StageSync::do_sync_tick() {
   }
 
   if (builder_.is_building() || builder_.has_pending_commit()) {
-    std::lock_guard<std::mutex> lock(sync_mu_);
-    refresh_status_locked();
-    refresh_timing_metrics(sync_.behind_blocks);
-    sync_.syncing = false;
-    schedule_sync(kStage2YieldDelaySeconds);
+    {
+      TraceN("s3/runloop/yield_stage2");
+      std::lock_guard<std::mutex> lock(sync_mu_);
+      refresh_status_locked();
+      refresh_timing_metrics(sync_.behind_blocks);
+      sync_.syncing = false;
+      schedule_sync(kStage2YieldDelaySeconds);
+    }
+    TraceFrameN("s3_sync_loop");
     return;
   }
 
-  refresh_conditions_if_needed();
+  {
+    TraceN("s3/runloop/refresh_conditions");
+    refresh_conditions_if_needed();
+  }
+
   const int64_t head_block = builder_.cursor();
   size_t processed = 0;
   {
-    TraceN("s3/sync_tick");
+    TraceN("s3/runloop/sync_tick");
     processed = stage3_sync_tick(rt_, builder_.user_event_store(), head_block, kStage3BatchEvents);
   }
   if (processed > 0) {
-    TraceN("s3/prune");
+    TraceN("s3/runloop/prune");
     stage3_post_sync_prune(rt_);
   }
   {
-    TraceN("s3/msync");
+    TraceN("s3/runloop/msync");
     stage3_sync(rt_);
   }
 
   {
+    TraceN("s3/runloop/commit");
     std::lock_guard<std::mutex> lock(sync_mu_);
     refresh_status_locked();
     const int64_t after_block = sync_.last_block;
@@ -605,6 +597,7 @@ void StageSync::do_sync_tick() {
     const int next_delay = (sync_.behind_blocks > 0) ? 1 : base_interval_seconds_;
     schedule_sync(next_delay);
   }
+  TraceFrameN("s3_sync_loop");
 }
 
 } // namespace stage3
