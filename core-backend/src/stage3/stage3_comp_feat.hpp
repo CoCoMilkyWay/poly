@@ -37,6 +37,8 @@ double calc_unrealized_pnl(const TokenSnapshot &st, double pos_epsilon);
 int64_t calc_exposure_1e6(const TokenSnapshot &st, double pos_epsilon);
 int64_t calc_holding_period_blocks(int64_t current_block, const TokenSnapshot &st, double pos_epsilon);
 int64_t calc_volume_1e6(stage2::EventType ty, int64_t amount, int64_t price_1e6);
+__int128 linear_series_i128(__int128 base, int64_t slope, int64_t len);
+__int128 advance_holding_exp(__int128 holding_exp, int64_t exposure, int64_t delta_blocks);
 
 void update_tail_window(BucketAggState &agg,
                         int64_t block_bucket,

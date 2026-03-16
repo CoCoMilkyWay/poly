@@ -14,6 +14,8 @@ int64_t narrow_i64(__int128 v) {
   return static_cast<int64_t>(v);
 }
 
+} // namespace
+
 __int128 linear_series_i128(__int128 base, int64_t slope, int64_t len) {
   assert(base >= 0);
   assert(slope >= 0);
@@ -22,7 +24,15 @@ __int128 linear_series_i128(__int128 base, int64_t slope, int64_t len) {
   return static_cast<__int128>(base) * L + static_cast<__int128>(slope) * L * (L - 1) / 2;
 }
 
-} // namespace
+__int128 advance_holding_exp(__int128 holding_exp, int64_t exposure, int64_t delta_blocks) {
+  assert(holding_exp >= 0);
+  assert(exposure >= 0);
+  assert(delta_blocks >= 0);
+  if (exposure == 0) {
+    assert(holding_exp == 0);
+  }
+  return holding_exp + static_cast<__int128>(exposure) * delta_blocks;
+}
 
 int64_t round_i64(double v) { return static_cast<int64_t>(std::llround(v)); }
 

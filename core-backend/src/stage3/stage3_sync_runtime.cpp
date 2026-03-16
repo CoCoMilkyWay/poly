@@ -308,6 +308,22 @@ struct PrefixSumHistoryRecord {
   int64_t ps_holding_period_avg = 0;
 };
 
+struct BlobTagKey {
+  std::string user_blob;
+  int32_t tag_id = -1;
+  bool operator==(const BlobTagKey &o) const {
+    return user_blob == o.user_blob && tag_id == o.tag_id;
+  }
+};
+
+struct BlobTagKeyHasher {
+  size_t operator()(const BlobTagKey &k) const {
+    size_t h = std::hash<std::string>()(k.user_blob);
+    h ^= std::hash<int32_t>()(k.tag_id) + 0x9e3779b97f4a7c15ULL + (h << 6) + (h >> 2);
+    return h;
+  }
+};
+
 const PrefixSumHistoryRecord *find_prefix_sum_history_by_pair_key_le(
     const std::vector<PrefixSumHistoryRecord> &records, int64_t target_bucket) {
   // records 按 bucket 降序排列，二分查找第一个 bucket <= target 的记录
@@ -540,12 +556,338 @@ bool StageSync::process_chunk_locked() const {
     loaded_state.entry_block = static_cast<double>(query_result.GetValue(6, row_idx).GetValue<int64_t>());
     return loaded_state;
   };
+  auto query_dense_feature_max_bucket = [&]() {
+    auto r = query_checked("SELECT COALESCE(MAX(block_bucket), -1) FROM " + table_feature_tensor);
+    return r->GetValue(0, 0).GetValue<int64_t>();
+  };
+  auto fill_dense_quiet_feature_bucket = [&](int64_t target_bucket) {
+    assert(target_bucket >= 0);
+    if (target_bucket == 0) {
+      return;
+    }
+    struct QuietPrevRow {
+      std::string user_blob;
+      int32_t tag_id = -1;
+      int64_t last_sort_key = 0;
+      int64_t last_block = 0;
+      int64_t last_exposure = 0;
+      __int128 last_holding_exp = 0;
+      int64_t last_token_count = 0;
+      int64_t ps_token = 0;
+      int64_t ps_exposure = 0;
+      int64_t ps_volume = 0;
+      int64_t ps_holding = 0;
+      int64_t updated_sort_key = 0;
+    };
+    const int64_t prev_bucket = target_bucket - 1;
+    auto prev_result = query_checked(
+        "SELECT user_addr, tag_id, last_sort_key_10w, last_block_10w, last_exposure_10w, "
+        "last_holding_period_10w, last_token_count_10w, "
+        "ps_token_avg_10w, ps_exposure_avg_10w, ps_volume_10w, ps_holding_period_avg_10w, updated_sort_key "
+        "FROM " +
+        table_feature_tensor + " WHERE block_bucket = " + std::to_string(prev_bucket) +
+        " ORDER BY user_addr, tag_id");
+    if (prev_result->RowCount() == 0) {
+      return;
+    }
+
+    std::vector<QuietPrevRow> prev_rows;
+    prev_rows.reserve(prev_result->RowCount());
+    std::vector<std::string> sharpe_users;
+    sharpe_users.reserve(prev_result->RowCount() / 16 + 1);
+    for (idx_t i = 0; i < prev_result->RowCount(); ++i) {
+      QuietPrevRow row;
+      row.user_blob = prev_result->GetValue(0, i).GetValueUnsafe<std::string>();
+      row.tag_id = prev_result->GetValue(1, i).GetValue<int32_t>();
+      row.last_sort_key = prev_result->GetValue(2, i).GetValue<int64_t>();
+      row.last_block = prev_result->GetValue(3, i).GetValue<int64_t>();
+      row.last_exposure = prev_result->GetValue(4, i).GetValue<int64_t>();
+      row.last_holding_exp = hugeint_to_i128(prev_result->GetValue(5, i).GetValue<duckdb::hugeint_t>());
+      row.last_token_count = prev_result->GetValue(6, i).GetValue<int64_t>();
+      row.ps_token = prev_result->GetValue(7, i).GetValue<int64_t>();
+      row.ps_exposure = prev_result->GetValue(8, i).GetValue<int64_t>();
+      row.ps_volume = prev_result->GetValue(9, i).GetValue<int64_t>();
+      row.ps_holding = prev_result->GetValue(10, i).GetValue<int64_t>();
+      row.updated_sort_key = prev_result->GetValue(11, i).GetValue<int64_t>();
+      prev_rows.push_back(row);
+      if (row.tag_id == -1) {
+        sharpe_users.push_back(row.user_blob);
+      }
+    }
+
+    std::unordered_map<BlobTagKey, PrefixSumHistoryRecord, BlobTagKeyHasher> boundary_100_by_key;
+    std::unordered_map<BlobTagKey, PrefixSumHistoryRecord, BlobTagKeyHasher> boundary_1000_by_key;
+    auto load_boundary_map =
+        [&](int64_t boundary_bucket,
+            std::unordered_map<BlobTagKey, PrefixSumHistoryRecord, BlobTagKeyHasher> &out) {
+          if (boundary_bucket < 0) {
+            return;
+          }
+          auto boundary_result = query_checked(
+              "SELECT user_addr, tag_id, ps_token_avg_10w, ps_exposure_avg_10w, "
+              "ps_volume_10w, ps_holding_period_avg_10w "
+              "FROM " +
+              table_feature_tensor + " WHERE block_bucket = " + std::to_string(boundary_bucket));
+          out.reserve(boundary_result->RowCount());
+          for (idx_t i = 0; i < boundary_result->RowCount(); ++i) {
+            BlobTagKey key{
+                boundary_result->GetValue(0, i).GetValueUnsafe<std::string>(),
+                boundary_result->GetValue(1, i).GetValue<int32_t>(),
+            };
+            out.emplace(
+                std::move(key),
+                PrefixSumHistoryRecord{
+                    boundary_bucket,
+                    boundary_result->GetValue(2, i).GetValue<int64_t>(),
+                    boundary_result->GetValue(3, i).GetValue<int64_t>(),
+                    boundary_result->GetValue(4, i).GetValue<int64_t>(),
+                    boundary_result->GetValue(5, i).GetValue<int64_t>(),
+                });
+          }
+        };
+    load_boundary_map(target_bucket - 10, boundary_100_by_key);
+    load_boundary_map(target_bucket - 100, boundary_1000_by_key);
+
+    std::unordered_map<std::string, UserSharpeCacheState> quiet_sharpe_cache_by_user;
+    quiet_sharpe_cache_by_user.reserve(sharpe_users.size());
+    if (!sharpe_users.empty()) {
+      tmp_table_reset(kSqlTmpTouchedUsers, kSqlTmpSchemaTouchedUsers);
+      {
+        duckdb::Appender ap(*sink_connection, kSqlTmpTouchedUsers);
+        for (const std::string &user_blob : sharpe_users) {
+          ap.BeginRow();
+          append_blob(ap, user_blob);
+          ap.EndRow();
+          quiet_sharpe_cache_by_user.try_emplace(user_blob, UserSharpeCacheState{});
+        }
+        ap.Close();
+      }
+      const int64_t start_bucket = std::max<int64_t>(0, target_bucket - 99);
+      auto anchor_result = query_checked(
+          "SELECT x.user_addr, x.close_pnl "
+          "FROM ("
+          "  SELECT s.user_addr, s.close_pnl, "
+          "         ROW_NUMBER() OVER (PARTITION BY t.user_addr ORDER BY s.block_bucket DESC) AS rn "
+          "  FROM " +
+          table_account_bucket_pnl + " s "
+                                     "  JOIN " +
+          std::string(kSqlTmpTouchedUsers) +
+          " t ON s.user_addr = t.user_addr "
+          "  WHERE s.block_bucket < " +
+          std::to_string(start_bucket) +
+          ") x WHERE x.rn = 1");
+      for (idx_t i = 0; i < anchor_result->RowCount(); ++i) {
+        const std::string user_blob = anchor_result->GetValue(0, i).GetValueUnsafe<std::string>();
+        quiet_sharpe_cache_by_user[user_blob].pnl_before_first_bucket =
+            anchor_result->GetValue(1, i).GetValue<int64_t>();
+      }
+      auto history_result = query_checked(
+          "SELECT s.user_addr, s.block_bucket, s.samples_blob, s.close_pnl, s.min_pnl, s.updated_sort_key "
+          "FROM " +
+          table_account_bucket_pnl + " s "
+                                     "JOIN " +
+          std::string(kSqlTmpTouchedUsers) +
+          " t ON s.user_addr = t.user_addr "
+          "WHERE s.block_bucket >= " +
+          std::to_string(start_bucket) + " AND s.block_bucket <= " + std::to_string(target_bucket) +
+          " ORDER BY s.user_addr, s.block_bucket");
+      for (idx_t i = 0; i < history_result->RowCount(); ++i) {
+        const std::string user_blob = history_result->GetValue(0, i).GetValueUnsafe<std::string>();
+        auto cache_it = quiet_sharpe_cache_by_user.find(user_blob);
+        assert(cache_it != quiet_sharpe_cache_by_user.end());
+        UserSharpeCacheState &cache = cache_it->second;
+        cache.buckets.push_back(AccountBucketPnlState{
+            history_result->GetValue(1, i).GetValue<int64_t>(),
+            {},
+            history_result->GetValue(3, i).GetValue<int64_t>(),
+            history_result->GetValue(4, i).GetValue<int64_t>(),
+            history_result->GetValue(5, i).GetValue<int64_t>(),
+        });
+        decode_account_bucket_samples_blob(
+            history_result->GetValue(2, i).GetValueUnsafe<std::string>(),
+            cache.buckets.back().samples);
+      }
+    }
+
+    tmp_table_reset(kSqlTmpFeatureTensorState, kSqlTmpSchemaFeatureTensorState);
+    {
+      duckdb::Appender ap(*sink_connection, kSqlTmpFeatureTensorState);
+      const int64_t bucket_start_block = target_bucket * kBlockBucketSize;
+      const int64_t denom_100 = std::min<int64_t>(10, target_bucket + 1);
+      const int64_t denom_1000 = std::min<int64_t>(100, target_bucket + 1);
+      for (const QuietPrevRow &row : prev_rows) {
+        assert(row.last_exposure >= 0);
+        assert(row.last_token_count >= 0);
+        const int64_t delta_to_start = bucket_start_block - row.last_block;
+        assert(delta_to_start >= 0);
+        const __int128 start_holding_exp =
+            feature_comp::advance_holding_exp(row.last_holding_exp, row.last_exposure, delta_to_start);
+        const int64_t token_avg_10w = row.last_token_count;
+        const int64_t exposure_avg_10w = row.last_exposure;
+        const int64_t volume_10w = 0;
+        const int64_t time_weight_sum = kBlockBucketSize;
+        const int64_t token_count_tw_sum =
+            i64_narrow_checked(static_cast<__int128>(token_avg_10w) * static_cast<__int128>(kBlockBucketSize));
+        const __int128 exposure_tw_sum =
+            static_cast<__int128>(exposure_avg_10w) * static_cast<__int128>(kBlockBucketSize);
+        const __int128 holding_period_exp_tw_sum =
+            feature_comp::linear_series_i128(start_holding_exp, exposure_avg_10w, kBlockBucketSize);
+        const int64_t holding_period_avg_10w =
+            (exposure_tw_sum > 0)
+                ? feature_comp::round_i64(static_cast<double>(i128_to_long_double(holding_period_exp_tw_sum) /
+                                                i128_to_long_double(exposure_tw_sum)))
+                : 0;
+        const int64_t ps_token_avg =
+            i64_narrow_checked(static_cast<__int128>(row.ps_token) + static_cast<__int128>(token_avg_10w));
+        const int64_t ps_exposure_avg =
+            i64_narrow_checked(static_cast<__int128>(row.ps_exposure) + static_cast<__int128>(exposure_avg_10w));
+        const int64_t ps_volume = row.ps_volume;
+        const int64_t ps_holding_period_avg =
+            i64_narrow_checked(static_cast<__int128>(row.ps_holding) + static_cast<__int128>(holding_period_avg_10w));
+
+        const PrefixSumHistoryRecord kZeroBoundary{};
+        const auto boundary_100_it = boundary_100_by_key.find(BlobTagKey{row.user_blob, row.tag_id});
+        const auto boundary_1000_it = boundary_1000_by_key.find(BlobTagKey{row.user_blob, row.tag_id});
+        const PrefixSumHistoryRecord &boundary_100 =
+            (boundary_100_it != boundary_100_by_key.end()) ? boundary_100_it->second : kZeroBoundary;
+        const PrefixSumHistoryRecord &boundary_1000 =
+            (boundary_1000_it != boundary_1000_by_key.end()) ? boundary_1000_it->second : kZeroBoundary;
+
+        const int64_t token_avg_100w = (denom_100 > 0)
+                                           ? feature_comp::round_i64(static_cast<double>(
+                                                 i64_narrow_checked(static_cast<__int128>(ps_token_avg) -
+                                                                    static_cast<__int128>(boundary_100.ps_token_avg))) /
+                                                                     static_cast<double>(denom_100))
+                                           : 0;
+        const int64_t token_avg_1000w = (denom_1000 > 0)
+                                            ? feature_comp::round_i64(static_cast<double>(
+                                                  i64_narrow_checked(static_cast<__int128>(ps_token_avg) -
+                                                                     static_cast<__int128>(boundary_1000.ps_token_avg))) /
+                                                                      static_cast<double>(denom_1000))
+                                            : 0;
+        const int64_t exposure_avg_100w =
+            (denom_100 > 0)
+                ? feature_comp::round_i64(static_cast<double>(
+                                              i64_narrow_checked(static_cast<__int128>(ps_exposure_avg) -
+                                                                 static_cast<__int128>(boundary_100.ps_exposure_avg))) /
+                                          static_cast<double>(denom_100))
+                : 0;
+        const int64_t exposure_avg_1000w =
+            (denom_1000 > 0)
+                ? feature_comp::round_i64(static_cast<double>(
+                                              i64_narrow_checked(static_cast<__int128>(ps_exposure_avg) -
+                                                                 static_cast<__int128>(boundary_1000.ps_exposure_avg))) /
+                                          static_cast<double>(denom_1000))
+                : 0;
+        const int64_t volume_avg_100w = (denom_100 > 0)
+                                            ? feature_comp::round_i64(static_cast<double>(
+                                                  i64_narrow_checked(static_cast<__int128>(ps_volume) -
+                                                                     static_cast<__int128>(boundary_100.ps_volume))) /
+                                                                      static_cast<double>(denom_100))
+                                            : 0;
+        const int64_t volume_avg_1000w = (denom_1000 > 0)
+                                             ? feature_comp::round_i64(static_cast<double>(
+                                                   i64_narrow_checked(static_cast<__int128>(ps_volume) -
+                                                                      static_cast<__int128>(boundary_1000.ps_volume))) /
+                                                                       static_cast<double>(denom_1000))
+                                             : 0;
+        const int64_t holding_period_avg_100w =
+            (denom_100 > 0)
+                ? feature_comp::round_i64(static_cast<double>(
+                                              i64_narrow_checked(static_cast<__int128>(ps_holding_period_avg) -
+                                                                 static_cast<__int128>(boundary_100.ps_holding_period_avg))) /
+                                          static_cast<double>(denom_100))
+                : 0;
+        const int64_t holding_period_avg_1000w =
+            (denom_1000 > 0)
+                ? feature_comp::round_i64(static_cast<double>(
+                                              i64_narrow_checked(static_cast<__int128>(ps_holding_period_avg) -
+                                                                 static_cast<__int128>(boundary_1000.ps_holding_period_avg))) /
+                                          static_cast<double>(denom_1000))
+                : 0;
+
+        double sharpe_10w = 0.0;
+        double sharpe_100w = 0.0;
+        double sharpe_1000w = 0.0;
+        if (row.tag_id == -1) {
+          auto cache_it = quiet_sharpe_cache_by_user.find(row.user_blob);
+          assert(cache_it != quiet_sharpe_cache_by_user.end());
+          const UserSharpeCacheState &cache = cache_it->second;
+          sharpe_10w = calc_window_return_sharpe(
+              cache.buckets, cache.pnl_before_first_bucket, target_bucket, target_bucket, exposure_avg_10w, kBlockBucketSize);
+          sharpe_100w = calc_window_return_sharpe(
+              cache.buckets,
+              cache.pnl_before_first_bucket,
+              std::max<int64_t>(0, target_bucket - 9),
+              target_bucket,
+              exposure_avg_100w,
+              kBlockBucketSize);
+          sharpe_1000w = calc_window_return_sharpe(
+              cache.buckets,
+              cache.pnl_before_first_bucket,
+              std::max<int64_t>(0, target_bucket - 99),
+              target_bucket,
+              exposure_avg_1000w,
+              kBlockBucketSize);
+        }
+
+        ap.BeginRow();
+        append_blob(ap, row.user_blob);
+        ap.Append(target_bucket);
+        ap.Append(row.tag_id);
+        ap.Append(row.last_sort_key);
+        ap.Append(bucket_start_block);
+        ap.Append(exposure_avg_10w);
+        ap.Append(duckdb::Value::HUGEINT(i128_to_hugeint(start_holding_exp)));
+        ap.Append(token_avg_10w);
+        ap.Append(time_weight_sum);
+        ap.Append(token_count_tw_sum);
+        ap.Append(duckdb::Value::HUGEINT(i128_to_hugeint(exposure_tw_sum)));
+        ap.Append(volume_10w);
+        ap.Append(duckdb::Value::HUGEINT(i128_to_hugeint(holding_period_exp_tw_sum)));
+        ap.Append(token_avg_10w);
+        ap.Append(exposure_avg_10w);
+        ap.Append(volume_10w);
+        ap.Append(holding_period_avg_10w);
+        ap.Append(sharpe_10w);
+        ap.Append(ps_token_avg);
+        ap.Append(ps_exposure_avg);
+        ap.Append(ps_volume);
+        ap.Append(ps_holding_period_avg);
+        ap.Append(token_avg_100w);
+        ap.Append(token_avg_1000w);
+        ap.Append(exposure_avg_100w);
+        ap.Append(exposure_avg_1000w);
+        ap.Append(volume_avg_100w);
+        ap.Append(volume_avg_1000w);
+        ap.Append(holding_period_avg_100w);
+        ap.Append(holding_period_avg_1000w);
+        ap.Append(sharpe_100w);
+        ap.Append(sharpe_1000w);
+        ap.Append(row.updated_sort_key);
+        ap.EndRow();
+      }
+      ap.Close();
+    }
+    (void)query_checked(
+        "INSERT INTO " + table_feature_tensor + " (" + kSqlColsFeatureTensorState + ") "
+                                                                                  "SELECT " +
+        kSqlColsFeatureTensorState + " FROM " +
+        std::string(kSqlTmpFeatureTensorState) +
+        " ON CONFLICT(user_addr, block_bucket, tag_id) DO NOTHING");
+  };
+  int64_t dense_feature_max_bucket = query_dense_feature_max_bucket();
   // L2: source ingestion
   std::vector<core::rocks::Stage2UserEventRecord> source_event_rows = builder_.user_event_store().scan_by_sort_key(
       sync_cursor_.sort_key, head_sort_key, static_cast<size_t>(kStage3BatchEvents));
   if (source_event_rows.empty()) {
-    sync_cursor_.sort_key = head_sort_key;
     (void)query_checked("BEGIN");
+    const int64_t head_bucket = feature_comp::sort_key_to_block_bucket(head_sort_key, SORT_KEY_SCALE, kBlockBucketSize);
+    while (dense_feature_max_bucket < head_bucket) {
+      fill_dense_quiet_feature_bucket(dense_feature_max_bucket + 1);
+      ++dense_feature_max_bucket;
+    }
+    sync_cursor_.sort_key = head_sort_key;
     save_cursor_locked(*sink_connection);
     (void)query_checked("COMMIT");
     return true;
@@ -1107,8 +1449,10 @@ bool StageSync::process_chunk_locked() const {
       agg.has_tail = (agg.time_weight_sum > 0);
     }
   }
+  std::unordered_map<UserTagRuntimePairKey, std::vector<PrefixSumHistoryRecord>, UserTagRuntimePairKeyHasher>
+      prefix_sum_history_by_pair_key;
 
-  // L5: event stream apply + feature fold
+  // L5: event stream apply + per-bucket dense feature flush
   std::vector<EventFact> event_fact_rows;
   event_fact_rows.reserve(event_input_rows.size());
   std::unordered_set<TokenKey, TokenKeyHash> dirty_token_key_set;
@@ -1141,176 +1485,227 @@ bool StageSync::process_chunk_locked() const {
       cache.buckets.pop_front();
     }
   };
-  auto update_account_bucket_cache = [&](uint32_t user_id, int64_t sort_key, int64_t prev_account_pnl, int64_t pnl) {
-    const std::string &user_blob = user_blob_by_user_id[user_id];
-    auto [cache_it, inserted] = sharpe_cache_by_user_blob_.try_emplace(user_blob, UserSharpeCacheState{});
-    (void)inserted;
-    UserSharpeCacheState &cache = cache_it->second;
-    if (cache.buckets.empty()) {
-      cache.pnl_before_first_bucket = prev_account_pnl;
-    }
-    const int64_t row_block = sort_key_to_block(sort_key);
-    const int64_t block_bucket =
-        feature_comp::sort_key_to_block_bucket(sort_key, SORT_KEY_SCALE, kBlockBucketSize);
-    int64_t prev_pnl = cache.pnl_before_first_bucket;
-    if (!cache.buckets.empty()) {
-      prev_pnl = cache.buckets.back().close_pnl;
-    }
-    bool created_new_bucket = false;
-    if (cache.buckets.empty() || cache.buckets.back().block_bucket < block_bucket) {
-      if (pnl == prev_pnl) {
-        return;
-      }
-      cache.buckets.push_back(AccountBucketPnlState{block_bucket, {}, prev_pnl, pnl, sort_key});
-      created_new_bucket = true;
-    } else {
-      assert(cache.buckets.back().block_bucket == block_bucket);
-    }
-    AccountBucketPnlState &bucket_state = cache.buckets.back();
-    const int32_t block_offset = static_cast<int32_t>(row_block - block_bucket * kBlockBucketSize);
-    assert(block_offset >= 0);
-    assert(block_offset < kBlockBucketSize);
-    if (!bucket_state.samples.empty() && bucket_state.samples.back().block_offset == block_offset) {
-      if (bucket_state.samples.back().pnl == pnl) {
-        return;
-      }
-      bucket_state.samples.back().pnl = pnl;
-      bucket_state.min_pnl = bucket_state.samples.front().pnl;
-      for (const auto &sample : bucket_state.samples) {
-        bucket_state.min_pnl = std::min(bucket_state.min_pnl, sample.pnl);
-      }
-    } else {
-      if (!created_new_bucket && bucket_state.close_pnl == pnl) {
-        return;
-      }
-      assert(bucket_state.samples.empty() || bucket_state.samples.back().block_offset < block_offset);
-      bucket_state.samples.push_back({block_offset, pnl});
-      bucket_state.min_pnl = std::min(bucket_state.min_pnl, pnl);
-    }
-    bucket_state.close_pnl = pnl;
-    bucket_state.updated_sort_key = sort_key;
-    dirty_account_bucket_key_set.insert(AccountBucketKey{user_id, block_bucket});
-  };
-  for (const auto &row : event_input_rows) {
-    auto realized_total_it = realized_total_by_user_id.find(row.user_id);
-    auto unrealized_total_it = unrealized_total_by_user_id.find(row.user_id);
-    auto active_token_count_it = active_token_count_by_user_id.find(row.user_id);
-    assert(realized_total_it != realized_total_by_user_id.end());
-    assert(unrealized_total_it != unrealized_total_by_user_id.end());
-    assert(active_token_count_it != active_token_count_by_user_id.end());
-    const int64_t prev_realized_total_i64 = feature_comp::round_i64(realized_total_it->second);
-    const int64_t prev_unrealized_total_i64 = feature_comp::round_i64(unrealized_total_it->second);
-    const int64_t prev_account_pnl_i64 =
-        i64_narrow_checked(static_cast<__int128>(prev_realized_total_i64) + static_cast<__int128>(prev_unrealized_total_i64));
-
-    double realized_delta = 0.0;
-    int8_t tag_id = 13;
-    int64_t exposure = 0;
-    int64_t holding_period = 0;
-    int64_t volume = calc_volume_1e6(row);
-    if (row.cond_idx >= 0) {
-      assert(static_cast<size_t>(row.cond_idx) < conditions_.size());
-      const auto &cond = conditions_[static_cast<size_t>(row.cond_idx)];
-      assert(row.token_idx >= 0 && row.token_idx < cond.outcome_count);
-      tag_id = cond_tag_ids_[static_cast<size_t>(row.cond_idx)];
-
-      TokenKey key{row.user_id, row.cond_idx, row.token_idx};
-      auto token_state_it = token_state_by_token_key.find(key);
-      assert(token_state_it != token_state_by_token_key.end());
-      TokenState &st = token_state_it->second;
-      const TokenState before_state = st;
-      const auto before_contrib = token_feature_contrib(st);
-      const double before_unrealized = feature_comp::calc_unrealized_pnl(
-          feature_comp::TokenSnapshot{st.pos, st.cost, st.lp, st.entry_block}, kPosEpsilon);
-      const int before_holding = static_cast<int>(before_contrib.token_count);
-      realized_delta = apply_event_input(row, st);
-      const auto after_contrib = token_feature_contrib(st);
-      const double after_unrealized = feature_comp::calc_unrealized_pnl(
-          feature_comp::TokenSnapshot{st.pos, st.cost, st.lp, st.entry_block}, kPosEpsilon);
-      const int after_holding = static_cast<int>(after_contrib.token_count);
-      unrealized_total_it->second += (after_unrealized - before_unrealized);
-      active_token_count_it->second += (after_holding - before_holding);
-      assert(active_token_count_it->second >= 0);
-
-      const int64_t token_count_delta = after_contrib.token_count - before_contrib.token_count;
-      const int64_t exposure_delta = after_contrib.exposure - before_contrib.exposure;
-      const __int128 exposure_entry_delta = after_contrib.exposure_entry - before_contrib.exposure_entry;
-      apply_runtime_contrib_delta(row.user_id, tag_id, token_count_delta, exposure_delta, exposure_entry_delta);
-      apply_runtime_contrib_delta(row.user_id, -1, token_count_delta, exposure_delta, exposure_entry_delta);
-      if (!token_state_rounded_equal(before_state, st)) {
-        dirty_token_key_set.insert(key);
-      }
-
-      const int64_t row_block = sort_key_to_block(row.sort_key);
-      exposure = after_contrib.exposure;
-      holding_period = feature_comp::calc_holding_period_blocks(
-          row_block, feature_comp::TokenSnapshot{st.pos, st.cost, st.lp, st.entry_block}, kPosEpsilon);
-      const int64_t block_bucket =
-          feature_comp::sort_key_to_block_bucket(row.sort_key, SORT_KEY_SCALE, kBlockBucketSize);
-
-      auto apply_feature_bucket = [&](int8_t agg_tag_id) {
-        UserTagRuntimePairKey rt_key{row.user_id, agg_tag_id};
-        auto [runtime_it, _] = runtime_pair_state_by_pair_key.try_emplace(rt_key, UserTagRuntimePairState{});
-        UserTagRuntimePairState &rt = runtime_it->second;
-        assert(rt.token_count >= 0);
-        assert(rt.exposure >= 0);
-        __int128 holding_exp = 0;
-        if (rt.exposure > 0) {
-          const __int128 computed = static_cast<__int128>(row_block) * rt.exposure - rt.exposure_entry_sum;
-          assert(computed >= 0);
-          holding_exp = computed;
-        } else {
-          assert(rt.exposure_entry_sum == 0);
+  auto update_account_bucket_cache =
+      [&](uint32_t user_id,
+          int64_t sort_key,
+          int64_t prev_account_pnl,
+          int64_t pnl,
+          std::unordered_set<AccountBucketKey, AccountBucketKeyHasher> &dirty_bucket_keys) {
+        const std::string &user_blob = user_blob_by_user_id[user_id];
+        auto [cache_it, inserted] = sharpe_cache_by_user_blob_.try_emplace(user_blob, UserSharpeCacheState{});
+        (void)inserted;
+        UserSharpeCacheState &cache = cache_it->second;
+        if (cache.buckets.empty()) {
+          cache.pnl_before_first_bucket = prev_account_pnl;
         }
+        const int64_t row_block = sort_key_to_block(sort_key);
+        const int64_t block_bucket =
+            feature_comp::sort_key_to_block_bucket(sort_key, SORT_KEY_SCALE, kBlockBucketSize);
+        int64_t prev_pnl = cache.pnl_before_first_bucket;
+        if (!cache.buckets.empty()) {
+          prev_pnl = cache.buckets.back().close_pnl;
+        }
+        bool created_new_bucket = false;
+        if (cache.buckets.empty() || cache.buckets.back().block_bucket < block_bucket) {
+          if (pnl == prev_pnl) {
+            return;
+          }
+          cache.buckets.push_back(AccountBucketPnlState{block_bucket, {}, prev_pnl, pnl, sort_key});
+          created_new_bucket = true;
+        } else {
+          assert(cache.buckets.back().block_bucket == block_bucket);
+        }
+        AccountBucketPnlState &bucket_state = cache.buckets.back();
+        const int32_t block_offset = static_cast<int32_t>(row_block - block_bucket * kBlockBucketSize);
+        assert(block_offset >= 0);
+        assert(block_offset < kBlockBucketSize);
+        if (!bucket_state.samples.empty() && bucket_state.samples.back().block_offset == block_offset) {
+          if (bucket_state.samples.back().pnl == pnl) {
+            return;
+          }
+          bucket_state.samples.back().pnl = pnl;
+          bucket_state.min_pnl = bucket_state.samples.front().pnl;
+          for (const auto &sample : bucket_state.samples) {
+            bucket_state.min_pnl = std::min(bucket_state.min_pnl, sample.pnl);
+          }
+        } else {
+          if (!created_new_bucket && bucket_state.close_pnl == pnl) {
+            return;
+          }
+          assert(bucket_state.samples.empty() || bucket_state.samples.back().block_offset < block_offset);
+          bucket_state.samples.push_back({block_offset, pnl});
+          bucket_state.min_pnl = std::min(bucket_state.min_pnl, pnl);
+        }
+        bucket_state.close_pnl = pnl;
+        bucket_state.updated_sort_key = sort_key;
+        dirty_bucket_keys.insert(AccountBucketKey{user_id, block_bucket});
+      };
+  struct BucketRange {
+    int64_t block_bucket = 0;
+    size_t begin_idx = 0;
+    size_t end_idx = 0;
+  };
+  std::vector<BucketRange> bucket_ranges;
+  bucket_ranges.reserve(event_input_rows.size() / 1000 + 1);
+  for (size_t i = 0; i < event_input_rows.size();) {
+    const int64_t block_bucket =
+        feature_comp::sort_key_to_block_bucket(event_input_rows[i].sort_key, SORT_KEY_SCALE, kBlockBucketSize);
+    size_t j = i + 1;
+    while (j < event_input_rows.size() &&
+           feature_comp::sort_key_to_block_bucket(event_input_rows[j].sort_key, SORT_KEY_SCALE, kBlockBucketSize) == block_bucket) {
+      ++j;
+    }
+    bucket_ranges.push_back(BucketRange{block_bucket, i, j});
+    i = j;
+  }
 
-        AggKey agg_key{row.user_id, block_bucket, agg_tag_id};
-        auto bucket_agg_it = bucket_agg_state_by_agg_key.find(agg_key);
-        assert(bucket_agg_it != bucket_agg_state_by_agg_key.end());
-        BucketAggState &agg = bucket_agg_it->second;
-        feature_comp::update_tail_window(
-            agg, agg_key.block_bucket, row_block, rt.exposure, holding_exp, rt.token_count, kBlockBucketSize);
-        agg.volume_sum += volume;
-        agg.last_sort_key = row.sort_key;
+  {
+    static uint64_t memory_probe_counter = 0;
+    ++memory_probe_counter;
+    const bool should_sample_memory = (memory_probe_counter % 16 == 1);
+    if (should_sample_memory) {
+      const auto no_extra = [](const auto &) { return int64_t{0}; };
+      const auto sharpe_cache_value_extra = [](const UserSharpeCacheState &cache) {
+        int64_t extra = 0;
+        extra += static_cast<int64_t>(cache.buckets.size()) * static_cast<int64_t>(sizeof(AccountBucketPnlState));
+        for (const auto &bucket : cache.buckets) {
+          extra += core::mem::estimate_vector_plain(bucket.samples);
+        }
+        return extra;
+      };
+      const int64_t event_input_rows_bytes = core::mem::estimate_vector_plain(event_input_rows);
+      const int64_t user_blob_by_user_id_bytes =
+          core::mem::estimate_vector(user_blob_by_user_id, [](const std::string &s) { return core::mem::estimate_string_extra(s); });
+      const int64_t user_index_bytes =
+          core::mem::estimate_unordered_map(
+              user_id_by_user_blob, [](const std::string &k) { return core::mem::estimate_string_extra(k); }, no_extra) +
+          core::mem::estimate_unordered_map(event_increment_by_user_id, no_extra, no_extra) +
+          core::mem::estimate_unordered_map(last_sort_key_by_user_id, no_extra, no_extra) +
+          core::mem::estimate_unordered_map(realized_total_by_user_id, no_extra, no_extra) +
+          core::mem::estimate_unordered_map(unrealized_total_by_user_id, no_extra, no_extra) +
+          core::mem::estimate_unordered_map(active_token_count_by_user_id, no_extra, no_extra) +
+          core::mem::estimate_unordered_map(runtime_pair_state_by_pair_key, no_extra, no_extra);
+      const int64_t token_state_by_token_key_bytes = core::mem::estimate_unordered_map(token_state_by_token_key, no_extra, no_extra);
+      const int64_t bucket_agg_bytes = core::mem::estimate_unordered_map(bucket_agg_state_by_agg_key, no_extra, no_extra);
+      const int64_t event_fact_rows_bytes = core::mem::estimate_vector_plain(event_fact_rows);
+      const int64_t sharpe_cache_bytes =
+          core::mem::estimate_unordered_map(
+              sharpe_cache_by_user_blob_,
+              [](const std::string &k) { return core::mem::estimate_string_extra(k); },
+              sharpe_cache_value_extra);
+      int64_t sharpe_cache_buckets = 0;
+      int64_t sharpe_cache_samples = 0;
+      for (const auto &[_, cache] : sharpe_cache_by_user_blob_) {
+        sharpe_cache_buckets += static_cast<int64_t>(cache.buckets.size());
+        for (const auto &bucket : cache.buckets) {
+          sharpe_cache_samples += static_cast<int64_t>(bucket.samples.size());
+        }
+      }
+      const int64_t total_working_set_bytes =
+          event_input_rows_bytes + user_blob_by_user_id_bytes + user_index_bytes + token_state_by_token_key_bytes +
+          bucket_agg_bytes + event_fact_rows_bytes;
+      std::lock_guard<std::mutex> lock(sync_mu_);
+      runtime_memory_probe_.event_inputs_bytes = event_input_rows_bytes;
+      runtime_memory_probe_.user_blob_pool_bytes = user_blob_by_user_id_bytes;
+      runtime_memory_probe_.user_index_bytes = user_index_bytes;
+      runtime_memory_probe_.token_states_bytes = token_state_by_token_key_bytes;
+      runtime_memory_probe_.bucket_agg_bytes = bucket_agg_bytes;
+      runtime_memory_probe_.event_facts_bytes = event_fact_rows_bytes;
+      runtime_memory_probe_.sharpe_cache_bytes = sharpe_cache_bytes;
+      runtime_memory_probe_.sharpe_cache_users = static_cast<int64_t>(sharpe_cache_by_user_blob_.size());
+      runtime_memory_probe_.sharpe_cache_buckets = sharpe_cache_buckets;
+      runtime_memory_probe_.sharpe_cache_samples = sharpe_cache_samples;
+      runtime_memory_probe_.total_working_set_bytes = total_working_set_bytes;
+      runtime_memory_probe_.peak_working_set_bytes =
+          std::max(runtime_memory_probe_.peak_working_set_bytes, total_working_set_bytes);
+      runtime_memory_probe_.row_count = static_cast<int64_t>(event_input_rows.size());
+      runtime_memory_probe_.max_cond_idx = max_cond_idx;
+    } else {
+      std::lock_guard<std::mutex> lock(sync_mu_);
+      runtime_memory_probe_.sharpe_cache_users = static_cast<int64_t>(sharpe_cache_by_user_blob_.size());
+      runtime_memory_probe_.row_count = static_cast<int64_t>(event_input_rows.size());
+      runtime_memory_probe_.max_cond_idx = max_cond_idx;
+    }
+  }
+
+  for (const auto &[key, st] : token_state_by_token_key) {
+    assert(key.cond_idx >= 0);
+    assert(static_cast<size_t>(key.cond_idx) < conditions_.size());
+    assert(std::isfinite(st.pos));
+    assert(std::isfinite(st.cost));
+    assert(std::isfinite(st.lp));
+    assert(std::isfinite(st.entry_block));
+  }
+
+  bool write_tx_open = false;
+  {
+    TraceN("s3/wr_open");
+    (void)query_checked("BEGIN");
+    write_tx_open = true;
+  }
+
+  auto flush_account_bucket_rows =
+      [&](const std::unordered_set<AccountBucketKey, AccountBucketKeyHasher> &dirty_bucket_keys) {
+        if (dirty_bucket_keys.empty()) {
+          return;
+        }
+        TraceN("s3/wr_duck_bucket_pnl");
+        tmp_table_reset(kSqlTmpAccountBucketPnlState, kSqlTmpSchemaAccountBucketPnlState);
+        {
+          duckdb::Appender ap(*sink_connection, kSqlTmpAccountBucketPnlState);
+          for (const auto &key : dirty_bucket_keys) {
+            const std::string &user_blob = user_blob_by_user_id[key.user_id];
+            auto cache_it = sharpe_cache_by_user_blob_.find(user_blob);
+            assert(cache_it != sharpe_cache_by_user_blob_.end());
+            const UserSharpeCacheState &cache = cache_it->second;
+            const auto bucket_it = std::lower_bound(
+                cache.buckets.begin(),
+                cache.buckets.end(),
+                key.block_bucket,
+                [](const AccountBucketPnlState &row, int64_t block_bucket) { return row.block_bucket < block_bucket; });
+            assert(bucket_it != cache.buckets.end());
+            assert(bucket_it->block_bucket == key.block_bucket);
+            assert(!bucket_it->samples.empty());
+            const std::string samples_blob = encode_account_bucket_samples_blob(bucket_it->samples);
+            ap.BeginRow();
+            append_blob(ap, user_blob);
+            ap.Append(key.block_bucket);
+            append_blob(ap, samples_blob);
+            ap.Append(bucket_it->close_pnl);
+            ap.Append(bucket_it->min_pnl);
+            ap.Append(bucket_it->updated_sort_key);
+            ap.EndRow();
+          }
+          ap.Close();
+        }
+        (void)query_checked(
+            "INSERT INTO " + table_account_bucket_pnl + " (" + kSqlColsAccountBucketPnlState + ") "
+                                                                             "SELECT " +
+            kSqlColsAccountBucketPnlState + " FROM " +
+            std::string(kSqlTmpAccountBucketPnlState) + " " + std::string(kSqlOnConflictAccountBucketPnlState));
       };
 
-      apply_feature_bucket(tag_id);
-      apply_feature_bucket(-1);
+  auto flush_feature_rows = [&](std::unordered_map<AggKey, BucketAggState, AggKeyHash> &bucket_agg_state_by_agg_key_local) {
+    if (bucket_agg_state_by_agg_key_local.empty()) {
+      return;
     }
-    double &realized_total = realized_total_it->second;
-    double &unrealized_total = unrealized_total_it->second;
-    realized_total += realized_delta;
-    const int64_t realized_total_i64 = feature_comp::round_i64(realized_total);
-    const int64_t unrealized_total_i64 = feature_comp::round_i64(unrealized_total);
-    const int64_t account_pnl_i64 =
-        i64_narrow_checked(static_cast<__int128>(realized_total_i64) + static_cast<__int128>(unrealized_total_i64));
-    update_account_bucket_cache(row.user_id, row.sort_key, prev_account_pnl_i64, account_pnl_i64);
-    int32_t token_count = active_token_count_it->second;
-    event_fact_rows.push_back({
-        row.user_id,
-        row.sort_key,
-        row.cond_idx,
-        row.token_idx,
-        row.event_type,
-        feature_comp::round_i64(realized_delta),
-        realized_total_i64,
-        unrealized_total_i64,
-        token_count,
-        tag_id,
-        exposure,
-        volume,
-        holding_period,
-    });
-  }
-  assert(event_fact_rows.size() == event_input_rows.size());
+    tmp_table_reset(kSqlTmpFeatureTensorKeys, kSqlTmpSchemaFeatureTensorKeys);
+    {
+      duckdb::Appender ap(*sink_connection, kSqlTmpFeatureTensorKeys);
+      for (const auto &[key, _] : bucket_agg_state_by_agg_key_local) {
+        const std::string &user_blob = user_blob_by_user_id[key.user_id];
+        ap.BeginRow();
+        append_blob(ap, user_blob);
+        ap.Append(key.block_bucket);
+        ap.Append(static_cast<int32_t>(key.tag_id));
+        ap.EndRow();
+      }
+      ap.Close();
+    }
 
-  // L6: prefix-sum history + projection
-  // Node-C: 前缀和历史记录（用于 O(1) 窗口计算）
-  // 按 (user_id, tag_id) 索引，每个 pair 存储按 bucket 降序排列的前缀和记录
-  std::unordered_map<UserTagRuntimePairKey, std::vector<PrefixSumHistoryRecord>, UserTagRuntimePairKeyHasher> prefix_sum_history_by_pair_key;
-  prefix_sum_history_by_pair_key.reserve(bucket_agg_state_by_agg_key.size());
-  if (!bucket_agg_state_by_agg_key.empty()) {
-    // 查询每个 (user, tag) 对的历史前缀和（不在当前 batch 中的 bucket）
-    // 只查询 bucket >= min_dirty_bucket - 100 的数据（更早的不需要）
+    std::unordered_map<UserTagRuntimePairKey, std::vector<PrefixSumHistoryRecord>, UserTagRuntimePairKeyHasher>
+        prefix_sum_history_by_pair_key;
+    prefix_sum_history_by_pair_key.reserve(bucket_agg_state_by_agg_key_local.size());
     const std::string sql_prefix_sum_history_by_pair_key =
         "SELECT f.user_addr, f.tag_id, f.block_bucket, "
         "f.ps_token_avg_10w, f.ps_exposure_avg_10w, f.ps_volume_10w, "
@@ -1345,91 +1740,388 @@ bool StageSync::process_chunk_locked() const {
           prefix_sum_result->GetValue(6, i).GetValue<int64_t>(),
       });
     }
-  }
 
-  {
-    static uint64_t memory_probe_counter = 0;
-    ++memory_probe_counter;
-    const bool should_sample_memory = (memory_probe_counter % 16 == 1);
-    if (should_sample_memory) {
-      const auto no_extra = [](const auto &) { return int64_t{0}; };
-      const auto sharpe_cache_value_extra = [](const UserSharpeCacheState &cache) {
-        int64_t extra = 0;
-        extra += static_cast<int64_t>(cache.buckets.size()) * static_cast<int64_t>(sizeof(AccountBucketPnlState));
-        for (const auto &bucket : cache.buckets) {
-          extra += core::mem::estimate_vector_plain(bucket.samples);
-        }
-        return extra;
-      };
-      const int64_t event_input_rows_bytes = core::mem::estimate_vector_plain(event_input_rows);
-      const int64_t user_blob_by_user_id_bytes =
-          core::mem::estimate_vector(user_blob_by_user_id, [](const std::string &s) { return core::mem::estimate_string_extra(s); });
-      const int64_t user_index_bytes =
-          core::mem::estimate_unordered_map(
-              user_id_by_user_blob, [](const std::string &k) { return core::mem::estimate_string_extra(k); }, no_extra) +
-          core::mem::estimate_unordered_map(event_increment_by_user_id, no_extra, no_extra) +
-          core::mem::estimate_unordered_map(last_sort_key_by_user_id, no_extra, no_extra) +
-          core::mem::estimate_unordered_map(realized_total_by_user_id, no_extra, no_extra) +
-          core::mem::estimate_unordered_map(unrealized_total_by_user_id, no_extra, no_extra) +
-          core::mem::estimate_unordered_map(active_token_count_by_user_id, no_extra, no_extra) +
-          core::mem::estimate_unordered_map(runtime_pair_state_by_pair_key, no_extra, no_extra) +
-          core::mem::estimate_unordered_map(prefix_sum_history_by_pair_key, no_extra, [](const std::vector<PrefixSumHistoryRecord> &v) {
-            return static_cast<int64_t>(v.capacity() * sizeof(PrefixSumHistoryRecord));
-          });
-      const int64_t token_state_by_token_key_bytes = core::mem::estimate_unordered_map(token_state_by_token_key, no_extra, no_extra);
-      const int64_t bucket_agg_bytes = core::mem::estimate_unordered_map(bucket_agg_state_by_agg_key, no_extra, no_extra);
-      const int64_t event_fact_rows_bytes = core::mem::estimate_vector_plain(event_fact_rows);
-      const int64_t sharpe_cache_bytes =
-          core::mem::estimate_unordered_map(
-              sharpe_cache_by_user_blob_,
-              [](const std::string &k) { return core::mem::estimate_string_extra(k); },
-              sharpe_cache_value_extra);
-      int64_t sharpe_cache_buckets = 0;
-      int64_t sharpe_cache_samples = 0;
-      for (const auto &[_, cache] : sharpe_cache_by_user_blob_) {
-        sharpe_cache_buckets += static_cast<int64_t>(cache.buckets.size());
-        for (const auto &bucket : cache.buckets) {
-          sharpe_cache_samples += static_cast<int64_t>(bucket.samples.size());
-        }
+    TraceN("s3/wr_duck_feat");
+    tmp_table_reset(kSqlTmpFeatureTensorState, kSqlTmpSchemaFeatureTensorState);
+    {
+      duckdb::Appender ap(*sink_connection, kSqlTmpFeatureTensorState);
+      std::vector<AggKey> sorted_feature_keys;
+      sorted_feature_keys.reserve(bucket_agg_state_by_agg_key_local.size());
+      for (const auto &[key, _] : bucket_agg_state_by_agg_key_local) {
+        sorted_feature_keys.push_back(key);
       }
-      const int64_t total_working_set_bytes =
-          event_input_rows_bytes + user_blob_by_user_id_bytes + user_index_bytes + token_state_by_token_key_bytes + bucket_agg_bytes + event_fact_rows_bytes;
-      std::lock_guard<std::mutex> lock(sync_mu_);
-      runtime_memory_probe_.event_inputs_bytes = event_input_rows_bytes;
-      runtime_memory_probe_.user_blob_pool_bytes = user_blob_by_user_id_bytes;
-      runtime_memory_probe_.user_index_bytes = user_index_bytes;
-      runtime_memory_probe_.token_states_bytes = token_state_by_token_key_bytes;
-      runtime_memory_probe_.bucket_agg_bytes = bucket_agg_bytes;
-      runtime_memory_probe_.event_facts_bytes = event_fact_rows_bytes;
-      runtime_memory_probe_.sharpe_cache_bytes = sharpe_cache_bytes;
-      runtime_memory_probe_.sharpe_cache_users = static_cast<int64_t>(sharpe_cache_by_user_blob_.size());
-      runtime_memory_probe_.sharpe_cache_buckets = sharpe_cache_buckets;
-      runtime_memory_probe_.sharpe_cache_samples = sharpe_cache_samples;
-      runtime_memory_probe_.total_working_set_bytes = total_working_set_bytes;
-      runtime_memory_probe_.peak_working_set_bytes =
-          std::max(runtime_memory_probe_.peak_working_set_bytes, total_working_set_bytes);
-      runtime_memory_probe_.row_count = static_cast<int64_t>(event_input_rows.size());
-      runtime_memory_probe_.max_cond_idx = max_cond_idx;
-    } else {
-      std::lock_guard<std::mutex> lock(sync_mu_);
-      runtime_memory_probe_.sharpe_cache_users = static_cast<int64_t>(sharpe_cache_by_user_blob_.size());
-      runtime_memory_probe_.row_count = static_cast<int64_t>(event_input_rows.size());
-      runtime_memory_probe_.max_cond_idx = max_cond_idx;
-    }
-  }
+      std::sort(sorted_feature_keys.begin(), sorted_feature_keys.end(), [](const AggKey &a, const AggKey &b) {
+        if (a.user_id != b.user_id) {
+          return a.user_id < b.user_id;
+        }
+        if (a.tag_id != b.tag_id) {
+          return a.tag_id < b.tag_id;
+        }
+        return a.block_bucket < b.block_bucket;
+      });
+      for (const AggKey &key : sorted_feature_keys) {
+        const BucketAggState &agg = bucket_agg_state_by_agg_key_local.at(key);
+        const std::string &user_blob = user_blob_by_user_id[key.user_id];
+        const int64_t tw = agg.time_weight_sum;
+        const int64_t token_avg_10w =
+            (tw > 0) ? feature_comp::round_i64(static_cast<double>(agg.token_count_tw_sum) / static_cast<double>(tw)) : 0;
+        const int64_t exposure_avg_10w =
+            (tw > 0)
+                ? feature_comp::round_i64(static_cast<double>(i128_to_long_double(agg.exposure_tw_sum) /
+                                                static_cast<long double>(tw)))
+                : 0;
+        const int64_t holding_period_avg_10w =
+            (agg.exposure_tw_sum > 0)
+                ? feature_comp::round_i64(static_cast<double>(i128_to_long_double(agg.holding_period_exp_tw_sum) /
+                                                i128_to_long_double(agg.exposure_tw_sum)))
+                : 0;
+        const int64_t volume_10w = agg.volume_sum;
 
-  for (const auto &[key, st] : token_state_by_token_key) {
-    assert(key.cond_idx >= 0);
-    assert(static_cast<size_t>(key.cond_idx) < conditions_.size());
-    assert(std::isfinite(st.pos));
-    assert(std::isfinite(st.cost));
-    assert(std::isfinite(st.lp));
-    assert(std::isfinite(st.entry_block));
+        UserTagRuntimePairKey pair_key{key.user_id, key.tag_id};
+        int64_t prev_ps_token = 0, prev_ps_exposure = 0, prev_ps_volume = 0, prev_ps_holding = 0;
+        auto ps_history_it = prefix_sum_history_by_pair_key.find(pair_key);
+        if (ps_history_it != prefix_sum_history_by_pair_key.end()) {
+          const PrefixSumHistoryRecord *prev_rec =
+              find_prefix_sum_history_by_pair_key_le(ps_history_it->second, key.block_bucket - 1);
+          if (prev_rec) {
+            prev_ps_token = prev_rec->ps_token_avg;
+            prev_ps_exposure = prev_rec->ps_exposure_avg;
+            prev_ps_volume = prev_rec->ps_volume;
+            prev_ps_holding = prev_rec->ps_holding_period_avg;
+          }
+        }
+        const int64_t ps_token_avg = i64_narrow_checked(static_cast<__int128>(prev_ps_token) + token_avg_10w);
+        const int64_t ps_exposure_avg = i64_narrow_checked(static_cast<__int128>(prev_ps_exposure) + exposure_avg_10w);
+        const int64_t ps_volume = i64_narrow_checked(static_cast<__int128>(prev_ps_volume) + volume_10w);
+        const int64_t ps_holding_period_avg = i64_narrow_checked(static_cast<__int128>(prev_ps_holding) + holding_period_avg_10w);
+
+        auto get_boundary_ps = [&](int64_t target_bucket) {
+          struct BoundaryPrefixSum {
+            int64_t token = 0;
+            int64_t exposure = 0;
+            int64_t volume = 0;
+            int64_t holding = 0;
+          };
+          BoundaryPrefixSum result{};
+          auto history_it = prefix_sum_history_by_pair_key.find(pair_key);
+          if (history_it == prefix_sum_history_by_pair_key.end()) {
+            return result;
+          }
+          const PrefixSumHistoryRecord *rec = find_prefix_sum_history_by_pair_key_le(history_it->second, target_bucket);
+          if (rec) {
+            result.token = rec->ps_token_avg;
+            result.exposure = rec->ps_exposure_avg;
+            result.volume = rec->ps_volume;
+            result.holding = rec->ps_holding_period_avg;
+          }
+          return result;
+        };
+        const auto boundary_100 = get_boundary_ps(key.block_bucket - 10);
+        const auto boundary_1000 = get_boundary_ps(key.block_bucket - 100);
+
+        const int64_t token_sum_100 = i64_narrow_checked(static_cast<__int128>(ps_token_avg) - boundary_100.token);
+        const int64_t token_sum_1000 = i64_narrow_checked(static_cast<__int128>(ps_token_avg) - boundary_1000.token);
+        const int64_t exposure_sum_100 = i64_narrow_checked(static_cast<__int128>(ps_exposure_avg) - boundary_100.exposure);
+        const int64_t exposure_sum_1000 = i64_narrow_checked(static_cast<__int128>(ps_exposure_avg) - boundary_1000.exposure);
+        const int64_t volume_sum_100 = i64_narrow_checked(static_cast<__int128>(ps_volume) - boundary_100.volume);
+        const int64_t volume_sum_1000 = i64_narrow_checked(static_cast<__int128>(ps_volume) - boundary_1000.volume);
+        const int64_t holding_period_sum_100 =
+            i64_narrow_checked(static_cast<__int128>(ps_holding_period_avg) - boundary_100.holding);
+        const int64_t holding_period_sum_1000 =
+            i64_narrow_checked(static_cast<__int128>(ps_holding_period_avg) - boundary_1000.holding);
+
+        const int64_t denom_100 = std::min<int64_t>(10, key.block_bucket + 1);
+        const int64_t denom_1000 = std::min<int64_t>(100, key.block_bucket + 1);
+        const int64_t token_avg_100w =
+            (denom_100 > 0) ? feature_comp::round_i64(static_cast<double>(token_sum_100) / static_cast<double>(denom_100)) : 0;
+        const int64_t token_avg_1000w =
+            (denom_1000 > 0) ? feature_comp::round_i64(static_cast<double>(token_sum_1000) / static_cast<double>(denom_1000)) : 0;
+        const int64_t exposure_avg_100w =
+            (denom_100 > 0) ? feature_comp::round_i64(static_cast<double>(exposure_sum_100) / static_cast<double>(denom_100)) : 0;
+        const int64_t exposure_avg_1000w =
+            (denom_1000 > 0) ? feature_comp::round_i64(static_cast<double>(exposure_sum_1000) / static_cast<double>(denom_1000)) : 0;
+        const int64_t volume_avg_100w =
+            (denom_100 > 0) ? feature_comp::round_i64(static_cast<double>(volume_sum_100) / static_cast<double>(denom_100)) : 0;
+        const int64_t volume_avg_1000w =
+            (denom_1000 > 0) ? feature_comp::round_i64(static_cast<double>(volume_sum_1000) / static_cast<double>(denom_1000)) : 0;
+        const int64_t holding_period_avg_100w =
+            (denom_100 > 0)
+                ? feature_comp::round_i64(static_cast<double>(holding_period_sum_100) / static_cast<double>(denom_100))
+                : 0;
+        const int64_t holding_period_avg_1000w =
+            (denom_1000 > 0)
+                ? feature_comp::round_i64(static_cast<double>(holding_period_sum_1000) / static_cast<double>(denom_1000))
+                : 0;
+
+        double sharpe_10w = 0.0;
+        double sharpe_100w = 0.0;
+        double sharpe_1000w = 0.0;
+        if (key.tag_id == -1) {
+          auto cache_it = sharpe_cache_by_user_blob_.find(user_blob);
+          assert(cache_it != sharpe_cache_by_user_blob_.end());
+          const UserSharpeCacheState &cache = cache_it->second;
+          sharpe_10w = calc_window_return_sharpe(
+              cache.buckets, cache.pnl_before_first_bucket, key.block_bucket, key.block_bucket, exposure_avg_10w, kBlockBucketSize);
+          sharpe_100w = calc_window_return_sharpe(
+              cache.buckets,
+              cache.pnl_before_first_bucket,
+              std::max<int64_t>(0, key.block_bucket - 9),
+              key.block_bucket,
+              exposure_avg_100w,
+              kBlockBucketSize);
+          sharpe_1000w = calc_window_return_sharpe(
+              cache.buckets,
+              cache.pnl_before_first_bucket,
+              std::max<int64_t>(0, key.block_bucket - 99),
+              key.block_bucket,
+              exposure_avg_1000w,
+              kBlockBucketSize);
+        }
+
+        ap.BeginRow();
+        append_blob(ap, user_blob);
+        ap.Append(key.block_bucket);
+        ap.Append(static_cast<int32_t>(key.tag_id));
+        ap.Append(agg.last_sort_key);
+        ap.Append(agg.last_block);
+        ap.Append(agg.last_exposure);
+        ap.Append(duckdb::Value::HUGEINT(i128_to_hugeint(agg.last_holding_exp)));
+        ap.Append(agg.last_token_count);
+        ap.Append(agg.time_weight_sum);
+        ap.Append(agg.token_count_tw_sum);
+        ap.Append(duckdb::Value::HUGEINT(i128_to_hugeint(agg.exposure_tw_sum)));
+        ap.Append(agg.volume_sum);
+        ap.Append(duckdb::Value::HUGEINT(i128_to_hugeint(agg.holding_period_exp_tw_sum)));
+        ap.Append(token_avg_10w);
+        ap.Append(exposure_avg_10w);
+        ap.Append(volume_10w);
+        ap.Append(holding_period_avg_10w);
+        ap.Append(sharpe_10w);
+        ap.Append(ps_token_avg);
+        ap.Append(ps_exposure_avg);
+        ap.Append(ps_volume);
+        ap.Append(ps_holding_period_avg);
+        ap.Append(token_avg_100w);
+        ap.Append(token_avg_1000w);
+        ap.Append(exposure_avg_100w);
+        ap.Append(exposure_avg_1000w);
+        ap.Append(volume_avg_100w);
+        ap.Append(volume_avg_1000w);
+        ap.Append(holding_period_avg_100w);
+        ap.Append(holding_period_avg_1000w);
+        ap.Append(sharpe_100w);
+        ap.Append(sharpe_1000w);
+        ap.Append(agg.last_sort_key);
+        ap.EndRow();
+      }
+      ap.Close();
+    }
+    (void)query_checked(
+        "INSERT INTO " + table_feature_tensor + " (" + kSqlColsFeatureTensorState + ") "
+                                                                                    "SELECT " +
+        kSqlColsFeatureTensorState + " FROM " +
+        std::string(kSqlTmpFeatureTensorState) + " " + std::string(kSqlOnConflictFeatureTensorState) +
+        std::string(kSqlSetFeatureTensorStateUpsert));
+  };
+
+  for (const BucketRange &bucket_range : bucket_ranges) {
+    while (dense_feature_max_bucket < bucket_range.block_bucket) {
+      fill_dense_quiet_feature_bucket(dense_feature_max_bucket + 1);
+      ++dense_feature_max_bucket;
+    }
+
+    std::unordered_map<AggKey, BucketAggState, AggKeyHash> bucket_agg_state_by_agg_key_local;
+    bucket_agg_state_by_agg_key_local.reserve((bucket_range.end_idx - bucket_range.begin_idx) * 2 + 1);
+    for (size_t idx = bucket_range.begin_idx; idx < bucket_range.end_idx; ++idx) {
+      const auto &row = event_input_rows[idx];
+      if (row.cond_idx < 0) {
+        continue;
+      }
+      assert(static_cast<size_t>(row.cond_idx) < cond_tag_ids_.size());
+      const int8_t tag_id = cond_tag_ids_[static_cast<size_t>(row.cond_idx)];
+      bucket_agg_state_by_agg_key_local.try_emplace(AggKey{row.user_id, bucket_range.block_bucket, tag_id}, BucketAggState{});
+      bucket_agg_state_by_agg_key_local.try_emplace(AggKey{row.user_id, bucket_range.block_bucket, -1}, BucketAggState{});
+    }
+    if (!bucket_agg_state_by_agg_key_local.empty()) {
+      tmp_table_reset(kSqlTmpFeatureTensorKeys, kSqlTmpSchemaFeatureTensorKeys);
+      {
+        duckdb::Appender ap(*sink_connection, kSqlTmpFeatureTensorKeys);
+        for (const auto &[key, _] : bucket_agg_state_by_agg_key_local) {
+          const std::string &user_blob = user_blob_by_user_id[key.user_id];
+          ap.BeginRow();
+          append_blob(ap, user_blob);
+          ap.Append(key.block_bucket);
+          ap.Append(static_cast<int32_t>(key.tag_id));
+          ap.EndRow();
+        }
+        ap.Close();
+      }
+      const std::string sql_from_feature_tensor_with_keys =
+          "FROM " + table_feature_tensor + " f " +
+          "JOIN " + std::string(kSqlTmpFeatureTensorKeys) +
+          " k ON f.user_addr = k.user_addr AND f.block_bucket = k.block_bucket AND f.tag_id = k.tag_id";
+      auto feature_state_result = query_checked(std::string(kSqlSelectFeatureTensorStateCols) + sql_from_feature_tensor_with_keys);
+      for (idx_t i = 0; i < feature_state_result->RowCount(); ++i) {
+        const std::string user_blob = feature_state_result->GetValue(0, i).GetValueUnsafe<std::string>();
+        auto user_id_it = user_id_by_user_blob.find(user_blob);
+        assert(user_id_it != user_id_by_user_blob.end());
+        AggKey key{
+            user_id_it->second,
+            feature_state_result->GetValue(1, i).GetValue<int64_t>(),
+            static_cast<int8_t>(feature_state_result->GetValue(2, i).GetValue<int32_t>()),
+        };
+        BucketAggState &agg = bucket_agg_state_by_agg_key_local.at(key);
+        agg.last_sort_key = feature_state_result->GetValue(3, i).GetValue<int64_t>();
+        agg.last_block = feature_state_result->GetValue(4, i).GetValue<int64_t>();
+        agg.last_exposure = feature_state_result->GetValue(5, i).GetValue<int64_t>();
+        agg.last_holding_exp = hugeint_to_i128(feature_state_result->GetValue(6, i).GetValue<duckdb::hugeint_t>());
+        agg.last_token_count = feature_state_result->GetValue(7, i).GetValue<int64_t>();
+        agg.time_weight_sum = feature_state_result->GetValue(8, i).GetValue<int64_t>();
+        agg.token_count_tw_sum = feature_state_result->GetValue(9, i).GetValue<int64_t>();
+        agg.exposure_tw_sum = hugeint_to_i128(feature_state_result->GetValue(10, i).GetValue<duckdb::hugeint_t>());
+        agg.volume_sum = feature_state_result->GetValue(11, i).GetValue<int64_t>();
+        agg.holding_period_exp_tw_sum = hugeint_to_i128(feature_state_result->GetValue(12, i).GetValue<duckdb::hugeint_t>());
+        agg.has_tail = (agg.time_weight_sum > 0);
+      }
+      const int64_t bucket_start_block = bucket_range.block_bucket * kBlockBucketSize;
+      for (auto &[_, agg] : bucket_agg_state_by_agg_key_local) {
+        if (agg.has_tail) {
+          continue;
+        }
+        agg.last_block = bucket_start_block;
+        agg.last_exposure = 0;
+        agg.last_holding_exp = 0;
+        agg.last_token_count = 0;
+        agg.time_weight_sum = kBlockBucketSize;
+        agg.token_count_tw_sum = 0;
+        agg.exposure_tw_sum = 0;
+        agg.volume_sum = 0;
+        agg.holding_period_exp_tw_sum = 0;
+        agg.has_tail = true;
+      }
+    }
+
+    std::unordered_set<AccountBucketKey, AccountBucketKeyHasher> bucket_dirty_account_bucket_key_set;
+    bucket_dirty_account_bucket_key_set.reserve(bucket_range.end_idx - bucket_range.begin_idx + 1);
+    for (size_t idx = bucket_range.begin_idx; idx < bucket_range.end_idx; ++idx) {
+      const auto &row = event_input_rows[idx];
+      auto realized_total_it = realized_total_by_user_id.find(row.user_id);
+      auto unrealized_total_it = unrealized_total_by_user_id.find(row.user_id);
+      auto active_token_count_it = active_token_count_by_user_id.find(row.user_id);
+      assert(realized_total_it != realized_total_by_user_id.end());
+      assert(unrealized_total_it != unrealized_total_by_user_id.end());
+      assert(active_token_count_it != active_token_count_by_user_id.end());
+      const int64_t prev_realized_total_i64 = feature_comp::round_i64(realized_total_it->second);
+      const int64_t prev_unrealized_total_i64 = feature_comp::round_i64(unrealized_total_it->second);
+      const int64_t prev_account_pnl_i64 =
+          i64_narrow_checked(static_cast<__int128>(prev_realized_total_i64) + static_cast<__int128>(prev_unrealized_total_i64));
+
+      double realized_delta = 0.0;
+      int8_t tag_id = 13;
+      int64_t exposure = 0;
+      int64_t holding_period = 0;
+      const int64_t volume = calc_volume_1e6(row);
+      if (row.cond_idx >= 0) {
+        assert(static_cast<size_t>(row.cond_idx) < conditions_.size());
+        const auto &cond = conditions_[static_cast<size_t>(row.cond_idx)];
+        assert(row.token_idx >= 0 && row.token_idx < cond.outcome_count);
+        tag_id = cond_tag_ids_[static_cast<size_t>(row.cond_idx)];
+
+        TokenKey key{row.user_id, row.cond_idx, row.token_idx};
+        auto token_state_it = token_state_by_token_key.find(key);
+        assert(token_state_it != token_state_by_token_key.end());
+        TokenState &st = token_state_it->second;
+        const TokenState before_state = st;
+        const auto before_contrib = token_feature_contrib(st);
+        const double before_unrealized = feature_comp::calc_unrealized_pnl(
+            feature_comp::TokenSnapshot{st.pos, st.cost, st.lp, st.entry_block}, kPosEpsilon);
+        const int before_holding = static_cast<int>(before_contrib.token_count);
+        realized_delta = apply_event_input(row, st);
+        const auto after_contrib = token_feature_contrib(st);
+        const double after_unrealized = feature_comp::calc_unrealized_pnl(
+            feature_comp::TokenSnapshot{st.pos, st.cost, st.lp, st.entry_block}, kPosEpsilon);
+        const int after_holding = static_cast<int>(after_contrib.token_count);
+        unrealized_total_it->second += (after_unrealized - before_unrealized);
+        active_token_count_it->second += (after_holding - before_holding);
+        assert(active_token_count_it->second >= 0);
+
+        const int64_t token_count_delta = after_contrib.token_count - before_contrib.token_count;
+        const int64_t exposure_delta = after_contrib.exposure - before_contrib.exposure;
+        const __int128 exposure_entry_delta = after_contrib.exposure_entry - before_contrib.exposure_entry;
+        apply_runtime_contrib_delta(row.user_id, tag_id, token_count_delta, exposure_delta, exposure_entry_delta);
+        apply_runtime_contrib_delta(row.user_id, -1, token_count_delta, exposure_delta, exposure_entry_delta);
+        if (!token_state_rounded_equal(before_state, st)) {
+          dirty_token_key_set.insert(key);
+        }
+
+        const int64_t row_block = sort_key_to_block(row.sort_key);
+        exposure = after_contrib.exposure;
+        holding_period = feature_comp::calc_holding_period_blocks(
+            row_block, feature_comp::TokenSnapshot{st.pos, st.cost, st.lp, st.entry_block}, kPosEpsilon);
+        auto apply_feature_bucket = [&](int8_t agg_tag_id) {
+          UserTagRuntimePairKey rt_key{row.user_id, agg_tag_id};
+          auto [runtime_it, _] = runtime_pair_state_by_pair_key.try_emplace(rt_key, UserTagRuntimePairState{});
+          UserTagRuntimePairState &rt = runtime_it->second;
+          assert(rt.token_count >= 0);
+          assert(rt.exposure >= 0);
+          __int128 holding_exp = 0;
+          if (rt.exposure > 0) {
+            const __int128 computed = static_cast<__int128>(row_block) * rt.exposure - rt.exposure_entry_sum;
+            assert(computed >= 0);
+            holding_exp = computed;
+          } else {
+            assert(rt.exposure_entry_sum == 0);
+          }
+
+          AggKey agg_key{row.user_id, bucket_range.block_bucket, agg_tag_id};
+          BucketAggState &agg = bucket_agg_state_by_agg_key_local.at(agg_key);
+          feature_comp::update_tail_window(
+              agg, agg_key.block_bucket, row_block, rt.exposure, holding_exp, rt.token_count, kBlockBucketSize);
+          agg.volume_sum += volume;
+          agg.last_sort_key = row.sort_key;
+        };
+
+        apply_feature_bucket(tag_id);
+        apply_feature_bucket(-1);
+      }
+
+      double &realized_total = realized_total_it->second;
+      double &unrealized_total = unrealized_total_it->second;
+      realized_total += realized_delta;
+      const int64_t realized_total_i64 = feature_comp::round_i64(realized_total);
+      const int64_t unrealized_total_i64 = feature_comp::round_i64(unrealized_total);
+      const int64_t account_pnl_i64 =
+          i64_narrow_checked(static_cast<__int128>(realized_total_i64) + static_cast<__int128>(unrealized_total_i64));
+      update_account_bucket_cache(row.user_id, row.sort_key, prev_account_pnl_i64, account_pnl_i64, bucket_dirty_account_bucket_key_set);
+      event_fact_rows.push_back({
+          row.user_id,
+          row.sort_key,
+          row.cond_idx,
+          row.token_idx,
+          row.event_type,
+          feature_comp::round_i64(realized_delta),
+          realized_total_i64,
+          unrealized_total_i64,
+          active_token_count_it->second,
+          tag_id,
+          exposure,
+          volume,
+          holding_period,
+      });
+    }
+    flush_account_bucket_rows(bucket_dirty_account_bucket_key_set);
+    flush_feature_rows(bucket_agg_state_by_agg_key_local);
   }
+  assert(event_fact_rows.size() == event_input_rows.size());
+  bucket_agg_state_by_agg_key.clear();
+  dirty_account_bucket_key_set.clear();
 
   {
     TraceN("s3/wr_open");
-    (void)query_checked("BEGIN");
+    if (!write_tx_open) {
+      (void)query_checked("BEGIN");
+      write_tx_open = true;
+    }
   }
 
   if (!dirty_token_key_set.empty()) {
