@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # lsof -i:8001
-# kill -9 1243184
+# kill -9
 
 import os
 import subprocess

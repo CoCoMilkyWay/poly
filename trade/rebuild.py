@@ -49,7 +49,7 @@ ID_QUERY_BATCH_LIMIT = 100
 MAX_WORKERS = 8
 MARKET_META_MAX_WORKERS = 8
 MAX_BAD_INDEXER_RETRIES = 100
-AGGREGATE_WEIGHT_THRESHOLD = Decimal("0.005")
+AGGREGATE_WEIGHT_THRESHOLD = Decimal("0.001")
 
 UNIT = Decimal("1000000")
 ZERO = Decimal("0")
@@ -414,28 +414,6 @@ def load_addresses() -> list[str]:
     return result
 
 
-def graph_url(api_key: str, subgraph_id: str) -> str:
-    return f"https://gateway.thegraph.com/api/{api_key}/subgraphs/id/{subgraph_id}"
-
-
-def extract_error_messages(body: dict[str, Any]) -> list[str]:
-    errors = body.get("errors")
-    if not isinstance(errors, list):
-        return []
-    messages: list[str] = []
-    for item in errors:
-        if not isinstance(item, dict):
-            continue
-        message = item.get("message")
-        if isinstance(message, str):
-            messages.append(message)
-    return messages
-
-
-def is_bad_indexers_error(body: dict[str, Any]) -> bool:
-    return any("bad indexers:" in message.lower() for message in extract_error_messages(body))
-
-
 def gql(
     api_key: str,
     subgraph_id: str,
@@ -447,7 +425,7 @@ def gql(
         {"query": query, "variables": variables}).encode("utf-8")
     for attempt in range(1, MAX_BAD_INDEXER_RETRIES + 1):
         request = Request(
-            graph_url(api_key, subgraph_id),
+            f"https://gateway.thegraph.com/api/{api_key}/subgraphs/id/{subgraph_id}",
             data=payload,
             headers={
                 "Content-Type": "application/json",
@@ -459,7 +437,17 @@ def gql(
         if "errors" not in body:
             assert "data" in body, body
             return body["data"]
-        if is_bad_indexers_error(body) and attempt < MAX_BAD_INDEXER_RETRIES:
+        errors = body.get("errors")
+        is_bad_indexers = (
+            isinstance(errors, list)
+            and any(
+                isinstance(item, dict)
+                and isinstance(item.get("message"), str)
+                and "bad indexers:" in item["message"].lower()
+                for item in errors
+            )
+        )
+        if is_bad_indexers and attempt < MAX_BAD_INDEXER_RETRIES:
             time.sleep(1.0)
             continue
         assert "errors" not in body, {
@@ -478,13 +466,7 @@ def parse_decimal(value: str | None) -> Decimal | None:
     return Decimal(value)
 
 
-def parse_int(value: str | None) -> int | None:
-    if value is None:
-        return None
-    return int(value)
-
-
-def parse_int_value(value: Any) -> int | None:
+def parse_int(value: Any) -> int | None:
     if value is None:
         return None
     return int(value)
@@ -499,16 +481,6 @@ def normalize_payout_denominator(value: int | None) -> int | None:
 
 def format_decimal(value: Decimal, places: int = 10) -> str:
     return format(value, f".{places}f")
-
-
-def raw_amount_to_decimal(raw: int) -> Decimal:
-    return Decimal(raw) / UNIT
-
-
-def fetch_json(url: str) -> Any:
-    request = Request(url, headers={"User-Agent": "poly-aggregate-exposure"})
-    with urlopen(request, timeout=10) as response:
-        return json.loads(response.read().decode("utf-8"))
 
 
 def load_previous_output() -> dict[str, Any] | None:
@@ -588,11 +560,11 @@ def build_cached_condition_index(previous_output: dict[str, Any] | None) -> dict
         result[condition_id] = {
             "condition_id": condition_id,
             "question_id": row.get("question_id") if isinstance(row.get("question_id"), str) else None,
-            "outcome_slot_count": parse_int_value(row.get("outcome_slot_count")),
-            "resolution_timestamp": parse_int_value(row.get("resolution_timestamp")),
+            "outcome_slot_count": parse_int(row.get("outcome_slot_count")),
+            "resolution_timestamp": parse_int(row.get("resolution_timestamp")),
             "token_ids": [str(item) for item in token_ids_value] if isinstance(token_ids_value, list) else [],
             "payout_numerators": [int(item) for item in payout_numerators_value] if isinstance(payout_numerators_value, list) else [],
-            "payout_denominator": normalize_payout_denominator(parse_int_value(row.get("payout_denominator"))),
+            "payout_denominator": normalize_payout_denominator(parse_int(row.get("payout_denominator"))),
             "market_question": clean_text(row.get("market_question")),
             "market_description": clean_text(row.get("market_description")),
             "market_event_title": clean_text(row.get("market_event_title")),
@@ -666,45 +638,43 @@ def filter_cached_token_data(
     return filtered_price_map, filtered_market_map
 
 
-def parse_json_field(market: dict[str, Any], key: str) -> list[Any]:
-    value = market.get(key, "[]")
-    parsed = json.loads(value) if isinstance(value, str) else (value or [])
-    assert isinstance(parsed, list), (key, type(parsed))
-    return parsed
-
-
 def clean_text(value: Any) -> str:
     return str(value or "").replace("\n", " ").strip()
 
 
-def extract_market_question(market: dict[str, Any]) -> str:
-    question = market.get("question")
-    if question:
-        return clean_text(question)
-    events = market.get("events", [])
-    if events:
-        title = events[0].get("title")
-        if title:
-            return clean_text(title)
-    return ""
-
-
 def fetch_market_meta_by_condition(condition_id: str) -> dict[str, Any]:
-    data = fetch_json(
-        f"{GAMMA_API_BASE}/markets?condition_ids={condition_id}&include_tag=true")
+    request = Request(
+        f"{GAMMA_API_BASE}/markets?condition_ids={condition_id}&include_tag=true",
+        headers={"User-Agent": "poly-aggregate-exposure"},
+    )
+    with urlopen(request, timeout=10) as response:
+        data = json.loads(response.read().decode("utf-8"))
     assert data, condition_id
     market = data[0]
     events = market.get("events", [])
     event0 = events[0] if events else {}
+    question = market.get("question")
+    if question:
+        market_question = clean_text(question)
+    else:
+        event_title = event0.get("title")
+        market_question = clean_text(event_title) if event_title else ""
+    outcomes_value = market.get("outcomes", "[]")
+    market_outcomes = (
+        json.loads(outcomes_value)
+        if isinstance(outcomes_value, str)
+        else (outcomes_value or [])
+    )
+    assert isinstance(market_outcomes, list), type(market_outcomes)
     slug = event0.get("slug") or market.get("slug")
     return {
         "condition_id": condition_id,
-        "market_question": extract_market_question(market),
+        "market_question": market_question,
         "market_description": clean_text(market.get("description")),
         "market_event_title": clean_text(event0.get("title")),
         "market_slug": slug or "",
         "market_url": f"https://polymarket.com/event/{slug}" if slug else "",
-        "market_outcomes": parse_json_field(market, "outcomes"),
+        "market_outcomes": market_outcomes,
     }
 
 
@@ -770,11 +740,6 @@ def write_output_json(output: dict[str, Any]) -> None:
     progress_step("write_json", 1, 1)
 
 
-def fetch_meta_block(api_key: str, subgraph_id: str, label: str) -> int:
-    data = gql(api_key, subgraph_id, META_QUERY, {}, label)
-    return int(data["_meta"]["block"]["number"])
-
-
 def resolve_snapshot_block(api_key: str, requested_block: int | None) -> int:
     if requested_block is not None:
         assert requested_block > 0, requested_block
@@ -783,13 +748,13 @@ def resolve_snapshot_block(api_key: str, requested_block: int | None) -> int:
     progress_step("resolve_snapshot_block", 0, 2)
     with ThreadPoolExecutor(max_workers=2) as executor:
         futures = {
-            executor.submit(fetch_meta_block, api_key, PNL_SUBGRAPH_ID, "pnl.meta"): "pnl",
-            executor.submit(fetch_meta_block, api_key, POLYMARKET_SUBGRAPH_ID, "polymarket.meta"): "polymarket",
+            executor.submit(gql, api_key, PNL_SUBGRAPH_ID, META_QUERY, {}, "pnl.meta"): "pnl",
+            executor.submit(gql, api_key, POLYMARKET_SUBGRAPH_ID, META_QUERY, {}, "polymarket.meta"): "polymarket",
         }
         blocks: dict[str, int] = {}
         done = 0
         for future in as_completed(futures):
-            blocks[futures[future]] = future.result()
+            blocks[futures[future]] = int(future.result()["_meta"]["block"]["number"])
             done += 1
             progress_step("resolve_snapshot_block", done, 2)
     snapshot_block = min(
@@ -860,9 +825,26 @@ def fetch_all_user_positions(api_key: str, users: list[str], snapshot_block: int
     return rows
 
 
-def convert_market_batch(items: list[dict[str, Any]]) -> dict[str, MarketData]:
+def fetch_market_data_batch(
+    api_key: str,
+    token_ids: list[str],
+    snapshot_block: int | None,
+    label: str,
+) -> dict[str, MarketData]:
+    variables: dict[str, Any] = {"ids": token_ids}
+    query = MARKET_DATA_LATEST_QUERY
+    if snapshot_block is not None:
+        variables["block"] = snapshot_block
+        query = MARKET_DATA_QUERY
+    data = gql(
+        api_key,
+        POLYMARKET_SUBGRAPH_ID,
+        query,
+        variables,
+        label,
+    )
     result: dict[str, MarketData] = {}
-    for item in items:
+    for item in data["marketDatas"]:
         condition = item["condition"]
         result[item["id"]] = MarketData(
             token_id=item["id"],
@@ -883,35 +865,6 @@ def convert_market_batch(items: list[dict[str, Any]]) -> dict[str, MarketData]:
     return result
 
 
-def market_data_progress_name(label_prefix: str) -> str | None:
-    if label_prefix == "held":
-        return "fetch_market_data_held"
-    if label_prefix == "sibling":
-        return "fetch_market_data_sibling"
-    return None
-
-
-def fetch_market_data_batch(
-    api_key: str,
-    token_ids: list[str],
-    snapshot_block: int | None,
-    label: str,
-) -> dict[str, MarketData]:
-    variables: dict[str, Any] = {"ids": token_ids}
-    query = MARKET_DATA_LATEST_QUERY
-    if snapshot_block is not None:
-        variables["block"] = snapshot_block
-        query = MARKET_DATA_QUERY
-    data = gql(
-        api_key,
-        POLYMARKET_SUBGRAPH_ID,
-        query,
-        variables,
-        label,
-    )
-    return convert_market_batch(data["marketDatas"])
-
-
 def fetch_market_data(
     api_key: str,
     token_ids: list[str],
@@ -923,7 +876,10 @@ def fetch_market_data(
         return {}
     groups = chunked(unique_token_ids, ID_QUERY_BATCH_LIMIT)
     result: dict[str, MarketData] = {}
-    progress_name = market_data_progress_name(label_prefix)
+    progress_name = {
+        "held": "fetch_market_data_held",
+        "sibling": "fetch_market_data_sibling",
+    }.get(label_prefix)
     label_suffix = "latest" if snapshot_block is None else "snapshot"
     chunk_results = run_parallel_indexed(
         groups,
@@ -940,18 +896,6 @@ def fetch_market_data(
     )
     for _, _, chunk_rows in chunk_results:
         result.update(chunk_rows)
-    return result
-
-
-def convert_condition_batch(items: list[dict[str, Any]]) -> dict[str, ConditionMeta]:
-    result: dict[str, ConditionMeta] = {}
-    for item in items:
-        result[item["id"]] = ConditionMeta(
-            condition_id=item["id"],
-            position_ids=[str(x) for x in item["positionIds"]],
-            payout_numerators=[int(x) for x in item["payoutNumerators"]],
-            payout_denominator=normalize_payout_denominator(parse_int(item["payoutDenominator"])),
-        )
     return result
 
 
@@ -973,7 +917,15 @@ def fetch_conditions_batch(
         variables,
         label,
     )
-    return convert_condition_batch(data["conditions"])
+    result: dict[str, ConditionMeta] = {}
+    for item in data["conditions"]:
+        result[item["id"]] = ConditionMeta(
+            condition_id=item["id"],
+            position_ids=[str(x) for x in item["positionIds"]],
+            payout_numerators=[int(x) for x in item["payoutNumerators"]],
+            payout_denominator=normalize_payout_denominator(parse_int(item["payoutDenominator"])),
+        )
+    return result
 
 
 def fetch_conditions(
@@ -1019,25 +971,6 @@ def resolved_price_from_payouts(
     return Decimal(payout_numerators[outcome_index]) / Decimal(payout_denominator)
 
 
-def market_has_resolved_price(market: MarketData) -> bool:
-    return (
-        resolved_price_from_payouts(
-            market.payout_numerators,
-            market.payout_denominator,
-            market.outcome_index,
-        )
-        is not None
-    )
-
-
-def condition_has_resolved_price(condition: ConditionMeta) -> bool:
-    return (
-        condition.payout_denominator is not None
-        and condition.payout_denominator != 0
-        and bool(condition.payout_numerators)
-    )
-
-
 def resolved_price_for_market(
     market: MarketData,
     conditions: dict[str, ConditionMeta],
@@ -1055,16 +988,6 @@ def resolved_price_for_market(
         market.payout_numerators,
         market.payout_denominator,
         market.outcome_index,
-    )
-
-
-def market_is_resolved(
-    market: MarketData,
-    conditions: dict[str, ConditionMeta],
-) -> bool:
-    return (
-        market.resolution_timestamp is not None
-        or resolved_price_for_market(market, conditions) is not None
     )
 
 
@@ -1142,6 +1065,10 @@ def prepare_prices(
     existing_markets: dict[str, MarketData] | None = None,
     existing_prices_are_authoritative: bool = False,
 ) -> tuple[dict[str, PricePoint], dict[str, MarketData], dict[str, ConditionMeta]]:
+    def mark_condition_and_sibling_fetch_skipped() -> None:
+        progress_step("fetch_conditions", 0, 0)
+        progress_step("fetch_market_data_sibling", 0, 0)
+
     def finalize(
         prices: dict[str, PricePoint],
         markets: dict[str, MarketData],
@@ -1176,14 +1103,12 @@ def prepare_prices(
         existing_prices_are_authoritative,
     )
     if not market_token_ids:
-        progress_step("fetch_conditions", 0, 0)
-        progress_step("fetch_market_data_sibling", 0, 0)
+        mark_condition_and_sibling_fetch_skipped()
         return finalize(initial_prices, known_markets, {})
 
     missing_price_tokens = [token_id for token_id in market_token_ids if token_id not in initial_prices]
     if not missing_price_tokens:
-        progress_step("fetch_conditions", 0, 0)
-        progress_step("fetch_market_data_sibling", 0, 0)
+        mark_condition_and_sibling_fetch_skipped()
         return finalize(initial_prices, known_markets, {})
 
     tokens_with_condition = [
@@ -1192,8 +1117,7 @@ def prepare_prices(
         if known_markets[token_id].condition_id
     ]
     if not tokens_with_condition:
-        progress_step("fetch_conditions", 0, 0)
-        progress_step("fetch_market_data_sibling", 0, 0)
+        mark_condition_and_sibling_fetch_skipped()
         return finalize(initial_prices, known_markets, {})
 
     missing_condition_ids = sorted(
@@ -1278,23 +1202,37 @@ def condition_markets_have_conflict(condition_markets: list[MarketData]) -> bool
     return False
 
 
-def infer_condition_outcome_slot_count(condition_markets: list[MarketData]) -> int | None:
-    counts = {
-        market.outcome_slot_count
-        for market in condition_markets
-        if market.outcome_slot_count is not None
-    }
-    assert len(counts) <= 1, counts
-    if not counts:
-        return None
-    return next(iter(counts))
-
-
 def build_condition_output_rows(
     markets: dict[str, MarketData],
     condition_metas: dict[str, ConditionMeta],
     previous_output: dict[str, Any] | None,
 ) -> list[dict[str, Any]]:
+    def merge_optional_scalar(
+        condition_id: str,
+        field_name: str,
+        current: Any,
+        incoming: Any,
+    ) -> Any:
+        if current is not None and incoming is not None:
+            assert current == incoming, (condition_id, field_name, current, incoming)
+            return current
+        if current is None:
+            return incoming
+        return current
+
+    def merge_optional_list(
+        condition_id: str,
+        field_name: str,
+        current: list[Any],
+        incoming: list[Any],
+    ) -> list[Any]:
+        if current and incoming:
+            assert current == incoming, (condition_id, field_name, current, incoming)
+            return current
+        if not current:
+            return list(incoming)
+        return current
+
     cached_condition_index = build_cached_condition_index(previous_output)
     markets_by_condition = group_markets_by_condition(markets)
 
@@ -1316,59 +1254,28 @@ def build_condition_output_rows(
         payout_numerators = list(cached_row["payout_numerators"]) if cached_row is not None else []
         payout_denominator = cached_row["payout_denominator"] if cached_row is not None else None
         for market in condition_markets:
-            if question_id is not None and market.question_id is not None:
-                assert question_id == market.question_id, (condition_id, question_id, market.question_id)
-            elif question_id is None:
-                question_id = market.question_id
-            if outcome_slot_count is not None and market.outcome_slot_count is not None:
-                assert outcome_slot_count == market.outcome_slot_count, (
-                    condition_id,
-                    outcome_slot_count,
-                    market.outcome_slot_count,
-                )
-            elif outcome_slot_count is None:
-                outcome_slot_count = market.outcome_slot_count
-            if resolution_timestamp is not None and market.resolution_timestamp is not None:
-                assert resolution_timestamp == market.resolution_timestamp, (
-                    condition_id,
-                    resolution_timestamp,
-                    market.resolution_timestamp,
-                )
-            elif resolution_timestamp is None:
-                resolution_timestamp = market.resolution_timestamp
-            if payout_numerators and market.payout_numerators:
-                assert payout_numerators == market.payout_numerators, (
-                    condition_id,
-                    payout_numerators,
-                    market.payout_numerators,
-                )
-            elif not payout_numerators:
-                payout_numerators = list(market.payout_numerators)
-            if payout_denominator is not None and market.payout_denominator is not None:
-                assert payout_denominator == market.payout_denominator, (
-                    condition_id,
-                    payout_denominator,
-                    market.payout_denominator,
-                )
-            elif payout_denominator is None:
-                payout_denominator = market.payout_denominator
+            question_id = merge_optional_scalar(
+                condition_id, "question_id", question_id, market.question_id
+            )
+            outcome_slot_count = merge_optional_scalar(
+                condition_id, "outcome_slot_count", outcome_slot_count, market.outcome_slot_count
+            )
+            resolution_timestamp = merge_optional_scalar(
+                condition_id, "resolution_timestamp", resolution_timestamp, market.resolution_timestamp
+            )
+            payout_numerators = merge_optional_list(
+                condition_id, "payout_numerators", payout_numerators, market.payout_numerators
+            )
+            payout_denominator = merge_optional_scalar(
+                condition_id, "payout_denominator", payout_denominator, market.payout_denominator
+            )
         if condition_meta is not None:
-            if payout_numerators and condition_meta.payout_numerators:
-                assert payout_numerators == condition_meta.payout_numerators, (
-                    condition_id,
-                    payout_numerators,
-                    condition_meta.payout_numerators,
-                )
-            elif not payout_numerators:
-                payout_numerators = list(condition_meta.payout_numerators)
-            if payout_denominator is not None and condition_meta.payout_denominator is not None:
-                assert payout_denominator == condition_meta.payout_denominator, (
-                    condition_id,
-                    payout_denominator,
-                    condition_meta.payout_denominator,
-                )
-            elif payout_denominator is None:
-                payout_denominator = condition_meta.payout_denominator
+            payout_numerators = merge_optional_list(
+                condition_id, "payout_numerators", payout_numerators, condition_meta.payout_numerators
+            )
+            payout_denominator = merge_optional_scalar(
+                condition_id, "payout_denominator", payout_denominator, condition_meta.payout_denominator
+            )
         inferred_market_token_ids = infer_complete_condition_token_ids_from_markets(
             condition_markets,
             outcome_slot_count,
@@ -1499,17 +1406,11 @@ def enrich_top_conditions(
     condition_ids = sorted(
         {
             token_condition_map[row["token_id"]]
-            for row in output["aggregate"][:20]
+            for row in output["aggregate"]
             if row["token_id"] in token_condition_map and token_condition_map[row["token_id"]]
         }
     )
-    cached_market_meta = build_cached_condition_market_meta(previous_output)
-    if not condition_ids:
-        output["summary"]["top_market_meta_count"] = 0
-        progress_step("fetch_gamma_market_meta", 0, 0)
-        return output
-
-    condition_meta_map = dict(cached_market_meta)
+    condition_meta_map = build_cached_condition_market_meta(previous_output)
     missing_condition_ids = [
         condition_id for condition_id in condition_ids if condition_id not in condition_meta_map
     ]
@@ -1549,36 +1450,21 @@ def compute_output(
     condition_metas: dict[str, ConditionMeta],
     previous_output: dict[str, Any] | None,
 ) -> dict[str, Any]:
-    def build_user_output(
-        user: str,
-        positions: list[dict[str, Any]],
-    ) -> dict[str, Any]:
-        return {
-            "user": user,
-            "positions": positions,
-        }
-
-    def build_aggregate_row(
-        token_id: str,
-        weight_sum: Decimal,
-        holder_count_value: int,
-        user_count: Decimal,
-    ) -> dict[str, Any]:
-        return {
-            "token_id": token_id,
-            "holder_count": holder_count_value,
-            "holder_ratio": format_decimal(Decimal(holder_count_value) / user_count, 10),
-            "aggregate_weight": format_decimal(weight_sum / user_count, 10),
-        }
-
     progress_step("compute_output", 0, 1)
     resolved_token_ids = {
         token_id
         for token_id, market in markets.items()
-        if market_is_resolved(market, condition_metas)
+        if (
+            market.resolution_timestamp is not None
+            or resolved_price_for_market(market, condition_metas) is not None
+        )
     }
     for condition_meta in condition_metas.values():
-        if condition_has_resolved_price(condition_meta):
+        if (
+            condition_meta.payout_denominator is not None
+            and condition_meta.payout_denominator != 0
+            and bool(condition_meta.payout_numerators)
+        ):
             resolved_token_ids.update(condition_meta.position_ids)
     active_price_map = {
         token_id: point
@@ -1635,19 +1521,14 @@ def compute_output(
                 ignored_token_ids.add(position.token_id)
                 ignored_position_count += 1
                 continue
-            amount = raw_amount_to_decimal(position.amount_raw)
+            amount = Decimal(position.amount_raw) / UNIT
             value = amount * price_point.value
             token_entries.append((position, value))
             total_value += value
             holder_count[position.token_id] += 1
             priced_position_count += 1
 
-        user_outputs.append(
-            build_user_output(
-                user=user,
-                positions=position_rows,
-            )
-        )
+        user_outputs.append({"user": user, "positions": position_rows})
         if total_value == ZERO:
             zero_value_users.append(user)
             continue
@@ -1659,12 +1540,14 @@ def compute_output(
     aggregate_rows: list[dict[str, Any]] = []
     for token_id, weight_sum in aggregate_weight_sum.items():
         aggregate_rows.append(
-            build_aggregate_row(
-                token_id=token_id,
-                weight_sum=weight_sum,
-                holder_count_value=holder_count[token_id],
-                user_count=user_count_decimal,
-            )
+            {
+                "token_id": token_id,
+                "holder_count": holder_count[token_id],
+                "holder_ratio": format_decimal(
+                    Decimal(holder_count[token_id]) / user_count_decimal, 10
+                ),
+                "aggregate_weight": format_decimal(weight_sum / user_count_decimal, 10),
+            }
         )
     aggregate_rows.sort(key=lambda item: Decimal(
         item["aggregate_weight"]), reverse=True)
@@ -1782,7 +1665,12 @@ def split_preserved_resolution_prices(
         for token_id in token_ids
         if token_id in cached_market_map
         and token_id in cached_price_map
-        and market_has_resolved_price(cached_market_map[token_id])
+        and resolved_price_from_payouts(
+            cached_market_map[token_id].payout_numerators,
+            cached_market_map[token_id].payout_denominator,
+            cached_market_map[token_id].outcome_index,
+        )
+        is not None
     }
     active_token_ids = [token_id for token_id in token_ids if token_id not in preserved_token_ids]
     preserved_price_map = {
@@ -1931,32 +1819,6 @@ def run_output_flow(
         return output
 
 
-def refresh_holdings_fill_missing_prices(
-    api_key: str,
-    requested_snapshot_block: int | None = None,
-) -> dict[str, Any]:
-    return run_output_flow(
-        api_key,
-        FLOW_REFRESH_HOLDINGS_FILL_MISSING_PRICE,
-        requested_snapshot_block,
-    )
-
-
-def refresh_holdings_refresh_prices(
-    api_key: str,
-    requested_snapshot_block: int | None = None,
-) -> dict[str, Any]:
-    return run_output_flow(
-        api_key,
-        FLOW_REFRESH_HOLDINGS_REFRESH_PRICE,
-        requested_snapshot_block,
-    )
-
-
-def refresh_prices(api_key: str) -> dict[str, Any]:
-    return run_output_flow(api_key, FLOW_REFRESH_PRICE)
-
-
 def build_http_handler(api_key: str) -> type[BaseHTTPRequestHandler]:
     class RebuildHandler(BaseHTTPRequestHandler):
         def _write_json(self, payload: dict[str, Any]) -> None:
@@ -2013,12 +1875,16 @@ def build_http_handler(api_key: str) -> type[BaseHTTPRequestHandler]:
                     if snapshot_block_value is not None
                     else None
                 )
-                output = refresh_holdings_refresh_prices(api_key, snapshot_block)
+                output = run_output_flow(
+                    api_key,
+                    FLOW_REFRESH_HOLDINGS_REFRESH_PRICE,
+                    snapshot_block,
+                )
                 self._write_json(output)
                 return
             if path == "/api/refresh-price":
                 self._read_json_body()
-                output = refresh_prices(api_key)
+                output = run_output_flow(api_key, FLOW_REFRESH_PRICE)
                 self._write_json(output)
                 return
             assert False, path
@@ -2041,7 +1907,7 @@ def main() -> None:
 
     previous_output = load_previous_output()
     if previous_output is None or not output_uses_normalized_schema(previous_output):
-        refresh_holdings_fill_missing_prices(api_key, None)
+        run_output_flow(api_key, FLOW_REFRESH_HOLDINGS_FILL_MISSING_PRICE, None)
     print(
         json.dumps(
             {
