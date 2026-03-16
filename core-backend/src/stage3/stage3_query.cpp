@@ -16,14 +16,17 @@ QueryStatus stage3_query_status(const Stage3Runtime* rt, int64_t head_block) {
                         ? sort_key_to_block(rt->header->cursor_sort_key) 
                         : 0;
   
-  status.syncing = true; // Assume always syncing for simplicity
+  status.syncing = last_block < head_block;
   status.last_block = last_block;
   status.head_block = head_block;
-  status.behind_blocks = head_block - last_block;
-  status.behind_chunks = status.behind_blocks / 10000; // Rough estimate
-  status.blocks_per_second = 0.0; // Would need timing data
+  status.behind_blocks = std::max<int64_t>(0, head_block - last_block);
+  status.behind_chunks = (status.behind_blocks == 0) ? 0 : 1 + status.behind_blocks / 10000000;
+  status.blocks_per_second = 0.0; // Caller should compute from timing
   status.eta_seconds = -1.0;
   status.ready = status.behind_blocks < 1000;
+  status.user_count = rt->header->user_count;
+  status.processed_events = rt->header->cursor_processed_events;
+  status.head_bucket = rt->header->head_bucket;
   
   return status;
 }
@@ -76,20 +79,94 @@ PnlResult stage3_query_pnl(Stage3Runtime* rt, const Address20& user_addr) {
 
 namespace {
 
-// Helper to apply event to positions map for replay
-void apply_event_to_positions(std::unordered_map<uint64_t, TokenPos>& positions, 
-                              const EventRecord& rec) {
+// Forward declaration from stage3_trade.cpp
+int64_t apply_trade_event(Stage3Runtime* rt, const EventInput& evt, TokenSlot* tok);
+
+// Helper to apply event to replay state
+void apply_event_to_replay_state(
+    const Stage3Runtime* rt,
+    const EventRecord& rec,
+    std::unordered_map<uint64_t, TokenPos>& positions) {
   if (rec.cond_idx < 0) return;
   
   uint64_t key = (static_cast<uint64_t>(static_cast<uint32_t>(rec.cond_idx)) << 16) | 
                   static_cast<uint16_t>(rec.token_idx);
   
-  // We need original event data to properly replay
-  // Since EventRecord doesn't store amount, we track cumulative state
-  // This is a simplified version - full implementation would store more data
+  auto& pos = positions[key];
+  pos.cond_idx = rec.cond_idx;
+  pos.token_idx = rec.token_idx;
+  pos.collateral = rec.collateral;
   
-  // For now, positions are retrieved from current token state at sort_key
-  // A proper implementation would maintain snapshots
+  // Replay trade logic using stored amount/price
+  const int64_t amount = rec.amount;
+  const int64_t price_1e6 = rec.price_1e6;
+  const bool has_usd = is_usd_collateral(rec.collateral);
+  const int64_t qty = std::abs(amount);
+  
+  if (qty == 0) return;
+  
+  // Skip LP events
+  if (rec.event_type == 5 || rec.event_type == 6 || rec.event_type == 7) {
+    return;
+  }
+  
+  // Update lp for trade events
+  if ((rec.event_type >= 1 && rec.event_type <= 4) && price_1e6 > 0 && has_usd) {
+    pos.lp = price_1e6;
+  }
+  
+  // Determine price per unit
+  double price_per_unit = 0.0;
+  if (rec.event_type == 16) { // Convert
+    const auto& cond = rt->conditions[rec.cond_idx];
+    price_per_unit = static_cast<double>(cond.outcome_count - 1) / static_cast<double>(cond.outcome_count);
+  } else if (rec.event_type >= 1 && rec.event_type <= 15) { // price events
+    price_per_unit = static_cast<double>(price_1e6) / 1e6;
+  }
+  
+  // Check if transfer event (17-22)
+  bool is_transfer = (rec.event_type >= 17 && rec.event_type <= 22);
+  
+  if (amount > 0) {
+    // Positive leg: cover short then open long
+    if (has_usd) {
+      const int64_t short_qty = std::max<int64_t>(0, -pos.pos);
+      const int64_t cover_qty = std::min(qty, short_qty);
+      const int64_t open_long_qty = qty - cover_qty;
+      
+      if (cover_qty > 0 && short_qty > 0) {
+        pos.cost -= pos.cost * cover_qty / short_qty;
+      }
+      pos.pos += qty;
+      if (open_long_qty > 0 && !is_transfer) {
+        pos.cost += static_cast<int64_t>(open_long_qty * price_per_unit);
+      }
+    } else {
+      pos.pos += qty;
+    }
+  } else {
+    // Negative leg: close long then open short
+    if (has_usd) {
+      const int64_t long_qty = std::max<int64_t>(0, pos.pos);
+      const int64_t close_qty = std::min(qty, long_qty);
+      const int64_t open_short_qty = qty - close_qty;
+      
+      if (close_qty > 0 && long_qty > 0) {
+        pos.cost -= pos.cost * close_qty / long_qty;
+      }
+      pos.pos -= qty;
+      if (open_short_qty > 0 && !is_transfer) {
+        pos.cost -= static_cast<int64_t>(open_short_qty * price_per_unit);
+      }
+    } else {
+      pos.pos -= qty;
+    }
+  }
+  
+  // Remove if position is zero
+  if (pos.pos == 0) {
+    positions.erase(key);
+  }
 }
 
 } // namespace
@@ -107,8 +184,7 @@ PositionsResult stage3_query_positions(Stage3Runtime* rt, const Address20& user_
   
   UserBlock* user = &rt->users[user_idx];
   
-  // For simplicity, if target_sort_key >= last_sort_key, return current positions
-  // A full implementation would replay events to reconstruct historical state
+  // If target_sort_key >= last_sort_key, return current positions
   if (target_sort_key >= user->last_sort_key) {
     uint32_t idx = user->token_head;
     while (idx != NULL_IDX) {
@@ -128,20 +204,9 @@ PositionsResult stage3_query_positions(Stage3Runtime* rt, const Address20& user_
     return result;
   }
   
-  // Historical query: need to replay events
-  // This requires building positions from scratch up to target_sort_key
+  // Historical query: replay events from scratch up to target_sort_key
+  std::unordered_map<uint64_t, TokenPos> positions;
   
-  // Token state during replay
-  struct ReplayTokenState {
-    int64_t pos = 0;
-    int64_t cost = 0;
-    int64_t lp = 0;
-    int64_t entry_block = 0;
-  };
-  
-  std::unordered_map<uint64_t, ReplayTokenState> token_states;
-  
-  // Walk timeline up to target_sort_key
   uint64_t offset = user->timeline_head;
   while (offset != NULL_LOG_OFFSET) {
     const EventRecord* rec = reinterpret_cast<const EventRecord*>(
@@ -149,23 +214,20 @@ PositionsResult stage3_query_positions(Stage3Runtime* rt, const Address20& user_
     
     if (rec->sort_key > target_sort_key) break;
     
-    // We can't fully replay without original event amount/price
-    // This is a limitation of the current EventRecord structure
-    // For a complete implementation, we'd need to store more data
-    
+    apply_event_to_replay_state(rt, *rec, positions);
     offset = rec->next_user_event_offset;
   }
   
-  // Build result from token_states
-  for (const auto& [key, state] : token_states) {
-    if (state.pos != 0) {
+  // Build result
+  for (const auto& [key, pos] : positions) {
+    if (pos.pos != 0) {
       PositionRow row{};
-      row.cond_idx = static_cast<int32_t>(key >> 16);
-      row.token_idx = static_cast<int16_t>(key & 0xFFFF);
-      row.qty = state.pos;
-      row.cost = state.cost;
-      row.lp = state.lp;
-      row.entry_block = state.entry_block;
+      row.cond_idx = pos.cond_idx;
+      row.token_idx = pos.token_idx;
+      row.qty = pos.pos;
+      row.cost = pos.cost;
+      row.lp = pos.lp;
+      row.entry_block = 0; // entry_block not tracked in replay
       result.positions.push_back(row);
     }
   }

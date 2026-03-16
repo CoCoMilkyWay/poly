@@ -12,6 +12,9 @@
 #include <string>
 #include <vector>
 
+// Forward declaration for Stage2 integration
+namespace core { namespace rocks { class Stage2UserEventStore; } }
+
 namespace stage3 {
 
 // ============================================================================
@@ -241,24 +244,27 @@ static_assert(sizeof(UserBlock) == 128);
 // EventsLog (append-only, ~160GB for 2B events)
 // ============================================================================
 
-struct EventRecord {                     // 80B
+struct EventRecord {                     // 96B
   int64_t  sort_key;
   int32_t  cond_idx;
   int16_t  token_idx;
   int8_t   event_type;
   int8_t   tag_id;
+  int64_t  amount;                       // signed, 1e6 scale (for replay)
+  int64_t  price_1e6;                    // price (for replay)
+  int16_t  collateral;                   // collateral type (for replay)
+  int16_t  _pad0;
+  int32_t  token_count;
   int64_t  realized_delta;
   int64_t  realized_cum;
   int64_t  unrealized_pnl;
-  int32_t  token_count;
-  int32_t  _pad0;
   int64_t  exposure;
   int64_t  volume;
   int64_t  holding_period;
   uint64_t next_user_event_offset;
 };
 
-static_assert(sizeof(EventRecord) == 80);
+static_assert(sizeof(EventRecord) == 96);
 
 // ============================================================================
 // UserIndex (512MB hash table)
@@ -366,6 +372,16 @@ void stage3_close(Stage3Runtime* rt);
 void stage3_sync(Stage3Runtime* rt);
 
 // ============================================================================
+// API declarations - ConditionMeta loading
+// ============================================================================
+
+void stage3_set_condition(Stage3Runtime* rt, int32_t cond_idx, 
+                          uint8_t outcome_count, int8_t tag_id,
+                          const int64_t* payout_numerators);
+void stage3_mark_condition_valid(Stage3Runtime* rt, int32_t cond_idx);
+const ConditionMeta* stage3_get_condition(const Stage3Runtime* rt, int32_t cond_idx);
+
+// ============================================================================
 // API declarations - UserIndex
 // ============================================================================
 
@@ -407,6 +423,8 @@ FeatureSlot* feature_get_or_create(Stage3Runtime* rt, uint32_t user_idx, int32_t
 
 SharpeAgg* sharpe_agg_find(Stage3Runtime* rt, uint32_t user_idx, int32_t bucket);
 SharpeAgg* sharpe_agg_get_or_create(Stage3Runtime* rt, uint32_t user_idx, int32_t bucket);
+void sharpe_prune_old_buckets(Stage3Runtime* rt, uint32_t user_idx, int32_t min_bucket_to_keep);
+void sharpe_prune_all_users(Stage3Runtime* rt, int32_t min_bucket_to_keep);
 
 // ============================================================================
 // API declarations - Trade
@@ -436,7 +454,17 @@ uint64_t events_log_append(Stage3Runtime* rt, const EventRecord& rec, uint32_t u
 // API declarations - Sync
 // ============================================================================
 
-size_t stage3_sync_tick(Stage3Runtime* rt, int64_t head_block, size_t batch_limit);
+// Process a batch of EventInput (internal use)
+size_t process_event_batch(Stage3Runtime* rt, const std::vector<EventInput>& batch);
+
+// Main sync entry point with Stage2 integration
+size_t stage3_sync_tick(Stage3Runtime* rt, 
+                        core::rocks::Stage2UserEventStore& event_store,
+                        int64_t head_block, 
+                        size_t batch_limit);
+
+// Perform Sharpe pruning after sync (called periodically)
+void stage3_post_sync_prune(Stage3Runtime* rt);
 
 // ============================================================================
 // API declarations - Query
@@ -451,6 +479,9 @@ struct QueryStatus {
   double blocks_per_second;
   double eta_seconds;
   bool ready;
+  uint64_t user_count;
+  int64_t processed_events;
+  int32_t head_bucket;
 };
 
 struct TimelineRow {

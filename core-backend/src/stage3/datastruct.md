@@ -205,20 +205,24 @@ static_assert(sizeof(Stage3Store::UserBlock) == 128);
 // 变长数据 (append-only logs, 单独 mmap)
 // ============================================================================
 
-// ==================== EventsLog (~160GB) ====================
+// ==================== EventsLog (~190GB) ====================
 // 对应原 EventFact, 定长 append-only 主体；每条记录带 per-user 单链表 next 指针
+// 存储完整事件数据，支持历史持仓重放，省去 snapshot 机制
 struct EventsLog {
-  struct EventRecord {                     // 80B
+  struct EventRecord {                     // 96B
     int64_t  sort_key;                     // block * 1e9 + log_idx
     int32_t  cond_idx;
     int16_t  token_idx;
     int8_t   event_type;
     int8_t   tag_id;
+    int64_t  amount;                       // signed, 1e6 scale (for replay)
+    int64_t  price_1e6;                    // price (for replay)
+    int16_t  collateral;                   // collateral type (for replay)
+    int16_t  _pad0;
+    int32_t  token_count;                  // user 有效持仓数 (|qty| >= 10 token)
     int64_t  realized_delta;               // 本事件 realized 增量
     int64_t  realized_cum;                 // user 累计 realized pnl
     int64_t  unrealized_pnl;               // user unrealized pnl
-    int32_t  token_count;                  // user 有效持仓数 (|qty| >= 10 token)
-    int32_t  _pad0;
     int64_t  exposure;                     // 该 token 暴露额 |pos * lp|
     int64_t  volume;                       // 交易额 |amount * price|
     int64_t  holding_period;               // 该 token 持仓周期 (blocks)
@@ -226,7 +230,7 @@ struct EventsLog {
   } records[];
 };
 
-static_assert(sizeof(EventsLog::EventRecord) == 80);
+static_assert(sizeof(EventsLog::EventRecord) == 96);
 
 
 // ============================================================================

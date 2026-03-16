@@ -228,9 +228,9 @@ double calc_window_log_sharpe(const BucketDeque &buckets,
     const long double curr_nav = nav_base + static_cast<long double>(pnl);
     assert(prev_nav > 0.0L);
     assert(curr_nav > 0.0L);
-    const long double log_return = std::log(curr_nav / prev_nav);
-    sum_r += log_return;
-    sum_r2_over_dt += (log_return * log_return) / static_cast<long double>(delta_t);
+    const long double simple_return = (curr_nav - prev_nav) / prev_nav;
+    sum_r += simple_return;
+    sum_r2_over_dt += (simple_return * simple_return) / static_cast<long double>(delta_t);
     prev_block = block;
     prev_pnl = pnl;
   };

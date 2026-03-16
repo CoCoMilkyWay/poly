@@ -249,4 +249,56 @@ void calc_sharpe_for_feature(Stage3Runtime* rt, uint32_t user_idx, FeatureSlot* 
   }
 }
 
+// ============================================================================
+// sharpe_prune_old_buckets - 淘汰用户的旧 bucket
+// 拆表头，重新连接链表
+// ============================================================================
+
+void sharpe_prune_old_buckets(Stage3Runtime* rt, uint32_t user_idx, int32_t min_bucket_to_keep) {
+  UserBlock* user = &rt->users[user_idx];
+  
+  uint32_t* prev_ptr = &user->sharpe_agg_head;
+  uint32_t idx = user->sharpe_agg_head;
+  
+  while (idx != NULL_IDX) {
+    SharpeAgg* agg = &rt->sharpe_agg_pool[idx];
+    uint32_t next_idx = agg->next;
+    
+    if (agg->bucket < min_bucket_to_keep) {
+      // Free all samples in this agg
+      uint32_t sample_idx = agg->sample_head;
+      while (sample_idx != NULL_IDX) {
+        uint32_t next_sample = rt->sharpe_sample_pool[sample_idx].next;
+        sharpe_sample_free(rt, sample_idx);
+        sample_idx = next_sample;
+      }
+      
+      // Remove from linked list: connect prev to next
+      *prev_ptr = next_idx;
+      user->sharpe_agg_count--;
+      
+      // Free the agg
+      sharpe_agg_free(rt, idx);
+    } else {
+      // Keep this agg, move prev_ptr forward
+      prev_ptr = &agg->next;
+    }
+    
+    idx = next_idx;
+  }
+}
+
+// ============================================================================
+// sharpe_prune_all_users - 淘汰所有用户的旧 bucket
+// ============================================================================
+
+void sharpe_prune_all_users(Stage3Runtime* rt, int32_t min_bucket_to_keep) {
+  for (uint64_t i = 0; i < rt->header->user_count; ++i) {
+    uint32_t user_idx = static_cast<uint32_t>(i);
+    if (rt->users[user_idx].flags & 1) {
+      sharpe_prune_old_buckets(rt, user_idx, min_bucket_to_keep);
+    }
+  }
+}
+
 } // namespace stage3

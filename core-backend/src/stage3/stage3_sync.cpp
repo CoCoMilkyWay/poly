@@ -1,7 +1,10 @@
 #include "stage3.hpp"
+#include "../core/rocks_store.hpp"
 
+#include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <cstring>
 #include <set>
 
 namespace stage3 {
@@ -11,18 +14,77 @@ void calc_sharpe_for_feature(Stage3Runtime* rt, uint32_t user_idx, FeatureSlot* 
 
 // ============================================================================
 // stage3_sync_tick - 同步主循环
+// 从 Stage2 RocksDB 拉取事件并处理
 // 返回处理的事件数
 // ============================================================================
 
-size_t stage3_sync_tick(Stage3Runtime* rt, int64_t head_block, size_t batch_limit) {
-  // This function should be called by the application layer which provides
-  // batch_events from Stage2.
-  // Here we define the core processing logic assuming events are already fetched.
+size_t stage3_sync_tick(Stage3Runtime* rt, 
+                        core::rocks::Stage2UserEventStore& event_store,
+                        int64_t head_block, 
+                        size_t batch_limit) {
+  const int64_t cursor = rt->header->cursor_sort_key;
+  const int64_t head_sort_key = head_block * SORT_KEY_SCALE + (SORT_KEY_SCALE - 1);
   
-  // The actual implementation would integrate with stage2 event source.
-  // For now, this provides the framework for processing a batch of EventInput.
+  // Check if already synced
+  if (cursor >= head_sort_key) {
+    return 0;
+  }
   
-  return 0; // Placeholder - actual implementation depends on stage2 integration
+  // Fetch events from Stage2
+  std::vector<core::rocks::Stage2UserEventRecord> source_events = 
+      event_store.scan_by_sort_key(cursor, head_sort_key, batch_limit);
+  
+  if (source_events.empty()) {
+    // No events, advance cursor
+    rt->header->cursor_sort_key = head_sort_key;
+    return 0;
+  }
+  
+  // Cut at block boundary if we hit the limit
+  if (source_events.size() == batch_limit) {
+    const int64_t last_block = sort_key_to_block(source_events.back().sort_key);
+    size_t cut = source_events.size();
+    while (cut > 0 && sort_key_to_block(source_events[cut - 1].sort_key) == last_block) {
+      --cut;
+    }
+    assert(cut > 0); // Single block should not exceed batch limit
+    source_events.resize(cut);
+  }
+  
+  // Convert to EventInput
+  std::vector<EventInput> batch;
+  batch.reserve(source_events.size());
+  
+  for (const auto& src : source_events) {
+    assert(src.user_addr.size() == 20);
+    
+    EventInput evt{};
+    std::memcpy(evt.user_addr.data(), src.user_addr.data(), 20);
+    evt.sort_key = src.sort_key;
+    evt.cond_idx = src.cond_idx;
+    evt.event_type = src.event_type;
+    evt.token_idx = src.token_idx;
+    evt.collateral = src.collateral;
+    evt.amount = src.amount;
+    evt.price_1e6 = src.price;
+    
+    batch.push_back(evt);
+  }
+  
+  // Process the batch
+  return process_event_batch(rt, batch);
+}
+
+// ============================================================================
+// stage3_post_sync_prune - Sharpe 淘汰 (定期调用)
+// ============================================================================
+
+void stage3_post_sync_prune(Stage3Runtime* rt) {
+  const int32_t current_bucket = block_to_bucket(
+      sort_key_to_block(rt->header->cursor_sort_key));
+  const int32_t min_bucket_to_keep = std::max(0, current_bucket - 99);
+  
+  sharpe_prune_all_users(rt, min_bucket_to_keep);
 }
 
 // ============================================================================
@@ -95,6 +157,9 @@ size_t process_event_batch(Stage3Runtime* rt, const std::vector<EventInput>& bat
     rec.token_idx = static_cast<int16_t>(evt.token_idx);
     rec.event_type = static_cast<int8_t>(evt.event_type);
     rec.tag_id = (evt.cond_idx >= 0) ? rt->conditions[evt.cond_idx].tag_id : -1;
+    rec.amount = evt.amount;
+    rec.price_1e6 = evt.price_1e6;
+    rec.collateral = static_cast<int16_t>(evt.collateral);
     rec.realized_delta = realized_delta;
     rec.realized_cum = user->total_realized_pnl;
     rec.unrealized_pnl = user->total_unrealized_pnl;

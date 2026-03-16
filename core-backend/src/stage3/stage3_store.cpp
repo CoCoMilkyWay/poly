@@ -549,4 +549,40 @@ uint64_t events_log_append(Stage3Runtime* rt, const EventRecord& rec, uint32_t u
   return offset;
 }
 
+// ============================================================================
+// ConditionMeta operations
+// ============================================================================
+
+void stage3_set_condition(Stage3Runtime* rt, int32_t cond_idx, 
+                          uint8_t outcome_count, int8_t tag_id,
+                          const int64_t* payout_numerators) {
+  assert(cond_idx >= 0 && static_cast<size_t>(cond_idx) < MAX_CONDITIONS);
+  
+  ConditionMeta* cond = &rt->conditions[cond_idx];
+  cond->outcome_count = outcome_count;
+  cond->tag_id = tag_id;
+  cond->flags = 0; // Not valid yet until mark_valid is called
+  
+  if (payout_numerators) {
+    size_t copy_count = std::min<size_t>(outcome_count, OUTCOME_MAX);
+    std::memcpy(cond->payout_numerators, payout_numerators, copy_count * sizeof(int64_t));
+  }
+}
+
+void stage3_mark_condition_valid(Stage3Runtime* rt, int32_t cond_idx) {
+  assert(cond_idx >= 0 && static_cast<size_t>(cond_idx) < MAX_CONDITIONS);
+  rt->conditions[cond_idx].flags |= 1;
+}
+
+const ConditionMeta* stage3_get_condition(const Stage3Runtime* rt, int32_t cond_idx) {
+  if (cond_idx < 0 || static_cast<size_t>(cond_idx) >= MAX_CONDITIONS) {
+    return nullptr;
+  }
+  const ConditionMeta* cond = &rt->conditions[cond_idx];
+  if (!(cond->flags & 1)) {
+    return nullptr;
+  }
+  return cond;
+}
+
 } // namespace stage3
