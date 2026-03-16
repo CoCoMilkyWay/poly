@@ -133,10 +133,6 @@ struct CarryState {
   int64_t token_count = 0;
 };
 
-inline bool has_bucket_carry(const CarryState &carry) {
-  return carry.exposure > 0 || carry.token_count > 0;
-}
-
 CarryState carry_state_for_bucket_start(const FeatureSlot *prev_feat, int32_t bucket) {
   CarryState carry{};
   if (prev_feat == nullptr) {
@@ -168,11 +164,9 @@ CarryState advance_carry_one_bucket(const CarryState &carry) {
 
 void seed_feature_full_bucket_from_carry(FeatureSlot *feat,
                                          int32_t bucket,
-                                         const CarryState &carry,
-                                         int64_t updated_sort_key) {
+                                         const CarryState &carry) {
   const int64_t bucket_start = static_cast<int64_t>(bucket) * BLOCK_BUCKET_SIZE;
   const int64_t bucket_len = BLOCK_BUCKET_SIZE;
-  feat->last_sort_key_10w = updated_sort_key;
   feat->last_block_10w = bucket_start;
   feat->last_exposure_10w = carry.exposure;
   i128_to_parts(carry.holding_exp, feat->last_holding_period_10w_lo, feat->last_holding_period_10w_hi);
@@ -189,11 +183,19 @@ void seed_feature_full_bucket_from_carry(FeatureSlot *feat,
   feat->volume_sum_10w = 0;
 }
 
+inline uint32_t feature_idx_from_ptr(Stage3Runtime *rt, const FeatureSlot *feat) {
+  assert(feat != nullptr);
+  return static_cast<uint32_t>(feat - rt->feature_pool);
+}
+
 void refresh_feature_outputs(Stage3Runtime *rt,
                              uint32_t user_idx,
                              int8_t tag,
                              FeatureSlot *feat,
-                             int64_t updated_sort_key) {
+                             const FeatureSlot *prev_feat,
+                             int32_t first_bucket) {
+  assert(first_bucket >= 0);
+  assert(feat->bucket >= first_bucket);
   if (feat->time_weight_sum_10w > 0) {
     const long double tw = static_cast<long double>(feat->time_weight_sum_10w);
     feat->token_avg_10w = round_i64(static_cast<long double>(feat->token_count_tw_sum_10w) / tw);
@@ -218,7 +220,6 @@ void refresh_feature_outputs(Stage3Runtime *rt,
     feat->holding_period_avg_10w = 0;
   }
 
-  FeatureSlot *prev_feat = (feat->bucket > 0) ? feature_find_le(rt, user_idx, feat->bucket - 1, tag) : nullptr;
   if (prev_feat) {
     feat->ps_token_avg_10w =
         i64_narrow_checked(static_cast<__int128>(prev_feat->ps_token_avg_10w) + feat->token_avg_10w);
@@ -235,11 +236,12 @@ void refresh_feature_outputs(Stage3Runtime *rt,
     feat->ps_holding_period_avg_10w = feat->holding_period_avg_10w;
   }
 
-  const int32_t bucket_count = feat->bucket + 1;
+  const int32_t bucket_count = feat->bucket - first_bucket + 1;
+  assert(bucket_count > 0);
   const int32_t win_100 = std::min(10, bucket_count);
   const int32_t win_1000 = std::min(100, bucket_count);
 
-  FeatureSlot *feat_10_back = (feat->bucket >= 10) ? feature_find_le(rt, user_idx, feat->bucket - 10, tag) : nullptr;
+  FeatureSlot *feat_10_back = (bucket_count > 10) ? feature_find(rt, user_idx, feat->bucket - 10, tag) : nullptr;
   const int64_t ps_10_tok = feat_10_back ? feat_10_back->ps_token_avg_10w : 0;
   const int64_t ps_10_exp = feat_10_back ? feat_10_back->ps_exposure_avg_10w : 0;
   const int64_t ps_10_vol = feat_10_back ? feat_10_back->ps_volume_10w : 0;
@@ -259,7 +261,7 @@ void refresh_feature_outputs(Stage3Runtime *rt,
   }
 
   FeatureSlot *feat_100_back =
-      (feat->bucket >= 100) ? feature_find_le(rt, user_idx, feat->bucket - 100, tag) : nullptr;
+      (bucket_count > 100) ? feature_find(rt, user_idx, feat->bucket - 100, tag) : nullptr;
   const int64_t ps_100_tok = feat_100_back ? feat_100_back->ps_token_avg_10w : 0;
   const int64_t ps_100_exp = feat_100_back ? feat_100_back->ps_exposure_avg_10w : 0;
   const int64_t ps_100_vol = feat_100_back ? feat_100_back->ps_volume_10w : 0;
@@ -277,43 +279,46 @@ void refresh_feature_outputs(Stage3Runtime *rt,
     feat->volume_avg_1000w = 0;
     feat->holding_period_avg_1000w = 0;
   }
-
-  feat->updated_sort_key = updated_sort_key;
 }
 
 FeatureSlot *prepare_feature_bucket(Stage3Runtime *rt,
                                     uint32_t user_idx,
                                     int32_t bucket,
                                     int8_t tag,
-                                    int64_t updated_sort_key) {
-  FeatureSlot *feat = feature_find(rt, user_idx, bucket, tag);
-  if (feat && feat->time_weight_sum_10w > 0) {
-    return feat;
+                                    int32_t &first_bucket,
+                                    int32_t &latest_bucket,
+                                    uint32_t &latest_idx) {
+  assert(bucket >= 0);
+  assert(latest_bucket <= bucket || latest_bucket < 0);
+
+  if (latest_idx != NULL_IDX && latest_bucket == bucket) {
+    return &rt->feature_pool[latest_idx];
   }
 
-  FeatureSlot *prev_feat = (bucket > 0) ? feature_find_le(rt, user_idx, bucket - 1, tag) : nullptr;
-  if (prev_feat == nullptr) {
-    return feat ? feat : feature_get_or_create(rt, user_idx, bucket, tag);
-  }
+  const FeatureSlot *prev_feat =
+      (latest_idx != NULL_IDX) ? &rt->feature_pool[latest_idx] : nullptr;
+  CarryState carry =
+      prev_feat ? carry_state_for_bucket_start(prev_feat, latest_bucket + 1) : CarryState{};
+  const int32_t start_bucket = (latest_bucket >= 0) ? (latest_bucket + 1) : bucket;
 
-  CarryState carry = carry_state_for_bucket_start(prev_feat, prev_feat->bucket + 1);
-  for (int32_t gap_bucket = prev_feat->bucket + 1; gap_bucket < bucket; ++gap_bucket) {
-    if (!has_bucket_carry(carry)) {
-      break;
+  for (int32_t materialized_bucket = start_bucket; materialized_bucket <= bucket; ++materialized_bucket) {
+    FeatureSlot *feat = feature_get_or_create(rt, user_idx, materialized_bucket, tag);
+    if (feat->time_weight_sum_10w == 0) {
+      seed_feature_full_bucket_from_carry(feat, materialized_bucket, carry);
     }
-    FeatureSlot *gap_feat = feature_get_or_create(rt, user_idx, gap_bucket, tag);
-    if (gap_feat->time_weight_sum_10w == 0) {
-      seed_feature_full_bucket_from_carry(gap_feat, gap_bucket, carry, updated_sort_key);
-      refresh_feature_outputs(rt, user_idx, tag, gap_feat, updated_sort_key);
+    if (first_bucket < 0) {
+      first_bucket = materialized_bucket;
     }
+    refresh_feature_outputs(rt, user_idx, tag, feat, prev_feat, first_bucket);
+    latest_bucket = materialized_bucket;
+    latest_idx = feature_idx_from_ptr(rt, feat);
+    prev_feat = feat;
     carry = advance_carry_one_bucket(carry);
   }
 
-  feat = feat ? feat : feature_get_or_create(rt, user_idx, bucket, tag);
-  if (feat->time_weight_sum_10w == 0 && has_bucket_carry(carry)) {
-    seed_feature_full_bucket_from_carry(feat, bucket, carry, updated_sort_key);
-  }
-  return feat;
+  assert(latest_idx != NULL_IDX);
+  assert(latest_bucket == bucket);
+  return &rt->feature_pool[latest_idx];
 }
 
 } // namespace
@@ -322,6 +327,39 @@ FeatureSlot *prepare_feature_bucket(Stage3Runtime *rt,
 // update_feature_on_event - 更新特征张量
 // ============================================================================
 
+void init_feature_timelines(Stage3Runtime *rt,
+                            uint32_t user_idx,
+                            std::array<int32_t, FEATURE_TAG_SLOT_COUNT> &first_buckets,
+                            std::array<int32_t, FEATURE_TAG_SLOT_COUNT> &latest_buckets,
+                            std::array<uint32_t, FEATURE_TAG_SLOT_COUNT> *latest_indices) {
+  first_buckets.fill(-1);
+  latest_buckets.fill(-1);
+  if (latest_indices != nullptr) {
+    latest_indices->fill(NULL_IDX);
+  }
+  if (user_idx >= rt->header->user_count) {
+    return;
+  }
+
+  uint32_t idx = rt->users[user_idx].feature_head;
+  while (idx != NULL_IDX) {
+    FeatureSlot *feat = &rt->feature_pool[idx];
+    if (feat->flags & 1) {
+      const size_t slot = tag_slot(feat->tag_id);
+      if (first_buckets[slot] < 0 || feat->bucket < first_buckets[slot]) {
+        first_buckets[slot] = feat->bucket;
+      }
+      if (feat->bucket > latest_buckets[slot]) {
+        latest_buckets[slot] = feat->bucket;
+        if (latest_indices != nullptr) {
+          (*latest_indices)[slot] = idx;
+        }
+      }
+    }
+    idx = feat->next;
+  }
+}
+
 void update_feature_on_event(Stage3Runtime *rt,
                              uint32_t user_idx,
                              int64_t current_block,
@@ -329,7 +367,10 @@ void update_feature_on_event(Stage3Runtime *rt,
                              const EventInput &evt,
                              const EventRecord &rec,
                              const FeatureRuntimeState &tag_state,
-                             const FeatureRuntimeState &global_state) {
+                             const FeatureRuntimeState &global_state,
+                             std::array<int32_t, FEATURE_TAG_SLOT_COUNT> &first_buckets,
+                             std::array<int32_t, FEATURE_TAG_SLOT_COUNT> &latest_buckets,
+                             std::array<uint32_t, FEATURE_TAG_SLOT_COUNT> &latest_indices) {
   // Only update features for valid condition events
   if (evt.cond_idx < 0)
     return;
@@ -337,9 +378,13 @@ void update_feature_on_event(Stage3Runtime *rt,
   const int8_t tag_id = rec.tag_id;
 
   const auto update_single_tag = [&](int8_t tag, const FeatureRuntimeState &state) {
-    FeatureSlot *feat = prepare_feature_bucket(rt, user_idx, bucket, tag, evt.sort_key);
+    const size_t slot = tag_slot(tag);
+    FeatureSlot *feat = prepare_feature_bucket(
+        rt, user_idx, bucket, tag, first_buckets[slot], latest_buckets[slot], latest_indices[slot]);
     assert(state.exposure >= 0);
     assert(state.token_count >= 0);
+    assert(first_buckets[slot] >= 0);
+    assert(latest_buckets[slot] == bucket);
 
     __int128 holding_exp = 0;
     if (state.exposure > 0) {
@@ -352,16 +397,34 @@ void update_feature_on_event(Stage3Runtime *rt,
     }
 
     update_tail_window(feat, bucket, current_block, state.exposure, holding_exp, state.token_count);
-    feat->last_sort_key_10w = evt.sort_key;
 
     if (is_volume_event(evt.event_type)) {
       feat->volume_sum_10w = i64_narrow_checked(static_cast<__int128>(feat->volume_sum_10w) + rec.volume);
     }
-    refresh_feature_outputs(rt, user_idx, tag, feat, evt.sort_key);
+    const FeatureSlot *prev_feat =
+        (bucket > first_buckets[slot]) ? feature_find(rt, user_idx, bucket - 1, tag) : nullptr;
+    refresh_feature_outputs(rt, user_idx, tag, feat, prev_feat, first_buckets[slot]);
   };
 
   update_single_tag(tag_id, tag_state);
   update_single_tag(-1, global_state);
+}
+
+void prepare_feature_buckets_for_mask(Stage3Runtime *rt,
+                                      uint32_t user_idx,
+                                      int32_t bucket,
+                                      uint16_t tag_mask,
+                                      std::array<int32_t, FEATURE_TAG_SLOT_COUNT> &first_buckets,
+                                      std::array<int32_t, FEATURE_TAG_SLOT_COUNT> &latest_buckets,
+                                      std::array<uint32_t, FEATURE_TAG_SLOT_COUNT> &latest_indices) {
+  for (size_t slot = 0; slot < FEATURE_TAG_SLOT_COUNT; ++slot) {
+    if ((tag_mask & (static_cast<uint16_t>(1u << slot))) == 0) {
+      continue;
+    }
+    const int8_t tag_id = static_cast<int8_t>(static_cast<int>(slot) - 1);
+    prepare_feature_bucket(
+        rt, user_idx, bucket, tag_id, first_buckets[slot], latest_buckets[slot], latest_indices[slot]);
+  }
 }
 
 } // namespace stage3

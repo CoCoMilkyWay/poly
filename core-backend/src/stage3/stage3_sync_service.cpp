@@ -63,21 +63,10 @@ int64_t StageSync::get_bucket_user_count(int64_t bucket) const {
   if (bucket < 0) {
     return 0;
   }
-
-  const int32_t target_bucket = static_cast<int32_t>(bucket);
-  int64_t count = 0;
-  for (uint32_t shard = 0; shard < STAGE3_SYNC_SHARD_COUNT; ++shard) {
-    for (const auto &[key, feat_idx] : rt_->feature_index[shard].map) {
-      (void)feat_idx;
-      if (FeatureIndex::extract_bucket(key) != target_bucket) {
-        continue;
-      }
-      if (FeatureIndex::extract_tag(key) == -1) {
-        ++count;
-      }
-    }
+  if (bucket >= static_cast<int64_t>(rt_->global_feature_user_counts.size())) {
+    return 0;
   }
-  return count;
+  return rt_->global_feature_user_counts[static_cast<size_t>(bucket)];
 }
 
 StageSync::Stage2Data StageSync::stage2_data() const {
@@ -272,23 +261,32 @@ filter::Result StageSync::filter_users_by_features(const filter::Request &req) c
   nreq.sort_asc = req.sort_asc;
   nreq.limit = req.limit;
   const FilterResult r = stage3_query_filter(rt_, nreq);
+  const int32_t anchor_bucket = static_cast<int32_t>(req.anchor_bucket);
+  const size_t global_slot = tag_slot(-1);
 
   filter::Result out;
   out.anchor_bucket = r.anchor_bucket;
   out.users.reserve(r.users.size());
   for (const auto &row : r.users) {
     filter::UserRow u{};
-    u.addr = format_address(row.addr);
+    const UserBlock *user = &rt_->users[row.user_idx];
+    u.addr = format_address(user->addr);
     u.sort_value = row.sort_value;
-    const uint32_t user_idx = user_index_lookup(rt_, row.addr);
-    assert(user_idx != NULL_IDX);
-    const FeatureSlot *feat = feature_find_le(rt_, user_idx, static_cast<int32_t>(req.anchor_bucket), -1);
+    std::array<int32_t, FEATURE_TAG_SLOT_COUNT> feature_first_buckets{};
+    std::array<int32_t, FEATURE_TAG_SLOT_COUNT> feature_latest_buckets{};
+    init_feature_timelines(rt_, row.user_idx, feature_first_buckets, feature_latest_buckets);
+
+    const FeatureSlot *feat = nullptr;
+    const int32_t first_bucket = feature_first_buckets[global_slot];
+    if (first_bucket >= 0 && anchor_bucket >= first_bucket) {
+      feat = feature_find(rt_, row.user_idx, std::min(anchor_bucket, feature_latest_buckets[global_slot]), -1);
+      assert(feat != nullptr);
+    }
     if (feat != nullptr) {
       u.month_avg_tok = feat->token_avg_100w;
       u.month_avg_exp = feat->exposure_avg_100w;
       u.month_avg_hp = feat->holding_period_avg_100w;
     }
-    const UserBlock *user = &rt_->users[user_idx];
     u.pnl = user->total_realized_pnl + user->total_unrealized_pnl;
     out.users.push_back(u);
   }

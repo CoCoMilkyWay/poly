@@ -168,12 +168,18 @@ SharpeWindow calc_sharpe_window(
 // Called when needed (lazy evaluation)
 // ============================================================================
 
-void calc_sharpe_for_feature(Stage3Runtime *rt, uint32_t user_idx, FeatureSlot *feat) {
+void calc_sharpe_for_feature(Stage3Runtime *rt, uint32_t user_idx, FeatureSlot *feat, int32_t first_bucket) {
   // Sharpe only for global aggregation (tag_id = -1)
   if (feat->tag_id != -1)
     return;
 
   const int32_t bucket = feat->bucket;
+  if (first_bucket < 0 || first_bucket > bucket) {
+    feat->sharpe_10w = 0.0f;
+    feat->sharpe_100w = 0.0f;
+    feat->sharpe_1000w = 0.0f;
+    return;
+  }
 
   // Helper to collect samples for a bucket
   auto collect_bucket_samples = [&](int32_t b) -> std::vector<std::pair<int32_t, int64_t>> {
@@ -225,58 +231,40 @@ void calc_sharpe_for_feature(Stage3Runtime *rt, uint32_t user_idx, FeatureSlot *
   // ========== 100w Sharpe (10 buckets) ==========
   {
     std::vector<std::pair<int32_t, int64_t>> all_samples;
-    int32_t start_bucket = std::max(0, bucket - 9);
-    int64_t total_exp = 0;
+    int32_t start_bucket = std::max(first_bucket, bucket - 9);
 
     for (int32_t b = start_bucket; b <= bucket; ++b) {
       auto samples = collect_bucket_samples(b);
       all_samples.insert(all_samples.end(), samples.begin(), samples.end());
-
-      FeatureSlot *f = feature_find(rt, user_idx, b, -1);
-      if (f) {
-        total_exp += f->exposure_avg_10w;
-      }
-      // Empty bucket contributes 0 to total_exp (faithfully matches old behavior)
     }
 
     std::sort(all_samples.begin(), all_samples.end());
     int64_t p0 = get_p0(start_bucket);
     int64_t start_block = static_cast<int64_t>(start_bucket) * BLOCK_BUCKET_SIZE;
     int64_t end_block = bucket_last_block(bucket);
-    // Use fixed window denominator: min(10, bucket + 1)
-    int32_t denom = std::min(10, bucket + 1);
-    int64_t avg_exp = denom > 0 ? total_exp / denom : 0;
 
-    SharpeWindow win = calc_sharpe_window(p0, all_samples, start_block, end_block, avg_exp);
+    SharpeWindow win =
+        calc_sharpe_window(p0, all_samples, start_block, end_block, feat->exposure_avg_100w);
     feat->sharpe_100w = win.sharpe;
   }
 
   // ========== 1000w Sharpe (100 buckets) ==========
   {
     std::vector<std::pair<int32_t, int64_t>> all_samples;
-    int32_t start_bucket = std::max(0, bucket - 99);
-    int64_t total_exp = 0;
+    int32_t start_bucket = std::max(first_bucket, bucket - 99);
 
     for (int32_t b = start_bucket; b <= bucket; ++b) {
       auto samples = collect_bucket_samples(b);
       all_samples.insert(all_samples.end(), samples.begin(), samples.end());
-
-      FeatureSlot *f = feature_find(rt, user_idx, b, -1);
-      if (f) {
-        total_exp += f->exposure_avg_10w;
-      }
-      // Empty bucket contributes 0 to total_exp (faithfully matches old behavior)
     }
 
     std::sort(all_samples.begin(), all_samples.end());
     int64_t p0 = get_p0(start_bucket);
     int64_t start_block = static_cast<int64_t>(start_bucket) * BLOCK_BUCKET_SIZE;
     int64_t end_block = bucket_last_block(bucket);
-    // Use fixed window denominator: min(100, bucket + 1)
-    int32_t denom = std::min(100, bucket + 1);
-    int64_t avg_exp = denom > 0 ? total_exp / denom : 0;
 
-    SharpeWindow win = calc_sharpe_window(p0, all_samples, start_block, end_block, avg_exp);
+    SharpeWindow win =
+        calc_sharpe_window(p0, all_samples, start_block, end_block, feat->exposure_avg_1000w);
     feat->sharpe_1000w = win.sharpe;
   }
 }

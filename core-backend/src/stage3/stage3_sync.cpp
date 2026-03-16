@@ -13,7 +13,7 @@
 namespace stage3 {
 
 // Forward declarations from other translation units
-void calc_sharpe_for_feature(Stage3Runtime *rt, uint32_t user_idx, FeatureSlot *feat);
+void calc_sharpe_for_feature(Stage3Runtime *rt, uint32_t user_idx, FeatureSlot *feat, int32_t first_bucket);
 
 // ============================================================================
 // stage3_sync_tick - 同步主循环
@@ -138,8 +138,6 @@ size_t process_event_batch(Stage3Runtime *rt, const std::vector<EventInput> &bat
   if (batch.empty())
     return 0;
 
-  const int64_t batch_start_sort_key = batch.front().sort_key;
-
   struct TokenFeatureContrib {
     int64_t token_count = 0;
     int64_t exposure = 0;
@@ -247,7 +245,19 @@ size_t process_event_batch(Stage3Runtime *rt, const std::vector<EventInput> &bat
 
   auto process_user_task = [&](const UserTask &task, uint64_t &log_cursor) {
     UserBlock *user = &rt->users[task.user_idx];
-    std::array<FeatureRuntimeState, 15> runtime_states{};
+    std::array<FeatureRuntimeState, FEATURE_TAG_SLOT_COUNT> runtime_states{};
+    std::array<int32_t, FEATURE_TAG_SLOT_COUNT> feature_first_buckets{};
+    std::array<int32_t, FEATURE_TAG_SLOT_COUNT> feature_latest_buckets{};
+    std::array<uint32_t, FEATURE_TAG_SLOT_COUNT> feature_latest_indices{};
+    uint16_t materialized_feature_mask = 0;
+    int32_t global_sharpe_recalc_start_bucket = -1;
+
+    init_feature_timelines(rt, task.user_idx, feature_first_buckets, feature_latest_buckets, &feature_latest_indices);
+    for (size_t slot = 0; slot < FEATURE_TAG_SLOT_COUNT; ++slot) {
+      if (feature_first_buckets[slot] >= 0) {
+        materialized_feature_mask |= static_cast<uint16_t>(1u << slot);
+      }
+    }
 
     if (task.touched_tag_mask != 0) {
       uint32_t idx = user->token_head;
@@ -282,6 +292,21 @@ size_t process_event_batch(Stage3Runtime *rt, const std::vector<EventInput> &bat
       TokenFeatureContrib after_contrib{};
 
       if (evt.cond_idx >= 0) {
+        const size_t global_slot_idx = tag_slot(-1);
+        const int32_t prev_global_latest_bucket = feature_latest_buckets[global_slot_idx];
+        const uint16_t dense_feature_mask =
+            static_cast<uint16_t>(materialized_feature_mask | tag_mask(evt.tag_id) | global_tag_mask);
+        prepare_feature_buckets_for_mask(
+            rt, user_idx, evt.bucket, dense_feature_mask, feature_first_buckets, feature_latest_buckets, feature_latest_indices);
+        materialized_feature_mask |= dense_feature_mask;
+        const int32_t affected_global_bucket =
+            (prev_global_latest_bucket >= 0 && prev_global_latest_bucket < evt.bucket)
+                ? (prev_global_latest_bucket + 1)
+                : evt.bucket;
+        if (global_sharpe_recalc_start_bucket < 0 || affected_global_bucket < global_sharpe_recalc_start_bucket) {
+          global_sharpe_recalc_start_bucket = affected_global_bucket;
+        }
+
         tok = token_get_or_create(rt, user_idx, evt.cond_idx,
                                   static_cast<int16_t>(evt.token_idx),
                                   static_cast<int16_t>(evt.collateral));
@@ -363,7 +388,10 @@ size_t process_event_batch(Stage3Runtime *rt, const std::vector<EventInput> &bat
             evt,
             rec,
             runtime_states[tag_slot(evt.tag_id)],
-            runtime_states[tag_slot(-1)]);
+            runtime_states[tag_slot(-1)],
+            feature_first_buckets,
+            feature_latest_buckets,
+            feature_latest_indices);
       }
 
       {
@@ -378,14 +406,13 @@ size_t process_event_batch(Stage3Runtime *rt, const std::vector<EventInput> &bat
       }
     }
 
-    if (task.touched_tag_mask & global_tag_mask) {
-      uint32_t feat_idx = user->feature_head;
-      while (feat_idx != NULL_IDX) {
-        FeatureSlot *feat = &rt->feature_pool[feat_idx];
-        if ((feat->flags & 1) && feat->tag_id == -1 && feat->updated_sort_key >= batch_start_sort_key) {
-          calc_sharpe_for_feature(rt, task.user_idx, feat);
-        }
-        feat_idx = feat->next;
+    const int32_t global_first_bucket = feature_first_buckets[tag_slot(-1)];
+    const int32_t global_latest_bucket = feature_latest_buckets[tag_slot(-1)];
+    if (global_sharpe_recalc_start_bucket >= 0 && global_first_bucket >= 0) {
+      for (int32_t bucket = global_sharpe_recalc_start_bucket; bucket <= global_latest_bucket; ++bucket) {
+        FeatureSlot *feat = feature_find(rt, task.user_idx, bucket, -1);
+        assert(feat != nullptr);
+        calc_sharpe_for_feature(rt, task.user_idx, feat, global_first_bucket);
       }
     }
     assert(std::isfinite(static_cast<double>(user->total_unrealized_pnl)));

@@ -479,9 +479,26 @@ FilterResult stage3_query_filter(Stage3Runtime *rt, const FilterRequest &req) {
     if (!(user->flags & 1))
       continue; // Not occupied
 
-    // Create feature getter for this user
+    std::array<int32_t, FEATURE_TAG_SLOT_COUNT> feature_first_buckets{};
+    std::array<int32_t, FEATURE_TAG_SLOT_COUNT> feature_latest_buckets{};
+    init_feature_timelines(rt, user_idx, feature_first_buckets, feature_latest_buckets);
+
+    std::array<const FeatureSlot *, FEATURE_TAG_SLOT_COUNT> feature_cache{};
+    std::array<bool, FEATURE_TAG_SLOT_COUNT> feature_loaded{};
     auto get_feature = [&](int8_t tag_id) -> const FeatureSlot * {
-      return feature_find_le(rt, user_idx, anchor_bucket, tag_id);
+      const size_t slot = tag_slot(tag_id);
+      if (!feature_loaded[slot]) {
+        feature_loaded[slot] = true;
+        const int32_t first_bucket = feature_first_buckets[slot];
+        const int32_t latest_bucket = feature_latest_buckets[slot];
+        const FeatureSlot *feat = nullptr;
+        if (first_bucket >= 0 && anchor_bucket >= first_bucket) {
+          feat = feature_find(rt, user_idx, std::min(anchor_bucket, latest_bucket), tag_id);
+          assert(feat != nullptr);
+        }
+        feature_cache[slot] = feat;
+      }
+      return feature_cache[slot];
     };
 
     // Check if user has any feature at anchor_bucket
@@ -538,7 +555,7 @@ FilterResult stage3_query_filter(Stage3Runtime *rt, const FilterRequest &req) {
 
   for (size_t i = 0; i < limit; ++i) {
     FilterUserRow row{};
-    row.addr = rt->users[candidates[i].user_idx].addr;
+    row.user_idx = candidates[i].user_idx;
     row.sort_value = candidates[i].sort_value;
     result.users.push_back(row);
   }

@@ -309,9 +309,6 @@ def resolve_db_path(repo_root: Path, explicit_path: str) -> Path:
         db_path = Path(explicit_path).expanduser().resolve()
         assert db_path.exists(), f"duckdb not found: {db_path}"
         return db_path
-    local_db = Path(__file__).resolve().with_name("replay.duckdb")
-    if local_db.exists():
-        return local_db
     db_path = load_stage3_db_path_from_config(repo_root)
     assert db_path.exists(), f"duckdb not found: {db_path}"
     return db_path

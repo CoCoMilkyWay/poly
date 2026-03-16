@@ -6,7 +6,6 @@
 #include <cstring>
 #include <fcntl.h>
 #include <filesystem>
-#include <limits>
 #include <queue>
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -17,7 +16,7 @@ namespace stage3 {
 namespace {
 
 constexpr uint64_t STORE_MAGIC = 0x0000334547415453ULL; // "STAGE3\0\0"
-constexpr uint64_t STORE_VERSION = 1;
+constexpr uint64_t STORE_VERSION = 1; // KEEP IT 1
 
 constexpr size_t STORE_HEADER_OFFSET = 0;
 constexpr size_t STORE_CONDITIONS_OFFSET = sizeof(StoreHeader);
@@ -130,6 +129,9 @@ void resize_events_log(Stage3Runtime *rt, size_t new_size) {
 }
 
 void rebuild_runtime_indices(Stage3Runtime *rt) {
+  rt->global_feature_user_counts.clear();
+  rt->global_feature_user_counts.resize(static_cast<size_t>(std::max<int64_t>(0, rt->header->head_bucket)) + 1, 0);
+
   for (uint32_t shard = 0; shard < STAGE3_SYNC_SHARD_COUNT; ++shard) {
     rt->token_index[shard].map.clear();
     rt->feature_index[shard].map.clear();
@@ -144,7 +146,7 @@ void rebuild_runtime_indices(Stage3Runtime *rt) {
   }
 
   for (uint32_t user_idx = 0; user_idx < rt->header->user_count; ++user_idx) {
-    const UserBlock &user = rt->users[user_idx];
+    UserBlock &user = rt->users[user_idx];
     if (!(user.flags & USER_FLAG_OCCUPIED)) {
       continue;
     }
@@ -164,6 +166,12 @@ void rebuild_runtime_indices(Stage3Runtime *rt) {
       const FeatureSlot &feat = rt->feature_pool[feat_idx];
       if (feat.flags & 1) {
         rt->feature_index[shard].map[FeatureIndex::make_key(user_idx, feat.bucket, feat.tag_id)] = feat_idx;
+        if (feat.tag_id == -1) {
+          if (feat.bucket >= static_cast<int32_t>(rt->global_feature_user_counts.size())) {
+            rt->global_feature_user_counts.resize(static_cast<size_t>(feat.bucket) + 1, 0);
+          }
+          rt->global_feature_user_counts[feat.bucket]++;
+        }
       }
       feat_idx = feat.next;
     }
@@ -383,6 +391,7 @@ uint32_t user_get_or_create(Stage3Runtime *rt, const Address20 &addr) {
   user->timeline_count = 0;
   user->_pad0 = 0;
   user->pnl_before_first_sharpe_bucket = 0;
+  std::memset(user->_reserved, 0, sizeof(user->_reserved));
 
   rt->rank_cache.needs_rebuild = true;
   return user_idx;
@@ -529,6 +538,12 @@ void feature_free(Stage3Runtime *rt, uint32_t idx) {
   const uint32_t shard = feature_shard_from_index(idx);
   if (feat.flags & 1) {
     rt->feature_index[shard].map.erase(FeatureIndex::make_key(feat.user_idx, feat.bucket, feat.tag_id));
+    if (feat.tag_id == -1 &&
+        feat.bucket >= 0 &&
+        feat.bucket < static_cast<int32_t>(rt->global_feature_user_counts.size()) &&
+        rt->global_feature_user_counts[feat.bucket] > 0) {
+      rt->global_feature_user_counts[feat.bucket]--;
+    }
   }
   feat.flags = 0;
   feat.next = rt->header->feature_free_head[shard];
@@ -646,27 +661,6 @@ FeatureSlot *feature_find(Stage3Runtime *rt, uint32_t user_idx, int32_t bucket, 
   return &rt->feature_pool[it->second];
 }
 
-FeatureSlot *feature_find_le(Stage3Runtime *rt, uint32_t user_idx, int32_t bucket, int8_t tag_id) {
-  if (bucket < 0 || user_idx >= rt->header->user_count) {
-    return nullptr;
-  }
-
-  int32_t last_bucket = std::numeric_limits<int32_t>::max();
-  uint32_t idx = rt->users[user_idx].feature_head;
-  while (idx != NULL_IDX) {
-    FeatureSlot *feat = &rt->feature_pool[idx];
-    if (feat->flags & 1) {
-      assert(feat->bucket <= last_bucket);
-      last_bucket = feat->bucket;
-      if (feat->tag_id == tag_id && feat->bucket <= bucket) {
-        return feat;
-      }
-    }
-    idx = feat->next;
-  }
-  return nullptr;
-}
-
 FeatureSlot *feature_get_or_create(Stage3Runtime *rt, uint32_t user_idx, int32_t bucket, int8_t tag_id) {
   FeatureSlot *existing = feature_find(rt, user_idx, bucket, tag_id);
   if (existing)
@@ -683,6 +677,12 @@ FeatureSlot *feature_get_or_create(Stage3Runtime *rt, uint32_t user_idx, int32_t
 
   rt->users[user_idx].feature_head = idx;
   rt->users[user_idx].feature_count++;
+  if (tag_id == -1) {
+    if (bucket >= static_cast<int32_t>(rt->global_feature_user_counts.size())) {
+      rt->global_feature_user_counts.resize(static_cast<size_t>(bucket) + 1, 0);
+    }
+    rt->global_feature_user_counts[bucket]++;
+  }
   rt->feature_index[user_shard(rt, user_idx)].map[FeatureIndex::make_key(user_idx, bucket, tag_id)] = idx;
 
   return feat;

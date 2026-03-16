@@ -58,6 +58,7 @@ constexpr uint32_t SHARPE_SAMPLES_PER_SYNC_SHARD = static_cast<uint32_t>(MAX_SHA
 constexpr uint32_t USER_FLAG_OCCUPIED = 1u;
 constexpr uint32_t USER_FLAG_SHARD_SHIFT = 8;
 constexpr uint32_t USER_FLAG_SHARD_MASK = 0xFFu << USER_FLAG_SHARD_SHIFT;
+constexpr size_t FEATURE_TAG_SLOT_COUNT = 15; // tag_id in [-1, 13]
 
 constexpr size_t STORE_HEADER_FIXED_BYTES = 56;
 constexpr size_t STORE_HEADER_PER_SHARD_BYTES = 48;
@@ -180,7 +181,7 @@ static_assert(sizeof(TokenSlot) == 48);
 // FeaturePool[5亿] (140GB)
 // ============================================================================
 
-struct FeatureSlot { // 280B
+struct FeatureSlot { // 264B
   // key
   uint32_t user_idx; // 所属用户
   int32_t bucket;    // block_bucket (10w blocks per bucket)
@@ -192,7 +193,6 @@ struct FeatureSlot { // 280B
   uint32_t _pad1;
 
   // Node-A0: 增量续算锚点
-  int64_t last_sort_key_10w;
   int64_t last_block_10w;
   int64_t last_exposure_10w;
   int64_t last_holding_period_10w_lo; // HUGEINT low part
@@ -233,11 +233,9 @@ struct FeatureSlot { // 280B
   int64_t holding_period_avg_1000w;
   float sharpe_100w;
   float sharpe_1000w;
-
-  int64_t updated_sort_key;
 };
 
-static_assert(sizeof(FeatureSlot) == 280);
+static_assert(sizeof(FeatureSlot) == 264);
 
 // ============================================================================
 // SharpeAggPool[5000万] (2.4GB)
@@ -305,7 +303,7 @@ struct UserBlock { // 128B
   int32_t _pad0;                          // 4B padding for alignment
   int64_t pnl_before_first_sharpe_bucket; // 8B, p0 anchor for sharpe windows
 
-  uint8_t _reserved[16]; // 16B to reach 128B total
+  uint8_t _reserved[16];
 };
 
 static_assert(sizeof(UserBlock) == 128);
@@ -521,6 +519,7 @@ struct Stage3Runtime {
   std::array<TokenIndex, STAGE3_SYNC_SHARD_COUNT> token_index;
   std::array<FeatureIndex, STAGE3_SYNC_SHARD_COUNT> feature_index;
   std::array<SharpeAggIndex, STAGE3_SYNC_SHARD_COUNT> sharpe_agg_index;
+  std::vector<int64_t> global_feature_user_counts;
   QueryCacheManager query_cache;
   DirtyUserSet dirty_users;
   UserRankCache rank_cache;
@@ -589,7 +588,6 @@ void token_remove_if_empty(Stage3Runtime *rt, uint32_t user_idx, TokenSlot *tok)
 // ============================================================================
 
 FeatureSlot *feature_find(Stage3Runtime *rt, uint32_t user_idx, int32_t bucket, int8_t tag_id);
-FeatureSlot *feature_find_le(Stage3Runtime *rt, uint32_t user_idx, int32_t bucket, int8_t tag_id);
 FeatureSlot *feature_get_or_create(Stage3Runtime *rt, uint32_t user_idx, int32_t bucket, int8_t tag_id);
 
 // ============================================================================
@@ -616,6 +614,12 @@ struct FeatureRuntimeState {
   __int128 exposure_entry_sum = 0;
 };
 
+void init_feature_timelines(Stage3Runtime *rt,
+                            uint32_t user_idx,
+                            std::array<int32_t, FEATURE_TAG_SLOT_COUNT> &first_buckets,
+                            std::array<int32_t, FEATURE_TAG_SLOT_COUNT> &latest_buckets,
+                            std::array<uint32_t, FEATURE_TAG_SLOT_COUNT> *latest_indices = nullptr);
+
 void update_feature_on_event(Stage3Runtime *rt,
                              uint32_t user_idx,
                              int64_t current_block,
@@ -623,7 +627,17 @@ void update_feature_on_event(Stage3Runtime *rt,
                              const EventInput &evt,
                              const EventRecord &rec,
                              const FeatureRuntimeState &tag_state,
-                             const FeatureRuntimeState &global_state);
+                             const FeatureRuntimeState &global_state,
+                             std::array<int32_t, FEATURE_TAG_SLOT_COUNT> &first_buckets,
+                             std::array<int32_t, FEATURE_TAG_SLOT_COUNT> &latest_buckets,
+                             std::array<uint32_t, FEATURE_TAG_SLOT_COUNT> &latest_indices);
+void prepare_feature_buckets_for_mask(Stage3Runtime *rt,
+                                      uint32_t user_idx,
+                                      int32_t bucket,
+                                      uint16_t tag_mask,
+                                      std::array<int32_t, FEATURE_TAG_SLOT_COUNT> &first_buckets,
+                                      std::array<int32_t, FEATURE_TAG_SLOT_COUNT> &latest_buckets,
+                                      std::array<uint32_t, FEATURE_TAG_SLOT_COUNT> &latest_indices);
 
 // ============================================================================
 // API declarations - Sharpe update
@@ -720,7 +734,7 @@ struct FilterRequest {
 };
 
 struct FilterUserRow {
-  Address20 addr;
+  uint32_t user_idx;
   double sort_value;
 };
 
