@@ -103,23 +103,18 @@
     }
 
     function getTokenRow(row, lookups) {
-      const tokenRow = lookups.tokenMap.get(row.token_id);
-      assertCond(tokenRow, `missing token ${row.token_id}`);
-      return tokenRow;
+      return lookups.tokenMap.get(row.token_id) || null;
     }
 
     function getConditionRow(tokenRow, lookups) {
       if (!tokenRow.condition_id) return null;
-      const conditionRow = lookups.conditionMap.get(tokenRow.condition_id) || null;
-      assertCond(conditionRow, `missing condition ${tokenRow.condition_id}`);
-      return conditionRow;
+      return lookups.conditionMap.get(tokenRow.condition_id) || null;
     }
 
     function getOutcomeIndex(tokenRow, conditionRow) {
       if (!conditionRow) return null;
       const outcomeIndex = (conditionRow.token_ids || []).indexOf(tokenRow.token_id);
-      assertCond(outcomeIndex >= 0, `missing condition token ${tokenRow.token_id}`);
-      return outcomeIndex;
+      return outcomeIndex >= 0 ? outcomeIndex : null;
     }
 
     function normalizeMarketOutcome(tokenRow, conditionRow) {
@@ -133,17 +128,28 @@
 
     function buildTokenLabel(row, index, lookups) {
       const tokenRow = getTokenRow(row, lookups);
+      if (!tokenRow) return `#${index} token ${String(row.token_id).slice(0, 10)}`;
       const conditionRow = getConditionRow(tokenRow, lookups);
       const outcomeIndex = getOutcomeIndex(tokenRow, conditionRow);
       if (conditionRow && conditionRow.market_question) {
         const outcome = normalizeMarketOutcome(tokenRow, conditionRow);
-        const suffix = outcome ? ` [${outcome}]` : ` [o${outcomeIndex}]`;
+        const suffix = outcome
+          ? ` [${outcome}]`
+          : (Number.isInteger(outcomeIndex) ? ` [o${outcomeIndex}]` : "");
         let question = String(conditionRow.market_question).trim();
         if (question.length > 60) question = question.slice(0, 57) + "...";
         return `#${index} ${question}${suffix}`;
       }
-      if (conditionRow && conditionRow.question_id) return `#${index} ${String(conditionRow.question_id).slice(2, 10)} o${outcomeIndex}`;
-      if (tokenRow.condition_id) return `#${index} ${String(tokenRow.condition_id).slice(2, 10)} o${outcomeIndex}`;
+      if (conditionRow && conditionRow.question_id) {
+        return Number.isInteger(outcomeIndex)
+          ? `#${index} ${String(conditionRow.question_id).slice(2, 10)} o${outcomeIndex}`
+          : `#${index} ${String(conditionRow.question_id).slice(2, 10)}`;
+      }
+      if (tokenRow.condition_id) {
+        return Number.isInteger(outcomeIndex)
+          ? `#${index} ${String(tokenRow.condition_id).slice(2, 10)} o${outcomeIndex}`
+          : `#${index} ${String(tokenRow.condition_id).slice(2, 10)}`;
+      }
       return `#${index} token ${String(tokenRow.token_id).slice(0, 10)}`;
     }
 
@@ -155,6 +161,9 @@
       for (let i = 0; i < output.aggregate.length; i += 1) {
         const row = output.aggregate[i];
         const tokenRow = getTokenRow(row, lookups);
+        // Some aggregate rows refer to foreign instruments with no normalized
+        // token metadata. Skip them in the chart instead of failing render.
+        if (!tokenRow) continue;
         const conditionRow = getConditionRow(tokenRow, lookups);
         const outcomeIndex = getOutcomeIndex(tokenRow, conditionRow);
         const weight = Number(row.aggregate_weight);
