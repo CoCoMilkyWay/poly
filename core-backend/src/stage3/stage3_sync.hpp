@@ -203,6 +203,10 @@ private:
   mutable std::deque<SyncCommitPoint> sync_commit_points_;
   std::unordered_map<std::string, int8_t> tag_to_industry_id_;
   int64_t loaded_max_cond_idx_ = -1;
+
+  // Cached for lightweight status API (updated by refresh_status_locked)
+  std::atomic<int64_t> cached_max_bucket_{-1};
+  std::atomic<int64_t> cached_bucket_user_count_{0};
 };
 
 } // namespace stage3

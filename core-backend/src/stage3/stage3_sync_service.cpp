@@ -92,22 +92,12 @@ StageSync::Status StageSync::status() const {
 }
 
 int64_t StageSync::get_max_bucket() const {
-  QueryPauseGuard guard(*this);
-  if (rt_->header->cursor_sort_key < 0) {
-    return -1;
-  }
-  return rt_->header->head_bucket;
+  return cached_max_bucket_.load(std::memory_order_relaxed);
 }
 
 int64_t StageSync::get_bucket_user_count(int64_t bucket) const {
-  QueryPauseGuard guard(*this);
-  if (bucket < 0) {
-    return 0;
-  }
-  if (bucket >= static_cast<int64_t>(rt_->global_feature_user_counts.size())) {
-    return 0;
-  }
-  return rt_->global_feature_user_counts[static_cast<size_t>(bucket)];
+  (void)bucket; // bucket parameter ignored, we always return cached value for max_bucket
+  return cached_bucket_user_count_.load(std::memory_order_relaxed);
 }
 
 StageSync::Stage2Data StageSync::stage2_data() const {
@@ -542,6 +532,16 @@ void StageSync::refresh_status_locked() {
   sync_.head_block = q.head_block;
   sync_.behind_blocks = q.behind_blocks;
   sync_.behind_chunks = q.behind_chunks;
+
+  // Update cached bucket info for lightweight status API
+  const int64_t max_bucket = (rt_->header->cursor_sort_key < 0) ? -1 : rt_->header->head_bucket;
+  cached_max_bucket_.store(max_bucket, std::memory_order_relaxed);
+  if (max_bucket >= 0 && max_bucket < static_cast<int64_t>(rt_->global_feature_user_counts.size())) {
+    cached_bucket_user_count_.store(rt_->global_feature_user_counts[static_cast<size_t>(max_bucket)],
+                                    std::memory_order_relaxed);
+  } else {
+    cached_bucket_user_count_.store(0, std::memory_order_relaxed);
+  }
 }
 
 void StageSync::schedule_sync(int delay_seconds) {
