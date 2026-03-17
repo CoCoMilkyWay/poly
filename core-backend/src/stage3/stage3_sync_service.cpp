@@ -7,8 +7,36 @@
 #include <cctype>
 #include <filesystem>
 #include <fstream>
+#include <thread>
 
 namespace stage3 {
+
+class StageSync::QueryPauseGuard {
+public:
+  explicit QueryPauseGuard(const StageSync &owner)
+      : owner_(owner), query_lock_(owner.query_mu_) {
+    StageSync &state_owner = const_cast<StageSync &>(owner_);
+    state_owner.pause_requested_.store(true);
+    while (true) {
+      uint8_t expected = kRtStateIdle;
+      if (state_owner.rt_state_.compare_exchange_weak(expected, kRtStateQuerying)) {
+        break;
+      }
+      std::this_thread::yield();
+    }
+  }
+
+  ~QueryPauseGuard() {
+    StageSync &state_owner = const_cast<StageSync &>(owner_);
+    const uint8_t prev = state_owner.rt_state_.exchange(kRtStateIdle);
+    assert(prev == kRtStateQuerying);
+    state_owner.pause_requested_.store(false);
+  }
+
+private:
+  const StageSync &owner_;
+  std::unique_lock<std::mutex> query_lock_;
+};
 
 StageSync::StageSync(stage2::EventBuilder &builder,
                      Database &stage0_db,
@@ -32,6 +60,12 @@ StageSync::StageSync(stage2::EventBuilder &builder,
 
 StageSync::~StageSync() {
   stop_requested_ = true;
+  pause_requested_.store(true);
+  std::lock_guard<std::mutex> query_lock(query_mu_);
+  while (rt_state_.load() == kRtStateSyncing) {
+    std::this_thread::yield();
+  }
+  assert(rt_state_.load() != kRtStateQuerying);
   if (rt_ != nullptr) {
     stage3_sync(rt_);
     stage3_close(rt_);
@@ -42,10 +76,15 @@ StageSync::~StageSync() {
 void StageSync::start(asio::io_context &ioc) {
   ioc_ = &ioc;
   stop_requested_ = false;
+  pause_requested_.store(false);
+  rt_state_.store(kRtStateIdle);
   schedule_sync(1);
 }
 
-void StageSync::stop() { stop_requested_ = true; }
+void StageSync::stop() {
+  stop_requested_ = true;
+  pause_requested_.store(true);
+}
 
 StageSync::Status StageSync::status() const {
   std::lock_guard<std::mutex> lock(sync_mu_);
@@ -53,6 +92,7 @@ StageSync::Status StageSync::status() const {
 }
 
 int64_t StageSync::get_max_bucket() const {
+  QueryPauseGuard guard(*this);
   if (rt_->header->cursor_sort_key < 0) {
     return -1;
   }
@@ -60,6 +100,7 @@ int64_t StageSync::get_max_bucket() const {
 }
 
 int64_t StageSync::get_bucket_user_count(int64_t bucket) const {
+  QueryPauseGuard guard(*this);
   if (bucket < 0) {
     return 0;
   }
@@ -127,6 +168,7 @@ StageSync::Stage2Data StageSync::stage2_data() const {
 }
 
 json StageSync::memory_breakdown() const {
+  QueryPauseGuard guard(*this);
   const int64_t token_used = static_cast<int64_t>(token_pool_used_total(rt_->header) * sizeof(TokenSlot));
   const int64_t feature_used = static_cast<int64_t>(feature_pool_used_total(rt_->header) * sizeof(FeatureSlot));
   const int64_t sharpe_agg_used = static_cast<int64_t>(sharpe_agg_pool_used_total(rt_->header) * sizeof(SharpeAgg));
@@ -156,6 +198,7 @@ json StageSync::stage2_rocksdb_memory_breakdown() const {
 }
 
 json StageSync::stage3_rocksdb_memory_breakdown() const {
+  QueryPauseGuard guard(*this);
   return {
       {"name", "stage3_mmap"},
       {"engine", "mmap"},
@@ -170,6 +213,7 @@ json StageSync::stage3_rocksdb_memory_breakdown() const {
 
 std::vector<StageSync::UserSummaryRow> StageSync::get_users_sorted(int64_t limit) const {
   TraceN("s3/users");
+  QueryPauseGuard guard(*this);
   const int64_t actual_limit = std::max<int64_t>(1, limit);
   rt_->rank_cache.rebuild_if_needed(rt_);
   const size_t n = std::min(rt_->rank_cache.by_events.size(), static_cast<size_t>(actual_limit));
@@ -190,6 +234,7 @@ std::vector<StageSync::UserSummaryRow> StageSync::get_users_sorted(int64_t limit
 
 std::vector<StageSync::TimelineRow> StageSync::get_user_timeline(const std::string &addr) const {
   TraceN("s3/timeline");
+  QueryPauseGuard guard(*this);
   const std::string normalized = normalize_addr(addr);
   if (normalized.empty()) {
     return {};
@@ -225,6 +270,7 @@ std::vector<StageSync::TimelineRow> StageSync::get_user_timeline(const std::stri
 
 std::vector<StageSync::PositionRow> StageSync::get_positions_at(const std::string &addr, int64_t sort_key) const {
   TraceN("s3/positions");
+  QueryPauseGuard guard(*this);
   const std::string normalized = normalize_addr(addr);
   if (normalized.empty()) {
     return {};
@@ -254,18 +300,16 @@ std::vector<StageSync::PositionRow> StageSync::get_positions_at(const std::strin
 
 filter::Result StageSync::filter_users_by_features(const filter::Request &req) const {
   TraceN("s3/filter");
-  FilterRequest nreq;
-  nreq.anchor_bucket = req.anchor_bucket;
-  nreq.filters = req.filters;
-  nreq.sort_expr = req.sort_expr;
-  nreq.sort_asc = req.sort_asc;
-  nreq.limit = req.limit;
-  const FilterResult r = stage3_query_filter(rt_, nreq);
+  QueryPauseGuard guard(*this);
+  const FilterResult r = stage3_query_filter(rt_, req);
   const int32_t anchor_bucket = static_cast<int32_t>(req.anchor_bucket);
   const size_t global_slot = tag_slot(-1);
 
   filter::Result out;
   out.anchor_bucket = r.anchor_bucket;
+  out.scanned_user_count = r.scanned_user_count;
+  out.matched_user_count = r.matched_user_count;
+  out.item_stats = r.item_stats;
   out.users.reserve(r.users.size());
   for (const auto &row : r.users) {
     filter::UserRow u{};
@@ -539,6 +583,13 @@ void StageSync::do_sync_tick() {
     sync_.eta_seconds =
         (remaining_blocks == 0) ? 0.0 : static_cast<double>(remaining_blocks) / sync_.blocks_per_second;
   };
+  auto yield_sync = [&](int delay_seconds) {
+    std::lock_guard<std::mutex> lock(sync_mu_);
+    refresh_status_locked();
+    refresh_timing_metrics(sync_.behind_blocks);
+    sync_.syncing = false;
+    schedule_sync(delay_seconds);
+  };
 
   int64_t before_block = 0;
   {
@@ -552,30 +603,53 @@ void StageSync::do_sync_tick() {
   if (builder_.is_building() || builder_.has_pending_commit()) {
     {
       TraceN("s3/runloop/yield_stage2");
-      std::lock_guard<std::mutex> lock(sync_mu_);
-      refresh_status_locked();
-      refresh_timing_metrics(sync_.behind_blocks);
-      sync_.syncing = false;
-      schedule_sync(kStage2YieldDelaySeconds);
+      yield_sync(kStage2YieldDelaySeconds);
     }
     TraceFrameN("s3_sync_loop");
     return;
   }
 
+  if (pause_requested_.load()) {
+    {
+      TraceN("s3/runloop/yield_query");
+      yield_sync(kPauseRetryDelaySeconds);
+    }
+    TraceFrameN("s3_sync_loop");
+    return;
+  }
+
+  uint8_t expected_state = kRtStateIdle;
+  if (!rt_state_.compare_exchange_strong(expected_state, kRtStateSyncing)) {
+    {
+      TraceN("s3/runloop/yield_query");
+      yield_sync(kPauseRetryDelaySeconds);
+    }
+    TraceFrameN("s3_sync_loop");
+    return;
+  }
+
+  size_t processed = 0;
   {
     TraceN("s3/runloop/refresh_conditions");
     refresh_conditions_if_needed();
   }
 
   const int64_t head_block = builder_.cursor();
-  const size_t processed = stage3_sync_tick(rt_, builder_.user_event_store(), head_block, kStage3BatchEvents);
+  processed = stage3_sync_tick(rt_, builder_.user_event_store(), head_block, kStage3BatchEvents);
   if (processed > 0) {
-    TraceN("s3/runloop/prune");
-    stage3_post_sync_prune(rt_);
+    {
+      TraceN("s3/runloop/prune");
+      stage3_post_sync_prune(rt_);
+    }
   }
+  const uint8_t prev_state = rt_state_.exchange(kRtStateIdle);
+  assert(prev_state == kRtStateSyncing);
+
   {
     TraceN("s3/runloop/msync");
-    stage3_sync(rt_);
+    if (!pause_requested_.load()) {
+      stage3_sync(rt_);
+    }
   }
 
   {
@@ -591,7 +665,8 @@ void StageSync::do_sync_tick() {
     }
     refresh_timing_metrics(sync_.behind_blocks);
     sync_.syncing = false;
-    const int next_delay = (sync_.behind_blocks > 0) ? 1 : base_interval_seconds_;
+    const int next_delay = pause_requested_.load() ? kPauseRetryDelaySeconds
+                                                   : ((sync_.behind_blocks > 0) ? 0 : base_interval_seconds_);
     schedule_sync(next_delay);
   }
   TraceFrameN("s3_sync_loop");

@@ -466,6 +466,136 @@ bool ensure_required_param(const std::string &value, const char *name, http::res
   return false;
 }
 
+std::string require_json_string(const json &obj, const char *key) {
+  if (!obj.contains(key) || !obj[key].is_string()) {
+    throw std::invalid_argument(std::string(key) + " is required and must be string");
+  }
+  return obj[key].get<std::string>();
+}
+
+stage3::FilterMetricRef parse_stage3_filter_metric_ref(const json &obj) {
+  if (!obj.is_object()) {
+    throw std::invalid_argument("metric ref must be object");
+  }
+
+  stage3::FilterMetricRef ref;
+  ref.industry = require_json_string(obj, "industry");
+  ref.feature = require_json_string(obj, "feature");
+  ref.window = require_json_string(obj, "window");
+  return ref;
+}
+
+stage3::FilterValueExpr parse_stage3_filter_value_expr(const json &obj) {
+  if (!obj.is_object()) {
+    throw std::invalid_argument("expr must be object");
+  }
+
+  stage3::FilterValueExpr expr;
+  if (!obj.contains("lhs")) {
+    throw std::invalid_argument("expr.lhs is required");
+  }
+  expr.lhs = parse_stage3_filter_metric_ref(obj["lhs"]);
+
+  if (obj.contains("arith_op") && !obj["arith_op"].is_string()) {
+    throw std::invalid_argument("expr.arith_op must be string");
+  }
+  expr.arith_op = obj.contains("arith_op") ? obj["arith_op"].get<std::string>() : "";
+  if (!expr.arith_op.empty()) {
+    if (!obj.contains("rhs")) {
+      throw std::invalid_argument("expr.rhs is required");
+    }
+    expr.rhs = parse_stage3_filter_metric_ref(obj["rhs"]);
+  }
+  return expr;
+}
+
+stage3::FilterItem parse_stage3_filter_item(const json &obj) {
+  if (!obj.is_object()) {
+    throw std::invalid_argument("item must be object");
+  }
+
+  stage3::FilterItem item;
+  item.id = require_json_string(obj, "id");
+  if (!obj.contains("expr")) {
+    throw std::invalid_argument("item.expr is required");
+  }
+  item.expr = parse_stage3_filter_value_expr(obj["expr"]);
+  item.compare_op = require_json_string(obj, "compare_op");
+  if (!obj.contains("compare_value") || !obj["compare_value"].is_number()) {
+    throw std::invalid_argument("item.compare_value is required and must be number");
+  }
+  item.compare_value = obj["compare_value"].get<double>();
+  return item;
+}
+
+stage3::FilterRequest parse_stage3_filter_request(const json &body) {
+  stage3::FilterRequest req;
+  if (!body.contains("anchor_bucket") || !body["anchor_bucket"].is_number_integer()) {
+    throw std::invalid_argument("anchor_bucket is required and must be integer");
+  }
+  req.anchor_bucket = body["anchor_bucket"].get<int64_t>();
+
+  if (!body.contains("limit") || !body["limit"].is_number_integer()) {
+    throw std::invalid_argument("limit is required and must be integer");
+  }
+  req.limit = body["limit"].get<int32_t>();
+
+  if (!body.contains("items") || !body["items"].is_array()) {
+    throw std::invalid_argument("items is required and must be array");
+  }
+  req.items.reserve(body["items"].size());
+  for (const auto &it : body["items"]) {
+    req.items.push_back(parse_stage3_filter_item(it));
+  }
+
+  if (!body.contains("sort") || !body["sort"].is_object()) {
+    throw std::invalid_argument("sort is required and must be object");
+  }
+  const json &sort = body["sort"];
+  if (!sort.contains("expr")) {
+    throw std::invalid_argument("sort.expr is required");
+  }
+  req.sort.expr = parse_stage3_filter_value_expr(sort["expr"]);
+  if (!sort.contains("asc") || !sort["asc"].is_boolean()) {
+    throw std::invalid_argument("sort.asc is required and must be boolean");
+  }
+  req.sort.asc = sort["asc"].get<bool>();
+
+  return req;
+}
+
+json to_stage3_filter_result_json(const stage3::filter::Result &result) {
+  json users = json::array();
+  for (const auto &u : result.users) {
+    users.push_back({
+        {"addr", u.addr},
+        {"sort_value", u.sort_value},
+        {"month_avg_tok", u.month_avg_tok},
+        {"month_avg_exp", u.month_avg_exp},
+        {"month_avg_hp", u.month_avg_hp},
+        {"pnl", u.pnl},
+    });
+  }
+
+  json item_stats = json::array();
+  for (const auto &stat : result.item_stats) {
+    item_stats.push_back({
+        {"id", stat.id},
+        {"before_count", stat.before_count},
+        {"filtered_count", stat.filtered_count},
+        {"remaining_count", stat.remaining_count},
+    });
+  }
+
+  return {
+      {"anchor_bucket", result.anchor_bucket},
+      {"scanned_user_count", result.scanned_user_count},
+      {"matched_user_count", result.matched_user_count},
+      {"users", users},
+      {"item_stats", item_stats},
+  };
+}
+
 } // namespace
 
 std::mutex ApiSession::s3_meta_cache_mu_;
@@ -1132,75 +1262,10 @@ void ApiSession::handle_stage3_filter() {
     return;
   }
 
-  stage3::filter::Request filter_req;
-  if (!body.contains("anchor_bucket") || !body["anchor_bucket"].is_number_integer()) {
-    res_.result(http::status::bad_request);
-    res_.body() = R"({"error":"anchor_bucket is required and must be integer"})";
-    return;
-  }
-  filter_req.anchor_bucket = body["anchor_bucket"].get<int64_t>();
-
-  if (!body.contains("limit") || !body["limit"].is_number_integer()) {
-    res_.result(http::status::bad_request);
-    res_.body() = R"({"error":"limit is required and must be integer"})";
-    return;
-  }
-  filter_req.limit = body["limit"].get<int32_t>();
-
-  if (!body.contains("sort_asc") || !body["sort_asc"].is_boolean()) {
-    res_.result(http::status::bad_request);
-    res_.body() = R"({"error":"sort_asc is required and must be boolean"})";
-    return;
-  }
-  filter_req.sort_asc = body["sort_asc"].get<bool>();
-  if (!body.contains("sort_expr") || !body["sort_expr"].is_string()) {
-    res_.result(http::status::bad_request);
-    res_.body() = R"({"error":"sort_expr is required"})";
-    return;
-  }
-  filter_req.sort_expr = body["sort_expr"].get<std::string>();
-
-  if (body.contains("filters") && !body["filters"].is_null()) {
-    if (!body["filters"].is_array()) {
-      res_.result(http::status::bad_request);
-      res_.body() = R"({"error":"filters must be string array"})";
-      return;
-    }
-    for (const auto &it : body["filters"]) {
-      if (!it.is_string()) {
-        res_.result(http::status::bad_request);
-        res_.body() = R"({"error":"filters must be string array"})";
-        return;
-      }
-      filter_req.filters.push_back(it.get<std::string>());
-    }
-  }
-
   try {
+    const stage3::FilterRequest filter_req = parse_stage3_filter_request(body);
     stage3::filter::Result filter_result = stage3_.filter_users_by_features(filter_req);
-    json users = json::array();
-    for (const auto &u : filter_result.users) {
-      users.push_back({
-          {"addr", u.addr},
-          {"sort_value", u.sort_value},
-          {"month_avg_tok", u.month_avg_tok},
-          {"month_avg_exp", u.month_avg_exp},
-          {"month_avg_hp", u.month_avg_hp},
-          {"pnl", u.pnl},
-      });
-    }
-    json filter_stats = json::array();
-    for (const auto &fs : filter_result.filter_stats) {
-      filter_stats.push_back({
-          {"pass_count", fs.pass_count},
-          {"reject_count", fs.reject_count},
-      });
-    }
-    write_ok_json_response(res_, {
-                                     {"anchor_bucket", filter_result.anchor_bucket},
-                                     {"users", users},
-                                     {"filter_stats", filter_stats},
-                                 });
+    write_ok_json_response(res_, to_stage3_filter_result_json(filter_result));
   } catch (const std::invalid_argument &e) {
     res_.result(http::status::bad_request);
     res_.body() = json{{"error", e.what()}}.dump();

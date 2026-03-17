@@ -16,7 +16,7 @@ namespace stage3 {
 namespace {
 
 // ============================================================================
-// Expression parser and evaluator (no SQL, direct feature evaluation)
+// Structured filter evaluator
 // ============================================================================
 
 std::string trim_copy(const std::string &s) {
@@ -85,62 +85,61 @@ enum class FeatureField {
   SHARPE_1000W,
 };
 
-std::optional<FeatureField> parse_feature_field(const std::string &token) {
-  std::string t = to_lower_str(token);
-  std::string base;
-  enum class Window { W10,
-                      W100,
-                      W1000 };
-  std::optional<Window> window;
+std::optional<FeatureField> parse_feature_field(const std::string &feature, const std::string &window) {
+  std::string base = to_lower_str(feature);
+  std::string normalized_window = to_lower_str(window);
 
-  if (t.ends_with("1k") || t.ends_with("1000")) {
-    base = t.ends_with("1k") ? t.substr(0, t.size() - 2) : t.substr(0, t.size() - 4);
-    window = Window::W1000;
-  } else if (t.ends_with("100")) {
-    base = t.substr(0, t.size() - 3);
-    window = Window::W100;
-  } else if (t.ends_with("10")) {
-    base = t.substr(0, t.size() - 2);
-    window = Window::W10;
+  enum class WindowKind { W10,
+                          W100,
+                          W1000 };
+  std::optional<WindowKind> window_kind;
+
+  if (normalized_window == "10") {
+    window_kind = WindowKind::W10;
+  } else if (normalized_window == "100") {
+    window_kind = WindowKind::W100;
+  } else if (normalized_window == "1k" || normalized_window == "1000") {
+    window_kind = WindowKind::W1000;
   } else {
     return std::nullopt;
   }
 
-  if (base.empty())
+  if (base.empty()) {
     return std::nullopt;
+  }
 
   if (base == "tok") {
-    if (*window == Window::W10)
+    if (*window_kind == WindowKind::W10)
       return FeatureField::TOKEN_AVG_10W;
-    if (*window == Window::W100)
+    if (*window_kind == WindowKind::W100)
       return FeatureField::TOKEN_AVG_100W;
     return FeatureField::TOKEN_AVG_1000W;
   }
   if (base == "exp") {
-    if (*window == Window::W10)
+    if (*window_kind == WindowKind::W10)
       return FeatureField::EXPOSURE_AVG_10W;
-    if (*window == Window::W100)
+    if (*window_kind == WindowKind::W100)
       return FeatureField::EXPOSURE_AVG_100W;
     return FeatureField::EXPOSURE_AVG_1000W;
   }
   if (base == "vol") {
-    if (*window == Window::W10)
+    if (*window_kind == WindowKind::W10)
       return FeatureField::VOLUME_10W;
-    if (*window == Window::W100)
+    if (*window_kind == WindowKind::W100)
       return FeatureField::VOLUME_AVG_100W;
     return FeatureField::VOLUME_AVG_1000W;
   }
   if (base == "hp") {
-    if (*window == Window::W10)
+    if (*window_kind == WindowKind::W10)
       return FeatureField::HP_AVG_10W;
-    if (*window == Window::W100)
+    if (*window_kind == WindowKind::W100)
       return FeatureField::HP_AVG_100W;
     return FeatureField::HP_AVG_1000W;
   }
   if (base == "shp") {
-    if (*window == Window::W10)
+    if (*window_kind == WindowKind::W10)
       return FeatureField::SHARPE_10W;
-    if (*window == Window::W100)
+    if (*window_kind == WindowKind::W100)
       return FeatureField::SHARPE_100W;
     return FeatureField::SHARPE_1000W;
   }
@@ -148,10 +147,7 @@ std::optional<FeatureField> parse_feature_field(const std::string &token) {
   return std::nullopt;
 }
 
-// Returns 0.0 if feature slot is missing (simplified from old SQL NULL semantics)
-// Note: In practice, filter expressions like "tag.exp > 1000" will correctly
-// exclude users without that tag (since 0 < 1000). NULLS LAST sorting is not
-// needed because sort_expr typically uses ALL.* which always exists.
+// Returns 0.0 if feature slot is missing.
 double get_feature_value(const FeatureSlot *feat, FeatureField field) {
   if (!feat)
     return 0.0;
@@ -191,257 +187,194 @@ double get_feature_value(const FeatureSlot *feat, FeatureField field) {
   return 0.0;
 }
 
-// ============================================================================
-// Simple expression evaluator
-// Supports: number, tag.field, +, -, *, /, >, <, >=, <=, ==, !=, and, or, not, (, )
-// ============================================================================
+bool is_sharpe_field(FeatureField field) {
+  return field == FeatureField::SHARPE_10W || field == FeatureField::SHARPE_100W ||
+         field == FeatureField::SHARPE_1000W;
+}
 
-struct FieldRef {
-  int8_t tag_id;
-  FeatureField field;
+enum class ArithmeticOp {
+  NONE,
+  MUL,
+  DIV,
 };
 
-class ExprEvaluator {
-public:
-  using GetFeatureFn = std::function<const FeatureSlot *(int8_t tag_id)>;
-
-  ExprEvaluator(GetFeatureFn get_feature) : get_feature_(std::move(get_feature)) {}
-
-  double eval_numeric(const std::string &expr) {
-    pos_ = 0;
-    expr_ = trim_copy(expr);
-    double result = parse_additive();
-    assert(pos_ == expr_.size());
-    return result;
-  }
-
-  bool eval_bool(const std::string &expr) {
-    pos_ = 0;
-    expr_ = trim_copy(expr);
-    bool result = parse_or();
-    assert(pos_ == expr_.size());
-    return result;
-  }
-
-private:
-  GetFeatureFn get_feature_;
-  std::string expr_;
-  size_t pos_ = 0;
-
-  char peek() const { return pos_ < expr_.size() ? expr_[pos_] : '\0'; }
-  char get() { return pos_ < expr_.size() ? expr_[pos_++] : '\0'; }
-  void skip_ws() {
-    while (std::isspace(static_cast<unsigned char>(peek())))
-      ++pos_;
-  }
-
-  bool parse_or() {
-    bool left = parse_and();
-    skip_ws();
-    while (pos_ + 2 <= expr_.size() && to_lower_str(expr_.substr(pos_, 2)) == "or") {
-      pos_ += 2;
-      skip_ws();
-      left = left || parse_and();
-      skip_ws();
-    }
-    return left;
-  }
-
-  bool parse_and() {
-    bool left = parse_not();
-    skip_ws();
-    while (pos_ + 3 <= expr_.size() && to_lower_str(expr_.substr(pos_, 3)) == "and") {
-      pos_ += 3;
-      skip_ws();
-      left = left && parse_not();
-      skip_ws();
-    }
-    return left;
-  }
-
-  bool parse_not() {
-    skip_ws();
-    if (pos_ + 3 <= expr_.size() && to_lower_str(expr_.substr(pos_, 3)) == "not") {
-      pos_ += 3;
-      skip_ws();
-      return !parse_not();
-    }
-    return parse_comparison();
-  }
-
-  bool parse_comparison() {
-    skip_ws();
-    if (peek() == '(') {
-      ++pos_;
-      bool result = parse_or();
-      skip_ws();
-      assert(peek() == ')');
-      ++pos_;
-      return result;
-    }
-
-    double left = parse_additive();
-    skip_ws();
-
-    std::string op;
-    if (pos_ + 2 <= expr_.size()) {
-      std::string two = expr_.substr(pos_, 2);
-      if (two == ">=" || two == "<=" || two == "==" || two == "!=") {
-        op = two;
-        pos_ += 2;
-      }
-    }
-    if (op.empty() && (peek() == '>' || peek() == '<' || peek() == '=')) {
-      op = std::string(1, get());
-    }
-
-    if (op.empty()) {
-      // No comparison operator - treat as boolean (non-zero = true)
-      return left != 0.0;
-    }
-
-    skip_ws();
-    double right = parse_additive();
-
-    if (op == ">")
-      return left > right;
-    if (op == "<")
-      return left < right;
-    if (op == ">=")
-      return left >= right;
-    if (op == "<=")
-      return left <= right;
-    if (op == "==" || op == "=")
-      return std::abs(left - right) < 1e-9;
-    if (op == "!=")
-      return std::abs(left - right) >= 1e-9;
-
-    assert(false);
-    return false;
-  }
-
-  double parse_additive() {
-    double left = parse_multiplicative();
-    skip_ws();
-    while (peek() == '+' || peek() == '-') {
-      char op = get();
-      skip_ws();
-      double right = parse_multiplicative();
-      if (op == '+')
-        left += right;
-      else
-        left -= right;
-      skip_ws();
-    }
-    return left;
-  }
-
-  double parse_multiplicative() {
-    double left = parse_unary();
-    skip_ws();
-    while (peek() == '*' || peek() == '/') {
-      char op = get();
-      skip_ws();
-      double right = parse_unary();
-      if (op == '*')
-        left *= right;
-      else
-        left /= right;
-      skip_ws();
-    }
-    return left;
-  }
-
-  double parse_unary() {
-    skip_ws();
-    if (peek() == '-') {
-      ++pos_;
-      return -parse_unary();
-    }
-    if (peek() == '+') {
-      ++pos_;
-      return parse_unary();
-    }
-    return parse_primary();
-  }
-
-  double parse_primary() {
-    skip_ws();
-
-    // Parentheses
-    if (peek() == '(') {
-      ++pos_;
-      double result = parse_additive();
-      skip_ws();
-      assert(peek() == ')');
-      ++pos_;
-      return result;
-    }
-
-    // Number
-    if (std::isdigit(static_cast<unsigned char>(peek())) || peek() == '.') {
-      size_t start = pos_;
-      while (std::isdigit(static_cast<unsigned char>(peek())) || peek() == '.') {
-        ++pos_;
-      }
-      return std::stod(expr_.substr(start, pos_ - start));
-    }
-
-    // Identifier (tag.field or field)
-    if (std::isalpha(static_cast<unsigned char>(peek())) || peek() == '_') {
-      size_t start = pos_;
-      while (std::isalnum(static_cast<unsigned char>(peek())) || peek() == '_') {
-        ++pos_;
-      }
-      std::string lhs = expr_.substr(start, pos_ - start);
-
-      skip_ws();
-      if (peek() == '.') {
-        // tag.field format
-        ++pos_;
-        skip_ws();
-        start = pos_;
-        while (std::isalnum(static_cast<unsigned char>(peek())) || peek() == '_') {
-          ++pos_;
-        }
-        std::string rhs = expr_.substr(start, pos_ - start);
-
-        auto tag_id = resolve_tag_id(lhs);
-        assert(tag_id.has_value());
-
-        auto field = parse_feature_field(rhs);
-        assert(field.has_value());
-
-        // Sharpe only for all (-1)
-        if (*field >= FeatureField::SHARPE_10W && *tag_id != -1) {
-          return 0.0;
-        }
-
-        const FeatureSlot *feat = get_feature_(*tag_id);
-        return get_feature_value(feat, *field);
-      }
-
-      // Just field name - assume all (-1)
-      auto field = parse_feature_field(lhs);
-      if (field.has_value()) {
-        const FeatureSlot *feat = get_feature_(-1);
-        return get_feature_value(feat, *field);
-      }
-
-      // Keywords
-      if (to_lower_str(lhs) == "true")
-        return 1.0;
-      if (to_lower_str(lhs) == "false")
-        return 0.0;
-
-      assert(false); // Unknown identifier
-      return 0.0;
-    }
-
-    assert(false);
-    return 0.0;
-  }
+enum class CompareOp {
+  GT,
+  GE,
+  LT,
+  LE,
+  EQ,
+  NE,
 };
+
+struct CompiledMetricRef {
+  int8_t tag_id = -1;
+  FeatureField field = FeatureField::TOKEN_AVG_10W;
+};
+
+struct CompiledValueExpr {
+  CompiledMetricRef lhs;
+  ArithmeticOp arith_op = ArithmeticOp::NONE;
+  CompiledMetricRef rhs;
+};
+
+struct CompiledFilterItem {
+  std::string id;
+  CompiledValueExpr expr;
+  CompareOp compare_op = CompareOp::GT;
+  double compare_value = 0.0;
+};
+
+struct CompiledFilterPlan {
+  std::vector<CompiledFilterItem> items;
+  CompiledValueExpr sort_expr;
+  bool sort_asc = false;
+};
+
+using GetFeatureFn = std::function<const FeatureSlot *(int8_t tag_id)>;
+
+CompiledMetricRef compile_metric_ref(const FilterMetricRef &ref) {
+  assert(!ref.industry.empty());
+  assert(!ref.feature.empty());
+  assert(!ref.window.empty());
+
+  auto tag_id = resolve_tag_id(ref.industry);
+  assert(tag_id.has_value());
+
+  auto field = parse_feature_field(ref.feature, ref.window);
+  assert(field.has_value());
+  assert(!is_sharpe_field(*field) || *tag_id == -1);
+
+  CompiledMetricRef out;
+  out.tag_id = *tag_id;
+  out.field = *field;
+  return out;
+}
+
+ArithmeticOp compile_arith_op(const std::string &raw_op) {
+  const std::string op = trim_copy(raw_op);
+  if (op.empty()) {
+    return ArithmeticOp::NONE;
+  }
+  if (op == "*") {
+    return ArithmeticOp::MUL;
+  }
+  if (op == "/") {
+    return ArithmeticOp::DIV;
+  }
+  assert(false);
+  return ArithmeticOp::NONE;
+}
+
+CompareOp compile_compare_op(const std::string &raw_op) {
+  const std::string op = trim_copy(raw_op);
+  if (op == ">") {
+    return CompareOp::GT;
+  }
+  if (op == ">=") {
+    return CompareOp::GE;
+  }
+  if (op == "<") {
+    return CompareOp::LT;
+  }
+  if (op == "<=") {
+    return CompareOp::LE;
+  }
+  if (op == "==" || op == "=") {
+    return CompareOp::EQ;
+  }
+  if (op == "!=") {
+    return CompareOp::NE;
+  }
+  assert(false);
+  return CompareOp::GT;
+}
+
+CompiledValueExpr compile_value_expr(const FilterValueExpr &expr) {
+  CompiledValueExpr out;
+  out.lhs = compile_metric_ref(expr.lhs);
+  out.arith_op = compile_arith_op(expr.arith_op);
+  if (out.arith_op == ArithmeticOp::NONE) {
+    out.rhs = out.lhs;
+    return out;
+  }
+  out.rhs = compile_metric_ref(expr.rhs);
+  return out;
+}
+
+CompiledFilterItem compile_filter_item(const FilterItem &item) {
+  assert(!item.id.empty());
+
+  CompiledFilterItem out;
+  out.id = item.id;
+  out.expr = compile_value_expr(item.expr);
+  out.compare_op = compile_compare_op(item.compare_op);
+  out.compare_value = item.compare_value;
+  assert(std::isfinite(out.compare_value));
+  return out;
+}
+
+CompiledFilterPlan compile_filter_plan(const FilterRequest &req) {
+  CompiledFilterPlan out;
+  out.items.reserve(req.items.size());
+  for (const auto &item : req.items) {
+    out.items.push_back(compile_filter_item(item));
+  }
+  out.sort_expr = compile_value_expr(req.sort.expr);
+  out.sort_asc = req.sort.asc;
+  return out;
+}
+
+double eval_metric_ref(const GetFeatureFn &get_feature, const CompiledMetricRef &ref) {
+  const FeatureSlot *feat = get_feature(ref.tag_id);
+  return get_feature_value(feat, ref.field);
+}
+
+double eval_value_expr(const GetFeatureFn &get_feature, const CompiledValueExpr &expr) {
+  const double left = eval_metric_ref(get_feature, expr.lhs);
+  if (expr.arith_op == ArithmeticOp::NONE) {
+    return left;
+  }
+
+  const double right = eval_metric_ref(get_feature, expr.rhs);
+  if (expr.arith_op == ArithmeticOp::MUL) {
+    return left * right;
+  }
+  if (expr.arith_op == ArithmeticOp::DIV) {
+    return left / right;
+  }
+
+  assert(false);
+  return 0.0;
+}
+
+bool eval_compare(double left, CompareOp op, double right) {
+  if (op == CompareOp::GT) {
+    return left > right;
+  }
+  if (op == CompareOp::GE) {
+    return left >= right;
+  }
+  if (op == CompareOp::LT) {
+    return left < right;
+  }
+  if (op == CompareOp::LE) {
+    return left <= right;
+  }
+  if (op == CompareOp::EQ) {
+    return std::abs(left - right) < 1e-9;
+  }
+  if (op == CompareOp::NE) {
+    return std::abs(left - right) >= 1e-9;
+  }
+
+  assert(false);
+  return false;
+}
+
+bool eval_filter_item(const GetFeatureFn &get_feature, const CompiledFilterItem &item) {
+  return eval_compare(eval_value_expr(get_feature, item.expr), item.compare_op, item.compare_value);
+}
 
 } // namespace
 
@@ -458,6 +391,7 @@ FilterResult stage3_query_filter(Stage3Runtime *rt, const FilterRequest &req) {
   assert(req.limit > 0 && req.limit <= 1000);
 
   const int32_t anchor_bucket = static_cast<int32_t>(req.anchor_bucket);
+  const CompiledFilterPlan plan = compile_filter_plan(req);
 
   // Temporary storage for candidates
   struct Candidate {
@@ -467,9 +401,8 @@ FilterResult stage3_query_filter(Stage3Runtime *rt, const FilterRequest &req) {
   std::vector<Candidate> candidates;
   candidates.reserve(rt->header->user_count);
 
-  // Initialize filter stats (faithful to old architecture - frontend uses these)
-  std::vector<int64_t> filter_pass_counts(req.filters.size(), 0);
-  std::vector<int64_t> filter_reject_counts(req.filters.size(), 0);
+  std::vector<int64_t> item_before_counts(plan.items.size(), 0);
+  std::vector<int64_t> item_filtered_counts(plan.items.size(), 0);
 
   // Scan all users
   for (uint64_t i = 0; i < rt->header->user_count; ++i) {
@@ -506,38 +439,30 @@ FilterResult stage3_query_filter(Stage3Runtime *rt, const FilterRequest &req) {
     if (!global_feat)
       continue;
 
-    // Evaluate filters and collect stats
-    ExprEvaluator evaluator(get_feature);
+    ++result.scanned_user_count;
     bool pass_all = true;
 
-    for (size_t fi = 0; fi < req.filters.size(); ++fi) {
-      const auto &filter = req.filters[fi];
-      if (filter.empty())
-        continue;
-      bool pass = evaluator.eval_bool(filter);
-      if (pass) {
-        filter_pass_counts[fi]++;
-      } else {
-        filter_reject_counts[fi]++;
+    for (size_t fi = 0; fi < plan.items.size(); ++fi) {
+      ++item_before_counts[fi];
+      const bool pass = eval_filter_item(get_feature, plan.items[fi]);
+      if (!pass) {
+        ++item_filtered_counts[fi];
         pass_all = false;
-        // Continue to evaluate remaining filters for stats (like old SQL approach)
+        break;
       }
     }
 
     if (!pass_all)
       continue;
 
-    // Evaluate sort expression
-    double sort_value = 0.0;
-    if (!req.sort_expr.empty()) {
-      sort_value = evaluator.eval_numeric(req.sort_expr);
-    }
-
+    const double sort_value = eval_value_expr(get_feature, plan.sort_expr);
     candidates.push_back({user_idx, sort_value});
   }
 
+  result.matched_user_count = static_cast<int64_t>(candidates.size());
+
   // Sort
-  if (req.sort_asc) {
+  if (plan.sort_asc) {
     std::sort(candidates.begin(), candidates.end(),
               [](const Candidate &a, const Candidate &b) {
                 return a.sort_value < b.sort_value;
@@ -560,13 +485,14 @@ FilterResult stage3_query_filter(Stage3Runtime *rt, const FilterRequest &req) {
     result.users.push_back(row);
   }
 
-  // Populate filter_stats (faithful to old architecture)
-  result.filter_stats.reserve(req.filters.size());
-  for (size_t fi = 0; fi < req.filters.size(); ++fi) {
-    FilterStat stat{};
-    stat.pass_count = filter_pass_counts[fi];
-    stat.reject_count = filter_reject_counts[fi];
-    result.filter_stats.push_back(stat);
+  result.item_stats.reserve(plan.items.size());
+  for (size_t fi = 0; fi < plan.items.size(); ++fi) {
+    FilterItemStat stat{};
+    stat.id = plan.items[fi].id;
+    stat.before_count = item_before_counts[fi];
+    stat.filtered_count = item_filtered_counts[fi];
+    stat.remaining_count = item_before_counts[fi] - item_filtered_counts[fi];
+    result.item_stats.push_back(stat);
   }
 
   return result;

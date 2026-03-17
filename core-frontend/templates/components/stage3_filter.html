@@ -324,6 +324,7 @@
     let _s3fMaxBucket = -1;
     let _s3fTotalUsers = 0;
     let _s3fIsRunning = false; // 防止并发请求
+    let _s3fNextFilterId = 1;
     let _s3fLastSortFeature = 'shp'; // 记录上次排序的特征，用于单位转换
     const _s3fDefaultFilters = [
         { industry: 'ALL', feature: 'exp', window: '100', arith: '', rhsIndustry: 'ALL', rhsFeature: 'exp', rhsWindow: '100', op: '>', value: '10000' },
@@ -338,6 +339,12 @@
     // 金钱相关特征需要除以 1e6 转换为 USD
     const _s3fMoneyFeatures = new Set(['exp', 'vol']);
 
+    function s3fAllocFilterId() {
+        const id = `f${_s3fNextFilterId}`;
+        _s3fNextFilterId += 1;
+        return id;
+    }
+
     function s3fNormalizeIndustryForFeature(industry, feature) {
         return feature === 'shp' ? 'ALL' : industry;
     }
@@ -351,20 +358,14 @@
         industrySelect.disabled = forceAll;
     }
 
-    function s3fBindFeatureIndustryConstraint(featureClass, industryClass) {
-        document.addEventListener('change', function (e) {
-            if (!e.target.classList.contains(featureClass)) {
-                return;
-            }
-            const row = e.target.closest('.s3f-filter-row');
-            if (!row) {
-                return;
-            }
-            const industrySelect = row.querySelector(`.${industryClass}`);
-            if (industrySelect) {
-                s3fApplyFeatureIndustryConstraint(e.target, industrySelect);
-            }
-        });
+    function s3fSyncFilterRowState(row) {
+        assert(row, 'filter row 缺失');
+        s3fApplyFeatureIndustryConstraint(row.querySelector('.s3f-feature'), row.querySelector('.s3f-industry'));
+        s3fApplyFeatureIndustryConstraint(row.querySelector('.s3f-rhs-feature'), row.querySelector('.s3f-rhs-industry'));
+
+        const rhsGroup = row.querySelector('.s3f-rhs-group');
+        assert(rhsGroup, 'rhs group 缺失');
+        rhsGroup.style.display = row.querySelector('.s3f-arith').value ? '' : 'none';
     }
 
     async function s3fRefreshMaxBucket() {
@@ -402,17 +403,12 @@
         });
         s3fApplyFeatureIndustryConstraint(sortFeature, sortIndustry);
 
-        // 检查过滤条件中的 shp，强制行业为 ALL
-        s3fBindFeatureIndustryConstraint('s3f-feature', 's3f-industry');
-        s3fBindFeatureIndustryConstraint('s3f-rhs-feature', 's3f-rhs-industry');
         document.addEventListener('change', function (e) {
-            if (!e.target.classList.contains('s3f-arith')) {
+            const row = e.target.closest('.s3f-filter-row');
+            if (!row) {
                 return;
             }
-            const row = e.target.closest('.s3f-filter-row');
-            if (row) {
-                s3fApplyArithVisibility(row);
-            }
+            s3fSyncFilterRowState(row);
         });
     }
 
@@ -515,29 +511,17 @@
         row.querySelector('.s3f-value').value = preset.value;
     }
 
-    function s3fApplyArithVisibility(row) {
-        const arith = row.querySelector('.s3f-arith').value;
-        const rhsGroup = row.querySelector('.s3f-rhs-group');
-        assert(rhsGroup, 'rhs group 缺失');
-        rhsGroup.style.display = arith ? '' : 'none';
-    }
-
     function s3fAddFilter(preset = null) {
         const box = document.getElementById('s3f-filters-box');
         const row = document.createElement('div');
         row.className = 's3f-filter-row';
+        row.dataset.filterId = s3fAllocFilterId();
         row.innerHTML = s3fMakeFilterRowHtml();
         box.appendChild(row);
         if (preset) {
             s3fApplyFilterPreset(row, preset);
         }
-        const featureSelect = row.querySelector('.s3f-feature');
-        const industrySelect = row.querySelector('.s3f-industry');
-        s3fApplyFeatureIndustryConstraint(featureSelect, industrySelect);
-        const rhsFeatureSelect = row.querySelector('.s3f-rhs-feature');
-        const rhsIndustrySelect = row.querySelector('.s3f-rhs-industry');
-        s3fApplyFeatureIndustryConstraint(rhsFeatureSelect, rhsIndustrySelect);
-        s3fApplyArithVisibility(row);
+        s3fSyncFilterRowState(row);
         s3fSyncFilterEmptyState();
     }
 
@@ -560,24 +544,33 @@
         }
     }
 
-    function s3fUpdateFilterStats(filterStats) {
+    function s3fUpdateFilterStats(itemStats) {
+        const statById = new Map();
+        for (const stat of itemStats) {
+            const id = String(stat && stat.id ? stat.id : '');
+            if (id) {
+                statById.set(id, stat);
+            }
+        }
         const rows = document.querySelectorAll('#s3f-filters-box .s3f-filter-row');
-        let statIdx = 0;
         for (const row of rows) {
             const statEl = row.querySelector('.s3f-filter-stat');
-            if (!statEl) continue;
+            if (!statEl) {
+                continue;
+            }
             const valueInput = row.querySelector('.s3f-value');
             if (!valueInput || valueInput.value.trim() === '') {
                 statEl.innerHTML = '';
                 continue;
             }
-            if (statIdx < filterStats.length) {
-                const stat = filterStats[statIdx];
-                statEl.innerHTML = `<span class="s3f-pass">✓${stat.pass_count.toLocaleString()}</span> <span class="s3f-reject">✗${stat.reject_count.toLocaleString()}</span>`;
-                statIdx++;
-            } else {
+            const stat = statById.get(row.dataset.filterId || '');
+            if (!stat) {
                 statEl.innerHTML = '';
+                continue;
             }
+            const filtered = Number(stat.filtered_count) || 0;
+            const remaining = Number(stat.remaining_count) || 0;
+            statEl.innerHTML = `<span class="s3f-reject">过滤 ${filtered.toLocaleString()}</span> <span class="s3f-pass">剩余 ${remaining.toLocaleString()}</span>`;
         }
     }
 
@@ -591,16 +584,24 @@
         }
     }
 
-    function s3fBuildExpr(industry, feature, window) {
-        return `${industry}.${feature}${window}`;
+    function s3fBuildMetricRef(industry, feature, window) {
+        return {
+            industry: s3fNormalizeIndustryForFeature(industry, feature),
+            feature,
+            window,
+        };
     }
 
-    function s3fBuildExprFromSelectors(industry, feature, window) {
-        const normalizedIndustry = s3fNormalizeIndustryForFeature(industry, feature);
-        return {
-            feature,
-            expr: s3fBuildExpr(normalizedIndustry, feature, window),
+    function s3fBuildValueExpr(lhs, arithOp = '', rhs = null) {
+        const expr = {
+            lhs,
+            arith_op: arithOp,
         };
+        if (arithOp) {
+            assert(rhs, 'rhs metric ref 缺失');
+            expr.rhs = rhs;
+        }
+        return expr;
     }
 
     function s3fMoneyPowerForFeature(feature) {
@@ -611,33 +612,35 @@
         const num = Number(value);
         assert(Number.isFinite(num), '阈值必须是有效数字');
         if (moneyPower === 0) {
-            return String(num);
+            return num;
         }
         const scaled = num * Math.pow(1e6, moneyPower);
         assert(Number.isFinite(scaled), '阈值换算后超出范围');
-        return String(scaled);
+        return scaled;
     }
 
-    function s3fBuildFilterExprForRow(row) {
-        const industry = row.querySelector('.s3f-industry').value;
-        const feature = row.querySelector('.s3f-feature').value;
-        const window = row.querySelector('.s3f-window').value;
+    function s3fBuildFilterItemForRow(row) {
+        assert(row && row.dataset.filterId, 'filter row id 缺失');
         const arith = row.querySelector('.s3f-arith').value;
-        const op = row.querySelector('.s3f-op').value;
-        let value = row.querySelector('.s3f-value').value.trim();
-        if (value === '') {
-            return '';
+        const compareOp = row.querySelector('.s3f-op').value;
+        const valueText = row.querySelector('.s3f-value').value.trim();
+        if (valueText === '') {
+            return null;
         }
 
-        const lhs = s3fBuildExprFromSelectors(industry, feature, window);
-        let lhsExpr = lhs.expr;
+        const lhs = s3fBuildMetricRef(
+            row.querySelector('.s3f-industry').value,
+            row.querySelector('.s3f-feature').value,
+            row.querySelector('.s3f-window').value
+        );
+        let rhs = null;
         let moneyPower = s3fMoneyPowerForFeature(lhs.feature);
         if (arith) {
-            const rhsIndustry = row.querySelector('.s3f-rhs-industry').value;
-            const rhsFeature = row.querySelector('.s3f-rhs-feature').value;
-            const rhsWindow = row.querySelector('.s3f-rhs-window').value;
-            const rhs = s3fBuildExprFromSelectors(rhsIndustry, rhsFeature, rhsWindow);
-            lhsExpr = `(${lhsExpr} ${arith} ${rhs.expr})`;
+            rhs = s3fBuildMetricRef(
+                row.querySelector('.s3f-rhs-industry').value,
+                row.querySelector('.s3f-rhs-feature').value,
+                row.querySelector('.s3f-rhs-window').value
+            );
             if (arith === '*') {
                 moneyPower += s3fMoneyPowerForFeature(rhs.feature);
             } else if (arith === '/') {
@@ -646,9 +649,29 @@
                 assert(false, `不支持的算术运算符: ${arith}`);
             }
         }
+        const expr = s3fBuildValueExpr(lhs, arith, rhs);
         // 用户始终按 USD 量纲输入，前端按表达式中的 money 次幂换算成后端原始单位
-        value = s3fScaleValueByMoneyPower(value, moneyPower);
-        return `${lhsExpr} ${op} ${value}`;
+        const compareValue = s3fScaleValueByMoneyPower(valueText, moneyPower);
+        return {
+            id: row.dataset.filterId,
+            expr,
+            compare_op: compareOp,
+            compare_value: compareValue,
+        };
+    }
+
+    function s3fBuildSortSpec() {
+        const sortIndustry = document.getElementById('s3f-sort-industry').value;
+        const sortFeature = document.getElementById('s3f-sort-feature').value;
+        const sortWindow = document.getElementById('s3f-sort-window').value;
+        const sortDir = document.getElementById('s3f-sort-dir').value;
+
+        _s3fLastSortFeature = sortFeature;
+
+        return {
+            expr: s3fBuildValueExpr(s3fBuildMetricRef(sortIndustry, sortFeature, sortWindow)),
+            asc: sortDir === 'asc',
+        };
     }
 
     function s3fEscapeAddr(addr) {
@@ -658,30 +681,19 @@
     function s3fBuildPayload() {
         assert(_s3fMaxBucket >= 0, 'bucket 未初始化，请稍后重试');
 
-        const filters = [];
+        const items = [];
         const rows = document.querySelectorAll('#s3f-filters-box .s3f-filter-row');
         for (const row of rows) {
-            const expr = s3fBuildFilterExprForRow(row);
-            if (expr) {
-                filters.push(expr);
+            const item = s3fBuildFilterItemForRow(row);
+            if (item) {
+                items.push(item);
             }
         }
 
-        let sortIndustry = document.getElementById('s3f-sort-industry').value;
-        const sortFeature = document.getElementById('s3f-sort-feature').value;
-        const sortWindow = document.getElementById('s3f-sort-window').value;
-        const sortDir = document.getElementById('s3f-sort-dir').value;
-        sortIndustry = s3fNormalizeIndustryForFeature(sortIndustry, sortFeature);
-        const sortExpr = s3fBuildExpr(sortIndustry, sortFeature, sortWindow);
-
-        // 记录排序特征，用于展示时单位转换
-        _s3fLastSortFeature = sortFeature;
-
         return {
             anchor_bucket: _s3fMaxBucket,
-            filters,
-            sort_expr: sortExpr,
-            sort_asc: sortDir === 'asc',
+            items,
+            sort: s3fBuildSortSpec(),
             limit: 100,
         };
     }
@@ -783,9 +795,13 @@
             }
             const users = Array.isArray(data.users) ? data.users : [];
             s3fRenderRows(users);
-            summary.textContent = `bucket=${data.anchor_bucket} | 返回 ${users.length} 地址`;
-            const filterStats = Array.isArray(data.filter_stats) ? data.filter_stats : [];
-            s3fUpdateFilterStats(filterStats);
+            const scannedUserCount = Number(data.scanned_user_count);
+            const matchedUserCount = Number(data.matched_user_count);
+            const scannedText = Number.isFinite(scannedUserCount) ? scannedUserCount.toLocaleString() : '-';
+            const matchedText = Number.isFinite(matchedUserCount) ? matchedUserCount.toLocaleString() : users.length.toLocaleString();
+            summary.textContent = `bucket=${data.anchor_bucket} | 参与 ${scannedText} | 命中 ${matchedText} | 返回 ${users.length} 地址`;
+            const itemStats = Array.isArray(data.item_stats) ? data.item_stats : [];
+            s3fUpdateFilterStats(itemStats);
         } catch (e) {
             errorEl.textContent = e.message || String(e);
             s3fClearFilterStats();

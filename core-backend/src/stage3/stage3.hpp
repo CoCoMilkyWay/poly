@@ -725,12 +725,35 @@ PositionsResult stage3_query_positions(Stage3Runtime *rt, const Address20 &user_
 // API declarations - Filter
 // ============================================================================
 
+struct FilterMetricRef {
+  std::string industry;
+  std::string feature;
+  std::string window;
+};
+
+struct FilterValueExpr {
+  FilterMetricRef lhs;
+  std::string arith_op;
+  FilterMetricRef rhs;
+};
+
+struct FilterItem {
+  std::string id;
+  FilterValueExpr expr;
+  std::string compare_op;
+  double compare_value = 0.0;
+};
+
+struct FilterSortSpec {
+  FilterValueExpr expr;
+  bool asc = false;
+};
+
 struct FilterRequest {
-  int64_t anchor_bucket;
-  std::vector<std::string> filters;
-  std::string sort_expr;
-  bool sort_asc;
-  int32_t limit;
+  int64_t anchor_bucket = 0;
+  std::vector<FilterItem> items;
+  FilterSortSpec sort;
+  int32_t limit = 100;
 };
 
 struct FilterUserRow {
@@ -738,15 +761,19 @@ struct FilterUserRow {
   double sort_value;
 };
 
-struct FilterStat {
-  int64_t pass_count;
-  int64_t reject_count;
+struct FilterItemStat {
+  std::string id;
+  int64_t before_count = 0;
+  int64_t filtered_count = 0;
+  int64_t remaining_count = 0;
 };
 
 struct FilterResult {
-  int64_t anchor_bucket;
+  int64_t anchor_bucket = 0;
+  int64_t scanned_user_count = 0;
+  int64_t matched_user_count = 0;
   std::vector<FilterUserRow> users;
-  std::vector<FilterStat> filter_stats; // Per-filter pass/reject stats
+  std::vector<FilterItemStat> item_stats;
 };
 
 FilterResult stage3_query_filter(Stage3Runtime *rt, const FilterRequest &req);

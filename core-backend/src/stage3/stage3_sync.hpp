@@ -23,13 +23,7 @@ using json = nlohmann::json;
 
 namespace filter {
 
-struct Request {
-  int64_t anchor_bucket = 0;
-  std::vector<std::string> filters;
-  std::string sort_expr;
-  bool sort_asc = false;
-  int32_t limit = 100;
-};
+using Request = FilterRequest;
 
 struct UserRow {
   std::string addr;
@@ -40,15 +34,12 @@ struct UserRow {
   int64_t pnl = 0;
 };
 
-struct FilterStat {
-  int64_t pass_count = 0;
-  int64_t reject_count = 0;
-};
-
 struct Result {
   int64_t anchor_bucket = 0;
+  int64_t scanned_user_count = 0;
+  int64_t matched_user_count = 0;
   std::vector<UserRow> users;
-  std::vector<FilterStat> filter_stats;
+  std::vector<FilterItemStat> item_stats;
 };
 
 } // namespace filter
@@ -168,14 +159,20 @@ public:
   filter::Result filter_users_by_features(const filter::Request &req) const;
 
 private:
-  static constexpr size_t kStage3BatchEvents = 10'000'000;
+  static constexpr size_t kStage3BatchEvents = 1'000'000;
   static constexpr size_t kCommitHistoryWindow = 20;
   static constexpr int kStage2YieldDelaySeconds = 1;
+  static constexpr int kPauseRetryDelaySeconds = 1;
+  static constexpr uint8_t kRtStateIdle = 0;
+  static constexpr uint8_t kRtStateSyncing = 1;
+  static constexpr uint8_t kRtStateQuerying = 2;
 
   struct SyncCommitPoint {
     std::chrono::steady_clock::time_point committed_at;
     int64_t block = 0;
   };
+
+  class QueryPauseGuard;
 
   static std::string normalize_addr(const std::string &addr);
   static std::string normalize_tag_key(const std::string &raw);
@@ -196,8 +193,11 @@ private:
   asio::io_context *ioc_ = nullptr;
   std::shared_ptr<asio::steady_timer> timer_;
   std::atomic<bool> stop_requested_{false};
+  mutable std::atomic<bool> pause_requested_{false};
+  mutable std::atomic<uint8_t> rt_state_{kRtStateIdle};
   int base_interval_seconds_ = 1;
 
+  mutable std::mutex query_mu_;
   mutable std::mutex sync_mu_;
   mutable Status sync_;
   mutable std::deque<SyncCommitPoint> sync_commit_points_;
