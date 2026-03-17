@@ -38,7 +38,7 @@ constexpr size_t MAX_SHARPE_SAMPLES = 500'000'000; // 5亿 sharpe 样本点
 constexpr size_t OUTCOME_MAX = 256;                // 最大 outcome 数
 constexpr uint32_t NULL_IDX = UINT32_MAX;          // 空指针
 constexpr uint64_t NULL_LOG_OFFSET = UINT64_MAX;   // events.log 空指针
-constexpr uint32_t STAGE3_SYNC_SHARD_COUNT = 64;   // 并行 shard 数
+constexpr uint32_t STAGE3_SYNC_SHARD_COUNT = 16;   // 并行 shard 数
 
 static_assert(MAX_TOKENS % STAGE3_SYNC_SHARD_COUNT == 0);
 static_assert(MAX_FEATURES % STAGE3_SYNC_SHARD_COUNT == 0);

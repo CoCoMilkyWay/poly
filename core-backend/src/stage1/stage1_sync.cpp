@@ -443,6 +443,7 @@ bool StageSync::try_commit_ready_chunks() {
               << ", rpc_bytes=" << landed_response_bytes
               << ", files=" << std::fixed << std::setprecision(2) << landed_mb << "MB"
               << std::defaultfloat << std::endl;
+    rpc_retry_total_ = 0;
 
     committed_any = true;
   }
