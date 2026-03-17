@@ -929,6 +929,7 @@ TransferClass EventBuilder::classify_and_emit(
           // Redemption payout in price_1e6:
           // payout_price = payout_numerator[token_idx] * 1e6 / payout_denominator,
           // where payout_denominator is the sum of all payout numerators.
+          // Losing legs are valid and carry zero payout.
           int64_t payout_price = 0;
           if (is_usdc_collateral(collateral)) {
             double payout_denominator = 0.0;
@@ -945,8 +946,8 @@ TransferClass EventBuilder::classify_and_emit(
                           AssertLevel::L3, "Redemption", "PayoutDenominatorPositive");
             payout_price = static_cast<int64_t>(std::llround(
                 static_cast<double>(payouts[token_idx]) * 1e6 / payout_denominator));
-            stage2_assert(payout_price > 0,
-                          AssertLevel::L3, "Redemption", "PayoutPricePositive");
+            stage2_assert(payout_price >= 0,
+                          AssertLevel::L3, "Redemption", "PayoutPriceNonNegative");
           }
           emit_if_user(from, RawEvent{sort_key, cond_idx, EventType::Redemption, token_idx, coll, 0, -amount, payout_price});
         }

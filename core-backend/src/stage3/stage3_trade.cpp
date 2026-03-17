@@ -38,6 +38,10 @@ inline bool is_transfer_event(int32_t event_type) {
          event_type == EVT_FPMM_LP_RETURN;
 }
 
+inline bool is_redemption_event(int32_t event_type) {
+  return event_type == EVT_REDEMPTION || event_type == EVT_REDEMPTION_NON_POLY;
+}
+
 // price 类: Order* / FPMM* / Split* / Merge* / Redemption*
 inline bool is_price_event(int32_t event_type) {
   return event_type == EVT_ORDER_BUY || event_type == EVT_ORDER_SELL ||
@@ -46,7 +50,7 @@ inline bool is_price_event(int32_t event_type) {
          event_type == EVT_SPLIT_NON_POLY ||
          event_type == EVT_MERGE_NORMAL || event_type == EVT_MERGE_NEGRISK ||
          event_type == EVT_MERGE_NON_POLY ||
-         event_type == EVT_REDEMPTION || event_type == EVT_REDEMPTION_NON_POLY;
+         is_redemption_event(event_type);
 }
 
 // 正向腿典型事件: OrderBuy, FPMMBuy, Split*, TransferIn*
@@ -142,7 +146,8 @@ int64_t apply_trade_event(Stage3Runtime *rt, const EventInput &evt, TokenSlot *t
     price_per_unit = calc_convert_price(rt, evt.cond_idx, cond);
   } else if (is_price_event(event_type)) {
     if (has_usd) {
-      assert(evt.price_1e6 > 0);
+      assert(evt.price_1e6 >= 0);
+      assert(is_redemption_event(event_type) || evt.price_1e6 > 0);
     }
     price_per_unit = static_cast<double>(evt.price_1e6) / 1e6;
   }
