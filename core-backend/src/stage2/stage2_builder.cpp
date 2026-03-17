@@ -776,7 +776,7 @@ void EventBuilder::persist_restore_cache_snapshot() {
     ap.Close();
   }
   exec_sql("COMMIT");
-  restore_cache_db_->checkpoint();
+  exec_sql("CHECKPOINT");
   stage2_log_info("Persisted restore cache at cursor " + std::to_string(main_cursor));
 }
 

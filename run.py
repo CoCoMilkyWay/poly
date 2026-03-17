@@ -213,7 +213,11 @@ def main():
         print(f"[run.py] 服务已启动: {url}")
         # webbrowser.open(url)
 
-        backend.wait()
+        backend_exit = backend.wait()
+        if backend_exit < 0:
+            print(f"[run.py] backend 异常退出: signal={-backend_exit}")
+        else:
+            print(f"[run.py] backend 已退出: code={backend_exit}")
     except KeyboardInterrupt:
         pass
     finally:

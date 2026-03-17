@@ -36,7 +36,7 @@ public:
     assert(start_block <= end_block);
     assert(!streaming_session_.has_value());
     active_end_block_ = end_block;
-    streaming_session_.emplace();
+    streaming_session_ = StreamingSession{};
     streaming_session_->start_block = start_block;
     streaming_session_->end_block = end_block;
   }

@@ -22,9 +22,9 @@ constexpr size_t STORE_HEADER_OFFSET = 0;
 constexpr size_t STORE_CONDITIONS_OFFSET = sizeof(StoreHeader);
 constexpr size_t STORE_TOKENS_OFFSET = STORE_CONDITIONS_OFFSET + sizeof(ConditionMeta) * MAX_CONDITIONS;
 constexpr size_t STORE_FEATURES_OFFSET = STORE_TOKENS_OFFSET + sizeof(TokenSlot) * MAX_TOKENS;
-constexpr size_t STORE_SHARPE_AGG_OFFSET = STORE_FEATURES_OFFSET + sizeof(FeatureSlot) * MAX_FEATURES;
-constexpr size_t STORE_SHARPE_SAMPLE_OFFSET = STORE_SHARPE_AGG_OFFSET + sizeof(SharpeAgg) * MAX_SHARPE_AGGS;
-constexpr size_t STORE_USERS_OFFSET = STORE_SHARPE_SAMPLE_OFFSET + sizeof(SharpeSample) * MAX_SHARPE_SAMPLES;
+constexpr size_t STORE_SHARPE_BUCKET_OFFSET = STORE_FEATURES_OFFSET + sizeof(FeatureSlot) * MAX_FEATURES;
+constexpr size_t STORE_SHARPE_POINT_OFFSET = STORE_SHARPE_BUCKET_OFFSET + sizeof(SharpeBucket) * MAX_SHARPE_BUCKETS;
+constexpr size_t STORE_USERS_OFFSET = STORE_SHARPE_POINT_OFFSET + sizeof(SharpePoint) * MAX_SHARPE_POINTS;
 constexpr size_t STORE_TOTAL_SIZE = STORE_USERS_OFFSET + sizeof(UserBlock) * MAX_USERS;
 
 constexpr size_t INDEX_TOTAL_SIZE = sizeof(UserIndexEntry) * USER_INDEX_SLOT_COUNT;
@@ -135,14 +135,14 @@ void rebuild_runtime_indices(Stage3Runtime *rt) {
   for (uint32_t shard = 0; shard < STAGE3_SYNC_SHARD_COUNT; ++shard) {
     rt->token_index[shard].map.clear();
     rt->feature_index[shard].map.clear();
-    rt->sharpe_agg_index[shard].map.clear();
+    rt->sharpe_bucket_index[shard].map.clear();
 
     rt->token_index[shard].map.reserve(
         std::max<size_t>(1, static_cast<size_t>(rt->header->token_pool_used[shard])));
     rt->feature_index[shard].map.reserve(
         std::max<size_t>(1, static_cast<size_t>(rt->header->feature_pool_used[shard])));
-    rt->sharpe_agg_index[shard].map.reserve(
-        std::max<size_t>(1, static_cast<size_t>(rt->header->sharpe_agg_pool_used[shard])));
+    rt->sharpe_bucket_index[shard].map.reserve(
+        std::max<size_t>(1, static_cast<size_t>(rt->header->sharpe_bucket_pool_used[shard])));
   }
 
   for (uint32_t user_idx = 0; user_idx < rt->header->user_count; ++user_idx) {
@@ -176,11 +176,11 @@ void rebuild_runtime_indices(Stage3Runtime *rt) {
       feat_idx = feat.next;
     }
 
-    uint32_t agg_idx = user.sharpe_agg_head;
-    while (agg_idx != NULL_IDX) {
-      const SharpeAgg &agg = rt->sharpe_agg_pool[agg_idx];
-      rt->sharpe_agg_index[shard].map[SharpeAggIndex::make_key(user_idx, agg.bucket)] = agg_idx;
-      agg_idx = agg.next;
+    uint32_t bucket_idx = user.sharpe_bucket_head;
+    while (bucket_idx != NULL_IDX) {
+      const SharpeBucket &bucket = rt->sharpe_bucket_pool[bucket_idx];
+      rt->sharpe_bucket_index[shard].map[SharpeBucketIndex::make_key(user_idx, bucket.bucket)] = bucket_idx;
+      bucket_idx = bucket.next;
     }
   }
 }
@@ -213,8 +213,8 @@ Stage3Runtime *stage3_open(const char *data_dir) {
   rt->conditions = reinterpret_cast<ConditionMeta *>(store_base + STORE_CONDITIONS_OFFSET);
   rt->token_pool = reinterpret_cast<TokenSlot *>(store_base + STORE_TOKENS_OFFSET);
   rt->feature_pool = reinterpret_cast<FeatureSlot *>(store_base + STORE_FEATURES_OFFSET);
-  rt->sharpe_agg_pool = reinterpret_cast<SharpeAgg *>(store_base + STORE_SHARPE_AGG_OFFSET);
-  rt->sharpe_sample_pool = reinterpret_cast<SharpeSample *>(store_base + STORE_SHARPE_SAMPLE_OFFSET);
+  rt->sharpe_bucket_pool = reinterpret_cast<SharpeBucket *>(store_base + STORE_SHARPE_BUCKET_OFFSET);
+  rt->sharpe_point_pool = reinterpret_cast<SharpePoint *>(store_base + STORE_SHARPE_POINT_OFFSET);
   rt->users = reinterpret_cast<UserBlock *>(store_base + STORE_USERS_OFFSET);
 
   // Open events.log
@@ -244,12 +244,12 @@ Stage3Runtime *stage3_open(const char *data_dir) {
     for (uint32_t shard = 0; shard < STAGE3_SYNC_SHARD_COUNT; ++shard) {
       rt->header->token_pool_used[shard] = 0;
       rt->header->feature_pool_used[shard] = 0;
-      rt->header->sharpe_agg_pool_used[shard] = 0;
-      rt->header->sharpe_sample_pool_used[shard] = 0;
+      rt->header->sharpe_bucket_pool_used[shard] = 0;
+      rt->header->sharpe_point_pool_used[shard] = 0;
       rt->header->token_free_head[shard] = NULL_IDX;
       rt->header->feature_free_head[shard] = NULL_IDX;
-      rt->header->sharpe_agg_free_head[shard] = NULL_IDX;
-      rt->header->sharpe_sample_free_head[shard] = NULL_IDX;
+      rt->header->sharpe_bucket_free_head[shard] = NULL_IDX;
+      rt->header->sharpe_point_free_head[shard] = NULL_IDX;
     }
     rt->header->events_log_tail = 0;
   } else {
@@ -384,13 +384,12 @@ uint32_t user_get_or_create(Stage3Runtime *rt, const Address20 &addr) {
   user->token_count = 0;
   user->feature_head = NULL_IDX;
   user->feature_count = 0;
-  user->sharpe_agg_head = NULL_IDX;
-  user->sharpe_agg_count = 0;
+  user->sharpe_bucket_head = NULL_IDX;
   user->timeline_head = NULL_LOG_OFFSET;
   user->timeline_tail = NULL_LOG_OFFSET;
   user->timeline_count = 0;
-  user->_pad0 = 0;
   user->pnl_before_first_sharpe_bucket = 0;
+  user->exposure_before_first_sharpe_bucket = 0;
   std::memset(user->_reserved, 0, sizeof(user->_reserved));
 
   rt->rank_cache.needs_rebuild = true;
@@ -550,43 +549,43 @@ void feature_free(Stage3Runtime *rt, uint32_t idx) {
   rt->header->feature_free_head[shard] = idx;
 }
 
-uint32_t sharpe_agg_alloc(Stage3Runtime *rt, uint32_t user_idx) {
+uint32_t sharpe_bucket_alloc(Stage3Runtime *rt, uint32_t user_idx) {
   const uint32_t shard = user_shard(rt, user_idx);
-  if (rt->header->sharpe_agg_free_head[shard] != NULL_IDX) {
-    const uint32_t idx = rt->header->sharpe_agg_free_head[shard];
-    rt->header->sharpe_agg_free_head[shard] = rt->sharpe_agg_pool[idx].next;
+  if (rt->header->sharpe_bucket_free_head[shard] != NULL_IDX) {
+    const uint32_t idx = rt->header->sharpe_bucket_free_head[shard];
+    rt->header->sharpe_bucket_free_head[shard] = rt->sharpe_bucket_pool[idx].next;
     return idx;
   }
-  assert(rt->header->sharpe_agg_pool_used[shard] < SHARPE_AGGS_PER_SYNC_SHARD);
-  return sharpe_agg_global_from_local(shard, static_cast<uint32_t>(rt->header->sharpe_agg_pool_used[shard]++));
+  assert(rt->header->sharpe_bucket_pool_used[shard] < SHARPE_BUCKETS_PER_SYNC_SHARD);
+  return sharpe_bucket_global_from_local(shard, static_cast<uint32_t>(rt->header->sharpe_bucket_pool_used[shard]++));
 }
 
-void sharpe_agg_free(Stage3Runtime *rt, uint32_t idx) {
-  SharpeAgg &agg = rt->sharpe_agg_pool[idx];
-  const uint32_t shard = sharpe_agg_shard_from_index(idx);
-  if (agg.bucket >= 0) {
-    rt->sharpe_agg_index[shard].map.erase(SharpeAggIndex::make_key(agg.user_idx, agg.bucket));
+void sharpe_bucket_free(Stage3Runtime *rt, uint32_t idx) {
+  SharpeBucket &bucket = rt->sharpe_bucket_pool[idx];
+  const uint32_t shard = sharpe_bucket_shard_from_index(idx);
+  if (bucket.bucket >= 0) {
+    rt->sharpe_bucket_index[shard].map.erase(SharpeBucketIndex::make_key(bucket.user_idx, bucket.bucket));
   }
-  agg.bucket = -1;
-  agg.next = rt->header->sharpe_agg_free_head[shard];
-  rt->header->sharpe_agg_free_head[shard] = idx;
+  bucket.bucket = -1;
+  bucket.next = rt->header->sharpe_bucket_free_head[shard];
+  rt->header->sharpe_bucket_free_head[shard] = idx;
 }
 
-uint32_t sharpe_sample_alloc(Stage3Runtime *rt, uint32_t user_idx) {
+uint32_t sharpe_point_alloc(Stage3Runtime *rt, uint32_t user_idx) {
   const uint32_t shard = user_shard(rt, user_idx);
-  if (rt->header->sharpe_sample_free_head[shard] != NULL_IDX) {
-    const uint32_t idx = rt->header->sharpe_sample_free_head[shard];
-    rt->header->sharpe_sample_free_head[shard] = rt->sharpe_sample_pool[idx].next;
+  if (rt->header->sharpe_point_free_head[shard] != NULL_IDX) {
+    const uint32_t idx = rt->header->sharpe_point_free_head[shard];
+    rt->header->sharpe_point_free_head[shard] = rt->sharpe_point_pool[idx].next;
     return idx;
   }
-  assert(rt->header->sharpe_sample_pool_used[shard] < SHARPE_SAMPLES_PER_SYNC_SHARD);
-  return sharpe_sample_global_from_local(shard, static_cast<uint32_t>(rt->header->sharpe_sample_pool_used[shard]++));
+  assert(rt->header->sharpe_point_pool_used[shard] < SHARPE_POINTS_PER_SYNC_SHARD);
+  return sharpe_point_global_from_local(shard, static_cast<uint32_t>(rt->header->sharpe_point_pool_used[shard]++));
 }
 
-void sharpe_sample_free(Stage3Runtime *rt, uint32_t idx) {
-  const uint32_t shard = sharpe_sample_shard_from_index(idx);
-  rt->sharpe_sample_pool[idx].next = rt->header->sharpe_sample_free_head[shard];
-  rt->header->sharpe_sample_free_head[shard] = idx;
+void sharpe_point_free(Stage3Runtime *rt, uint32_t idx) {
+  const uint32_t shard = sharpe_point_shard_from_index(idx);
+  rt->sharpe_point_pool[idx].next = rt->header->sharpe_point_free_head[shard];
+  rt->header->sharpe_point_free_head[shard] = idx;
 }
 
 // ============================================================================
@@ -692,38 +691,35 @@ FeatureSlot *feature_get_or_create(Stage3Runtime *rt, uint32_t user_idx, int32_t
 // Sharpe operations
 // ============================================================================
 
-SharpeAgg *sharpe_agg_find(Stage3Runtime *rt, uint32_t user_idx, int32_t bucket) {
-  const uint64_t key = SharpeAggIndex::make_key(user_idx, bucket);
-  auto &map = rt->sharpe_agg_index[user_shard(rt, user_idx)].map;
+SharpeBucket *sharpe_bucket_find(Stage3Runtime *rt, uint32_t user_idx, int32_t bucket) {
+  const uint64_t key = SharpeBucketIndex::make_key(user_idx, bucket);
+  auto &map = rt->sharpe_bucket_index[user_shard(rt, user_idx)].map;
   auto it = map.find(key);
   if (it == map.end()) {
     return nullptr;
   }
-  return &rt->sharpe_agg_pool[it->second];
+  return &rt->sharpe_bucket_pool[it->second];
 }
 
-SharpeAgg *sharpe_agg_get_or_create(Stage3Runtime *rt, uint32_t user_idx, int32_t bucket) {
-  SharpeAgg *existing = sharpe_agg_find(rt, user_idx, bucket);
+SharpeBucket *sharpe_bucket_get_or_create(Stage3Runtime *rt, uint32_t user_idx, int32_t bucket) {
+  SharpeBucket *existing = sharpe_bucket_find(rt, user_idx, bucket);
   if (existing)
     return existing;
 
-  uint32_t idx = sharpe_agg_alloc(rt, user_idx);
-  SharpeAgg *agg = &rt->sharpe_agg_pool[idx];
-  agg->user_idx = user_idx;
-  agg->bucket = bucket;
-  agg->close_pnl = 0;
-  agg->min_pnl = INT64_MAX;
-  agg->max_pnl = INT64_MIN;
-  agg->sample_head = NULL_IDX;
-  agg->sample_count = 0;
-  agg->last_block = -1;
-  agg->next = rt->users[user_idx].sharpe_agg_head;
+  uint32_t idx = sharpe_bucket_alloc(rt, user_idx);
+  SharpeBucket *node = &rt->sharpe_bucket_pool[idx];
+  node->user_idx = user_idx;
+  node->bucket = bucket;
+  node->close_pnl = 0;
+  node->close_exposure = 0;
+  node->point_head = NULL_IDX;
+  node->point_tail = NULL_IDX;
+  node->next = rt->users[user_idx].sharpe_bucket_head;
 
-  rt->users[user_idx].sharpe_agg_head = idx;
-  rt->users[user_idx].sharpe_agg_count++;
-  rt->sharpe_agg_index[user_shard(rt, user_idx)].map[SharpeAggIndex::make_key(user_idx, bucket)] = idx;
+  rt->users[user_idx].sharpe_bucket_head = idx;
+  rt->sharpe_bucket_index[user_shard(rt, user_idx)].map[SharpeBucketIndex::make_key(user_idx, bucket)] = idx;
 
-  return agg;
+  return node;
 }
 
 // ============================================================================

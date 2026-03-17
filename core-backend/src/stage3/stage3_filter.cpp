@@ -79,7 +79,6 @@ enum class FeatureField {
   HP_AVG_10W,
   HP_AVG_100W,
   HP_AVG_1000W,
-  SHARPE_10W,
   SHARPE_100W,
   SHARPE_1000W,
 };
@@ -137,7 +136,7 @@ std::optional<FeatureField> parse_feature_field(const std::string &feature, cons
   }
   if (base == "shp") {
     if (*window_kind == WindowKind::W10)
-      return FeatureField::SHARPE_10W;
+      return std::nullopt;
     if (*window_kind == WindowKind::W100)
       return FeatureField::SHARPE_100W;
     return FeatureField::SHARPE_1000W;
@@ -176,8 +175,6 @@ double get_feature_value(const FeatureSlot *feat, FeatureField field) {
     return static_cast<double>(feat->holding_period_avg_100w);
   case FeatureField::HP_AVG_1000W:
     return static_cast<double>(feat->holding_period_avg_1000w);
-  case FeatureField::SHARPE_10W:
-    return static_cast<double>(feat->sharpe_10w);
   case FeatureField::SHARPE_100W:
     return static_cast<double>(feat->sharpe_100w);
   case FeatureField::SHARPE_1000W:
@@ -187,8 +184,7 @@ double get_feature_value(const FeatureSlot *feat, FeatureField field) {
 }
 
 bool is_sharpe_field(FeatureField field) {
-  return field == FeatureField::SHARPE_10W || field == FeatureField::SHARPE_100W ||
-         field == FeatureField::SHARPE_1000W;
+  return field == FeatureField::SHARPE_100W || field == FeatureField::SHARPE_1000W;
 }
 
 void load_latest_features(Stage3Runtime *rt,

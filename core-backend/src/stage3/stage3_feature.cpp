@@ -345,6 +345,8 @@ void init_feature_timelines(Stage3Runtime *rt,
   while (idx != NULL_IDX) {
     FeatureSlot *feat = &rt->feature_pool[idx];
     if (feat->flags & 1) {
+      assert(feat->tag_id >= -1);
+      assert(tag_slot(feat->tag_id) < FEATURE_TAG_SLOT_COUNT);
       const size_t slot = tag_slot(feat->tag_id);
       if (first_buckets[slot] < 0 || feat->bucket < first_buckets[slot]) {
         first_buckets[slot] = feat->bucket;
@@ -378,9 +380,12 @@ void update_feature_on_event(Stage3Runtime *rt,
   const int8_t tag_id = rec.tag_id;
 
   const auto update_single_tag = [&](int8_t tag, const FeatureRuntimeState &state) {
+    assert(tag >= -1);
+    assert(tag_slot(tag) < FEATURE_TAG_SLOT_COUNT);
     const size_t slot = tag_slot(tag);
     FeatureSlot *feat = prepare_feature_bucket(
         rt, user_idx, bucket, tag, first_buckets[slot], latest_buckets[slot], latest_indices[slot]);
+    assert(feature_find(rt, user_idx, bucket, tag) == feat);
     assert(state.exposure >= 0);
     assert(state.token_count >= 0);
     assert(first_buckets[slot] >= 0);
@@ -403,6 +408,9 @@ void update_feature_on_event(Stage3Runtime *rt,
     }
     const FeatureSlot *prev_feat =
         (bucket > first_buckets[slot]) ? feature_find(rt, user_idx, bucket - 1, tag) : nullptr;
+    if (bucket > first_buckets[slot]) {
+      assert(prev_feat != nullptr);
+    }
     refresh_feature_outputs(rt, user_idx, tag, feat, prev_feat, first_buckets[slot]);
   };
 

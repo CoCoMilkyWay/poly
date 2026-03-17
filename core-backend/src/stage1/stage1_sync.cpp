@@ -518,6 +518,12 @@ void StageSync::sync_loop(int64_t safe_head) {
           task.decode_future = submit_decode_task(std::move(shared_raw_logs));
           task.decode_in_flight = true;
         } else {
+          if (!result.retryable) {
+            clear_progress_inline();
+            std::cerr << "[Stage1] non-retryable RPC error at "
+                      << task.from_block << "-" << task.to_block
+                      << ": " << result.error_msg << std::endl;
+          }
           assert(result.retryable && "stage1 query返回了不可重试错误, 数据可靠性无法保证");
           if (stopping) {
             task.done = true;

@@ -54,15 +54,13 @@ void EventBuilder::restore_users_and_event_stats_parallel() {
   }
 
   std::unordered_map<uint16_t, int64_t> rebuilt_event_by_collateral;
-  std::unordered_set<std::string> rebuilt_seen_user_blobs;
   rebuilt_event_by_collateral.reserve(64);
   user_event_store_->for_each_event_brief_in_sort_key_range(
       min_sort_key, max_sort_key,
-      [this, &rebuilt_seen_user_blobs, &rebuilt_event_by_collateral](std::string_view user_blob,
-                                                                      int32_t cond_idx,
-                                                                      int32_t event_type,
-                                                                      int32_t collateral) {
-        rebuilt_seen_user_blobs.emplace(user_blob);
+      [this, &rebuilt_event_by_collateral](std::string_view,
+                                           int32_t cond_idx,
+                                           int32_t event_type,
+                                           int32_t collateral) {
         stage2_assert(event_type >= static_cast<int32_t>(EventType::OrderBuy) &&
                           event_type <= static_cast<int32_t>(EventType::TransferOutNonPoly),
                       AssertLevel::L0, "DB", "LoadEventTypeInRange");
@@ -77,6 +75,7 @@ void EventBuilder::restore_users_and_event_stats_parallel() {
       });
   progress_.event_by_collateral = std::move(rebuilt_event_by_collateral);
 
+  std::unordered_set<std::string> rebuilt_seen_user_blobs = user_event_store_->collect_distinct_users();
   seen_users_.reserve(rebuilt_seen_user_blobs.size());
   for (const auto &user_blob : rebuilt_seen_user_blobs) {
     seen_users_.insert(blob_to_hex(user_blob));

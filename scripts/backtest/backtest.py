@@ -122,7 +122,6 @@ def feature_token_to_column(feature_token: str) -> Optional[str]:
         }[window]
     if base == "shp":
         return {
-            "10": "sharpe_10w",
             "100": "sharpe_100w",
             "1000": "sharpe_1000w",
         }[window]

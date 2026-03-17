@@ -161,19 +161,21 @@ json StageSync::memory_breakdown() const {
   QueryPauseGuard guard(*this);
   const int64_t token_used = static_cast<int64_t>(token_pool_used_total(rt_->header) * sizeof(TokenSlot));
   const int64_t feature_used = static_cast<int64_t>(feature_pool_used_total(rt_->header) * sizeof(FeatureSlot));
-  const int64_t sharpe_agg_used = static_cast<int64_t>(sharpe_agg_pool_used_total(rt_->header) * sizeof(SharpeAgg));
-  const int64_t sharpe_sample_used =
-      static_cast<int64_t>(sharpe_sample_pool_used_total(rt_->header) * sizeof(SharpeSample));
+  const int64_t sharpe_bucket_used =
+      static_cast<int64_t>(sharpe_bucket_pool_used_total(rt_->header) * sizeof(SharpeBucket));
+  const int64_t sharpe_point_used =
+      static_cast<int64_t>(sharpe_point_pool_used_total(rt_->header) * sizeof(SharpePoint));
   const int64_t users_used = static_cast<int64_t>(rt_->header->user_count * sizeof(UserBlock));
   const int64_t events_used = static_cast<int64_t>(rt_->header->events_log_tail);
   const int64_t index_used = static_cast<int64_t>(rt_->header->user_count * sizeof(UserIndexEntry));
-  const int64_t estimated_total = token_used + feature_used + sharpe_agg_used + sharpe_sample_used + users_used + events_used + index_used;
+  const int64_t estimated_total =
+      token_used + feature_used + sharpe_bucket_used + sharpe_point_used + users_used + events_used + index_used;
   return {
       {"name", "stage3_mmap"},
       {"token_pool_used_bytes", token_used},
       {"feature_pool_used_bytes", feature_used},
-      {"sharpe_agg_pool_used_bytes", sharpe_agg_used},
-      {"sharpe_sample_pool_used_bytes", sharpe_sample_used},
+      {"sharpe_bucket_pool_used_bytes", sharpe_bucket_used},
+      {"sharpe_point_pool_used_bytes", sharpe_point_used},
       {"users_used_bytes", users_used},
       {"events_log_used_bytes", events_used},
       {"user_index_used_bytes", index_used},

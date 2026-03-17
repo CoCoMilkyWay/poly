@@ -40,7 +40,6 @@
     近期平均持仓周期           N+1  时间,金额加权      近10w块移动平均持仓周期(分行业+综合)
     近月平均持仓周期           N+1  等权               近100w块移动平均持仓周期(分行业+综合)
     近年平均持仓周期           N+1  等权               近1000w块移动平均持仓周期(分行业+综合)
-    近期夏普                   1    精确计算           近10w块全账户夏普(仅全账户)
     近月夏普                   1    精确计算           近100w块全账户夏普(仅全账户)
     近年夏普                   1    精确计算           近1000w块全账户夏普(仅全账户)
 截面特征:
@@ -49,38 +48,27 @@
     目标: 支持“分行业 nested 特征”的横截面对比与选人
 
 注:
-  0. 用户首个 `cond_idx >= 0` 事件之前没有 bucket；首个事件所在 bucket 开始，直到该用户最新已 materialize 的 bucket 为止，bucket 必须稠密。
-  1. 交易额里: 只记录会直接创造头寸暴露的操作(比如铸币, 合币就不应该记入), 暴露方向不重要
-  2. 平均持仓: 需要统计周期内多个事件(非均匀)的持仓快照(记录不同token的平均持仓周期), 再按照token金额, 事件时间加权
-  3. 夏普: 无风险=0, 基于账户级 `pnl` 的窗口级精确重算
-     - 仅统计全账户 Sharpe(tag_id=-1)，不支持分行业 Sharpe
-     - `sharpe_10w / sharpe_100w / sharpe_1000w` 统一 normalize 到 `1000w block` 量纲
-     - `FeatureSlot` 时间轴按 bucket 稠密；`SharpeAgg / SharpeSample` 只记录真实发生过 PnL 变化的 bucket 和采样点
-     - `SharpeAgg` 在 bucket 内首次出现 PnL 变化时 materialize；空 bucket 不落 `SharpeAgg`
-     - 同一 block 多事件只保留块末样本
-     - `stage3_post_sync_prune()` 只保留最近 `100` 个 sharpe bucket；更老 bucket 的 `close_pnl` 滚入 `pnl_before_first_sharpe_bucket`
-     - 其中: `pnl = realized_cum + unrealized_pnl`
-     - 对窗口 `W ∈ {10w, 100w, 1000w}`:
-       - 左边界锚点 `p0` 取窗口起点前最后一个已知 `pnl`；若更早 bucket 已被 prune，则取 `user.pnl_before_first_sharpe_bucket`
-       - 区间重标定: `x_i = pnl_i - p0`
-       - 采样序列是按 `block_num` 排序的稀疏 `(block, pnl)` 点；缺失 block 表示该 block 的 `return = 0`
-       - 因而 Sharpe 统计对象是窗口内完整的 block 级 return 分布，而不是“按采样间隔摊薄后的 jump 序列”
-       - `min_interval_pnl_W = min(0, x_i)`，遍历窗口内全部采样点以及右边界平推点
-       - `avg_exposure_W`:
-         - `10w`: 取当前 bucket 的 `exposure_avg_10w`
-         - `100w/1000w`: 取当前 `FeatureSlot` 上的 `exposure_avg_100w / exposure_avg_1000w`
-       - `nav_base_W = avg_exposure_W + abs(min_interval_pnl_W) + 1 USD`
-       - `nav_i = nav_base_W + x_i`
-       - 对每个采样 block，跳变收益定义为 `r_i = (nav_i - nav_{i-1}) / nav_{i-1}`
-       - 未采样到的 block 对应 `0 return`
-       - `10w / 100w / 1000w` 的区别只有窗口范围；`100w / 1000w` 都是直接从各自窗口的完整 block return 分布重算，不能从更低级别 Sharpe 聚合
-     - 右边界锚点使用窗口末 block；若末尾无新事件，则用最后一个 `pnl` 平推到窗口末尾
-     - 时间加权平均收益率: `μ = Σr_i / T`
-     - 时间加权方差: `σ² = Σ(r_i^2) / T - μ²`，其中 `T` 是窗口内 block 数，未采样 block 通过零收益自然计入分布
-     - raw Sharpe = `μ / σ`
-     - 输出 Sharpe = `raw_sharpe * sqrt(10000000)`，即统一归一到 `1000w block`
-     - `nav_i <= 0`、`T <= 0` 或 `σ² <= 0` 时，该窗口 Sharpe 记 `0`
-  4. `data/stage3` 按当前布局直接建库使用
+  1. 用户首个 `cond_idx >= 0` 事件之前没有 bucket；首个事件所在 bucket 开始，直到该用户最新已 materialize 的 bucket 为止，bucket 必须稠密。
+  2. 交易额里: 只记录会直接创造头寸暴露的操作(比如铸币, 合币就不应该记入, 转帐本身也不是创造暴露的操作, 更偏向转移暴露到当前账户，所以不记入), 暴露方向不重要
+  3. 平均持仓: 需要统计周期内多个事件(非均匀)的持仓快照(记录不同token的平均持仓周期), 再按照token金额, 事件时间加权
+  4. 持仓周期: 因为用户的特征bucket是尾部稠密的, 持仓周期这种特征, 在原本稀疏的插值bucket也应该按照定义increment，比较特殊
+  5. 夏普:
+     - 无风险=0
+     - 没有账户的USDC类资产信息，所以无法计算净值曲线，需要拿 nav~f(exposure(t),realized_pnl(t),unrealized_pnl(t))来近似
+     - 因为收益率的分布不平稳, 连续时间假设不成立, 所以必须用真实分布(density)来计算波动性
+     - {(block_num, exposure, pnl)}的采样是极端不均匀的, 有时候中间很多个bucket都没有采样(事件), 有时候很多个采样在同一个block
+     - 因为非均匀, 夏普的定义不唯一, 标准的时间加权夏普, 会惩罚波动性(预期内), 但是不会惩罚曲率(是时间无关的), 所以这里的夏普会加入曲率调整项
+     - 对于计算周期[T1,T2] (需要normalize到年周期/1000w blk), 曲率调整项a: 
+       - 先把pnl标准化到周期内: pnl_0(t) = pnl(t) - pnl(T1)
+       - 先把pnl抬高到非负: pnl+ = pnl_0 + abs(min(pnl_0))
+       - a = avg({r(t)^2/(1+r(t)^2)}), 整个pnl+序列做quadratic fit, r(t)=abs(pnl+(t)-fit(t))/max(fit(t),eps)
+       - 对于采样数不足的用户, 比如区间内采样点不足10个, 夏普=0 跳过计算
+     - 夏普 S = S0 * (1 - a) * sqrt(10000000)
+       - return per step: r[i] = (pnl+[i] - pnl+[i-1]) / max(abs(exp[i-1]), eps)
+       - time-weighted sharpe: S0 = (σ² > 0 ? μ / sqrt(σ²) : 0)
+       - T = T2 - T1 + 1
+       - μ = Σr / T
+       - σ² = Σ(r^2) / T - μ^2
 
 // ============================================================================
 // Stage3 完整数据结构设计 (mmap + pool)
@@ -92,8 +80,8 @@ constexpr size_t MAX_CONDITIONS        = 1'000'000;      // 100万 conditions
 constexpr size_t MAX_USERS             = 10'000'000;     // 1000万用户
 constexpr size_t MAX_TOKENS            = 100'000'000;    // 1亿 token slots
 constexpr size_t MAX_FEATURES          = 500'000'000;    // 5亿 feature slots
-constexpr size_t MAX_SHARPE_AGGS       = 50'000'000;     // 5000万 sharpe bucket 聚合
-constexpr size_t MAX_SHARPE_SAMPLES    = 500'000'000;    // 5亿 sharpe 样本点
+constexpr size_t MAX_SHARPE_BUCKETS    = 50'000'000;     // 5000万 sharpe bucket
+constexpr size_t MAX_SHARPE_POINTS     = 500'000'000;    // 5亿 sharpe 点
 constexpr size_t OUTCOME_MAX           = 256;            // 最大 outcome 数
 constexpr uint32_t NULL_IDX            = UINT32_MAX;     // 空指针
 constexpr uint64_t NULL_LOG_OFFSET     = UINT64_MAX;     // events.log 空指针
@@ -121,12 +109,12 @@ struct Stage3Store {
     // Per-shard Pool 使用情况 / Free list heads
     uint64_t token_pool_used[STAGE3_SYNC_SHARD_COUNT];
     uint64_t feature_pool_used[STAGE3_SYNC_SHARD_COUNT];
-    uint64_t sharpe_agg_pool_used[STAGE3_SYNC_SHARD_COUNT];
-    uint64_t sharpe_sample_pool_used[STAGE3_SYNC_SHARD_COUNT];
+    uint64_t sharpe_bucket_pool_used[STAGE3_SYNC_SHARD_COUNT];
+    uint64_t sharpe_point_pool_used[STAGE3_SYNC_SHARD_COUNT];
     uint32_t token_free_head[STAGE3_SYNC_SHARD_COUNT];
     uint32_t feature_free_head[STAGE3_SYNC_SHARD_COUNT];
-    uint32_t sharpe_agg_free_head[STAGE3_SYNC_SHARD_COUNT];
-    uint32_t sharpe_sample_free_head[STAGE3_SYNC_SHARD_COUNT];
+    uint32_t sharpe_bucket_free_head[STAGE3_SYNC_SHARD_COUNT];
+    uint32_t sharpe_point_free_head[STAGE3_SYNC_SHARD_COUNT];
     
     // Events log
     uint64_t events_log_tail;              // events.log 写入 byte offset
@@ -191,8 +179,7 @@ struct Stage3Store {
     int64_t  exposure_avg_10w;
     int64_t  volume_10w;
     int64_t  holding_period_avg_10w;
-    float    sharpe_10w;
-    float    _pad2;
+    uint8_t  _pad2[8];
 
     // Node-C: 前缀缓存 (按 bucket 单调推进, 用于窗口投影)
     int64_t  ps_token_avg_10w;
@@ -213,31 +200,27 @@ struct Stage3Store {
     float    sharpe_1000w;
   } feature_pool[MAX_FEATURES];            // 5亿 × 264B = 132GB
 
-  // ==================== SharpeAggPool[5000万] (2.4GB) ====================
-  // 对应原 AccountBucketPnlState 的 bucket 级聚合
-  struct SharpeAgg {                       // 48B
+  // ==================== SharpeBucketPool[5000万] (2.0GB) ====================
+  // 按 bucket 组织 Sharpe 点, 只服务窗口取点 / 左边界锚点 / prune
+  struct SharpeBucket {                    // 40B
     uint32_t user_idx;
     int32_t  bucket;
-    int64_t  close_pnl;                    // bucket 末尾 pnl
-    int64_t  min_pnl;                      // bucket 内最小 pnl
-    int64_t  max_pnl;                      // bucket 内最大 pnl (用于 Sharpe 计算)
-    uint32_t sample_head;                  // -> sharpe_sample_pool 链表头
-    uint16_t sample_count;
-    uint16_t _pad0;
-    int32_t  last_block;                   // 最近更新的 block (用于去重同 block 多事件)
-    uint32_t next;                         // 同用户下一个 agg / free list
-  } sharpe_agg_pool[MAX_SHARPE_AGGS];      // 5000万 × 48B = 2.4GB
+    int64_t  close_pnl;                    // bucket 末尾 pnl, 用作 Sharpe 左边界锚点 / prune
+    int64_t  close_exposure;               // bucket 末尾 exposure, 用作 Sharpe 左边界 exp 锚点 / prune
+    uint32_t point_head;                   // -> sharpe_point_pool 链表头
+    uint32_t point_tail;                   // -> sharpe_point_pool 链表尾, O(1) append
+    uint32_t point_count;
+    uint32_t next;                         // 同用户下一个 bucket / free list
+  } sharpe_bucket_pool[MAX_SHARPE_BUCKETS]; // 5000万 × 40B = 2.0GB
 
-  // ==================== SharpeSamplePool[5亿] (16GB) ====================
-  // 稀疏 (block, pnl) 样本, 用于精确 Sharpe 计算
-  struct SharpeSample {                    // 32B
-    uint32_t agg_idx;                      // 所属 SharpeAgg
+  // ==================== SharpePointPool[5亿] (12GB) ====================
+  // 每次 `pnl` jump 记录一个点, 直接服务 Sharpe 计算
+  struct SharpePoint {                     // 24B
+    uint32_t next;                         // 同 bucket 下一个点 / free list
     int32_t  block_offset;                 // bucket 内 block 偏移 (0 ~ 99999)
-    int64_t  pnl;                          // realized_cum + unrealized_pnl
-    uint32_t next;                         // 同 agg 下一个样本 / free list
-    uint32_t _pad;
-    int64_t  _reserved;
-  } sharpe_sample_pool[MAX_SHARPE_SAMPLES]; // 5亿 × 32B = 16GB
+    int64_t  exposure;                     // 当前点的全账户 exposure
+    int64_t  pnl;                          // 当前点的全账户 pnl
+  } sharpe_point_pool[MAX_SHARPE_POINTS];  // 5亿 × 24B = 12GB
 
   // ==================== Users[1000万] (1.28GB) ====================
   struct UserBlock {                       // 128B (对应原 UserSummaryState + 扩展)
@@ -256,8 +239,8 @@ struct Stage3Store {
     uint32_t  token_count;                 // 有效持仓 token 数 (active_tokens)
     uint32_t  feature_head;                // -> feature_pool
     uint32_t  feature_count;
-    uint32_t  sharpe_agg_head;             // -> sharpe_agg_pool
-    uint32_t  sharpe_agg_count;
+    uint32_t  sharpe_bucket_head;          // -> sharpe_bucket_pool
+    uint32_t  sharpe_bucket_count;
 
     // Timeline 引用 (per-user 单链表 -> events.log)
     uint64_t  timeline_head;               // 首条事件的 byte offset, NULL_LOG_OFFSET 表示空
@@ -266,9 +249,10 @@ struct Stage3Store {
 
     // Sharpe 锚点
     int32_t   _pad0;                       // 4B padding for alignment
-    int64_t   pnl_before_first_sharpe_bucket; // 8B, Sharpe 窗口左边界锚点
+    int64_t   pnl_before_first_sharpe_bucket;      // 8B, Sharpe 窗口左边界 pnl 锚点
+    int64_t   exposure_before_first_sharpe_bucket; // 8B, Sharpe 窗口左边界 exp 锚点
 
-    uint8_t   _reserved[16];               // 填充到 128B
+    uint8_t   _reserved[4];                // 填充到 128B
   } users[MAX_USERS];                      // 1000万 × 128B = 1.28GB
 
 };
@@ -278,8 +262,8 @@ static_assert(sizeof(Stage3Store::Header) == 4096);
 static_assert(sizeof(Stage3Store::ConditionMeta) == 2056);
 static_assert(sizeof(Stage3Store::TokenSlot) == 48);
 static_assert(sizeof(Stage3Store::FeatureSlot) == 264);
-static_assert(sizeof(Stage3Store::SharpeAgg) == 48);
-static_assert(sizeof(Stage3Store::SharpeSample) == 32);
+static_assert(sizeof(Stage3Store::SharpeBucket) == 32);
+static_assert(sizeof(Stage3Store::SharpePoint) == 24);
 static_assert(sizeof(Stage3Store::UserBlock) == 128);
 
 
@@ -368,10 +352,10 @@ struct FeatureIndex {
   }
 };
 
-// ==================== SharpeAggIndex ====================
-// 运行时哈希索引, O(1) 查找 sharpe agg
+// ==================== SharpeBucketIndex ====================
+// 运行时哈希索引, O(1) 查找 sharpe bucket
 // key: (user_idx, bucket) -> pool_idx
-struct SharpeAggIndex {
+struct SharpeBucketIndex {
   // key = (user_idx << 16) | (bucket & 0xFFFF)
   std::unordered_map<uint64_t, uint32_t> map;
   
@@ -476,13 +460,13 @@ struct EventInput {
 
 /*
 data/stage3/
-├── store.bin        # Stage3Store mmap (~159GB)
+├── store.bin        # Stage3Store mmap (~154GB)
 │                    # Header: 4KB
 │                    # ConditionMeta[100万]: ~2GB
 │                    # TokenPool[1亿]: 4.8GB
 │                    # FeaturePool[5亿]: 132GB
-│                    # SharpeAggPool[5000万]: 2.4GB
-│                    # SharpeSamplePool[5亿]: 16GB
+│                    # SharpeBucketPool[5000万]: 2.0GB
+│                    # SharpePointPool[5亿]: 12GB
 │                    # Users[1000万]: 1.28GB
 ├── events.log       # EventRecord 定长数组, 每条含 next_user_event_offset (~160GB for 2B events)
 └── users.idx        # UserIndex hash table (512MB)
@@ -500,18 +484,18 @@ data/stage3/
 | ConditionMeta[100万]  | 2GB         | 2056B × 1M                  |
 | TokenPool[1亿]        | 4.8GB       | 48B × 100M, 稀疏            |
 | FeaturePool[5亿]      | 132GB       | 264B × 500M, 稀疏           |
-| SharpeAggPool         | 2.4GB       | 48B × 50M                   |
-| SharpeSamplePool      | 16GB        | 32B × 500M                  |
+| SharpeBucketPool      | 2.0GB       | 40B × 50M                   |
+| SharpePointPool       | 12GB        | 24B × 500M                  |
 | Users[1000万]         | 1.28GB      | 128B × 10M                  |
-| store.bin 总计        | ~159GB      |                             |
+| store.bin 总计        | ~154GB      |                             |
 | users.idx             | 512MB       | hash table                  |
 | events.log            | ~160GB      | 96B × 2B events             |
-| 总存储                | ~319GB      |                             |
+| 总存储                | ~314GB      |                             |
 | --------------------- | ----------- | --------------------------- |
 | 运行时索引 (估算)     |             |                             |
 | TokenIndex[64]        | ~2GB        | 1亿 token × 20B/entry       |
 | FeatureIndex[64]      | ~10GB       | 5亿 feature × 20B/entry     |
-| SharpeAggIndex[64]    | ~1GB        | 5000万 agg × 20B/entry      |
+| SharpeBucketIndex[64] | ~1GB        | 5000万 bucket × 20B/entry   |
 | global_feature_user_counts | <1MB   | head_bucket 级别稠密数组    |
 | QueryCacheManager     | ~500MB      | 1000 用户 × 500KB/user      |
 | DirtyUserSet          | ~1MB        | 本批次 dirty users          |
@@ -520,15 +504,15 @@ data/stage3/
 
 # Stage3 Flow (mmap + pool + runtime index)
 
-文件: `store.bin`(~159GB) + `events.log`(~160GB) + `users.idx`(512MB)
-运行时索引: `TokenIndex[64]` + `FeatureIndex[64]` + `SharpeAggIndex[64]` + `global_feature_user_counts` (启动时重建, 按用户 shard 分片, 支持并行同步)
+文件: `store.bin`(~154GB) + `events.log`(~160GB) + `users.idx`(512MB)
+运行时索引: `TokenIndex[64]` + `FeatureIndex[64]` + `SharpeBucketIndex[64]` + `global_feature_user_counts` (启动时重建, 按用户 shard 分片, 支持并行同步)
 
 ```
 stage3_bootstrap
 ├─ store.bin 不存在?
-│  ├─ fallocate store.bin (Header 4KB + ConditionMeta 2GB + TokenPool 4.8GB + FeaturePool 132GB + SharpeAggPool 2.4GB + SharpeSamplePool 16GB + Users 1.28GB)
+│  ├─ fallocate store.bin (Header 4KB + ConditionMeta 2GB + TokenPool 4.8GB + FeaturePool 132GB + SharpeBucketPool 2.0GB + SharpePointPool 12GB + Users 1.28GB)
 │  ├─ mmap store.bin MAP_SHARED
-│  ├─ header.magic = "STAGE3\0\0", header.version = 1
+│  ├─ header.magic = "STAGE3\0\0", header.version = 2
 │  ├─ header.cursor_sort_key = -1, header.cursor_processed_events = 0
 │  ├─ header.user_count = 0, header.head_bucket = 0
 │  ├─ for shard in 0..64: header.*_pool_used[shard] = 0, header.*_free_head[shard] = NULL_IDX
@@ -541,14 +525,14 @@ stage3_bootstrap
 ├─ 从 stage2 加载 condition_meta 到 conditions[] (100万 × 2056B, outcome_count + tag_id + payout_numerators[256])
 ├─ 重建运行时索引 (按用户链表遍历, 自动分 shard):
 │  ├─ global_feature_user_counts.resize(head_bucket + 1, 0)
-│  ├─ for shard in 0..64: token_index[shard].clear(), feature_index[shard].clear(), sharpe_agg_index[shard].clear()
+│  ├─ for shard in 0..64: token_index[shard].clear(), feature_index[shard].clear(), sharpe_bucket_index[shard].clear()
 │  ├─ for user_idx in 0..header.user_count:
 │  │  ├─ shard = user_shard_from_flags(users[user_idx].flags)
 │  │  ├─ 遍历 users[user_idx].token_head 链表, 插入 token_index[shard]
 │  │  ├─ 遍历 users[user_idx].feature_head 链表, 插入 feature_index[shard]
 │  │  │  └─ 若 `feat.tag_id == -1`: global_feature_user_counts[feat.bucket]++
-│  │  └─ 遍历 users[user_idx].sharpe_agg_head 链表, 插入 sharpe_agg_index[shard]
-└─ 返回 Stage3Runtime* {store, events_log, users_idx, token_index[64], feature_index[64], sharpe_agg_index[64], global_feature_user_counts, query_cache, dirty_users, rank_cache}
+│  │  └─ 遍历 users[user_idx].sharpe_bucket_head 链表, 插入 sharpe_bucket_index[shard]
+└─ 返回 Stage3Runtime* {store, events_log, users_idx, token_index[64], feature_index[64], sharpe_bucket_index[64], global_feature_user_counts, query_cache, dirty_users, rank_cache}
 
 stage3_sync_tick(runtime, head_block, batch_limit)
 ├─ 0) cursor = header.cursor_sort_key, head_sort_key = head_block*1e9 + (1e9-1)
@@ -621,25 +605,50 @@ stage3_post_sync_prune(runtime) // 仅处理 dirty_users, 而非全用户扫描
 └─ `dirty_users.last_pruned_bucket = min_bucket_to_keep`
 
 sharpe_prune_old_buckets(user_idx, min_bucket_to_keep)
-├─ 遍历 `users[user_idx].sharpe_agg_head`
-├─ if `agg->bucket < min_bucket_to_keep`:
-│  ├─ 用“被裁掉部分中离保留区最近的 `close_pnl`”更新 `users[user_idx].pnl_before_first_sharpe_bucket`
-│  ├─ 释放该 agg 下全部 sample
-│  ├─ 从 `sharpe_agg_index` 移除
-│  ├─ 从用户 agg 链表摘除
-│  └─ `sharpe_agg_free(agg_idx)`
+├─ 遍历 `users[user_idx].sharpe_bucket_head`
+├─ if `bucket->bucket < min_bucket_to_keep`:
+│  ├─ 用“被裁掉部分中离保留区最近的 `close_pnl / close_exposure`”
+│  │  更新 `users[user_idx].pnl_before_first_sharpe_bucket / exposure_before_first_sharpe_bucket`
+│  ├─ 释放该 bucket 下全部 point
+│  ├─ 从 `sharpe_bucket_index` 移除
+│  ├─ 从用户 bucket 链表摘除
+│  └─ `sharpe_bucket_free(bucket_idx)`
 └─ else: 保留
+
+update_sharpe_on_event(user_idx, exposure, prev_exposure, pnl, prev_pnl, bucket, block_offset)
+├─ if `users[user_idx].sharpe_bucket_head == NULL_IDX`:
+│  └─ `users[user_idx].pnl_before_first_sharpe_bucket = prev_pnl`
+│     `users[user_idx].exposure_before_first_sharpe_bucket = prev_exposure`
+├─ `bucket_node = sharpe_bucket_get_or_create(user_idx, bucket)`
+├─ 追加一个 `SharpePoint{block_offset, exposure, pnl}`
+├─ `bucket_node->close_pnl = pnl`
+└─ `bucket_node->close_exposure = exposure`
+
+collect_sharpe_points(user_idx, start_bucket, end_bucket)
+├─ `p0 = get_p0(start_bucket)`
+├─ `e0 = get_e0(start_bucket)`
+├─ 依 bucket 顺序遍历 `[start_bucket, end_bucket]` 的全部 `SharpeBucket`
+├─ 展开每个 bucket 下全部 `SharpePoint`, 保持事件原顺序
+└─ 返回 `{p0, e0, points[]}`
 
 calc_sharpe_for_feature(user_idx, feat, first_bucket) // 仅在 batch 结束时调用, 而非每事件
 ├─ if `feat->tag_id != -1`: return  // Sharpe 仅全局
-├─ if `first_bucket < 0 || first_bucket > feat->bucket`: 直接把 `sharpe_{10w,100w,1000w}` 置 0
-├─ `get_p0(start_bucket)`
-│  ├─ 扫 `user->sharpe_agg_head`
-│  ├─ 取所有 `agg->bucket < start_bucket` 中 bucket 最大者的 `close_pnl`
-│  └─ 若找不到: 用 `user->pnl_before_first_sharpe_bucket`
-├─ `10w`: 收集当前窗口的全部样本，构造完整 block return 分布，用 `feat->exposure_avg_10w`
-├─ `100w`: 收集 `[max(first_bucket, bucket-9), bucket]` 的全部样本，重新构造该窗口的完整 block return 分布，用 `feat->exposure_avg_100w`
-└─ `1000w`: 收集 `[max(first_bucket, bucket-99), bucket]` 的全部样本，重新构造该窗口的完整 block return 分布，用 `feat->exposure_avg_1000w`
+├─ if `first_bucket < 0 || first_bucket > feat->bucket`: 直接把 `sharpe_{100w,1000w}` 置 0
+├─ 对 `100w / 1000w` 两个窗口分别重算:
+│  ├─ `start_bucket =` 当前窗口左边界 bucket
+│  ├─ `win = collect_sharpe_points(user_idx, start_bucket, feat->bucket)`
+│  ├─ if `win.points.size() < 10`: 对应窗口 Sharpe = 0
+│  ├─ 用 `win.p0` 把窗口内 `pnl` 重标定成 `pnl_0`
+│  ├─ 用 `pnl_0` 构造 `pnl+`
+│  ├─ 在真实 `block_num` 时间轴上对 `pnl+` 做 quadratic fit, 计算曲率项 `a`
+│  ├─ 对首个 point: 用 `win.e0 / win.p0` 作为 `t-1` 锚点
+│  ├─ 对每个 point / jump `i`: `r[i] = (pnl+[i] - pnl+[i-1]) / max(abs(exp[i-1]), eps)`
+│  ├─ `T = T2 - T1 + 1`
+│  ├─ `μ = Σr / T`
+│  ├─ `σ² = Σ(r^2) / T - μ^2`
+│  ├─ `S0 = (σ² > 0 ? μ / sqrt(σ²) : 0)`
+│  └─ `sharpe_W = S0 * (1 - a) * sqrt(10000000)`
+└─ 返回
 
 stage3_query_status() -> {syncing, last_block, head_block, behind_blocks, behind_chunks, blocks_per_second, eta_seconds, ready, user_count, processed_events, head_bucket}
 ├─ `last_block = (header.cursor_sort_key >= 0 ? header.cursor_sort_key / 1e9 : 0)`

@@ -101,6 +101,8 @@ size_t stage3_sync_tick(Stage3Runtime *rt,
         assert(evt.token_idx >= 0);
         assert(evt.token_idx < cond->outcome_count);
         evt.tag_id = cond->tag_id;
+        assert(evt.tag_id >= 0);
+        assert(tag_slot(evt.tag_id) < FEATURE_TAG_SLOT_COUNT);
       }
 
       batch.push_back(evt);
@@ -253,6 +255,37 @@ size_t process_event_batch(Stage3Runtime *rt, const std::vector<EventInput> &bat
     int32_t global_sharpe_recalc_start_bucket = -1;
 
     init_feature_timelines(rt, task.user_idx, feature_first_buckets, feature_latest_buckets, &feature_latest_indices);
+    auto assert_dense_feature_slot = [&](int8_t tag_id) {
+      assert(tag_id >= -1);
+      assert(tag_slot(tag_id) < FEATURE_TAG_SLOT_COUNT);
+      const size_t slot = tag_slot(tag_id);
+      const int32_t first_bucket = feature_first_buckets[slot];
+      const int32_t latest_bucket = feature_latest_buckets[slot];
+      const uint32_t latest_idx = feature_latest_indices[slot];
+      if (first_bucket < 0) {
+        assert(latest_bucket < 0);
+        assert(latest_idx == NULL_IDX);
+        return;
+      }
+      assert(latest_bucket >= first_bucket);
+      assert(latest_idx != NULL_IDX);
+      const FeatureSlot *latest_feat = &rt->feature_pool[latest_idx];
+      assert(latest_feat->user_idx == task.user_idx);
+      assert(latest_feat->bucket == latest_bucket);
+      assert(latest_feat->tag_id == tag_id);
+      for (int32_t bucket = first_bucket; bucket <= latest_bucket; ++bucket) {
+        FeatureSlot *feat = feature_find(rt, task.user_idx, bucket, tag_id);
+        assert(feat != nullptr);
+        assert(feat->user_idx == task.user_idx);
+        assert(feat->bucket == bucket);
+        assert(feat->tag_id == tag_id);
+      }
+    };
+    for (size_t slot = 0; slot < FEATURE_TAG_SLOT_COUNT; ++slot) {
+      if (feature_first_buckets[slot] >= 0) {
+        assert_dense_feature_slot(static_cast<int8_t>(static_cast<int>(slot) - 1));
+      }
+    }
     for (size_t slot = 0; slot < FEATURE_TAG_SLOT_COUNT; ++slot) {
       if (feature_first_buckets[slot] >= 0) {
         materialized_feature_mask |= static_cast<uint16_t>(1u << slot);
@@ -267,6 +300,8 @@ size_t process_event_batch(Stage3Runtime *rt, const std::vector<EventInput> &bat
           const ConditionMeta *cond = stage3_get_condition(rt, tok->cond_idx);
           assert(cond != nullptr);
           const int8_t token_tag_id = cond->tag_id;
+          assert(token_tag_id >= 0);
+          assert(tag_slot(token_tag_id) < FEATURE_TAG_SLOT_COUNT);
           const TokenFeatureContrib contrib = token_feature_contrib(*tok);
           const uint16_t token_tag_mask = tag_mask(token_tag_id);
           if (task.touched_tag_mask & token_tag_mask) {
@@ -284,6 +319,7 @@ size_t process_event_batch(Stage3Runtime *rt, const std::vector<EventInput> &bat
       const EventInput &evt = batch[event_order[pos]];
       const uint32_t user_idx = task.user_idx;
       const int64_t prev_pnl = user->total_realized_pnl + user->total_unrealized_pnl;
+      const int64_t prev_global_exposure = runtime_states[tag_slot(-1)].exposure;
       int64_t realized_delta = 0;
       TokenSlot *tok = nullptr;
       int64_t old_mtm = 0;
@@ -298,6 +334,8 @@ size_t process_event_batch(Stage3Runtime *rt, const std::vector<EventInput> &bat
             static_cast<uint16_t>(materialized_feature_mask | tag_mask(evt.tag_id) | global_tag_mask);
         prepare_feature_buckets_for_mask(
             rt, user_idx, evt.bucket, dense_feature_mask, feature_first_buckets, feature_latest_buckets, feature_latest_indices);
+        assert_dense_feature_slot(evt.tag_id);
+        assert_dense_feature_slot(-1);
         materialized_feature_mask |= dense_feature_mask;
         const int32_t affected_global_bucket =
             (prev_global_latest_bucket >= 0 && prev_global_latest_bucket < evt.bucket)
@@ -397,7 +435,15 @@ size_t process_event_batch(Stage3Runtime *rt, const std::vector<EventInput> &bat
       {
         const int64_t pnl = user->total_realized_pnl + user->total_unrealized_pnl;
         if (pnl != prev_pnl) {
-          update_sharpe_on_event(rt, user_idx, pnl, prev_pnl, evt.bucket, evt.block_offset);
+          update_sharpe_on_event(
+              rt,
+              user_idx,
+              runtime_states[tag_slot(-1)].exposure,
+              prev_global_exposure,
+              pnl,
+              prev_pnl,
+              evt.bucket,
+              evt.block_offset);
         }
       }
 
