@@ -230,30 +230,26 @@ std::vector<StageSync::TimelineRow> StageSync::get_user_timeline(const std::stri
     return {};
   }
   const Address20 user_addr = parse_address(normalized);
-  const uint32_t user_idx = user_index_lookup(rt_, user_addr);
-  if (user_idx == NULL_IDX) {
+  UserQueryCache *cache = stage3_get_user_query_cache(rt_, user_addr);
+  if (cache == nullptr || cache->timeline.empty()) {
     return {};
   }
 
-  const UserBlock *user = &rt_->users[user_idx];
   std::vector<TimelineRow> out;
-  out.reserve(user->timeline_count);
-  uint64_t offset = user->timeline_head;
-  while (offset != NULL_LOG_OFFSET) {
-    const EventRecord *rec = reinterpret_cast<const EventRecord *>(
-        reinterpret_cast<const uint8_t *>(rt_->events_log) + offset);
-    out.push_back({
-        rec->sort_key,
-        rec->cond_idx,
-        rec->token_idx,
-        static_cast<uint8_t>(rec->event_type),
-        rec->amount,
-        rec->price_1e6,
-        rec->realized_cum,
-        rec->unrealized_pnl,
-        rec->token_count,
-    });
-    offset = rec->next_user_event_offset;
+  out.resize(cache->timeline.size());
+  for (size_t i = 0; i < cache->timeline.size(); ++i) {
+    const EventRecord &rec = cache->timeline[i];
+    out[i] = {
+        rec.sort_key,
+        rec.cond_idx,
+        rec.token_idx,
+        static_cast<uint8_t>(rec.event_type),
+        rec.amount,
+        rec.price_1e6,
+        rec.realized_cum,
+        rec.unrealized_pnl,
+        rec.token_count,
+    };
   }
   return out;
 }
@@ -292,8 +288,6 @@ filter::Result StageSync::filter_users_by_features(const filter::Request &req) c
   TraceN("s3/filter");
   QueryPauseGuard guard(*this);
   const FilterResult r = stage3_query_filter(rt_, req);
-  const int32_t anchor_bucket = static_cast<int32_t>(req.anchor_bucket);
-  const size_t global_slot = tag_slot(-1);
 
   filter::Result out;
   out.anchor_bucket = r.anchor_bucket;
@@ -306,22 +300,10 @@ filter::Result StageSync::filter_users_by_features(const filter::Request &req) c
     const UserBlock *user = &rt_->users[row.user_idx];
     u.addr = format_address(user->addr);
     u.sort_value = row.sort_value;
-    std::array<int32_t, FEATURE_TAG_SLOT_COUNT> feature_first_buckets{};
-    std::array<int32_t, FEATURE_TAG_SLOT_COUNT> feature_latest_buckets{};
-    init_feature_timelines(rt_, row.user_idx, feature_first_buckets, feature_latest_buckets);
-
-    const FeatureSlot *feat = nullptr;
-    const int32_t first_bucket = feature_first_buckets[global_slot];
-    if (first_bucket >= 0 && anchor_bucket >= first_bucket) {
-      feat = feature_find(rt_, row.user_idx, std::min(anchor_bucket, feature_latest_buckets[global_slot]), -1);
-      assert(feat != nullptr);
-    }
-    if (feat != nullptr) {
-      u.month_avg_tok = feat->token_avg_100w;
-      u.month_avg_exp = feat->exposure_avg_100w;
-      u.month_avg_hp = feat->holding_period_avg_100w;
-    }
-    u.pnl = user->total_realized_pnl + user->total_unrealized_pnl;
+    u.month_avg_tok = row.month_avg_tok;
+    u.month_avg_exp = row.month_avg_exp;
+    u.month_avg_hp = row.month_avg_hp;
+    u.pnl = row.pnl;
     out.users.push_back(u);
   }
   return out;

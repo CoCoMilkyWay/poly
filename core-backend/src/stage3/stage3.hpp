@@ -686,14 +686,6 @@ struct QueryStatus {
   int32_t head_bucket;
 };
 
-struct TimelineRow {
-  int64_t sort_key;
-  int8_t event_type;
-  int64_t realized_pnl;
-  int64_t unrealized_pnl;
-  int32_t token_count;
-};
-
 struct PositionRow {
   int32_t cond_idx;
   int16_t token_idx;
@@ -701,13 +693,6 @@ struct PositionRow {
   int64_t cost;
   int64_t lp;
   int64_t entry_block;
-};
-
-struct PnlResult {
-  Address20 user;
-  int64_t block;
-  int64_t total_events;
-  std::vector<TimelineRow> timeline;
 };
 
 struct PositionsResult {
@@ -718,7 +703,7 @@ struct PositionsResult {
 };
 
 QueryStatus stage3_query_status(const Stage3Runtime *rt, int64_t head_block);
-PnlResult stage3_query_pnl(Stage3Runtime *rt, const Address20 &user_addr);
+UserQueryCache *stage3_get_user_query_cache(Stage3Runtime *rt, const Address20 &user_addr);
 PositionsResult stage3_query_positions(Stage3Runtime *rt, const Address20 &user_addr, int64_t target_sort_key);
 
 // ============================================================================
@@ -759,6 +744,10 @@ struct FilterRequest {
 struct FilterUserRow {
   uint32_t user_idx;
   double sort_value;
+  int64_t month_avg_tok = 0;
+  int64_t month_avg_exp = 0;
+  int64_t month_avg_hp = 0;
+  int64_t pnl = 0;
 };
 
 struct FilterItemStat {

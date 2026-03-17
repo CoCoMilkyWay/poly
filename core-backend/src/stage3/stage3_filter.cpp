@@ -6,7 +6,6 @@
 #include <cassert>
 #include <cctype>
 #include <cmath>
-#include <functional>
 #include <optional>
 #include <unordered_map>
 #include <vector>
@@ -192,6 +191,30 @@ bool is_sharpe_field(FeatureField field) {
          field == FeatureField::SHARPE_1000W;
 }
 
+void load_latest_features(Stage3Runtime *rt,
+                          const UserBlock *user,
+                          std::array<const FeatureSlot *, FEATURE_TAG_SLOT_COUNT> &latest_features) {
+  latest_features.fill(nullptr);
+  uint32_t idx = user->feature_head;
+  int32_t latest_bucket = -1;
+  while (idx != NULL_IDX) {
+    const FeatureSlot *feat = &rt->feature_pool[idx];
+    idx = feat->next;
+    if (!(feat->flags & 1)) {
+      continue;
+    }
+    if (latest_bucket < 0) {
+      latest_bucket = feat->bucket;
+    }
+    if (feat->bucket != latest_bucket) {
+      break;
+    }
+    const size_t slot = tag_slot(feat->tag_id);
+    assert(latest_features[slot] == nullptr);
+    latest_features[slot] = feat;
+  }
+}
+
 enum class ArithmeticOp {
   NONE,
   MUL,
@@ -209,6 +232,7 @@ enum class CompareOp {
 
 struct CompiledMetricRef {
   int8_t tag_id = -1;
+  uint8_t slot = 0;
   FeatureField field = FeatureField::TOKEN_AVG_10W;
 };
 
@@ -231,8 +255,6 @@ struct CompiledFilterPlan {
   bool sort_asc = false;
 };
 
-using GetFeatureFn = std::function<const FeatureSlot *(int8_t tag_id)>;
-
 CompiledMetricRef compile_metric_ref(const FilterMetricRef &ref) {
   assert(!ref.industry.empty());
   assert(!ref.feature.empty());
@@ -247,6 +269,7 @@ CompiledMetricRef compile_metric_ref(const FilterMetricRef &ref) {
 
   CompiledMetricRef out;
   out.tag_id = *tag_id;
+  out.slot = static_cast<uint8_t>(tag_slot(*tag_id));
   out.field = *field;
   return out;
 }
@@ -325,11 +348,13 @@ CompiledFilterPlan compile_filter_plan(const FilterRequest &req) {
   return out;
 }
 
+template <typename GetFeatureFn>
 double eval_metric_ref(const GetFeatureFn &get_feature, const CompiledMetricRef &ref) {
-  const FeatureSlot *feat = get_feature(ref.tag_id);
+  const FeatureSlot *feat = get_feature(ref.slot, ref.tag_id);
   return get_feature_value(feat, ref.field);
 }
 
+template <typename GetFeatureFn>
 double eval_value_expr(const GetFeatureFn &get_feature, const CompiledValueExpr &expr) {
   const double left = eval_metric_ref(get_feature, expr.lhs);
   if (expr.arith_op == ArithmeticOp::NONE) {
@@ -372,6 +397,7 @@ bool eval_compare(double left, CompareOp op, double right) {
   return false;
 }
 
+template <typename GetFeatureFn>
 bool eval_filter_item(const GetFeatureFn &get_feature, const CompiledFilterItem &item) {
   return eval_compare(eval_value_expr(get_feature, item.expr), item.compare_op, item.compare_value);
 }
@@ -397,12 +423,17 @@ FilterResult stage3_query_filter(Stage3Runtime *rt, const FilterRequest &req) {
   struct Candidate {
     uint32_t user_idx;
     double sort_value;
+    int64_t month_avg_tok;
+    int64_t month_avg_exp;
+    int64_t month_avg_hp;
+    int64_t pnl;
   };
   std::vector<Candidate> candidates;
   candidates.reserve(rt->header->user_count);
 
   std::vector<int64_t> item_before_counts(plan.items.size(), 0);
   std::vector<int64_t> item_filtered_counts(plan.items.size(), 0);
+  const uint8_t global_slot = static_cast<uint8_t>(tag_slot(-1));
 
   // Scan all users
   for (uint64_t i = 0; i < rt->header->user_count; ++i) {
@@ -412,30 +443,27 @@ FilterResult stage3_query_filter(Stage3Runtime *rt, const FilterRequest &req) {
     if (!(user->flags & 1))
       continue; // Not occupied
 
-    std::array<int32_t, FEATURE_TAG_SLOT_COUNT> feature_first_buckets{};
-    std::array<int32_t, FEATURE_TAG_SLOT_COUNT> feature_latest_buckets{};
-    init_feature_timelines(rt, user_idx, feature_first_buckets, feature_latest_buckets);
-
+    std::array<const FeatureSlot *, FEATURE_TAG_SLOT_COUNT> latest_features{};
+    load_latest_features(rt, user, latest_features);
     std::array<const FeatureSlot *, FEATURE_TAG_SLOT_COUNT> feature_cache{};
     std::array<bool, FEATURE_TAG_SLOT_COUNT> feature_loaded{};
-    auto get_feature = [&](int8_t tag_id) -> const FeatureSlot * {
-      const size_t slot = tag_slot(tag_id);
+    auto get_feature = [&](uint8_t slot, int8_t tag_id) -> const FeatureSlot * {
       if (!feature_loaded[slot]) {
         feature_loaded[slot] = true;
-        const int32_t first_bucket = feature_first_buckets[slot];
-        const int32_t latest_bucket = feature_latest_buckets[slot];
-        const FeatureSlot *feat = nullptr;
-        if (first_bucket >= 0 && anchor_bucket >= first_bucket) {
-          feat = feature_find(rt, user_idx, std::min(anchor_bucket, latest_bucket), tag_id);
-          assert(feat != nullptr);
+        const FeatureSlot *latest_feat = latest_features[slot];
+        if (latest_feat == nullptr) {
+          feature_cache[slot] = nullptr;
+        } else if (anchor_bucket >= latest_feat->bucket) {
+          feature_cache[slot] = latest_feat;
+        } else {
+          feature_cache[slot] = feature_find(rt, user_idx, anchor_bucket, tag_id);
         }
-        feature_cache[slot] = feat;
       }
       return feature_cache[slot];
     };
 
     // Check if user has any feature at anchor_bucket
-    const FeatureSlot *global_feat = get_feature(-1);
+    const FeatureSlot *global_feat = get_feature(global_slot, -1);
     if (!global_feat)
       continue;
 
@@ -456,32 +484,55 @@ FilterResult stage3_query_filter(Stage3Runtime *rt, const FilterRequest &req) {
       continue;
 
     const double sort_value = eval_value_expr(get_feature, plan.sort_expr);
-    candidates.push_back({user_idx, sort_value});
+    candidates.push_back({
+        user_idx,
+        sort_value,
+        global_feat->token_avg_100w,
+        global_feat->exposure_avg_100w,
+        global_feat->holding_period_avg_100w,
+        user->total_realized_pnl + user->total_unrealized_pnl,
+    });
   }
 
   result.matched_user_count = static_cast<int64_t>(candidates.size());
 
-  // Sort
-  if (plan.sort_asc) {
-    std::sort(candidates.begin(), candidates.end(),
-              [](const Candidate &a, const Candidate &b) {
-                return a.sort_value < b.sort_value;
-              });
+  // `partial_sort` is faster than `nth_element + sort` for this small fixed top-K workload.
+  const size_t limit = std::min(static_cast<size_t>(req.limit), candidates.size());
+  if (limit < candidates.size()) {
+    if (plan.sort_asc) {
+      std::partial_sort(candidates.begin(), candidates.begin() + limit, candidates.end(),
+                        [](const Candidate &a, const Candidate &b) {
+                          return a.sort_value < b.sort_value;
+                        });
+    } else {
+      std::partial_sort(candidates.begin(), candidates.begin() + limit, candidates.end(),
+                        [](const Candidate &a, const Candidate &b) {
+                          return a.sort_value > b.sort_value;
+                        });
+    }
   } else {
-    std::sort(candidates.begin(), candidates.end(),
-              [](const Candidate &a, const Candidate &b) {
-                return a.sort_value > b.sort_value;
-              });
+    if (plan.sort_asc) {
+      std::sort(candidates.begin(), candidates.end(),
+                [](const Candidate &a, const Candidate &b) {
+                  return a.sort_value < b.sort_value;
+                });
+    } else {
+      std::sort(candidates.begin(), candidates.end(),
+                [](const Candidate &a, const Candidate &b) {
+                  return a.sort_value > b.sort_value;
+                });
+    }
   }
 
-  // Limit results
-  size_t limit = std::min(static_cast<size_t>(req.limit), candidates.size());
   result.users.reserve(limit);
-
   for (size_t i = 0; i < limit; ++i) {
     FilterUserRow row{};
     row.user_idx = candidates[i].user_idx;
     row.sort_value = candidates[i].sort_value;
+    row.month_avg_tok = candidates[i].month_avg_tok;
+    row.month_avg_exp = candidates[i].month_avg_exp;
+    row.month_avg_hp = candidates[i].month_avg_hp;
+    row.pnl = candidates[i].pnl;
     result.users.push_back(row);
   }
 

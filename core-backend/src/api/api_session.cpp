@@ -1298,8 +1298,7 @@ void ApiSession::handle_stage3_pnl() {
     }
     cond_idxs.push_back(static_cast<uint32_t>(e.cond_idx));
   }
-  auto cond_meta = load_stage3_cond_meta(cond_idxs);
-  stage3_store_cond_meta_cache(user, cond_meta);
+  auto cond_meta = load_stage3_cond_meta_with_cache(user, cond_idxs);
 
   json timeline_arr = json::array();
   for (const auto &e : timeline) {
@@ -1372,6 +1371,44 @@ void ApiSession::stage3_store_cond_meta_cache(const std::string &user,
 }
 
 std::unordered_map<uint32_t, ApiSession::Stage3CondMeta>
+ApiSession::load_stage3_cond_meta_with_cache(const std::string &user,
+                                             const std::vector<uint32_t> &cond_idxs) {
+  if (cond_idxs.empty()) {
+    return {};
+  }
+
+  auto cond_meta = stage3_cond_meta_from_cache(user);
+  if (cond_meta.empty()) {
+    auto loaded = load_stage3_cond_meta(cond_idxs);
+    stage3_store_cond_meta_cache(user, loaded);
+    return loaded;
+  }
+
+  std::vector<uint32_t> required_conds(cond_idxs.begin(), cond_idxs.end());
+  std::sort(required_conds.begin(), required_conds.end());
+  required_conds.erase(std::unique(required_conds.begin(), required_conds.end()), required_conds.end());
+
+  std::vector<uint32_t> missing_conds;
+  missing_conds.reserve(required_conds.size());
+  for (uint32_t cond_idx : required_conds) {
+    if (!cond_meta.contains(cond_idx)) {
+      missing_conds.push_back(cond_idx);
+    }
+  }
+  if (missing_conds.empty()) {
+    return cond_meta;
+  }
+
+  auto loaded = load_stage3_cond_meta(missing_conds);
+  cond_meta.reserve(cond_meta.size() + loaded.size());
+  for (auto &[cond_idx, meta] : loaded) {
+    cond_meta.insert_or_assign(cond_idx, std::move(meta));
+  }
+  stage3_store_cond_meta_cache(user, cond_meta);
+  return cond_meta;
+}
+
+std::unordered_map<uint32_t, ApiSession::Stage3CondMeta>
 ApiSession::load_stage3_cond_meta(const std::vector<uint32_t> &cond_idxs) {
   std::unordered_map<uint32_t, Stage3CondMeta> out;
   if (cond_idxs.empty()) {
@@ -1383,6 +1420,7 @@ ApiSession::load_stage3_cond_meta(const std::vector<uint32_t> &cond_idxs) {
   conds.assign(cond_idxs.begin(), cond_idxs.end());
   std::sort(conds.begin(), conds.end());
   conds.erase(std::unique(conds.begin(), conds.end()), conds.end());
+  out.reserve(conds.size());
 
   std::string cond_idx_list;
   cond_idx_list.reserve(conds.size() * 12);
@@ -1506,16 +1544,12 @@ void ApiSession::handle_stage3_positions() {
     return;
   }
 
-  auto cond_meta = stage3_cond_meta_from_cache(user);
-  if (cond_meta.empty()) {
-    std::vector<uint32_t> cond_idxs;
-    cond_idxs.reserve(positions.size());
-    for (const auto &p : positions) {
-      cond_idxs.push_back(p.cond_idx);
-    }
-    cond_meta = load_stage3_cond_meta(cond_idxs);
-    stage3_store_cond_meta_cache(user, cond_meta);
+  std::vector<uint32_t> cond_idxs;
+  cond_idxs.reserve(positions.size());
+  for (const auto &p : positions) {
+    cond_idxs.push_back(p.cond_idx);
   }
+  auto cond_meta = load_stage3_cond_meta_with_cache(user, cond_idxs);
   json pos_arr = json::array();
   for (const auto &p : positions) {
     const auto it = cond_meta.find(p.cond_idx);

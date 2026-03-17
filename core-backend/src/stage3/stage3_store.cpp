@@ -16,7 +16,7 @@ namespace stage3 {
 namespace {
 
 constexpr uint64_t STORE_MAGIC = 0x0000334547415453ULL; // "STAGE3\0\0"
-constexpr uint64_t STORE_VERSION = 1; // KEEP IT 1
+constexpr uint64_t STORE_VERSION = 1;                   // KEEP IT 1
 
 constexpr size_t STORE_HEADER_OFFSET = 0;
 constexpr size_t STORE_CONDITIONS_OFFSET = sizeof(StoreHeader);

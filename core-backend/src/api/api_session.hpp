@@ -123,6 +123,8 @@ private:
   };
   std::unordered_map<uint32_t, Stage3CondMeta>
   load_stage3_cond_meta(const std::vector<uint32_t> &cond_idxs);
+  std::unordered_map<uint32_t, Stage3CondMeta>
+  load_stage3_cond_meta_with_cache(const std::string &user, const std::vector<uint32_t> &cond_idxs);
   static std::string normalize_stage3_user(const std::string &addr);
   static std::unordered_map<uint32_t, Stage3CondMeta> stage3_cond_meta_from_cache(const std::string &user);
   static void stage3_store_cond_meta_cache(const std::string &user,

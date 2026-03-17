@@ -926,7 +926,7 @@ TransferClass EventBuilder::classify_and_emit(
       if (known_token) {
         if (is_user_addr(from)) {
           auto &payouts = conditions_[cond_idx].payout_numerators;
-          // Convert redemption payout to price_1e6:
+          // Redemption payout in price_1e6:
           // payout_price = payout_numerator[token_idx] * 1e6 / payout_denominator,
           // where payout_denominator is the sum of all payout numerators.
           int64_t payout_price = 0;
@@ -937,14 +937,16 @@ TransferClass EventBuilder::classify_and_emit(
                 payout_denominator += static_cast<double>(p);
               }
             }
-            if (token_idx < static_cast<int>(payouts.size()) &&
-                payouts[token_idx] >= 0 &&
-                payout_denominator > 0.0) {
-              payout_price = static_cast<int64_t>(std::llround(
-                  static_cast<double>(payouts[token_idx]) * 1e6 / payout_denominator));
-            } else {
-              payout_price = 1000000; // Default $1 if payout unknown
-            }
+            stage2_assert(token_idx < static_cast<int>(payouts.size()),
+                          AssertLevel::L3, "Redemption", "PayoutTokenIdxInRange");
+            stage2_assert(payouts[token_idx] >= 0,
+                          AssertLevel::L3, "Redemption", "PayoutNumeratorKnown");
+            stage2_assert(payout_denominator > 0.0,
+                          AssertLevel::L3, "Redemption", "PayoutDenominatorPositive");
+            payout_price = static_cast<int64_t>(std::llround(
+                static_cast<double>(payouts[token_idx]) * 1e6 / payout_denominator));
+            stage2_assert(payout_price > 0,
+                          AssertLevel::L3, "Redemption", "PayoutPricePositive");
           }
           emit_if_user(from, RawEvent{sort_key, cond_idx, EventType::Redemption, token_idx, coll, 0, -amount, payout_price});
         }
