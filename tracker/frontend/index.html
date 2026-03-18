@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Polymarket Tracker</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <div>
+        <h1>Polymarket Tracker</h1>
+        <p class="subtle">低延时持仓 / 交易追踪面板</p>
+      </div>
+      <div class="status-strip">
+        <span id="backend-url"></span>
+        <button id="resync-button" type="button">Force Resync</button>
+      </div>
+    </header>
+
+    <section class="top-grid">
+      <section class="panel users-panel">
+        <div class="panel-title">A. 用户列表</div>
+        <div id="users-list" class="list-scroll"></div>
+      </section>
+
+      <section class="panel trades-panel">
+        <div class="panel-title">B. 交易记录</div>
+        <div id="trade-list" class="list-scroll"></div>
+      </section>
+    </section>
+
+    <section class="bottom-grid">
+      <section class="panel controls-panel">
+        <div class="panel-title">C. 视图选择</div>
+        <div class="controls-row">
+          <label>
+            模式
+            <select id="mode-select">
+              <option value="aggregate-current">aggre 当前动态持仓</option>
+              <option value="user-current">用户当前动态持仓</option>
+              <option value="user-history">用户历史静态持仓</option>
+            </select>
+          </label>
+          <label>
+            用户
+            <select id="user-select"></select>
+          </label>
+          <label>
+            Snapshot
+            <select id="snapshot-select"></select>
+          </label>
+        </div>
+      </section>
+
+      <section class="panel queries-panel">
+        <div class="panel-title">E. Query Count</div>
+        <div id="query-counts" class="query-grid"></div>
+      </section>
+
+      <section class="panel holdings-panel">
+        <div class="panel-title">D. 持仓展示</div>
+        <div class="holdings-summary" id="holdings-summary"></div>
+        <div id="holdings-list" class="holdings-list"></div>
+      </section>
+    </section>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
