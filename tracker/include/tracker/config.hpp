@@ -56,6 +56,12 @@ inline constexpr size_t kGraphIdBatchLimit    = 100;   // max IDs per Graph quer
 inline constexpr size_t kGraphPageLimit       = 1000;  // max items per Graph page
 
 // ============================================================================
+// HTTP Client Configuration
+// ============================================================================
+
+inline constexpr size_t kHttpConcurrency      = 10;    // max concurrent HTTP requests
+
+// ============================================================================
 // URL Parsing Utilities
 // ============================================================================
 
@@ -113,6 +119,9 @@ struct AppConfig {
   size_t user_query_batch_limit;
   size_t graph_id_batch_limit;
   size_t graph_page_limit;
+
+  // http client
+  size_t http_concurrency;
 
   static AppConfig load(const std::filesystem::path &tracker_dir);
 };

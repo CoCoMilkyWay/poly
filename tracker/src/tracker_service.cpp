@@ -618,25 +618,36 @@ json TrackerService::rpc_batch_call(const std::vector<json> &requests) {
   return body;
 }
 
-json TrackerService::graph_query(const std::string &subgraph_id, const std::string &query, const json &variables, const std::string &) {
+json TrackerService::graph_query(const std::string &subgraph_id, const std::string &query, const json &variables, const std::string &label) {
   assert(!config_.graph_api_key.empty());
   const std::string url = "https://gateway.thegraph.com/api/" + config_.graph_api_key + "/subgraphs/id/" + subgraph_id;
   const json payload = {
       {"query", query},
       {"variables", variables},
   };
-  const HttpResponse response = http_post_json(url, payload);
-  assert(response.status == 200);
-  const json body = safe_json_parse(response.body);
-  if (body.contains("errors") || !body.contains("data")) {
-    std::cerr << "[graph_query] subgraph=" << subgraph_id << " response=" << body.dump() << std::endl;
-    assert(false);
+  constexpr int kMaxAttempts = 8;
+  for (int attempt = 1; attempt <= kMaxAttempts; ++attempt) {
+    const HttpResponse response = http_post_json(url, payload);
+    assert(response.status == 200);
+    const json body = safe_json_parse(response.body);
+    if (!body.contains("errors") && body.contains("data")) {
+      {
+        std::lock_guard<std::mutex> guard(mutex_);
+        query_counters_.subgraph_queries += 1;
+      }
+      return body.at("data");
+    }
+    std::cerr << "[graph_query] label=" << label
+              << " subgraph=" << subgraph_id
+              << " attempt=" << attempt << "/" << kMaxAttempts
+              << " response=" << body.dump()
+              << std::endl;
+    if (attempt < kMaxAttempts) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(200 * attempt));
+    }
   }
-  {
-    std::lock_guard<std::mutex> guard(mutex_);
-    query_counters_.subgraph_queries += 1;
-  }
-  return body.at("data");
+  assert(false);
+  return json::object();
 }
 
 uint64_t TrackerService::rpc_block_number() {
@@ -1368,9 +1379,10 @@ void TrackerService::refresh_reference_data(bool missing_only) {
       }
     }
 
-    std::set<std::string> missing_market_texts;
+    std::vector<std::string> missing_market_texts;
     {
       std::lock_guard<std::mutex> guard(mutex_);
+      std::set<std::string> missing_set;
       for (const std::string &user : watched_users_) {
         for (const auto &[token_id, _] : users_.at(user).token_amounts) {
           if (!tokens_.contains(token_id)) {
@@ -1381,73 +1393,84 @@ void TrackerService::refresh_reference_data(bool missing_only) {
             continue;
           }
           if (!conditions_.contains(condition_id) || conditions_.at(condition_id).market_question.empty()) {
-            missing_market_texts.insert(condition_id);
+            missing_set.insert(condition_id);
           }
         }
       }
+      missing_market_texts.assign(missing_set.begin(), missing_set.end());
     }
 
-    for (const std::string &condition_id : missing_market_texts) {
-      const std::string url = std::string(kGammaApiBase) + "/markets?condition_ids=" + condition_id + "&include_tag=true";
-      const HttpResponse response = http_get(url);
-      assert(response.status == 200);
-      const json arr = safe_json_parse(response.body);
-      assert(arr.is_array());
-      {
-        std::lock_guard<std::mutex> guard(mutex_);
-        query_counters_.gamma_queries += 1;
+    if (!missing_market_texts.empty()) {
+      std::vector<HttpRequest> requests;
+      requests.reserve(missing_market_texts.size());
+      for (const std::string &condition_id : missing_market_texts) {
+        requests.push_back({
+            .url = std::string(kGammaApiBase) + "/markets?condition_ids=" + condition_id + "&include_tag=true",
+            .method = "GET",
+            .body = "",
+        });
       }
-      if (arr.empty()) {
-        continue;
-      }
-      json market = arr.front();
-      for (const json &item : arr) {
-        const std::string candidate = item.contains("conditionId")
-                                          ? json_string_or_empty(item, "conditionId")
-                                          : json_string_or_empty(item, "condition_id");
-        if (candidate.empty()) {
+      const std::vector<HttpResponse> responses = http_batch(requests, config_.http_concurrency);
+
+      std::lock_guard<std::mutex> guard(mutex_);
+      query_counters_.gamma_queries += responses.size();
+      for (size_t i = 0; i < responses.size(); ++i) {
+        const std::string &condition_id = missing_market_texts[i];
+        const HttpResponse &response = responses[i];
+        assert(response.status == 200);
+        const json arr = safe_json_parse(response.body);
+        assert(arr.is_array());
+        if (arr.empty()) {
           continue;
         }
-        if (normalize_hex(candidate) == normalize_hex(condition_id)) {
-          market = item;
-          break;
+        json market = arr.front();
+        for (const json &item : arr) {
+          const std::string candidate = item.contains("conditionId")
+                                            ? json_string_or_empty(item, "conditionId")
+                                            : json_string_or_empty(item, "condition_id");
+          if (candidate.empty()) {
+            continue;
+          }
+          if (normalize_hex(candidate) == normalize_hex(condition_id)) {
+            market = item;
+            break;
+          }
         }
-      }
-      ConditionMeta incoming;
-      incoming.condition_id = condition_id;
-      const json events = market.contains("events") && market.at("events").is_array()
-                              ? market.at("events")
-                              : json::array();
-      const json event0 = events.empty() ? json::object() : events.front();
-      incoming.market_question = json_string_or_empty(market, "question");
-      if (incoming.market_question.empty()) {
-        incoming.market_question = json_string_or_empty(event0, "title");
-      }
-      incoming.market_description = json_string_or_empty(market, "description");
-      incoming.market_event_title = json_string_or_empty(event0, "title");
-      incoming.market_slug = json_string_or_empty(event0, "slug");
-      if (incoming.market_slug.empty()) {
-        incoming.market_slug = json_string_or_empty(market, "slug");
-      }
-      incoming.market_url = incoming.market_slug.empty() ? "" : "https://polymarket.com/event/" + incoming.market_slug;
-      if (market.contains("outcomes")) {
-        if (market.at("outcomes").is_string()) {
-          const json outcomes = json::parse(market.at("outcomes").get<std::string>());
-          if (outcomes.is_array()) {
-            for (const json &value : outcomes) {
+        ConditionMeta incoming;
+        incoming.condition_id = condition_id;
+        const json events = market.contains("events") && market.at("events").is_array()
+                                ? market.at("events")
+                                : json::array();
+        const json event0 = events.empty() ? json::object() : events.front();
+        incoming.market_question = json_string_or_empty(market, "question");
+        if (incoming.market_question.empty()) {
+          incoming.market_question = json_string_or_empty(event0, "title");
+        }
+        incoming.market_description = json_string_or_empty(market, "description");
+        incoming.market_event_title = json_string_or_empty(event0, "title");
+        incoming.market_slug = json_string_or_empty(event0, "slug");
+        if (incoming.market_slug.empty()) {
+          incoming.market_slug = json_string_or_empty(market, "slug");
+        }
+        incoming.market_url = incoming.market_slug.empty() ? "" : "https://polymarket.com/event/" + incoming.market_slug;
+        if (market.contains("outcomes")) {
+          if (market.at("outcomes").is_string()) {
+            const json outcomes = json::parse(market.at("outcomes").get<std::string>());
+            if (outcomes.is_array()) {
+              for (const json &value : outcomes) {
+                incoming.market_outcomes.push_back(json_string_or_integer_string(value));
+              }
+            }
+          } else if (market.at("outcomes").is_array()) {
+            for (const json &value : market.at("outcomes")) {
               incoming.market_outcomes.push_back(json_string_or_integer_string(value));
             }
           }
-        } else if (market.at("outcomes").is_array()) {
-          for (const json &value : market.at("outcomes")) {
-            incoming.market_outcomes.push_back(json_string_or_integer_string(value));
-          }
         }
+        ConditionMeta &target = conditions_[condition_id];
+        merge_condition_meta(target, incoming);
+        target.condition_id = condition_id;
       }
-      std::lock_guard<std::mutex> guard(mutex_);
-      ConditionMeta &target = conditions_[condition_id];
-      merge_condition_meta(target, incoming);
-      target.condition_id = condition_id;
     }
   }
 }

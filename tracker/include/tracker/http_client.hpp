@@ -2,8 +2,8 @@
 
 #include "tracker/json.hpp"
 
-#include <memory>
 #include <string>
+#include <vector>
 
 namespace tracker {
 
@@ -12,22 +12,17 @@ struct HttpResponse {
   std::string body;
 };
 
+struct HttpRequest {
+  std::string url;
+  std::string method;
+  std::string body;
+};
+
+// 单次请求 (同步接口，内部异步实现，无限重试)
 HttpResponse http_get(const std::string &url);
 HttpResponse http_post_json(const std::string &url, const json &payload);
 
-class SyncWebSocketClient {
-public:
-  explicit SyncWebSocketClient(const std::string &url);
-  ~SyncWebSocketClient();
-
-  void connect();
-  void send_json(const json &payload);
-  json recv_json();
-  void close();
-
-private:
-  struct Impl;
-  std::unique_ptr<Impl> impl_;
-};
+// 批量并发请求 (单线程异步并发，无限重试)
+std::vector<HttpResponse> http_batch(const std::vector<HttpRequest> &requests, size_t concurrency);
 
 } // namespace tracker

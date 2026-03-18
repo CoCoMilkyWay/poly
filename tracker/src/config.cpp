@@ -126,6 +126,12 @@ AppConfig AppConfig::load(const std::filesystem::path &tracker_dir) {
     config.recent_event_limit = static_cast<size_t>(std::stoull(env_val));
   }
 
+  // http client
+  config.http_concurrency = kHttpConcurrency;
+  if (const char *env_val = std::getenv("TRACKER_HTTP_CONCURRENCY")) {
+    config.http_concurrency = static_cast<size_t>(std::stoull(env_val));
+  }
+
   // assertions
   assert(std::filesystem::exists(config.address_file));
   assert(!config.rpc_name.empty());
@@ -141,6 +147,7 @@ AppConfig AppConfig::load(const std::filesystem::path &tracker_dir) {
   assert(config.user_query_batch_limit > 0);
   assert(config.graph_id_batch_limit > 0);
   assert(config.graph_page_limit > 0);
+  assert(config.http_concurrency > 0);
   return config;
 }
 
