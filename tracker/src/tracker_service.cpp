@@ -628,8 +628,10 @@ json TrackerService::graph_query(const std::string &subgraph_id, const std::stri
   const HttpResponse response = http_post_json(url, payload);
   assert(response.status == 200);
   const json body = safe_json_parse(response.body);
-  assert(!body.contains("errors"));
-  assert(body.contains("data"));
+  if (body.contains("errors") || !body.contains("data")) {
+    std::cerr << "[graph_query] subgraph=" << subgraph_id << " response=" << body.dump() << std::endl;
+    assert(false);
+  }
   {
     std::lock_guard<std::mutex> guard(mutex_);
     query_counters_.subgraph_queries += 1;

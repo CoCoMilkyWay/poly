@@ -86,15 +86,13 @@ def build_backend() -> None:
     assert BACKEND_EXE.exists(), str(BACKEND_EXE)
 
 
-def wait_for_port(port: int, timeout_sec: int, proc: subprocess.Popen[str]) -> None:
-    deadline = time.time() + timeout_sec
-    while time.time() < deadline:
+def wait_for_port(port: int, proc: subprocess.Popen[str]) -> None:
+    while True:
         if port_in_use(port):
             return
         if proc.poll() is not None:
             assert False, f"进程提前退出: {proc.poll()}"
         time.sleep(0.2)
-    assert False, f"端口未就绪: {port}"
 
 
 def terminate_process(proc: subprocess.Popen[str] | None) -> None:
@@ -133,7 +131,7 @@ def main() -> None:
     frontend = None
 
     try:
-        wait_for_port(BACKEND_PORT, 30, backend)
+        wait_for_port(BACKEND_PORT, backend)
         frontend = subprocess.Popen(
             [
                 sys.executable,
@@ -150,7 +148,7 @@ def main() -> None:
             start_new_session=True,
             text=True,
         )
-        wait_for_port(FRONTEND_PORT, 10, frontend)
+        wait_for_port(FRONTEND_PORT, frontend)
 
         print(
             json.dumps(
