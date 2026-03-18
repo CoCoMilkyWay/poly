@@ -586,7 +586,7 @@ json TrackerService::rpc_call(const std::string &method, const json &params) {
   };
   const HttpResponse response = http_post_json(config_.rpc_http_url, payload);
   assert(response.status == 200);
-  const json body = json::parse(response.body);
+  const json body = safe_json_parse(response.body);
   assert(body.contains("result"));
   {
     std::lock_guard<std::mutex> guard(mutex_);
@@ -606,7 +606,7 @@ json TrackerService::rpc_batch_call(const std::vector<json> &requests) {
   }
   const HttpResponse response = http_post_json(config_.rpc_http_url, payload);
   assert(response.status == 200);
-  json body = json::parse(response.body);
+  json body = safe_json_parse(response.body);
   assert(body.is_array());
   std::sort(body.begin(), body.end(), [](const json &lhs, const json &rhs) {
     return lhs.at("id").get<int>() < rhs.at("id").get<int>();
@@ -627,7 +627,7 @@ json TrackerService::graph_query(const std::string &subgraph_id, const std::stri
   };
   const HttpResponse response = http_post_json(url, payload);
   assert(response.status == 200);
-  const json body = json::parse(response.body);
+  const json body = safe_json_parse(response.body);
   assert(!body.contains("errors"));
   assert(body.contains("data"));
   {
@@ -1389,7 +1389,7 @@ void TrackerService::refresh_reference_data(bool missing_only) {
       const std::string url = std::string(kGammaApiBase) + "/markets?condition_ids=" + condition_id + "&include_tag=true";
       const HttpResponse response = http_get(url);
       assert(response.status == 200);
-      const json arr = json::parse(response.body);
+      const json arr = safe_json_parse(response.body);
       assert(arr.is_array());
       {
         std::lock_guard<std::mutex> guard(mutex_);

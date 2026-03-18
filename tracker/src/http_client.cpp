@@ -2,6 +2,7 @@
 #include "tracker/common.hpp"
 #include "tracker/config.hpp"
 
+#include <iostream>
 #include <boost/asio/connect.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/read.hpp>
@@ -55,6 +56,43 @@ std::string build_http_request(const UrlParts &parts,
 }
 
 template <typename TStream>
+std::string read_chunked_body(TStream &stream, std::string &pending) {
+  std::string body;
+  auto ensure_pending = [&](size_t need) {
+    while (pending.size() < need) {
+      std::array<char, 4096> tmp{};
+      const size_t n = stream.read_some(asio::buffer(tmp));
+      pending.append(tmp.data(), n);
+    }
+  };
+  auto read_line = [&]() {
+    while (true) {
+      const size_t pos = pending.find("\r\n");
+      if (pos != std::string::npos) {
+        std::string line = pending.substr(0, pos);
+        pending.erase(0, pos + 2);
+        return line;
+      }
+      std::array<char, 4096> tmp{};
+      const size_t n = stream.read_some(asio::buffer(tmp));
+      pending.append(tmp.data(), n);
+    }
+  };
+  while (true) {
+    const std::string chunk_size_line = read_line();
+    const size_t chunk_size = std::stoull(chunk_size_line, nullptr, 16);
+    if (chunk_size == 0) {
+      read_line(); // trailing empty line
+      break;
+    }
+    ensure_pending(chunk_size + 2);
+    body.append(pending.data(), chunk_size);
+    pending.erase(0, chunk_size + 2);
+  }
+  return body;
+}
+
+template <typename TStream>
 HttpResponse read_http_response(TStream &stream) {
   asio::streambuf buffer;
   asio::read_until(stream, buffer, "\r\n\r\n");
@@ -74,6 +112,7 @@ HttpResponse read_http_response(TStream &stream) {
 
   size_t content_length = 0;
   bool has_content_length = false;
+  bool is_chunked = false;
   while (true) {
     std::string header_line;
     std::getline(in, header_line);
@@ -90,20 +129,28 @@ HttpResponse read_http_response(TStream &stream) {
     if (key == "content-length") {
       content_length = static_cast<size_t>(std::stoull(value));
       has_content_length = true;
+    } else if (key == "transfer-encoding" && value == "chunked") {
+      is_chunked = true;
     }
   }
 
   std::string body;
-  body.assign(std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>());
-  if (has_content_length) {
-    while (body.size() < content_length) {
-      std::array<char, 4096> chunk{};
-      const size_t need = std::min(chunk.size(), content_length - body.size());
-      const size_t n = asio::read(stream, asio::buffer(chunk.data(), need));
-      body.append(chunk.data(), n);
-    }
-    if (body.size() > content_length) {
-      body.resize(content_length);
+  if (is_chunked) {
+    std::string pending;
+    pending.assign(std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>());
+    body = read_chunked_body(stream, pending);
+  } else {
+    body.assign(std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>());
+    if (has_content_length) {
+      while (body.size() < content_length) {
+        std::array<char, 4096> chunk{};
+        const size_t need = std::min(chunk.size(), content_length - body.size());
+        const size_t n = asio::read(stream, asio::buffer(chunk.data(), need));
+        body.append(chunk.data(), n);
+      }
+      if (body.size() > content_length) {
+        body.resize(content_length);
+      }
     }
   }
 
@@ -115,19 +162,28 @@ HttpResponse read_http_response(TStream &stream) {
 
 HttpResponse http_request(const std::string &url, std::string_view method, const std::string &body) {
   const UrlParts parts = parse_url(url);
+  std::cerr << "[DEBUG] HTTP " << method << " scheme=" << parts.scheme << " host=" << parts.host << " port=" << parts.port << " target=" << parts.target << " secure=" << parts.secure() << std::endl;
   asio::io_context ioc;
   tcp::resolver resolver(ioc);
   const auto endpoints = resolver.resolve(parts.host, parts.port);
   const std::string request = build_http_request(parts, method, body);
 
   if (parts.secure()) {
-    ssl::context ssl_ctx(ssl::context::tls_client);
+    std::cerr << "[DEBUG] Creating SSL context (sslv23_client)..." << std::endl;
+    ssl::context ssl_ctx(ssl::context::sslv23_client);
+    ssl_ctx.set_options(ssl::context::default_workarounds | ssl::context::no_sslv2 | ssl::context::no_sslv3);
     ssl_ctx.set_default_verify_paths();
     ssl_ctx.set_verify_mode(ssl::verify_peer);
     ssl::stream<tcp::socket> stream(ioc, ssl_ctx);
-    assert(SSL_set_tlsext_host_name(stream.native_handle(), parts.host.c_str()) == 1);
+    std::cerr << "[DEBUG] Setting SNI: " << parts.host << std::endl;
+    const int sni_result = SSL_set_tlsext_host_name(stream.native_handle(), parts.host.c_str());
+    std::cerr << "[DEBUG] SNI result: " << sni_result << std::endl;
+    assert(sni_result == 1);
+    std::cerr << "[DEBUG] Connecting..." << std::endl;
     asio::connect(stream.next_layer(), endpoints);
+    std::cerr << "[DEBUG] Handshaking..." << std::endl;
     stream.handshake(ssl::stream_base::client);
+    std::cerr << "[DEBUG] Handshake SUCCESS, version=" << SSL_get_version(stream.native_handle()) << std::endl;
     asio::write(stream, asio::buffer(request));
     HttpResponse response = read_http_response(stream);
     boost::system::error_code ec;

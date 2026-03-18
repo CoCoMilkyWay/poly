@@ -11,6 +11,7 @@
 #include <iomanip>
 #include <sstream>
 #include <string>
+#include <iostream>
 #include <vector>
 
 #include <boost/multiprecision/cpp_int.hpp>
@@ -200,6 +201,16 @@ inline std::vector<std::vector<TValue>> chunked(const std::vector<TValue> &value
                         values.begin() + static_cast<std::ptrdiff_t>(end));
   }
   return result;
+}
+
+inline json safe_json_parse(const std::string &body) {
+  try {
+    return json::parse(body);
+  } catch (const json::parse_error &e) {
+    std::cerr << "[ERROR] JSON parse failed: " << e.what() << std::endl;
+    std::cerr << "[ERROR] Response body: " << body << std::endl;
+    throw;
+  }
 }
 
 } // namespace tracker
