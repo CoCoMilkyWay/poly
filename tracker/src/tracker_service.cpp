@@ -1,12 +1,30 @@
 #include "tracker/tracker_service.hpp"
 #include "tracker/http_client.hpp"
 #include "tracker/json_store.hpp"
+#include "tracker/logger.hpp"
+#include "tracker/progress_board.hpp"
 
+#include <boost/asio/connect.hpp>
+#include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/ssl.hpp>
+#include <boost/beast/core.hpp>
+#include <boost/beast/ssl.hpp>
+#include <boost/beast/websocket.hpp>
+#include <openssl/ssl.h>
+
+#include <cctype>
 #include <chrono>
+#include <optional>
 #include <thread>
 
 namespace tracker {
 namespace {
+
+namespace asio = boost::asio;
+namespace beast = boost::beast;
+namespace ssl = asio::ssl;
+namespace websocket = beast::websocket;
+using tcp = asio::ip::tcp;
 
 inline constexpr const char *kGammaApiBase = "https://gamma-api.polymarket.com";
 inline constexpr const char *kPolymarketSubgraphId = "81Dm16JjuFSrqz813HysXoUPvzTwE7fsfPk2RTf66nyC";
@@ -21,6 +39,8 @@ query Meta {
   }
 }
 )";
+
+inline constexpr int64_t kSnapshotBlockLag = 64;
 
 inline constexpr const char *kUserPositionsQuery = R"(
 query UserPositions($users: [String!]!, $after: String!, $block: Int!, $first: Int!) {
@@ -75,6 +95,124 @@ query Conditions($ids: [ID!]!) {
   }
 }
 )";
+
+class RpcWebSocketStream {
+public:
+  explicit RpcWebSocketStream(const std::string &url)
+      : parts_(parse_url(url)),
+        ssl_ctx_(ssl::context::tlsv12_client),
+        resolver_(ioc_) {
+    assert(parts_.websocket());
+    if (parts_.secure()) {
+      ssl_ctx_.set_default_verify_paths();
+      ssl_ctx_.set_verify_mode(ssl::verify_peer);
+    }
+  }
+
+  void start() {
+    const tcp::resolver::results_type endpoints = resolver_.resolve(parts_.host, parts_.port);
+    const std::string host = parts_.host + ":" + parts_.port;
+    if (parts_.secure()) {
+      ssl_ws_.emplace(ioc_, ssl_ctx_);
+      ssl_ws_->set_option(websocket::stream_base::timeout::suggested(beast::role_type::client));
+      [[maybe_unused]] const int sni = SSL_set_tlsext_host_name(
+          ssl_ws_->next_layer().native_handle(), parts_.host.c_str());
+      assert(sni == 1);
+      beast::get_lowest_layer(*ssl_ws_).connect(endpoints);
+      ssl_ws_->next_layer().handshake(ssl::stream_base::client);
+      ssl_ws_->handshake(host, parts_.target);
+    } else {
+      plain_ws_.emplace(ioc_);
+      plain_ws_->set_option(websocket::stream_base::timeout::suggested(beast::role_type::client));
+      beast::get_lowest_layer(*plain_ws_).connect(endpoints);
+      plain_ws_->handshake(host, parts_.target);
+    }
+  }
+
+  std::string subscribe_new_heads() {
+    return subscribe(json::array({"newHeads"}), "newHeads");
+  }
+
+  std::string subscribe_logs(const json &filter) {
+    return subscribe(json::array({"logs", filter}), "logs");
+  }
+
+  std::optional<json> try_read_message() {
+    if (!queued_messages_.empty()) {
+      json payload = std::move(queued_messages_.front());
+      queued_messages_.pop_front();
+      return payload;
+    }
+    if (!has_pending_frame()) {
+      return std::nullopt;
+    }
+    return read_json();
+  }
+
+private:
+  std::string subscribe(const json &params, const std::string &label) {
+    const int request_id = next_request_id_++;
+    write_json({
+        {"jsonrpc", "2.0"},
+        {"id", request_id},
+        {"method", "eth_subscribe"},
+        {"params", params},
+    });
+    while (true) {
+      const json payload = read_json();
+      if (payload.contains("id")) {
+        assert(payload.at("id").get<int>() == request_id);
+        assert(payload.contains("result"));
+        const std::string subscription_id = normalize_hex(payload.at("result").get<std::string>());
+        sync_logger().info("rpc ws subscribed " + label + " " + subscription_id);
+        return subscription_id;
+      }
+      queued_messages_.push_back(payload);
+    }
+  }
+
+  void write_json(const json &payload) {
+    const std::string body = payload.dump();
+    if (parts_.secure()) {
+      ssl_ws_->write(asio::buffer(body));
+      return;
+    }
+    plain_ws_->write(asio::buffer(body));
+  }
+
+  json read_json() {
+    buffer_.consume(buffer_.size());
+    if (parts_.secure()) {
+      ssl_ws_->read(buffer_);
+      assert(ssl_ws_->got_text());
+    } else {
+      plain_ws_->read(buffer_);
+      assert(plain_ws_->got_text());
+    }
+    const std::string body = beast::buffers_to_string(buffer_.cdata());
+    buffer_.consume(buffer_.size());
+    return safe_json_parse(body);
+  }
+
+  bool has_pending_frame() {
+    boost::system::error_code ec;
+    const size_t available = parts_.secure()
+                                 ? beast::get_lowest_layer(*ssl_ws_).socket().available(ec)
+                                 : beast::get_lowest_layer(*plain_ws_).socket().available(ec);
+    assert(!ec);
+    return available > 0;
+  }
+
+  UrlParts parts_;
+  asio::io_context ioc_;
+  ssl::context ssl_ctx_;
+  tcp::resolver resolver_;
+  std::optional<websocket::stream<beast::ssl_stream<beast::tcp_stream>>> ssl_ws_;
+  std::optional<websocket::stream<beast::tcp_stream>> plain_ws_;
+  beast::flat_buffer buffer_;
+  std::deque<json> queued_messages_;
+  int next_request_id_ = 1;
+};
 
 struct MarketDataRow {
   std::string token_id;
@@ -575,7 +713,11 @@ json build_event_json(const TxContext &context,
 
 TrackerService::TrackerService(AppConfig config)
     : config_(std::move(config)),
-      history_root_(json::object({{"users", json::object()}})) {}
+      snapshot_root_(json::object()),
+      history_root_(json::object()) {
+  // 初始化logger
+  sync_logger().init(config_.log_file);
+}
 
 json TrackerService::rpc_call(const std::string &method, const json &params) {
   const json payload = {
@@ -625,8 +767,8 @@ json TrackerService::graph_query(const std::string &subgraph_id, const std::stri
       {"query", query},
       {"variables", variables},
   };
-  constexpr int kMaxAttempts = 8;
-  for (int attempt = 1; attempt <= kMaxAttempts; ++attempt) {
+  size_t retry = 0;
+  for (;;) {
     const HttpResponse response = http_post_json(url, payload);
     assert(response.status == 200);
     const json body = safe_json_parse(response.body);
@@ -637,17 +779,10 @@ json TrackerService::graph_query(const std::string &subgraph_id, const std::stri
       }
       return body.at("data");
     }
-    std::cerr << "[graph_query] label=" << label
-              << " subgraph=" << subgraph_id
-              << " attempt=" << attempt << "/" << kMaxAttempts
-              << " response=" << body.dump()
-              << std::endl;
-    if (attempt < kMaxAttempts) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(200 * attempt));
-    }
+    ++retry;
+    sync_logger().warn("subgraph retry " + std::to_string(retry) + ": " + label + " - " + body.dump());
+    std::this_thread::sleep_for(std::chrono::seconds(1));
   }
-  assert(false);
-  return json::object();
 }
 
 uint64_t TrackerService::rpc_block_number() {
@@ -818,10 +953,11 @@ void TrackerService::load_persisted_files() {
 
   {
     std::lock_guard<std::mutex> guard(mutex_);
-    history_root_ = load_json_file(config_.history_file, json::object({{"users", json::object()}}));
-    if (!history_root_.contains("users")) {
-      history_root_["users"] = json::object();
-    }
+    // 加载snapshot.json (用户持仓快照)
+    snapshot_root_ = load_json_file(config_.snapshot_file, json::object());
+    // 加载history.json (交易记录)
+    history_root_ = load_json_file(config_.history_file, json::object());
+    // 加载aggregate.json (聚合仓位)
     const json aggregate_payload = load_json_file(config_.aggregate_file, json::object());
     if (!aggregate_payload.is_object()) {
       return;
@@ -874,7 +1010,8 @@ void TrackerService::append_full_snapshot_locked(uint64_t block_number) {
           {"amount_raw", big_int_to_string(amount_raw)},
       });
     }
-    history_root_["users"][user]["snapshots"][block_key(block_number)] = {
+    // 快照写入snapshot_root_ (key: user -> block_key -> snapshot)
+    snapshot_root_[user][block_key(block_number)] = {
         {"block_number", block_number},
         {"captured_at_unix_sec", now_unix},
         {"stable_balances", {
@@ -1066,15 +1203,14 @@ json TrackerService::build_current_state_json_locked() {
         {"positions", positions},
     });
 
-    const json &history_user = history_root_["users"].contains(user) ? history_root_["users"].at(user) : json::object();
+    // 从snapshot_root_获取快照信息
+    const json &user_snapshots = snapshot_root_.contains(user) ? snapshot_root_.at(user) : json::object();
     json snapshot_rows = json::array();
-    if (history_user.contains("snapshots")) {
-      for (auto it = history_user.at("snapshots").begin(); it != history_user.at("snapshots").end(); ++it) {
-        snapshot_rows.push_back({
-            {"key", it.key()},
-            {"block_number", it.value().at("block_number")},
-        });
-      }
+    for (auto it = user_snapshots.begin(); it != user_snapshots.end(); ++it) {
+      snapshot_rows.push_back({
+          {"key", it.key()},
+          {"block_number", it.value().at("block_number")},
+      });
     }
     result["history_index"][user] = {
         {"snapshots", snapshot_rows},
@@ -1160,6 +1296,10 @@ void TrackerService::persist_aggregate_locked() {
   write_json_atomic(config_.aggregate_file, build_current_state_json_locked());
 }
 
+void TrackerService::persist_snapshot_locked() {
+  write_json_atomic(config_.snapshot_file, snapshot_root_);
+}
+
 void TrackerService::persist_history_locked() {
   write_json_atomic(config_.history_file, history_root_);
 }
@@ -1167,6 +1307,7 @@ void TrackerService::persist_history_locked() {
 void TrackerService::persist_all_locked() {
   persist_meta_locked();
   persist_aggregate_locked();
+  persist_snapshot_locked();
   persist_history_locked();
 }
 
@@ -1183,16 +1324,14 @@ json TrackerService::meta_json() {
 json TrackerService::history_json_for_user(const std::string &user) {
   const std::string normalized = normalize_address(user);
   std::lock_guard<std::mutex> guard(mutex_);
-  if (!history_root_["users"].contains(normalized)) {
-    return {
-        {"user", normalized},
-        {"snapshots", json::object()},
-        {"events", json::object()},
-    };
-  }
-  json result = history_root_["users"].at(normalized);
-  result["user"] = normalized;
-  return result;
+  // 从snapshot_root_获取快照，从history_root_获取交易记录
+  json snapshots = snapshot_root_.contains(normalized) ? snapshot_root_.at(normalized) : json::object();
+  json events = history_root_.contains(normalized) ? history_root_.at(normalized) : json::object();
+  return {
+      {"user", normalized},
+      {"snapshots", snapshots},
+      {"events", events},
+  };
 }
 
 json TrackerService::health_json() {
@@ -1517,12 +1656,17 @@ void TrackerService::bootstrap() {
 
 void TrackerService::full_resync() {
   force_resync_.store(false);
+  // 初始化进度显示
+  progress_board().init(SYNC_STAGES);
   {
     std::lock_guard<std::mutex> guard(mutex_);
     last_resync_started_at_ = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   }
 
   const std::vector<std::string> users = load_address_file_lines(config_.address_file);
+  progress_board().update("fetch_positions", 0, users.size());
+
+  // 先查 _meta 获取 block，减去 lag 得到稳定的 snapshot_block
   const uint64_t pnl_block = static_cast<uint64_t>(std::stoull(
       json_string_or_integer_string(graph_query(kPnlSubgraphId, kMetaQuery, json::object(), "pnl.meta")
                                         .at("_meta")
@@ -1533,12 +1677,15 @@ void TrackerService::full_resync() {
                                         .at("_meta")
                                         .at("block")
                                         .at("number"))));
-  const uint64_t snapshot_block = std::min(pnl_block, poly_block) - kSnapshotBlockLag;
+  const uint64_t snapshot_block = std::min(pnl_block, poly_block) - static_cast<uint64_t>(kSnapshotBlockLag);
+  sync_logger().info("_meta: pnl=" + std::to_string(pnl_block) + " poly=" + std::to_string(poly_block) +
+                     " snapshot=" + std::to_string(snapshot_block));
 
   std::map<std::string, std::map<std::string, BigInt>> snapshot_positions;
   for (const std::string &user : users) {
     snapshot_positions[user] = {};
   }
+  size_t users_processed = 0;
   for (const auto &group : chunked(users, config_.user_query_batch_limit)) {
     std::string after;
     while (true) {
@@ -1564,6 +1711,8 @@ void TrackerService::full_resync() {
       }
       after = rows.back().at("id").get<std::string>();
     }
+    users_processed += group.size();
+    progress_board().update("fetch_positions", users_processed, users.size());
   }
 
   {
@@ -1581,7 +1730,7 @@ void TrackerService::full_resync() {
   {
     std::lock_guard<std::mutex> guard(mutex_);
     append_full_snapshot_locked(snapshot_block);
-    persist_history_locked();
+    persist_snapshot_locked();  // 保存快照到snapshot.json
   }
 
   const uint64_t head_block = rpc_block_number();
@@ -1599,6 +1748,7 @@ void TrackerService::full_resync() {
     last_resync_finished_at_ = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     persist_all_locked();
   }
+  progress_board().finish();
 }
 
 std::vector<json> TrackerService::build_log_filters(const std::vector<std::string> &users,
@@ -1696,7 +1846,8 @@ bool TrackerService::apply_block_logs(const std::vector<json> &raw_logs, std::se
           user.token_amounts[transfer.token_id] = next;
         }
         json event = build_event_json(context, transfer, transfer.from_addr, "out", kind, fill);
-        json &event_bucket = history_root_["users"][transfer.from_addr]["events"][block_key(transfer.block_number)];
+        // 交易记录写入history_root_ (key: user -> block_key -> events array)
+        json &event_bucket = history_root_[transfer.from_addr][block_key(transfer.block_number)];
         if (!event_bucket.is_array()) {
           event_bucket = json::array();
         }
@@ -1729,7 +1880,8 @@ bool TrackerService::apply_block_logs(const std::vector<json> &raw_logs, std::se
         }
         user.token_amounts[transfer.token_id] += transfer.amount_raw;
         json event = build_event_json(context, transfer, transfer.to_addr, "in", kind, fill);
-        json &event_bucket = history_root_["users"][transfer.to_addr]["events"][block_key(transfer.block_number)];
+        // 交易记录写入history_root_ (key: user -> block_key -> events array)
+        json &event_bucket = history_root_[transfer.to_addr][block_key(transfer.block_number)];
         if (!event_bucket.is_array()) {
           event_bucket = json::array();
         }
@@ -1743,13 +1895,34 @@ bool TrackerService::apply_block_logs(const std::vector<json> &raw_logs, std::se
       }
     }
   }
-
-  if (!raw_logs.empty()) {
-    const uint64_t block_number = hex_to_u64(raw_logs.front().at("blockNumber").get<std::string>());
-    head_block_ = std::max(head_block_, block_number);
-    last_applied_block_ = std::max(last_applied_block_, block_number);
-  }
   return changed;
+}
+
+void TrackerService::apply_log_blocks(std::map<uint64_t, std::map<std::string, json>> blocks) {
+  for (auto &[block_number, logs_by_key] : blocks) {
+    std::vector<json> raw_logs;
+    raw_logs.reserve(logs_by_key.size());
+    for (auto &[_, row] : logs_by_key) {
+      raw_logs.push_back(std::move(row));
+    }
+    std::sort(raw_logs.begin(), raw_logs.end(), [](const json &lhs, const json &rhs) {
+      return log_sort_key(lhs) < log_sort_key(rhs);
+    });
+    std::set<std::string> touched_token_ids;
+    const bool changed = apply_block_logs(raw_logs, touched_token_ids);
+    if (!touched_token_ids.empty()) {
+      refresh_reference_data(true);
+    }
+    if (changed || !touched_token_ids.empty()) {
+      std::lock_guard<std::mutex> guard(mutex_);
+      persist_all_locked();
+    }
+    {
+      std::lock_guard<std::mutex> guard(mutex_);
+      last_applied_block_ = std::max(last_applied_block_, block_number);
+      head_block_ = std::max(head_block_, block_number);
+    }
+  }
 }
 
 void TrackerService::backfill_range(uint64_t from_block, uint64_t to_block) {
@@ -1782,30 +1955,7 @@ void TrackerService::backfill_range(uint64_t from_block, uint64_t to_block) {
         blocks[hex_to_u64(log.at("blockNumber").get<std::string>())][log_unique_key(log)] = log;
       }
     }
-
-    for (auto &[block_number, logs_by_key] : blocks) {
-      std::vector<json> raw_logs;
-      raw_logs.reserve(logs_by_key.size());
-      for (auto &[_, row] : logs_by_key) {
-        raw_logs.push_back(row);
-      }
-      std::sort(raw_logs.begin(), raw_logs.end(), [](const json &lhs, const json &rhs) {
-        return log_sort_key(lhs) < log_sort_key(rhs);
-      });
-      std::set<std::string> touched_token_ids;
-      const bool changed = apply_block_logs(raw_logs, touched_token_ids);
-      if (!touched_token_ids.empty()) {
-        refresh_reference_data(true);
-      }
-      if (changed || !touched_token_ids.empty()) {
-        std::lock_guard<std::mutex> guard(mutex_);
-        persist_all_locked();
-      }
-      {
-        std::lock_guard<std::mutex> guard(mutex_);
-        last_applied_block_ = std::max(last_applied_block_, block_number);
-      }
-    }
+    apply_log_blocks(std::move(blocks));
 
     {
       std::lock_guard<std::mutex> guard(mutex_);
@@ -1817,18 +1967,83 @@ void TrackerService::backfill_range(uint64_t from_block, uint64_t to_block) {
 }
 
 void TrackerService::run_live_until(std::chrono::steady_clock::time_point deadline) {
+  std::vector<std::string> users;
+  {
+    std::lock_guard<std::mutex> guard(mutex_);
+    users = watched_users_;
+  }
+  const std::vector<json> live_filters = build_log_filters(users, std::nullopt, std::nullopt);
+
+  RpcWebSocketStream ws_stream(config_.rpc_ws_url);
+  ws_stream.start();
+  const std::string new_heads_subscription_id = ws_stream.subscribe_new_heads();
+  std::set<std::string> log_subscription_ids;
+  for (const json &filter : live_filters) {
+    log_subscription_ids.insert(ws_stream.subscribe_logs(filter));
+  }
+  {
+    std::lock_guard<std::mutex> guard(mutex_);
+    query_counters_.rpc_ws_subscriptions += 1 + live_filters.size();
+  }
+
+  // 订阅全部建立完成后，只补一次 gap。后续实时事件只走 ws。
+  const uint64_t gap_end_block = rpc_block_number();
+  uint64_t resume_from = 0;
+  {
+    std::lock_guard<std::mutex> guard(mutex_);
+    head_block_ = std::max(head_block_, gap_end_block);
+    resume_from = last_applied_block_ + 1;
+  }
+  if (resume_from <= gap_end_block) {
+    backfill_range(resume_from, gap_end_block);
+  }
+
+  std::map<uint64_t, std::map<std::string, json>> pending_blocks;
   while (std::chrono::steady_clock::now() < deadline && !force_resync_.load()) {
-    const uint64_t head_block = rpc_block_number();
-    uint64_t resume_from = 0;
+    const std::optional<json> payload_opt = ws_stream.try_read_message();
+    if (!payload_opt.has_value()) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      continue;
+    }
+
     {
       std::lock_guard<std::mutex> guard(mutex_);
-      head_block_ = std::max(head_block_, head_block);
-      resume_from = last_applied_block_ + 1;
+      query_counters_.rpc_ws_messages += 1;
     }
-    if (resume_from <= head_block) {
-      backfill_range(resume_from, head_block);
+
+    const json &payload = *payload_opt;
+    assert(payload.contains("method"));
+    assert(payload.at("method").get<std::string>() == "eth_subscription");
+    assert(payload.contains("params") && payload.at("params").is_object());
+    const json &params = payload.at("params");
+    const std::string subscription_id = normalize_hex(params.at("subscription").get<std::string>());
+    assert(params.contains("result"));
+
+    if (subscription_id == new_heads_subscription_id) {
+      const uint64_t head_block = hex_to_u64(params.at("result").at("number").get<std::string>());
+      {
+        std::lock_guard<std::mutex> guard(mutex_);
+        head_block_ = std::max(head_block_, head_block);
+      }
+      std::map<uint64_t, std::map<std::string, json>> ready_blocks;
+      while (!pending_blocks.empty() && pending_blocks.begin()->first < head_block) {
+        auto node = pending_blocks.extract(pending_blocks.begin());
+        ready_blocks.insert(std::move(node));
+      }
+      if (!ready_blocks.empty()) {
+        apply_log_blocks(std::move(ready_blocks));
+      }
+      continue;
     }
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    assert(log_subscription_ids.contains(subscription_id));
+    const json &log = params.at("result");
+    assert(log.is_object());
+    const uint64_t block_number = hex_to_u64(log.at("blockNumber").get<std::string>());
+    if (block_number <= gap_end_block) {
+      continue;
+    }
+    pending_blocks[block_number][log_unique_key(log)] = log;
   }
 }
 

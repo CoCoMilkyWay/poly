@@ -1,5 +1,6 @@
 #include "tracker/http_client.hpp"
 #include "tracker/config.hpp"
+#include "tracker/logger.hpp"
 
 #include <boost/asio/connect.hpp>
 #include <boost/asio/ip/tcp.hpp>
@@ -12,8 +13,6 @@
 #include <atomic>
 #include <chrono>
 #include <deque>
-#include <iostream>
-#include <memory>
 #include <mutex>
 
 namespace tracker {
@@ -24,35 +23,6 @@ namespace beast = boost::beast;
 namespace http = beast::http;
 namespace ssl = asio::ssl;
 using tcp = asio::ip::tcp;
-
-struct ProgressState {
-  std::atomic<size_t> completed{0};
-  std::atomic<size_t> total{0};
-  std::atomic<size_t> pending{0};
-  std::atomic<size_t> retries{0};
-  std::atomic<bool> running{false};
-  std::mutex print_mutex;
-
-  void print_progress() {
-    if (!running.load()) {
-      return;
-    }
-    std::lock_guard<std::mutex> lock(print_mutex);
-    std::cerr << "\r[http] " << completed.load() << "/" << total.load()
-              << " done, " << pending.load() << " pending, "
-              << retries.load() << " retries\x1b[K" << std::flush;
-  }
-
-  void print_done() {
-    if (!running.load()) {
-      return;
-    }
-    std::lock_guard<std::mutex> lock(print_mutex);
-    std::cerr << "\r[http] " << completed.load() << "/" << total.load()
-              << " done, " << retries.load() << " retries total\x1b[K"
-              << std::endl;
-  }
-};
 
 struct PendingRequest {
   HttpRequest request;
@@ -66,19 +36,15 @@ public:
               std::deque<PendingRequest> &queue,
               std::vector<HttpResponse> &results,
               std::atomic<size_t> &active_count,
-              std::mutex &queue_mutex,
-              ProgressState &progress)
+              std::mutex &queue_mutex)
       : resolver_(ioc),
         ssl_ctx_(ssl_ctx),
         queue_(queue),
         results_(results),
         active_count_(active_count),
-        queue_mutex_(queue_mutex),
-        progress_(progress) {}
+        queue_mutex_(queue_mutex) {}
 
-  void start() {
-    start_next();
-  }
+  void start() { start_next(); }
 
 private:
   void start_next() {
@@ -91,8 +57,7 @@ private:
       current_ = std::move(queue_.front());
       queue_.pop_front();
     }
-    ++progress_.pending;
-    progress_.print_progress();
+    retry_count_ = 0;
     do_resolve();
   }
 
@@ -112,16 +77,13 @@ private:
   void do_connect() {
     if (current_.parts.secure()) {
       ssl_stream_.emplace(resolver_.get_executor(), ssl_ctx_);
-      [[maybe_unused]] const int sni_result = SSL_set_tlsext_host_name(ssl_stream_->native_handle(), current_.parts.host.c_str());
-      assert(sni_result == 1);
+      [[maybe_unused]] const int sni = SSL_set_tlsext_host_name(ssl_stream_->native_handle(), current_.parts.host.c_str());
+      assert(sni == 1);
       beast::get_lowest_layer(*ssl_stream_).expires_after(std::chrono::seconds(30));
       beast::get_lowest_layer(*ssl_stream_).async_connect(
           endpoints_,
           [self = shared_from_this()](beast::error_code ec, const tcp::endpoint &) {
-            if (ec) {
-              self->retry_with_delay();
-              return;
-            }
+            if (ec) { self->retry_with_delay(); return; }
             self->do_ssl_handshake();
           });
     } else {
@@ -130,49 +92,34 @@ private:
       plain_stream_->async_connect(
           endpoints_,
           [self = shared_from_this()](beast::error_code ec, const tcp::endpoint &) {
-            if (ec) {
-              self->retry_with_delay();
-              return;
-            }
+            if (ec) { self->retry_with_delay(); return; }
             self->do_write_plain();
           });
     }
   }
 
   void do_ssl_handshake() {
-    ssl_stream_->async_handshake(
-        ssl::stream_base::client,
+    ssl_stream_->async_handshake(ssl::stream_base::client,
         [self = shared_from_this()](beast::error_code ec) {
-          if (ec) {
-            self->retry_with_delay();
-            return;
-          }
+          if (ec) { self->retry_with_delay(); return; }
           self->do_write_ssl();
         });
   }
 
   void do_write_ssl() {
     build_request();
-    http::async_write(
-        *ssl_stream_, request_,
+    http::async_write(*ssl_stream_, request_,
         [self = shared_from_this()](beast::error_code ec, size_t) {
-          if (ec) {
-            self->retry_with_delay();
-            return;
-          }
+          if (ec) { self->retry_with_delay(); return; }
           self->do_read_ssl();
         });
   }
 
   void do_read_ssl() {
     response_ = {};
-    http::async_read(
-        *ssl_stream_, buffer_, response_,
+    http::async_read(*ssl_stream_, buffer_, response_,
         [self = shared_from_this()](beast::error_code ec, size_t) {
-          if (ec) {
-            self->retry_with_delay();
-            return;
-          }
+          if (ec) { self->retry_with_delay(); return; }
           self->handle_response();
           self->do_shutdown_ssl();
         });
@@ -180,35 +127,26 @@ private:
 
   void do_shutdown_ssl() {
     beast::get_lowest_layer(*ssl_stream_).expires_after(std::chrono::seconds(5));
-    ssl_stream_->async_shutdown(
-        [self = shared_from_this()](beast::error_code) {
-          self->ssl_stream_.reset();
-          self->finish_request();
-        });
+    ssl_stream_->async_shutdown([self = shared_from_this()](beast::error_code) {
+      self->ssl_stream_.reset();
+      self->start_next();
+    });
   }
 
   void do_write_plain() {
     build_request();
-    http::async_write(
-        *plain_stream_, request_,
+    http::async_write(*plain_stream_, request_,
         [self = shared_from_this()](beast::error_code ec, size_t) {
-          if (ec) {
-            self->retry_with_delay();
-            return;
-          }
+          if (ec) { self->retry_with_delay(); return; }
           self->do_read_plain();
         });
   }
 
   void do_read_plain() {
     response_ = {};
-    http::async_read(
-        *plain_stream_, buffer_, response_,
+    http::async_read(*plain_stream_, buffer_, response_,
         [self = shared_from_this()](beast::error_code ec, size_t) {
-          if (ec) {
-            self->retry_with_delay();
-            return;
-          }
+          if (ec) { self->retry_with_delay(); return; }
           self->handle_response();
           self->do_shutdown_plain();
         });
@@ -218,14 +156,13 @@ private:
     boost::system::error_code ec;
     plain_stream_->socket().shutdown(tcp::socket::shutdown_both, ec); // NOLINT
     plain_stream_.reset();
-    finish_request();
+    start_next();
   }
 
   void build_request() {
-    const http::verb verb = current_.request.method == "POST" ? http::verb::post : http::verb::get;
     request_ = {};
     request_.version(11);
-    request_.method(verb);
+    request_.method(current_.request.method == "POST" ? http::verb::post : http::verb::get);
     request_.target(current_.parts.target);
     request_.set(http::field::host, current_.parts.host);
     request_.set(http::field::user_agent, "tracker");
@@ -245,26 +182,21 @@ private:
     };
   }
 
-  void finish_request() {
-    --progress_.pending;
-    ++progress_.completed;
-    progress_.print_progress();
-    start_next();
-  }
-
   void retry_with_delay() {
     ssl_stream_.reset();
     plain_stream_.reset();
     buffer_.clear();
-    ++progress_.retries;
-    progress_.print_progress();
+    ++retry_count_;
+    sync_logger().warn("http retry " + std::to_string(retry_count_) + ": " + current_.request.url);
 
     auto timer = std::make_shared<asio::steady_timer>(resolver_.get_executor());
-    timer->expires_after(std::chrono::milliseconds(200));
+    timer->expires_after(std::chrono::milliseconds(500));
     timer->async_wait([self = shared_from_this(), timer](beast::error_code) {
       self->do_resolve();
     });
   }
+
+  size_t retry_count_ = 0;
 
   tcp::resolver resolver_;
   ssl::context &ssl_ctx_;
@@ -272,13 +204,11 @@ private:
   std::vector<HttpResponse> &results_;
   std::atomic<size_t> &active_count_;
   std::mutex &queue_mutex_;
-  ProgressState &progress_;
 
   PendingRequest current_;
   tcp::resolver::results_type endpoints_;
   std::optional<beast::ssl_stream<beast::tcp_stream>> ssl_stream_;
   std::optional<beast::tcp_stream> plain_stream_;
-
   http::request<http::string_body> request_;
   http::response<http::string_body> response_;
   beast::flat_buffer buffer_;
@@ -286,7 +216,7 @@ private:
 
 } // namespace
 
-std::vector<HttpResponse> http_batch_internal(const std::vector<HttpRequest> &requests, size_t concurrency, bool show_progress) {
+std::vector<HttpResponse> http_batch(const std::vector<HttpRequest> &requests, size_t concurrency) {
   assert(!requests.empty());
   assert(concurrency > 0);
 
@@ -302,10 +232,6 @@ std::vector<HttpResponse> http_batch_internal(const std::vector<HttpRequest> &re
     });
   }
 
-  ProgressState progress;
-  progress.total = requests.size();
-  progress.running = show_progress;
-
   asio::io_context ioc;
   ssl::context ssl_ctx(ssl::context::tlsv12_client);
   ssl_ctx.set_default_verify_paths();
@@ -313,22 +239,11 @@ std::vector<HttpResponse> http_batch_internal(const std::vector<HttpRequest> &re
 
   std::atomic<size_t> active_count = std::min(concurrency, requests.size());
   for (size_t i = 0; i < active_count; ++i) {
-    std::make_shared<HttpSession>(ioc, ssl_ctx, queue, results, active_count, queue_mutex, progress)->start();
+    std::make_shared<HttpSession>(ioc, ssl_ctx, queue, results, active_count, queue_mutex)->start();
   }
 
-  if (show_progress) {
-    progress.print_progress();
-  }
   ioc.run();
-  if (show_progress) {
-    progress.print_done();
-  }
-
   return results;
-}
-
-std::vector<HttpResponse> http_batch(const std::vector<HttpRequest> &requests, size_t concurrency) {
-  return http_batch_internal(requests, concurrency, requests.size() > 1);
 }
 
 HttpResponse http_get(const std::string &url) {

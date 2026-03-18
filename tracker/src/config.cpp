@@ -47,7 +47,7 @@ RpcNode select_rpc_node() {
     return kDefaultRpc;
   }
   const std::string name(env_name);
-  constexpr std::array<RpcNode, 3> kAllNodes = {kRpcAlchemy, kRpcDrpc};
+  constexpr std::array<RpcNode, 2> kAllNodes = {kRpcAlchemy, kRpcDrpc};
   for (const RpcNode &node : kAllNodes) {
     if (node.name == name) {
       return node;
@@ -67,8 +67,10 @@ AppConfig AppConfig::load(const std::filesystem::path &tracker_dir) {
   config.tracker_dir = std::filesystem::weakly_canonical(tracker_dir);
   config.address_file = config.tracker_dir / "address.txt";
   config.meta_file = config.tracker_dir / "meta.json";
-  config.aggregate_file = config.tracker_dir / "aggregate.json";
+  config.snapshot_file = config.tracker_dir / "snapshot.json";
   config.history_file = config.tracker_dir / "history.json";
+  config.aggregate_file = config.tracker_dir / "aggregate.json";
+  config.log_file = config.tracker_dir / "sync.log";
   config.seed_rebuild_file = config.tracker_dir / "rebuild.json";
 
   // RPC (from constants, env override for URL)

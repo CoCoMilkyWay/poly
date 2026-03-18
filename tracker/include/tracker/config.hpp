@@ -92,8 +92,10 @@ struct AppConfig {
   std::filesystem::path tracker_dir;
   std::filesystem::path address_file;
   std::filesystem::path meta_file;
-  std::filesystem::path aggregate_file;
-  std::filesystem::path history_file;
+  std::filesystem::path snapshot_file;   // 用户持仓快照 (key: user, block_num)
+  std::filesystem::path history_file;    // 交易记录 (key: user, block_num)
+  std::filesystem::path aggregate_file;  // 聚合仓位 (实时计算的当前状态)
+  std::filesystem::path log_file;
   std::filesystem::path seed_rebuild_file;
 
   // RPC settings (from constants or env override)

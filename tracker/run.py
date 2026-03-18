@@ -30,9 +30,6 @@ REQUIRED_TOOLS = [
 REQUIRED_PACKAGES = [
     "build-essential",
     "libssl-dev",
-    "libboost-system-dev",
-    "libboost-thread-dev",
-    "nlohmann-json3-dev",
     "ninja-build",
 ]
 

@@ -39,7 +39,6 @@ inline constexpr const char *kPositionConvertTopic = "0xb03d19dddbc72a87e735ff0e
 inline constexpr const char *kUsdcE = "0x2791bca1f2de4661ed88a30c99a7a9449aa84174";
 inline constexpr const char *kWrappedCollateral = "0x3a3bd7bb9528e159577f7c2e685cc81a765002e2";
 
-inline constexpr int64_t kSnapshotBlockLag = 64;
 inline constexpr int64_t kTransferFlatLogScale = 10'000;
 inline constexpr long double kUnit = 1'000'000.0L;
 

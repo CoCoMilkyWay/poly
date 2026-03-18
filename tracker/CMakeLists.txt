@@ -13,12 +13,12 @@ endif()
 
 add_compile_options(-O2 -g -Wall -Wextra -Wpedantic)
 
-find_package(Boost REQUIRED COMPONENTS system thread)
 find_package(OpenSSL REQUIRED)
-find_package(nlohmann_json 3.2.0 REQUIRED)
 
 set(TRACKER_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 set(TRACKER_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set(CORE_BACKEND_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../core-backend/include)
+set(CORE_BACKEND_NLOHMANN_INCLUDE_DIR ${CORE_BACKEND_INCLUDE_DIR}/package)
 set(TRACKER_COMPILE_COMMANDS_LINK ${CMAKE_CURRENT_SOURCE_DIR}/compile_commands.json)
 
 file(REMOVE "${TRACKER_COMPILE_COMMANDS_LINK}")
@@ -43,15 +43,18 @@ target_compile_options(tracker_backend PRIVATE
     $<$<CONFIG:MinSizeRel>:-UNDEBUG>
 )
 
+target_compile_definitions(tracker_backend PRIVATE
+    BOOST_ERROR_CODE_HEADER_ONLY
+)
+
 target_include_directories(tracker_backend PRIVATE
+    ${CORE_BACKEND_INCLUDE_DIR}
+    ${CORE_BACKEND_NLOHMANN_INCLUDE_DIR}
     ${TRACKER_INCLUDE_DIR}
 )
 
 target_link_libraries(tracker_backend PRIVATE
-    Boost::system
-    Boost::thread
     OpenSSL::SSL
     OpenSSL::Crypto
-    nlohmann_json::nlohmann_json
     pthread
 )

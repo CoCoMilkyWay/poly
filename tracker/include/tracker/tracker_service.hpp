@@ -83,6 +83,7 @@ private:
   void append_full_snapshot_locked(uint64_t block_number);
   void persist_meta_locked();
   void persist_aggregate_locked();
+  void persist_snapshot_locked();
   void persist_history_locked();
   void persist_all_locked();
   json build_current_state_json_locked();
@@ -96,6 +97,7 @@ private:
   void full_resync();
   void run_live_until(std::chrono::steady_clock::time_point deadline);
   void backfill_range(uint64_t from_block, uint64_t to_block);
+  void apply_log_blocks(std::map<uint64_t, std::map<std::string, json>> blocks);
   void refresh_reference_data(bool missing_only);
   void refresh_stable_balances(const std::string &block_tag);
   std::vector<json> build_log_filters(const std::vector<std::string> &users,
@@ -116,7 +118,8 @@ private:
   std::map<std::string, TokenMeta> tokens_;
   std::map<std::string, ConditionMeta> conditions_;
   std::deque<json> recent_events_;
-  json history_root_;
+  json snapshot_root_;  // 用户持仓快照 (key: user -> block_num -> snapshot)
+  json history_root_;   // 交易记录 (key: user -> block_num -> events)
   QueryCounters query_counters_;
   uint64_t last_snapshot_block_ = 0;
   uint64_t last_applied_block_ = 0;
