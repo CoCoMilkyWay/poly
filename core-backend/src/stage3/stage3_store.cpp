@@ -156,7 +156,7 @@ void rebuild_runtime_indices(Stage3Runtime *rt) {
     while (tok_idx != NULL_IDX) {
       const TokenSlot &tok = rt->token_pool[tok_idx];
       if (tok.cond_idx >= 0) {
-        rt->token_index[shard].map[TokenIndex::make_key(user_idx, tok.cond_idx, tok.token_idx)] = tok_idx;
+        rt->token_index[shard].map[TokenIndex::make_key(user_idx, tok.cond_idx, tok.token_idx, tok.collateral)] = tok_idx;
       }
       tok_idx = tok.next;
     }
@@ -514,7 +514,7 @@ void token_free(Stage3Runtime *rt, uint32_t idx) {
   TokenSlot &tok = rt->token_pool[idx];
   const uint32_t shard = token_shard_from_index(idx);
   if (tok.cond_idx >= 0) {
-    rt->token_index[shard].map.erase(TokenIndex::make_key(tok.user_idx, tok.cond_idx, tok.token_idx));
+    rt->token_index[shard].map.erase(TokenIndex::make_key(tok.user_idx, tok.cond_idx, tok.token_idx, tok.collateral));
   }
   tok.cond_idx = -1;
   tok.next = rt->header->token_free_head[shard];
@@ -539,9 +539,12 @@ void feature_free(Stage3Runtime *rt, uint32_t idx) {
     rt->feature_index[shard].map.erase(FeatureIndex::make_key(feat.user_idx, feat.bucket, feat.tag_id));
     if (feat.tag_id == -1 &&
         feat.bucket >= 0 &&
-        feat.bucket < static_cast<int32_t>(rt->global_feature_user_counts.size()) &&
-        rt->global_feature_user_counts[feat.bucket] > 0) {
-      rt->global_feature_user_counts[feat.bucket]--;
+        feat.bucket < static_cast<int32_t>(rt->global_feature_user_counts.size())) {
+      std::lock_guard<std::mutex> guard(rt->global_feature_user_counts_mu);
+      if (feat.bucket < static_cast<int32_t>(rt->global_feature_user_counts.size()) &&
+          rt->global_feature_user_counts[feat.bucket] > 0) {
+        rt->global_feature_user_counts[feat.bucket]--;
+      }
     }
   }
   feat.flags = 0;
@@ -592,8 +595,12 @@ void sharpe_point_free(Stage3Runtime *rt, uint32_t idx) {
 // Token state operations
 // ============================================================================
 
-TokenSlot *token_find(Stage3Runtime *rt, uint32_t user_idx, int32_t cond_idx, int16_t token_idx) {
-  const uint64_t key = TokenIndex::make_key(user_idx, cond_idx, token_idx);
+TokenSlot *token_find(Stage3Runtime *rt,
+                      uint32_t user_idx,
+                      int32_t cond_idx,
+                      int16_t token_idx,
+                      int16_t collateral) {
+  const uint64_t key = TokenIndex::make_key(user_idx, cond_idx, token_idx, collateral);
   auto &map = rt->token_index[user_shard(rt, user_idx)].map;
   auto it = map.find(key);
   if (it == map.end()) {
@@ -603,7 +610,7 @@ TokenSlot *token_find(Stage3Runtime *rt, uint32_t user_idx, int32_t cond_idx, in
 }
 
 TokenSlot *token_get_or_create(Stage3Runtime *rt, uint32_t user_idx, int32_t cond_idx, int16_t token_idx, int16_t collateral) {
-  TokenSlot *existing = token_find(rt, user_idx, cond_idx, token_idx);
+  TokenSlot *existing = token_find(rt, user_idx, cond_idx, token_idx, collateral);
   if (existing)
     return existing;
 
@@ -620,7 +627,7 @@ TokenSlot *token_get_or_create(Stage3Runtime *rt, uint32_t user_idx, int32_t con
   tok->next = rt->users[user_idx].token_head;
 
   rt->users[user_idx].token_head = idx;
-  rt->token_index[user_shard(rt, user_idx)].map[TokenIndex::make_key(user_idx, cond_idx, token_idx)] = idx;
+  rt->token_index[user_shard(rt, user_idx)].map[TokenIndex::make_key(user_idx, cond_idx, token_idx, collateral)] = idx;
 
   return tok;
 }
@@ -677,6 +684,7 @@ FeatureSlot *feature_get_or_create(Stage3Runtime *rt, uint32_t user_idx, int32_t
   rt->users[user_idx].feature_head = idx;
   rt->users[user_idx].feature_count++;
   if (tag_id == -1) {
+    std::lock_guard<std::mutex> guard(rt->global_feature_user_counts_mu);
     if (bucket >= static_cast<int32_t>(rt->global_feature_user_counts.size())) {
       rt->global_feature_user_counts.resize(static_cast<size_t>(bucket) + 1, 0);
     }

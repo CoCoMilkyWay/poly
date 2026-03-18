@@ -327,13 +327,13 @@
     let _s3fNextFilterId = 1;
     let _s3fLastSortFeature = 'shp'; // 记录上次排序的特征，用于单位转换
     const _s3fDefaultFilters = [
-        { industry: 'ALL', feature: 'exp', window: '100', arith: '', rhsIndustry: 'ALL', rhsFeature: 'exp', rhsWindow: '100', op: '>', value: '10000' },
-        { industry: 'ALL', feature: 'tok', window: '100', arith: '', rhsIndustry: 'ALL', rhsFeature: 'exp', rhsWindow: '100', op: '>', value: '5' },
-        { industry: 'ALL', feature: 'tok', window: '100', arith: '', rhsIndustry: 'ALL', rhsFeature: 'exp', rhsWindow: '100', op: '<', value: '50' },
-        { industry: 'ALL', feature: 'vol', window: '100', arith: '', rhsIndustry: 'ALL', rhsFeature: 'exp', rhsWindow: '100', op: '>', value: '10000' },
-        { industry: 'ALL', feature: 'hp', window: '100', arith: '', rhsIndustry: 'ALL', rhsFeature: 'exp', rhsWindow: '100', op: '<', value: '500000' },
-        { industry: 'ALL', feature: 'hp', window: '100', arith: '', rhsIndustry: 'ALL', rhsFeature: 'exp', rhsWindow: '100', op: '>', value: '50000' },
-        { industry: 'Politics_World', feature: 'exp', window: '100', arith: '/', rhsIndustry: 'ALL', rhsFeature: 'exp', rhsWindow: '100', op: '>', value: '0.8' },
+        { industry: 'ALL', feature: 'exp', window: '100', arith: '', rhsIndustry: 'ALL', rhsFeature: 'exp', rhsWindow: '100', op: '>', value: '5000' },
+        { industry: 'ALL', feature: 'vol', window: '100', arith: '/', rhsIndustry: 'ALL', rhsFeature: 'exp', rhsWindow: '100', op: '>', value: '1.0' },
+        { industry: 'ALL', feature: 'tok', window: '1k', arith: '', rhsIndustry: 'ALL', rhsFeature: 'exp', rhsWindow: '100', op: '>', value: '10' },
+        { industry: 'ALL', feature: 'tok', window: '1k', arith: '', rhsIndustry: 'ALL', rhsFeature: 'exp', rhsWindow: '100', op: '<', value: '100' },
+        { industry: 'ALL', feature: 'hp', window: '1k', arith: '', rhsIndustry: 'ALL', rhsFeature: 'exp', rhsWindow: '100', op: '>', value: '50000' },
+        { industry: 'ALL', feature: 'hp', window: '1k', arith: '', rhsIndustry: 'ALL', rhsFeature: 'exp', rhsWindow: '100', op: '<', value: '500000' },
+        { industry: 'Politics_World', feature: 'exp', window: '100', arith: '/', rhsIndustry: 'ALL', rhsFeature: 'exp', rhsWindow: '100', op: '>', value: '0.5' },
     ];
 
     // 金钱相关特征需要除以 1e6 转换为 USD

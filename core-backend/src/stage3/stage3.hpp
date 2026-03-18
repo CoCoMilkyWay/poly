@@ -9,9 +9,11 @@
 #include <cassert>
 #include <cctype>
 #include <cstdint>
+#include <limits>
 #include <list>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -29,16 +31,16 @@ namespace stage3 {
 // Constants
 // ============================================================================
 
-constexpr size_t MAX_CONDITIONS = 1'000'000;       // 100万 conditions
-constexpr size_t MAX_USERS = 10'000'000;           // 1000万用户
-constexpr size_t MAX_TOKENS = 100'000'000;         // 1亿 token slots
-constexpr size_t MAX_FEATURES = 500'000'000;       // 5亿 feature slots
-constexpr size_t MAX_SHARPE_BUCKETS = 50'000'000;  // 5000万 sharpe bucket
-constexpr size_t MAX_SHARPE_POINTS = 500'000'000;  // 5亿 sharpe 点
-constexpr size_t OUTCOME_MAX = 256;                // 最大 outcome 数
-constexpr uint32_t NULL_IDX = UINT32_MAX;          // 空指针
-constexpr uint64_t NULL_LOG_OFFSET = UINT64_MAX;   // events.log 空指针
-constexpr uint32_t STAGE3_SYNC_SHARD_COUNT = 16;   // 并行 shard 数
+constexpr size_t MAX_CONDITIONS = 1'000'000;      // 100万 conditions
+constexpr size_t MAX_USERS = 10'000'000;          // 1000万用户
+constexpr size_t MAX_TOKENS = 100'000'000;        // 1亿 token slots
+constexpr size_t MAX_FEATURES = 500'000'000;      // 5亿 feature slots
+constexpr size_t MAX_SHARPE_BUCKETS = 50'000'000; // 5000万 sharpe bucket
+constexpr size_t MAX_SHARPE_POINTS = 500'000'000; // 5亿 sharpe 点
+constexpr size_t OUTCOME_MAX = 256;               // 最大 outcome 数
+constexpr uint32_t NULL_IDX = UINT32_MAX;         // 空指针
+constexpr uint64_t NULL_LOG_OFFSET = UINT64_MAX;  // events.log 空指针
+constexpr uint32_t STAGE3_SYNC_SHARD_COUNT = 16;  // 并行 shard 数
 
 static_assert(MAX_TOKENS % STAGE3_SYNC_SHARD_COUNT == 0);
 static_assert(MAX_FEATURES % STAGE3_SYNC_SHARD_COUNT == 0);
@@ -293,7 +295,7 @@ struct UserBlock { // 128B
   uint64_t timeline_tail; // 8B
 
   // Sharpe calculation anchors
-  int64_t pnl_before_first_sharpe_bucket; // 8B, p0 anchor for sharpe windows
+  int64_t pnl_before_first_sharpe_bucket;      // 8B, p0 anchor for sharpe windows
   int64_t exposure_before_first_sharpe_bucket; // 8B, exposure anchor for sharpe windows
 
   uint8_t _reserved[16];
@@ -347,10 +349,21 @@ static_assert(sizeof(UserIndexEntry) == 32);
 struct TokenIndex {
   std::unordered_map<uint64_t, uint32_t> map;
 
-  static uint64_t make_key(uint32_t user_idx, int32_t cond_idx, int16_t token_idx) {
+  static uint64_t make_key(uint32_t user_idx,
+                           int32_t cond_idx,
+                           int16_t token_idx,
+                           int16_t collateral) {
+    assert(cond_idx >= 0);
+    assert(static_cast<size_t>(cond_idx) < MAX_CONDITIONS);
+    assert(token_idx >= 0);
+    assert(token_idx <= std::numeric_limits<uint8_t>::max());
+    assert(collateral >= 0);
+    assert(collateral <= 15);
+
     return (static_cast<uint64_t>(user_idx) << 32) |
-           (static_cast<uint64_t>(static_cast<uint16_t>(cond_idx)) << 16) |
-           static_cast<uint16_t>(token_idx);
+           (static_cast<uint64_t>(static_cast<uint32_t>(cond_idx) & 0xFFFFFu) << 12) |
+           (static_cast<uint64_t>(static_cast<uint16_t>(token_idx) & 0xFFu) << 4) |
+           static_cast<uint64_t>(static_cast<uint16_t>(collateral) & 0xFu);
   }
 };
 
@@ -513,6 +526,7 @@ struct Stage3Runtime {
   std::array<FeatureIndex, STAGE3_SYNC_SHARD_COUNT> feature_index;
   std::array<SharpeBucketIndex, STAGE3_SYNC_SHARD_COUNT> sharpe_bucket_index;
   std::vector<int64_t> global_feature_user_counts;
+  std::mutex global_feature_user_counts_mu;
   QueryCacheManager query_cache;
   DirtyUserSet dirty_users;
   UserRankCache rank_cache;
@@ -572,7 +586,11 @@ void sharpe_point_free(Stage3Runtime *rt, uint32_t idx);
 // API declarations - Token state operations
 // ============================================================================
 
-TokenSlot *token_find(Stage3Runtime *rt, uint32_t user_idx, int32_t cond_idx, int16_t token_idx);
+TokenSlot *token_find(Stage3Runtime *rt,
+                      uint32_t user_idx,
+                      int32_t cond_idx,
+                      int16_t token_idx,
+                      int16_t collateral);
 TokenSlot *token_get_or_create(Stage3Runtime *rt, uint32_t user_idx, int32_t cond_idx, int16_t token_idx, int16_t collateral);
 void token_remove_if_empty(Stage3Runtime *rt, uint32_t user_idx, TokenSlot *tok);
 

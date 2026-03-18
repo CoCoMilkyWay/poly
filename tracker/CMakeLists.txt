@@ -37,6 +37,12 @@ add_executable(tracker_backend
     ${TRACKER_SRC_DIR}/http_server.cpp
 )
 
+target_compile_options(tracker_backend PRIVATE
+    $<$<CONFIG:Release>:-UNDEBUG>
+    $<$<CONFIG:RelWithDebInfo>:-UNDEBUG>
+    $<$<CONFIG:MinSizeRel>:-UNDEBUG>
+)
+
 target_include_directories(tracker_backend PRIVATE
     ${TRACKER_INCLUDE_DIR}
 )
