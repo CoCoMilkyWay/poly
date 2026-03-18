@@ -232,6 +232,6 @@ int main(int argc, char *argv[]) {
     std::cout << "[Main] Stage2 restore cache 快照完成" << std::endl;
   }
 
-  std::cout << "[Main] 已退出" << std::endl;
+  std::cout << "[Main] 主流程退出, 析构中..." << std::endl;
   return 0;
 }

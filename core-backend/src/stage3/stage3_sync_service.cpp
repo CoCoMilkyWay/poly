@@ -7,6 +7,7 @@
 #include <cctype>
 #include <filesystem>
 #include <fstream>
+#include <iostream>
 #include <thread>
 
 namespace stage3 {
@@ -67,9 +68,12 @@ StageSync::~StageSync() {
   }
   assert(rt_state_.load() != kRtStateQuerying);
   if (rt_ != nullptr) {
+    std::cout << "[Stage3] msync runtime..." << std::endl;
     stage3_sync(rt_);
+    std::cout << "[Stage3] close runtime (final msync + munmap)..." << std::endl;
     stage3_close(rt_);
     rt_ = nullptr;
+    std::cout << "[Stage3] runtime closed" << std::endl;
   }
 }
 

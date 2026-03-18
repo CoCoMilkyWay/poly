@@ -4,6 +4,7 @@
 #include <chrono>
 #include <cstring>
 #include <filesystem>
+#include <iostream>
 
 namespace stage2 {
 
@@ -19,6 +20,7 @@ EventBuilder::EventBuilder(Database &stage1_db, Database &stage2_db)
 EventBuilder::~EventBuilder() {
   {
     std::unique_lock<std::mutex> lock(commit_mu_);
+    std::cout << "[Stage2] waiting commit worker idle..." << std::endl;
     while (commit_busy_) {
       if (commit_result_.has_value()) {
         reap_commit_result_locked();
@@ -28,10 +30,12 @@ EventBuilder::~EventBuilder() {
     }
     commit_stop_ = true;
   }
+  std::cout << "[Stage2] join commit worker thread..." << std::endl;
   commit_cv_.notify_all();
   if (commit_thread_.joinable()) {
     commit_thread_.join();
   }
+  std::cout << "[Stage2] commit worker joined" << std::endl;
 }
 
 void EventBuilder::init_schema() {
