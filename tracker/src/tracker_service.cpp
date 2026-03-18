@@ -30,29 +30,23 @@ inline constexpr const char *kGammaApiBase = "https://gamma-api.polymarket.com";
 inline constexpr const char *kPolymarketSubgraphId = "81Dm16JjuFSrqz813HysXoUPvzTwE7fsfPk2RTf66nyC";
 inline constexpr const char *kPnlSubgraphId = "6c58N5U4MtQE2Y8njfVrrAfRykzfqajMGeTMEvMmskVz";
 
-inline constexpr const char *kMetaQuery = R"(
-query Meta {
+
+// 单用户查询，不带 block 参数，带 _meta 返回实际 block
+// 注: The Graph 对 user_in 多用户查询会路由到坏 indexer，所以只能单用户查询
+inline constexpr const char *kUserPositionsLatestQuery = R"(
+query UserPositions($user: String!, $after: String!, $first: Int!) {
   _meta {
     block {
       number
     }
   }
-}
-)";
-
-inline constexpr int64_t kSnapshotBlockLag = 64;
-
-inline constexpr const char *kUserPositionsQuery = R"(
-query UserPositions($users: [String!]!, $after: String!, $block: Int!, $first: Int!) {
   userPositions(
     first: $first
     orderBy: id
     orderDirection: asc
-    block: { number: $block }
-    where: {user_in: $users, amount_gt: "0", id_gt: $after}
+    where: {user: $user, amount_gt: "0", id_gt: $after}
   ) {
     id
-    user
     tokenId
     amount
   }
@@ -164,7 +158,7 @@ private:
         assert(payload.at("id").get<int>() == request_id);
         assert(payload.contains("result"));
         const std::string subscription_id = normalize_hex(payload.at("result").get<std::string>());
-        sync_logger().info("rpc ws subscribed " + label + " " + subscription_id);
+        logger().info("rpc ws subscribed " + label + " " + subscription_id);
         return subscription_id;
       }
       queued_messages_.push_back(payload);
@@ -716,7 +710,7 @@ TrackerService::TrackerService(AppConfig config)
       snapshot_root_(json::object()),
       history_root_(json::object()) {
   // 初始化logger
-  sync_logger().init(config_.log_file);
+  logger().init(config_.log_file);
 }
 
 json TrackerService::rpc_call(const std::string &method, const json &params) {
@@ -780,7 +774,7 @@ json TrackerService::graph_query(const std::string &subgraph_id, const std::stri
       return body.at("data");
     }
     ++retry;
-    sync_logger().warn("subgraph retry " + std::to_string(retry) + ": " + label + " - " + body.dump());
+    logger().warn("subgraph retry " + std::to_string(retry) + ": " + label + " - " + body.dump());
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
 }
@@ -1376,6 +1370,7 @@ void TrackerService::refresh_stable_balances(const std::string &block_tag) {
     return;
   }
   const json responses = rpc_batch_call(requests);
+  logger().info("stage3: fetch_balances batch(" + std::to_string(requests.size()) + ")");
   assert(responses.size() == refs.size());
   std::lock_guard<std::mutex> guard(mutex_);
   for (size_t index = 0; index < refs.size(); ++index) {
@@ -1412,12 +1407,29 @@ void TrackerService::refresh_reference_data(bool missing_only) {
 
   if (!active_token_ids.empty()) {
     std::map<std::string, MarketDataRow> markets;
+    
+    // 构建所有 marketDatas 请求
+    std::vector<HttpRequest> market_requests;
+    const std::string poly_url = "https://gateway.thegraph.com/api/" + config_.graph_api_key + "/subgraphs/id/" + std::string(kPolymarketSubgraphId);
     for (const auto &group : chunked(active_token_ids, config_.graph_id_batch_limit)) {
-      const json data = graph_query(
-          kPolymarketSubgraphId,
-          kMarketDataLatestQuery,
-          {{"ids", group}},
-          "marketDatas.latest");
+      const json payload = {{"query", kMarketDataLatestQuery}, {"variables", {{"ids", std::vector<std::string>(group.begin(), group.end())}}}};
+      market_requests.push_back({.url = poly_url, .method = "POST", .body = payload.dump()});
+    }
+    
+    // 并发执行
+    const std::vector<HttpResponse> market_responses = http_batch(market_requests, config_.http_concurrency);
+    logger().info("stage4: fetch_market_data batch(" + std::to_string(market_responses.size()) + ")");
+    {
+      std::lock_guard<std::mutex> guard(mutex_);
+      query_counters_.subgraph_queries += market_responses.size();
+    }
+    
+    // 处理响应
+    for (const HttpResponse &response : market_responses) {
+      assert(response.status == 200);
+      const json body = safe_json_parse(response.body);
+      assert(!body.contains("errors") && body.contains("data"));
+      const json &data = body.at("data");
       assert(data.contains("marketDatas") && data.at("marketDatas").is_array());
       for (const json &item : data.at("marketDatas")) {
         MarketDataRow row;
@@ -1494,12 +1506,28 @@ void TrackerService::refresh_reference_data(bool missing_only) {
 
     std::vector<std::string> missing_condition_ids(condition_ids_for_rows.begin(), condition_ids_for_rows.end());
     if (!missing_condition_ids.empty()) {
+      // 构建所有 conditions 请求
+      std::vector<HttpRequest> cond_requests;
+      const std::string pnl_url = "https://gateway.thegraph.com/api/" + config_.graph_api_key + "/subgraphs/id/" + std::string(kPnlSubgraphId);
       for (const auto &group : chunked(missing_condition_ids, config_.graph_id_batch_limit)) {
-        const json data = graph_query(
-            kPnlSubgraphId,
-            kConditionsLatestQuery,
-            {{"ids", group}},
-            "conditions.latest");
+        const json payload = {{"query", kConditionsLatestQuery}, {"variables", {{"ids", std::vector<std::string>(group.begin(), group.end())}}}};
+        cond_requests.push_back({.url = pnl_url, .method = "POST", .body = payload.dump()});
+      }
+      
+      // 并发执行
+      const std::vector<HttpResponse> cond_responses = http_batch(cond_requests, config_.http_concurrency);
+      logger().info("stage5: fetch_conditions batch(" + std::to_string(cond_responses.size()) + ")");
+      {
+        std::lock_guard<std::mutex> guard(mutex_);
+        query_counters_.subgraph_queries += cond_responses.size();
+      }
+      
+      // 处理响应
+      for (const HttpResponse &response : cond_responses) {
+        assert(response.status == 200);
+        const json body = safe_json_parse(response.body);
+        assert(!body.contains("errors") && body.contains("data"));
+        const json &data = body.at("data");
         assert(data.contains("conditions") && data.at("conditions").is_array());
         for (const json &item : data.at("conditions")) {
           ConditionMeta incoming;
@@ -1550,6 +1578,7 @@ void TrackerService::refresh_reference_data(bool missing_only) {
         });
       }
       const std::vector<HttpResponse> responses = http_batch(requests, config_.http_concurrency);
+      logger().info("stage6: fetch_gamma batch(" + std::to_string(responses.size()) + ")");
 
       std::lock_guard<std::mutex> guard(mutex_);
       query_counters_.gamma_queries += responses.size();
@@ -1666,70 +1695,117 @@ void TrackerService::full_resync() {
   const std::vector<std::string> users = load_address_file_lines(config_.address_file);
   progress_board().update("fetch_positions", 0, users.size());
 
-  // 先查 _meta 获取 block，减去 lag 得到稳定的 snapshot_block
-  const uint64_t pnl_block = static_cast<uint64_t>(std::stoull(
-      json_string_or_integer_string(graph_query(kPnlSubgraphId, kMetaQuery, json::object(), "pnl.meta")
-                                        .at("_meta")
-                                        .at("block")
-                                        .at("number"))));
-  const uint64_t poly_block = static_cast<uint64_t>(std::stoull(
-      json_string_or_integer_string(graph_query(kPolymarketSubgraphId, kMetaQuery, json::object(), "poly.meta")
-                                        .at("_meta")
-                                        .at("block")
-                                        .at("number"))));
-  const uint64_t snapshot_block = std::min(pnl_block, poly_block) - static_cast<uint64_t>(kSnapshotBlockLag);
-  sync_logger().info("_meta: pnl=" + std::to_string(pnl_block) + " poly=" + std::to_string(poly_block) +
-                     " snapshot=" + std::to_string(snapshot_block));
+  // Per-user 并发查询 positions（不带 block 参数，用 _meta 返回的 block 作为该用户的 snapshot）
+  // 注: The Graph 对 user_in 多用户查询会路由到坏 indexer，所以只能单用户并发查询
+  struct UserSnapshot {
+    std::string user;
+    uint64_t snapshot_block = 0;
+    std::map<std::string, BigInt> positions;
+    std::string after_cursor;  // 分页游标
+    bool done = false;
+  };
 
-  std::map<std::string, std::map<std::string, BigInt>> snapshot_positions;
+  std::vector<UserSnapshot> user_snapshots;
+  user_snapshots.reserve(users.size());
   for (const std::string &user : users) {
-    snapshot_positions[user] = {};
+    user_snapshots.push_back(UserSnapshot{.user = user, .snapshot_block = 0, .positions = {}, .after_cursor = "", .done = false});
   }
-  size_t users_processed = 0;
-  for (const auto &group : chunked(users, config_.user_query_batch_limit)) {
-    std::string after;
-    while (true) {
-      const json data = graph_query(
-          kPnlSubgraphId,
-          kUserPositionsQuery,
-          {
-              {"users", group},
-              {"after", after},
-              {"block", snapshot_block},
+
+  const std::string graph_url = "https://gateway.thegraph.com/api/" + config_.graph_api_key + "/subgraphs/id/" + std::string(kPnlSubgraphId);
+  size_t users_done = 0;
+
+  // 循环直到所有用户都完成分页
+  while (users_done < users.size()) {
+    // 构造当前批次请求（每个未完成用户的当前页）
+    std::vector<HttpRequest> requests;
+    std::vector<size_t> request_user_indices;  // 请求索引 -> 用户索引
+    for (size_t i = 0; i < user_snapshots.size(); ++i) {
+      if (user_snapshots[i].done) continue;
+      const json payload = {
+          {"query", kUserPositionsLatestQuery},
+          {"variables", {
+              {"user", user_snapshots[i].user},
+              {"after", user_snapshots[i].after_cursor},
               {"first", config_.graph_page_limit},
-          },
-          "userPositions");
-      assert(data.contains("userPositions") && data.at("userPositions").is_array());
-      const json rows = data.at("userPositions");
-      for (const json &row : rows) {
-        const std::string user = normalize_address(row.at("user").get<std::string>());
-        const std::string token_id = row.at("tokenId").get<std::string>();
-        snapshot_positions[user][token_id] += big_int_from_dec(json_string_or_integer_string(row.at("amount")));
-      }
-      if (rows.size() < config_.graph_page_limit) {
-        break;
-      }
-      after = rows.back().at("id").get<std::string>();
+          }},
+      };
+      requests.push_back(HttpRequest{
+          .url = graph_url,
+          .method = "POST",
+          .body = payload.dump(),
+      });
+      request_user_indices.push_back(i);
     }
-    users_processed += group.size();
-    progress_board().update("fetch_positions", users_processed, users.size());
+
+    if (requests.empty()) break;
+
+    // 并发执行
+    const std::vector<HttpResponse> responses = http_batch(requests, config_.http_concurrency);
+    {
+      std::lock_guard<std::mutex> guard(mutex_);
+      query_counters_.subgraph_queries += responses.size();
+    }
+
+    // 处理响应
+    for (size_t r = 0; r < responses.size(); ++r) {
+      const size_t user_idx = request_user_indices[r];
+      UserSnapshot &snap = user_snapshots[user_idx];
+      
+      assert(responses[r].status == 200);
+      const json body = safe_json_parse(responses[r].body);
+      assert(!body.contains("errors") && body.contains("data"));
+      const json &data = body.at("data");
+
+      // 获取 snapshot_block（只在第一页时记录）
+      if (snap.snapshot_block == 0) {
+        snap.snapshot_block = static_cast<uint64_t>(std::stoull(
+            json_string_or_integer_string(data.at("_meta").at("block").at("number"))));
+      }
+
+      // 处理 positions
+      const json &rows = data.at("userPositions");
+      assert(rows.is_array());
+      for (const json &row : rows) {
+        const std::string token_id = row.at("tokenId").get<std::string>();
+        snap.positions[token_id] += big_int_from_dec(json_string_or_integer_string(row.at("amount")));
+      }
+
+      // 检查是否还有更多页
+      if (rows.size() < static_cast<size_t>(config_.graph_page_limit)) {
+        snap.done = true;
+        ++users_done;
+        progress_board().update("fetch_positions", users_done, users.size());
+      } else {
+        snap.after_cursor = rows.back().at("id").get<std::string>();
+      }
+    }
   }
+
+  // 计算全局 snapshot_block = min(所有用户的 snapshot_block)
+  uint64_t min_snapshot_block = UINT64_MAX;
+  for (const UserSnapshot &snap : user_snapshots) {
+    if (snap.snapshot_block > 0 && snap.snapshot_block < min_snapshot_block) {
+      min_snapshot_block = snap.snapshot_block;
+    }
+  }
+  assert(min_snapshot_block != UINT64_MAX);
+  logger().info("stage1: fetch_positions batch(" + std::to_string(users.size()) + ") min_block=" + std::to_string(min_snapshot_block));
 
   {
     std::lock_guard<std::mutex> guard(mutex_);
     set_watched_users_locked(users);
-    for (const std::string &user : watched_users_) {
-      users_[user].token_amounts = snapshot_positions[user];
+    for (const UserSnapshot &snap : user_snapshots) {
+      users_[snap.user].token_amounts = snap.positions;
     }
-    last_snapshot_block_ = snapshot_block;
-    last_applied_block_ = snapshot_block;
-    head_block_ = std::max(head_block_, snapshot_block);
+    last_snapshot_block_ = min_snapshot_block;
+    last_applied_block_ = min_snapshot_block;
+    head_block_ = std::max(head_block_, min_snapshot_block);
   }
 
-  refresh_stable_balances(int_to_hex(snapshot_block));
+  refresh_stable_balances(int_to_hex(min_snapshot_block));
   {
     std::lock_guard<std::mutex> guard(mutex_);
-    append_full_snapshot_locked(snapshot_block);
+    append_full_snapshot_locked(min_snapshot_block);
     persist_snapshot_locked();  // 保存快照到snapshot.json
   }
 
@@ -1738,8 +1814,8 @@ void TrackerService::full_resync() {
     std::lock_guard<std::mutex> guard(mutex_);
     head_block_ = std::max(head_block_, head_block);
   }
-  if (snapshot_block + 1 <= head_block) {
-    backfill_range(snapshot_block + 1, head_block);
+  if (min_snapshot_block + 1 <= head_block) {
+    backfill_range(min_snapshot_block + 1, head_block);
   }
   refresh_stable_balances("latest");
   refresh_reference_data(false);
@@ -1748,6 +1824,7 @@ void TrackerService::full_resync() {
     last_resync_finished_at_ = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     persist_all_locked();
   }
+  logger().info("stage9: persist done");
   progress_board().finish();
 }
 
@@ -1948,6 +2025,8 @@ void TrackerService::backfill_range(uint64_t from_block, uint64_t to_block) {
       });
     }
     const json responses = rpc_batch_call(requests);
+    logger().info("stage8: backfill_logs batch(" + std::to_string(requests.size()) + ") blocks=" + 
+                  std::to_string(start_block) + "-" + std::to_string(end_block));
     std::map<uint64_t, std::map<std::string, json>> blocks;
     for (const json &response : responses) {
       assert(response.contains("result") && response.at("result").is_array());

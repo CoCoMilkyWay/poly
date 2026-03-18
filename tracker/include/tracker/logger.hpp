@@ -36,8 +36,8 @@ public:
     if (log_file_.has_parent_path()) {
       std::filesystem::create_directories(log_file_.parent_path());
     }
-    // 追加模式打开
-    stream_.open(log_file_, std::ios::app);
+    // 每次重启清空
+    stream_.open(log_file_, std::ios::trunc);
   }
 
   void log(LogLevel level, const std::string &message) {
@@ -81,7 +81,7 @@ private:
 };
 
 // 全局单例
-inline Logger &sync_logger() {
+inline Logger &logger() {
   static Logger instance;
   return instance;
 }

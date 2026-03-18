@@ -187,7 +187,7 @@ private:
     plain_stream_.reset();
     buffer_.clear();
     ++retry_count_;
-    sync_logger().warn("http retry " + std::to_string(retry_count_) + ": " + current_.request.url);
+    logger().warn("http retry " + std::to_string(retry_count_) + ": " + current_.request.url);
 
     auto timer = std::make_shared<asio::steady_timer>(resolver_.get_executor());
     timer->expires_after(std::chrono::milliseconds(500));

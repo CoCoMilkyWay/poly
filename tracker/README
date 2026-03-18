@@ -15,11 +15,12 @@ Sync Flow 设计 (v2)
 
 采用多行ANSI转义码，每个阶段一行，实时更新：
 
-  [aggregate] resolve snapshot block: 2/2 subgraphs
-  [aggregate] fetch user positions: 50/100 users
-  [aggregate] fetch market data: 0/0 tokens
-  [aggregate] fetch conditions: 0/0 conditions
-  [aggregate] fetch gamma meta: 0/0 markets
+  [tracker] fetch user positions: 50/100 users
+  [tracker] fetch stable balances: 0/0 users
+  [tracker] fetch market data: 0/0 tokens
+  [tracker] fetch conditions: 0/0 conditions
+  [tracker] fetch gamma meta: 0/0 markets
+  [tracker] backfill gap: 0/0 users
 
 实现要点：
   - 初始化时打印所有stage行
@@ -30,23 +31,25 @@ Sync Flow 设计 (v2)
 full_resync() 新设计
 ======================
 
-Stage 1: resolve_snapshot_block (并发2个subgraph meta查询)
+Stage 1: fetch_user_positions (per-user 并发，不带 block 参数)
+  每个用户单独查询，不使用 user_in 批量查询（The Graph 对 user_in 路由到坏 indexer）
+  每个用户的查询返回 _meta.block.number 作为该用户的 snapshot_block
+  
   http_batch([
-    POST thegraph/pnl/_meta,
-    POST thegraph/poly/_meta,
-  ])
-  -> snapshot_block = min(pnl, poly) - 64
-  注: snapshot_block 不需要等于 head，只需要是稳定且固定的 block
-
-Stage 2: fetch_user_positions (并发N个用户组)
-  用户分组: chunked(users, 50)
-  每组独立分页查询 (单组内串行分页，组间并发)
-  http_batch([
-    POST userPositions(group1, page1),
-    POST userPositions(group2, page1),
+    POST userPositions(user1, no block param) -> snapshot_block_1,
+    POST userPositions(user2, no block param) -> snapshot_block_2,
     ...
   ])
-  注: 分页需要串行(依赖上一页cursor)，但不同组可以并发
+  
+  注: 
+  - 不带 block 参数时，_meta.block.number 就是数据对应的真实 block
+  - 每个用户的 snapshot_block 可能不同，后续 fill gap per-user
+  - 单用户查询需要分页（串行），但不同用户之间并发
+  
+  数据结构:
+    user_snapshots: map<user, {snapshot_block, positions[]}>
+  
+  全局 snapshot_block = min(所有用户的 snapshot_block)，用于 aggregate 计算
 
 Stage 3: fetch_stable_balances (并发RPC)
   http_batch([
@@ -86,13 +89,18 @@ Stage 7: start_ws_subscription
     eth_subscribe logs 接收实时日志
   注: 先建订阅，再补 gap，避免订阅建立窗口漏事件
 
-Stage 8: backfill_gap (RPC 并发多个filter)
-  用 rpc_block_number / eth_getLogs 补齐 snapshot_block 之后到订阅建立时刻之间的 gap
+Stage 8: backfill_gap (per-user RPC 并发)
+  每个用户从各自的 snapshot_block 开始补齐到当前 head
   注: backfill_gap 和 websocket logs 使用统一 raw log 格式，落地到 history 时不区分来源
-  filters = build_log_filters(users, from_block, to_block)
+  
+  for each user:
+    from_block = user_snapshot_block + 1
+    to_block = current_head
+    filters = build_log_filters([user], from_block, to_block)
+  
   http_batch([
-    POST rpc eth_getLogs(filter1),
-    POST rpc eth_getLogs(filter2),
+    POST rpc eth_getLogs(user1, from=snapshot_1+1, to=head),
+    POST rpc eth_getLogs(user2, from=snapshot_2+1, to=head),
     ...
   ])
 
@@ -134,10 +142,7 @@ Log 设计
 依赖关系
 ======================
 
-  resolve_snapshot_block
-          |
-          v
-  fetch_user_positions
+  fetch_user_positions (per-user 并发，返回各自 snapshot_block)
           |
           v
   fetch_stable_balances (可与下一步并行)
@@ -155,7 +160,7 @@ Log 设计
   start_ws_subscription
           |
           v
-  backfill_gap
+  backfill_gap (per-user，从各自 snapshot_block 开始)
           |
           v
   persist_all
