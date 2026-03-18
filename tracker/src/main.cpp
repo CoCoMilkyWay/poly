@@ -10,8 +10,13 @@ namespace {
 
 std::filesystem::path resolve_tracker_dir_from_config() {
   const std::filesystem::path candidate = std::filesystem::current_path();
-  assert(std::filesystem::exists(candidate / "config.json"));
-  assert(std::filesystem::exists(candidate / "address.txt"));
+  if (std::filesystem::exists(candidate / "address.txt")) {
+    return candidate;
+  }
+  if (std::filesystem::exists(candidate / "tracker" / "address.txt")) {
+    return candidate / "tracker";
+  }
+  assert(false);
   return candidate;
 }
 
