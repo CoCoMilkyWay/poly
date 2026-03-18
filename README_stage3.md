@@ -58,13 +58,14 @@
      - 因为收益率的分布不平稳, 连续时间假设不成立, 所以必须用真实分布(density)来计算波动性
      - {(block_num, exposure, pnl)}的采样是极端不均匀的, 有时候中间很多个bucket都没有采样(事件), 有时候很多个采样在同一个block
      - 因为非均匀, 夏普的定义不唯一, 标准的时间加权夏普, 会惩罚波动性(预期内), 但是不会惩罚曲率(是时间无关的), 所以这里的夏普会加入曲率调整项
-     - 对于计算周期[T1,T2] (需要normalize到年周期/1000w blk), 曲率调整项a: 
+     - 对于计算周期[T1,T2] (需要normalize到年周期/1000w blk), 曲率衰减调整项a: 
        - 先把pnl标准化到周期内: pnl_0(t) = pnl(t) - pnl(T1)
        - 先把pnl抬高到非负: pnl+ = pnl_0 + abs(min(pnl_0))
        - a = avg({r(t)^2/(1+r(t)^2)}), 整个pnl+序列做quadratic fit, r(t)=abs(pnl+(t)-fit(t))/max(fit(t),eps)
        - 对于采样数不足的用户, 比如区间内采样点不足10个, 夏普=0 跳过计算
      - 夏普 S = S0 * (1 - a) * trade_decay * sqrt(10000000)
-       - return per step: r[i] = (pnl+[i] - pnl+[i-1]) / max(abs(exp[i-1]), eps)
+       - avg_exp = avg(|exp[i]|), 用固定的平均exposure作为分母, 避免仓位变化导致收益率稀释/放大(这里隐含了对用户仓位管理能力的衰减调整)
+       - return per step: r[i] = (pnl+[i] - pnl+[i-1]) / avg_exp
        - time-weighted sharpe: S0 = (σ² > 0 ? μ / sqrt(σ²) : 0)
        - T = T2 - T1 + 1
        - μ = Σr / T

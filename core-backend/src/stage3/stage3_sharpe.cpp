@@ -209,10 +209,16 @@ float calc_sharpe_window(const CollectedSharpePoints &window, int64_t start_bloc
     return 0.0f;
   }
 
+  // compute average exposure as fixed denominator
+  long double sum_abs_exposure = std::fabs(static_cast<long double>(window.e0));
+  for (const auto &point : window.points) {
+    sum_abs_exposure += std::fabs(static_cast<long double>(point.exposure));
+  }
+  const long double avg_exposure = std::max(sum_abs_exposure / static_cast<long double>(window.points.size() + 1), SHARPE_RETURN_EPS);
+
   const long double shift = calc_pnl_shift(window.points, window.p0);
 
   long double prev_pnl_plus = shift;
-  long double prev_exposure = static_cast<long double>(window.e0);
   long double sum_r = 0.0L;
   long double sum_r2 = 0.0L;
   int64_t prev_block = start_block - 1;
@@ -221,12 +227,10 @@ float calc_sharpe_window(const CollectedSharpePoints &window, int64_t start_bloc
     assert(point.block <= end_block);
     assert(point.block >= prev_block);
     const long double curr_pnl_plus = static_cast<long double>(point.pnl - window.p0) + shift;
-    const long double denom = std::max(std::fabs(prev_exposure), SHARPE_RETURN_EPS);
-    const long double r = (curr_pnl_plus - prev_pnl_plus) / denom;
+    const long double r = (curr_pnl_plus - prev_pnl_plus) / avg_exposure;
     sum_r += r;
     sum_r2 += r * r;
     prev_pnl_plus = curr_pnl_plus;
-    prev_exposure = static_cast<long double>(point.exposure);
     prev_block = point.block;
   }
 
