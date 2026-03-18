@@ -63,12 +63,16 @@
        - 先把pnl抬高到非负: pnl+ = pnl_0 + abs(min(pnl_0))
        - a = avg({r(t)^2/(1+r(t)^2)}), 整个pnl+序列做quadratic fit, r(t)=abs(pnl+(t)-fit(t))/max(fit(t),eps)
        - 对于采样数不足的用户, 比如区间内采样点不足10个, 夏普=0 跳过计算
-     - 夏普 S = S0 * (1 - a) * sqrt(10000000)
+     - 夏普 S = S0 * (1 - a) * trade_decay * sqrt(10000000)
        - return per step: r[i] = (pnl+[i] - pnl+[i-1]) / max(abs(exp[i-1]), eps)
        - time-weighted sharpe: S0 = (σ² > 0 ? μ / sqrt(σ²) : 0)
        - T = T2 - T1 + 1
        - μ = Σr / T
        - σ² = Σ(r^2) / T - μ^2
+       - trade_decay: 交易次数线性衰减调整
+         - 1000W window: 交易次数 < 100 时, trade_decay = count / 100
+         - 100W window: 交易次数 < 10 时, trade_decay = count / 10
+         - 否则 trade_decay = 1
 
 // ============================================================================
 // Stage3 完整数据结构设计 (mmap + pool)

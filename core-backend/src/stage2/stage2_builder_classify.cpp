@@ -200,6 +200,12 @@ TransferClass EventBuilder::classify_and_emit(
     if (coll != static_cast<uint8_t>(Collateral::Unknown)) {
       return;
     }
+    if (known_token) {
+      coll = require_cond_collateral(cond_idx);
+      collateral = static_cast<Collateral>(coll);
+      split_price = is_usdc_collateral(collateral) ? (1000000 / outcome_cnt) : 0;
+      return;
+    }
     if (semantic_collateral_addr.empty() || semantic_collateral_addr == ZERO_ADDR) {
       return;
     }
@@ -208,10 +214,6 @@ TransferClass EventBuilder::classify_and_emit(
                   AssertLevel::L1, "Mapping", "SemanticCollateralPatchedNotUnknown");
     coll = patched;
     collateral = static_cast<Collateral>(coll);
-    if (known_token) {
-      set_cond_collateral(cond_idx, coll);
-      split_price = is_usdc_collateral(collateral) ? (1000000 / outcome_cnt) : 0;
-    }
   };
   auto classify_transfer_by_counterparty = [&](TransferClass in_cls, TransferClass out_cls,
                                                TransferClass internal_cls) {

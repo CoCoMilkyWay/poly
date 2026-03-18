@@ -17,19 +17,11 @@ void EventBuilder::restore_users_and_event_stats_parallel() {
   progress_.cnt_fpmm_funding = 0;
   progress_.cnt_transfer = 0;
 
-  int64_t min_sort_key = 0;
-  int64_t max_sort_key = 0;
-  if (!user_event_store_->sort_key_bounds(min_sort_key, max_sort_key)) {
-    progress_.total_users = 0;
-    return;
-  }
-
   std::unordered_map<uint16_t, int64_t> rebuilt_event_by_collateral;
   rebuilt_event_by_collateral.reserve(64);
-  user_event_store_->for_each_event_brief_in_sort_key_range(
-      min_sort_key, max_sort_key,
+  user_event_store_->for_each_event_brief(
       [this, &rebuilt_event_by_collateral](std::string_view,
-                                           int32_t cond_idx,
+                                           int32_t,
                                            int32_t event_type,
                                            int32_t collateral) {
         stage2_assert(event_type >= static_cast<int32_t>(EventType::OrderBuy) &&
@@ -44,13 +36,7 @@ void EventBuilder::restore_users_and_event_stats_parallel() {
         rebuilt_event_by_collateral[key]++;
       });
   progress_.event_by_collateral = std::move(rebuilt_event_by_collateral);
-
-  std::unordered_set<std::string> rebuilt_seen_user_blobs = user_event_store_->collect_distinct_users();
-  seen_users_.reserve(rebuilt_seen_user_blobs.size());
-  for (const auto &user_blob : rebuilt_seen_user_blobs) {
-    seen_users_.insert(blob_to_hex(user_blob));
-  }
-  progress_.total_users = seen_users_.size();
+  progress_.total_users = user_event_store_->count_distinct_users();
 
   int64_t total_events_from_collateral = 0;
   for (const auto &[key, cnt] : progress_.event_by_collateral) {

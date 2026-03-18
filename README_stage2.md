@@ -211,11 +211,11 @@ abbr(all)
 ### 映射表 (持久化 rb\_\* + 内存)
 | 映射                                                                                | Stage1表作为输入                                                                  |
 | ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| `cond_idx_map[cond_id] -> cond_idx`                                                 | `condition_preparation` / `token_map` / `fpmm` / `split` / `merge` / `redemption` |
-| `cond_info_map[cond_idx] -> cond_info:{outcome_count, payout, question_id, source}` | `condition_preparation` / `condition_resolution`                                  |
+| `cond_idx_map[cond_id] -> cond_idx`                                                 | `condition_preparation` / `neg_risk_question` / `token_map` / `fpmm` / `split` / `merge` / `redemption` |
+| `cond_info_map[cond_idx] -> cond_info:{outcome_count, payout, question_id, source}` | `condition_preparation` / `condition_resolution` / `neg_risk_question`             |
 | `token_info_map[token_id] -> token_info:{cond_idx, token_idx, source}`              | `token_map` / `fpmm` / `split` / `merge` / `redemption` / `transfer`              |
 | `fpmm_info_map[fpmm_addr] -> fpmm_info:{cond_idx, coll}`                            | `fpmm`                                                                            |
-| `coll_map[cond_idx] -> coll`                                                        | `fpmm` / `split` / `merge` / `redemption`                                         |
+| `coll_map[cond_idx] -> coll`                                                        | `neg_risk_question` / `token_map` / `fpmm` / `split` / `merge` / `redemption`     |
 | `mid_map[qid] -> mid`                                                               | `neg_risk_question`                                                               |
 | `pm_cond_set[cond_idx] -> bool`                                                     | `fpmm`                                                                            |
 | `nr_cond_set[cond_idx] -> bool`                                                     | `neg_risk_question`                                                               |
@@ -224,11 +224,11 @@ abbr(all)
 ```
 ① `condition_preparation`                   → `cond_idx_map` + `cond_info_map`(outcome_count/question_id/source)
 ② `condition_resolution`                    → `cond_info_map`(payout)
-③ `token_map`                               → `cond_idx_map` + `cond_info_map`(source单向升级到TokenReg,且TokenReg粘性不回退) + `token_info_map`
-④ 读取 `fpmm` 原始行(延迟落盘)              → 暂存 `{fpmm_addr, condition_ids[], collateral, conditional_tokens}`
-⑤ `split` / `merge` / `redemption` 增量更新 → `cond_idx_map` + `cond_info_map`(source/outcome_count按index_set最高位推断并扩展) + `token_info_map` + `coll_map`(同condition若出现多collateral,按“已知优先+确定性tie-break”规范化)
-⑥ 回放暂存 `fpmm` 行并严格落盘              → 仅处理 `conditional_tokens == CONDITIONAL_TOKENS` 的域内行；域内要求 `condition_ids` 全已知,再写 `fpmm_info_map` + `token_info_map` + `coll_map` + `pm_cond_set`
-⑦ `neg_risk_question`                       → `mid_map` + `nr_cond_set`
+③ `neg_risk_question`                       → `mid_map` + `nr_cond_set` + `cond_idx_map/cond_info_map`(固定2结果,补 question_id) + `coll_map`(`WrappedUSDCe`)
+④ `token_map`                               → `cond_idx_map` + `cond_info_map`(source单向升级到TokenReg,且TokenReg粘性不回退) + `token_info_map` + `coll_map`(对可反推的 atomic token 直接落 canonical collateral)
+⑤ 读取 `fpmm` 原始行(延迟落盘)              → 暂存 `{fpmm_addr, condition_ids[], collateral, conditional_tokens}`
+⑥ `split` / `merge` / `redemption` 增量更新 → `cond_idx_map` + `cond_info_map`(source/outcome_count按index_set最高位推断并扩展) + `token_info_map` + `coll_map`(同condition若出现多collateral,按“已知优先+确定性tie-break”规范化；neg-risk 统一折叠到 `WrappedUSDCe`)
+⑦ 回放暂存 `fpmm` 行并严格落盘              → 仅处理 `conditional_tokens == CONDITIONAL_TOKENS` 的域内行；域内要求 `condition_ids` 全已知,再写 `fpmm_info_map` + `token_info_map` + `coll_map` + `pm_cond_set`(neg-risk 同样统一为 `WrappedUSDCe`)
 ⑧ `token_info_map` 升级规则                 → 按证据强度单向升级(`TransferInferred < FPMM < token_map < split/merge/redemption`)；同映射可仅升级source；`token_map` 同condition反向重复注册可忽略；非推断来源要求 `cond_idx` 一致；`TokenTree` 分区时 `TokenReg` 以 `cond_info_map.source` 为准(不直接用 token.source)
 ⑨ `cond_info_map.source` 升级规则           → 按证据强度单向升级(`ConditionPrep < split/merge/redemption < OtherFPMM < PolymarketFPMM < PolymarketTokenReg`)；`TokenReg` 一旦命中即保持粘性；chunk内断言:被 `token_map` 命中的 condition 其 source 必须为 `PolymarketTokenReg`
 ⑩ 前缀一致门控                             → 记录 chunk 内证据首次可见 sort_key(`token_known_visible_from_sort`/`fpmm_visible_from_sort`/`nr_cond_visible_from_sort`),Phase3 仅在 `evidence_sort_key <= transfer.sort_key` 时允许映射生效
@@ -284,7 +284,7 @@ phase3_process_transfers(chunk)
 │  ├─ build_transfer_ctx
 │  │  ├─ token_info_map 命中 -> known_cond=true
 │  │  ├─ token_info_map 未命中 -> TransferInferred{cond_idx=UNKNOWN_COND_IDX, token_idx=255}
-│  │  ├─ coll = coll_map[cond_idx], miss=>UnknownCollateral
+│  │  ├─ coll = coll_map[cond_idx](neg-risk 已在 Phase1 规范为 `WrappedUSDCe`), miss=>UnknownCollateral
 │  │  └─ known_cond=false 且命中FPMM语义 且 operator in fpmm_info_map -> coll回填为fpmm.coll
 │  └─ 可见性门控
 │     ├─ 读取 `token_known_visible_from_sort` / `fpmm_visible_from_sort` / `nr_cond_visible_from_sort`

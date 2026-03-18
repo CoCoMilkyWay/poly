@@ -5,7 +5,6 @@
 #include <cstdint>
 #include <string>
 #include <string_view>
-#include <unordered_set>
 #include <vector>
 
 #include "rocksdb/c.h"
@@ -233,6 +232,23 @@ public:
     return out;
   }
 
+  bool has_user(std::string_view user_addr) const {
+    assert(user_addr.size() == kUserAddrBytes);
+    rocksdb_iterator_t *it = rocksdb_create_iterator_cf(db_, read_options_, user_cf_);
+    rocksdb_iter_seek(it, user_addr.data(), user_addr.size());
+    bool found = false;
+    if (rocksdb_iter_valid(it) != 0) {
+      size_t klen = 0;
+      const char *kptr = rocksdb_iter_key(it, &klen);
+      found = detail::starts_with(std::string_view(kptr, klen), user_addr);
+    }
+    char *err = nullptr;
+    rocksdb_iter_get_error(it, &err);
+    rocksdb_iter_destroy(it);
+    detail::assert_no_err(err);
+    return found;
+  }
+
   MemoryStats memory_stats() const {
     MemoryStats stats;
     stats.memtables_bytes = detail::property_int64(db_, "rocksdb.cur-size-all-mem-tables");
@@ -244,33 +260,6 @@ public:
 
   const std::string &db_path() const {
     return db_path_;
-  }
-
-  bool sort_key_bounds(int64_t &min_sort_key, int64_t &max_sort_key) const {
-    rocksdb_iterator_t *it = rocksdb_create_iterator_cf(db_, scan_read_options_, sort_cf_);
-    rocksdb_iter_seek_to_first(it);
-    if (rocksdb_iter_valid(it) == 0) {
-      char *err = nullptr;
-      rocksdb_iter_get_error(it, &err);
-      rocksdb_iter_destroy(it);
-      detail::assert_no_err(err);
-      return false;
-    }
-    size_t first_klen = 0;
-    const char *first_kptr = rocksdb_iter_key(it, &first_klen);
-    min_sort_key = decode_sort_entry_sort_key(std::string_view(first_kptr, first_klen));
-
-    rocksdb_iter_seek_to_last(it);
-    assert(rocksdb_iter_valid(it) != 0);
-    size_t last_klen = 0;
-    const char *last_kptr = rocksdb_iter_key(it, &last_klen);
-    max_sort_key = decode_sort_entry_sort_key(std::string_view(last_kptr, last_klen));
-
-    char *err = nullptr;
-    rocksdb_iter_get_error(it, &err);
-    rocksdb_iter_destroy(it);
-    detail::assert_no_err(err);
-    return true;
   }
 
   template <typename Fn>
@@ -314,41 +303,8 @@ public:
     detail::assert_no_err(err);
   }
 
-  template <typename Fn>
-  void for_each_event_brief_in_sort_key_range(int64_t sort_key_begin_inclusive,
-                                              int64_t sort_key_end_inclusive,
-                                              Fn &&fn) const {
-    if (sort_key_begin_inclusive > sort_key_end_inclusive) {
-      return;
-    }
-    const std::string seek_key = build_sort_seek_key(sort_key_begin_inclusive);
-    rocksdb_iterator_t *it = rocksdb_create_iterator_cf(db_, scan_read_options_, sort_cf_);
-    rocksdb_iter_seek(it, seek_key.data(), seek_key.size());
-    while (rocksdb_iter_valid(it) != 0) {
-      size_t klen = 0;
-      size_t vlen = 0;
-      const char *k = rocksdb_iter_key(it, &klen);
-      const char *v = rocksdb_iter_value(it, &vlen);
-      const std::string_view key(k, klen);
-      const int64_t sort_key = decode_sort_entry_sort_key(key);
-      if (sort_key > sort_key_end_inclusive) {
-        break;
-      }
-      const std::string_view value(v, vlen);
-      fn(sort_entry_user_addr(key),
-         decode_sort_entry_cond_idx(key),
-         decode_sort_entry_event_type(key),
-         decode_value_collateral(value));
-      rocksdb_iter_next(it);
-    }
-    char *err = nullptr;
-    rocksdb_iter_get_error(it, &err);
-    rocksdb_iter_destroy(it);
-    detail::assert_no_err(err);
-  }
-
-  std::unordered_set<std::string> collect_distinct_users() const {
-    std::unordered_set<std::string> out;
+  int64_t count_distinct_users() const {
+    int64_t count = 0;
     rocksdb_iterator_t *it = rocksdb_create_iterator_cf(db_, scan_read_options_, user_cf_);
     std::string last_user;
     rocksdb_iter_seek_to_first(it);
@@ -357,20 +313,21 @@ public:
       const char *kptr = rocksdb_iter_key(it, &klen);
       std::string_view k(kptr, klen);
       assert(k.size() == 40);
-      std::string user(k.substr(0, kUserAddrBytes));
-      if (user == last_user) {
+      std::string_view user = k.substr(0, kUserAddrBytes);
+      if (last_user.size() == user.size() &&
+          std::equal(user.begin(), user.end(), last_user.begin())) {
         rocksdb_iter_next(it);
         continue;
       }
-      out.insert(user);
-      last_user = user;
+      last_user.assign(user.begin(), user.end());
+      count++;
       rocksdb_iter_next(it);
     }
     char *err = nullptr;
     rocksdb_iter_get_error(it, &err);
     rocksdb_iter_destroy(it);
     detail::assert_no_err(err);
-    return out;
+    return count;
   }
 
   int64_t count_events() const {

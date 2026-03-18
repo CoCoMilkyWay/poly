@@ -10,6 +10,7 @@
 #include "stage2_utils.hpp"
 #include <atomic>
 #include <condition_variable>
+#include <cstring>
 #include <functional>
 #include <limits>
 #include <memory>
@@ -61,7 +62,7 @@ private:
   std::unordered_map<std::string, TokenInfo> token_map_;
   std::unordered_map<std::string, FPMMInfo> fpmm_map_;
   std::unordered_map<std::string, std::string> cond_to_market_; // question_id -> market_id
-  std::unordered_set<std::string> seen_users_;                  // 实时统计唯一用户
+  std::unordered_set<std::string> seen_users_;                  // Users seen in this process
   std::unordered_set<uint32_t> fpmm_cond_idxs_;                 // Polymarket AMM 对应的 cond_idx
   std::unordered_set<uint32_t> negrisk_cond_idxs_;              // NegRisk 对应的 cond_idx
   std::unordered_map<uint32_t, uint8_t> cond_collateral_;       // cond_idx -> collateral_id
@@ -132,6 +133,7 @@ private:
   std::vector<NewFPMM> new_fpmms_;
   std::vector<NewCollateral> new_collaterals_;
   std::vector<NewCondCollateral> new_cond_collaterals_;
+  std::unordered_map<uint32_t, size_t> new_cond_collateral_pos_;
   std::vector<NewNegRiskMarket> new_neg_risk_markets_;
   std::vector<std::tuple<std::string, RawEvent>> new_events_;
   std::string current_transfer_context_;
@@ -380,13 +382,122 @@ private:
     return coll_id;
   }
 
-  void set_cond_collateral(uint32_t cond_idx, uint8_t coll_id) {
+  uint8_t infer_known_collateral_from_atomic_token(const std::string &lower_cid,
+                                                   uint8_t token_idx,
+                                                   const std::string &token_id) const {
+    if (lower_cid.empty() || token_id.empty()) {
+      return static_cast<uint8_t>(Collateral::Unknown);
+    }
+    stage2_assert(token_idx < 31, AssertLevel::L1, "Mapping", "AtomicTokenIdxLt31");
+    const std::string cond_bytes = hex_to_blob(lower_cid);
+    const std::string token_lower = to_lower(token_id);
+    const std::string collection_id = ctf::get_collection_id(cond_bytes, 1u << token_idx);
+
+    uint8_t matched = static_cast<uint8_t>(Collateral::Unknown);
+    int matched_count = 0;
+    auto try_match = [&](Collateral candidate) {
+      const std::string collateral_bytes = hex_to_blob(collateral_addr(candidate));
+      const auto position_hash = ctf::get_position_id(collateral_bytes, collection_id);
+      const std::string expected_token = to_lower(crypto::Keccak256::to_hex(position_hash));
+      if (expected_token == token_lower) {
+        matched = static_cast<uint8_t>(candidate);
+        matched_count++;
+      }
+    };
+
+    try_match(Collateral::USDC);
+    try_match(Collateral::USDCe);
+    try_match(Collateral::USDT);
+    try_match(Collateral::WrappedUSDCe);
+
+    stage2_assert(matched_count <= 1, AssertLevel::L1, "Mapping", "AtomicTokenCollateralUnique");
+    return matched;
+  }
+
+  std::string build_negrisk_condition_id(const std::string &question_id) const {
+    auto oracle_bytes = hex_to_blob(NEG_RISK_ADAPTER);
+    auto qid_bytes = hex_to_blob(question_id);
+    std::string input(84, '\0');
+    std::memcpy(input.data(), oracle_bytes.data(), std::min(size_t(20), oracle_bytes.size()));
+    std::memcpy(input.data() + 20, qid_bytes.data(), std::min(size_t(32), qid_bytes.size()));
+    input[83] = 2;
+    return to_lower(crypto::Keccak256::to_hex(crypto::keccak256(input)));
+  }
+
+  void note_negrisk_condition(uint32_t cond_idx, int64_t evidence_sort_key = -1) {
+    negrisk_cond_idxs_.insert(cond_idx);
+    if (evidence_sort_key < 0) {
+      return;
+    }
+    auto vis_it = chunk_negrisk_visible_from_sort_.find(cond_idx);
+    if (vis_it == chunk_negrisk_visible_from_sort_.end() || evidence_sort_key < vis_it->second) {
+      chunk_negrisk_visible_from_sort_[cond_idx] = evidence_sort_key;
+    }
+  }
+
+  std::string canonical_condition_collateral_addr(uint32_t cond_idx,
+                                                  const std::string &collateral_addr) const {
+    if (negrisk_cond_idxs_.count(cond_idx) > 0) {
+      return WRAPPED_USDC_E;
+    }
+    return to_lower(collateral_addr);
+  }
+
+  void set_cond_collateral(uint32_t cond_idx, uint8_t coll_id, bool record_pending = true) {
     auto it = cond_collateral_.find(cond_idx);
     if (it != cond_collateral_.end() && it->second == coll_id) {
       return;
     }
     cond_collateral_[cond_idx] = coll_id;
+    if (!record_pending) {
+      return;
+    }
+    auto pos_it = new_cond_collateral_pos_.find(cond_idx);
+    if (pos_it != new_cond_collateral_pos_.end()) {
+      new_cond_collaterals_[pos_it->second].coll_id = coll_id;
+      return;
+    }
     new_cond_collaterals_.push_back({cond_idx, coll_id});
+    new_cond_collateral_pos_[cond_idx] = new_cond_collaterals_.size() - 1;
+  }
+
+  uint8_t require_cond_collateral(uint32_t cond_idx) const {
+    auto it = cond_collateral_.find(cond_idx);
+    stage2_assert(it != cond_collateral_.end(), AssertLevel::L1, "Mapping", "KnownConditionCollateralPresent");
+    return it->second;
+  }
+
+  void backfill_missing_condition_collateral_from_token_map() {
+    std::unordered_map<uint32_t, uint8_t> inferred;
+    inferred.reserve(token_map_.size() / 16 + 1);
+    for (const auto &[token_id, info] : token_map_) {
+      if (info.source != TokenSource::PolymarketTokenReg) {
+        continue;
+      }
+      if (info.cond_idx == UNKNOWN_COND_IDX || info.token_idx == UNKNOWN_TOKEN_IDX) {
+        continue;
+      }
+      if (cond_collateral_.count(info.cond_idx) > 0) {
+        continue;
+      }
+      stage2_assert(info.cond_idx < cond_ids_.size(), AssertLevel::L1, "Mapping", "TokenRegCondIdxInRange");
+      const std::string lower_cid = to_lower(cond_ids_[info.cond_idx]);
+      uint8_t coll_id = infer_known_collateral_from_atomic_token(lower_cid, info.token_idx, token_id);
+      if (coll_id == static_cast<uint8_t>(Collateral::Unknown) &&
+          conditions_[info.cond_idx].outcome_count == 2 && info.token_idx < 2) {
+        coll_id = infer_known_collateral_from_atomic_token(lower_cid, static_cast<uint8_t>(info.token_idx ^ 1), token_id);
+      }
+      if (coll_id == static_cast<uint8_t>(Collateral::Unknown)) {
+        continue;
+      }
+      auto [it, inserted] = inferred.try_emplace(info.cond_idx, coll_id);
+      if (!inserted) {
+        stage2_assert(it->second == coll_id, AssertLevel::L1, "Mapping", "TokenRegCollateralConsistent");
+      }
+    }
+    for (const auto &[cond_idx, coll_id] : inferred) {
+      set_cond_collateral(cond_idx, coll_id);
+    }
   }
 
   void intern_fpmm(const std::string &addr, uint32_t cond_idx, uint8_t collateral,
@@ -715,12 +826,18 @@ private:
 
   void push_event(const std::string &user_addr, const RawEvent &evt) {
     std::string lower = to_lower(user_addr);
+    if (evt.cond_idx != UNKNOWN_COND_IDX) {
+      stage2_assert(evt.collateral != static_cast<uint8_t>(Collateral::Unknown),
+                    AssertLevel::L1, "Mapping", "KnownEventCollateralResolved");
+    }
     new_events_.emplace_back(lower, evt);
     progress_.total_events++;
 
-    // 实时更新用户数
+    // Only the first post-startup event for a user needs a Rocks existence probe.
     if (seen_users_.insert(lower).second) {
-      progress_.total_users = seen_users_.size();
+      if (!user_event_store_->has_user(hex_to_blob(lower))) {
+        progress_.total_users++;
+      }
     }
 
     update_xfer_tree(evt);

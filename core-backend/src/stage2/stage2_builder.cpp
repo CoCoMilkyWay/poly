@@ -1,16 +1,11 @@
 #include "stage2_builder.hpp"
 #include "misc/profiler.hpp"
 
-#include <algorithm>
 #include <chrono>
 #include <cstring>
 #include <filesystem>
 
 namespace stage2 {
-
-namespace {
-constexpr int64_t kRestoreCacheVersion = 1;
-}
 
 EventBuilder::EventBuilder(Database &stage1_db, Database &stage2_db)
     : stage1_db_(stage1_db), stage2_db_(stage2_db),
@@ -124,9 +119,16 @@ void EventBuilder::init_schema() {
                         "payout_7", "question_id", "source"});
   assert_table_columns("rb_token", {"token_id", "cond_idx", "token_idx", "source"});
 
-  auto r = conn->Query("SELECT value FROM stage2_cursor WHERE key='last_block'");
-  stage2_assert(r && !r->HasError(), AssertLevel::L0, "DB", "CursorQuerySuccess");
-  if (r->RowCount() == 0) {
+  auto meta_r = conn->Query("SELECT key, value FROM stage2_cursor WHERE key='last_block'");
+  stage2_assert(meta_r && !meta_r->HasError(), AssertLevel::L0, "DB", "CursorQuerySuccess");
+  bool has_last_block = false;
+  for (idx_t i = 0; i < meta_r->RowCount(); ++i) {
+    std::string key = meta_r->GetValue(0, i).GetValueUnsafe<std::string>();
+    if (key == "last_block") {
+      has_last_block = true;
+    }
+  }
+  if (!has_last_block) {
     auto ins = conn->Query("INSERT INTO stage2_cursor(key, value) VALUES ('last_block', 0)");
     stage2_assert(ins && !ins->HasError(), AssertLevel::L0, "DB", "CursorInitInsertSuccess");
   }
@@ -138,15 +140,11 @@ void EventBuilder::init_restore_cache_schema() {
     auto r = conn->Query(sql);
     stage2_assert(r && !r->HasError(), AssertLevel::L0, "DB", "RestoreCacheSchemaSQLSuccess");
   };
+  exec_sql("DROP TABLE IF EXISTS restore_cache_users");
   exec_sql(R"(
     CREATE TABLE IF NOT EXISTS restore_cache_meta (
       key TEXT PRIMARY KEY,
       value BIGINT
-    )
-  )");
-  exec_sql(R"(
-    CREATE TABLE IF NOT EXISTS restore_cache_users (
-      user_addr BLOB PRIMARY KEY
     )
   )");
   exec_sql(R"(
@@ -164,7 +162,6 @@ void EventBuilder::clear_restore_cache_locked(duckdb::Connection &conn) const {
     auto r = conn.Query(sql);
     stage2_assert(r && !r->HasError(), AssertLevel::L0, "DB", "RestoreCacheClearSQLSuccess");
   };
-  exec_sql("DELETE FROM restore_cache_users");
   exec_sql("DELETE FROM restore_cache_event_by_collateral");
   exec_sql("DELETE FROM restore_cache_meta");
 }
@@ -204,22 +201,14 @@ bool EventBuilder::load_users_and_event_stats_from_cache_if_cursor_match(int64_t
     meta[key] = value;
   }
 
-  bool meta_ready = meta.count("version") > 0 && meta.count("ready") > 0 &&
-                    meta.count("cursor") > 0;
-  if (!meta_ready || meta["version"] != kRestoreCacheVersion || meta["ready"] != 1 ||
-      meta["cursor"] != expected_cursor) {
+  bool meta_ready = meta.count("ready") > 0 && meta.count("cursor") > 0;
+  if (!meta_ready || meta["ready"] != 1 || meta["cursor"] != expected_cursor) {
     stage2_log_info("Restore cache invalidated, purge cache db files and fallback to rebuild");
     purge_restore_cache_db_files();
     return false;
   }
 
-  auto users_r = conn->Query("SELECT user_addr FROM restore_cache_users");
-  stage2_assert(users_r && !users_r->HasError(), AssertLevel::L0, "DB", "RestoreCacheUsersLoadSuccess");
   seen_users_.clear();
-  seen_users_.reserve(static_cast<size_t>(users_r->RowCount()));
-  for (idx_t i = 0; i < users_r->RowCount(); ++i) {
-    seen_users_.insert(blob_to_hex(users_r->GetValue(0, i).GetValueUnsafe<std::string>()));
-  }
 
   auto ebc_r = conn->Query("SELECT event_type, collateral, cnt FROM restore_cache_event_by_collateral");
   stage2_assert(ebc_r && !ebc_r->HasError(), AssertLevel::L0, "DB", "RestoreCacheEventByCollateralLoadSuccess");
@@ -240,8 +229,9 @@ bool EventBuilder::load_users_and_event_stats_from_cache_if_cursor_match(int64_t
     progress_.event_by_collateral[key] += cnt;
   }
 
+  stage2_assert(meta.count("total_users") > 0, AssertLevel::L0, "DB", "RestoreCacheTotalUsersExists");
   progress_.total_events = 0;
-  progress_.total_users = static_cast<int64_t>(seen_users_.size());
+  progress_.total_users = meta["total_users"];
   progress_.cnt_split = 0;
   progress_.cnt_merge = 0;
   progress_.cnt_redemption = 0;
@@ -263,10 +253,6 @@ bool EventBuilder::load_users_and_event_stats_from_cache_if_cursor_match(int64_t
   if (meta.count("total_events") > 0) {
     stage2_assert(progress_.total_events == meta["total_events"],
                   AssertLevel::L0, "DB", "RestoreCacheTotalEventsMatch");
-  }
-  if (meta.count("total_users") > 0) {
-    stage2_assert(progress_.total_users == meta["total_users"],
-                  AssertLevel::L0, "DB", "RestoreCacheTotalUsersMatch");
   }
   stage2_log_info("Restore cache hit at cursor " + std::to_string(expected_cursor));
   return true;
@@ -297,6 +283,7 @@ void EventBuilder::load_from_rb() {
   cond_collateral_.clear();
   new_condition_pos_.clear();
   new_token_pos_.clear();
+  new_cond_collateral_pos_.clear();
 
   collateral_addr_to_id_.clear();
   collateral_id_to_addr_.clear();
@@ -371,6 +358,25 @@ void EventBuilder::load_from_rb() {
   }
 
   {
+    TraceN("s2/restore/load_neg_risk_market");
+    auto nrm_r = conn->Query("SELECT question_id, market_id FROM rb_neg_risk_market");
+    stage2_assert(nrm_r && !nrm_r->HasError(), AssertLevel::L0, "DB", "LoadNegRiskMarketSuccess");
+    cond_to_market_.reserve(static_cast<size_t>(nrm_r->RowCount()));
+    for (idx_t i = 0; i < nrm_r->RowCount(); ++i) {
+      std::string question_id = blob_hex_lower(nrm_r->GetValue(0, i));
+      std::string market_id = blob_hex_lower(nrm_r->GetValue(1, i));
+      auto [it_market, inserted] = cond_to_market_.emplace(question_id, market_id);
+      if (!inserted) {
+        stage2_assert(it_market->second == market_id, AssertLevel::L1, "Mapping",
+                      "NegRiskQuestionMarketConsistent");
+      }
+      auto it = cond_map_.find(build_negrisk_condition_id(question_id));
+      stage2_assert(it != cond_map_.end(), AssertLevel::L1, "Mapping", "NegRiskConditionKnownInRB");
+      note_negrisk_condition(it->second);
+    }
+  }
+
+  {
     TraceN("s2/restore/load_token");
     auto token_r = conn->Query("SELECT token_id, cond_idx, token_idx, source FROM rb_token");
     stage2_assert(token_r && !token_r->HasError(), AssertLevel::L0, "DB", "LoadTokenSuccess");
@@ -394,7 +400,11 @@ void EventBuilder::load_from_rb() {
     for (idx_t i = 0; i < cond_coll_r->RowCount(); ++i) {
       uint32_t cond_idx = cond_coll_r->GetValue(0, i).GetValue<uint32_t>();
       uint8_t coll_id = static_cast<uint8_t>(cond_coll_r->GetValue(1, i).GetValue<int32_t>());
-      cond_collateral_[cond_idx] = coll_id;
+      if (negrisk_cond_idxs_.count(cond_idx) > 0) {
+        stage2_assert(coll_id == static_cast<uint8_t>(Collateral::WrappedUSDCe),
+                      AssertLevel::L1, "Mapping", "NegRiskCollateralCanonical");
+      }
+      set_cond_collateral(cond_idx, coll_id, false);
     }
   }
 
@@ -408,39 +418,14 @@ void EventBuilder::load_from_rb() {
       FPMMInfo info;
       info.cond_idx = fpmm_r->GetValue(1, i).GetValue<uint32_t>();
       info.collateral = static_cast<uint8_t>(fpmm_r->GetValue(2, i).GetValue<int32_t>());
+      if (negrisk_cond_idxs_.count(info.cond_idx) > 0) {
+        stage2_assert(info.collateral == static_cast<uint8_t>(Collateral::WrappedUSDCe),
+                      AssertLevel::L1, "Mapping", "NegRiskCollateralCanonical");
+      }
       fpmm_map_[to_lower(addr)] = info;
       fpmm_cond_idxs_.insert(info.cond_idx);
-      if (!cond_collateral_.count(info.cond_idx)) {
-        cond_collateral_[info.cond_idx] = info.collateral;
-      }
-    }
-  }
-
-  {
-    TraceN("s2/restore/load_neg_risk_market");
-    // 从 rb_neg_risk_market 表加载 question_id -> market_id 映射,并标记 NegRisk 条件
-    auto nrm_r = conn->Query("SELECT question_id, market_id FROM rb_neg_risk_market");
-    stage2_assert(nrm_r && !nrm_r->HasError(), AssertLevel::L0, "DB", "LoadNegRiskMarketSuccess");
-    cond_to_market_.reserve(static_cast<size_t>(nrm_r->RowCount()));
-    for (idx_t i = 0; i < nrm_r->RowCount(); ++i) {
-      std::string question_id = blob_hex_lower(nrm_r->GetValue(0, i));
-      std::string market_id = blob_hex_lower(nrm_r->GetValue(1, i));
-      cond_to_market_[question_id] = market_id;
-
-      // 计算 conditionId 并标记对应条件为 NegRisk
-      auto oracle_bytes = hex_to_blob(NEG_RISK_ADAPTER);
-      auto qid_bytes = hex_to_blob(question_id);
-      std::string input(84, '\0');
-      std::memcpy(input.data(), oracle_bytes.data(), std::min(size_t(20), oracle_bytes.size()));
-      std::memcpy(input.data() + 20, qid_bytes.data(), std::min(size_t(32), qid_bytes.size()));
-      input[83] = 2; // outcomeSlotCount = 2
-      auto cond_hash = crypto::keccak256(input);
-      std::string cond_id = to_lower(crypto::Keccak256::to_hex(cond_hash));
-
-      auto it = cond_map_.find(cond_id);
-      if (it != cond_map_.end()) {
-        negrisk_cond_idxs_.insert(it->second);
-      }
+      stage2_assert(cond_collateral_.count(info.cond_idx) > 0,
+                    AssertLevel::L1, "Mapping", "FPMMConditionCollateralPresentInRB");
     }
   }
 
@@ -715,8 +700,6 @@ void EventBuilder::persist_restore_cache_snapshot() {
 
   stage2_assert(main_cursor == committed_progress_.cursor,
                 AssertLevel::L0, "State", "MainCursorMatchesCommittedCursor");
-  stage2_assert(committed_progress_.total_users == static_cast<int64_t>(seen_users_.size()),
-                AssertLevel::L0, "State", "CommittedTotalUsersMatchesSeenUsers");
 
   init_restore_cache_schema();
   auto conn = restore_cache_db_->create_connection();
@@ -724,22 +707,9 @@ void EventBuilder::persist_restore_cache_snapshot() {
     auto r = conn->Query(sql);
     stage2_assert(r && !r->HasError(), AssertLevel::L0, "DB", "PersistRestoreCacheSQLSuccess");
   };
-  auto append_blob = [](duckdb::Appender &ap, const std::string &hex) {
-    std::string b = hex_to_blob(hex);
-    ap.Append(duckdb::Value::BLOB(reinterpret_cast<duckdb::const_data_ptr_t>(b.data()), b.size()));
-  };
 
   exec_sql("BEGIN TRANSACTION");
   clear_restore_cache_locked(*conn);
-  {
-    duckdb::Appender ap(*conn, "restore_cache_users");
-    for (const auto &user_hex : seen_users_) {
-      ap.BeginRow();
-      append_blob(ap, user_hex);
-      ap.EndRow();
-    }
-    ap.Close();
-  }
   {
     duckdb::Appender ap(*conn, "restore_cache_event_by_collateral");
     for (const auto &[key, cnt] : committed_progress_.event_by_collateral) {
@@ -768,7 +738,6 @@ void EventBuilder::persist_restore_cache_snapshot() {
       ap.Append(value);
       ap.EndRow();
     };
-    save_meta("version", kRestoreCacheVersion);
     save_meta("ready", 1);
     save_meta("cursor", main_cursor);
     save_meta("total_events", committed_progress_.total_events);
@@ -823,6 +792,7 @@ bool EventBuilder::build_chunk(int64_t target_block) {
   new_fpmms_.clear();
   new_collaterals_.clear();
   new_cond_collaterals_.clear();
+  new_cond_collateral_pos_.clear();
   new_neg_risk_markets_.clear();
   new_events_.clear();
 

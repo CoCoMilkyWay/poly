@@ -62,6 +62,7 @@ size_t stage3_sync_tick(Stage3Runtime *rt,
 
   // Convert to EventInput
   std::vector<EventInput> batch;
+  size_t skipped_invalid_events = 0;
   {
     TraceN("s3/sync_tick/convert_events");
     std::unordered_map<Address20, uint32_t, Address20Hash, Address20Equal> user_idx_cache;
@@ -96,7 +97,10 @@ size_t stage3_sync_tick(Stage3Runtime *rt,
       evt.amount = src.amount;
       evt.price_1e6 = src.price;
       if (evt.cond_idx >= 0) {
-        assert(evt.collateral != 0);
+        if (evt.collateral == 0) {
+          skipped_invalid_events++;
+          continue;
+        }
         const ConditionMeta *cond = stage3_get_condition(rt, evt.cond_idx);
         assert(cond != nullptr);
         assert(evt.token_idx >= 0);
@@ -110,8 +114,26 @@ size_t stage3_sync_tick(Stage3Runtime *rt,
     }
   }
 
+  const int64_t last_source_sort_key = source_events.back().sort_key;
+  const int64_t last_source_bucket = block_to_bucket(sort_key_to_block(last_source_sort_key));
+
+  if (batch.empty()) {
+    rt->dirty_users.users.clear();
+    rt->header->head_bucket = std::max<int64_t>(rt->header->head_bucket, last_source_bucket);
+    rt->header->cursor_sort_key = last_source_sort_key;
+    rt->header->cursor_processed_events += source_events.size();
+    return 0;
+  }
+
   // Process the batch
-  return process_event_batch(rt, batch);
+  const size_t processed = process_event_batch(rt, batch);
+  assert(processed == batch.size());
+  if (skipped_invalid_events > 0) {
+    rt->header->head_bucket = std::max<int64_t>(rt->header->head_bucket, last_source_bucket);
+    rt->header->cursor_sort_key = last_source_sort_key;
+    rt->header->cursor_processed_events += skipped_invalid_events;
+  }
+  return processed;
 }
 
 // ============================================================================

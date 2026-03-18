@@ -164,6 +164,39 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
   }
 
   {
+    TraceN("neg_risk_mapping");
+    auto nrq = query_block_range(
+        *conn, stage1_db_,
+        "SELECT block_number, log_index, market_id, question_id FROM ", "neg_risk_question",
+        start, end);
+    if (nrq) {
+      for (idx_t i = 0; i < nrq->RowCount(); ++i) {
+        if (stop_requested_) {
+          return;
+        }
+        int64_t block_number = q_get_i64(nrq, 0, i);
+        int64_t log_index = q_get_i64(nrq, 1, i);
+        int64_t evidence_sort_key = to_semantic_sort_key(block_number, log_index);
+        std::string market_id = q_get_hex_lower(nrq, 2, i);
+        std::string question_id = q_get_hex_lower(nrq, 3, i);
+
+        auto [it_market, inserted] = cond_to_market_.emplace(question_id, market_id);
+        if (!inserted) {
+          stage2_assert(it_market->second == market_id, AssertLevel::L1, "Mapping",
+                        "NegRiskQuestionMarketConsistent");
+        } else {
+          new_neg_risk_markets_.push_back({question_id, market_id});
+        }
+
+        uint32_t cond_idx = intern_condition(build_negrisk_condition_id(question_id), 2,
+                                             ConditionSource::ConditionPrep, question_id);
+        note_negrisk_condition(cond_idx, evidence_sort_key);
+        set_cond_collateral(cond_idx, static_cast<uint8_t>(Collateral::WrappedUSDCe));
+      }
+    }
+  }
+
+  {
     TraceN("token_map");
     auto tm = query_block_range(
         *conn, stage1_db_, "SELECT block_number, log_index, token0, token1, condition_id FROM ",
@@ -177,17 +210,46 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
         int64_t block_number = q_get_i64(tm, 0, i);
         int64_t log_index = q_get_i64(tm, 1, i);
         int64_t evidence_sort_key = to_semantic_sort_key(block_number, log_index);
-        std::string token0 = q_get_hex(tm, 2, i);
-        std::string token1 = q_get_hex(tm, 3, i);
-        std::string cid = q_get_hex(tm, 4, i);
+        std::string token0 = q_get_hex_lower(tm, 2, i);
+        std::string token1 = q_get_hex_lower(tm, 3, i);
+        std::string cid = q_get_hex_lower(tm, 4, i);
         uint32_t cond_idx = intern_condition(cid, 2, ConditionSource::PolymarketTokenReg);
         tokenreg_cond_idxs_seen.insert(cond_idx);
+        uint8_t inferred_collateral = static_cast<uint8_t>(Collateral::Unknown);
+        auto accept_inferred_collateral = [&](uint8_t coll_id) {
+          if (coll_id == static_cast<uint8_t>(Collateral::Unknown)) {
+            return;
+          }
+          if (inferred_collateral == static_cast<uint8_t>(Collateral::Unknown)) {
+            inferred_collateral = coll_id;
+            return;
+          }
+          stage2_assert(inferred_collateral == coll_id, AssertLevel::L1, "Mapping", "TokenRegCollateralConsistent");
+        };
+        const uint8_t direct0 = infer_known_collateral_from_atomic_token(cid, 0, token0);
+        const uint8_t direct1 = infer_known_collateral_from_atomic_token(cid, 1, token1);
+        if (direct0 != static_cast<uint8_t>(Collateral::Unknown) &&
+            direct1 != static_cast<uint8_t>(Collateral::Unknown)) {
+          stage2_assert(direct0 == direct1, AssertLevel::L1, "Mapping", "TokenRegDirectCollateralConsistent");
+          accept_inferred_collateral(direct0);
+        }
+        const uint8_t swapped0 = infer_known_collateral_from_atomic_token(cid, 0, token1);
+        const uint8_t swapped1 = infer_known_collateral_from_atomic_token(cid, 1, token0);
+        if (swapped0 != static_cast<uint8_t>(Collateral::Unknown) &&
+            swapped1 != static_cast<uint8_t>(Collateral::Unknown)) {
+          stage2_assert(swapped0 == swapped1, AssertLevel::L1, "Mapping", "TokenRegSwappedCollateralConsistent");
+          accept_inferred_collateral(swapped0);
+        }
+        if (inferred_collateral != static_cast<uint8_t>(Collateral::Unknown)) {
+          set_cond_collateral(cond_idx, inferred_collateral);
+        }
         // TokenRegistered keeps a binary market ordering: token0 -> outcome 0, token1 -> outcome 1.
         intern_token(token0, cond_idx, 0, TokenSource::PolymarketTokenReg, evidence_sort_key);
         intern_token(token1, cond_idx, 1, TokenSource::PolymarketTokenReg, evidence_sort_key);
       }
     }
   }
+  backfill_missing_condition_collateral_from_token_map();
 
   struct FPMMRow {
     int64_t evidence_sort_key = -1;
@@ -206,6 +268,7 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
     stage2_assert(!row.cids.empty(), AssertLevel::L1, "Mapping", "FPMMHasConditionIds");
     uint32_t primary_cond_idx = 0;
     bool has_primary = false;
+    bool has_negrisk = false;
     for (const auto &cid : row.cids) {
       std::string lower_cid = to_lower(cid);
       auto it = cond_map_.find(lower_cid);
@@ -218,12 +281,16 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
         primary_cond_idx = idx;
         has_primary = true;
       }
+      has_negrisk = has_negrisk || (negrisk_cond_idxs_.count(idx) > 0);
     }
     stage2_assert(has_primary, AssertLevel::L1, "Mapping", "FPMMHasPrimaryCondition");
-    uint8_t coll_id = intern_collateral(row.collateral);
+    const std::string canonical_collateral =
+        has_negrisk ? std::string(WRAPPED_USDC_E)
+                    : canonical_condition_collateral_addr(primary_cond_idx, row.collateral);
+    uint8_t coll_id = intern_collateral(canonical_collateral);
     intern_fpmm(row.addr, primary_cond_idx, coll_id, row.evidence_sort_key);
     // 为 FPMM 计算所有 atomic position token_id(覆盖多条件组合头寸)
-    intern_fpmm_tokens(row.cids, row.collateral, primary_cond_idx, row.evidence_sort_key);
+    intern_fpmm_tokens(row.cids, canonical_collateral, primary_cond_idx, row.evidence_sort_key);
   };
   {
     TraceN("fpmm_source_rows");
@@ -345,9 +412,12 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
     }
     for (const auto &[lower_cid, inf] : inferred_map) {
       uint32_t cond_idx = intern_condition(lower_cid, inf.outcome_count, cond_source);
-      uint8_t coll_id = intern_collateral(inf.collateral);
+      const std::string canonical_collateral =
+          canonical_condition_collateral_addr(cond_idx, inf.collateral);
+      uint8_t coll_id = intern_collateral(canonical_collateral);
       set_cond_collateral(cond_idx, coll_id);
-      intern_condition_tokens(lower_cid, inf.collateral, cond_idx, token_source, inf.first_sort_key);
+      intern_condition_tokens(lower_cid, canonical_collateral, cond_idx, token_source,
+                              inf.first_sort_key);
     }
   };
   {
@@ -364,52 +434,6 @@ void EventBuilder::phase1_update_mappings(int64_t start, int64_t end) {
         return;
       }
       process_fpmm_row(row);
-    }
-  }
-
-  {
-    TraceN("neg_risk_mapping");
-    auto nrq = query_block_range(
-        *conn, stage1_db_,
-        "SELECT block_number, log_index, market_id, question_id FROM ", "neg_risk_question",
-        start, end);
-    if (nrq) {
-      for (idx_t i = 0; i < nrq->RowCount(); ++i) {
-        if (stop_requested_) {
-          return;
-        }
-        int64_t block_number = q_get_i64(nrq, 0, i);
-        int64_t log_index = q_get_i64(nrq, 1, i);
-        int64_t evidence_sort_key = to_semantic_sort_key(block_number, log_index);
-        std::string market_id = q_get_hex_lower(nrq, 2, i);
-        std::string question_id = q_get_hex_lower(nrq, 3, i);
-
-        auto [it_market, inserted] = cond_to_market_.emplace(question_id, market_id);
-        if (inserted) {
-          new_neg_risk_markets_.push_back({question_id, market_id});
-        }
-
-        auto oracle_bytes = hex_to_blob(NEG_RISK_ADAPTER);
-        auto qid_bytes = hex_to_blob(question_id);
-        std::string input(84, '\0');
-        std::memcpy(input.data(), oracle_bytes.data(), std::min(size_t(20), oracle_bytes.size()));
-        std::memcpy(input.data() + 20, qid_bytes.data(), std::min(size_t(32), qid_bytes.size()));
-        input[83] = 2;
-        auto cond_hash = crypto::keccak256(input);
-        std::string cond_id = to_lower(crypto::Keccak256::to_hex(cond_hash));
-
-        auto it = cond_map_.find(cond_id);
-        if (it != cond_map_.end()) {
-          auto [_, cond_inserted] = negrisk_cond_idxs_.insert(it->second);
-          if (cond_inserted) {
-            auto vis_it = chunk_negrisk_visible_from_sort_.find(it->second);
-            if (vis_it == chunk_negrisk_visible_from_sort_.end() ||
-                evidence_sort_key < vis_it->second) {
-              chunk_negrisk_visible_from_sort_[it->second] = evidence_sort_key;
-            }
-          }
-        }
-      }
     }
   }
 

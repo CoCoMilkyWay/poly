@@ -201,7 +201,7 @@ CollectedSharpePoints collect_sharpe_points(Stage3Runtime *rt, uint32_t user_idx
   return result;
 }
 
-float calc_sharpe_window(const CollectedSharpePoints &window, int64_t start_block, int64_t end_block) {
+float calc_sharpe_window(const CollectedSharpePoints &window, int64_t start_block, int64_t end_block, size_t min_trade_count) {
   if (end_block < start_block) {
     return 0.0f;
   }
@@ -249,7 +249,13 @@ float calc_sharpe_window(const CollectedSharpePoints &window, int64_t start_bloc
     return 0.0f;
   }
 
-  const long double sharpe = s0 * (1.0L - a) * std::sqrt(10000000.0L);
+  // trade count linear decay adjustment
+  long double trade_decay = 1.0L;
+  if (window.points.size() < min_trade_count) {
+    trade_decay = static_cast<long double>(window.points.size()) / static_cast<long double>(min_trade_count);
+  }
+
+  const long double sharpe = s0 * (1.0L - a) * trade_decay * std::sqrt(10000000.0L);
   if (!std::isfinite(static_cast<double>(sharpe))) {
     return 0.0f;
   }
@@ -275,14 +281,14 @@ void calc_sharpe_for_feature(Stage3Runtime *rt, uint32_t user_idx, FeatureSlot *
   }
 
   const int64_t end_block = bucket_last_block(bucket);
-  auto recalc_window = [&](int32_t bucket_span, float *out) {
+  auto recalc_window = [&](int32_t bucket_span, size_t min_trade_count, float *out) {
     const int32_t start_bucket = std::max(first_bucket, bucket - bucket_span + 1);
     const CollectedSharpePoints window = collect_sharpe_points(rt, user_idx, start_bucket, bucket);
     const int64_t start_block = static_cast<int64_t>(start_bucket) * BLOCK_BUCKET_SIZE;
-    *out = calc_sharpe_window(window, start_block, end_block);
+    *out = calc_sharpe_window(window, start_block, end_block, min_trade_count);
   };
-  recalc_window(10, &feat->sharpe_100w);
-  recalc_window(100, &feat->sharpe_1000w);
+  recalc_window(10, 10, &feat->sharpe_100w);
+  recalc_window(100, 100, &feat->sharpe_1000w);
 }
 
 // ============================================================================
