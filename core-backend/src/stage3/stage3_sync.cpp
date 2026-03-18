@@ -96,6 +96,7 @@ size_t stage3_sync_tick(Stage3Runtime *rt,
       evt.amount = src.amount;
       evt.price_1e6 = src.price;
       if (evt.cond_idx >= 0) {
+        assert(evt.collateral != 0);
         const ConditionMeta *cond = stage3_get_condition(rt, evt.cond_idx);
         assert(cond != nullptr);
         assert(evt.token_idx >= 0);

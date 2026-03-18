@@ -147,7 +147,7 @@ int64_t apply_trade_event(Stage3Runtime *rt, const EventInput &evt, TokenSlot *t
   } else if (is_price_event(event_type)) {
     if (has_usd) {
       assert(evt.price_1e6 >= 0);
-      assert(is_redemption_event(event_type) || evt.price_1e6 > 0);
+      assert(evt.price_1e6 > 0 || is_redemption_event(event_type) || is_trade_event(event_type));
     }
     price_per_unit = static_cast<double>(evt.price_1e6) / 1e6;
   }
