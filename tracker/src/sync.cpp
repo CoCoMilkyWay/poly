@@ -733,6 +733,7 @@ void SyncThread::publish_all() {
   publish_json(shared_.meta_ptr, build_meta_json(rt_));
   publish_json(shared_.snapshot_ptr, rt_.snapshot_root);
   publish_json(shared_.history_ptr, rt_.history_root);
+  ++shared_.version;
 }
 
 void SyncThread::persist_all() {
@@ -1132,7 +1133,7 @@ void SyncThread::fetch_gamma_meta(const std::vector<std::string> &condition_ids)
     for (const auto &cid : chunk) {
       if (!params.empty())
         params += "&";
-      params += "condition_ids%5B%5D=" + cid; // %5B%5D = []
+      params += "condition_ids%5B%5D=" + strip_0x(cid); // %5B%5D = [], gamma API要求无0x前缀
     }
     reqs.push_back({
         .url = std::string(kGammaApiBase) + "/markets?" + params + "&include_tag=true",
@@ -1484,14 +1485,19 @@ void SyncThread::apply_order_fill(const json &log) {
       maker_asset_id == 0 ? maker_amount : taker_amount;
 
   ensure_token_meta(token_id);
-  const TokenMeta &token = rt_.tokens.at(token_id);
+  auto token_it = rt_.tokens.find(token_id);
+  if (token_it == rt_.tokens.end() || token_it->second.cond.empty() ||
+      token_it->second.idx == 0xFF) {
+    logger().warn("apply_order_filled skip incomplete token_id=" + token_id);
+    return;
+  }
+  const TokenMeta &token = token_it->second;
   ensure_condition_meta(token.cond, Collateral::Unknown);
   ConditionMeta &condition = rt_.conditions.at(token.cond);
   if (condition.coll == 0) {
     condition.coll = to_u8(
         infer_collateral_from_token(token.cond, token.idx, token_id));
   }
-  assert(condition.coll != 0);
 
   std::vector<PendingEmit> events;
   if (rt_.user_set.contains(buyer)) {

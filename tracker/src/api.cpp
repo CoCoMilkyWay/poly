@@ -8,6 +8,7 @@
 #include <boost/beast/http.hpp>
 
 #include <cassert>
+#include <thread>
 
 namespace tracker {
 namespace {
@@ -222,6 +223,29 @@ void handle_request(AppState &state,
     write_json(socket, req.version(), json{{"ok", true}});
     return;
   }
+  if (req.method() == http::verb::get && path == "/api/events") {
+    std::string header =
+        "HTTP/1.1 200 OK\r\n"
+        "Content-Type: text/event-stream\r\n"
+        "Cache-Control: no-cache\r\n"
+        "Access-Control-Allow-Origin: *\r\n"
+        "Connection: keep-alive\r\n\r\n";
+    beast::error_code ec;
+    asio::write(socket, asio::buffer(header), ec);
+    if (is_peer_closed(ec)) return;
+
+    uint64_t last_version = 0;
+    while (true) {
+      uint64_t current = state.version.load();
+      if (current != last_version) {
+        last_version = current;
+        std::string event = "data: " + std::to_string(current) + "\n\n";
+        asio::write(socket, asio::buffer(event), ec);
+        if (is_peer_closed(ec)) return;
+      }
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+  }
 
   assert(false);
 }
@@ -352,6 +376,9 @@ json build_state_json(const RuntimeState &state) {
     };
 
     for (const auto &[token_id, amount] : live.positions) {
+      if (amount == 0) {
+        continue;
+      }
       ++position_count;
       auto token_it = state.tokens.find(token_id);
       const TokenMeta *token =

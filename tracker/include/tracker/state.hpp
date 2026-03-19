@@ -169,6 +169,7 @@ struct AppState {
   std::shared_ptr<const json> meta_ptr = std::make_shared<json>(json::object());
   std::shared_ptr<const json> snapshot_ptr = std::make_shared<json>(json::object());
   std::shared_ptr<const json> history_ptr = std::make_shared<json>(json::object());
+  std::atomic<uint64_t> version{0};
 };
 
 inline void publish_json(std::shared_ptr<const json> &slot, json value) {

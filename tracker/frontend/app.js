@@ -470,15 +470,24 @@ resyncButtonEl.addEventListener("click", async () => {
   }
 });
 
-async function boot() {
-  await refreshState();
-  setInterval(async () => {
+function connectSSE() {
+  const es = new EventSource(`${BACKEND_BASE}/api/events`);
+  es.onmessage = async () => {
     try {
       await refreshState();
     } catch (error) {
       console.error(error);
     }
-  }, 2000);
+  };
+  es.onerror = () => {
+    es.close();
+    setTimeout(connectSSE, 2000);
+  };
+}
+
+async function boot() {
+  await refreshState();
+  connectSSE();
 }
 
 boot().catch((error) => {
