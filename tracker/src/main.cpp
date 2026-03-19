@@ -12,8 +12,10 @@ namespace {
 
 std::filesystem::path find_tracker_dir() {
   std::filesystem::path cwd = std::filesystem::current_path();
-  if (std::filesystem::exists(cwd / "address.txt")) return cwd;
-  if (std::filesystem::exists(cwd / "tracker" / "address.txt")) return cwd / "tracker";
+  if (std::filesystem::exists(cwd / "address.txt"))
+    return cwd;
+  if (std::filesystem::exists(cwd / "tracker" / "address.txt"))
+    return cwd / "tracker";
   assert(false && "cannot find tracker directory");
   return cwd;
 }
@@ -35,14 +37,16 @@ int main() {
   api_thread.start();
 
   std::cout << tracker::json({
-      {"backend_url", "http://localhost:" + std::to_string(cfg.backend_port)},
-      {"frontend_url", "http://localhost:" + std::to_string(cfg.frontend_port)},
-      {"address_file", cfg.address_file.string()},
-      {"snapshot_file", cfg.snapshot_file.string()},
-      {"history_file", cfg.history_file.string()},
-      {"aggregate_file", cfg.aggregate_file.string()},
-      {"meta_file", cfg.meta_file.string()},
-  }).dump(2) << std::endl;
+                                 {"backend_url", "http://localhost:" + std::to_string(cfg.backend_port)},
+                                 {"frontend_url", "http://localhost:" + std::to_string(cfg.frontend_port)},
+                                 {"address_file", cfg.address_file.string()},
+                                 {"snapshot_file", cfg.snapshot_file.string()},
+                                 {"history_file", cfg.history_file.string()},
+                                 {"aggregate_file", cfg.aggregate_file.string()},
+                                 {"meta_file", cfg.meta_file.string()},
+                             })
+                   .dump(2)
+            << std::endl;
   std::cout << std::flush;
 
   sync_thread.run();

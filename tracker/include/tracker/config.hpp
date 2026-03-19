@@ -48,9 +48,9 @@ inline constexpr uint32_t kGetLogsBlockSpan = 2000;
 // ============================================================================
 
 inline constexpr size_t kRecentEventLimit = 512;
-inline constexpr size_t kGraphIdBatchLimit = 100;
-inline constexpr size_t kGraphPageLimit = 1000;
-inline constexpr size_t kGammaBatchLimit = 1;
+inline constexpr size_t kGraphIdBatchLimit = 1000; // TheGraph: where {id_in: [...]} 最大 1000
+inline constexpr size_t kGraphPageLimit = 1000;    // TheGraph: first 最大 1000
+inline constexpr size_t kGammaBatchLimit = 50;     // Gamma: condition_ids[] URL 长度限制 ~4KB
 inline constexpr size_t kHttpConcurrency = 10;
 
 // ============================================================================

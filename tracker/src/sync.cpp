@@ -151,32 +151,6 @@ json graph_data_with_retry(RuntimeState &state,
   }
 }
 
-json gamma_array_with_retry(RuntimeState &state,
-                            const std::string &name,
-                            const std::string &detail,
-                            const std::string &url,
-                            const std::string &proxy_url,
-                            std::optional<HttpRes> first_resp = std::nullopt) {
-  HttpRes resp = first_resp ? *first_resp : http_get(url, proxy_url);
-  for (size_t attempt = 1;; ++attempt) {
-    ++state.counters.gamma;
-    if (resp.status == 200) {
-      json body = safe_parse(resp.body);
-      if (body.is_array()) {
-        log_query("gamma", name, attempt, true, detail);
-        return body;
-      }
-      log_query("gamma", name, attempt, false,
-                detail + " body=" + clip_text(body.dump()));
-    } else {
-      log_query("gamma", name, attempt, false,
-                detail + " status=" + std::to_string(resp.status));
-    }
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-    resp = http_get(url, proxy_url);
-  }
-}
-
 struct TransferLeg {
   uint64_t block_number = 0;
   uint64_t transaction_index = 0;
@@ -221,11 +195,11 @@ TransferLeg parse_transfer_single(const json &log) {
   return {
       .block_number = hex_to_u64(log.at("blockNumber").get<std::string>()),
       .transaction_index =
-      hex_to_u64(log.at("transactionIndex").get<std::string>()),
+          hex_to_u64(log.at("transactionIndex").get<std::string>()),
       .tx_hash = norm_hex(log.at("transactionHash").get<std::string>()),
       .log_index = static_cast<int64_t>(
           hex_to_u64(log.at("logIndex").get<std::string>()) *
-                           kTransferFlatLogScale),
+          kTransferFlatLogScale),
       .op = topic_to_addr(topics.at(1).get<std::string>()),
       .from = topic_to_addr(topics.at(2).get<std::string>()),
       .to = topic_to_addr(topics.at(3).get<std::string>()),
@@ -414,8 +388,8 @@ void SyncThread::full_resync() {
   progress().init();
   rt_.resync_started_at = now_unix_sec();
 
-  fetch_user_snapshots();       // a - positions
-  fetch_snapshot_balances();    // b - balances
+  fetch_user_snapshots();    // a - positions
+  fetch_snapshot_balances(); // b - balances
   append_snapshot_roots();
 
   std::vector<std::string> token_ids = collect_active_token_ids();
@@ -771,7 +745,7 @@ void SyncThread::persist_all() {
 
 void SyncThread::fetch_user_snapshots() {
   std::vector<std::string> users = load_addr_file(cfg_.address_file);
-  auto& pa = progress()[API::positions];
+  auto &pa = progress()[API::positions];
   pa.total = users.size();
   progress().stage("positions");
 
@@ -876,7 +850,7 @@ void SyncThread::fetch_user_snapshots() {
 }
 
 void SyncThread::fetch_snapshot_balances() {
-  auto& pb = progress()[API::balances];
+  auto &pb = progress()[API::balances];
   pb.total = rt_.users.size() * 4;
   progress().stage("balances");
 
@@ -895,7 +869,7 @@ void SyncThread::fetch_snapshot_balances() {
     auto push_call = [&](const char *token_addr, Collateral collateral) {
       reqs.push_back({
           {"method", "eth_call"},
-         {"params",
+          {"params",
            json::array({json{{"to", token_addr}, {"data", data}}, block_tag})},
       });
       refs.push_back({user, collateral});
@@ -916,24 +890,24 @@ void SyncThread::fetch_snapshot_balances() {
     UserSnapshotState &snapshot = rt_.user_snapshots.at(refs[i].user);
     UserLiveState &live = rt_.user_states.at(refs[i].user);
     switch (refs[i].collateral) {
-      case Collateral::USDC:
-        snapshot.stable.usdc = balance;
-        live.stable.usdc = balance;
-        break;
-      case Collateral::USDCe:
-        snapshot.stable.usdc_e = balance;
-        live.stable.usdc_e = balance;
-        break;
-      case Collateral::USDT:
-        snapshot.stable.usdt = balance;
-        live.stable.usdt = balance;
-        break;
-      case Collateral::WrappedUSDCe:
-        snapshot.stable.wrapped = balance;
-        live.stable.wrapped = balance;
-        break;
-      case Collateral::Unknown:
-        assert(false);
+    case Collateral::USDC:
+      snapshot.stable.usdc = balance;
+      live.stable.usdc = balance;
+      break;
+    case Collateral::USDCe:
+      snapshot.stable.usdc_e = balance;
+      live.stable.usdc_e = balance;
+      break;
+    case Collateral::USDT:
+      snapshot.stable.usdt = balance;
+      live.stable.usdt = balance;
+      break;
+    case Collateral::WrappedUSDCe:
+      snapshot.stable.wrapped = balance;
+      live.stable.wrapped = balance;
+      break;
+    case Collateral::Unknown:
+      assert(false);
     }
   }
   pb.done = refs.size();
@@ -978,7 +952,7 @@ std::vector<std::string> SyncThread::collect_active_token_ids() const {
 }
 
 void SyncThread::fetch_token_meta(const std::vector<std::string> &token_ids) {
-  auto& pc = progress()[API::tokens];
+  auto &pc = progress()[API::tokens];
   if (token_ids.empty()) {
     return;
   }
@@ -1014,19 +988,19 @@ void SyncThread::fetch_token_meta(const std::vector<std::string> &token_ids) {
         url,
         json{{"query", kMarketDataQuery}, {"variables", {{"ids", chunks[i]}}}},
         cfg_.proxy_url, responses[i]);
-      for (const auto &row : data.at("marketDatas")) {
+    for (const auto &row : data.at("marketDatas")) {
       const std::string token_id = row.at("id").get<std::string>();
       TokenMeta token;
       int idx = json_int(row, "outcomeIndex", 0xFF);
       token.idx = idx < 0 ? 0xFF : static_cast<uint8_t>(idx);
-        if (row.contains("priceOrderbook") &&
-            row.at("priceOrderbook").is_string()) {
+      if (row.contains("priceOrderbook") &&
+          row.at("priceOrderbook").is_string()) {
         token.price = static_cast<int64_t>(std::llround(
             parse_decimal(row.at("priceOrderbook").get<std::string>()) *
             static_cast<long double>(kPriceScale)));
         token.price_src = "orderbook";
-        }
-        if (row.contains("condition") && row.at("condition").is_object()) {
+      }
+      if (row.contains("condition") && row.at("condition").is_object()) {
         const json &condition_row = row.at("condition");
         token.cond = json_str(condition_row, "id");
         ConditionMeta condition;
@@ -1069,7 +1043,7 @@ void SyncThread::fetch_token_meta(const std::vector<std::string> &token_ids) {
 }
 
 void SyncThread::fetch_condition_meta(const std::vector<std::string> &condition_ids) {
-  auto& pd = progress()[API::conditions];
+  auto &pd = progress()[API::conditions];
   if (condition_ids.empty()) {
     return;
   }
@@ -1143,82 +1117,141 @@ void SyncThread::fetch_condition_meta(const std::vector<std::string> &condition_
 }
 
 void SyncThread::fetch_gamma_meta(const std::vector<std::string> &condition_ids) {
-  auto& pf = progress()[API::gamma];
+  auto &pf = progress()[API::gamma];
   if (condition_ids.empty()) {
     return;
   }
 
+  // 按 gamma_batch_limit 分 chunk，使用 condition_ids[] 格式批量查询
+  std::vector<std::vector<std::string>> chunks = chunked(condition_ids, cfg_.gamma_batch_limit);
+
+  // 构建请求：condition_ids[]=xxx&condition_ids[]=yyy 格式
   std::vector<HttpReq> reqs;
-  for (const auto &condition_id : condition_ids) {
+  for (const auto &chunk : chunks) {
+    std::string params;
+    for (const auto &cid : chunk) {
+      if (!params.empty())
+        params += "&";
+      params += "condition_ids%5B%5D=" + cid; // %5B%5D = []
+    }
     reqs.push_back({
-        .url = std::string(kGammaApiBase) + "/markets?condition_ids=" +
-               condition_id + "&include_tag=true",
+        .url = std::string(kGammaApiBase) + "/markets?" + params + "&include_tag=true",
         .method = "GET",
         .body = "",
     });
   }
-  pf.pending = reqs.size();
-  progress().flush();
-  auto responses = http_batch(reqs, cfg_.http_concurrency, cfg_.proxy_url);
-  pf.pending = 0;
-  assert(responses.size() == condition_ids.size());
 
-  for (size_t i = 0; i < responses.size(); ++i) {
-    const std::string &condition_id = condition_ids[i];
-    json arr = gamma_array_with_retry(
-        rt_, "markets", "condition_id=" + condition_id, reqs[i].url,
-        cfg_.proxy_url, responses[i]);
-    if (!arr.is_array() || arr.empty()) {
-      pf.done = i + 1;
-      progress().flush();
-      continue;
+  // 跟踪每个 chunk 的结果
+  std::vector<std::optional<json>> chunk_results(chunks.size());
+  std::vector<size_t> pending_chunk_indices;
+  for (size_t i = 0; i < chunks.size(); ++i) {
+    pending_chunk_indices.push_back(i);
+  }
+
+  // 并发请求 + 并发重试
+  for (size_t attempt = 1; !pending_chunk_indices.empty(); ++attempt) {
+    std::vector<HttpReq> batch_reqs;
+    for (size_t idx : pending_chunk_indices) {
+      batch_reqs.push_back(reqs[idx]);
     }
 
-    json market = arr.front();
-    for (const auto &item : arr) {
-      std::string current = item.contains("conditionId")
-                          ? json_str(item, "conditionId")
-                          : json_str(item, "condition_id");
-      if (!current.empty() && norm_hex(current) == norm_hex(condition_id)) {
-        market = item;
-        break;
+    pf.pending = batch_reqs.size();
+    progress().flush();
+    auto responses = http_batch(batch_reqs, cfg_.http_concurrency, cfg_.proxy_url);
+    pf.pending = 0;
+    assert(responses.size() == pending_chunk_indices.size());
+
+    std::vector<size_t> still_pending;
+    for (size_t i = 0; i < responses.size(); ++i) {
+      size_t idx = pending_chunk_indices[i];
+      const auto &resp = responses[i];
+      ++rt_.counters.gamma;
+
+      if (resp.status == 200) {
+        json body = safe_parse(resp.body);
+        if (body.is_array()) {
+          log_query("gamma", "markets", attempt, true, "n=" + std::to_string(chunks[idx].size()));
+          chunk_results[idx] = std::move(body);
+          continue;
+        }
+        log_query("gamma", "markets", attempt, false,
+                  "n=" + std::to_string(chunks[idx].size()) + " body=" + clip_text(body.dump()));
+      } else {
+        log_query("gamma", "markets", attempt, false,
+                  "n=" + std::to_string(chunks[idx].size()) + " status=" + std::to_string(resp.status));
       }
+      still_pending.push_back(idx);
     }
 
-    json events =
-        market.contains("events") && market.at("events").is_array()
-                      ? market.at("events")
-                      : json::array();
-    json event0 = events.empty() ? json::object() : events.front();
-    ConditionMeta condition;
-    condition.q = json_str(market, "question");
-    if (condition.q.empty()) {
-      condition.q = json_str(event0, "title");
+    pending_chunk_indices = std::move(still_pending);
+    if (!pending_chunk_indices.empty()) {
+      std::this_thread::sleep_for(std::chrono::seconds(1));
     }
-    condition.desc = json_str(market, "description");
-    condition.slug = json_str(event0, "slug");
-    if (condition.slug.empty()) {
-      condition.slug = json_str(market, "slug");
-    }
-    if (!condition.slug.empty()) {
-      condition.url = "https://polymarket.com/event/" + condition.slug;
-    }
-    if (market.contains("outcomes")) {
-      json outcomes = market.at("outcomes");
-      if (outcomes.is_string()) {
-        outcomes = json::parse(outcomes.get<std::string>());
+  }
+
+  // 处理所有结果：从 chunk_results 提取每个 condition 的 market
+  size_t done_count = 0;
+  for (size_t chunk_idx = 0; chunk_idx < chunks.size(); ++chunk_idx) {
+    const auto &chunk = chunks[chunk_idx];
+    const auto &arr_opt = chunk_results[chunk_idx];
+    json arr = (arr_opt && arr_opt->is_array()) ? *arr_opt : json::array();
+
+    for (const auto &condition_id : chunk) {
+      // 在返回的 array 中找到匹配的 market
+      json market = json::object();
+      for (const auto &item : arr) {
+        std::string current = item.contains("conditionId")
+                                  ? json_str(item, "conditionId")
+                                  : json_str(item, "condition_id");
+        if (!current.empty() && norm_hex(current) == norm_hex(condition_id)) {
+          market = item;
+          break;
+        }
       }
-      if (outcomes.is_array()) {
-        for (const auto &outcome : outcomes) {
-          if (outcome.is_string()) {
-            condition.outcomes.push_back(outcome.get<std::string>());
+
+      if (market.empty()) {
+        ++done_count;
+        pf.done = done_count;
+        progress().flush();
+        continue;
+      }
+
+      json events =
+          market.contains("events") && market.at("events").is_array()
+              ? market.at("events")
+              : json::array();
+      json event0 = events.empty() ? json::object() : events.front();
+      ConditionMeta condition;
+      condition.q = json_str(market, "question");
+      if (condition.q.empty()) {
+        condition.q = json_str(event0, "title");
+      }
+      condition.desc = json_str(market, "description");
+      condition.slug = json_str(event0, "slug");
+      if (condition.slug.empty()) {
+        condition.slug = json_str(market, "slug");
+      }
+      if (!condition.slug.empty()) {
+        condition.url = "https://polymarket.com/event/" + condition.slug;
+      }
+      if (market.contains("outcomes")) {
+        json outcomes = market.at("outcomes");
+        if (outcomes.is_string()) {
+          outcomes = json::parse(outcomes.get<std::string>());
+        }
+        if (outcomes.is_array()) {
+          for (const auto &outcome : outcomes) {
+            if (outcome.is_string()) {
+              condition.outcomes.push_back(outcome.get<std::string>());
+            }
           }
         }
       }
+      merge_condition(rt_.conditions[condition_id], condition);
+      ++done_count;
+      pf.done = done_count;
+      progress().flush();
     }
-    merge_condition(rt_.conditions[condition_id], condition);
-    pf.done = i + 1;
-    progress().flush();
   }
 }
 
@@ -1334,7 +1367,7 @@ void SyncThread::backfill_range(uint64_t from_block, uint64_t to_block) {
   if (from_block > to_block) {
     return;
   }
-  auto& pe = progress()[API::logs];
+  auto &pe = progress()[API::logs];
   pe.total = to_block - from_block + 1;
   progress().stage("logs");
 
@@ -1699,7 +1732,7 @@ void SyncThread::apply_convert(const json &log, const std::vector<json> &tx_logs
   for (const auto &tx_log : tx_logs) {
     const std::string address = norm_hex(tx_log.at("address").get<std::string>());
     if (address != kConditionalTokens) {
-        continue;
+      continue;
     }
     const std::string topic0 =
         norm_hex(tx_log.at("topics").at(0).get<std::string>());
@@ -1720,7 +1753,7 @@ void SyncThread::apply_convert(const json &log, const std::vector<json> &tx_logs
     ensure_token_meta(transfer.token_id);
     const TokenMeta &token = rt_.tokens.at(transfer.token_id);
     if (!market_conditions.contains(token.cond)) {
-        continue;
+      continue;
     }
     ConditionMeta &condition = rt_.conditions.at(token.cond);
     if (condition.coll == 0) {

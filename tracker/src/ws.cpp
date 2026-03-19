@@ -220,7 +220,6 @@ WsCounters WsThread::counters() const {
   };
 }
 
-
 void WsThread::run() {
   while (running_) {
     uint64_t session_id = 0;

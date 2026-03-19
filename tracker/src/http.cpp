@@ -46,7 +46,10 @@ private:
   void next() {
     {
       std::lock_guard<std::mutex> lock(mu_);
-      if (queue_.empty()) { --active_; return; }
+      if (queue_.empty()) {
+        --active_;
+        return;
+      }
       cur_ = std::move(queue_.front());
       queue_.pop_front();
     }
@@ -59,11 +62,14 @@ private:
     const std::string &host = proxy_ ? proxy_->host : cur_.parts.host;
     const std::string &port = proxy_ ? proxy_->port : cur_.parts.port;
     resolver_.async_resolve(host, port,
-        [self = shared_from_this()](beast::error_code ec, tcp::resolver::results_type r) {
-          if (ec) { self->retry(); return; }
-          self->endpoints_ = std::move(r);
-          self->connect();
-        });
+                            [self = shared_from_this()](beast::error_code ec, tcp::resolver::results_type r) {
+                              if (ec) {
+                                self->retry();
+                                return;
+                              }
+                              self->endpoints_ = std::move(r);
+                              self->connect();
+                            });
   }
 
   void connect() {
@@ -71,20 +77,27 @@ private:
       ssl_stream_.emplace(resolver_.get_executor(), ssl_ctx_);
       SSL_set_tlsext_host_name(ssl_stream_->native_handle(), cur_.parts.host.c_str());
       beast::get_lowest_layer(*ssl_stream_).expires_after(std::chrono::seconds(30));
-      beast::get_lowest_layer(*ssl_stream_).async_connect(endpoints_,
-          [self = shared_from_this()](beast::error_code ec, const tcp::endpoint &) {
-            if (ec) { self->retry(); return; }
-            if (self->proxy_) self->proxy_connect();
-            else self->handshake();
-          });
+      beast::get_lowest_layer(*ssl_stream_).async_connect(endpoints_, [self = shared_from_this()](beast::error_code ec, const tcp::endpoint &) {
+        if (ec) {
+          self->retry();
+          return;
+        }
+        if (self->proxy_)
+          self->proxy_connect();
+        else
+          self->handshake();
+      });
     } else {
       plain_stream_.emplace(resolver_.get_executor());
       plain_stream_->expires_after(std::chrono::seconds(30));
       plain_stream_->async_connect(endpoints_,
-          [self = shared_from_this()](beast::error_code ec, const tcp::endpoint &) {
-            if (ec) { self->retry(); return; }
-            self->write_plain();
-          });
+                                   [self = shared_from_this()](beast::error_code ec, const tcp::endpoint &) {
+                                     if (ec) {
+                                       self->retry();
+                                       return;
+                                     }
+                                     self->write_plain();
+                                   });
     }
   }
 
@@ -100,51 +113,66 @@ private:
 
     auto &stream = beast::get_lowest_layer(*ssl_stream_);
     http::async_write(stream, proxy_req_,
-        [self = shared_from_this()](beast::error_code ec, size_t) {
-          if (ec) { self->retry(); return; }
-          self->proxy_read();
-        });
+                      [self = shared_from_this()](beast::error_code ec, size_t) {
+                        if (ec) {
+                          self->retry();
+                          return;
+                        }
+                        self->proxy_read();
+                      });
   }
 
   void proxy_read() {
     proxy_parser_.emplace();
-    proxy_parser_->skip(true);  // CONNECT 响应没有 body，跳过 body 解析
+    proxy_parser_->skip(true); // CONNECT 响应没有 body，跳过 body 解析
     auto &stream = beast::get_lowest_layer(*ssl_stream_);
     http::async_read(stream, proxy_buf_, *proxy_parser_,
-        [self = shared_from_this()](beast::error_code ec, size_t) {
-          if (ec) { self->retry(); return; }
-          // CONNECT 成功返回 200
-          assert(self->proxy_parser_->get().result() == http::status::ok);
-          self->proxy_buf_.consume(self->proxy_buf_.size());
-          self->handshake();
-        });
+                     [self = shared_from_this()](beast::error_code ec, size_t) {
+                       if (ec) {
+                         self->retry();
+                         return;
+                       }
+                       // CONNECT 成功返回 200
+                       assert(self->proxy_parser_->get().result() == http::status::ok);
+                       self->proxy_buf_.consume(self->proxy_buf_.size());
+                       self->handshake();
+                     });
   }
 
   void handshake() {
     ssl_stream_->async_handshake(ssl::stream_base::client,
-        [self = shared_from_this()](beast::error_code ec) {
-          if (ec) { self->retry(); return; }
-          self->write_ssl();
-        });
+                                 [self = shared_from_this()](beast::error_code ec) {
+                                   if (ec) {
+                                     self->retry();
+                                     return;
+                                   }
+                                   self->write_ssl();
+                                 });
   }
 
   void write_ssl() {
     build_request();
     http::async_write(*ssl_stream_, req_,
-        [self = shared_from_this()](beast::error_code ec, size_t) {
-          if (ec) { self->retry(); return; }
-          self->read_ssl();
-        });
+                      [self = shared_from_this()](beast::error_code ec, size_t) {
+                        if (ec) {
+                          self->retry();
+                          return;
+                        }
+                        self->read_ssl();
+                      });
   }
 
   void read_ssl() {
     res_ = {};
     http::async_read(*ssl_stream_, buf_, res_,
-        [self = shared_from_this()](beast::error_code ec, size_t) {
-          if (ec) { self->retry(); return; }
-          self->done();
-          self->shutdown_ssl();
-        });
+                     [self = shared_from_this()](beast::error_code ec, size_t) {
+                       if (ec) {
+                         self->retry();
+                         return;
+                       }
+                       self->done();
+                       self->shutdown_ssl();
+                     });
   }
 
   void shutdown_ssl() {
@@ -158,20 +186,26 @@ private:
   void write_plain() {
     build_request();
     http::async_write(*plain_stream_, req_,
-        [self = shared_from_this()](beast::error_code ec, size_t) {
-          if (ec) { self->retry(); return; }
-          self->read_plain();
-        });
+                      [self = shared_from_this()](beast::error_code ec, size_t) {
+                        if (ec) {
+                          self->retry();
+                          return;
+                        }
+                        self->read_plain();
+                      });
   }
 
   void read_plain() {
     res_ = {};
     http::async_read(*plain_stream_, buf_, res_,
-        [self = shared_from_this()](beast::error_code ec, size_t) {
-          if (ec) { self->retry(); return; }
-          self->done();
-          self->shutdown_plain();
-        });
+                     [self = shared_from_this()](beast::error_code ec, size_t) {
+                       if (ec) {
+                         self->retry();
+                         return;
+                       }
+                       self->done();
+                       self->shutdown_plain();
+                     });
   }
 
   void shutdown_plain() {
@@ -250,7 +284,8 @@ std::vector<HttpRes> http_batch(const std::vector<HttpReq> &reqs, size_t concurr
   assert(concurrency > 0);
 
   std::optional<UrlParts> proxy;
-  if (!proxy_url.empty()) proxy = parse_url(proxy_url);
+  if (!proxy_url.empty())
+    proxy = parse_url(proxy_url);
 
   std::deque<PendingReq> queue;
   std::vector<HttpRes> results(reqs.size());

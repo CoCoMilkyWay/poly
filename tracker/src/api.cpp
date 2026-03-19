@@ -96,18 +96,18 @@ void write_empty(tcp::socket &socket, unsigned version, unsigned status) {
 
 const char *event_type_name(uint8_t type) {
   switch (static_cast<EventType>(type)) {
-    case EventType::OrderBuy:
-      return "order_buy";
-    case EventType::OrderSell:
-      return "order_sell";
-    case EventType::Split:
-      return "split";
-    case EventType::Merge:
-      return "merge";
-    case EventType::Redeem:
-      return "redeem";
-    case EventType::Convert:
-      return "convert";
+  case EventType::OrderBuy:
+    return "order_buy";
+  case EventType::OrderSell:
+    return "order_sell";
+  case EventType::Split:
+    return "split";
+  case EventType::Merge:
+    return "merge";
+  case EventType::Redeem:
+    return "redeem";
+  case EventType::Convert:
+    return "convert";
   }
   return "unknown";
 }
@@ -264,9 +264,9 @@ void ApiThread::run() {
 
 json build_progress_json() {
   json result = json::array();
-  auto& board = progress();
+  auto &board = progress();
   for (size_t i = 0; i < ProgressBoard::kApiCount; ++i) {
-    auto& api = board.apis[i];
+    auto &api = board.apis[i];
     result.push_back({
         {"name", ProgressBoard::kApiNames[i]},
         {"done", api.done.load()},
