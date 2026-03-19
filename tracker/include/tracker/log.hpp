@@ -1,15 +1,16 @@
 #pragma once
 
+#include <array>
+#include <atomic>
+#include <cassert>
 #include <chrono>
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
-#include <map>
 #include <mutex>
 #include <sstream>
 #include <string>
-#include <vector>
 
 namespace tracker {
 
@@ -90,67 +91,99 @@ inline void log_query(const std::string &channel,
 }
 
 // ============================================================================
-// ProgressBoard - 多行进度显示
+// ProgressBoard - API进度显示
 // ============================================================================
+// 终端显示格式:
+//   API        done/total  [pend]
+//   positions  5/10        [3]
+//   balances   4/4         [0]
+//   tokens     50/100      [5]
+//   conditions 20/50       [2]
+//   logs       500/1000    [10]
+//   gamma      30/50       [3]
+//   subscribe  10/0        [0]
+//   block      1/0         [0]
+//   [current_stage]
+
+enum class API { positions, balances, tokens, conditions, logs, gamma, subscribe, block, COUNT };
+
+struct ProgressState {
+  std::atomic<size_t> done{0};
+  std::atomic<size_t> total{0};
+  std::atomic<size_t> pending{0};
+};
 
 struct ProgressBoard {
-  struct Stage {
-    std::string name;
-    std::string unit;
-    size_t done = 0;
-    size_t total = 0;
+  static constexpr size_t kApiCount = static_cast<size_t>(API::COUNT);
+  static constexpr const char* kApiNames[kApiCount] = {
+    "positions", "balances", "tokens", "conditions",
+    "logs", "gamma", "subscribe", "block"
   };
 
-  std::vector<Stage> stages;
-  std::map<std::string, size_t> index;
-  std::mutex mu;
-  bool ansi = true;
+  std::array<ProgressState, kApiCount> apis;
+  std::string current_stage;
+  std::mutex print_mu;
   bool inited = false;
 
-  void init(const std::vector<std::pair<std::string, std::string>> &defs) {
-    std::lock_guard<std::mutex> lock(mu);
-    stages.clear();
-    index.clear();
-    for (size_t i = 0; i < defs.size(); ++i) {
-      stages.push_back({defs[i].first, defs[i].second, 0, 0});
-      index[defs[i].first] = i;
+  ProgressState& operator[](API api) { return apis[static_cast<size_t>(api)]; }
+
+  void init() {
+    std::lock_guard<std::mutex> lock(print_mu);
+    for (auto& api : apis) {
+      api.done = 0;
+      api.total = 0;
+      api.pending = 0;
     }
-    for (const auto &s : stages) {
-      std::cerr << "[sync] " << s.name << ": 0/0";
-      if (!s.unit.empty()) std::cerr << " " << s.unit;
+    current_stage = "init";
+    // 表头 + kApiCount行 + stage行
+    std::cerr << "API        done/total  [pend]" << std::endl;
+    for (size_t i = 0; i < kApiCount; ++i) {
+      print_row(i);
       std::cerr << std::endl;
     }
+    std::cerr << "[init]" << std::endl;
     inited = true;
   }
 
-  void update(const std::string &name, size_t done, size_t total) {
-    std::lock_guard<std::mutex> lock(mu);
-    auto it = index.find(name);
-    if (it == index.end()) return;
-    size_t idx = it->second;
-    stages[idx].done = done;
-    stages[idx].total = total;
+  void stage(const std::string &name) {
+    std::lock_guard<std::mutex> lock(print_mu);
+    current_stage = name;
+    reprint_all();
+  }
 
-    if (!ansi) {
-      std::cerr << "[sync] " << stages[idx].name << ": " << done << "/" << total;
-      if (!stages[idx].unit.empty()) std::cerr << " " << stages[idx].unit;
-      std::cerr << std::endl;
-      return;
-    }
-
-    size_t up = stages.size() - idx;
-    std::cerr << "\x1b[" << up << "A";
-    std::cerr << "\r[sync] " << stages[idx].name << ": " << done << "/" << total;
-    if (!stages[idx].unit.empty()) std::cerr << " " << stages[idx].unit;
-    std::cerr << "\x1b[K";
-    std::cerr << "\x1b[" << up << "B";
-    std::cerr << std::flush;
+  void flush() {
+    std::lock_guard<std::mutex> lock(print_mu);
+    reprint_all();
   }
 
   void finish() {
-    std::lock_guard<std::mutex> lock(mu);
-    std::cerr << "[sync] done" << std::endl;
+    std::lock_guard<std::mutex> lock(print_mu);
+    current_stage = "done";
+    reprint_all();
+    std::cerr << std::endl;
     inited = false;
+  }
+
+private:
+  void print_row(size_t i) {
+    auto& api = apis[i];
+    std::cerr << std::left << std::setw(10) << kApiNames[i] << " ";
+    std::cerr << std::right << std::setw(5) << api.done.load() << "/";
+    std::cerr << std::left << std::setw(5) << api.total.load() << " ";
+    std::cerr << "[" << std::setw(4) << api.pending.load() << "]";
+  }
+
+  void reprint_all() {
+    // 上移 kApiCount+2 行 (表头+数据+stage)
+    std::cerr << "\x1b[" << (kApiCount + 2) << "A";
+    std::cerr << "\rAPI        done/total  [pend]\x1b[K" << std::endl;
+    for (size_t i = 0; i < kApiCount; ++i) {
+      std::cerr << "\r";
+      print_row(i);
+      std::cerr << "\x1b[K" << std::endl;
+    }
+    std::cerr << "[" << current_stage << "]\x1b[K" << std::endl;
+    std::cerr << std::flush;
   }
 };
 
@@ -158,16 +191,5 @@ inline ProgressBoard &progress() {
   static ProgressBoard instance;
   return instance;
 }
-
-#define SYNC_STAGES \
-  { \
-    {"fetch_positions", "users"}, \
-    {"fetch_balances", ""}, \
-    {"fetch_market_data", "tokens"}, \
-    {"fetch_conditions", "conditions"}, \
-    {"fetch_gamma", "markets"}, \
-    {"backfill_logs", "blocks"}, \
-    {"persist", ""}, \
-  }
 
 } // namespace tracker

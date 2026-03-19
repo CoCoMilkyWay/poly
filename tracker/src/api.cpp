@@ -1,6 +1,7 @@
 #include "tracker/api.hpp"
 
 #include "tracker/codec.hpp"
+#include "tracker/log.hpp"
 
 #include <boost/asio.hpp>
 #include <boost/beast/core.hpp>
@@ -261,6 +262,21 @@ void ApiThread::run() {
 // JSON Builders
 // ============================================================================
 
+json build_progress_json() {
+  json result = json::array();
+  auto& board = progress();
+  for (size_t i = 0; i < ProgressBoard::kApiCount; ++i) {
+    auto& api = board.apis[i];
+    result.push_back({
+        {"name", ProgressBoard::kApiNames[i]},
+        {"done", api.done.load()},
+        {"total", api.total.load()},
+        {"pending", api.pending.load()},
+    });
+  }
+  return result;
+}
+
 json build_state_json(const RuntimeState &state) {
   json result = {
       {"summary", json::object()},
@@ -515,6 +531,7 @@ json build_state_json(const RuntimeState &state) {
            {"subgraph", state.counters.subgraph},
            {"gamma", state.counters.gamma},
        }},
+      {"api_progress", build_progress_json()},
   };
 
   return result;

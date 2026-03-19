@@ -350,21 +350,31 @@ function renderHoldings() {
 }
 
 function renderQueryCounts() {
-  const queryCounts = state.payload?.summary?.query_counts || {};
-  const rows = [
-    ["rpc_http", queryCounts.rpc_http || 0],
-    ["rpc_ws_msg", queryCounts.rpc_ws_msg || 0],
-    ["rpc_ws_sub", queryCounts.rpc_ws_sub || 0],
-    ["subgraph", queryCounts.subgraph || 0],
-    ["gamma", queryCounts.gamma || 0],
-    ["head", state.payload?.summary?.head_block || 0],
-  ];
-  queryCountsEl.innerHTML = rows.map(([label, value]) => `
-    <div class="query-card">
-      <div class="query-label">${label}</div>
-      <div class="query-value">${fmtNumber(value)}</div>
-    </div>
-  `).join("");
+  const apiProgress = state.payload?.summary?.api_progress || [];
+  const headBlock = state.payload?.summary?.head_block || 0;
+
+  let html = `
+    <table class="progress-table">
+      <thead>
+        <tr><th>API</th><th>done/total</th><th>[pend]</th></tr>
+      </thead>
+      <tbody>
+  `;
+  for (const api of apiProgress) {
+    html += `
+      <tr>
+        <td>${api.name}</td>
+        <td>${fmtNumber(api.done)}/${fmtNumber(api.total)}</td>
+        <td>[${api.pending}]</td>
+      </tr>
+    `;
+  }
+  html += `
+      </tbody>
+    </table>
+    <div class="head-block">head: ${fmtNumber(headBlock)}</div>
+  `;
+  queryCountsEl.innerHTML = html;
 }
 
 function renderUserOptions() {

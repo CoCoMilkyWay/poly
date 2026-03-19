@@ -411,17 +411,17 @@ void SyncThread::run() {
 }
 
 void SyncThread::full_resync() {
-  progress().init(SYNC_STAGES);
+  progress().init();
   rt_.resync_started_at = now_unix_sec();
 
-  fetch_user_snapshots();
-  fetch_snapshot_balances();
+  fetch_user_snapshots();       // a - positions
+  fetch_snapshot_balances();    // b - balances
   append_snapshot_roots();
 
   std::vector<std::string> token_ids = collect_active_token_ids();
-  progress().update("fetch_market_data", 0, token_ids.size());
+  progress()[API::tokens].total = token_ids.size();
+  progress().stage("tokens");
   fetch_token_meta(token_ids);
-  progress().update("fetch_market_data", token_ids.size(), token_ids.size());
 
   std::vector<std::string> condition_ids;
   for (const auto &[token_id, token] : rt_.tokens) {
@@ -434,9 +434,9 @@ void SyncThread::full_resync() {
   condition_ids.erase(std::unique(condition_ids.begin(), condition_ids.end()),
                       condition_ids.end());
 
-  progress().update("fetch_conditions", 0, condition_ids.size());
+  progress()[API::conditions].total = condition_ids.size();
+  progress().stage("conditions");
   fetch_condition_meta(condition_ids);
-  progress().update("fetch_conditions", condition_ids.size(), condition_ids.size());
 
   std::vector<std::string> gamma_ids;
   for (const auto &condition_id : condition_ids) {
@@ -445,17 +445,23 @@ void SyncThread::full_resync() {
       gamma_ids.push_back(condition_id);
     }
   }
-  progress().update("fetch_gamma", 0, gamma_ids.size());
+  progress()[API::gamma].total = gamma_ids.size();
+  progress().stage("gamma");
   fetch_gamma_meta(gamma_ids);
-  progress().update("fetch_gamma", gamma_ids.size(), gamma_ids.size());
 
   queue_.clear();
   deferred_.clear();
+  progress()[API::subscribe].total = rt_.users.size();
+  progress().stage("subscribe");
   WsSessionInfo ws_session = ws_.start_session(rt_.users);
   current_session_id_ = ws_session.session_id;
+  progress()[API::subscribe].done = rt_.users.size();
+  progress().flush();
 
+  progress().stage("block");
   uint64_t head_block = std::max(ws_session.start_block, rpc_block_number());
   rt_.head_block = std::max(rt_.head_block, head_block);
+  progress()[API::block].done = 1;
 
   uint64_t from_block = head_block + 1;
   for (const auto &user : rt_.users) {
@@ -756,7 +762,7 @@ void SyncThread::publish_all() {
 }
 
 void SyncThread::persist_all() {
-  progress().update("persist", 0, 0);
+  progress().stage("persist");
   save_json(cfg_.aggregate_file, *load_published(shared_.state_ptr));
   save_json(cfg_.meta_file, *load_published(shared_.meta_ptr));
   save_json(cfg_.snapshot_file, rt_.snapshot_root);
@@ -765,7 +771,9 @@ void SyncThread::persist_all() {
 
 void SyncThread::fetch_user_snapshots() {
   std::vector<std::string> users = load_addr_file(cfg_.address_file);
-  progress().update("fetch_positions", 0, users.size());
+  auto& pa = progress()[API::positions];
+  pa.total = users.size();
+  progress().stage("positions");
 
   std::vector<SnapshotFetch> snapshots;
   for (const auto &user : users) {
@@ -801,7 +809,10 @@ void SyncThread::fetch_user_snapshots() {
       });
       refs.push_back(i);
     }
+    pa.pending = reqs.size();
+    progress().flush();
     auto responses = http_batch(reqs, cfg_.http_concurrency, cfg_.proxy_url);
+    pa.pending = 0;
     for (size_t i = 0; i < responses.size(); ++i) {
       SnapshotFetch &snapshot = snapshots[refs[i]];
       json variables = {
@@ -827,7 +838,8 @@ void SyncThread::fetch_user_snapshots() {
       if (rows.size() < cfg_.graph_page_limit) {
         snapshot.done = true;
         ++done_count;
-        progress().update("fetch_positions", done_count, users.size());
+        pa.done = done_count;
+        progress().flush();
       } else {
         snapshot.cursor = rows.back().at("id").get<std::string>();
       }
@@ -864,7 +876,10 @@ void SyncThread::fetch_user_snapshots() {
 }
 
 void SyncThread::fetch_snapshot_balances() {
-  progress().update("fetch_balances", 0, rt_.users.size() * 4);
+  auto& pb = progress()[API::balances];
+  pb.total = rt_.users.size() * 4;
+  progress().stage("balances");
+
   std::vector<json> reqs;
   struct BalanceRef {
     std::string user;
@@ -891,7 +906,10 @@ void SyncThread::fetch_snapshot_balances() {
     push_call(kWrappedUsdcE, Collateral::WrappedUSDCe);
   }
 
+  pb.pending = reqs.size();
+  progress().flush();
   json responses = rpc_batch(reqs);
+  pb.pending = 0;
   for (size_t i = 0; i < refs.size(); ++i) {
     BigInt balance =
         bigint_from_hex(responses.at(i).at("result").get<std::string>());
@@ -918,7 +936,8 @@ void SyncThread::fetch_snapshot_balances() {
         assert(false);
     }
   }
-  progress().update("fetch_balances", refs.size(), refs.size());
+  pb.done = refs.size();
+  progress().flush();
 }
 
 void SyncThread::append_snapshot_roots() {
@@ -959,6 +978,7 @@ std::vector<std::string> SyncThread::collect_active_token_ids() const {
 }
 
 void SyncThread::fetch_token_meta(const std::vector<std::string> &token_ids) {
+  auto& pc = progress()[API::tokens];
   if (token_ids.empty()) {
     return;
   }
@@ -980,9 +1000,13 @@ void SyncThread::fetch_token_meta(const std::vector<std::string> &token_ids) {
                     .dump(),
     });
   }
+  pc.pending = reqs.size();
+  progress().flush();
   auto responses = http_batch(reqs, cfg_.http_concurrency, cfg_.proxy_url);
+  pc.pending = 0;
   assert(responses.size() == chunks.size());
 
+  size_t done_tokens = 0;
   for (size_t i = 0; i < responses.size(); ++i) {
     json data = graph_data_with_retry(
         rt_, "marketDatas",
@@ -1038,10 +1062,14 @@ void SyncThread::fetch_token_meta(const std::vector<std::string> &token_ids) {
         apply_resolved_prices(rt_, token.cond);
       }
     }
+    done_tokens += chunks[i].size();
+    pc.done = done_tokens;
+    progress().flush();
   }
 }
 
 void SyncThread::fetch_condition_meta(const std::vector<std::string> &condition_ids) {
+  auto& pd = progress()[API::conditions];
   if (condition_ids.empty()) {
     return;
   }
@@ -1064,9 +1092,13 @@ void SyncThread::fetch_condition_meta(const std::vector<std::string> &condition_
                 .dump(),
     });
   }
+  pd.pending = reqs.size();
+  progress().flush();
   auto responses = http_batch(reqs, cfg_.http_concurrency, cfg_.proxy_url);
+  pd.pending = 0;
   assert(responses.size() == chunks.size());
 
+  size_t done_conds = 0;
   for (size_t i = 0; i < responses.size(); ++i) {
     json data = graph_data_with_retry(
         rt_, "conditions",
@@ -1104,10 +1136,14 @@ void SyncThread::fetch_condition_meta(const std::vector<std::string> &condition_
       }
       apply_resolved_prices(rt_, condition_id);
     }
+    done_conds += chunks[i].size();
+    pd.done = done_conds;
+    progress().flush();
   }
 }
 
 void SyncThread::fetch_gamma_meta(const std::vector<std::string> &condition_ids) {
+  auto& pf = progress()[API::gamma];
   if (condition_ids.empty()) {
     return;
   }
@@ -1121,7 +1157,10 @@ void SyncThread::fetch_gamma_meta(const std::vector<std::string> &condition_ids)
         .body = "",
     });
   }
+  pf.pending = reqs.size();
+  progress().flush();
   auto responses = http_batch(reqs, cfg_.http_concurrency, cfg_.proxy_url);
+  pf.pending = 0;
   assert(responses.size() == condition_ids.size());
 
   for (size_t i = 0; i < responses.size(); ++i) {
@@ -1130,6 +1169,8 @@ void SyncThread::fetch_gamma_meta(const std::vector<std::string> &condition_ids)
         rt_, "markets", "condition_id=" + condition_id, reqs[i].url,
         cfg_.proxy_url, responses[i]);
     if (!arr.is_array() || arr.empty()) {
+      pf.done = i + 1;
+      progress().flush();
       continue;
     }
 
@@ -1176,6 +1217,8 @@ void SyncThread::fetch_gamma_meta(const std::vector<std::string> &condition_ids)
       }
     }
     merge_condition(rt_.conditions[condition_id], condition);
+    pf.done = i + 1;
+    progress().flush();
   }
 }
 
@@ -1291,7 +1334,9 @@ void SyncThread::backfill_range(uint64_t from_block, uint64_t to_block) {
   if (from_block > to_block) {
     return;
   }
-  progress().update("backfill_logs", 0, to_block - from_block + 1);
+  auto& pe = progress()[API::logs];
+  pe.total = to_block - from_block + 1;
+  progress().stage("logs");
 
   uint64_t start = from_block;
   while (start <= to_block) {
@@ -1304,7 +1349,10 @@ void SyncThread::backfill_range(uint64_t from_block, uint64_t to_block) {
           {"params", json::array({filter})},
       });
     }
+    pe.pending = reqs.size();
+    progress().flush();
     json responses = rpc_batch(reqs);
+    pe.pending = 0;
     std::map<uint64_t, std::map<std::string, json>> blocks;
     for (const auto &response : responses) {
       assert(response.contains("result") && response.at("result").is_array());
@@ -1329,8 +1377,8 @@ void SyncThread::backfill_range(uint64_t from_block, uint64_t to_block) {
 
     rt_.last_applied_block = std::max(rt_.last_applied_block, end);
     rt_.head_block = std::max(rt_.head_block, end);
-    progress().update("backfill_logs", end - from_block + 1,
-                      to_block - from_block + 1);
+    pe.done = end - from_block + 1;
+    progress().flush();
     start = end + 1;
   }
 }

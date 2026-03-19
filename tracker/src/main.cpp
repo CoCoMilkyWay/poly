@@ -43,6 +43,7 @@ int main() {
       {"aggregate_file", cfg.aggregate_file.string()},
       {"meta_file", cfg.meta_file.string()},
   }).dump(2) << std::endl;
+  std::cout << std::flush;
 
   sync_thread.run();
 }

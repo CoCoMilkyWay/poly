@@ -112,6 +112,22 @@ def main() -> None:
 
     build_backend()
 
+    print(
+        json.dumps(
+            {
+                "frontend_url": f"http://localhost:{FRONTEND_PORT}",
+                "backend_url": f"http://localhost:{BACKEND_PORT}",
+                "address_file": str(ROOT / "address.txt"),
+                "snapshot_file": str(ROOT / "data" / "snapshot.json"),
+                "history_file": str(ROOT / "data" / "history.json"),
+                "aggregate_file": str(ROOT / "data" / "aggregate.json"),
+                "meta_file": str(ROOT / "data" / "meta.json"),
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+    )
+
     env = dict(os.environ)
     env["TRACKER_BACKEND_PORT"] = str(BACKEND_PORT)
     env["TRACKER_FRONTEND_PORT"] = str(FRONTEND_PORT)
@@ -146,22 +162,6 @@ def main() -> None:
             text=True,
         )
         wait_for_port(FRONTEND_PORT, frontend)
-
-        print(
-            json.dumps(
-                {
-                    "frontend_url": f"http://localhost:{FRONTEND_PORT}",
-                    "backend_url": f"http://localhost:{BACKEND_PORT}",
-                    "address_file": str(ROOT / "address.txt"),
-                    "snapshot_file": str(ROOT / "data" / "snapshot.json"),
-                    "history_file": str(ROOT / "data" / "history.json"),
-                    "aggregate_file": str(ROOT / "data" / "aggregate.json"),
-                    "meta_file": str(ROOT / "data" / "meta.json"),
-                },
-                ensure_ascii=False,
-                indent=2,
-            )
-        )
 
         backend_exit = backend.wait()
         assert backend_exit == 0, f"backend exited: {backend_exit}"

@@ -48,7 +48,9 @@ inline std::string strip_0x(std::string s) {
 
 inline std::string norm_hex(std::string s) {
   s = to_lower(std::move(s));
-  assert(s.starts_with("0x"));
+  if (!s.starts_with("0x")) {
+    s = "0x" + s;
+  }
   return s;
 }
 

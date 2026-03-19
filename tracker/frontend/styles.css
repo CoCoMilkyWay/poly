@@ -133,28 +133,40 @@ button {
   font-size: 13px;
 }
 
-.query-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+.progress-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  font-family: 'JetBrains Mono', monospace;
 }
 
-.query-card {
-  background: #10162a;
-  border: 1px solid var(--panel-border);
-  border-radius: 12px;
-  padding: 12px;
+.progress-table th,
+.progress-table td {
+  padding: 6px 8px;
+  text-align: left;
+  border-bottom: 1px solid var(--panel-border);
 }
 
-.query-label {
+.progress-table th {
   color: var(--subtle);
-  font-size: 12px;
-  margin-bottom: 6px;
+  font-weight: 500;
+  font-size: 11px;
+  text-transform: uppercase;
 }
 
-.query-value {
-  font-size: 18px;
-  font-weight: 700;
+.progress-table td:nth-child(2),
+.progress-table td:nth-child(3) {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.head-block {
+  margin-top: 12px;
+  padding: 8px 12px;
+  background: #10162a;
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--subtle);
 }
 
 .user-row,
