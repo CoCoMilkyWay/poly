@@ -39,7 +39,7 @@ inline constexpr uint16_t kFrontendPort = 8870;
 // Sync Settings
 // ============================================================================
 
-inline constexpr uint32_t kResyncIntervalSec = 300;
+inline constexpr uint32_t kResyncIntervalSec = 3600;
 inline constexpr uint32_t kTopicGroupSize = 128;
 inline constexpr uint32_t kGetLogsBlockSpan = 2000;
 
