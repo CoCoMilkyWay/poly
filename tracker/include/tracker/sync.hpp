@@ -41,14 +41,12 @@ private:
   void fetch_snapshot_balances();
   void append_snapshot_roots();
   std::vector<std::string> collect_active_token_ids() const;
-  void fetch_token_meta(const std::vector<std::string> &token_ids);
-  void fetch_condition_meta(const std::vector<std::string> &condition_ids);
-  void fetch_gamma_meta(const std::vector<std::string> &condition_ids);
-  void fetch_market_questions(const std::vector<std::string> &market_ids);
+  void fetch_gamma_by_token_ids(const std::vector<std::string> &token_ids);
+  void fetch_gamma_by_condition_ids(const std::vector<std::string> &condition_ids);
+  void fetch_gamma_market_questions(const std::string &market_id);
   void ensure_token_meta(const std::string &token_id);
   void ensure_condition_meta(const std::string &condition_id,
                              Collateral hint_collateral);
-  void ensure_gamma_meta(const std::string &condition_id);
   void ensure_market_questions(const std::string &market_id);
   void backfill_range(uint64_t from_block, uint64_t to_block);
   void apply_block_logs(const std::vector<json> &logs);

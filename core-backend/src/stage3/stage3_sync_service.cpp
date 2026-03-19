@@ -5,12 +5,47 @@
 #include <algorithm>
 #include <cassert>
 #include <cctype>
+#include <chrono>
+#include <cstdio>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <thread>
 
 namespace stage3 {
+
+// Print pool usage statistics periodically
+void print_pool_usage(const Stage3Runtime *rt) {
+  const auto *h = rt->header;
+
+  // Calculate per-shard and total usage
+  auto calc_shard_stats = [](const uint64_t (&used)[STAGE3_SYNC_SHARD_COUNT], uint64_t per_shard_max) {
+    uint64_t total = 0;
+    uint64_t max_used = 0;
+    int max_shard = 0;
+    for (uint32_t s = 0; s < STAGE3_SYNC_SHARD_COUNT; ++s) {
+      total += used[s];
+      if (used[s] > max_used) {
+        max_used = used[s];
+        max_shard = static_cast<int>(s);
+      }
+    }
+    double max_pct = 100.0 * static_cast<double>(max_used) / static_cast<double>(per_shard_max);
+    return std::make_tuple(total, max_used, max_shard, max_pct);
+  };
+
+  auto [tok_total, tok_max, tok_shard, tok_pct] = calc_shard_stats(h->token_pool_used, TOKENS_PER_SYNC_SHARD);
+  auto [feat_total, feat_max, feat_shard, feat_pct] = calc_shard_stats(h->feature_pool_used, FEATURES_PER_SYNC_SHARD);
+  auto [sb_total, sb_max, sb_shard, sb_pct] = calc_shard_stats(h->sharpe_bucket_pool_used, SHARPE_BUCKETS_PER_SYNC_SHARD);
+  auto [sp_total, sp_max, sp_shard, sp_pct] = calc_shard_stats(h->sharpe_point_pool_used, SHARPE_POINTS_PER_SYNC_SHARD);
+
+  fprintf(stderr, "[Stage3] Pool usage:\n");
+  fprintf(stderr, "  users:         %10lu / %10zu (%.2f%%)\n", h->user_count, MAX_USERS, 100.0 * h->user_count / MAX_USERS);
+  fprintf(stderr, "  tokens:        %10lu / %10zu (%.2f%%) | hottest shard[%d]: %lu/%-10u (%.2f%%)\n", tok_total, MAX_TOKENS, 100.0 * tok_total / MAX_TOKENS, tok_shard, tok_max, TOKENS_PER_SYNC_SHARD, tok_pct);
+  fprintf(stderr, "  features:      %10lu / %10zu (%.2f%%) | hottest shard[%d]: %lu/%-10u (%.2f%%)\n", feat_total, MAX_FEATURES, 100.0 * feat_total / MAX_FEATURES, feat_shard, feat_max, FEATURES_PER_SYNC_SHARD, feat_pct);
+  fprintf(stderr, "  sharpe_bucket: %10lu / %10zu (%.2f%%) | hottest shard[%d]: %lu/%-10u (%.2f%%)\n", sb_total, MAX_SHARPE_BUCKETS, 100.0 * sb_total / MAX_SHARPE_BUCKETS, sb_shard, sb_max, SHARPE_BUCKETS_PER_SYNC_SHARD, sb_pct);
+  fprintf(stderr, "  sharpe_point:  %10lu / %10zu (%.2f%%) | hottest shard[%d]: %lu/%-10u (%.2f%%)\n", sp_total, MAX_SHARPE_POINTS, 100.0 * sp_total / MAX_SHARPE_POINTS, sp_shard, sp_max, SHARPE_POINTS_PER_SYNC_SHARD, sp_pct);
+}
 
 class StageSync::QueryPauseGuard {
 public:
@@ -57,6 +92,8 @@ StageSync::StageSync(stage2::EventBuilder &builder,
   refresh_conditions_if_needed();
   std::lock_guard<std::mutex> lock(sync_mu_);
   refresh_status_locked();
+  // Print initial pool usage
+  print_pool_usage(rt_);
 }
 
 StageSync::~StageSync() {
@@ -637,6 +674,16 @@ void StageSync::do_sync_tick() {
     TraceN("s3/runloop/msync");
     if (!pause_requested_.load()) {
       stage3_sync(rt_);
+    }
+  }
+
+  // Print pool usage every 60 seconds
+  {
+    static auto last_print_time = std::chrono::steady_clock::now();
+    auto now = std::chrono::steady_clock::now();
+    if (std::chrono::duration_cast<std::chrono::seconds>(now - last_print_time).count() >= 60) {
+      print_pool_usage(rt_);
+      last_print_time = now;
     }
   }
 

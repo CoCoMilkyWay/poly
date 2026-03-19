@@ -57,7 +57,8 @@ inline constexpr size_t kHttpConcurrency = 10;
 // Proxy (empty = no proxy)
 // ============================================================================
 
-inline constexpr const char *kProxyUrl = "http://172.17.112.1:20000";
+// inline constexpr const char *kProxyUrl = "http://172.17.112.1:20000";
+inline constexpr const char *kProxyUrl = "http://127.0.0.1:10808";
 
 // ============================================================================
 // URL Parsing

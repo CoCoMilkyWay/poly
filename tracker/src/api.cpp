@@ -11,6 +11,10 @@
 #include <thread>
 
 namespace tracker {
+
+// Forward declaration
+json build_progress_json();
+
 namespace {
 
 namespace asio = boost::asio;
@@ -216,6 +220,10 @@ void handle_request(AppState &state,
                build_health_json(*load_published(state.state_ptr)));
     return;
   }
+  if (req.method() == http::verb::get && path == "/api/progress") {
+    write_json(socket, req.version(), build_progress_json());
+    return;
+  }
   if (req.method() == http::verb::post && path == "/api/resync") {
     if (on_resync) {
       on_resync();
@@ -244,6 +252,29 @@ void handle_request(AppState &state,
         if (is_peer_closed(ec)) return;
       }
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+  }
+  if (req.method() == http::verb::get && path == "/api/progress/stream") {
+    std::string header =
+        "HTTP/1.1 200 OK\r\n"
+        "Content-Type: text/event-stream\r\n"
+        "Cache-Control: no-cache\r\n"
+        "Access-Control-Allow-Origin: *\r\n"
+        "Connection: keep-alive\r\n\r\n";
+    beast::error_code ec;
+    asio::write(socket, asio::buffer(header), ec);
+    if (is_peer_closed(ec)) return;
+
+    std::string last_data;
+    while (true) {
+      std::string current_data = build_progress_json().dump();
+      if (current_data != last_data) {
+        last_data = current_data;
+        std::string event = "data: " + current_data + "\n\n";
+        asio::write(socket, asio::buffer(event), ec);
+        if (is_peer_closed(ec)) return;
+      }
+      std::this_thread::sleep_for(std::chrono::milliseconds(200));
     }
   }
 

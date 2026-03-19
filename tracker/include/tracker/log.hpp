@@ -105,26 +105,22 @@ inline void log_query(const std::string &channel,
 // ============================================================================
 // ProgressBoard - API进度显示
 // ============================================================================
-// 终端显示格式:
-//   API        done/total  [pend]
-//   positions  5/10        [3]
-//   balances   4/4         [0]
-//   tokens     50/100      [5]
-//   conditions 20/50       [2]
-//   logs       500/1000    [10]
-//   gamma      30/50       [3]
-//   subscribe  10/0        [0]
-//   block      1/0         [0]
+// 终端显示格式 (按 full_resync 流程顺序):
+//   API       done/total  [pend]   说明
+//   snapshot  5/10        [3]      [a] Graph.userPositions    (done=完成用户数, total=用户数)
+//   stables   40/40       [0]      [b] RPC.eth_call           (done=完成查询数, total=用户数*4)
+//   meta      50/100      [5]      [c] Gamma.markets          (done=完成token数, total=token数)
+//   ws_sub    10/10       [0]      [d] ws.eth_subscribe       (done=订阅用户数, total=用户数)
+//   head      1/1         [0]      [e] RPC.eth_blockNumber    (done=1表示完成)
+//   backfill  500/1000    [10]     [f] RPC.eth_getLogs        (done=已处理区块数, total=区块范围)
 //   [current_stage]
 
-enum class API { positions,
-                 balances,
-                 tokens,
-                 conditions,
-                 gamma,
-                 subscribe,
-                 block,
-                 logs,
+enum class API { snapshot,   // [a] 用户持仓快照
+                 stables,    // [b] 稳定币余额
+                 meta,       // [c] token/condition 元数据
+                 ws_sub,     // [d] WebSocket 订阅
+                 head,       // [e] 区块高度
+                 backfill,   // [f] 历史补齐
                  COUNT };
 
 struct ProgressState {
@@ -135,7 +131,7 @@ struct ProgressState {
 
 struct ProgressBoard {
   static constexpr size_t kApiCount = static_cast<size_t>(API::COUNT);
-  static constexpr const char *kApiNames[kApiCount] = {"positions", "balances", "tokens", "conditions", "gamma", "subscribe", "block", "logs"};
+  static constexpr const char *kApiNames[kApiCount] = {"snapshot", "stables", "meta", "ws_sub", "head", "backfill"};
 
   std::array<ProgressState, kApiCount> apis;
   std::string current_stage;

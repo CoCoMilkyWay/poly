@@ -88,27 +88,35 @@ E:query count (展示rpc,subgraph当前session分别query了多少次)
 ----------------------------
 
 API:
-a/{users}      http.Subgraph(pnl).userPositions(1)                   获取用户历史snapshot持仓({kGraphPageLimit}分页)
-b/4            http.RPC.eth_call({users})                            批量获取用户稳定币余额 (USDC/USDCe/USDT/Wrapped)
-c/{tokens}     http.Subgraph(poly).marketDatas({kGraphIdBatchLimit}) 批量获取token_ids
-d/{conditions} http.Subgraph(pnl).conditions({kGraphIdBatchLimit})   批量获取condition_ids 
-e/e            http.RPC.eth_getLogs({users})                         批量补齐历史记录({kGetLogsBlockSpan}区块拆分)
-f/{conditions} http.Gamma(polymarket).markets({kGammaBatchLimit})    批量获取问题描述
-g/             ws.RPC.eth_subscribe({users})                         批量订阅WebSocket交易记录(subscribe={subscribe},usrs/subscribe/topic={kTopicGroupSize})
-h/             http.RPC.eth_blockNumber(1)                           获取当前区块高度
+a/{users}      Graph(pnl).userPositions(1)                           获取用户历史snapshot持仓({kGraphPageLimit}分页)
+b/4            RPC.eth_call({users})                                 批量获取用户稳定币余额 (USDC/USDCe/USDT/Wrapped)
+c/{tokens}     Gamma.markets({kGammaBatchLimit})                     批量获取token/condition元数据
+d/             ws.RPC.eth_subscribe({users})                         批量订阅WebSocket交易记录(subscribe={subscribe},usrs/subscribe/topic={kTopicGroupSize})
+e/             RPC.eth_blockNumber                                   获取当前区块高度
+f/             RPC.eth_getLogs({users})                              批量补齐历史记录({kGetLogsBlockSpan}区块拆分)
 
 ======================
 进度显示设计(终端)
 ======================
-  - 动态更新上面的API
-  - 底部显示当前stage
+  - 按 full_resync 流程顺序显示
+  - 底部显示当前 stage
   - 更新时用 \x1b[{lines_up}A 上移光标,\x1b[K 清行
-  - 用mutex保护打印
+  - 用 mutex 保护打印
+
+终端显示格式:
+  API       done/total  [pend]   说明
+  snapshot  5/10        [3]      [a] done=完成用户数, total=用户数
+  stables   40/40       [0]      [b] done=完成查询数, total=用户数*4
+  meta      50/100      [5]      [c] done=完成token数, total=token数
+  ws_sub    10/10       [0]      [d] done=订阅用户数, total=用户数
+  head      1/1         [0]      [e] done=1表示完成
+  backfill  500/1000    [10]     [f] done=已处理区块数, total=区块范围
+  [current_stage]
 ======================
 Log设计(文件)
 ======================
   - 网络请求失败/无限重试(预期此程序7*24小时运行)
-  - subgraph "bad indexers" 错误
+  - Graph/Gamma API 错误
   - JSON解析失败
   - 其他异常
 ======================
@@ -137,46 +145,40 @@ SyncThread.run()
 │  └─ load_files() → snapshot_root/history_root 从磁盘恢复
 ├─ 主循环
 │  ├─ full_resync() (初始触发/每3600s定时触发/手动UI触发)
-│  │  ├─ [a] fetch_user_positions (per-user 并发)
-│  │  │  ├─ API: http.Subgraph(pnl).userPositions(user)
+│  │  ├─ [a] fetch_user_snapshots (per-user 并发)
+│  │  │  ├─ API: Graph(pnl).userPositions(user)
 │  │  │  ├─ 输出: user_snapshots[user] = {snapshot_block, positions[]}
 │  │  │  ├─ 注: snapshot_block 是 per-user checkpoint, 不是全局统一块高
 │  │  │  └─ 落地: → S (snapshot.json)
-│  │  ├─ [b] fetch_stable_balances (并发 RPC)
-│  │  │  ├─ API: http.RPC.eth_call balanceOf(user, USDC/USDCe/USDT/Wrapped)
+│  │  ├─ [b] fetch_snapshot_balances (并发 RPC)
+│  │  │  ├─ API: RPC.eth_call balanceOf(user, USDC/USDCe/USDT/Wrapped)
 │  │  │  ├─ 输出: user_states[user].stable = {usdc, usdc_e, usdt, wrapped}
-│  │  │  └─ 注: 只在 full_resync 时更新，不监听 ERC20 Transfer，场外转账后可能过时
-│  │  ├─ [c] fetch_market_data (并发批次)
-│  │  │  ├─ API: http.Subgraph(poly).marketDatas(token_ids)
-│  │  │  ├─ 输出: tokens[token_id] = {condition_id, outcome_index, ...}
+│  │  │  └─ 注: 只在 full_resync 时更新，不监听 ERC20 Transfer
+│  │  ├─ [c] fetch_gamma_by_token_ids (批量)
+│  │  │  ├─ API: Gamma.markets?clob_token_ids=tid1,tid2,...
+│  │  │  ├─ 输出: tokens[token_id] = {condition_id, idx}
+│  │  │  │        conditions[cond_id] = {oc, coll, tids[], q, slug, outcomes[]}
+│  │  │  ├─ 注: Gamma 一步返回完整 token/condition 元数据
 │  │  │  └─ 落地: → M (meta.json)
-│  │  ├─ [d] fetch_conditions (并发批次)
-│  │  │  ├─ API: http.Subgraph(pnl).conditions(condition_ids)
-│  │  │  ├─ 输出: conditions[cond_id] = {outcome_count, payout, question_id, ...}
-│  │  │  └─ 落地: → M (meta.json)
-│  │  ├─ [f] fetch_gamma_meta (并发)
-│  │  │  ├─ API: http.Gamma(polymarket).markets(condition_ids)
-│  │  │  ├─ 输出: conditions[cond_id].market_* 补齐
-│  │  │  └─ 落地: → M (meta.json)
-│  │  ├─ [g] start_ws_subscription (先订阅，再获取head，再backfill)
+│  │  ├─ [d] start_ws_subscription (先订阅，再获取head，再backfill)
 │  │  │  ├─ API: ws.RPC.eth_subscribe(newHeads, logs)
 │  │  │  ├─ 阻塞等待: ws 连接成功 + 收到首条 newHeads
 │  │  │  ├─ 输出: ws 连接建立, ws_start_block = 首条 newHeads.number
 │  │  │  └─ 注: ws 事件暂存队列，等 backfill 完成后再处理
-│  │  ├─ [h] get_head_block (订阅成功后获取)
-│  │  │  ├─ API: http.RPC.eth_blockNumber()
+│  │  ├─ [e] get_head_block (订阅成功后获取)
+│  │  │  ├─ API: RPC.eth_blockNumber()
 │  │  │  └─ 输出: head_block = max(ws_start_block, eth_blockNumber)
-│  │  ├─ [e] backfill_gap (按 per-user checkpoint 计算, RPC 侧合并抓取)
+│  │  ├─ [f] backfill_range (按 per-user checkpoint 计算, RPC 侧合并抓取)
 │  │  │  ├─ 对每个 user: from = user_snapshots[user].snapshot_block + 1, to = head_block
-│  │  │  ├─ API: http.RPC.eth_getLogs({users}, merged filters)
-│  │  │  ├─ 处理: 先按 raw_log_key=(block,tx_hash,log_index,address) 合并去重,再 parse_and_emit_events(logs)
+│  │  │  ├─ API: RPC.eth_getLogs({users}, merged filters)
+│  │  │  ├─ 处理: 先按 raw_log_key 合并去重, 再 apply_block_logs(logs)
 │  │  │  ├─ 落地: → H (history.json) per batch, 按 event_id 幂等写入
 │  │  │  └─ 完成后: backfill_done_block = head_block
 │  │  ├─ 去重处理 (多 filter / 多 user / backfill 与 ws 重叠)
 │  │  │  ├─ 遍历 ws 暂存队列中 block <= backfill_done_block 的事件
 │  │  │  ├─ raw 去重: 相同 raw_log_key 只保留一份 raw log
 │  │  │  ├─ emit 后: event_id = op_key + "|" + user + "|" + leg_index
-│  │  │  └─ H 落地按 event_id 幂等,不按 (block_number, log_index) 去重
+│  │  │  └─ H 落地按 event_id 幂等
 │  │  └─ 计算 aggregate
 │  │     ├─ 输出: aggregate 状态 + summary.min_snapshot_block
 │  │     ├─ 输出: summary.snapshot_blocks[user] = user_snapshots[user].snapshot_block
@@ -184,25 +186,25 @@ SyncThread.run()
 │  ├─ drain_queue() (处理 websocket 事件)
 │  │  ├─ on newHeads → update head_block
 │  │  └─ on logs
-│  │     ├─ parse_and_emit_events([log])
+│  │     ├─ apply_block_logs([log])
 │  │     ├─ 落地: → H (history.json) 增量, 按 event_id 幂等写入
-│  │     ├─ 映射补齐时: → M (meta.json)
+│  │     ├─ 映射补齐时: → M (meta.json) via Gamma
 │  │     └─ aggregate 重算: → A (aggregate.json)
-│  └─ sleep(100ms)  // 主循环空闲轮询间隔, 非 resync 周期
+│  └─ sleep(100ms)  // 主循环空闲轮询间隔
 └─ 落地汇总
    ├─ S (snapshot.json): [a] 完成后
-   ├─ M (meta.json): [c][d][f] 各自完成后 + 增量映射补齐时
-   ├─ H (history.json): [e] 每批 + ws 增量, 按 event_id 幂等
-   └─ A (aggregate.json): [e] 完成后 + ws 每条事件后
+   ├─ M (meta.json): [c] 完成后 + 增量映射补齐时 (via Gamma)
+   ├─ H (history.json): [f] 每批 + ws 增量, 按 event_id 幂等
+   └─ A (aggregate.json): [f] 完成后 + ws 每条事件后
 ```
 
 ======================
-parse_and_emit_events(logs) 流程
+apply_block_logs(logs) 流程
 ======================
 ```
-parse_and_emit_events(logs)
+apply_block_logs(logs)
 ├─ 输入
-│  ├─ logs[]: raw RPC logs (transfer + 语义事件,按 block + tx + log_index 排序)
+│  ├─ logs[]: raw RPC logs (按 block + tx + log_index 排序)
 │  └─ state: tokens/conditions 映射 (可被补齐更新)
 ├─ 前置约束
 │  ├─ assert(parent_collection_id == 0x0)
@@ -225,7 +227,7 @@ parse_and_emit_events(logs)
 │  ├─ PositionSplit (CONDITIONAL_TOKENS)
 │  │  ├─ 解码: stakeholder, condition_id, partition[], amount, collateral_token
 │  │  ├─ 补齐: condition_id → (outcome_count, collateral) from conditions[]
-│  │  │  └─ 缺失时: on-demand query subgraph 或 RPC
+│  │  │  └─ 缺失时: on-demand query Gamma API
 │  │  ├─ 计算: token_ids[] = [getPositionId(coll, cond, idx) for idx in partition]
 │  │  ├─ 产出 (每个 outcome 一条):
 │  │  │  └─ emit(stakeholder, Split, +amount, price=1e6/outcome_count)
@@ -251,7 +253,7 @@ parse_and_emit_events(logs)
 │  └─ PositionConvert (NEG_RISK_ADAPTER; 只作为 convert op root)
 │     ├─ 解码: stakeholder, market_id, index_set, amount
 │     ├─ 补齐: market_id → question_ids[] → condition_ids[]
-│     │  └─ 缺失时: subgraph.negRiskEvent(market_id).questionCount + 本地计算
+│     │  └─ 缺失时: Gamma /markets?question_ids= + /events?slug=
 │     ├─ 不直接 emit 单条 Convert
 │     ├─ 同 tx 查找相关 TransferSingle/TransferBatch 仓位腿
 │     │  ├─ burn 腿: stakeholder/adapter -> burn_address 的旧 token
@@ -260,13 +262,14 @@ parse_and_emit_events(logs)
 │     ├─ 以 PositionConvert raw log 作为 op_key, 对展开后的每条仓位腿分配 leg_index
 │     ├─ 产出: emit(stakeholder, Convert, signed_amount, price=0)
 │     └─ 更新: user_states[stakeholder].positions += signed_amount (per token)
-├─ 映射补齐 (on-demand, 遇到未知映射时触发)
-│  ├─ token_id 未知 → query_token_meta(token_id)
-│  │  └─ subgraph marketDatas 或计算 getPositionId 反推
-│  ├─ condition_id 未知 → query_condition_meta(cond_id)
-│  │  └─ subgraph conditions + gamma markets
-│  └─ market_id 未知 → query_market_questions(market_id)
-│     └─ subgraph.negRiskEvent(market_id).questionCount + 本地计算 question_id
+├─ 映射补齐 (on-demand, 遇到未知映射时触发, 统一用 Gamma)
+│  ├─ token_id 未知 → Gamma /markets?clob_token_ids=
+│  │  └─ 返回: conditionId, clobTokenIds[], question, outcomes
+│  │  └─ 从 clobTokenIds 数组位置推断 idx
+│  ├─ condition_id 未知 → Gamma /markets?condition_ids=
+│  │  └─ 返回: clobTokenIds[], question, outcomes
+│  └─ market_id 未知 → Gamma /markets?question_ids= + /events?slug=
+│     └─ 步骤: market_id+"00" → question_id → slug → all markets
 └─ 输出
    ├─ history_root[user][block_key].push(event) 增量
    ├─ user_states[user].positions 实时更新
@@ -327,9 +330,9 @@ TransferSingle/TransferBatch 不作为独立事件类型暴露,但会参与 orde
 | 映射                     | 来源                          | 补齐方式                                                                              |
 | ------------------------ | ----------------------------- | ------------------------------------------------------------------------------------- |
 | condition_id → collateral| PositionSplit/Merge 事件      | 事件自带 collateral_token 字段                                                        |
-| market_id → question_ids | subgraph + 计算               | subgraph.negRiskEvent(market_id).questionCount → question_id = market_id[0:31] \| idx |
+| market_id → question_ids | Gamma API                     | /markets?question_ids=market_id+"00" → slug → /events?slug= → all questionIDs         |
 | question_id → condition  | 计算                          | condition = keccak256(NRA, question_id, 2)                                            |
-| token_id → (cond, idx)   | subgraph / Split/Merge 事件   | subgraph marketDatas 查询，或从 Split/Merge 事件反向记录                              |
+| token_id → (cond, idx)   | Gamma API / Split/Merge 事件  | /markets?clob_token_ids= → clobTokenIds 数组位置推断 idx                              |
 | (cond, idx) → token_id   | 正向计算                      | token_id = getPositionId(collateral, condition, idx)                                  |
 
 补齐用常量:

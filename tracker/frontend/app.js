@@ -349,8 +349,8 @@ function renderHoldings() {
   }).join("");
 }
 
-function renderQueryCounts() {
-  const apiProgress = state.payload?.summary?.api_progress || [];
+function renderQueryCounts(apiProgress = null) {
+  const progressData = apiProgress || state.payload?.summary?.api_progress || [];
   const headBlock = state.payload?.summary?.head_block || 0;
 
   let html = `
@@ -360,7 +360,7 @@ function renderQueryCounts() {
       </thead>
       <tbody>
   `;
-  for (const api of apiProgress) {
+  for (const api of progressData) {
     html += `
       <tr>
         <td>${api.name}</td>
@@ -485,9 +485,26 @@ function connectSSE() {
   };
 }
 
+function connectProgressSSE() {
+  const es = new EventSource(`${BACKEND_BASE}/api/progress/stream`);
+  es.onmessage = (event) => {
+    try {
+      const progress = JSON.parse(event.data);
+      renderQueryCounts(progress);
+    } catch (error) {
+      console.error("Progress SSE error:", error);
+    }
+  };
+  es.onerror = () => {
+    es.close();
+    setTimeout(connectProgressSSE, 2000);
+  };
+}
+
 async function boot() {
   await refreshState();
   connectSSE();
+  connectProgressSSE();
 }
 
 boot().catch((error) => {
