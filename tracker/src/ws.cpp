@@ -1,7 +1,7 @@
 #include "tracker/ws.hpp"
 
 #include "tracker/codec.hpp"
-#include "tracker/const.hpp"
+#include "tracker/filter.hpp"
 #include "tracker/log.hpp"
 
 #include <boost/asio/connect.hpp>
@@ -220,48 +220,6 @@ WsCounters WsThread::counters() const {
   };
 }
 
-std::vector<json> WsThread::build_log_filters(
-    const std::vector<std::string> &users) const {
-  std::vector<json> filters;
-  for (const auto &group : chunked(users, cfg_.topic_group_size)) {
-    json topics = json::array();
-    for (const auto &user : group) {
-      topics.push_back(addr_to_topic(user));
-    }
-
-    std::vector<json> group_filters = {
-        {{"address", kConditionalTokens},
-         {"topics",
-          json::array({json::array({kTransferSingleTopic, kTransferBatchTopic}),
-                       nullptr, topics})}},
-        {{"address", kConditionalTokens},
-         {"topics",
-          json::array({json::array({kTransferSingleTopic, kTransferBatchTopic}),
-                       nullptr, nullptr, topics})}},
-        {{"address", kConditionalTokens},
-         {"topics",
-          json::array({json::array({kPositionSplitTopic, kPositionMergeTopic,
-                                    kPositionRedeemTopic}),
-                       topics})}},
-        {{"address", json::array({kCtfExchange, kNegRiskCtfExchange})},
-         {"topics", json::array({json::array({kOrderFillTopic}), nullptr, topics})}},
-        {{"address", json::array({kCtfExchange, kNegRiskCtfExchange})},
-         {"topics",
-          json::array({json::array({kOrderFillTopic}), nullptr, nullptr, topics})}},
-        {{"address", kNegRiskAdapter},
-         {"topics", json::array({json::array({kPositionConvertTopic}), topics})}},
-    };
-    for (auto &filter : group_filters) {
-      filters.push_back(std::move(filter));
-    }
-  }
-
-  filters.push_back({
-      {"address", kConditionalTokens},
-      {"topics", json::array({json::array({kConditionResolveTopic})})},
-  });
-  return filters;
-}
 
 void WsThread::run() {
   while (running_) {
@@ -299,7 +257,7 @@ void WsThread::run() {
 
         std::string head_sub = ws.subscribe_heads();
         std::set<std::string> log_subs;
-        for (const auto &filter : build_log_filters(users)) {
+        for (const auto &filter : build_user_log_filters(users, cfg_.topic_group_size)) {
           log_subs.insert(ws.subscribe_logs(filter));
         }
         ws_sub_count_ += 1 + log_subs.size();

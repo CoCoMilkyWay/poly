@@ -297,6 +297,97 @@ inline long double parse_decimal(const std::string &s) { return std::stold(s); }
 inline json safe_parse(const std::string &body) { return json::parse(body); }
 
 // ============================================================================
+// JSON Field Accessors
+// ============================================================================
+
+inline std::string json_str(const json &row, const char *key) {
+  if (!row.contains(key) || row.at(key).is_null()) {
+    return "";
+  }
+  if (row.at(key).is_string()) {
+    return row.at(key).get<std::string>();
+  }
+  return row.at(key).dump();
+}
+
+inline int json_int(const json &row, const char *key, int fallback = -1) {
+  if (!row.contains(key) || row.at(key).is_null()) {
+    return fallback;
+  }
+  if (row.at(key).is_number_integer()) {
+    return row.at(key).get<int>();
+  }
+  if (row.at(key).is_string()) {
+    return std::stoi(row.at(key).get<std::string>());
+  }
+  return fallback;
+}
+
+inline int64_t json_i64(const json &row, const char *key, int64_t fallback = -1) {
+  if (!row.contains(key) || row.at(key).is_null()) {
+    return fallback;
+  }
+  if (row.at(key).is_number_integer()) {
+    return row.at(key).get<int64_t>();
+  }
+  if (row.at(key).is_string()) {
+    return std::stoll(row.at(key).get<std::string>());
+  }
+  return fallback;
+}
+
+inline BigInt json_bigint(const json &row, const char *key) {
+  if (!row.contains(key) || row.at(key).is_null()) {
+    return 0;
+  }
+  if (row.at(key).is_string()) {
+    return bigint_from_dec(row.at(key).get<std::string>());
+  }
+  if (row.at(key).is_number_integer()) {
+    return bigint_from_dec(std::to_string(row.at(key).get<int64_t>()));
+  }
+  return 0;
+}
+
+inline std::vector<BigInt> json_bigint_arr(const json &row, const char *key) {
+  std::vector<BigInt> out;
+  if (!row.contains(key) || !row.at(key).is_array()) {
+    return out;
+  }
+  for (const auto &value : row.at(key)) {
+    if (value.is_string()) {
+      out.push_back(bigint_from_dec(value.get<std::string>()));
+    } else if (value.is_number_integer()) {
+      out.push_back(bigint_from_dec(std::to_string(value.get<int64_t>())));
+    }
+  }
+  return out;
+}
+
+inline std::vector<std::string> json_str_arr(const json &row, const char *key) {
+  std::vector<std::string> out;
+  if (!row.contains(key) || !row.at(key).is_array()) {
+    return out;
+  }
+  for (const auto &value : row.at(key)) {
+    if (value.is_string()) {
+      out.push_back(value.get<std::string>());
+    }
+  }
+  return out;
+}
+
+inline std::string json_str_or_int(const json &value) {
+  if (value.is_string()) {
+    return value.get<std::string>();
+  }
+  if (value.is_number_integer()) {
+    return std::to_string(value.get<int64_t>());
+  }
+  return "";
+}
+
+// ============================================================================
 // File Helpers
 // ============================================================================
 

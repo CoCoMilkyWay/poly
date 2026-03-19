@@ -42,7 +42,6 @@ public:
 
 private:
   void run();
-  std::vector<json> build_log_filters(const std::vector<std::string> &users) const;
 
   const AppConfig &cfg_;
   EventQueue &queue_;

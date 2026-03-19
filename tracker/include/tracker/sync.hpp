@@ -62,9 +62,6 @@ private:
   uint64_t rpc_block_number();
   json rpc_call(const std::string &method, const json &params);
   json rpc_batch(const std::vector<json> &reqs);
-  std::vector<json> build_log_filters(const std::vector<std::string> &users,
-                                      uint64_t from_block,
-                                      uint64_t to_block) const;
 
   const AppConfig &cfg_;
   AppState &shared_;

@@ -1,6 +1,7 @@
 #include "tracker/sync.hpp"
 
 #include "tracker/api.hpp"
+#include "tracker/filter.hpp"
 #include "tracker/http.hpp"
 #include "tracker/log.hpp"
 #include "tracker/store.hpp"
@@ -72,93 +73,6 @@ query NegRiskEvents($ids: [ID!]!) {
 const std::string &zero_b32() {
   static const std::string value = "0x" + std::string(64, '0');
   return value;
-}
-
-std::string json_str(const json &row, const char *key) {
-  if (!row.contains(key) || row.at(key).is_null()) {
-    return "";
-  }
-  if (row.at(key).is_string()) {
-    return row.at(key).get<std::string>();
-  }
-  return row.at(key).dump();
-}
-
-int json_int(const json &row, const char *key, int fallback = -1) {
-  if (!row.contains(key) || row.at(key).is_null()) {
-    return fallback;
-  }
-  if (row.at(key).is_number_integer()) {
-    return row.at(key).get<int>();
-  }
-  if (row.at(key).is_string()) {
-    return std::stoi(row.at(key).get<std::string>());
-  }
-  return fallback;
-}
-
-int64_t json_i64(const json &row, const char *key, int64_t fallback = -1) {
-  if (!row.contains(key) || row.at(key).is_null()) {
-    return fallback;
-  }
-  if (row.at(key).is_number_integer()) {
-    return row.at(key).get<int64_t>();
-  }
-  if (row.at(key).is_string()) {
-    return std::stoll(row.at(key).get<std::string>());
-  }
-  return fallback;
-}
-
-BigInt json_bigint(const json &row, const char *key) {
-  if (!row.contains(key) || row.at(key).is_null()) {
-    return 0;
-  }
-  if (row.at(key).is_string()) {
-    return bigint_from_dec(row.at(key).get<std::string>());
-  }
-  if (row.at(key).is_number_integer()) {
-    return bigint_from_dec(std::to_string(row.at(key).get<int64_t>()));
-  }
-  return 0;
-}
-
-std::vector<BigInt> json_bigint_arr(const json &row, const char *key) {
-  std::vector<BigInt> out;
-  if (!row.contains(key) || !row.at(key).is_array()) {
-    return out;
-  }
-  for (const auto &value : row.at(key)) {
-    if (value.is_string()) {
-      out.push_back(bigint_from_dec(value.get<std::string>()));
-    } else if (value.is_number_integer()) {
-      out.push_back(bigint_from_dec(std::to_string(value.get<int64_t>())));
-    }
-  }
-  return out;
-}
-
-std::vector<std::string> json_str_arr(const json &row, const char *key) {
-  std::vector<std::string> out;
-  if (!row.contains(key) || !row.at(key).is_array()) {
-    return out;
-  }
-  for (const auto &value : row.at(key)) {
-    if (value.is_string()) {
-      out.push_back(value.get<std::string>());
-    }
-  }
-  return out;
-}
-
-std::string json_str_or_int(const json &value) {
-  if (value.is_string()) {
-    return value.get<std::string>();
-  }
-  if (value.is_number_integer()) {
-    return std::to_string(value.get<int64_t>());
-  }
-  return "";
 }
 
 std::string clip_text(const std::string &s, size_t n = 256) {
@@ -778,10 +692,8 @@ void SyncThread::load_seed() {
 
   auto load_token_row = [&](const std::string &token_id, const json &row) {
     TokenMeta token;
-    token.cond = row.contains("cond") ? json_str(row, "cond")
-                                      : json_str(row, "condition_id");
-    int idx = row.contains("idx") ? json_int(row, "idx", 0xFF)
-                                  : json_int(row, "outcome_index", 0xFF);
+    token.cond = json_str(row, "cond");
+    int idx = json_int(row, "idx", 0xFF);
     token.idx = idx < 0 ? 0xFF : static_cast<uint8_t>(idx);
     token.price = json_i64(row, "price", -1);
     token.price_src = json_str(row, "price_src");
@@ -793,63 +705,26 @@ void SyncThread::load_seed() {
       load_token_row(it.key(), it.value());
     }
   }
-  if (seed.contains("tokens") && seed.at("tokens").is_array()) {
-    for (const auto &row : seed.at("tokens")) {
-      std::string token_id = json_str(row, "token_id");
-      if (token_id.empty()) {
-        continue;
-      }
-      load_token_row(token_id, row);
-    }
-  }
 
   auto load_condition_row = [&](const std::string &condition_id, const json &row) {
     ConditionMeta condition;
-    condition.qid = row.contains("qid") ? json_str(row, "qid")
-                                        : json_str(row, "question_id");
-    int oc = row.contains("oc") ? json_int(row, "oc", 0)
-                                : json_int(row, "outcome_slot_count", 0);
+    condition.qid = json_str(row, "qid");
+    int oc = json_int(row, "oc", 0);
     condition.oc = oc <= 0 ? 0 : static_cast<uint8_t>(oc);
-    int coll = row.contains("coll") ? json_int(row, "coll", 0)
-                                    : json_int(row, "collateral", 0);
+    int coll = json_int(row, "coll", 0);
     condition.coll = coll <= 0 ? 0 : static_cast<uint8_t>(coll);
-    condition.tids = row.contains("tids") ? json_str_arr(row, "tids")
-                                           : json_str_arr(row, "token_ids");
-    condition.payout = row.contains("payout") ? json_bigint_arr(row, "payout")
-                                              : json_bigint_arr(row, "payout_numerators");
+    condition.tids = json_str_arr(row, "tids");
+    condition.payout = json_bigint_arr(row, "payout");
     if (row.contains("payout_d") && !row.at("payout_d").is_null()) {
-      if (row.at("payout_d").is_string()) {
-        condition.payout_d = bigint_from_dec(row.at("payout_d").get<std::string>());
-      } else {
-        condition.payout_d =
-            bigint_from_dec(std::to_string(row.at("payout_d").get<int64_t>()));
-      }
+      condition.payout_d = json_bigint(row, "payout_d");
       condition.has_payout_d = true;
       condition.resolved = true;
     }
-    if (row.contains("payout_denominator") &&
-        !row.at("payout_denominator").is_null()) {
-      if (row.at("payout_denominator").is_string()) {
-        condition.payout_d =
-            bigint_from_dec(row.at("payout_denominator").get<std::string>());
-      } else {
-        condition.payout_d = bigint_from_dec(
-            std::to_string(row.at("payout_denominator").get<int64_t>()));
-      }
-      condition.has_payout_d = true;
-      condition.resolved = true;
-    }
-    condition.q = row.contains("q") ? json_str(row, "q")
-                                     : json_str(row, "market_question");
-    condition.desc = row.contains("desc") ? json_str(row, "desc")
-                                           : json_str(row, "market_description");
-    condition.slug = row.contains("slug") ? json_str(row, "slug")
-                                           : json_str(row, "market_slug");
-    condition.url = row.contains("url") ? json_str(row, "url")
-                                         : json_str(row, "market_url");
-    condition.outcomes =
-        row.contains("outcomes") ? json_str_arr(row, "outcomes")
-                                  : json_str_arr(row, "market_outcomes");
+    condition.q = json_str(row, "q");
+    condition.desc = json_str(row, "desc");
+    condition.slug = json_str(row, "slug");
+    condition.url = json_str(row, "url");
+    condition.outcomes = json_str_arr(row, "outcomes");
     merge_condition(rt_.conditions[condition_id], condition);
     apply_resolved_prices(rt_, condition_id);
   };
@@ -858,16 +733,6 @@ void SyncThread::load_seed() {
     for (auto it = seed.at("conditions").begin(); it != seed.at("conditions").end();
          ++it) {
       load_condition_row(it.key(), it.value());
-    }
-  }
-  if (seed.contains("conditions") && seed.at("conditions").is_array()) {
-    for (const auto &row : seed.at("conditions")) {
-      std::string condition_id = row.contains("cond") ? json_str(row, "cond")
-                                                       : json_str(row, "condition_id");
-      if (condition_id.empty()) {
-        continue;
-      }
-      load_condition_row(condition_id, row);
     }
   }
 
@@ -1431,7 +1296,7 @@ void SyncThread::backfill_range(uint64_t from_block, uint64_t to_block) {
   uint64_t start = from_block;
   while (start <= to_block) {
     uint64_t end = std::min(to_block, start + cfg_.get_logs_block_span - 1);
-    auto filters = build_log_filters(rt_.users, start, end);
+    auto filters = build_user_log_filters(rt_.users, cfg_.topic_group_size, start, end);
     std::vector<json> reqs;
     for (const auto &filter : filters) {
       reqs.push_back({
@@ -1915,55 +1780,6 @@ json SyncThread::rpc_batch(const std::vector<json> &reqs) {
               "size=" + std::to_string(reqs.size()));
     return body;
   }
-}
-
-std::vector<json> SyncThread::build_log_filters(
-    const std::vector<std::string> &users,
-    uint64_t from_block,
-    uint64_t to_block) const {
-  std::vector<json> filters;
-  for (const auto &group : chunked(users, cfg_.topic_group_size)) {
-    json topics = json::array();
-    for (const auto &user : group) {
-      topics.push_back(addr_to_topic(user));
-    }
-
-    std::vector<json> group_filters = {
-        {{"address", kConditionalTokens},
-         {"topics",
-          json::array({json::array({kTransferSingleTopic, kTransferBatchTopic}),
-                       nullptr, topics})}},
-        {{"address", kConditionalTokens},
-         {"topics",
-          json::array({json::array({kTransferSingleTopic, kTransferBatchTopic}),
-                       nullptr, nullptr, topics})}},
-        {{"address", kConditionalTokens},
-         {"topics",
-          json::array({json::array({kPositionSplitTopic, kPositionMergeTopic,
-                                    kPositionRedeemTopic}),
-                       topics})}},
-        {{"address", json::array({kCtfExchange, kNegRiskCtfExchange})},
-         {"topics", json::array({json::array({kOrderFillTopic}), nullptr, topics})}},
-        {{"address", json::array({kCtfExchange, kNegRiskCtfExchange})},
-         {"topics",
-          json::array({json::array({kOrderFillTopic}), nullptr, nullptr, topics})}},
-        {{"address", kNegRiskAdapter},
-         {"topics", json::array({json::array({kPositionConvertTopic}), topics})}},
-    };
-    for (auto &filter : group_filters) {
-      filter["fromBlock"] = u64_to_hex(from_block);
-      filter["toBlock"] = u64_to_hex(to_block);
-      filters.push_back(std::move(filter));
-    }
-  }
-
-  filters.push_back({
-      {"address", kConditionalTokens},
-      {"topics", json::array({json::array({kConditionResolveTopic})})},
-      {"fromBlock", u64_to_hex(from_block)},
-      {"toBlock", u64_to_hex(to_block)},
-  });
-  return filters;
 }
 
 } // namespace tracker
