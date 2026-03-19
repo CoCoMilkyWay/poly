@@ -41,9 +41,11 @@ private:
 // JSON Builders (供 API 和 Sync 使用)
 // ============================================================================
 
-json build_state_json(AppState &state);
-json build_meta_json(AppState &state);
-json build_history_json(AppState &state, const std::string &user);
-json build_health_json(AppState &state);
+json build_state_json(const RuntimeState &state);
+json build_meta_json(const RuntimeState &state);
+json build_history_json(const json &snapshot_root,
+                        const json &history_root,
+                        const std::string &user);
+json build_health_json(const json &state_root);
 
 } // namespace tracker

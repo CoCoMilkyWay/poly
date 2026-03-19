@@ -48,9 +48,9 @@ inline constexpr uint32_t kGetLogsBlockSpan = 2000;
 // ============================================================================
 
 inline constexpr size_t kRecentEventLimit = 512;
-inline constexpr size_t kUserQueryBatchLimit = 50;
 inline constexpr size_t kGraphIdBatchLimit = 100;
 inline constexpr size_t kGraphPageLimit = 1000;
+inline constexpr size_t kGammaBatchLimit = 1;
 inline constexpr size_t kHttpConcurrency = 10;
 
 // ============================================================================
@@ -115,9 +115,9 @@ struct AppConfig {
 
   // limits
   size_t recent_event_limit;
-  size_t user_batch_limit;
   size_t graph_id_batch_limit;
   size_t graph_page_limit;
+  size_t gamma_batch_limit;
   size_t http_concurrency;
 
   // proxy (empty = no proxy)

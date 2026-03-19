@@ -1,21 +1,19 @@
 #include "tracker/sync.hpp"
+
 #include "tracker/api.hpp"
-#include "tracker/const.hpp"
 #include "tracker/http.hpp"
 #include "tracker/log.hpp"
 #include "tracker/store.hpp"
 
 #include <chrono>
+#include <cmath>
+#include <functional>
 #include <map>
 #include <optional>
 #include <set>
 
 namespace tracker {
 namespace {
-
-// ============================================================================
-// GraphQL Queries
-// ============================================================================
 
 const char *kUserPositionsQuery = R"(
 query UserPositions($user: String!, $after: String!, $first: Int!) {
@@ -25,15 +23,28 @@ query UserPositions($user: String!, $after: String!, $first: Int!) {
     orderBy: id
     orderDirection: asc
     where: {user: $user, amount_gt: "0", id_gt: $after}
-  ) { id tokenId amount }
+  ) {
+    id
+    tokenId
+    amount
+  }
 }
 )";
 
 const char *kMarketDataQuery = R"(
 query MarketDatas($ids: [ID!]!) {
   marketDatas(where: {id_in: $ids}, orderBy: id) {
-    id outcomeIndex priceOrderbook
-    condition { id questionId outcomeSlotCount resolutionTimestamp payoutNumerators payoutDenominator }
+    id
+    outcomeIndex
+    priceOrderbook
+    condition {
+      id
+      questionId
+      outcomeSlotCount
+      resolutionTimestamp
+      payoutNumerators
+      payoutDenominator
+    }
   }
 }
 )";
@@ -41,405 +52,435 @@ query MarketDatas($ids: [ID!]!) {
 const char *kConditionsQuery = R"(
 query Conditions($ids: [ID!]!) {
   conditions(where: {id_in: $ids}, orderBy: id) {
-    id positionIds payoutNumerators payoutDenominator
+    id
+    positionIds
+    payoutNumerators
+    payoutDenominator
   }
 }
 )";
 
-// ============================================================================
-// JSON Helpers
-// ============================================================================
+const char *kNegRiskEventQuery = R"(
+query NegRiskEvents($ids: [ID!]!) {
+  negRiskEvents(where: {id_in: $ids}, orderBy: id) {
+    id
+    questionCount
+  }
+}
+)";
+
+const std::string &zero_b32() {
+  static const std::string value = "0x" + std::string(64, '0');
+  return value;
+}
 
 std::string json_str(const json &row, const char *key) {
-  if (!row.contains(key) || row.at(key).is_null())
+  if (!row.contains(key) || row.at(key).is_null()) {
     return "";
-  if (row.at(key).is_string())
+  }
+  if (row.at(key).is_string()) {
     return row.at(key).get<std::string>();
+  }
   return row.at(key).dump();
 }
 
 int json_int(const json &row, const char *key, int fallback = -1) {
-  if (!row.contains(key) || row.at(key).is_null())
+  if (!row.contains(key) || row.at(key).is_null()) {
     return fallback;
-  if (row.at(key).is_number_integer())
+  }
+  if (row.at(key).is_number_integer()) {
     return row.at(key).get<int>();
-  if (row.at(key).is_string())
+  }
+  if (row.at(key).is_string()) {
     return std::stoi(row.at(key).get<std::string>());
+  }
   return fallback;
 }
 
 int64_t json_i64(const json &row, const char *key, int64_t fallback = -1) {
-  if (!row.contains(key) || row.at(key).is_null())
+  if (!row.contains(key) || row.at(key).is_null()) {
     return fallback;
-  if (row.at(key).is_number_integer())
+  }
+  if (row.at(key).is_number_integer()) {
     return row.at(key).get<int64_t>();
-  if (row.at(key).is_string())
+  }
+  if (row.at(key).is_string()) {
     return std::stoll(row.at(key).get<std::string>());
+  }
   return fallback;
 }
 
 BigInt json_bigint(const json &row, const char *key) {
-  if (!row.contains(key) || row.at(key).is_null())
+  if (!row.contains(key) || row.at(key).is_null()) {
     return 0;
-  if (row.at(key).is_string())
+  }
+  if (row.at(key).is_string()) {
     return bigint_from_dec(row.at(key).get<std::string>());
-  if (row.at(key).is_number_integer())
+  }
+  if (row.at(key).is_number_integer()) {
     return bigint_from_dec(std::to_string(row.at(key).get<int64_t>()));
+  }
   return 0;
 }
 
 std::vector<BigInt> json_bigint_arr(const json &row, const char *key) {
-  std::vector<BigInt> r;
-  if (!row.contains(key) || !row.at(key).is_array())
-    return r;
-  for (const auto &v : row.at(key)) {
-    if (v.is_string())
-      r.push_back(bigint_from_dec(v.get<std::string>()));
-    else if (v.is_number_integer())
-      r.push_back(bigint_from_dec(std::to_string(v.get<int64_t>())));
+  std::vector<BigInt> out;
+  if (!row.contains(key) || !row.at(key).is_array()) {
+    return out;
   }
-  return r;
+  for (const auto &value : row.at(key)) {
+    if (value.is_string()) {
+      out.push_back(bigint_from_dec(value.get<std::string>()));
+    } else if (value.is_number_integer()) {
+      out.push_back(bigint_from_dec(std::to_string(value.get<int64_t>())));
+    }
+  }
+  return out;
 }
 
 std::vector<std::string> json_str_arr(const json &row, const char *key) {
-  std::vector<std::string> r;
-  if (!row.contains(key) || !row.at(key).is_array())
-    return r;
-  for (const auto &v : row.at(key)) {
-    if (v.is_string())
-      r.push_back(v.get<std::string>());
-    else if (v.is_number())
-      r.push_back(std::to_string(v.get<int64_t>()));
+  std::vector<std::string> out;
+  if (!row.contains(key) || !row.at(key).is_array()) {
+    return out;
   }
-  return r;
+  for (const auto &value : row.at(key)) {
+    if (value.is_string()) {
+      out.push_back(value.get<std::string>());
+    }
+  }
+  return out;
 }
 
-std::string json_str_or_int(const json &v) {
-  if (v.is_string())
-    return v.get<std::string>();
-  if (v.is_number())
-    return std::to_string(v.get<int64_t>());
+std::string json_str_or_int(const json &value) {
+  if (value.is_string()) {
+    return value.get<std::string>();
+  }
+  if (value.is_number_integer()) {
+    return std::to_string(value.get<int64_t>());
+  }
   return "";
 }
 
 std::string clip_text(const std::string &s, size_t n = 256) {
-  if (s.size() <= n)
+  if (s.size() <= n) {
     return s;
+  }
   return s.substr(0, n) + "...";
 }
 
-json graph_data_with_retry(AppState &state, const std::string &name,
-                           const std::string &detail, const std::string &url,
-                           const json &payload, const std::string &proxy_url,
+int64_t scaled_price(const BigInt &quote_amount, const BigInt &token_amount) {
+  assert(token_amount > 0);
+  return bigint_to_i64((quote_amount * kPriceScale) / token_amount);
+}
+
+void apply_resolved_prices(RuntimeState &state, const std::string &condition_id) {
+  auto cond_it = state.conditions.find(condition_id);
+  if (cond_it == state.conditions.end()) {
+    return;
+  }
+  ConditionMeta &condition = cond_it->second;
+  if (!condition.has_payout_d || condition.payout_d == 0) {
+    return;
+  }
+  condition.resolved = true;
+  for (size_t i = 0; i < condition.tids.size() && i < condition.payout.size(); ++i) {
+    const std::string &token_id = condition.tids[i];
+    if (token_id.empty()) {
+      continue;
+    }
+    TokenMeta &token = state.tokens[token_id];
+    token.cond = condition_id;
+    token.idx = static_cast<uint8_t>(i);
+    token.price = scaled_price(condition.payout[i], condition.payout_d);
+    token.price_src = "resolution";
+  }
+}
+
+Collateral infer_collateral_from_token(const std::string &condition_id,
+                                       uint8_t token_idx,
+                                       const std::string &token_id) {
+  for (Collateral collateral :
+       {Collateral::USDC, Collateral::USDCe, Collateral::USDT,
+        Collateral::WrappedUSDCe}) {
+    if (condition_token_id(condition_id, collateral_addr(collateral), token_idx) ==
+        norm_hex(token_id)) {
+      return collateral;
+    }
+  }
+  return Collateral::Unknown;
+}
+
+json graph_data_with_retry(RuntimeState &state,
+                           const std::string &name,
+                           const std::string &detail,
+                           const std::string &url,
+                           const json &payload,
+                           const std::string &proxy_url,
                            std::optional<HttpRes> first_resp = std::nullopt) {
   HttpRes resp = first_resp ? *first_resp : http_post(url, payload, proxy_url);
   for (size_t attempt = 1;; ++attempt) {
-    {
-      std::lock_guard<std::mutex> lock(state.mu);
-      state.counters.subgraph++;
-    }
+    ++state.counters.subgraph;
     if (resp.status == 200) {
       json body = safe_parse(resp.body);
       if (!body.contains("errors") && body.contains("data")) {
         log_query("graph", name, attempt, true, detail);
         return body.at("data");
       }
-      std::string fail = detail.empty()
-                             ? "body=" + clip_text(body.dump())
-                             : detail + " body=" + clip_text(body.dump());
-      log_query("graph", name, attempt, false, fail);
+      log_query("graph", name, attempt, false,
+                detail + " body=" + clip_text(body.dump()));
     } else {
-      std::string fail =
-          detail.empty() ? "status=" + std::to_string(resp.status)
-                         : detail + " status=" + std::to_string(resp.status);
-      log_query("graph", name, attempt, false, fail);
+      log_query("graph", name, attempt, false,
+                detail + " status=" + std::to_string(resp.status));
     }
     std::this_thread::sleep_for(std::chrono::seconds(1));
     resp = http_post(url, payload, proxy_url);
   }
 }
 
-json gamma_array_with_retry(AppState &state, const std::string &name,
-                            const std::string &detail, const std::string &url,
+json gamma_array_with_retry(RuntimeState &state,
+                            const std::string &name,
+                            const std::string &detail,
+                            const std::string &url,
                             const std::string &proxy_url,
                             std::optional<HttpRes> first_resp = std::nullopt) {
   HttpRes resp = first_resp ? *first_resp : http_get(url, proxy_url);
   for (size_t attempt = 1;; ++attempt) {
-    {
-      std::lock_guard<std::mutex> lock(state.mu);
-      state.counters.gamma++;
-    }
+    ++state.counters.gamma;
     if (resp.status == 200) {
       json body = safe_parse(resp.body);
       if (body.is_array()) {
         log_query("gamma", name, attempt, true, detail);
         return body;
       }
-      std::string fail = detail.empty()
-                             ? "body=" + clip_text(body.dump())
-                             : detail + " body=" + clip_text(body.dump());
-      log_query("gamma", name, attempt, false, fail);
+      log_query("gamma", name, attempt, false,
+                detail + " body=" + clip_text(body.dump()));
     } else {
-      std::string fail =
-          detail.empty() ? "status=" + std::to_string(resp.status)
-                         : detail + " status=" + std::to_string(resp.status);
-      log_query("gamma", name, attempt, false, fail);
+      log_query("gamma", name, attempt, false,
+                detail + " status=" + std::to_string(resp.status));
     }
     std::this_thread::sleep_for(std::chrono::seconds(1));
     resp = http_get(url, proxy_url);
   }
 }
 
-std::optional<long double> resolved_price(const std::vector<BigInt> &nums,
-                                          const BigInt &denom, bool has,
-                                          int idx) {
-  if (!has || idx < 0 || static_cast<size_t>(idx) >= nums.size())
-    return std::nullopt;
-  long double d = denom.convert_to<long double>();
-  if (d <= 0.0L)
-    return std::nullopt;
-  return nums[static_cast<size_t>(idx)].convert_to<long double>() / d;
-}
-
-// ============================================================================
-// Log Parsing
-// ============================================================================
-
 struct TransferLeg {
-  uint64_t block = 0;
-  uint64_t tx_idx = 0;
+  uint64_t block_number = 0;
+  uint64_t transaction_index = 0;
   std::string tx_hash;
-  int64_t log_idx = 0;
-  std::string op, from, to;
+  int64_t log_index = 0;
+  std::string op;
+  std::string from;
+  std::string to;
   std::string token_id;
   BigInt amount = 0;
 };
 
-struct OrderFill {
-  uint64_t block = 0;
+struct TxContext {
+  uint64_t block_number = 0;
+  uint64_t transaction_index = 0;
   std::string tx_hash;
-  int64_t log_idx = 0;
-  std::string exchange;
-  std::string maker, taker, buyer, seller;
-  std::string token_id;
-  BigInt token_amount = 0;
-  BigInt collateral_amount = 0;
-  BigInt fee = 0;
-  [[nodiscard]] long double price() const {
-    long double t = token_amount.convert_to<long double>();
-    return t > 0.0L ? collateral_amount.convert_to<long double>() / t : 0.0L;
-  }
+  std::vector<json> raw_logs;
 };
 
-struct TxContext {
-  uint64_t block = 0;
-  uint64_t tx_idx = 0;
-  std::string tx_hash;
-  std::vector<TransferLeg> transfers;
-  std::set<std::string> split_users, merge_users, redeem_users, convert_users;
-  std::vector<OrderFill> fills;
+struct PendingEmit {
+  std::string user;
+  std::string token_id;
+  std::string condition_id;
+  uint8_t token_idx = 0xFF;
+  uint8_t collateral = 0;
+  EventType type = EventType::OrderBuy;
+  int64_t amount = 0;
+  int64_t price = 0;
+};
+
+struct SnapshotFetch {
+  std::string user;
+  uint64_t snapshot_block = 0;
+  std::map<std::string, BigInt> positions;
+  std::string cursor;
+  bool done = false;
 };
 
 TransferLeg parse_transfer_single(const json &log) {
   const json &topics = log.at("topics");
-  std::string data = log.at("data").get<std::string>();
+  const std::string data = log.at("data").get<std::string>();
   return {
-      hex_to_u64(log.at("blockNumber").get<std::string>()),
+      .block_number = hex_to_u64(log.at("blockNumber").get<std::string>()),
+      .transaction_index =
       hex_to_u64(log.at("transactionIndex").get<std::string>()),
-      norm_hex(log.at("transactionHash").get<std::string>()),
-      static_cast<int64_t>(hex_to_u64(log.at("logIndex").get<std::string>()) *
+      .tx_hash = norm_hex(log.at("transactionHash").get<std::string>()),
+      .log_index = static_cast<int64_t>(
+          hex_to_u64(log.at("logIndex").get<std::string>()) *
                            kTransferFlatLogScale),
-      topic_to_addr(topics.at(1).get<std::string>()),
-      topic_to_addr(topics.at(2).get<std::string>()),
-      topic_to_addr(topics.at(3).get<std::string>()),
-      bigint_to_str(extract_u256(data, 0)),
-      extract_u256(data, 1),
+      .op = topic_to_addr(topics.at(1).get<std::string>()),
+      .from = topic_to_addr(topics.at(2).get<std::string>()),
+      .to = topic_to_addr(topics.at(3).get<std::string>()),
+      .token_id = bigint_to_str(extract_u256(data, 0)),
+      .amount = extract_u256(data, 1),
   };
 }
 
 std::vector<TransferLeg> parse_transfer_batch(const json &log) {
   const json &topics = log.at("topics");
-  std::string data = log.at("data").get<std::string>();
+  const std::string data = log.at("data").get<std::string>();
   std::vector<BigInt> ids = extract_u256_array(data, extract_u256(data, 0));
-  std::vector<BigInt> vals = extract_u256_array(data, extract_u256(data, 1));
-  assert(ids.size() == vals.size());
+  std::vector<BigInt> values = extract_u256_array(data, extract_u256(data, 1));
+  assert(ids.size() == values.size());
 
-  uint64_t block = hex_to_u64(log.at("blockNumber").get<std::string>());
-  uint64_t tx_idx = hex_to_u64(log.at("transactionIndex").get<std::string>());
+  uint64_t block_number = hex_to_u64(log.at("blockNumber").get<std::string>());
+  uint64_t transaction_index =
+      hex_to_u64(log.at("transactionIndex").get<std::string>());
   std::string tx_hash = norm_hex(log.at("transactionHash").get<std::string>());
-  uint64_t log_idx = hex_to_u64(log.at("logIndex").get<std::string>());
+  uint64_t raw_log_index = hex_to_u64(log.at("logIndex").get<std::string>());
   std::string op = topic_to_addr(topics.at(1).get<std::string>());
   std::string from = topic_to_addr(topics.at(2).get<std::string>());
   std::string to = topic_to_addr(topics.at(3).get<std::string>());
 
-  std::vector<TransferLeg> r;
+  std::vector<TransferLeg> out;
   for (size_t i = 0; i < ids.size(); ++i) {
-    r.push_back({block, tx_idx, tx_hash,
-                 static_cast<int64_t>(log_idx * kTransferFlatLogScale + i), op,
-                 from, to, bigint_to_str(ids[i]), vals[i]});
+    out.push_back({
+        .block_number = block_number,
+        .transaction_index = transaction_index,
+        .tx_hash = tx_hash,
+        .log_index = static_cast<int64_t>(raw_log_index * kTransferFlatLogScale +
+                                          i),
+        .op = op,
+        .from = from,
+        .to = to,
+        .token_id = bigint_to_str(ids[i]),
+        .amount = values[i],
+    });
   }
-  return r;
-}
-
-OrderFill parse_order_fill(const json &log) {
-  const json &topics = log.at("topics");
-  std::string data = log.at("data").get<std::string>();
-  std::string maker = topic_to_addr(topics.at(2).get<std::string>());
-  std::string taker = topic_to_addr(topics.at(3).get<std::string>());
-  BigInt maker_asset = extract_u256(data, 0);
-  BigInt taker_asset = extract_u256(data, 1);
-  BigInt maker_amt = extract_u256(data, 2);
-  BigInt taker_amt = extract_u256(data, 3);
-  BigInt fee = extract_u256(data, 4);
-  bool maker_is_coll = maker_asset == 0;
-  return {
-      hex_to_u64(log.at("blockNumber").get<std::string>()),
-      norm_hex(log.at("transactionHash").get<std::string>()),
-      static_cast<int64_t>(hex_to_u64(log.at("logIndex").get<std::string>())),
-      norm_hex(log.at("address").get<std::string>()),
-      maker,
-      taker,
-      maker_is_coll ? maker : taker,
-      maker_is_coll ? taker : maker,
-      bigint_to_str(maker_is_coll ? taker_asset : maker_asset),
-      maker_is_coll ? taker_amt : maker_amt,
-      maker_is_coll ? maker_amt : taker_amt,
-      fee,
-  };
-}
-
-std::string log_key(const json &log) {
-  return log.at("blockNumber").get<std::string>() + "|" +
-         norm_hex(log.at("transactionHash").get<std::string>()) + "|" +
-         log.at("logIndex").get<std::string>() + "|" +
-         norm_hex(log.at("address").get<std::string>());
+  return out;
 }
 
 std::vector<TxContext> build_tx_contexts(const std::vector<json> &logs) {
-  std::map<std::string, TxContext> map;
+  std::map<std::string, TxContext> txs;
   for (const auto &log : logs) {
-    std::string tx_hash =
+    const std::string tx_hash =
         norm_hex(log.at("transactionHash").get<std::string>());
-    TxContext &ctx = map[tx_hash];
+    TxContext &ctx = txs[tx_hash];
     if (ctx.tx_hash.empty()) {
       ctx.tx_hash = tx_hash;
-      ctx.block = hex_to_u64(log.at("blockNumber").get<std::string>());
-      ctx.tx_idx = hex_to_u64(log.at("transactionIndex").get<std::string>());
+      ctx.block_number = hex_to_u64(log.at("blockNumber").get<std::string>());
+      ctx.transaction_index =
+          hex_to_u64(log.at("transactionIndex").get<std::string>());
     }
-
-    std::string addr = norm_hex(log.at("address").get<std::string>());
-    std::string topic0 = norm_hex(log.at("topics").at(0).get<std::string>());
-
-    if (addr == kConditionalTokens && topic0 == kTransferSingleTopic) {
-      ctx.transfers.push_back(parse_transfer_single(log));
-    } else if (addr == kConditionalTokens && topic0 == kTransferBatchTopic) {
-      auto legs = parse_transfer_batch(log);
-      ctx.transfers.insert(ctx.transfers.end(), legs.begin(), legs.end());
-    } else if (addr == kConditionalTokens && topic0 == kPositionSplitTopic) {
-      ctx.split_users.insert(
-          topic_to_addr(log.at("topics").at(1).get<std::string>()));
-    } else if (addr == kConditionalTokens && topic0 == kPositionMergeTopic) {
-      ctx.merge_users.insert(
-          topic_to_addr(log.at("topics").at(1).get<std::string>()));
-    } else if (addr == kConditionalTokens && topic0 == kPositionRedeemTopic) {
-      ctx.redeem_users.insert(
-          topic_to_addr(log.at("topics").at(1).get<std::string>()));
-    } else if ((addr == kCtfExchange || addr == kNegRiskCtfExchange) &&
-               topic0 == kOrderFillTopic) {
-      ctx.fills.push_back(parse_order_fill(log));
-    } else if (addr == kNegRiskAdapter && topic0 == kPositionConvertTopic) {
-      ctx.convert_users.insert(
-          topic_to_addr(log.at("topics").at(1).get<std::string>()));
-    }
+    ctx.raw_logs.push_back(log);
   }
 
-  std::vector<TxContext> r;
-  for (auto &[_, ctx] : map) {
-    std::sort(
-        ctx.transfers.begin(), ctx.transfers.end(),
-        [](const auto &a, const auto &b) { return a.log_idx < b.log_idx; });
-    std::sort(
-        ctx.fills.begin(), ctx.fills.end(),
-        [](const auto &a, const auto &b) { return a.log_idx < b.log_idx; });
-    r.push_back(std::move(ctx));
+  std::vector<TxContext> out;
+  for (auto &[_, ctx] : txs) {
+    std::sort(ctx.raw_logs.begin(), ctx.raw_logs.end(),
+              [](const json &a, const json &b) {
+                return raw_log_sort_key(a) < raw_log_sort_key(b);
+              });
+    out.push_back(std::move(ctx));
   }
-  std::sort(r.begin(), r.end(), [](const auto &a, const auto &b) {
-    if (a.block != b.block)
-      return a.block < b.block;
-    if (a.tx_idx != b.tx_idx)
-      return a.tx_idx < b.tx_idx;
-    return (a.transfers.empty() ? 0 : a.transfers[0].log_idx) <
-           (b.transfers.empty() ? 0 : b.transfers[0].log_idx);
+  std::sort(out.begin(), out.end(), [](const TxContext &a, const TxContext &b) {
+    if (a.block_number != b.block_number) {
+      return a.block_number < b.block_number;
+    }
+    return a.transaction_index < b.transaction_index;
   });
-  return r;
+  return out;
 }
 
-const OrderFill *find_buy(const TxContext &ctx, const TransferLeg &t,
-                          const std::string &u) {
-  for (const auto &f : ctx.fills) {
-    if (f.buyer == u && f.token_id == t.token_id && f.token_amount == t.amount)
-      return &f;
+std::string op_key_from_log(const json &log) {
+  return std::to_string(hex_to_u64(log.at("blockNumber").get<std::string>())) +
+         "|" + norm_hex(log.at("transactionHash").get<std::string>()) + "|" +
+         std::to_string(hex_to_u64(log.at("logIndex").get<std::string>())) +
+         "|" + norm_hex(log.at("address").get<std::string>());
+}
+
+void commit_pending_events(RuntimeState &state,
+                           const json &root_log,
+                           const std::vector<PendingEmit> &events,
+                           size_t recent_limit,
+                           const std::function<bool(const std::string &, uint64_t)>
+                               &visible_at) {
+  const uint64_t block_number =
+      hex_to_u64(root_log.at("blockNumber").get<std::string>());
+  const int64_t log_index =
+      static_cast<int64_t>(hex_to_u64(root_log.at("logIndex").get<std::string>()));
+  const std::string op_key = op_key_from_log(root_log);
+
+  std::map<std::string, int64_t> next_leg;
+  for (const auto &event : events) {
+    if (!visible_at(event.user, block_number)) {
+      continue;
+    }
+
+    int64_t leg_index = next_leg[event.user]++;
+    std::string event_id =
+        op_key + "|" + event.user + "|" + std::to_string(leg_index);
+    if (!state.history_event_ids.insert(event_id).second) {
+      continue;
+    }
+
+    BigInt delta = bigint_from_dec(std::to_string(event.amount));
+    UserLiveState &user_state = state.user_states.at(event.user);
+    if (delta >= 0) {
+      user_state.positions[event.token_id] += delta;
+    } else {
+      BigInt current = 0;
+      auto current_it = user_state.positions.find(event.token_id);
+      if (current_it != user_state.positions.end()) {
+        current = current_it->second;
+      }
+      assert(current >= -delta);
+      BigInt next = current + delta;
+      if (next == 0) {
+        user_state.positions.erase(event.token_id);
+      } else {
+        user_state.positions[event.token_id] = next;
+      }
+    }
+
+    json row = {
+        {"event_id", event_id},
+        {"op_key", op_key},
+        {"log_index", log_index},
+        {"leg_index", leg_index},
+        {"type", to_u8(event.type)},
+        {"condition_id", event.condition_id},
+        {"token_idx", event.token_idx},
+        {"collateral", event.collateral},
+        {"amount", event.amount},
+        {"price", event.price},
+    };
+    json &bucket = state.history_root[event.user][block_key(block_number)];
+    if (!bucket.is_array()) {
+      bucket = json::array();
+    }
+    bucket.push_back(row);
+
+    json recent = row;
+    recent["user"] = event.user;
+    recent["block_number"] = block_number;
+    push_recent_event(state, std::move(recent), recent_limit);
   }
-  return nullptr;
-}
-
-const OrderFill *find_sell(const TxContext &ctx, const TransferLeg &t,
-                           const std::string &u) {
-  for (const auto &f : ctx.fills) {
-    if (f.seller == u && f.token_id == t.token_id && f.token_amount == t.amount)
-      return &f;
-  }
-  return nullptr;
-}
-
-bool is_protocol(const std::string &addr) {
-  return addr == kConditionalTokens || addr == kCtfExchange ||
-         addr == kNegRiskCtfExchange || addr == kNegRiskAdapter ||
-         addr == kZeroAddress;
-}
-
-json build_event(const TxContext &ctx, const TransferLeg &t,
-                 const std::string &user, const std::string &dir,
-                 const std::string &kind, const OrderFill *fill) {
-  json r = {
-      {"block_number", t.block},
-      {"tx_hash", t.tx_hash},
-      {"log_index", t.log_idx},
-      {"user", user},
-      {"direction", dir},
-      {"kind", kind},
-      {"token_id", t.token_id},
-      {"amount_raw", bigint_to_str(t.amount)},
-      {"counterparty", dir == "in" ? t.from : t.to},
-      {"operator", t.op},
-      {"tx_transfer_count", ctx.transfers.size()},
-      {"tx_order_fill_count", ctx.fills.size()},
-  };
-  if (fill) {
-    r["exchange"] = fill->exchange;
-    r["collateral_amount_raw"] = bigint_to_str(fill->collateral_amount);
-    r["price"] = fmt_decimal(fill->price(), 10);
-    r["fee_raw"] = bigint_to_str(fill->fee);
-  }
-  return r;
 }
 
 } // namespace
 
-// ============================================================================
-// SyncThread Implementation
-// ============================================================================
-
-SyncThread::SyncThread(const AppConfig &cfg, AppState &state, EventQueue &queue,
+SyncThread::SyncThread(const AppConfig &cfg,
+                       AppState &shared,
+                       EventQueue &queue,
                        WsThread &ws)
-    : cfg_(cfg), state_(state), queue_(queue), ws_(ws) {}
+    : cfg_(cfg), shared_(shared), queue_(queue), ws_(ws) {
+  resync_flag_ = true;
+}
 
-void SyncThread::request_resync() { resync_flag_ = true; }
+void SyncThread::request_resync() {
+  resync_flag_ = true;
+}
 
 void SyncThread::run() {
   logger().init(cfg_.log_file);
   load_seed();
   load_files();
+  publish_all();
 
   auto next_resync = std::chrono::steady_clock::now();
   while (true) {
@@ -448,7 +489,6 @@ void SyncThread::run() {
       full_resync();
       next_resync = std::chrono::steady_clock::now() +
                     std::chrono::seconds(cfg_.resync_interval_sec);
-      ws_.request_reconnect();
       continue;
     }
     drain_queue();
@@ -458,452 +498,1435 @@ void SyncThread::run() {
 
 void SyncThread::full_resync() {
   progress().init(SYNC_STAGES);
-  {
-    std::lock_guard<std::mutex> lock(state_.mu);
-    state_.resync_started_at =
-        std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+  rt_.resync_started_at = now_unix_sec();
+
+  fetch_user_snapshots();
+  fetch_snapshot_balances();
+  append_snapshot_roots();
+
+  std::vector<std::string> token_ids = collect_active_token_ids();
+  progress().update("fetch_market_data", 0, token_ids.size());
+  fetch_token_meta(token_ids);
+  progress().update("fetch_market_data", token_ids.size(), token_ids.size());
+
+  std::vector<std::string> condition_ids;
+  for (const auto &[token_id, token] : rt_.tokens) {
+    (void)token_id;
+    if (!token.cond.empty()) {
+      condition_ids.push_back(token.cond);
+    }
+  }
+  std::sort(condition_ids.begin(), condition_ids.end());
+  condition_ids.erase(std::unique(condition_ids.begin(), condition_ids.end()),
+                      condition_ids.end());
+
+  progress().update("fetch_conditions", 0, condition_ids.size());
+  fetch_condition_meta(condition_ids);
+  progress().update("fetch_conditions", condition_ids.size(), condition_ids.size());
+
+  std::vector<std::string> gamma_ids;
+  for (const auto &condition_id : condition_ids) {
+    auto it = rt_.conditions.find(condition_id);
+    if (it != rt_.conditions.end() && it->second.q.empty()) {
+      gamma_ids.push_back(condition_id);
+    }
+  }
+  progress().update("fetch_gamma", 0, gamma_ids.size());
+  fetch_gamma_meta(gamma_ids);
+  progress().update("fetch_gamma", gamma_ids.size(), gamma_ids.size());
+
+  queue_.clear();
+  deferred_.clear();
+  WsSessionInfo ws_session = ws_.start_session(rt_.users);
+  current_session_id_ = ws_session.session_id;
+
+  uint64_t head_block = std::max(ws_session.start_block, rpc_block_number());
+  rt_.head_block = std::max(rt_.head_block, head_block);
+
+  uint64_t from_block = head_block + 1;
+  for (const auto &user : rt_.users) {
+    uint64_t user_from = rt_.user_snapshots.at(user).snapshot_block + 1;
+    if (user_from < from_block) {
+      from_block = user_from;
+    }
+  }
+  if (from_block <= head_block) {
+    backfill_range(from_block, head_block);
+  } else {
+    rt_.last_applied_block = head_block;
   }
 
-  fetch_positions();
+  handle_overlap_queue(ws_session.session_id, head_block);
+  rt_.last_applied_block = std::max(rt_.last_applied_block, head_block);
+  rt_.resync_finished_at = now_unix_sec();
 
-  uint64_t snap_block;
-  {
-    std::lock_guard<std::mutex> lock(state_.mu);
-    snap_block = state_.snapshot_block;
-  }
-  fetch_balances(u64_to_hex(snap_block));
-  append_snapshot(snap_block);
-
-  fetch_market_data(false);
-
-  uint64_t head = rpc_block_number();
-  {
-    std::lock_guard<std::mutex> lock(state_.mu);
-    state_.head_block = std::max(state_.head_block, head);
-  }
-
-  if (snap_block + 1 <= head) {
-    backfill_range(snap_block + 1, head);
-  }
-
-  fetch_balances("latest");
-  fetch_market_data(false);
-
-  {
-    std::lock_guard<std::mutex> lock(state_.mu);
-    state_.resync_finished_at =
-        std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-  }
+  publish_all();
   persist_all();
   progress().finish();
   logger().info("resync done");
 }
 
-void SyncThread::fetch_positions() {
+void SyncThread::drain_queue() {
+  while (true) {
+    if (!deferred_.empty()) {
+      QueueEvent ev = std::move(deferred_.front());
+      deferred_.pop_front();
+      handle_queue_event(std::move(ev));
+      continue;
+    }
+    auto ev = queue_.try_pop();
+    if (!ev) {
+      break;
+    }
+    handle_queue_event(std::move(*ev));
+  }
+}
+
+void SyncThread::handle_queue_event(QueueEvent ev) {
+  if (ev.session_id != current_session_id_) {
+    return;
+  }
+  if (ev.kind == QueueEventKind::Resync) {
+    resync_flag_ = true;
+    return;
+  }
+  if (ev.kind == QueueEventKind::Head) {
+    rt_.head_block = std::max(rt_.head_block, ev.block_number);
+    publish_all();
+    return;
+  }
+  if (ev.kind == QueueEventKind::Logs) {
+    std::vector<json> logs;
+    for (const auto &log : ev.logs) {
+      logs.push_back(log);
+    }
+    std::sort(logs.begin(), logs.end(), [](const json &a, const json &b) {
+      return raw_log_sort_key(a) < raw_log_sort_key(b);
+    });
+    apply_block_logs(logs);
+    rt_.last_applied_block = std::max(rt_.last_applied_block, ev.block_number);
+    rt_.head_block = std::max(rt_.head_block, ev.block_number);
+    publish_all();
+    persist_all();
+    return;
+  }
+  assert(false);
+}
+
+void SyncThread::handle_overlap_queue(uint64_t session_id, uint64_t overlap_block) {
+  std::map<uint64_t, std::map<std::string, json>> overlap;
+  while (auto ev = queue_.try_pop()) {
+    if (ev->session_id != session_id) {
+      continue;
+    }
+    if (ev->kind == QueueEventKind::Resync) {
+      resync_flag_ = true;
+      continue;
+    }
+    if (ev->kind == QueueEventKind::Head) {
+      rt_.head_block = std::max(rt_.head_block, ev->block_number);
+      if (ev->block_number > overlap_block) {
+        deferred_.push_back(std::move(*ev));
+      }
+      continue;
+    }
+    if (ev->kind == QueueEventKind::Logs) {
+      if (ev->block_number > overlap_block) {
+        deferred_.push_back(std::move(*ev));
+        continue;
+      }
+      for (const auto &log : ev->logs) {
+        overlap[ev->block_number][raw_log_key(log)] = log;
+      }
+    }
+  }
+
+  for (auto &[block_number, by_key] : overlap) {
+    std::vector<json> logs;
+    for (auto &[_, log] : by_key) {
+      logs.push_back(std::move(log));
+    }
+    std::sort(logs.begin(), logs.end(), [](const json &a, const json &b) {
+      return raw_log_sort_key(a) < raw_log_sort_key(b);
+    });
+    apply_block_logs(logs);
+    rt_.last_applied_block = std::max(rt_.last_applied_block, block_number);
+  }
+}
+
+void SyncThread::load_files() {
+  json meta = load_json(cfg_.meta_file);
+  if (meta.contains("tokens") && meta.at("tokens").is_object()) {
+    for (auto it = meta.at("tokens").begin(); it != meta.at("tokens").end(); ++it) {
+      TokenMeta token;
+      token.cond = json_str(it.value(), "cond");
+      int idx = json_int(it.value(), "idx", 0xFF);
+      token.idx = idx < 0 ? 0xFF : static_cast<uint8_t>(idx);
+      token.price = json_i64(it.value(), "price", -1);
+      token.price_src = json_str(it.value(), "price_src");
+      merge_token(rt_.tokens[it.key()], token);
+    }
+  }
+  if (meta.contains("conditions") && meta.at("conditions").is_object()) {
+    for (auto it = meta.at("conditions").begin(); it != meta.at("conditions").end();
+         ++it) {
+      ConditionMeta condition;
+      condition.qid = json_str(it.value(), "qid");
+      int oc = json_int(it.value(), "oc", 0);
+      condition.oc = oc <= 0 ? 0 : static_cast<uint8_t>(oc);
+      int coll = json_int(it.value(), "coll", 0);
+      condition.coll = coll <= 0 ? 0 : static_cast<uint8_t>(coll);
+      condition.tids = json_str_arr(it.value(), "tids");
+      condition.resolved =
+          it.value().contains("resolved") && it.value().at("resolved").is_boolean() &&
+          it.value().at("resolved").get<bool>();
+      condition.payout = json_bigint_arr(it.value(), "payout");
+      if (it.value().contains("payout_d") && !it.value().at("payout_d").is_null()) {
+        if (it.value().at("payout_d").is_string()) {
+          condition.payout_d =
+              bigint_from_dec(it.value().at("payout_d").get<std::string>());
+        } else {
+          condition.payout_d =
+              bigint_from_dec(std::to_string(it.value().at("payout_d").get<int64_t>()));
+        }
+        condition.has_payout_d = true;
+      }
+      condition.q = json_str(it.value(), "q");
+      condition.desc = json_str(it.value(), "desc");
+      condition.slug = json_str(it.value(), "slug");
+      condition.url = json_str(it.value(), "url");
+      condition.outcomes = json_str_arr(it.value(), "outcomes");
+      merge_condition(rt_.conditions[it.key()], condition);
+      apply_resolved_prices(rt_, it.key());
+    }
+  }
+  if (meta.contains("markets") && meta.at("markets").is_object()) {
+    for (auto it = meta.at("markets").begin(); it != meta.at("markets").end(); ++it) {
+      MarketMeta market;
+      market.qids = json_str_arr(it.value(), "qids");
+      merge_market(rt_.markets[it.key()], market);
+    }
+  }
+
+  rt_.snapshot_root = load_json(cfg_.snapshot_file);
+  rt_.history_root = load_json(cfg_.history_file);
+
+  struct RecentRow {
+    uint64_t block_number = 0;
+    int64_t log_index = 0;
+    json row;
+  };
+  std::vector<RecentRow> recent_rows;
+  if (rt_.history_root.is_object()) {
+    for (auto user_it = rt_.history_root.begin(); user_it != rt_.history_root.end();
+         ++user_it) {
+      const std::string user = user_it.key();
+      if (!user_it.value().is_object()) {
+        continue;
+      }
+      for (auto block_it = user_it.value().begin(); block_it != user_it.value().end();
+           ++block_it) {
+        uint64_t block_number = std::stoull(block_it.key());
+        if (!block_it.value().is_array()) {
+          continue;
+        }
+        for (const auto &event : block_it.value()) {
+          if (event.contains("event_id") && event.at("event_id").is_string()) {
+            rt_.history_event_ids.insert(event.at("event_id").get<std::string>());
+          }
+          json recent = event;
+          recent["user"] = user;
+          recent["block_number"] = block_number;
+          recent_rows.push_back(
+              {block_number, json_i64(event, "log_index", 0), std::move(recent)});
+        }
+      }
+    }
+  }
+  std::sort(recent_rows.begin(), recent_rows.end(),
+            [](const RecentRow &a, const RecentRow &b) {
+              if (a.block_number != b.block_number) {
+                return a.block_number < b.block_number;
+              }
+              return a.log_index < b.log_index;
+            });
+  for (const auto &recent : recent_rows) {
+    push_recent_event(rt_, recent.row, cfg_.recent_event_limit);
+  }
+
+  json aggregate = load_json(cfg_.aggregate_file);
+  if (aggregate.contains("summary") && aggregate.at("summary").is_object()) {
+    const json &summary = aggregate.at("summary");
+    rt_.last_applied_block =
+        static_cast<uint64_t>(json_i64(summary, "last_applied_block", 0));
+    rt_.head_block = static_cast<uint64_t>(json_i64(summary, "head_block", 0));
+    rt_.resync_started_at =
+        json_i64(summary, "last_resync_started_at_unix_sec", 0);
+    rt_.resync_finished_at =
+        json_i64(summary, "last_resync_finished_at_unix_sec", 0);
+  }
+}
+
+void SyncThread::load_seed() {
+  if (!std::filesystem::exists(cfg_.seed_file)) {
+    return;
+  }
+  json seed = load_json(cfg_.seed_file);
+  if (!seed.is_object()) {
+    return;
+  }
+
+  auto load_token_row = [&](const std::string &token_id, const json &row) {
+    TokenMeta token;
+    token.cond = row.contains("cond") ? json_str(row, "cond")
+                                      : json_str(row, "condition_id");
+    int idx = row.contains("idx") ? json_int(row, "idx", 0xFF)
+                                  : json_int(row, "outcome_index", 0xFF);
+    token.idx = idx < 0 ? 0xFF : static_cast<uint8_t>(idx);
+    token.price = json_i64(row, "price", -1);
+    token.price_src = json_str(row, "price_src");
+    merge_token(rt_.tokens[token_id], token);
+  };
+
+  if (seed.contains("tokens") && seed.at("tokens").is_object()) {
+    for (auto it = seed.at("tokens").begin(); it != seed.at("tokens").end(); ++it) {
+      load_token_row(it.key(), it.value());
+    }
+  }
+  if (seed.contains("tokens") && seed.at("tokens").is_array()) {
+    for (const auto &row : seed.at("tokens")) {
+      std::string token_id = json_str(row, "token_id");
+      if (token_id.empty()) {
+        continue;
+      }
+      load_token_row(token_id, row);
+    }
+  }
+
+  auto load_condition_row = [&](const std::string &condition_id, const json &row) {
+    ConditionMeta condition;
+    condition.qid = row.contains("qid") ? json_str(row, "qid")
+                                        : json_str(row, "question_id");
+    int oc = row.contains("oc") ? json_int(row, "oc", 0)
+                                : json_int(row, "outcome_slot_count", 0);
+    condition.oc = oc <= 0 ? 0 : static_cast<uint8_t>(oc);
+    int coll = row.contains("coll") ? json_int(row, "coll", 0)
+                                    : json_int(row, "collateral", 0);
+    condition.coll = coll <= 0 ? 0 : static_cast<uint8_t>(coll);
+    condition.tids = row.contains("tids") ? json_str_arr(row, "tids")
+                                           : json_str_arr(row, "token_ids");
+    condition.payout = row.contains("payout") ? json_bigint_arr(row, "payout")
+                                              : json_bigint_arr(row, "payout_numerators");
+    if (row.contains("payout_d") && !row.at("payout_d").is_null()) {
+      if (row.at("payout_d").is_string()) {
+        condition.payout_d = bigint_from_dec(row.at("payout_d").get<std::string>());
+      } else {
+        condition.payout_d =
+            bigint_from_dec(std::to_string(row.at("payout_d").get<int64_t>()));
+      }
+      condition.has_payout_d = true;
+      condition.resolved = true;
+    }
+    if (row.contains("payout_denominator") &&
+        !row.at("payout_denominator").is_null()) {
+      if (row.at("payout_denominator").is_string()) {
+        condition.payout_d =
+            bigint_from_dec(row.at("payout_denominator").get<std::string>());
+      } else {
+        condition.payout_d = bigint_from_dec(
+            std::to_string(row.at("payout_denominator").get<int64_t>()));
+      }
+      condition.has_payout_d = true;
+      condition.resolved = true;
+    }
+    condition.q = row.contains("q") ? json_str(row, "q")
+                                     : json_str(row, "market_question");
+    condition.desc = row.contains("desc") ? json_str(row, "desc")
+                                           : json_str(row, "market_description");
+    condition.slug = row.contains("slug") ? json_str(row, "slug")
+                                           : json_str(row, "market_slug");
+    condition.url = row.contains("url") ? json_str(row, "url")
+                                         : json_str(row, "market_url");
+    condition.outcomes =
+        row.contains("outcomes") ? json_str_arr(row, "outcomes")
+                                  : json_str_arr(row, "market_outcomes");
+    merge_condition(rt_.conditions[condition_id], condition);
+    apply_resolved_prices(rt_, condition_id);
+  };
+
+  if (seed.contains("conditions") && seed.at("conditions").is_object()) {
+    for (auto it = seed.at("conditions").begin(); it != seed.at("conditions").end();
+         ++it) {
+      load_condition_row(it.key(), it.value());
+    }
+  }
+  if (seed.contains("conditions") && seed.at("conditions").is_array()) {
+    for (const auto &row : seed.at("conditions")) {
+      std::string condition_id = row.contains("cond") ? json_str(row, "cond")
+                                                       : json_str(row, "condition_id");
+      if (condition_id.empty()) {
+        continue;
+      }
+      load_condition_row(condition_id, row);
+    }
+  }
+
+  if (seed.contains("markets") && seed.at("markets").is_object()) {
+    for (auto it = seed.at("markets").begin(); it != seed.at("markets").end(); ++it) {
+      MarketMeta market;
+      market.qids = json_str_arr(it.value(), "qids");
+      merge_market(rt_.markets[it.key()], market);
+    }
+  }
+}
+
+void SyncThread::publish_all() {
+  WsCounters ws_counters = ws_.counters();
+  rt_.counters.rpc_ws_msg = ws_counters.msg;
+  rt_.counters.rpc_ws_sub = ws_counters.sub;
+  publish_json(shared_.state_ptr, build_state_json(rt_));
+  publish_json(shared_.meta_ptr, build_meta_json(rt_));
+  publish_json(shared_.snapshot_ptr, rt_.snapshot_root);
+  publish_json(shared_.history_ptr, rt_.history_root);
+}
+
+void SyncThread::persist_all() {
+  progress().update("persist", 0, 0);
+  save_json(cfg_.aggregate_file, *load_published(shared_.state_ptr));
+  save_json(cfg_.meta_file, *load_published(shared_.meta_ptr));
+  save_json(cfg_.snapshot_file, rt_.snapshot_root);
+  save_json(cfg_.history_file, rt_.history_root);
+}
+
+void SyncThread::fetch_user_snapshots() {
   std::vector<std::string> users = load_addr_file(cfg_.address_file);
   progress().update("fetch_positions", 0, users.size());
 
-  struct Snap {
-    std::string user;
-    uint64_t block = 0;
-    std::map<std::string, BigInt> pos;
-    std::string cursor;
-    bool done = false;
-  };
-  std::vector<Snap> snaps;
-  for (const auto &u : users)
-    snaps.push_back({u, 0, {}, "", false});
+  std::vector<SnapshotFetch> snapshots;
+  for (const auto &user : users) {
+    snapshots.push_back({
+        .user = user,
+        .snapshot_block = 0,
+        .positions = {},
+        .cursor = "",
+        .done = false,
+    });
+  }
 
   std::string url = "https://gateway.thegraph.com/api/" + cfg_.graph_api_key +
                     "/subgraphs/id/" + std::string(kPnlSubgraphId);
   size_t done_count = 0;
-
-  while (done_count < users.size()) {
+  while (done_count < snapshots.size()) {
     std::vector<HttpReq> reqs;
-    std::vector<size_t> idx_map;
-    for (size_t i = 0; i < snaps.size(); ++i) {
-      if (snaps[i].done)
+    std::vector<size_t> refs;
+    for (size_t i = 0; i < snapshots.size(); ++i) {
+      if (snapshots[i].done) {
         continue;
-      json vars = {{"user", snaps[i].user},
-                   {"after", snaps[i].cursor},
-                   {"first", static_cast<int>(cfg_.graph_page_limit)}};
-      reqs.push_back(
-          {url, "POST",
-           json{{"query", kUserPositionsQuery}, {"variables", vars}}.dump()});
-      idx_map.push_back(i);
-    }
-    if (reqs.empty())
-      break;
-
-    auto resps = http_batch(reqs, cfg_.http_concurrency, cfg_.proxy_url);
-
-    for (size_t r = 0; r < resps.size(); ++r) {
-      size_t i = idx_map[r];
-      Snap &s = snaps[i];
-      json vars = {{"user", s.user},
-                   {"after", s.cursor},
-                   {"first", static_cast<int>(cfg_.graph_page_limit)}};
-      json payload = {{"query", kUserPositionsQuery}, {"variables", vars}};
-      json data = graph_data_with_retry(state_, "userPositions",
-                                        "user=" + s.user + " after=" + s.cursor,
-                                        url, payload, cfg_.proxy_url, resps[r]);
-
-      if (s.block == 0) {
-        s.block = static_cast<uint64_t>(std::stoull(
-            json_str_or_int(data.at("_meta").at("block").at("number"))));
       }
-
+      json variables = {
+          {"user", snapshots[i].user},
+          {"after", snapshots[i].cursor},
+          {"first", static_cast<int>(cfg_.graph_page_limit)},
+      };
+      reqs.push_back({
+          .url = url,
+          .method = "POST",
+          .body =
+              json{{"query", kUserPositionsQuery}, {"variables", variables}}.dump(),
+      });
+      refs.push_back(i);
+    }
+    auto responses = http_batch(reqs, cfg_.http_concurrency, cfg_.proxy_url);
+    for (size_t i = 0; i < responses.size(); ++i) {
+      SnapshotFetch &snapshot = snapshots[refs[i]];
+      json variables = {
+          {"user", snapshot.user},
+          {"after", snapshot.cursor},
+          {"first", static_cast<int>(cfg_.graph_page_limit)},
+      };
+      json data = graph_data_with_retry(
+          rt_, "userPositions",
+          "user=" + snapshot.user + " after=" + snapshot.cursor, url,
+          json{{"query", kUserPositionsQuery}, {"variables", variables}},
+          cfg_.proxy_url, responses[i]);
+      if (snapshot.snapshot_block == 0) {
+        snapshot.snapshot_block = static_cast<uint64_t>(
+            std::stoull(json_str_or_int(data.at("_meta").at("block").at("number"))));
+      }
       const json &rows = data.at("userPositions");
       for (const auto &row : rows) {
         std::string token_id = row.at("tokenId").get<std::string>();
-        s.pos[token_id] += bigint_from_dec(json_str_or_int(row.at("amount")));
+        snapshot.positions[token_id] +=
+            bigint_from_dec(json_str_or_int(row.at("amount")));
       }
-
       if (rows.size() < cfg_.graph_page_limit) {
-        s.done = true;
+        snapshot.done = true;
         ++done_count;
         progress().update("fetch_positions", done_count, users.size());
       } else {
-        s.cursor = rows.back().at("id").get<std::string>();
+        snapshot.cursor = rows.back().at("id").get<std::string>();
       }
     }
   }
 
-  uint64_t min_block = UINT64_MAX;
-  for (const auto &s : snaps) {
-    if (s.block > 0 && s.block < min_block)
-      min_block = s.block;
-  }
-  assert(min_block != UINT64_MAX);
-  logger().info("fetch_positions done, min_block=" + std::to_string(min_block));
-
-  {
-    std::lock_guard<std::mutex> lock(state_.mu);
-    state_.users = users;
-    state_.user_set.clear();
-    for (const auto &u : users)
-      state_.user_set.insert(u);
-    state_.user_states.clear();
-    for (const auto &s : snaps) {
-      UserState &us = state_.user_states[s.user];
-      us.user = s.user;
-      us.positions = s.pos;
+  rt_.users = users;
+  rt_.user_set.clear();
+  rt_.user_snapshots.clear();
+  rt_.user_states.clear();
+  uint64_t min_snapshot_block = 0;
+  bool have_min_snapshot_block = false;
+  for (const auto &snapshot : snapshots) {
+    rt_.user_set.insert(snapshot.user);
+    rt_.user_snapshots[snapshot.user] = {
+        .snapshot_block = snapshot.snapshot_block,
+        .stable = {},
+        .positions = snapshot.positions,
+    };
+    rt_.user_states[snapshot.user] = {
+        .user = snapshot.user,
+        .stable = {},
+        .positions = snapshot.positions,
+    };
+    if (!have_min_snapshot_block ||
+        snapshot.snapshot_block < min_snapshot_block) {
+      min_snapshot_block = snapshot.snapshot_block;
+      have_min_snapshot_block = true;
     }
-    state_.snapshot_block = min_block;
-    state_.applied_block = min_block;
-    state_.head_block = std::max(state_.head_block, min_block);
   }
+  assert(have_min_snapshot_block);
+  rt_.last_applied_block = min_snapshot_block;
+  rt_.head_block = std::max(rt_.head_block, min_snapshot_block);
 }
 
-void SyncThread::fetch_balances(const std::string &block_tag) {
-  std::vector<std::string> users;
-  {
-    std::lock_guard<std::mutex> lock(state_.mu);
-    users = state_.users;
-  }
-  progress().update("fetch_balances", 0, 0);
-
+void SyncThread::fetch_snapshot_balances() {
+  progress().update("fetch_balances", 0, rt_.users.size() * 4);
   std::vector<json> reqs;
-  struct Ref {
+  struct BalanceRef {
     std::string user;
-    bool wrapped;
+    Collateral collateral = Collateral::Unknown;
   };
-  std::vector<Ref> refs;
+  std::vector<BalanceRef> refs;
 
-  std::string selector = "0x70a08231";
-  for (const auto &u : users) {
-    std::string data = selector + std::string(24, '0') + strip_0x(u);
-    reqs.push_back(
-        {{"method", "eth_call"},
+  const std::string selector = "0x70a08231";
+  for (const auto &user : rt_.users) {
+    const uint64_t block = rt_.user_snapshots.at(user).snapshot_block;
+    const std::string block_tag = u64_to_hex(block);
+    const std::string data = selector + std::string(24, '0') + strip_0x(user);
+    auto push_call = [&](const char *token_addr, Collateral collateral) {
+      reqs.push_back({
+          {"method", "eth_call"},
          {"params",
-          json::array({json{{"to", kUsdcE}, {"data", data}}, block_tag})}});
-    refs.push_back({u, false});
-    reqs.push_back({{"method", "eth_call"},
-                    {"params", json::array({json{{"to", kWrappedCollateral},
-                                                 {"data", data}},
-                                            block_tag})}});
-    refs.push_back({u, true});
+           json::array({json{{"to", token_addr}, {"data", data}}, block_tag})},
+      });
+      refs.push_back({user, collateral});
+    };
+    push_call(kUsdc, Collateral::USDC);
+    push_call(kUsdcE, Collateral::USDCe);
+    push_call(kUsdt, Collateral::USDT);
+    push_call(kWrappedUsdcE, Collateral::WrappedUSDCe);
   }
 
-  if (reqs.empty())
-    return;
-  json resps = rpc_batch(reqs);
-  logger().info("fetch_balances batch(" + std::to_string(reqs.size()) + ")");
-
-  std::lock_guard<std::mutex> lock(state_.mu);
+  json responses = rpc_batch(reqs);
   for (size_t i = 0; i < refs.size(); ++i) {
-    BigInt bal = bigint_from_hex(resps.at(i).at("result").get<std::string>());
-    UserState &us = state_.user_states.at(refs[i].user);
-    if (refs[i].wrapped)
-      us.stable.wrapped = bal;
-    else
-      us.stable.usdc_e = bal;
+    BigInt balance =
+        bigint_from_hex(responses.at(i).at("result").get<std::string>());
+    UserSnapshotState &snapshot = rt_.user_snapshots.at(refs[i].user);
+    UserLiveState &live = rt_.user_states.at(refs[i].user);
+    switch (refs[i].collateral) {
+      case Collateral::USDC:
+        snapshot.stable.usdc = balance;
+        live.stable.usdc = balance;
+        break;
+      case Collateral::USDCe:
+        snapshot.stable.usdc_e = balance;
+        live.stable.usdc_e = balance;
+        break;
+      case Collateral::USDT:
+        snapshot.stable.usdt = balance;
+        live.stable.usdt = balance;
+        break;
+      case Collateral::WrappedUSDCe:
+        snapshot.stable.wrapped = balance;
+        live.stable.wrapped = balance;
+        break;
+      case Collateral::Unknown:
+        assert(false);
+    }
+  }
+  progress().update("fetch_balances", refs.size(), refs.size());
+}
+
+void SyncThread::append_snapshot_roots() {
+  const int64_t now = now_unix_sec();
+  for (const auto &user : rt_.users) {
+    const UserSnapshotState &snapshot = rt_.user_snapshots.at(user);
+    json positions = json::array();
+    for (const auto &[token_id, amount] : snapshot.positions) {
+      positions.push_back({
+          {"token_id", token_id},
+          {"amount_raw", bigint_to_str(amount)},
+      });
+    }
+    rt_.snapshot_root[user][block_key(snapshot.snapshot_block)] = {
+        {"block_number", snapshot.snapshot_block},
+        {"captured_at_unix_sec", now},
+        {"stable_balances",
+         {
+             {"usdc_raw", bigint_to_str(snapshot.stable.usdc)},
+             {"usdc_e_raw", bigint_to_str(snapshot.stable.usdc_e)},
+             {"usdt_raw", bigint_to_str(snapshot.stable.usdt)},
+             {"wrapped_raw", bigint_to_str(snapshot.stable.wrapped)},
+         }},
+        {"positions", positions},
+    };
   }
 }
 
-void SyncThread::fetch_market_data(bool missing_only) {
-  std::vector<std::string> token_ids;
-  {
-    std::lock_guard<std::mutex> lock(state_.mu);
-    std::set<std::string> set;
-    for (const auto &u : state_.users) {
-      for (const auto &[tid, _] : state_.user_states.at(u).positions) {
-        if (!missing_only || !state_.tokens.contains(tid) ||
-            state_.tokens.at(tid).price < 0.0L) {
-          set.insert(tid);
-        }
-      }
+std::vector<std::string> SyncThread::collect_active_token_ids() const {
+  std::set<std::string> token_ids;
+  for (const auto &user : rt_.users) {
+    const UserLiveState &live = rt_.user_states.at(user);
+    for (const auto &[token_id, _] : live.positions) {
+      token_ids.insert(token_id);
     }
-    token_ids.assign(set.begin(), set.end());
   }
-  if (token_ids.empty())
+  return {token_ids.begin(), token_ids.end()};
+}
+
+void SyncThread::fetch_token_meta(const std::vector<std::string> &token_ids) {
+  if (token_ids.empty()) {
     return;
-  progress().update("fetch_market_data", 0, token_ids.size());
+  }
+
+  std::vector<std::string> unique = token_ids;
+  std::sort(unique.begin(), unique.end());
+  unique.erase(std::unique(unique.begin(), unique.end()), unique.end());
 
   std::string url = "https://gateway.thegraph.com/api/" + cfg_.graph_api_key +
                     "/subgraphs/id/" + std::string(kPolymarketSubgraphId);
   std::vector<std::vector<std::string>> chunks =
-      chunked(token_ids, cfg_.graph_id_batch_limit);
+      chunked(unique, cfg_.graph_id_batch_limit);
   std::vector<HttpReq> reqs;
   for (const auto &chunk : chunks) {
-    json vars = {{"ids", std::vector<std::string>(chunk.begin(), chunk.end())}};
-    reqs.push_back(
-        {url, "POST",
-         json{{"query", kMarketDataQuery}, {"variables", vars}}.dump()});
+    reqs.push_back({
+        .url = url,
+        .method = "POST",
+        .body = json{{"query", kMarketDataQuery}, {"variables", {{"ids", chunk}}}}
+                    .dump(),
+    });
   }
+  auto responses = http_batch(reqs, cfg_.http_concurrency, cfg_.proxy_url);
+  assert(responses.size() == chunks.size());
 
-  auto resps = http_batch(reqs, cfg_.http_concurrency, cfg_.proxy_url);
-  logger().info("fetch_market_data batch(" + std::to_string(resps.size()) +
-                ")");
-  assert(resps.size() == chunks.size());
-
-  std::vector<json> data_rows;
-  data_rows.reserve(resps.size());
-  for (size_t i = 0; i < resps.size(); ++i) {
-    json vars = {{"ids", chunks[i]}};
-    json payload = {{"query", kMarketDataQuery}, {"variables", vars}};
-    data_rows.push_back(graph_data_with_retry(
-        state_, "marketDatas",
+  for (size_t i = 0; i < responses.size(); ++i) {
+    json data = graph_data_with_retry(
+        rt_, "marketDatas",
         "chunk=" + std::to_string(i + 1) + "/" + std::to_string(chunks.size()),
-        url, payload, cfg_.proxy_url, resps[i]));
-  }
-
-  std::set<std::string> cond_ids;
-  {
-    std::lock_guard<std::mutex> lock(state_.mu);
-    for (const auto &data : data_rows) {
+        url,
+        json{{"query", kMarketDataQuery}, {"variables", {{"ids", chunks[i]}}}},
+        cfg_.proxy_url, responses[i]);
       for (const auto &row : data.at("marketDatas")) {
-        TokenMeta tm;
-        tm.token_id = row.at("id").get<std::string>();
-        tm.outcome_index = json_int(row, "outcomeIndex");
+      const std::string token_id = row.at("id").get<std::string>();
+      TokenMeta token;
+      int idx = json_int(row, "outcomeIndex", 0xFF);
+      token.idx = idx < 0 ? 0xFF : static_cast<uint8_t>(idx);
         if (row.contains("priceOrderbook") &&
             row.at("priceOrderbook").is_string()) {
-          tm.price = parse_decimal(row.at("priceOrderbook").get<std::string>());
-          tm.price_source = "orderbook";
+        token.price = static_cast<int64_t>(std::llround(
+            parse_decimal(row.at("priceOrderbook").get<std::string>()) *
+            static_cast<long double>(kPriceScale)));
+        token.price_src = "orderbook";
         }
         if (row.contains("condition") && row.at("condition").is_object()) {
-          const json &c = row.at("condition");
-          tm.condition_id = json_str(c, "id");
-          tm.question_id = json_str(c, "questionId");
-          tm.outcome_slot_count = json_int(c, "outcomeSlotCount");
-          tm.resolution_timestamp = json_i64(c, "resolutionTimestamp");
-          tm.payout_numerators = json_bigint_arr(c, "payoutNumerators");
-          if (c.contains("payoutDenominator") &&
-              !c.at("payoutDenominator").is_null()) {
-            tm.payout_denominator = json_bigint(c, "payoutDenominator");
-            tm.has_payout_denominator = true;
-          }
-          auto rp = resolved_price(tm.payout_numerators, tm.payout_denominator,
-                                   tm.has_payout_denominator, tm.outcome_index);
-          if (rp) {
-            tm.price = *rp;
-            tm.price_source = "resolution";
-          }
-
-          ConditionMeta cm;
-          cm.condition_id = tm.condition_id;
-          cm.question_id = tm.question_id;
-          cm.outcome_slot_count = tm.outcome_slot_count;
-          cm.resolution_timestamp = tm.resolution_timestamp;
-          cm.payout_numerators = tm.payout_numerators;
-          cm.payout_denominator = tm.payout_denominator;
-          cm.has_payout_denominator = tm.has_payout_denominator;
-          merge_condition(state_.conditions[tm.condition_id], cm);
-          cond_ids.insert(tm.condition_id);
+        const json &condition_row = row.at("condition");
+        token.cond = json_str(condition_row, "id");
+        ConditionMeta condition;
+        condition.qid = json_str(condition_row, "questionId");
+        int oc = json_int(condition_row, "outcomeSlotCount", 0);
+        condition.oc = oc <= 0 ? 0 : static_cast<uint8_t>(oc);
+        condition.payout = json_bigint_arr(condition_row, "payoutNumerators");
+        if (condition_row.contains("payoutDenominator") &&
+            !condition_row.at("payoutDenominator").is_null()) {
+          condition.payout_d = json_bigint(condition_row, "payoutDenominator");
+          condition.has_payout_d = true;
+          condition.resolved = true;
         }
-        merge_token(state_.tokens[tm.token_id], tm);
+        merge_condition(rt_.conditions[token.cond], condition);
+      }
+      merge_token(rt_.tokens[token_id], token);
+
+      if (!token.cond.empty()) {
+        ConditionMeta &condition = rt_.conditions[token.cond];
+        if (condition.oc > 0 && condition.tids.size() < condition.oc) {
+          condition.tids.resize(condition.oc);
+        }
+        if (token.idx != 0xFF) {
+          if (condition.tids.size() <= token.idx) {
+            condition.tids.resize(static_cast<size_t>(token.idx) + 1);
+          }
+          condition.tids[token.idx] = token_id;
+          if (condition.coll == 0) {
+            condition.coll = to_u8(
+                infer_collateral_from_token(token.cond, token.idx, token_id));
+          }
+        }
+        apply_resolved_prices(rt_, token.cond);
       }
     }
   }
-  progress().update("fetch_market_data", token_ids.size(), token_ids.size());
-
-  std::vector<std::string> cond_vec(cond_ids.begin(), cond_ids.end());
-  if (!cond_vec.empty())
-    fetch_conditions(cond_vec);
-
-  std::vector<std::string> missing_gamma;
-  {
-    std::lock_guard<std::mutex> lock(state_.mu);
-    for (const auto &u : state_.users) {
-      for (const auto &[tid, _] : state_.user_states.at(u).positions) {
-        if (!state_.tokens.contains(tid))
-          continue;
-        const std::string &cid = state_.tokens.at(tid).condition_id;
-        if (cid.empty())
-          continue;
-        if (!state_.conditions.contains(cid) ||
-            state_.conditions.at(cid).market_question.empty()) {
-          missing_gamma.push_back(cid);
-        }
-      }
-    }
-    std::sort(missing_gamma.begin(), missing_gamma.end());
-    missing_gamma.erase(std::unique(missing_gamma.begin(), missing_gamma.end()),
-                        missing_gamma.end());
-  }
-  if (!missing_gamma.empty())
-    fetch_gamma(missing_gamma);
 }
 
-void SyncThread::fetch_conditions(const std::vector<std::string> &ids) {
-  if (ids.empty())
+void SyncThread::fetch_condition_meta(const std::vector<std::string> &condition_ids) {
+  if (condition_ids.empty()) {
     return;
-  progress().update("fetch_conditions", 0, ids.size());
+  }
+
+  std::vector<std::string> unique = condition_ids;
+  std::sort(unique.begin(), unique.end());
+  unique.erase(std::unique(unique.begin(), unique.end()), unique.end());
 
   std::string url = "https://gateway.thegraph.com/api/" + cfg_.graph_api_key +
                     "/subgraphs/id/" + std::string(kPnlSubgraphId);
   std::vector<std::vector<std::string>> chunks =
-      chunked(ids, cfg_.graph_id_batch_limit);
+      chunked(unique, cfg_.graph_id_batch_limit);
   std::vector<HttpReq> reqs;
   for (const auto &chunk : chunks) {
-    json vars = {{"ids", std::vector<std::string>(chunk.begin(), chunk.end())}};
-    reqs.push_back(
-        {url, "POST",
-         json{{"query", kConditionsQuery}, {"variables", vars}}.dump()});
+    reqs.push_back({
+        .url = url,
+        .method = "POST",
+        .body =
+            json{{"query", kConditionsQuery}, {"variables", {{"ids", chunk}}}}
+                .dump(),
+    });
   }
+  auto responses = http_batch(reqs, cfg_.http_concurrency, cfg_.proxy_url);
+  assert(responses.size() == chunks.size());
 
-  auto resps = http_batch(reqs, cfg_.http_concurrency, cfg_.proxy_url);
-  logger().info("fetch_conditions batch(" + std::to_string(resps.size()) + ")");
-  assert(resps.size() == chunks.size());
-
-  std::vector<json> data_rows;
-  data_rows.reserve(resps.size());
-  for (size_t i = 0; i < resps.size(); ++i) {
-    json vars = {{"ids", chunks[i]}};
-    json payload = {{"query", kConditionsQuery}, {"variables", vars}};
-    data_rows.push_back(graph_data_with_retry(
-        state_, "conditions",
+  for (size_t i = 0; i < responses.size(); ++i) {
+    json data = graph_data_with_retry(
+        rt_, "conditions",
         "chunk=" + std::to_string(i + 1) + "/" + std::to_string(chunks.size()),
-        url, payload, cfg_.proxy_url, resps[i]));
-  }
-
-  std::lock_guard<std::mutex> lock(state_.mu);
-  for (const auto &data : data_rows) {
+        url,
+        json{{"query", kConditionsQuery}, {"variables", {{"ids", chunks[i]}}}},
+        cfg_.proxy_url, responses[i]);
     for (const auto &row : data.at("conditions")) {
-      ConditionMeta cm;
-      cm.condition_id = row.at("id").get<std::string>();
-      cm.token_ids = json_str_arr(row, "positionIds");
-      cm.payout_numerators = json_bigint_arr(row, "payoutNumerators");
+      const std::string condition_id = row.at("id").get<std::string>();
+      ConditionMeta condition;
+      condition.tids = json_str_arr(row, "positionIds");
+      condition.oc = static_cast<uint8_t>(condition.tids.size());
+      condition.payout = json_bigint_arr(row, "payoutNumerators");
       if (row.contains("payoutDenominator") &&
           !row.at("payoutDenominator").is_null()) {
-        cm.payout_denominator = json_bigint(row, "payoutDenominator");
-        cm.has_payout_denominator = true;
+        condition.payout_d = json_bigint(row, "payoutDenominator");
+        condition.has_payout_d = true;
+        condition.resolved = true;
       }
-      merge_condition(state_.conditions[cm.condition_id], cm);
+      merge_condition(rt_.conditions[condition_id], condition);
+
+      ConditionMeta &merged = rt_.conditions[condition_id];
+      for (size_t idx = 0; idx < merged.tids.size(); ++idx) {
+        if (merged.tids[idx].empty()) {
+          continue;
+        }
+        TokenMeta token;
+        token.cond = condition_id;
+        token.idx = static_cast<uint8_t>(idx);
+        merge_token(rt_.tokens[merged.tids[idx]], token);
+        if (merged.coll == 0) {
+          merged.coll = to_u8(infer_collateral_from_token(
+              condition_id, static_cast<uint8_t>(idx), merged.tids[idx]));
+        }
+      }
+      apply_resolved_prices(rt_, condition_id);
     }
   }
-  progress().update("fetch_conditions", ids.size(), ids.size());
 }
 
-void SyncThread::fetch_gamma(const std::vector<std::string> &ids) {
-  if (ids.empty())
+void SyncThread::fetch_gamma_meta(const std::vector<std::string> &condition_ids) {
+  if (condition_ids.empty()) {
     return;
-  progress().update("fetch_gamma", 0, ids.size());
-
-  std::vector<HttpReq> reqs;
-  for (const auto &cid : ids) {
-    reqs.push_back({std::string(kGammaApiBase) +
-                        "/markets?condition_ids=" + cid + "&include_tag=true",
-                    "GET", ""});
   }
 
-  auto resps = http_batch(reqs, cfg_.http_concurrency, cfg_.proxy_url);
-  logger().info("fetch_gamma batch(" + std::to_string(resps.size()) + ")");
-  assert(resps.size() == ids.size());
+  std::vector<HttpReq> reqs;
+  for (const auto &condition_id : condition_ids) {
+    reqs.push_back({
+        .url = std::string(kGammaApiBase) + "/markets?condition_ids=" +
+               condition_id + "&include_tag=true",
+        .method = "GET",
+        .body = "",
+    });
+  }
+  auto responses = http_batch(reqs, cfg_.http_concurrency, cfg_.proxy_url);
+  assert(responses.size() == condition_ids.size());
 
-  std::vector<ConditionMeta> updates;
-  updates.reserve(ids.size());
-  for (size_t i = 0; i < resps.size(); ++i) {
-    const std::string &cid = ids[i];
-    std::string url = std::string(kGammaApiBase) +
-                      "/markets?condition_ids=" + cid + "&include_tag=true";
-    json arr = gamma_array_with_retry(state_, "markets", "condition_id=" + cid,
-                                      url, cfg_.proxy_url, resps[i]);
-    if (!arr.is_array() || arr.empty())
+  for (size_t i = 0; i < responses.size(); ++i) {
+    const std::string &condition_id = condition_ids[i];
+    json arr = gamma_array_with_retry(
+        rt_, "markets", "condition_id=" + condition_id, reqs[i].url,
+        cfg_.proxy_url, responses[i]);
+    if (!arr.is_array() || arr.empty()) {
       continue;
+    }
 
     json market = arr.front();
     for (const auto &item : arr) {
-      std::string c = item.contains("conditionId")
+      std::string current = item.contains("conditionId")
                           ? json_str(item, "conditionId")
                           : json_str(item, "condition_id");
-      if (!c.empty() && norm_hex(c) == norm_hex(cid)) {
+      if (!current.empty() && norm_hex(current) == norm_hex(condition_id)) {
         market = item;
         break;
       }
     }
 
-    ConditionMeta cm;
-    cm.condition_id = cid;
-    json events = market.contains("events") && market.at("events").is_array()
+    json events =
+        market.contains("events") && market.at("events").is_array()
                       ? market.at("events")
                       : json::array();
     json event0 = events.empty() ? json::object() : events.front();
-    cm.market_question = json_str(market, "question");
-    if (cm.market_question.empty())
-      cm.market_question = json_str(event0, "title");
-    cm.market_description = json_str(market, "description");
-    cm.market_event_title = json_str(event0, "title");
-    cm.market_slug = json_str(event0, "slug");
-    if (cm.market_slug.empty())
-      cm.market_slug = json_str(market, "slug");
-    cm.market_url = cm.market_slug.empty()
-                        ? ""
-                        : "https://polymarket.com/event/" + cm.market_slug;
+    ConditionMeta condition;
+    condition.q = json_str(market, "question");
+    if (condition.q.empty()) {
+      condition.q = json_str(event0, "title");
+    }
+    condition.desc = json_str(market, "description");
+    condition.slug = json_str(event0, "slug");
+    if (condition.slug.empty()) {
+      condition.slug = json_str(market, "slug");
+    }
+    if (!condition.slug.empty()) {
+      condition.url = "https://polymarket.com/event/" + condition.slug;
+    }
     if (market.contains("outcomes")) {
       json outcomes = market.at("outcomes");
-      if (outcomes.is_string())
+      if (outcomes.is_string()) {
         outcomes = json::parse(outcomes.get<std::string>());
+      }
       if (outcomes.is_array()) {
-        for (const auto &v : outcomes)
-          cm.market_outcomes.push_back(json_str_or_int(v));
+        for (const auto &outcome : outcomes) {
+          if (outcome.is_string()) {
+            condition.outcomes.push_back(outcome.get<std::string>());
+          }
+        }
       }
     }
-    updates.push_back(std::move(cm));
+    merge_condition(rt_.conditions[condition_id], condition);
   }
-
-  {
-    std::lock_guard<std::mutex> lock(state_.mu);
-    for (const auto &cm : updates) {
-      merge_condition(state_.conditions[cm.condition_id], cm);
-    }
-  }
-  progress().update("fetch_gamma", ids.size(), ids.size());
 }
 
-std::vector<json> SyncThread::build_log_filters(uint64_t from,
-                                                uint64_t to) const {
-  std::vector<std::string> users;
-  {
-    std::lock_guard<std::mutex> lock(state_.mu);
-    users = state_.users;
+void SyncThread::fetch_market_questions(const std::vector<std::string> &market_ids) {
+  if (market_ids.empty()) {
+    return;
   }
 
+  std::vector<std::string> unique = market_ids;
+  std::sort(unique.begin(), unique.end());
+  unique.erase(std::unique(unique.begin(), unique.end()), unique.end());
+
+  std::string url = "https://gateway.thegraph.com/api/" + cfg_.graph_api_key +
+                    "/subgraphs/id/" + std::string(kActivitySubgraphId);
+  std::vector<std::vector<std::string>> chunks =
+      chunked(unique, cfg_.graph_id_batch_limit);
+  std::vector<HttpReq> reqs;
+  for (const auto &chunk : chunks) {
+    reqs.push_back({
+        .url = url,
+        .method = "POST",
+        .body = json{{"query", kNegRiskEventQuery}, {"variables", {{"ids", chunk}}}}
+                    .dump(),
+    });
+  }
+  auto responses = http_batch(reqs, cfg_.http_concurrency, cfg_.proxy_url);
+  assert(responses.size() == chunks.size());
+
+  for (size_t i = 0; i < responses.size(); ++i) {
+    json data = graph_data_with_retry(
+        rt_, "negRiskEvents",
+        "chunk=" + std::to_string(i + 1) + "/" + std::to_string(chunks.size()),
+        url,
+        json{{"query", kNegRiskEventQuery}, {"variables", {{"ids", chunks[i]}}}},
+        cfg_.proxy_url, responses[i]);
+    for (const auto &row : data.at("negRiskEvents")) {
+      std::string market_id = norm_hex(row.at("id").get<std::string>());
+      int question_count = json_int(row, "questionCount", 0);
+      assert(question_count > 0);
+
+      MarketMeta market;
+      for (int idx = 0; idx < question_count; ++idx) {
+        std::string question_id = build_negrisk_question_id(market_id, idx);
+        market.qids.push_back(question_id);
+        std::string condition_id = build_negrisk_condition_id(question_id);
+        ConditionMeta condition;
+        condition.qid = question_id;
+        condition.oc = 2;
+        condition.coll = to_u8(Collateral::WrappedUSDCe);
+        if (condition.tids.size() < 2) {
+          condition.tids.resize(2);
+        }
+        merge_condition(rt_.conditions[condition_id], condition);
+      }
+      merge_market(rt_.markets[market_id], market);
+    }
+  }
+}
+
+void SyncThread::ensure_token_meta(const std::string &token_id) {
+  auto it = rt_.tokens.find(token_id);
+  if (it != rt_.tokens.end() && !it->second.cond.empty() && it->second.idx != 0xFF) {
+    if (rt_.conditions.contains(it->second.cond)) {
+      return;
+    }
+  }
+  fetch_token_meta({token_id});
+  it = rt_.tokens.find(token_id);
+  assert(it != rt_.tokens.end());
+  assert(!it->second.cond.empty());
+  assert(it->second.idx != 0xFF);
+  ensure_condition_meta(it->second.cond, Collateral::Unknown);
+}
+
+void SyncThread::ensure_condition_meta(const std::string &condition_id,
+                                       Collateral hint_collateral) {
+  ConditionMeta &condition = rt_.conditions[condition_id];
+  if (hint_collateral != Collateral::Unknown && condition.coll == 0) {
+    condition.coll = to_u8(hint_collateral);
+  }
+  if (condition.oc == 0 || condition.tids.empty()) {
+    fetch_condition_meta({condition_id});
+  }
+  if (hint_collateral != Collateral::Unknown && condition.coll == 0) {
+    condition.coll = to_u8(hint_collateral);
+  }
+  if (condition.q.empty()) {
+    fetch_gamma_meta({condition_id});
+  }
+  assert(condition.oc > 0);
+}
+
+void SyncThread::ensure_gamma_meta(const std::string &condition_id) {
+  auto it = rt_.conditions.find(condition_id);
+  if (it != rt_.conditions.end() && !it->second.q.empty()) {
+    return;
+  }
+  fetch_gamma_meta({condition_id});
+}
+
+void SyncThread::ensure_market_questions(const std::string &market_id) {
+  auto it = rt_.markets.find(market_id);
+  if (it != rt_.markets.end() && !it->second.qids.empty()) {
+    return;
+  }
+  fetch_market_questions({market_id});
+  it = rt_.markets.find(market_id);
+  assert(it != rt_.markets.end());
+  assert(!it->second.qids.empty());
+}
+
+void SyncThread::backfill_range(uint64_t from_block, uint64_t to_block) {
+  if (from_block > to_block) {
+    return;
+  }
+  progress().update("backfill_logs", 0, to_block - from_block + 1);
+
+  uint64_t start = from_block;
+  while (start <= to_block) {
+    uint64_t end = std::min(to_block, start + cfg_.get_logs_block_span - 1);
+    auto filters = build_log_filters(rt_.users, start, end);
+    std::vector<json> reqs;
+    for (const auto &filter : filters) {
+      reqs.push_back({
+          {"method", "eth_getLogs"},
+          {"params", json::array({filter})},
+      });
+    }
+    json responses = rpc_batch(reqs);
+    std::map<uint64_t, std::map<std::string, json>> blocks;
+    for (const auto &response : responses) {
+      assert(response.contains("result") && response.at("result").is_array());
+      for (const auto &log : response.at("result")) {
+        blocks[hex_to_u64(log.at("blockNumber").get<std::string>())]
+              [raw_log_key(log)] = log;
+      }
+    }
+
+    for (auto &[block_number, deduped] : blocks) {
+      std::vector<json> logs;
+      for (auto &[_, log] : deduped) {
+        logs.push_back(std::move(log));
+      }
+      std::sort(logs.begin(), logs.end(), [](const json &a, const json &b) {
+        return raw_log_sort_key(a) < raw_log_sort_key(b);
+      });
+      apply_block_logs(logs);
+      rt_.last_applied_block = std::max(rt_.last_applied_block, block_number);
+      rt_.head_block = std::max(rt_.head_block, block_number);
+    }
+
+    rt_.last_applied_block = std::max(rt_.last_applied_block, end);
+    rt_.head_block = std::max(rt_.head_block, end);
+    progress().update("backfill_logs", end - from_block + 1,
+                      to_block - from_block + 1);
+    start = end + 1;
+  }
+}
+
+void SyncThread::apply_block_logs(const std::vector<json> &logs) {
+  auto txs = build_tx_contexts(logs);
+  for (const auto &tx : txs) {
+    for (const auto &log : tx.raw_logs) {
+      const std::string address = norm_hex(log.at("address").get<std::string>());
+      const std::string topic0 =
+          norm_hex(log.at("topics").at(0).get<std::string>());
+      if (address == kConditionalTokens && topic0 == kConditionResolveTopic) {
+        apply_condition_resolution(log);
+      } else if (address == kConditionalTokens && topic0 == kPositionSplitTopic) {
+        apply_split(log);
+      } else if (address == kConditionalTokens && topic0 == kPositionMergeTopic) {
+        apply_merge(log);
+      } else if (address == kConditionalTokens && topic0 == kPositionRedeemTopic) {
+        apply_redeem(log);
+      } else if ((address == kCtfExchange || address == kNegRiskCtfExchange) &&
+                 topic0 == kOrderFillTopic) {
+        apply_order_fill(log);
+      } else if (address == kNegRiskAdapter && topic0 == kPositionConvertTopic) {
+        apply_convert(log, tx.raw_logs);
+      }
+    }
+  }
+}
+
+void SyncThread::apply_condition_resolution(const json &log) {
+  const json &topics = log.at("topics");
+  const std::string data = log.at("data").get<std::string>();
+  const std::string condition_id = norm_b32(topics.at(1).get<std::string>());
+  const std::string question_id = norm_b32(topics.at(3).get<std::string>());
+  BigInt outcome_count = extract_u256(data, 0);
+  std::vector<BigInt> payouts = extract_u256_array(data, extract_u256(data, 1));
+
+  ConditionMeta condition;
+  condition.qid = question_id;
+  condition.oc = static_cast<uint8_t>(bigint_to_u64(outcome_count));
+  condition.payout = payouts;
+  condition.payout_d = 0;
+  for (const auto &value : payouts) {
+    condition.payout_d += value;
+  }
+  condition.has_payout_d = true;
+  condition.resolved = true;
+  merge_condition(rt_.conditions[condition_id], condition);
+  apply_resolved_prices(rt_, condition_id);
+}
+
+void SyncThread::apply_order_fill(const json &log) {
+  const json &topics = log.at("topics");
+  const std::string data = log.at("data").get<std::string>();
+  BigInt maker_asset_id = extract_u256(data, 0);
+  BigInt taker_asset_id = extract_u256(data, 1);
+  BigInt maker_amount = extract_u256(data, 2);
+  BigInt taker_amount = extract_u256(data, 3);
+  assert((maker_asset_id == 0) ^ (taker_asset_id == 0));
+
+  const std::string maker = topic_to_addr(topics.at(2).get<std::string>());
+  const std::string taker = topic_to_addr(topics.at(3).get<std::string>());
+  const std::string buyer = maker_asset_id == 0 ? maker : taker;
+  const std::string seller = maker_asset_id == 0 ? taker : maker;
+  const std::string token_id =
+      bigint_to_str(maker_asset_id == 0 ? taker_asset_id : maker_asset_id);
+  const BigInt token_amount = maker_asset_id == 0 ? taker_amount : maker_amount;
+  const BigInt collateral_amount =
+      maker_asset_id == 0 ? maker_amount : taker_amount;
+
+  ensure_token_meta(token_id);
+  const TokenMeta &token = rt_.tokens.at(token_id);
+  ensure_condition_meta(token.cond, Collateral::Unknown);
+  ConditionMeta &condition = rt_.conditions.at(token.cond);
+  if (condition.coll == 0) {
+    condition.coll = to_u8(
+        infer_collateral_from_token(token.cond, token.idx, token_id));
+  }
+  assert(condition.coll != 0);
+
+  std::vector<PendingEmit> events;
+  if (rt_.user_set.contains(buyer)) {
+    events.push_back({
+        .user = buyer,
+        .token_id = token_id,
+        .condition_id = token.cond,
+        .token_idx = token.idx,
+        .collateral = condition.coll,
+        .type = EventType::OrderBuy,
+        .amount = bigint_to_i64(token_amount),
+        .price = scaled_price(collateral_amount, token_amount),
+    });
+  }
+  if (rt_.user_set.contains(seller)) {
+    events.push_back({
+        .user = seller,
+        .token_id = token_id,
+        .condition_id = token.cond,
+        .token_idx = token.idx,
+        .collateral = condition.coll,
+        .type = EventType::OrderSell,
+        .amount = -bigint_to_i64(token_amount),
+        .price = scaled_price(collateral_amount, token_amount),
+    });
+  }
+
+  commit_pending_events(
+      rt_, log, events, cfg_.recent_event_limit,
+      [this](const std::string &user, uint64_t block_number) {
+        return user_visible_at(user, block_number);
+      });
+}
+
+void SyncThread::apply_split(const json &log) {
+  const json &topics = log.at("topics");
+  const std::string data = log.at("data").get<std::string>();
+  const std::string stakeholder = topic_to_addr(topics.at(1).get<std::string>());
+  const std::string parent_collection_id =
+      norm_b32(topics.at(2).get<std::string>());
+  const std::string condition_id = norm_b32(topics.at(3).get<std::string>());
+  assert(parent_collection_id == zero_b32());
+
+  const std::string collateral_token = extract_addr_from_word(data, 0);
+  Collateral collateral = collateral_from_addr(collateral_token);
+  assert(collateral != Collateral::Unknown);
+  ensure_condition_meta(condition_id, collateral);
+  ConditionMeta &condition = rt_.conditions.at(condition_id);
+  assert(condition.oc == 2);
+  condition.coll = to_u8(collateral);
+
+  std::vector<BigInt> partition = extract_u256_array(data, extract_u256(data, 1));
+  BigInt amount = extract_u256(data, 2);
+  std::vector<PendingEmit> events;
+  for (const auto &entry : partition) {
+    uint8_t token_idx = index_set_to_token_idx(entry);
+    assert(token_idx < condition.oc);
+    std::string token_id =
+        condition_token_id(condition_id, collateral_token, token_idx);
+    if (condition.tids.size() <= token_idx) {
+      condition.tids.resize(static_cast<size_t>(token_idx) + 1);
+    }
+    condition.tids[token_idx] = token_id;
+    merge_token(rt_.tokens[token_id],
+                {.cond = condition_id,
+                 .idx = token_idx,
+                 .price = -1,
+                 .price_src = ""});
+
+    if (rt_.user_set.contains(stakeholder)) {
+      events.push_back({
+          .user = stakeholder,
+          .token_id = token_id,
+          .condition_id = condition_id,
+          .token_idx = token_idx,
+          .collateral = condition.coll,
+          .type = EventType::Split,
+          .amount = bigint_to_i64(amount),
+          .price = kPriceScale / condition.oc,
+      });
+    }
+  }
+
+  commit_pending_events(
+      rt_, log, events, cfg_.recent_event_limit,
+      [this](const std::string &user, uint64_t block_number) {
+        return user_visible_at(user, block_number);
+      });
+}
+
+void SyncThread::apply_merge(const json &log) {
+  const json &topics = log.at("topics");
+  const std::string data = log.at("data").get<std::string>();
+  const std::string stakeholder = topic_to_addr(topics.at(1).get<std::string>());
+  const std::string parent_collection_id =
+      norm_b32(topics.at(2).get<std::string>());
+  const std::string condition_id = norm_b32(topics.at(3).get<std::string>());
+  assert(parent_collection_id == zero_b32());
+
+  const std::string collateral_token = extract_addr_from_word(data, 0);
+  Collateral collateral = collateral_from_addr(collateral_token);
+  assert(collateral != Collateral::Unknown);
+  ensure_condition_meta(condition_id, collateral);
+  ConditionMeta &condition = rt_.conditions.at(condition_id);
+  assert(condition.oc == 2);
+  condition.coll = to_u8(collateral);
+
+  std::vector<BigInt> partition = extract_u256_array(data, extract_u256(data, 1));
+  BigInt amount = extract_u256(data, 2);
+  std::vector<PendingEmit> events;
+  for (const auto &entry : partition) {
+    uint8_t token_idx = index_set_to_token_idx(entry);
+    assert(token_idx < condition.oc);
+    std::string token_id =
+        condition_token_id(condition_id, collateral_token, token_idx);
+    if (condition.tids.size() <= token_idx) {
+      condition.tids.resize(static_cast<size_t>(token_idx) + 1);
+    }
+    condition.tids[token_idx] = token_id;
+    merge_token(rt_.tokens[token_id],
+                {.cond = condition_id,
+                 .idx = token_idx,
+                 .price = -1,
+                 .price_src = ""});
+
+    if (rt_.user_set.contains(stakeholder)) {
+      events.push_back({
+          .user = stakeholder,
+          .token_id = token_id,
+          .condition_id = condition_id,
+          .token_idx = token_idx,
+          .collateral = condition.coll,
+          .type = EventType::Merge,
+          .amount = -bigint_to_i64(amount),
+          .price = kPriceScale / condition.oc,
+      });
+    }
+  }
+
+  commit_pending_events(
+      rt_, log, events, cfg_.recent_event_limit,
+      [this](const std::string &user, uint64_t block_number) {
+        return user_visible_at(user, block_number);
+      });
+}
+
+void SyncThread::apply_redeem(const json &log) {
+  const json &topics = log.at("topics");
+  const std::string data = log.at("data").get<std::string>();
+  const std::string redeemer = topic_to_addr(topics.at(1).get<std::string>());
+  const std::string collateral_token = topic_to_addr(topics.at(2).get<std::string>());
+  const std::string condition_id = norm_b32(topics.at(3).get<std::string>());
+  const std::string parent_collection_id = extract_b32_from_word(data, 0);
+  assert(parent_collection_id == zero_b32());
+
+  Collateral collateral = collateral_from_addr(collateral_token);
+  assert(collateral != Collateral::Unknown);
+  ensure_condition_meta(condition_id, collateral);
+  ConditionMeta &condition = rt_.conditions.at(condition_id);
+  condition.coll = to_u8(collateral);
+  assert(condition.oc == 2);
+  assert(condition.has_payout_d);
+  assert(condition.payout.size() == condition.oc);
+
+  std::vector<BigInt> index_sets =
+      extract_u256_array(data, extract_u256(data, 1));
+  BigInt payout = extract_u256(data, 2);
+
+  uint8_t winner_idx = 0;
+  for (size_t i = 1; i < condition.payout.size(); ++i) {
+    if (condition.payout[i] > condition.payout[winner_idx]) {
+      winner_idx = static_cast<uint8_t>(i);
+    }
+  }
+  assert(condition.payout[winner_idx] > 0);
+  BigInt winner_holding =
+      (payout * condition.payout_d) / condition.payout[winner_idx];
+
+  std::vector<PendingEmit> events;
+  for (const auto &index_set : index_sets) {
+    uint8_t token_idx = index_set_to_token_idx(index_set);
+    assert(token_idx < condition.oc);
+    std::string token_id =
+        condition_token_id(condition_id, collateral_token, token_idx);
+    if (condition.tids.size() <= token_idx) {
+      condition.tids.resize(static_cast<size_t>(token_idx) + 1);
+    }
+    condition.tids[token_idx] = token_id;
+    merge_token(rt_.tokens[token_id],
+                {.cond = condition_id,
+                 .idx = token_idx,
+                 .price = -1,
+                 .price_src = ""});
+
+    BigInt holding = 0;
+    if (token_idx == winner_idx) {
+      holding = winner_holding;
+    } else if (rt_.user_states.contains(redeemer) &&
+               rt_.user_states.at(redeemer).positions.contains(token_id)) {
+      holding = rt_.user_states.at(redeemer).positions.at(token_id);
+    }
+
+    events.push_back({
+        .user = redeemer,
+        .token_id = token_id,
+        .condition_id = condition_id,
+        .token_idx = token_idx,
+        .collateral = condition.coll,
+        .type = EventType::Redeem,
+        .amount = -bigint_to_i64(holding),
+        .price = scaled_price(condition.payout[token_idx], condition.payout_d),
+    });
+  }
+
+  commit_pending_events(
+      rt_, log, events, cfg_.recent_event_limit,
+      [this](const std::string &user, uint64_t block_number) {
+        return user_visible_at(user, block_number);
+      });
+}
+
+void SyncThread::apply_convert(const json &log, const std::vector<json> &tx_logs) {
+  const json &topics = log.at("topics");
+  const std::string data = log.at("data").get<std::string>();
+  const std::string stakeholder = topic_to_addr(topics.at(1).get<std::string>());
+  const std::string market_id = norm_b32(topics.at(2).get<std::string>());
+  (void)extract_u256(data, 0);
+
+  ensure_market_questions(market_id);
+  const MarketMeta &market = rt_.markets.at(market_id);
+  std::unordered_set<std::string> market_conditions;
+  for (const auto &question_id : market.qids) {
+    std::string condition_id = build_negrisk_condition_id(question_id);
+    ensure_condition_meta(condition_id, Collateral::WrappedUSDCe);
+    market_conditions.insert(condition_id);
+  }
+
+  std::vector<TransferLeg> transfers;
+  for (const auto &tx_log : tx_logs) {
+    const std::string address = norm_hex(tx_log.at("address").get<std::string>());
+    if (address != kConditionalTokens) {
+        continue;
+    }
+    const std::string topic0 =
+        norm_hex(tx_log.at("topics").at(0).get<std::string>());
+    if (topic0 == kTransferSingleTopic) {
+      transfers.push_back(parse_transfer_single(tx_log));
+    } else if (topic0 == kTransferBatchTopic) {
+      auto batch = parse_transfer_batch(tx_log);
+      transfers.insert(transfers.end(), batch.begin(), batch.end());
+    }
+  }
+  std::sort(transfers.begin(), transfers.end(),
+            [](const TransferLeg &a, const TransferLeg &b) {
+              return a.log_index < b.log_index;
+            });
+
+  std::vector<PendingEmit> events;
+  for (const auto &transfer : transfers) {
+    ensure_token_meta(transfer.token_id);
+    const TokenMeta &token = rt_.tokens.at(transfer.token_id);
+    if (!market_conditions.contains(token.cond)) {
+        continue;
+    }
+    ConditionMeta &condition = rt_.conditions.at(token.cond);
+    if (condition.coll == 0) {
+      condition.coll = to_u8(Collateral::WrappedUSDCe);
+    }
+
+    int64_t signed_amount = 0;
+    if (transfer.from == stakeholder && transfer.to == kNoTokenBurnAddress) {
+      signed_amount = -bigint_to_i64(transfer.amount);
+    } else if (transfer.to == stakeholder &&
+               (transfer.from == kNegRiskAdapter || transfer.from == kZeroAddress)) {
+      signed_amount = bigint_to_i64(transfer.amount);
+    } else {
+      continue;
+    }
+
+    events.push_back({
+        .user = stakeholder,
+        .token_id = transfer.token_id,
+        .condition_id = token.cond,
+        .token_idx = token.idx,
+        .collateral = condition.coll,
+        .type = EventType::Convert,
+        .amount = signed_amount,
+        .price = 0,
+    });
+  }
+
+  assert(!events.empty());
+  commit_pending_events(
+      rt_, log, events, cfg_.recent_event_limit,
+      [this](const std::string &user, uint64_t block_number) {
+        return user_visible_at(user, block_number);
+      });
+}
+
+bool SyncThread::user_visible_at(const std::string &user,
+                                 uint64_t block_number) const {
+  auto it = rt_.user_snapshots.find(user);
+  if (it == rt_.user_snapshots.end()) {
+    return false;
+  }
+  return block_number > it->second.snapshot_block;
+}
+
+uint64_t SyncThread::rpc_block_number() {
+  json result = rpc_call("eth_blockNumber", json::array());
+  return hex_to_u64(result.get<std::string>());
+}
+
+json SyncThread::rpc_call(const std::string &method, const json &params) {
+  json payload = {
+      {"jsonrpc", "2.0"},
+      {"id", 1},
+      {"method", method},
+      {"params", params},
+  };
+  for (size_t attempt = 1;; ++attempt) {
+    HttpRes response = http_post(cfg_.rpc_http_url, payload, cfg_.proxy_url);
+    ++rt_.counters.rpc_http;
+    if (response.status != 200) {
+      log_query("rpc", method, attempt, false,
+                "status=" + std::to_string(response.status));
+      std::this_thread::sleep_for(std::chrono::seconds(1));
+      continue;
+    }
+    json body = safe_parse(response.body);
+    if (body.contains("result")) {
+      log_query("rpc", method, attempt, true);
+      return body.at("result");
+    }
+    log_query("rpc", method, attempt, false, "body=" + clip_text(body.dump()));
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+  }
+}
+
+json SyncThread::rpc_batch(const std::vector<json> &reqs) {
+  json payload = json::array();
+  int id = 1;
+  for (const auto &req : reqs) {
+    json item = req;
+    item["jsonrpc"] = "2.0";
+    item["id"] = id++;
+    payload.push_back(std::move(item));
+  }
+  for (size_t attempt = 1;; ++attempt) {
+    HttpRes response = http_post(cfg_.rpc_http_url, payload, cfg_.proxy_url);
+    rt_.counters.rpc_http += reqs.size();
+    if (response.status != 200) {
+      log_query("rpc", "batch", attempt, false,
+                "status=" + std::to_string(response.status));
+      std::this_thread::sleep_for(std::chrono::seconds(1));
+      continue;
+    }
+    json body = safe_parse(response.body);
+    if (!body.is_array()) {
+      log_query("rpc", "batch", attempt, false, "body=" + clip_text(body.dump()));
+      std::this_thread::sleep_for(std::chrono::seconds(1));
+      continue;
+    }
+    std::sort(body.begin(), body.end(), [](const json &a, const json &b) {
+      return a.at("id").get<int>() < b.at("id").get<int>();
+    });
+    log_query("rpc", "batch", attempt, true,
+              "size=" + std::to_string(reqs.size()));
+    return body;
+  }
+}
+
+std::vector<json> SyncThread::build_log_filters(
+    const std::vector<std::string> &users,
+    uint64_t from_block,
+    uint64_t to_block) const {
   std::vector<json> filters;
   for (const auto &group : chunked(users, cfg_.topic_group_size)) {
     json topics = json::array();
-    for (const auto &u : group)
-      topics.push_back(addr_to_topic(u));
+    for (const auto &user : group) {
+      topics.push_back(addr_to_topic(user));
+    }
 
     std::vector<json> group_filters = {
         {{"address", kConditionalTokens},
@@ -920,422 +1943,27 @@ std::vector<json> SyncThread::build_log_filters(uint64_t from,
                                     kPositionRedeemTopic}),
                        topics})}},
         {{"address", json::array({kCtfExchange, kNegRiskCtfExchange})},
-         {"topics",
-          json::array({json::array({kOrderFillTopic}), nullptr, topics})}},
+         {"topics", json::array({json::array({kOrderFillTopic}), nullptr, topics})}},
         {{"address", json::array({kCtfExchange, kNegRiskCtfExchange})},
-         {"topics", json::array({json::array({kOrderFillTopic}), nullptr,
-                                 nullptr, topics})}},
-        {{"address", kNegRiskAdapter},
          {"topics",
-          json::array({json::array({kPositionConvertTopic}), topics})}},
+          json::array({json::array({kOrderFillTopic}), nullptr, nullptr, topics})}},
+        {{"address", kNegRiskAdapter},
+         {"topics", json::array({json::array({kPositionConvertTopic}), topics})}},
     };
-    for (auto &f : group_filters) {
-      f["fromBlock"] = u64_to_hex(from);
-      f["toBlock"] = u64_to_hex(to);
-      filters.push_back(std::move(f));
+    for (auto &filter : group_filters) {
+      filter["fromBlock"] = u64_to_hex(from_block);
+      filter["toBlock"] = u64_to_hex(to_block);
+      filters.push_back(std::move(filter));
     }
   }
 
   filters.push_back({
       {"address", kConditionalTokens},
       {"topics", json::array({json::array({kConditionResolveTopic})})},
-      {"fromBlock", u64_to_hex(from)},
-      {"toBlock", u64_to_hex(to)},
+      {"fromBlock", u64_to_hex(from_block)},
+      {"toBlock", u64_to_hex(to_block)},
   });
   return filters;
-}
-
-void SyncThread::backfill_range(uint64_t from, uint64_t to) {
-  if (from > to)
-    return;
-  progress().update("backfill_logs", 0, to - from + 1);
-
-  uint64_t start = from;
-  while (start <= to) {
-    uint64_t end = std::min(to, start + cfg_.get_logs_block_span - 1);
-    auto filters = build_log_filters(start, end);
-
-    std::vector<json> reqs;
-    for (const auto &f : filters) {
-      reqs.push_back({{"method", "eth_getLogs"}, {"params", json::array({f})}});
-    }
-    json resps = rpc_batch(reqs);
-    logger().info("backfill_logs batch(" + std::to_string(reqs.size()) +
-                  ") blocks=" + std::to_string(start) + "-" +
-                  std::to_string(end));
-
-    std::map<uint64_t, std::map<std::string, json>> blocks;
-    for (const auto &resp : resps) {
-      assert(resp.contains("result") && resp.at("result").is_array());
-      for (const auto &log : resp.at("result")) {
-        blocks[hex_to_u64(log.at("blockNumber").get<std::string>())]
-              [log_key(log)] = log;
-      }
-    }
-
-    for (auto &[blk, logs_map] : blocks) {
-      std::vector<json> logs;
-      for (auto &[_, log] : logs_map)
-        logs.push_back(std::move(log));
-      std::sort(logs.begin(), logs.end(), [](const json &a, const json &b) {
-        return std::make_tuple(
-                   hex_to_u64(a.at("transactionIndex").get<std::string>()),
-                   hex_to_u64(a.at("logIndex").get<std::string>())) <
-               std::make_tuple(
-                   hex_to_u64(b.at("transactionIndex").get<std::string>()),
-                   hex_to_u64(b.at("logIndex").get<std::string>()));
-      });
-      std::set<std::string> touched;
-      apply_logs(logs, touched);
-      if (!touched.empty())
-        fetch_market_data(true);
-      {
-        std::lock_guard<std::mutex> lock(state_.mu);
-        state_.applied_block = std::max(state_.applied_block, blk);
-        state_.head_block = std::max(state_.head_block, blk);
-      }
-    }
-
-    {
-      std::lock_guard<std::mutex> lock(state_.mu);
-      state_.applied_block = std::max(state_.applied_block, end);
-      state_.head_block = std::max(state_.head_block, end);
-    }
-    progress().update("backfill_logs", end - from + 1, to - from + 1);
-    start = end + 1;
-  }
-}
-
-void SyncThread::drain_queue() {
-  while (auto ev = queue_.try_pop()) {
-    std::set<std::string> touched;
-    std::vector<json> logs;
-    for (const auto &log : ev->logs)
-      logs.push_back(log);
-    bool changed = apply_logs(logs, touched);
-    if (!touched.empty())
-      fetch_market_data(true);
-    if (changed || !touched.empty())
-      persist_all();
-    {
-      std::lock_guard<std::mutex> lock(state_.mu);
-      state_.applied_block = std::max(state_.applied_block, ev->block_number);
-    }
-  }
-}
-
-bool SyncThread::apply_logs(const std::vector<json> &logs,
-                            std::set<std::string> &touched) {
-  bool changed = false;
-  auto ctxs = build_tx_contexts(logs);
-
-  std::lock_guard<std::mutex> lock(state_.mu);
-  for (const auto &ctx : ctxs) {
-    for (const auto &t : ctx.transfers) {
-      // OUT
-      if (state_.user_set.contains(t.from)) {
-        UserState &us = state_.user_states.at(t.from);
-        const OrderFill *fill = find_sell(ctx, t, t.from);
-        std::string kind = "transfer_out";
-        if (fill) {
-          kind = "order_sell";
-          us.stable.usdc_e += fill->collateral_amount;
-        } else if (ctx.merge_users.contains(t.from))
-          kind = "merge_out";
-        else if (ctx.redeem_users.contains(t.from))
-          kind = "redeem_out";
-        else if (ctx.convert_users.contains(t.from))
-          kind = "convert_out";
-        else if (t.to == kZeroAddress)
-          kind = "burn_out";
-        else if (state_.user_set.contains(t.to))
-          kind = "tracked_out";
-        else if (is_protocol(t.to) || is_protocol(t.op))
-          kind = "protocol_out";
-
-        BigInt cur = us.positions.contains(t.token_id)
-                         ? us.positions.at(t.token_id)
-                         : BigInt{0};
-        assert(cur >= t.amount);
-        BigInt next = cur - t.amount;
-        if (next == 0)
-          us.positions.erase(t.token_id);
-        else
-          us.positions[t.token_id] = next;
-
-        json ev = build_event(ctx, t, t.from, "out", kind, fill);
-        json &bucket = state_.history_root[t.from][block_key(t.block)];
-        if (!bucket.is_array())
-          bucket = json::array();
-        bucket.push_back(ev);
-        state_.recent_events.push_back(ev);
-        while (state_.recent_events.size() > cfg_.recent_event_limit)
-          state_.recent_events.pop_front();
-        touched.insert(t.token_id);
-        changed = true;
-      }
-
-      // IN
-      if (state_.user_set.contains(t.to)) {
-        UserState &us = state_.user_states.at(t.to);
-        const OrderFill *fill = find_buy(ctx, t, t.to);
-        std::string kind = "transfer_in";
-        if (fill) {
-          kind = "order_buy";
-          us.stable.usdc_e -= fill->collateral_amount;
-        } else if (ctx.split_users.contains(t.to))
-          kind = "split_in";
-        else if (ctx.convert_users.contains(t.to))
-          kind = "convert_in";
-        else if (t.from == kZeroAddress)
-          kind = "mint_in";
-        else if (state_.user_set.contains(t.from))
-          kind = "tracked_in";
-        else if (is_protocol(t.from) || is_protocol(t.op))
-          kind = "protocol_in";
-
-        us.positions[t.token_id] += t.amount;
-
-        json ev = build_event(ctx, t, t.to, "in", kind, fill);
-        json &bucket = state_.history_root[t.to][block_key(t.block)];
-        if (!bucket.is_array())
-          bucket = json::array();
-        bucket.push_back(ev);
-        state_.recent_events.push_back(ev);
-        while (state_.recent_events.size() > cfg_.recent_event_limit)
-          state_.recent_events.pop_front();
-        touched.insert(t.token_id);
-        changed = true;
-      }
-    }
-  }
-  return changed;
-}
-
-void SyncThread::load_files() {
-  std::lock_guard<std::mutex> lock(state_.mu);
-
-  json meta = load_json(cfg_.meta_file);
-  if (meta.contains("conditions") && meta.at("conditions").is_object()) {
-    for (auto it = meta.at("conditions").begin();
-         it != meta.at("conditions").end(); ++it) {
-      ConditionMeta cm;
-      cm.condition_id = it.key();
-      cm.question_id = json_str(it.value(), "question_id");
-      cm.outcome_slot_count = json_int(it.value(), "outcome_slot_count");
-      cm.resolution_timestamp = json_i64(it.value(), "resolution_timestamp");
-      cm.token_ids = json_str_arr(it.value(), "token_ids");
-      cm.payout_numerators = json_bigint_arr(it.value(), "payout_numerators");
-      if (it.value().contains("payout_denominator") &&
-          !it.value().at("payout_denominator").is_null()) {
-        cm.payout_denominator = json_bigint(it.value(), "payout_denominator");
-        cm.has_payout_denominator = true;
-      }
-      cm.market_question = json_str(it.value(), "market_question");
-      cm.market_description = json_str(it.value(), "market_description");
-      cm.market_event_title = json_str(it.value(), "market_event_title");
-      cm.market_slug = json_str(it.value(), "market_slug");
-      cm.market_url = json_str(it.value(), "market_url");
-      cm.market_outcomes = json_str_arr(it.value(), "market_outcomes");
-      merge_condition(state_.conditions[cm.condition_id], cm);
-    }
-  }
-  if (meta.contains("tokens") && meta.at("tokens").is_object()) {
-    for (auto it = meta.at("tokens").begin(); it != meta.at("tokens").end();
-         ++it) {
-      TokenMeta tm;
-      tm.token_id = it.key();
-      tm.condition_id = json_str(it.value(), "condition_id");
-      tm.question_id = json_str(it.value(), "question_id");
-      tm.outcome_index = json_int(it.value(), "outcome_index");
-      tm.outcome_slot_count = json_int(it.value(), "outcome_slot_count");
-      tm.resolution_timestamp = json_i64(it.value(), "resolution_timestamp");
-      tm.payout_numerators = json_bigint_arr(it.value(), "payout_numerators");
-      if (it.value().contains("payout_denominator") &&
-          !it.value().at("payout_denominator").is_null()) {
-        tm.payout_denominator = json_bigint(it.value(), "payout_denominator");
-        tm.has_payout_denominator = true;
-      }
-      if (it.value().contains("price") && it.value().at("price").is_string()) {
-        tm.price = parse_decimal(it.value().at("price").get<std::string>());
-        tm.price_source = json_str(it.value(), "price_source");
-      }
-      merge_token(state_.tokens[tm.token_id], tm);
-    }
-  }
-
-  state_.snapshot_root = load_json(cfg_.snapshot_file);
-  state_.history_root = load_json(cfg_.history_file);
-
-  json agg = load_json(cfg_.aggregate_file);
-  if (agg.contains("summary") && agg.at("summary").is_object()) {
-    const json &s = agg.at("summary");
-    state_.snapshot_block =
-        static_cast<uint64_t>(json_i64(s, "snapshot_block", 0));
-    state_.applied_block =
-        static_cast<uint64_t>(json_i64(s, "last_applied_block", 0));
-    state_.head_block = static_cast<uint64_t>(json_i64(s, "head_block", 0));
-    state_.resync_started_at =
-        json_i64(s, "last_resync_started_at_unix_sec", 0);
-    state_.resync_finished_at =
-        json_i64(s, "last_resync_finished_at_unix_sec", 0);
-  }
-  if (agg.contains("recent_events") && agg.at("recent_events").is_array()) {
-    for (const auto &ev : agg.at("recent_events"))
-      state_.recent_events.push_back(ev);
-  }
-}
-
-void SyncThread::load_seed() {
-  if (!std::filesystem::exists(cfg_.seed_file))
-    return;
-  json seed = load_json(cfg_.seed_file);
-  if (!seed.is_object())
-    return;
-
-  std::lock_guard<std::mutex> lock(state_.mu);
-  if (seed.contains("conditions") && seed.at("conditions").is_array()) {
-    for (const auto &row : seed.at("conditions")) {
-      std::string cid = json_str(row, "condition_id");
-      if (cid.empty())
-        continue;
-      ConditionMeta cm;
-      cm.condition_id = cid;
-      cm.question_id = json_str(row, "question_id");
-      cm.outcome_slot_count = json_int(row, "outcome_slot_count");
-      cm.resolution_timestamp = json_i64(row, "resolution_timestamp");
-      cm.token_ids = json_str_arr(row, "token_ids");
-      cm.payout_numerators = json_bigint_arr(row, "payout_numerators");
-      if (row.contains("payout_denominator") &&
-          !row.at("payout_denominator").is_null()) {
-        cm.payout_denominator = json_bigint(row, "payout_denominator");
-        cm.has_payout_denominator = true;
-      }
-      cm.market_question = json_str(row, "market_question");
-      cm.market_description = json_str(row, "market_description");
-      cm.market_event_title = json_str(row, "market_event_title");
-      cm.market_slug = json_str(row, "market_slug");
-      cm.market_url = json_str(row, "market_url");
-      cm.market_outcomes = json_str_arr(row, "market_outcomes");
-      merge_condition(state_.conditions[cid], cm);
-    }
-  }
-  if (seed.contains("tokens") && seed.at("tokens").is_array()) {
-    for (const auto &row : seed.at("tokens")) {
-      std::string tid = json_str(row, "token_id");
-      if (tid.empty())
-        continue;
-      TokenMeta tm;
-      tm.token_id = tid;
-      tm.condition_id = json_str(row, "condition_id");
-      if (row.contains("price") && row.at("price").is_string()) {
-        tm.price = parse_decimal(row.at("price").get<std::string>());
-        tm.price_source = "seed";
-      }
-      merge_token(state_.tokens[tid], tm);
-    }
-  }
-}
-
-void SyncThread::append_snapshot(uint64_t block) {
-  int64_t now =
-      std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-  std::lock_guard<std::mutex> lock(state_.mu);
-  for (const auto &u : state_.users) {
-    const UserState &us = state_.user_states.at(u);
-    json positions = json::array();
-    for (const auto &[tid, amt] : us.positions) {
-      positions.push_back(
-          {{"token_id", tid}, {"amount_raw", bigint_to_str(amt)}});
-    }
-    state_.snapshot_root[u][block_key(block)] = {
-        {"block_number", block},
-        {"captured_at_unix_sec", now},
-        {"stable_balances",
-         {{"usdc_e_raw", bigint_to_str(us.stable.usdc_e)},
-          {"wrapped_raw", bigint_to_str(us.stable.wrapped)}}},
-        {"positions", positions},
-    };
-  }
-}
-
-void SyncThread::persist_all() {
-  progress().update("persist", 0, 0);
-  std::lock_guard<std::mutex> lock(state_.mu);
-  save_json(cfg_.meta_file, build_meta_json(state_));
-  save_json(cfg_.aggregate_file, build_state_json(state_));
-  save_json(cfg_.snapshot_file, state_.snapshot_root);
-  save_json(cfg_.history_file, state_.history_root);
-}
-
-uint64_t SyncThread::rpc_block_number() {
-  json r = rpc_call("eth_blockNumber", json::array());
-  return hex_to_u64(r.get<std::string>());
-}
-
-json SyncThread::rpc_call(const std::string &method, const json &params) {
-  json payload = {
-      {"jsonrpc", "2.0"}, {"id", 1}, {"method", method}, {"params", params}};
-  for (size_t attempt = 1;; ++attempt) {
-    HttpRes resp = http_post(cfg_.rpc_http_url, payload, cfg_.proxy_url);
-    {
-      std::lock_guard<std::mutex> lock(state_.mu);
-      state_.counters.rpc_http++;
-    }
-    if (resp.status != 200) {
-      log_query("rpc", method, attempt, false,
-                "status=" + std::to_string(resp.status));
-      std::this_thread::sleep_for(std::chrono::seconds(1));
-      continue;
-    }
-
-    json body = safe_parse(resp.body);
-    if (body.contains("result")) {
-      log_query("rpc", method, attempt, true);
-      return body.at("result");
-    }
-    log_query("rpc", method, attempt, false, "body=" + clip_text(body.dump()));
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-  }
-}
-
-json SyncThread::rpc_batch(const std::vector<json> &reqs) {
-  json payload = json::array();
-  int id = 1;
-  for (const auto &r : reqs) {
-    json item = r;
-    item["jsonrpc"] = "2.0";
-    item["id"] = id++;
-    payload.push_back(std::move(item));
-  }
-  for (size_t attempt = 1;; ++attempt) {
-    HttpRes resp = http_post(cfg_.rpc_http_url, payload, cfg_.proxy_url);
-    {
-      std::lock_guard<std::mutex> lock(state_.mu);
-      state_.counters.rpc_http += reqs.size();
-    }
-    if (resp.status != 200) {
-      log_query("rpc", "batch", attempt, false,
-                "status=" + std::to_string(resp.status));
-      std::this_thread::sleep_for(std::chrono::seconds(1));
-      continue;
-    }
-
-    json body = safe_parse(resp.body);
-    if (!body.is_array()) {
-      log_query("rpc", "batch", attempt, false,
-                "body=" + clip_text(body.dump()));
-      std::this_thread::sleep_for(std::chrono::seconds(1));
-      continue;
-    }
-
-    std::sort(body.begin(), body.end(), [](const json &a, const json &b) {
-      return a.at("id").get<int>() < b.at("id").get<int>();
-    });
-    log_query("rpc", "batch", attempt, true,
-              "size=" + std::to_string(reqs.size()));
-    return body;
-  }
 }
 
 } // namespace tracker

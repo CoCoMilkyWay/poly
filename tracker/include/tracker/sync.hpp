@@ -6,7 +6,7 @@
 #include "tracker/ws.hpp"
 
 #include <atomic>
-#include <set>
+#include <deque>
 
 namespace tracker {
 
@@ -22,46 +22,58 @@ namespace tracker {
 
 class SyncThread {
 public:
-  SyncThread(const AppConfig &cfg, AppState &state, EventQueue &queue,
+  SyncThread(const AppConfig &cfg, AppState &shared, EventQueue &queue,
              WsThread &ws);
 
   void run(); // blocking, call from main
   void request_resync();
 
 private:
-  // full resync stages
   void full_resync();
-  void fetch_positions();
-  void fetch_balances(const std::string &block_tag);
-  void fetch_market_data(bool missing_only);
-  void fetch_conditions(const std::vector<std::string> &ids);
-  void fetch_gamma(const std::vector<std::string> &ids);
-  void backfill_range(uint64_t from, uint64_t to);
-
-  // live processing
   void drain_queue();
-  bool apply_logs(const std::vector<json> &logs,
-                  std::set<std::string> &touched);
-
-  // persistence
+  void handle_queue_event(QueueEvent ev);
+  void handle_overlap_queue(uint64_t session_id, uint64_t overlap_block);
   void load_files();
   void load_seed();
+  void publish_all();
   void persist_all();
-  void append_snapshot(uint64_t block);
-
-  // rpc helpers
+  void fetch_user_snapshots();
+  void fetch_snapshot_balances();
+  void append_snapshot_roots();
+  std::vector<std::string> collect_active_token_ids() const;
+  void fetch_token_meta(const std::vector<std::string> &token_ids);
+  void fetch_condition_meta(const std::vector<std::string> &condition_ids);
+  void fetch_gamma_meta(const std::vector<std::string> &condition_ids);
+  void fetch_market_questions(const std::vector<std::string> &market_ids);
+  void ensure_token_meta(const std::string &token_id);
+  void ensure_condition_meta(const std::string &condition_id,
+                             Collateral hint_collateral);
+  void ensure_gamma_meta(const std::string &condition_id);
+  void ensure_market_questions(const std::string &market_id);
+  void backfill_range(uint64_t from_block, uint64_t to_block);
+  void apply_block_logs(const std::vector<json> &logs);
+  void apply_condition_resolution(const json &log);
+  void apply_order_fill(const json &log);
+  void apply_split(const json &log);
+  void apply_merge(const json &log);
+  void apply_redeem(const json &log);
+  void apply_convert(const json &log, const std::vector<json> &tx_logs);
+  bool user_visible_at(const std::string &user, uint64_t block_number) const;
   uint64_t rpc_block_number();
   json rpc_call(const std::string &method, const json &params);
   json rpc_batch(const std::vector<json> &reqs);
-
-  // filter building
-  std::vector<json> build_log_filters(uint64_t from, uint64_t to) const;
+  std::vector<json> build_log_filters(const std::vector<std::string> &users,
+                                      uint64_t from_block,
+                                      uint64_t to_block) const;
 
   const AppConfig &cfg_;
-  AppState &state_;
+  AppState &shared_;
   EventQueue &queue_;
   WsThread &ws_;
+  RuntimeState rt_;
+  std::deque<QueueEvent> deferred_;
   std::atomic<bool> resync_flag_{false};
+  uint64_t current_session_id_ = 0;
 };
 
 } // namespace tracker

@@ -251,7 +251,7 @@ parse_and_emit_events(logs)
 │  └─ PositionConvert (NEG_RISK_ADAPTER; 只作为 convert op root)
 │     ├─ 解码: stakeholder, market_id, index_set, amount
 │     ├─ 补齐: market_id → question_ids[] → condition_ids[]
-│     │  └─ 缺失时: eth_getLogs(NRA, QUESTION_PREPARE, market_id) 补齐
+│     │  └─ 缺失时: subgraph.negRiskEvent(market_id).questionCount + 本地计算
 │     ├─ 不直接 emit 单条 Convert
 │     ├─ 同 tx 查找相关 TransferSingle/TransferBatch 仓位腿
 │     │  ├─ burn 腿: stakeholder/adapter -> burn_address 的旧 token
@@ -266,7 +266,7 @@ parse_and_emit_events(logs)
 │  ├─ condition_id 未知 → query_condition_meta(cond_id)
 │  │  └─ subgraph conditions + gamma markets
 │  └─ market_id 未知 → query_market_questions(market_id)
-│     └─ eth_getLogs(NRA, QUESTION_PREPARE, market_id=topics[1])
+│     └─ subgraph.negRiskEvent(market_id).questionCount + 本地计算 question_id
 └─ 输出
    ├─ history_root[user][block_key].push(event) 增量
    ├─ user_states[user].positions 实时更新
@@ -323,18 +323,17 @@ TransferSingle/TransferBatch 不作为独立事件类型暴露,但会参与 orde
 | PayoutRedemption | redeemer, condition_id, index_sets[], payout                 | token_id    | token_id = getPositionId(collateral, condition, idx)        |
 | PositionConvert  | stakeholder, market_id, index_set, amount                    | 仓位腿      | 不直接写 history; 结合同 tx Transfer 展开为多个 Convert leg |
 
-映射补齐 (存入 meta.json，缺失时 RPC 查询):
-| 映射                     | 来源                          | 补齐方式                                                                       |
-| ------------------------ | ----------------------------- | ------------------------------------------------------------------------------ |
-| condition_id → collateral| PositionSplit/Merge 事件      | 事件自带 collateral_token 字段                                                 |
-| market_id → question_ids | NegRiskQuestionEvent          | 优先 seed 文件，缺失时 eth_getLogs(NRA, QUESTION_PREPARE, fromBlock=NRA部署块) |
-| question_id → condition  | 计算                          | condition = keccak256(NRA, question_id, 2)                                     |
-| token_id → (cond, idx)   | subgraph / Split/Merge 事件   | subgraph marketDatas 查询，或从 Split/Merge 事件反向记录                       |
-| (cond, idx) → token_id   | 正向计算                      | token_id = getPositionId(collateral, condition, idx)                           |
+映射补齐 (存入 meta.json，缺失时点查):
+| 映射                     | 来源                          | 补齐方式                                                                              |
+| ------------------------ | ----------------------------- | ------------------------------------------------------------------------------------- |
+| condition_id → collateral| PositionSplit/Merge 事件      | 事件自带 collateral_token 字段                                                        |
+| market_id → question_ids | subgraph + 计算               | subgraph.negRiskEvent(market_id).questionCount → question_id = market_id[0:31] \| idx |
+| question_id → condition  | 计算                          | condition = keccak256(NRA, question_id, 2)                                            |
+| token_id → (cond, idx)   | subgraph / Split/Merge 事件   | subgraph marketDatas 查询，或从 Split/Merge 事件反向记录                              |
+| (cond, idx) → token_id   | 正向计算                      | token_id = getPositionId(collateral, condition, idx)                                  |
 
 补齐用常量:
   NegRiskAdapter     = 0xd91e80cf2e7be2e162c6513ced06f1dd0da35296
-  QUESTION_PREPARE   = 0xaac410f87d423a922a7b226ac68f0c2eaf5bf6d15e644ac0758c7f96e2c253f7
 
 Collateral 地址 (Polygon):
   USDC (native)      = 0x3c499c542cef5e3811e1192ce70d8cc03d5c3359

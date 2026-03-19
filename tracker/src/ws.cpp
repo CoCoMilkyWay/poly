@@ -1,4 +1,5 @@
 #include "tracker/ws.hpp"
+
 #include "tracker/codec.hpp"
 #include "tracker/const.hpp"
 #include "tracker/log.hpp"
@@ -39,11 +40,12 @@ public:
       ssl_ctx_.set_default_verify_paths();
       ssl_ctx_.set_verify_mode(ssl::verify_peer);
     }
-    if (!proxy_url.empty()) proxy_ = parse_url(proxy_url);
+    if (!proxy_url.empty()) {
+      proxy_ = parse_url(proxy_url);
+    }
   }
 
   void connect() {
-    // 有代理时连接代理，否则直接连接目标
     const std::string &host = proxy_ ? proxy_->host : parts_.host;
     const std::string &port = proxy_ ? proxy_->port : parts_.port;
     tcp::resolver::results_type endpoints = resolver_.resolve(host, port);
@@ -51,20 +53,24 @@ public:
     std::string ws_host = parts_.host + ":" + parts_.port;
     if (parts_.secure()) {
       ssl_ws_.emplace(ioc_, ssl_ctx_);
-      ssl_ws_->set_option(websocket::stream_base::timeout::suggested(beast::role_type::client));
-      SSL_set_tlsext_host_name(ssl_ws_->next_layer().native_handle(), parts_.host.c_str());
+      ssl_ws_->set_option(
+          websocket::stream_base::timeout::suggested(beast::role_type::client));
+      SSL_set_tlsext_host_name(ssl_ws_->next_layer().native_handle(),
+                               parts_.host.c_str());
       beast::get_lowest_layer(*ssl_ws_).connect(endpoints);
-
-      if (proxy_) proxy_connect();
-
+      if (proxy_) {
+        proxy_connect();
+      }
       ssl_ws_->next_layer().handshake(ssl::stream_base::client);
       ssl_ws_->handshake(ws_host, parts_.target);
-    } else {
-      plain_ws_.emplace(ioc_);
-      plain_ws_->set_option(websocket::stream_base::timeout::suggested(beast::role_type::client));
-      beast::get_lowest_layer(*plain_ws_).connect(endpoints);
-      plain_ws_->handshake(ws_host, parts_.target);
+      return;
     }
+
+    plain_ws_.emplace(ioc_);
+    plain_ws_->set_option(
+        websocket::stream_base::timeout::suggested(beast::role_type::client));
+    beast::get_lowest_layer(*plain_ws_).connect(endpoints);
+    plain_ws_->handshake(ws_host, parts_.target);
   }
 
   std::string subscribe_heads() {
@@ -77,17 +83,18 @@ public:
 
   std::optional<json> try_read() {
     if (!queued_.empty()) {
-      json msg = std::move(queued_.front());
+      json message = std::move(queued_.front());
       queued_.pop_front();
-      return msg;
+      return message;
     }
-    if (!has_data()) return std::nullopt;
+    if (!has_data()) {
+      return std::nullopt;
+    }
     return read_json();
   }
 
 private:
   void proxy_connect() {
-    // 发送 HTTP CONNECT 请求建立隧道
     std::string target = parts_.host + ":" + parts_.port;
     http::request<http::empty_body> req;
     req.version(11);
@@ -101,31 +108,39 @@ private:
 
     beast::flat_buffer buf;
     http::response_parser<http::empty_body> parser;
-    parser.skip(true);  // CONNECT 响应没有 body，跳过 body 解析
+    parser.skip(true);
     http::read(stream, buf, parser);
     assert(parser.get().result() == http::status::ok);
   }
 
   std::string subscribe(const json &params, const std::string &label) {
     int id = next_id_++;
-    write_json({{"jsonrpc", "2.0"}, {"id", id}, {"method", "eth_subscribe"}, {"params", params}});
+    write_json({
+        {"jsonrpc", "2.0"},
+        {"id", id},
+        {"method", "eth_subscribe"},
+        {"params", params},
+    });
     while (true) {
-      json msg = read_json();
-      if (msg.contains("id")) {
-        assert(msg.at("id").get<int>() == id);
-        assert(msg.contains("result"));
-        std::string sub_id = norm_hex(msg.at("result").get<std::string>());
+      json message = read_json();
+      if (message.contains("id")) {
+        assert(message.at("id").get<int>() == id);
+        assert(message.contains("result"));
+        std::string sub_id = norm_hex(message.at("result").get<std::string>());
         log_query("ws", "eth_subscribe:" + label, 1, true, "sub_id=" + sub_id);
         return sub_id;
       }
-      queued_.push_back(msg);
+      queued_.push_back(std::move(message));
     }
   }
 
   void write_json(const json &msg) {
     std::string body = msg.dump();
-    if (parts_.secure()) ssl_ws_->write(asio::buffer(body));
-    else plain_ws_->write(asio::buffer(body));
+    if (parts_.secure()) {
+      ssl_ws_->write(asio::buffer(body));
+      return;
+    }
+    plain_ws_->write(asio::buffer(body));
   }
 
   json read_json() {
@@ -145,8 +160,8 @@ private:
   bool has_data() {
     boost::system::error_code ec;
     size_t avail = parts_.secure()
-        ? beast::get_lowest_layer(*ssl_ws_).socket().available(ec)
-        : beast::get_lowest_layer(*plain_ws_).socket().available(ec);
+                       ? beast::get_lowest_layer(*ssl_ws_).socket().available(ec)
+                       : beast::get_lowest_layer(*plain_ws_).socket().available(ec);
     assert(!ec);
     return avail > 0;
   }
@@ -163,17 +178,10 @@ private:
   int next_id_ = 1;
 };
 
-std::string log_key(const json &log) {
-  return log.at("blockNumber").get<std::string>() + "|" +
-         norm_hex(log.at("transactionHash").get<std::string>()) + "|" +
-         log.at("logIndex").get<std::string>() + "|" +
-         norm_hex(log.at("address").get<std::string>());
-}
-
 } // namespace
 
-WsThread::WsThread(const AppConfig &cfg, AppState &state, EventQueue &queue)
-    : cfg_(cfg), state_(state), queue_(queue) {}
+WsThread::WsThread(const AppConfig &cfg, EventQueue &queue)
+    : cfg_(cfg), queue_(queue) {}
 
 void WsThread::start() {
   assert(!running_);
@@ -183,106 +191,210 @@ void WsThread::start() {
 
 void WsThread::stop() {
   running_ = false;
-  if (thread_.joinable()) thread_.join();
-}
-
-void WsThread::request_reconnect() {
-  reconnect_ = true;
-}
-
-std::vector<json> WsThread::build_log_filters() const {
-  std::vector<std::string> users;
-  {
-    std::lock_guard<std::mutex> lock(state_.mu);
-    users = state_.users;
+  cv_.notify_all();
+  if (thread_.joinable()) {
+    thread_.join();
   }
+}
 
+WsSessionInfo WsThread::start_session(const std::vector<std::string> &users) {
+  assert(running_);
+  std::unique_lock<std::mutex> lock(mu_);
+  ++desired_session_id_;
+  desired_users_ = users;
+  ready_session_id_ = 0;
+  ready_start_block_ = 0;
+  uint64_t session_id = desired_session_id_;
+  cv_.notify_all();
+  cv_.wait(lock, [this, session_id] {
+    return !running_ || ready_session_id_ == session_id;
+  });
+  assert(running_);
+  return {session_id, ready_start_block_};
+}
+
+WsCounters WsThread::counters() const {
+  return {
+      .msg = ws_msg_count_.load(),
+      .sub = ws_sub_count_.load(),
+  };
+}
+
+std::vector<json> WsThread::build_log_filters(
+    const std::vector<std::string> &users) const {
   std::vector<json> filters;
   for (const auto &group : chunked(users, cfg_.topic_group_size)) {
     json topics = json::array();
-    for (const auto &u : group) topics.push_back(addr_to_topic(u));
+    for (const auto &user : group) {
+      topics.push_back(addr_to_topic(user));
+    }
 
     std::vector<json> group_filters = {
-        {{"address", kConditionalTokens}, {"topics", json::array({json::array({kTransferSingleTopic, kTransferBatchTopic}), nullptr, topics})}},
-        {{"address", kConditionalTokens}, {"topics", json::array({json::array({kTransferSingleTopic, kTransferBatchTopic}), nullptr, nullptr, topics})}},
-        {{"address", kConditionalTokens}, {"topics", json::array({json::array({kPositionSplitTopic, kPositionMergeTopic, kPositionRedeemTopic}), topics})}},
-        {{"address", json::array({kCtfExchange, kNegRiskCtfExchange})}, {"topics", json::array({json::array({kOrderFillTopic}), nullptr, topics})}},
-        {{"address", json::array({kCtfExchange, kNegRiskCtfExchange})}, {"topics", json::array({json::array({kOrderFillTopic}), nullptr, nullptr, topics})}},
-        {{"address", kNegRiskAdapter}, {"topics", json::array({json::array({kPositionConvertTopic}), topics})}},
+        {{"address", kConditionalTokens},
+         {"topics",
+          json::array({json::array({kTransferSingleTopic, kTransferBatchTopic}),
+                       nullptr, topics})}},
+        {{"address", kConditionalTokens},
+         {"topics",
+          json::array({json::array({kTransferSingleTopic, kTransferBatchTopic}),
+                       nullptr, nullptr, topics})}},
+        {{"address", kConditionalTokens},
+         {"topics",
+          json::array({json::array({kPositionSplitTopic, kPositionMergeTopic,
+                                    kPositionRedeemTopic}),
+                       topics})}},
+        {{"address", json::array({kCtfExchange, kNegRiskCtfExchange})},
+         {"topics", json::array({json::array({kOrderFillTopic}), nullptr, topics})}},
+        {{"address", json::array({kCtfExchange, kNegRiskCtfExchange})},
+         {"topics",
+          json::array({json::array({kOrderFillTopic}), nullptr, nullptr, topics})}},
+        {{"address", kNegRiskAdapter},
+         {"topics", json::array({json::array({kPositionConvertTopic}), topics})}},
     };
-    for (auto &f : group_filters) filters.push_back(std::move(f));
+    for (auto &filter : group_filters) {
+      filters.push_back(std::move(filter));
+    }
   }
 
-  filters.push_back({{"address", kConditionalTokens}, {"topics", json::array({json::array({kConditionResolveTopic})})}});
+  filters.push_back({
+      {"address", kConditionalTokens},
+      {"topics", json::array({json::array({kConditionResolveTopic})})},
+  });
   return filters;
 }
 
 void WsThread::run() {
-  size_t connect_attempt = 0;
   while (running_) {
-    try {
-      ++connect_attempt;
-      reconnect_ = false;
-      WsStream ws(cfg_.rpc_ws_url, cfg_.proxy_url);
-      ws.connect();
-      log_query("ws", "connect", connect_attempt, true, "url=" + cfg_.rpc_ws_url);
-      connect_attempt = 0;
-
-      std::string heads_sub = ws.subscribe_heads();
-      std::set<std::string> log_subs;
-      for (const auto &f : build_log_filters()) {
-        log_subs.insert(ws.subscribe_logs(f));
+    uint64_t session_id = 0;
+    std::vector<std::string> users;
+    {
+      std::unique_lock<std::mutex> lock(mu_);
+      cv_.wait(lock, [this] { return !running_ || desired_session_id_ > 0; });
+      if (!running_) {
+        return;
       }
+      session_id = desired_session_id_;
+      users = desired_users_;
+    }
+    if (users.empty()) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(50));
+      continue;
+    }
 
+    size_t connect_attempt = 0;
+    while (running_) {
       {
-        std::lock_guard<std::mutex> lock(state_.mu);
-        state_.counters.rpc_ws_sub += 1 + log_subs.size();
+        std::lock_guard<std::mutex> lock(mu_);
+        if (session_id != desired_session_id_) {
+          break;
+        }
       }
 
-      std::map<uint64_t, std::map<std::string, json>> pending;
+      try {
+        ++connect_attempt;
+        WsStream ws(cfg_.rpc_ws_url, cfg_.proxy_url);
+        ws.connect();
+        log_query("ws", "connect", connect_attempt, true, "url=" + cfg_.rpc_ws_url);
+        connect_attempt = 0;
 
-      while (running_ && !reconnect_) {
-        auto msg_opt = ws.try_read();
-        if (!msg_opt) {
-          std::this_thread::sleep_for(std::chrono::milliseconds(50));
-          continue;
+        std::string head_sub = ws.subscribe_heads();
+        std::set<std::string> log_subs;
+        for (const auto &filter : build_log_filters(users)) {
+          log_subs.insert(ws.subscribe_logs(filter));
         }
+        ws_sub_count_ += 1 + log_subs.size();
 
-        {
-          std::lock_guard<std::mutex> lock(state_.mu);
-          state_.counters.rpc_ws_msg++;
-        }
-
-        const json &msg = *msg_opt;
-        assert(msg.contains("method"));
-        assert(msg.at("method").get<std::string>() == "eth_subscription");
-        const json &params = msg.at("params");
-        std::string sub_id = norm_hex(params.at("subscription").get<std::string>());
-
-        if (sub_id == heads_sub) {
-          uint64_t head = hex_to_u64(params.at("result").at("number").get<std::string>());
+        bool ready = false;
+        std::map<uint64_t, std::map<std::string, json>> pending_by_block;
+        while (running_) {
           {
-            std::lock_guard<std::mutex> lock(state_.mu);
-            state_.head_block = std::max(state_.head_block, head);
+            std::lock_guard<std::mutex> lock(mu_);
+            if (session_id != desired_session_id_) {
+              break;
+            }
           }
-          // flush blocks < head
-          while (!pending.empty() && pending.begin()->first < head) {
-            auto node = pending.extract(pending.begin());
-            json logs = json::array();
-            for (auto &[_, log] : node.mapped()) logs.push_back(std::move(log));
-            queue_.push({node.key(), std::move(logs)});
-          }
-          continue;
-        }
 
-        assert(log_subs.contains(sub_id));
-        const json &log = params.at("result");
-        uint64_t block = hex_to_u64(log.at("blockNumber").get<std::string>());
-        pending[block][log_key(log)] = log;
+          auto msg_opt = ws.try_read();
+          if (!msg_opt) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+            continue;
+          }
+
+          ++ws_msg_count_;
+          const json &message = *msg_opt;
+          assert(message.contains("method"));
+          assert(message.at("method").get<std::string>() == "eth_subscription");
+
+          const json &params = message.at("params");
+          std::string sub_id =
+              norm_hex(params.at("subscription").get<std::string>());
+          if (sub_id == head_sub) {
+            uint64_t head =
+                hex_to_u64(params.at("result").at("number").get<std::string>());
+            if (!ready) {
+              std::lock_guard<std::mutex> lock(mu_);
+              ready = true;
+              ready_session_id_ = session_id;
+              ready_start_block_ = head;
+              cv_.notify_all();
+            }
+            queue_.push({
+                .session_id = session_id,
+                .kind = QueueEventKind::Head,
+                .block_number = head,
+                .logs = json::array(),
+            });
+            while (!pending_by_block.empty() &&
+                   pending_by_block.begin()->first < head) {
+              auto block_it = pending_by_block.begin();
+              json logs = json::array();
+              for (auto &[_, log] : block_it->second) {
+                logs.push_back(std::move(log));
+              }
+              queue_.push({
+                  .session_id = session_id,
+                  .kind = QueueEventKind::Logs,
+                  .block_number = block_it->first,
+                  .logs = std::move(logs),
+              });
+              pending_by_block.erase(block_it);
+            }
+            continue;
+          }
+
+          assert(log_subs.contains(sub_id));
+          const json &log = params.at("result");
+          if (log.contains("removed") && log.at("removed").get<bool>()) {
+            queue_.push({
+                .session_id = session_id,
+                .kind = QueueEventKind::Resync,
+                .block_number = 0,
+                .logs = json::array(),
+            });
+            break;
+          }
+          uint64_t block = hex_to_u64(log.at("blockNumber").get<std::string>());
+          pending_by_block[block][raw_log_key(log)] = log;
+        }
+      } catch (const std::exception &e) {
+        log_query("ws", "connect", connect_attempt, false, std::string(e.what()));
       }
 
-    } catch (const std::exception &e) {
-      log_query("ws", "connect", connect_attempt, false, std::string(e.what()));
+      if (!running_) {
+        return;
+      }
+      {
+        std::lock_guard<std::mutex> lock(mu_);
+        if (session_id != desired_session_id_) {
+          break;
+        }
+      }
+      queue_.push({
+          .session_id = session_id,
+          .kind = QueueEventKind::Resync,
+          .block_number = 0,
+          .logs = json::array(),
+      });
       std::this_thread::sleep_for(std::chrono::seconds(3));
     }
   }

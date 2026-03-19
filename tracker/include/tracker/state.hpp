@@ -3,68 +3,139 @@
 #include "tracker/codec.hpp"
 #include "tracker/json.hpp"
 
+#include <atomic>
 #include <deque>
 #include <map>
-#include <mutex>
+#include <memory>
 #include <string>
 #include <unordered_set>
 #include <vector>
 
 namespace tracker {
 
-// ============================================================================
-// Meta Structures
-// ============================================================================
-
-struct ConditionMeta {
-  std::string condition_id;
-  std::string question_id;
-  int outcome_slot_count = -1;
-  int64_t resolution_timestamp = -1;
-  std::vector<std::string> token_ids;
-  std::vector<BigInt> payout_numerators;
-  BigInt payout_denominator = 0;
-  bool has_payout_denominator = false;
-  std::string market_question;
-  std::string market_description;
-  std::string market_event_title;
-  std::string market_slug;
-  std::string market_url;
-  std::vector<std::string> market_outcomes;
+enum class Collateral : uint8_t {
+  Unknown = 0,
+  USDC = 1,
+  USDCe = 2,
+  USDT = 3,
+  WrappedUSDCe = 4,
 };
 
-struct TokenMeta {
-  std::string token_id;
-  std::string condition_id;
-  std::string question_id;
-  int outcome_index = -1;
-  int outcome_slot_count = -1;
-  int64_t resolution_timestamp = -1;
-  std::vector<BigInt> payout_numerators;
-  BigInt payout_denominator = 0;
-  bool has_payout_denominator = false;
-  long double price = -1.0L;
-  std::string price_source;
+enum class EventType : uint8_t {
+  OrderBuy = 0,
+  OrderSell = 1,
+  Split = 2,
+  Merge = 3,
+  Redeem = 4,
+  Convert = 5,
 };
 
-// ============================================================================
-// User State
-// ============================================================================
+inline uint8_t to_u8(Collateral value) {
+  return static_cast<uint8_t>(value);
+}
+
+inline uint8_t to_u8(EventType value) {
+  return static_cast<uint8_t>(value);
+}
+
+inline const char *collateral_label(Collateral collateral) {
+  switch (collateral) {
+    case Collateral::USDC:
+      return "USDC";
+    case Collateral::USDCe:
+      return "USDC.e";
+    case Collateral::USDT:
+      return "USDT";
+    case Collateral::WrappedUSDCe:
+      return "WrappedUSDCe";
+    case Collateral::Unknown:
+      break;
+  }
+  return "";
+}
+
+inline const char *collateral_addr(Collateral collateral) {
+  switch (collateral) {
+    case Collateral::USDC:
+      return kUsdc;
+    case Collateral::USDCe:
+      return kUsdcE;
+    case Collateral::USDT:
+      return kUsdt;
+    case Collateral::WrappedUSDCe:
+      return kWrappedUsdcE;
+    case Collateral::Unknown:
+      break;
+  }
+  return kZeroAddress;
+}
+
+inline Collateral collateral_from_addr(const std::string &addr) {
+  std::string lower = norm_addr(addr);
+  if (lower == kUsdc) {
+    return Collateral::USDC;
+  }
+  if (lower == kUsdcE) {
+    return Collateral::USDCe;
+  }
+  if (lower == kUsdt) {
+    return Collateral::USDT;
+  }
+  if (lower == kWrappedUsdcE) {
+    return Collateral::WrappedUSDCe;
+  }
+  return Collateral::Unknown;
+}
+
+inline bool is_usd_collateral(Collateral collateral) {
+  return collateral != Collateral::Unknown;
+}
 
 struct StableBalances {
+  BigInt usdc = 0;
   BigInt usdc_e = 0;
+  BigInt usdt = 0;
   BigInt wrapped = 0;
 };
 
-struct UserState {
-  std::string user;
-  std::map<std::string, BigInt> positions;  // token_id -> amount
-  StableBalances stable;
+struct TokenMeta {
+  std::string cond;
+  uint8_t idx = 0xFF;
+  int64_t price = -1;
+  std::string price_src;
 };
 
-// ============================================================================
-// Query Counters
-// ============================================================================
+struct ConditionMeta {
+  std::string qid;
+  uint8_t oc = 0;
+  uint8_t coll = 0;
+  std::vector<std::string> tids;
+  bool resolved = false;
+  std::vector<BigInt> payout;
+  BigInt payout_d = 0;
+  bool has_payout_d = false;
+  std::string q;
+  std::string desc;
+  std::string slug;
+  std::string url;
+  std::vector<std::string> outcomes;
+};
+
+struct MarketMeta {
+  std::vector<std::string> qids;
+};
+
+struct UserSnapshotState {
+  uint64_t snapshot_block = 0;
+  StableBalances stable;
+  std::map<std::string, BigInt> positions;
+};
+
+struct UserLiveState {
+  std::string user;
+  StableBalances stable;
+  std::map<std::string, BigInt> positions;
+};
 
 struct QueryCounters {
   uint64_t rpc_http = 0;
@@ -74,82 +145,114 @@ struct QueryCounters {
   uint64_t gamma = 0;
 };
 
-// ============================================================================
-// AppState - 所有可变状态
-// ============================================================================
-
-struct AppState {
-  mutable std::mutex mu;
-
-  // watched users
+struct RuntimeState {
   std::vector<std::string> users;
   std::unordered_set<std::string> user_set;
-
-  // per-user runtime
-  std::map<std::string, UserState> user_states;
-
-  // meta
+  std::map<std::string, UserSnapshotState> user_snapshots;
+  std::map<std::string, UserLiveState> user_states;
   std::map<std::string, TokenMeta> tokens;
   std::map<std::string, ConditionMeta> conditions;
-
-  // history (persisted)
-  json snapshot_root = json::object();  // user -> block_key -> snapshot
-  json history_root = json::object();   // user -> block_key -> events[]
-
-  // recent events (in-memory ring buffer)
+  std::map<std::string, MarketMeta> markets;
+  json snapshot_root = json::object();
+  json history_root = json::object();
+  std::unordered_set<std::string> history_event_ids;
   std::deque<json> recent_events;
-
-  // block tracking
-  uint64_t snapshot_block = 0;
-  uint64_t applied_block = 0;
+  uint64_t last_applied_block = 0;
   uint64_t head_block = 0;
-
-  // timestamps
   int64_t resync_started_at = 0;
   int64_t resync_finished_at = 0;
-
-  // counters
   QueryCounters counters;
 };
 
-// ============================================================================
-// Helpers
-// ============================================================================
+struct AppState {
+  std::shared_ptr<const json> state_ptr = std::make_shared<json>(json::object());
+  std::shared_ptr<const json> meta_ptr = std::make_shared<json>(json::object());
+  std::shared_ptr<const json> snapshot_ptr = std::make_shared<json>(json::object());
+  std::shared_ptr<const json> history_ptr = std::make_shared<json>(json::object());
+};
 
-inline void merge_condition(ConditionMeta &dst, const ConditionMeta &src) {
-  if (dst.condition_id.empty()) dst.condition_id = src.condition_id;
-  if (dst.question_id.empty()) dst.question_id = src.question_id;
-  if (dst.outcome_slot_count < 0) dst.outcome_slot_count = src.outcome_slot_count;
-  if (dst.resolution_timestamp < 0) dst.resolution_timestamp = src.resolution_timestamp;
-  if (dst.token_ids.empty()) dst.token_ids = src.token_ids;
-  if (dst.payout_numerators.empty()) dst.payout_numerators = src.payout_numerators;
-  if (!dst.has_payout_denominator && src.has_payout_denominator) {
-    dst.payout_denominator = src.payout_denominator;
-    dst.has_payout_denominator = true;
-  }
-  if (dst.market_question.empty()) dst.market_question = src.market_question;
-  if (dst.market_description.empty()) dst.market_description = src.market_description;
-  if (dst.market_event_title.empty()) dst.market_event_title = src.market_event_title;
-  if (dst.market_slug.empty()) dst.market_slug = src.market_slug;
-  if (dst.market_url.empty()) dst.market_url = src.market_url;
-  if (dst.market_outcomes.empty()) dst.market_outcomes = src.market_outcomes;
+inline void publish_json(std::shared_ptr<const json> &slot, json value) {
+  std::atomic_store(
+      &slot, std::shared_ptr<const json>(std::make_shared<json>(std::move(value))));
+}
+
+inline std::shared_ptr<const json> load_published(
+    const std::shared_ptr<const json> &slot) {
+  return std::atomic_load(&slot);
 }
 
 inline void merge_token(TokenMeta &dst, const TokenMeta &src) {
-  if (dst.token_id.empty()) dst.token_id = src.token_id;
-  if (dst.condition_id.empty()) dst.condition_id = src.condition_id;
-  if (dst.question_id.empty()) dst.question_id = src.question_id;
-  if (dst.outcome_index < 0) dst.outcome_index = src.outcome_index;
-  if (dst.outcome_slot_count < 0) dst.outcome_slot_count = src.outcome_slot_count;
-  if (dst.resolution_timestamp < 0) dst.resolution_timestamp = src.resolution_timestamp;
-  if (dst.payout_numerators.empty()) dst.payout_numerators = src.payout_numerators;
-  if (!dst.has_payout_denominator && src.has_payout_denominator) {
-    dst.payout_denominator = src.payout_denominator;
-    dst.has_payout_denominator = true;
+  if (dst.cond.empty()) {
+    dst.cond = src.cond;
   }
-  if (src.price >= 0.0L) {
+  if (dst.idx == 0xFF && src.idx != 0xFF) {
+    dst.idx = src.idx;
+  }
+  if (src.price >= 0) {
     dst.price = src.price;
-    dst.price_source = src.price_source;
+    dst.price_src = src.price_src;
+  }
+}
+
+inline void merge_condition(ConditionMeta &dst, const ConditionMeta &src) {
+  if (dst.qid.empty()) {
+    dst.qid = src.qid;
+  }
+  if (dst.oc == 0 && src.oc > 0) {
+    dst.oc = src.oc;
+  }
+  if (dst.coll == 0 && src.coll > 0) {
+    dst.coll = src.coll;
+  }
+  size_t target_size = std::max(dst.tids.size(), src.tids.size());
+  target_size = std::max(target_size, static_cast<size_t>(dst.oc));
+  if (target_size > dst.tids.size()) {
+    dst.tids.resize(target_size);
+  }
+  for (size_t i = 0; i < src.tids.size(); ++i) {
+    if (!src.tids[i].empty()) {
+      dst.tids[i] = src.tids[i];
+    }
+  }
+  if (!src.payout.empty()) {
+    dst.payout = src.payout;
+  }
+  if (src.has_payout_d) {
+    dst.payout_d = src.payout_d;
+    dst.has_payout_d = true;
+    dst.resolved = true;
+  }
+  dst.resolved = dst.resolved || src.resolved;
+  if (dst.q.empty()) {
+    dst.q = src.q;
+  }
+  if (dst.desc.empty()) {
+    dst.desc = src.desc;
+  }
+  if (dst.slug.empty()) {
+    dst.slug = src.slug;
+  }
+  if (dst.url.empty()) {
+    dst.url = src.url;
+  }
+  if (dst.outcomes.empty()) {
+    dst.outcomes = src.outcomes;
+  }
+}
+
+inline void merge_market(MarketMeta &dst, const MarketMeta &src) {
+  std::unordered_set<std::string> seen(dst.qids.begin(), dst.qids.end());
+  for (const auto &qid : src.qids) {
+    if (!qid.empty() && seen.insert(qid).second) {
+      dst.qids.push_back(qid);
+    }
+  }
+}
+
+inline void push_recent_event(RuntimeState &state, json row, size_t limit) {
+  state.recent_events.push_back(std::move(row));
+  while (state.recent_events.size() > limit) {
+    state.recent_events.pop_front();
   }
 }
 
