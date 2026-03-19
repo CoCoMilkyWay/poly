@@ -32,7 +32,6 @@ query UserPositions($user: String!, $after: String!, $first: Int!) {
 }
 )";
 
-
 const std::string &zero_b32() {
   static const std::string value = "0x" + std::string(64, '0');
   return value;
@@ -351,16 +350,26 @@ void SyncThread::full_resync() {
   progress().init();
   rt_.resync_started_at = now_unix_sec();
 
-  fetch_user_snapshots();    // a - positions
-  fetch_snapshot_balances(); // b - balances
-  append_snapshot_roots();
+  // Clear history state - new snapshot will have positions up to snapshot_block,
+  // and we only want to track events from snapshot_block+1 onwards
+  rt_.history_root = json::object();
+  rt_.history_event_ids.clear();
+  rt_.recent_events.clear();
 
-  // [c] Gamma API 一步获取所有 token/condition 元数据
+  // [a] snapshot + [b] stables
+  fetch_user_snapshots();
+  fetch_snapshot_balances();
+  append_snapshot_roots();
+  persist_snapshot(); // 阶段完成，立即落地 S
+
+  // [c] meta
   std::vector<std::string> token_ids = collect_active_token_ids();
   progress()[API::meta].total = token_ids.size();
   progress().stage("meta");
   fetch_gamma_by_token_ids(token_ids);
+  persist_meta(); // 阶段完成，立即落地 M
 
+  // [d] ws_sub
   queue_.clear();
   deferred_.clear();
   progress()[API::ws_sub].total = rt_.users.size();
@@ -370,12 +379,14 @@ void SyncThread::full_resync() {
   progress()[API::ws_sub].done = rt_.users.size();
   progress().flush();
 
+  // [e] head
   progress().stage("head");
   progress()[API::head].total = 1;
   uint64_t head_block = std::max(ws_session.start_block, rpc_block_number());
   rt_.head_block = std::max(rt_.head_block, head_block);
   progress()[API::head].done = 1;
 
+  // [f] backfill
   uint64_t from_block = head_block + 1;
   for (const auto &user : rt_.users) {
     uint64_t user_from = rt_.user_snapshots.at(user).snapshot_block + 1;
@@ -394,7 +405,7 @@ void SyncThread::full_resync() {
   rt_.resync_finished_at = now_unix_sec();
 
   publish_all();
-  persist_all();
+  persist_state(); // S/M/H 已在各阶段落地，最后落地 A
   progress().finish();
   logger().info("resync done");
 }
@@ -440,7 +451,8 @@ void SyncThread::handle_queue_event(QueueEvent ev) {
     rt_.last_applied_block = std::max(rt_.last_applied_block, ev.block_number);
     rt_.head_block = std::max(rt_.head_block, ev.block_number);
     publish_all();
-    persist_all();
+    persist_history(); // ws 增量落地 H
+    persist_state();   // ws 增量落地 A
     return;
   }
   assert(false);
@@ -675,12 +687,22 @@ void SyncThread::publish_all() {
   ++shared_.version;
 }
 
-void SyncThread::persist_all() {
-  progress().stage("persist");
-  save_json(cfg_.aggregate_file, *load_published(shared_.state_ptr));
-  save_json(cfg_.meta_file, *load_published(shared_.meta_ptr));
+void SyncThread::persist_snapshot() {
   save_json(cfg_.snapshot_file, rt_.snapshot_root);
+}
+
+void SyncThread::persist_meta() {
+  publish_json(shared_.meta_ptr, build_meta_json(rt_));
+  save_json(cfg_.meta_file, *load_published(shared_.meta_ptr));
+}
+
+void SyncThread::persist_history() {
   save_json(cfg_.history_file, rt_.history_root);
+}
+
+void SyncThread::persist_state() {
+  publish_json(shared_.state_ptr, build_state_json(rt_));
+  save_json(cfg_.aggregate_file, *load_published(shared_.state_ptr));
 }
 
 void SyncThread::fetch_user_snapshots() {
@@ -855,6 +877,8 @@ void SyncThread::fetch_snapshot_balances() {
 }
 
 void SyncThread::append_snapshot_roots() {
+  // 只保留本次 sync 的 snapshot，清空旧数据
+  rt_.snapshot_root = json::object();
   const int64_t now = now_unix_sec();
   for (const auto &user : rt_.users) {
     const UserSnapshotState &snapshot = rt_.user_snapshots.at(user);
@@ -901,15 +925,13 @@ void SyncThread::fetch_gamma_by_token_ids(const std::vector<std::string> &token_
   std::sort(unique.begin(), unique.end());
   unique.erase(std::unique(unique.begin(), unique.end()), unique.end());
 
-  // 按 gamma_batch_limit 分 chunk，使用 clob_token_ids[] 格式批量查询
+  // 按 gamma_batch_limit 分 chunk，使用重复参数格式 clob_token_ids=x&clob_token_ids=y
   std::vector<std::vector<std::string>> chunks = chunked(unique, cfg_.gamma_batch_limit);
   std::vector<HttpReq> reqs;
   for (const auto &chunk : chunks) {
-    std::string params;
+    std::string params = "limit=" + std::to_string(chunk.size());
     for (const auto &tid : chunk) {
-      if (!params.empty())
-        params += "&";
-      params += "clob_token_ids%5B%5D=" + tid; // %5B%5D = []
+      params += "&clob_token_ids=" + tid;
     }
     reqs.push_back({
         .url = std::string(kGammaApiBase) + "/markets?" + params,
@@ -978,9 +1000,11 @@ void SyncThread::fetch_gamma_by_token_ids(const std::vector<std::string> &token_
       json market = json::object();
       for (const auto &item : arr) {
         std::string clob_token_ids_str = json_str(item, "clobTokenIds");
-        if (clob_token_ids_str.empty()) continue;
+        if (clob_token_ids_str.empty())
+          continue;
         json clob_token_ids = safe_parse(clob_token_ids_str);
-        if (!clob_token_ids.is_array()) continue;
+        if (!clob_token_ids.is_array())
+          continue;
         for (size_t i = 0; i < clob_token_ids.size(); ++i) {
           if (clob_token_ids[i].is_string() && clob_token_ids[i].get<std::string>() == token_id) {
             market = item;
@@ -988,10 +1012,17 @@ void SyncThread::fetch_gamma_by_token_ids(const std::vector<std::string> &token_
             break;
           }
         }
-        if (!market.empty()) break;
+        if (!market.empty())
+          break;
       }
 
       if (market.empty()) {
+        // Gamma 中找不到此 token，标记为已查询 (避免重复查询)
+        // 使用特殊标记 cond="?" 表示已查询但未找到
+        TokenMeta &token = rt_.tokens[token_id];
+        if (token.cond.empty()) {
+          token.cond = "?"; // 标记已查询
+        }
         ++done_count;
         pc.done = done_count;
         progress().flush();
@@ -1026,7 +1057,7 @@ void SyncThread::fetch_gamma_by_token_ids(const std::vector<std::string> &token_
         if (condition.qid.empty()) {
           condition.qid = json_str(market, "question_id");
         }
-        
+
         // 从 clobTokenIds 提取 tids 和 outcome_count
         std::string clob_token_ids_str = json_str(market, "clobTokenIds");
         if (!clob_token_ids_str.empty()) {
@@ -1108,15 +1139,13 @@ void SyncThread::fetch_gamma_by_condition_ids(const std::vector<std::string> &co
   std::sort(unique.begin(), unique.end());
   unique.erase(std::unique(unique.begin(), unique.end()), unique.end());
 
-  // 按 gamma_batch_limit 分 chunk，使用 condition_ids[] 格式批量查询
+  // 按 gamma_batch_limit 分 chunk，使用重复参数格式 condition_ids=x&condition_ids=y
   std::vector<std::vector<std::string>> chunks = chunked(unique, cfg_.gamma_batch_limit);
   std::vector<HttpReq> reqs;
   for (const auto &chunk : chunks) {
-    std::string params;
+    std::string params = "limit=" + std::to_string(chunk.size());
     for (const auto &cid : chunk) {
-      if (!params.empty())
-        params += "&";
-      params += "condition_ids%5B%5D=" + strip_0x(cid); // %5B%5D = [], gamma API要求无0x前缀
+      params += "&condition_ids=" + strip_0x(cid); // gamma API要求无0x前缀
     }
     reqs.push_back({
         .url = std::string(kGammaApiBase) + "/markets?" + params,
@@ -1271,7 +1300,6 @@ void SyncThread::fetch_gamma_by_condition_ids(const std::vector<std::string> &co
   }
 }
 
-
 void SyncThread::fetch_gamma_market_questions(const std::string &market_id) {
   // NegRisk market_id 查询流程:
   // 1. market_id → first_question_id = market_id[0:31] + "00"
@@ -1282,7 +1310,7 @@ void SyncThread::fetch_gamma_market_questions(const std::string &market_id) {
   std::string first_question_id = build_negrisk_question_id(market_id, 0);
 
   // Step 2: 查询第一个 market 获取 slug
-  std::string url1 = std::string(kGammaApiBase) + "/markets?question_ids%5B%5D=" + strip_0x(first_question_id);
+  std::string url1 = std::string(kGammaApiBase) + "/markets?question_ids=" + strip_0x(first_question_id);
   std::string slug;
   for (size_t attempt = 1;; ++attempt) {
     HttpRes resp = http_get(url1, cfg_.proxy_url);
@@ -1363,15 +1391,21 @@ void SyncThread::fetch_gamma_market_questions(const std::string &market_id) {
 
 void SyncThread::ensure_token_meta(const std::string &token_id) {
   auto it = rt_.tokens.find(token_id);
-  if (it != rt_.tokens.end() && !it->second.cond.empty() && it->second.idx != 0xFF) {
-    if (rt_.conditions.contains(it->second.cond) && rt_.conditions.at(it->second.cond).oc > 0) {
+  if (it != rt_.tokens.end()) {
+    // cond="?" 表示已查询但 Gamma 中不存在，跳过重复查询
+    if (it->second.cond == "?") {
       return;
+    }
+    if (!it->second.cond.empty() && it->second.idx != 0xFF) {
+      if (rt_.conditions.contains(it->second.cond) && rt_.conditions.at(it->second.cond).oc > 0) {
+        return;
+      }
     }
   }
   // 使用 Gamma API 一步获取 token + condition 元数据
   fetch_gamma_by_token_ids({token_id});
   it = rt_.tokens.find(token_id);
-  if (it == rt_.tokens.end() || it->second.cond.empty() || it->second.idx == 0xFF) {
+  if (it == rt_.tokens.end() || it->second.cond.empty() || it->second.cond == "?" || it->second.idx == 0xFF) {
     logger().warn("token_meta incomplete token_id=" + token_id);
     return;
   }
@@ -1392,7 +1426,6 @@ void SyncThread::ensure_condition_meta(const std::string &condition_id,
   }
   assert(condition.oc > 0);
 }
-
 
 void SyncThread::ensure_market_questions(const std::string &market_id) {
   auto it = rt_.markets.find(market_id);
@@ -1454,6 +1487,7 @@ void SyncThread::backfill_range(uint64_t from_block, uint64_t to_block) {
     rt_.last_applied_block = std::max(rt_.last_applied_block, end);
     rt_.head_block = std::max(rt_.head_block, end);
     pe.done = end - from_block + 1;
+    persist_history(); // 每批完成，立即落地 H
     progress().flush();
     start = end + 1;
   }
@@ -1528,8 +1562,11 @@ void SyncThread::apply_order_fill(const json &log) {
   ensure_token_meta(token_id);
   auto token_it = rt_.tokens.find(token_id);
   if (token_it == rt_.tokens.end() || token_it->second.cond.empty() ||
-      token_it->second.idx == 0xFF) {
-    logger().warn("apply_order_filled skip incomplete token_id=" + token_id);
+      token_it->second.cond == "?" || token_it->second.idx == 0xFF) {
+    // 静默跳过 Gamma 中找不到的 token (已在 ensure_token_meta 中记录警告)
+    if (token_it == rt_.tokens.end() || token_it->second.cond != "?") {
+      logger().warn("apply_order_filled skip incomplete token_id=" + token_id);
+    }
     return;
   }
   const TokenMeta &token = token_it->second;

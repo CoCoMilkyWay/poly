@@ -36,7 +36,10 @@ private:
   void load_files();
   void load_seed();
   void publish_all();
-  void persist_all();
+  void persist_snapshot();
+  void persist_meta();
+  void persist_history();
+  void persist_state();
   void fetch_user_snapshots();
   void fetch_snapshot_balances();
   void append_snapshot_roots();

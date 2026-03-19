@@ -31,12 +31,12 @@ namespace stage3 {
 // Constants
 // ============================================================================
 
-constexpr size_t MAX_CONDITIONS = 1'000'000;      // 100万 conditions
-constexpr size_t MAX_USERS = 10'000'000;          // 1000万用户
-constexpr size_t MAX_TOKENS = 100'000'000;        // 1亿 token slots
-constexpr size_t MAX_FEATURES = 500'000'000;      // 5亿 feature slots
-constexpr size_t MAX_SHARPE_BUCKETS = 50'000'000; // 5000万 sharpe bucket
-constexpr size_t MAX_SHARPE_POINTS = 500'000'000; // 5亿 sharpe 点
+constexpr size_t MAX_CONDITIONS = 1'000'000;      // conditions
+constexpr size_t MAX_USERS = 5'000'000;           // 用户
+constexpr size_t MAX_TOKENS = 50'000'000;         // token slots
+constexpr size_t MAX_FEATURES = 2000'000'000;     // feature slots
+constexpr size_t MAX_SHARPE_BUCKETS = 20'000'000; // sharpe bucket
+constexpr size_t MAX_SHARPE_POINTS = 500'000'000; // sharpe 点
 constexpr size_t OUTCOME_MAX = 256;               // 最大 outcome 数
 constexpr uint32_t NULL_IDX = UINT32_MAX;         // 空指针
 constexpr uint64_t NULL_LOG_OFFSET = UINT64_MAX;  // events.log 空指针
