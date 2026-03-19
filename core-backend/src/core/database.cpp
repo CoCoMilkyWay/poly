@@ -116,7 +116,7 @@ Database::Database(const std::string &path) : db_path_(path) {
   data_dir_ = parent.empty() ? "." : parent.string();
   fs::create_directories(data_dir_);
   duckdb::DBConfig config;
-  // 限制单个DuckDB实例内存，避免多实例合计占用过多
+  // 限制单个DuckDB实例内存,避免多实例合计占用过多
   // 4 instances × 2GB = 8GB total
   // config.SetOption("memory_limit", duckdb::Value("2GB"));
   db_ = std::make_unique<duckdb::DuckDB>(path, &config);

@@ -1,59 +1,58 @@
 #include "tracker/config.hpp"
-#include "tracker/common.hpp"
+#include "tracker/codec.hpp"
 
 #include <array>
+#include <cassert>
 #include <cstdlib>
 
 namespace tracker {
 
 UrlParts parse_url(const std::string &url) {
-  const size_t scheme_pos = url.find("://");
-  assert(scheme_pos != std::string::npos);
-  UrlParts parts;
-  parts.scheme = to_lower_ascii(url.substr(0, scheme_pos));
+  size_t pos = url.find("://");
+  assert(pos != std::string::npos);
 
-  const size_t host_begin = scheme_pos + 3;
-  const size_t path_pos = url.find('/', host_begin);
-  const std::string host_port =
-      path_pos == std::string::npos
-          ? url.substr(host_begin)
-          : url.substr(host_begin, path_pos - host_begin);
-  const size_t colon_pos = host_port.find(':');
-  if (colon_pos == std::string::npos) {
-    parts.host = host_port;
-    parts.port = parts.secure() ? "443" : "80";
+  UrlParts p;
+  p.scheme = to_lower(url.substr(0, pos));
+
+  size_t host_begin = pos + 3;
+  size_t path_pos = url.find('/', host_begin);
+  std::string host_port = path_pos == std::string::npos
+      ? url.substr(host_begin)
+      : url.substr(host_begin, path_pos - host_begin);
+
+  size_t colon = host_port.find(':');
+  if (colon == std::string::npos) {
+    p.host = host_port;
+    p.port = p.secure() ? "443" : "80";
   } else {
-    parts.host = host_port.substr(0, colon_pos);
-    parts.port = host_port.substr(colon_pos + 1);
+    p.host = host_port.substr(0, colon);
+    p.port = host_port.substr(colon + 1);
   }
-  parts.target = path_pos == std::string::npos ? "/" : url.substr(path_pos);
-  assert(!parts.host.empty());
-  assert(!parts.port.empty());
-  assert(!parts.target.empty());
-  return parts;
+  p.target = path_pos == std::string::npos ? "/" : url.substr(path_pos);
+
+  assert(!p.host.empty());
+  assert(!p.port.empty());
+  assert(!p.target.empty());
+  return p;
 }
 
 std::string derive_ws_url(const std::string &http_url) {
-  const UrlParts parts = parse_url(http_url);
-  const std::string ws_scheme = parts.scheme == "https" ? "wss" : "ws";
-  return ws_scheme + "://" + parts.host + ":" + parts.port + parts.target;
+  UrlParts p = parse_url(http_url);
+  std::string ws_scheme = p.scheme == "https" ? "wss" : "ws";
+  return ws_scheme + "://" + p.host + ":" + p.port + p.target;
 }
 
 namespace {
 
-RpcNode select_rpc_node() {
-  const char *env_name = std::getenv("TRACKER_RPC_NAME");
-  if (env_name == nullptr) {
-    return kDefaultRpc;
+RpcNode select_rpc() {
+  const char *env = std::getenv("TRACKER_RPC_NAME");
+  if (!env) return kDefaultRpc;
+  std::string name(env);
+  constexpr std::array<RpcNode, 2> nodes = {kRpcAlchemy, kRpcDrpc};
+  for (const auto &n : nodes) {
+    if (n.name == name) return n;
   }
-  const std::string name(env_name);
-  constexpr std::array<RpcNode, 2> kAllNodes = {kRpcAlchemy, kRpcDrpc};
-  for (const RpcNode &node : kAllNodes) {
-    if (node.name == name) {
-      return node;
-    }
-  }
-  assert(false && "unknown RPC name in TRACKER_RPC_NAME env");
+  assert(false && "unknown RPC name");
   return kDefaultRpc;
 }
 
@@ -61,96 +60,66 @@ RpcNode select_rpc_node() {
 
 AppConfig AppConfig::load(const std::filesystem::path &tracker_dir) {
   assert(std::filesystem::exists(tracker_dir));
-  AppConfig config;
+
+  AppConfig c;
 
   // paths
-  config.tracker_dir = std::filesystem::weakly_canonical(tracker_dir);
-  config.address_file = config.tracker_dir / "address.txt";
-  config.meta_file = config.tracker_dir / "meta.json";
-  config.snapshot_file = config.tracker_dir / "snapshot.json";
-  config.history_file = config.tracker_dir / "history.json";
-  config.aggregate_file = config.tracker_dir / "aggregate.json";
-  config.log_file = config.tracker_dir / "sync.log";
-  config.seed_rebuild_file = config.tracker_dir / "rebuild.json";
+  c.tracker_dir     = std::filesystem::weakly_canonical(tracker_dir);
+  c.address_file    = c.tracker_dir / "address.txt";
+  c.meta_file       = c.tracker_dir / "meta.json";
+  c.snapshot_file   = c.tracker_dir / "snapshot.json";
+  c.history_file    = c.tracker_dir / "history.json";
+  c.aggregate_file  = c.tracker_dir / "aggregate.json";
+  c.log_file        = c.tracker_dir / "sync.log";
+  c.seed_file       = c.tracker_dir / "rebuild.json";
 
-  // RPC (from constants, env override for URL)
-  const RpcNode node = select_rpc_node();
-  config.rpc_name = std::string(node.name);
-  config.rpc_http_url = std::string(node.url);
-  if (const char *env_http = std::getenv("TRACKER_RPC_HTTP_URL")) {
-    config.rpc_http_url = env_http;
-  }
-  config.rpc_ws_url = derive_ws_url(config.rpc_http_url);
-  if (const char *env_ws = std::getenv("TRACKER_RPC_WS_URL")) {
-    config.rpc_ws_url = env_ws;
-  }
+  // rpc
+  RpcNode node = select_rpc();
+  c.rpc_name = std::string(node.name);
+  c.rpc_http_url = std::string(node.url);
+  if (const char *env = std::getenv("TRACKER_RPC_HTTP_URL")) c.rpc_http_url = env;
+  c.rpc_ws_url = derive_ws_url(c.rpc_http_url);
+  if (const char *env = std::getenv("TRACKER_RPC_WS_URL")) c.rpc_ws_url = env;
 
-  // Graph API key
-  config.graph_api_key = kGraphApiKey;
-  if (const char *env_key = std::getenv("THE_GRAPH_API_KEY")) {
-    config.graph_api_key = env_key;
-  }
+  // api keys
+  c.graph_api_key = kGraphApiKey;
+  if (const char *env = std::getenv("THE_GRAPH_API_KEY")) c.graph_api_key = env;
 
-  // server settings (from constants, env override)
-  config.backend_host = kBackendHost;
-  config.backend_port = kBackendPort;
-  config.frontend_port = kFrontendPort;
-  if (const char *env_host = std::getenv("TRACKER_BACKEND_HOST")) {
-    config.backend_host = env_host;
-  }
-  if (const char *env_port = std::getenv("TRACKER_BACKEND_PORT")) {
-    config.backend_port = static_cast<uint16_t>(std::stoi(env_port));
-  }
-  if (const char *env_port = std::getenv("TRACKER_FRONTEND_PORT")) {
-    config.frontend_port = static_cast<uint16_t>(std::stoi(env_port));
-  }
+  // server
+  c.backend_host = kBackendHost;
+  c.backend_port = kBackendPort;
+  c.frontend_port = kFrontendPort;
+  if (const char *env = std::getenv("TRACKER_BACKEND_HOST")) c.backend_host = env;
+  if (const char *env = std::getenv("TRACKER_BACKEND_PORT")) c.backend_port = static_cast<uint16_t>(std::stoi(env));
+  if (const char *env = std::getenv("TRACKER_FRONTEND_PORT")) c.frontend_port = static_cast<uint16_t>(std::stoi(env));
 
-  // sync settings (from constants, env override)
-  config.resync_interval_sec = kResyncIntervalSec;
-  config.topic_group_size = kTopicGroupSize;
-  config.get_logs_block_span = kGetLogsBlockSpan;
-  if (const char *env_val = std::getenv("TRACKER_RESYNC_INTERVAL_SEC")) {
-    config.resync_interval_sec = static_cast<uint32_t>(std::stoul(env_val));
-  }
-  if (const char *env_val = std::getenv("TRACKER_TOPIC_GROUP_SIZE")) {
-    config.topic_group_size = static_cast<uint32_t>(std::stoul(env_val));
-  }
-  if (const char *env_val = std::getenv("TRACKER_GET_LOGS_BLOCK_SPAN")) {
-    config.get_logs_block_span = static_cast<uint32_t>(std::stoul(env_val));
-  }
+  // sync
+  c.resync_interval_sec = kResyncIntervalSec;
+  c.topic_group_size = kTopicGroupSize;
+  c.get_logs_block_span = kGetLogsBlockSpan;
+  if (const char *env = std::getenv("TRACKER_RESYNC_INTERVAL_SEC")) c.resync_interval_sec = static_cast<uint32_t>(std::stoul(env));
+  if (const char *env = std::getenv("TRACKER_TOPIC_GROUP_SIZE")) c.topic_group_size = static_cast<uint32_t>(std::stoul(env));
+  if (const char *env = std::getenv("TRACKER_GET_LOGS_BLOCK_SPAN")) c.get_logs_block_span = static_cast<uint32_t>(std::stoul(env));
 
-  // query limits (from constants, env override)
-  config.recent_event_limit = kRecentEventLimit;
-  config.user_query_batch_limit = kUserQueryBatchLimit;
-  config.graph_id_batch_limit = kGraphIdBatchLimit;
-  config.graph_page_limit = kGraphPageLimit;
-  if (const char *env_val = std::getenv("TRACKER_RECENT_EVENT_LIMIT")) {
-    config.recent_event_limit = static_cast<size_t>(std::stoull(env_val));
-  }
-
-  // http client
-  config.http_concurrency = kHttpConcurrency;
-  if (const char *env_val = std::getenv("TRACKER_HTTP_CONCURRENCY")) {
-    config.http_concurrency = static_cast<size_t>(std::stoull(env_val));
-  }
+  // limits
+  c.recent_event_limit = kRecentEventLimit;
+  c.user_batch_limit = kUserQueryBatchLimit;
+  c.graph_id_batch_limit = kGraphIdBatchLimit;
+  c.graph_page_limit = kGraphPageLimit;
+  c.http_concurrency = kHttpConcurrency;
+  if (const char *env = std::getenv("TRACKER_RECENT_EVENT_LIMIT")) c.recent_event_limit = static_cast<size_t>(std::stoull(env));
+  if (const char *env = std::getenv("TRACKER_HTTP_CONCURRENCY")) c.http_concurrency = static_cast<size_t>(std::stoull(env));
 
   // assertions
-  assert(std::filesystem::exists(config.address_file));
-  assert(!config.rpc_name.empty());
-  assert(!config.rpc_http_url.empty());
-  assert(!config.rpc_ws_url.empty());
-  assert(!config.graph_api_key.empty());
-  assert(config.backend_port > 0);
-  assert(config.frontend_port > 0);
-  assert(config.resync_interval_sec > 0);
-  assert(config.topic_group_size > 0);
-  assert(config.get_logs_block_span > 0);
-  assert(config.recent_event_limit > 0);
-  assert(config.user_query_batch_limit > 0);
-  assert(config.graph_id_batch_limit > 0);
-  assert(config.graph_page_limit > 0);
-  assert(config.http_concurrency > 0);
-  return config;
+  assert(std::filesystem::exists(c.address_file));
+  assert(!c.rpc_name.empty());
+  assert(!c.rpc_http_url.empty());
+  assert(!c.rpc_ws_url.empty());
+  assert(!c.graph_api_key.empty());
+  assert(c.backend_port > 0);
+  assert(c.frontend_port > 0);
+
+  return c;
 }
 
 } // namespace tracker

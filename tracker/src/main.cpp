@@ -1,47 +1,54 @@
+#include "tracker/api.hpp"
 #include "tracker/config.hpp"
-#include "tracker/http_server.hpp"
-#include "tracker/tracker_service.hpp"
+#include "tracker/queue.hpp"
+#include "tracker/state.hpp"
+#include "tracker/sync.hpp"
+#include "tracker/ws.hpp"
 
-#include <cassert>
 #include <filesystem>
 #include <iostream>
 
 namespace {
 
-std::filesystem::path resolve_tracker_dir_from_config() {
-  const std::filesystem::path candidate = std::filesystem::current_path();
-  if (std::filesystem::exists(candidate / "address.txt")) {
-    return candidate;
-  }
-  if (std::filesystem::exists(candidate / "tracker" / "address.txt")) {
-    return candidate / "tracker";
-  }
-  assert(false);
-  return candidate;
+std::filesystem::path find_tracker_dir() {
+  std::filesystem::path cwd = std::filesystem::current_path();
+  if (std::filesystem::exists(cwd / "address.txt")) return cwd;
+  if (std::filesystem::exists(cwd / "tracker" / "address.txt")) return cwd / "tracker";
+  assert(false && "cannot find tracker directory");
+  return cwd;
 }
 
 } // namespace
 
 int main() {
-  const tracker::AppConfig config = tracker::AppConfig::load(resolve_tracker_dir_from_config());
-  tracker::TrackerService service(config);
-  service.bootstrap();
+  // 1. 加载配置
+  tracker::AppConfig cfg = tracker::AppConfig::load(find_tracker_dir());
 
-  tracker::ApiServer server(service, config.backend_host, config.backend_port);
-  server.start();
+  // 2. 创建共享状态和队列
+  tracker::AppState state;
+  tracker::EventQueue queue;
 
-  std::cout
-      << tracker::json({
-             {"backend_url", "http://localhost:" + std::to_string(config.backend_port)},
-             {"frontend_url", "http://localhost:" + std::to_string(config.frontend_port)},
-             {"address_file", config.address_file.string()},
-             {"meta_file", config.meta_file.string()},
-             {"aggregate_file", config.aggregate_file.string()},
-             {"history_file", config.history_file.string()},
-         })
-             .dump(2)
-      << std::endl;
+  // 3. 创建三个线程
+  tracker::WsThread ws_thread(cfg, state, queue);
+  tracker::SyncThread sync_thread(cfg, state, queue, ws_thread);
+  tracker::ApiThread api_thread(cfg, state, [&sync_thread] { sync_thread.request_resync(); });
 
-  service.run_forever();
+  // 4. 启动 WS 和 API 线程
+  ws_thread.start();
+  api_thread.start();
+
+  // 5. 打印启动信息
+  std::cout << tracker::json({
+      {"backend_url", "http://localhost:" + std::to_string(cfg.backend_port)},
+      {"frontend_url", "http://localhost:" + std::to_string(cfg.frontend_port)},
+      {"address_file", cfg.address_file.string()},
+      {"meta_file", cfg.meta_file.string()},
+      {"aggregate_file", cfg.aggregate_file.string()},
+      {"history_file", cfg.history_file.string()},
+  }).dump(2) << std::endl;
+
+  // 6. 在主线程运行 Sync (blocking)
+  sync_thread.run();
+
   return 0;
 }

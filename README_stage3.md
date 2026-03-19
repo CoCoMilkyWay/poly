@@ -48,13 +48,13 @@
     目标: 支持“分行业 nested 特征”的横截面对比与选人
 
 注:
-  1. 用户首个 `cond_idx >= 0` 事件之前没有 bucket；首个事件所在 bucket 开始，直到该用户最新已 materialize 的 bucket 为止，bucket 必须稠密。
-  2. 交易额里: 只记录会直接创造头寸暴露的操作(比如铸币, 合币就不应该记入, 转帐本身也不是创造暴露的操作, 更偏向转移暴露到当前账户，所以不记入), 暴露方向不重要
+  1. 用户首个 `cond_idx >= 0` 事件之前没有 bucket；首个事件所在 bucket 开始,直到该用户最新已 materialize 的 bucket 为止,bucket 必须稠密。
+  2. 交易额里: 只记录会直接创造头寸暴露的操作(比如铸币, 合币就不应该记入, 转帐本身也不是创造暴露的操作, 更偏向转移暴露到当前账户,所以不记入), 暴露方向不重要
   3. 平均持仓: 需要统计周期内多个事件(非均匀)的持仓快照(记录不同token的平均持仓周期), 再按照token金额, 事件时间加权
-  4. 持仓周期: 因为用户的特征bucket是尾部稠密的, 持仓周期这种特征, 在原本稀疏的插值bucket也应该按照定义increment，比较特殊
+  4. 持仓周期: 因为用户的特征bucket是尾部稠密的, 持仓周期这种特征, 在原本稀疏的插值bucket也应该按照定义increment,比较特殊
   5. 夏普:
      - 无风险=0
-     - 没有账户的USDC类资产信息，所以无法计算净值曲线，需要拿 nav~f(exposure(t),realized_pnl(t),unrealized_pnl(t))来近似
+     - 没有账户的USDC类资产信息,所以无法计算净值曲线,需要拿 nav~f(exposure(t),realized_pnl(t),unrealized_pnl(t))来近似
      - 因为收益率的分布不平稳, 连续时间假设不成立, 所以必须用真实分布(density)来计算波动性
      - {(block_num, exposure, pnl)}的采样是极端不均匀的, 有时候中间很多个bucket都没有采样(事件), 有时候很多个采样在同一个block
      - 因为非均匀, 夏普的定义不唯一, 标准的时间加权夏普, 会惩罚波动性(预期内), 但是不会惩罚曲率(是时间无关的), 所以这里的夏普会加入曲率调整项
@@ -278,7 +278,7 @@ static_assert(sizeof(Stage3Store::UserBlock) == 128);
 
 // ==================== EventsLog (~190GB) ====================
 // 对应原 EventFact, 定长 append-only 主体；每条记录带 per-user 单链表 next 指针
-// 存储完整事件数据，支持历史持仓重放；runtime query cache 会按需派生 snapshot
+// 存储完整事件数据,支持历史持仓重放；runtime query cache 会按需派生 snapshot
 struct EventsLog {
   struct EventRecord {                     // 96B
     int64_t  sort_key;                     // block * 1e9 + log_idx
@@ -544,7 +544,7 @@ stage3_sync_tick(runtime, head_block, batch_limit)
 ├─ 1) 从 Stage2 RocksDB 拉事件
 │  ├─ scan_by_sort_key(cursor, head_sort_key, batch_limit)
 │  ├─ 若空: header.cursor_sort_key = head_sort_key, return 0
-│  └─ 若命中 `batch_limit`, 按 block 边界截断，避免半个 block 被拆到下一批
+│  └─ 若命中 `batch_limit`, 按 block 边界截断,避免半个 block 被拆到下一批
 ├─ 2) 转成 `EventInput`
 │  ├─ `user_idx_cache[address] -> user_idx`
 │  ├─ 新用户通过 `user_get_or_create()` 初始化 `UserBlock + user_index`
@@ -562,7 +562,7 @@ process_event_batch(batch)
 │  │  ├─ `init_feature_timelines(...)`
 │  │  │  ├─ 扫当前 `feature_head` 链表
 │  │  │  ├─ 得到每个 tag 的 `first_bucket / latest_bucket`
-│  │  │  └─ 同时得到 `latest_feature_idx`，供后续 bucket 稠密推进
+│  │  │  └─ 同时得到 `latest_feature_idx`,供后续 bucket 稠密推进
 │  │  ├─ `materialized_feature_mask =` 历史已存在的 feature tag 集合
 │  │  ├─ 若 `task.touched_tag_mask != 0`:
 │  │  │  └─ 扫当前 `token_head`, 只为 `touched tags + global` 预装 `runtime_states{token_count, exposure, exposure_entry_sum}`
@@ -581,7 +581,7 @@ process_event_batch(batch)
 │  │  │  │  ├─ `after_contrib = token_feature_contrib(*tok)`
 │  │  │  │  └─ `runtime_states[tag/global] += after_contrib - before_contrib`
 │  │  │  ├─ 更新 `UserBlock`: `total_events / total_realized_pnl / total_unrealized_pnl / token_count / last_sort_key`
-│  │  │  ├─ append `EventRecord` 到该 shard 的 `events.log` 区间，并挂到用户 timeline 单链表
+│  │  │  ├─ append `EventRecord` 到该 shard 的 `events.log` 区间,并挂到用户 timeline 单链表
 │  │  │  ├─ if `evt.cond_idx >= 0`:
 │  │  │  │  └─ `update_feature_on_event(...)`
 │  │  │  │     ├─ 只更新 `{evt.tag_id, -1}` 当前 bucket 的尾部窗口
@@ -709,7 +709,7 @@ StageSync::filter_users_by_features(req) -> {anchor_bucket, users[{addr, sort_va
 ├─ `r = stage3_query_filter(rt_, req)`
 ├─ for `row in r.users`:
 │  ├─ `addr = users[row.user_idx].addr`
-│  ├─ 再取一次该用户 global feature at `min(anchor_bucket, latest_bucket)`，补 `month_avg_*`
+│  ├─ 再取一次该用户 global feature at `min(anchor_bucket, latest_bucket)`,补 `month_avg_*`
 │  └─ `pnl = total_realized_pnl + total_unrealized_pnl`
 └─ 组装 service 层返回
 

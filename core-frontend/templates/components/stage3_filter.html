@@ -248,9 +248,9 @@
         <span class="s3f-sub">当前截面用户数: <span id="s3f-total-users">-</span> | 输出过滤后的 Top100 用户地址</span>
     </div>
 
-    <div class="s3f-section-title">过滤条件(AND 关系，支持乘除)</div>
+    <div class="s3f-section-title">过滤条件(AND 关系,支持乘除)</div>
     <div id="s3f-filters-box" class="s3f-filters-box">
-        <div id="s3f-filter-empty" class="s3f-filter-empty">当前无过滤条件，将仅按排序返回 Top100</div>
+        <div id="s3f-filter-empty" class="s3f-filter-empty">当前无过滤条件,将仅按排序返回 Top100</div>
     </div>
     <button class="s3f-btn s3f-btn-small s3f-btn-add" onclick="s3fAddFilter()">+ 添加条件</button>
 
@@ -325,7 +325,7 @@
     let _s3fTotalUsers = 0;
     let _s3fIsRunning = false; // 防止并发请求
     let _s3fNextFilterId = 1;
-    let _s3fLastSortFeature = 'shp'; // 记录上次排序的特征，用于单位转换
+    let _s3fLastSortFeature = 'shp'; // 记录上次排序的特征,用于单位转换
     const _s3fDefaultFilters = [
         { industry: 'ALL', feature: 'exp', window: '100', arith: '', rhsIndustry: 'ALL', rhsFeature: 'exp', rhsWindow: '100', op: '>', value: '5000' },
         { industry: 'ALL', feature: 'vol', window: '100', arith: '/', rhsIndustry: 'ALL', rhsFeature: 'exp', rhsWindow: '100', op: '>', value: '1.0' },
@@ -396,7 +396,7 @@
             runBtn.textContent = '执行过滤';
         }
 
-        // 当选择 shp 时，强制行业为 ALL
+        // 当选择 shp 时,强制行业为 ALL
         const sortFeature = document.getElementById('s3f-sort-feature');
         const sortIndustry = document.getElementById('s3f-sort-industry');
         sortFeature.addEventListener('change', function () {
@@ -651,7 +651,7 @@
             }
         }
         const expr = s3fBuildValueExpr(lhs, arith, rhs);
-        // 用户始终按 USD 量纲输入，前端按表达式中的 money 次幂换算成后端原始单位
+        // 用户始终按 USD 量纲输入,前端按表达式中的 money 次幂换算成后端原始单位
         const compareValue = s3fScaleValueByMoneyPower(valueText, moneyPower);
         return {
             id: row.dataset.filterId,
@@ -680,7 +680,7 @@
     }
 
     function s3fBuildPayload() {
-        assert(_s3fMaxBucket >= 0, 'bucket 未初始化，请稍后重试');
+        assert(_s3fMaxBucket >= 0, 'bucket 未初始化,请稍后重试');
 
         const items = [];
         const rows = document.querySelectorAll('#s3f-filters-box .s3f-filter-row');

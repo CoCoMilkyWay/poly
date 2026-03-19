@@ -1,19 +1,92 @@
-Sync Flow 设计 (v2)
 ======================
-
-注: 本文描述当前同步 flow。
-
 核心设计原则：
   1. 所有网络IO并发执行 (http_batch为唯一出口)
-  2. 阶段化流程，每个阶段内部并发，阶段之间有依赖
+  2. 阶段化流程,每个阶段内部并发,阶段之间有依赖
   3. 多行进度显示 (参考rebuild.py ProgressBoard)
-  4. 异常记录到log文件，终端只显示进度
+  4. 异常记录到log文件,终端只显示进度
+
+======================
+线程架构
+======================
+
+                                  ┌─────────────┐
+                                  │ 前端 UI     │
+                                  │ (浏览器)    │
+                                  └──────┬──────┘
+                                         │ HTTP API
+                                         v
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                  后端进程                                   │
+│                                                                             │
+│  ┌───────────────────┐  ┌───────────────────┐  ┌───────────────────┐        │
+│  │    WS Thread      │  │   Sync Thread     │  │   HTTP Thread     │        │
+│  │  (RPC websocket)  │  │   (状态持有者)    │  │  (前端API服务)    │        │
+│  ├───────────────────┤  ├───────────────────┤  ├───────────────────┤        │
+│  │ 输入: RPC节点     │  │ 核心业务线程      │  │ 输入: 前端请求    │        │
+│  │ 输出: event_queue │  │                   │  │ 输出: JSON响应    │        │
+│  │                   │  │                   │  │                   │        │
+│  │ - 维护 ws 连接    │  │ - 拥有全部状态    │  │ - /api/state      │        │
+│  │ - eth_subscribe   │  │ - full_resync()   │  │ - /api/meta       │        │
+│  │   newHeads/logs   │  │ - drain 队列      │  │ - /api/history    │        │
+│  │ - 解析后入队列    │  │ - apply_logs()    │  │ - /api/resync     │        │
+│  │ - 断线自动重连    │  │ - persist_all()   │  │                   │        │
+│  │                   │  │ - 发布 state_ptr  │  │ 读 state_ptr 响应 │        │
+│  └─────────┬─────────┘  └─────────┬─────────┘  └─────────┬─────────┘        │
+│            │                      │                      │                  │
+│            │    event_queue       │      state_ptr       │                  │
+│            │    (mpsc, 写)        │   (atomic, 只读)     │                  │
+│            └─────────────────────>│<─────────────────────┘                  │
+│                                   │                                         │
+│                                   │  resync_flag (atomic<bool>)             │
+│                                   │<────────────────────────────────────────│
+│                                   │                                         │
+│                                   v                                         │
+│                          ┌─────────────────┐                                │
+│                          │   http_batch()  │                                │
+│                          │   无状态纯函数  │                                │
+│                          │   阻塞调用      │                                │
+│                          │   内部asio并发  │                                │
+│                          └─────────────────┘                                │
+│                                   │                                         │
+│                                   v                                         │
+│                    ┌──────────────────────────────┐                         │
+│                    │ RPC / TheGraph / Gamma API   │                         │
+│                    └──────────────────────────────┘                         │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+线程职责总结:
+  Sync Thread  : 唯一写状态, 调用 http_batch, 持久化
+  WS Thread    : 收 RPC 实时事件, 入队列, 无状态
+  HTTP Thread  : 给前端 UI 提供 API, 读 state_ptr, 无状态
+
+======================
+前端UI设计
+A:用户列表(token类资产市值/总市值(加上类USDC稳定币资产)):
+B:交易记录(按照block number, 展示 snapshot 和统一格式的历史交易记录,不区分 websocket / RPC 来源)
+C:选择栏: 可以选择 aggre当前动态持仓, 用户当前动态持仓, 用户历史静态持仓(选择历史记录里的snapshot)
+D:持仓展示: 每个token按百分比展示bar, 显示yes/no/index, 持仓比例(USD计价), 里面包括稳定币资产, 鼠标悬浮展示问题和描述
+E:query count (展示rpc,subgraph当前session分别query了多少次)
+
+----------------------------
+|                |         |
+|                |         |
+|       A        |    B    |
+|                |         |
+----------------------------
+| C                      E |
+|                          |
+|                          |
+|                          |
+|            D             |
+|                          |
+|                          |
+|                          |
+----------------------------
 
 ======================
 进度显示设计 (ProgressBoard)
 ======================
-
-采用多行ANSI转义码，每个阶段一行，实时更新：
+采用多行ANSI转义码,每个阶段一行,实时更新：
 
   [tracker] fetch user positions: 50/100 users
   [tracker] fetch stable balances: 0/0 users
@@ -24,15 +97,15 @@ Sync Flow 设计 (v2)
 
 实现要点：
   - 初始化时打印所有stage行
-  - 更新时用 \x1b[{lines_up}A 上移光标，\x1b[K 清行
+  - 更新时用 \x1b[{lines_up}A 上移光标,\x1b[K 清行
   - 用mutex保护打印
 
 ======================
 full_resync() 新设计
 ======================
 
-Stage 1: fetch_user_positions (per-user 并发，不带 block 参数)
-  每个用户单独查询，不使用 user_in 批量查询（The Graph 对 user_in 路由到坏 indexer）
+Stage 1: fetch_user_positions (per-user 并发,不带 block 参数)
+  每个用户单独查询,不使用 user_in 批量查询(The Graph 对 user_in 路由到坏 indexer)
   每个用户的查询返回 _meta.block.number 作为该用户的 snapshot_block
   
   http_batch([
@@ -42,14 +115,14 @@ Stage 1: fetch_user_positions (per-user 并发，不带 block 参数)
   ])
   
   注: 
-  - 不带 block 参数时，_meta.block.number 就是数据对应的真实 block
-  - 每个用户的 snapshot_block 可能不同，后续 fill gap per-user
-  - 单用户查询需要分页（串行），但不同用户之间并发
+  - 不带 block 参数时,_meta.block.number 就是数据对应的真实 block
+  - 每个用户的 snapshot_block 可能不同,后续 fill gap per-user
+  - 单用户查询需要分页(串行),但不同用户之间并发
   
   数据结构:
     user_snapshots: map<user, {snapshot_block, positions[]}>
   
-  全局 snapshot_block = min(所有用户的 snapshot_block)，用于 aggregate 计算
+  全局 snapshot_block = min(所有用户的 snapshot_block),用于 aggregate 计算
 
 Stage 3: fetch_stable_balances (并发RPC)
   http_batch([
@@ -87,11 +160,11 @@ Stage 7: start_ws_subscription
   建立 websocket 订阅:
     eth_subscribe newHeads 作为 block flush 信号
     eth_subscribe logs 接收实时日志
-  注: 先建订阅，再补 gap，避免订阅建立窗口漏事件
+  注: 先建订阅,再补 gap,避免订阅建立窗口漏事件
 
 Stage 8: backfill_gap (per-user RPC 并发)
   每个用户从各自的 snapshot_block 开始补齐到当前 head
-  注: backfill_gap 和 websocket logs 使用统一 raw log 格式，落地到 history 时不区分来源
+  注: backfill_gap 和 websocket logs 使用统一 raw log 格式,落地到 history 时不区分来源
   
   for each user:
     from_block = user_snapshot_block + 1
@@ -112,7 +185,7 @@ http_batch 改进
 
 当前http_batch:
   - 接收 vector<HttpRequest>
-  - 并发执行，无限重试
+  - 并发执行,无限重试
   - 返回 vector<HttpResponse>
 
 改进:
@@ -136,13 +209,13 @@ Log 设计
   2024-01-15T12:34:56 [WARN] subgraph retry: bad indexers, attempt=3
   2024-01-15T12:34:57 [ERROR] http timeout: gamma-api.polymarket.com
 
-终端只显示ProgressBoard，不输出debug信息。
+终端只显示ProgressBoard,不输出debug信息。
 
 ======================
 依赖关系
 ======================
 
-  fetch_user_positions (per-user 并发，返回各自 snapshot_block)
+  fetch_user_positions (per-user 并发,返回各自 snapshot_block)
           |
           v
   fetch_stable_balances (可与下一步并行)
@@ -160,7 +233,7 @@ Log 设计
   start_ws_subscription
           |
           v
-  backfill_gap (per-user，从各自 snapshot_block 开始)
+  backfill_gap (per-user,从各自 snapshot_block 开始)
           |
           v
   persist_all
@@ -185,7 +258,7 @@ Log 设计
   data/tracker/
     snapshot.json   - 用户持仓快照 (历史记录)
     history.json    - 交易记录 (历史记录)
-    aggregate.json  - 聚合仓位 (实时状态，每次sync/交易更新)
+    aggregate.json  - 聚合仓位 (实时状态,每次sync/交易更新)
     meta.json       - token/condition元数据
     sync.log        - 同步日志
 
@@ -210,7 +283,7 @@ Log 设计
 
 --- history.json ---
 存储统一格式的历史交易记录
-来源可能是 websocket 实时日志，也可能是启动/重连时通过 RPC 补齐的 gap 日志；落地时不做来源区分
+来源可能是 websocket 实时日志,也可能是启动/重连时通过 RPC 补齐的 gap 日志；落地时不做来源区分
 
 {
   "0xuser1": {
@@ -260,28 +333,3 @@ token和condition元数据 (与之前相同)
   "tokens": { ... },
   "conditions": { ... }
 }
-
-======================
-UI 设计
-
-A:用户列表(token类资产市值/总市值(加上类USDC稳定币资产)):
-B:交易记录(按照block number, 展示 snapshot 和统一格式的历史交易记录，不区分 websocket / RPC 来源)
-C:选择栏: 可以选择 aggre当前动态持仓, 用户当前动态持仓, 用户历史静态持仓(选择历史记录里的snapshot)
-D:持仓展示: 每个token按百分比展示bar, 显示yes/no/index, 持仓比例(USD计价), 里面包括稳定币资产, 鼠标悬浮展示问题和描述
-E:query count (展示rpc,subgraph当前session分别query了多少次)
-
-----------------------------
-|                |         |
-|                |         |
-|       A        |    B    |
-|                |         |
-----------------------------
-| C                      E |
-|                          |
-|                          |
-|                          |
-|            D             |
-|                          |
-|                          |
-|                          |
-----------------------------

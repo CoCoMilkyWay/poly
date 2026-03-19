@@ -317,7 +317,7 @@ def build_dashboard_html(page_title: str, chart_payloads: list[dict]) -> str:
 </head>
 <body>
   <div class="page-title">{page_title}</div>
-  <div class="page-subtitle">全部分布均基于全量数据计算(无采样)，range=q2~q98，tail clip到边界</div>
+  <div class="page-subtitle">全部分布均基于全量数据计算(无采样),range=q2~q98,tail clip到边界</div>
   {sections_html}
   <script>
     const payload = {json.dumps(payload, ensure_ascii=False)};

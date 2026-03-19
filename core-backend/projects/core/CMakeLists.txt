@@ -68,7 +68,7 @@ elseif(EXISTS ${ONNXRUNTIME_CPU_DIR}/libonnxruntime.so)
     set(ONNXRUNTIME_MODE "cpu")
 else()
     message(FATAL_ERROR
-        "未找到 ONNX Runtime 库文件，请提供以下任一目录:\n"
+        "未找到 ONNX Runtime 库文件,请提供以下任一目录:\n"
         "  - ${ONNXRUNTIME_GPU_DIR}/libonnxruntime.so\n"
         "  - ${ONNXRUNTIME_CPU_DIR}/libonnxruntime.so")
 endif()

@@ -165,7 +165,7 @@ def terminate_then_wait(proc: Optional[subprocess.Popen], name: str, timeout: in
     while time.time() < deadline and proc.poll() is None:
         time.sleep(0.2)
     if proc.poll() is None:
-        print(f"[run.py] {name} 超时，强制 kill")
+        print(f"[run.py] {name} 超时,强制 kill")
         proc.kill()
     proc.wait()
     print(f"[run.py] {name} 已退出")
