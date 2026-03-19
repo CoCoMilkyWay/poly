@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import os
 import shutil
 import socket
@@ -112,22 +111,6 @@ def main() -> None:
 
     build_backend()
 
-    print(
-        json.dumps(
-            {
-                "frontend_url": f"http://localhost:{FRONTEND_PORT}",
-                "backend_url": f"http://localhost:{BACKEND_PORT}",
-                "address_file": str(ROOT / "address.txt"),
-                "snapshot_file": str(ROOT / "data" / "snapshot.json"),
-                "history_file": str(ROOT / "data" / "history.json"),
-                "aggregate_file": str(ROOT / "data" / "aggregate.json"),
-                "meta_file": str(ROOT / "data" / "meta.json"),
-            },
-            ensure_ascii=False,
-            indent=2,
-        )
-    )
-
     env = dict(os.environ)
     env["TRACKER_BACKEND_PORT"] = str(BACKEND_PORT)
     env["TRACKER_FRONTEND_PORT"] = str(FRONTEND_PORT)
@@ -160,6 +143,8 @@ def main() -> None:
             env=env,
             start_new_session=True,
             text=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
         )
         wait_for_port(FRONTEND_PORT, frontend)
 

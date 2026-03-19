@@ -1320,9 +1320,10 @@ void SyncThread::ensure_token_meta(const std::string &token_id) {
   }
   fetch_token_meta({token_id});
   it = rt_.tokens.find(token_id);
-  assert(it != rt_.tokens.end());
-  assert(!it->second.cond.empty());
-  assert(it->second.idx != 0xFF);
+  if (it == rt_.tokens.end() || it->second.cond.empty() || it->second.idx == 0xFF) {
+    logger().warn("token_meta incomplete token_id=" + token_id);
+    return;
+  }
   ensure_condition_meta(it->second.cond, Collateral::Unknown);
 }
 

@@ -18,14 +18,21 @@ namespace tracker {
 // Logger
 // ============================================================================
 
-enum class LogLevel { DEBUG, INFO, WARN, ERROR };
+enum class LogLevel { DEBUG,
+                      INFO,
+                      WARN,
+                      ERROR };
 
 inline const char *log_level_str(LogLevel level) {
   switch (level) {
-    case LogLevel::DEBUG: return "DEBUG";
-    case LogLevel::INFO:  return "INFO";
-    case LogLevel::WARN:  return "WARN";
-    case LogLevel::ERROR: return "ERROR";
+  case LogLevel::DEBUG:
+    return "DEBUG";
+  case LogLevel::INFO:
+    return "INFO";
+  case LogLevel::WARN:
+    return "WARN";
+  case LogLevel::ERROR:
+    return "ERROR";
   }
   return "?";
 }
@@ -43,13 +50,14 @@ public:
 
   void log(LogLevel level, const std::string &msg) {
     std::lock_guard<std::mutex> lock(mu_);
-    if (!out_.is_open()) return;
+    if (!out_.is_open())
+      return;
     out_ << timestamp() << " [" << log_level_str(level) << "] " << msg << std::endl;
   }
 
   void debug(const std::string &msg) { log(LogLevel::DEBUG, msg); }
-  void info(const std::string &msg)  { log(LogLevel::INFO, msg); }
-  void warn(const std::string &msg)  { log(LogLevel::WARN, msg); }
+  void info(const std::string &msg) { log(LogLevel::INFO, msg); }
+  void warn(const std::string &msg) { log(LogLevel::WARN, msg); }
   void error(const std::string &msg) { log(LogLevel::ERROR, msg); }
 
 private:
@@ -57,7 +65,8 @@ private:
     auto now = std::chrono::system_clock::now();
     auto t = std::chrono::system_clock::to_time_t(now);
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-        now.time_since_epoch()) % 1000;
+                  now.time_since_epoch()) %
+              1000;
     std::tm tm{};
     localtime_r(&t, &tm);
     std::ostringstream oss;
@@ -85,9 +94,12 @@ inline void log_query(const std::string &channel,
                     " name=" + name +
                     " attempt=" + std::to_string(attempt) +
                     " result=" + (ok ? "ok" : "fail");
-  if (!detail.empty()) msg += " detail=" + detail;
-  if (ok) logger().info(msg);
-  else logger().warn(msg);
+  if (!detail.empty())
+    msg += " detail=" + detail;
+  if (ok)
+    logger().info(msg);
+  else
+    logger().warn(msg);
 }
 
 // ============================================================================
@@ -105,7 +117,15 @@ inline void log_query(const std::string &channel,
 //   block      1/0         [0]
 //   [current_stage]
 
-enum class API { positions, balances, tokens, conditions, logs, gamma, subscribe, block, COUNT };
+enum class API { positions,
+                 balances,
+                 tokens,
+                 conditions,
+                 gamma,
+                 subscribe,
+                 block,
+                 logs,
+                 COUNT };
 
 struct ProgressState {
   std::atomic<size_t> done{0};
@@ -115,21 +135,18 @@ struct ProgressState {
 
 struct ProgressBoard {
   static constexpr size_t kApiCount = static_cast<size_t>(API::COUNT);
-  static constexpr const char* kApiNames[kApiCount] = {
-    "positions", "balances", "tokens", "conditions",
-    "logs", "gamma", "subscribe", "block"
-  };
+  static constexpr const char *kApiNames[kApiCount] = {"positions", "balances", "tokens", "conditions", "gamma", "subscribe", "block", "logs"};
 
   std::array<ProgressState, kApiCount> apis;
   std::string current_stage;
   std::mutex print_mu;
   bool inited = false;
 
-  ProgressState& operator[](API api) { return apis[static_cast<size_t>(api)]; }
+  ProgressState &operator[](API api) { return apis[static_cast<size_t>(api)]; }
 
   void init() {
     std::lock_guard<std::mutex> lock(print_mu);
-    for (auto& api : apis) {
+    for (auto &api : apis) {
       api.done = 0;
       api.total = 0;
       api.pending = 0;
@@ -166,7 +183,7 @@ struct ProgressBoard {
 
 private:
   void print_row(size_t i) {
-    auto& api = apis[i];
+    auto &api = apis[i];
     std::cerr << std::left << std::setw(10) << kApiNames[i] << " ";
     std::cerr << std::right << std::setw(5) << api.done.load() << "/";
     std::cerr << std::left << std::setw(5) << api.total.load() << " ";

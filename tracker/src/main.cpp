@@ -33,12 +33,9 @@ int main() {
   tracker::ApiThread api_thread(cfg, state,
                                 [&sync_thread] { sync_thread.request_resync(); });
 
-  ws_thread.start();
-  api_thread.start();
-
-  std::cout << tracker::json({
-                                 {"backend_url", "http://localhost:" + std::to_string(cfg.backend_port)},
+  std::cerr << tracker::json({
                                  {"frontend_url", "http://localhost:" + std::to_string(cfg.frontend_port)},
+                                 {"backend_url", "http://localhost:" + std::to_string(cfg.backend_port)},
                                  {"address_file", cfg.address_file.string()},
                                  {"snapshot_file", cfg.snapshot_file.string()},
                                  {"history_file", cfg.history_file.string()},
@@ -47,7 +44,8 @@ int main() {
                              })
                    .dump(2)
             << std::endl;
-  std::cout << std::flush;
 
+  ws_thread.start();
+  api_thread.start();
   sync_thread.run();
 }
