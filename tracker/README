@@ -54,10 +54,19 @@
 │                    └──────────────────────────────┘                         │
 └─────────────────────────────────────────────────────────────────────────────┘
 
-线程职责总结:
-  Sync Thread  : 唯一写状态, 调用 http_batch, 持久化
-  WS Thread    : 收 RPC 实时事件, 入队列, 无状态
-  HTTP Thread  : 给前端 UI 提供 API, 读 state_ptr, 无状态
+api.hpp      # API Thread 接口
+codec.hpp    # 编码解码工具
+config.hpp   # 配置
+const.hpp    # 合约地址、Topic 常量
+http.hpp     # HTTP 客户端
+json.hpp     # json alias
+log.hpp      # 日志 + 进度显示
+queue.hpp    # event_queue (mpsc)
+state.hpp    # 状态结构定义
+store.hpp    # JSON 存储
+sync.hpp     # Sync Thread 接口
+ws.hpp       # WS Thread 接口
+main.cpp     # 入口，启动3线程
 
 ======================
 前端UI设计

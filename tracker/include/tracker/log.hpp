@@ -75,6 +75,20 @@ inline Logger &logger() {
   return instance;
 }
 
+inline void log_query(const std::string &channel,
+                      const std::string &name,
+                      size_t attempt,
+                      bool ok,
+                      const std::string &detail = "") {
+  std::string msg = "query channel=" + channel +
+                    " name=" + name +
+                    " attempt=" + std::to_string(attempt) +
+                    " result=" + (ok ? "ok" : "fail");
+  if (!detail.empty()) msg += " detail=" + detail;
+  if (ok) logger().info(msg);
+  else logger().warn(msg);
+}
+
 // ============================================================================
 // ProgressBoard - 多行进度显示
 // ============================================================================

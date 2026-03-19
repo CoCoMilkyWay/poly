@@ -6,7 +6,8 @@
 namespace tracker {
 
 json load_json(const std::filesystem::path &path, const json &fallback) {
-  if (!std::filesystem::exists(path)) return fallback;
+  if (!std::filesystem::exists(path))
+    return fallback;
   std::ifstream in(path);
   assert(in.is_open());
   json data;
@@ -15,6 +16,7 @@ json load_json(const std::filesystem::path &path, const json &fallback) {
 }
 
 void save_json(const std::filesystem::path &path, const json &data) {
+  std::filesystem::create_directories(path.parent_path());
   std::filesystem::path tmp = path.string() + ".tmp";
   {
     std::ofstream out(tmp);

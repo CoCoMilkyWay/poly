@@ -1,9 +1,5 @@
 build/
-compile_commands.json
-meta.json
-meta.json.tmp
-aggregate.json
-aggregate.json.tmp
-history.json
-history.json.tmp
-address.txt
+**.json
+**.tmp
+**.log
+**.txt

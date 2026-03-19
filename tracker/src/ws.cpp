@@ -7,6 +7,7 @@
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/ssl.hpp>
 #include <boost/beast/core.hpp>
+#include <boost/beast/http.hpp>
 #include <boost/beast/ssl.hpp>
 #include <boost/beast/websocket.hpp>
 #include <openssl/ssl.h>
@@ -22,13 +23,14 @@ namespace {
 
 namespace asio = boost::asio;
 namespace beast = boost::beast;
+namespace http = beast::http;
 namespace ssl = asio::ssl;
 namespace websocket = beast::websocket;
 using tcp = asio::ip::tcp;
 
 class WsStream {
 public:
-  explicit WsStream(const std::string &url)
+  WsStream(const std::string &url, const std::string &proxy_url)
       : parts_(parse_url(url)),
         ssl_ctx_(ssl::context::tlsv12_client),
         resolver_(ioc_) {
@@ -37,23 +39,31 @@ public:
       ssl_ctx_.set_default_verify_paths();
       ssl_ctx_.set_verify_mode(ssl::verify_peer);
     }
+    if (!proxy_url.empty()) proxy_ = parse_url(proxy_url);
   }
 
   void connect() {
-    tcp::resolver::results_type endpoints = resolver_.resolve(parts_.host, parts_.port);
-    std::string host = parts_.host + ":" + parts_.port;
+    // 有代理时连接代理，否则直接连接目标
+    const std::string &host = proxy_ ? proxy_->host : parts_.host;
+    const std::string &port = proxy_ ? proxy_->port : parts_.port;
+    tcp::resolver::results_type endpoints = resolver_.resolve(host, port);
+
+    std::string ws_host = parts_.host + ":" + parts_.port;
     if (parts_.secure()) {
       ssl_ws_.emplace(ioc_, ssl_ctx_);
       ssl_ws_->set_option(websocket::stream_base::timeout::suggested(beast::role_type::client));
       SSL_set_tlsext_host_name(ssl_ws_->next_layer().native_handle(), parts_.host.c_str());
       beast::get_lowest_layer(*ssl_ws_).connect(endpoints);
+
+      if (proxy_) proxy_connect();
+
       ssl_ws_->next_layer().handshake(ssl::stream_base::client);
-      ssl_ws_->handshake(host, parts_.target);
+      ssl_ws_->handshake(ws_host, parts_.target);
     } else {
       plain_ws_.emplace(ioc_);
       plain_ws_->set_option(websocket::stream_base::timeout::suggested(beast::role_type::client));
       beast::get_lowest_layer(*plain_ws_).connect(endpoints);
-      plain_ws_->handshake(host, parts_.target);
+      plain_ws_->handshake(ws_host, parts_.target);
     }
   }
 
@@ -76,6 +86,25 @@ public:
   }
 
 private:
+  void proxy_connect() {
+    // 发送 HTTP CONNECT 请求建立隧道
+    std::string target = parts_.host + ":" + parts_.port;
+    http::request<http::empty_body> req;
+    req.version(11);
+    req.method(http::verb::connect);
+    req.target(target);
+    req.set(http::field::host, target);
+    req.set(http::field::proxy_connection, "Keep-Alive");
+
+    auto &stream = beast::get_lowest_layer(*ssl_ws_);
+    http::write(stream, req);
+
+    beast::flat_buffer buf;
+    http::response<http::empty_body> res;
+    http::read(stream, buf, res);
+    assert(res.result() == http::status::ok);
+  }
+
   std::string subscribe(const json &params, const std::string &label) {
     int id = next_id_++;
     write_json({{"jsonrpc", "2.0"}, {"id", id}, {"method", "eth_subscribe"}, {"params", params}});
@@ -85,7 +114,7 @@ private:
         assert(msg.at("id").get<int>() == id);
         assert(msg.contains("result"));
         std::string sub_id = norm_hex(msg.at("result").get<std::string>());
-        logger().info("ws subscribed " + label + " " + sub_id);
+        log_query("ws", "eth_subscribe:" + label, 1, true, "sub_id=" + sub_id);
         return sub_id;
       }
       queued_.push_back(msg);
@@ -122,6 +151,7 @@ private:
   }
 
   UrlParts parts_;
+  std::optional<UrlParts> proxy_;
   asio::io_context ioc_;
   ssl::context ssl_ctx_;
   tcp::resolver resolver_;
@@ -187,11 +217,15 @@ std::vector<json> WsThread::build_log_filters() const {
 }
 
 void WsThread::run() {
+  size_t connect_attempt = 0;
   while (running_) {
     try {
+      ++connect_attempt;
       reconnect_ = false;
-      WsStream ws(cfg_.rpc_ws_url);
+      WsStream ws(cfg_.rpc_ws_url, cfg_.proxy_url);
       ws.connect();
+      log_query("ws", "connect", connect_attempt, true, "url=" + cfg_.rpc_ws_url);
+      connect_attempt = 0;
 
       std::string heads_sub = ws.subscribe_heads();
       std::set<std::string> log_subs;
@@ -247,7 +281,7 @@ void WsThread::run() {
       }
 
     } catch (const std::exception &e) {
-      logger().error(std::string("ws error: ") + e.what());
+      log_query("ws", "connect", connect_attempt, false, std::string(e.what()));
       std::this_thread::sleep_for(std::chrono::seconds(3));
     }
   }

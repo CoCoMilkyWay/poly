@@ -31,10 +31,11 @@ file(CREATE_LINK
 add_executable(tracker_backend
     ${TRACKER_SRC_DIR}/main.cpp
     ${TRACKER_SRC_DIR}/config.cpp
-    ${TRACKER_SRC_DIR}/http_client.cpp
-    ${TRACKER_SRC_DIR}/json_store.cpp
-    ${TRACKER_SRC_DIR}/tracker_service.cpp
-    ${TRACKER_SRC_DIR}/http_server.cpp
+    ${TRACKER_SRC_DIR}/api.cpp
+    ${TRACKER_SRC_DIR}/http.cpp
+    ${TRACKER_SRC_DIR}/store.cpp
+    ${TRACKER_SRC_DIR}/sync.cpp
+    ${TRACKER_SRC_DIR}/ws.cpp
 )
 
 target_compile_options(tracker_backend PRIVATE

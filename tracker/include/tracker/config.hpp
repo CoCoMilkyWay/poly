@@ -17,36 +17,47 @@ struct RpcNode {
   std::string_view url;
 };
 
-inline constexpr RpcNode kRpcAlchemy = {"Alchemy", "https://polygon-mainnet.g.alchemy.com/v2/BkfGdYfzIqosg_dYeRWop"};
-inline constexpr RpcNode kRpcDrpc    = {"dRPC",    "https://lb.drpc.org/ogrpc?network=polygon&dkey=Aj9Y8zpk1EVEkcL8w3Z1mGcHAZE3DdUR8biw-uF7NYYO"};
+inline constexpr RpcNode kRpcAlchemy = {
+    "Alchemy",
+    "https://polygon-mainnet.g.alchemy.com/v2/BkfGdYfzIqosg_dYeRWop"};
+inline constexpr RpcNode kRpcDrpc = {
+    "dRPC",
+    "https://lb.drpc.org/"
+    "ogrpc?network=polygon&dkey=Aj9Y8zpk1EVEkcL8w3Z1mGcHAZE3DdUR8biw-uF7NYYO"};
 inline constexpr RpcNode kDefaultRpc = kRpcAlchemy;
 
 // ============================================================================
 // API Keys & Server Defaults
 // ============================================================================
 
-inline constexpr const char *kGraphApiKey   = "1d7a83f3e6778cd93dfbae707bb192de";
-inline constexpr const char *kBackendHost   = "0.0.0.0";
-inline constexpr uint16_t    kBackendPort   = 8871;
-inline constexpr uint16_t    kFrontendPort  = 8870;
+inline constexpr const char *kGraphApiKey = "1d7a83f3e6778cd93dfbae707bb192de";
+inline constexpr const char *kBackendHost = "0.0.0.0";
+inline constexpr uint16_t kBackendPort = 8871;
+inline constexpr uint16_t kFrontendPort = 8870;
 
 // ============================================================================
 // Sync Settings
 // ============================================================================
 
-inline constexpr uint32_t kResyncIntervalSec  = 300;
-inline constexpr uint32_t kTopicGroupSize     = 50;
-inline constexpr uint32_t kGetLogsBlockSpan   = 400;
+inline constexpr uint32_t kResyncIntervalSec = 300;
+inline constexpr uint32_t kTopicGroupSize = 50;
+inline constexpr uint32_t kGetLogsBlockSpan = 400;
 
 // ============================================================================
 // Query Limits
 // ============================================================================
 
-inline constexpr size_t kRecentEventLimit    = 512;
+inline constexpr size_t kRecentEventLimit = 512;
 inline constexpr size_t kUserQueryBatchLimit = 50;
-inline constexpr size_t kGraphIdBatchLimit   = 100;
-inline constexpr size_t kGraphPageLimit      = 1000;
-inline constexpr size_t kHttpConcurrency     = 10;
+inline constexpr size_t kGraphIdBatchLimit = 100;
+inline constexpr size_t kGraphPageLimit = 1000;
+inline constexpr size_t kHttpConcurrency = 10;
+
+// ============================================================================
+// Proxy (empty = no proxy)
+// ============================================================================
+
+inline constexpr const char *kProxyUrl = "http://172.17.112.1:20000";
 
 // ============================================================================
 // URL Parsing
@@ -58,8 +69,12 @@ struct UrlParts {
   std::string port;
   std::string target;
 
-  [[nodiscard]] bool secure() const { return scheme == "https" || scheme == "wss"; }
-  [[nodiscard]] bool websocket() const { return scheme == "ws" || scheme == "wss"; }
+  [[nodiscard]] bool secure() const {
+    return scheme == "https" || scheme == "wss";
+  }
+  [[nodiscard]] bool websocket() const {
+    return scheme == "ws" || scheme == "wss";
+  }
 };
 
 UrlParts parse_url(const std::string &url);
@@ -104,6 +119,9 @@ struct AppConfig {
   size_t graph_id_batch_limit;
   size_t graph_page_limit;
   size_t http_concurrency;
+
+  // proxy (empty = no proxy)
+  std::string proxy_url;
 
   static AppConfig load(const std::filesystem::path &tracker_dir);
 };

@@ -15,6 +15,13 @@ namespace beast = boost::beast;
 namespace http = beast::http;
 using tcp = asio::ip::tcp;
 
+bool is_peer_closed(const beast::error_code &ec) {
+  return ec == http::error::end_of_stream ||
+         ec == asio::error::eof ||
+         ec == asio::error::connection_reset ||
+         ec == asio::error::broken_pipe;
+}
+
 std::pair<std::string, std::string> split_target(const std::string &target) {
   size_t pos = target.find('?');
   if (pos == std::string::npos) return {target, ""};
@@ -53,18 +60,27 @@ std::string http_response(unsigned version, unsigned status, std::string_view co
 
 void write_json(tcp::socket &socket, unsigned version, const json &data) {
   std::string r = http_response(version, 200, "application/json; charset=utf-8", data.dump());
-  asio::write(socket, asio::buffer(r));
+  beast::error_code ec;
+  asio::write(socket, asio::buffer(r), ec);
+  if (is_peer_closed(ec)) return;
+  assert(!ec);
 }
 
 void write_empty(tcp::socket &socket, unsigned version, unsigned status) {
   std::string r = http_response(version, status, "text/plain; charset=utf-8", "");
-  asio::write(socket, asio::buffer(r));
+  beast::error_code ec;
+  asio::write(socket, asio::buffer(r), ec);
+  if (is_peer_closed(ec)) return;
+  assert(!ec);
 }
 
 void handle_request(AppState &state, ApiThread::ResyncCallback on_resync, tcp::socket socket) {
   beast::flat_buffer buf;
   http::request<http::string_body> req;
-  http::read(socket, buf, req);
+  beast::error_code ec;
+  http::read(socket, buf, req, ec);
+  if (is_peer_closed(ec)) return;
+  assert(!ec);
 
   if (req.method() == http::verb::options) {
     write_empty(socket, req.version(), 204);

@@ -53,8 +53,6 @@ private:
   uint64_t rpc_block_number();
   json rpc_call(const std::string &method, const json &params);
   json rpc_batch(const std::vector<json> &reqs);
-  json graph_query(const std::string &subgraph_id, const std::string &query,
-                   const json &vars, const std::string &label);
 
   // filter building
   std::vector<json> build_log_filters(uint64_t from, uint64_t to) const;

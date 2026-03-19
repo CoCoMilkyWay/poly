@@ -1,5 +1,0 @@
-2026-03-19T05:48:09.655 [INFO] stage1: fetch_positions batch(10) min_block=84375094
-2026-03-19T05:48:10.535 [INFO] stage3: fetch_balances batch(20)
-2026-03-19T05:48:15.690 [INFO] stage8: backfill_logs batch(7) blocks=84375095-84375229
-2026-03-19T05:48:28.601 [INFO] stage4: fetch_market_data batch(118)
-2026-03-19T05:48:34.384 [INFO] stage5: fetch_conditions batch(73)

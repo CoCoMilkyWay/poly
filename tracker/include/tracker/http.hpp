@@ -23,11 +23,11 @@ struct HttpRes {
 };
 
 // ============================================================================
-// HTTP Client
+// HTTP Client (proxy_url empty = no proxy)
 // ============================================================================
 
-HttpRes http_get(const std::string &url);
-HttpRes http_post(const std::string &url, const json &payload);
-std::vector<HttpRes> http_batch(const std::vector<HttpReq> &reqs, size_t concurrency);
+HttpRes http_get(const std::string &url, const std::string &proxy_url = "");
+HttpRes http_post(const std::string &url, const json &payload, const std::string &proxy_url = "");
+std::vector<HttpRes> http_batch(const std::vector<HttpReq> &reqs, size_t concurrency, const std::string &proxy_url = "");
 
 } // namespace tracker
