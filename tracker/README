@@ -1,14 +1,6 @@
 ======================
-核心设计原则：
-  1. 所有网络IO并发执行 (http_batch为唯一出口)
-  2. 阶段化流程,每个阶段内部并发,阶段之间有依赖
-  3. 多行进度显示 (参考rebuild.py ProgressBoard)
-  4. 异常记录到log文件,终端只显示进度
-
-======================
 线程架构
 ======================
-
                                   ┌─────────────┐
                                   │ 前端 UI     │
                                   │ (浏览器)    │
@@ -70,6 +62,7 @@ main.cpp     # 入口，启动3线程
 
 ======================
 前端UI设计
+======================
 A:用户列表(token类资产市值/总市值(加上类USDC稳定币资产)):
 B:交易记录(按照block number, 展示 snapshot 和统一格式的历史交易记录,不区分 websocket / RPC 来源)
 C:选择栏: 可以选择 aggre当前动态持仓, 用户当前动态持仓, 用户历史静态持仓(选择历史记录里的snapshot)
@@ -78,198 +71,176 @@ E:query count (展示rpc,subgraph当前session分别query了多少次)
 
 ----------------------------
 |                |         |
-|                |         |
 |       A        |    B    |
 |                |         |
 ----------------------------
 | C                      E |
 |                          |
-|                          |
-|                          |
 |            D             |
-|                          |
-|                          |
 |                          |
 ----------------------------
 
-======================
-进度显示设计 (ProgressBoard)
-======================
-采用多行ANSI转义码,每个阶段一行,实时更新：
+API:
+a/{users}      http.Subgraph(pnl).userPositions(1)                   获取用户历史snapshot持仓({kGraphPageLimit}分页)
+b/4            http.RPC.eth_call({users})                            批量获取用户稳定币余额 (USDC/USDCe/USDT/Wrapped)
+c/{tokens}     http.Subgraph(poly).marketDatas({kGraphIdBatchLimit}) 批量获取token_ids
+d/{conditions} http.Subgraph(pnl).conditions({kGraphIdBatchLimit})   批量获取condition_ids 
+e/e            http.RPC.eth_getLogs({users})                         批量补齐历史记录({kGetLogsBlockSpan}区块拆分)
+f/{conditions} http.Gamma(polymarket).markets({kGammaBatchLimit})    批量获取问题描述
+g/             ws.RPC.eth_subscribe({users})                         批量订阅WebSocket交易记录(subscribe={subscribe},usrs/subscribe/topic={kTopicGroupSize})
+h/             http.RPC.eth_blockNumber(1)                           获取当前区块高度
 
-  [tracker] fetch user positions: 50/100 users
-  [tracker] fetch stable balances: 0/0 users
-  [tracker] fetch market data: 0/0 tokens
-  [tracker] fetch conditions: 0/0 conditions
-  [tracker] fetch gamma meta: 0/0 markets
-  [tracker] backfill gap: 0/0 users
-
-实现要点：
-  - 初始化时打印所有stage行
+======================
+进度显示设计(终端)
+======================
+  - 动态更新上面的API
+  - 底部显示当前stage
   - 更新时用 \x1b[{lines_up}A 上移光标,\x1b[K 清行
   - 用mutex保护打印
-
 ======================
-full_resync() 新设计
+Log设计(文件)
 ======================
-
-Stage 1: fetch_user_positions (per-user 并发,不带 block 参数)
-  每个用户单独查询,不使用 user_in 批量查询(The Graph 对 user_in 路由到坏 indexer)
-  每个用户的查询返回 _meta.block.number 作为该用户的 snapshot_block
-  
-  http_batch([
-    POST userPositions(user1, no block param) -> snapshot_block_1,
-    POST userPositions(user2, no block param) -> snapshot_block_2,
-    ...
-  ])
-  
-  注: 
-  - 不带 block 参数时,_meta.block.number 就是数据对应的真实 block
-  - 每个用户的 snapshot_block 可能不同,后续 fill gap per-user
-  - 单用户查询需要分页(串行),但不同用户之间并发
-  
-  数据结构:
-    user_snapshots: map<user, {snapshot_block, positions[]}>
-  
-  全局 snapshot_block = min(所有用户的 snapshot_block),用于 aggregate 计算
-
-Stage 3: fetch_stable_balances (并发RPC)
-  http_batch([
-    POST rpc balanceOf(user1, USDC.e),
-    POST rpc balanceOf(user1, wrapped),
-    POST rpc balanceOf(user2, USDC.e),
-    ...
-  ])
-  或者用eth_call batch打包
-
-Stage 4: fetch_market_data (并发多个token批次)
-  token_ids = 从positions收集
-  http_batch([
-    POST thegraph/poly/marketDatas(batch1),
-    POST thegraph/poly/marketDatas(batch2),
-    ...
-  ])
-
-Stage 5: fetch_conditions (并发多个condition批次)
-  condition_ids = 从market_data收集
-  http_batch([
-    POST thegraph/pnl/conditions(batch1),
-    POST thegraph/pnl/conditions(batch2),
-    ...
-  ])
-
-Stage 6: fetch_gamma_meta (并发gamma API)
-  condition_ids = 缺少market_question的
-  http_batch([
-    GET gamma/markets?condition_ids=xxx,
-    ...
-  ])
-
-Stage 7: start_ws_subscription
-  建立 websocket 订阅:
-    eth_subscribe newHeads 作为 block flush 信号
-    eth_subscribe logs 接收实时日志
-  注: 先建订阅,再补 gap,避免订阅建立窗口漏事件
-
-Stage 8: backfill_gap (per-user RPC 并发)
-  每个用户从各自的 snapshot_block 开始补齐到当前 head
-  注: backfill_gap 和 websocket logs 使用统一 raw log 格式,落地到 history 时不区分来源
-  
-  for each user:
-    from_block = user_snapshot_block + 1
-    to_block = current_head
-    filters = build_log_filters([user], from_block, to_block)
-  
-  http_batch([
-    POST rpc eth_getLogs(user1, from=snapshot_1+1, to=head),
-    POST rpc eth_getLogs(user2, from=snapshot_2+1, to=head),
-    ...
-  ])
-
-Stage 9: persist_all
-
-======================
-http_batch 改进
-======================
-
-当前http_batch:
-  - 接收 vector<HttpRequest>
-  - 并发执行,无限重试
-  - 返回 vector<HttpResponse>
-
-改进:
-  1. 支持回调函数处理单个响应 (可选)
-  2. 内部错误记录到log文件
-  3. 限制单个请求最大重试时间 (如30s)
-
-======================
-Log 设计
-======================
-
-文件: data/tracker/sync.log (按日期轮转)
-
-记录内容:
-  - 网络请求失败/重试
+  - 网络请求失败/无限重试(预期此程序7*24小时运行)
   - subgraph "bad indexers" 错误
   - JSON解析失败
   - 其他异常
-
-格式:
-  2024-01-15T12:34:56 [WARN] subgraph retry: bad indexers, attempt=3
-  2024-01-15T12:34:57 [ERROR] http timeout: gamma-api.polymarket.com
-
-终端只显示ProgressBoard,不输出debug信息。
-
-======================
-依赖关系
-======================
-
-  fetch_user_positions (per-user 并发,返回各自 snapshot_block)
-          |
-          v
-  fetch_stable_balances (可与下一步并行)
-          |
-          v
-  fetch_market_data
-          |
-          v
-  fetch_conditions
-          |
-          v
-  fetch_gamma_meta
-          |
-          v
-  start_ws_subscription
-          |
-          v
-  backfill_gap (per-user,从各自 snapshot_block 开始)
-          |
-          v
-  persist_all
-
-增量阶段:
-  websocket logs / newHeads
-          |
-          v
-  apply_logs / 更新运行时状态
-          |
-          v
-  aggregate 重算
-          |
-          v
-  persist_all
-
 ======================
 数据存储设计
 ======================
-
 目录结构:
-  data/tracker/
+  data/
     snapshot.json   - 用户持仓快照 (历史记录)
     history.json    - 交易记录 (历史记录)
     aggregate.json  - 聚合仓位 (实时状态,每次sync/交易更新)
     meta.json       - token/condition元数据
     sync.log        - 同步日志
+======================
+整体流程
+======================
+```
+文件落地时机:
+  S = snapshot.json (用户持仓快照)
+  H = history.json (交易记录)
+  A = aggregate.json (聚合仓位)
+  M = meta.json (token/condition元数据)
+
+SyncThread.run()
+├─ 初始化
+│  ├─ load_seed() → tokens/conditions 初始映射
+│  └─ load_files() → snapshot_root/history_root 从磁盘恢复
+├─ 主循环
+│  ├─ full_resync() (初始触发/定时触发/手动UI触发)
+│  │  ├─ [a] fetch_user_positions (per-user 并发)
+│  │  │  ├─ API: http.Subgraph(pnl).userPositions(user)
+│  │  │  ├─ 输出: user_snapshots[user] = {snapshot_block, positions[]}
+│  │  │  └─ 落地: → S (snapshot.json)
+│  │  ├─ [b] fetch_stable_balances (并发 RPC)
+│  │  │  ├─ API: http.RPC.eth_call balanceOf(user, USDC/USDCe/USDT/Wrapped)
+│  │  │  └─ 输出: user_states[user].stable = {usdc, usdc_e, usdt, wrapped}
+│  │  ├─ [c] fetch_market_data (并发批次)
+│  │  │  ├─ API: http.Subgraph(poly).marketDatas(token_ids)
+│  │  │  ├─ 输出: tokens[token_id] = {condition_id, outcome_index, ...}
+│  │  │  └─ 落地: → M (meta.json)
+│  │  ├─ [d] fetch_conditions (并发批次)
+│  │  │  ├─ API: http.Subgraph(pnl).conditions(condition_ids)
+│  │  │  ├─ 输出: conditions[cond_id] = {outcome_count, payout, question_id, ...}
+│  │  │  └─ 落地: → M (meta.json)
+│  │  ├─ [f] fetch_gamma_meta (并发)
+│  │  │  ├─ API: http.Gamma(polymarket).markets(condition_ids)
+│  │  │  ├─ 输出: conditions[cond_id].market_* 补齐
+│  │  │  └─ 落地: → M (meta.json)
+│  │  ├─ [h] get_head_block
+│  │  │  ├─ API: http.RPC.eth_blockNumber()
+│  │  │  └─ 输出: head_block (内存)
+│  │  ├─ [g] start_ws_subscription (先订阅再补 gap)
+│  │  │  ├─ API: ws.RPC.eth_subscribe(newHeads, logs)
+│  │  │  └─ 输出: ws 连接建立
+│  │  ├─ [e] backfill_gap (per-user 并发)
+│  │  │  ├─ API: http.RPC.eth_getLogs(from=snapshot_block+1, to=head)
+│  │  │  ├─ 处理: parse_and_emit_events(logs)
+│  │  │  └─ 落地: → H (history.json) per batch
+│  │  └─ 计算 aggregate
+│  │     ├─ 输出: aggregate 状态
+│  │     └─ 落地: → A (aggregate.json)
+│  ├─ drain_queue() (处理 websocket 事件)
+│  │  ├─ on newHeads → update head_block
+│  │  └─ on logs
+│  │     ├─ parse_and_emit_events([log])
+│  │     ├─ 落地: → H (history.json) 每条事件
+│  │     ├─ 映射补齐时: → M (meta.json)
+│  │     └─ aggregate 重算: → A (aggregate.json)
+│  └─ sleep(100ms)
+└─ 落地汇总
+   ├─ S (snapshot.json): [a] 完成后
+   ├─ M (meta.json): [c][d][f] 各自完成后 + 增量映射补齐时
+   ├─ H (history.json): [e] 每批 + ws 每条事件
+   └─ A (aggregate.json): [e] 完成后 + ws 每条事件后
+```
+
+======================
+parse_and_emit_events(logs) 流程
+======================
+```
+parse_and_emit_events(logs)
+├─ 输入
+│  ├─ logs[]: raw RPC logs (语义事件,按 block + log_index 排序)
+│  └─ state: tokens/conditions 映射 (可被补齐更新)
+├─ 主循环 for log in logs
+│  ├─ OrderFilled (CTF_EXCHANGE | NEG_RISK_CTF_EXCHANGE)
+│  │  ├─ 解码: maker, taker, maker_asset_id, taker_asset_id, maker_amt, taker_amt, fee
+│  │  ├─ 判断: maker_is_buyer = (maker_asset_id == 0)
+│  │  │  ├─ buyer = maker_is_buyer ? maker : taker
+│  │  │  ├─ seller = maker_is_buyer ? taker : maker
+│  │  │  ├─ token_id = maker_is_buyer ? taker_asset_id : maker_asset_id
+│  │  │  ├─ token_amount = maker_is_buyer ? taker_amt : maker_amt
+│  │  │  └─ collateral_amount = maker_is_buyer ? maker_amt : taker_amt
+│  │  ├─ 补齐: token_id → (condition_id, token_idx) from tokens[]
+│  │  ├─ 产出 (双方各一条):
+│  │  │  ├─ emit(buyer, OrderBuy, +token_amount, price=coll*1e6/tokens)
+│  │  │  └─ emit(seller, OrderSell, -token_amount, price=coll*1e6/tokens)
+│  │  └─ 更新: user_states[buyer].positions[token_id] += token_amount
+│  │          user_states[seller].positions[token_id] -= token_amount
+│  ├─ PositionSplit (CONDITIONAL_TOKENS)
+│  │  ├─ 解码: stakeholder, condition_id, partition[], amount, collateral_token
+│  │  ├─ 补齐: condition_id → (outcome_count, collateral) from conditions[]
+│  │  │  └─ 缺失时: on-demand query subgraph 或 RPC
+│  │  ├─ 计算: token_ids[] = [getPositionId(coll, cond, idx) for idx in partition]
+│  │  ├─ 产出 (每个 outcome 一条):
+│  │  │  └─ emit(stakeholder, Split, +amount, price=1e6/outcome_count)
+│  │  └─ 更新: user_states[stakeholder].positions[token_id] += amount (per token)
+│  ├─ PositionsMerge (CONDITIONAL_TOKENS)
+│  │  ├─ 解码: stakeholder, condition_id, partition[], amount, collateral_token
+│  │  ├─ 补齐/计算: 同 Split
+│  │  ├─ 产出 (每个 outcome 一条):
+│  │  │  └─ emit(stakeholder, Merge, -amount, price=1e6/outcome_count)
+│  │  └─ 更新: user_states[stakeholder].positions[token_id] -= amount (per token)
+│  ├─ PayoutRedemption (CONDITIONAL_TOKENS)
+│  │  ├─ 解码: redeemer, condition_id, index_sets[], payout
+│  │  ├─ 补齐: condition_id → (payout_numerators[], payout_denominator) from conditions[]
+│  │  ├─ 计算: payout_ratio[idx] = numerators[idx] / sum(numerators)
+│  │  ├─ 产出 (每个 index_set 一条):
+│  │  │  └─ emit(redeemer, Redeem, -holding, price=payout_ratio*1e6)
+│  │  └─ 更新: user_states[redeemer].positions[token_id] = 0 (清仓)
+│  └─ PositionConvert (NEG_RISK_ADAPTER)
+│     ├─ 解码: stakeholder, market_id, index_set, amount
+│     ├─ 补齐: market_id → question_ids[] → condition_ids[]
+│     │  └─ 缺失时: eth_getLogs(NRA, QUESTION_PREPARE, market_id) 补齐
+│     ├─ 计算: condition_id = getNegRiskConditionId(question_id)
+│     ├─ 产出: emit(stakeholder, Convert, -amount, price=0)
+│     └─ 更新: user_states[stakeholder].positions 调整
+├─ 映射补齐 (on-demand, 遇到未知映射时触发)
+│  ├─ token_id 未知 → query_token_meta(token_id)
+│  │  └─ subgraph marketDatas 或计算 getPositionId 反推
+│  ├─ condition_id 未知 → query_condition_meta(cond_id)
+│  │  └─ subgraph conditions + gamma markets
+│  └─ market_id 未知 → query_market_questions(market_id)
+│     └─ eth_getLogs(NRA, QUESTION_PREPARE, market_id=topics[1])
+└─ 输出
+   ├─ history_root[user][block_key].push(event) 增量
+   ├─ user_states[user].positions 实时更新
+   └─ tokens[]/conditions[] 映射可能被补齐
+```
+
 
 --- snapshot.json ---
 存储用户在特定区块的详细持仓情况 (历史快照)
@@ -280,8 +251,10 @@ Log 设计
       "block_number": 12345678,
       "captured_at_unix_sec": 1705312496,
       "stable_balances": {
+        "usdc_raw": "0",
         "usdc_e_raw": "1000000000",
-        "wrapped_collateral_raw": "500000000"
+        "usdt_raw": "0",
+        "wrapped_raw": "500000000"
       },
       "positions": [
         {"token_id": "123...", "amount_raw": "1000000"}
@@ -293,20 +266,63 @@ Log 设计
 --- history.json ---
 存储统一格式的历史交易记录
 来源可能是 websocket 实时日志,也可能是启动/重连时通过 RPC 补齐的 gap 日志；落地时不做来源区分
+只parse 买入,卖出,铸造,合并,赎回,转换, 忽略池操作/转账
 
+事件订阅表 (按用户地址过滤):
+| 事件             | Contract                                          | Topic                                                              | 用户字段位置 |
+| ---------------- | ------------------------------------------------- | ------------------------------------------------------------------ | ------------ |
+| OrderFilled      | 0x4bfb41d5b3570defd03c39a9a4d8de6bd8b8982e (CTF)  | 0xd0a08e8c493f9c94f29311604c9de1b4e8c8d4c06bd0c789af57f2d65bfec0f6 | topics[2,3]  |
+| OrderFilled      | 0xc5d563a36ae78145c45a50134d48a1215220f80a (NR)   | 0xd0a08e8c493f9c94f29311604c9de1b4e8c8d4c06bd0c789af57f2d65bfec0f6 | topics[2,3]  |
+| PositionSplit    | 0x4d97dcd97ec945f40cf65f87097ace5ea0476045 (CTF)  | 0x2e6bb91f8cbcda0c93623c54d0403a43514fabc40084ec96b6d5379a74786298 | topics[1]    |
+| PositionsMerge   | 0x4d97dcd97ec945f40cf65f87097ace5ea0476045 (CTF)  | 0x6f13ca62553fcc2bcd2372180a43949c1e4cebba603901ede2f4e14f36b282ca | topics[1]    |
+| PayoutRedemption | 0x4d97dcd97ec945f40cf65f87097ace5ea0476045 (CTF)  | 0x2682012a4a4f1973119f1c9b90745d1bd91fa2bab387344f044cb3586864d18d | topics[1]    |
+| PositionConvert  | 0xd91e80cf2e7be2e162c6513ced06f1dd0da35296 (NRA)  | 0xb03d19dddbc72a87e735ff0ea3b57bef133ebe44e1894284916a84044deb367e | topics[1]    |
+
+事件字段与缺失信息补齐:
+| 事件             | 原始字段                                                     | 缺失        | 补齐方式                                              |
+| ---------------- | ------------------------------------------------------------ | ----------- | ----------------------------------------------------- |
+| OrderFilled      | maker, taker, token_id, token_amount, collateral_amount, fee | -           | 完整，无需补齐                                        |
+| PositionSplit    | stakeholder, condition_id, partition[], amount, collateral   | token_id    | token_id = getPositionId(collateral, condition, idx)  |
+| PositionsMerge   | stakeholder, condition_id, partition[], amount, collateral   | token_id    | token_id = getPositionId(collateral, condition, idx)  |
+| PayoutRedemption | redeemer, condition_id, index_sets[], payout                 | token_id    | token_id = getPositionId(collateral, condition, idx)  |
+| PositionConvert  | stakeholder, market_id, index_set, amount                    | condition   | condition = getNegRiskConditionId(question_id)        |
+
+映射补齐 (存入 meta.json，缺失时 RPC 查询):
+| 映射                     | 来源                          | RPC 补齐方式                                          |
+| ------------------------ | ----------------------------- | ----------------------------------------------------- |
+| condition_id → collateral| PositionSplit/Merge 事件      | 事件自带 collateral_token 字段                        |
+| market_id → question_ids | NegRiskQuestionEvent          | eth_getLogs: NRA + topic QUESTION_PREPARE + market_id |
+| question_id → condition  | 计算                          | condition = keccak256(NRA, question_id, 2)            |
+| token_id → (cond, idx)   | TokenRegistered / 计算        | 反推或 subgraph 查询                                  |
+
+补齐用常量:
+  NegRiskAdapter     = 0xd91e80cf2e7be2e162c6513ced06f1dd0da35296
+  QUESTION_PREPARE   = 0xaac410f87d423a922a7b226ac68f0c2eaf5bf6d15e644ac0758c7f96e2c253f7
+
+Collateral 地址 (Polygon):
+  USDC (native)      = 0x3c499c542cef5e3811e1192ce70d8cc03d5c3359
+  USDCe (bridged)    = 0x2791bca1f2de4661ed88a30c99a7a9449aa84174
+  USDT               = 0xc2132d05d31c914a87c6611c10748aeb04b58e8f
+  WrappedUSDCe       = 0x3a3bd7bb9528e159577f7c2e685cc81a765002e2  (NegRisk 专用)
+
+Collateral 枚举:
+  0=Unknown, 1=USDC, 2=USDCe, 3=USDT, 4=WrappedUSDCe
+
+EventType 枚举:
+  0=OrderBuy, 1=OrderSell, 2=Split, 3=Merge, 4=Redeem, 5=Convert
+
+事件格式 (参考 stage2 RawEvent):
 {
   "0xuser1": {
     "12345678": [                    // block_num as key, array of events
       {
-        "tx_hash": "0x...",
-        "log_index": 5,
-        "direction": "in",           // "in" | "out"
-        "kind": "order_buy",         // order_buy, order_sell, split_in, merge_out, ...
-        "token_id": "123...",
-        "amount_raw": "1000000",
-        "counterparty": "0x...",
-        "price": "0.5500000000",     // if order fill
-        "collateral_amount_raw": "550000"
+        "log_index": 5,              // int64, 事件在区块内的位置
+        "type": 0,                   // uint8, EventType 枚举
+        "condition_id": "0x...",     // bytes32, condition 标识
+        "token_idx": 0,              // uint8, outcome index (0=YES, 1=NO, 255=unknown)
+        "collateral": 1,             // uint8, 0=Unknown, 1=USDC, 2=USDCe, 3=USDT, 4=WrappedUSDCe
+        "amount": 1000000,           // int64, 带符号 (流入+, 流出-), 1e6=$1
+        "price": 550000              // int64, price*1e6, 非订单=0
       }
     ]
   }
@@ -336,9 +352,43 @@ Log 设计
 }
 
 --- meta.json ---
-token和condition元数据 (与之前相同)
+token/condition/market 元数据
+
+设计原则:
+  - condition_id 是核心主键，token 只存指向 condition 的引用
+  - 信息不重复: payout/outcome_count 等只存 condition 层
+  - 三个独立 map: tokens, conditions, markets
 
 {
-  "tokens": { ... },
-  "conditions": { ... }
+  "tokens": {
+    "123...": {                        // token_id (uint256 as string)
+      "cond": "0xabc...",              // → condition_id (必有)
+      "idx": 0,                        // outcome_index: 0=YES, 1=NO
+      "price": 550000,                 // 最新价格 * 1e6 (可选, 来自 gamma)
+      "price_src": "gamma"             // 价格来源 (可选)
+    }
+  },
+  "conditions": {
+    "0xabc...": {                       // condition_id (bytes32)
+      "qid": "0xdef...",                // question_id (可选, NegRisk 有)
+      "oc": 2,                          // outcome_count
+      "coll": 2,                        // collateral enum (1=USDC, 2=USDCe, 3=USDT, 4=Wrapped)
+      "resolved": false,                // 是否已结算
+      "payout": [1000000, 0],           // payout_numerators[] (结算后有值)
+      "payout_d": 1000000,              // payout_denominator (结算后有值)
+      "q": "Who will win?",             // market_question (gamma)
+      "slug": "who-will-win",           // market_slug (gamma)
+      "outcomes": ["Yes", "No"]         // market_outcomes (gamma)
+    }
+  },
+  "markets": {
+    "0x111...": {                        // market_id (NegRisk 专用)
+      "qids": ["0xdef...", "0xghi..."]   // question_ids[] → 可计算 condition_ids
+    }
+  }
 }
+
+查找路径:
+  token_id       → tokens[tid].cond → conditions[cond]
+  condition_id   → conditions[cond]
+  market_id      → markets[mid].qids → [getNegRiskConditionId(qid) for qid]

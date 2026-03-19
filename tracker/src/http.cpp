@@ -107,13 +107,14 @@ private:
   }
 
   void proxy_read() {
-    proxy_res_ = {};
+    proxy_parser_.emplace();
+    proxy_parser_->skip(true);  // CONNECT 响应没有 body，跳过 body 解析
     auto &stream = beast::get_lowest_layer(*ssl_stream_);
-    http::async_read(stream, proxy_buf_, proxy_res_,
+    http::async_read(stream, proxy_buf_, *proxy_parser_,
         [self = shared_from_this()](beast::error_code ec, size_t) {
           if (ec) { self->retry(); return; }
           // CONNECT 成功返回 200
-          assert(self->proxy_res_.result() == http::status::ok);
+          assert(self->proxy_parser_->get().result() == http::status::ok);
           self->proxy_buf_.consume(self->proxy_buf_.size());
           self->handshake();
         });
@@ -238,7 +239,7 @@ private:
   beast::flat_buffer buf_;
   // proxy CONNECT
   http::request<http::empty_body> proxy_req_;
-  http::response<http::empty_body> proxy_res_;
+  std::optional<http::response_parser<http::empty_body>> proxy_parser_;
   beast::flat_buffer proxy_buf_;
 };
 

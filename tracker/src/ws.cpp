@@ -100,9 +100,10 @@ private:
     http::write(stream, req);
 
     beast::flat_buffer buf;
-    http::response<http::empty_body> res;
-    http::read(stream, buf, res);
-    assert(res.result() == http::status::ok);
+    http::response_parser<http::empty_body> parser;
+    parser.skip(true);  // CONNECT 响应没有 body，跳过 body 解析
+    http::read(stream, buf, parser);
+    assert(parser.get().result() == http::status::ok);
   }
 
   std::string subscribe(const json &params, const std::string &label) {
