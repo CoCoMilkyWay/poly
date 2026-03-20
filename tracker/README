@@ -167,6 +167,8 @@ SyncThread.run()
 │  │  │  ├─ 输出: user_snapshots[user] = {snapshot_block, positions[]}
 │  │  │  ├─ 注: snapshot_block = validAt.blockNumber, 是 per-user checkpoint, 不是全局统一块高
 │  │  │  ├─ 注: snapshot_block 取第一页 validAt.blockNumber, 后续分页默认视为同一份持仓列表的延续(假设)
+│  │  │  ├─ 注: Alchemy 分页可能不一致 (不同页返回不同 block 的数据), 导致 snapshot 数据错误
+│  │  │  │  └─ 修正: commit_events 检测到 negative position 时, 从链上查询真实 balance 并修正
 │  │  │  └─ 落地: → S (snapshot.json) -- 仅有更新时落地
 │  │  ├─ [b] fetch_snapshot_balances (并发 RPC, 仅 stale_users)
 │  │  │  ├─ API: RPC.eth_call balanceOf(user, USDC/USDCe/USDT/Wrapped)
@@ -233,6 +235,11 @@ SyncThread.run()
 ======================
 apply_block_logs(logs) 流程
 ======================
+核心设计: Position 完全由 Transfer 决定
+  - 所有仓位变化由 TransferSingle/Batch 决定 (唯一来源)
+  - 每个 Transfer 只能被一个语义事件消费 (去重)
+  - 语义事件 (OrderFilled/Split/Merge/Redeem/Convert) 只提供元信息 (价格/类型)
+
 ```
 apply_block_logs(logs)
 ├─ 输入
@@ -241,75 +248,50 @@ apply_block_logs(logs)
 ├─ 前置约束
 │  ├─ assert(parent_collection_id == 0x0)
 │  └─ assert(outcome_count == 2)
-├─ 主循环 for log in logs
-│  ├─ OrderFilled (CTF_EXCHANGE | NEG_RISK_CTF_EXCHANGE)
-│  │  ├─ 解码: maker, taker, maker_asset_id, taker_asset_id, maker_amt, taker_amt, fee
-│  │  ├─ 判断: maker_is_buyer = (maker_asset_id == 0)
-│  │  │  ├─ buyer = maker_is_buyer ? maker : taker
-│  │  │  ├─ seller = maker_is_buyer ? taker : maker
-│  │  │  ├─ token_id = maker_is_buyer ? taker_asset_id : maker_asset_id
-│  │  │  ├─ token_amount = maker_is_buyer ? taker_amt : maker_amt
-│  │  │  └─ collateral_amount = maker_is_buyer ? maker_amt : taker_amt
-│  │  ├─ 补齐: token_id → condition_id from tokens[]
-│  │  ├─ 产出 (双方各一条):
-│  │  │  ├─ emit(buyer, OrderBuy, +token_amount, price=coll*1e6/token_amount)
-│  │  │  └─ emit(seller, OrderSell, -token_amount, price=coll*1e6/token_amount)
-│  │  └─ 更新: user_states[buyer].positions[token_id] += token_amount
-│  │          user_states[seller].positions[token_id] -= token_amount
-│  ├─ PositionSplit (CONDITIONAL_TOKENS)
-│  │  ├─ 解码: stakeholder, condition_id, partition[], amount, collateral_token
-│  │  ├─ 补齐: condition_id → (outcome_count, collateral) from conditions[]
-│  │  │  └─ 缺失时: on-demand query Gamma API
-│  │  ├─ 计算: token_ids[] = [getPositionId(coll, cond, idx) for idx in partition]
-│  │  ├─ 产出 (每个 outcome 一条):
-│  │  │  └─ emit(stakeholder, Split, +amount, price=1e6/outcome_count)
-│  │  └─ 更新: user_states[stakeholder].positions[token_id] += amount (per token)
-│  ├─ PositionsMerge (CONDITIONAL_TOKENS)
-│  │  ├─ 解码: stakeholder, condition_id, partition[], amount, collateral_token
-│  │  ├─ 补齐/计算: 同 Split
-│  │  ├─ 产出 (每个 outcome 一条):
-│  │  │  └─ emit(stakeholder, Merge, -amount, price=1e6/outcome_count)
-│  │  └─ 更新: user_states[stakeholder].positions[token_id] -= amount (per token)
-│  ├─ PayoutRedemption (CONDITIONAL_TOKENS)
-│  │  ├─ 解码: redeemer, condition_id, index_sets[], payout
-│  │  ├─ 补齐: condition_id → (payout_numerators[], payout_denominator) from conditions[]
-│  │  ├─ 计算 holding (事件只有 payout 总额,需反推):
-│  │  │  ├─ winner_idx = argmax(payout_numerators)
-│  │  │  ├─ winner_ratio = numerators[winner_idx] / payout_denominator
-│  │  │  ├─ holding = payout / winner_ratio  (赎回前持有量)
-│  │  │  └─ 注: 只有获胜方有 payout,其他 index_set 的 holding 从当前持仓查
-│  │  ├─ 产出 (每个 index_set 一条):
-│  │  │  ├─ price = numerators[idx] * 1e6 / payout_denominator
-│  │  │  └─ emit(redeemer, Redeem, -holding[idx], price)
-│  │  └─ 更新: user_states[redeemer].positions[token_id] = 0 (清仓)
-│  └─ PositionConvert (NEG_RISK_ADAPTER; 只作为 convert op root)
-│     ├─ 解码: stakeholder, market_id, index_set, amount
-│     ├─ 补齐: market_id → question_ids[] → condition_ids[]
-│     │  └─ 缺失时: Gamma /markets?question_ids= + /events?slug=
-│     ├─ 不直接 emit 单条 Convert
-│     ├─ 同 tx 查找相关 TransferSingle/TransferBatch 仓位腿
-│     │  ├─ burn 腿: stakeholder/adapter -> burn_address 的旧 token
-│     │  ├─ mint/transfer 腿: 0x0/adapter -> stakeholder 或 vault 的新 token
-│     │  └─ 每条腿映射到 (condition_id, token_idx, signed_amount)
-│     ├─ 以 PositionConvert raw log 作为 op_key, 对展开后的每条仓位腿分配 leg_index
-│     ├─ 产出: emit(stakeholder, Convert, signed_amount, price=0)
-│     └─ 更新: user_states[stakeholder].positions += signed_amount (per token)
-├─ 映射补齐 (on-demand, 遇到未知映射时触发, 统一用 Gamma)
+├─ 按 tx 分组: txs = build_tx_contexts(logs)
+├─ 主循环 for tx in txs
+│  ├─ 预解析 transfers[]: {log_index, from, to, token_id, amount}
+│  ├─ 初始化 matched_indices: set<size_t> (追踪已消费的 transfer)
+│  ├─ 遍历 tx.raw_logs (按 log_index 顺序)
+│  │  ├─ OrderFilled (CTF_EXCHANGE | NEG_RISK_CTF_EXCHANGE)
+│  │  │  ├─ 解码: buyer, seller, token_id, price
+│  │  │  ├─ 匹配: 找 transfers 里未消费的 t (token_id 匹配 && from==seller)
+│  │  │  ├─ 消费: matched_indices.insert(t.log_index)
+│  │  │  └─ 产出 (仅匹配成功):
+│  │  │     ├─ if t.from == seller && user_set.contains(seller):
+│  │  │     │     emit(seller, OrderSell, -t.amount, price)
+│  │  │     └─ if t.to == buyer && user_set.contains(buyer):
+│  │  │          emit(buyer, OrderBuy, +t.amount, price)
+│  │  ├─ PositionSplit (CONDITIONAL_TOKENS)
+│  │  │  ├─ 解码: stakeholder, condition_id, partition[], collateral
+│  │  │  ├─ 匹配: 找 transfers 里 from==0x0 && to==stakeholder 的 mint
+│  │  │  ├─ 消费: matched_indices.insert(t.log_index)
+│  │  │  └─ 产出: emit(stakeholder, Split, +t.amount, price=1e6/oc)
+│  │  ├─ PositionsMerge (CONDITIONAL_TOKENS)
+│  │  │  ├─ 解码: stakeholder, condition_id, partition[], collateral
+│  │  │  ├─ 匹配: 找 transfers 里 from==stakeholder && to==0x0 的 burn
+│  │  │  ├─ 消费: matched_indices.insert(t.log_index)
+│  │  │  └─ 产出: emit(stakeholder, Merge, -t.amount, price=1e6/oc)
+│  │  ├─ PayoutRedemption (CONDITIONAL_TOKENS)
+│  │  │  ├─ 解码: redeemer, condition_id, index_sets[], payout
+│  │  │  ├─ 匹配: 找 transfers 里 from==redeemer && to==0x0 的 burn
+│  │  │  ├─ 消费: matched_indices.insert(t.log_index)
+│  │  │  └─ 产出: emit(redeemer, Redeem, -t.amount, price)
+│  │  └─ PositionConvert (NEG_RISK_ADAPTER)
+│  │     ├─ 解码: stakeholder, market_id
+│  │     ├─ 匹配: 找 stakeholder 相关的 transfers (mint/burn)
+│  │     ├─ 消费: matched_indices.insert(t.log_index)
+│  │     └─ 产出: emit(stakeholder, Convert, ±t.amount, price=0)
+├─ 映射补齐 (on-demand, 统一用 Gamma)
 │  ├─ token_id 未知 → Gamma /markets?clob_token_ids=
-│  │  └─ 返回: conditionId, clobTokenIds[], question, outcomes
-│  │  └─ 从 clobTokenIds 数组位置推断 idx
 │  ├─ condition_id 未知 → Gamma /markets?condition_ids=
-│  │  └─ 返回: clobTokenIds[], question, outcomes
 │  └─ market_id 未知 → Gamma /markets?question_ids= + /events?slug=
-│     └─ 步骤: market_id+"00" → question_id → slug → all markets
 └─ 输出
    ├─ history_root[user][block_key].push(event) 增量
-   ├─ user_states[user].positions 实时更新 (raw,不过滤)
+   ├─ user_states[user].positions 实时更新
    ├─ token_holders[token] 增量维护
-   ├─ dirty_conditions: 本次变更价格/结算/补齐过的 condition
-   ├─ dirty_users: 事件用户 ∪ holders(dirty_conditions)
-   ├─ refresh_users(dirty_users) → user_views + aggregate_tokens 增量更新
-   └─ tokens[]/conditions[] 映射可能被补齐 (条件已 updated=1 则跳过)
+   ├─ dirty_users → refresh_users() → user_views + aggregate_tokens 增量更新
+   └─ tokens[]/conditions[] 映射可能被补齐
 ```
 
 --- snapshot.json ---
@@ -353,14 +335,15 @@ TransferSingle/TransferBatch 不作为独立事件类型暴露,但会参与 orde
 | PayoutRedemption | 0x4d97dcd97ec945f40cf65f87097ace5ea0476045 (CTF)  | 0x2682012a4a4f1973119f1c9b90745d1bd91fa2bab387344f044cb3586864d18d | topics[1]    |
 | PositionConvert  | 0xd91e80cf2e7be2e162c6513ced06f1dd0da35296 (NRA)  | 0xb03d19dddbc72a87e735ff0ea3b57bef133ebe44e1894284916a84044deb367e | topics[1]    |
 
-事件字段与缺失信息补齐:
-| 事件             | 原始字段                                                     | 缺失        | 补齐方式                                                    |
-| ---------------- | ------------------------------------------------------------ | ----------- | ----------------------------------------------------------- |
-| OrderFilled      | maker, taker, token_id, token_amount, collateral_amount, fee | -           | 完整,无需补齐                                              |
-| PositionSplit    | stakeholder, condition_id, partition[], amount, collateral   | token_id    | token_id = getPositionId(collateral, condition, idx)        |
-| PositionsMerge   | stakeholder, condition_id, partition[], amount, collateral   | token_id    | token_id = getPositionId(collateral, condition, idx)        |
-| PayoutRedemption | redeemer, condition_id, index_sets[], payout                 | token_id    | token_id = getPositionId(collateral, condition, idx)        |
-| PositionConvert  | stakeholder, market_id, index_set, amount                    | 仓位腿      | 不直接写 history; 结合同 tx Transfer 展开为多个 Convert leg |
+事件字段与 Position 来源:
+| 事件             | 语义字段                                                     | Position 来源                                               |
+| ---------------- | ------------------------------------------------------------ | ----------------------------------------------------------- |
+| OrderFilled      | maker, taker, token_id, token_amount, collateral_amount, fee | Transfer (from=seller) 的 amount                            |
+| PositionSplit    | stakeholder, condition_id, partition[], amount, collateral   | Transfer (from=0x0, to=stakeholder) 的 amount               |
+| PositionsMerge   | stakeholder, condition_id, partition[], amount, collateral   | Transfer (from=stakeholder, to=0x0) 的 amount               |
+| PayoutRedemption | redeemer, condition_id, index_sets[], payout                 | Transfer (from=redeemer, to=0x0) 的 amount                  |
+| PositionConvert  | stakeholder, market_id, index_set, amount                    | Transfer (stakeholder 相关 mint/burn) 的 amount             |
+| (核心原则)       | -                                                            | 每个 TransferLeg 只能被一个语义事件消费 (matched_indices)   |
 
 映射补齐 (存入 meta.json,缺失时点查):
 | 映射                     | 来源                          | 补齐方式                                                                              |

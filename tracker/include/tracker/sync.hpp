@@ -10,6 +10,27 @@
 
 namespace tracker {
 
+// TransferSingle/Batch 解析后的 token 转移 (Transfer 驱动设计)
+struct TransferLeg {
+  int64_t log_index = 0;
+  std::string from;
+  std::string to;
+  std::string token_id;
+  BigInt amount = 0;
+};
+
+// 待提交事件 (apply_* 产出 → commit_events 消费)
+struct PendingEmit {
+  std::string user;
+  std::string token_id;
+  std::string condition_id;
+  uint8_t token_idx = 0xFF;
+  uint8_t collateral = 0;
+  EventType type = EventType::OrderBuy;
+  int64_t amount = 0;
+  int64_t price = 0;
+};
+
 // ============================================================================
 // SyncThread - 核心同步线程 (状态持有者)
 // ============================================================================
@@ -42,7 +63,7 @@ private:
   void clear_derived_state();
   void rebuild_derived_state();
   void refresh_users(const std::unordered_set<std::string> &users);
-  ConditionMeta &prepare_condition(const std::string &condition_id, Collateral hint_collateral, std::unordered_set<std::string> &dirty_conditions);
+  ConditionMeta &prepare_condition(const std::string &condition_id, Collateral hint_collateral);
   void remove_user_aggregate(const std::string &user);
   void add_user_aggregate(const std::string &user);
   void rebuild_user_view(const std::string &user);
@@ -61,12 +82,17 @@ private:
   void ensure_market_questions(const std::string &market_id);
   void backfill_range(uint64_t from_block, uint64_t to_block);
   void apply_block_logs(const std::vector<json> &logs, const std::string &source);
-  void apply_condition_resolution(const json &log, std::unordered_set<std::string> &dirty_conditions);
-  void apply_order_fill(const json &log, std::unordered_set<std::string> &dirty_users, std::unordered_set<std::string> &dirty_conditions);
-  void apply_split_or_merge(const json &log, bool is_split, std::unordered_set<std::string> &dirty_users, std::unordered_set<std::string> &dirty_conditions);
-  void apply_redeem(const json &log, std::unordered_set<std::string> &dirty_users, std::unordered_set<std::string> &dirty_conditions);
-  void apply_convert(const json &log, const std::vector<json> &tx_logs, std::unordered_set<std::string> &dirty_users, std::unordered_set<std::string> &dirty_conditions);
+  // apply_* 系列: 处理各类事件, 更新 dirty_users_/dirty_conds_
+  // matched_indices: 追踪已消费的 TransferLeg (防止重复匹配)
+  void apply_condition_resolution(const json &log);
+  void apply_order_fill(const json &log, const std::vector<TransferLeg> &transfers, std::unordered_set<int64_t> &matched_indices);
+  void apply_split_or_merge(const json &log, bool is_split, const std::vector<TransferLeg> &transfers, std::unordered_set<int64_t> &matched_indices);
+  void apply_redeem(const json &log, const std::vector<TransferLeg> &transfers, std::unordered_set<int64_t> &matched_indices);
+  void apply_convert(const json &log, const std::vector<TransferLeg> &transfers, std::unordered_set<int64_t> &matched_indices);
+  // commit_events: 提交 PendingEmit 列表, 更新仓位/历史/dirty_users_
+  void commit_events(const json &log, const std::vector<PendingEmit> &events);
   bool user_visible_at(const std::string &user, uint64_t block_number) const;
+  BigInt query_balance_at_block(const std::string &user, const std::string &token_id, uint64_t block_number);
   uint64_t rpc_block_number();
   json rpc_call(const std::string &method, const json &params);
   json rpc_batch(const std::vector<json> &reqs);
@@ -80,6 +106,9 @@ private:
   std::vector<std::string> stale_users_; // 需要从 snapshot API 抓取 snapshot 的用户
   std::atomic<bool> resync_flag_{false};
   uint64_t current_session_id_ = 0;
+  // apply_block_logs 期间使用的临时状态
+  std::unordered_set<std::string> dirty_users_;
+  std::unordered_set<std::string> dirty_conds_;
 };
 
 } // namespace tracker

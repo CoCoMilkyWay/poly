@@ -8,7 +8,6 @@
 
 #include <chrono>
 #include <cmath>
-#include <functional>
 #include <map>
 #include <optional>
 #include <set>
@@ -214,30 +213,11 @@ json snapshot_data_with_retry(RuntimeState &state, const std::string &detail,
   }
 }
 
-struct TransferLeg {
-  int64_t log_index = 0;
-  std::string from;
-  std::string to;
-  std::string token_id;
-  BigInt amount = 0;
-};
-
 struct TxContext {
   uint64_t block_number = 0;
   uint64_t transaction_index = 0;
   std::string tx_hash;
   std::vector<json> raw_logs;
-};
-
-struct PendingEmit {
-  std::string user;
-  std::string token_id;
-  std::string condition_id;
-  uint8_t token_idx = 0xFF;
-  uint8_t collateral = 0;
-  EventType type = EventType::OrderBuy;
-  int64_t amount = 0;
-  int64_t price = 0;
 };
 
 struct SnapshotFetch {
@@ -431,64 +411,87 @@ std::string op_key_from_log(const json &log) {
          "|" + norm_hex(log.at("address").get<std::string>());
 }
 
-void commit_pending_events(RuntimeState &state,
-                           const json &root_log,
-                           const std::vector<PendingEmit> &events,
-                           size_t recent_limit,
-                           const std::function<bool(const std::string &, uint64_t)>
-                               &visible_at,
-                           std::unordered_set<std::string> &dirty_users) {
+} // namespace
+
+SyncThread::SyncThread(const AppConfig &cfg,
+                       AppState &shared,
+                       EventQueue &queue,
+                       WsThread &ws)
+    : cfg_(cfg), shared_(shared), queue_(queue), ws_(ws) {
+  resync_flag_ = true;
+}
+
+void SyncThread::request_resync() {
+  resync_flag_ = true;
+}
+
+void SyncThread::commit_events(const json &log,
+                               const std::vector<PendingEmit> &events) {
+  if (events.empty())
+    return;
   const uint64_t block_number =
-      hex_to_u64(root_log.at("blockNumber").get<std::string>());
+      hex_to_u64(log.at("blockNumber").get<std::string>());
   const int64_t log_index =
-      static_cast<int64_t>(hex_to_u64(root_log.at("logIndex").get<std::string>()));
-  const std::string op_key = op_key_from_log(root_log);
+      static_cast<int64_t>(hex_to_u64(log.at("logIndex").get<std::string>()));
+  const std::string op_key = op_key_from_log(log);
 
   std::map<std::string, int64_t> next_leg;
   for (const auto &event : events) {
-    if (!visible_at(event.user, block_number)) {
+    if (!user_visible_at(event.user, block_number)) {
       continue;
     }
-
     int64_t leg_index = next_leg[event.user]++;
     std::string event_id =
         op_key + "|" + event.user + "|" + std::to_string(leg_index);
-    if (!state.history_event_ids.insert(event_id).second) {
+    if (!rt_.history_event_ids.insert(event_id).second) {
       continue;
     }
 
     BigInt delta = bigint_from_dec(std::to_string(event.amount));
-    UserLiveState &user_state = state.user_states.at(event.user);
+    UserLiveState &user_state = rt_.user_states.at(event.user);
     if (delta >= 0) {
       user_state.positions[event.token_id] += delta;
-      state.token_holders[event.token_id].insert(event.user);
+      rt_.token_holders[event.token_id].insert(event.user);
     } else {
       BigInt current = 0;
-      auto current_it = user_state.positions.find(event.token_id);
-      if (current_it != user_state.positions.end()) {
-        current = current_it->second;
-      }
+      auto it = user_state.positions.find(event.token_id);
+      if (it != user_state.positions.end())
+        current = it->second;
       if (current < -delta) {
-        sync_logger().warn("negative position user=" + event.user +
-                           " token_id=" + event.token_id +
-                           " current=" + bigint_to_str(current) +
-                           " delta=" + std::to_string(event.amount));
+        // Snapshot 可能不一致 (Alchemy 分页问题)，从链上查询真实 balance
+        uint64_t snapshot_block = rt_.user_snapshots.at(event.user).snapshot_block;
+        BigInt real_balance = query_balance_at_block(event.user, event.token_id, snapshot_block);
+        if (real_balance != current) {
+          sync_logger().info("snapshot mismatch corrected user=" + event.user +
+                             " token=" + event.token_id +
+                             " snapshot=" + bigint_to_str(current) +
+                             " real=" + bigint_to_str(real_balance));
+          current = real_balance;
+          user_state.positions[event.token_id] = current;
+        }
+        // 修正后仍然 negative，说明是真正的数据问题
+        if (current < -delta) {
+          sync_logger().warn("negative position user=" + event.user +
+                             " token_id=" + event.token_id +
+                             " current=" + bigint_to_str(current) +
+                             " delta=" + std::to_string(event.amount));
+        }
       }
       BigInt next = current + delta;
       if (next == 0) {
         user_state.positions.erase(event.token_id);
-        auto holder_it = state.token_holders.find(event.token_id);
-        assert(holder_it != state.token_holders.end());
+        auto holder_it = rt_.token_holders.find(event.token_id);
+        assert(holder_it != rt_.token_holders.end());
         holder_it->second.erase(event.user);
         if (holder_it->second.empty()) {
-          state.token_holders.erase(holder_it);
+          rt_.token_holders.erase(holder_it);
         }
       } else {
         user_state.positions[event.token_id] = next;
-        state.token_holders[event.token_id].insert(event.user);
+        rt_.token_holders[event.token_id].insert(event.user);
       }
     }
-    dirty_users.insert(event.user);
+    dirty_users_.insert(event.user);
 
     json row = {
         {"event_id", event_id},
@@ -502,31 +505,16 @@ void commit_pending_events(RuntimeState &state,
         {"amount", event.amount},
         {"price", event.price},
     };
-    json &bucket = state.history_root[event.user][block_key(block_number)];
-    if (!bucket.is_array()) {
+    json &bucket = rt_.history_root[event.user][block_key(block_number)];
+    if (!bucket.is_array())
       bucket = json::array();
-    }
     bucket.push_back(row);
 
     json recent = row;
     recent["user"] = event.user;
     recent["block_number"] = block_number;
-    push_recent_event(state, std::move(recent), recent_limit);
+    push_recent_event(rt_, std::move(recent), cfg_.recent_event_limit);
   }
-}
-
-} // namespace
-
-SyncThread::SyncThread(const AppConfig &cfg,
-                       AppState &shared,
-                       EventQueue &queue,
-                       WsThread &ws)
-    : cfg_(cfg), shared_(shared), queue_(queue), ws_(ws) {
-  resync_flag_ = true;
-}
-
-void SyncThread::request_resync() {
-  resync_flag_ = true;
 }
 
 void SyncThread::run() {
@@ -796,14 +784,11 @@ void SyncThread::clear_derived_state() {
 }
 
 ConditionMeta &SyncThread::prepare_condition(
-    const std::string &condition_id,
-    Collateral hint_collateral,
-    std::unordered_set<std::string> &dirty_conditions) {
-  bool fetched_condition_meta = ensure_condition_meta(condition_id, hint_collateral);
+    const std::string &condition_id, Collateral hint_collateral) {
+  bool fetched = ensure_condition_meta(condition_id, hint_collateral);
   ConditionMeta &condition = rt_.conditions.at(condition_id);
-  if (fetched_condition_meta) {
-    dirty_conditions.insert(condition_id);
-  }
+  if (fetched)
+    dirty_conds_.insert(condition_id);
   if (condition.coll == 0 && hint_collateral != Collateral::Unknown) {
     condition.coll = to_u8(hint_collateral);
   }
@@ -1955,47 +1940,64 @@ void SyncThread::apply_block_logs(const std::vector<json> &logs, const std::stri
         << ",\"idx\":\"" << log.at("logIndex").get<std::string>() << "\""
         << ",\"addr\":\"" << log.at("address").get<std::string>() << "\""
         << ",\"t0\":\"" << topics.at(0).get<std::string>() << "\"";
-    if (topics.size() > 1) oss << ",\"t1\":\"" << topics.at(1).get<std::string>() << "\"";
-    if (topics.size() > 2) oss << ",\"t2\":\"" << topics.at(2).get<std::string>() << "\"";
-    if (topics.size() > 3) oss << ",\"t3\":\"" << topics.at(3).get<std::string>() << "\"";
+    if (topics.size() > 1)
+      oss << ",\"t1\":\"" << topics.at(1).get<std::string>() << "\"";
+    if (topics.size() > 2)
+      oss << ",\"t2\":\"" << topics.at(2).get<std::string>() << "\"";
+    if (topics.size() > 3)
+      oss << ",\"t3\":\"" << topics.at(3).get<std::string>() << "\"";
     oss << ",\"data\":\"" << log.at("data").get<std::string>() << "\"}";
     event_logger().info(oss.str());
   }
 
   auto txs = build_tx_contexts(logs);
-  std::unordered_set<std::string> dirty_users;
-  std::unordered_set<std::string> dirty_conditions;
+  dirty_users_.clear();
+  dirty_conds_.clear();
   for (const auto &tx : txs) {
+    // 预解析 tx 的 TransferSingle/Batch (Transfer 驱动设计)
+    std::vector<TransferLeg> transfers;
+    for (const auto &tx_log : tx.raw_logs) {
+      const std::string addr = norm_hex(tx_log.at("address").get<std::string>());
+      if (addr != kConditionalTokens)
+        continue;
+      const std::string t0 = norm_hex(tx_log.at("topics").at(0).get<std::string>());
+      if (t0 == kTransferSingleTopic) {
+        transfers.push_back(parse_transfer_single(tx_log));
+      } else if (t0 == kTransferBatchTopic) {
+        auto batch = parse_transfer_batch(tx_log);
+        transfers.insert(transfers.end(), batch.begin(), batch.end());
+      }
+    }
+    // matched_indices: 追踪已消费的 TransferLeg (每个 Transfer 只能被消费一次)
+    std::unordered_set<int64_t> matched_indices;
     for (const auto &log : tx.raw_logs) {
       const std::string address = norm_hex(log.at("address").get<std::string>());
       const std::string topic0 =
           norm_hex(log.at("topics").at(0).get<std::string>());
       if (address == kConditionalTokens && topic0 == kConditionResolveTopic) {
-        apply_condition_resolution(log, dirty_conditions);
+        apply_condition_resolution(log);
       } else if (address == kConditionalTokens && topic0 == kPositionSplitTopic) {
-        apply_split_or_merge(log, true, dirty_users, dirty_conditions);
+        apply_split_or_merge(log, true, transfers, matched_indices);
       } else if (address == kConditionalTokens && topic0 == kPositionMergeTopic) {
-        apply_split_or_merge(log, false, dirty_users, dirty_conditions);
+        apply_split_or_merge(log, false, transfers, matched_indices);
       } else if (address == kConditionalTokens && topic0 == kPositionRedeemTopic) {
-        apply_redeem(log, dirty_users, dirty_conditions);
+        apply_redeem(log, transfers, matched_indices);
       } else if ((address == kCtfExchange || address == kNegRiskCtfExchange) &&
                  topic0 == kOrderFillTopic) {
-        apply_order_fill(log, dirty_users, dirty_conditions);
+        apply_order_fill(log, transfers, matched_indices);
       } else if (address == kNegRiskAdapter && topic0 == kPositionConvertTopic) {
-        apply_convert(log, tx.raw_logs, dirty_users, dirty_conditions);
+        apply_convert(log, transfers, matched_indices);
       }
     }
   }
-  for (const auto &condition_id : dirty_conditions) {
-    auto holders = collect_condition_users(condition_id);
-    dirty_users.insert(holders.begin(), holders.end());
+  for (const auto &cond_id : dirty_conds_) {
+    auto holders = collect_condition_users(cond_id);
+    dirty_users_.insert(holders.begin(), holders.end());
   }
-  refresh_users(dirty_users);
+  refresh_users(dirty_users_);
 }
 
-void SyncThread::apply_condition_resolution(
-    const json &log,
-    std::unordered_set<std::string> &dirty_conditions) {
+void SyncThread::apply_condition_resolution(const json &log) {
   const json &topics = log.at("topics");
   const std::string data = log.at("data").get<std::string>();
   const std::string condition_id = norm_b32(topics.at(1).get<std::string>());
@@ -2014,18 +2016,16 @@ void SyncThread::apply_condition_resolution(
   condition.has_payout_d = true;
   merge_condition(rt_.conditions[condition_id], condition);
   apply_resolved_prices(rt_, condition_id);
-  dirty_conditions.insert(condition_id);
+  dirty_conds_.insert(condition_id);
 }
 
 void SyncThread::apply_order_fill(const json &log,
-                                  std::unordered_set<std::string> &dirty_users,
-                                  std::unordered_set<std::string> &dirty_conditions) {
+                                  const std::vector<TransferLeg> &transfers,
+                                  std::unordered_set<int64_t> &matched_indices) {
   const json &topics = log.at("topics");
   const std::string data = log.at("data").get<std::string>();
   BigInt maker_asset_id = extract_u256(data, 0);
   BigInt taker_asset_id = extract_u256(data, 1);
-  BigInt maker_amount = extract_u256(data, 2);
-  BigInt taker_amount = extract_u256(data, 3);
   assert((maker_asset_id == 0) ^ (taker_asset_id == 0));
 
   const std::string maker = topic_to_addr(topics.at(2).get<std::string>());
@@ -2034,44 +2034,45 @@ void SyncThread::apply_order_fill(const json &log,
   const std::string seller = maker_asset_id == 0 ? taker : maker;
   const std::string token_id =
       bigint_to_str(maker_asset_id == 0 ? taker_asset_id : maker_asset_id);
-  const BigInt token_amount = maker_asset_id == 0 ? taker_amount : maker_amount;
   const BigInt collateral_amount =
-      maker_asset_id == 0 ? maker_amount : taker_amount;
+      maker_asset_id == 0 ? extract_u256(data, 2) : extract_u256(data, 3);
+  const BigInt order_token_amount =
+      maker_asset_id == 0 ? extract_u256(data, 3) : extract_u256(data, 2);
 
   bool fetched_token_meta = ensure_token_meta(token_id);
   auto token_it = rt_.tokens.find(token_id);
   if (token_it == rt_.tokens.end() || token_it->second.cond.empty() ||
       token_it->second.cond == "?") {
-    // 静默跳过 Gamma 中找不到的 token (已在 ensure_token_meta 中记录警告)
     if (token_it == rt_.tokens.end() || token_it->second.cond != "?") {
       sync_logger().warn("apply_order_filled skip incomplete token_id=" + token_id);
     }
     return;
   }
   const std::string &cond_id = token_it->second.cond;
-  ConditionMeta &condition =
-      prepare_condition(cond_id, Collateral::Unknown, dirty_conditions);
-  if (fetched_token_meta) {
-    dirty_conditions.insert(cond_id);
-  }
+  ConditionMeta &condition = prepare_condition(cond_id, Collateral::Unknown);
+  if (fetched_token_meta)
+    dirty_conds_.insert(cond_id);
   uint8_t token_idx = get_token_idx(rt_.conditions, cond_id, token_id);
   if (condition.coll == 0) {
     condition.coll = to_u8(infer_collateral_from_token(cond_id, token_idx, token_id));
   }
 
-  std::vector<PendingEmit> events;
-  if (rt_.user_set.contains(buyer)) {
-    events.push_back({
-        .user = buyer,
-        .token_id = token_id,
-        .condition_id = cond_id,
-        .token_idx = token_idx,
-        .collateral = condition.coll,
-        .type = EventType::OrderBuy,
-        .amount = bigint_to_i64(token_amount),
-        .price = scaled_price(collateral_amount, token_amount),
-    });
+  // Transfer 驱动: 找到未消费的 transfer (from=seller 且 token_id 匹配)
+  const TransferLeg *matched = nullptr;
+  for (const auto &t : transfers) {
+    if (matched_indices.contains(t.log_index))
+      continue; // 已被消费
+    if (t.token_id == token_id && t.from == seller) {
+      matched = &t;
+      break;
+    }
   }
+  if (!matched)
+    return; // 没有匹配的 transfer
+  matched_indices.insert(matched->log_index);
+
+  // Position 变化由 Transfer 决定
+  std::vector<PendingEmit> events;
   if (rt_.user_set.contains(seller)) {
     events.push_back({
         .user = seller,
@@ -2080,57 +2081,69 @@ void SyncThread::apply_order_fill(const json &log,
         .token_idx = token_idx,
         .collateral = condition.coll,
         .type = EventType::OrderSell,
-        .amount = -bigint_to_i64(token_amount),
-        .price = scaled_price(collateral_amount, token_amount),
+        .amount = -bigint_to_i64(matched->amount),
+        .price = scaled_price(collateral_amount, order_token_amount),
     });
   }
-
-  commit_pending_events(
-      rt_, log, events, cfg_.recent_event_limit,
-      [this](const std::string &user, uint64_t block_number) {
-        return user_visible_at(user, block_number);
-      },
-      dirty_users);
+  if (rt_.user_set.contains(buyer) && matched->to == buyer) {
+    events.push_back({
+        .user = buyer,
+        .token_id = token_id,
+        .condition_id = cond_id,
+        .token_idx = token_idx,
+        .collateral = condition.coll,
+        .type = EventType::OrderBuy,
+        .amount = bigint_to_i64(matched->amount),
+        .price = scaled_price(collateral_amount, order_token_amount),
+    });
+  }
+  commit_events(log, events);
 }
 
-void SyncThread::apply_split_or_merge(const json &log,
-                                      bool is_split,
-                                      std::unordered_set<std::string> &dirty_users,
-                                      std::unordered_set<std::string> &dirty_conditions) {
+void SyncThread::apply_split_or_merge(const json &log, bool is_split,
+                                      const std::vector<TransferLeg> &transfers,
+                                      std::unordered_set<int64_t> &matched_indices) {
   const json &topics = log.at("topics");
   const std::string data = log.at("data").get<std::string>();
   const std::string stakeholder = topic_to_addr(topics.at(1).get<std::string>());
-  const std::string parent_collection_id =
-      norm_b32(topics.at(2).get<std::string>());
+  const std::string parent_coll_id = norm_b32(topics.at(2).get<std::string>());
   const std::string condition_id = norm_b32(topics.at(3).get<std::string>());
-  // 跳过非直接仓位 (NegRisk 等多层 collection)
-  if (parent_collection_id != zero_b32()) {
-    return;
-  }
+  if (parent_coll_id != zero_b32())
+    return; // 跳过非直接仓位
 
   const std::string collateral_token = extract_addr_from_word(data, 0);
   Collateral collateral = collateral_from_addr(collateral_token);
   assert(collateral != Collateral::Unknown);
-  ConditionMeta &condition =
-      prepare_condition(condition_id, collateral, dirty_conditions);
+  ConditionMeta &condition = prepare_condition(condition_id, collateral);
   assert(condition.oc == 2);
 
-  std::vector<BigInt> partition = extract_u256_array(data, extract_u256(data, 1));
-  BigInt amount = extract_u256(data, 2);
-  int64_t signed_amount = is_split ? bigint_to_i64(amount) : -bigint_to_i64(amount);
-
+  // Transfer 驱动: 从 transfers 中找到匹配的 mint/burn
+  // Split: from=0x0, to=stakeholder (mint)
+  // Merge: from=stakeholder, to=0x0 (burn)
   std::vector<PendingEmit> events;
-  for (const auto &entry : partition) {
-    uint8_t token_idx = index_set_to_token_idx(entry);
-    assert(token_idx < condition.oc);
-    std::string token_id =
-        condition_token_id(condition_id, collateral_token, token_idx);
-    bind_condition_token(rt_, condition, condition_id, token_idx, token_id);
+  for (const auto &t : transfers) {
+    if (matched_indices.contains(t.log_index))
+      continue;
+    bool is_match = is_split ? (t.from == kZeroAddress && t.to == stakeholder)
+                             : (t.from == stakeholder && t.to == kZeroAddress);
+    if (!is_match)
+      continue;
+
+    // 确保 token 属于该 condition
+    ensure_token_meta(t.token_id);
+    auto token_it = rt_.tokens.find(t.token_id);
+    if (token_it == rt_.tokens.end() || token_it->second.cond != condition_id)
+      continue;
+
+    matched_indices.insert(t.log_index);
+    uint8_t token_idx = get_token_idx(rt_.conditions, condition_id, t.token_id);
+    bind_condition_token(rt_, condition, condition_id, token_idx, t.token_id);
 
     if (rt_.user_set.contains(stakeholder)) {
+      int64_t signed_amount = is_split ? bigint_to_i64(t.amount) : -bigint_to_i64(t.amount);
       events.push_back({
           .user = stakeholder,
-          .token_id = token_id,
+          .token_id = t.token_id,
           .condition_id = condition_id,
           .token_idx = token_idx,
           .collateral = condition.coll,
@@ -2140,91 +2153,65 @@ void SyncThread::apply_split_or_merge(const json &log,
       });
     }
   }
-
-  commit_pending_events(
-      rt_, log, events, cfg_.recent_event_limit,
-      [this](const std::string &user, uint64_t block_number) {
-        return user_visible_at(user, block_number);
-      },
-      dirty_users);
+  commit_events(log, events);
 }
 
 void SyncThread::apply_redeem(const json &log,
-                              std::unordered_set<std::string> &dirty_users,
-                              std::unordered_set<std::string> &dirty_conditions) {
+                              const std::vector<TransferLeg> &transfers,
+                              std::unordered_set<int64_t> &matched_indices) {
   const json &topics = log.at("topics");
   const std::string data = log.at("data").get<std::string>();
   const std::string redeemer = topic_to_addr(topics.at(1).get<std::string>());
   const std::string collateral_token = topic_to_addr(topics.at(2).get<std::string>());
   const std::string condition_id = norm_b32(topics.at(3).get<std::string>());
-  const std::string parent_collection_id = extract_b32_from_word(data, 0);
-  // 跳过非直接仓位 (NegRisk 等多层 collection)
-  if (parent_collection_id != zero_b32()) {
-    return;
-  }
+  const std::string parent_coll_id = extract_b32_from_word(data, 0);
+  if (parent_coll_id != zero_b32())
+    return; // 跳过非直接仓位
 
   Collateral collateral = collateral_from_addr(collateral_token);
   assert(collateral != Collateral::Unknown);
-  ConditionMeta &condition =
-      prepare_condition(condition_id, collateral, dirty_conditions);
+  ConditionMeta &condition = prepare_condition(condition_id, collateral);
   assert(condition.oc == 2);
   assert(condition.has_payout_d);
   assert(condition.payout.size() == condition.oc);
 
-  std::vector<BigInt> index_sets =
-      extract_u256_array(data, extract_u256(data, 1));
-  BigInt payout = extract_u256(data, 2);
-
-  uint8_t winner_idx = 0;
-  for (size_t i = 1; i < condition.payout.size(); ++i) {
-    if (condition.payout[i] > condition.payout[winner_idx]) {
-      winner_idx = static_cast<uint8_t>(i);
-    }
-  }
-  assert(condition.payout[winner_idx] > 0);
-  BigInt winner_holding =
-      (payout * condition.payout_d) / condition.payout[winner_idx];
-
+  // Transfer 驱动: 从 transfers 中找到 burn (from=redeemer, to=0x0)
   std::vector<PendingEmit> events;
-  for (const auto &index_set : index_sets) {
-    uint8_t token_idx = index_set_to_token_idx(index_set);
-    assert(token_idx < condition.oc);
-    std::string token_id =
-        condition_token_id(condition_id, collateral_token, token_idx);
-    bind_condition_token(rt_, condition, condition_id, token_idx, token_id);
+  for (const auto &t : transfers) {
+    if (matched_indices.contains(t.log_index))
+      continue;
+    if (t.from != redeemer || t.to != kZeroAddress)
+      continue;
 
-    BigInt holding = 0;
-    if (token_idx == winner_idx) {
-      holding = winner_holding;
-    } else if (rt_.user_states.contains(redeemer) &&
-               rt_.user_states.at(redeemer).positions.contains(token_id)) {
-      holding = rt_.user_states.at(redeemer).positions.at(token_id);
+    // 确保 token 属于该 condition
+    ensure_token_meta(t.token_id);
+    auto token_it = rt_.tokens.find(t.token_id);
+    if (token_it == rt_.tokens.end() || token_it->second.cond != condition_id)
+      continue;
+
+    matched_indices.insert(t.log_index);
+    uint8_t token_idx = get_token_idx(rt_.conditions, condition_id, t.token_id);
+    bind_condition_token(rt_, condition, condition_id, token_idx, t.token_id);
+
+    if (rt_.user_set.contains(redeemer)) {
+      events.push_back({
+          .user = redeemer,
+          .token_id = t.token_id,
+          .condition_id = condition_id,
+          .token_idx = token_idx,
+          .collateral = condition.coll,
+          .type = EventType::Redeem,
+          .amount = -bigint_to_i64(t.amount),
+          .price = scaled_price(condition.payout[token_idx], condition.payout_d),
+      });
     }
-
-    events.push_back({
-        .user = redeemer,
-        .token_id = token_id,
-        .condition_id = condition_id,
-        .token_idx = token_idx,
-        .collateral = condition.coll,
-        .type = EventType::Redeem,
-        .amount = -bigint_to_i64(holding),
-        .price = scaled_price(condition.payout[token_idx], condition.payout_d),
-    });
   }
-
-  commit_pending_events(
-      rt_, log, events, cfg_.recent_event_limit,
-      [this](const std::string &user, uint64_t block_number) {
-        return user_visible_at(user, block_number);
-      },
-      dirty_users);
+  commit_events(log, events);
 }
 
 void SyncThread::apply_convert(const json &log,
-                               const std::vector<json> &tx_logs,
-                               std::unordered_set<std::string> &dirty_users,
-                               std::unordered_set<std::string> &dirty_conditions) {
+                               const std::vector<TransferLeg> &transfers,
+                               std::unordered_set<int64_t> &matched_indices) {
   const json &topics = log.at("topics");
   const std::string data = log.at("data").get<std::string>();
   const std::string stakeholder = topic_to_addr(topics.at(1).get<std::string>());
@@ -2236,43 +2223,24 @@ void SyncThread::apply_convert(const json &log,
   std::unordered_set<std::string> market_conditions;
   for (const auto &question_id : market.qids) {
     std::string condition_id = build_negrisk_condition_id(question_id);
-    prepare_condition(condition_id, Collateral::WrappedUSDCe, dirty_conditions);
+    prepare_condition(condition_id, Collateral::WrappedUSDCe);
     market_conditions.insert(condition_id);
   }
 
-  std::vector<TransferLeg> transfers;
-  for (const auto &tx_log : tx_logs) {
-    const std::string address = norm_hex(tx_log.at("address").get<std::string>());
-    if (address != kConditionalTokens) {
-      continue;
-    }
-    const std::string topic0 =
-        norm_hex(tx_log.at("topics").at(0).get<std::string>());
-    if (topic0 == kTransferSingleTopic) {
-      transfers.push_back(parse_transfer_single(tx_log));
-    } else if (topic0 == kTransferBatchTopic) {
-      auto batch = parse_transfer_batch(tx_log);
-      transfers.insert(transfers.end(), batch.begin(), batch.end());
-    }
-  }
-  std::sort(transfers.begin(), transfers.end(),
-            [](const TransferLeg &a, const TransferLeg &b) {
-              return a.log_index < b.log_index;
-            });
-
   std::vector<PendingEmit> events;
   for (const auto &transfer : transfers) {
+    if (matched_indices.contains(transfer.log_index))
+      continue;
+
     bool fetched_token_meta = ensure_token_meta(transfer.token_id);
     assert(rt_.tokens.contains(transfer.token_id));
     const std::string &cond_id = rt_.tokens.at(transfer.token_id).cond;
     if (fetched_token_meta && !cond_id.empty() && cond_id != "?") {
-      dirty_conditions.insert(cond_id);
+      dirty_conds_.insert(cond_id);
     }
-    if (!market_conditions.contains(cond_id)) {
+    if (!market_conditions.contains(cond_id))
       continue;
-    }
-    ConditionMeta &condition =
-        prepare_condition(cond_id, Collateral::WrappedUSDCe, dirty_conditions);
+    ConditionMeta &condition = prepare_condition(cond_id, Collateral::WrappedUSDCe);
 
     int64_t signed_amount = 0;
     if (transfer.from == stakeholder && transfer.to == kNoTokenBurnAddress) {
@@ -2284,6 +2252,7 @@ void SyncThread::apply_convert(const json &log,
       continue;
     }
 
+    matched_indices.insert(transfer.log_index);
     uint8_t token_idx = get_token_idx(rt_.conditions, cond_id, transfer.token_id);
     events.push_back({
         .user = stakeholder,
@@ -2296,14 +2265,8 @@ void SyncThread::apply_convert(const json &log,
         .price = 0,
     });
   }
-
   assert(!events.empty());
-  commit_pending_events(
-      rt_, log, events, cfg_.recent_event_limit,
-      [this](const std::string &user, uint64_t block_number) {
-        return user_visible_at(user, block_number);
-      },
-      dirty_users);
+  commit_events(log, events);
 }
 
 bool SyncThread::user_visible_at(const std::string &user,
@@ -2313,6 +2276,26 @@ bool SyncThread::user_visible_at(const std::string &user,
     return false;
   }
   return block_number > it->second.snapshot_block;
+}
+
+BigInt SyncThread::query_balance_at_block(const std::string &user,
+                                          const std::string &token_id,
+                                          uint64_t block_number) {
+  // balanceOf(address,uint256) selector = 0x00fdd58e
+  std::string addr_padded = std::string(24, '0') + user.substr(2); // remove 0x, pad to 32 bytes
+  std::string token_hex = bigint_to_hex(bigint_from_dec(token_id));
+  std::string token_padded = std::string(64 - token_hex.size(), '0') + token_hex;
+  std::string data = "0x00fdd58e" + addr_padded + token_padded;
+
+  json params = json::array({
+      {{"to", kConditionalTokens}, {"data", data}},
+      u64_to_hex(block_number),
+  });
+  json result = rpc_call("eth_call", params);
+  if (!result.is_string() || result.get<std::string>().size() < 3) {
+    return 0;
+  }
+  return extract_u256(result.get<std::string>(), 0);
 }
 
 uint64_t SyncThread::rpc_block_number() {

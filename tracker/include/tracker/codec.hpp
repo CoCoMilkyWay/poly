@@ -105,6 +105,12 @@ inline BigInt bigint_from_hex(std::string s) {
 
 inline std::string bigint_to_str(const BigInt &v) { return v.convert_to<std::string>(); }
 
+inline std::string bigint_to_hex(const BigInt &v) {
+  std::ostringstream oss;
+  oss << std::hex << v;
+  return oss.str();
+}
+
 inline int64_t bigint_to_i64(const BigInt &v) {
   assert(v >= std::numeric_limits<int64_t>::min());
   assert(v <= std::numeric_limits<int64_t>::max());
