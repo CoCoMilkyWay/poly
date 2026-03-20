@@ -370,14 +370,19 @@ void SyncThread::full_resync() {
   append_snapshot_roots();
   persist_snapshot(); // 阶段完成,立即落地 S
 
-  // [c] meta
+  // [c] meta (仅 updated=0)
   std::vector<std::string> token_ids = collect_active_token_ids();
   progress()[API::meta].total = token_ids.size();
   progress().stage("meta");
   fetch_gamma_by_token_ids(token_ids);
+
+  // [d] prices (仅 price_ts 过期)
+  progress()[API::prices].total = token_ids.size();
+  progress().stage("prices");
+  refresh_prices(token_ids);
   persist_meta(); // 阶段完成,立即落地 M
 
-  // [d] ws_sub
+  // [e] ws_sub
   queue_.clear();
   deferred_.clear();
   progress()[API::ws_sub].total = rt_.users.size();
@@ -387,14 +392,14 @@ void SyncThread::full_resync() {
   progress()[API::ws_sub].done = rt_.users.size();
   progress().flush();
 
-  // [e] head
+  // [f] head
   progress().stage("head");
   progress()[API::head].total = 1;
   uint64_t head_block = std::max(ws_session.start_block, rpc_block_number());
   rt_.head_block = std::max(rt_.head_block, head_block);
   progress()[API::head].done = 1;
 
-  // [f] backfill
+  // [g] backfill
   uint64_t from_block = head_block + 1;
   for (const auto &user : rt_.users) {
     uint64_t user_from = rt_.user_snapshots.at(user).snapshot_block + 1;
@@ -1252,6 +1257,166 @@ void SyncThread::fetch_gamma_by_token_ids(const std::vector<std::string> &token_
       }
 
       apply_resolved_prices(rt_, condition_id);
+    }
+  }
+}
+
+void SyncThread::refresh_prices(const std::vector<std::string> &token_ids) {
+  auto &pc = progress()[API::prices];
+  if (token_ids.empty()) {
+    return;
+  }
+
+  // 筛选 price_ts 过期的 token
+  int64_t now = now_unix_sec();
+  std::vector<std::string> stale;
+  for (const auto &tid : token_ids) {
+    auto tok_it = rt_.tokens.find(tid);
+    if (tok_it == rt_.tokens.end() || tok_it->second.cond.empty() ||
+        tok_it->second.cond == "?") {
+      continue;
+    }
+    auto cond_it = rt_.conditions.find(tok_it->second.cond);
+    if (cond_it == rt_.conditions.end()) {
+      continue;
+    }
+    // 找到 token 在 condition 中的 index
+    const auto &tids = cond_it->second.tids;
+    size_t idx = std::find(tids.begin(), tids.end(), tid) - tids.begin();
+    if (idx >= tids.size()) {
+      continue;
+    }
+    // 检查 price_ts 是否过期
+    int64_t ts = (idx < cond_it->second.price_ts.size())
+                     ? cond_it->second.price_ts[idx]
+                     : 0;
+    if (now - ts > static_cast<int64_t>(cfg_.resync_interval_sec)) {
+      stale.push_back(tid);
+    }
+  }
+
+  std::vector<std::string> unique = stale;
+  std::sort(unique.begin(), unique.end());
+  unique.erase(std::unique(unique.begin(), unique.end()), unique.end());
+  pc.total = token_ids.size();
+  pc.done = token_ids.size() - unique.size();
+
+  if (unique.empty()) {
+    return;
+  }
+
+  // 按 kClobBatchLimit 分 chunk
+  std::vector<std::vector<std::string>> chunks = chunked(unique, kClobBatchLimit);
+  std::vector<HttpReq> reqs;
+  for (const auto &chunk : chunks) {
+    // 构建 POST body: [{"token_id":"xxx","side":"BUY"},...]
+    json arr = json::array();
+    for (const auto &tid : chunk) {
+      arr.push_back({{"token_id", tid}, {"side", "BUY"}});
+    }
+    reqs.push_back({
+        .url = std::string(kClobApiBase) + "/prices",
+        .method = "POST",
+        .body = arr.dump(),
+    });
+  }
+
+  std::vector<std::optional<json>> chunk_results(chunks.size());
+  std::vector<size_t> pending_indices;
+  for (size_t i = 0; i < chunks.size(); ++i) {
+    pending_indices.push_back(i);
+  }
+
+  size_t done_count = pc.done;
+  for (size_t attempt = 1; !pending_indices.empty(); ++attempt) {
+    std::vector<HttpReq> batch_reqs;
+    for (size_t idx : pending_indices) {
+      batch_reqs.push_back(reqs[idx]);
+    }
+
+    pc.pending = batch_reqs.size();
+    progress().flush();
+    auto responses = http_batch(batch_reqs, cfg_.http_concurrency, cfg_.proxy_url);
+    pc.pending = 0;
+    progress().flush();
+    assert(responses.size() == pending_indices.size());
+
+    std::vector<size_t> still_pending;
+    for (size_t i = 0; i < responses.size(); ++i) {
+      size_t idx = pending_indices[i];
+      const auto &resp = responses[i];
+      ++rt_.counters.clob;
+
+      if (resp.status == 200) {
+        json body = safe_parse(resp.body);
+        if (body.is_object() && !body.contains("error")) {
+          log_query("clob", "prices", attempt, true,
+                    "n=" + std::to_string(chunks[idx].size()));
+          chunk_results[idx] = std::move(body);
+          done_count += chunks[idx].size();
+          pc.done = done_count;
+          progress().flush();
+          continue;
+        }
+        log_query("clob", "prices", attempt, false,
+                  "n=" + std::to_string(chunks[idx].size()) +
+                      " body=" + clip_text(body.dump()));
+      } else {
+        log_query("clob", "prices", attempt, false,
+                  "n=" + std::to_string(chunks[idx].size()) +
+                      " status=" + std::to_string(resp.status));
+      }
+      still_pending.push_back(idx);
+    }
+
+    pending_indices = std::move(still_pending);
+    if (!pending_indices.empty()) {
+      std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+  }
+
+  // 处理结果: {"tid1":{"BUY":"0.45"},...}
+  int64_t ts = now_unix_sec();
+  for (size_t chunk_idx = 0; chunk_idx < chunks.size(); ++chunk_idx) {
+    const auto &result_opt = chunk_results[chunk_idx];
+    if (!result_opt || !result_opt->is_object()) {
+      continue;
+    }
+    const json &result = *result_opt;
+
+    for (const auto &tid : chunks[chunk_idx]) {
+      if (!result.contains(tid)) {
+        continue;
+      }
+      const json &price_obj = result.at(tid);
+      if (!price_obj.is_object() || !price_obj.contains("BUY")) {
+        continue;
+      }
+      std::string price_str = price_obj.at("BUY").get<std::string>();
+      double price = std::stod(price_str);
+      int64_t price_scaled = static_cast<int64_t>(price * 1e6);
+
+      // 更新 condition.prices[idx]
+      auto tok_it = rt_.tokens.find(tid);
+      if (tok_it == rt_.tokens.end()) {
+        continue;
+      }
+      auto cond_it = rt_.conditions.find(tok_it->second.cond);
+      if (cond_it == rt_.conditions.end()) {
+        continue;
+      }
+      const auto &tids = cond_it->second.tids;
+      size_t idx = std::find(tids.begin(), tids.end(), tid) - tids.begin();
+      if (idx >= tids.size()) {
+        continue;
+      }
+      ConditionMeta &cond = cond_it->second;
+      if (cond.prices.size() <= idx) {
+        cond.prices.resize(idx + 1, -1);
+        cond.price_ts.resize(idx + 1, 0);
+      }
+      cond.prices[idx] = price_scaled;
+      cond.price_ts[idx] = ts;
     }
   }
 }

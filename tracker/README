@@ -90,10 +90,11 @@ E:query count (展示rpc,subgraph当前session分别query了多少次)
 API:
 a/{users}      Graph(pnl).userPositions(1)                           获取用户历史snapshot持仓({kGraphPageLimit}分页)
 b/4            RPC.eth_call({users})                                 批量获取用户稳定币余额 (USDC/USDCe/USDT/Wrapped)
-c/{tokens}     Gamma.markets({kGammaBatchLimit})                     批量获取token/condition元数据
-d/             ws.RPC.eth_subscribe({users})                         批量订阅WebSocket交易记录(subscribe={subscribe},usrs/subscribe/topic={kTopicGroupSize})
-e/             RPC.eth_blockNumber                                   获取当前区块高度
-f/             RPC.eth_getLogs({users})                              批量补齐历史记录({kGetLogsBlockSpan}区块拆分)
+c/{tokens}     Gamma.markets({kGammaBatchLimit})                     批量获取token/condition元数据 (仅 updated=0)
+d/{tokens}     CLOB.prices({kClobBatchLimit})                        批量刷新token价格 (仅 price_ts 过期>3600s)
+e/             ws.RPC.eth_subscribe({users})                         批量订阅WebSocket交易记录(subscribe={subscribe},usrs/subscribe/topic={kTopicGroupSize})
+f/             RPC.eth_blockNumber                                   获取当前区块高度
+g/             RPC.eth_getLogs({users})                              批量补齐历史记录({kGetLogsBlockSpan}区块拆分)
 
 ======================
 进度显示设计(终端)
@@ -107,13 +108,16 @@ f/             RPC.eth_getLogs({users})                              批量补�
   API       done/total  [pend]   说明
   snapshot  5/10        [3]      [a] done=完成/缓存用户数, total=用户数 (cached=8)
   stables   8/8         [0]      [b] done=完成查询数, total=stale_users*4
-  meta      50/100      [5]      [c] done=完成token数, total=token数
-  ws_sub    10/10       [0]      [d] done=订阅用户数, total=用户数
-  head      1/1         [0]      [e] done=1表示完成
-  backfill  500/1000    [10]     [f] done=已处理区块数, total=区块范围
+  meta      50/100      [5]      [c] done=完成token数, total=需更新meta的token数 (updated=0)
+  prices    80/100      [5]      [d] done=完成token数, total=需刷新价格的token数 (price_ts过期)
+  ws_sub    10/10       [0]      [e] done=订阅用户数, total=用户数
+  head      1/1         [0]      [f] done=1表示完成
+  backfill  500/1000    [10]     [g] done=已处理区块数, total=区块范围
   [current_stage]
 
   注: snapshot 阶段会显示 cached 数量,表示从磁盘复用的 snapshot 数量
+  注: meta 只对 updated=0 的 condition 查询 (一次性)
+  注: prices 只对 price_ts 过期 (>3600s) 的 condition 刷新
 ======================
 Log设计(文件)
 ======================
@@ -162,21 +166,28 @@ SyncThread.run()
 │  │  │  ├─ API: RPC.eth_call balanceOf(user, USDC/USDCe/USDT/Wrapped)
 │  │  │  ├─ 输出: user_states[user].stable = {usdc, usdc_e, usdt, wrapped}
 │  │  │  └─ 注: 仅更新 stale_users 的余额, cached_users 沿用现有
-│  │  ├─ [c] fetch_gamma_by_token_ids (批量)
-│  │  │  ├─ API: Gamma.markets?clob_token_ids=tid1,tid2,...
+│  │  ├─ [c] fetch_gamma_meta (批量, 仅 updated=0)
+│  │  │  ├─ 筛选: 只处理 updated=0 的 condition 对应的 token_id
+│  │  │  ├─ API: Gamma /markets?clob_token_ids=tid1&clob_token_ids=tid2&...
 │  │  │  ├─ 输出: tokens[token_id] = condition_id
-│  │  │  │        conditions[cond_id] = {oc, coll, tids[], prices[], q, slug, outcomes[], updated}
-│  │  │  ├─ 注: 已 updated=1 的 condition 不再重复查询
+│  │  │  │        conditions[cond_id] = {oc, coll, tids[], q, slug, outcomes[], updated=1}
+│  │  │  ├─ 注: meta 是一次性的, updated=1 后永不再查
 │  │  │  └─ 落地: → M (meta.json)
-│  │  ├─ [d] start_ws_subscription (先订阅,再获取head,再backfill)
+│  │  ├─ [d] refresh_prices (批量, price_ts 过期)
+│  │  │  ├─ 筛选: 只处理 now - price_ts > resync_interval_sec (3600s) 的 condition
+│  │  │  ├─ API: POST CLOB /prices (kClobBatchLimit=500)
+│  │  │  ├─ 输出: conditions[cond_id].prices[], conditions[cond_id].price_ts[]
+│  │  │  ├─ 注: 轻量级接口, 只返回价格, 比 Gamma /markets 更高效
+│  │  │  └─ 落地: → M (meta.json)
+│  │  ├─ [e] start_ws_subscription (先订阅,再获取head,再backfill)
 │  │  │  ├─ API: ws.RPC.eth_subscribe(newHeads, logs)
 │  │  │  ├─ 阻塞等待: ws 连接成功 + 收到首条 newHeads
 │  │  │  ├─ 输出: ws 连接建立, ws_start_block = 首条 newHeads.number
 │  │  │  └─ 注: ws 事件暂存队列,等 backfill 完成后再处理
-│  │  ├─ [e] get_head_block (订阅成功后获取)
+│  │  ├─ [f] get_head_block (订阅成功后获取)
 │  │  │  ├─ API: RPC.eth_blockNumber()
 │  │  │  └─ 输出: head_block = max(ws_start_block, eth_blockNumber)
-│  │  ├─ [f] backfill_range (按 per-user checkpoint 计算, RPC 侧合并抓取)
+│  │  ├─ [g] backfill_range (按 per-user checkpoint 计算, RPC 侧合并抓取)
 │  │  │  ├─ 对每个 user: from = user_snapshots[user].snapshot_block + 1, to = head_block
 │  │  │  ├─ 注: cached_users 的 backfill 范围通常更大 (snapshot 较旧)
 │  │  │  ├─ API: RPC.eth_getLogs({users}, merged filters)
@@ -202,9 +213,9 @@ SyncThread.run()
 │  └─ sleep(100ms)  // 主循环空闲轮询间隔
 └─ 落地汇总
    ├─ S (snapshot.json): [a'] 完成后 (仅 stale_users 更新时)
-   ├─ M (meta.json): [c] 完成后 + 增量映射补齐时 (via Gamma)
-   ├─ H (history.json): [f] 每批 + ws 增量, 按 event_id 幂等
-   └─ A (aggregate.json): [f] 完成后 + ws 每条事件后
+   ├─ M (meta.json): [c] 完成后 + [d] 完成后 + 增量映射补齐时 (via Gamma)
+   ├─ H (history.json): [g] 每批 + ws 增量, 按 event_id 幂等
+   └─ A (aggregate.json): [g] 完成后 + ws 每条事件后
 ```
 
 ======================
@@ -422,7 +433,9 @@ token/condition/market 元数据
   - condition_id 是核心主键
   - tokens 只存 token_id → condition_id 映射
   - 价格/时间等信息集中存 condition 层 (数组对应 tids 顺序)
-  - 已从 gamma 成功更新的 condition 标记 updated=1, 后续不再重复查询
+  - meta 与 price 更新策略分离:
+    - meta (oc/coll/tids/q/slug/outcomes): 一次性, updated=1 后永不再查
+    - price (prices/price_ts): 定期刷新, price_ts 过期 (>3600s) 时重新查询
 
 {
   "tokens": {

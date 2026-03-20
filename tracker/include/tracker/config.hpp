@@ -51,6 +51,7 @@ inline constexpr size_t kRecentEventLimit = 512;
 inline constexpr size_t kGraphIdBatchLimit = 1000; // TheGraph: where {id_in: [...]} 最大 1000
 inline constexpr size_t kGraphPageLimit = 1000;    // TheGraph: first 最大 1000
 inline constexpr size_t kGammaBatchLimit = 50;     // Gamma: condition_ids[] URL 长度限制 ~4KB
+inline constexpr size_t kClobBatchLimit = 500;     // CLOB: prices[] URL 长度限制 500
 inline constexpr size_t kHttpConcurrency = 10;
 
 // ============================================================================

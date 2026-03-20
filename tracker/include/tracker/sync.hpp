@@ -45,6 +45,7 @@ private:
   void append_snapshot_roots();
   std::vector<std::string> collect_active_token_ids() const;
   void fetch_gamma_by_token_ids(const std::vector<std::string> &token_ids);
+  void refresh_prices(const std::vector<std::string> &token_ids);
   void fetch_gamma_by_condition_ids(const std::vector<std::string> &condition_ids);
   void fetch_gamma_market_questions(const std::string &market_id);
   void ensure_token_meta(const std::string &token_id);

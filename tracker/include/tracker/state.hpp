@@ -154,6 +154,7 @@ struct QueryCounters {
   uint64_t rpc_ws_sub = 0;
   uint64_t subgraph = 0;
   uint64_t gamma = 0;
+  uint64_t clob = 0;
 };
 
 struct RuntimeState {

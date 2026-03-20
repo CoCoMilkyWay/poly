@@ -138,6 +138,7 @@ function buildSnapshotRows(snapshot) {
       price,
       value_usd: valueUsd,
       q: metaCondition?.q || position.token_id,
+      desc: metaCondition?.desc || "",
       outcomes: metaCondition?.outcomes || [],
       outcome_text: tokenIdx === null ? "" : (metaCondition?.outcomes?.[tokenIdx] || ""),
     });
