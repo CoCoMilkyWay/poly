@@ -448,6 +448,7 @@ void EventBuilder::load_from_rb() {
     // 从 user_event.rocks 重建用户集合与事件统计(并行分段扫描).
     restore_users_and_event_stats_parallel();
   }
+  did_rebuild_user_event_stats_ = !loaded_user_stats_cache;
 
   {
     TraceN("s2/restore/load_transfer_snapshot");

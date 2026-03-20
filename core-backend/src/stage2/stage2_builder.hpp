@@ -47,6 +47,7 @@ public:
   const BuildProgress &committed_progress() const;
   json memory_breakdown() const;
   json rocksdb_memory_breakdown() const;
+  bool did_rebuild_user_event_stats() const { return did_rebuild_user_event_stats_; }
 
 private:
   Database &stage1_db_;
@@ -164,6 +165,7 @@ private:
   std::atomic<bool> stop_requested_{false};
   std::atomic<bool> build_running_{false};
   std::atomic<bool> commit_pending_{false};
+  bool did_rebuild_user_event_stats_ = false;
   mutable std::mutex mem_mu_;
   json mem_snapshot_ = json::object();
   int64_t mem_peak_chunk_bytes_ = 0;
@@ -569,7 +571,7 @@ private:
                           AssertLevel::L1, "Mapping", "FPMMFirstOutcomeFitsU8");
             uint8_t token_idx = static_cast<uint8_t>(first_condition_outcome);
             intern_token(token_id, primary_cond_idx, token_idx, TokenSource::PolymarketFPMM,
-                        evidence_sort_key);
+                         evidence_sort_key);
             return;
           }
 

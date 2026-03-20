@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "misc/profiler.hpp"
+#include "stage2_assert.hpp"
 
 namespace stage2 {
 
@@ -17,6 +18,11 @@ StageSync::StageSync(Database &stage1_db, Database &stage2_db, int base_interval
   builder_.init_schema();
   builder_.load_from_rb();
   sync_.last_block = builder_.cursor();
+  // purge cache 后 rebuild 完成，立即保存 cache，避免退出后丢失
+  if (builder_.did_rebuild_user_event_stats()) {
+    stage2_log_info("Persist restore cache after rebuild");
+    builder_.persist_restore_cache_snapshot();
+  }
 }
 
 void StageSync::flush_restore_cache_snapshot() {
@@ -153,6 +159,7 @@ void StageSync::do_sync() {
   builder_.build_chunk(target);
   builder_.wait_for_pending_commit();
   stage2_db_.checkpoint();
+  builder_.persist_restore_cache_snapshot();
   int64_t new_cursor = builder_.cursor();
   if (new_cursor > last_block) {
     commit_history_.push_back({std::chrono::steady_clock::now(), new_cursor});
