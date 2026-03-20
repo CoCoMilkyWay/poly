@@ -57,9 +57,9 @@ inline constexpr size_t kHttpConcurrency = 10;
 // ============================================================================
 // Filter Thresholds
 // ============================================================================
-inline constexpr long double kUserTokenRatioThreshold = 0.5L;   // 用户 token 占比 > 50%
-inline constexpr long double kTokenValueThreshold = 0.001L;     // token 价值 > 0.1% 账户净值
-inline constexpr long double kAggregateValueThreshold = 0.001L; // aggregate 中 > 0.1%
+inline constexpr long double kUserTokenRatioThreshold = 0.5L;   // 有效用户: 用户token净值占比 >= x%
+inline constexpr long double kTokenValueThreshold = 0.001L;     // 有效token: token价值 >=x% 账户净值
+inline constexpr long double kAggregateValueThreshold = 0.001L; // 有效聚合: aggre中token价值 >=x% 账户净值
 
 // ============================================================================
 // URL Parsing
