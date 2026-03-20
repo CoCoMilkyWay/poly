@@ -52,8 +52,12 @@ AppConfig AppConfig::load(const std::filesystem::path &tracker_dir) {
   c.address_file = c.tracker_dir / "address.txt";
   c.proxy_file = c.tracker_dir / "proxy.txt";
 
+  // log files in log/ subdirectory
+  auto log_dir = c.tracker_dir / "log";
+  c.sync_log_file = log_dir / "sync.log";
+  c.event_log_file = log_dir / "event.log";
+
   // data files in data/ subdirectory
-  c.log_file = data_dir / "sync.log";
   c.meta_file = data_dir / "meta.json";
   c.snapshot_file = data_dir / "snapshot.json";
   c.history_file = data_dir / "history.json";

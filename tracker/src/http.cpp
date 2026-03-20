@@ -247,7 +247,7 @@ private:
     buf_.clear();
     proxy_buf_.clear();
     ++retries_;
-    logger().warn("http retry " + std::to_string(retries_) + ": " + cur_.req.url);
+    sync_logger().warn("http retry " + std::to_string(retries_) + ": " + cur_.req.url);
     auto timer = std::make_shared<asio::steady_timer>(resolver_.get_executor());
     timer->expires_after(std::chrono::milliseconds(500));
     timer->async_wait([self = shared_from_this(), timer](beast::error_code) {

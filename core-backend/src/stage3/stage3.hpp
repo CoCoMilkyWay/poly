@@ -356,14 +356,17 @@ struct TokenIndex {
     assert(cond_idx >= 0);
     assert(static_cast<size_t>(cond_idx) < MAX_CONDITIONS);
     assert(token_idx >= 0);
-    assert(token_idx <= std::numeric_limits<uint8_t>::max());
+    // token_idx comes from conditional outcome index (Stage2 MAX_OUTCOMES=8),
+    // so it fits in 4 bits. Keep it tight to free bits for collateral.
+    assert(token_idx <= 15);
     assert(collateral >= 0);
-    assert(collateral <= 15);
+    // Stage2 collateral id is uint8 (0..255). Stage3 key needs to accommodate it.
+    assert(collateral <= std::numeric_limits<uint8_t>::max());
 
     return (static_cast<uint64_t>(user_idx) << 32) |
            (static_cast<uint64_t>(static_cast<uint32_t>(cond_idx) & 0xFFFFFu) << 12) |
-           (static_cast<uint64_t>(static_cast<uint16_t>(token_idx) & 0xFFu) << 4) |
-           static_cast<uint64_t>(static_cast<uint16_t>(collateral) & 0xFu);
+           (static_cast<uint64_t>(static_cast<uint16_t>(token_idx) & 0xFu) << 8) |
+           static_cast<uint64_t>(static_cast<uint16_t>(collateral) & 0xFFu);
   }
 };
 

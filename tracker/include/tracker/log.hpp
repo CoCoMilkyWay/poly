@@ -80,7 +80,12 @@ private:
   std::mutex mu_;
 };
 
-inline Logger &logger() {
+inline Logger &sync_logger() {
+  static Logger instance;
+  return instance;
+}
+
+inline Logger &event_logger() {
   static Logger instance;
   return instance;
 }
@@ -97,9 +102,9 @@ inline void log_query(const std::string &channel,
   if (!detail.empty())
     msg += " detail=" + detail;
   if (ok)
-    logger().info(msg);
+    sync_logger().info(msg);
   else
-    logger().warn(msg);
+    sync_logger().warn(msg);
 }
 
 // ============================================================================

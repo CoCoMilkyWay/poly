@@ -193,8 +193,7 @@ json snapshot_data_with_retry(RuntimeState &state, const std::string &detail,
         size_t total_count =
             static_cast<size_t>(std::stoull(json_str_or_int(body.at("totalCount"))));
         size_t total_pages =
-            total_count == 0 ? 1 : (total_count + kSnapshotApiPageSize - 1) /
-                                       kSnapshotApiPageSize;
+            total_count == 0 ? 1 : (total_count + kSnapshotApiPageSize - 1) / kSnapshotApiPageSize;
         std::string page_detail =
             detail + " page=" + std::to_string(page_num) + "/" +
             std::to_string(total_pages) +
@@ -470,10 +469,10 @@ void commit_pending_events(RuntimeState &state,
         current = current_it->second;
       }
       if (current < -delta) {
-        logger().warn("negative position user=" + event.user +
-                      " token_id=" + event.token_id +
-                      " current=" + bigint_to_str(current) +
-                      " delta=" + std::to_string(event.amount));
+        sync_logger().warn("negative position user=" + event.user +
+                           " token_id=" + event.token_id +
+                           " current=" + bigint_to_str(current) +
+                           " delta=" + std::to_string(event.amount));
       }
       BigInt next = current + delta;
       if (next == 0) {
@@ -531,7 +530,8 @@ void SyncThread::request_resync() {
 }
 
 void SyncThread::run() {
-  logger().init(cfg_.log_file);
+  sync_logger().init(cfg_.sync_log_file);
+  event_logger().init(cfg_.event_log_file);
   load_seed();
   load_files();
   publish_all();
@@ -616,7 +616,7 @@ void SyncThread::full_resync() {
 
   publish_all();
   progress().finish();
-  logger().info("resync done");
+  sync_logger().info("resync done");
 }
 
 void SyncThread::drain_queue() {
@@ -656,7 +656,7 @@ void SyncThread::handle_queue_event(QueueEvent ev) {
     std::sort(logs.begin(), logs.end(), [](const json &a, const json &b) {
       return raw_log_sort_key(a) < raw_log_sort_key(b);
     });
-    apply_block_logs(logs);
+    apply_block_logs(logs, "websocket");
     rt_.last_applied_block = std::max(rt_.last_applied_block, ev.block_number);
     rt_.head_block = std::max(rt_.head_block, ev.block_number);
     publish_all();
@@ -702,7 +702,7 @@ void SyncThread::handle_overlap_queue(uint64_t session_id, uint64_t overlap_bloc
     std::sort(logs.begin(), logs.end(), [](const json &a, const json &b) {
       return raw_log_sort_key(a) < raw_log_sort_key(b);
     });
-    apply_block_logs(logs);
+    apply_block_logs(logs, "websocket");
     rt_.last_applied_block = std::max(rt_.last_applied_block, block_number);
   }
 }
@@ -1100,7 +1100,8 @@ void SyncThread::fetch_user_snapshots() {
 
         uint64_t block_number = static_cast<uint64_t>(
             std::stoull(json_str_or_int(data.at("validAt").at("blockNumber"))));
-        if (snapshot.snapshot_block == 0) {
+        // 取所有分页中的最小 block_number，确保 backfill 覆盖分页期间的交易
+        if (snapshot.snapshot_block == 0 || block_number < snapshot.snapshot_block) {
           snapshot.snapshot_block = block_number;
         }
 
@@ -1825,7 +1826,7 @@ bool SyncThread::ensure_token_meta(const std::string &token_id) {
   fetch_gamma_by_token_ids({token_id});
   it = rt_.tokens.find(token_id);
   if (it == rt_.tokens.end() || it->second.cond.empty() || it->second.cond == "?") {
-    logger().warn("token_meta incomplete token_id=" + token_id);
+    sync_logger().warn("token_meta incomplete token_id=" + token_id);
     return false;
   }
   return true;
@@ -1903,7 +1904,7 @@ void SyncThread::backfill_range(uint64_t from_block, uint64_t to_block) {
       std::sort(logs.begin(), logs.end(), [](const json &a, const json &b) {
         return raw_log_sort_key(a) < raw_log_sort_key(b);
       });
-      apply_block_logs(logs);
+      apply_block_logs(logs, "backfill");
       rt_.last_applied_block = std::max(rt_.last_applied_block, block_number);
       rt_.head_block = std::max(rt_.head_block, block_number);
     }
@@ -1917,7 +1918,50 @@ void SyncThread::backfill_range(uint64_t from_block, uint64_t to_block) {
   }
 }
 
-void SyncThread::apply_block_logs(const std::vector<json> &logs) {
+// topic0 → 4字符等宽类型名
+inline const char *topic_to_type(const std::string &topic0) {
+  if (topic0 == kTransferSingleTopic)
+    return "XFER";
+  if (topic0 == kTransferBatchTopic)
+    return "XFRB";
+  if (topic0 == kConditionResolveTopic)
+    return "RSLV";
+  if (topic0 == kPositionSplitTopic)
+    return "SPLT";
+  if (topic0 == kPositionMergeTopic)
+    return "MERG";
+  if (topic0 == kPositionRedeemTopic)
+    return "REDM";
+  if (topic0 == kOrderFillTopic)
+    return "FILL";
+  if (topic0 == kPositionConvertTopic)
+    return "CONV";
+  return "????";
+}
+
+void SyncThread::apply_block_logs(const std::vector<json> &logs, const std::string &source) {
+  // 记录原始事件到 event.log (手动拼接保证字段顺序)
+  // src: BF=backfill, WS=websocket (2字符等宽)
+  // typ: XFER/XFRB/RSLV/SPLT/MERG/REDM/FILL/CONV (4字符等宽)
+  const char *src = (source == "backfill") ? "BF" : "WS";
+  for (const auto &log : logs) {
+    std::string topic0 = norm_hex(log.at("topics").at(0).get<std::string>());
+    const auto &topics = log.at("topics");
+    std::ostringstream oss;
+    oss << "{\"src\":\"" << src << "\""
+        << ",\"typ\":\"" << topic_to_type(topic0) << "\""
+        << ",\"blk\":\"" << log.at("blockNumber").get<std::string>() << "\""
+        << ",\"tx\":\"" << log.at("transactionHash").get<std::string>() << "\""
+        << ",\"idx\":\"" << log.at("logIndex").get<std::string>() << "\""
+        << ",\"addr\":\"" << log.at("address").get<std::string>() << "\""
+        << ",\"t0\":\"" << topics.at(0).get<std::string>() << "\"";
+    if (topics.size() > 1) oss << ",\"t1\":\"" << topics.at(1).get<std::string>() << "\"";
+    if (topics.size() > 2) oss << ",\"t2\":\"" << topics.at(2).get<std::string>() << "\"";
+    if (topics.size() > 3) oss << ",\"t3\":\"" << topics.at(3).get<std::string>() << "\"";
+    oss << ",\"data\":\"" << log.at("data").get<std::string>() << "\"}";
+    event_logger().info(oss.str());
+  }
+
   auto txs = build_tx_contexts(logs);
   std::unordered_set<std::string> dirty_users;
   std::unordered_set<std::string> dirty_conditions;
@@ -2000,7 +2044,7 @@ void SyncThread::apply_order_fill(const json &log,
       token_it->second.cond == "?") {
     // 静默跳过 Gamma 中找不到的 token (已在 ensure_token_meta 中记录警告)
     if (token_it == rt_.tokens.end() || token_it->second.cond != "?") {
-      logger().warn("apply_order_filled skip incomplete token_id=" + token_id);
+      sync_logger().warn("apply_order_filled skip incomplete token_id=" + token_id);
     }
     return;
   }
@@ -2059,7 +2103,10 @@ void SyncThread::apply_split_or_merge(const json &log,
   const std::string parent_collection_id =
       norm_b32(topics.at(2).get<std::string>());
   const std::string condition_id = norm_b32(topics.at(3).get<std::string>());
-  assert(parent_collection_id == zero_b32());
+  // 跳过非直接仓位 (NegRisk 等多层 collection)
+  if (parent_collection_id != zero_b32()) {
+    return;
+  }
 
   const std::string collateral_token = extract_addr_from_word(data, 0);
   Collateral collateral = collateral_from_addr(collateral_token);
@@ -2111,7 +2158,10 @@ void SyncThread::apply_redeem(const json &log,
   const std::string collateral_token = topic_to_addr(topics.at(2).get<std::string>());
   const std::string condition_id = norm_b32(topics.at(3).get<std::string>());
   const std::string parent_collection_id = extract_b32_from_word(data, 0);
-  assert(parent_collection_id == zero_b32());
+  // 跳过非直接仓位 (NegRisk 等多层 collection)
+  if (parent_collection_id != zero_b32()) {
+    return;
+  }
 
   Collateral collateral = collateral_from_addr(collateral_token);
   assert(collateral != Collateral::Unknown);
