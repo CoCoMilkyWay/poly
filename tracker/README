@@ -43,7 +43,7 @@
 │                                   │                                         │
 │                                   v                                         │
 │                    ┌──────────────────────────────┐                         │
-│                    │ RPC / TheGraph / Gamma API   │                         │
+│                    │ RPC / Snapshot API / Gamma   │                         │
 │                    └──────────────────────────────┘                         │
 └─────────────────────────────────────────────────────────────────────────────┘
 
@@ -75,7 +75,7 @@ A:用户列表(token类资产市值/总市值(加上类USDC稳定币资产)):
 B:交易记录(按照block number, 展示 snapshot 和统一格式的历史交易记录,不区分 websocket / RPC 来源)
 C:选择栏: 可以选择 aggre当前动态持仓, 用户当前动态持仓, 用户历史静态持仓(选择历史记录里的snapshot)
 D:持仓展示: 每个token按百分比展示bar, 显示yes/no/index, 持仓比例(USD计价), 里面包括稳定币资产, 鼠标悬浮展示问题和描述
-E:query count (展示rpc,subgraph当前session分别query了多少次)
+E:query count (展示rpc,snapshot_api,gamma当前session分别query了多少次)
 
 ----------------------------
 |                |         |
@@ -89,7 +89,7 @@ E:query count (展示rpc,subgraph当前session分别query了多少次)
 ----------------------------
 
 API:
-a/{users}      Graph(pnl).userPositions(1)                           获取用户历史snapshot持仓({kGraphPageLimit}分页)
+a/{users}      AlchemyNFT.getNFTsForOwner(1)                         获取用户snapshot持仓(pageKey分页, contract=ConditionalTokens)
 b/4            RPC.eth_call({users})                                 批量获取用户稳定币余额 (USDC/USDCe/USDT/Wrapped)
 c/{tokens}     Gamma.markets({kGammaBatchLimit})                     批量获取token/condition元数据 (仅 updated=0)
 d/{tokens}     CLOB.prices({kClobBatchLimit})                        批量刷新token价格 (仅 price_ts 过期>3600s)
@@ -125,7 +125,7 @@ g/             RPC.eth_getLogs({users})                              批量补�
 Log设计(文件)
 ======================
   - 网络请求失败/无限重试(预期此程序7*24小时运行)
-  - Graph/Gamma API 错误
+  - Snapshot/Gamma API 错误
   - JSON解析失败
   - 其他异常
 ======================
@@ -160,12 +160,13 @@ SyncThread.run()
 │  │  │  ├─ 遍历 users, 从 snapshot_root 中查找最新的 snapshot
 │  │  │  ├─ 判断: now - captured_at_unix_sec < resync_interval_sec (3600s)
 │  │  │  ├─ 若有效: 直接恢复 user_snapshots[user] 从 snapshot_root[user][block]
-│  │  │  │  └─ 无需调用 Graph API, 跳过该用户的 snapshot 抓取
-│  │  │  └─ 若失效/不存在: 加入 stale_users 列表, 后续从 Graph 抓取
+│  │  │  │  └─ 无需调用 snapshot API, 跳过该用户的 snapshot 抓取
+│  │  │  └─ 若失效/不存在: 加入 stale_users 列表, 后续从 snapshot API 抓取
 │  │  ├─ [a'] fetch_user_snapshots (仅对 stale_users, per-user 并发)
-│  │  │  ├─ API: Graph(pnl).userPositions(user) -- 仅 stale_users
+│  │  │  ├─ API: Alchemy NFT API getNFTsForOwner(owner, contract=CTF, withMetadata=false, pageKey) -- 仅 stale_users
 │  │  │  ├─ 输出: user_snapshots[user] = {snapshot_block, positions[]}
-│  │  │  ├─ 注: snapshot_block 是 per-user checkpoint, 不是全局统一块高
+│  │  │  ├─ 注: snapshot_block = validAt.blockNumber, 是 per-user checkpoint, 不是全局统一块高
+│  │  │  ├─ 注: snapshot_block 取第一页 validAt.blockNumber, 后续分页默认视为同一份持仓列表的延续(假设)
 │  │  │  └─ 落地: → S (snapshot.json) -- 仅有更新时落地
 │  │  ├─ [b] fetch_snapshot_balances (并发 RPC, 仅 stale_users)
 │  │  │  ├─ API: RPC.eth_call balanceOf(user, USDC/USDCe/USDT/Wrapped)
@@ -314,6 +315,7 @@ apply_block_logs(logs)
 --- snapshot.json ---
 存储用户在特定区块的详细持仓情况 (历史快照)
 说明: checkpoint 是 per-user, 不保证不同用户的 block_number 相同
+说明: block_number 来自 snapshot API 返回的 validAt.blockNumber
 
 {
   "0xuser1": {

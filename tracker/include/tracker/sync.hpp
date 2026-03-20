@@ -91,7 +91,7 @@ private:
   WsThread &ws_;
   RuntimeState rt_;
   std::deque<QueueEvent> deferred_;
-  std::vector<std::string> stale_users_; // 需要从 Graph 抓取 snapshot 的用户
+  std::vector<std::string> stale_users_; // 需要从 snapshot API 抓取 snapshot 的用户
   std::atomic<bool> resync_flag_{false};
   uint64_t current_session_id_ = 0;
 };

@@ -27,10 +27,11 @@ inline constexpr RpcNode kRpcDrpc = {
 inline constexpr RpcNode kDefaultRpc = kRpcAlchemy;
 
 // ============================================================================
-// API Keys & Server Defaults
+// External APIs & Server Defaults
 // ============================================================================
 
-inline constexpr const char *kGraphApiKey = "1d7a83f3e6778cd93dfbae707bb192de";
+inline constexpr const char *kSnapshotApiUrl =
+    "https://polygon-mainnet.g.alchemy.com/nft/v3/BkfGdYfzIqosg_dYeRWop";
 inline constexpr const char *kBackendHost = "0.0.0.0";
 inline constexpr uint16_t kBackendPort = 8871;
 inline constexpr uint16_t kFrontendPort = 8870;
@@ -48,7 +49,6 @@ inline constexpr uint32_t kGetLogsBlockSpan = 2000;
 // ============================================================================
 
 inline constexpr size_t kRecentEventLimit = 512;
-inline constexpr size_t kGraphPageLimit = 1000;    // TheGraph: first 最大 1000
 inline constexpr size_t kGammaBatchLimit = 50;     // Gamma: condition_ids[] URL 长度限制 ~4KB
 inline constexpr size_t kClobBatchLimit = 500;     // CLOB: prices[] URL 长度限制 500
 inline constexpr size_t kHttpConcurrency = 10;
@@ -101,8 +101,8 @@ struct AppConfig {
   std::string rpc_http_url;
   std::string rpc_ws_url;
 
-  // api keys
-  std::string graph_api_key;
+  // external APIs
+  std::string snapshot_api_url;
 
   // server
   std::string backend_host;
@@ -116,7 +116,6 @@ struct AppConfig {
 
   // limits
   size_t recent_event_limit;
-  size_t graph_page_limit;
   size_t gamma_batch_limit;
   size_t http_concurrency;
 

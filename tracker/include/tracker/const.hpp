@@ -39,9 +39,6 @@ inline constexpr const char *kPositionConvertTopic = "0xb03d19dddbc72a87e735ff0e
 
 inline constexpr const char *kGammaApiBase = "https://gamma-api.polymarket.com";
 inline constexpr const char *kClobApiBase = "https://clob.polymarket.com";
-inline constexpr const char *kPolymarketSubgraphId = "81Dm16JjuFSrqz813HysXoUPvzTwE7fsfPk2RTf66nyC";
-inline constexpr const char *kPnlSubgraphId = "6c58N5U4MtQE2Y8njfVrrAfRykzfqajMGeTMEvMmskVz";
-inline constexpr const char *kActivitySubgraphId = "Fk9HLcfoc3gbRcAmMVXjFfJuUDatdKBeioNnY9P1NLWG";
 
 // ============================================================================
 // Numeric Constants

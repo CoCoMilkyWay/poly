@@ -107,7 +107,7 @@ inline void log_query(const std::string &channel,
 // ============================================================================
 // 终端显示格式 (按 full_resync 流程顺序):
 //   API       done/total  [pend]   说明
-//   snapshot  5/10        [3]      [a] Graph.userPositions    (done=完成用户数, total=用户数)
+//   snapshot  5/10        [3]      [a] AlchemyNFT.getNFTsForOwner (done=完成用户数, total=用户数)
 //   stables   40/40       [0]      [b] RPC.eth_call           (done=完成查询数, total=用户数*4)
 //   meta      50/100      [5]      [c] Gamma.markets          (done=完成token数, total=token数)
 //   prices    80/100      [5]      [d] CLOB.prices            (done=完成token数, total=token数)

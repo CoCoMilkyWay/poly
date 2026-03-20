@@ -64,8 +64,8 @@ AppConfig AppConfig::load(const std::filesystem::path &tracker_dir) {
   c.rpc_http_url = std::string(kDefaultRpc.url);
   c.rpc_ws_url = derive_ws_url(c.rpc_http_url);
 
-  // api keys
-  c.graph_api_key = kGraphApiKey;
+  // external APIs
+  c.snapshot_api_url = kSnapshotApiUrl;
 
   // server
   c.backend_host = kBackendHost;
@@ -79,7 +79,6 @@ AppConfig AppConfig::load(const std::filesystem::path &tracker_dir) {
 
   // limits
   c.recent_event_limit = kRecentEventLimit;
-  c.graph_page_limit = kGraphPageLimit;
   c.gamma_batch_limit = kGammaBatchLimit;
   c.http_concurrency = kHttpConcurrency;
 
@@ -94,7 +93,7 @@ AppConfig AppConfig::load(const std::filesystem::path &tracker_dir) {
   assert(!c.rpc_name.empty());
   assert(!c.rpc_http_url.empty());
   assert(!c.rpc_ws_url.empty());
-  assert(!c.graph_api_key.empty());
+  assert(!c.snapshot_api_url.empty());
   assert(c.backend_port > 0);
   assert(c.frontend_port > 0);
 

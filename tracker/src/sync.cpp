@@ -16,21 +16,36 @@
 namespace tracker {
 namespace {
 
-const char *kUserPositionsQuery = R"(
-query UserPositions($user: String!, $after: String!, $first: Int!) {
-  _meta { block { number } }
-  userPositions(
-    first: $first
-    orderBy: id
-    orderDirection: asc
-    where: {user: $user, amount_gt: "0", id_gt: $after}
-  ) {
-    id
-    tokenId
-    amount
+constexpr size_t kSnapshotApiPageSize = 100;
+
+std::string url_encode(const std::string &s) {
+  static constexpr char kHex[] = "0123456789ABCDEF";
+  std::string out;
+  out.reserve(s.size() * 3);
+  for (unsigned char c : s) {
+    if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
+        (c >= '0' && c <= '9') || c == '-' || c == '_' || c == '.' ||
+        c == '~') {
+      out.push_back(static_cast<char>(c));
+      continue;
+    }
+    out.push_back('%');
+    out.push_back(kHex[c >> 4]);
+    out.push_back(kHex[c & 0x0F]);
   }
+  return out;
 }
-)";
+
+std::string build_snapshot_api_url(const AppConfig &cfg, const std::string &user,
+                                   const std::string &page_key) {
+  std::string url = cfg.snapshot_api_url + "/getNFTsForOwner?owner=" + norm_addr(user) +
+                    "&contractAddresses[]=" + std::string(kConditionalTokens) +
+                    "&withMetadata=false";
+  if (!page_key.empty()) {
+    url += "&pageKey=" + url_encode(page_key);
+  }
+  return url;
+}
 
 const std::string &zero_b32() {
   static const std::string value = "0x" + std::string(64, '0');
@@ -162,30 +177,41 @@ Collateral infer_collateral_from_token(const std::string &condition_id,
   return Collateral::Unknown;
 }
 
-json graph_data_with_retry(RuntimeState &state,
-                           const std::string &name,
-                           const std::string &detail,
-                           const std::string &url,
-                           const json &payload,
-                           const std::string &proxy_url,
-                           std::optional<HttpRes> first_resp = std::nullopt) {
-  HttpRes resp = first_resp ? *first_resp : http_post(url, payload, proxy_url);
+json snapshot_data_with_retry(RuntimeState &state, const std::string &detail,
+                              size_t page_num,
+                              const std::string &url,
+                              const std::string &proxy_url,
+                              std::optional<HttpRes> first_resp = std::nullopt) {
+  HttpRes resp = first_resp ? *first_resp : http_get(url, proxy_url);
   for (size_t attempt = 1;; ++attempt) {
-    ++state.counters.subgraph;
+    ++state.counters.snapshot_api;
     if (resp.status == 200) {
       json body = safe_parse(resp.body);
-      if (!body.contains("errors") && body.contains("data")) {
-        log_query("graph", name, attempt, true, detail);
-        return body.at("data");
+      if (body.contains("ownedNfts") && body.at("ownedNfts").is_array() &&
+          body.contains("validAt") && body.at("validAt").is_object()) {
+        assert(body.contains("totalCount"));
+        size_t total_count =
+            static_cast<size_t>(std::stoull(json_str_or_int(body.at("totalCount"))));
+        size_t total_pages =
+            total_count == 0 ? 1 : (total_count + kSnapshotApiPageSize - 1) /
+                                       kSnapshotApiPageSize;
+        std::string page_detail =
+            detail + " page=" + std::to_string(page_num) + "/" +
+            std::to_string(total_pages) +
+            " n=" + std::to_string(body.at("ownedNfts").size());
+        log_query("snapshot", "getNFTsForOwner", attempt, true, page_detail);
+        return body;
       }
-      log_query("graph", name, attempt, false,
-                detail + " body=" + clip_text(body.dump()));
+      log_query("snapshot", "getNFTsForOwner", attempt, false,
+                detail + " page=" + std::to_string(page_num) + "/? body=" +
+                    clip_text(body.dump()));
     } else {
-      log_query("graph", name, attempt, false,
-                detail + " status=" + std::to_string(resp.status));
+      log_query("snapshot", "getNFTsForOwner", attempt, false,
+                detail + " page=" + std::to_string(page_num) + "/? status=" +
+                    std::to_string(resp.status));
     }
     std::this_thread::sleep_for(std::chrono::seconds(1));
-    resp = http_post(url, payload, proxy_url);
+    resp = http_get(url, proxy_url);
   }
 }
 
@@ -219,7 +245,8 @@ struct SnapshotFetch {
   std::string user;
   uint64_t snapshot_block = 0;
   std::map<std::string, BigInt> positions;
-  std::string cursor;
+  std::string page_key;
+  size_t page_num = 1;
   bool done = false;
 };
 
@@ -442,7 +469,12 @@ void commit_pending_events(RuntimeState &state,
       if (current_it != user_state.positions.end()) {
         current = current_it->second;
       }
-      assert(current >= -delta);
+      if (current < -delta) {
+        logger().warn("negative position user=" + event.user +
+                      " token_id=" + event.token_id +
+                      " current=" + bigint_to_str(current) +
+                      " delta=" + std::to_string(event.amount));
+      }
       BigInt next = current + delta;
       if (next == 0) {
         user_state.positions.erase(event.token_id);
@@ -1012,7 +1044,7 @@ void SyncThread::fetch_user_snapshots() {
 
     if (!cached) {
       stale_users_.push_back(user);
-      // 先初始化空状态,后续从 Graph 填充
+      // 先初始化空状态,后续从 snapshot API 填充
       rt_.user_snapshots[user] = {};
       rt_.user_states[user] = {.user = user, .stable = {}, .positions = {}};
     }
@@ -1021,7 +1053,7 @@ void SyncThread::fetch_user_snapshots() {
   pa.done = cached_count;
   progress().flush();
 
-  // [a'] fetch_user_snapshots: 仅对 stale_users 从 Graph 抓取
+  // [a'] fetch_user_snapshots: 仅对 stale_users 从 snapshot API 抓取
   if (!stale_users_.empty()) {
     std::vector<SnapshotFetch> snapshots;
     for (const auto &user : stale_users_) {
@@ -1029,13 +1061,12 @@ void SyncThread::fetch_user_snapshots() {
           .user = user,
           .snapshot_block = 0,
           .positions = {},
-          .cursor = "",
+          .page_key = "",
+          .page_num = 1,
           .done = false,
       });
     }
 
-    std::string url = "https://gateway.thegraph.com/api/" + cfg_.graph_api_key +
-                      "/subgraphs/id/" + std::string(kPnlSubgraphId);
     size_t done_count = 0;
     while (done_count < snapshots.size()) {
       std::vector<HttpReq> reqs;
@@ -1044,16 +1075,10 @@ void SyncThread::fetch_user_snapshots() {
         if (snapshots[i].done) {
           continue;
         }
-        json variables = {
-            {"user", snapshots[i].user},
-            {"after", snapshots[i].cursor},
-            {"first", static_cast<int>(cfg_.graph_page_limit)},
-        };
         reqs.push_back({
-            .url = url,
-            .method = "POST",
-            .body =
-                json{{"query", kUserPositionsQuery}, {"variables", variables}}.dump(),
+            .url = build_snapshot_api_url(cfg_, snapshots[i].user, snapshots[i].page_key),
+            .method = "GET",
+            .body = "",
         });
         refs.push_back(i);
       }
@@ -1064,37 +1089,41 @@ void SyncThread::fetch_user_snapshots() {
       progress().flush();
       for (size_t i = 0; i < responses.size(); ++i) {
         SnapshotFetch &snapshot = snapshots[refs[i]];
-        json variables = {
-            {"user", snapshot.user},
-            {"after", snapshot.cursor},
-            {"first", static_cast<int>(cfg_.graph_page_limit)},
-        };
-        json data = graph_data_with_retry(
-            rt_, "userPositions",
-            "user=" + snapshot.user + " after=" + snapshot.cursor, url,
-            json{{"query", kUserPositionsQuery}, {"variables", variables}},
+        std::string detail = "user=" + snapshot.user;
+        if (!snapshot.page_key.empty()) {
+          detail += " pageKey=" + snapshot.page_key;
+        }
+        json data = snapshot_data_with_retry(
+            rt_, detail, snapshot.page_num,
+            build_snapshot_api_url(cfg_, snapshot.user, snapshot.page_key),
             cfg_.proxy_url, responses[i]);
+
+        uint64_t block_number = static_cast<uint64_t>(
+            std::stoull(json_str_or_int(data.at("validAt").at("blockNumber"))));
         if (snapshot.snapshot_block == 0) {
-          snapshot.snapshot_block = static_cast<uint64_t>(
-              std::stoull(json_str_or_int(data.at("_meta").at("block").at("number"))));
+          snapshot.snapshot_block = block_number;
         }
-        const json &rows = data.at("userPositions");
+
+        const json &rows = data.at("ownedNfts");
         for (const auto &row : rows) {
-          std::string token_id = row.at("tokenId").get<std::string>();
-          // 跳过负数 token_id（graph subgraph 返回的溢出值）
-          if (token_id.empty() || token_id[0] == '-') {
-            continue;
-          }
-          snapshot.positions[token_id] +=
-              bigint_from_dec(json_str_or_int(row.at("amount")));
+          std::string token_id = json_str(row, "tokenId");
+          std::string balance_raw = json_str_or_int(row.at("balance"));
+          assert(!token_id.empty());
+          assert(!balance_raw.empty());
+          BigInt balance = bigint_from_dec(balance_raw);
+          assert(balance > 0);
+          snapshot.positions[token_id] += balance;
         }
-        if (rows.size() < cfg_.graph_page_limit) {
+
+        std::string next_page_key = json_str(data, "pageKey");
+        if (next_page_key.empty()) {
           snapshot.done = true;
           ++done_count;
           pa.done = cached_count + done_count;
           progress().flush();
         } else {
-          snapshot.cursor = rows.back().at("id").get<std::string>();
+          snapshot.page_key = next_page_key;
+          ++snapshot.page_num;
         }
       }
     }
@@ -1233,7 +1262,7 @@ std::vector<std::string> SyncThread::collect_active_token_ids() const {
   for (const auto &user : rt_.users) {
     const UserLiveState &live = rt_.user_states.at(user);
     for (const auto &[token_id, _] : live.positions) {
-      // 过滤掉负数 token_id（graph subgraph 数据源本身的问题）
+      // 过滤掉无效 token_id
       if (!token_id.empty() && token_id[0] != '-') {
         token_ids.insert(token_id);
       }

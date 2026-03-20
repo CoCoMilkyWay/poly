@@ -565,7 +565,7 @@ json build_state_json(const RuntimeState &state) {
            {"rpc_http", state.counters.rpc_http},
            {"rpc_ws_msg", state.counters.rpc_ws_msg},
            {"rpc_ws_sub", state.counters.rpc_ws_sub},
-           {"subgraph", state.counters.subgraph},
+           {"snapshot_api", state.counters.snapshot_api},
            {"gamma", state.counters.gamma},
        }},
   };
