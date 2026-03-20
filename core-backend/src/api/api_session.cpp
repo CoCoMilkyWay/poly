@@ -849,7 +849,9 @@ void ApiSession::handle_stage3_status() {
   res_.set(http::field::content_type, "application/json");
 
   const Stage3Status status = stage3_getter_();
-  write_ok_json_response(res_, to_stage3_status_json(status));
+  json result = to_stage3_status_json(status);
+  result["pool_usage"] = stage3_.pool_usage();
+  write_ok_json_response(res_, result);
 }
 
 void ApiSession::handle_query() {

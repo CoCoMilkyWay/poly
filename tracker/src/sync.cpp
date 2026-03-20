@@ -749,6 +749,7 @@ void SyncThread::fetch_user_snapshots() {
     progress().flush();
     auto responses = http_batch(reqs, cfg_.http_concurrency, cfg_.proxy_url);
     pa.pending = 0;
+    progress().flush();
     for (size_t i = 0; i < responses.size(); ++i) {
       SnapshotFetch &snapshot = snapshots[refs[i]];
       json variables = {
@@ -846,6 +847,7 @@ void SyncThread::fetch_snapshot_balances() {
   progress().flush();
   json responses = rpc_batch(reqs);
   pb.pending = 0;
+  progress().flush();
   for (size_t i = 0; i < refs.size(); ++i) {
     BigInt balance =
         bigint_from_hex(responses.at(i).at("result").get<std::string>());
@@ -871,9 +873,9 @@ void SyncThread::fetch_snapshot_balances() {
     case Collateral::Unknown:
       assert(false);
     }
+    pb.done = i + 1;
+    progress().flush();
   }
-  pb.done = refs.size();
-  progress().flush();
 }
 
 void SyncThread::append_snapshot_roots() {
@@ -924,6 +926,7 @@ void SyncThread::fetch_gamma_by_token_ids(const std::vector<std::string> &token_
   std::vector<std::string> unique = token_ids;
   std::sort(unique.begin(), unique.end());
   unique.erase(std::unique(unique.begin(), unique.end()), unique.end());
+  pc.total = unique.size(); // 去重后更新 total
 
   // 按 gamma_batch_limit 分 chunk，使用重复参数格式 clob_token_ids=x&clob_token_ids=y
   std::vector<std::vector<std::string>> chunks = chunked(unique, cfg_.gamma_batch_limit);
@@ -948,6 +951,7 @@ void SyncThread::fetch_gamma_by_token_ids(const std::vector<std::string> &token_
   }
 
   // 并发请求 + 并发重试
+  size_t done_count = 0;
   for (size_t attempt = 1; !pending_chunk_indices.empty(); ++attempt) {
     std::vector<HttpReq> batch_reqs;
     for (size_t idx : pending_chunk_indices) {
@@ -958,6 +962,7 @@ void SyncThread::fetch_gamma_by_token_ids(const std::vector<std::string> &token_
     progress().flush();
     auto responses = http_batch(batch_reqs, cfg_.http_concurrency, cfg_.proxy_url);
     pc.pending = 0;
+    progress().flush();
     assert(responses.size() == pending_chunk_indices.size());
 
     std::vector<size_t> still_pending;
@@ -971,6 +976,9 @@ void SyncThread::fetch_gamma_by_token_ids(const std::vector<std::string> &token_
         if (body.is_array()) {
           log_query("gamma", "markets/tokens", attempt, true, "n=" + std::to_string(chunks[idx].size()));
           chunk_results[idx] = std::move(body);
+          done_count += chunks[idx].size();
+          pc.done = done_count;
+          progress().flush();
           continue;
         }
         log_query("gamma", "markets/tokens", attempt, false,
@@ -989,7 +997,6 @@ void SyncThread::fetch_gamma_by_token_ids(const std::vector<std::string> &token_
   }
 
   // 处理所有结果
-  size_t done_count = 0;
   for (size_t chunk_idx = 0; chunk_idx < chunks.size(); ++chunk_idx) {
     const auto &chunk = chunks[chunk_idx];
     const auto &arr_opt = chunk_results[chunk_idx];
@@ -1023,9 +1030,6 @@ void SyncThread::fetch_gamma_by_token_ids(const std::vector<std::string> &token_
         if (token.cond.empty()) {
           token.cond = "?"; // 标记已查询
         }
-        ++done_count;
-        pc.done = done_count;
-        progress().flush();
         continue;
       }
 
@@ -1122,10 +1126,6 @@ void SyncThread::fetch_gamma_by_token_ids(const std::vector<std::string> &token_
 
         apply_resolved_prices(rt_, condition_id);
       }
-
-      ++done_count;
-      pc.done = done_count;
-      progress().flush();
     }
   }
 }
@@ -1462,6 +1462,7 @@ void SyncThread::backfill_range(uint64_t from_block, uint64_t to_block) {
     progress().flush();
     json responses = rpc_batch(reqs);
     pe.pending = 0;
+    progress().flush();
     std::map<uint64_t, std::map<std::string, json>> blocks;
     for (const auto &response : responses) {
       assert(response.contains("result") && response.at("result").is_array());

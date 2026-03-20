@@ -589,7 +589,6 @@ json build_state_json(const RuntimeState &state) {
            {"subgraph", state.counters.subgraph},
            {"gamma", state.counters.gamma},
        }},
-      {"api_progress", build_progress_json()},
   };
 
   return result;

@@ -645,6 +645,10 @@
       badge.className = 'badge badge-warning';
       badge.textContent = '等待中';
     }
+
+    if (typeof window.s3UpdatePoolUsage === 'function') {
+      window.s3UpdatePoolUsage(sync.pool_usage || {});
+    }
   }
 
   function s3SetFullWindow() {

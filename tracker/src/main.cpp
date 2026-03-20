@@ -36,6 +36,7 @@ int main() {
   std::cerr << tracker::json({
                                  {"frontend_url", "http://localhost:" + std::to_string(cfg.frontend_port)},
                                  {"backend_url", "http://localhost:" + std::to_string(cfg.backend_port)},
+                                 {"proxy_url", cfg.proxy_url},
                                  {"address_file", cfg.address_file.string()},
                                  {"snapshot_file", cfg.snapshot_file.string()},
                                  {"history_file", cfg.history_file.string()},

@@ -1,0 +1,83 @@
+<style>
+  .s3p-card {
+    background: #1a1a1a;
+    border-radius: 10px;
+    padding: 15px;
+    border: 1px solid #333;
+    margin-bottom: 15px;
+  }
+
+  .s3p-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #333;
+  }
+
+  .s3p-header h2 {
+    font-size: 1.05em;
+    color: #fff;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .s3p-header h2::before {
+    content: "";
+    width: 3px;
+    height: 16px;
+    background: #6366f1;
+    border-radius: 2px;
+  }
+
+  .s3p-pre {
+    font-family: monospace;
+    font-size: 0.82em;
+    color: #ccc;
+    background: #111;
+    padding: 10px 12px;
+    border-radius: 6px;
+    white-space: pre;
+    overflow-x: auto;
+    line-height: 1.5;
+  }
+</style>
+
+<div class="s3p-card">
+  <div class="s3p-header">
+    <h2>Stage3 Pool</h2>
+  </div>
+  <pre class="s3p-pre" id="s3p-pre">loading...</pre>
+</div>
+
+<script>
+  window.s3UpdatePoolUsage = function(pool) {
+    const pre = document.getElementById('s3p-pre');
+    if (!pool || typeof pool !== 'object') {
+      pre.textContent = '(no data)';
+      return;
+    }
+
+    const pad = (n, w) => String(n).padStart(w, ' ');
+    const pct = (v) => (v != null ? Number(v).toFixed(2) : '0.00') + '%';
+    const num = (v) => v != null ? Number(v).toLocaleString() : '0';
+
+    const u = pool.users || {};
+    const t = pool.tokens || {};
+    const f = pool.features || {};
+    const sb = pool.sharpe_bucket || {};
+    const sp = pool.sharpe_point || {};
+
+    const lines = [
+      `users:         ${pad(num(u.used), 12)} / ${pad(num(u.max), 12)} (${pct(u.pct)})`,
+      `tokens:        ${pad(num(t.used), 12)} / ${pad(num(t.max), 12)} (${pct(t.pct)}) | hottest shard[${t.hottest_shard ?? '-'}]: ${num(t.shard_used)}/${num(t.shard_max)} (${pct(t.shard_pct)})`,
+      `features:      ${pad(num(f.used), 12)} / ${pad(num(f.max), 12)} (${pct(f.pct)}) | hottest shard[${f.hottest_shard ?? '-'}]: ${num(f.shard_used)}/${num(f.shard_max)} (${pct(f.shard_pct)})`,
+      `sharpe_bucket: ${pad(num(sb.used), 12)} / ${pad(num(sb.max), 12)} (${pct(sb.pct)}) | hottest shard[${sb.hottest_shard ?? '-'}]: ${num(sb.shard_used)}/${num(sb.shard_max)} (${pct(sb.shard_pct)})`,
+      `sharpe_point:  ${pad(num(sp.used), 12)} / ${pad(num(sp.max), 12)} (${pct(sp.pct)}) | hottest shard[${sp.hottest_shard ?? '-'}]: ${num(sp.shard_used)}/${num(sp.shard_max)} (${pct(sp.shard_pct)})`,
+    ];
+    pre.textContent = lines.join('\n');
+  };
+</script>

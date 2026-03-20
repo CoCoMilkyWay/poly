@@ -2,6 +2,7 @@
 #include "tracker/codec.hpp"
 
 #include <cassert>
+#include <fstream>
 
 namespace tracker {
 
@@ -49,6 +50,7 @@ AppConfig AppConfig::load(const std::filesystem::path &tracker_dir) {
   c.tracker_dir = std::filesystem::weakly_canonical(tracker_dir);
   auto data_dir = c.tracker_dir / "data";
   c.address_file = c.tracker_dir / "address.txt";
+  c.proxy_file = c.tracker_dir / "proxy.txt";
 
   // data files in data/ subdirectory
   c.log_file = data_dir / "sync.log";
@@ -83,8 +85,11 @@ AppConfig AppConfig::load(const std::filesystem::path &tracker_dir) {
   c.gamma_batch_limit = kGammaBatchLimit;
   c.http_concurrency = kHttpConcurrency;
 
-  // proxy
-  c.proxy_url = kProxyUrl;
+  // proxy (read from file, empty if not exists)
+  if (std::filesystem::exists(c.proxy_file)) {
+    std::ifstream f(c.proxy_file);
+    std::getline(f, c.proxy_url);
+  }
 
   // assertions
   assert(std::filesystem::exists(c.address_file));

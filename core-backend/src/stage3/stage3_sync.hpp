@@ -148,6 +148,8 @@ public:
   Status status() const;
   int64_t get_max_bucket() const;
   int64_t get_bucket_user_count(int64_t bucket) const;
+  // Stage3 mmap pool usage (per-shard + hottest shard), for frontend display.
+  json pool_usage() const;
   Stage2Data stage2_data() const;
   json memory_breakdown() const;
   json stage2_rocksdb_memory_breakdown() const;

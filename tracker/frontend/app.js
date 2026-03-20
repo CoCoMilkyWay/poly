@@ -20,6 +20,7 @@ const state = {
   selectedSnapshot: "",
   mode: "aggregate-current",
   historyCache: new Map(),
+  progress: null,
 };
 
 const usersListEl = document.getElementById("users-list");
@@ -349,8 +350,8 @@ function renderHoldings() {
   }).join("");
 }
 
-function renderQueryCounts(apiProgress = null) {
-  const progressData = apiProgress || state.payload?.summary?.api_progress || [];
+function renderQueryCounts() {
+  const progressData = state.progress || [];
   const headBlock = state.payload?.summary?.head_block || 0;
 
   let html = `
@@ -489,8 +490,8 @@ function connectProgressSSE() {
   const es = new EventSource(`${BACKEND_BASE}/api/progress/stream`);
   es.onmessage = (event) => {
     try {
-      const progress = JSON.parse(event.data);
-      renderQueryCounts(progress);
+      state.progress = JSON.parse(event.data);
+      renderQueryCounts();
     } catch (error) {
       console.error("Progress SSE error:", error);
     }
