@@ -87,10 +87,6 @@ inline Collateral collateral_from_addr(const std::string &addr) {
   return Collateral::Unknown;
 }
 
-inline bool is_usd_collateral(Collateral collateral) {
-  return collateral != Collateral::Unknown;
-}
-
 struct StableBalances {
   BigInt usdc = 0;
   BigInt usdc_e = 0;
@@ -148,6 +144,28 @@ struct UserLiveState {
   std::map<std::string, BigInt> positions;
 };
 
+struct VisibleTokenState {
+  BigInt amount = 0;
+  long double value_usd = 0.0L;
+};
+
+struct UserViewState {
+  size_t raw_position_count = 0;
+  size_t filtered_dust_count = 0;
+  size_t filtered_settled_count = 0;
+  long double token_value_usd = 0.0L;
+  long double stable_value_usd = 0.0L;
+  long double total_value_usd = 0.0L;
+  bool qualifies_for_aggregate = false;
+  std::map<std::string, VisibleTokenState> visible_tokens;
+};
+
+struct AggregateTokenState {
+  BigInt amount = 0;
+  long double value_usd = 0.0L;
+  size_t holder_count = 0;
+};
+
 struct QueryCounters {
   uint64_t rpc_http = 0;
   uint64_t rpc_ws_msg = 0;
@@ -162,9 +180,13 @@ struct RuntimeState {
   std::unordered_set<std::string> user_set;
   std::map<std::string, UserSnapshotState> user_snapshots;
   std::map<std::string, UserLiveState> user_states;
+  std::map<std::string, UserViewState> user_views; // raw user_states 的派生有效视图
   std::map<std::string, TokenMeta> tokens;
   std::map<std::string, ConditionMeta> conditions;
   std::map<std::string, MarketMeta> markets;
+  std::map<std::string, AggregateTokenState> aggregate_tokens; // 有效用户贡献的聚合桶
+  std::map<std::string, std::unordered_set<std::string>> token_holders; // token -> 持有用户
+  long double aggregate_value_usd = 0.0L; // aggregate_tokens 的总价值
   json snapshot_root = json::object();
   json history_root = json::object();
   std::unordered_set<std::string> history_event_ids;
@@ -192,12 +214,6 @@ inline void publish_json(std::shared_ptr<const json> &slot, json value) {
 inline std::shared_ptr<const json> load_published(
     const std::shared_ptr<const json> &slot) {
   return std::atomic_load(&slot);
-}
-
-inline void merge_token(TokenMeta &dst, const TokenMeta &src) {
-  if (dst.cond.empty()) {
-    dst.cond = src.cond;
-  }
 }
 
 // 从 condition.tids 推断 token 的 idx
@@ -295,6 +311,23 @@ inline void push_recent_event(RuntimeState &state, json row, size_t limit) {
   while (state.recent_events.size() > limit) {
     state.recent_events.pop_front();
   }
+}
+
+inline long double stable_value_usd(const StableBalances &stable) {
+  return bigint_to_units(stable.usdc) + bigint_to_units(stable.usdc_e) +
+         bigint_to_units(stable.usdt) + bigint_to_units(stable.wrapped);
+}
+
+inline long double token_value_usd(const BigInt &amount, int64_t price) {
+  if (price < 0) {
+    return 0.0L;
+  }
+  return bigint_to_units(amount) * static_cast<long double>(price) /
+         static_cast<long double>(kPriceScale);
+}
+
+inline bool is_settled(const ConditionMeta &cond) {
+  return cond.has_payout_d && cond.payout_d > 0;
 }
 
 } // namespace tracker

@@ -15,7 +15,7 @@ namespace tracker {
 // 职责:
 //   - accept HTTP 连接
 //   - 提供 /api/state, /api/meta, /api/history, /api/resync
-//   - 只读 state (通过 mu 保护)
+//   - 只读原子发布的 state/meta/history
 //   - 写 resync_flag 触发重新同步
 
 class ApiThread {

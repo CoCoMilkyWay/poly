@@ -17,8 +17,8 @@ namespace tracker {
 //   - 拥有全部状态 (AppState)
 //   - full_resync()
 //   - drain 队列, apply_logs()
-//   - 持久化 snapshot/history/meta (aggregate 纯内存)
-//   - 发布 state (通过 AppState.mu 保护)
+//   - 持久化 snapshot/history/meta (aggregate/user_views/token_holders 纯内存)
+//   - 原子发布 state/meta/snapshot/history
 
 class SyncThread {
 public:
@@ -39,6 +39,17 @@ private:
   void persist_snapshot();
   void persist_meta();
   void persist_history();
+  void clear_derived_state();
+  void rebuild_derived_state();
+  void refresh_users(const std::unordered_set<std::string> &users);
+  ConditionMeta &prepare_condition(const std::string &condition_id,
+                                   Collateral hint_collateral,
+                                   std::unordered_set<std::string> &dirty_conditions);
+  void remove_user_aggregate(const std::string &user);
+  void add_user_aggregate(const std::string &user);
+  void rebuild_user_view(const std::string &user);
+  std::unordered_set<std::string>
+  collect_condition_users(const std::string &condition_id) const;
   void fetch_user_snapshots();
   void fetch_snapshot_balances();
   void append_snapshot_roots();
@@ -47,18 +58,28 @@ private:
   void refresh_prices(const std::vector<std::string> &token_ids);
   void fetch_gamma_by_condition_ids(const std::vector<std::string> &condition_ids);
   void fetch_gamma_market_questions(const std::string &market_id);
-  void ensure_token_meta(const std::string &token_id);
-  void ensure_condition_meta(const std::string &condition_id,
+  bool ensure_token_meta(const std::string &token_id);
+  bool ensure_condition_meta(const std::string &condition_id,
                              Collateral hint_collateral);
   void ensure_market_questions(const std::string &market_id);
   void backfill_range(uint64_t from_block, uint64_t to_block);
   void apply_block_logs(const std::vector<json> &logs);
-  void apply_condition_resolution(const json &log);
-  void apply_order_fill(const json &log);
-  void apply_split(const json &log);
-  void apply_merge(const json &log);
-  void apply_redeem(const json &log);
-  void apply_convert(const json &log, const std::vector<json> &tx_logs);
+  void apply_condition_resolution(const json &log,
+                                  std::unordered_set<std::string> &dirty_conditions);
+  void apply_order_fill(const json &log,
+                        std::unordered_set<std::string> &dirty_users,
+                        std::unordered_set<std::string> &dirty_conditions);
+  void apply_split_or_merge(const json &log,
+                            bool is_split,
+                            std::unordered_set<std::string> &dirty_users,
+                            std::unordered_set<std::string> &dirty_conditions);
+  void apply_redeem(const json &log,
+                    std::unordered_set<std::string> &dirty_users,
+                    std::unordered_set<std::string> &dirty_conditions);
+  void apply_convert(const json &log,
+                     const std::vector<json> &tx_logs,
+                     std::unordered_set<std::string> &dirty_users,
+                     std::unordered_set<std::string> &dirty_conditions);
   bool user_visible_at(const std::string &user, uint64_t block_number) const;
   uint64_t rpc_block_number();
   json rpc_call(const std::string &method, const json &params);

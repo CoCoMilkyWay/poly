@@ -134,12 +134,106 @@ json payout_json(const std::vector<BigInt> &values) {
   return out;
 }
 
-long double value_usd(const BigInt &amount, int64_t price) {
-  if (price < 0) {
-    return 0.0L;
+struct TokenRowMeta {
+  std::string condition_id;
+  const ConditionMeta *condition = nullptr;
+  uint8_t token_idx = 0xFF;
+  int64_t price = -1;
+};
+
+TokenRowMeta resolve_token_row_meta(const RuntimeState &state,
+                                    const std::string &token_id) {
+  TokenRowMeta meta;
+  auto token_it = state.tokens.find(token_id);
+  if (token_it == state.tokens.end() || token_it->second.cond.empty()) {
+    return meta;
   }
-  return bigint_to_units(amount) * static_cast<long double>(price) /
-         static_cast<long double>(kPriceScale);
+  meta.condition_id = token_it->second.cond;
+  auto cond_it = state.conditions.find(meta.condition_id);
+  if (cond_it == state.conditions.end()) {
+    return meta;
+  }
+  meta.condition = &cond_it->second;
+  meta.token_idx = get_token_idx(state.conditions, meta.condition_id, token_id);
+  if (meta.token_idx < meta.condition->prices.size()) {
+    meta.price = meta.condition->prices[meta.token_idx];
+  }
+  return meta;
+}
+
+void attach_token_row_meta(json &row, const TokenRowMeta &meta) {
+  row["condition_id"] =
+      meta.condition_id.empty() ? json(nullptr) : json(meta.condition_id);
+  row["token_idx"] = meta.token_idx == 0xFF ? json(nullptr) : json(meta.token_idx);
+  row["collateral"] =
+      meta.condition == nullptr || meta.condition->coll == 0
+          ? json(nullptr)
+          : json(meta.condition->coll);
+  row["price"] = meta.price < 0 ? json(nullptr) : json(meta.price);
+  row["q"] = meta.condition == nullptr ? "" : meta.condition->q;
+  row["desc"] = meta.condition == nullptr ? "" : meta.condition->desc;
+  row["outcomes"] =
+      meta.condition == nullptr ? json::array() : json(meta.condition->outcomes);
+  if (meta.condition != nullptr && meta.token_idx != 0xFF &&
+      meta.token_idx < meta.condition->outcomes.size()) {
+    row["outcome_text"] = meta.condition->outcomes[meta.token_idx];
+  }
+}
+
+json build_token_position_row(const RuntimeState &state,
+                              const std::string &token_id,
+                              const BigInt &amount,
+                              long double value_usd) {
+  TokenRowMeta meta = resolve_token_row_meta(state, token_id);
+  json row = {
+      {"asset_type", "token"},
+      {"token_id", token_id},
+      {"amount_raw", bigint_to_str(amount)},
+      {"value_usd", value_usd},
+      {"settled", meta.condition != nullptr && is_settled(*meta.condition)},
+  };
+  attach_token_row_meta(row, meta);
+  return row;
+}
+
+json build_stable_position_row(const char *token_id,
+                               const char *label,
+                               Collateral collateral,
+                               const BigInt &amount) {
+  return {
+      {"asset_type", "stable"},
+      {"token_id", token_id},
+      {"label", label},
+      {"condition_id", nullptr},
+      {"token_idx", nullptr},
+      {"collateral", to_u8(collateral)},
+      {"amount_raw", bigint_to_str(amount)},
+      {"price", kPriceScale},
+      {"value_usd", bigint_to_units(amount)},
+      {"q", label},
+      {"desc", ""},
+      {"outcomes", json::array()},
+      {"settled", false},
+  };
+}
+
+json build_aggregate_row(const RuntimeState &state,
+                         const std::string &token_id,
+                         const AggregateTokenState &bucket) {
+  TokenRowMeta meta = resolve_token_row_meta(state, token_id);
+  json row = {
+      {"token_id", token_id},
+      {"amount_raw", bigint_to_str(bucket.amount)},
+      {"holder_count", bucket.holder_count},
+      {"value_usd", bucket.value_usd},
+      {"aggregate_weight",
+       state.aggregate_value_usd > 0.0L
+           ? bucket.value_usd / state.aggregate_value_usd
+           : 0.0L},
+      {"asset_type", "token"},
+  };
+  attach_token_row_meta(row, meta);
+  return row;
 }
 
 json enrich_event(json row, const RuntimeState &state) {
@@ -336,10 +430,6 @@ json build_progress_json() {
   return result;
 }
 
-inline bool is_settled(const ConditionMeta &cond) {
-  return cond.has_payout_d && cond.payout_d > 0;
-}
-
 json build_state_json(const RuntimeState &state) {
   json result = {
       {"summary", json::object()},
@@ -348,16 +438,6 @@ json build_state_json(const RuntimeState &state) {
       {"recent_events", json::array()},
   };
 
-  struct AggregateBucket {
-    BigInt amount = 0;
-    long double value = 0.0L;
-    size_t holders = 0;
-    bool stable = false;
-    std::string label;
-    uint8_t collateral = 0;
-  };
-
-  std::map<std::string, AggregateBucket> aggregate_map;
   uint64_t min_snapshot_block = 0;
   bool have_snapshot_block = false;
   size_t position_count = 0;
@@ -365,78 +445,26 @@ json build_state_json(const RuntimeState &state) {
   for (const auto &user : state.users) {
     const UserLiveState &live = state.user_states.at(user);
     const UserSnapshotState &snapshot = state.user_snapshots.at(user);
+    const UserViewState &view = state.user_views.at(user);
     if (!have_snapshot_block || snapshot.snapshot_block < min_snapshot_block) {
       min_snapshot_block = snapshot.snapshot_block;
       have_snapshot_block = true;
     }
+    position_count += view.raw_position_count;
 
-    struct UserRow {
-      long double value = 0.0L;
-      bool settled = false;
+    struct PositionRow {
+      long double value_usd = 0.0L;
       json row;
     };
-
-    std::vector<UserRow> rows;
-    long double token_total = 0.0L;
-    long double stable_total = 0.0L;
-
-    // 先计算 stable 总值
-    stable_total += bigint_to_units(live.stable.usdc);
-    stable_total += bigint_to_units(live.stable.usdc_e);
-    stable_total += bigint_to_units(live.stable.usdt);
-    stable_total += bigint_to_units(live.stable.wrapped);
-
-    // 计算 token 仓位
-    for (const auto &[token_id, amount] : live.positions) {
-      if (amount == 0) {
-        continue;
-      }
-      ++position_count;
-      auto token_it = state.tokens.find(token_id);
-      const std::string cond_id =
-          token_it != state.tokens.end() ? token_it->second.cond : "";
-      const ConditionMeta *condition = nullptr;
-      if (!cond_id.empty()) {
-        auto cond_it = state.conditions.find(cond_id);
-        if (cond_it != state.conditions.end()) {
-          condition = &cond_it->second;
-        }
-      }
-
-      uint8_t token_idx = get_token_idx(state.conditions, cond_id, token_id);
-      int64_t price = -1;
-      if (condition != nullptr && token_idx < condition->prices.size()) {
-        price = condition->prices[token_idx];
-      }
-      long double current_value = value_usd(amount, price);
-      token_total += current_value;
-
-      bool settled = condition != nullptr && is_settled(*condition);
-      json row = {
-          {"asset_type", "token"},
-          {"token_id", token_id},
-          {"condition_id", cond_id.empty() ? json(nullptr) : json(cond_id)},
-          {"token_idx", token_idx == 0xFF ? json(nullptr) : json(token_idx)},
-          {"collateral",
-           condition == nullptr || condition->coll == 0 ? json(nullptr)
-                                                        : json(condition->coll)},
-          {"amount_raw", bigint_to_str(amount)},
-          {"price", price < 0 ? json(nullptr) : json(price)},
-          {"value_usd", current_value},
-          {"q", condition == nullptr ? "" : condition->q},
-          {"desc", condition == nullptr ? "" : condition->desc},
-          {"outcomes",
-           condition == nullptr ? json::array() : json(condition->outcomes)},
-          {"settled", settled},
-      };
-      if (condition != nullptr && token_idx != 0xFF &&
-          token_idx < condition->outcomes.size()) {
-        row["outcome_text"] = condition->outcomes[token_idx];
-      }
-      rows.push_back({current_value, settled, std::move(row)});
+    std::vector<PositionRow> rows;
+    for (const auto &[token_id, visible] : view.visible_tokens) {
+      rows.push_back({
+          .value_usd = visible.value_usd,
+          .row = build_token_position_row(state, token_id, visible.amount,
+                                          visible.value_usd),
+      });
     }
 
-    // 添加 stable 到 rows (用于用户展示)
     auto push_stable_row = [&](const char *token_id,
                                const char *label,
                                Collateral collateral,
@@ -444,25 +472,9 @@ json build_state_json(const RuntimeState &state) {
       if (amount == 0) {
         return;
       }
-      long double current_value = bigint_to_units(amount);
       rows.push_back({
-          current_value,
-          false, // stable 不算 settled
-          {
-              {"asset_type", "stable"},
-              {"token_id", token_id},
-              {"label", label},
-              {"condition_id", nullptr},
-              {"token_idx", nullptr},
-              {"collateral", to_u8(collateral)},
-              {"amount_raw", bigint_to_str(amount)},
-              {"price", kPriceScale},
-              {"value_usd", current_value},
-              {"q", label},
-              {"desc", ""},
-              {"outcomes", json::array()},
-              {"settled", false},
-          },
+          .value_usd = bigint_to_units(amount),
+          .row = build_stable_position_row(token_id, label, collateral, amount),
       });
     };
     push_stable_row("stable:usdc", "USDC", Collateral::USDC, live.stable.usdc);
@@ -471,105 +483,43 @@ json build_state_json(const RuntimeState &state) {
     push_stable_row("stable:wrapped", "WrappedUSDCe", Collateral::WrappedUSDCe,
                     live.stable.wrapped);
 
-    std::sort(rows.begin(), rows.end(), [](const UserRow &a, const UserRow &b) {
-      if (a.value != b.value) {
-        return a.value > b.value;
+    std::sort(rows.begin(), rows.end(), [](const PositionRow &a, const PositionRow &b) {
+      if (a.value_usd != b.value_usd) {
+        return a.value_usd > b.value_usd;
       }
       return a.row.at("token_id").get<std::string>() <
              b.row.at("token_id").get<std::string>();
     });
 
-    long double total_value = token_total + stable_total;
     json positions = json::array();
     for (auto &row : rows) {
-      row.row["weight"] = total_value > 0.0L ? row.value / total_value : 0.0L;
+      row.row["weight"] = view.total_value_usd > 0.0L
+                              ? row.value_usd / view.total_value_usd
+                              : 0.0L;
       positions.push_back(row.row);
-    }
-
-    // 用户过滤: token_value > 0.5 * total_value 才计入 aggregate
-    bool user_qualifies = total_value > 0.0L &&
-                          token_total > kUserTokenRatioThreshold * total_value;
-
-    if (user_qualifies) {
-      // token 过滤: !settled && value > 0.001 * total_value
-      long double value_threshold = kTokenValueThreshold * total_value;
-      for (const auto &row : rows) {
-        if (row.row.at("asset_type").get<std::string>() == "stable") {
-          continue; // stable 不计入 aggregate
-        }
-        if (row.settled) {
-          continue; // 已结算跳过
-        }
-        if (row.value <= value_threshold) {
-          continue; // dust 跳过
-        }
-        const std::string &token_id = row.row.at("token_id").get<std::string>();
-        const BigInt amount = bigint_from_dec(row.row.at("amount_raw").get<std::string>());
-        AggregateBucket &bucket = aggregate_map[token_id];
-        bucket.amount += amount;
-        bucket.value += row.value;
-        bucket.holders += 1;
-        if (row.row.contains("collateral") && !row.row.at("collateral").is_null()) {
-          bucket.collateral = row.row.at("collateral").get<uint8_t>();
-        }
-      }
     }
 
     result["users"].push_back({
         {"user", user},
         {"snapshot_block", snapshot.snapshot_block},
         {"stable_balances", stable_balances_json(live.stable)},
-        {"token_value_usd", token_total},
-        {"stable_value_usd", stable_total},
-        {"total_value_usd", total_value},
-        {"qualifies_for_aggregate", user_qualifies},
+        {"token_value_usd", view.token_value_usd},
+        {"stable_value_usd", view.stable_value_usd},
+        {"total_value_usd", view.total_value_usd},
+        {"qualifies_for_aggregate", view.qualifies_for_aggregate},
         {"positions", positions},
+        {"filtered_dust_count", view.filtered_dust_count},
+        {"filtered_settled_count", view.filtered_settled_count},
     });
   }
 
-  // aggregate 最终过滤: value > 0.001 * aggregate_total
-  long double aggregate_total = 0.0L;
-  for (const auto &[_, bucket] : aggregate_map) {
-    aggregate_total += bucket.value;
-  }
-  long double aggregate_threshold = kAggregateValueThreshold * aggregate_total;
-
-  for (const auto &[token_id, bucket] : aggregate_map) {
-    if (bucket.value <= aggregate_threshold) {
-      continue; // 过滤 dust
+  long double aggregate_threshold =
+      kAggregateValueThreshold * state.aggregate_value_usd;
+  for (const auto &[token_id, bucket] : state.aggregate_tokens) {
+    if (bucket.value_usd <= aggregate_threshold) {
+      continue;
     }
-    json row = {
-        {"token_id", token_id},
-        {"amount_raw", bigint_to_str(bucket.amount)},
-        {"holder_count", bucket.holders},
-        {"value_usd", bucket.value},
-        {"aggregate_weight", aggregate_total > 0.0L ? bucket.value / aggregate_total
-                                                    : 0.0L},
-        {"collateral", bucket.collateral == 0 ? json(nullptr)
-                                              : json(bucket.collateral)},
-        {"asset_type", "token"},
-    };
-    auto token_it = state.tokens.find(token_id);
-    if (token_it != state.tokens.end() && !token_it->second.cond.empty()) {
-      const std::string &cond_id = token_it->second.cond;
-      row["condition_id"] = cond_id;
-      auto cond_it = state.conditions.find(cond_id);
-      if (cond_it != state.conditions.end()) {
-        uint8_t idx = get_token_idx(state.conditions, cond_id, token_id);
-        row["token_idx"] = idx == 0xFF ? json(nullptr) : json(idx);
-        int64_t price = (idx < cond_it->second.prices.size())
-                            ? cond_it->second.prices[idx]
-                            : -1;
-        row["price"] = price < 0 ? json(nullptr) : json(price);
-        row["q"] = cond_it->second.q;
-        row["desc"] = cond_it->second.desc;
-        row["outcomes"] = cond_it->second.outcomes;
-        if (idx != 0xFF && idx < cond_it->second.outcomes.size()) {
-          row["outcome_text"] = cond_it->second.outcomes[idx];
-        }
-      }
-    }
-    result["aggregate"].push_back(std::move(row));
+    result["aggregate"].push_back(build_aggregate_row(state, token_id, bucket));
   }
 
   std::sort(result["aggregate"].begin(), result["aggregate"].end(),

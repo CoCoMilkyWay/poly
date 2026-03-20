@@ -17,11 +17,12 @@
 │  │ 输入: RPC节点     │  │ 核心业务线程      │  │ 输入: 前端请求    │        │
 │  │ 输出: event_queue │  │                   │  │ 输出: JSON响应    │        │
 │  │                   │  │                   │  │                   │        │
-│  │ - 维护 ws 连接    │  │ - 拥有全部状态    │  │ - /api/state      │        │
+│  │ - 维护 ws 连接    │  │ - 拥有 raw/derived│  │ - /api/state      │        │
 │  │ - eth_subscribe   │  │ - full_resync()   │  │ - /api/meta       │        │
 │  │   newHeads/logs   │  │ - drain 队列      │  │ - /api/history    │        │
 │  │ - 解析后入队列    │  │ - apply_logs()    │  │ - /api/resync     │        │
-│  │ - 断线自动重连    │  │ - persist S/H/M   │  │                   │        │
+│  │ - 断线自动重连    │  │ - 维护有效表      │  │                   │        │
+│  │                   │  │ - persist S/H/M   │  │                   │        │
 │  │                   │  │ - 发布 state_ptr  │  │ 读 state_ptr 响应 │        │
 │  └─────────┬─────────┘  └─────────┬─────────┘  └─────────┬─────────┘        │
 │            │                      │                      │                  │
@@ -96,6 +97,8 @@ e/             ws.RPC.eth_subscribe({users})                         批量订�
 f/             RPC.eth_blockNumber                                   获取当前区块高度
 g/             RPC.eth_getLogs({users})                              批量补齐历史记录({kGetLogsBlockSpan}区块拆分)
 
+注: /api/state 直接返回有效用户标记、用户有效token表、有效aggregate token表,前端不再做过滤计算
+
 ======================
 进度显示设计(终端)
 ======================
@@ -135,7 +138,7 @@ Log设计(文件)
     meta.json       - token/condition元数据
     sync.log        - 同步日志
 
-注: aggregate 仓位纯内存维护,不落盘,重启时从 snapshot + backfill 重建
+注: aggregate/user_views/token_holders 纯内存维护,不落盘,重启时从 snapshot + backfill 重建
 ======================
 整体流程
 ======================
@@ -144,7 +147,7 @@ Log设计(文件)
   S = snapshot.json (用户持仓快照)
   H = history.json (交易记录)
   M = meta.json (token/condition元数据)
-  (aggregate 纯内存,不落盘)
+  (aggregate/user_views/token_holders 纯内存,不落盘)
 
 SyncThread.run()
 ├─ 初始化
@@ -181,6 +184,11 @@ SyncThread.run()
 │  │  │  ├─ 输出: conditions[cond_id].prices[], conditions[cond_id].price_ts[]
 │  │  │  ├─ 注: 轻量级接口, 只返回价格, 比 Gamma /markets 更高效
 │  │  │  └─ 落地: → M (meta.json)
+│  │  ├─ [d'] rebuild_derived_state (建立 ws/backfill 基线)
+│  │  │  ├─ 构建 token_holders[token] -> users
+│  │  │  ├─ 对每个 user 计算 user_view = {token_value, stable_value, total_value, qualifies, visible_tokens}
+│  │  │  ├─ 若 user qualifies: visible_tokens 累加到 aggregate_tokens
+│  │  │  └─ 输出: 后续增量阶段只更新 dirty_users / dirty_conditions
 │  │  ├─ [e] start_ws_subscription (先订阅,再获取head,再backfill)
 │  │  │  ├─ API: ws.RPC.eth_subscribe(newHeads, logs)
 │  │  │  ├─ 阻塞等待: ws 连接成功 + 收到首条 newHeads
@@ -201,27 +209,19 @@ SyncThread.run()
 │  │  │  ├─ raw 去重: 相同 raw_log_key 只保留一份 raw log
 │  │  │  ├─ emit 后: event_id = op_key + "|" + user + "|" + leg_index
 │  │  │  └─ H 落地按 event_id 幂等
-│  │  └─ 计算 aggregate (内存, 全量遍历 users)
-│  │     ├─ 过滤阈值: kUserTokenRatio=0.5, kTokenValue=0.001, kAggregateValue=0.001
-│  │     ├─ is_settled(cond) = cond.has_payout_d && cond.payout_d > 0
-│  │     └─ for user in users:
-│  │        ├─ token_value = Σ(amount * price), total_value = token_value + stable
-│  │        ├─ 用户过滤: token_value <= 0.5 * total_value → 跳过该用户
-│  │        ├─ token 过滤: !is_settled(cond) && token_value > 0.001 * total_value
-│  │        └─ 有效 token 计入 aggregate
-│  │     └─ aggregate 展示过滤: value > 0.001 * aggregate_total
+│  │  └─ 注: aggregate_tokens 已在 [d'] 建好基线,backfill 期间只做增量维护
 │  ├─ drain_queue() (处理 websocket 事件)
 │  │  ├─ on newHeads → update head_block
 │  │  └─ on logs
-│  │     ├─ apply_block_logs([log]) → affected_users
-│  │     ├─ 落地: → H (history.json) 增量, 按 event_id 幂等写入
-│  │     ├─ 映射补齐时: → M (meta.json) via Gamma
-│  │     └─ 增量 aggregate (仅 affected_users, O(1)):
-│  │        ├─ 移除该用户旧贡献
-│  │        ├─ token_value = Σ(amount * price), total_value = token_value + stable
-│  │        ├─ 用户过滤: token_value <= 0.5 * total_value → 跳过
-│  │        ├─ token 过滤: !is_settled && value > 0.001 * total_value
-│  │        └─ 有效 token 计入 aggregate
+│  │     ├─ apply_block_logs([log])
+│  │     ├─ 事件更新: user_states.positions + token_holders
+│  │     ├─ 条件更新: dirty_conditions (resolution / on-demand Gamma / 价格变化)
+│  │     ├─ dirty_users = 事件用户 ∪ holders(dirty_conditions)
+│  │     ├─ refresh_users(dirty_users)
+│  │     │  ├─ 移除该用户旧 aggregate 贡献
+│  │     │  ├─ 重算该用户 user_view / visible_tokens
+│  │     │  └─ 回灌 aggregate_tokens
+│  │     └─ 落地: → H 增量, M 仅在元数据补齐时更新
 │  └─ sleep(100ms)  // 主循环空闲轮询间隔
 └─ 落地汇总
    ├─ S (snapshot.json): [a'] 完成后 (仅 stale_users 更新时)
@@ -303,9 +303,12 @@ apply_block_logs(logs)
 │     └─ 步骤: market_id+"00" → question_id → slug → all markets
 └─ 输出
    ├─ history_root[user][block_key].push(event) 增量
-   ├─ user_states[user].positions 实时更新 (全量,不过滤)
-   ├─ tokens[]/conditions[] 映射可能被补齐 (条件已 updated=1 则跳过)
-   └─ affected_users: 本次涉及的用户 (用于增量 aggregate)
+   ├─ user_states[user].positions 实时更新 (raw,不过滤)
+   ├─ token_holders[token] 增量维护
+   ├─ dirty_conditions: 本次变更价格/结算/补齐过的 condition
+   ├─ dirty_users: 事件用户 ∪ holders(dirty_conditions)
+   ├─ refresh_users(dirty_users) → user_views + aggregate_tokens 增量更新
+   └─ tokens[]/conditions[] 映射可能被补齐 (条件已 updated=1 则跳过)
 ```
 
 --- snapshot.json ---

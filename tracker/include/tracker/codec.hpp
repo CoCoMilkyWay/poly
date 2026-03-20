@@ -143,12 +143,6 @@ inline int64_t now_unix_sec() {
 // Formatting
 // ============================================================================
 
-inline std::string fmt_decimal(long double v, int digits = 10) {
-  std::ostringstream oss;
-  oss << std::fixed << std::setprecision(digits) << v;
-  return oss.str();
-}
-
 inline std::string block_key(uint64_t block) {
   std::ostringstream oss;
   oss << std::setw(16) << std::setfill('0') << block;
@@ -285,16 +279,6 @@ inline uint8_t index_set_to_token_idx(const BigInt &index_set) {
 // ============================================================================
 // JSON Helpers
 // ============================================================================
-
-inline json bigint_vec_to_json(const std::vector<BigInt> &v) {
-  json r = json::array();
-  for (const auto &x : v) {
-    r.push_back(bigint_to_str(x));
-  }
-  return r;
-}
-
-inline long double parse_decimal(const std::string &s) { return std::stold(s); }
 
 inline json safe_parse(const std::string &body) { return json::parse(body); }
 

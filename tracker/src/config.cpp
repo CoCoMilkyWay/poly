@@ -79,7 +79,6 @@ AppConfig AppConfig::load(const std::filesystem::path &tracker_dir) {
 
   // limits
   c.recent_event_limit = kRecentEventLimit;
-  c.graph_id_batch_limit = kGraphIdBatchLimit;
   c.graph_page_limit = kGraphPageLimit;
   c.gamma_batch_limit = kGammaBatchLimit;
   c.http_concurrency = kHttpConcurrency;
