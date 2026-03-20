@@ -103,7 +103,7 @@ inline void log_query(const std::string &channel,
 }
 
 // ============================================================================
-// ProgressBoard - API进度显示
+// ProgressBoard - API进度状态 (供UI前端轮询)
 // ============================================================================
 // 终端显示格式 (按 full_resync 流程顺序):
 //   API       done/total  [pend]   说明
@@ -116,13 +116,13 @@ inline void log_query(const std::string &channel,
 //   backfill  500/1000    [10]     [g] RPC.eth_getLogs        (done=已处理区块数, total=区块范围)
 //   [current_stage]
 
-enum class API { snapshot,   // [a] 用户持仓快照
-                 stables,    // [b] 稳定币余额
-                 meta,       // [c] token/condition 元数据
-                 prices,     // [d] 价格刷新
-                 ws_sub,     // [e] WebSocket 订阅
-                 head,       // [f] 区块高度
-                 backfill,   // [g] 历史补齐
+enum class API { snapshot, // [a] 用户持仓快照
+                 stables,  // [b] 稳定币余额
+                 meta,     // [c] token/condition 元数据
+                 prices,   // [d] 价格刷新
+                 ws_sub,   // [e] WebSocket 订阅
+                 head,     // [f] 区块高度
+                 backfill, // [g] 历史补齐
                  COUNT };
 
 struct ProgressState {
@@ -150,55 +150,22 @@ struct ProgressBoard {
       api.pending = 0;
     }
     current_stage = "init";
-    // 表头 + kApiCount行 + stage行
-    std::cerr << "API        done/total  [pend]" << std::endl;
-    for (size_t i = 0; i < kApiCount; ++i) {
-      print_row(i);
-      std::cerr << std::endl;
-    }
-    std::cerr << "[init]" << std::endl;
     inited = true;
   }
 
   void stage(const std::string &name) {
     std::lock_guard<std::mutex> lock(print_mu);
     current_stage = name;
-    reprint_all();
   }
 
   void flush() {
-    std::lock_guard<std::mutex> lock(print_mu);
-    reprint_all();
+    // no-op: UI前端自行轮询
   }
 
   void finish() {
     std::lock_guard<std::mutex> lock(print_mu);
     current_stage = "done";
-    reprint_all();
-    std::cerr << std::endl;
     inited = false;
-  }
-
-private:
-  void print_row(size_t i) {
-    auto &api = apis[i];
-    std::cerr << std::left << std::setw(10) << kApiNames[i] << " ";
-    std::cerr << std::right << std::setw(5) << api.done.load() << "/";
-    std::cerr << std::left << std::setw(5) << api.total.load() << " ";
-    std::cerr << "[" << std::setw(4) << api.pending.load() << "]";
-  }
-
-  void reprint_all() {
-    // 上移 kApiCount+2 行 (表头+数据+stage)
-    std::cerr << "\x1b[" << (kApiCount + 2) << "A";
-    std::cerr << "\rAPI        done/total  [pend]\x1b[K" << std::endl;
-    for (size_t i = 0; i < kApiCount; ++i) {
-      std::cerr << "\r";
-      print_row(i);
-      std::cerr << "\x1b[K" << std::endl;
-    }
-    std::cerr << "[" << current_stage << "]\x1b[K" << std::endl;
-    std::cerr << std::flush;
   }
 };
 

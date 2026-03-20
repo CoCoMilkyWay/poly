@@ -55,6 +55,13 @@ inline constexpr size_t kClobBatchLimit = 500;     // CLOB: prices[] URL 长度�
 inline constexpr size_t kHttpConcurrency = 10;
 
 // ============================================================================
+// Filter Thresholds
+// ============================================================================
+inline constexpr long double kUserTokenRatioThreshold = 0.5L;   // 用户 token 占比 > 50%
+inline constexpr long double kTokenValueThreshold = 0.001L;     // token 价值 > 0.1% 账户净值
+inline constexpr long double kAggregateValueThreshold = 0.001L; // aggregate 中 > 0.1%
+
+// ============================================================================
 // URL Parsing
 // ============================================================================
 
@@ -86,7 +93,6 @@ struct AppConfig {
   std::filesystem::path meta_file;
   std::filesystem::path snapshot_file;
   std::filesystem::path history_file;
-  std::filesystem::path aggregate_file;
   std::filesystem::path log_file;
   std::filesystem::path seed_file;
   std::filesystem::path proxy_file;

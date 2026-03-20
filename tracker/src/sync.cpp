@@ -418,7 +418,6 @@ void SyncThread::full_resync() {
   rt_.resync_finished_at = now_unix_sec();
 
   publish_all();
-  persist_state(); // S/M/H 已在各阶段落地,最后落地 A
   progress().finish();
   logger().info("resync done");
 }
@@ -465,7 +464,6 @@ void SyncThread::handle_queue_event(QueueEvent ev) {
     rt_.head_block = std::max(rt_.head_block, ev.block_number);
     publish_all();
     persist_history(); // ws 增量落地 H
-    persist_state();   // ws 增量落地 A
     return;
   }
   assert(false);
@@ -608,18 +606,7 @@ void SyncThread::load_files() {
   for (const auto &recent : recent_rows) {
     push_recent_event(rt_, recent.row, cfg_.recent_event_limit);
   }
-
-  json aggregate = load_json(cfg_.aggregate_file);
-  if (aggregate.contains("summary") && aggregate.at("summary").is_object()) {
-    const json &summary = aggregate.at("summary");
-    rt_.last_applied_block =
-        static_cast<uint64_t>(json_i64(summary, "last_applied_block", 0));
-    rt_.head_block = static_cast<uint64_t>(json_i64(summary, "head_block", 0));
-    rt_.resync_started_at =
-        json_i64(summary, "last_resync_started_at_unix_sec", 0);
-    rt_.resync_finished_at =
-        json_i64(summary, "last_resync_finished_at_unix_sec", 0);
-  }
+  // 不再从 aggregate.json 恢复进度, full_resync 会重算
 }
 
 void SyncThread::load_seed() {
@@ -703,11 +690,6 @@ void SyncThread::persist_meta() {
 
 void SyncThread::persist_history() {
   save_json(cfg_.history_file, rt_.history_root);
-}
-
-void SyncThread::persist_state() {
-  publish_json(shared_.state_ptr, build_state_json(rt_));
-  save_json(cfg_.aggregate_file, *load_published(shared_.state_ptr));
 }
 
 void SyncThread::fetch_user_snapshots() {

@@ -17,7 +17,7 @@ namespace tracker {
 //   - 拥有全部状态 (AppState)
 //   - full_resync()
 //   - drain 队列, apply_logs()
-//   - 持久化 persist_all()
+//   - 持久化 snapshot/history/meta (aggregate 纯内存)
 //   - 发布 state (通过 AppState.mu 保护)
 
 class SyncThread {
@@ -39,7 +39,6 @@ private:
   void persist_snapshot();
   void persist_meta();
   void persist_history();
-  void persist_state();
   void fetch_user_snapshots();
   void fetch_snapshot_balances();
   void append_snapshot_roots();

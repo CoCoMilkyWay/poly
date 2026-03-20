@@ -21,7 +21,7 @@
 │  │ - eth_subscribe   │  │ - full_resync()   │  │ - /api/meta       │        │
 │  │   newHeads/logs   │  │ - drain 队列      │  │ - /api/history    │        │
 │  │ - 解析后入队列    │  │ - apply_logs()    │  │ - /api/resync     │        │
-│  │ - 断线自动重连    │  │ - persist_all()   │  │                   │        │
+│  │ - 断线自动重连    │  │ - persist S/H/M   │  │                   │        │
 │  │                   │  │ - 发布 state_ptr  │  │ 读 state_ptr 响应 │        │
 │  └─────────┬─────────┘  └─────────┬─────────┘  └─────────┬─────────┘        │
 │            │                      │                      │                  │
@@ -132,9 +132,10 @@ Log设计(文件)
   data/
     snapshot.json   - 用户持仓快照 (历史记录)
     history.json    - 交易记录 (历史记录)
-    aggregate.json  - 聚合仓位 (实时状态,每次sync/交易更新)
     meta.json       - token/condition元数据
     sync.log        - 同步日志
+
+注: aggregate 仓位纯内存维护,不落盘,重启时从 snapshot + backfill 重建
 ======================
 整体流程
 ======================
@@ -142,13 +143,14 @@ Log设计(文件)
 文件落地时机:
   S = snapshot.json (用户持仓快照)
   H = history.json (交易记录)
-  A = aggregate.json (聚合仓位)
   M = meta.json (token/condition元数据)
+  (aggregate 纯内存,不落盘)
 
 SyncThread.run()
 ├─ 初始化
 │  ├─ load_seed() → tokens/conditions 初始映射
-│  └─ load_files() → snapshot_root/history_root 从磁盘恢复
+│  └─ load_files() → snapshot_root/history_root/meta 从磁盘恢复
+│     └─ 注: 不读取任何进度文件, head_block/last_applied_block 由 full_resync 重算
 ├─ 主循环
 │  ├─ full_resync() (初始触发/每3600s定时触发/手动UI触发)
 │  │  ├─ [a] try_reuse_snapshots (检查现有 snapshot 是否可复用)
@@ -199,23 +201,32 @@ SyncThread.run()
 │  │  │  ├─ raw 去重: 相同 raw_log_key 只保留一份 raw log
 │  │  │  ├─ emit 后: event_id = op_key + "|" + user + "|" + leg_index
 │  │  │  └─ H 落地按 event_id 幂等
-│  │  └─ 计算 aggregate
-│  │     ├─ 输出: aggregate 状态 + summary.min_snapshot_block
-│  │     ├─ 输出: summary.snapshot_blocks[user] = user_snapshots[user].snapshot_block
-│  │     └─ 落地: → A (aggregate.json)
+│  │  └─ 计算 aggregate (内存, 全量遍历 users)
+│  │     ├─ 过滤阈值: kUserTokenRatio=0.5, kTokenValue=0.001, kAggregateValue=0.001
+│  │     ├─ is_settled(cond) = cond.has_payout_d && cond.payout_d > 0
+│  │     └─ for user in users:
+│  │        ├─ token_value = Σ(amount * price), total_value = token_value + stable
+│  │        ├─ 用户过滤: token_value <= 0.5 * total_value → 跳过该用户
+│  │        ├─ token 过滤: !is_settled(cond) && token_value > 0.001 * total_value
+│  │        └─ 有效 token 计入 aggregate
+│  │     └─ aggregate 展示过滤: value > 0.001 * aggregate_total
 │  ├─ drain_queue() (处理 websocket 事件)
 │  │  ├─ on newHeads → update head_block
 │  │  └─ on logs
-│  │     ├─ apply_block_logs([log])
+│  │     ├─ apply_block_logs([log]) → affected_users
 │  │     ├─ 落地: → H (history.json) 增量, 按 event_id 幂等写入
 │  │     ├─ 映射补齐时: → M (meta.json) via Gamma
-│  │     └─ aggregate 重算: → A (aggregate.json)
+│  │     └─ 增量 aggregate (仅 affected_users, O(1)):
+│  │        ├─ 移除该用户旧贡献
+│  │        ├─ token_value = Σ(amount * price), total_value = token_value + stable
+│  │        ├─ 用户过滤: token_value <= 0.5 * total_value → 跳过
+│  │        ├─ token 过滤: !is_settled && value > 0.001 * total_value
+│  │        └─ 有效 token 计入 aggregate
 │  └─ sleep(100ms)  // 主循环空闲轮询间隔
 └─ 落地汇总
    ├─ S (snapshot.json): [a'] 完成后 (仅 stale_users 更新时)
    ├─ M (meta.json): [c] 完成后 + [d] 完成后 + 增量映射补齐时 (via Gamma)
-   ├─ H (history.json): [g] 每批 + ws 增量, 按 event_id 幂等
-   └─ A (aggregate.json): [g] 完成后 + ws 每条事件后
+   └─ H (history.json): [g] 每批 + ws 增量, 按 event_id 幂等
 ```
 
 ======================
@@ -292,10 +303,10 @@ apply_block_logs(logs)
 │     └─ 步骤: market_id+"00" → question_id → slug → all markets
 └─ 输出
    ├─ history_root[user][block_key].push(event) 增量
-   ├─ user_states[user].positions 实时更新
-   └─ tokens[]/conditions[] 映射可能被补齐 (条件已 updated=1 则跳过)
+   ├─ user_states[user].positions 实时更新 (全量,不过滤)
+   ├─ tokens[]/conditions[] 映射可能被补齐 (条件已 updated=1 则跳过)
+   └─ affected_users: 本次涉及的用户 (用于增量 aggregate)
 ```
-
 
 --- snapshot.json ---
 存储用户在特定区块的详细持仓情况 (历史快照)
@@ -395,35 +406,6 @@ EventType 枚举:
       }
     ]
   }
-}
-
---- aggregate.json ---
-聚合仓位 (实时计算的当前状态)
-- 每次 snapshot / gap 补齐完成后更新
-- 每次 websocket 增量事件应用后触发重算
-- 用于未来交易决策
-- `summary.min_snapshot_block` 是所有用户 checkpoint 的保守下界
-- `summary.snapshot_blocks[user]` 保留每个用户各自的 snapshot_block
-
-{
-  "summary": {
-    "min_snapshot_block": 12345678,
-    "snapshot_blocks": {
-      "0xuser1": 12345678,
-      "0xuser2": 12345690
-    },
-    "last_applied_block": 12345700,
-    "user_count": 10,
-    "position_count": 150
-  },
-  "users": [...],
-  "aggregate": [
-    {
-      "token_id": "123...",
-      "holder_count": 5,
-      "aggregate_weight": "0.1500000000"
-    }
-  ]
 }
 
 --- meta.json ---
