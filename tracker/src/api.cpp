@@ -240,7 +240,8 @@ void handle_request(AppState &state,
         "Connection: keep-alive\r\n\r\n";
     beast::error_code ec;
     asio::write(socket, asio::buffer(header), ec);
-    if (is_peer_closed(ec)) return;
+    if (is_peer_closed(ec))
+      return;
 
     uint64_t last_version = 0;
     while (true) {
@@ -249,7 +250,8 @@ void handle_request(AppState &state,
         last_version = current;
         std::string event = "data: " + std::to_string(current) + "\n\n";
         asio::write(socket, asio::buffer(event), ec);
-        if (is_peer_closed(ec)) return;
+        if (is_peer_closed(ec))
+          return;
       }
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
@@ -263,7 +265,8 @@ void handle_request(AppState &state,
         "Connection: keep-alive\r\n\r\n";
     beast::error_code ec;
     asio::write(socket, asio::buffer(header), ec);
-    if (is_peer_closed(ec)) return;
+    if (is_peer_closed(ec))
+      return;
 
     std::string last_data;
     while (true) {
@@ -272,7 +275,8 @@ void handle_request(AppState &state,
         last_data = current_data;
         std::string event = "data: " + current_data + "\n\n";
         asio::write(socket, asio::buffer(event), ec);
-        if (is_peer_closed(ec)) return;
+        if (is_peer_closed(ec))
+          return;
       }
       std::this_thread::sleep_for(std::chrono::milliseconds(200));
     }
@@ -412,29 +416,29 @@ json build_state_json(const RuntimeState &state) {
       }
       ++position_count;
       auto token_it = state.tokens.find(token_id);
-      const TokenMeta *token =
-          token_it == state.tokens.end() ? nullptr : &token_it->second;
+      const std::string cond_id =
+          token_it != state.tokens.end() ? token_it->second.cond : "";
       const ConditionMeta *condition = nullptr;
-      if (token != nullptr && !token->cond.empty()) {
-        auto cond_it = state.conditions.find(token->cond);
+      if (!cond_id.empty()) {
+        auto cond_it = state.conditions.find(cond_id);
         if (cond_it != state.conditions.end()) {
           condition = &cond_it->second;
         }
       }
 
-      int64_t price = token == nullptr ? -1 : token->price;
+      uint8_t token_idx = get_token_idx(state.conditions, cond_id, token_id);
+      int64_t price = -1;
+      if (condition != nullptr && token_idx < condition->prices.size()) {
+        price = condition->prices[token_idx];
+      }
       long double current_value = value_usd(amount, price);
       token_total += current_value;
 
       json row = {
           {"asset_type", "token"},
           {"token_id", token_id},
-          {"condition_id",
-           token == nullptr || token->cond.empty() ? json(nullptr)
-                                                   : json(token->cond)},
-          {"token_idx",
-           token == nullptr || token->idx == 0xFF ? json(nullptr)
-                                                  : json(token->idx)},
+          {"condition_id", cond_id.empty() ? json(nullptr) : json(cond_id)},
+          {"token_idx", token_idx == 0xFF ? json(nullptr) : json(token_idx)},
           {"collateral",
            condition == nullptr || condition->coll == 0 ? json(nullptr)
                                                         : json(condition->coll)},
@@ -446,9 +450,9 @@ json build_state_json(const RuntimeState &state) {
           {"outcomes",
            condition == nullptr ? json::array() : json(condition->outcomes)},
       };
-      if (token != nullptr && condition != nullptr && token->idx != 0xFF &&
-          token->idx < condition->outcomes.size()) {
-        row["outcome_text"] = condition->outcomes[token->idx];
+      if (condition != nullptr && token_idx != 0xFF &&
+          token_idx < condition->outcomes.size()) {
+        row["outcome_text"] = condition->outcomes[token_idx];
       }
       rows.push_back({current_value, row});
 
@@ -519,23 +523,22 @@ json build_state_json(const RuntimeState &state) {
     } else {
       row["asset_type"] = "token";
       auto token_it = state.tokens.find(token_id);
-      if (token_it != state.tokens.end()) {
-        row["condition_id"] =
-            token_it->second.cond.empty() ? json(nullptr)
-                                          : json(token_it->second.cond);
-        row["token_idx"] = token_it->second.idx == 0xFF
-                               ? json(nullptr)
-                               : json(token_it->second.idx);
-        row["price"] = token_it->second.price < 0 ? json(nullptr)
-                                                  : json(token_it->second.price);
-        auto cond_it = state.conditions.find(token_it->second.cond);
+      if (token_it != state.tokens.end() && !token_it->second.cond.empty()) {
+        const std::string &cond_id = token_it->second.cond;
+        row["condition_id"] = cond_id;
+        auto cond_it = state.conditions.find(cond_id);
         if (cond_it != state.conditions.end()) {
+          uint8_t idx = get_token_idx(state.conditions, cond_id, token_id);
+          row["token_idx"] = idx == 0xFF ? json(nullptr) : json(idx);
+          int64_t price = (idx < cond_it->second.prices.size())
+                              ? cond_it->second.prices[idx]
+                              : -1;
+          row["price"] = price < 0 ? json(nullptr) : json(price);
           row["q"] = cond_it->second.q;
           row["desc"] = cond_it->second.desc;
           row["outcomes"] = cond_it->second.outcomes;
-          if (token_it->second.idx != 0xFF &&
-              token_it->second.idx < cond_it->second.outcomes.size()) {
-            row["outcome_text"] = cond_it->second.outcomes[token_it->second.idx];
+          if (idx != 0xFF && idx < cond_it->second.outcomes.size()) {
+            row["outcome_text"] = cond_it->second.outcomes[idx];
           }
         }
       }
@@ -602,31 +605,35 @@ json build_meta_json(const RuntimeState &state) {
       {"markets", json::object()},
   };
 
+  // tokens: token_id → condition_id 映射
   for (const auto &[token_id, token] : state.tokens) {
-    result["tokens"][token_id] = {
-        {"cond", token.cond.empty() ? json(nullptr) : json(token.cond)},
-        {"idx", token.idx == 0xFF ? json(nullptr) : json(token.idx)},
-        {"price", token.price < 0 ? json(nullptr) : json(token.price)},
-        {"price_src", token.price_src.empty() ? json(nullptr)
-                                              : json(token.price_src)},
-    };
+    result["tokens"][token_id] = token.cond.empty() ? json(nullptr) : json(token.cond);
   }
 
   for (const auto &[condition_id, condition] : state.conditions) {
     result["conditions"][condition_id] = {
+        // 身份标识
         {"qid", condition.qid.empty() ? json(nullptr) : json(condition.qid)},
         {"oc", condition.oc == 0 ? json(nullptr) : json(condition.oc)},
         {"coll", condition.coll == 0 ? json(nullptr) : json(condition.coll)},
         {"tids", condition.tids},
-        {"resolved", condition.resolved},
-        {"payout", payout_json(condition.payout)},
-        {"payout_d", condition.has_payout_d ? json(bigint_to_i64(condition.payout_d))
-                                            : json(nullptr)},
+        // 市场信息
         {"q", condition.q},
         {"desc", condition.desc},
         {"slug", condition.slug},
-        {"url", condition.url},
         {"outcomes", condition.outcomes},
+        // 价格
+        {"prices", condition.prices},
+        {"price_ts", condition.price_ts},
+        // 时间
+        {"start", condition.start.empty() ? json(nullptr) : json(condition.start)},
+        {"end", condition.end.empty() ? json(nullptr) : json(condition.end)},
+        // 结算
+        {"payout", payout_json(condition.payout)},
+        {"payout_d", condition.has_payout_d ? json(bigint_to_i64(condition.payout_d))
+                                            : json(nullptr)},
+        // 状态
+        {"updated", condition.updated ? 1 : 0},
     };
   }
 

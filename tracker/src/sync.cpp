@@ -58,17 +58,25 @@ void apply_resolved_prices(RuntimeState &state, const std::string &condition_id)
   if (!condition.has_payout_d || condition.payout_d == 0) {
     return;
   }
-  condition.resolved = true;
-  for (size_t i = 0; i < condition.tids.size() && i < condition.payout.size(); ++i) {
+  size_t n = std::max(condition.tids.size(), condition.payout.size());
+  if (condition.prices.size() < n) {
+    condition.prices.resize(n, -1);
+  }
+  if (condition.price_ts.size() < n) {
+    condition.price_ts.resize(n, 0);
+  }
+  int64_t ts = now_unix_sec();
+  for (size_t i = 0; i < condition.payout.size(); ++i) {
+    condition.prices[i] = scaled_price(condition.payout[i], condition.payout_d);
+    condition.price_ts[i] = ts;
+  }
+  // 确保 token 映射存在
+  for (size_t i = 0; i < condition.tids.size(); ++i) {
     const std::string &token_id = condition.tids[i];
-    if (token_id.empty()) {
-      continue;
+    if (!token_id.empty()) {
+      TokenMeta &token = state.tokens[token_id];
+      token.cond = condition_id;
     }
-    TokenMeta &token = state.tokens[token_id];
-    token.cond = condition_id;
-    token.idx = static_cast<uint8_t>(i);
-    token.price = scaled_price(condition.payout[i], condition.payout_d);
-    token.price_src = "resolution";
   }
 }
 
@@ -360,14 +368,14 @@ void SyncThread::full_resync() {
   fetch_user_snapshots();
   fetch_snapshot_balances();
   append_snapshot_roots();
-  persist_snapshot(); // 阶段完成，立即落地 S
+  persist_snapshot(); // 阶段完成,立即落地 S
 
   // [c] meta
   std::vector<std::string> token_ids = collect_active_token_ids();
   progress()[API::meta].total = token_ids.size();
   progress().stage("meta");
   fetch_gamma_by_token_ids(token_ids);
-  persist_meta(); // 阶段完成，立即落地 M
+  persist_meta(); // 阶段完成,立即落地 M
 
   // [d] ws_sub
   queue_.clear();
@@ -405,7 +413,7 @@ void SyncThread::full_resync() {
   rt_.resync_finished_at = now_unix_sec();
 
   publish_all();
-  persist_state(); // S/M/H 已在各阶段落地，最后落地 A
+  persist_state(); // S/M/H 已在各阶段落地,最后落地 A
   progress().finish();
   logger().info("resync done");
 }
@@ -501,15 +509,12 @@ void SyncThread::handle_overlap_queue(uint64_t session_id, uint64_t overlap_bloc
 
 void SyncThread::load_files() {
   json meta = load_json(cfg_.meta_file);
+  // tokens: token_id → condition_id 映射
   if (meta.contains("tokens") && meta.at("tokens").is_object()) {
     for (auto it = meta.at("tokens").begin(); it != meta.at("tokens").end(); ++it) {
-      TokenMeta token;
-      token.cond = json_str(it.value(), "cond");
-      int idx = json_int(it.value(), "idx", 0xFF);
-      token.idx = idx < 0 ? 0xFF : static_cast<uint8_t>(idx);
-      token.price = json_i64(it.value(), "price", -1);
-      token.price_src = json_str(it.value(), "price_src");
-      merge_token(rt_.tokens[it.key()], token);
+      if (it.value().is_string()) {
+        rt_.tokens[it.key()].cond = it.value().get<std::string>();
+      }
     }
   }
   if (meta.contains("conditions") && meta.at("conditions").is_object()) {
@@ -522,9 +527,10 @@ void SyncThread::load_files() {
       int coll = json_int(it.value(), "coll", 0);
       condition.coll = coll <= 0 ? 0 : static_cast<uint8_t>(coll);
       condition.tids = json_str_arr(it.value(), "tids");
-      condition.resolved =
-          it.value().contains("resolved") && it.value().at("resolved").is_boolean() &&
-          it.value().at("resolved").get<bool>();
+      condition.prices = json_i64_arr(it.value(), "prices");
+      condition.price_ts = json_i64_arr(it.value(), "price_ts");
+      condition.start = json_str(it.value(), "start");
+      condition.end = json_str(it.value(), "end");
       condition.payout = json_bigint_arr(it.value(), "payout");
       if (it.value().contains("payout_d") && !it.value().at("payout_d").is_null()) {
         if (it.value().at("payout_d").is_string()) {
@@ -539,10 +545,9 @@ void SyncThread::load_files() {
       condition.q = json_str(it.value(), "q");
       condition.desc = json_str(it.value(), "desc");
       condition.slug = json_str(it.value(), "slug");
-      condition.url = json_str(it.value(), "url");
       condition.outcomes = json_str_arr(it.value(), "outcomes");
+      condition.updated = json_int(it.value(), "updated", 0) != 0;
       merge_condition(rt_.conditions[it.key()], condition);
-      apply_resolved_prices(rt_, it.key());
     }
   }
   if (meta.contains("markets") && meta.at("markets").is_object()) {
@@ -621,19 +626,12 @@ void SyncThread::load_seed() {
     return;
   }
 
-  auto load_token_row = [&](const std::string &token_id, const json &row) {
-    TokenMeta token;
-    token.cond = json_str(row, "cond");
-    int idx = json_int(row, "idx", 0xFF);
-    token.idx = idx < 0 ? 0xFF : static_cast<uint8_t>(idx);
-    token.price = json_i64(row, "price", -1);
-    token.price_src = json_str(row, "price_src");
-    merge_token(rt_.tokens[token_id], token);
-  };
-
+  // tokens: token_id → condition_id 映射
   if (seed.contains("tokens") && seed.at("tokens").is_object()) {
     for (auto it = seed.at("tokens").begin(); it != seed.at("tokens").end(); ++it) {
-      load_token_row(it.key(), it.value());
+      if (it.value().is_string()) {
+        rt_.tokens[it.key()].cond = it.value().get<std::string>();
+      }
     }
   }
 
@@ -645,19 +643,21 @@ void SyncThread::load_seed() {
     int coll = json_int(row, "coll", 0);
     condition.coll = coll <= 0 ? 0 : static_cast<uint8_t>(coll);
     condition.tids = json_str_arr(row, "tids");
+    condition.prices = json_i64_arr(row, "prices");
+    condition.price_ts = json_i64_arr(row, "price_ts");
+    condition.start = json_str(row, "start");
+    condition.end = json_str(row, "end");
     condition.payout = json_bigint_arr(row, "payout");
     if (row.contains("payout_d") && !row.at("payout_d").is_null()) {
       condition.payout_d = json_bigint(row, "payout_d");
       condition.has_payout_d = true;
-      condition.resolved = true;
     }
     condition.q = json_str(row, "q");
     condition.desc = json_str(row, "desc");
     condition.slug = json_str(row, "slug");
-    condition.url = json_str(row, "url");
     condition.outcomes = json_str_arr(row, "outcomes");
+    condition.updated = json_int(row, "updated", 0) != 0;
     merge_condition(rt_.conditions[condition_id], condition);
-    apply_resolved_prices(rt_, condition_id);
   };
 
   if (seed.contains("conditions") && seed.at("conditions").is_object()) {
@@ -711,99 +711,188 @@ void SyncThread::fetch_user_snapshots() {
   pa.total = users.size();
   progress().stage("snapshot");
 
-  std::vector<SnapshotFetch> snapshots;
-  for (const auto &user : users) {
-    snapshots.push_back({
-        .user = user,
-        .snapshot_block = 0,
-        .positions = {},
-        .cursor = "",
-        .done = false,
-    });
-  }
-
-  std::string url = "https://gateway.thegraph.com/api/" + cfg_.graph_api_key +
-                    "/subgraphs/id/" + std::string(kPnlSubgraphId);
-  size_t done_count = 0;
-  while (done_count < snapshots.size()) {
-    std::vector<HttpReq> reqs;
-    std::vector<size_t> refs;
-    for (size_t i = 0; i < snapshots.size(); ++i) {
-      if (snapshots[i].done) {
-        continue;
-      }
-      json variables = {
-          {"user", snapshots[i].user},
-          {"after", snapshots[i].cursor},
-          {"first", static_cast<int>(cfg_.graph_page_limit)},
-      };
-      reqs.push_back({
-          .url = url,
-          .method = "POST",
-          .body =
-              json{{"query", kUserPositionsQuery}, {"variables", variables}}.dump(),
-      });
-      refs.push_back(i);
-    }
-    pa.pending = reqs.size();
-    progress().flush();
-    auto responses = http_batch(reqs, cfg_.http_concurrency, cfg_.proxy_url);
-    pa.pending = 0;
-    progress().flush();
-    for (size_t i = 0; i < responses.size(); ++i) {
-      SnapshotFetch &snapshot = snapshots[refs[i]];
-      json variables = {
-          {"user", snapshot.user},
-          {"after", snapshot.cursor},
-          {"first", static_cast<int>(cfg_.graph_page_limit)},
-      };
-      json data = graph_data_with_retry(
-          rt_, "userPositions",
-          "user=" + snapshot.user + " after=" + snapshot.cursor, url,
-          json{{"query", kUserPositionsQuery}, {"variables", variables}},
-          cfg_.proxy_url, responses[i]);
-      if (snapshot.snapshot_block == 0) {
-        snapshot.snapshot_block = static_cast<uint64_t>(
-            std::stoull(json_str_or_int(data.at("_meta").at("block").at("number"))));
-      }
-      const json &rows = data.at("userPositions");
-      for (const auto &row : rows) {
-        std::string token_id = row.at("tokenId").get<std::string>();
-        snapshot.positions[token_id] +=
-            bigint_from_dec(json_str_or_int(row.at("amount")));
-      }
-      if (rows.size() < cfg_.graph_page_limit) {
-        snapshot.done = true;
-        ++done_count;
-        pa.done = done_count;
-        progress().flush();
-      } else {
-        snapshot.cursor = rows.back().at("id").get<std::string>();
-      }
-    }
-  }
-
   rt_.users = users;
   rt_.user_set.clear();
   rt_.user_snapshots.clear();
   rt_.user_states.clear();
+  stale_users_.clear();
+
+  const int64_t now = now_unix_sec();
+  size_t cached_count = 0;
+
+  // [a] try_reuse_snapshots: 检查现有 snapshot 是否可复用
+  for (const auto &user : users) {
+    rt_.user_set.insert(user);
+    bool cached = false;
+
+    if (rt_.snapshot_root.contains(user) && rt_.snapshot_root.at(user).is_object()) {
+      // 找最新的 snapshot (最大 block_number)
+      const json &user_snapshots = rt_.snapshot_root.at(user);
+      std::string best_block_key;
+      int64_t best_captured_at = 0;
+      for (auto it = user_snapshots.begin(); it != user_snapshots.end(); ++it) {
+        if (!it.value().is_object())
+          continue;
+        int64_t captured = json_i64(it.value(), "captured_at_unix_sec", 0);
+        if (captured > best_captured_at) {
+          best_captured_at = captured;
+          best_block_key = it.key();
+        }
+      }
+
+      // 判断是否在有效期内
+      if (!best_block_key.empty() &&
+          now - best_captured_at < static_cast<int64_t>(cfg_.resync_interval_sec)) {
+        const json &snap = user_snapshots.at(best_block_key);
+        uint64_t block_num = static_cast<uint64_t>(json_i64(snap, "block_number", 0));
+
+        // 恢复 positions
+        std::map<std::string, BigInt> positions;
+        if (snap.contains("positions") && snap.at("positions").is_array()) {
+          for (const auto &pos : snap.at("positions")) {
+            std::string tid = json_str(pos, "token_id");
+            if (!tid.empty()) {
+              positions[tid] = bigint_from_dec(json_str(pos, "amount_raw"));
+            }
+          }
+        }
+
+        // 恢复 stables
+        StableBalances stable;
+        if (snap.contains("stable_balances") && snap.at("stable_balances").is_object()) {
+          const json &sb = snap.at("stable_balances");
+          stable.usdc = bigint_from_dec(json_str(sb, "usdc_raw"));
+          stable.usdc_e = bigint_from_dec(json_str(sb, "usdc_e_raw"));
+          stable.usdt = bigint_from_dec(json_str(sb, "usdt_raw"));
+          stable.wrapped = bigint_from_dec(json_str(sb, "wrapped_raw"));
+        }
+
+        rt_.user_snapshots[user] = {
+            .snapshot_block = block_num,
+            .stable = stable,
+            .positions = positions,
+        };
+        rt_.user_states[user] = {
+            .user = user,
+            .stable = stable,
+            .positions = positions,
+        };
+        cached = true;
+        ++cached_count;
+      }
+    }
+
+    if (!cached) {
+      stale_users_.push_back(user);
+      // 先初始化空状态,后续从 Graph 填充
+      rt_.user_snapshots[user] = {};
+      rt_.user_states[user] = {.user = user, .stable = {}, .positions = {}};
+    }
+  }
+
+  pa.done = cached_count;
+  progress().flush();
+
+  // [a'] fetch_user_snapshots: 仅对 stale_users 从 Graph 抓取
+  if (!stale_users_.empty()) {
+    std::vector<SnapshotFetch> snapshots;
+    for (const auto &user : stale_users_) {
+      snapshots.push_back({
+          .user = user,
+          .snapshot_block = 0,
+          .positions = {},
+          .cursor = "",
+          .done = false,
+      });
+    }
+
+    std::string url = "https://gateway.thegraph.com/api/" + cfg_.graph_api_key +
+                      "/subgraphs/id/" + std::string(kPnlSubgraphId);
+    size_t done_count = 0;
+    while (done_count < snapshots.size()) {
+      std::vector<HttpReq> reqs;
+      std::vector<size_t> refs;
+      for (size_t i = 0; i < snapshots.size(); ++i) {
+        if (snapshots[i].done) {
+          continue;
+        }
+        json variables = {
+            {"user", snapshots[i].user},
+            {"after", snapshots[i].cursor},
+            {"first", static_cast<int>(cfg_.graph_page_limit)},
+        };
+        reqs.push_back({
+            .url = url,
+            .method = "POST",
+            .body =
+                json{{"query", kUserPositionsQuery}, {"variables", variables}}.dump(),
+        });
+        refs.push_back(i);
+      }
+      pa.pending = reqs.size();
+      progress().flush();
+      auto responses = http_batch(reqs, cfg_.http_concurrency, cfg_.proxy_url);
+      pa.pending = 0;
+      progress().flush();
+      for (size_t i = 0; i < responses.size(); ++i) {
+        SnapshotFetch &snapshot = snapshots[refs[i]];
+        json variables = {
+            {"user", snapshot.user},
+            {"after", snapshot.cursor},
+            {"first", static_cast<int>(cfg_.graph_page_limit)},
+        };
+        json data = graph_data_with_retry(
+            rt_, "userPositions",
+            "user=" + snapshot.user + " after=" + snapshot.cursor, url,
+            json{{"query", kUserPositionsQuery}, {"variables", variables}},
+            cfg_.proxy_url, responses[i]);
+        if (snapshot.snapshot_block == 0) {
+          snapshot.snapshot_block = static_cast<uint64_t>(
+              std::stoull(json_str_or_int(data.at("_meta").at("block").at("number"))));
+        }
+        const json &rows = data.at("userPositions");
+        for (const auto &row : rows) {
+          std::string token_id = row.at("tokenId").get<std::string>();
+          // 跳过负数 token_id（graph subgraph 返回的溢出值）
+          if (token_id.empty() || token_id[0] == '-') {
+            continue;
+          }
+          snapshot.positions[token_id] +=
+              bigint_from_dec(json_str_or_int(row.at("amount")));
+        }
+        if (rows.size() < cfg_.graph_page_limit) {
+          snapshot.done = true;
+          ++done_count;
+          pa.done = cached_count + done_count;
+          progress().flush();
+        } else {
+          snapshot.cursor = rows.back().at("id").get<std::string>();
+        }
+      }
+    }
+
+    // 更新 stale_users 的 snapshot
+    for (const auto &snapshot : snapshots) {
+      rt_.user_snapshots[snapshot.user] = {
+          .snapshot_block = snapshot.snapshot_block,
+          .stable = {},
+          .positions = snapshot.positions,
+      };
+      rt_.user_states[snapshot.user] = {
+          .user = snapshot.user,
+          .stable = {},
+          .positions = snapshot.positions,
+      };
+    }
+  }
+
+  // 计算 min_snapshot_block
   uint64_t min_snapshot_block = 0;
   bool have_min_snapshot_block = false;
-  for (const auto &snapshot : snapshots) {
-    rt_.user_set.insert(snapshot.user);
-    rt_.user_snapshots[snapshot.user] = {
-        .snapshot_block = snapshot.snapshot_block,
-        .stable = {},
-        .positions = snapshot.positions,
-    };
-    rt_.user_states[snapshot.user] = {
-        .user = snapshot.user,
-        .stable = {},
-        .positions = snapshot.positions,
-    };
-    if (!have_min_snapshot_block ||
-        snapshot.snapshot_block < min_snapshot_block) {
-      min_snapshot_block = snapshot.snapshot_block;
+  for (const auto &user : users) {
+    uint64_t block = rt_.user_snapshots.at(user).snapshot_block;
+    if (!have_min_snapshot_block || block < min_snapshot_block) {
+      min_snapshot_block = block;
       have_min_snapshot_block = true;
     }
   }
@@ -814,8 +903,14 @@ void SyncThread::fetch_user_snapshots() {
 
 void SyncThread::fetch_snapshot_balances() {
   auto &pb = progress()[API::stables];
-  pb.total = rt_.users.size() * 4;
+  pb.total = stale_users_.size() * 4; // 仅 stale_users 需要获取余额
   progress().stage("stables");
+
+  if (stale_users_.empty()) {
+    pb.done = 0;
+    progress().flush();
+    return;
+  }
 
   std::vector<json> reqs;
   struct BalanceRef {
@@ -825,7 +920,7 @@ void SyncThread::fetch_snapshot_balances() {
   std::vector<BalanceRef> refs;
 
   const std::string selector = "0x70a08231";
-  for (const auto &user : rt_.users) {
+  for (const auto &user : stale_users_) {
     const uint64_t block = rt_.user_snapshots.at(user).snapshot_block;
     const std::string block_tag = u64_to_hex(block);
     const std::string data = selector + std::string(24, '0') + strip_0x(user);
@@ -879,10 +974,9 @@ void SyncThread::fetch_snapshot_balances() {
 }
 
 void SyncThread::append_snapshot_roots() {
-  // 只保留本次 sync 的 snapshot，清空旧数据
-  rt_.snapshot_root = json::object();
+  // 仅更新 stale_users 的 snapshot,保留 cached users 的旧数据
   const int64_t now = now_unix_sec();
-  for (const auto &user : rt_.users) {
+  for (const auto &user : stale_users_) {
     const UserSnapshotState &snapshot = rt_.user_snapshots.at(user);
     json positions = json::array();
     for (const auto &[token_id, amount] : snapshot.positions) {
@@ -911,7 +1005,10 @@ std::vector<std::string> SyncThread::collect_active_token_ids() const {
   for (const auto &user : rt_.users) {
     const UserLiveState &live = rt_.user_states.at(user);
     for (const auto &[token_id, _] : live.positions) {
-      token_ids.insert(token_id);
+      // 过滤掉负数 token_id（graph subgraph 数据源本身的问题）
+      if (!token_id.empty() && token_id[0] != '-') {
+        token_ids.insert(token_id);
+      }
     }
   }
   return {token_ids.begin(), token_ids.end()};
@@ -923,12 +1020,30 @@ void SyncThread::fetch_gamma_by_token_ids(const std::vector<std::string> &token_
     return;
   }
 
-  std::vector<std::string> unique = token_ids;
+  // 过滤掉已 updated 的 condition 对应的 token
+  std::vector<std::string> pending;
+  for (const auto &tid : token_ids) {
+    auto tok_it = rt_.tokens.find(tid);
+    if (tok_it != rt_.tokens.end() && !tok_it->second.cond.empty()) {
+      auto cond_it = rt_.conditions.find(tok_it->second.cond);
+      if (cond_it != rt_.conditions.end() && cond_it->second.updated) {
+        continue; // 跳过已更新
+      }
+    }
+    pending.push_back(tid);
+  }
+
+  std::vector<std::string> unique = pending;
   std::sort(unique.begin(), unique.end());
   unique.erase(std::unique(unique.begin(), unique.end()), unique.end());
-  pc.total = unique.size(); // 去重后更新 total
+  pc.total = token_ids.size();
+  pc.done = token_ids.size() - unique.size(); // 已跳过的计入 done
 
-  // 按 gamma_batch_limit 分 chunk，使用重复参数格式 clob_token_ids=x&clob_token_ids=y
+  if (unique.empty()) {
+    return;
+  }
+
+  // 按 gamma_batch_limit 分 chunk,使用重复参数格式 clob_token_ids=x&clob_token_ids=y
   std::vector<std::vector<std::string>> chunks = chunked(unique, cfg_.gamma_batch_limit);
   std::vector<HttpReq> reqs;
   for (const auto &chunk : chunks) {
@@ -1024,11 +1139,9 @@ void SyncThread::fetch_gamma_by_token_ids(const std::vector<std::string> &token_
       }
 
       if (market.empty()) {
-        // Gamma 中找不到此 token，标记为已查询 (避免重复查询)
-        // 使用特殊标记 cond="?" 表示已查询但未找到
-        TokenMeta &token = rt_.tokens[token_id];
-        if (token.cond.empty()) {
-          token.cond = "?"; // 标记已查询
+        // Gamma 中找不到此 token,标记 cond="?" 避免重复查询
+        if (rt_.tokens[token_id].cond.empty()) {
+          rt_.tokens[token_id].cond = "?";
         }
         continue;
       }
@@ -1038,94 +1151,107 @@ void SyncThread::fetch_gamma_by_token_ids(const std::vector<std::string> &token_
       if (condition_id.empty()) {
         condition_id = json_str(market, "condition_id");
       }
-      if (!condition_id.empty()) {
-        condition_id = norm_hex(condition_id);
+      if (condition_id.empty()) {
+        continue;
       }
+      condition_id = norm_hex(condition_id);
 
-      // 提取 idx (从 clobTokenIds 数组位置)
-      uint8_t token_idx = 0xFF;
-      if (market.contains("_matched_idx")) {
-        token_idx = static_cast<uint8_t>(market["_matched_idx"].get<size_t>());
-      }
-
-      // 更新 token
-      TokenMeta token;
-      token.cond = condition_id;
-      token.idx = token_idx;
-      merge_token(rt_.tokens[token_id], token);
+      // 更新 token → condition 映射
+      rt_.tokens[token_id].cond = condition_id;
 
       // 更新 condition
-      if (!condition_id.empty()) {
-        ConditionMeta condition;
-        condition.qid = json_str(market, "questionId");
-        if (condition.qid.empty()) {
-          condition.qid = json_str(market, "question_id");
-        }
-
-        // 从 clobTokenIds 提取 tids 和 outcome_count
-        std::string clob_token_ids_str = json_str(market, "clobTokenIds");
-        if (!clob_token_ids_str.empty()) {
-          json clob_token_ids = safe_parse(clob_token_ids_str);
-          if (clob_token_ids.is_array()) {
-            condition.oc = static_cast<uint8_t>(clob_token_ids.size());
-            for (size_t i = 0; i < clob_token_ids.size(); ++i) {
-              if (clob_token_ids[i].is_string()) {
-                std::string tid = clob_token_ids[i].get<std::string>();
-                if (condition.tids.size() <= i) {
-                  condition.tids.resize(i + 1);
-                }
-                condition.tids[i] = tid;
-                // 同时更新该 token 的 cond 和 idx
-                TokenMeta other_token;
-                other_token.cond = condition_id;
-                other_token.idx = static_cast<uint8_t>(i);
-                merge_token(rt_.tokens[tid], other_token);
-              }
-            }
-          }
-        }
-
-        // 提取 question/description/slug/outcomes
-        json events = market.contains("events") && market.at("events").is_array()
-                          ? market.at("events")
-                          : json::array();
-        json event0 = events.empty() ? json::object() : events.front();
-        condition.q = json_str(market, "question");
-        if (condition.q.empty()) {
-          condition.q = json_str(event0, "title");
-        }
-        condition.desc = json_str(market, "description");
-        condition.slug = json_str(event0, "slug");
-        if (condition.slug.empty()) {
-          condition.slug = json_str(market, "slug");
-        }
-        if (!condition.slug.empty()) {
-          condition.url = "https://polymarket.com/event/" + condition.slug;
-        }
-        if (market.contains("outcomes")) {
-          json outcomes = market.at("outcomes");
-          if (outcomes.is_string()) {
-            outcomes = safe_parse(outcomes.get<std::string>());
-          }
-          if (outcomes.is_array()) {
-            for (const auto &outcome : outcomes) {
-              if (outcome.is_string()) {
-                condition.outcomes.push_back(outcome.get<std::string>());
-              }
-            }
-          }
-        }
-
-        merge_condition(rt_.conditions[condition_id], condition);
-
-        // 推断 collateral
-        ConditionMeta &merged = rt_.conditions[condition_id];
-        if (merged.coll == 0 && token_idx != 0xFF) {
-          merged.coll = to_u8(infer_collateral_from_token(condition_id, token_idx, token_id));
-        }
-
-        apply_resolved_prices(rt_, condition_id);
+      ConditionMeta condition;
+      condition.qid = json_str(market, "questionId");
+      if (condition.qid.empty()) {
+        condition.qid = json_str(market, "question_id");
       }
+
+      // 从 clobTokenIds 提取 tids 和 outcome_count
+      std::string clob_token_ids_str = json_str(market, "clobTokenIds");
+      json clob_token_ids = safe_parse(clob_token_ids_str);
+      if (clob_token_ids.is_array()) {
+        condition.oc = static_cast<uint8_t>(clob_token_ids.size());
+        for (size_t i = 0; i < clob_token_ids.size(); ++i) {
+          if (clob_token_ids[i].is_string()) {
+            std::string tid = clob_token_ids[i].get<std::string>();
+            if (condition.tids.size() <= i) {
+              condition.tids.resize(i + 1);
+            }
+            condition.tids[i] = tid;
+            rt_.tokens[tid].cond = condition_id;
+          }
+        }
+      }
+
+      // 提取 outcomePrices
+      std::string outcome_prices_str = json_str(market, "outcomePrices");
+      json outcome_prices = safe_parse(outcome_prices_str);
+      if (outcome_prices.is_array()) {
+        int64_t ts = now_unix_sec();
+        for (size_t i = 0; i < outcome_prices.size(); ++i) {
+          if (condition.prices.size() <= i) {
+            condition.prices.resize(i + 1, -1);
+            condition.price_ts.resize(i + 1, 0);
+          }
+          if (outcome_prices[i].is_string()) {
+            double p = std::stod(outcome_prices[i].get<std::string>());
+            condition.prices[i] = static_cast<int64_t>(p * 1e6);
+            condition.price_ts[i] = ts;
+          }
+        }
+      }
+
+      // 提取 question/desc/slug/outcomes/start/end
+      json events = market.contains("events") && market.at("events").is_array()
+                        ? market.at("events")
+                        : json::array();
+      json event0 = events.empty() ? json::object() : events.front();
+      condition.q = json_str(market, "question");
+      if (condition.q.empty()) {
+        condition.q = json_str(event0, "title");
+      }
+      condition.desc = json_str(market, "description");
+      if (condition.desc.empty()) {
+        condition.desc = json_str(event0, "description");
+      }
+      condition.slug = json_str(event0, "slug");
+      if (condition.slug.empty()) {
+        condition.slug = json_str(market, "slug");
+      }
+      condition.start = json_str(event0, "startDate");
+      if (condition.start.empty()) {
+        condition.start = json_str(market, "startDate");
+      }
+      condition.end = json_str(event0, "endDate");
+      if (condition.end.empty()) {
+        condition.end = json_str(market, "endDate");
+      }
+      if (market.contains("outcomes")) {
+        json outcomes = market.at("outcomes");
+        if (outcomes.is_string()) {
+          outcomes = safe_parse(outcomes.get<std::string>());
+        }
+        if (outcomes.is_array()) {
+          for (const auto &outcome : outcomes) {
+            if (outcome.is_string()) {
+              condition.outcomes.push_back(outcome.get<std::string>());
+            }
+          }
+        }
+      }
+
+      // 标记为已从 gamma 成功更新
+      condition.updated = true;
+
+      merge_condition(rt_.conditions[condition_id], condition);
+
+      // 推断 collateral
+      ConditionMeta &merged = rt_.conditions[condition_id];
+      if (merged.coll == 0 && !merged.tids.empty()) {
+        merged.coll = to_u8(infer_collateral_from_token(condition_id, 0, merged.tids[0]));
+      }
+
+      apply_resolved_prices(rt_, condition_id);
     }
   }
 }
@@ -1135,17 +1261,31 @@ void SyncThread::fetch_gamma_by_condition_ids(const std::vector<std::string> &co
     return;
   }
 
-  std::vector<std::string> unique = condition_ids;
+  // 过滤掉已 updated 的 condition
+  std::vector<std::string> pending;
+  for (const auto &cid : condition_ids) {
+    auto it = rt_.conditions.find(cid);
+    if (it != rt_.conditions.end() && it->second.updated) {
+      continue;
+    }
+    pending.push_back(cid);
+  }
+
+  std::vector<std::string> unique = pending;
   std::sort(unique.begin(), unique.end());
   unique.erase(std::unique(unique.begin(), unique.end()), unique.end());
 
-  // 按 gamma_batch_limit 分 chunk，使用重复参数格式 condition_ids=x&condition_ids=y
+  if (unique.empty()) {
+    return;
+  }
+
+  // 按 gamma_batch_limit 分 chunk
   std::vector<std::vector<std::string>> chunks = chunked(unique, cfg_.gamma_batch_limit);
   std::vector<HttpReq> reqs;
   for (const auto &chunk : chunks) {
     std::string params = "limit=" + std::to_string(chunk.size());
     for (const auto &cid : chunk) {
-      params += "&condition_ids=" + strip_0x(cid); // gamma API要求无0x前缀
+      params += "&condition_ids=" + strip_0x(cid);
     }
     reqs.push_back({
         .url = std::string(kGammaApiBase) + "/markets?" + params,
@@ -1154,14 +1294,12 @@ void SyncThread::fetch_gamma_by_condition_ids(const std::vector<std::string> &co
     });
   }
 
-  // 跟踪每个 chunk 的结果
   std::vector<std::optional<json>> chunk_results(chunks.size());
   std::vector<size_t> pending_chunk_indices;
   for (size_t i = 0; i < chunks.size(); ++i) {
     pending_chunk_indices.push_back(i);
   }
 
-  // 并发请求 + 并发重试
   for (size_t attempt = 1; !pending_chunk_indices.empty(); ++attempt) {
     std::vector<HttpReq> batch_reqs;
     for (size_t idx : pending_chunk_indices) {
@@ -1206,7 +1344,6 @@ void SyncThread::fetch_gamma_by_condition_ids(const std::vector<std::string> &co
     json arr = (arr_opt && arr_opt->is_array()) ? *arr_opt : json::array();
 
     for (const auto &condition_id : chunk) {
-      // 在返回的 array 中找到匹配的 market
       json market = json::object();
       for (const auto &item : arr) {
         std::string current = item.contains("conditionId")
@@ -1228,30 +1365,42 @@ void SyncThread::fetch_gamma_by_condition_ids(const std::vector<std::string> &co
         condition.qid = json_str(market, "question_id");
       }
 
-      // 从 clobTokenIds 提取 tids 和 outcome_count
+      // 从 clobTokenIds 提取 tids
       std::string clob_token_ids_str = json_str(market, "clobTokenIds");
-      if (!clob_token_ids_str.empty()) {
-        json clob_token_ids = safe_parse(clob_token_ids_str);
-        if (clob_token_ids.is_array()) {
-          condition.oc = static_cast<uint8_t>(clob_token_ids.size());
-          for (size_t i = 0; i < clob_token_ids.size(); ++i) {
-            if (clob_token_ids[i].is_string()) {
-              std::string tid = clob_token_ids[i].get<std::string>();
-              if (condition.tids.size() <= i) {
-                condition.tids.resize(i + 1);
-              }
-              condition.tids[i] = tid;
-              // 同时更新该 token 的 cond 和 idx
-              TokenMeta token;
-              token.cond = condition_id;
-              token.idx = static_cast<uint8_t>(i);
-              merge_token(rt_.tokens[tid], token);
+      json clob_token_ids = safe_parse(clob_token_ids_str);
+      if (clob_token_ids.is_array()) {
+        condition.oc = static_cast<uint8_t>(clob_token_ids.size());
+        for (size_t i = 0; i < clob_token_ids.size(); ++i) {
+          if (clob_token_ids[i].is_string()) {
+            std::string tid = clob_token_ids[i].get<std::string>();
+            if (condition.tids.size() <= i) {
+              condition.tids.resize(i + 1);
             }
+            condition.tids[i] = tid;
+            rt_.tokens[tid].cond = condition_id;
           }
         }
       }
 
-      // 提取 question/description/slug/outcomes
+      // 提取 outcomePrices
+      std::string outcome_prices_str = json_str(market, "outcomePrices");
+      json outcome_prices = safe_parse(outcome_prices_str);
+      if (outcome_prices.is_array()) {
+        int64_t ts = now_unix_sec();
+        for (size_t i = 0; i < outcome_prices.size(); ++i) {
+          if (condition.prices.size() <= i) {
+            condition.prices.resize(i + 1, -1);
+            condition.price_ts.resize(i + 1, 0);
+          }
+          if (outcome_prices[i].is_string()) {
+            double p = std::stod(outcome_prices[i].get<std::string>());
+            condition.prices[i] = static_cast<int64_t>(p * 1e6);
+            condition.price_ts[i] = ts;
+          }
+        }
+      }
+
+      // 提取 question/desc/slug/outcomes/start/end
       json events = market.contains("events") && market.at("events").is_array()
                         ? market.at("events")
                         : json::array();
@@ -1261,12 +1410,20 @@ void SyncThread::fetch_gamma_by_condition_ids(const std::vector<std::string> &co
         condition.q = json_str(event0, "title");
       }
       condition.desc = json_str(market, "description");
+      if (condition.desc.empty()) {
+        condition.desc = json_str(event0, "description");
+      }
       condition.slug = json_str(event0, "slug");
       if (condition.slug.empty()) {
         condition.slug = json_str(market, "slug");
       }
-      if (!condition.slug.empty()) {
-        condition.url = "https://polymarket.com/event/" + condition.slug;
+      condition.start = json_str(event0, "startDate");
+      if (condition.start.empty()) {
+        condition.start = json_str(market, "startDate");
+      }
+      condition.end = json_str(event0, "endDate");
+      if (condition.end.empty()) {
+        condition.end = json_str(market, "endDate");
       }
       if (market.contains("outcomes")) {
         json outcomes = market.at("outcomes");
@@ -1282,18 +1439,13 @@ void SyncThread::fetch_gamma_by_condition_ids(const std::vector<std::string> &co
         }
       }
 
+      condition.updated = true;
       merge_condition(rt_.conditions[condition_id], condition);
 
-      // 推断 collateral 并更新 tokens
+      // 推断 collateral
       ConditionMeta &merged = rt_.conditions[condition_id];
-      for (size_t idx = 0; idx < merged.tids.size(); ++idx) {
-        if (merged.tids[idx].empty()) {
-          continue;
-        }
-        if (merged.coll == 0) {
-          merged.coll = to_u8(infer_collateral_from_token(
-              condition_id, static_cast<uint8_t>(idx), merged.tids[idx]));
-        }
+      if (merged.coll == 0 && !merged.tids.empty()) {
+        merged.coll = to_u8(infer_collateral_from_token(condition_id, 0, merged.tids[0]));
       }
       apply_resolved_prices(rt_, condition_id);
     }
@@ -1392,12 +1544,13 @@ void SyncThread::fetch_gamma_market_questions(const std::string &market_id) {
 void SyncThread::ensure_token_meta(const std::string &token_id) {
   auto it = rt_.tokens.find(token_id);
   if (it != rt_.tokens.end()) {
-    // cond="?" 表示已查询但 Gamma 中不存在，跳过重复查询
+    // cond="?" 表示已查询但 Gamma 中不存在,跳过重复查询
     if (it->second.cond == "?") {
       return;
     }
-    if (!it->second.cond.empty() && it->second.idx != 0xFF) {
-      if (rt_.conditions.contains(it->second.cond) && rt_.conditions.at(it->second.cond).oc > 0) {
+    if (!it->second.cond.empty()) {
+      auto cond_it = rt_.conditions.find(it->second.cond);
+      if (cond_it != rt_.conditions.end() && cond_it->second.updated) {
         return;
       }
     }
@@ -1405,7 +1558,7 @@ void SyncThread::ensure_token_meta(const std::string &token_id) {
   // 使用 Gamma API 一步获取 token + condition 元数据
   fetch_gamma_by_token_ids({token_id});
   it = rt_.tokens.find(token_id);
-  if (it == rt_.tokens.end() || it->second.cond.empty() || it->second.cond == "?" || it->second.idx == 0xFF) {
+  if (it == rt_.tokens.end() || it->second.cond.empty() || it->second.cond == "?") {
     logger().warn("token_meta incomplete token_id=" + token_id);
     return;
   }
@@ -1488,7 +1641,7 @@ void SyncThread::backfill_range(uint64_t from_block, uint64_t to_block) {
     rt_.last_applied_block = std::max(rt_.last_applied_block, end);
     rt_.head_block = std::max(rt_.head_block, end);
     pe.done = end - from_block + 1;
-    persist_history(); // 每批完成，立即落地 H
+    persist_history(); // 每批完成,立即落地 H
     progress().flush();
     start = end + 1;
   }
@@ -1536,7 +1689,6 @@ void SyncThread::apply_condition_resolution(const json &log) {
     condition.payout_d += value;
   }
   condition.has_payout_d = true;
-  condition.resolved = true;
   merge_condition(rt_.conditions[condition_id], condition);
   apply_resolved_prices(rt_, condition_id);
 }
@@ -1563,19 +1715,19 @@ void SyncThread::apply_order_fill(const json &log) {
   ensure_token_meta(token_id);
   auto token_it = rt_.tokens.find(token_id);
   if (token_it == rt_.tokens.end() || token_it->second.cond.empty() ||
-      token_it->second.cond == "?" || token_it->second.idx == 0xFF) {
+      token_it->second.cond == "?") {
     // 静默跳过 Gamma 中找不到的 token (已在 ensure_token_meta 中记录警告)
     if (token_it == rt_.tokens.end() || token_it->second.cond != "?") {
       logger().warn("apply_order_filled skip incomplete token_id=" + token_id);
     }
     return;
   }
-  const TokenMeta &token = token_it->second;
-  ensure_condition_meta(token.cond, Collateral::Unknown);
-  ConditionMeta &condition = rt_.conditions.at(token.cond);
+  const std::string &cond_id = token_it->second.cond;
+  ensure_condition_meta(cond_id, Collateral::Unknown);
+  ConditionMeta &condition = rt_.conditions.at(cond_id);
+  uint8_t token_idx = get_token_idx(rt_.conditions, cond_id, token_id);
   if (condition.coll == 0) {
-    condition.coll = to_u8(
-        infer_collateral_from_token(token.cond, token.idx, token_id));
+    condition.coll = to_u8(infer_collateral_from_token(cond_id, token_idx, token_id));
   }
 
   std::vector<PendingEmit> events;
@@ -1583,8 +1735,8 @@ void SyncThread::apply_order_fill(const json &log) {
     events.push_back({
         .user = buyer,
         .token_id = token_id,
-        .condition_id = token.cond,
-        .token_idx = token.idx,
+        .condition_id = cond_id,
+        .token_idx = token_idx,
         .collateral = condition.coll,
         .type = EventType::OrderBuy,
         .amount = bigint_to_i64(token_amount),
@@ -1595,8 +1747,8 @@ void SyncThread::apply_order_fill(const json &log) {
     events.push_back({
         .user = seller,
         .token_id = token_id,
-        .condition_id = token.cond,
-        .token_idx = token.idx,
+        .condition_id = cond_id,
+        .token_idx = token_idx,
         .collateral = condition.coll,
         .type = EventType::OrderSell,
         .amount = -bigint_to_i64(token_amount),
@@ -1640,11 +1792,7 @@ void SyncThread::apply_split(const json &log) {
       condition.tids.resize(static_cast<size_t>(token_idx) + 1);
     }
     condition.tids[token_idx] = token_id;
-    merge_token(rt_.tokens[token_id],
-                {.cond = condition_id,
-                 .idx = token_idx,
-                 .price = -1,
-                 .price_src = ""});
+    rt_.tokens[token_id].cond = condition_id;
 
     if (rt_.user_set.contains(stakeholder)) {
       events.push_back({
@@ -1696,11 +1844,7 @@ void SyncThread::apply_merge(const json &log) {
       condition.tids.resize(static_cast<size_t>(token_idx) + 1);
     }
     condition.tids[token_idx] = token_id;
-    merge_token(rt_.tokens[token_id],
-                {.cond = condition_id,
-                 .idx = token_idx,
-                 .price = -1,
-                 .price_src = ""});
+    rt_.tokens[token_id].cond = condition_id;
 
     if (rt_.user_set.contains(stakeholder)) {
       events.push_back({
@@ -1765,11 +1909,7 @@ void SyncThread::apply_redeem(const json &log) {
       condition.tids.resize(static_cast<size_t>(token_idx) + 1);
     }
     condition.tids[token_idx] = token_id;
-    merge_token(rt_.tokens[token_id],
-                {.cond = condition_id,
-                 .idx = token_idx,
-                 .price = -1,
-                 .price_src = ""});
+    rt_.tokens[token_id].cond = condition_id;
 
     BigInt holding = 0;
     if (token_idx == winner_idx) {
@@ -1837,11 +1977,11 @@ void SyncThread::apply_convert(const json &log, const std::vector<json> &tx_logs
   std::vector<PendingEmit> events;
   for (const auto &transfer : transfers) {
     ensure_token_meta(transfer.token_id);
-    const TokenMeta &token = rt_.tokens.at(transfer.token_id);
-    if (!market_conditions.contains(token.cond)) {
+    const std::string &cond_id = rt_.tokens.at(transfer.token_id).cond;
+    if (!market_conditions.contains(cond_id)) {
       continue;
     }
-    ConditionMeta &condition = rt_.conditions.at(token.cond);
+    ConditionMeta &condition = rt_.conditions.at(cond_id);
     if (condition.coll == 0) {
       condition.coll = to_u8(Collateral::WrappedUSDCe);
     }
@@ -1856,11 +1996,12 @@ void SyncThread::apply_convert(const json &log, const std::vector<json> &tx_logs
       continue;
     }
 
+    uint8_t token_idx = get_token_idx(rt_.conditions, cond_id, transfer.token_id);
     events.push_back({
         .user = stakeholder,
         .token_id = transfer.token_id,
-        .condition_id = token.cond,
-        .token_idx = token.idx,
+        .condition_id = cond_id,
+        .token_idx = token_idx,
         .collateral = condition.coll,
         .type = EventType::Convert,
         .amount = signed_amount,

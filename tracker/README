@@ -58,7 +58,7 @@ state.hpp    # 状态结构定义
 store.hpp    # JSON 存储
 sync.hpp     # Sync Thread 接口
 ws.hpp       # WS Thread 接口
-main.cpp     # 入口，启动3线程
+main.cpp     # 入口,启动3线程
 
 ======================
 范围约束
@@ -105,13 +105,15 @@ f/             RPC.eth_getLogs({users})                              批量补�
 
 终端显示格式:
   API       done/total  [pend]   说明
-  snapshot  5/10        [3]      [a] done=完成用户数, total=用户数
-  stables   40/40       [0]      [b] done=完成查询数, total=用户数*4
+  snapshot  5/10        [3]      [a] done=完成/缓存用户数, total=用户数 (cached=8)
+  stables   8/8         [0]      [b] done=完成查询数, total=stale_users*4
   meta      50/100      [5]      [c] done=完成token数, total=token数
   ws_sub    10/10       [0]      [d] done=订阅用户数, total=用户数
   head      1/1         [0]      [e] done=1表示完成
   backfill  500/1000    [10]     [f] done=已处理区块数, total=区块范围
   [current_stage]
+
+  注: snapshot 阶段会显示 cached 数量,表示从磁盘复用的 snapshot 数量
 ======================
 Log设计(文件)
 ======================
@@ -145,31 +147,38 @@ SyncThread.run()
 │  └─ load_files() → snapshot_root/history_root 从磁盘恢复
 ├─ 主循环
 │  ├─ full_resync() (初始触发/每3600s定时触发/手动UI触发)
-│  │  ├─ [a] fetch_user_snapshots (per-user 并发)
-│  │  │  ├─ API: Graph(pnl).userPositions(user)
+│  │  ├─ [a] try_reuse_snapshots (检查现有 snapshot 是否可复用)
+│  │  │  ├─ 遍历 users, 从 snapshot_root 中查找最新的 snapshot
+│  │  │  ├─ 判断: now - captured_at_unix_sec < resync_interval_sec (3600s)
+│  │  │  ├─ 若有效: 直接恢复 user_snapshots[user] 从 snapshot_root[user][block]
+│  │  │  │  └─ 无需调用 Graph API, 跳过该用户的 snapshot 抓取
+│  │  │  └─ 若失效/不存在: 加入 stale_users 列表, 后续从 Graph 抓取
+│  │  ├─ [a'] fetch_user_snapshots (仅对 stale_users, per-user 并发)
+│  │  │  ├─ API: Graph(pnl).userPositions(user) -- 仅 stale_users
 │  │  │  ├─ 输出: user_snapshots[user] = {snapshot_block, positions[]}
 │  │  │  ├─ 注: snapshot_block 是 per-user checkpoint, 不是全局统一块高
-│  │  │  └─ 落地: → S (snapshot.json)
-│  │  ├─ [b] fetch_snapshot_balances (并发 RPC)
+│  │  │  └─ 落地: → S (snapshot.json) -- 仅有更新时落地
+│  │  ├─ [b] fetch_snapshot_balances (并发 RPC, 仅 stale_users)
 │  │  │  ├─ API: RPC.eth_call balanceOf(user, USDC/USDCe/USDT/Wrapped)
 │  │  │  ├─ 输出: user_states[user].stable = {usdc, usdc_e, usdt, wrapped}
-│  │  │  └─ 注: 只在 full_resync 时更新，不监听 ERC20 Transfer
+│  │  │  └─ 注: 仅更新 stale_users 的余额, cached_users 沿用现有
 │  │  ├─ [c] fetch_gamma_by_token_ids (批量)
 │  │  │  ├─ API: Gamma.markets?clob_token_ids=tid1,tid2,...
-│  │  │  ├─ 输出: tokens[token_id] = {condition_id, idx}
-│  │  │  │        conditions[cond_id] = {oc, coll, tids[], q, slug, outcomes[]}
-│  │  │  ├─ 注: Gamma 一步返回完整 token/condition 元数据
+│  │  │  ├─ 输出: tokens[token_id] = condition_id
+│  │  │  │        conditions[cond_id] = {oc, coll, tids[], prices[], q, slug, outcomes[], updated}
+│  │  │  ├─ 注: 已 updated=1 的 condition 不再重复查询
 │  │  │  └─ 落地: → M (meta.json)
-│  │  ├─ [d] start_ws_subscription (先订阅，再获取head，再backfill)
+│  │  ├─ [d] start_ws_subscription (先订阅,再获取head,再backfill)
 │  │  │  ├─ API: ws.RPC.eth_subscribe(newHeads, logs)
 │  │  │  ├─ 阻塞等待: ws 连接成功 + 收到首条 newHeads
 │  │  │  ├─ 输出: ws 连接建立, ws_start_block = 首条 newHeads.number
-│  │  │  └─ 注: ws 事件暂存队列，等 backfill 完成后再处理
+│  │  │  └─ 注: ws 事件暂存队列,等 backfill 完成后再处理
 │  │  ├─ [e] get_head_block (订阅成功后获取)
 │  │  │  ├─ API: RPC.eth_blockNumber()
 │  │  │  └─ 输出: head_block = max(ws_start_block, eth_blockNumber)
 │  │  ├─ [f] backfill_range (按 per-user checkpoint 计算, RPC 侧合并抓取)
 │  │  │  ├─ 对每个 user: from = user_snapshots[user].snapshot_block + 1, to = head_block
+│  │  │  ├─ 注: cached_users 的 backfill 范围通常更大 (snapshot 较旧)
 │  │  │  ├─ API: RPC.eth_getLogs({users}, merged filters)
 │  │  │  ├─ 处理: 先按 raw_log_key 合并去重, 再 apply_block_logs(logs)
 │  │  │  ├─ 落地: → H (history.json) per batch, 按 event_id 幂等写入
@@ -192,7 +201,7 @@ SyncThread.run()
 │  │     └─ aggregate 重算: → A (aggregate.json)
 │  └─ sleep(100ms)  // 主循环空闲轮询间隔
 └─ 落地汇总
-   ├─ S (snapshot.json): [a] 完成后
+   ├─ S (snapshot.json): [a'] 完成后 (仅 stale_users 更新时)
    ├─ M (meta.json): [c] 完成后 + 增量映射补齐时 (via Gamma)
    ├─ H (history.json): [f] 每批 + ws 增量, 按 event_id 幂等
    └─ A (aggregate.json): [f] 完成后 + ws 每条事件后
@@ -218,10 +227,10 @@ apply_block_logs(logs)
 │  │  │  ├─ token_id = maker_is_buyer ? taker_asset_id : maker_asset_id
 │  │  │  ├─ token_amount = maker_is_buyer ? taker_amt : maker_amt
 │  │  │  └─ collateral_amount = maker_is_buyer ? maker_amt : taker_amt
-│  │  ├─ 补齐: token_id → (condition_id, token_idx) from tokens[]
+│  │  ├─ 补齐: token_id → condition_id from tokens[]
 │  │  ├─ 产出 (双方各一条):
-│  │  │  ├─ emit(buyer, OrderBuy, +token_amount, price=coll*1e6/tokens)
-│  │  │  └─ emit(seller, OrderSell, -token_amount, price=coll*1e6/tokens)
+│  │  │  ├─ emit(buyer, OrderBuy, +token_amount, price=coll*1e6/token_amount)
+│  │  │  └─ emit(seller, OrderSell, -token_amount, price=coll*1e6/token_amount)
 │  │  └─ 更新: user_states[buyer].positions[token_id] += token_amount
 │  │          user_states[seller].positions[token_id] -= token_amount
 │  ├─ PositionSplit (CONDITIONAL_TOKENS)
@@ -241,11 +250,11 @@ apply_block_logs(logs)
 │  ├─ PayoutRedemption (CONDITIONAL_TOKENS)
 │  │  ├─ 解码: redeemer, condition_id, index_sets[], payout
 │  │  ├─ 补齐: condition_id → (payout_numerators[], payout_denominator) from conditions[]
-│  │  ├─ 计算 holding (事件只有 payout 总额，需反推):
+│  │  ├─ 计算 holding (事件只有 payout 总额,需反推):
 │  │  │  ├─ winner_idx = argmax(payout_numerators)
 │  │  │  ├─ winner_ratio = numerators[winner_idx] / payout_denominator
 │  │  │  ├─ holding = payout / winner_ratio  (赎回前持有量)
-│  │  │  └─ 注: 只有获胜方有 payout，其他 index_set 的 holding 从当前持仓查
+│  │  │  └─ 注: 只有获胜方有 payout,其他 index_set 的 holding 从当前持仓查
 │  │  ├─ 产出 (每个 index_set 一条):
 │  │  │  ├─ price = numerators[idx] * 1e6 / payout_denominator
 │  │  │  └─ emit(redeemer, Redeem, -holding[idx], price)
@@ -273,7 +282,7 @@ apply_block_logs(logs)
 └─ 输出
    ├─ history_root[user][block_key].push(event) 增量
    ├─ user_states[user].positions 实时更新
-   └─ tokens[]/conditions[] 映射可能被补齐
+   └─ tokens[]/conditions[] 映射可能被补齐 (条件已 updated=1 则跳过)
 ```
 
 
@@ -320,13 +329,13 @@ TransferSingle/TransferBatch 不作为独立事件类型暴露,但会参与 orde
 事件字段与缺失信息补齐:
 | 事件             | 原始字段                                                     | 缺失        | 补齐方式                                                    |
 | ---------------- | ------------------------------------------------------------ | ----------- | ----------------------------------------------------------- |
-| OrderFilled      | maker, taker, token_id, token_amount, collateral_amount, fee | -           | 完整，无需补齐                                              |
+| OrderFilled      | maker, taker, token_id, token_amount, collateral_amount, fee | -           | 完整,无需补齐                                              |
 | PositionSplit    | stakeholder, condition_id, partition[], amount, collateral   | token_id    | token_id = getPositionId(collateral, condition, idx)        |
 | PositionsMerge   | stakeholder, condition_id, partition[], amount, collateral   | token_id    | token_id = getPositionId(collateral, condition, idx)        |
 | PayoutRedemption | redeemer, condition_id, index_sets[], payout                 | token_id    | token_id = getPositionId(collateral, condition, idx)        |
 | PositionConvert  | stakeholder, market_id, index_set, amount                    | 仓位腿      | 不直接写 history; 结合同 tx Transfer 展开为多个 Convert leg |
 
-映射补齐 (存入 meta.json，缺失时点查):
+映射补齐 (存入 meta.json,缺失时点查):
 | 映射                     | 来源                          | 补齐方式                                                                              |
 | ------------------------ | ----------------------------- | ------------------------------------------------------------------------------------- |
 | condition_id → collateral| PositionSplit/Merge 事件      | 事件自带 collateral_token 字段                                                        |
@@ -410,42 +419,49 @@ EventType 枚举:
 token/condition/market 元数据
 
 设计原则:
-  - condition_id 是核心主键，token 只存指向 condition 的引用
-  - 信息不重复: payout/outcome_count 等只存 condition 层
-  - 三个独立 map: tokens, conditions, markets
+  - condition_id 是核心主键
+  - tokens 只存 token_id → condition_id 映射
+  - 价格/时间等信息集中存 condition 层 (数组对应 tids 顺序)
+  - 已从 gamma 成功更新的 condition 标记 updated=1, 后续不再重复查询
 
 {
   "tokens": {
-    "123...": {                        // token_id (uint256 as string)
-      "cond": "0xabc...",              // → condition_id (必有)
-      "idx": 0,                        // outcome_index: 0=YES, 1=NO
-      "price": 550000,                 // 最新价格 * 1e6 (可选, 来自 gamma)
-      "price_src": "gamma"             // 价格来源 (可选)
-    }
+    "123...": "0xabc..."                    // token_id → condition_id 映射
   },
   "conditions": {
-    "0xabc...": {                       // condition_id (bytes32)
-      "qid": "0xdef...",                // question_id (可选, NegRisk 有)
-      "oc": 2,                          // outcome_count
-      "coll": 2,                        // collateral enum (1=USDC, 2=USDCe, 3=USDT, 4=Wrapped)
-      "tids": ["123...", "456..."],     // token_ids[idx], ""=未知占位
-      "resolved": false,                // 是否已结算
-      "payout": [1000000, 0],           // payout_numerators[] (结算后有值)
-      "payout_d": 1000000,              // payout_denominator (结算后有值)
-      "q": "Who will win?",             // market_question (gamma)
-      "slug": "who-will-win",           // market_slug (gamma)
-      "outcomes": ["Yes", "No"]         // market_outcomes (gamma)
+    "0xabc...": {                           // condition_id (bytes32)
+      // 身份标识
+      "qid": "0xdef...",                    // question_id (NegRisk 专用)
+      "oc": 2,                              // outcome_count
+      "coll": 2,                            // collateral enum (1=USDC, 2=USDCe, 3=USDT, 4=Wrapped)
+      "tids": ["123...", "456..."],         // token_ids[idx]
+      // 市场信息
+      "q": "Who will win?",                 // question
+      "desc": "This market is about...",    // description
+      "slug": "who-will-win",               // slug
+      "outcomes": ["Yes", "No"],            // outcomes[]
+      // 价格
+      "prices": [550000, 450000],           // 价格 * 1e6 (per outcome)
+      "price_ts": [1711234567, 1711234567], // 价格时间 unix sec (per outcome)
+      // 时间
+      "start": "2024-01-01T00:00:00Z",      // 开始时间 ISO8601
+      "end": "2024-12-31T00:00:00Z",        // 结束时间 ISO8601
+      // 结算
+      "payout": [1000000, 0],               // payout_numerators[] (结算后)
+      "payout_d": 1000000,                  // payout_denominator (结算后)
+      // 状态
+      "updated": 1                          // 已从 gamma 成功更新 (0/1)
     }
   },
   "markets": {
-    "0x111...": {                        // market_id (NegRisk 专用)
-      "qids": ["0xdef...", "0xghi..."]   // question_ids[] → 可计算 condition_ids
+    "0x111...": {                           // market_id (NegRisk 专用)
+      "qids": ["0xdef...", "0xghi..."]      // question_ids[] → 可计算 condition_ids
     }
   }
 }
 
 查找路径:
-  token_id       → tokens[tid].cond → conditions[cond]
+  token_id       → tokens[tid] → conditions[cond]
   condition_id   → conditions[cond]
   market_id      → markets[mid].qids → [getNegRiskConditionId(qid) for qid]
   (cond, idx)    → conditions[cond].tids[idx]

@@ -58,7 +58,7 @@ private:
   }
 
   void resolve() {
-    // 有代理时解析代理地址，否则解析目标地址
+    // 有代理时解析代理地址,否则解析目标地址
     const std::string &host = proxy_ ? proxy_->host : cur_.parts.host;
     const std::string &port = proxy_ ? proxy_->port : cur_.parts.port;
     resolver_.async_resolve(host, port,
@@ -124,7 +124,7 @@ private:
 
   void proxy_read() {
     proxy_parser_.emplace();
-    proxy_parser_->skip(true); // CONNECT 响应没有 body，跳过 body 解析
+    proxy_parser_->skip(true); // CONNECT 响应没有 body,跳过 body 解析
     auto &stream = beast::get_lowest_layer(*ssl_stream_);
     http::async_read(stream, proxy_buf_, *proxy_parser_,
                      [self = shared_from_this()](beast::error_code ec, size_t) {

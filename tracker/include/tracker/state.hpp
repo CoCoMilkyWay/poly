@@ -99,26 +99,37 @@ struct StableBalances {
 };
 
 struct TokenMeta {
-  std::string cond;
-  uint8_t idx = 0xFF;
-  int64_t price = -1;
-  std::string price_src;
+  std::string cond; // token_id → condition_id 映射
 };
 
 struct ConditionMeta {
-  std::string qid;
-  uint8_t oc = 0;
-  uint8_t coll = 0;
-  std::vector<std::string> tids;
-  bool resolved = false;
-  std::vector<BigInt> payout;
-  BigInt payout_d = 0;
+  // 身份标识
+  std::string qid;                    // question_id (NegRisk 专用)
+  uint8_t oc = 0;                     // outcome_count
+  uint8_t coll = 0;                   // collateral enum
+  std::vector<std::string> tids;      // token_ids[idx]
+
+  // 市场信息 (gamma)
+  std::string q;                      // question
+  std::string desc;                   // description
+  std::string slug;                   // slug
+  std::vector<std::string> outcomes;  // outcomes[]
+
+  // 价格
+  std::vector<int64_t> prices;        // 价格 * 1e6 (per outcome)
+  std::vector<int64_t> price_ts;      // 价格时间 unix sec (per outcome)
+
+  // 时间
+  std::string start;                  // 开始时间 ISO8601
+  std::string end;                    // 结束时间 ISO8601
+
+  // 结算
+  std::vector<BigInt> payout;         // payout_numerators[]
+  BigInt payout_d = 0;                // payout_denominator
   bool has_payout_d = false;
-  std::string q;
-  std::string desc;
-  std::string slug;
-  std::string url;
-  std::vector<std::string> outcomes;
+
+  // 状态
+  bool updated = false;               // 已从 gamma 成功更新
 };
 
 struct MarketMeta {
@@ -186,13 +197,22 @@ inline void merge_token(TokenMeta &dst, const TokenMeta &src) {
   if (dst.cond.empty()) {
     dst.cond = src.cond;
   }
-  if (dst.idx == 0xFF && src.idx != 0xFF) {
-    dst.idx = src.idx;
+}
+
+// 从 condition.tids 推断 token 的 idx
+inline uint8_t get_token_idx(const std::map<std::string, ConditionMeta> &conditions,
+                             const std::string &cond_id,
+                             const std::string &token_id) {
+  auto it = conditions.find(cond_id);
+  if (it == conditions.end()) {
+    return 0xFF;
   }
-  if (src.price >= 0) {
-    dst.price = src.price;
-    dst.price_src = src.price_src;
+  for (size_t i = 0; i < it->second.tids.size(); ++i) {
+    if (it->second.tids[i] == token_id) {
+      return static_cast<uint8_t>(i);
+    }
   }
+  return 0xFF;
 }
 
 inline void merge_condition(ConditionMeta &dst, const ConditionMeta &src) {
@@ -215,15 +235,36 @@ inline void merge_condition(ConditionMeta &dst, const ConditionMeta &src) {
       dst.tids[i] = src.tids[i];
     }
   }
+  // prices / price_ts 按索引更新 (非负值覆盖)
+  if (dst.prices.size() < target_size) {
+    dst.prices.resize(target_size, -1);
+  }
+  if (dst.price_ts.size() < target_size) {
+    dst.price_ts.resize(target_size, 0);
+  }
+  for (size_t i = 0; i < src.prices.size(); ++i) {
+    if (src.prices[i] >= 0) {
+      dst.prices[i] = src.prices[i];
+    }
+  }
+  for (size_t i = 0; i < src.price_ts.size(); ++i) {
+    if (src.price_ts[i] > 0) {
+      dst.price_ts[i] = src.price_ts[i];
+    }
+  }
+  if (dst.start.empty()) {
+    dst.start = src.start;
+  }
+  if (dst.end.empty()) {
+    dst.end = src.end;
+  }
   if (!src.payout.empty()) {
     dst.payout = src.payout;
   }
   if (src.has_payout_d) {
     dst.payout_d = src.payout_d;
     dst.has_payout_d = true;
-    dst.resolved = true;
   }
-  dst.resolved = dst.resolved || src.resolved;
   if (dst.q.empty()) {
     dst.q = src.q;
   }
@@ -233,12 +274,10 @@ inline void merge_condition(ConditionMeta &dst, const ConditionMeta &src) {
   if (dst.slug.empty()) {
     dst.slug = src.slug;
   }
-  if (dst.url.empty()) {
-    dst.url = src.url;
-  }
   if (dst.outcomes.empty()) {
     dst.outcomes = src.outcomes;
   }
+  dst.updated = dst.updated || src.updated;
 }
 
 inline void merge_market(MarketMeta &dst, const MarketMeta &src) {

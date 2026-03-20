@@ -60,11 +60,28 @@ async function fetchJson(url, options) {
 }
 
 function tokenMeta(tokenId) {
-  return state.meta?.tokens?.[tokenId] || null;
+  // tokens 现在只存 token_id → condition_id 映射
+  const condId = state.meta?.tokens?.[tokenId];
+  return condId ? { cond: condId } : null;
 }
 
 function conditionMeta(conditionId) {
   return conditionId ? state.meta?.conditions?.[conditionId] || null : null;
+}
+
+function getTokenIdx(conditionId, tokenId) {
+  const cond = conditionMeta(conditionId);
+  if (!cond?.tids) return null;
+  const idx = cond.tids.indexOf(tokenId);
+  return idx >= 0 ? idx : null;
+}
+
+function getTokenPrice(conditionId, tokenId) {
+  const cond = conditionMeta(conditionId);
+  const idx = getTokenIdx(conditionId, tokenId);
+  if (idx === null || !cond?.prices) return null;
+  const price = cond.prices[idx];
+  return typeof price === "number" && price >= 0 ? price : null;
 }
 
 function stableRowsFromBalances(stableBalances) {
@@ -104,23 +121,23 @@ function buildSnapshotRows(snapshot) {
   const rows = [];
   for (const position of snapshot.positions || []) {
     const metaToken = tokenMeta(position.token_id);
-    const metaCondition = conditionMeta(metaToken?.cond);
-    const price = typeof metaToken?.price === "number" ? metaToken.price : null;
+    const condId = metaToken?.cond || null;
+    const metaCondition = conditionMeta(condId);
+    const tokenIdx = getTokenIdx(condId, position.token_id);
+    const price = getTokenPrice(condId, position.token_id);
     const valueUsd = price === null
       ? 0
       : (Number(position.amount_raw || 0) / 1e6) * (price / 1e6);
-    const tokenIdx = typeof metaToken?.idx === "number" ? metaToken.idx : null;
     rows.push({
       asset_type: "token",
       token_id: position.token_id,
-      condition_id: metaToken?.cond || null,
+      condition_id: condId,
       token_idx: tokenIdx,
       collateral: metaCondition?.coll ?? null,
       amount_raw: position.amount_raw,
       price,
       value_usd: valueUsd,
       q: metaCondition?.q || position.token_id,
-      desc: metaCondition?.desc || "",
       outcomes: metaCondition?.outcomes || [],
       outcome_text: tokenIdx === null ? "" : (metaCondition?.outcomes?.[tokenIdx] || ""),
     });

@@ -379,6 +379,21 @@ inline std::vector<std::string> json_str_arr(const json &row, const char *key) {
   return out;
 }
 
+inline std::vector<int64_t> json_i64_arr(const json &row, const char *key) {
+  std::vector<int64_t> out;
+  if (!row.contains(key) || !row.at(key).is_array()) {
+    return out;
+  }
+  for (const auto &value : row.at(key)) {
+    if (value.is_number_integer()) {
+      out.push_back(value.get<int64_t>());
+    } else {
+      out.push_back(-1);
+    }
+  }
+  return out;
+}
+
 inline std::string json_str_or_int(const json &value) {
   if (value.is_string()) {
     return value.get<std::string>();
