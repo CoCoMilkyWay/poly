@@ -54,9 +54,20 @@ StageSync::StageSync(stage2::EventBuilder &builder,
   assert(base_interval_seconds_ > 0);
   const std::filesystem::path mmap_dir = std::filesystem::path(stage3_db_.data_dir()) / "mmap";
   std::filesystem::create_directories(mmap_dir);
+
+  auto t0 = std::chrono::steady_clock::now();
   rt_ = stage3_open(mmap_dir.c_str());
+  auto t1 = std::chrono::steady_clock::now();
+  std::cout << "[Stage3] stage3_open: " << std::chrono::duration<double>(t1 - t0).count() << " sec" << std::endl;
+
   load_tag_mapping();
+  auto t2 = std::chrono::steady_clock::now();
+  std::cout << "[Stage3] load_tag_mapping: " << std::chrono::duration<double>(t2 - t1).count() << " sec" << std::endl;
+
   refresh_conditions_if_needed();
+  auto t3 = std::chrono::steady_clock::now();
+  std::cout << "[Stage3] refresh_conditions: " << std::chrono::duration<double>(t3 - t2).count() << " sec" << std::endl;
+
   std::lock_guard<std::mutex> lock(sync_mu_);
   refresh_status_locked();
 }
