@@ -176,41 +176,139 @@ Collateral infer_collateral_from_token(const std::string &condition_id,
   return Collateral::Unknown;
 }
 
-json snapshot_data_with_retry(RuntimeState &state, const std::string &detail,
-                              size_t page_num,
-                              const std::string &url,
-                              const std::string &proxy_url,
-                              std::optional<HttpRes> first_resp = std::nullopt) {
-  HttpRes resp = first_resp ? *first_resp : http_get(url, proxy_url);
-  for (size_t attempt = 1;; ++attempt) {
-    ++state.counters.snapshot_api;
-    if (resp.status == 200) {
-      json body = safe_parse(resp.body);
-      if (body.contains("ownedNfts") && body.at("ownedNfts").is_array() &&
-          body.contains("validAt") && body.at("validAt").is_object()) {
-        assert(body.contains("totalCount"));
-        size_t total_count =
-            static_cast<size_t>(std::stoull(json_str_or_int(body.at("totalCount"))));
-        size_t total_pages =
-            total_count == 0 ? 1 : (total_count + kSnapshotApiPageSize - 1) / kSnapshotApiPageSize;
-        std::string page_detail =
-            detail + " page=" + std::to_string(page_num) + "/" +
-            std::to_string(total_pages) +
-            " n=" + std::to_string(body.at("ownedNfts").size());
-        log_query("snapshot", "getNFTsForOwner", attempt, true, page_detail);
-        return body;
+std::vector<std::string> active_token_ids(const RuntimeState &state) {
+  std::set<std::string> token_ids;
+  for (const auto &user : state.users) {
+    const UserLiveState &live = state.user_states.at(user);
+    for (const auto &[token_id, _] : live.positions) {
+      if (!token_id.empty() && token_id[0] != '-') {
+        token_ids.insert(token_id);
       }
-      log_query("snapshot", "getNFTsForOwner", attempt, false,
-                detail + " page=" + std::to_string(page_num) + "/? body=" +
-                    clip_text(body.dump()));
-    } else {
-      log_query("snapshot", "getNFTsForOwner", attempt, false,
-                detail + " page=" + std::to_string(page_num) + "/? status=" +
-                    std::to_string(resp.status));
     }
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-    resp = http_get(url, proxy_url);
   }
+  return {token_ids.begin(), token_ids.end()};
+}
+
+bool token_meta_ready(const RuntimeState &state, const std::string &token_id) {
+  auto token_it = state.tokens.find(token_id);
+  if (token_it == state.tokens.end()) {
+    return false;
+  }
+  const std::string &condition_id = token_it->second.cond;
+  if (condition_id == "?") {
+    return true;
+  }
+  if (condition_id.empty()) {
+    return false;
+  }
+  auto cond_it = state.conditions.find(condition_id);
+  if (cond_it == state.conditions.end()) {
+    return false;
+  }
+  return cond_it->second.updated;
+}
+
+bool token_price_ready(const RuntimeState &state,
+                       const AppConfig &cfg,
+                       const std::string &token_id) {
+  auto token_it = state.tokens.find(token_id);
+  if (token_it == state.tokens.end()) {
+    return false;
+  }
+  const std::string &condition_id = token_it->second.cond;
+  if (condition_id == "?") {
+    return true;
+  }
+  if (condition_id.empty()) {
+    return false;
+  }
+  auto cond_it = state.conditions.find(condition_id);
+  if (cond_it == state.conditions.end()) {
+    return false;
+  }
+  const ConditionMeta &condition = cond_it->second;
+  auto it = std::find(condition.tids.begin(), condition.tids.end(), token_id);
+  if (it == condition.tids.end()) {
+    return false;
+  }
+  size_t idx = static_cast<size_t>(it - condition.tids.begin());
+  if (idx >= condition.price_ts.size()) {
+    return false;
+  }
+  // price_ts > 0 表示已查询过（无论CLOB是否返回价格）
+  if (condition.price_ts[idx] <= 0) {
+    return false;
+  }
+  return now_unix_sec() - condition.price_ts[idx] <=
+         static_cast<int64_t>(cfg.resync_interval_sec);
+}
+
+void set_meta_progress(const RuntimeState &state) {
+  std::vector<std::string> token_ids = active_token_ids(state);
+  size_t done = 0;
+  for (const auto &token_id : token_ids) {
+    if (token_meta_ready(state, token_id)) {
+      ++done;
+    }
+  }
+  progress()[API::meta].set_data(done, token_ids.size());
+}
+
+void set_price_progress(const RuntimeState &state, const AppConfig &cfg) {
+  std::vector<std::string> token_ids = active_token_ids(state);
+  size_t done = 0;
+  for (const auto &token_id : token_ids) {
+    if (token_price_ready(state, cfg, token_id)) {
+      ++done;
+    }
+  }
+  progress()[API::prices].set_data(done, token_ids.size());
+}
+
+void sync_meta_progress(const RuntimeState &state) {
+  set_meta_progress(state);
+}
+
+void sync_price_progress(const RuntimeState &state, const AppConfig &cfg) {
+  set_price_progress(state, cfg);
+}
+
+void sync_live_progress(const RuntimeState &state, const AppConfig &cfg) {
+  set_meta_progress(state);
+  set_price_progress(state, cfg);
+}
+
+std::optional<json> parse_snapshot_response(RuntimeState &state,
+                                            const std::string &detail,
+                                            size_t page_num,
+                                            size_t attempt,
+                                            const HttpRes &resp) {
+  ++state.counters.snapshot_api;
+  if (resp.status == 200) {
+    json body = safe_parse(resp.body);
+    if (body.contains("ownedNfts") && body.at("ownedNfts").is_array() &&
+        body.contains("validAt") && body.at("validAt").is_object()) {
+      assert(body.contains("totalCount"));
+      size_t total_count =
+          static_cast<size_t>(std::stoull(json_str_or_int(body.at("totalCount"))));
+      size_t total_pages =
+          total_count == 0 ? 1 : (total_count + kSnapshotApiPageSize - 1) / kSnapshotApiPageSize;
+      std::string page_detail =
+          detail + " page=" + std::to_string(page_num) + "/" +
+          std::to_string(total_pages) +
+          " n=" + std::to_string(body.at("ownedNfts").size());
+      log_query("snapshot", "getNFTsForOwner", attempt, true, page_detail);
+      return body;
+    }
+    log_query("snapshot", "getNFTsForOwner", attempt, false,
+              detail + " page=" + std::to_string(page_num) + "/? body=" +
+                  clip_text(body.dump()));
+    return std::nullopt;
+  }
+  log_query("snapshot", "getNFTsForOwner", attempt, false,
+            detail + " page=" + std::to_string(page_num) + "/? status=" +
+                std::to_string(resp.status));
+  return std::nullopt;
 }
 
 struct TxContext {
@@ -226,7 +324,7 @@ struct SnapshotFetch {
   std::map<std::string, BigInt> positions;
   std::string page_key;
   size_t page_num = 1;
-  bool done = false;
+  size_t page_attempt = 1;
 };
 
 struct DerivedTokenCandidate {
@@ -542,8 +640,9 @@ void SyncThread::full_resync() {
   progress().init();
   rt_.resync_started_at = now_unix_sec();
 
-  // Clear history state - new snapshot will have positions up to snapshot_block,
+  // Clear state - new snapshot will have positions up to snapshot_block,
   // and we only want to track events from snapshot_block+1 onwards
+  rt_.snapshot_root = json::object();
   rt_.history_root = json::object();
   rt_.history_event_ids.clear();
   rt_.recent_events.clear();
@@ -556,12 +655,12 @@ void SyncThread::full_resync() {
 
   // [c] meta (仅 updated=0)
   std::vector<std::string> token_ids = collect_active_token_ids();
-  progress()[API::meta].total = token_ids.size();
+  sync_meta_progress(rt_);
   progress().stage("meta");
   fetch_gamma_by_token_ids(token_ids);
 
   // [d] prices (仅 price_ts 过期)
-  progress()[API::prices].total = token_ids.size();
+  sync_price_progress(rt_, cfg_);
   progress().stage("prices");
   refresh_prices(token_ids);
   persist_meta(); // 阶段完成,立即落地 M
@@ -570,19 +669,17 @@ void SyncThread::full_resync() {
   // [e] ws_sub
   queue_.clear();
   deferred_.clear();
-  progress()[API::ws_sub].total = rt_.users.size();
+  progress()[API::ws_sub].set_data(0, rt_.users.size());
   progress().stage("ws_sub");
   WsSessionInfo ws_session = ws_.start_session(rt_.users);
   current_session_id_ = ws_session.session_id;
-  progress()[API::ws_sub].done = rt_.users.size();
-  progress().flush();
 
   // [f] head
   progress().stage("head");
-  progress()[API::head].total = 1;
-  uint64_t head_block = std::max(ws_session.start_block, rpc_block_number());
+  progress()[API::head].set_data(0, 1);
+  uint64_t head_block = std::max(ws_session.start_block, rpc_block_number(API::head));
   rt_.head_block = std::max(rt_.head_block, head_block);
-  progress()[API::head].done = 1;
+  progress()[API::head].set_data_done(1);
 
   // [g] backfill
   uint64_t from_block = head_block + 1;
@@ -648,7 +745,6 @@ void SyncThread::handle_queue_event(QueueEvent ev) {
     rt_.last_applied_block = std::max(rt_.last_applied_block, ev.block_number);
     rt_.head_block = std::max(rt_.head_block, ev.block_number);
     publish_all();
-    persist_history(); // ws 增量落地 H
     return;
   }
   assert(false);
@@ -697,52 +793,7 @@ void SyncThread::handle_overlap_queue(uint64_t session_id, uint64_t overlap_bloc
 
 void SyncThread::load_files() {
   merge_meta_root(rt_, load_json(cfg_.meta_file));
-
   rt_.snapshot_root = load_json(cfg_.snapshot_file);
-  rt_.history_root = load_json(cfg_.history_file);
-
-  struct RecentRow {
-    uint64_t block_number = 0;
-    int64_t log_index = 0;
-    json row;
-  };
-  std::vector<RecentRow> recent_rows;
-  if (rt_.history_root.is_object()) {
-    for (auto user_it = rt_.history_root.begin(); user_it != rt_.history_root.end();
-         ++user_it) {
-      const std::string user = user_it.key();
-      if (!user_it.value().is_object()) {
-        continue;
-      }
-      for (auto block_it = user_it.value().begin(); block_it != user_it.value().end();
-           ++block_it) {
-        uint64_t block_number = std::stoull(block_it.key());
-        if (!block_it.value().is_array()) {
-          continue;
-        }
-        for (const auto &event : block_it.value()) {
-          if (event.contains("event_id") && event.at("event_id").is_string()) {
-            rt_.history_event_ids.insert(event.at("event_id").get<std::string>());
-          }
-          json recent = event;
-          recent["user"] = user;
-          recent["block_number"] = block_number;
-          recent_rows.push_back(
-              {block_number, json_i64(event, "log_index", 0), std::move(recent)});
-        }
-      }
-    }
-  }
-  std::sort(recent_rows.begin(), recent_rows.end(),
-            [](const RecentRow &a, const RecentRow &b) {
-              if (a.block_number != b.block_number) {
-                return a.block_number < b.block_number;
-              }
-              return a.log_index < b.log_index;
-            });
-  for (const auto &recent : recent_rows) {
-    push_recent_event(rt_, recent.row, cfg_.recent_event_limit);
-  }
 }
 
 void SyncThread::load_seed() {
@@ -752,7 +803,79 @@ void SyncThread::load_seed() {
   merge_meta_root(rt_, load_json(cfg_.seed_file));
 }
 
+void SyncThread::http_batch_each(
+    API api,
+    const std::vector<HttpReq> &reqs,
+    const std::function<void(size_t, const HttpRes &)> &on_response) {
+  if (reqs.empty()) {
+    return;
+  }
+  ProgressState &state = progress()[api];
+  state.start_query(reqs.size());
+  std::vector<HttpRes> responses =
+      http_batch(reqs, cfg_.http_concurrency, cfg_.proxy_url,
+                 [&](size_t idx, const HttpRes &response) {
+                   on_response(idx, response);
+                   state.finish_query();
+                 });
+  assert(responses.size() == reqs.size());
+}
+
+void SyncThread::rpc_batch_each(
+    API api,
+    const std::vector<json> &reqs,
+    const std::function<void(size_t, const json &)> &on_response) {
+  if (reqs.empty()) {
+    return;
+  }
+  json payload = json::array();
+  int id = 1;
+  for (const auto &req : reqs) {
+    json item = req;
+    item["jsonrpc"] = "2.0";
+    item["id"] = id++;
+    payload.push_back(std::move(item));
+  }
+  ProgressState &state = progress()[api];
+  for (size_t attempt = 1;; ++attempt) {
+    state.start_query(reqs.size());
+    HttpRes response = http_post(cfg_.rpc_http_url, payload, cfg_.proxy_url);
+    rt_.counters.rpc_http += reqs.size();
+    if (response.status != 200) {
+      log_query("rpc", "batch", attempt, false,
+                "status=" + std::to_string(response.status));
+      for (size_t i = 0; i < reqs.size(); ++i) {
+        state.finish_query();
+      }
+      std::this_thread::sleep_for(std::chrono::seconds(1));
+      continue;
+    }
+    json body = safe_parse(response.body);
+    if (!body.is_array()) {
+      log_query("rpc", "batch", attempt, false,
+                "body=" + clip_text(body.dump()));
+      for (size_t i = 0; i < reqs.size(); ++i) {
+        state.finish_query();
+      }
+      std::this_thread::sleep_for(std::chrono::seconds(1));
+      continue;
+    }
+    std::sort(body.begin(), body.end(), [](const json &a, const json &b) {
+      return a.at("id").get<int>() < b.at("id").get<int>();
+    });
+    assert(body.size() == reqs.size());
+    log_query("rpc", "batch", attempt, true,
+              "size=" + std::to_string(reqs.size()));
+    for (size_t i = 0; i < reqs.size(); ++i) {
+      on_response(i, body.at(i));
+      state.finish_query();
+    }
+    return;
+  }
+}
+
 void SyncThread::publish_all() {
+  sync_live_progress(rt_, cfg_);
   WsCounters ws_counters = ws_.counters();
   rt_.counters.rpc_ws_msg = ws_counters.msg;
   rt_.counters.rpc_ws_sub = ws_counters.sub;
@@ -770,10 +893,6 @@ void SyncThread::persist_snapshot() {
 void SyncThread::persist_meta() {
   publish_json(shared_.meta_ptr, build_meta_json(rt_));
   save_json(cfg_.meta_file, *load_published(shared_.meta_ptr));
-}
-
-void SyncThread::persist_history() {
-  save_json(cfg_.history_file, rt_.history_root);
 }
 
 void SyncThread::clear_derived_state() {
@@ -952,7 +1071,7 @@ void SyncThread::rebuild_derived_state() {
 void SyncThread::fetch_user_snapshots() {
   std::vector<std::string> users = load_addr_file(cfg_.address_file);
   auto &pa = progress()[API::snapshot];
-  pa.total = users.size();
+  pa.set_data(0, users.size());
   progress().stage("snapshot");
 
   rt_.users = users;
@@ -1035,8 +1154,7 @@ void SyncThread::fetch_user_snapshots() {
     }
   }
 
-  pa.done = cached_count;
-  progress().flush();
+  pa.set_data_done(cached_count);
 
   // [a'] fetch_user_snapshots: 仅对 stale_users 从 snapshot API 抓取
   if (!stale_users_.empty()) {
@@ -1048,18 +1166,19 @@ void SyncThread::fetch_user_snapshots() {
           .positions = {},
           .page_key = "",
           .page_num = 1,
-          .done = false,
+          .page_attempt = 1,
       });
     }
 
-    size_t done_count = 0;
-    while (done_count < snapshots.size()) {
+    std::vector<size_t> pending_snapshot_indices;
+    for (size_t i = 0; i < snapshots.size(); ++i) {
+      pending_snapshot_indices.push_back(i);
+    }
+
+    while (!pending_snapshot_indices.empty()) {
       std::vector<HttpReq> reqs;
       std::vector<size_t> refs;
-      for (size_t i = 0; i < snapshots.size(); ++i) {
-        if (snapshots[i].done) {
-          continue;
-        }
+      for (size_t i : pending_snapshot_indices) {
         reqs.push_back({
             .url = build_snapshot_api_url(cfg_, snapshots[i].user, snapshots[i].page_key),
             .method = "GET",
@@ -1067,30 +1186,29 @@ void SyncThread::fetch_user_snapshots() {
         });
         refs.push_back(i);
       }
-      pa.pending = reqs.size();
-      progress().flush();
-      auto responses = http_batch(reqs, cfg_.http_concurrency, cfg_.proxy_url);
-      pa.pending = 0;
-      progress().flush();
-      for (size_t i = 0; i < responses.size(); ++i) {
+      std::vector<size_t> still_pending;
+      http_batch_each(API::snapshot, reqs, [&](size_t i, const HttpRes &response) {
         SnapshotFetch &snapshot = snapshots[refs[i]];
         std::string detail = "user=" + snapshot.user;
         if (!snapshot.page_key.empty()) {
           detail += " pageKey=" + snapshot.page_key;
         }
-        json data = snapshot_data_with_retry(
-            rt_, detail, snapshot.page_num,
-            build_snapshot_api_url(cfg_, snapshot.user, snapshot.page_key),
-            cfg_.proxy_url, responses[i]);
+        std::optional<json> data = parse_snapshot_response(
+            rt_, detail, snapshot.page_num, snapshot.page_attempt, response);
+        if (!data) {
+          ++snapshot.page_attempt;
+          still_pending.push_back(refs[i]);
+          return;
+        }
 
         uint64_t block_number = static_cast<uint64_t>(
-            std::stoull(json_str_or_int(data.at("validAt").at("blockNumber"))));
+            std::stoull(json_str_or_int(data->at("validAt").at("blockNumber"))));
         // 取所有分页中的最小 block_number，确保 backfill 覆盖分页期间的交易
         if (snapshot.snapshot_block == 0 || block_number < snapshot.snapshot_block) {
           snapshot.snapshot_block = block_number;
         }
 
-        const json &rows = data.at("ownedNfts");
+        const json &rows = data->at("ownedNfts");
         for (const auto &row : rows) {
           std::string token_id = json_str(row, "tokenId");
           std::string balance_raw = json_str_or_int(row.at("balance"));
@@ -1101,16 +1219,19 @@ void SyncThread::fetch_user_snapshots() {
           snapshot.positions[token_id] += balance;
         }
 
-        std::string next_page_key = json_str(data, "pageKey");
+        std::string next_page_key = json_str(*data, "pageKey");
         if (next_page_key.empty()) {
-          snapshot.done = true;
-          ++done_count;
-          pa.done = cached_count + done_count;
-          progress().flush();
-        } else {
-          snapshot.page_key = next_page_key;
-          ++snapshot.page_num;
+          pa.add_data_done();
+          return;
         }
+        snapshot.page_key = next_page_key;
+        ++snapshot.page_num;
+        snapshot.page_attempt = 1;
+        still_pending.push_back(refs[i]);
+      });
+      pending_snapshot_indices = std::move(still_pending);
+      if (!pending_snapshot_indices.empty()) {
+        std::this_thread::sleep_for(std::chrono::seconds(1));
       }
     }
 
@@ -1146,12 +1267,11 @@ void SyncThread::fetch_user_snapshots() {
 
 void SyncThread::fetch_snapshot_balances() {
   auto &pb = progress()[API::stables];
-  pb.total = stale_users_.size() * 4; // 仅 stale_users 需要获取余额
+  size_t cached_user_count = rt_.users.size() - stale_users_.size();
+  pb.set_data(cached_user_count * 4, rt_.users.size() * 4);
   progress().stage("stables");
 
   if (stale_users_.empty()) {
-    pb.done = 0;
-    progress().flush();
     return;
   }
 
@@ -1181,14 +1301,9 @@ void SyncThread::fetch_snapshot_balances() {
     push_call(kWrappedUsdcE, Collateral::WrappedUSDCe);
   }
 
-  pb.pending = reqs.size();
-  progress().flush();
-  json responses = rpc_batch(reqs);
-  pb.pending = 0;
-  progress().flush();
-  for (size_t i = 0; i < refs.size(); ++i) {
-    BigInt balance =
-        bigint_from_hex(responses.at(i).at("result").get<std::string>());
+  rpc_batch_each(API::stables, reqs, [&](size_t i, const json &response) {
+    assert(response.contains("result"));
+    BigInt balance = bigint_from_hex(response.at("result").get<std::string>());
     UserSnapshotState &snapshot = rt_.user_snapshots.at(refs[i].user);
     UserLiveState &live = rt_.user_states.at(refs[i].user);
     switch (refs[i].collateral) {
@@ -1211,9 +1326,8 @@ void SyncThread::fetch_snapshot_balances() {
     case Collateral::Unknown:
       assert(false);
     }
-    pb.done = i + 1;
-    progress().flush();
-  }
+    pb.add_data_done();
+  });
 }
 
 void SyncThread::append_snapshot_roots() {
@@ -1244,27 +1358,17 @@ void SyncThread::append_snapshot_roots() {
 }
 
 std::vector<std::string> SyncThread::collect_active_token_ids() const {
-  std::set<std::string> token_ids;
-  for (const auto &user : rt_.users) {
-    const UserLiveState &live = rt_.user_states.at(user);
-    for (const auto &[token_id, _] : live.positions) {
-      // 过滤掉无效 token_id
-      if (!token_id.empty() && token_id[0] != '-') {
-        token_ids.insert(token_id);
-      }
-    }
-  }
-  return {token_ids.begin(), token_ids.end()};
+  return active_token_ids(rt_);
 }
 
 void SyncThread::fetch_gamma_by_token_ids(const std::vector<std::string> &token_ids) {
-  auto &pc = progress()[API::meta];
+  sync_meta_progress(rt_);
   if (token_ids.empty()) {
     return;
   }
 
   // 过滤掉已 updated 的 condition 对应的 token
-  std::vector<std::string> pending;
+  std::vector<std::string> pending_queries;
   for (const auto &tid : token_ids) {
     auto tok_it = rt_.tokens.find(tid);
     if (tok_it != rt_.tokens.end() && !tok_it->second.cond.empty()) {
@@ -1273,16 +1377,15 @@ void SyncThread::fetch_gamma_by_token_ids(const std::vector<std::string> &token_
         continue; // 跳过已更新
       }
     }
-    pending.push_back(tid);
+    pending_queries.push_back(tid);
   }
 
-  std::vector<std::string> unique = pending;
+  std::vector<std::string> unique = pending_queries;
   std::sort(unique.begin(), unique.end());
   unique.erase(std::unique(unique.begin(), unique.end()), unique.end());
-  pc.total = token_ids.size();
-  pc.done = token_ids.size() - unique.size(); // 已跳过的计入 done
 
   if (unique.empty()) {
+    sync_meta_progress(rt_);
     return;
   }
 
@@ -1301,43 +1404,87 @@ void SyncThread::fetch_gamma_by_token_ids(const std::vector<std::string> &token_
     });
   }
 
-  // 跟踪每个 chunk 的结果
-  std::vector<std::optional<json>> chunk_results(chunks.size());
   std::vector<size_t> pending_chunk_indices;
   for (size_t i = 0; i < chunks.size(); ++i) {
     pending_chunk_indices.push_back(i);
   }
 
   // 并发请求 + 并发重试
-  size_t done_count = 0;
   for (size_t attempt = 1; !pending_chunk_indices.empty(); ++attempt) {
     std::vector<HttpReq> batch_reqs;
-    for (size_t idx : pending_chunk_indices) {
+    std::vector<size_t> batch_chunk_indices = pending_chunk_indices;
+    for (size_t idx : batch_chunk_indices) {
       batch_reqs.push_back(reqs[idx]);
     }
 
-    pc.pending = batch_reqs.size();
-    progress().flush();
-    auto responses = http_batch(batch_reqs, cfg_.http_concurrency, cfg_.proxy_url);
-    pc.pending = 0;
-    progress().flush();
-    assert(responses.size() == pending_chunk_indices.size());
-
     std::vector<size_t> still_pending;
-    for (size_t i = 0; i < responses.size(); ++i) {
-      size_t idx = pending_chunk_indices[i];
-      const auto &resp = responses[i];
+    http_batch_each(API::meta, batch_reqs, [&](size_t i, const HttpRes &resp) {
+      size_t idx = batch_chunk_indices[i];
       ++rt_.counters.gamma;
 
       if (resp.status == 200) {
         json body = safe_parse(resp.body);
         if (body.is_array()) {
-          log_query("gamma", "markets/tokens", attempt, true, "n=" + std::to_string(chunks[idx].size()));
-          chunk_results[idx] = std::move(body);
-          done_count += chunks[idx].size();
-          pc.done = done_count;
-          progress().flush();
-          continue;
+          log_query("gamma", "markets/tokens", attempt, true,
+                    "n=" + std::to_string(chunks[idx].size()));
+          const auto &chunk = chunks[idx];
+          for (const auto &token_id : chunk) {
+            json market = json::object();
+            for (const auto &item : body) {
+              std::string clob_token_ids_str = json_str(item, "clobTokenIds");
+              if (clob_token_ids_str.empty()) {
+                continue;
+              }
+              json clob_token_ids = safe_parse(clob_token_ids_str);
+              if (!clob_token_ids.is_array()) {
+                continue;
+              }
+              for (size_t token_idx = 0; token_idx < clob_token_ids.size(); ++token_idx) {
+                if (clob_token_ids[token_idx].is_string() &&
+                    clob_token_ids[token_idx].get<std::string>() == token_id) {
+                  market = item;
+                  break;
+                }
+              }
+              if (!market.empty()) {
+                break;
+              }
+            }
+
+            if (market.empty()) {
+              if (rt_.tokens[token_id].cond.empty()) {
+                rt_.tokens[token_id].cond = "?";
+              }
+              continue;
+            }
+
+            std::string condition_id = json_str(market, "conditionId");
+            if (condition_id.empty()) {
+              condition_id = json_str(market, "condition_id");
+            }
+            if (condition_id.empty()) {
+              continue;
+            }
+            condition_id = norm_hex(condition_id);
+            rt_.tokens[token_id].cond = condition_id;
+
+            ConditionMeta condition = parse_gamma_market(market);
+            for (const auto &tid : condition.tids) {
+              if (!tid.empty()) {
+                rt_.tokens[tid].cond = condition_id;
+              }
+            }
+            merge_condition(rt_.conditions[condition_id], condition);
+
+            ConditionMeta &merged = rt_.conditions[condition_id];
+            if (merged.coll == 0 && !merged.tids.empty()) {
+              merged.coll =
+                  to_u8(infer_collateral_from_token(condition_id, 0, merged.tids[0]));
+            }
+            apply_resolved_prices(rt_, condition_id);
+          }
+          sync_meta_progress(rt_);
+          return;
         }
         log_query("gamma", "markets/tokens", attempt, false,
                   "n=" + std::to_string(chunks[idx].size()) + " body=" + clip_text(body.dump()));
@@ -1346,84 +1493,17 @@ void SyncThread::fetch_gamma_by_token_ids(const std::vector<std::string> &token_
                   "n=" + std::to_string(chunks[idx].size()) + " status=" + std::to_string(resp.status));
       }
       still_pending.push_back(idx);
-    }
+    });
 
     pending_chunk_indices = std::move(still_pending);
     if (!pending_chunk_indices.empty()) {
       std::this_thread::sleep_for(std::chrono::seconds(1));
     }
   }
-
-  // 处理所有结果
-  for (size_t chunk_idx = 0; chunk_idx < chunks.size(); ++chunk_idx) {
-    const auto &chunk = chunks[chunk_idx];
-    const auto &arr_opt = chunk_results[chunk_idx];
-    json arr = (arr_opt && arr_opt->is_array()) ? *arr_opt : json::array();
-
-    for (const auto &token_id : chunk) {
-      // 在返回的 array 中找到匹配的 market (通过 clobTokenIds 匹配)
-      json market = json::object();
-      for (const auto &item : arr) {
-        std::string clob_token_ids_str = json_str(item, "clobTokenIds");
-        if (clob_token_ids_str.empty())
-          continue;
-        json clob_token_ids = safe_parse(clob_token_ids_str);
-        if (!clob_token_ids.is_array())
-          continue;
-        for (size_t i = 0; i < clob_token_ids.size(); ++i) {
-          if (clob_token_ids[i].is_string() && clob_token_ids[i].get<std::string>() == token_id) {
-            market = item;
-            market["_matched_idx"] = i; // 记录 token 在数组中的位置 (即 idx)
-            break;
-          }
-        }
-        if (!market.empty())
-          break;
-      }
-
-      if (market.empty()) {
-        // Gamma 中找不到此 token,标记 cond="?" 避免重复查询
-        if (rt_.tokens[token_id].cond.empty()) {
-          rt_.tokens[token_id].cond = "?";
-        }
-        continue;
-      }
-
-      // 提取 condition_id
-      std::string condition_id = json_str(market, "conditionId");
-      if (condition_id.empty()) {
-        condition_id = json_str(market, "condition_id");
-      }
-      if (condition_id.empty()) {
-        continue;
-      }
-      condition_id = norm_hex(condition_id);
-
-      // 更新 token → condition 映射
-      rt_.tokens[token_id].cond = condition_id;
-
-      // 解析并合并 condition
-      ConditionMeta condition = parse_gamma_market(market);
-      for (const auto &tid : condition.tids) {
-        if (!tid.empty()) {
-          rt_.tokens[tid].cond = condition_id;
-        }
-      }
-      merge_condition(rt_.conditions[condition_id], condition);
-
-      // 推断 collateral
-      ConditionMeta &merged = rt_.conditions[condition_id];
-      if (merged.coll == 0 && !merged.tids.empty()) {
-        merged.coll = to_u8(infer_collateral_from_token(condition_id, 0, merged.tids[0]));
-      }
-
-      apply_resolved_prices(rt_, condition_id);
-    }
-  }
 }
 
 void SyncThread::refresh_prices(const std::vector<std::string> &token_ids) {
-  auto &pc = progress()[API::prices];
+  sync_price_progress(rt_, cfg_);
   if (token_ids.empty()) {
     return;
   }
@@ -1459,10 +1539,9 @@ void SyncThread::refresh_prices(const std::vector<std::string> &token_ids) {
   std::vector<std::string> unique = stale;
   std::sort(unique.begin(), unique.end());
   unique.erase(std::unique(unique.begin(), unique.end()), unique.end());
-  pc.total = token_ids.size();
-  pc.done = token_ids.size() - unique.size();
 
   if (unique.empty()) {
+    sync_price_progress(rt_, cfg_);
     return;
   }
 
@@ -1482,30 +1561,21 @@ void SyncThread::refresh_prices(const std::vector<std::string> &token_ids) {
     });
   }
 
-  std::vector<std::optional<json>> chunk_results(chunks.size());
   std::vector<size_t> pending_indices;
   for (size_t i = 0; i < chunks.size(); ++i) {
     pending_indices.push_back(i);
   }
 
-  size_t done_count = pc.done;
   for (size_t attempt = 1; !pending_indices.empty(); ++attempt) {
     std::vector<HttpReq> batch_reqs;
-    for (size_t idx : pending_indices) {
+    std::vector<size_t> batch_indices = pending_indices;
+    for (size_t idx : batch_indices) {
       batch_reqs.push_back(reqs[idx]);
     }
 
-    pc.pending = batch_reqs.size();
-    progress().flush();
-    auto responses = http_batch(batch_reqs, cfg_.http_concurrency, cfg_.proxy_url);
-    pc.pending = 0;
-    progress().flush();
-    assert(responses.size() == pending_indices.size());
-
     std::vector<size_t> still_pending;
-    for (size_t i = 0; i < responses.size(); ++i) {
-      size_t idx = pending_indices[i];
-      const auto &resp = responses[i];
+    http_batch_each(API::prices, batch_reqs, [&](size_t i, const HttpRes &resp) {
+      size_t idx = batch_indices[i];
       ++rt_.counters.clob;
 
       if (resp.status == 200) {
@@ -1513,11 +1583,43 @@ void SyncThread::refresh_prices(const std::vector<std::string> &token_ids) {
         if (body.is_object() && !body.contains("error")) {
           log_query("clob", "prices", attempt, true,
                     "n=" + std::to_string(chunks[idx].size()));
-          chunk_results[idx] = std::move(body);
-          done_count += chunks[idx].size();
-          pc.done = done_count;
-          progress().flush();
-          continue;
+          int64_t ts = now_unix_sec();
+          for (const auto &tid : chunks[idx]) {
+            auto tok_it = rt_.tokens.find(tid);
+            if (tok_it == rt_.tokens.end()) {
+              continue;
+            }
+            auto cond_it = rt_.conditions.find(tok_it->second.cond);
+            if (cond_it == rt_.conditions.end()) {
+              continue;
+            }
+            const auto &tids = cond_it->second.tids;
+            size_t token_idx = std::find(tids.begin(), tids.end(), tid) - tids.begin();
+            if (token_idx >= tids.size()) {
+              continue;
+            }
+            ConditionMeta &cond = cond_it->second;
+            if (cond.prices.size() <= token_idx) {
+              cond.prices.resize(token_idx + 1, -1);
+              cond.price_ts.resize(token_idx + 1, 0);
+            }
+            // 先标记已查询（即使CLOB不返回价格，也标记ts表示已尝试）
+            cond.price_ts[token_idx] = ts;
+
+            if (!body.contains(tid)) {
+              continue; // CLOB不返回此token，prices保持-1，但ts已更新
+            }
+            const json &price_obj = body.at(tid);
+            if (!price_obj.is_object() || !price_obj.contains("BUY")) {
+              continue;
+            }
+            std::string price_str = price_obj.at("BUY").get<std::string>();
+            double price = std::stod(price_str);
+            int64_t price_scaled = static_cast<int64_t>(price * 1e6);
+            cond.prices[token_idx] = price_scaled;
+          }
+          sync_price_progress(rt_, cfg_);
+          return;
         }
         log_query("clob", "prices", attempt, false,
                   "n=" + std::to_string(chunks[idx].size()) +
@@ -1528,76 +1630,32 @@ void SyncThread::refresh_prices(const std::vector<std::string> &token_ids) {
                       " status=" + std::to_string(resp.status));
       }
       still_pending.push_back(idx);
-    }
+    });
 
     pending_indices = std::move(still_pending);
     if (!pending_indices.empty()) {
       std::this_thread::sleep_for(std::chrono::seconds(1));
     }
   }
-
-  // 处理结果: {"tid1":{"BUY":"0.45"},...}
-  int64_t ts = now_unix_sec();
-  for (size_t chunk_idx = 0; chunk_idx < chunks.size(); ++chunk_idx) {
-    const auto &result_opt = chunk_results[chunk_idx];
-    if (!result_opt || !result_opt->is_object()) {
-      continue;
-    }
-    const json &result = *result_opt;
-
-    for (const auto &tid : chunks[chunk_idx]) {
-      if (!result.contains(tid)) {
-        continue;
-      }
-      const json &price_obj = result.at(tid);
-      if (!price_obj.is_object() || !price_obj.contains("BUY")) {
-        continue;
-      }
-      std::string price_str = price_obj.at("BUY").get<std::string>();
-      double price = std::stod(price_str);
-      int64_t price_scaled = static_cast<int64_t>(price * 1e6);
-
-      // 更新 condition.prices[idx]
-      auto tok_it = rt_.tokens.find(tid);
-      if (tok_it == rt_.tokens.end()) {
-        continue;
-      }
-      auto cond_it = rt_.conditions.find(tok_it->second.cond);
-      if (cond_it == rt_.conditions.end()) {
-        continue;
-      }
-      const auto &tids = cond_it->second.tids;
-      size_t idx = std::find(tids.begin(), tids.end(), tid) - tids.begin();
-      if (idx >= tids.size()) {
-        continue;
-      }
-      ConditionMeta &cond = cond_it->second;
-      if (cond.prices.size() <= idx) {
-        cond.prices.resize(idx + 1, -1);
-        cond.price_ts.resize(idx + 1, 0);
-      }
-      cond.prices[idx] = price_scaled;
-      cond.price_ts[idx] = ts;
-    }
-  }
 }
 
 void SyncThread::fetch_gamma_by_condition_ids(const std::vector<std::string> &condition_ids) {
+  sync_meta_progress(rt_);
   if (condition_ids.empty()) {
     return;
   }
 
   // 过滤掉已 updated 的 condition
-  std::vector<std::string> pending;
+  std::vector<std::string> pending_queries;
   for (const auto &cid : condition_ids) {
     auto it = rt_.conditions.find(cid);
     if (it != rt_.conditions.end() && it->second.updated) {
       continue;
     }
-    pending.push_back(cid);
+    pending_queries.push_back(cid);
   }
 
-  std::vector<std::string> unique = pending;
+  std::vector<std::string> unique = pending_queries;
   std::sort(unique.begin(), unique.end());
   unique.erase(std::unique(unique.begin(), unique.end()), unique.end());
 
@@ -1620,7 +1678,6 @@ void SyncThread::fetch_gamma_by_condition_ids(const std::vector<std::string> &co
     });
   }
 
-  std::vector<std::optional<json>> chunk_results(chunks.size());
   std::vector<size_t> pending_chunk_indices;
   for (size_t i = 0; i < chunks.size(); ++i) {
     pending_chunk_indices.push_back(i);
@@ -1628,25 +1685,56 @@ void SyncThread::fetch_gamma_by_condition_ids(const std::vector<std::string> &co
 
   for (size_t attempt = 1; !pending_chunk_indices.empty(); ++attempt) {
     std::vector<HttpReq> batch_reqs;
-    for (size_t idx : pending_chunk_indices) {
+    std::vector<size_t> batch_chunk_indices = pending_chunk_indices;
+    for (size_t idx : batch_chunk_indices) {
       batch_reqs.push_back(reqs[idx]);
     }
 
-    auto responses = http_batch(batch_reqs, cfg_.http_concurrency, cfg_.proxy_url);
-    assert(responses.size() == pending_chunk_indices.size());
-
     std::vector<size_t> still_pending;
-    for (size_t i = 0; i < responses.size(); ++i) {
-      size_t idx = pending_chunk_indices[i];
-      const auto &resp = responses[i];
+    http_batch_each(API::meta, batch_reqs, [&](size_t i, const HttpRes &resp) {
+      size_t idx = batch_chunk_indices[i];
       ++rt_.counters.gamma;
 
       if (resp.status == 200) {
         json body = safe_parse(resp.body);
         if (body.is_array()) {
-          log_query("gamma", "markets/conds", attempt, true, "n=" + std::to_string(chunks[idx].size()));
-          chunk_results[idx] = std::move(body);
-          continue;
+          log_query("gamma", "markets/conds", attempt, true,
+                    "n=" + std::to_string(chunks[idx].size()));
+          const auto &chunk = chunks[idx];
+          for (const auto &condition_id : chunk) {
+            json market = json::object();
+            for (const auto &item : body) {
+              std::string current = item.contains("conditionId")
+                                        ? json_str(item, "conditionId")
+                                        : json_str(item, "condition_id");
+              if (!current.empty() &&
+                  norm_hex(current) == norm_hex(condition_id)) {
+                market = item;
+                break;
+              }
+            }
+
+            if (market.empty()) {
+              continue;
+            }
+
+            ConditionMeta condition = parse_gamma_market(market);
+            for (const auto &tid : condition.tids) {
+              if (!tid.empty()) {
+                rt_.tokens[tid].cond = condition_id;
+              }
+            }
+            merge_condition(rt_.conditions[condition_id], condition);
+
+            ConditionMeta &merged = rt_.conditions[condition_id];
+            if (merged.coll == 0 && !merged.tids.empty()) {
+              merged.coll =
+                  to_u8(infer_collateral_from_token(condition_id, 0, merged.tids[0]));
+            }
+            apply_resolved_prices(rt_, condition_id);
+          }
+          sync_meta_progress(rt_);
+          return;
         }
         log_query("gamma", "markets/conds", attempt, false,
                   "n=" + std::to_string(chunks[idx].size()) + " body=" + clip_text(body.dump()));
@@ -1655,51 +1743,11 @@ void SyncThread::fetch_gamma_by_condition_ids(const std::vector<std::string> &co
                   "n=" + std::to_string(chunks[idx].size()) + " status=" + std::to_string(resp.status));
       }
       still_pending.push_back(idx);
-    }
+    });
 
     pending_chunk_indices = std::move(still_pending);
     if (!pending_chunk_indices.empty()) {
       std::this_thread::sleep_for(std::chrono::seconds(1));
-    }
-  }
-
-  // 处理所有结果
-  for (size_t chunk_idx = 0; chunk_idx < chunks.size(); ++chunk_idx) {
-    const auto &chunk = chunks[chunk_idx];
-    const auto &arr_opt = chunk_results[chunk_idx];
-    json arr = (arr_opt && arr_opt->is_array()) ? *arr_opt : json::array();
-
-    for (const auto &condition_id : chunk) {
-      json market = json::object();
-      for (const auto &item : arr) {
-        std::string current = item.contains("conditionId")
-                                  ? json_str(item, "conditionId")
-                                  : json_str(item, "condition_id");
-        if (!current.empty() && norm_hex(current) == norm_hex(condition_id)) {
-          market = item;
-          break;
-        }
-      }
-
-      if (market.empty()) {
-        continue;
-      }
-
-      // 解析并合并 condition
-      ConditionMeta condition = parse_gamma_market(market);
-      for (const auto &tid : condition.tids) {
-        if (!tid.empty()) {
-          rt_.tokens[tid].cond = condition_id;
-        }
-      }
-      merge_condition(rt_.conditions[condition_id], condition);
-
-      // 推断 collateral
-      ConditionMeta &merged = rt_.conditions[condition_id];
-      if (merged.coll == 0 && !merged.tids.empty()) {
-        merged.coll = to_u8(infer_collateral_from_token(condition_id, 0, merged.tids[0]));
-      }
-      apply_resolved_prices(rt_, condition_id);
     }
   }
 }
@@ -1717,28 +1765,36 @@ void SyncThread::fetch_gamma_market_questions(const std::string &market_id) {
   std::string url1 = std::string(kGammaApiBase) + "/markets?question_ids=" + strip_0x(first_question_id);
   std::string slug;
   for (size_t attempt = 1;; ++attempt) {
-    HttpRes resp = http_get(url1, cfg_.proxy_url);
-    ++rt_.counters.gamma;
-    if (resp.status == 200) {
-      json body = safe_parse(resp.body);
-      if (body.is_array() && !body.empty()) {
-        json events = body[0].contains("events") && body[0].at("events").is_array()
-                          ? body[0].at("events")
-                          : json::array();
-        json event0 = events.empty() ? json::object() : events.front();
-        slug = json_str(event0, "slug");
-        if (slug.empty()) {
-          slug = json_str(body[0], "slug");
+    bool ok = false;
+    http_batch_each(API::meta, {{url1, "GET", ""}}, [&](size_t, const HttpRes &resp) {
+      ++rt_.counters.gamma;
+      if (resp.status == 200) {
+        json body = safe_parse(resp.body);
+        if (body.is_array() && !body.empty()) {
+          json events = body[0].contains("events") && body[0].at("events").is_array()
+                            ? body[0].at("events")
+                            : json::array();
+          json event0 = events.empty() ? json::object() : events.front();
+          slug = json_str(event0, "slug");
+          if (slug.empty()) {
+            slug = json_str(body[0], "slug");
+          }
+          if (!slug.empty()) {
+            log_query("gamma", "markets/qid", attempt, true,
+                      "market_id=" + market_id);
+            ok = true;
+            return;
+          }
         }
-        if (!slug.empty()) {
-          log_query("gamma", "markets/qid", attempt, true, "market_id=" + market_id);
-          break;
-        }
+        log_query("gamma", "markets/qid", attempt, false,
+                  "market_id=" + market_id + " no_slug");
+        return;
       }
-      log_query("gamma", "markets/qid", attempt, false, "market_id=" + market_id + " no_slug");
-    } else {
       log_query("gamma", "markets/qid", attempt, false,
                 "market_id=" + market_id + " status=" + std::to_string(resp.status));
+    });
+    if (ok) {
+      break;
     }
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
@@ -1747,19 +1803,26 @@ void SyncThread::fetch_gamma_market_questions(const std::string &market_id) {
   std::string url2 = std::string(kGammaApiBase) + "/events?slug=" + slug;
   json event_data;
   for (size_t attempt = 1;; ++attempt) {
-    HttpRes resp = http_get(url2, cfg_.proxy_url);
-    ++rt_.counters.gamma;
-    if (resp.status == 200) {
-      json body = safe_parse(resp.body);
-      if (body.is_array() && !body.empty()) {
-        event_data = body[0];
-        log_query("gamma", "events/slug", attempt, true, "slug=" + slug);
-        break;
+    bool ok = false;
+    http_batch_each(API::meta, {{url2, "GET", ""}}, [&](size_t, const HttpRes &resp) {
+      ++rt_.counters.gamma;
+      if (resp.status == 200) {
+        json body = safe_parse(resp.body);
+        if (body.is_array() && !body.empty()) {
+          event_data = body[0];
+          log_query("gamma", "events/slug", attempt, true, "slug=" + slug);
+          ok = true;
+          return;
+        }
+        log_query("gamma", "events/slug", attempt, false,
+                  "slug=" + slug + " empty");
+        return;
       }
-      log_query("gamma", "events/slug", attempt, false, "slug=" + slug + " empty");
-    } else {
       log_query("gamma", "events/slug", attempt, false,
                 "slug=" + slug + " status=" + std::to_string(resp.status));
+    });
+    if (ok) {
+      break;
     }
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
@@ -1791,6 +1854,7 @@ void SyncThread::fetch_gamma_market_questions(const std::string &market_id) {
   }
 
   merge_market(rt_.markets[market_id], market);
+  sync_meta_progress(rt_);
 }
 
 bool SyncThread::ensure_token_meta(const std::string &token_id) {
@@ -1853,7 +1917,7 @@ void SyncThread::backfill_range(uint64_t from_block, uint64_t to_block) {
     return;
   }
   auto &pe = progress()[API::backfill];
-  pe.total = to_block - from_block + 1;
+  pe.set_data(0, to_block - from_block + 1);
   progress().stage("backfill");
 
   uint64_t start = from_block;
@@ -1867,38 +1931,32 @@ void SyncThread::backfill_range(uint64_t from_block, uint64_t to_block) {
           {"params", json::array({filter})},
       });
     }
-    pe.pending = reqs.size();
-    progress().flush();
-    json responses = rpc_batch(reqs);
-    pe.pending = 0;
-    progress().flush();
     std::map<uint64_t, std::map<std::string, json>> blocks;
-    for (const auto &response : responses) {
+    rpc_batch_each(API::backfill, reqs, [&](size_t, const json &response) {
       assert(response.contains("result") && response.at("result").is_array());
       for (const auto &log : response.at("result")) {
         blocks[hex_to_u64(log.at("blockNumber").get<std::string>())]
               [raw_log_key(log)] = log;
       }
-    }
+    });
 
-    for (auto &[block_number, deduped] : blocks) {
-      std::vector<json> logs;
-      for (auto &[_, log] : deduped) {
-        logs.push_back(std::move(log));
+    for (uint64_t block_number = start; block_number <= end; ++block_number) {
+      auto block_it = blocks.find(block_number);
+      if (block_it != blocks.end()) {
+        std::vector<json> logs;
+        for (auto &[_, log] : block_it->second) {
+          logs.push_back(std::move(log));
+        }
+        std::sort(logs.begin(), logs.end(), [](const json &a, const json &b) {
+          return raw_log_sort_key(a) < raw_log_sort_key(b);
+        });
+        apply_block_logs(logs, "backfill");
       }
-      std::sort(logs.begin(), logs.end(), [](const json &a, const json &b) {
-        return raw_log_sort_key(a) < raw_log_sort_key(b);
-      });
-      apply_block_logs(logs, "backfill");
       rt_.last_applied_block = std::max(rt_.last_applied_block, block_number);
       rt_.head_block = std::max(rt_.head_block, block_number);
+      pe.add_data_done();
     }
 
-    rt_.last_applied_block = std::max(rt_.last_applied_block, end);
-    rt_.head_block = std::max(rt_.head_block, end);
-    pe.done = end - from_block + 1;
-    persist_history(); // 每批完成,立即落地 H
-    progress().flush();
     start = end + 1;
   }
 }
@@ -1995,6 +2053,7 @@ void SyncThread::apply_block_logs(const std::vector<json> &logs, const std::stri
     dirty_users_.insert(holders.begin(), holders.end());
   }
   refresh_users(dirty_users_);
+  sync_live_progress(rt_, cfg_);
 }
 
 void SyncThread::apply_condition_resolution(const json &log) {
@@ -2291,74 +2350,48 @@ BigInt SyncThread::query_balance_at_block(const std::string &user,
       {{"to", kConditionalTokens}, {"data", data}},
       u64_to_hex(block_number),
   });
-  json result = rpc_call("eth_call", params);
+  json result = rpc_call(API::snapshot, "eth_call", params);
   if (!result.is_string() || result.get<std::string>().size() < 3) {
     return 0;
   }
   return extract_u256(result.get<std::string>(), 0);
 }
 
-uint64_t SyncThread::rpc_block_number() {
-  json result = rpc_call("eth_blockNumber", json::array());
+uint64_t SyncThread::rpc_block_number(API api) {
+  json result = rpc_call(api, "eth_blockNumber", json::array());
   return hex_to_u64(result.get<std::string>());
 }
 
-json SyncThread::rpc_call(const std::string &method, const json &params) {
+json SyncThread::rpc_call(API api, const std::string &method, const json &params) {
   json payload = {
       {"jsonrpc", "2.0"},
       {"id", 1},
       {"method", method},
       {"params", params},
   };
+  ProgressState &state = progress()[api];
   for (size_t attempt = 1;; ++attempt) {
+    state.start_query();
     HttpRes response = http_post(cfg_.rpc_http_url, payload, cfg_.proxy_url);
     ++rt_.counters.rpc_http;
     if (response.status != 200) {
       log_query("rpc", method, attempt, false,
                 "status=" + std::to_string(response.status));
+      state.finish_query();
       std::this_thread::sleep_for(std::chrono::seconds(1));
       continue;
     }
     json body = safe_parse(response.body);
     if (body.contains("result")) {
       log_query("rpc", method, attempt, true);
-      return body.at("result");
+      json result = body.at("result");
+      state.finish_query();
+      return result;
     }
-    log_query("rpc", method, attempt, false, "body=" + clip_text(body.dump()));
+    log_query("rpc", method, attempt, false,
+              "body=" + clip_text(body.dump()));
+    state.finish_query();
     std::this_thread::sleep_for(std::chrono::seconds(1));
-  }
-}
-
-json SyncThread::rpc_batch(const std::vector<json> &reqs) {
-  json payload = json::array();
-  int id = 1;
-  for (const auto &req : reqs) {
-    json item = req;
-    item["jsonrpc"] = "2.0";
-    item["id"] = id++;
-    payload.push_back(std::move(item));
-  }
-  for (size_t attempt = 1;; ++attempt) {
-    HttpRes response = http_post(cfg_.rpc_http_url, payload, cfg_.proxy_url);
-    rt_.counters.rpc_http += reqs.size();
-    if (response.status != 200) {
-      log_query("rpc", "batch", attempt, false,
-                "status=" + std::to_string(response.status));
-      std::this_thread::sleep_for(std::chrono::seconds(1));
-      continue;
-    }
-    json body = safe_parse(response.body);
-    if (!body.is_array()) {
-      log_query("rpc", "batch", attempt, false, "body=" + clip_text(body.dump()));
-      std::this_thread::sleep_for(std::chrono::seconds(1));
-      continue;
-    }
-    std::sort(body.begin(), body.end(), [](const json &a, const json &b) {
-      return a.at("id").get<int>() < b.at("id").get<int>();
-    });
-    log_query("rpc", "batch", attempt, true,
-              "size=" + std::to_string(reqs.size()));
-    return body;
   }
 }
 

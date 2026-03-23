@@ -22,7 +22,7 @@
 │  │   newHeads/logs   │  │ - drain 队列      │  │ - /api/history    │        │
 │  │ - 解析后入队列    │  │ - apply_logs()    │  │ - /api/resync     │        │
 │  │ - 断线自动重连    │  │ - 维护有效表      │  │                   │        │
-│  │                   │  │ - persist S/H/M   │  │                   │        │
+│  │                   │  │ - persist S/M     │  │                   │        │
 │  │                   │  │ - 发布 state_ptr  │  │ 读 state_ptr 响应 │        │
 │  └─────────┬─────────┘  └─────────┬─────────┘  └─────────┬─────────┘        │
 │            │                      │                      │                  │
@@ -133,26 +133,24 @@ Log设计(文件)
 ======================
 目录结构:
   data/
-    snapshot.json   - 用户持仓快照 (历史记录)
-    history.json    - 交易记录 (历史记录)
+    snapshot.json   - 用户持仓快照 (仅保留最新一份)
     meta.json       - token/condition元数据
     sync.log        - 同步日志
 
-注: aggregate/user_views/token_holders 纯内存维护,不落盘,重启时从 snapshot + backfill 重建
+注: aggregate/user_views/token_holders/history 纯内存维护,不落盘,重启时从 snapshot + backfill 重建
 ======================
 整体流程
 ======================
 ```
 文件落地时机:
-  S = snapshot.json (用户持仓快照)
-  H = history.json (交易记录)
+  S = snapshot.json (用户持仓快照,每次 resync 清空后仅保留最新)
   M = meta.json (token/condition元数据)
-  (aggregate/user_views/token_holders 纯内存,不落盘)
+  (aggregate/user_views/token_holders/history 纯内存,不落盘)
 
 SyncThread.run()
 ├─ 初始化
 │  ├─ load_seed() → tokens/conditions 初始映射
-│  └─ load_files() → snapshot_root/history_root/meta 从磁盘恢复
+│  └─ load_files() → snapshot_root/meta 从磁盘恢复
 │     └─ 注: 不读取任何进度文件, head_block/last_applied_block 由 full_resync 重算
 ├─ 主循环
 │  ├─ full_resync() (初始触发/每3600s定时触发/手动UI触发)
@@ -169,7 +167,7 @@ SyncThread.run()
 │  │  │  ├─ 注: snapshot_block 取第一页 validAt.blockNumber, 后续分页默认视为同一份持仓列表的延续(假设)
 │  │  │  ├─ 注: Alchemy 分页可能不一致 (不同页返回不同 block 的数据), 导致 snapshot 数据错误
 │  │  │  │  └─ 修正: commit_events 检测到 negative position 时, 从链上查询真实 balance 并修正
-│  │  │  └─ 落地: → S (snapshot.json) -- 仅有更新时落地
+│  │  │  └─ 落地: → S (snapshot.json)
 │  │  ├─ [b] fetch_snapshot_balances (并发 RPC, 仅 stale_users)
 │  │  │  ├─ API: RPC.eth_call balanceOf(user, USDC/USDCe/USDT/Wrapped)
 │  │  │  ├─ 输出: user_states[user].stable = {usdc, usdc_e, usdt, wrapped}
@@ -205,7 +203,6 @@ SyncThread.run()
 │  │  │  ├─ 注: cached_users 的 backfill 范围通常更大 (snapshot 较旧)
 │  │  │  ├─ API: RPC.eth_getLogs({users}, merged filters)
 │  │  │  ├─ 处理: 先按 raw_log_key 合并去重, 再 apply_block_logs(logs)
-│  │  │  ├─ 落地: → H (history.json) per batch, 按 event_id 幂等写入
 │  │  │  └─ 完成后: backfill_done_block = head_block
 │  │  ├─ 去重处理 (多 filter / 多 user / backfill 与 ws 重叠)
 │  │  │  ├─ 遍历 ws 暂存队列中 block <= backfill_done_block 的事件
@@ -224,12 +221,11 @@ SyncThread.run()
 │  │     │  ├─ 移除该用户旧 aggregate 贡献
 │  │     │  ├─ 重算该用户 user_view / visible_tokens
 │  │     │  └─ 回灌 aggregate_tokens
-│  │     └─ 落地: → H 增量, M 仅在元数据补齐时更新
+│  │     └─ 落地: M 仅在元数据补齐时更新
 │  └─ sleep(100ms)  // 主循环空闲轮询间隔
 └─ 落地汇总
-   ├─ S (snapshot.json): [a'] 完成后 (仅 stale_users 更新时)
-   ├─ M (meta.json): [c] 完成后 + [d] 完成后 + 增量映射补齐时 (via Gamma)
-   └─ H (history.json): [g] 每批 + ws 增量, 按 event_id 幂等
+   ├─ S (snapshot.json): [a'] 完成后 (resync 开始时清空旧数据)
+   └─ M (meta.json): [c] 完成后 + [d] 完成后 + 增量映射补齐时 (via Gamma)
 ```
 
 ======================
@@ -287,7 +283,7 @@ apply_block_logs(logs)
 │  ├─ condition_id 未知 → Gamma /markets?condition_ids=
 │  └─ market_id 未知 → Gamma /markets?question_ids= + /events?slug=
 └─ 输出
-   ├─ history_root[user][block_key].push(event) 增量
+   ├─ history_root[user][block_key].push(event) 内存增量 (不落盘)
    ├─ user_states[user].positions 实时更新
    ├─ token_holders[token] 增量维护
    ├─ dirty_users → refresh_users() → user_views + aggregate_tokens 增量更新
@@ -317,11 +313,10 @@ apply_block_logs(logs)
   }
 }
 
---- history.json ---
-存储统一格式的历史交易记录
-来源可能是 websocket 实时日志,也可能是启动/重连时通过 RPC 补齐的 gap 日志；落地时不做来源区分
+--- history (内存) ---
+存储统一格式的历史交易记录 (内存维护,不落盘,resync 时清空重建)
+来源可能是 websocket 实时日志,也可能是启动/重连时通过 RPC 补齐的 gap 日志
 只parse 买入,卖出,铸造,合并,赎回,转换, 忽略池操作/转账
-只落地统一格式的用户仓位事件
 TransferSingle/TransferBatch 不作为独立事件类型暴露,但会参与 order / split / merge / redeem / convert 的语义展开与闭环校验
 忽略池操作和不影响用户仓位的非目标腿
 

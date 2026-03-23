@@ -21,19 +21,19 @@
 
     <section class="top-grid">
       <section class="panel users-panel">
-        <div class="panel-title">A. 用户列表</div>
+        <div class="panel-title">用户列表</div>
         <div id="users-list" class="list-scroll"></div>
       </section>
 
       <section class="panel trades-panel">
-        <div class="panel-title">B. 交易记录</div>
+        <div class="panel-title">交易记录</div>
         <div id="trade-list" class="list-scroll"></div>
       </section>
     </section>
 
     <section class="bottom-grid">
       <section class="panel controls-panel">
-        <div class="panel-title">C. 视图选择</div>
+        <div class="panel-title">视图选择</div>
         <div class="controls-row">
           <label>
             模式
@@ -55,18 +55,22 @@
       </section>
 
       <section class="panel queries-panel">
-        <div class="panel-title">E. API Progress</div>
+        <div class="panel-title">API Progress</div>
         <div id="query-counts"></div>
       </section>
 
       <section class="panel holdings-panel">
-        <div class="panel-title">D. 持仓展示</div>
+        <div class="panel-title">持仓展示</div>
         <div class="holdings-summary" id="holdings-summary"></div>
         <div id="holdings-list" class="holdings-list"></div>
       </section>
     </section>
   </div>
 
-  <script src="./app.js"></script>
+  <script>
+    const appScript = document.createElement("script");
+    appScript.src = `./app.js?v=${Date.now()}`;
+    document.body.appendChild(appScript);
+  </script>
 </body>
 </html>

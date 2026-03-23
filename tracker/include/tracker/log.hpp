@@ -111,14 +111,14 @@ inline void log_query(const std::string &channel,
 // ProgressBoard - API进度状态 (供UI前端轮询)
 // ============================================================================
 // 终端显示格式 (按 full_resync 流程顺序):
-//   API       done/total  [pend]   说明
-//   snapshot  5/10        [3]      [a] AlchemyNFT.getNFTsForOwner (done=完成用户数, total=用户数)
-//   stables   40/40       [0]      [b] RPC.eth_call           (done=完成查询数, total=用户数*4)
-//   meta      50/100      [5]      [c] Gamma.markets          (done=完成token数, total=token数)
-//   prices    80/100      [5]      [d] CLOB.prices            (done=完成token数, total=token数)
-//   ws_sub    10/10       [0]      [e] ws.eth_subscribe       (done=订阅用户数, total=用户数)
-//   head      1/1         [0]      [f] RPC.eth_blockNumber    (done=1表示完成)
-//   backfill  500/1000    [10]     [g] RPC.eth_getLogs        (done=已处理区块数, total=区块范围)
+//   API       done/total  [pend]   累计 说明
+//   snapshot  5/10        [3]      12   AlchemyNFT.getNFTsForOwner (done=完成用户数, total=用户数)
+//   stables   40/40       [0]      44   RPC.eth_call           (done=完成查询数, total=用户数*4)
+//   meta      50/100      [5]      7    Gamma.markets          (done=完成token数, total=token数)
+//   prices    80/100      [5]      9    CLOB.prices            (done=完成token数, total=token数)
+//   ws_sub    10/10       [0]      8    ws.eth_subscribe       (done=订阅用户数, total=用户数)
+//   head      1/1         [0]      1    RPC.eth_blockNumber    (done=1表示完成)
+//   backfill  500/1000    [10]     32   RPC.eth_getLogs        (done=已处理区块数, total=区块范围)
 //   [current_stage]
 
 enum class API { snapshot, // [a] 用户持仓快照
@@ -130,10 +130,61 @@ enum class API { snapshot, // [a] 用户持仓快照
                  backfill, // [g] 历史补齐
                  COUNT };
 
-struct ProgressState {
+struct ProgressDataState {
   std::atomic<size_t> done{0};
   std::atomic<size_t> total{0};
+};
+
+struct ProgressQueryState {
   std::atomic<size_t> pending{0};
+  std::atomic<size_t> total{0};
+};
+
+struct ProgressState {
+  ProgressDataState data;
+  ProgressQueryState query;
+
+  void reset() {
+    data.done = 0;
+    data.total = 0;
+    query.pending = 0;
+    query.total = 0;
+  }
+
+  void set_data(size_t done, size_t total) {
+    assert(done <= total);
+    size_t current_done = data.done.load();
+    if (done <= current_done) {
+      data.done = done;
+      data.total = total;
+      return;
+    }
+    data.total = total;
+    data.done = done;
+  }
+
+  void set_data_done(size_t done) {
+    assert(done <= data.total.load());
+    data.done = done;
+  }
+
+  void add_data_done(size_t delta = 1) {
+    assert(delta > 0);
+    size_t prev = data.done.fetch_add(delta);
+    assert(prev + delta <= data.total.load());
+  }
+
+  void start_query(size_t count = 1) {
+    assert(count > 0);
+    query.pending.fetch_add(count);
+  }
+
+  void finish_query(size_t count = 1) {
+    assert(count > 0);
+    size_t prev = query.pending.fetch_sub(count);
+    assert(prev >= count);
+    query.total.fetch_add(count);
+  }
 };
 
 struct ProgressBoard {
@@ -146,13 +197,12 @@ struct ProgressBoard {
   bool inited = false;
 
   ProgressState &operator[](API api) { return apis[static_cast<size_t>(api)]; }
+  const ProgressState &operator[](API api) const { return apis[static_cast<size_t>(api)]; }
 
   void init() {
     std::lock_guard<std::mutex> lock(print_mu);
     for (auto &api : apis) {
-      api.done = 0;
-      api.total = 0;
-      api.pending = 0;
+      api.reset();
     }
     current_stage = "init";
     inited = true;
@@ -161,10 +211,6 @@ struct ProgressBoard {
   void stage(const std::string &name) {
     std::lock_guard<std::mutex> lock(print_mu);
     current_stage = name;
-  }
-
-  void flush() {
-    // no-op: UI前端自行轮询
   }
 
   void finish() {

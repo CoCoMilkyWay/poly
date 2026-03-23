@@ -29,6 +29,40 @@ namespace ssl = asio::ssl;
 namespace websocket = beast::websocket;
 using tcp = asio::ip::tcp;
 
+struct WsQueryGuard {
+  explicit WsQueryGuard(std::atomic<uint64_t> &counter)
+      : state(progress()[API::ws_sub]), counter(counter) {
+    state.start_query();
+  }
+
+  void finish() {
+    if (done) {
+      return;
+    }
+    done = true;
+    state.finish_query();
+    ++counter;
+  }
+
+  ~WsQueryGuard() {
+    if (!done) {
+      finish();
+    }
+  }
+
+  ProgressState &state;
+  std::atomic<uint64_t> &counter;
+  bool done = false;
+};
+
+template <typename Fn>
+auto run_ws_query(std::atomic<uint64_t> &counter, Fn &&fn) {
+  WsQueryGuard guard(counter);
+  auto result = fn();
+  guard.finish();
+  return result;
+}
+
 class WsStream {
 public:
   WsStream(const std::string &url, const std::string &proxy_url)
@@ -254,12 +288,14 @@ void WsThread::run() {
         log_query("ws", "connect", connect_attempt, true, "url=" + cfg_.rpc_ws_url);
         connect_attempt = 0;
 
-        std::string head_sub = ws.subscribe_heads();
+        std::string head_sub =
+            run_ws_query(ws_sub_count_, [&] { return ws.subscribe_heads(); });
         std::set<std::string> log_subs;
         for (const auto &filter : build_user_log_filters(users, cfg_.topic_group_size)) {
-          log_subs.insert(ws.subscribe_logs(filter));
+          log_subs.insert(
+              run_ws_query(ws_sub_count_, [&] { return ws.subscribe_logs(filter); }));
         }
-        ws_sub_count_ += 1 + log_subs.size();
+        progress()[API::ws_sub].set_data_done(users.size());
 
         bool ready = false;
         std::map<uint64_t, std::map<std::string, json>> pending_by_block;

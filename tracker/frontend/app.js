@@ -210,13 +210,13 @@ function renderUserList() {
     return `
       <div class="user-row ${activeClass}" data-user="${row.user}">
         <div class="user-row-head">
-          <div class="mono">${shortAddr(row.user)}</div>
-          <div>${fmtNumber(row.total_value_usd)} USD</div>
+          <span class="mono">${shortAddr(row.user)}</span>
         </div>
         <div class="metric-pair">
-          <span>snapshot ${row.snapshot_block || 0}</span>
-          <span>token ${fmtNumber(row.token_value_usd || 0)}</span>
-          <span>stable ${fmtNumber(row.stable_value_usd || 0)}</span>
+          <span>${fmtNumber(row.total_value_usd)} USD</span>
+          <span>blk ${row.snapshot_block || 0}</span>
+          <span>tkn ${fmtNumber(row.token_value_usd || 0)}</span>
+          <span>stb ${fmtNumber(row.stable_value_usd || 0)}</span>
         </div>
       </div>
     `;
@@ -254,23 +254,16 @@ function renderTradeList() {
     return `
       <div class="trade-row">
         <div class="trade-row-head">
-          <div>
-            <div class="trade-kind ${negative}">${row.type_name || "-"}</div>
-            <div class="mono">${shortAddr(row.user || "")}</div>
-          </div>
-          <div class="mono">blk ${row.block_number || "-"}</div>
+          <span class="trade-kind ${negative}">${row.type_name || "-"}</span>
+          <span class="mono">${shortAddr(row.user || "")}</span>
+          <span class="mono">blk ${row.block_number || "-"}</span>
         </div>
         <div class="metric-pair">
-          <span>${question}</span>
+          <span>${question.slice(0,30)}</span>
           <span>${outcome}</span>
-        </div>
-        <div class="metric-pair">
           <span>amt ${row.amount ?? "-"}</span>
           <span>${row.collateral_label || "-"}</span>
-        </div>
-        <div class="metric-pair">
-          <span>${row.condition_id || "-"}</span>
-          <span>price ${priceText}</span>
+          <span>p ${priceText}</span>
         </div>
       </div>
     `;
@@ -341,28 +334,25 @@ function renderHoldings() {
     const stable = row.asset_type === "stable" ? "stable" : "";
     const title = row.asset_type === "stable" ? (row.label || row.token_id || "-") : (row.q || row.token_id || "-");
     const subtitle = row.asset_type === "stable"
-      ? (row.label || "")
-      : `${row.outcome_text || "-"} | idx ${row.token_idx ?? "-"}`;
+      ? ""
+      : (row.outcome_text || `idx ${row.token_idx ?? "-"}`);
     const tooltip = [row.q || "", row.desc || ""].filter(Boolean).join(" | ");
     const priceText = typeof row.price === "number" ? fmtNumber(row.price / 1e6) : "-";
     return `
       <div class="holding-row" title="${tooltip}">
         <div class="holding-head">
-          <div>
-            <div class="holding-title">${title}</div>
-            <div class="holding-subtitle">${subtitle}</div>
-          </div>
-          <div>${fmtNumber(value)} USD</div>
+          <span class="holding-title">${title}</span>
+          <span class="holding-subtitle">${subtitle}</span>
         </div>
         <div class="bar-track">
           <div class="bar-fill ${stable}" style="width:${width}%"></div>
         </div>
         <div class="holding-metrics">
-          <span>${row.token_id || row.label || "-"}</span>
           <span>amt ${row.amount_raw || "-"}</span>
-          <span>price ${priceText}</span>
+          <span>p ${priceText}</span>
           <span>${fmtNumber(width)}%</span>
         </div>
+        <span class="holding-value">${fmtNumber(value)}</span>
       </div>
     `;
   }).join("");
@@ -375,7 +365,7 @@ function renderQueryCounts() {
   let html = `
     <table class="progress-table">
       <thead>
-        <tr><th>API</th><th>done/total</th><th>[pend]</th></tr>
+        <tr><th>API</th><th>done/total</th><th>[pend]</th><th>累计</th></tr>
       </thead>
       <tbody>
   `;
@@ -383,8 +373,9 @@ function renderQueryCounts() {
     html += `
       <tr>
         <td>${api.name}</td>
-        <td>${fmtNumber(api.done)}/${fmtNumber(api.total)}</td>
-        <td>[${api.pending}]</td>
+        <td>${fmtNumber(api.data?.done)}/${fmtNumber(api.data?.total)}</td>
+        <td>[${fmtNumber(api.query?.pending)}]</td>
+        <td>${fmtNumber(api.query?.total)}</td>
       </tr>
     `;
   }

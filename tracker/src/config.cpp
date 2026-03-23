@@ -60,7 +60,6 @@ AppConfig AppConfig::load(const std::filesystem::path &tracker_dir) {
   // data files in data/ subdirectory
   c.meta_file = data_dir / "meta.json";
   c.snapshot_file = data_dir / "snapshot.json";
-  c.history_file = data_dir / "history.json";
   c.seed_file = data_dir / "rebuild.json";
 
   // rpc

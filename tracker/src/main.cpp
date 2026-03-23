@@ -39,7 +39,6 @@ int main() {
                                           {"proxy_url", cfg.proxy_url},
                                           {"address_file", cfg.address_file.string()},
                                           {"snapshot_file", cfg.snapshot_file.string()},
-                                          {"history_file", cfg.history_file.string()},
                                           {"meta_file", cfg.meta_file.string()},
                                       })
                    .dump(2)

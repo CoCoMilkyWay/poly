@@ -26,28 +26,34 @@ body {
 }
 
 .page {
-  max-width: 1440px;
+  max-width: 1600px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 12px 16px;
 }
 
 .header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   gap: 16px;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
 }
 
 .header h1 {
   margin: 0;
-  font-size: 28px;
+  font-size: 20px;
 }
 
 .subtle {
-  margin: 6px 0 0;
+  margin: 0 0 0 12px;
   color: var(--subtle);
-  font-size: 14px;
+  font-size: 12px;
+  display: inline;
+}
+
+.header > div:first-child {
+  display: flex;
+  align-items: baseline;
 }
 
 .status-strip {
@@ -62,9 +68,10 @@ select {
   background: #11162a;
   color: var(--text);
   border: 1px solid var(--panel-border);
-  border-radius: 10px;
-  padding: 8px 12px;
+  border-radius: 6px;
+  padding: 5px 10px;
   font: inherit;
+  font-size: 12px;
 }
 
 button {
@@ -74,15 +81,15 @@ button {
 .top-grid {
   display: grid;
   grid-template-columns: 1.1fr 0.9fr;
-  gap: 16px;
-  margin-bottom: 16px;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
 .bottom-grid {
   display: grid;
   grid-template-columns: 1.2fr 0.8fr;
   grid-template-rows: auto 1fr;
-  gap: 16px;
+  gap: 10px;
 }
 
 .controls-panel {
@@ -103,46 +110,53 @@ button {
 .panel {
   background: rgba(23, 27, 47, 0.94);
   border: 1px solid rgba(58, 73, 118, 0.9);
-  border-radius: 18px;
+  border-radius: 12px;
   box-shadow: var(--shadow);
-  padding: 16px;
+  padding: 10px 12px;
 }
 
 .panel-title {
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 700;
-  margin-bottom: 14px;
+  margin-bottom: 8px;
+  color: var(--subtle);
 }
 
 .list-scroll {
-  max-height: 320px;
+  max-height: 280px;
+  overflow: auto;
+}
+
+.holdings-list {
+  max-height: 360px;
   overflow: auto;
 }
 
 .controls-row {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   flex-wrap: wrap;
+  align-items: center;
 }
 
 .controls-row label {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 6px;
   color: var(--subtle);
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .progress-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: 12px;
   font-family: 'JetBrains Mono', monospace;
 }
 
 .progress-table th,
 .progress-table td {
-  padding: 6px 8px;
+  padding: 3px 6px;
   text-align: left;
   border-bottom: 1px solid var(--panel-border);
 }
@@ -150,36 +164,41 @@ button {
 .progress-table th {
   color: var(--subtle);
   font-weight: 500;
-  font-size: 11px;
+  font-size: 10px;
   text-transform: uppercase;
 }
 
 .progress-table td:nth-child(2),
-.progress-table td:nth-child(3) {
+.progress-table td:nth-child(3),
+.progress-table td:nth-child(4) {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
 .head-block {
-  margin-top: 12px;
-  padding: 8px 12px;
+  margin-top: 6px;
+  padding: 4px 8px;
   background: #10162a;
-  border-radius: 8px;
-  font-size: 13px;
+  border-radius: 6px;
+  font-size: 12px;
   color: var(--subtle);
 }
 
 .user-row,
 .trade-row {
   border: 1px solid transparent;
-  border-radius: 12px;
-  padding: 12px;
+  border-radius: 8px;
+  padding: 6px 10px;
   background: #10162a;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
 }
 
 .user-row + .user-row,
 .trade-row + .trade-row {
-  margin-top: 10px;
+  margin-top: 4px;
 }
 
 .user-row {
@@ -194,9 +213,9 @@ button {
 .user-row-head,
 .trade-row-head {
   display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 8px;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .mono {
@@ -205,9 +224,12 @@ button {
 
 .metric-pair {
   display: flex;
-  gap: 12px;
+  gap: 8px;
   color: var(--subtle);
   font-size: 12px;
+  flex-wrap: wrap;
+  flex: 1;
+  min-width: 0;
 }
 
 .trade-kind {
@@ -222,8 +244,8 @@ button {
 .holdings-summary {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: 8px;
+  margin-bottom: 8px;
   color: var(--subtle);
 }
 
@@ -231,45 +253,53 @@ button {
   background: #10162a;
   border: 1px solid var(--panel-border);
   border-radius: 999px;
-  padding: 8px 12px;
-  font-size: 12px;
+  padding: 4px 10px;
+  font-size: 11px;
 }
 
 .holding-row {
   background: #10162a;
   border: 1px solid var(--panel-border);
-  border-radius: 14px;
-  padding: 12px;
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .holding-row + .holding-row {
-  margin-top: 10px;
+  margin-top: 4px;
 }
 
 .holding-head {
   display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 8px;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
 }
 
 .holding-title {
-  font-weight: 700;
-  line-height: 1.4;
+  font-weight: 600;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 280px;
 }
 
 .holding-subtitle {
   color: var(--subtle);
   font-size: 12px;
-  margin-top: 4px;
 }
 
 .bar-track {
-  width: 100%;
-  height: 12px;
+  width: 80px;
+  height: 8px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.05);
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .bar-fill {
@@ -283,16 +313,23 @@ button {
 
 .holding-metrics {
   display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
+  gap: 10px;
   color: var(--subtle);
   font-size: 12px;
-  margin-top: 8px;
+  flex-shrink: 0;
+}
+
+.holding-value {
+  font-weight: 600;
+  color: var(--text);
+  min-width: 70px;
+  text-align: right;
 }
 
 .empty {
   color: var(--subtle);
-  padding: 20px 6px;
+  padding: 12px 6px;
+  font-size: 12px;
 }
 
 @media (max-width: 1080px) {

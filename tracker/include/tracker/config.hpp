@@ -91,7 +91,6 @@ struct AppConfig {
   std::filesystem::path address_file;
   std::filesystem::path meta_file;
   std::filesystem::path snapshot_file;
-  std::filesystem::path history_file;
   std::filesystem::path sync_log_file;   // log/sync.log
   std::filesystem::path event_log_file;  // log/event.log
   std::filesystem::path seed_file;

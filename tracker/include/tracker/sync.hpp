@@ -1,12 +1,15 @@
 #pragma once
 
 #include "tracker/config.hpp"
+#include "tracker/http.hpp"
+#include "tracker/log.hpp"
 #include "tracker/queue.hpp"
 #include "tracker/state.hpp"
 #include "tracker/ws.hpp"
 
 #include <atomic>
 #include <deque>
+#include <functional>
 
 namespace tracker {
 
@@ -59,7 +62,6 @@ private:
   void publish_all();
   void persist_snapshot();
   void persist_meta();
-  void persist_history();
   void clear_derived_state();
   void rebuild_derived_state();
   void refresh_users(const std::unordered_set<std::string> &users);
@@ -82,6 +84,8 @@ private:
   void ensure_market_questions(const std::string &market_id);
   void backfill_range(uint64_t from_block, uint64_t to_block);
   void apply_block_logs(const std::vector<json> &logs, const std::string &source);
+  void http_batch_each(API api,const std::vector<HttpReq> &reqs,const std::function<void(size_t, const HttpRes &)> &on_response);
+  void rpc_batch_each(API api,const std::vector<json> &reqs,const std::function<void(size_t, const json &)> &on_response);
   // apply_* 系列: 处理各类事件, 更新 dirty_users_/dirty_conds_
   // matched_indices: 追踪已消费的 TransferLeg (防止重复匹配)
   void apply_condition_resolution(const json &log);
@@ -93,9 +97,8 @@ private:
   void commit_events(const json &log, const std::vector<PendingEmit> &events);
   bool user_visible_at(const std::string &user, uint64_t block_number) const;
   BigInt query_balance_at_block(const std::string &user, const std::string &token_id, uint64_t block_number);
-  uint64_t rpc_block_number();
-  json rpc_call(const std::string &method, const json &params);
-  json rpc_batch(const std::vector<json> &reqs);
+  uint64_t rpc_block_number(API api);
+  json rpc_call(API api, const std::string &method, const json &params);
 
   const AppConfig &cfg_;
   AppState &shared_;

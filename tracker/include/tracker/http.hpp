@@ -2,6 +2,7 @@
 
 #include "tracker/json.hpp"
 
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -22,12 +23,17 @@ struct HttpRes {
   std::string body;
 };
 
+using HttpBatchCallback = std::function<void(size_t, const HttpRes &)>;
+
 // ============================================================================
 // HTTP Client (proxy_url empty = no proxy)
 // ============================================================================
 
 HttpRes http_get(const std::string &url, const std::string &proxy_url = "");
 HttpRes http_post(const std::string &url, const json &payload, const std::string &proxy_url = "");
-std::vector<HttpRes> http_batch(const std::vector<HttpReq> &reqs, size_t concurrency, const std::string &proxy_url = "");
+std::vector<HttpRes> http_batch(const std::vector<HttpReq> &reqs,
+                               size_t concurrency,
+                               const std::string &proxy_url = "",
+                               const HttpBatchCallback &on_response = {});
 
 } // namespace tracker

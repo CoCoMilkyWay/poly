@@ -419,12 +419,19 @@ json build_progress_json() {
   json result = json::array();
   auto &board = progress();
   for (size_t i = 0; i < ProgressBoard::kApiCount; ++i) {
-    auto &api = board.apis[i];
+    const auto &api = board.apis[i];
     result.push_back({
         {"name", ProgressBoard::kApiNames[i]},
-        {"done", api.done.load()},
-        {"total", api.total.load()},
-        {"pending", api.pending.load()},
+        {"data",
+         {
+             {"done", api.data.done.load()},
+             {"total", api.data.total.load()},
+         }},
+        {"query",
+         {
+             {"pending", api.query.pending.load()},
+             {"total", api.query.total.load()},
+         }},
     });
   }
   return result;
@@ -567,6 +574,7 @@ json build_state_json(const RuntimeState &state) {
            {"rpc_ws_sub", state.counters.rpc_ws_sub},
            {"snapshot_api", state.counters.snapshot_api},
            {"gamma", state.counters.gamma},
+           {"clob", state.counters.clob},
        }},
   };
 

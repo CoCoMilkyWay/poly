@@ -36,9 +36,11 @@ public:
   HttpSession(asio::io_context &ioc, ssl::context &ssl_ctx,
               std::deque<PendingReq> &queue, std::vector<HttpRes> &results,
               std::atomic<size_t> &active, std::mutex &mu,
-              const std::optional<UrlParts> &proxy)
+              const std::optional<UrlParts> &proxy,
+              const HttpBatchCallback &on_response)
       : resolver_(ioc), ssl_ctx_(ssl_ctx), queue_(queue),
-        results_(results), active_(active), mu_(mu), proxy_(proxy) {}
+        results_(results), active_(active), mu_(mu), proxy_(proxy),
+        on_response_(on_response) {}
 
   void start() { next(); }
 
@@ -239,6 +241,9 @@ private:
         .status = static_cast<int>(res_.result_int()),
         .body = std::move(res_.body()),
     };
+    if (on_response_) {
+      on_response_(cur_.idx, results_[cur_.idx]);
+    }
   }
 
   void retry() {
@@ -263,6 +268,7 @@ private:
   std::atomic<size_t> &active_;
   std::mutex &mu_;
   std::optional<UrlParts> proxy_;
+  const HttpBatchCallback &on_response_;
 
   PendingReq cur_;
   tcp::resolver::results_type endpoints_;
@@ -279,7 +285,10 @@ private:
 
 } // namespace
 
-std::vector<HttpRes> http_batch(const std::vector<HttpReq> &reqs, size_t concurrency, const std::string &proxy_url) {
+std::vector<HttpRes> http_batch(const std::vector<HttpReq> &reqs,
+                                size_t concurrency,
+                                const std::string &proxy_url,
+                                const HttpBatchCallback &on_response) {
   assert(!reqs.empty());
   assert(concurrency > 0);
 
@@ -302,7 +311,9 @@ std::vector<HttpRes> http_batch(const std::vector<HttpReq> &reqs, size_t concurr
 
   std::atomic<size_t> active = std::min(concurrency, reqs.size());
   for (size_t i = 0; i < active; ++i) {
-    std::make_shared<HttpSession>(ioc, ssl_ctx, queue, results, active, mu, proxy)->start();
+    std::make_shared<HttpSession>(
+        ioc, ssl_ctx, queue, results, active, mu, proxy, on_response)
+        ->start();
   }
   ioc.run();
   return results;
