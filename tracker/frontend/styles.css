@@ -150,38 +150,102 @@ button {
 .progress-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 12px;
-  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
 }
 
 .progress-table th,
 .progress-table td {
-  padding: 3px 6px;
-  text-align: left;
-  border-bottom: 1px solid var(--panel-border);
+  padding: 4px 6px;
+  border-bottom: 1px solid rgba(40, 49, 84, 0.6);
+  white-space: nowrap;
 }
 
 .progress-table th {
   color: var(--subtle);
   font-weight: 500;
-  font-size: 10px;
+  font-size: 9px;
   text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.progress-table td:nth-child(2),
-.progress-table td:nth-child(3),
-.progress-table td:nth-child(4) {
+.progress-table .col-api {
+  text-align: left;
+  font-size: 10px;
+}
+
+.progress-table .col-desc {
+  text-align: left;
+  color: var(--subtle);
+  font-size: 10px;
+}
+
+.progress-table .col-progress {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
+.progress-table .col-pend {
+  text-align: center;
+  color: var(--subtle);
+  font-variant-numeric: tabular-nums;
+  min-width: 40px;
+}
+
+.progress-table .col-total {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+  min-width: 50px;
+}
+
+.progress-table tr.done {
+  opacity: 0.7;
+}
+
+.progress-table tr.active .col-pend {
+  color: var(--accent-2);
+}
+
+.progress-text {
+  color: var(--text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.progress-pct {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 4px;
+  background: rgba(79, 119, 255, 0.15);
+  border-radius: 3px;
+  font-size: 9px;
+  color: var(--accent);
+  min-width: 28px;
+  text-align: center;
+}
+
+.progress-footer {
+  margin-top: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
 .head-block {
-  margin-top: 6px;
-  padding: 4px 8px;
-  background: #10162a;
+  padding: 4px 10px;
+  background: linear-gradient(135deg, #1a2555 0%, #10162a 100%);
+  border: 1px solid var(--panel-border);
   border-radius: 6px;
   font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.ws-stat {
+  font-size: 10px;
   color: var(--subtle);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
 .user-row,

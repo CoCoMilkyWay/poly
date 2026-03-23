@@ -567,6 +567,8 @@ json build_state_json(const RuntimeState &state) {
       {"recent_event_count", state.recent_events.size()},
       {"last_resync_started_at_unix_sec", state.resync_started_at},
       {"last_resync_finished_at_unix_sec", state.resync_finished_at},
+      {"ws_blocks", state.counters.ws_blocks},
+      {"ws_logs", state.counters.ws_logs},
       {"query_counts",
        {
            {"rpc_http", state.counters.rpc_http},

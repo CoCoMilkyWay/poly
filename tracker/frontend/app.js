@@ -13,6 +13,16 @@ const EVENT_TYPE_LABELS = [
   "convert",
 ];
 
+const API_INFO = {
+  snapshot: { api: "Alchemy.getNFTsForOwner", desc: "持仓快照" },
+  stables:  { api: "RPC.eth_call",            desc: "稳定币余额" },
+  meta:     { api: "Gamma.markets",           desc: "token元数据" },
+  prices:   { api: "CLOB.prices",             desc: "价格刷新" },
+  ws_sub:   { api: "ws.eth_subscribe",        desc: "WS订阅" },
+  head:     { api: "RPC.eth_blockNumber",     desc: "区块高度" },
+  backfill: { api: "RPC.eth_getLogs",         desc: "历史补齐" },
+};
+
 const state = {
   payload: null,
   meta: null,
@@ -361,28 +371,56 @@ function renderHoldings() {
 function renderQueryCounts() {
   const progressData = state.progress || [];
   const headBlock = state.payload?.summary?.head_block || 0;
+  const wsBlocks = state.payload?.summary?.ws_blocks || 0;
+  const wsLogs = state.payload?.summary?.ws_logs || 0;
 
   let html = `
     <table class="progress-table">
       <thead>
-        <tr><th>API</th><th>done/total</th><th>[pend]</th><th>累计</th></tr>
+        <tr>
+          <th class="col-api">API</th>
+          <th class="col-desc">描述</th>
+          <th class="col-progress">进度</th>
+          <th class="col-pend">等待</th>
+          <th class="col-total">累计</th>
+        </tr>
       </thead>
       <tbody>
   `;
-  for (const api of progressData) {
+  for (const item of progressData) {
+    const info = API_INFO[item.name] || { api: item.name, desc: "-" };
+    const done = item.data?.done ?? 0;
+    const total = item.data?.total ?? 0;
+    const pend = item.query?.pending ?? 0;
+    let accum = item.query?.total ?? 0;
+
+    // head 和 backfill 累计包含 ws 返回
+    if (item.name === "head") accum += wsBlocks;
+    if (item.name === "backfill") accum += wsLogs;
+
+    const pct = total > 0 ? Math.round((done / total) * 100) : (done > 0 ? 100 : 0);
+    const statusClass = pct >= 100 ? "done" : (pend > 0 ? "active" : "");
+
     html += `
-      <tr>
-        <td>${api.name}</td>
-        <td>${fmtNumber(api.data?.done)}/${fmtNumber(api.data?.total)}</td>
-        <td>[${fmtNumber(api.query?.pending)}]</td>
-        <td>${fmtNumber(api.query?.total)}</td>
+      <tr class="${statusClass}">
+        <td class="col-api mono">${info.api}</td>
+        <td class="col-desc">${info.desc}</td>
+        <td class="col-progress">
+          <span class="progress-text">${fmtNumber(done)}/${fmtNumber(total)}</span>
+          <span class="progress-pct">${pct}%</span>
+        </td>
+        <td class="col-pend">${pend > 0 ? `[${fmtNumber(pend)}]` : "-"}</td>
+        <td class="col-total">${fmtNumber(accum)}</td>
       </tr>
     `;
   }
   html += `
       </tbody>
     </table>
-    <div class="head-block">head: ${fmtNumber(headBlock)}</div>
+    <div class="progress-footer">
+      <span class="head-block">HEAD ${fmtNumber(headBlock)}</span>
+      <span class="ws-stat">WS blk +${fmtNumber(wsBlocks)} | log +${fmtNumber(wsLogs)}</span>
+    </div>
   `;
   queryCountsEl.innerHTML = html;
 }

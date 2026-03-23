@@ -173,6 +173,8 @@ struct QueryCounters {
   uint64_t snapshot_api = 0;
   uint64_t gamma = 0;
   uint64_t clob = 0;
+  uint64_t ws_blocks = 0;
+  uint64_t ws_logs = 0;
 };
 
 struct RuntimeState {

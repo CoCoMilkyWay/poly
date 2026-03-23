@@ -730,6 +730,7 @@ void SyncThread::handle_queue_event(QueueEvent ev) {
   }
   if (ev.kind == QueueEventKind::Head) {
     rt_.head_block = std::max(rt_.head_block, ev.block_number);
+    ++rt_.counters.ws_blocks;
     publish_all();
     return;
   }
@@ -744,6 +745,7 @@ void SyncThread::handle_queue_event(QueueEvent ev) {
     apply_block_logs(logs, "websocket");
     rt_.last_applied_block = std::max(rt_.last_applied_block, ev.block_number);
     rt_.head_block = std::max(rt_.head_block, ev.block_number);
+    rt_.counters.ws_logs += logs.size();
     publish_all();
     return;
   }
